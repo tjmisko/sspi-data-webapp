@@ -9,8 +9,8 @@ After adding your name, you'll need to save your work.  But how?
 This saves your work locally, so that if you close the file you won't lose your changes.
 But how do we make it so that everyone can see your saved work?
 
-2) Create a new branch entitled "[YOUR NAME HERE]-branch by typing
-	git checkout -b [YOUR NAME HERE]
+2) Create a new branch entitled "[YOUR NAME HERE]-branch" by typing
+	git checkout -b [YOUR NAME HERE]-branch
 into your command line.  For example, I typed
 	git checkout -b tristan-branch
 Branching allows us to work in parallel and control how we merge in changes.  We won't always
