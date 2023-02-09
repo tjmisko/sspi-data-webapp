@@ -7,5 +7,11 @@
   <body>
     <h1>Login to the SSPI Database</h1>
     <p>Don't have an account?</p><a href="{{ url_for('register') }}">Register here.</a>
+    <form action="" method="POST">
+      {{ form.hidden_tag() }}
+      {{ form.username }}
+      {{ form.password }}
+      {{ form.submit }}
+    </form>
   </body>
 </html>
