@@ -51,13 +51,6 @@ class LoginForm(FlaskForm):
         min=4, max=20)], render_kw={"placeholder": "Password"})
     submit = SubmitField("Login")
 
-    def validate_username(self, username):
-        # query the database to check whether the submitted new username is taken
-        username_taken = User.query.filter_by(username=username.data).first()
-        # if the username is taken, raise a validation ValidationError
-        if username_taken:
-            raise ValidationError("That username is already taken!")
-
 # create a 'route' (aka API endpoint) so that the function home is run when the
 # base url is called
 @app.route('/')
