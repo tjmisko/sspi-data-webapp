@@ -2,7 +2,7 @@ from sqlalchemy_serializer import SerializerMixin
 from dataclasses import dataclass
 from json import JSONEncoder
 # load in the Flask class from the flask library
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect
 # load in the SQLAlchemy object to handle setting up the user data database
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
@@ -15,14 +15,20 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from flask_bcrypt import Bcrypt
-
+# load in pymongo for connecting to mongodb, our database
+# https://www.digitalocean.com/community/tutorials/how-to-use-mongodb-in-a-flask-application
+from pymongo import MongoClient
 
 # create a Flask object
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents/Projects/sspi-data-collection/instance/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents/Projects/sspi-data-collection/flask_app/instance/database.db'
 app.config['SECRET_KEY'] = 'thisneedstobechanged'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+
+client = MongoClient('localhost', 27017)
+sspidb = client.flask_db
+sspi_main_data = sspidb.sspi_main_data
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -75,6 +81,24 @@ def home():
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/database', methods=['GET', 'POST'])
+def database():
+    if request.method == 'POST':
+        indicator = request.form['indicator']
+        country = request.form['country']
+        value = request.form['value']
+        year = request.form['year'] 
+        sspi_main_data.insert_one({"indicator": indicator,
+                                   "value": value,
+                                   "country": country,
+                                   "year": year})
+        return redirect(url_for('database'))
+    else:
+        sspi_data = sspi_main_data.find()
+        for doc in sspi_data:
+            print(doc)
+    return "database page"
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     login_form = LoginForm()
@@ -82,7 +106,7 @@ def login():
         user = User.query.filter_by(username=login_form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard'))               
     return render_template('login.html', form=login_form)
 
 @app.route('/logout', methods=['GET', 'POST'])
