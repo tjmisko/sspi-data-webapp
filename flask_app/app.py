@@ -90,13 +90,13 @@ def database():
         year = request.form['year'] 
         sspi_main_data.insert_one({"indicator": indicator,
                                    "value": value,
+                                   "country": country,
                                    "year": year})
         return redirect(url_for('database'))
     else:
         sspi_data = sspi_main_data.find()
         for doc in sspi_data:
             print(doc)
-        print("hello")
     return "database page"
 
 @app.route('/login', methods=['GET', 'POST'])
