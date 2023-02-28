@@ -25,7 +25,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents
 app.config['SECRET_KEY'] = 'thisneedstobechanged'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-hello = "world"
+
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 sspi_main_data = sspidb.sspi_main_data
@@ -85,6 +85,7 @@ def dashboard():
 def database():
     if request.method == 'POST':
         indicator = request.form['indicator']
+        country = request.form['country']
         value = request.form['value']
         year = request.form['year'] 
         sspi_main_data.insert_one({"indicator": indicator,
@@ -105,7 +106,7 @@ def login():
         user = User.query.filter_by(username=login_form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard'))               
     return render_template('login.html', form=login_form)
 
 @app.route('/logout', methods=['GET', 'POST'])
