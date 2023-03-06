@@ -18,6 +18,7 @@ from flask_bcrypt import Bcrypt
 # load in pymongo for connecting to mongodb, our database
 # https://www.digitalocean.com/community/tutorials/how-to-use-mongodb-in-a-flask-application
 from pymongo import MongoClient
+import requests
 
 # create a Flask object
 app = Flask(__name__)
@@ -126,6 +127,11 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form=register_form)
+
+@app.route('/collect-iea-data')
+def collect_coal_power():
+    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?")
+    return str(response.json())
 
 @app.route('/check-user-db')
 @login_required

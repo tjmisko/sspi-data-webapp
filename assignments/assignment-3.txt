@@ -1,0 +1,58 @@
+Action Items:
+1) Install MongoDB and MongoSH if you haven't already
+2) Watch (and follow along) this tutorial on getting started with MongoDB: https://www.youtube.com/watch?v=ofme2o29ngU&t=496s
+
+We're starting to get into the juicy stuff now!
+
+This week's assignment will be focused on writing
+code to collect indicator data from online sources
+and storing that inside of our database.
+
+The database we will be using for the SSPI is called
+MongoDB---short for huMONGOus DataBase.  By the end
+of this project, if all goes according to plan, 
+we will have a humongous database of our own.
+
+Online data sources---web APIs---generally return in
+either JSON (JavaScript Object Notation) or in CSV
+(Comma Separated Values) formats.
+
+JSON looks like a python dictionary. Here's an example:
+
+{"country": "Argentina, "year": 2018, 
+"indicator": "Deforestation", "value": 15.13}
+
+JSON files can be in lists:
+
+[{"country": "Argentina, "year": 2018, 
+"indicator": "Deforestation", "value": 15.13},
+{"country": "Austria, "year": 2018, 
+"indicator": "Deforestation", "value": 27.14},
+{"country": "Australia, "year": 2018, 
+"indicator": "Deforestation", "value": 19.43}]
+
+They can also be nested:
+
+x = {"country": {"donor": "Germany", "recipient": "India"}, 
+"year": 2018, "indicator": "Foreign Aid", "value": 15.13}
+
+We can access and manipulate values from the JSON object x above
+like so:
+
+>>> x["indicator"]
+"Foreign Aid"
+
+>>> x["value"]
+15.13
+
+>>> x["value"] = 19.31
+>>> x["value"]
+19.31
+
+>>> x["country"]
+{"donor": "Germany", "recipient": "India"}
+
+>>> x["country"]["donor"]
+"Germany"
+
+
