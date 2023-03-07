@@ -22,7 +22,7 @@ import requests
 
 # create a Flask object
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents/Projects/sspi-data-collection/flask_app/instance/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////var/www/sspi.world/flask_app/instance/database.db'
 app.config['SECRET_KEY'] = 'thisneedstobechanged'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
