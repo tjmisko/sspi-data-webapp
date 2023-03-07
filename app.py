@@ -5,15 +5,15 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+import requests
 
 # there is an issue here within this region of code; the database is not populating properly (so no new users can be added... or they are added, just not within an existing datatable or easily traceable --> "Error: in prepare, no such table: user (1)")
 
 app = Flask(__name__)
-db = SQLAlchemy()   
-bcrypt = Bcrypt(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/maxs/Desktop/sspi/sspi-data-collection/database.db'
 app.config['SECRET_KEY'] = 'secretkey'
-db.init_app(app)
+db = SQLAlchemy(app)   
+bcrypt = Bcrypt(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -48,6 +48,10 @@ class LoginForm(FlaskForm):
         min = 4, max = 20)], render_kw = {"placeholder": "Password"})
     submit = SubmitField("Login")
 
+@app.route('/stgdata')
+def stgdata():
+    response = requests.get('https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData')
+    return str(response.json())
 
 
 @app.route('/')
