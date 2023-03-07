@@ -2,7 +2,7 @@ from sqlalchemy_serializer import SerializerMixin
 from dataclasses import dataclass
 from json import JSONEncoder
 # load in the Flask class from the flask library
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, jsonify, render_template, request, url_for, redirect
 # load in the SQLAlchemy object to handle setting up the user data database
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
@@ -84,6 +84,7 @@ def about():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -137,8 +138,15 @@ def register():
 
 @app.route('/collect-iea-data')
 def collect_coal_power():
-    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?countries=BEL")
-    return str(response.json())
+    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?countries=BEL").json()
+    for r in response:
+        print(r, type(r))
+        sspi_main_data.insert_one(r)
+    return str(len(response))
+
+@app.route('/check_country_database')
+def check_db():
+    return type(sspi_main_data.find({ "year": 2018 }))
 
 @app.route('/check-user-db')
 @login_required
