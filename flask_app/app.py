@@ -137,7 +137,7 @@ def register():
 
 @app.route('/collect-iea-data')
 def collect_coal_power():
-    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?")
+    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?countries=BEL")
     return str(response.json())
 
 @app.route('/check-user-db')
