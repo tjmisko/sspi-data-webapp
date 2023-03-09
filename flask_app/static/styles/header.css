@@ -12,6 +12,7 @@ body {
 
 .site-title {
     margin: 5px 10px;
+    color: white;
 }
 
 .header-nav-bar {
@@ -23,4 +24,13 @@ body {
     display: flex;
     justify-content: space-around;
     padding: 0;
+}
+
+.header-nav-bar-link {
+    color: white;
+    text-decoration: none;
+}
+.header-nav-bar-link:hover {
+    transform: scale(1.1);
+    transition: 1s;
 }
