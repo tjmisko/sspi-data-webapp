@@ -1,0 +1,26 @@
+body {
+    margin: 0;
+}
+
+.site-header {
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(15, 56, 82, 1);
+}
+
+.site-title {
+    margin: 5px 10px;
+}
+
+.header-nav-bar {
+    position: relative;
+    width: 100%;
+}
+.header-nav-bar-link-list {
+    list-style: none;
+    display: flex;
+    justify-content: space-around;
+    padding: 0;
+}
