@@ -27,6 +27,7 @@ app.config['SECRET_KEY'] = 'thisneedstobechanged'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+# MongoDB Configuration
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 sspi_main_data = sspidb.sspi_main_data
