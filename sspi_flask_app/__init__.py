@@ -1,7 +1,7 @@
 from flask import Flask
-from flask_app.config import Config, DevConfig, ProdConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient, PyMongo
+from config import Config, DevConfig, ProdConfig
 
 db = SQLAlchemy()
 
