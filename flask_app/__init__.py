@@ -13,17 +13,9 @@ def init_app():
     # Initialize Core application
     app = Flask(__name__)
     app.config.from_object(DevConfig)
-
+    print("DatabaseURI:" + DevConfig.SQLALCHEMY_DATABASE_URI)
     # Initialize Plugins
     db.init_app(app)
-    client.init_app(app)
     
     with app.app_context():
-        from . import api
-        from . import auth
-
-        app.register_blueprint(auth.auth_bp)
-
         return app
-    
-    return app
