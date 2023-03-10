@@ -1,6 +1,7 @@
 Action Items:
 1) Install MongoDB and MongoSH if you haven't already
 2) Watch (and follow along) this tutorial on getting started with MongoDB: https://www.youtube.com/watch?v=ofme2o29ngU&t=496s
+3) Read through this post on project structure: https://hackersandslackers.com/flask-application-factory/
 
 We're starting to get into the juicy stuff now!
 

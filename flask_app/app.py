@@ -8,7 +8,7 @@ from flask import Flask, jsonify, render_template, request, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
 # but it's a nice automation so we don't have to think too much about it)
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 # load in the packages that make the forms pretty for submitting login and
 # and restration data
 from flask_wtf import FlaskForm
@@ -21,18 +21,22 @@ from flask_bcrypt import Bcrypt
 from pymongo import MongoClient
 from bson import json_util
 import requests
+from datetime import datetime
 
-# create a Flask object
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents/Projects/sspi-data-collection/flask_app/instance/database.db'
-app.config['SECRET_KEY'] = 'thisneedstobechanged'
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
+def create_app():
+    app = Flask(__name__)
+    # SQLAlchemy configuration for administrator login
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents/Projects/sspi-data-collection/flask_app/instance/database.db'
+    app.config['SECRET_KEY'] = 'thisneedstobechanged'
+    db = SQLAlchemy(app)
+    bcrypt = Bcrypt(app)
+    # MongoDB configuration
+    client = MongoClient('localhost', 27017)
+    sspidb = client.flask_db
+    sspi_main_data = sspidb.sspi_main_data
+    return app
 
-# MongoDB Configuration
-client = MongoClient('localhost', 27017)
-sspidb = client.flask_db
-sspi_main_data = sspidb.sspi_main_data
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -50,6 +54,8 @@ class User(db.Model, UserMixin, SerializerMixin):
     username:str = db.Column(db.String(20), nullable=False, unique=True)
     password:str = db.Column(db.String(80), nullable=False)
 
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
 
 # create a registration form for new users
 class RegisterForm(FlaskForm):
@@ -140,18 +146,30 @@ def register():
     return render_template('register.html', form=register_form)
 
 @app.route('/collect-iea-data')
+@login_required
 def collect_coal_power():
-    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?countries=BEL").json()
+    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?").json()
     for r in response:
-        print(r, type(r))
-        sspi_main_data.insert_one(r)
+       sspi_main_data.insert_one({"observation": r,
+                                  "collection-info": {"collector": current_user.username,
+                                                      "datetime": datetime.now()}})
     return str(len(response))
 
-@app.route('/check_db')
+@app.route('/check-db')
+@login_required
 def check_db():
     x = sspi_main_data.find()
-    print(x)
-    return "1"
+    return parse_json(x)
+
+@app.route('/delete-db')
+@login_required
+def delete_db():
+    sspi_main_data.delete_many({})
+    return "Deleted all observations"
+
+@app.route('/database-metadata')
+def get_metadata():
+    return sspidb.list_collection_names()
 
 @app.route('/check-user-db')
 @login_required
@@ -164,6 +182,3 @@ def get_all_users():
 # https://www.freecodecamp.org/news/whats-in-a-python-s-name-506262fe61e8/#:~:text=The%20__name__%20variable%20(two%20underscores%20before%20and%20after,a%20module%20in%20another%20script.
 if __name__ == '__main__':
     app.run(debug = True)
-
-def parse_json(data):
-    return json.loads(json_util.dumps(data))
