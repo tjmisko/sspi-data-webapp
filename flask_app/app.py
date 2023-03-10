@@ -1,3 +1,4 @@
+import json
 from sqlalchemy_serializer import SerializerMixin
 from dataclasses import dataclass
 from json import JSONEncoder
@@ -18,11 +19,12 @@ from flask_bcrypt import Bcrypt
 # load in pymongo for connecting to mongodb, our database
 # https://www.digitalocean.com/community/tutorials/how-to-use-mongodb-in-a-flask-application
 from pymongo import MongoClient
+from bson import json_util
 import requests
 
 # create a Flask object
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////var/www/sspi.world/flask_app/instance/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/tristanmisko/Documents/Projects/sspi-data-collection/flask_app/instance/database.db'
 app.config['SECRET_KEY'] = 'thisneedstobechanged'
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -145,9 +147,11 @@ def collect_coal_power():
         sspi_main_data.insert_one(r)
     return str(len(response))
 
-@app.route('/check_country_database')
+@app.route('/check_db')
 def check_db():
-    return type(sspi_main_data.find({ "year": 2018 }))
+    x = sspi_main_data.find()
+    print(x)
+    return "1"
 
 @app.route('/check-user-db')
 @login_required
@@ -160,3 +164,6 @@ def get_all_users():
 # https://www.freecodecamp.org/news/whats-in-a-python-s-name-506262fe61e8/#:~:text=The%20__name__%20variable%20(two%20underscores%20before%20and%20after,a%20module%20in%20another%20script.
 if __name__ == '__main__':
     app.run(debug = True)
+
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
