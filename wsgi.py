@@ -1,4 +1,5 @@
-from flask_app import init_app
+from sspi_flask_app import init_app
+from config import Config, DevConfig, ProdConfig
 
 app = init_app()
 

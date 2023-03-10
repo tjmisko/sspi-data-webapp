@@ -1,6 +1,7 @@
 *.DS_Store
 
 bin/*
+env/
 etc/*
 include/*
 lib/*
