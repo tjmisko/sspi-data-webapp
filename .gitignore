@@ -15,3 +15,4 @@ flask_app/instance/database.db
 *.egg-info/
 
 __pycache__/
+instance/
