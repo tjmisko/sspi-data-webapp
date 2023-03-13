@@ -1,21 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <!-- This is the head of the document, where external resources are loaded and
-  and the metatdata is stored.  It is not rendered on the page. -->
-  <head>
-    <meta charset="utf-8">
-    <title>Home</title>
-  </head>
-  <!-- This is where we put the stuff that will be rendered on the page -->
-  <body>
-    <header class="site-header">
-      <h1 class="site-title"> Sustainable and Shared-Prosperity Index </h1>
-      <div class="header-nav-bar">
-        <ol class="header-nav-bar-link-list">
-        </ol>
-      </div>
-    </header>
-   
+{% block content %}
     <article class="page-content">
       <p> Our research team has created a policy index that documents the 
         policies being practiced around the world that create an economy 
@@ -25,9 +8,5 @@
         Three pillars—Sustainability, Market Structure, Public Goods and 
         Services—represent government policies that create and govern the 
         economy to create the outcomes desired by the society.  </p>
-     
     </article>
-    </div>
-    
-  </body>
-</html>
+{% endblock %}
