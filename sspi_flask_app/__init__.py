@@ -18,4 +18,8 @@ def init_app():
     db.init_app(app)
     
     with app.app_context():
+        from .home import routes
+
+        # Register Blueprints
+        app.register_blueprint(home.home_bp)
         return app
