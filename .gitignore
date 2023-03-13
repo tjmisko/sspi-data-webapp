@@ -10,4 +10,8 @@ share/*
 flask_app/instance/database.db
 
 .env
+.flaskenv
+*.egg
+*.egg-info/
 
+__pycache__/
