@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from sqlalchemy_serializer import SerializerMixin
-from . import db
+from .. import db
 from dataclasses import dataclass
 
 @dataclass

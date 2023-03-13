@@ -1,5 +1,6 @@
 from flask import Blueprint
 from flask import current_app as app
+from models.usermodel import User, db
 from sqlalchemy_serializer import SerializerMixin
 # load in the Flask class from the flask library
 from flask import Flask, render_template, request, url_for, redirect
@@ -23,21 +24,11 @@ auth_bp = Blueprint(
     static_folder='static'
 )
 
-login_manager = LoginManager()
-login_manager.init_app(app)
 login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-# create a User object that can track the id, username, and password of SSPI
-# team members in the database database.db
-@dataclass
-class User(db.Model, UserMixin, SerializerMixin):
-    id:int = db.Column(db.Integer, primary_key=True)
-    username:str = db.Column(db.String(20), nullable=False, unique=True)
-    password:str = db.Column(db.String(80), nullable=False)
 
 # create a registration form for new users
 class RegisterForm(FlaskForm):
