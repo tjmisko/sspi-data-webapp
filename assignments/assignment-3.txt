@@ -27,8 +27,18 @@ Project Structure:
         2) The file wsgi.py reads in the file __init__.py from the module sspi_flask_app, and it runs
         the line "app = init_app()".  This is the core of the "factory method" design pattern that 
         we talked about before.  Everything that happens to create the app on startup happens inside of
-        the function init_app, which means we can pass in 
-    - Read through these blog posts for details
+        the function init_app, which means we can pass in.
+        3) Within init_app, we do all of our configuration and initialization.  When we add new Blueprints,
+        we must register them here.
+    - Read through these blog posts for details, they're really good! https://hackersandslackers.com/your-first-flask-application/
+    - We are now using Flask Blueprints to handle separation of concerns.  A blueprint is simply a little
+    collection of related routes that we tell Flask about through registration in the init_app function in __init__.py.  For example,
+    the only part of the application that uses the Login/Registration features we implemented in Assignment 1 are a couple of 
+    routes, namely '/login' and '/register'.  Before, all of the logic in these little routes was cluttering up the 
+    app.py file, which gets really messy really quickly as we start writing more and more applications.  Now, the logic and the pages for
+    user login are hidden away in the 'auth' module.  Each module comprises a .py file which creates the Blueprint and
+    specifies the routes, a templates file which holds the html/jinja2 templates for setting up the views, and a
+    static file which will hold the css and JavaScript we will use to make the html pretty.
 - Setup virtual environment and use the lastest gitignore files to build and
 test your app locally.
     - We have a file called requirements.txt in the directory which contains
