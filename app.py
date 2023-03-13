@@ -110,33 +110,6 @@ def database():
             print(doc)
     return "database page"
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    login_form = LoginForm()
-    if login_form.validate_on_submit():
-        user = User.query.filter_by(username=login_form.username.data).first()
-        if user and bcrypt.check_password_hash(user.password, login_form.password.data):
-            login_user(user)
-            return redirect(url_for('dashboard'))               
-    return render_template('login.html', form=login_form)
-
-@app.route('/logout', methods=['GET', 'POST'])
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    register_form = RegisterForm()
-    if register_form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(register_form.password.data)
-        new_user = User(username=register_form.username.data, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
-
-    return render_template('register.html', form=register_form)
 
 @app.route('/collect-iea-data')
 @login_required

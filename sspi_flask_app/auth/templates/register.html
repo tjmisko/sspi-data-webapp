@@ -6,7 +6,7 @@
   </head>
   <body>
     <h1>Register to Access the SSPI Database</h1>
-    <p>Already have an account?</p><a href="{{ url_for('login') }}">Login here.</a>
+    <p>Already have an account?</p><a href="{{ url_for('auth_bp.login') }}">Login here.</a>
     <form action="" method="POST">
       {{ form.hidden_tag() }}
       {{ form.username }}

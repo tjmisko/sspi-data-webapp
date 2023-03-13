@@ -3,8 +3,10 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient, PyMongo
 from config import Config, DevConfig, ProdConfig
+from flask_bcrypt import Bcrypt
 
 db = SQLAlchemy()
+login_manager = LoginManager()
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
@@ -17,13 +19,15 @@ def init_app():
     print("DatabaseURI:" + DevConfig.SQLALCHEMY_DATABASE_URI)
     # Initialize SQLAlchemy Database
     db.init_app(app)
-
-    login_manager = LoginManager()
+    # Initialize Login manager
     login_manager.init_app(app)
-    
+    # initialize Bcrypt
+    bcrypt = Bcrypt(app)
+
     with app.app_context():
         from .home import routes
         from .auth import auth
+        from .models import usermodel
         # Register Blueprints
         db.create_all()
         app.register_blueprint(routes.home_bp)

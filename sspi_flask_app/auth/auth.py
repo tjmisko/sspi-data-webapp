@@ -1,6 +1,8 @@
 from flask import Blueprint
 from flask import current_app as app
-from models.usermodel import User, db
+from ..models.usermodel import User, db
+from .. import login_manager
+from app import bcrypt
 from sqlalchemy_serializer import SerializerMixin
 # load in the Flask class from the flask library
 from flask import Flask, render_template, request, url_for, redirect
