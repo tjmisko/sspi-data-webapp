@@ -7,6 +7,7 @@ from flask_bcrypt import Bcrypt
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+flask_bcrypt = Bcrypt()
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
@@ -19,6 +20,8 @@ def init_app():
     print("DatabaseURI:" + DevConfig.SQLALCHEMY_DATABASE_URI)
     # Initialize SQLAlchemy Database
     db.init_app(app)
+    # Initialize password encryption
+    flask_bcrypt.init_app(app)
     # Initialize Login manager
     login_manager.init_app(app)
     # initialize Bcrypt
@@ -28,8 +31,10 @@ def init_app():
         from .home import routes
         from .auth import auth
         from .models import usermodel
+        from .api import datatest
         # Register Blueprints
         db.create_all()
+        app.register_blueprint(datatest.datatest_bp)
         app.register_blueprint(routes.home_bp)
         app.register_blueprint(auth.auth_bp)
         return app
