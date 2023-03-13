@@ -1,8 +1,7 @@
 from flask import Blueprint
 from flask import current_app as app
 from ..models.usermodel import User, db
-from .. import login_manager
-from app import bcrypt
+from .. import login_manager, flask_bcrypt
 from sqlalchemy_serializer import SerializerMixin
 # load in the Flask class from the flask library
 from flask import Flask, render_template, request, url_for, redirect
@@ -17,7 +16,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
-from flask_bcrypt import Bcrypt
 from dataclasses import dataclass
 
 auth_bp = Blueprint(
@@ -26,7 +24,7 @@ auth_bp = Blueprint(
     static_folder='static'
 )
 
-login_manager.login_view = "login"
+login_manager.login_view = "auth_bp.login"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -60,25 +58,26 @@ def login():
     login_form = LoginForm()
     if login_form.validate_on_submit():
         user = User.query.filter_by(username=login_form.username.data).first()
-        if user and bcrypt.check_password_hash(user.password, login_form.password.data):
+        if user and flask_bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
-            return redirect(url_for('dashboard'))               
+            return redirect(url_for('home_bp.dashboard'))               
     return render_template('login.html', form=login_form)
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('home'))
+    return redirect(url_for('home_bp.home'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(register_form.password.data)
+        hashed_password = flask_bcrypt.generate_password_hash(register_form.password.data)
         new_user = User(username=register_form.username.data, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        return redirect(url_for('login'))
+        return redirect(url_for('auth_bp.login'))
 
     return render_template('register.html', form=register_form)
