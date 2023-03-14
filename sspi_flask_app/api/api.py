@@ -28,7 +28,6 @@ def collect():
     if not collector_lookup(indicator):
         return "Indicator was not found in SSPI database"
     return collector()
-    
 
 @api_bp.route("/compute")
 @login_required
@@ -38,7 +37,8 @@ def compute():
 
 # returns the collector function specified in the appropriate file path
 def collector_lookup(indicator):
-    if indicator == 'REDLST':
+    print(indicator)
+    if indicator == 'redlst':
         from .sspi.sustainability.ecosystem.redlist import collect as collector
         return collector
     return None
