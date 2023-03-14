@@ -14,8 +14,7 @@ def parse_json(data):
 datatest_bp = Blueprint(
     'datatest_bp', __name__,
     template_folder='templates',
-    static_folder='static',
-    url_prefix='/api/v1'
+    static_folder='static'
 )
 
 @datatest_bp.route('/database', methods=['GET', 'POST'])

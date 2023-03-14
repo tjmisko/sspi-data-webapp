@@ -1,5 +1,6 @@
 
-Project Structure:
+
+Project Structure Notes:
 - Everything looks different! What's going on?
 - Structural changes to sspi_flask_app:
     - I've renamed the main file from 'flask_app' to 'sspi_flask_app' just 
@@ -44,11 +45,11 @@ test your app locally.
     - We have a file called requirements.txt in the directory which contains
     a list of all the dependencies and their versions.  This tells anyone looking
     to deploy the app what they'll need to download from the internet to get
-    started.  
+    started.
     - Setup: 
         1) Run "pip install virtualenv" (you might need to use "pip3" instead of "pip")
         2) Pull the updated main branch from github with the requirements.txt file and the updated .gitignore
-        3) Create the virtual environment with "python3 -m  venv env"; this generates a folder called 'env'
+        3) Create the virtual environment with "python3 -m venv env"; this generates a folder called 'env'
         which contains 'bin', 'include', and 'lib' subdirectories that constitute a local 
         version of python and its packages in your directory.
         4) To tell python that we are working in a virtual environment, we need to activate it via the
@@ -64,65 +65,5 @@ test your app locally.
     - The gitignore ensures that these files are not tracked in git or on GitHub, so that
     libraries that are implemented differently on different operating systems will not run into 
     conflicts.
-    
 
-
-Action Items:
-1) Install MongoDB and MongoSH if you haven't already
-2) Watch (and follow along) this tutorial on getting started with MongoDB: https://www.youtube.com/watch?v=ofme2o29ngU&t=496s
-3) Read through this set of blog posts on structuring more complex Projects: https://hackersandslackers.com/flask-application-factory/
-
-We're starting to get into the juicy stuff now!
-
-This week's assignment will be focused on writing
-code to collect indicator data from online sources
-and storing that inside of our database.
-
-The database we will be using for the SSPI is called
-MongoDB---short for huMONGOus DataBase.  By the end
-of this project, if all goes according to plan, 
-we will have a humongous database of our own.
-
-Online data sources---web APIs---generally return in
-either JSON (JavaScript Object Notation) or in CSV
-(Comma Separated Values) formats.
-
-JSON looks like a python dictionary. Here's an example:
-
-{"country": "Argentina, "year": 2018, 
-"indicator": "Deforestation", "value": 15.13}
-
-JSON files can be in lists:
-
-[{"country": "Argentina, "year": 2018, 
-"indicator": "Deforestation", "value": 15.13},
-{"country": "Austria, "year": 2018, 
-"indicator": "Deforestation", "value": 27.14},
-{"country": "Australia, "year": 2018, 
-"indicator": "Deforestation", "value": 19.43}]
-
-They can also be nested:
-
-x = {"country": {"donor": "Germany", "recipient": "India"}, 
-"year": 2018, "indicator": "Foreign Aid", "value": 15.13}
-
-We can access and manipulate values from the JSON object x above
-like so:
-
->>> x["indicator"]
-"Foreign Aid"
-
->>> x["value"]
-15.13
-
->>> x["value"] = 19.31
->>> x["value"]
-19.31
-
->>> x["country"]
-{"donor": "Germany", "recipient": "India"}
-
->>> x["country"]["donor"]
-"Germany"
-
-
+Assignment

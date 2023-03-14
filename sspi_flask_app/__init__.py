@@ -28,11 +28,12 @@ def init_app(Config):
         # read in the appropriate modules
         from .home import routes
         from .auth import auth
-        from .api import datatest
+        from .api import datatest, api
         # Register database
         db.create_all()
         # Register Blueprints
         app.register_blueprint(datatest.datatest_bp)
         app.register_blueprint(routes.home_bp)
         app.register_blueprint(auth.auth_bp)
+        app.register_blueprint(api.api_bp)
         return app
