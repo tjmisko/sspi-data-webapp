@@ -1,6 +1,7 @@
+from datetime import datetime
 import json
 from flask import Blueprint, redirect, request, url_for
-from flask_login import login_required
+from flask_login import current_user, login_required
 from ..models.usermodel import User
 import requests
 from .. import sspi_main_data, sspidb
@@ -13,7 +14,8 @@ def parse_json(data):
 datatest_bp = Blueprint(
     'datatest_bp', __name__,
     template_folder='templates',
-    static_folder='static'
+    static_folder='static',
+    url_prefix='/api/v1'
 )
 
 @datatest_bp.route('/database', methods=['GET', 'POST'])
