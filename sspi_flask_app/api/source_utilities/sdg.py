@@ -1,7 +1,10 @@
+import json
+import requests
+
 def collectAvailableGeoAreas(indicator_code):
-    json_data = requests.get("https://unstats.un.org/sdgapi/v1/sdg/Indicator/" + indicator_code + "/GeoAreas")
+    json_data = requests.get("https://unstats.un.org/sdgapi/v1/sdg/Indicator/" + indicator_code + "/GeoAreas").json()
     m49_list = []
-    for observation in json_data:
+    for observation in json(json_data):
         m49_list.append(observation["geoAreaCode"])
     return m49_list
 
@@ -12,4 +15,4 @@ def collectSDGIndicatorData(indicator_code):
         slug = "&areaCode=" + country
         base_url = base_url + slug
     json_data = requests.get(base_url)
-    return len(json_data)
+    return json_data
