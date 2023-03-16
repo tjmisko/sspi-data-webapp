@@ -6,6 +6,9 @@ def collect():
     return str(type(data))
 
 """
+def validate():
+
+
 def 
 
 """
