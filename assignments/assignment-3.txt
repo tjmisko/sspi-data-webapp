@@ -1,4 +1,35 @@
+Assigment 3
+    Due Date: 22 March 2023 (Soft)
+    Collaboration: Essential
 
+Deliverables
+- Finish implementing the sspi_flask_app/api/source_utilities collection functions.  These functions are 
+the ones that directly access each of the sources.  
+
+Pair Programing
+- Programing is like swimming: never code alone!
+    - The risk of drowning in both is considerable, especially when we're first starting
+- Two brains together will get more done then two brains working separately in most cases
+- Find times to meetup this week to write and test your code
+
+WARNING: DO NOT SPEND MORE THAN 30 MINUTES TRYING TO DO ANY ONE THING!
+- Take breaks, and especially take walks without your device or music
+- Don't barrel headfirst into pits of despair: know when it's time to stop or ask for help
+
+Test Driven Development (TDD)
+- A test runs a piece of code to see if that code works
+    - We give the test a standard input
+    - We assert what we think the output ought to be if the code works correctly
+    - We run the test to see if the output of the code matches what we asserted it should be
+- A popular (and controversial) idea in software engineering communities: write tests BEFORE writing code!!!
+    - I'm not a TDD purist: often writing tests for basic things are annoying and unhelpful
+    - More important to know when you need to test: sometimes its really helpful
+    - As a project gets more complex, changing code in one file might break code in another file
+    - Testing all of our functions in our codebase can help us make sure that we're not breaking anything when
+    we make changes to something else
+- There is now a "test" folder setup in the directory!
+    - Look through the example tests I have written in there to see how these types of things work
+    - 
 
 Project Structure Notes:
 - Everything looks different! What's going on?
@@ -65,5 +96,3 @@ test your app locally.
     - The gitignore ensures that these files are not tracked in git or on GitHub, so that
     libraries that are implemented differently on different operating systems will not run into 
     conflicts.
-
-Assignment
