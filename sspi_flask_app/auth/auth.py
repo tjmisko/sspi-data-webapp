@@ -70,7 +70,6 @@ def logout():
     return redirect(url_for('home_bp.home'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-@login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
