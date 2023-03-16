@@ -7,8 +7,8 @@ from sspi_flask_app.api.source_utilities.sdg import collectAvailableGeoAreas
 def test_collect_geo_area():
     """
     GIVEN an SDG Indicator Code
-    WHEN our SSPI collection is called
-    THEN hits the API and returns a list strings 
+    WHEN our SSPI collection api is called
+    THEN hits the SDG API and returns a list of strings 
     representing the M49 codes of countries with data for the indicator
     """
     lst = collectAvailableGeoAreas("15.1.2")

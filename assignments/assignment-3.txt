@@ -11,9 +11,11 @@ the ones that directly access each of the sources.
     - ilo.py
     - iea.py
 - Each of the above files should contain a python function (or functions):
-    - Take in an argument/input that allows us to use the same collection function for 
+    - Take in an argument/input that allows us to use the same collection function for different indicators
+    from the same source
     - Send a request to the appropriate API link
-
+    - Process the data into a list of python dictionaries (JSON format)
+- Check out the sdg.py file to get a sense of how this might look
 - Most of our data come from a few key sources, so figuring out how to use each of these data
 APIs will get us a lot of bang for our coding buck.
     

@@ -2,6 +2,8 @@ from sspi_flask_app.api.source_utilities.sdg import collectSDGIndicatorData
 
 def test_collect_indicator_data():
     """
+    This set of tests is unfinished!
+    
     GIVEN an SDG Indicator Code
     WHEN our SSPI collection api is called
     THEN hits the SDG API and returns all of the available data for our 
