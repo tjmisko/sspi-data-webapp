@@ -4,8 +4,19 @@ Assigment 3
 
 Deliverables
 - Finish implementing the sspi_flask_app/api/source_utilities collection functions.  These functions are 
-the ones that directly access each of the sources.  
+the ones that directly access each of the sources.
+    - worldbank.py 
+    - oecdstat.py
+    - unfao.py
+    - ilo.py
+    - iea.py
+- Each of the above files should contain a python function (or functions):
+    - Take in an argument/input that allows us to use the same collection function for 
+    - Send a request to the appropriate API link
 
+- Most of our data come from a few key sources, so figuring out how to use each of these data
+APIs will get us a lot of bang for our coding buck.
+    
 Pair Programing
 - Programing is like swimming: never code alone!
     - The risk of drowning in both is considerable, especially when we're first starting
@@ -29,7 +40,8 @@ Test Driven Development (TDD)
     we make changes to something else
 - There is now a "test" folder setup in the directory!
     - Look through the example tests I have written in there to see how these types of things work
-    - 
+    - Try writing your own tests for the functions you've written
+    - Run the tests by typing "pytest" in your terminal
 
 Project Structure Notes:
 - Everything looks different! What's going on?
@@ -71,8 +83,7 @@ Project Structure Notes:
     user login are hidden away in the 'auth' module.  Each module comprises a .py file which creates the Blueprint and
     specifies the routes, a templates file which holds the html/jinja2 templates for setting up the views, and a
     static file which will hold the css and JavaScript we will use to make the html pretty.
-- Setup virtual environment and use the lastest gitignore files to build and
-test your app locally.
+- Setup virtual environment and use the lastest gitignore files to build and test your app locally.
     - We have a file called requirements.txt in the directory which contains
     a list of all the dependencies and their versions.  This tells anyone looking
     to deploy the app what they'll need to download from the internet to get
