@@ -1,0 +1,12 @@
+Flask==2.2.3
+Flask_Bcrypt==1.0.1
+Flask_Login==0.6.2
+Flask_PyMongo==2.3.0
+flask_sqlalchemy==3.0.3
+Flask_WTF==1.1.1
+pymongo==4.3.3
+pytest==7.2.2
+python-dotenv==1.0.0
+requests==2.28.2
+SQLAlchemy_serializer==1.4.1
+WTForms==3.0.1

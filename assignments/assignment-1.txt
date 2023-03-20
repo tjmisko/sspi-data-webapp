@@ -2,6 +2,9 @@ Hi there, you've found the text file!
 
 Add your name to the list when you've found the file:
 - Tristan Misko
+- Minh Nguyen
+- Daya Khunkhun
+- Justin Laskowski
 - Max Strongman
 
 After adding your name, you'll need to save your work.  But how?
@@ -17,6 +20,8 @@ into your command line.  For example, I typed
 Branching allows us to work in parallel and control how we merge in changes.  We won't always
 need to make new branches every time we use git, but we should always be working on separate
 branches so that we don't run into merge conflicts down the line.
+
+help minh pls
 
 3) "Stage" your changes by running
 	git add .
