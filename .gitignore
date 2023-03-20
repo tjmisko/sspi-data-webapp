@@ -16,3 +16,4 @@ flask_app/instance/database.db
 
 __pycache__/
 instance/
+*/__pycache__
