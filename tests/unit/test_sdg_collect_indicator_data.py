@@ -14,3 +14,4 @@ def test_collect_indicator_data():
     #assert type(json_data) == type([])
     # check that the return type of each element of the list is a dictionary
     #assert type(json_data[0]) == type({})
+    
