@@ -3,9 +3,7 @@ import json
 from flask import Blueprint, redirect, request, url_for
 from flask_login import current_user, login_required
 from ..models.usermodel import User
-import requests
 from .. import sspi_main_data, sspidb
-from json import JSONEncoder
 from bson import json_util
 
 def parse_json(data):
@@ -36,10 +34,14 @@ def compute():
     indicator = request.args.get('indicator')
     return indicator
 
+
 # returns the collector function specified in the appropriate file path
 def collector_lookup(indicator):
     print(indicator)
     if indicator == 'redlst':
         from .sspi.sustainability.ecosystem.redlist import collect as collector
+        return collector
+    elif indicator == 'biodiv':
+        from .sspi.sustainability.ecosystem.biodiversity import collect as collector
         return collector
     return None
