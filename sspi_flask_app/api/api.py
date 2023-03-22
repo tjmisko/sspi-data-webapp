@@ -21,6 +21,7 @@ api_bp = Blueprint(
 @api_bp.route("/collect")
 @login_required
 def collect():
+    print("hello")
     indicator = request.args.get('indicator')
     if not indicator:
         return "Please provide a valid argument to the 'indicator' query field"
