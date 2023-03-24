@@ -3,7 +3,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient, PyMongo
 from flask_bcrypt import Bcrypt
-from flask_assets import Environment, Bundle
+from flask_assets import Environment
 from .assets import compile_static_assets
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -26,8 +26,10 @@ def init_app(Config):
     flask_bcrypt.init_app(app)
     # Initialize Login manager
     login_manager.init_app(app)
-    assets = Environment()  # Create an assets environment
+    # Create an assets environment
+    assets = Environment()  
     assets.init_app(app)
+    
 
     with app.app_context():
         # read in the appropriate modules
@@ -42,6 +44,6 @@ def init_app(Config):
         app.register_blueprint(auth.auth_bp)
         app.register_blueprint(api.api_bp)
         # Register Style Bundle and build optimized css, js
-
         compile_static_assets(assets)
+        
         return app
