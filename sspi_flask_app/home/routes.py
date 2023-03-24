@@ -22,6 +22,5 @@ def contact():
     return render_template('contact.html')
 
 @home_bp.route('/data')
-@login_required
 def dashboard():
     return render_template('data.html')
