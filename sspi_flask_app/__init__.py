@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient, PyMongo
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment, Bundle
-
+from .assets import compile_static_assets
 db = SQLAlchemy()
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
@@ -26,7 +26,8 @@ def init_app(Config):
     flask_bcrypt.init_app(app)
     # Initialize Login manager
     login_manager.init_app(app)
-
+    assets = Environment()  # Create an assets environment
+    assets.init_app(app)
 
     with app.app_context():
         # read in the appropriate modules
@@ -41,21 +42,6 @@ def init_app(Config):
         app.register_blueprint(auth.auth_bp)
         app.register_blueprint(api.api_bp)
         # Register Style Bundle and build optimized css, js
-        assets.auto_build = True
-        assets.debug = False
-        home_style_bundle = Bundle(
-            'home_bp/src/scss/*.scss',
-            filters='pyscss,cssmin',
-            output='home_bp/dist/css/style.min.css',
-            extra={'rel':'stylesheet/css'}
-        )
-        home_js_bundle = Bundle(
-            'home_bp/src/js/*.js',
-            filters='jsmin',
-            output='home_bp/dist/js/main.min.js'
-        )
-        assets.register('home_styles', home_style_bundle)
-        home_style_bundle.build()
-        assets.register('home_js', home_js_bundle)
-        home_js_bundle.build()
+
+        compile_static_assets(assets)
         return app
