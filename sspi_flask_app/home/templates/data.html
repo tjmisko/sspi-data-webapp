@@ -7,6 +7,16 @@
         <a class="datanavlink" href="/"> Plot </a>
         <a class="datanavlink" href="/"> Table </a>
     </nav>
+    <div class="datacontent">
+        <div class="datacontentmap">
+            <img src="{{ url_for('home_bp.static', filename = 'map.png') }}"/>
+        </div>
+        <div class="datacontentplot">
+            <img src="{{ url_for('home_bp.static', filename = 'plot.png') }}"/>
+        </div>
+        <div class="datacontenttable">
+            <img src="{{ url_for('home_bp.static', filename = 'table.png') }}"/>
+        </div>
 </div>
 
 {% endblock %}
