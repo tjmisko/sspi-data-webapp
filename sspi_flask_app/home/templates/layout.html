@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <!-- This is the head of the document, where external resources are loaded and
-  and the metatdata is stored.  It is not rendered on the page. -->
   <head>
     <meta charset="utf-8">
     <title>Home</title>
@@ -10,7 +8,7 @@
       <link rel="stylesheet" type="text/css" href="{{ url_for('home_bp.static', filename = 'style.css') }} "/>
     {% endassets %}
   </head>
-  <!-- This is where we put the stuff that will be rendered on the page -->
+
   <body>
     {% include 'header.html' %}
     {% block content %}{% endblock %}
