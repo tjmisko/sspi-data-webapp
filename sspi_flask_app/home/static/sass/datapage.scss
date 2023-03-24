@@ -1,0 +1,20 @@
+.datawindow {
+    display: flex;
+    position: relative;
+    width: 95%;
+    margin: 2.5%;
+    align-items: center;
+    justify-content: center;
+    background-color: lightgrey;
+    border: 2px;
+    border-color: black;
+    border-radius: 5px;
+    box-shadow: -5px 5px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.datanav {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+}
