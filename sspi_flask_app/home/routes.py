@@ -24,3 +24,7 @@ def contact():
 @home_bp.route('/data')
 def dashboard():
     return render_template('data.html')
+
+@home_bp.route('/indicators')
+def indicators():
+    return render_template('indicators.html')
