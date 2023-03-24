@@ -8,6 +8,8 @@ home_bp = Blueprint(
     static_folder='static'
 )
 
+## Write a route that renders the home html page
+
 
 
 @home_bp.route('/')
