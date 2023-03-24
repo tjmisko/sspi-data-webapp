@@ -27,8 +27,7 @@ def init_app(Config):
     # Initialize Login manager
     login_manager.init_app(app)
     # Create an assets environment
-    assets = Environment()  
-    assets.init_app(app)
+    
     
 
     with app.app_context():
@@ -43,7 +42,8 @@ def init_app(Config):
         app.register_blueprint(routes.home_bp)
         app.register_blueprint(auth.auth_bp)
         app.register_blueprint(api.api_bp)
-        # Register Style Bundle and build optimized css, js
+        # Register Style Bundles and build optimized css, js
+        assets.init_app(app)
         compile_static_assets(assets)
         
         return app

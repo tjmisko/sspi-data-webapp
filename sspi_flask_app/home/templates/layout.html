@@ -5,8 +5,10 @@
   <head>
     <meta charset="utf-8">
     <title>Home</title>
-    <link ref="stylesheet" type="text/css" href="home_bp/static/dist/css">
-    <link ref="stylesheet" type="text/css" href="{{ url_for('home_bp.static', filename='pagecontent.css') }}">
+
+    {% assets "home_style_bundle" %}
+      <link rel="stylesheet" type="text/css" href="{{ url_for('home_bp.static', filename = 'style.css') }} "/>
+    {% endassets %}
   </head>
   <!-- This is where we put the stuff that will be rendered on the page -->
   <body>
