@@ -1,3 +1,6 @@
+// Import variables from variables.scss
+@import "variables";
+
 body {
     margin: 0;
 }
@@ -7,7 +10,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: rgba(15, 56, 82, 1);
+    background-color: $home-page-color;
 }
 
 .site-title {
