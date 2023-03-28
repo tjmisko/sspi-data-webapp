@@ -21,7 +21,7 @@ api_bp = Blueprint(
 @api_bp.route("/country/lookup")
 def countryLookup(countryData=''):
     """
-    This function takes a country data (a name or code) and returns pycountry country object
+    Take country data (a name or code) and return a string of a pycountry country object
     """
     if request.args:
         countryData = escape(request.args.get('countryData', default = '', type = str))
@@ -32,3 +32,20 @@ def countryLookup(countryData=''):
     except LookupError:
        return "country not found"
     return str(country)
+
+@api_bp.route("/save/<indicator:string>", methods=['POST'])
+def save_indicator(indicator):
+    """
+    take an indicator name and request argument option of overwrite to write data
+    to MongoDb database
+    """
+    overwrite = bool(request.args.get('overwrite', default = False, type = bool))
+    print("overwrite:", overwrite)
+    inMongo = bool(sspi_main_data.find_one({"indicator": indicator}))
+    print("inMongo:", inMongo)
+    collect = bool(request.args.get('collect', default = False, type = bool))
+    print("collect:", collect)
+    if not inMongo and collect:
+        print("collecting data")
+        # collect data
+      
