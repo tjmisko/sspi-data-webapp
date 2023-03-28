@@ -31,14 +31,4 @@ def countryLookup(countryData=''):
         print("Fuzzy lookup guessed that", countryData, "is", country.name)
     except LookupError:
        return "country not found"
-    if request:
-        return str(country)
-    return country
-
-@api_bp.route("/country/checklogic")
-def countryCheckLogic():
-    if request.args:
-        countryData = escape(request.args.get('countryData', default = '', type = str))
-    countryLookup(countryData)
-    print(countryData)
-    return str(countryData)
+    return str(country)
