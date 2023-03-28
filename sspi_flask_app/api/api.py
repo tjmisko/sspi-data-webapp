@@ -1,10 +1,12 @@
 from datetime import datetime
 import json
-from flask import Blueprint, redirect, request, url_for
+from flask import Blueprint, redirect, request, url_for, escape
 from flask_login import current_user, login_required
 from ..models.usermodel import User
 from .. import sspi_main_data, sspidb
 from bson import json_util
+from pycountry import countries
+
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -16,32 +18,27 @@ api_bp = Blueprint(
     url_prefix='/api/v1'
 )
 
-@api_bp.route("/collect")
-@login_required
-def collect():
-    print("hello")
-    indicator = request.args.get('indicator')
-    if not indicator:
-        return "Please provide a valid argument to the 'indicator' query field"
-    collector = collector_lookup(indicator)
-    if not collector_lookup(indicator):
-        return "Indicator was not found in SSPI database"
-    return collector()
+@api_bp.route("/country/lookup")
+def countryLookup(countryData=''):
+    """
+    This function takes a country data (a name or code) and returns pycountry country object
+    """
+    if request.args:
+        countryData = escape(request.args.get('countryData', default = '', type = str))
+    try:
+        print("countryData:", countryData)
+        country = countries.search_fuzzy(countryData)[0]
+        print("Fuzzy lookup guessed that", countryData, "is", country.name)
+    except LookupError:
+       return "country not found"
+    if request:
+        return str(country)
+    return country
 
-@api_bp.route("/compute")
-@login_required
-def compute():
-    indicator = request.args.get('indicator')
-    return indicator
-
-
-# returns the collector function specified in the appropriate file path
-def collector_lookup(indicator):
-    print(indicator)
-    if indicator == 'redlst':
-        from .sspi.sustainability.ecosystem.redlist import collect as collector
-        return collector
-    elif indicator == 'biodiv':
-        from .sspi.sustainability.ecosystem.biodiversity import collect as collector
-        return collector
-    return None
+@api_bp.route("/country/checklogic")
+def countryCheckLogic():
+    if request.args:
+        countryData = escape(request.args.get('countryData', default = '', type = str))
+    countryLookup(countryData)
+    print(countryData)
+    return str(countryData)
