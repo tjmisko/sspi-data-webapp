@@ -33,23 +33,23 @@ def countryLookup(countryData=''):
        return "country not found"
     return str(country)
 
-@api_bp.route("/save/<indicator:string>", methods=['POST'])
-def save_indicator(indicator, indicator_data={}):
-    """
-    take an indicator name and request argument options
-    - overwrite: bool, default False
-    - collect: bool, default False
-    """
-    overwrite = bool(request.args.get('overwrite', default = False, type = bool))
-    print("overwrite:", overwrite)
-    inMongo = bool(sspi_main_data.find_one({"indicator": indicator}))
-    print("inMongo:", inMongo)
-    collect = bool(request.args.get('collect', default = False, type = bool))
-    print("collect:", collect)
-    if not inMongo:
-        sspi_main_data.insert_many(indicator_data)
-    elif overwrite:
-        sspi_main_data.delete_many({"indicator": indicator})
-        sspi_main_data.insert_many(indicator_data)
+# @api_bp.route("/save/<indicator:string>", methods=['POST'])
+# def save_indicator(indicator, indicator_data={}):
+#     """
+#     take an indicator name and request argument options
+#     - overwrite: bool, default False
+#     - collect: bool, default False
+#     """
+#     overwrite = bool(request.args.get('overwrite', default = False, type = bool))
+#     print("overwrite:", overwrite)
+#     inMongo = bool(sspi_main_data.find_one({"indicator": indicator}))
+#     print("inMongo:", inMongo)
+#     collect = bool(request.args.get('collect', default = False, type = bool))
+#     print("collect:", collect)
+#     if not inMongo:
+#         sspi_main_data.insert_many(indicator_data)
+#     elif overwrite:
+#         sspi_main_data.delete_many({"indicator": indicator})
+#         sspi_main_data.insert_many(indicator_data)
 
       
