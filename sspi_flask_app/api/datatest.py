@@ -20,14 +20,9 @@ datatest_bp = Blueprint(
 @datatest_bp.route('/database', methods=['GET', 'POST'])
 def database():
     if request.method == 'POST':
-        indicator = request.form['indicator']
-        country = request.form['country']
-        value = request.form['value']
-        year = request.form['year'] 
-        sspi_main_data.insert_one({"indicator": indicator,
-                                   "value": value,
-                                   "country": country,
-                                   "year": year})
+        print("type of request.data", type(request.data))
+        print("type of parsed request.data", type(parse_json(request.data)))
+        sspi_main_data.insert_many(parse_json(request.data))
         return redirect(url_for('database'))
     else:
         sspi_data = sspi_main_data.find()
