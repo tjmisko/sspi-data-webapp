@@ -58,6 +58,6 @@ def query_indicator(IndicatorCode):
     """
     Take an indicator code and return the data
     """
-    indicator_data = sspi_main_data.find({"IndicatorGroup": IndicatorCode})
+    indicator_data = sspi_main_data.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
       
