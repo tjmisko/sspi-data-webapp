@@ -18,6 +18,7 @@ datatest_bp = Blueprint(
 )
 
 @datatest_bp.route('/database', methods=['GET', 'POST'])
+@login_required
 def database():
     if request.method == 'POST':
         data = json.loads(request.data)
@@ -30,7 +31,6 @@ def database():
         for doc in sspi_data:
             print(doc)
     return "database page"
-
 
 @datatest_bp.route('/collect-iea-data')
 @login_required
@@ -63,3 +63,4 @@ def get_metadata():
 def get_all_users():
     users = User.query.all()
     return str(users)
+
