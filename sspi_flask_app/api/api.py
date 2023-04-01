@@ -52,4 +52,12 @@ def countryLookup(countryData=''):
 #         sspi_main_data.delete_many({"indicator": indicator})
 #         sspi_main_data.insert_many(indicator_data)
 
+# route querying indicator data from mongodb
+@api_bp.route("/query/<IndicatorCode>")
+def query_indicator(IndicatorCode):
+    """
+    Take an indicator code and return the data
+    """
+    indicator_data = sspi_main_data.find({"IndicatorGroup": IndicatorCode})
+    return parse_json(indicator_data)
       
