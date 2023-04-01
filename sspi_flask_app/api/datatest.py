@@ -18,7 +18,7 @@ datatest_bp = Blueprint(
 )
 
 @datatest_bp.route('/database', methods=['GET', 'POST'])
-@login_required
+#login_required
 def database():
     if request.method == 'POST':
         data = json.loads(request.data)
