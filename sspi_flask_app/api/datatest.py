@@ -20,9 +20,10 @@ datatest_bp = Blueprint(
 @datatest_bp.route('/database', methods=['GET', 'POST'])
 def database():
     if request.method == 'POST':
-        print("type of request.data", type(request.data))
-        print("request.data", request.data[1:10])
-        #sspi_main_data.insert_many(parse_json(request.data))
+        data = json.loads(request.data)
+        print("type of request.data", type(data))
+        print("request.data", data[1:10])
+        sspi_main_data.insert_many(data)
         return redirect(url_for('datatest_bp.database'))
     else:
         sspi_data = sspi_main_data.find()
