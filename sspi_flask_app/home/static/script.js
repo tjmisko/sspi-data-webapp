@@ -1,4 +1,8 @@
-console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('myChart');const BarChart=new Chart(ctx,{});async function makeBarChart(IndicatorCode){await fetch('/api/v1/query/'+IndicatorCode).then((response)=>response.json()).then((indicator_data)=>console.log(indicator_data)).then((indicator_data)=>updateBarChart(indicator_data))}
-function updateBarChart(indicator_data){BarChart.data={labels:indicator_data.map((observation)=>(observation["Country"])),datasets:[{label:indicator_data[0]["IndicatorNameShort"],data:indicator_data.map((observation)=>(observation["SCORE"])),borderWidth:1}]}
-BarChart.options={scales:{yAxes:[{ticks:{beginAtZero:true}}]}}
+console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('BarChart');const BarChart=new Chart(ctx,{type:'bar',data:{},options:{},});async function makeBarChart(IndicatorCode,raw=false){let response=await fetch('/api/v1/query/'+IndicatorCode)
+let indicator_data=await response.json()
+let y_axis=raw?getRaw(indicator_data):getScores(indicator_data)
+BarChart.data={labels:getCountries(indicator_data),datasets:[{label:IndicatorCode,data:y_axis,backgroundColor:'rgb(255, 99, 132)',borderColor:'rgb(255, 99, 132)',borderWidth:1}]}
 BarChart.update();}
+function getCountries(indicator_data){return indicator_data.map(data=>data.Country)}
+function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
+function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
