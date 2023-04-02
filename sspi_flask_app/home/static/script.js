@@ -2,7 +2,7 @@ console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const c
 raw=false
 async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/'+IndicatorCode)
 let indicator_data=await response.json()
-indicator_data.sort((a,b)=>a.RAW-b.RAW)
+indicator_data.sort((a,b)=>b.RANK-a.RANK)
 let y_axis=raw?getRaw(indicator_data):getScores(indicator_data)
 BarChart.data={labels:getCountries(indicator_data),datasets:[{datacode:IndicatorCode,label:indicator_data[0].IndicatorNameShort,data:y_axis,backgroundColor:'rgb(255, 99, 132)',borderColor:'rgb(255, 99, 132)',borderWidth:1}]}
 BarChart.options={scaleShowValues:true,layout:{padding:20},scales:{xAxes:[{id:'x',type:'category',title:{display:true,text:'Country'},ticks:{autoskip:true,}}]}}
