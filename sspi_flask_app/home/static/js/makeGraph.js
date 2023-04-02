@@ -6,6 +6,7 @@ const BarChart = new Chart(ctx, {
     options: {}
 });
 // global raw value set by tickbox
+makeBarChart("BIODIV")
 raw=false
 
 async function makeBarChart(IndicatorCode){
