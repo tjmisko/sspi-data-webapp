@@ -1,5 +1,7 @@
-console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('BarChart');const BarChart=new Chart(ctx,{type:'bar',data:{},options:{},});async function makeBarChart(IndicatorCode,raw=false){let response=await fetch('/api/v1/query/'+IndicatorCode)
+console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('BarChart');const BarChart=new Chart(ctx,{type:'bar',data:{},options:{},});raw=false
+async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/'+IndicatorCode)
 let indicator_data=await response.json()
+indicator_data.sort((a,b)=>a.RAW-b.RAW)
 let y_axis=raw?getRaw(indicator_data):getScores(indicator_data)
 BarChart.data={labels:getCountries(indicator_data),datasets:[{label:IndicatorCode,data:y_axis,backgroundColor:'rgb(255, 99, 132)',borderColor:'rgb(255, 99, 132)',borderWidth:1}]}
 BarChart.update();}
