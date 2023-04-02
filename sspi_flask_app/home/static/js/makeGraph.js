@@ -3,7 +3,7 @@ const ctx = document.getElementById('BarChart');
 const BarChart = new Chart(ctx, {
     type: 'bar',
     data: {},
-    options: {},
+    options: {}
 });
 // global raw value set by tickbox
 raw=false
@@ -16,13 +16,24 @@ async function makeBarChart(IndicatorCode){
     BarChart.data = {
         labels: getCountries(indicator_data),
         datasets: [{
-            label: IndicatorCode,
+            label: indicator_data[0].IndicatorNameShort,
             data: y_axis,
             backgroundColor: 'rgb(255, 99, 132)',
             borderColor: 'rgb(255, 99, 132)',
             borderWidth: 1
         }]
     }
+    
+    BarChart.options = {
+        scaleShowValues: true,
+        scales: {
+          xAxes: [{
+            ticks: {
+              autoSkip: false
+            }
+          }]
+        }
+      },
     BarChart.update();
 }
 
