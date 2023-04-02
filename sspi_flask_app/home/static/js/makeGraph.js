@@ -26,6 +26,7 @@ async function makeBarChart(IndicatorCode){
     
     BarChart.options = {
         scaleShowValues: true,
+        layout: {padding : 20},
         scales: {
           xAxes: [{
             ticks: {
@@ -33,9 +34,15 @@ async function makeBarChart(IndicatorCode){
             }
           }]
         }
-      },
+    },
     BarChart.update();
 }
+
+function toggleRaw(IndicatorCode) {
+    raw = !raw
+    makeBarChart(IndicatorCode);
+}
+
 
 function getCountries(indicator_data) {
     return indicator_data.map(data => data.Country)
