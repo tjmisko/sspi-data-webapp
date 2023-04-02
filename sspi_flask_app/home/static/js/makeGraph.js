@@ -16,6 +16,7 @@ async function makeBarChart(IndicatorCode){
     BarChart.data = {
         labels: getCountries(indicator_data),
         datasets: [{
+            datacode: IndicatorCode,
             label: indicator_data[0].IndicatorNameShort,
             data: y_axis,
             backgroundColor: 'rgb(255, 99, 132)',
@@ -29,18 +30,30 @@ async function makeBarChart(IndicatorCode){
         layout: {padding : 20},
         scales: {
           xAxes: [{
+            id: 'x',
+            type: 'category',
+            title: {
+                display: true,
+                text: 'Country'
+            },
             ticks: {
-              autoSkip: false
+              autoskip: true,
             }
           }]
         }
-    },
+    }
     BarChart.update();
 }
 
-function toggleRaw(IndicatorCode) {
+function toggleRaw() {
     raw = !raw
-    makeBarChart(IndicatorCode);
+    try {
+        IndicatorCode = BarChart.data.datasets[0].datacode
+        makeBarChart(IndicatorCode);
+    } catch (TypeError) {
+        console.log("No Chart Loaded!\n", TypeError)
+        IndicatorCode = null;
+    }
 }
 
 
