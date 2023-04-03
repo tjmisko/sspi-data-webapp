@@ -35,7 +35,15 @@ def database():
             print(doc)
     return "database page"
 
-def store_api_data(response, collection_time, IndicatorCode):
+@datatest_bp.route('/collect/coalpower', methods=['GET', 'POST'])
+@login_required
+def collect_coal_power():
+    collection_time = datetime.now()
+    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?").json()
+    store_raw_api_data(response, collection_time, "COALPW")
+    return redirect(url_for('datatest_bp.query_coalpower'))
+
+def store_raw_api_data(response, collection_time, IndicatorCode):
     """
     Store the response from an API call in the database
     """
@@ -50,16 +58,6 @@ def store_api_data(response, collection_time, IndicatorCode):
     except Exception as e:
         print("Error storing API data:", e)
         return "Error storing API data"
-
-@datatest_bp.route('/collect/coalpower', methods=['GET', 'POST'])
-@login_required
-def collect_coal_power():
-    collection_time = datetime.now()
-    response = requests.get("https://api.iea.org/stats/indicator/TESbySource?").json()
-    store_api_data(response, collection_time, "COALPW")
-    return redirect(url_for('datatest_bp.query_coalpower'))
-
-
 
 @datatest_bp.route('/query/coalpower')
 @login_required
