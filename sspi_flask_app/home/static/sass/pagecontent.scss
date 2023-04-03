@@ -1,3 +1,6 @@
+@import 'variables';
+
 .page-content {
     padding: 20px 40px;
+    background-color: $home-page-background-color;
 }
