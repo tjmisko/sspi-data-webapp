@@ -22,7 +22,7 @@ def contact():
     return render_template('contact.html')
 
 @home_bp.route('/data')
-def dashboard():
+def data():
     return render_template('data.html')
 
 @home_bp.route('/indicators')

@@ -40,7 +40,7 @@ def collect_coal_power():
        sspi_raw_api_data.insert_one({"observation": r,
                                   "collection-info": {"collector": current_user.username,
                                                       "datetime": datetime.now()}})
-    return url_for('home_bp.data')
+    return redirect(url_for('home_bp.data'))
 
 @datatest_bp.route('/query/coalpower')
 @login_required
