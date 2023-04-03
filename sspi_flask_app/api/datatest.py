@@ -11,6 +11,9 @@ from bson import json_util
 def parse_json(data):
     return json.loads(json_util.dumps(data))
 
+def print_json(data):
+    print(json.dumps(data, indent=4, sort_keys=True))
+
 datatest_bp = Blueprint(
     'datatest_bp', __name__,
     template_folder='templates',
@@ -32,17 +35,31 @@ def database():
             print(doc)
     return "database page"
 
+def store_api_data(response, collection_time, IndicatorCode):
+    """
+    Store the response from an API call in the database
+    """
+    try:
+        for r in response:
+            sspi_raw_api_data.insert_one(
+                {"collection-info": {"CollectedBy": current_user.username,
+                                    "RawDataDestination": IndicatorCode,
+                                    "CollectedAt": collection_time}, 
+                "observation": r}) 
+        return response
+    except Exception as e:
+        print("Error storing API data:", e)
+        return "Error storing API data"
+
 @datatest_bp.route('/collect/coalpower', methods=['GET', 'POST'])
 @login_required
 def collect_coal_power():
     collection_time = datetime.now()
     response = requests.get("https://api.iea.org/stats/indicator/TESbySource?").json()
-    for r in response:
-        sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": current_user.username,
-                                        "RawDataDestination": "COALPW",
-                                        "CollectedAt": collection_time},
-                                        "observation": r})      
+    store_api_data(response, collection_time, "COALPW")
     return redirect(url_for('datatest_bp.query_coalpower'))
+
+
 
 @datatest_bp.route('/query/coalpower')
 @login_required
@@ -80,8 +97,11 @@ def compute_coalpower():
     for year in years_available:
         for country in countries_available:
             print("Computing coalpower for {} in year {}\n".format(country, year))
-            countryYearTotalAllSources = parse_json(sspi_raw_api_data.find({'observation.country': country, 'observation.year': year, 'collection-info.RawDataDestination': 'COALPW'}))
-            print(json.dumps(countryYearTotalAllSources, indent=4))
+            countryYearTotalAllSources = sspi_raw_api_data.aggregate([
+                {'$match': {'observation.country': country, 'observation.year': year, 'collection-info.RawDataDestination': 'COALPW'}},
+                {'$group': {'_id': '$country', 'total': {'$sum': '$observation.value'}}}
+            ]).json()
+            print("Total energy from all sources in {} in year {}: {}".format(country, year, countryYearTotalAllSources))
     return "Checkstring"
 
 @datatest_bp.route('/check-db')

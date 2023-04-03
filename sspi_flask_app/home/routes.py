@@ -28,3 +28,7 @@ def data():
 @home_bp.route('/indicators')
 def indicators():
     return render_template('indicators.html')
+
+@home_bp.route('/methodology')
+def methodology():
+    return render_template('methodology.html')

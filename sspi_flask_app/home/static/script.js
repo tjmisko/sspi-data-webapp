@@ -1,5 +1,4 @@
-console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('BarChart');const BarChart=new Chart(ctx,{type:'bar',data:{},options:{}});makeBarChart("BIODIV")
-raw=false
+console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('BarChart');const BarChart=new Chart(ctx,{type:'bar',data:{},options:{}});raw=false
 async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/indicator/'+IndicatorCode)
 let indicator_data=await response.json()
 indicator_data.sort((a,b)=>b.RANK-a.RANK)
