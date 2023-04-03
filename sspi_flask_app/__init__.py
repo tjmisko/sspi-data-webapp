@@ -5,13 +5,16 @@ from flask_pymongo import MongoClient, PyMongo
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
 from .assets import compile_static_assets
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
-sspi_main_data = sspidb.sspi_main_data
+sspi_main_data_v3 = sspidb.sspi_main_data_v3
+sspi_raw_api_data = sspidb.sspi_raw_api_data
+sspi_clean_api_data = sspidb.sspi_clean_api_data
 
 assets = Environment()
 
@@ -26,9 +29,6 @@ def init_app(Config):
     flask_bcrypt.init_app(app)
     # Initialize Login manager
     login_manager.init_app(app)
-    # Create an assets environment
-    
-    
 
     with app.app_context():
         # read in the appropriate modules

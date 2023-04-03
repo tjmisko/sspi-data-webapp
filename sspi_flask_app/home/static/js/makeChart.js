@@ -10,7 +10,7 @@ makeBarChart("BIODIV")
 raw=false
 
 async function makeBarChart(IndicatorCode){
-    let response = await fetch('/api/v1/query/' + IndicatorCode)
+    let response = await fetch('/api/v1/query/indicator/' + IndicatorCode)
     let indicator_data = await response.json()
     indicator_data.sort((a, b) => b.RANK - a.RANK)
     let y_axis = raw ? getRaw(indicator_data) : getScores(indicator_data)
