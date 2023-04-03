@@ -32,15 +32,17 @@ def database():
             print(doc)
     return "database page"
 
-@datatest_bp.route('/collect-iea-data', methods=['GET', 'POST'])
+@datatest_bp.route('/collect/coalpower', methods=['GET', 'POST'])
 @login_required
 def collect_coal_power():
+    collection_time = datetime.now()
     response = requests.get("https://api.iea.org/stats/indicator/TESbySource?").json()
     for r in response:
-       sspi_raw_api_data.insert_one({"observation": r,
-                                  "collection-info": {"collector": current_user.username,
-                                                      "datetime": datetime.now()}})
-    return redirect(url_for('home_bp.data'))
+        sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": current_user.username,
+                                        "RawDataDestination": "COALPW",
+                                        "CollectedAt": collection_time},
+                                        "observation": r})      
+    return redirect(url_for('datatest_bp.query_coalpower'))
 
 @datatest_bp.route('/query/coalpower')
 @login_required
@@ -59,7 +61,28 @@ def query_coalpower():
 @datatest_bp.route('/compute/coalpower')
 @login_required
 def compute_coalpower():
-    return None
+    """
+    Compute the percentage of energy from coal power sources by country and year
+    - First, check if there is data in the database
+    - Second, check which years are available
+    - Third, loop through the years and compute the percentage for each country
+    """
+    if not sspi_raw_api_data.find_one({'collection-info.RawDataDestination': 'COALPW'}):
+        return "No data for coalpower to compute"
+    observation_format = {
+        "IndicatorCode": "COALPW",
+        "IndicatorNameShort": "Coal Power",
+        "IndicatorNameLong": "Energy from Coal Sources",
+        "ObservationType": "IndicatorObservation"     
+    }
+    years_available = sspi_raw_api_data.distinct('observation.year', {'collection-info.RawDataDestination': 'COALPW'})
+    countries_available = sspi_raw_api_data.distinct('observation.country', {'collection-info.RawDataDestination': 'COALPW'})
+    for year in years_available:
+        for country in countries_available:
+            print("Computing coalpower for {} in year {}\n".format(country, year))
+            countryYearTotalAllSources = parse_json(sspi_raw_api_data.find({'observation.country': country, 'observation.year': year, 'collection-info.RawDataDestination': 'COALPW'}))
+            print(json.dumps(countryYearTotalAllSources, indent=4))
+    return "Checkstring"
 
 @datatest_bp.route('/check-db')
 @login_required
@@ -67,10 +90,10 @@ def check_db():
     x = sspi_main_data_v3.find()
     return parse_json(x)
 
-@datatest_bp.route('/delete-db')
+@datatest_bp.route('/delete/coalpower')
 @login_required
 def delete_db():
-    sspi_main_data_v3.delete_many({})
+    sspi_raw_api_data.delete_many({})
     return "Deleted all observations"
 
 @datatest_bp.route('/database-metadata')
