@@ -46,14 +46,20 @@ def collect_coal_power():
 @login_required
 def query_coalpower():
     mongoQuery = {}
-    countries = request.args.get('CountryCode', default = None, type = str)
-    years = request.args.get('TimePeriod', default = None, type = str)
-    if countries:
-        mongoQuery['country'] = countries
-    if years:
-        mongoQuery['year'] = years
+    countryCodesQuery = {'$in': request.args.getlist('countryCode')}
+    yearsQuery = {'$in': request.args.getlist('timePeriod')}
+    if countryCodesQuery['$in']:
+        mongoQuery['observation.country'] = countryCodesQuery
+    if yearsQuery['$in']:
+        mongoQuery['observation.year'] = yearsQuery
+    print('mongoQuery: ', mongoQuery)
     queryData = sspi_raw_api_data.find(mongoQuery)
     return parse_json(queryData)
+
+@datatest_bp.route('/compute/coalpower')
+@login_required
+def compute_coalpower():
+    return None
 
 @datatest_bp.route('/check-db')
 @login_required
@@ -76,4 +82,6 @@ def get_metadata():
 def get_all_users():
     users = User.query.all()
     return str(users)
+
+
 
