@@ -4,9 +4,9 @@
 <h2> Data Visualizations</h2>
 <div class="datawindow"> 
     <nav class="datanav">
-        <a class="datanavlink" href="/"> Map </a>
-        <a class="datanavlink" href="/"> Plot </a>
-        <a class="datanavlink" href="/"> Table </a>
+        <a class="datanavlink" href="/"> By Indicator </a>
+        <a class="datanavlink" href="/"> By Country </a>
+        <a class="datanavlink" href="/"> Country Comparison </a>
     </nav>
     <div class="dropdown">
         <label for="Indicator">Indicator:</label>
@@ -72,5 +72,11 @@
     </div>
     <canvas id="BarChart"></canvas>
 </div>
+<h2> Indicator Table </h2>
+<div class="datawindow">
+    <div id="example-table"></div>
+    <script> makeIndicatorTable()</script>
+</div>
+
 
 {% endblock %}
