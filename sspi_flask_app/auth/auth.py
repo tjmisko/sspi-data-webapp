@@ -60,7 +60,7 @@ def login():
         user = User.query.filter_by(username=login_form.username.data).first()
         if user and flask_bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
-            return redirect(url_for('home_bp.dashboard'))               
+            return redirect(url_for('home_bp.data'))               
     return render_template('login.html', form=login_form)
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
