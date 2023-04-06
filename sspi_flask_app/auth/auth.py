@@ -57,9 +57,12 @@ class LoginForm(FlaskForm):
 def login():
     login_form = LoginForm()
     if login_form.validate_on_submit():
+        print("form submitted!")
         user = User.query.filter_by(username=login_form.username.data).first()
+        print(user)
         if user and flask_bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user)
+            print("login successful!")
             return redirect(url_for('home_bp.data'))               
     return render_template('login.html', form=login_form)
 

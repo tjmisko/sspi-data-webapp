@@ -7,6 +7,7 @@ import requests
 from .. import sspi_main_data_v3, sspidb, sspi_clean_api_data, sspi_raw_api_data
 from json import JSONEncoder
 from bson import json_util
+from .source_utilities.worldbank import collectWorldBankdata
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -119,10 +120,14 @@ def get_metadata():
     return sspidb.list_collection_names()
 
 @datatest_bp.route('/check-user-db')
-@login_required
 def get_all_users():
     users = User.query.all()
     return str(users)
+
+@datatest_bp.route('/wb')
+@login_required
+def wb():
+    return collectWorldBankdata("EP.PMP.SGAS.CD")
 
 
 
