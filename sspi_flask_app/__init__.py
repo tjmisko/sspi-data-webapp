@@ -35,13 +35,18 @@ def init_app(Config):
         from .home import routes
         from .auth import auth
         from .api import datatest, api
+        from .api.sspi import collect
+        from .api.api import api_bp
+        from .api.sspi.collect import collect_bp
         # Register database
         db.create_all()
         # Register Blueprints
         app.register_blueprint(datatest.datatest_bp)
         app.register_blueprint(routes.home_bp)
         app.register_blueprint(auth.auth_bp)
+        api_bp.register_blueprint(collect_bp)
         app.register_blueprint(api.api_bp)
+        
         # Register Style Bundles and build optimized css, js
         assets.init_app(app)
         compile_static_assets(assets)

@@ -8,6 +8,7 @@ from .. import sspi_main_data_v3, sspidb, sspi_clean_api_data, sspi_raw_api_data
 from json import JSONEncoder
 from bson import json_util
 from .source_utilities.worldbank import collectWorldBankdata
+from flask import current_app as app
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -129,5 +130,8 @@ def get_all_users():
 def wb():
     return collectWorldBankdata("EP.PMP.SGAS.CD")
 
+@datatest_bp.route('/sitemap')
+def sitemap():
+    return str(app.url_map)
 
 
