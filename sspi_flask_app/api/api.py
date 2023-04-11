@@ -3,7 +3,7 @@ import json
 from flask import Blueprint, redirect, request, url_for, escape
 from flask_login import current_user, login_required
 from ..models.usermodel import User
-from .. import sspi_main_data_v3
+from .. import sspi_main_data_v3, sspi_raw_api_data
 from bson import json_util
 from pycountry import countries
 
@@ -61,7 +61,11 @@ def query_indicator(IndicatorCode):
     """
     Take an indicator code and return the data
     """
-    indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
+    raw = request.args.get('raw', default = False, type = bool)
+    if raw:
+        indicator_data = sspi_raw_api_data.find({"IndicatorCode": IndicatorCode})
+    else: 
+        indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
 
 @api_bp.route("/query/country/<CountryCode>")
