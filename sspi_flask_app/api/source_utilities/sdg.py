@@ -8,7 +8,7 @@ from datetime import datetime
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
     collection_time = datetime.now()
-    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + IndicatorCode
+    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
     """make API request"""
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
@@ -23,6 +23,6 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
                                     "CollectedAt": collection_time}, 
                 "observation": r}
             )
-        time.sleep(1)
+        time.sleep(0.5)
     return response
 
