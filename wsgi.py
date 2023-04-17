@@ -3,9 +3,8 @@ import sys
 import logging
 import socket
 
-logging.basicConfig(level=logging.DEBUG, filename='/var/www/sspi.world/logs/sspi.world.log', format='%(asctime)s %(message)s')
-print("hostname:", socket.gethostname())
 if socket.gethostname() == "sspi-web-server":
+    logging.basicConfig(level=logging.DEBUG, filename='/var/www/sspi.world/logs/sspi.world.log', format='%(asctime)s %(message)s')
     sys.path.insert(0, '/var/www/sspi.world')
     sys.path.insert(0, '/var/www/sspi.world/env/lib/python3.9/site-packages')
 

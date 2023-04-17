@@ -50,6 +50,6 @@ def init_app(Config):
         
         # Register Style Bundles and build optimized css, js
         assets.init_app(app)
-        compile_static_assets(assets)
-        
+        if Config.FLASK_ENV == "development":
+            compile_static_assets(assets)
         return app
