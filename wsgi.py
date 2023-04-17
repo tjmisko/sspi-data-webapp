@@ -12,7 +12,12 @@ from config import Config, DevConfig, ProdConfig
 
 print("Startup info:", str(dir(DevConfig)))
 print("SQLALCHEMY_DATABASE_URI", DevConfig.SQLALCHEMY_DATABASE_URI)
-app = init_app(DevConfig)
+
+if socket.gethostname() == "sspi-web-server":
+    app = init_app(ProdConfig)
+else:
+    app = init_app(DevConfig)
 
 if __name__ == "__main__":
+    print("Starting app on port 5000")
     app.run(host='0.0.0.0')
