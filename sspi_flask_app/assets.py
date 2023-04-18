@@ -4,7 +4,7 @@ from flask_assets import Bundle
 
 def compile_static_assets(assets):
     """Configure bundle building and minification of css and js"""
-    assets.auto_build = True
+    assets.auto_build = False
     assets.debug = False
     home_style_bundle = Bundle(
         'home_bp/sass/*.scss',
@@ -24,8 +24,5 @@ def compile_static_assets(assets):
     # # assets.config['PYSCSS_ASSETS_URL'] = assets.url
     # # assets.config['PYSCSS_ASSETS_ROOT'] = assets.directory
     assets.register('home_style_bundle', home_style_bundle)
-    home_style_bundle.build()
     assets.register('home_js_bundle', home_js_bundle)
-    home_js_bundle.build()
-
     return assets
