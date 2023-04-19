@@ -106,7 +106,7 @@ def download():
         mem.seek(0)
         return send_file(mem,
                          mimetype='text/csv',
-                         downflload_name='data.csv',
+                         download_name='data.csv',
                          as_attachment=True)
     elif format=='json':
         return data_to_download
