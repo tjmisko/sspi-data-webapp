@@ -31,8 +31,11 @@ def compute_biodiv():
     marine, freshwater, and terrestrial ecosystems
     """
     if indicator_data_available("BIODIV"):
-        raw_data = parse_json(sspi_raw_api_data.find({"RawDataDestination": "BIODIV"}))
+        raw_data = sspi_raw_api_data.find({"collection-info": {"RawDataDestination": "BIODIV"}})
+        raw_data_test = sspi_raw_api_data.find_one()
+        print(parse_json(raw_data_test))
         print(raw_data)
+        print(parse_json(raw_data))
         return "success"
     return "failure"
 
