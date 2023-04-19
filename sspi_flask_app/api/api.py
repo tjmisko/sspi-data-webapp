@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+from io import BytesIO
 from flask import Blueprint, redirect, request, url_for, escape, send_file
 from flask_login import current_user, login_required
 from ..models.usermodel import User
@@ -90,18 +91,22 @@ def download():
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
     if request.args.getlist('timePeriod'):
         MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
-    print(MongoQuery)
     if not request.args.get('dataset'):
         dataframe = sspi_main_data_v3
     elif request.args.get('dataset') == 'dynamic':
         dataframe = sspi_clean_api_data
-    
-    isCSV = request.args.get('format', default = False, type = str)
-    data_to_download = dataframe.find(MongoQuery)
-    print(data_to_download)
-    if isCSV:
-        df = pd.read_json(data_to_download)
-        return send_file(df.to_csv('data.csv'))
+    format = request.args.get('format', default = 'json', type = str)
+    data_to_download = parse_json(dataframe.find(MongoQuery))
+    if format == 'csv':
+        df = pd.DataFrame(data_to_download).to_csv()
+        mem = BytesIO()
+        mem.write(df.encode('utf-8'))
+        mem.seek(0)
+        return send_file(mem,
+                         mimetype='text/csv',
+                         download_name='data.csv',
+                         as_attachment=True)
+    elif format=='json':
+        return data_to_download
     else:
-        return print_json(data_to_download)
-    
+        return "Invalid format"
