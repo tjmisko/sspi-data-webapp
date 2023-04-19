@@ -1,11 +1,12 @@
 from datetime import datetime
 import json
-from flask import Blueprint, redirect, request, url_for, escape
+from flask import Blueprint, redirect, request, url_for, escape, send_file
 from flask_login import current_user, login_required
 from ..models.usermodel import User
-from .. import sspi_main_data_v3, sspi_raw_api_data
+from .. import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data
 from bson import json_util
 from pycountry import countries
+import pandas as pd
 
 
 def parse_json(data):
@@ -75,4 +76,32 @@ def query_country(CountryCode):
     """
     country_data = sspi_main_data_v3.find({"CountryCode": CountryCode})
     return parse_json(country_data)
-      
+
+@api_bp.route("/download")
+def download():
+    """
+    Download the data from the database
+    """
+    MongoQuery = {}
+    # implement filter parameters
+    if request.args.getlist('IndicatorCode'):
+        MongoQuery["IndicatorCode"] = {"$in": request.args.getlist('IndicatorCode')}
+    if request.args.getlist('CountryCode'):
+        MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
+    if request.args.getlist('timePeriod'):
+        MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
+    print(MongoQuery)
+    if not request.args.get('dataset'):
+        dataframe = sspi_main_data_v3
+    elif request.args.get('dataset') == 'dynamic':
+        dataframe = sspi_clean_api_data
+    
+    isCSV = request.args.get('format', default = False, type = str)
+    data_to_download = dataframe.find(MongoQuery)
+    print(data_to_download)
+    if isCSV:
+        df = pd.read_json(data_to_download)
+        return send_file(df.to_csv('data.csv'))
+    else:
+        return print_json(data_to_download)
+    

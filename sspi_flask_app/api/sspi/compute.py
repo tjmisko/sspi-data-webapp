@@ -25,6 +25,8 @@ def compute_biodiv():
     if not indicator_data_available("BIODIV"):
         return render_template("missingdata.html", IndicatorCode="BIODIV")
     # Should I do my aggregation operations in MongoDB or in Python?
+    # Python is easier to debug, but MongoDB is faster
     raw_data = sspi_raw_api_data.find({"RawDataDestination": "BIODIV"})
+    print(raw_data)
 
     
