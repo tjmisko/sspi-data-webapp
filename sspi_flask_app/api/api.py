@@ -67,7 +67,7 @@ def query_indicator(IndicatorCode):
     """
     raw = request.args.get('raw', default = False, type = bool)
     if raw:
-        indicator_data = sspi_raw_api_data.find({"IndicatorCode": IndicatorCode})
+        indicator_data = sspi_raw_api_data.find({"RawDataDestination": IndicatorCode})
     else: 
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
@@ -113,10 +113,10 @@ def download():
     else:
         return "Invalid format"
 
-@api_bp.route('coverage')
+@api_bp.route('/coverage')
 def coverage():
     endpoints = [str(r) for r in app.url_map.iter_rules()]
-    collect_implemented = [re.search(r'(?<=collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=collect/)(?!static)[\w]*', r)]
-    compute_implemented = [re.search(r'(?<=compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=compute/)(?!static)[\w]*', r)]
+    collect_implemented = [re.search(r'(?<=api/v1/collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=api/v1/collect/)(?!static)[\w]*', r)]
+    compute_implemented = [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r)]
     coverage_data = {"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data)
