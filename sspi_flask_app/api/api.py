@@ -117,9 +117,6 @@ def download():
 def coverage():
     endpoints = [str(r) for r in app.url_map.iter_rules()]
     collect_implemented = [re.search(r'(?<=collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=collect/)(?!static)[\w]*', r)]
-    print(collect_implemented)
     compute_implemented = [re.search(r'(?<=compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=compute/)(?!static)[\w]*', r)]
-    print(compute_implemented)
     coverage_data = {"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
-    print(coverage_data)
-    return str(endpoints)
+    return parse_json(coverage_data)
