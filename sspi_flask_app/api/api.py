@@ -67,7 +67,7 @@ def query_indicator(IndicatorCode):
     """
     raw = request.args.get('raw', default = False, type = bool)
     if raw:
-        indicator_data = sspi_raw_api_data.find({"RawDataDestination": IndicatorCode})
+        indicator_data = sspi_raw_api_data.find({"collection-info": {"RawDataDestination": IndicatorCode}})
     else: 
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
