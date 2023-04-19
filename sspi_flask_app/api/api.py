@@ -1,13 +1,15 @@
 from datetime import datetime
 import json
 from io import BytesIO
-from flask import Blueprint, redirect, request, url_for, escape, send_file
+from flask import Blueprint, redirect, request, url_for, escape, send_file, current_app as app
 from flask_login import current_user, login_required
 from ..models.usermodel import User
 from .. import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data
 from bson import json_util
 from pycountry import countries
 import pandas as pd
+import re
+
 
 
 def parse_json(data):
@@ -89,7 +91,7 @@ def download():
         MongoQuery["IndicatorCode"] = {"$in": request.args.getlist('IndicatorCode')}
     if request.args.getlist('CountryCode'):
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
-    if request.args.getlist('timePeriod'):
+    if request.args.getlist('YEAR'):
         MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
     if not request.args.get('dataset'):
         dataframe = sspi_main_data_v3
@@ -104,9 +106,20 @@ def download():
         mem.seek(0)
         return send_file(mem,
                          mimetype='text/csv',
-                         download_name='data.csv',
+                         downflload_name='data.csv',
                          as_attachment=True)
     elif format=='json':
         return data_to_download
     else:
         return "Invalid format"
+
+@api_bp.route('coverage')
+def coverage():
+    endpoints = [str(r) for r in app.url_map.iter_rules()]
+    collect_implemented = [re.search(r'(?<=collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=collect/)(?!static)[\w]*', r)]
+    print(collect_implemented)
+    compute_implemented = [re.search(r'(?<=compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=compute/)(?!static)[\w]*', r)]
+    print(compute_implemented)
+    coverage_data = {"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
+    print(coverage_data)
+    return str(endpoints)
