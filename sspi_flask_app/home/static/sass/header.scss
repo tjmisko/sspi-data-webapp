@@ -6,7 +6,6 @@ body {
 }
 
 .site-header {
-    font-size: 0.9em;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -15,6 +14,9 @@ body {
 
 .site-title {
     margin: 5px 10px;
+    display: flex;
+    flex-direction: row;
+    font-size: 1.618em;
     a {
         color: white;
         text-decoration: none;
@@ -34,6 +36,28 @@ body {
 }
 
 .header-nav-bar-link {
+    font-size: 1em;
     color: white;
     text-decoration: none;
+}
+
+.title-subdiv {
+    flex-grow: 1;
+}
+.title-collapse {
+    margin-right: 5px;
+}
+
+@media screen and (max-width: 600px) {
+    .header-nav-bar-link {
+        color: red;
+    }
+    .header-nav-bar-link-list {
+        display: none;
+    }
+    .title-collapse {
+        opacity: 0;
+        transition: all 0.5s ease-in-out;
+        
+    }
 }
