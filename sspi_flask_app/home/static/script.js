@@ -1,4 +1,4 @@
-console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const ctx=document.getElementById('BarChart');const BarChart=new Chart(ctx,{type:'bar',data:{},options:{}});makeBarChart('BIODIV')
+console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const BarChartCanvas=document.getElementById('BarChart');const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}});makeBarChart('BIODIV')
 raw=false
 async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/indicator/'+IndicatorCode)
 let indicator_data=await response.json()
