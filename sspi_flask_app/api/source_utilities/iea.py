@@ -4,7 +4,6 @@ from ... import sspi_raw_api_data
 from flask_login import current_user
 from flask import redirect, url_for
 
-
 def collectIEAData(IndicatorCode, RawDataDestination):
     collection_time = datetime.now()
     response = requests.get("https://api.iea.org/stats/indicator/" + IndicatorCode + "/").json()
