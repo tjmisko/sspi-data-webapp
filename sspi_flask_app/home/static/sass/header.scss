@@ -66,9 +66,8 @@ body {
     }
     .title-collapse {
         opacity: 0;
-        transition: opacity 0.25s ease-in-out;
-        width:1px;
-        transition: width 0.25s ease 0.25s;
-        margin-right:0;
+        flex-grow: 0.01;
+        margin-right: 0;
+        transition: all 0.25s ease-in-out;
     }
 }
