@@ -12,16 +12,23 @@ body {
     background-color: $home-page-color;
 }
 
+.titlebox{
+    color:white;
+    text-decoration:none;
+}
 .site-title {
     margin: 5px 10px;
     display: flex;
     flex-direction: row;
     font-size: 1.618em;
-    a {
+    a, .titlebox {
         color: white;
         text-decoration: none;
     }
-    
+}
+
+.titlebox {
+    color: white;
 }
 
 .header-nav-bar {
@@ -57,7 +64,9 @@ body {
     }
     .title-collapse {
         opacity: 0;
-        transition: all 0.5s ease-in-out;
-        
+        transition: opacity 0.25s ease-in-out;
+        width:1px;
+        transition: width 0.25s ease 0.25s;
+        margin-right:0;
     }
 }
