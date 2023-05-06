@@ -13,8 +13,10 @@ body {
 }
 
 .titlebox{
+    display: flex;
+    flex-direction: horizontal;
     color:white;
-    text-decoration:none;
+    text-decoration: none;
 }
 .site-title {
     margin: 5px 10px;
