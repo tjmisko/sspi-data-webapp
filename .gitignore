@@ -22,3 +22,5 @@ instance
 
 *.webassets-cache
 */webassets-cache
+*.wsgi
+wsgi.py
