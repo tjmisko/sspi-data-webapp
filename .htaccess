@@ -1,0 +1,7 @@
+Options -Indexes
+
+AuthType Basic
+AuthName "Development in Process"
+AuthUserFile /etc/apache2/.htpasswd
+
+Require valid-user
