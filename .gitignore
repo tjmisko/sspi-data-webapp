@@ -24,3 +24,6 @@ instance
 */webassets-cache
 *.wsgi
 wsgi.py
+
+.htaccess
+*.log
