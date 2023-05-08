@@ -25,4 +25,6 @@ def compile_static_assets(assets):
     # # assets.config['PYSCSS_ASSETS_ROOT'] = assets.directory
     assets.register('home_style_bundle', home_style_bundle)
     assets.register('home_js_bundle', home_js_bundle)
+    home_js_bundle.build()
+    home_style_bundle.build()
     return assets

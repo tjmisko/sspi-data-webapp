@@ -1,5 +1,10 @@
 from flask import Blueprint, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
+import json
+from bson import json_util
+
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -10,7 +15,10 @@ def indicator_data_available(IndicatorCode):
     """
     Check if indicator is in database
     """
-    return bool(sspi_raw_api_data.find_one({"RawDataDestination": IndicatorCode}))
+    if not bool(sspi_raw_api_data.find_one({"RawDataDestination": IndicatorCode})):
+        return render_template("missingdata.html", IndicatorCode=IndicatorCode)
+    else:
+        return True
 
 @compute_bp.route("/BIODIV", methods=['GET'])
 def compute_biodiv():
@@ -22,9 +30,13 @@ def compute_biodiv():
     - Indicator computation: average of the three scores for percentage of biodiversity in
     marine, freshwater, and terrestrial ecosystems
     """
-    if not indicator_data_available("BIODIV"):
-        return render_template("missingdata.html", IndicatorCode="BIODIV")
-    # Should I do my aggregation operations in MongoDB or in Python?
-    raw_data = sspi_raw_api_data.find({"RawDataDestination": "BIODIV"})
+    if indicator_data_available("BIODIV"):
+        raw_data = sspi_raw_api_data.find({"collection-info": {"RawDataDestination": "BIODIV"}})
+        raw_data_test = sspi_raw_api_data.find_one()
+        print(parse_json(raw_data_test))
+        print(raw_data)
+        print(parse_json(raw_data))
+        return "success"
+    return "failure"
 
     

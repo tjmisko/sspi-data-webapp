@@ -1,10 +1,36 @@
 console.log("makeGraph.js loaded with chart.js version: " + Chart.version);
-const ctx = document.getElementById('BarChart');
-const BarChart = new Chart(ctx, {
+const BarChartCanvas = document.getElementById('BarChart');
+const BarChart = new Chart(BarChartCanvas, {
     type: 'bar',
     data: {},
     options: {}
 });
+
+// const CoverageChartCanvas = document.getElementById('CoverageChart');
+// const CoverageChart = new Chart(CoverageChartCanvas, {
+//     type: 'bar',
+//     data: data,
+//     options: {
+//       indexAxis: 'y',
+//       // Elements options apply to all of the options unless overridden in a dataset
+//       // In this case, we are setting the border of each horizontal bar to be 2px wide
+//       elements: {
+//         bar: {
+//           borderWidth: 2,
+//         }
+//       },
+//       responsive: true,
+//       plugins: {
+//         legend: {
+//           position: 'right',
+//         },
+//         title: {
+//           display: true,
+//           text: 'Chart.js Horizontal Bar Chart'
+//         }
+//       }
+//     },
+// });
 // global raw value set by tickbox
 makeBarChart('BIODIV')
 raw=false
@@ -45,6 +71,7 @@ async function makeBarChart(IndicatorCode){
     }
     BarChart.update();
 }
+
 
 function toggleRaw() {
     raw = !raw

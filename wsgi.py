@@ -1,4 +1,4 @@
-from .sspi_flask_app import init_app
+from sspi_flask_app import init_app
 import sys
 import logging
 import socket
