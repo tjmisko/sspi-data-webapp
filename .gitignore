@@ -28,3 +28,4 @@ wsgi.py
 .htaccess
 *.log
 log/*
+.sass-cache/*
