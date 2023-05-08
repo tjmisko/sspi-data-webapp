@@ -27,3 +27,4 @@ wsgi.py
 
 .htaccess
 *.log
+log/*
