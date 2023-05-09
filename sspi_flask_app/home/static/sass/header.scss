@@ -7,7 +7,7 @@ body {
 
 .site-header {
     display: flex;
-    padding: 10px 50px;
+    padding: 10px 50px 5px;
     flex-direction: column;
     align-items: center;
     background-color: $home-page-color;
@@ -27,10 +27,11 @@ body {
     position: relative;
     width: 100%;
 }
+
 .header-nav-bar-link-list {
     list-style: none;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     padding: 0;
 }
 
