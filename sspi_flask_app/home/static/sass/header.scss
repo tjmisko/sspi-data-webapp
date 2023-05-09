@@ -7,20 +7,20 @@ body {
 
 .site-header {
     display: flex;
+    padding: 10px 50px;
     flex-direction: column;
     align-items: center;
     background-color: $home-page-color;
 }
 
 .titlebox{
-    width: 90%;
     display: flex;
+    width: 100%;
     font-size: 1.618em;
     flex-direction: row;
     color:white;
     text-decoration: none;
     align-items: flex-start;
-    margin: 10px 5%;
 }
 
 .header-nav-bar {
@@ -30,7 +30,7 @@ body {
 .header-nav-bar-link-list {
     list-style: none;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     padding: 0;
 }
 
@@ -56,15 +56,21 @@ body {
 }
 
 @media screen and (max-width: 600px) {
+    .site-header {
+        flex-direction: row;
+    }
     .header-nav-bar-link {
-        color: red;
+        margin: 5px;
     }
     .header-nav-bar-link-list {
-        display: none;
+        display: block;
     }
     .title-subdiv {
         flex: 0 1 min-content;
         transition: all 0.25s linear;
+    }
+    .titlebox {
+        width: 70%;
     }
     .title-collapse {
         opacity: 0.1;
