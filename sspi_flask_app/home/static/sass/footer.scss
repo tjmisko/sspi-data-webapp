@@ -25,4 +25,21 @@ $data-page-background-color: rgba(184, 188, 190, 1);
 
 .footer-col-list {
     list-style: none;
+    margin: 0;
+    padding-left: 15px;
+}
+
+.footer-link:hover {
+    color: rgb(255, 102, 0);
+}
+
+#admin-login {
+    margin: 5px 0px;
+    text-decoration: none;
+    color: white;
+}
+
+#admin-login:hover {
+    transform: scale(1.01);
+    transition: 0.1s ease;
 }
