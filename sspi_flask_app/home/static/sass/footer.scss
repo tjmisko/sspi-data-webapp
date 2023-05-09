@@ -4,8 +4,25 @@ $data-page-background-color: rgba(184, 188, 190, 1);
 
 .site-footer {
     background-color: $home-page-color;
+    color: white;
+    padding: 10px 50px;
+}
+
+.footer-col-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 #footer-title {
-    font-size: 1.3em;
+    font-size: 1.4em;
+}
+
+.footer-col-title {
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.footer-col-list {
+    list-style: none;
 }
