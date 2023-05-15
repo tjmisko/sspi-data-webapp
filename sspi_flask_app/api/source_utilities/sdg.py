@@ -9,7 +9,6 @@ from datetime import datetime
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
     collection_time = datetime.now()
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
-    """make API request"""
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
     for p in range(1, nPages + 1):

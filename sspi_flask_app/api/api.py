@@ -120,3 +120,17 @@ def coverage():
     compute_implemented = [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r)]
     coverage_data = {"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data)
+
+def store_raw_api_data(observation, collection_time, RawDataDestination):
+    """
+    Store the response from an API call in the database
+    - Observation to be passed as a well-formed dictionary for entry into pymongo
+    """
+    if sspi_raw_api_data.find({"observation": observation}):
+        print("Observation already in database")
+    else:
+        sspi_raw_api_data.insert_one(
+        {"collection-info": {"CollectedBy": current_user.username,
+                            "RawDataDestination": RawDataDestination,
+                            "CollectedAt": collection_time}, 
+        "observation": observation})
