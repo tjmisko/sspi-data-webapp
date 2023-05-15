@@ -29,3 +29,6 @@ wsgi.py
 *.log
 log/*
 .sass-cache/*
+.pytest_cache/*
+.sass-cache
+.pytest_cache
