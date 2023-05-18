@@ -60,6 +60,7 @@ def login():
         return render_template('login.html', form=login_form, error="Invalid Submission Format")
     user = User.query.filter_by(username=login_form.username.data).first()
     if user is None or not flask_bcrypt.check_password_hash(user.password, login_form.password.data):
+        flash("Invalid username or password")
         return render_template('login.html', form=login_form, error="Invalid username or password")
     login_user(user)
     flash("Login Successful! Redirecting...")
@@ -72,6 +73,7 @@ def logout():
     logout_user()
     return redirect(url_for('home_bp.home'))
 
+@login_required
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     register_form = RegisterForm()
