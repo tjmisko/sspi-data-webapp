@@ -127,5 +127,5 @@ def post_static_data():
 @fresh_login_required
 @api_bp.route("/delete/<IndicatorCode>", methods=["DELETE"])
 def delete_indicator(IndicatorCode):
-    sspi_raw_api_data.delete_many({"RawDataDestination": IndicatorCode})
+    sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode})
     return redirect(url_for('home_bp.home'))
