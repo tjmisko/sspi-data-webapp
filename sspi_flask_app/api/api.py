@@ -47,7 +47,7 @@ def query_indicator(IndicatorCode):
     """
     raw = request.args.get('raw', default = False, type = bool)
     if raw:
-        indicator_data = sspi_raw_api_data.find({"collection-info": {"RawDataDestination": IndicatorCode}})
+        indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
     else: 
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
@@ -125,7 +125,7 @@ def post_static_data():
     return redirect(url_for('datatest_bp.database'))
 
 @fresh_login_required
-@api_bp.route("/delete/<IndicatorCode>", methods=["POST"])
+@api_bp.route("/delete/<IndicatorCode>", methods=["DELETE"])
 def delete_indicator(IndicatorCode):
     sspi_raw_api_data.delete_many({"RawDataDestination": IndicatorCode})
     return redirect(url_for('home_bp.home'))
