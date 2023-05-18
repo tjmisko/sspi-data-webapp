@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Page Title</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        .message {
+            padding: 10px;
+            margin: 5px;
+            background-color: #f3f3f3
+        }
+    </style>
+</head>
+<body>
+    {% if messages %}
+    {% for message in get_flashed_messages() %}
+        <div class="message">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    <h1> Delete Indicator Data </h1>
+    <form method="DELETE">
+        {{ form.hidden_tag() }}
+        {{ form.database.label }}{{ form.database }} <br>
+        {{ form.indicator_code.label }}{{ form.indicator_code }} <br>
+        Deletion of data from the database is permanent and cannot be undone.  Do you wish to proceed? <br>
+        {{ form.submit }}
+    </form>
+    
+</body>
+</html>
