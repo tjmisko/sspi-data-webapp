@@ -15,6 +15,7 @@ class Config:
     SASS_BIN = "/env/usr/bin/pyscss"
     ASSETS_DEBUG = False
     ASSETS_AUTO_BUILD = True
+    REMEMBER_COOKIE_DURATION=60*60*24*30
 
 class ProdConfig(Config):
     FLASK_ENV = 'production'

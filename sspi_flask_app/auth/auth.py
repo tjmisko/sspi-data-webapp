@@ -8,11 +8,11 @@ from flask import Flask, render_template, request, url_for, redirect, Blueprint,
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
 # but it's a nice automation so we don't have to think too much about it)
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import UserMixin, fresh_login_required, login_user, LoginManager, login_required, logout_user, current_user
 # load in the packages that make the forms pretty for submitting login and
 # and restration data
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from dataclasses import dataclass
@@ -24,6 +24,7 @@ auth_bp = Blueprint(
 )
 
 login_manager.login_view = "auth_bp.login"
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -50,6 +51,7 @@ class LoginForm(FlaskForm):
         min=4, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(
         min=4, max=20)], render_kw={"placeholder": "Password"})
+    remember_me = BooleanField("Remember me for 30 days", default=False)
     submit = SubmitField("Login as Administrator")
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -62,6 +64,8 @@ def login():
     if user is None or not flask_bcrypt.check_password_hash(user.password, login_form.password.data):
         flash("Invalid username or password")
         return render_template('login.html', form=login_form, error="Invalid username or password")
+    if login_form.remember_me:
+        login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
     return redirect(url_for('home_bp.data'))               
@@ -73,7 +77,7 @@ def logout():
     logout_user()
     return redirect(url_for('home_bp.home'))
 
-@login_required
+@fresh_login_required
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     register_form = RegisterForm()
