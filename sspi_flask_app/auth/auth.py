@@ -51,7 +51,7 @@ class LoginForm(FlaskForm):
         min=4, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(
         min=4, max=20)], render_kw={"placeholder": "Password"})
-    remember_me = BooleanField("Remember me for 30 days", default=False)
+    remember_me = BooleanField(default=False, label="Remember me for 30 days")
     submit = SubmitField("Login as Administrator")
 
 @auth_bp.route('/login', methods=['GET', 'POST'])

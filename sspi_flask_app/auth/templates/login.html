@@ -2,17 +2,19 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('auth_bp.static', filename = 'style.css') }} "/>
     <title>Login</title>
   </head>
   <body>
     <h1>Administrator Login</h1>
-    {% if error %}
-      <p class="error"><strong>Error:</strong> {{ error }}</p>
+    {% if form.error %}
+      <p class="error"><strong>Error:</strong> {{ form.error }}</p>
     {% endif %}
     <form action="" method="POST">
       {{ form.hidden_tag() }}
       {{ form.username }}
       {{ form.password }}
+      Remember me? {{ form.remember_me }}
       {{ form.submit }}
     </form>
   </body>
