@@ -121,10 +121,12 @@ def coverage():
     coverage_data = {"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data)
 
-def store_raw_api_data(observation, collection_time, RawDataDestination):
+@login_required
+def store_raw_observation(observation, collection_time, RawDataDestination):
     """
     Store the response from an API call in the database
     - Observation to be passed as a well-formed dictionary for entry into pymongo
+    - RawDataDestination is the indicator code for the indicator that the observation is for
     """
     if sspi_raw_api_data.find({"observation": observation}):
         print("Observation already in database")

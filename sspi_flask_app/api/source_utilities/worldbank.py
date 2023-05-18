@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 from ... import sspi_raw_api_data
 
-def store_raw_api_data(response, IndicatorCode):
+def store_raw_observation(response, IndicatorCode):
     """
     Store the response from an API call in the database
     """
@@ -32,7 +32,7 @@ def collectWorldBankdata(indicator_code):
     for p in range(2,npage+1):
         new_url=url_source+ "&page=" + str(p)
         response=requests.get(new_url).json()
-        store_raw_api_data(response, "GTRANS")
+        store_raw_observation(response, "GTRANS")
         time.sleep(1)
         print(new_url)
     return "Complete"

@@ -1,10 +1,9 @@
-from flask import Blueprint
 from flask import current_app as app
 from ..models.usermodel import User, db
 from .. import login_manager, flask_bcrypt
 from sqlalchemy_serializer import SerializerMixin
 # load in the Flask class from the flask library
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, Blueprint, flash
 # load in the SQLAlchemy object to handle setting up the user data database
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
@@ -51,20 +50,21 @@ class LoginForm(FlaskForm):
         min=4, max=20)], render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(
         min=4, max=20)], render_kw={"placeholder": "Password"})
-    submit = SubmitField("Login")
+    submit = SubmitField("Login as Administrator")
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     login_form = LoginForm()
-    if login_form.validate_on_submit():
-        print("form submitted!")
-        user = User.query.filter_by(username=login_form.username.data).first()
-        print(user)
-        if user and flask_bcrypt.check_password_hash(user.password, login_form.password.data):
-            login_user(user)
-            print("login successful!")
-            return redirect(url_for('home_bp.data'))               
-    return render_template('login.html', form=login_form)
+    if not login_form.validate_on_submit():
+        flash("Invalid Submission Format")
+        return render_template('login.html', form=login_form, error="Invalid Submission Format")
+    user = User.query.filter_by(username=login_form.username.data).first()
+    if user is None or not flask_bcrypt.check_password_hash(user.password, login_form.password.data):
+        return render_template('login.html', form=login_form, error="Invalid username or password")
+    login_user(user)
+    flash("Login Successful! Redirecting...")
+    return redirect(url_for('home_bp.data'))               
+    
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -81,5 +81,4 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
-
     return render_template('register.html', form=register_form)

@@ -42,10 +42,10 @@ def database():
 def collect_coal_power():
     collection_time = datetime.now()
     response = requests.get("https://api.iea.org/stats/indicator/TESbySource?").json()
-    store_raw_api_data(response, collection_time, "COALPW")
+    store_raw_observation(response, collection_time, "COALPW")
     return redirect(url_for('datatest_bp.query_coalpower'))
 
-def store_raw_api_data(response, collection_time, IndicatorCode):
+def store_raw_observation(response, collection_time, IndicatorCode):
     """
     Store the response from an API call in the database
     """
