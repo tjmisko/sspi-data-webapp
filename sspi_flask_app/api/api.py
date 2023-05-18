@@ -127,15 +127,13 @@ def post_static_data():
     sspi_main_data_v3.insert_many(data)
     return redirect(url_for('datatest_bp.database'))
 
-
-
 class DeleteForm(FlaskForm):
     database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Delete')
 
-@fresh_login_required
 @api_bp.route("/delete", methods=["GET", "POST"])
+@login_required
 def delete_indicator():
     delete_form = DeleteForm(request.form)
     print(request.method, delete_form.validate_on_submit())

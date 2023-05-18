@@ -8,7 +8,7 @@ from flask import Flask, render_template, request, url_for, redirect, Blueprint,
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
 # but it's a nice automation so we don't have to think too much about it)
-from flask_login import UserMixin, fresh_login_required, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 # load in the packages that make the forms pretty for submitting login and
 # and restration data
 from flask_wtf import FlaskForm
@@ -56,6 +56,9 @@ class LoginForm(FlaskForm):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    print(current_user)
+    if current_user.is_authenticated:
+        return redirect(url_for('home_bp.data'))
     login_form = LoginForm()
     if not login_form.validate_on_submit():
         flash("Invalid Submission Format")
@@ -77,8 +80,9 @@ def logout():
     logout_user()
     return redirect(url_for('home_bp.home'))
 
-@fresh_login_required
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
