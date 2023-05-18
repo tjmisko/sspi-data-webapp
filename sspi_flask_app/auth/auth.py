@@ -48,9 +48,9 @@ class RegisterForm(FlaskForm):
 # create a registration form for new users
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Username"})
+        min=4, max=20)], render_kw={"placeholder": "Username"}, label="Username")
     password = PasswordField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Password"})
+        min=4, max=20)], render_kw={"placeholder": "Password"}, label="Password")
     remember_me = BooleanField(default=False, label="Remember me for 30 days")
     submit = SubmitField("Login as Administrator")
 

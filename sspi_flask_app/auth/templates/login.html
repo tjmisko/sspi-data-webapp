@@ -12,10 +12,10 @@
     {% endif %}
     <form action="" method="POST">
       {{ form.hidden_tag() }}
-      {{ form.username }}
-      {{ form.password }}
-      Remember me? {{ form.remember_me }}
-      {{ form.submit }}
+      {{ form.username }} <br>
+      {{ form.password }} <br>
+      {{ form.remember_me.label }} {{ form.remember_me }} <br>
+      {{ form.submit }} <br>
     </form>
   </body>
 </html>
