@@ -17,7 +17,7 @@ collect_bp = Blueprint("collect_bp", __name__,
 @login_required
 def biodiv():
     collectSDGIndicatorData("14.5.1", "BIODIV")
-    collectSDGIndicatorData("15.2.1", "BIODIV")
+    collectSDGIndicatorData("15.1.2", "BIODIV")
     return "success!"
 
 @collect_bp.route("REDLST", methods=['GET'])

@@ -40,26 +40,6 @@ def countryLookup(countryData=''):
        return "country not found"
     return str(country)
 
-# @api_bp.route("/save/<indicator:string>", methods=['POST'])
-# def save_indicator(indicator, indicator_data={}):
-#     """
-#     take an indicator name and request argument options
-#     - overwrite: bool, default False
-#     - collect: bool, default False
-#     """
-#     overwrite = bool(request.args.get('overwrite', default = False, type = bool))
-#     print("overwrite:", overwrite)
-#     inMongo = bool(sspi_main_data_v3.find_one({"indicator": indicator}))
-#     print("inMongo:", inMongo)
-#     collect = bool(request.args.get('collect', default = False, type = bool))
-#     print("collect:", collect)
-#     if not inMongo:
-#         sspi_main_data_v3.insert_many(indicator_data)
-#     elif overwrite:
-#         sspi_main_data_v3.delete_many({"indicator": indicator})
-#         sspi_main_data_v3.insert_many(indicator_data)
-
-# route querying indicator data from mongodb
 @api_bp.route("/query/indicator/<IndicatorCode>")
 def query_indicator(IndicatorCode):
     """
@@ -143,3 +123,9 @@ def post_static_data():
     data = json.loads(request.data)
     sspi_main_data_v3.insert_many(data)
     return redirect(url_for('datatest_bp.database'))
+
+@fresh_login_required
+@api_bp.route("/delete/<IndicatorCode>", methods=["POST"])
+def delete_indicator(IndicatorCode):
+    sspi_raw_api_data.delete_many({"RawDataDestination": IndicatorCode})
+    return redirect(url_for('home_bp.home'))
