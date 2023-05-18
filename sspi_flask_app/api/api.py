@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 from io import BytesIO
 from flask import Blueprint, redirect, request, url_for, escape, send_file, current_app as app
-from flask_login import current_user, login_required
+from flask_login import current_user, fresh_login_required, login_required
 from ..models.usermodel import User
 from .. import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data
 from bson import json_util
@@ -136,3 +136,10 @@ def store_raw_observation(observation, collection_time, RawDataDestination):
                             "RawDataDestination": RawDataDestination,
                             "CollectedAt": collection_time}, 
         "observation": observation})
+
+@fresh_login_required
+@api_bp.route("/post_static_data", methods=["POST"])
+def post_static_data():
+    data = json.loads(request.data)
+    sspi_main_data_v3.insert_many(data)
+    return redirect(url_for('datatest_bp.database'))
