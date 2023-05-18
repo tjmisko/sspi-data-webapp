@@ -11,22 +11,31 @@
             margin: 5px;
             background-color: #f3f3f3
         }
+        .form-box {
+            padding: 10px;
+            margin: 5px;
+        }
+        .form-item {
+            margin: 5px 0px;
+        }
     </style>
 </head>
 <body>
-    {% if messages %}
-    {% for message in get_flashed_messages() %}
-        <div class="message">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-    <h1> Delete Indicator Data </h1>
-    <form method="DELETE">
-        {{ form.hidden_tag() }}
-        {{ form.database.label }}{{ form.database }} <br>
-        {{ form.indicator_code.label }}{{ form.indicator_code }} <br>
-        Deletion of data from the database is permanent and cannot be undone.  Do you wish to proceed? <br>
-        {{ form.submit }}
-    </form>
+    <div class="form-box">
+        {% if messages %}
+        {% for message in get_flashed_messages() %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        <h1> Delete Indicator Data </h1>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-item"> {{ form.database.label }}: {{ form.database }} </div>
+            <div class="form-item"> {{ form.indicator_code.label }}: {{ form.indicator_code }} </div>
+            Deletion of data from the database is permanent and cannot be undone.  Do you wish to proceed? <br>
+            <div class="form-item"> {{ form.submit }}</div>
+        </form>
+    </div>
     
 </body>
 </html>
