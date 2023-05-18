@@ -27,8 +27,6 @@ datatest_bp = Blueprint(
 def database():
     if request.method == 'POST':
         data = json.loads(request.data)
-        print("type of request.data", type(data))
-        print("request.data", data[1:10])
         sspi_main_data_v3.insert_many(data)
         return redirect(url_for('datatest_bp.database'))
     else:
