@@ -5,6 +5,8 @@ from bson import json_util
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
+def print_json(data):
+    print(json.dumps(data, indent=4, sort_keys=True))
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -32,10 +34,17 @@ def compute_biodiv():
     """
     if indicator_data_available("BIODIV"):
         mongoQuery = {"collection-info.RawDataDestination": "BIODIV"}
-        raw_data = sspi_raw_api_data.find(mongoQuery)
-        print(raw_data)
-        print(parse_json(raw_data))
-        return "success"
+        raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+        print_json(raw_data[1600])
+        coverage = {}
+        for r in raw_data:
+            if r["observation"]["series"] in coverage.keys():
+                coverage[r["observation"]["series"]].append(r["observation"]["geoAreaName"])
+            else:
+                coverage[r["observation"]["series"]] = [r["observation"]["geoAreaName"]]
+        print("# of Observations = ", len(raw_data))
+        print("Series: ", coverage.keys())
+        return str(coverage)
     return "failure"
 
     
