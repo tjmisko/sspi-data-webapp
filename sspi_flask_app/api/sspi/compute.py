@@ -17,10 +17,7 @@ def indicator_data_available(IndicatorCode):
     """
     Check if indicator is in database
     """
-    if not bool(sspi_raw_api_data.find_one({"RawDataDestination": IndicatorCode})):
-        return render_template("missingdata.html", IndicatorCode=IndicatorCode)
-    else:
-        return True
+    return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
 
 @compute_bp.route("/BIODIV", methods=['GET'])
 def compute_biodiv():
@@ -35,7 +32,7 @@ def compute_biodiv():
     if indicator_data_available("BIODIV"):
         mongoQuery = {"collection-info.RawDataDestination": "BIODIV"}
         raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
-        print_json(raw_data[1600])
+        print_json(raw_data[0]) 
         coverage = {}
         for r in raw_data:
             if r["observation"]["series"] in coverage.keys():
