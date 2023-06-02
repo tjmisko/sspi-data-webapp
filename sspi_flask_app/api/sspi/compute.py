@@ -32,6 +32,10 @@ def compute_biodiv():
     if indicator_data_available("BIODIV"):
         mongoQuery = {"collection-info.RawDataDestination": "BIODIV"}
         raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+        clean_obs_dict = {}
+        for country in raw_data:
+            if not country["observation"]["geoAreaCode"] in clean_obs_dict.keys():
+                clean_obs_dict[country["observation"]["geoAreaCode"]] = {"CountryName": country["observation"]["geoAreaName"]}
         coverage = {}
         for r in raw_data:
             if r["observation"]["series"] in coverage.keys():
@@ -40,5 +44,7 @@ def compute_biodiv():
                 coverage[r["observation"]["series"]] = [r["observation"]["geoAreaName"]]
         print("# of Observations = ", len(raw_data))
         print("Series: ", coverage.keys())
-        return str(raw_data[2])
+        print(len(raw_data))
+        print(clean_obs_dict)
+        return str(raw_data[788])
     return "failure"
