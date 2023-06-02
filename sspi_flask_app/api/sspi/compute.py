@@ -46,5 +46,3 @@ def compute_biodiv():
         print("Series: ", coverage.keys())
         return str(coverage)
     return "failure"
-
-    
