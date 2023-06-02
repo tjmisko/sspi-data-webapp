@@ -13,8 +13,6 @@ from wtforms.validators import InputRequired, Length, ValidationError, DataRequi
 import pandas as pd
 import re
 
-
-
 def parse_json(data):
     return json.loads(json_util.dumps(data))
 
@@ -151,3 +149,13 @@ def delete_indicator():
         flash("Deleted " + str(pre - post) + " documents")
     return render_template('delete.html', form=delete_form, messages=get_flashed_messages())
 
+@api_bp.route("/post", methods=["POST"])
+@login_required
+def post_data():
+    data = json.loads(request.data)
+    for observation in data:
+        if sspi_main_data_v3.find({"observation": observation}):
+            print("Observation already in database")
+        else: 
+            sspi_main_data_v3.insert_many(data)
+    return redirect(url_for('datatest_bp.database'))
