@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
 import json
@@ -37,10 +38,14 @@ def compute_biodiv():
             if not country["observation"]["geoAreaCode"] in clean_obs_dict.keys():
                 clean_obs_dict[country["observation"]["geoAreaCode"]] = {"CountryName": country["observation"]["geoAreaName"]}
             years_list = json.loads(country["observation"]["years"])
-            print(type(years_list))
             for year in years_list:
-                if year["value"] is not '':
-                    clean_obs_dict[country["observation"]["geoAreaCode"]][year["year"]] = year["value"]
+                year_string = year["year"][1:5]
+                print(year_string)
+                # if not year[] in 
+                # if year["value"] is not '':
+                    
+                #     print(year_string)
+                #     clean_obs_dict[country["observation"]["geoAreaCode"]][year_string] = year["value"]
         coverage = {}
         for r in raw_data:
             if r["observation"]["series"] in coverage.keys():
