@@ -36,6 +36,10 @@ def compute_biodiv():
         for country in raw_data:
             if not country["observation"]["geoAreaCode"] in clean_obs_dict.keys():
                 clean_obs_dict[country["observation"]["geoAreaCode"]] = {"CountryName": country["observation"]["geoAreaName"]}
+            years_list = json.loads(country["observation"]["years"])
+            print(type(years_list))
+            #for year in years_list:
+                #clean_obs_dict[country["observation"]["geoAreaCode"]][year["year"]] = year["value"]
         coverage = {}
         for r in raw_data:
             if r["observation"]["series"] in coverage.keys():
