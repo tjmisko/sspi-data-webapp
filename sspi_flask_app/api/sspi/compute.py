@@ -62,5 +62,5 @@ def compute_biodiv():
         print(len(raw_data))
         print(clean_obs_dict)
         # store the cleaned data in the database
-        return str(raw_data[788])
+        return str(clean_obs_dict)
     return "failure"
