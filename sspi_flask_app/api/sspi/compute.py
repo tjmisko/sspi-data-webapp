@@ -31,21 +31,26 @@ def compute_biodiv():
     marine, freshwater, and terrestrial ecosystems
     """
     if indicator_data_available("BIODIV"):
+        # retrieve our raw data from the database
         mongoQuery = {"collection-info.RawDataDestination": "BIODIV"}
         raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+        # parse the observation into a clean format
         clean_obs_dict = {}
         for country in raw_data:
-            if not country["observation"]["geoAreaCode"] in clean_obs_dict.keys():
-                clean_obs_dict[country["observation"]["geoAreaCode"]] = {"CountryName": country["observation"]["geoAreaName"]}
+            geoAreaCode = country["observation"]["geoAreaCode"]
+            if not geoAreaCode in clean_obs_dict.keys():
+                clean_obs_dict[geoAreaCode] = {"CountryName": country["observation"]["geoAreaName"]}
+            series = country["observation"]["series"]
             years_list = json.loads(country["observation"]["years"])
             for year in years_list:
-                year_string = year["year"][1:5]
-                print(year_string)
-                # if not year[] in 
-                # if year["value"] is not '':
-                    
-                #     print(year_string)
-                #     clean_obs_dict[country["observation"]["geoAreaCode"]][year_string] = year["value"]
+                year_int = int(year["year"][1:5])
+                if year["value"] is '':
+                    pass
+                elif year_int not in clean_obs_dict[geoAreaCode].keys():
+                    clean_obs_dict[geoAreaCode][year_int] = {series: year["value"]}
+                else:   
+                    clean_obs_dict[geoAreaCode][year_int][series] = year["value"]
+        # check the coverage
         coverage = {}
         for r in raw_data:
             if r["observation"]["series"] in coverage.keys():
@@ -56,5 +61,6 @@ def compute_biodiv():
         print("Series: ", coverage.keys())
         print(len(raw_data))
         print(clean_obs_dict)
+        # store the cleaned data in the database
         return str(raw_data[788])
     return "failure"
