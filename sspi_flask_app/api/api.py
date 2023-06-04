@@ -4,7 +4,7 @@ from io import BytesIO
 from flask import Blueprint, redirect, request, url_for, escape, send_file, current_app as app, render_template, flash, get_flashed_messages
 from flask_login import current_user, fresh_login_required, login_required
 from ..models.usermodel import User
-from .. import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data
+from .. import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
 from bson import json_util
 from pycountry import countries
 from flask_wtf import FlaskForm
@@ -157,5 +157,18 @@ def post_data():
         if sspi_main_data_v3.find({"observation": observation}):
             print("Observation already in database")
         else: 
-            sspi_main_data_v3.insert_many(data)
+            sspi_main_data_v3.insert_one(observation)
     return redirect(url_for('datatest_bp.database'))
+
+@api_bp.route("/metadata", methods=["GET"])
+def metadata():
+    # Implement request.args for filtering the metadata
+    
+    return
+
+@api_bp.route("/metadata", methods=["POST"])
+@login_required
+def post_metadata():
+    data = json.loads(request.data)
+    sspi_main_data_v3.insert_many(data)
+    redirect(url_for('datatest_bp.database'))
