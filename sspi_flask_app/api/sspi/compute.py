@@ -50,6 +50,14 @@ def compute_biodiv():
                     clean_obs_dict[geoAreaCode][year_int] = {series: year["value"]}
                 else:   
                     clean_obs_dict[geoAreaCode][year_int][series] = year["value"]
+            for year in years_list:
+                if not year in clean_obs_dict[geoAreaCode].keys():
+                    pass
+                elif 'N' in clean_obs_dict[geoAreaCode][year].values():
+                    clean_obs_dict[geoAreaCode][year]["RAW"] = 'N'
+                else:
+                    clean_obs_dict[geoAreaCode][year]["RAW"] == sum(clean_obs_dict[geoAreaCode][year])/len(clean_obs_dict[geoAreaCode][year])
+
         # check the coverage
         coverage = {}
         for r in raw_data:
