@@ -163,8 +163,7 @@ def post_data():
 @api_bp.route("/metadata", methods=["GET"])
 def metadata():
     # Implement request.args for filtering the metadata
-    
-    return
+    return sspi_metadata.find()
 
 @api_bp.route("/metadata", methods=["POST"])
 @login_required
