@@ -30,6 +30,36 @@ def compute_biodiv():
     - Indicator computation: average of the three scores for percentage of biodiversity in
     marine, freshwater, and terrestrial ecosystems
     """
+    def flatten(dict, keyname):
+        """
+        Takes in a nested dictionary of the form
+        {
+            "a":
+                {
+                    "b": v1
+                    "c": v2
+                }
+            "d":
+                {
+                    "e": v3
+                    "f": v4
+                }
+        }
+        and flattens it into a list of the form
+        [
+            {keyname: "a", "b": v1, "c": v2},
+            {keyname: "d", "e": v3, "f": v4}
+        ]
+        
+        """
+        newlist = []
+        for k in dict.keys():
+            for obs in dict[k]:
+                print(obs)
+                flat_obs = obs.copy()
+                flat_obs[keyname] = k
+                newlist.append(flat_obs)
+        return newlist
     if indicator_data_available("BIODIV"):
         # retrieve our raw data from the database
         mongoQuery = {"collection-info.RawDataDestination": "BIODIV"}
@@ -39,25 +69,29 @@ def compute_biodiv():
         for country in raw_data:
             geoAreaCode = country["observation"]["geoAreaCode"]
             if not geoAreaCode in clean_obs_dict.keys():
-                clean_obs_dict[geoAreaCode] = {"CountryName": country["observation"]["geoAreaName"]}
+                clean_obs_dict[geoAreaCode] = {}
             series = country["observation"]["series"]
             years_list = json.loads(country["observation"]["years"])
             for year in years_list:
                 year_int = int(year["year"][1:5])
-                if year["value"] is '':
+                if year["value"] == '':
                     pass
                 elif year_int not in clean_obs_dict[geoAreaCode].keys():
-                    clean_obs_dict[geoAreaCode][year_int] = {series: year["value"]}
+                    clean_obs_dict[geoAreaCode][year_int]["Intermediates"] = {series: year["value"]}
                 else:   
-                    clean_obs_dict[geoAreaCode][year_int][series] = year["value"]
+                    clean_obs_dict[geoAreaCode][year_int]["Intermediates"][series]= year["value"]
             # after all observations have been extracted for a country
             for year in clean_obs_dict[geoAreaCode].keys():
                 if not year in clean_obs_dict[geoAreaCode].keys() or not isinstance(year, int):
                     pass
-                elif 'N' in clean_obs_dict[geoAreaCode][year].values():
-                    clean_obs_dict[geoAreaCode][year]["RAW"] = 'N'
-                else:
-                    clean_obs_dict[geoAreaCode][year]["RAW"] = sum(clean_obs_dict[geoAreaCode][year])/len(clean_obs_dict[geoAreaCode][year])
+                else: 
+                    if 'N' in clean_obs_dict[geoAreaCode][year]["Intermediates"].values():
+                        clean_obs_dict[geoAreaCode][year]["RAW"] = 'N'
+                    else:
+                        clean_obs_dict[geoAreaCode][year]["RAW"] = sum([float(x) for x in clean_obs_dict[geoAreaCode][year].values()])/len(clean_obs_dict[geoAreaCode][year])
+        
+        # process dictionary into usable format
+        # clean_obs_list = flatten(clean_obs_dict, "M49CountryCode")
 
         # check the coverage
         coverage = {}
@@ -72,4 +106,4 @@ def compute_biodiv():
         print(clean_obs_dict)
         # store the cleaned data in the database
         return str(clean_obs_dict)
-    return "failure"
+    return "Data unavailable. Try running collect."
