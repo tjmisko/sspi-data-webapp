@@ -55,7 +55,6 @@ def compute_biodiv():
     """
     if not indicator_data_available("BIODIV"):
         return "Data unavailable. Try running collect."
-    # retrieve our raw data from the database
     raw_data = fetch_raw_data("BIODIV")
     # pass through the raw data and extract the datapoints we want
     intermediate_obs_dict = {}
@@ -66,41 +65,21 @@ def compute_biodiv():
         if not country_data:
             continue
         series = country["observation"]["series"]
-        years_list = json.loads(country["observation"]["years"])
+        annual_data_list = json.loads(country["observation"]["years"])
         COU = country_data.alpha_3
         # add the country to the dictionary if it's not there already
         if COU not in intermediate_obs_dict.keys():
             intermediate_obs_dict[COU] = {}
         # iterate through each of the annual observations and add the appropriate entry
-        # for year in years_list:
-        #     year_int = int(year["year"][1:5])
-        #     if not year["value"] == '':
-        #         intermediate_obs_dict[COU][]
-
-            
-        # if not geoAreaCode in clean_obs_dict.keys():
-        #     clean_obs_dict[geoAreaCode] = {}
-        # series = country["observation"]["series"]
-        # years_list = json.loads(country["observation"]["years"])
-        # for year in years_list:
-        #     year_int = int(year["year"][1:5])
-        #     if year["value"] == '':
-        #         pass
-        #     elif year_int not in clean_obs_dict[geoAreaCode].keys():
-        #         clean_obs_dict[geoAreaCode][year_int]["Intermediates"] = {series: year["value"]}
-        #     else:   
-        #         clean_obs_dict[geoAreaCode][year_int]["Intermediates"][series]= year["value"]
-        # # after all observations have been extracted for a country
-        # for year in clean_obs_dict[geoAreaCode].keys():
-        #     if not year in clean_obs_dict[geoAreaCode].keys() or not isinstance(year, int):
-        #         pass
-        #     else: 
-        #         if 'N' in clean_obs_dict[geoAreaCode][year]["Intermediates"].values():
-        #             clean_obs_dict[geoAreaCode][year]["RAW"] = 'N'
-        #         else:
-        #             clean_obs_dict[geoAreaCode][year]["RAW"] = sum([float(x) for x in clean_obs_dict[geoAreaCode][year].values()])/len(clean_obs_dict[geoAreaCode][year])
+        for obs in annual_data_list:
+            year = int(obs["year"][1:5])
+            if obs["value"] == '':
+                continue
+            if year not in intermediate_obs_dict[COU].keys():
+                intermediate_obs_dict[COU][year] = {}
+            intermediate_obs_dict[COU][year][series] = obs["value"]
     
     # process dictionary into usable format
     print(raw_data[0])
     # store the cleaned data in the database
-    return str(intermediate_obs_dict)
+    return json.dumps(intermediate_obs_dict)
