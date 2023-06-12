@@ -19,6 +19,8 @@ def parse_json(data):
 def print_json(data):
     print(json.dumps(data, indent=4, sort_keys=True))
 
+
+
 api_bp = Blueprint(
     'api_bp', __name__,
     template_folder='templates',
@@ -171,3 +173,25 @@ def post_metadata():
     data = json.loads(request.data)
     sspi_main_data_v3.insert_many(data)
     redirect(url_for('datatest_bp.database'))
+
+# utility functions
+def format_m49_as_string(input):
+    """
+    Utility function ensuring that all M49 data is correctly formatted as a
+    string of length 3 for use with the pycountry library
+    """
+    input = int(input)
+    if input >= 100:
+        return str(input) 
+    elif input >= 10:
+        return '0' + str(input)
+    else: 
+        return '00' + str(input)
+    
+def fetch_raw_data(RawDataDestination):
+    """
+    Utility function that handles querying the database
+    """
+    mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+    return raw_data
