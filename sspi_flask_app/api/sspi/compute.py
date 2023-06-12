@@ -51,11 +51,10 @@ def compute_biodiv():
         # parse the observation(s) into a clean format
         clean_obs_dict = {}
         for country in raw_data:
-            geoAreaCode = country["observation"]["geoAreaCode"]
-            print("geoAreaCode", int(geoAreaCode))
+            geoAreaCode = format_m49_as_string(country["observation"]["geoAreaCode"])
             country_data = countries.get(numeric=geoAreaCode)
             if country_data:
-                print(country_data.alpha_3)
+                COU = country_data.alpha_3
             else:
                 print("Could not find data for", country["observation"]["geoAreaName"])
             # if not geoAreaCode in clean_obs_dict.keys():
