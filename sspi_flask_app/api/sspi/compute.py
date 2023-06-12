@@ -9,6 +9,15 @@ def parse_json(data):
     return json.loads(json_util.dumps(data))
 def print_json(data):
     print(json.dumps(data, indent=4, sort_keys=True))
+
+def fetch_raw_data(RawDataDestination):
+    """
+    Utility function that handles querying the database
+    """
+    mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+    return raw_data
+
 def format_m49_as_string(input):
     """
     Utility function ensuring that all M49 data is correctly formatted as a
@@ -44,55 +53,54 @@ def compute_biodiv():
     - Indicator computation: average of the three scores for percentage of biodiversity in
     marine, freshwater, and terrestrial ecosystems
     """
-    if indicator_data_available("BIODIV"):
-        # retrieve our raw data from the database
-        mongoQuery = {"collection-info.RawDataDestination": "BIODIV"}
-        raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
-        # parse the observation(s) into a clean format
-        clean_obs_dict = {}
-        for country in raw_data:
-            geoAreaCode = format_m49_as_string(country["observation"]["geoAreaCode"])
-            country_data = countries.get(numeric=geoAreaCode)
-            if country_data:
-                COU = country_data.alpha_3
-            else:
-                print("Could not find data for", country["observation"]["geoAreaName"])
-            # if not geoAreaCode in clean_obs_dict.keys():
-            #     clean_obs_dict[geoAreaCode] = {}
-            # series = country["observation"]["series"]
-            # years_list = json.loads(country["observation"]["years"])
-            # for year in years_list:
-            #     year_int = int(year["year"][1:5])
-            #     if year["value"] == '':
-            #         pass
-            #     elif year_int not in clean_obs_dict[geoAreaCode].keys():
-            #         clean_obs_dict[geoAreaCode][year_int]["Intermediates"] = {series: year["value"]}
-            #     else:   
-            #         clean_obs_dict[geoAreaCode][year_int]["Intermediates"][series]= year["value"]
-            # # after all observations have been extracted for a country
-            # for year in clean_obs_dict[geoAreaCode].keys():
-            #     if not year in clean_obs_dict[geoAreaCode].keys() or not isinstance(year, int):
-            #         pass
-            #     else: 
-            #         if 'N' in clean_obs_dict[geoAreaCode][year]["Intermediates"].values():
-            #             clean_obs_dict[geoAreaCode][year]["RAW"] = 'N'
-            #         else:
-            #             clean_obs_dict[geoAreaCode][year]["RAW"] = sum([float(x) for x in clean_obs_dict[geoAreaCode][year].values()])/len(clean_obs_dict[geoAreaCode][year])
-        
-        # process dictionary into usable format
-        # clean_obs_list = flatten(clean_obs_dict, "M49CountryCode")
+    if not indicator_data_available("BIODIV"):
+        return "Data unavailable. Try running collect."
+    # retrieve our raw data from the database
+    raw_data = fetch_raw_data("BIODIV")
+    # pass through the raw data and extract the datapoints we want
+    intermediate_obs_dict = {}
+    for country in raw_data:
+        geoAreaCode = format_m49_as_string(country["observation"]["geoAreaCode"])
+        country_data = countries.get(numeric=geoAreaCode)
+        # make sure that the data corresponds to a valid country (gets rid of regional aggregates)
+        if not country_data:
+            continue
+        series = country["observation"]["series"]
+        years_list = json.loads(country["observation"]["years"])
+        COU = country_data.alpha_3
+        # add the country to the dictionary if it's not there already
+        if COU not in intermediate_obs_dict.keys():
+            intermediate_obs_dict[COU] = {}
+        # iterate through each of the annual observations and add the appropriate entry
+        # for year in years_list:
+        #     year_int = int(year["year"][1:5])
+        #     if not year["value"] == '':
+        #         intermediate_obs_dict[COU][]
 
-        # check the coverage
-        coverage = {}
-        for r in raw_data:
-            if r["observation"]["series"] in coverage.keys():
-                coverage[r["observation"]["series"]].append(r["observation"]["geoAreaName"])
-            else:
-                coverage[r["observation"]["series"]] = [r["observation"]["geoAreaName"]]
-        print("# of Observations = ", len(raw_data))
-        print("Series: ", coverage.keys())
-        print(len(raw_data))
-        print(clean_obs_dict)
-        # store the cleaned data in the database
-        return str(clean_obs_dict)
-    return "Data unavailable. Try running collect."
+            
+        # if not geoAreaCode in clean_obs_dict.keys():
+        #     clean_obs_dict[geoAreaCode] = {}
+        # series = country["observation"]["series"]
+        # years_list = json.loads(country["observation"]["years"])
+        # for year in years_list:
+        #     year_int = int(year["year"][1:5])
+        #     if year["value"] == '':
+        #         pass
+        #     elif year_int not in clean_obs_dict[geoAreaCode].keys():
+        #         clean_obs_dict[geoAreaCode][year_int]["Intermediates"] = {series: year["value"]}
+        #     else:   
+        #         clean_obs_dict[geoAreaCode][year_int]["Intermediates"][series]= year["value"]
+        # # after all observations have been extracted for a country
+        # for year in clean_obs_dict[geoAreaCode].keys():
+        #     if not year in clean_obs_dict[geoAreaCode].keys() or not isinstance(year, int):
+        #         pass
+        #     else: 
+        #         if 'N' in clean_obs_dict[geoAreaCode][year]["Intermediates"].values():
+        #             clean_obs_dict[geoAreaCode][year]["RAW"] = 'N'
+        #         else:
+        #             clean_obs_dict[geoAreaCode][year]["RAW"] = sum([float(x) for x in clean_obs_dict[geoAreaCode][year].values()])/len(clean_obs_dict[geoAreaCode][year])
+    
+    # process dictionary into usable format
+    print(raw_data[0])
+    # store the cleaned data in the database
+    return str(intermediate_obs_dict)
