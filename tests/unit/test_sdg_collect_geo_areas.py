@@ -11,7 +11,7 @@ def test_collect_geo_area():
     THEN hits the SDG API and returns a list of strings 
     representing the M49 codes of countries with data for the indicator
     """
-    lst = collectAvailableGeoAreas("15.1.2")
+    #lst = collectAvailableGeoAreas("15.1.2")
     print(lst)
     # check that the return type is correct
     assert type(lst[1]) == type("string")
