@@ -39,6 +39,8 @@ def compute_biodiv():
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    # implement a computation function as an argument which can be adapted to different contexts
+    # how to handle imputations?
     final_data_list = flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict)
     # store the cleaned data in the database
     return json_util.dumps(final_data_list)
