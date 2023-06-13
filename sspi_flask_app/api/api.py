@@ -50,7 +50,7 @@ def query_indicator(IndicatorCode):
     """
     database = request.args.get('database', default = "sspi_main_data_v3", type = bool)
     if database == "sspi_raw_api_data":
-        indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
+        indicator_data = sspi_raw_api_data.find({"IndicatorCode": IndicatorCode})
     elif database == "sspi_clean_api_data":
         indicator_data = sspi_clean_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
     else:  
