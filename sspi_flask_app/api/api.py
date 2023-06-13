@@ -127,29 +127,43 @@ def post_static_data():
     sspi_main_data_v3.insert_many(data)
     return redirect(url_for('datatest_bp.database'))
 
-class DeleteForm(FlaskForm):
+class DeleteIndicatorForm(FlaskForm):
     database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Delete')
 
+class ClearDatabaseForm(FlaskForm):
+    database = StringField(validators=[DataRequired()], label="Database Name")
+    database_confirm = StringField(validators=[DataRequired()], label="Confirm Database Name")
+    submit = SubmitField('Clear Database')
+
 @api_bp.route("/delete", methods=["GET", "POST"])
 @login_required
-def delete_indicator():
-    delete_form = DeleteForm(request.form)
-    print(request.method, delete_form.validate_on_submit())
-    if request.method == "POST" and delete_form.validate_on_submit():
-        IndicatorCode = delete_form.indicator_code.data
+def delete():
+    delete_indicator_form = DeleteIndicatorForm(request.form)
+    clear_database_form = ClearDatabaseForm(request.form)
+    if request.method == "POST" and delete_indicator_form.validate_on_submit():
+        IndicatorCode = delete_indicator_form.indicator_code.data
         print("successful validation of delete method")
-        if delete_form.database.data == "sspi_main_data_v3":
+        if delete_indicator_form.database.data == "sspi_main_data_v3":
             pre = sspi_main_data_v3.count_documents({"IndicatorCode": IndicatorCode})
             sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode})
             post = sspi_main_data_v3.count_documents({"IndicatorCode": IndicatorCode})
-        elif delete_form.database.data == "sspi_raw_api_data":
+        elif delete_indicator_form.database.data == "sspi_raw_api_data":
             pre = sspi_raw_api_data.count_documents({"collection-info.RawDataDestination": IndicatorCode})
             sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode})
             post = sspi_raw_api_data.count_documents({"collection-info.RawDataDestination": IndicatorCode})
         flash("Deleted " + str(pre - post) + " documents")
-    return render_template('delete.html', form=delete_form, messages=get_flashed_messages())
+    if request.method == "POST" and clear_database_form.validate_on_submit():
+        if clear_database_form.database.data == clear_database_form.database_confirm.data:
+            if clear_database_form.database.data == "sspi_main_data_v3":
+                sspi_main_data_v3.delete_many({})
+            elif clear_database_form.database.data == "sspi_raw_api_data":
+                sspi_raw_api_data.delete_many({})
+            flash("Cleared database " + clear_database_form.database.data)
+        else:
+            flash("Database names do not match")
+    return render_template('delete.html', delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
 
 @api_bp.route("/post", methods=["POST"])
 @login_required
@@ -171,7 +185,7 @@ def metadata():
 @login_required
 def post_metadata():
     data = json.loads(request.data)
-    sspi_main_data_v3.insert_many(data)
+    sspi_metadata.insert_many(data)
     redirect(url_for('datatest_bp.database'))
 
 # utility functions
