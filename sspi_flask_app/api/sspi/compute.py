@@ -40,9 +40,8 @@ def compute_biodiv():
     raw_data = fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     # implement a computation function as an argument which can be adapted to different contexts
-    # write unit tests for fetch, extract, and flatten
-    # how to handle imputations?
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
     sspi_clean_api_data.insert_many(final_data_list)
-    return json_util.dumps(raw_data[0:3])
+    return f"Inserted {len(final_data_list)} observations into the database."
+

@@ -17,7 +17,9 @@
 
   <body>
     {% include 'header.html' %}
-    {% block content %}{% endblock %}
+    <div class="pagecontent">
+      {% block content %}{% endblock %}
+    </div>
     {% include 'footer.html' %}
   </body>
   
