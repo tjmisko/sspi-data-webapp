@@ -43,12 +43,22 @@ def countryLookup(countryData=''):
        return "country not found"
     return str(country)
 
+@api_bp.route("/query")
+def query_full_database():
+    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
+    if database == "sspi_raw_api_data":
+        return parse_json(sspi_raw_api_data.find())
+    elif database == "sspi_clean_api_data":
+        return parse_json(sspi_clean_api_data.find())
+    else:  
+        return parse_json(sspi_main_data_v3.find())
+
 @api_bp.route("/query/indicator/<IndicatorCode>")
 def query_indicator(IndicatorCode):
     """
     Take an indicator code and return the data
     """
-    database = request.args.get('database', default = "sspi_main_data_v3", type = bool)
+    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
     if database == "sspi_raw_api_data":
         indicator_data = sspi_raw_api_data.find({"IndicatorCode": IndicatorCode})
     elif database == "sspi_clean_api_data":
