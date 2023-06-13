@@ -16,6 +16,7 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from dataclasses import dataclass
+import requests
 
 auth_bp = Blueprint(
     'auth_bp', __name__,
@@ -72,7 +73,15 @@ def login():
     login_user(user)
     flash("Login Successful! Redirecting...")
     return redirect(url_for('home_bp.data'))               
-    
+
+@auth_bp.route('/remote_login', methods=['POST'])
+def remote_login():
+    username = requests.get("username")
+    password = requests.get("password")
+    user = User.query.filter_by(username=username).first()
+    if user and flask_bcrypt.check_password_hash(user.password, password):
+        login_user(user)
+    return redirect(url_for('home_bp.data'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
