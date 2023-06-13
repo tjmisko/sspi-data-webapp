@@ -48,10 +48,12 @@ def query_indicator(IndicatorCode):
     """
     Take an indicator code and return the data
     """
-    raw = request.args.get('raw', default = False, type = bool)
-    if raw:
+    database = request.args.get('database', default = "sspi_main_data_v3", type = bool)
+    if database == "sspi_raw_api_data":
         indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
-    else: 
+    elif database == "sspi_clean_api_data":
+        indicator_data = sspi_clean_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
+    else:  
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
 
@@ -160,6 +162,10 @@ def delete():
                 sspi_main_data_v3.delete_many({})
             elif clear_database_form.database.data == "sspi_raw_api_data":
                 sspi_raw_api_data.delete_many({})
+            elif clear_database_form.database.data == "sspi_clean_api_data":
+                sspi_clean_api_data.delete_many({})
+            elif clear_database_form.database.data == "sspi_metadata":
+                sspi_metadata.delete_many({})
             flash("Cleared database " + clear_database_form.database.data)
         else:
             flash("Database names do not match")
@@ -179,7 +185,7 @@ def post_data():
 @api_bp.route("/metadata", methods=["GET"])
 def metadata():
     # Implement request.args for filtering the metadata
-    return sspi_metadata.find()
+    return parse_json(sspi_metadata.find())
 
 @api_bp.route("/metadata", methods=["POST"])
 @login_required
