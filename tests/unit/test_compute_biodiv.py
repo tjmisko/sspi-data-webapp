@@ -1,4 +1,4 @@
-from sspi_flask_app.api.source_utilities.sdg import flatten_and_format_nested_sdg_dictionary, extract_sdg_pivot_data_to_nested_dictionary
+from sspi_flask_app.api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
 from sspi_flask_app.api.sspi.compute import fetch_raw_data
 import json
 import math
@@ -18,7 +18,7 @@ def test_flatten():
                          2019: {"d": 3, "e": 4, "f": 5}},
                  "RUS": {2018: {},
                          2019: {"a": 1}}}
-    final_data_list = flatten_and_format_nested_sdg_dictionary(test_data)
+    final_data_list = flatten_nested_dictionary_biodiv(test_data)
     assert len(final_data_list) == 6
     assert final_data_list[0]["CountryCode"] == "USA"
     assert final_data_list[0]["RAW"] == 2
