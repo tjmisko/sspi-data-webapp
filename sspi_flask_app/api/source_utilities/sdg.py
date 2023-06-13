@@ -56,7 +56,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
             intermediate_obs_dict[COU][year][series] = obs["value"]
     return intermediate_obs_dict
     
-def flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict):
+def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
     final_data_list = []
     for cou in intermediate_obs_dict.keys():
         for year in intermediate_obs_dict[cou].keys():

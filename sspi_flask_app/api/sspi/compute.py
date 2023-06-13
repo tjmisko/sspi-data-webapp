@@ -1,7 +1,7 @@
 import re
 from flask import Blueprint, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
-from ...api.source_utilities.sdg import flatten_and_format_nested_sdg_dictionary, extract_sdg_pivot_data_to_nested_dictionary
+from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
 import json
 from bson import json_util
 from pycountry import countries
@@ -42,6 +42,7 @@ def compute_biodiv():
     # implement a computation function as an argument which can be adapted to different contexts
     # write unit tests for fetch, extract, and flatten
     # how to handle imputations?
-    final_data_list = flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict)
+    final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
+    sspi_clean_api_data.insert_many(final_data_list)
     return json_util.dumps(raw_data[0:3])
