@@ -64,7 +64,6 @@ def flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict):
                 mean_across_series = sum([float(x) for x in intermediate_obs_dict[cou][year].values()])/3
             except ValueError:
                 mean_across_series = float("nan")
-
             new_observation = {
                 "CountryCode": cou,
                 "YEAR": year,
