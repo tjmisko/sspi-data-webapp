@@ -66,7 +66,7 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
                 mean_across_series = float("nan")
             new_observation = {
                 "CountryCode": cou,
-                "IndicatorCode:": "BIODIV",
+                "IndicatorCode": "BIODIV",
                 "YEAR": year,
                 "RAW": mean_across_series,
                 "Intermediates": intermediate_obs_dict[cou][year]
