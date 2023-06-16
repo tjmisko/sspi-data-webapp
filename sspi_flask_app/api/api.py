@@ -62,10 +62,8 @@ def query_indicator(IndicatorCode):
     if database == "sspi_raw_api_data":
         indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
     elif database == "sspi_clean_api_data":
-        print("running query on sspi_clean_api_data with query param {}".format(IndicatorCode))
         indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode})
     else:  
-        print("running query on sspi_main_data_v3 with query param {}".format(IndicatorCode))
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
 
