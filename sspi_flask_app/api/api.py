@@ -201,8 +201,8 @@ def metadata():
 @login_required
 def post_metadata():
     data = json.loads(request.data)
-    sspi_metadata.insert_many(data)
-    redirect(url_for('datatest_bp.database'))
+    sspi_metadata.insert_one(data)
+    return redirect(url_for('datatest_bp.database'))
 
 # utility functions
 def format_m49_as_string(input):
