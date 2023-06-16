@@ -14,6 +14,13 @@ IndicatorCode=null;}}
 function getCountries(indicator_data){return indicator_data.map(data=>data.Country)}
 function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
-async function makeIndicatorTable(){var tabledata=await fetch('/api/v1/metadata/indicator_table')
-var table=new Tabulator("#example-table",{data:tabledata,autoColumns:true,});}
+async function makeDynamicDataTable(IndicatorCode="BIODIV"){var country_groups=await fetch('/api/v1/metadata')
+var dynamic_data=await fetch('/api/v1/query/indicator/'+IndicatorCode+'?database=sspi_clean_api_data')
+var country_group_data=await country_groups.json()
+var dynamic_data_table=await dynamic_data.json()
+console.log(country_group_data)
+console.log(dynamic_data_table)
+var table=new Tabulator("#dynamic-data-table",{data:dynamic_data_table,autoColumns:true,});}
+makeDynamicDataTable()
+async function makeIndicatorTable(){var table=new Tabulator("#example-table",{data:tabledata,autoColumns:true,});}
 makeIndicatorTable()
