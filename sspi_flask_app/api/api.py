@@ -60,9 +60,9 @@ def query_indicator(IndicatorCode):
     """
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
     if database == "sspi_raw_api_data":
-        indicator_data = sspi_raw_api_data.find({"IndicatorCode": IndicatorCode})
+        indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
     elif database == "sspi_clean_api_data":
-        indicator_data = sspi_clean_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
+        indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode})
     else:  
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
