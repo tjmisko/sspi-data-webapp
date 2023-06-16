@@ -76,8 +76,8 @@ def login():
 
 @auth_bp.route('/remote_login', methods=['POST'])
 def remote_login():
-    username = requests.get("username")
-    password = requests.get("password")
+    username = request.form.get("username")
+    password = request.form.get("password")
     user = User.query.filter_by(username=username).first()
     if user and flask_bcrypt.check_password_hash(user.password, password):
         login_user(user)
