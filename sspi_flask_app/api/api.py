@@ -146,6 +146,7 @@ def indicator_coverage(IndicatorCode):
     for country_code in nested_data.keys():
         country_data = nested_data[country_code]
         country_data["CountryCode"] = country_code
+        country_data["CountryName"] = countries.lookup(country_code).name
         return_data.append(country_data)
     return parse_json(return_data)
 
