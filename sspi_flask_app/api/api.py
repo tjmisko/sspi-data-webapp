@@ -132,11 +132,10 @@ def indicator_coverage(IndicatorCode):
     request_country_group = request.args.get("country_group", default = "sspi_67", type = str)
     country_codes = country_group(request_country_group)
     query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}}, {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
-    print(country_codes)
-    print(query_results)
-    
-
-    return "Not implemented yet"
+    long_dataframe = pd.DataFrame(query_results)
+    wide_dataframe = pd.pivot(long_dataframe, index="CountryCode", columns="YEAR", values="RAW")
+    print(wide_dataframe)
+    return parse_json(wide_dataframe.to_json(orient="index"))
 
 @login_required
 def store_raw_observation(observation, collection_time, RawDataDestination):
