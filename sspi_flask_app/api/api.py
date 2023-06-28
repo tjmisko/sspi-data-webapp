@@ -127,6 +127,17 @@ def api_coverage():
     #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data_object)
 
+@api_bp.route('/coverage/<IndicatorCode>')
+def indicator_coverage(IndicatorCode):
+    request_country_group = request.args.get("country_group", default = "sspi_67", type = str)
+    country_codes = country_group(request_country_group)
+    query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}}, {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
+    print(country_codes)
+    print(query_results)
+    
+
+    return "Not implemented yet"
+
 @login_required
 def store_raw_observation(observation, collection_time, RawDataDestination):
     """
