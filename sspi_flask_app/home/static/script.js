@@ -1,9 +1,4 @@
-async function makeAPICoverageReport(){var endpoint_coverage=await fetch('/api/v1/api_coverage')
-var endpoint_coverage_table=await endpoint_coverage.json()
-console.log(endpoint_coverage_table)
-var table=new Tabulator("#api-link-coverage-data-table",{data:endpoint_coverage_table,autoColumns:true,});}
-makeAPICoverageReport()
-console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const BarChartCanvas=document.getElementById('BarChart');const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}});makeBarChart('BIODIV')
+var table=new Tabulator("#api-link-coverage-data-table",{ajaxURL:"/api/v1/api_coverage",columns:[{title:"Indicator Code",field:"IndicatorCode",formatter:"textarea"},{title:"Collect Method Implemented",field:"collect_implemented",formatter:"tickCross"},{title:"Compute Method Implemented",field:"compute_implemented",formatter:"tickCross"}]});console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const BarChartCanvas=document.getElementById('BarChart');const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}});makeBarChart('BIODIV')
 raw=false
 async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/indicator/'+IndicatorCode)
 let indicator_data=await response.json()
