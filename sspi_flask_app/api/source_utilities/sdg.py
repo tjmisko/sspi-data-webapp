@@ -63,7 +63,7 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
             try:
                 mean_across_series = sum([float(x) for x in intermediate_obs_dict[cou][year].values()])/3
             except ValueError:
-                mean_across_series = float("nan")
+                mean_across_series = "NaN"
             new_observation = {
                 "CountryCode": cou,
                 "IndicatorCode": "BIODIV",

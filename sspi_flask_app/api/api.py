@@ -11,6 +11,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
 import pandas as pd
+import numpy as np
 import re
 
 def parse_json(data):
@@ -129,13 +130,22 @@ def api_coverage():
 
 @api_bp.route('/coverage/<IndicatorCode>')
 def indicator_coverage(IndicatorCode):
+    """
+    Use the format argument to control whether the document is formatted for the website table
+    """
     request_country_group = request.args.get("country_group", default = "sspi_67", type = str)
     country_codes = country_group(request_country_group)
-    query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}}, {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
-    long_dataframe = pd.DataFrame(query_results)
-    wide_dataframe = pd.pivot(long_dataframe, index="CountryCode", columns="YEAR", values="RAW")
-    print(wide_dataframe)
-    return parse_json(wide_dataframe.to_json(orient="index"))
+    query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}},                                             {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
+    long_data = pd.DataFrame(query_results)
+    long_data = long_data.astype({"YEAR": int, "RAW": float})
+    wide_dataframe = pd.pivot(long_data, index="CountryCode", columns="YEAR", values="RAW")
+    nested_data = json.loads(wide_dataframe.to_json(orient="index"))
+    return_data = []
+    for country_code in nested_data.keys():
+        country_data = nested_data[country_code]
+        country_data["CountryCode"] = country_code
+        return_data.append(country_data)
+    return parse_json(return_data)
 
 @login_required
 def store_raw_observation(observation, collection_time, RawDataDestination):
@@ -161,7 +171,7 @@ def post_static_data():
     return redirect(url_for('datatest_bp.database'))
 
 class DeleteIndicatorForm(FlaskForm):
-    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
+    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Delete')
 
@@ -186,7 +196,12 @@ def delete():
             pre = sspi_raw_api_data.count_documents({"collection-info.RawDataDestination": IndicatorCode})
             sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode})
             post = sspi_raw_api_data.count_documents({"collection-info.RawDataDestination": IndicatorCode})
+        elif delete_indicator_form.database.data == "sspi_clean_api_data":
+            pre = sspi_clean_api_data.count_documents({"IndicatorCode": IndicatorCode})
+            sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode})
+            post = sspi_clean_api_data.count_documents({"IndicatorCode": IndicatorCode})
         flash("Deleted " + str(pre - post) + " documents")
+
     if request.method == "POST" and clear_database_form.validate_on_submit():
         if clear_database_form.database.data == clear_database_form.database_confirm.data:
             if clear_database_form.database.data == "sspi_main_data_v3":
