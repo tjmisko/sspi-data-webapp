@@ -221,7 +221,8 @@ def country_groups():
     Return a list of all country groups in the database
     """
     query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
-    return query_result
+    return parse_json(query_result.keys())
+
 
 # utility functions
 def format_m49_as_string(input):
