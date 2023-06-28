@@ -223,6 +223,13 @@ def country_groups():
     query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
     return parse_json(query_result.keys())
 
+@api_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
+def country_group(country_group):
+    """
+    Return a list of all countries in a given country group
+    """
+    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
+    return query_result
 
 # utility functions
 def format_m49_as_string(input):
