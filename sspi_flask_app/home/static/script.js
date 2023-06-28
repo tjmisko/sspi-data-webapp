@@ -1,3 +1,8 @@
+async function makeAPICoverageReport(){var endpoint_coverage=await fetch('/api/v1/api_coverage')
+var endpoint_coverage_table=await endpoint_coverage.json()
+console.log(endpoint_coverage_table)
+var table=new Tabulator("#api-link-coverage-data-table",{data:endpoint_coverage_table,autoColumns:true,});}
+makeAPICoverageReport()
 console.log("makeGraph.js loaded with chart.js version: "+Chart.version);const BarChartCanvas=document.getElementById('BarChart');const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}});makeBarChart('BIODIV')
 raw=false
 async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/indicator/'+IndicatorCode)
@@ -14,13 +19,5 @@ IndicatorCode=null;}}
 function getCountries(indicator_data){return indicator_data.map(data=>data.Country)}
 function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
-async function makeDynamicDataTable(IndicatorCode="BIODIV"){var country_groups=await fetch('/api/v1/metadata')
-var dynamic_data=await fetch('/api/v1/query/indicator/'+IndicatorCode+'?database=sspi_clean_api_data')
-var country_group_data=await country_groups.json()
-var dynamic_data_table=await dynamic_data.json()
-console.log(country_group_data)
-console.log(dynamic_data_table)
-var table=new Tabulator("#dynamic-data-table",{data:dynamic_data_table,autoColumns:true,});}
-makeDynamicDataTable()
 async function makeIndicatorTable(){var table=new Tabulator("#example-table",{data:tabledata,autoColumns:true,});}
 makeIndicatorTable()
