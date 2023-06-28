@@ -121,8 +121,10 @@ def api_coverage():
     endpoints = [str(r) for r in app.url_map.iter_rules()]
     collect_implemented = [re.search(r'(?<=api/v1/collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=api/v1/collect/)(?!static)[\w]*', r)]
     compute_implemented = [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r)]
-    coverage_data = {"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
-    return parse_json(coverage_data)
+    collect_list = [int(c in collect_implemented) for c in all_indicators]
+    compute_list = [int(c in compute_implemented) for c in all_indicators]
+    #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
+    return parse_json({"indicator": all_indicators, "collect": collect_list, "compute": compute_list})
 
 @login_required
 def store_raw_observation(observation, collection_time, RawDataDestination):
