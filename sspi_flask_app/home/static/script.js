@@ -14,5 +14,6 @@ IndicatorCode=null;}}
 function getCountries(indicator_data){return indicator_data.map(data=>data.Country)}
 function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
-async function makeIndicatorTable(){var table=new Tabulator("#example-table",{data:tabledata,autoColumns:true,});}
+async function makeIndicatorTable(){var tabledata=await fetch('/api/v1/metadata/indicator_table')
+var table=new Tabulator("#example-table",{data:tabledata,autoColumns:true,});}
 makeIndicatorTable()
