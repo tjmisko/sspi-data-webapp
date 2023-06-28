@@ -58,11 +58,15 @@ def query_indicator(IndicatorCode):
     """
     Take an indicator code and return the data
     """
+    country_group = request.args.get('country_group', default = "all", type = str)
+    if country_group != "all":
+
+        query_parameters = {"CountryGroup": country_group}
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
     if database == "sspi_raw_api_data":
         indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
     elif database == "sspi_clean_api_data":
-        indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode})
+        indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode}, {"_id": 0, "Intermediates": 0})
     else:  
         indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
     return parse_json(indicator_data)
@@ -108,8 +112,8 @@ def download():
     else:
         return "Invalid format"
 
-@api_bp.route('/coverage')
-def coverage():
+@api_bp.route('/api_coverage')
+def api_coverage():
     endpoints = [str(r) for r in app.url_map.iter_rules()]
     collect_implemented = [re.search(r'(?<=api/v1/collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=api/v1/collect/)(?!static)[\w]*', r)]
     compute_implemented = [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r)]
@@ -198,11 +202,26 @@ def metadata():
     return parse_json(sspi_metadata.find())
 
 @api_bp.route("/metadata", methods=["POST"])
-@login_required
 def post_metadata():
     data = json.loads(request.data)
-    sspi_metadata.insert_one(data)
+    sspi_metadata.insert_many(data)
     return redirect(url_for('datatest_bp.database'))
+
+@api_bp.route("/metadata/indicator_codes", methods=["GET"])
+def indicator_codes():
+    """
+    Return a list of all indicator codes in the database
+    """
+    query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
+    return query_result
+
+@api_bp.route("/metadata/country_groups", methods=["GET"])
+def country_groups():
+    """
+    Return a list of all country groups in the database
+    """
+    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
+    return query_result
 
 # utility functions
 def format_m49_as_string(input):
