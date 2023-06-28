@@ -138,8 +138,10 @@ def indicator_coverage(IndicatorCode):
     query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}},                                             {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
     long_data = pd.DataFrame(query_results)
     long_data = long_data.astype({"YEAR": int, "RAW": float})
+    long_data = long_data.round(3)
     wide_dataframe = pd.pivot(long_data, index="CountryCode", columns="YEAR", values="RAW")
     nested_data = json.loads(wide_dataframe.to_json(orient="index"))
+    print(nested_data)
     return_data = []
     for country_code in nested_data.keys():
         country_data = nested_data[country_code]

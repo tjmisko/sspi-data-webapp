@@ -11,3 +11,11 @@
 //         autoColumns:true, //create columns from data field names
 //     });
 // }
+
+var table = new Tabulator("#dynamic-data-table", {
+    ajaxURL:"/api/v1/coverage/BIODIV", //ajax URL
+    autoColumns:true, //create columns from data field names
+    height: "300px",
+    responsiveLayout:"collapse",
+    width: "100%"
+});
