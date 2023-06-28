@@ -114,6 +114,10 @@ def download():
 
 @api_bp.route('/api_coverage')
 def api_coverage():
+    """
+    Return a list of all endpoints and whether they are implemented
+    """
+    all_indicators = indicator_codes()
     endpoints = [str(r) for r in app.url_map.iter_rules()]
     collect_implemented = [re.search(r'(?<=api/v1/collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=api/v1/collect/)(?!static)[\w]*', r)]
     compute_implemented = [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r)]
@@ -186,7 +190,6 @@ def delete():
     return render_template('delete.html', delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
 
 @api_bp.route("/post", methods=["POST"])
-@login_required
 def post_data():
     data = json.loads(request.data)
     for observation in data:
