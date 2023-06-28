@@ -11,5 +11,3 @@
 //         autoColumns:true, //create columns from data field names
 //     });
 // }
-
-// makeDynamicDataTable()
