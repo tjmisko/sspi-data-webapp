@@ -1,14 +1,20 @@
 <header class="site-header">
-  <h1 class="site-title"> Sustainable and Shared-Prosperity Index </h1>
+  <a class="titlebox" href="/">
+    <div class="title-subdiv">S</div>
+    <div class="title-subdiv title-collapse">ustainable </div>
+    <div class="title-subdiv title-collapse">and </div>
+    <div class="title-subdiv">S</div>
+    <div class="title-subdiv title-collapse">hared-Prosperity </div>
+    <div class="title-subdiv">P</div>
+    <div class="title-subdiv title-collapse">olicy </div>
+    <div class="title-subdiv">I</div>
+    <div class="title-subdiv title-collapse">ndex</div>
+  </a>
   <div class="header-nav-bar">
-    <p> This is the site header area.  It is seperately loaded from the 
-      main page content and the site footer.  The footer and header will be
-      the same across pages.  This process is called 'modularization' or 
-      'separation of concerns'.
-    </p>
     <ol class="header-nav-bar-link-list">
       <li><a class="header-nav-bar-link" href="{{ url_for('home_bp.about') }}">About</a></li>
-      <li><a class="header-nav-bar-link" href="{{ url_for('home_bp.dashboard') }}"> Data</a></li>
+      <li><a class="header-nav-bar-link" href="{{ url_for('home_bp.methodology') }}"> Methodology </a></li>
+      <li><a class="header-nav-bar-link" href="{{ url_for('home_bp.data') }}"> Data</a></li>
       <li><a class="header-nav-bar-link" href="{{ url_for('home_bp.contact') }}"> Contact</a></li>
     </ol>
   </div>

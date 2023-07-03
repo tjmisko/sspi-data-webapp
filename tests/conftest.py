@@ -3,7 +3,7 @@ from config import DevConfig
 from sspi_flask_app import init_app
 import pytest
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def app():
     app = init_app(DevConfig)
     app.config.update({"TESTING": True})

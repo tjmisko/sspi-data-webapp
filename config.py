@@ -1,5 +1,6 @@
 from os import environ, path
 from dotenv import load_dotenv
+from datetime import timedelta
 
 basedir = path.abspath(path.dirname(__file__))
 print("basedir: " + basedir)
@@ -15,12 +16,13 @@ class Config:
     SASS_BIN = "/env/usr/bin/pyscss"
     ASSETS_DEBUG = False
     ASSETS_AUTO_BUILD = True
+    REMEMBER_COOKIE_DURATION=timedelta(days=30)
 
 class ProdConfig(Config):
     FLASK_ENV = 'production'
     DEBUG = False
     TESTING = False
-    DATABASE_URI = environ.get('PROD_DATABASE_URI')
+    SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI')
 
 class DevConfig(Config):
     FLASK_ENV = 'development'
