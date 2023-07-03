@@ -1,0 +1,85 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2> Data Visualizations</h2>
+<div class="datawindow"> 
+    <nav class="datanav">
+        <a class="datanavlink" href="/"> By Indicator </a>
+        <a class="datanavlink" href="/"> By Country </a>
+        <a class="datanavlink" href="/"> Country Comparison </a>
+    </nav>
+    <div class="dropdown">
+        <label for="Indicator">Indicator:</label>
+        <select name="Indicator" onchange="makeBarChart(value)">
+            <option value="BIODIV" selected="True"> Biodiversity </option>
+            <option value="IUCNRL">IUCN Red List Index</option>
+            <option value="NITROG">Sustainable Nitrogen Management</option>
+            <option value="WATMAN">Water Management</option>
+            <option value="STKHLM">Stockholm Convention</option>
+            <option value="DEFRST">Deforestation</option>
+            <option value="CARBON">Carbon Capture</option>
+            <option value="ALTNRG">Alternative Energy</option>
+            <option value="NRGINT">Energy Intensity</option>
+            <option value="AIRPOL">Air Pollution</option>
+            <option value="GTRANS">Green Transport</option>
+            <option value="BEEFMK">Beef Market</option>
+            <option value="COALPW">Coal Power</option>
+            <option value="MSWGEN">MSW</option>
+            <option value="EWASTE">E-Waste</option>
+            <option value="RECYCL">Recycling</option>
+            <option value="LFPART">Labor Force Participation</option>
+            <option value="CHILDW">Child Labor</option>
+            <option value="COLBAR">Collective Bagaining</option>
+            <option value="UNEMPL">Unemployment Benefits</option>
+            <option value="MATERN">Maternity Leave</option>
+            <option value="FATINJ">Fatal Injuries</option>
+            <option value="SENIOR">Seniors</option>
+            <option value="CRPTAX">Corporate Tax</option>
+            <option value="TAXREV">Tax Revenue</option>
+            <option value="TAXEVA">Tax Evasion</option>
+            <option value="FSTABL">Stability</option>
+            <option value="FDEPTH">Depth</option>
+            <option value="PUBACC">Public Access</option>
+            <option value="GINIPT">GINI</option>
+            <option value="ISHRAT">Income Share Ratio</option>
+            <option value="ENRPRI">Primary Net Enrollment</option>
+            <option value="ENRSEC">Lower Secondary Net Enrollment</option>
+            <option value="PUPTCH">Pupil to Teacher Ratio</option>
+            <option value="ATBRTH">Births Attended by Skilled Personnel</option>
+            <option value="DPTCOV">DPT Coverage</option>
+            <option value="PHYSPC">Physicians per 10,000</option>
+            <option value="FAMPLN">Family Planning</option>
+            <option value="CSTUNT">Child Stunting</option>
+            <option value="AQELEC">Electricity</option>
+            <option value="DRKWAT">Drinking Water</option>
+            <option value="SANSRV">Sanitation</option>
+            <option value="INTRNT">Internet</option>
+            <option value="TRNETW">Transport Network</option>
+            <option value="RULELW">Rule of Law</option>
+            <option value="PUBSRV">Public Services</option>
+            <option value="EDEMOC">Democracy</option>
+            <option value="UNCONV">UN Conventions</option>
+            <option value="GENDEQ">Gender Equality</option>
+            <option value="MURDER">Intentional Homicide</option>
+            <option value="CYBSEC">Cybersecurity</option>
+            <option value="SECAPP">Security</option>
+            <option value="INCARC">Incarceration</option>
+            <option value="ARMEXP">Arms Exports</option>
+            <option value="MILEXP">Military Expenditure</option>
+            <option value="RDFUND">R&D</option>
+            <option value="FORAID">Foreign Aid</option>
+        </select>
+    </div>
+    <canvas id="BarChart"></canvas>
+</div>
+<div class="datawindow">
+    <canvas id="CoverageChart"></canvas>
+</div>
+<h2> Indicator Table </h2>
+<div class="datawindow">
+    <div id="example-table"></div>
+    <script src="home_bp/script.js"></script>
+</div>
+
+
+{% endblock %}

@@ -1,48 +1,75 @@
 import json
 import time
 import requests
-from ..api import parse_json
 
-def collectAvailableGeoAreas(indicator_code):
+from ... import sspi_raw_api_data
+from flask_login import current_user
+from datetime import datetime
+from pycountry import countries
+from ..api import format_m49_as_string
+
+# Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
+    collection_time = datetime.now()
+    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
+    response = requests.get(url_source)
+    nPages = response.json().get('totalPages')
+    for p in range(1, nPages + 1):
+        new_url = url_source+ "&page=" + str(p)
+        print(new_url)
+        response = requests.get(new_url)
+        for r in response.json().get('data'):
+            sspi_raw_api_data.insert_one(
+                {"collection-info": {"CollectedBy": current_user.username,
+                                    "RawDataDestination": RawDataDestination,
+                                    "CollectedAt": collection_time}, 
+                "observation": r}
+            )
+        time.sleep(0.5)
+    return response
+
+def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
     """
-    To collect the data, we need to know which countries for which data is available to call
-    the data collection API
-
-    Here we call the data availability API to check what data is available
-
-    We process the request into a list of strings of m49 codes which we can feed into the data collection function
+    Takes in a list of observations from the sdg_pivot_data_api and returns a nested dictionary 
+    with only the relevant information extracted
     """
-    json_data = requests.get("https://unstats.un.org/sdgapi/v1/sdg/Indicator/" + indicator_code + "/GeoAreas").json()
-    m49_list = []
-    # add each geoAreaCode string to the m49_list to return
-    for observation in json_data:
-        # extract the m49_code from the json file
-        m49_string = observation["geoAreaCode"]
-        # fix issue where leading zeros have been chopped off from m49 codes
-        while len(m49_string) < 3:
-            m49_string = "0" + m49_string
-        # add the fixed string to the list
-        m49_list.append(m49_string)
-    return m49_list
+    intermediate_obs_dict = {}
+    for country in raw_sdg_pivot_data:
+        geoAreaCode = format_m49_as_string(country["observation"]["geoAreaCode"])
+        country_data = countries.get(numeric=geoAreaCode)
+        # make sure that the data corresponds to a valid country (gets rid of regional aggregates)
+        if not country_data:
+            continue
+        series = country["observation"]["series"]
+        annual_data_list = json.loads(country["observation"]["years"])
+        COU = country_data.alpha_3
+        # add the country to the dictionary if it's not there already
+        if COU not in intermediate_obs_dict.keys():
+            intermediate_obs_dict[COU] = {}
+        # iterate through each of the annual observations and add the appropriate entry
+        for obs in annual_data_list:
+            year = int(obs["year"][1:5])
+            if obs["value"] == '':
+                continue
+            if year not in intermediate_obs_dict[COU].keys():
+                intermediate_obs_dict[COU][year] = {}
+            intermediate_obs_dict[COU][year][series] = obs["value"]
+    return intermediate_obs_dict
+    
+def flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict):
+    final_data_list = []
+    for cou in intermediate_obs_dict.keys():
+        for year in intermediate_obs_dict[cou].keys():
+            try:
+                mean_across_series = sum([float(x) for x in intermediate_obs_dict[cou][year].values()])/3
+            except ValueError:
+                mean_across_series = float("nan")
 
-def collectSDGIndicatorData(indicator_code):
-    """
-    This function collects the data from the SDG database using the m49 code list we return in the previous function
-
-    Notice how we've separated the logic of getting the codes from the logic of calling the data api once we have them.
-    This allows us to write smaller chunks of code that are easier to test and reason about. 
-    """
-    base_url = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/Data?indicator=" + indicator_code
-    m49_list = collectAvailableGeoAreas(indicator_code)
-    big_observation_list = []
-    # add on the timePeriod variables to the URL
-    for year in range(2000,2023):
-        base_url = base_url + "&timePeriod=" + str(year)
-    # for each country in the m49 list, make a serparate call to the database
-    for country in m49_list:
-        country_url = base_url + "&areaCode=" + country
-        json_data = requests.get(country_url).json()
-        print(json_data)
-        time.sleep(5)
-        big_observation_list.append(json_data["data"])
-    return big_observation_list
+            new_observation = {
+                "CountryCode": cou,
+                "YEAR": year,
+                "RAW": mean_across_series,
+                "Intermediates": intermediate_obs_dict[cou][year]
+            }
+            final_data_list.append(new_observation)
+    return final_data_list

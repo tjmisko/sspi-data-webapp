@@ -1,0 +1,49 @@
+$home-page-color: rgb(81, 127, 103);
+$home-page-background-color: rgba(255, 255, 255, 1);
+$data-page-background-color: rgb(223, 223, 223);
+
+body {
+    background-color: $data-page-background-color;
+}
+.datawindow {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 95%;
+    margin: 2.5%;
+    align-items: center;
+    justify-content: center;
+    background-color: $home-page-background-color;
+    border: 2px;
+    border-color: black;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.1);
+}
+
+.datanav {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.datanavlink {
+    color: black;
+    text-decoration: none;
+    font-size: 1m;
+    padding: 10px;
+    &:hover{
+        transform: scale(1.05);
+        transition: 0.2s;
+    }
+}
+
+#indicator-table {
+    padding: 10px;
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    border-spacing: 15px;
+
+}
+

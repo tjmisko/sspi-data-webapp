@@ -1,5 +1,34 @@
 <footer class="site-footer">
-    <h1> This will eventually be the footer</h1>
-    <p> Some contacts and detailed sitenav. </p>
-    <a href="{{ url_for('auth_bp.login') }}">Administrator Login</a>
+    <h1 id="footer-title"> Sustainable and Shared-Prosperity Policy Index</h1>
+    <div class="footer-col-box">
+        <div class="footer-col">
+            <h2 class="footer-col-title">Data</h2>
+            <ul class="footer-col-list">
+                <li class="footer-link"><a>Compare Countries</a></li>
+                <li class="footer-link"><a>Scores by Indicator</a></li>
+                <li class="footer-link"><a>Scores by Country</a></li>
+                <li class="footer-link"><a>Indicator Table</a></li>
+                <li class="footer-link"><a>Data Sources</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h2 class="footer-col-title">Methodology</h2>
+            <ul class="footer-col-list">
+                <li class="footer-link"><a>Selecting Data Sources</a></li>
+                <li class="footer-link"><a>Scoring Policies</a></li>
+                <li class="footer-link"><a>Aggregation and Weighting</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h2 class="footer-col-title">About</h2>
+            <ul class="footer-col-list">
+                <li class="footer-link"><a>Project History</a></li>
+                <li class="footer-link"><a>Buddhist Economics</a></li>
+                <li class="footer-link"><a>Team Members</a></li>
+                <li class="footer-link"><a></a></li>
+                <li class="footer-link"><a></a></li>
+            </ul>
+        </div>
+    </div>     
+    <a id="admin-login" href="{{ url_for('auth_bp.login') }}">Administrator Login</a>
 </footer>
