@@ -1,10 +1,9 @@
-from flask import Blueprint
 from flask import current_app as app
 from ..models.usermodel import User, db
 from .. import login_manager, flask_bcrypt
 from sqlalchemy_serializer import SerializerMixin
 # load in the Flask class from the flask library
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, Blueprint, flash
 # load in the SQLAlchemy object to handle setting up the user data database
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
@@ -13,10 +12,11 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 # load in the packages that make the forms pretty for submitting login and
 # and restration data
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from dataclasses import dataclass
+import requests
 
 auth_bp = Blueprint(
     'auth_bp', __name__,
@@ -25,6 +25,7 @@ auth_bp = Blueprint(
 )
 
 login_manager.login_view = "auth_bp.login"
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -48,20 +49,39 @@ class RegisterForm(FlaskForm):
 # create a registration form for new users
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Username"})
+        min=4, max=20)], render_kw={"placeholder": "Username"}, label="Username")
     password = PasswordField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Password"})
-    submit = SubmitField("Login")
+        min=4, max=20)], render_kw={"placeholder": "Password"}, label="Password")
+    remember_me = BooleanField(default=False, label="Remember me for 30 days")
+    submit = SubmitField("Login as Administrator")
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    print(current_user)
+    if current_user.is_authenticated:
+        return redirect(url_for('home_bp.data'))
     login_form = LoginForm()
-    if login_form.validate_on_submit():
-        user = User.query.filter_by(username=login_form.username.data).first()
-        if user and flask_bcrypt.check_password_hash(user.password, login_form.password.data):
-            login_user(user)
-            return redirect(url_for('home_bp.dashboard'))               
-    return render_template('login.html', form=login_form)
+    if not login_form.validate_on_submit():
+        flash("Invalid Submission Format")
+        return render_template('login.html', form=login_form, error="Invalid Submission Format")
+    user = User.query.filter_by(username=login_form.username.data).first()
+    if user is None or not flask_bcrypt.check_password_hash(user.password, login_form.password.data):
+        flash("Invalid username or password")
+        return render_template('login.html', form=login_form, error="Invalid username or password")
+    if login_form.remember_me:
+        login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
+    login_user(user)
+    flash("Login Successful! Redirecting...")
+    return redirect(url_for('home_bp.data'))               
+
+@auth_bp.route('/remote_login', methods=['POST'])
+def remote_login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    user = User.query.filter_by(username=username).first()
+    if user and flask_bcrypt.check_password_hash(user.password, password):
+        login_user(user)
+    return redirect(url_for('home_bp.data'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -69,7 +89,9 @@ def logout():
     logout_user()
     return redirect(url_for('home_bp.home'))
 
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
@@ -78,5 +100,4 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
-
     return render_template('register.html', form=register_form)

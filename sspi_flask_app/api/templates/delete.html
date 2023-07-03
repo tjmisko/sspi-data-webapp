@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Page Title</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <style>
+        .message {
+            padding: 10px;
+            margin: 5px;
+            background-color: #f3f3f3
+        }
+        .form-box {
+            padding: 10px;
+            margin: 5px;
+        }
+        .form-item {
+            margin: 5px 0px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-box">
+        {% if messages %}
+        {% for message in get_flashed_messages() %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        <h1> Delete Indicator Data </h1>
+        <form method="POST" id="delete_indicator">
+            {{ delete_indicator_form.hidden_tag() }}
+            <div class="form-item"> {{ delete_indicator_form.database.label }}: {{ delete_indicator_form.database }} </div>
+            <div class="form-item"> {{ delete_indicator_form.indicator_code.label }}: {{ delete_indicator_form.indicator_code }} </div>
+            Deletion of data from the database is permanent and cannot be undone.  Do you wish to proceed? <br>
+            <div class="form-item"> {{ delete_indicator_form.submit }}</div>
+        </form>
+        <h1> Clear Database </h1>
+        <b> Danger! Clearing an entire database is a big deal! If you wish to proceed, type the name of the database you wish to clear in the fields below: </b>
+        <form method="POST" id="clear_database">
+            {{ clear_database_form.hidden_tag() }}
+            <div class="form-item"> {{ clear_database_form.database.label }}: {{ clear_database_form.database }} </div>
+            <div class="form-item"> {{ clear_database_form.database_confirm.label }}: {{ clear_database_form.database_confirm }} </div>
+            <div class="form-item"> {{ clear_database_form.submit }}</div>
+    </div>
+</body>
+</html>

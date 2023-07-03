@@ -8,6 +8,7 @@ lib/*
 lib64
 share/*
 flask_app/instance/database.db
+instance/*
 
 .env
 .flaskenv
@@ -15,4 +16,19 @@ flask_app/instance/database.db
 *.egg-info/
 
 __pycache__/
-instance/
+*.pyc
+instance
+*/__pycache__
+
+*.webassets-cache
+*/webassets-cache
+*.wsgi
+wsgi.py
+
+.htaccess
+*.log
+log/*
+.sass-cache/*
+.pytest_cache/*
+.sass-cache
+.pytest_cache
