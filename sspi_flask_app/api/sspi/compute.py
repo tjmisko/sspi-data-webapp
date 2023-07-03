@@ -1,7 +1,7 @@
 import re
 from flask import Blueprint, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
-from ...api.source_utilities.sdg import flatten_and_format_nested_sdg_dictionary, extract_sdg_pivot_data_to_nested_dictionary
+from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
 import json
 from bson import json_util
 from pycountry import countries
@@ -40,7 +40,8 @@ def compute_biodiv():
     raw_data = fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     # implement a computation function as an argument which can be adapted to different contexts
-    # how to handle imputations?
-    final_data_list = flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict)
+    final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
-    return json_util.dumps(final_data_list)
+    sspi_clean_api_data.insert_many(final_data_list)
+    return f"Inserted {len(final_data_list)} observations into the database."
+

@@ -28,14 +28,20 @@
         {% endfor %}
         {% endif %}
         <h1> Delete Indicator Data </h1>
-        <form method="POST">
-            {{ form.hidden_tag() }}
-            <div class="form-item"> {{ form.database.label }}: {{ form.database }} </div>
-            <div class="form-item"> {{ form.indicator_code.label }}: {{ form.indicator_code }} </div>
+        <form method="POST" id="delete_indicator">
+            {{ delete_indicator_form.hidden_tag() }}
+            <div class="form-item"> {{ delete_indicator_form.database.label }}: {{ delete_indicator_form.database }} </div>
+            <div class="form-item"> {{ delete_indicator_form.indicator_code.label }}: {{ delete_indicator_form.indicator_code }} </div>
             Deletion of data from the database is permanent and cannot be undone.  Do you wish to proceed? <br>
-            <div class="form-item"> {{ form.submit }}</div>
+            <div class="form-item"> {{ delete_indicator_form.submit }}</div>
         </form>
+        <h1> Clear Database </h1>
+        <b> Danger! Clearing an entire database is a big deal! If you wish to proceed, type the name of the database you wish to clear in the fields below: </b>
+        <form method="POST" id="clear_database">
+            {{ clear_database_form.hidden_tag() }}
+            <div class="form-item"> {{ clear_database_form.database.label }}: {{ clear_database_form.database }} </div>
+            <div class="form-item"> {{ clear_database_form.database_confirm.label }}: {{ clear_database_form.database_confirm }} </div>
+            <div class="form-item"> {{ clear_database_form.submit }}</div>
     </div>
-    
 </body>
 </html>

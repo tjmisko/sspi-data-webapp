@@ -1,5 +1,31 @@
-from sspi_flask_app.api.sspi.compute import format_m49_as_stringa
+from sspi_flask_app.api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
+from sspi_flask_app.api.sspi.compute import fetch_raw_data
 import json
-def test_compute_biodiv():
-    json.loads([{'_id': {'$oid': '647a0c3524d162df31d2d48f'}, 'collection-info': {'CollectedBy': 'tjmisko', 'RawDataDestination': 'BIODIV', 'CollectedAt': {'$date': '2023-06-02T11:35:13.966Z'}}, 'observation': {'goal': '14', 'target': '14.5', 'indicator': '14.5.1', 'series': 'ER_MRN_MPA', 'seriesDescription': 'Average proportion of Marine Key Biodiversity Areas (KBAs) covered by protected areas (%)', 'seriesCount': '6049', 'geoAreaCode': '4', 'geoAreaName': 'Afghanistan', 'timeCoverage': None, 'upperBound': None, 'lowerBound': None, 'basePeriod': None, 'source': None, 'geoInfoUrl': None, 'age': None, 'freq': None, 'sex': None, 'location': None, 'units': 'PERCENT', 'level_status': None, 'name_of_international_agreement': None, 'education_level': None, 'type_of_product': None, 'type_of_facilities': None, 'name_of_international_institution': None, 'type_of_occupation': None, 'tariff_regime_status': None, 'mode_of_transportation': None, 'type_of_mobile_technology': None, 'name_of_non_communicable_disease': None, 'type_of_skill': None, 'type_of_speed': None, 'migratory_status': None, 'disability_status': None, 'hazard_type': None, 'ihr_capacity': None, 'reporting_type': None, 'cities': None, 'activity': None, 'policy_domains': None, 'years': '[{"year":"[2001]","value":"N","valueType":"String","footnotes":"Non-relevant","Nature":"C","Source Type":"","UnitMultiplier":"","Units":"PERCENT","Management Level":"","Observation Status":"A","Geo Info Type":""},{"year":"[2002]","value":"N","valueType":"String","footnotes":"Non-relevant","Nature":"C","Source Type":"","UnitMultiplier":"","Units":"PERCENT","Management Level":"","Observation Status":"A","Geo Info Type":""},{"year":"[2007]","value":"N","valueType":"String","footnotes":"Non-relevant","Nature":"C","Source Type":"","UnitMultiplier":"","Units":"PERCENT","Management Level":"","Observation Status":"A","Geo Info Type":""},{"year":"[2013]","value":"N","valueType":"String","footnotes":"Non-relevant","Nature":"C","Source Type":"","UnitMultiplier":"","Units":"PERCENT","Management Level":"","Observation Status":"A","Geo Info Type":""},{"year":"[2019]","value":"N","valueType":"String","footnotes":"Non-relevant","Nature":"C","Source Type":"","UnitMultiplier":"","Units":"PERCENT","Management Level":"","Observation Status":"A","Geo Info Type":""}]'}}, ])
+import math
+
+def test_extract():
+    test_data = fetch_raw_data("BIODIV")[0:2]
+    nested_dict = extract_sdg_pivot_data_to_nested_dictionary(test_data)
+    assert "AFG" in nested_dict.keys()
+    assert "ALB" in nested_dict.keys()
+    assert "ER_MRN_MPA" in nested_dict["AFG"][2010].keys()
+    assert "N" in nested_dict["AFG"][2010].values()
+
+def test_flatten():
+    test_data = {"USA": {2018: {"a": 1, "b": 2, "c": 3}, 
+                         2019: {"d": 4, "e": 5, "f": 6}},
+                 "CHN": {2018: {"a": 1, "b": 2, "c": "N"},
+                         2019: {"d": 3, "e": 4, "f": 5}},
+                 "RUS": {2018: {},
+                         2019: {"a": 1}}}
+    final_data_list = flatten_nested_dictionary_biodiv(test_data)
+    assert len(final_data_list) == 6
+    assert final_data_list[0]["CountryCode"] == "USA"
+    assert final_data_list[0]["RAW"] == 2
+    assert final_data_list[2]["CountryCode"] == "CHN"
+    assert math.isnan(final_data_list[2]["RAW"])
+    assert final_data_list[4]["CountryCode"] == "RUS"
+    assert final_data_list[4]["RAW"] == 0 
+    assert final_data_list[5]["RAW"] == 1/3
+                 
     
