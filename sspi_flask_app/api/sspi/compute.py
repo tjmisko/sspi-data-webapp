@@ -45,12 +45,12 @@ def compute_biodiv():
     sspi_clean_api_data.insert_many(final_data_list)
     return f"Inserted {len(final_data_list)} observations into the database."
 
-# @compute_bp.route("/RDLST", methods = ['GET'])
-# def compute_rdlst():
-#     if not indicator_data_available("RDLST"):
-#         return "Data unavailable. Try running collect."
-#     raw_data = fetch_raw_data("RDLST")
-
-
-#run collect route to see if it works
-# IUCN, Redlist
+@compute_bp.route("/REDLST", methods = ['GET'])
+def compute_rdlst():
+    if not indicator_data_available("REDLST"):
+        return "Data unavailable. Try running collect."
+    raw_data = fetch_raw_data("REDLST")
+    intermediate_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    final_list = flatten_nested_dictionary_biodiv(intermediate_dict)
+    sspi_clean_api_data.insert_many(final_list)
+    return f"Inserted {len(final_list)} observations into the database."
