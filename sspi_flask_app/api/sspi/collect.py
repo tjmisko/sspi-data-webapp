@@ -36,3 +36,9 @@ def stkhlm():
 def coalpw():
     collectIEAData("TESbySource", "COALPW")
     return "success!"
+
+@collect_bp.route("ALTNRG", methods=['GET'])
+@login_required
+def altnrg():
+    collectIEAData("TFCbySource", "ALTNRG")
+    return "success!"

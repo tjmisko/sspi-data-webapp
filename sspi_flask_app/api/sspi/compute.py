@@ -6,6 +6,7 @@ import json
 from bson import json_util
 from pycountry import countries
 from ..api import fetch_raw_data
+import pandas as pd
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -45,3 +46,13 @@ def compute_biodiv():
     sspi_clean_api_data.insert_many(final_data_list)
     return f"Inserted {len(final_data_list)} observations into the database."
 
+@compute_bp.route("/ALTNRG", methods=['GET'])
+def compute_altnrg():
+    if not indicator_data_available("ALTNRG"):
+        return "Data unavailable. Try running collect."
+    raw_data = fetch_raw_data("ALTNRG")
+    lst = []
+    for observation in raw_data:
+        lst.append(observation["observation"])
+    pd.pivot(pd.DataFrame(lst), index="short") 
+    return "success"
