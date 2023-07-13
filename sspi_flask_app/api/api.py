@@ -29,21 +29,6 @@ api_bp = Blueprint(
     url_prefix='/api/v1'
 )
 
-@api_bp.route("/country/lookup")
-def countryLookup(countryData=''):
-    """
-    Take country data (a name or code) and return a string of a pycountry country object
-    """
-    if request.args:
-        countryData = escape(request.args.get('countryData', default = '', type = str))
-    try:
-        print("countryData:", countryData)
-        country = countries.search_fuzzy(countryData)[0]
-        print("Fuzzy lookup guessed that", countryData, "is", country.name)
-    except LookupError:
-       return "country not found"
-    return str(country)
-
 @api_bp.route("/query")
 def query_full_database():
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
@@ -157,14 +142,11 @@ def store_raw_observation(observation, collection_time, RawDataDestination):
     - Observation to be passed as a well-formed dictionary for entry into pymongo
     - RawDataDestination is the indicator code for the indicator that the observation is for
     """
-    if sspi_raw_api_data.find({"observation": observation}):
-        print("Observation already in database")
-    else:
-        sspi_raw_api_data.insert_one(
-        {"collection-info": {"CollectedBy": current_user.username,
-                            "RawDataDestination": RawDataDestination,
-                            "CollectedAt": collection_time}, 
-        "observation": observation})
+    sspi_raw_api_data.insert_one(
+    {"collection-info": {"CollectedBy": current_user.username,
+                        "RawDataDestination": RawDataDestination,
+                        "CollectedAt": collection_time}, 
+    "observation": observation})
 
 @fresh_login_required
 @api_bp.route("/post_static_data", methods=["POST"])

@@ -1,6 +1,6 @@
 
 
-var table = new Tabulator("#dynamic-data-table", {
+var dynamicDataTable = new Tabulator("#dynamic-data-table", {
     ajaxURL:"/api/v1/coverage/BIODIV", //ajax URL
     height: "400px",
     headerSortClickElement:"icon",
@@ -30,5 +30,9 @@ var table = new Tabulator("#dynamic-data-table", {
         {title: 2020, field: "2020", formatter:"string"},
         {title: 2021, field: "2021", formatter:"string"},
         {title: 2022, field: "2022", formatter:"string"}
+    ],
+    initialSort:[
+        {column:"CountryName", dir:"asc"}
     ]
 });
+
