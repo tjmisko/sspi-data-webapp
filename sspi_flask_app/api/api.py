@@ -20,8 +20,6 @@ def parse_json(data):
 def print_json(data):
     print(json.dumps(data, indent=4, sort_keys=True))
 
-
-
 api_bp = Blueprint(
     'api_bp', __name__,
     template_folder='templates',
