@@ -52,7 +52,6 @@ def compute_altnrg():
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("ALTNRG")
     lst = []
-    for observation in raw_data:
-        lst.append(observation["observation"])
-    pd.pivot(pd.DataFrame(lst), index="short") 
-    return "success"
+    for row in raw_data:
+        lst.append(row["observation"])
+    return parse_json(set([e["product"]for e in lst]))
