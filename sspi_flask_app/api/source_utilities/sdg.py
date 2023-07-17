@@ -73,3 +73,19 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
             }
             final_data_list.append(new_observation)
     return final_data_list
+
+def flatten_nested_dictionary_redlst(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict.keys():
+        for year in intermediate_obs_dict.keys():
+            value = intermediate_obs_dict[country][year]["value"]
+            if not isinstance(value, float):
+               value = "NaN"
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "REDLST",
+                "YEAR": year,
+                "RAW": value
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst

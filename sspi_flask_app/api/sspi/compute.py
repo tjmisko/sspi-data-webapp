@@ -1,7 +1,7 @@
 import re
 from flask import Blueprint, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
-from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
+from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 import json
 from bson import json_util
 from pycountry import countries
@@ -50,7 +50,11 @@ def compute_rdlst():
     if not indicator_data_available("REDLST"):
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("REDLST")
-    intermediate_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    final_list = flatten_nested_dictionary_biodiv(intermediate_dict)
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    print (intermediate_obs_dict)
+   
+   # figure out way to see whats actually in the intermediate dictionary, then see how to extract wanted data into final
+   
+    final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     sspi_clean_api_data.insert_many(final_list)
     return f"Inserted {len(final_list)} observations into the database."
