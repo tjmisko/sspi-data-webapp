@@ -54,4 +54,4 @@ def compute_altnrg():
     lst = []
     for row in raw_data:
         lst.append(row["observation"])
-    return parse_json(set([e["product"]for e in lst]))
+    return parse_json()
