@@ -25,6 +25,6 @@ if __name__ == "__main__":
 7) Create a `.env` file in the top level directory containing a `SECRET_KEY`, which can be any string you like (so long as its wrapped in `''`), and an `SQLALCHEMY_DATABASE_URI` which contains the absolute file path to your `database.db` file.  Remember that file paths look different on Unix vs. Windows machines.   Be sure to use the appropriate one for you.  Further, the file path must be prefixed with `sqlite:///`.  You may also have to use escape characters depending on your path—YMMV.  Here's an example of what your `.env` should look like when you're done.
 ```
 SECRET_KEY='thiscanbewhateveryouwant'
-SQLALCHEMY_DATABASE_URI=
+SQLALCHEMY_DATABASE_URI="sqlite:////Users/tjmisko/Documents/sspi-flask-app/instance/database.db"
 ```
 8) Run the `flask run` command from your terminal in the top level directory, which contains the `wsgi.py` file.  Your application should boot, and you can open it in the browser.
