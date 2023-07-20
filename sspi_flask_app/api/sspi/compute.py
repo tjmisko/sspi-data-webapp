@@ -51,10 +51,9 @@ def compute_rdlst():
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    print (intermediate_obs_dict)
-   
-   # figure out way to see whats actually in the intermediate dictionary, then see how to extract wanted data into final
-   
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
+    
+    # return parse_json(final_list)
+
     sspi_clean_api_data.insert_many(final_list)
     return f"Inserted {len(final_list)} observations into the database."
