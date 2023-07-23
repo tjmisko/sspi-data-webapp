@@ -20,12 +20,17 @@ def parse_json(data):
 def print_json(data):
     print(json.dumps(data, indent=4, sort_keys=True))
 
+
 api_bp = Blueprint(
     'api_bp', __name__,
     template_folder='templates',
     static_folder='static',
     url_prefix='/api/v1'
 )
+
+@api_bp.route("/", methods=["GET"])
+def api_home():
+    return render_template("api.html")
 
 @api_bp.route("/query")
 def query_full_database():
