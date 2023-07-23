@@ -26,6 +26,12 @@ def redlst():
     collectSDGIndicatorData("15.5.1", "REDLST")
     return "success!"
 
+@collect_bp.route("WATMAN", methods=['GET'])
+def watman():
+    collectSDGIndicatorData("6.4.1", "WATMAN")
+    collectSDGIndicatorData("6.4.2", "WATMAN")
+    return "success!"
+
 @collect_bp.route("STKHLM", methods=['GET'])
 @login_required
 def stkhlm():
