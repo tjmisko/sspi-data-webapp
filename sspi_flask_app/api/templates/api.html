@@ -18,10 +18,17 @@
 
 <h2>Database</h2>
 <h3>SSPI Main Data</h3>
-    <script>$.get("/api/v1/DatabaseStatus/")</script>
+    <div id="sspi_main_data_v3"></div>
+    <script>$.get("/api/v1/status/database/sspi_main_data_v3", (data)=>{$('#sspi_main_data_v3').html(data)})</script>
 <h3>SSPI Raw API Data</h3>
+    <div id="sspi_raw_api_data"></div>
+    <script>$.get("/api/v1/status/database/sspi_raw_api_data", (data)=>{$('#sspi_raw_api_data').html(data)})</script>
 <h3>SSPI Clean API Data</h3>
+    <div id="sspi_clean_api_data"></div>
+    <script>$.get("/api/v1/status/database/sspi_clean_api_data", (data)=>{$('#sspi_clean_api_data').html(data)})</script>
 <h3>SSPI Imputed API Data</h3>
+    <div id="sspi_imputed_api_data"></div>
+    <script>$.get("/api/v1/status/database/sspi_main_data_v3", (data)=>{$('#sspi_imputed_api_data').html(data)})</script>
 <h3>SSPI Metadata</h3>
 
 </body>
