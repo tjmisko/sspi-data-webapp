@@ -166,6 +166,13 @@ class RemoveDuplicatesForm(FlaskForm):
     indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Remove Duplicates')
 
+@api_bp.route("/remove_duplicates", methods=["POST"])
+def remove_duplicates():
+    database = request.form.get("database")
+    IndicatorCode = request.form.get("indicator_code")
+    print(database, IndicatorCode)
+    return redirect(url_for("api_bp.delete"))
+
 class DeleteIndicatorForm(FlaskForm):
     database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
@@ -182,15 +189,6 @@ def delete():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     delete_indicator_form = DeleteIndicatorForm(request.form)
     clear_database_form = ClearDatabaseForm(request.form)
-    if request.method == "POST" and remove_duplicates_form.validate_on_submit():
-        IndicatorCode = remove_duplicates_form.indicator_code.data
-        data = sspi_raw_api_data.aggregate([
-            {"$group" : { "_id": "$observation", "count": { "$sum": 1 } } },
-            {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } }, 
-            {"$project": {"name" : "$_id", "_id" : 0}}
-        ])
-        return parse_json(data)
-        
     if request.method == "POST" and delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
         if delete_indicator_form.database.data == "sspi_main_data_v3":
