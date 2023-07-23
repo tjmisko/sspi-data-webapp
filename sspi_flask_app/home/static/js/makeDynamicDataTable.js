@@ -1,7 +1,7 @@
 
 
 var dynamicDataTable = new Tabulator("#dynamic-data-table", {
-    ajaxURL:"/api/v1/coverage/BIODIV", //ajax URL
+    ajaxURL:"/api/v1/dynamic/BIODIV", //ajax URL
     height: "400px",
     headerSortClickElement:"icon",
     columns:[

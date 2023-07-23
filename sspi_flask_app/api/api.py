@@ -120,15 +120,15 @@ def api_coverage():
     #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data_object)
 
-@api_bp.route('/coverage/<IndicatorCode>')
-def indicator_coverage(IndicatorCode):
+@api_bp.route('/dynamic/<IndicatorCode>')
+def get_dynamic_data(IndicatorCode):
     """
     Use the format argument to control whether the document is formatted for the website table
     """
     request_country_group = request.args.get("country_group", default = "sspi_67", type = str)
     country_codes = country_group(request_country_group)
     query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}},                                             {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
-    long_data = pd.DataFrame(query_results)
+    long_data = pd.DataFrame(query_results).drop_duplicates()
     long_data = long_data.astype({"YEAR": int, "RAW": float})
     long_data = long_data.round(3)
     wide_dataframe = pd.pivot(long_data, index="CountryCode", columns="YEAR", values="RAW")
@@ -154,12 +154,17 @@ def store_raw_observation(observation, collection_time, RawDataDestination):
                         "CollectedAt": collection_time}, 
     "observation": observation})
 
-@fresh_login_required
 @api_bp.route("/post_static_data", methods=["POST"])
+@fresh_login_required
 def post_static_data():
     data = json.loads(request.data)
     sspi_main_data_v3.insert_many(data)
     return redirect(url_for('datatest_bp.database'))
+
+class RemoveDuplicatesForm(FlaskForm):
+    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
+    indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
+    submit = SubmitField('Remove Duplicates')
 
 class DeleteIndicatorForm(FlaskForm):
     database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
@@ -174,24 +179,27 @@ class ClearDatabaseForm(FlaskForm):
 @api_bp.route("/delete", methods=["GET", "POST"])
 @login_required
 def delete():
+    remove_duplicates_form = RemoveDuplicatesForm(request.form)
     delete_indicator_form = DeleteIndicatorForm(request.form)
     clear_database_form = ClearDatabaseForm(request.form)
+    if request.method == "POST" and remove_duplicates_form.validate_on_submit():
+        IndicatorCode = remove_duplicates_form.indicator_code.data
+        data = sspi_raw_api_data.aggregate([
+            {"$group" : { "_id": "$observation", "count": { "$sum": 1 } } },
+            {"$match": {"_id" :{ "$ne" : null } , "count" : {"$gt": 1} } }, 
+            {"$project": {"name" : "$_id", "_id" : 0}}
+        ])
+        return parse_json(data)
+        
     if request.method == "POST" and delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
-        print("successful validation of delete method")
         if delete_indicator_form.database.data == "sspi_main_data_v3":
-            pre = sspi_main_data_v3.count_documents({"IndicatorCode": IndicatorCode})
-            sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode})
-            post = sspi_main_data_v3.count_documents({"IndicatorCode": IndicatorCode})
+            count = sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode})
         elif delete_indicator_form.database.data == "sspi_raw_api_data":
-            pre = sspi_raw_api_data.count_documents({"collection-info.RawDataDestination": IndicatorCode})
-            sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode})
-            post = sspi_raw_api_data.count_documents({"collection-info.RawDataDestination": IndicatorCode})
+            count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode})
         elif delete_indicator_form.database.data == "sspi_clean_api_data":
-            pre = sspi_clean_api_data.count_documents({"IndicatorCode": IndicatorCode})
-            sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode})
-            post = sspi_clean_api_data.count_documents({"IndicatorCode": IndicatorCode})
-        flash("Deleted " + str(pre - post) + " documents")
+            count = sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode})
+        flash("Deleted " + str(count) + " documents")
 
     if request.method == "POST" and clear_database_form.validate_on_submit():
         if clear_database_form.database.data == clear_database_form.database_confirm.data:
@@ -199,7 +207,7 @@ def delete():
             flash("Cleared database " + clear_database_form.database.data)
         else:
             flash("Database names do not match")
-    return render_template('delete.html', delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
+    return render_template('delete.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
 
 @api_bp.route("/post", methods=["POST"])
 def post_data():
