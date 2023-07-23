@@ -28,7 +28,7 @@
         {% endfor %}
         {% endif %}
         <h1> Remove Duplicate Data</h1>
-        <form method="POST" id="remove_duplicates">
+        <form action="/api/v1/remove_duplicates" method="POST" id="remove_duplicates">
             <div class="form-item">{{ remove_duplicates_form.database.label }}: {{ remove_duplicates_form.database }} </div>
             <div class="form-item">{{ remove_duplicates_form.indicator_code.label }}: {{ remove_duplicates_form.indicator_code }} </div>
             <div class="form-item">{{ remove_duplicates_form.submit }} </div>
