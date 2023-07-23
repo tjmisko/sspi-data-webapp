@@ -32,9 +32,11 @@ api_bp = Blueprint(
 def api_home():
     return render_template("api.html")
 
-@api_bp.route("/database/<database>/status")
-def get_database_status():
-    return render_template("database_status.html")
+@api_bp.route("/status/database/<database>")
+def get_database_status(database):
+
+    return render_template("database_status.html", database=database)
+
 @api_bp.route("/query")
 def query_full_database():
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
@@ -273,3 +275,14 @@ def fetch_raw_data(RawDataDestination):
     mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
+
+def lookup_database(database_name):
+    if database_name == "sspi_main_data_v3":
+        return sspi_main_data_v3
+    elif database_name == "sspi_raw_api_data":
+        return sspi_raw_api_data
+    elif database_name == "sspi_clean_api_data":
+        return sspi_clean_api_data
+    elif database_name == "sspi_metadata":
+        return sspi_metadata
+    
