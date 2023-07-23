@@ -11,12 +11,15 @@ from ..api import format_m49_as_string
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
     collection_time = datetime.now()
+    #session = requests.Session()
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
+    print(url_source)
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
-    for p in range(1, nPages + 1):
+    print(nPages)
+    for p in range(1, nPages):
         new_url = url_source+ "&page=" + str(p)
-        print(new_url)
+        print(p)
         response = requests.get(new_url)
         for r in response.json().get('data'):
             sspi_raw_api_data.insert_one(
@@ -25,7 +28,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
                                     "CollectedAt": collection_time}, 
                 "observation": r}
             )
-        time.sleep(0.5)
+        time.sleep(1)
     return response
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):

@@ -133,7 +133,6 @@ def indicator_coverage(IndicatorCode):
         return_data.append(country_data)
     return parse_json(return_data)
 
-@login_required
 def store_raw_observation(observation, collection_time, RawDataDestination):
     """
     Store the response from an API call in the database
