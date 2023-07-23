@@ -29,13 +29,15 @@ api_bp = Blueprint(
 )
 
 @api_bp.route("/", methods=["GET"])
+@login_required
 def api_home():
     return render_template("api.html")
 
 @api_bp.route("/status/database/<database>")
+@login_required
 def get_database_status(database):
-
-    return render_template("database_status.html", database=database)
+    ndocs = lookup_database(database).count_documents({})
+    return render_template("database_status.html", database=database, ndocs=ndocs)
 
 @api_bp.route("/query")
 def query_full_database():
@@ -86,10 +88,7 @@ def download():
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
     if request.args.getlist('YEAR'):
         MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
-    if not request.args.get('dataset'):
-        dataframe = sspi_main_data_v3
-    elif request.args.get('dataset') == 'dynamic':
-        dataframe = sspi_clean_api_data
+    dataframe = lookup_database(request.args.get('database'))
     format = request.args.get('format', default = 'json', type = str)
     data_to_download = parse_json(dataframe.find(MongoQuery))
     if format == 'csv':
@@ -196,14 +195,7 @@ def delete():
 
     if request.method == "POST" and clear_database_form.validate_on_submit():
         if clear_database_form.database.data == clear_database_form.database_confirm.data:
-            if clear_database_form.database.data == "sspi_main_data_v3":
-                sspi_main_data_v3.delete_many({})
-            elif clear_database_form.database.data == "sspi_raw_api_data":
-                sspi_raw_api_data.delete_many({})
-            elif clear_database_form.database.data == "sspi_clean_api_data":
-                sspi_clean_api_data.delete_many({})
-            elif clear_database_form.database.data == "sspi_metadata":
-                sspi_metadata.delete_many({})
+            lookup_database(clear_database_form.database.data).delete_many({})
             flash("Cleared database " + clear_database_form.database.data)
         else:
             flash("Database names do not match")
