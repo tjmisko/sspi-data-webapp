@@ -32,6 +32,9 @@ api_bp = Blueprint(
 def api_home():
     return render_template("api.html")
 
+@api_bp.route("/database/<database>/status")
+def get_database_status():
+    return render_template("database_status.html")
 @api_bp.route("/query")
 def query_full_database():
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
