@@ -1,4 +1,5 @@
 *.DS_Store
+**/.DS_Store
 
 bin/*
 env/*
@@ -18,7 +19,7 @@ instance/*
 __pycache__/
 *.pyc
 instance
-*/__pycache__
+**/__pycache__
 
 *.webassets-cache
 */webassets-cache
