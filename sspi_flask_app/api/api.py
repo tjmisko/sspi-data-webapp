@@ -285,14 +285,12 @@ def lookup_database(database_name):
         return sspi_metadata
 
 @api_bp.route("/local")
+@login_required
 def local():
     return render_template('local.html', database_names=check_for_local_data())
 
-@api_bp.route("getcwd")
-def print_getcwd():
-    return os.path.dirname
-
 @api_bp.route("/local/database/list", methods=['GET'])
+@login_required
 def check_for_local_data():
     try:
         database_files = os.listdir(os.path.join(os.getcwd(),'local'))
@@ -302,6 +300,7 @@ def check_for_local_data():
     return parse_json(database_names)
 
 @api_bp.route("/local/reload/<database_name>", methods=["POST"])
+@login_required
 def reload_from_local(database_name):
     if not database_name in check_for_local_data():
         return "Unable to Reload Data: Invalid database name"
@@ -311,7 +310,7 @@ def reload_from_local(database_name):
         filepath = os.path.join(os.getcwd(),'local', database_name + ".json")
         json_file = open(filepath)
     except FileNotFoundError:
-        filepath = "/var/www/sspi.world/local"
+        filepath = os.path.join("/var/www/sspi.world/local", database_name + ".json")
         json_file = open(filepath)
     local_data = json.load(json_file)
     ins_count = len(database.insert_many(local_data).inserted_ids)
