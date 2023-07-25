@@ -1,12 +1,14 @@
 import json
 import time
 import requests
+import math
 
 from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
 from pycountry import countries
 from ..api import format_m49_as_string
+from ..api import string_to_float
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
@@ -76,3 +78,17 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
             }
             final_data_list.append(new_observation)
     return final_data_list
+
+def flatten_nested_dictionary_redlst(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "REDLST",
+                "YEAR": year,
+                "RAW": string_to_float(value)
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst

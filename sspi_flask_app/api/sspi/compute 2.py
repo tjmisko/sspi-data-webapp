@@ -1,12 +1,11 @@
 import re
 from flask import Blueprint, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
-from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
+from ...api.source_utilities.sdg import flatten_and_format_nested_sdg_dictionary, extract_sdg_pivot_data_to_nested_dictionary
 import json
 from bson import json_util
 from pycountry import countries
 from ..api import fetch_raw_data
-import pandas as pd
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -41,32 +40,7 @@ def compute_biodiv():
     raw_data = fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     # implement a computation function as an argument which can be adapted to different contexts
-    final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
+    # how to handle imputations?
+    final_data_list = flatten_and_format_nested_sdg_dictionary(intermediate_obs_dict)
     # store the cleaned data in the database
-    sspi_clean_api_data.insert_many(final_data_list)
-    return f"Inserted {len(final_data_list)} observations into the database."
-
-<<<<<<< HEAD
-@compute_bp.route("/ALTNRG", methods=['GET'])
-def compute_altnrg():
-    if not indicator_data_available("ALTNRG"):
-        return "Data unavailable. Try running collect."
-    raw_data = fetch_raw_data("ALTNRG")
-    lst = []
-    for row in raw_data:
-        lst.append(row["observation"])
-    return parse_json(lst)
-=======
-@compute_bp.route("/REDLST", methods = ['GET'])
-def compute_rdlst():
-    if not indicator_data_available("REDLST"):
-        return "Data unavailable. Try running collect."
-    raw_data = fetch_raw_data("REDLST")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    
-    # return parse_json(final_list)
-
-    sspi_clean_api_data.insert_many(final_list)
-    return f"Inserted {len(final_list)} observations into the database."
->>>>>>> 25498e1c9e01b7b0df6a044823ddf03c44fb44b4
+    return json_util.dumps(final_data_list)
