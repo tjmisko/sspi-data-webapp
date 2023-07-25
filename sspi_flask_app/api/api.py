@@ -134,7 +134,6 @@ def get_dynamic_data(IndicatorCode):
     long_data = long_data.round(3)
     wide_dataframe = pd.pivot(long_data, index="CountryCode", columns="YEAR", values="RAW")
     nested_data = json.loads(wide_dataframe.to_json(orient="index"))
-    print(nested_data)
     return_data = []
     for country_code in nested_data.keys():
         country_data = nested_data[country_code]
@@ -291,7 +290,7 @@ def local():
 
 @api_bp.route("/local/database/list", methods=['GET'])
 def check_for_local_data():
-    database_files = os.listdir(os.path.join(os.getcwd() + 'local'))
+    database_files = os.listdir(os.path.join(os.getcwd(),'local'))
     database_names = [db_file.split(".")[0] for db_file in database_files]
     return parse_json(database_names)
 
