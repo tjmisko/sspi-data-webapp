@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import math
 from io import BytesIO
 from flask import Blueprint, redirect, request, url_for, escape, send_file, current_app as app, render_template, flash, get_flashed_messages
 from flask_login import current_user, fresh_login_required, login_required
@@ -286,3 +287,11 @@ def fetch_raw_data(RawDataDestination):
     mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
+
+def string_to_float(string):
+    """
+    Passes back string 'NaN' instead of float NaN
+    """
+    if math.isnan(float(string)):
+        return "NaN"
+    return float(string)
