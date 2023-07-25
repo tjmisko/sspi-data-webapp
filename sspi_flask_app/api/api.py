@@ -13,6 +13,7 @@ from wtforms.validators import InputRequired, Length, ValidationError, DataRequi
 import pandas as pd
 import numpy as np
 import re
+import os
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -283,4 +284,15 @@ def lookup_database(database_name):
         return sspi_clean_api_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
+
+
+@api_bp.route("/local")
+def local():
+    return render_template('local.html')
+
+@api_bp.route("/local/database/list", methods=['GET'])
+def check_for_local_data():
+    return parse_json(os.listdir(os.getcwd() + '/local'))
+
+@api_bp.route("/local/load/<database>")
     
