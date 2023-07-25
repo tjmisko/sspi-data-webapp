@@ -9,7 +9,11 @@ lib/*
 lib64
 share/*
 instance/database.db
+<<<<<<< HEAD
 instance/**
+=======
+instance
+>>>>>>> 34f913fa (fixed repo locally)
 instance/*
 
 .env
