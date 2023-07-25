@@ -93,7 +93,7 @@ def logout():
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
