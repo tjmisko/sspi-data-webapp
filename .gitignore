@@ -8,8 +8,8 @@ include/*
 lib/*
 lib64
 share/*
-flask_app/instance/database.db
-instance/*
+instance/database.db
+instance/**
 
 .env
 .flaskenv
