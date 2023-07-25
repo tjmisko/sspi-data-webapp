@@ -291,7 +291,7 @@ def local():
 
 @api_bp.route("/local/database/list", methods=['GET'])
 def check_for_local_data():
-    database_files = os.listdir(os.getcwd() + '/local')
+    database_files = os.listdir(os.path.join(os.getcwd() + 'local'))
     database_names = [db_file.split(".")[0] for db_file in database_files]
     return parse_json(database_names)
 
