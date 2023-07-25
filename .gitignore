@@ -9,6 +9,7 @@ lib/*
 lib64
 share/*
 instance/database.db
+instance
 instance/*
 
 .env
