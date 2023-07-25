@@ -1,0 +1,8 @@
+{% for database_name in database_names %}
+    <div class="database-control"> 
+        <div><b>Filename:</b> {{database_name}}.json</div>
+        <div><b>Database:</b> {{ database_name }}</div>
+        <div><button>Reload Database From Local File</button></div>
+    </div>
+{% endfor %}
+

@@ -285,14 +285,25 @@ def lookup_database(database_name):
     elif database_name == "sspi_metadata":
         return sspi_metadata
 
-
 @api_bp.route("/local")
 def local():
-    return render_template('local.html')
+    return render_template('local.html', database_names=check_for_local_data())
 
 @api_bp.route("/local/database/list", methods=['GET'])
 def check_for_local_data():
-    return parse_json(os.listdir(os.getcwd() + '/local'))
+    database_files = os.listdir(os.getcwd() + '/local')
+    database_names = [db_file.split(".")[0] for db_file in database_files]
+    return parse_json(database_names)
 
-@api_bp.route("/local/load/<database>")
-    
+@api_bp.route("/local/reload/<database_name>", methods=["POST"])
+def reload_from_local(database_name):
+    if not database_name in check_for_local_data():
+        return "Unable to Reload Data: Invalid database name"
+    database = lookup_database(database_name)
+    del_count = database.delete_many({})
+    filepath = os.getcwd() + '/local/' + database_name.json()
+    json_file = open(filepath)
+    local_data = json.load(json_file)
+    ins_count = database.insert_many(local_data)
+    json_file.close()
+    return "Reload successful: Dropped {del_count} observations from {database_name} and reloaded with {ins_count} observations".format(del_count, database_name, ins_count)
