@@ -290,11 +290,14 @@ def local():
 
 @api_bp.route("getcwd")
 def print_getcwd():
-    return os.getcwd()
+    return os.path.dirname
 
 @api_bp.route("/local/database/list", methods=['GET'])
 def check_for_local_data():
-    database_files = os.listdir(os.path.join(os.getcwd(),'local'))
+    try:
+        database_files = os.listdir(os.path.join(os.getcwd(),'local'))
+    except FileNotFoundError:
+        database_files = os.listdir("/var/www/sspi.world/local")
     database_names = [db_file.split(".")[0] for db_file in database_files]
     return parse_json(database_names)
 
