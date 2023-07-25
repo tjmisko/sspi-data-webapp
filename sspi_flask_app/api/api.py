@@ -288,6 +288,10 @@ def lookup_database(database_name):
 def local():
     return render_template('local.html', database_names=check_for_local_data())
 
+@api_bp.route("getcwd")
+def print_getcwd():
+    return os.getcwd()
+
 @api_bp.route("/local/database/list", methods=['GET'])
 def check_for_local_data():
     database_files = os.listdir(os.path.join(os.getcwd(),'local'))
