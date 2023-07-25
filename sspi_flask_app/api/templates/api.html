@@ -31,5 +31,8 @@
     <script>$.get("/api/v1/status/database/sspi_main_data_v3", (data)=>{$('#sspi_imputed_api_data').html(data)})</script>
 <h3>SSPI Metadata</h3>
 
+<h2>Local Data</h2>
+    <div id="local"></div>
+    <script>$.get("/api/v1/local", (data)=> $('#local').html(data))</script>
 </body>
 </html>
