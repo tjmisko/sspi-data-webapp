@@ -46,7 +46,16 @@ def compute_biodiv():
     sspi_clean_api_data.insert_many(final_data_list)
     return f"Inserted {len(final_data_list)} observations into the database."
 
-<<<<<<< HEAD
+@compute_bp.route("/REDLST", methods = ['GET'])
+def compute_rdlst():
+    if not indicator_data_available("REDLST"):
+        return "Data unavailable. Try running collect."
+    raw_data = fetch_raw_data("REDLST")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
+    sspi_clean_api_data.insert_many(final_list)
+    return f"Inserted {len(final_list)} observations into the database."
+
 @compute_bp.route("/ALTNRG", methods=['GET'])
 def compute_altnrg():
     if not indicator_data_available("ALTNRG"):
@@ -56,17 +65,3 @@ def compute_altnrg():
     for row in raw_data:
         lst.append(row["observation"])
     return parse_json(lst)
-=======
-@compute_bp.route("/REDLST", methods = ['GET'])
-def compute_rdlst():
-    if not indicator_data_available("REDLST"):
-        return "Data unavailable. Try running collect."
-    raw_data = fetch_raw_data("REDLST")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    
-    # return parse_json(final_list)
-
-    sspi_clean_api_data.insert_many(final_list)
-    return f"Inserted {len(final_list)} observations into the database."
->>>>>>> 25498e1c9e01b7b0df6a044823ddf03c44fb44b4
