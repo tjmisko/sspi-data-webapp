@@ -307,8 +307,12 @@ def reload_from_local(database_name):
         return "Unable to Reload Data: Invalid database name"
     database = lookup_database(database_name)
     del_count = database.delete_many({}).deleted_count
-    filepath = os.path.join(os.getcwd(),'local', database_name + ".json")
-    json_file = open(filepath)
+    try: 
+        filepath = os.path.join(os.getcwd(),'local', database_name + ".json")
+        json_file = open(filepath)
+    except FileNotFoundError:
+        filepath = "/var/www/sspi.world/local"
+        json_file = open(filepath)
     local_data = json.load(json_file)
     ins_count = len(database.insert_many(local_data).inserted_ids)
     json_file.close()
