@@ -74,14 +74,14 @@ def login():
     flash("Login Successful! Redirecting...")
     return redirect(url_for('home_bp.data'))               
 
-# @auth_bp.route('/remote_login', methods=['POST'])
-# def remote_login():
-#     username = request.form.get("username")
-#     password = request.form.get("password")
-#     user = User.query.filter_by(username=username).first()
-#     if user and flask_bcrypt.check_password_hash(user.password, password):
-#         login_user(user)
-#     return redirect(url_for('home_bp.data'))
+@auth_bp.route('/remote/session/login', methods=['POST'])
+def remote_login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    user = User.query.filter_by(username=username).first()
+    if user and flask_bcrypt.check_password_hash(user.password, password):
+        login_user(user)
+    return redirect(url_for('home_bp.data'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
