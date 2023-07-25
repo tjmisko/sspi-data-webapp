@@ -128,7 +128,9 @@ def get_dynamic_data(IndicatorCode):
     """
     request_country_group = request.args.get("country_group", default = "sspi_67", type = str)
     country_codes = country_group(request_country_group)
-    query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}},                                             {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
+    query_results = parse_json(sspi_clean_api_data.find({"IndicatorCode": IndicatorCode, "CountryCode": {"$in": country_codes}},
+                                                        {"_id": 0, "Intermediates": 0, "IndicatorCode": 0}))
+    print(query_results)
     long_data = pd.DataFrame(query_results).drop_duplicates()
     long_data = long_data.astype({"YEAR": int, "RAW": float})
     long_data = long_data.round(3)
@@ -192,11 +194,11 @@ def delete():
     if request.method == "POST" and delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
         if delete_indicator_form.database.data == "sspi_main_data_v3":
-            count = sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode})
+            count = sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
         elif delete_indicator_form.database.data == "sspi_raw_api_data":
-            count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode})
+            count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
         elif delete_indicator_form.database.data == "sspi_clean_api_data":
-            count = sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode})
+            count = sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
         flash("Deleted " + str(count) + " documents")
 
     if request.method == "POST" and clear_database_form.validate_on_submit():
