@@ -327,3 +327,8 @@ def string_to_float(string):
     if math.isnan(float(string)):
         return "NaN"
     return float(string)
+
+@api_bp.route("/api-gui")
+def api_gui():
+    implementation_data = api_coverage()
+    return render_template("api_gui.html", implementation_data=implementation_data)
