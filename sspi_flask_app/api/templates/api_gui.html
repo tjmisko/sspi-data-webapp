@@ -1,0 +1,10 @@
+{% for indicator in implementation_data %}
+    <div class="indicator-row">
+        <b>{{ IndicatorCode }} </b>
+        <button onclick="" >Query</button>
+        <button onclick="" {% if not indicator.collect_implemented %}disabled{% endif %}>Collect</button>
+        <button onclick="" {% if not indicator.compute_implemented %}disabled{% endif %}>Compute</button>
+        <button onclick="" {% if not indicator.impute_implemented %}disabled{% endif %}>Impute</button>
+    </div>
+    <div id="{{IndicatorCode}}-results-box"></div>
+{% endfor %}
