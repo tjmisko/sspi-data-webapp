@@ -18,9 +18,9 @@
 <body>
 <h1> SSPI API Interface</h1>
 <h2>API GUI</h2>
-put a table here
-
-<h2>Database</h2>
+    <div id="api-gui-box"></div>
+    <script>$.get("/api/v1/api-gui", (data)=>$("#api-gui-box").html(data))</script>
+<h2>Database Status</h2>
 <h3>SSPI Main Data</h3>
     <div id="sspi_main_data_v3"></div>
     <script>$.get("/api/v1/status/database/sspi_main_data_v3", (data)=>{$('#sspi_main_data_v3').html(data)})</script>
