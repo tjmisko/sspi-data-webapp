@@ -1,7 +1,7 @@
 {% for indicator in implementation_data %}
     <div class="indicator-row">
-        <b>{{ IndicatorCode }} </b>
-        <button onclick="" >Query</button>
+        <b>{{ indicator.IndicatorCode }} </b>
+        <button onclick="$.get('/api/v1/query/indicator/{{indicator.IndicatorCode}}')">Query</button>
         <button onclick="" {% if not indicator.collect_implemented %}disabled{% endif %}>Collect</button>
         <button onclick="" {% if not indicator.compute_implemented %}disabled{% endif %}>Compute</button>
         <button onclick="" {% if not indicator.impute_implemented %}disabled{% endif %}>Impute</button>
