@@ -5,10 +5,11 @@ async function DatabaseStatus(database){
 async function handleQuery(IndicatorCode){
     $.get('/api/v1/query/indicator/' + IndicatorCode, 
         (data)=>{
+            console.log(data)
             $("#" + IndicatorCode + ".results-box")
                 .children(".return-content")
                 .empty()
-                .append("finished")
+                .append(JSON.stringify(data))
         });
     console.log()
     $(`#${IndicatorCode}.results-box`).show()
