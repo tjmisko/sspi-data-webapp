@@ -1,5 +1,5 @@
 from flask import Blueprint, Response
-from flask_login import login_required
+from flask_login import login_required, current_user
 from ..source_utilities.sdg import collectSDGIndicatorData
 from ..source_utilities.iea import collectIEAData
 from ..api import parse_json
