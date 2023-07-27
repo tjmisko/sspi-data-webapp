@@ -3,10 +3,14 @@ async function DatabaseStatus(database){
 }
 
 async function handleQuery(IndicatorCode){
-    $.get('/api/v1/query/indicator' + IndicatorCode, 
-    (data)=>{
-        $("#" + IndicatorCode + ".results-box").children(".")
-    });
-    $("#" + IndicatorCode + ".results-box").style.display = "block"
-    $("#" + IndicatorCode + ".results-box").children(".").append("waiting")
+    $.get('/api/v1/query/indicator/' + IndicatorCode, 
+        (data)=>{
+            $("#" + IndicatorCode + ".results-box")
+                .children(".return-content")
+                .empty()
+                .append("finished")
+        });
+    console.log()
+    $(`#${IndicatorCode}.results-box`).show()
+    $("#" + IndicatorCode + ".results-box").children(".return-content").empty().append("waiting")
 }
