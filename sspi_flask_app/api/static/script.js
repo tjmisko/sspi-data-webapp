@@ -2,6 +2,10 @@ async function DatabaseStatus(database){
     let response = await fetch('/api/v1/database/' + database +'/status')
 }
 
+function closeBox(obj) {
+    $(obj).parent(".results-box").hide()
+}
+
 async function handleQuery(IndicatorCode){
     $.get('/api/v1/query/indicator/' + IndicatorCode, 
         (data)=>{
@@ -9,7 +13,7 @@ async function handleQuery(IndicatorCode){
             $("#" + IndicatorCode + ".results-box")
                 .children(".return-content")
                 .empty()
-                .append(JSON.stringify(data))
+                .append(JSON.stringify(data, null, 2))
         });
     console.log()
     $(`#${IndicatorCode}.results-box`).show()
