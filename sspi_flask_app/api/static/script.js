@@ -3,7 +3,7 @@ async function DatabaseStatus(database){
 }
 
 async function handleQuery(IndicatorCode){
-    $.get('/api/v1/IndicatorCode', 
+    $.get('/api/v1/query/indicator' + IndicatorCode, 
     (data)=>{
         $("#" + IndicatorCode + ".results-box").children(".")
     });
