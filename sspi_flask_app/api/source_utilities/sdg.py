@@ -25,7 +25,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         response = requests.get(new_url)
         for r in response.json().get('data'):
             sspi_raw_api_data.insert_one(
-                {"collection-info": {"CollectedBy": current_user.username,
+                {"collection-info": {"CollectedBy": current_user.username or "None",
                                     "RawDataDestination": RawDataDestination,
                                     "CollectedAt": collection_time}, 
                 "observation": r}
