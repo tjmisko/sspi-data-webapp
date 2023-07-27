@@ -38,9 +38,21 @@ body {
 }
 
 .close-window-button {
-    position: absolute;
+    position: sticky;
     top: 10px;
-    right:10px;
+    left: calc(100% - 20px);
+    background-color: transparent;
+    border: none;
+}
+
+.close-window-button:hover {
+    transform: scale(1.04);
+    transition: 0.1s;
+}
+
+.x-svg {
+    color: red;
+    fill:"red";
 }
 
 .action-box {
