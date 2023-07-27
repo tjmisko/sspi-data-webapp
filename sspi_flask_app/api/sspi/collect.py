@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, Response
 from flask_login import login_required
 from ..source_utilities.sdg import collectSDGIndicatorData
 from ..source_utilities.iea import collectIEAData
@@ -16,9 +16,11 @@ collect_bp = Blueprint("collect_bp", __name__,
 @collect_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def biodiv():
-    collectSDGIndicatorData("14.5.1", "BIODIV")
-    collectSDGIndicatorData("15.1.2", "BIODIV")
-    return "success!"
+    def collect_iterator():
+        yield from collectSDGIndicatorData("14.5.1", "BIODIV")
+        yield from collectSDGIndicatorData("15.1.2", "BIODIV")
+        yield "Collection complete"
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("REDLST", methods=['GET'])
 @login_required
