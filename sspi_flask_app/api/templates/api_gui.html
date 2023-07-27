@@ -6,7 +6,7 @@
             <p>Actions:</p>
             <div class="button-box">
                 <button class="gui-button query" onclick="handleQuery('{{indicator.IndicatorCode}}')">Query</button>
-                <button class="gui-button collect" onclick="" {% if not indicator.collect_implemented %}disabled{% endif %}>Collect</button>
+                <button class="gui-button collect" onclick="handleCollect('{{indicator.IndicatorCode}}')" {% if not indicator.collect_implemented %}disabled{% endif %}>Collect</button>
                 <button class="gui-button compute" onclick="" {% if not indicator.compute_implemented %}disabled{% endif %}>Compute</button>
                 <button class="gui-button impute" onclick="" {% if not indicator.impute_implemented %}disabled{% endif %}>Impute</button>
             </div>

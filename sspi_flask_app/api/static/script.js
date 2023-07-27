@@ -19,3 +19,12 @@ async function handleQuery(IndicatorCode){
     $(`#${IndicatorCode}.results-box`).show()
     $("#" + IndicatorCode + ".results-box").children(".return-content").empty().append("waiting")
 }
+
+function handleCollect(IndicatorCode) {
+    $(`#${IndicatorCode}.results-box`).show()
+    let message_handler = new EventSource(`/api/v1/collect/${IndicatorCode}`)
+    message_handler.onmessage = (e) => {
+        $(`#${IndicatorCode}.results-box`).children(".return-content").prepend(e.data)
+        if (e.data === "Collection complete") {message_handler.close()}
+    }
+}
