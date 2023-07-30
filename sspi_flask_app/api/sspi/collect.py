@@ -6,6 +6,7 @@ from ..api import parse_json
 from flask import redirect, url_for
 import datetime
 import requests
+import time
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -19,8 +20,15 @@ def biodiv():
     def collect_iterator():
         yield from collectSDGIndicatorData("14.5.1", "BIODIV")
         yield from collectSDGIndicatorData("15.1.2", "BIODIV")
-        yield "Collection complete"
-    return Response(collect_iterator(), mimetype='text/event-stream')
+        yield "data: Collection complete"
+    def test_generator():
+        for i in range(10):
+            message = "data: {}\n".format(i)
+            yield message
+            print(message)
+            time.sleep(2)
+        yield "data: close"
+    return Response(test_generator(), mimetype='text/event-stream')
 
 @collect_bp.route("REDLST", methods=['GET'])
 @login_required
