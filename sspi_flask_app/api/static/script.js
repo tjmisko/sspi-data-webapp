@@ -15,7 +15,6 @@ async function handleQuery(IndicatorCode){
                 .empty()
                 .append(JSON.stringify(data, null, 2))
         });
-    console.log()
     $(`#${IndicatorCode}.results-box`).show()
     $("#" + IndicatorCode + ".results-box").children(".return-content").empty().append("waiting")
 }
@@ -23,8 +22,15 @@ async function handleQuery(IndicatorCode){
 function handleCollect(IndicatorCode) {
     $(`#${IndicatorCode}.results-box`).show()
     let message_handler = new EventSource(`/api/v1/collect/${IndicatorCode}`)
-    message_handler.onmessage = (e) => {
-        $(`#${IndicatorCode}.results-box`).children(".return-content").prepend(e.data)
-        if (e.data === "Collection complete") {message_handler.close()}
-    }
+    message_handler.onmessage = function (event) {
+        if (event.data === "close") {
+            message_handler.close()
+        } else {
+            results_box.children.innerHTML = event.data
+        }
+    };
+    // (e) => {
+    //     $(`#${IndicatorCode}.results-box`).children(".return-content").text(e.data)
+    //     if (e.data === "Collection complete") {message_handler.close()}
+    // }
 }
