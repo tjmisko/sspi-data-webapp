@@ -1,0 +1,34 @@
+$accent-color: rgb(41, 75, 80);
+$white: rgb(226, 226, 226);
+$grey: rgba(184, 188, 190, 1);
+$black: rgb(42, 41, 43);
+
+.page-content {
+    padding: 20px 40px;
+}
+
+.pillar-cards {
+    display: flex;
+    direction: column;
+}
+
+.pillar-card {
+    border: none;
+    font-family: 'REM', sans-serif;
+    font-size: larger; 
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 1px 1px 3px $accent-color;
+}
+#sus {
+    background-color: #27b36e;
+    box-shadow: 4px 4px 8px grey;
+}
+#ms {
+    background-color: #fe8237;
+}
+#pg {
+    background-color: #1e92c4;
+}
+
