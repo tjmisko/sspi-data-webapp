@@ -3,9 +3,19 @@ $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
 
-.page-content {
-    padding: 20px 40px;
+
+#hero-box {
+    background-color: $black;
+    padding: 2rem 4rem; 
+    color: $white;
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-gap: 1rem;
 }
+
+
 
 .pillar-cards {
     display: flex;
