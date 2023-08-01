@@ -7,14 +7,18 @@ body {
     margin: 0;
     color: $black;
     background-color: $white;
+    font-size: 14pt;
+    line-height: 1.25em;
 }
 
 h1 {
     font-family: 'REM', sans-serif;
     font-weight:600;
+    font-size: 1.4em;
 }
 
 h2 {
     font-family: 'Libra Baskerville', serif;
-    font-weight: 400;
+    font-weight: 600;
+    font-size: 1.2em;
 }
