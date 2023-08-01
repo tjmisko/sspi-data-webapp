@@ -3,11 +3,13 @@ $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
 
+html {
+    font-size: 16pt;
+}
 body {
     margin: 0;
     color: $black;
     background-color: $white;
-    font-size: 14pt;
     line-height: 1.25em;
 }
 

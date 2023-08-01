@@ -3,14 +3,6 @@ $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
 
-body {
-    background-color: $white;
-}
-
-.pagecontent {
-    padding: 2.5% 3%;
-}
-
 .datawindow {
     display: flex;
     flex-direction: column;
