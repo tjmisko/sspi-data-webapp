@@ -1,0 +1,20 @@
+$accent-color: rgb(41, 75, 80);
+$white: rgb(226, 226, 226);
+$grey: rgba(184, 188, 190, 1);
+$black: rgb(42, 41, 43);
+
+body {
+    margin: 0;
+    color: $black;
+    background-color: $white;
+}
+
+h1 {
+    font-family: 'REM', sans-serif;
+    font-weight:600;
+}
+
+h2 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 400;
+}
