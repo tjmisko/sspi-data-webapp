@@ -1,4 +1,5 @@
 $accent-color: rgb(41, 75, 80);
+$link-color: rgb(0, 221, 255);
 $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
@@ -15,7 +16,18 @@ $black: rgb(42, 41, 43);
     grid-gap: 1rem;
 }
 
+#hero-datalink {
+    color: $link-color;
+    margin-left: 1rem;
+    font-weight: 600;
+}
 
+.globegl-hover {
+    background-color: rgba(41, 75, 80, 0.8);
+    color:rgb(226, 226, 226);
+    padding: 0.8rem;
+    border-radius: 5px;
+}
 
 .pillar-cards {
     display: flex;
