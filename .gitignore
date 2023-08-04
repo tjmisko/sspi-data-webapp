@@ -18,10 +18,12 @@ instance/*
 *.egg
 *.egg-info/
 
-__pycache__/
+__pycache__
 *.pyc
 instance
 **/__pycache__
+*.pyc
+*.pyo
 
 *.webassets-cache
 */webassets-cache
@@ -39,3 +41,29 @@ log/*
 load_remote_data.py
 sspi_main_data_v3.json
 sspi_metadata.json
+
+.DS_Store
+.env
+.flaskenv
+*.pyc
+*.pyo
+env/
+venv/
+.venv/
+env*
+dist/
+build/
+*.egg
+*.egg-info/
+.tox/
+.cache/
+.pytest_cache/
+.idea/
+docs/_build/
+.vscode
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+*,cover
