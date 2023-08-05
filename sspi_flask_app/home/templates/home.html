@@ -2,13 +2,80 @@
 
 {% block content %}
     <article class="page-content">
-      <p> <b> Site Content: </b> Our research team has created a policy index that documents the 
-        policies being practiced around the world that create an economy 
-        that cares for people and the planet. We know the policies to create 
-        a sustainable world, to share prosperity and provide a comfortable, 
-        meaningful life for all people, and to reduce suffering globally. 
-        Three pillars—Sustainability, Market Structure, Public Goods and 
-        Services—represent government policies that create and govern the 
-        economy to create the outcomes desired by the society.  </p>
+      <section id="hero-box">
+        <div class="hero-textbox"> 
+          <h2 id="hero-h2">Measuring Policy Around the Globe</h2>
+          <p id="hero-p"> How well are countries doing at guaranteeing wellbeing for
+            people and the planet? The SSPI answers this question using data
+            to score country performance across 57 policy indicators grouped into 16 categories and organized
+            under 3 pillars. </p>
+          <a id="hero-datalink" href="/data"> Explore Data by Country </a>
+        </div>
+        <div id="globeViz"></div>
+      </section>
+      <section class="side" id="pillars">
+        <h2>The Three Pillars of the SSPI</h2>
+        <div id="pillars-description">
+          The three pillars of the SSPI correspond to the three major 
+          policy challenges facing governments around the world.
+          <ul>
+            <li> Protecting the natual environment from degredation to guantee a liveable and thriving planet for all creatures </li>
+            <li> Structuring free and fair markets that promote general prosperity and equality </li>
+            <li> Providing public goods that all citizens share  </li>
+          </ul>
+        </div>
+        <div class="pillar-cards">
+          <button class="pillar-card" id="sus">Sustainability</button>
+          <button class="pillar-card" id="ms">Market Structure</button>
+          <button class="pillar-card" id="pg">Public Goods</button>
+        </div>
+      </section>
+      <section>
+        <h2> Articles </h2>
+
+      </section>
     </article>
+    <script>
+      const colorScale = d3.scaleSequentialSqrt(d3.interpolateYlOrRd);
+  
+      // GDP per capita (avoiding countries with small pop)
+      const getVal = feat => feat.properties.GDP_MD_EST / Math.max(1e5, feat.properties.POP_EST);
+  
+      fetch("{{ url_for('home_bp.static', filename = 'ne_110m_admin_0_countries.geojson') }}").then(res => res.json()).then(countries =>
+      {
+        const maxVal = Math.max(...countries.features.map(getVal));
+        colorScale.domain([0, maxVal]);
+        console.log(countries.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+        const world = Globe()
+          .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+          .backgroundColor("#2a292b")
+          .width("500")
+          .height("500")
+          .showGraticules(true)
+          .atmosphereColor("green")
+          .lineHoverPrecision(0)
+          .polygonsData(countries.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
+          .polygonAltitude(0.01)
+          .polygonCapColor(feat => colorScale(getVal(feat)))
+          .polygonSideColor(() => 'rgba(0, 100, 0, 0.15)')
+          .polygonStrokeColor(() => '#111')
+          .polygonLabel(({ properties: d }) => `
+            <div class="globegl-hover"
+              <b>${d.ADMIN} (${d.ISO_A2}):</b> <br />
+              GDP: <i>${d.GDP_MD_EST}</i> M$<br/>
+              Population: <i>${d.POP_EST}</i>
+            </div>
+          `)
+          .onPolygonHover(hoverD => world
+            .polygonAltitude(d => d === hoverD ? 0.10 : 0.01)
+            .polygonCapColor(d => d === hoverD ? '#294b50' : colorScale(getVal(d)))
+          )
+          .polygonsTransitionDuration(200)
+          .pointOfView({lat: 25, lng: 60, altitude: 2}, 500)
+        (document.getElementById('globeViz'))
+        world.controls().autoRotate = true
+        world.controls().autoRotateSpeed = 0.3
+        world.controls().enableZoom = false;
+      });
+    </script>
 {% endblock %}

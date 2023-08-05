@@ -1,33 +1,37 @@
-$home-page-color: rgb(81, 127, 103);
-$home-page-background-color: rgba(255, 255, 255, 1);
-$data-page-background-color: rgba(184, 188, 190, 1);
-
-
-body {
-    margin: 0;
-}
+$accent-color: rgb(41, 75, 80);
+$white: rgb(226, 226, 226);
+$grey: rgba(184, 188, 190, 1);
+$black: rgb(42, 41, 43);
 
 .site-header {
     display: flex;
-    padding: 10px 50px 5px;
-    flex-direction: column;
+    padding: 10px 50px 10px;
+    flex-direction: row;
+    justify-content: space-around;
     align-items: center;
-    background-color: $home-page-color;
+    background-color: $accent-color;
 }
 
 .titlebox{
+    flex-basis: 0;
     display: flex;
-    width: 100%;
-    font-size: 1.618em;
-    flex-direction: row;
-    color:white;
+    flex-direction: column;
+    color: $white;
     text-decoration: none;
     align-items: flex-start;
+    margin: 10pt 20pt 10pt 0pt;
+}
+
+.title {
+    font-size: 18pt;
+    margin: 0;
+    font-weight: 300;
+    white-space: nowrap;
 }
 
 .header-nav-bar {
     position: relative;
-    width: 100%;
+    width: 70%;
 }
 
 .header-nav-bar-link-list {
@@ -39,7 +43,7 @@ body {
 
 .header-nav-bar-link {
     font-size: 1em;
-    color: white;
+    color: $white;
     text-decoration: none;
 }
 

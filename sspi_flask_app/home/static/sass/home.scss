@@ -1,0 +1,56 @@
+$accent-color: rgb(41, 75, 80);
+$link-color: rgb(0, 221, 255);
+$white: rgb(226, 226, 226);
+$grey: rgba(184, 188, 190, 1);
+$black: rgb(42, 41, 43);
+
+
+#hero-box {
+    background-color: $black;
+    padding: 2rem 4rem; 
+    color: $white;
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-gap: 1rem;
+}
+
+#hero-datalink {
+    color: $link-color;
+    margin-left: 1rem;
+    font-weight: 600;
+}
+
+.globegl-hover {
+    background-color: rgba(41, 75, 80, 0.8);
+    color:rgb(226, 226, 226);
+    padding: 0.8rem;
+    border-radius: 5px;
+}
+
+.pillar-cards {
+    display: flex;
+    direction: column;
+}
+
+.pillar-card {
+    border: none;
+    font-family: 'REM', sans-serif;
+    font-size: larger; 
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 1px 1px 3px $accent-color;
+}
+#sus {
+    background-color: #27b36e;
+    box-shadow: 4px 4px 8px grey;
+}
+#ms {
+    background-color: #fe8237;
+}
+#pg {
+    background-color: #1e92c4;
+}
+
