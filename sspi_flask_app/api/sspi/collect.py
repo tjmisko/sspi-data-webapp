@@ -21,14 +21,7 @@ def biodiv():
         yield from collectSDGIndicatorData("14.5.1", "BIODIV")
         yield from collectSDGIndicatorData("15.1.2", "BIODIV")
         yield "data: Collection complete"
-    def test_generator():
-        for i in range(10):
-            message = "data: {}\n".format(i)
-            yield message
-            print(message)
-            time.sleep(2)
-        yield "data: close"
-    return Response(test_generator(), mimetype='text/event-stream')
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("REDLST", methods=['GET'])
 @login_required
