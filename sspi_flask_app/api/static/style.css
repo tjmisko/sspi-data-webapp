@@ -5,6 +5,12 @@ body {
     color: #101223;
 }
 
+#gridbox {
+    display:grid;
+    align-items: top;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr))
+}
+
 .database-control {
     margin: 15px;
 }
@@ -14,8 +20,7 @@ body {
     flex-direction: column;
     border-style: solid;
     border-radius: 5px;
-    width: 650px;
-    padding: 15px;
+    padding: 10px;
     margin: 10px;
 }
 
@@ -75,6 +80,7 @@ body {
     text-align: center;
     border-radius: 5px;
     margin: 0px 5px;
+    max-width: 100px;
     box-shadow: 0px 1px 5px 2 grey;
 }
 
@@ -92,13 +98,12 @@ body {
     transform: scale(0.9);
     transition: 0.1s;
 }
+
 .query:enabled {
     background-color:rgb(0, 0, 255);
 }
-.query:disabled{
-    background-color: rgba(0,0,225,0.2);
-    transform: none;
-}
+
+
 
 .collect:enabled {
     background-color:rgb(255, 165, 0);
@@ -124,3 +129,18 @@ body {
     background-color: rgba(255, 0, 0, 0.2);
     transform:none;
 }
+
+.query-button-list {
+    margin: 0;
+    padding:0;
+    list-style: none;
+}
+
+.query-subbutton {
+    padding: 3px 6px;
+    margin: 2px 0px;
+    border-radius: 5px;
+    max-width: 160px;
+
+}
+.ic-label {font: smaller;}
