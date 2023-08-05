@@ -6,6 +6,8 @@ function closeBox(obj) {
     $(obj).parent(".results-box").hide()
 }
 
+$(".querybutton")
+
 async function handleQuery(IndicatorCode){
     $.get(`/api/v1/query/indicator/${IndicatorCode}`, 
         (data)=>{
@@ -31,10 +33,6 @@ function handleCollect(IndicatorCode) {
             results_box.children.innerHTML = event.data
         }
     });
-    // (e) => {
-    //     $(`#${IndicatorCode}.results-box`).children(".return-content").text(e.data)
-    //     if (e.data === "Collection complete") {message_handler.close()}
-    // }
 }
 
 function handleCompute(IndicatorCode) {
