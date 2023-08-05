@@ -1,11 +1,10 @@
 {% for indicator in implementation_data %}
 <div class="indicator"> 
     <div class="indicator-row">
-        <p>Indicator Code: <b>{{ indicator.IndicatorCode }} </b></p>
+        <p class="ic-label">Indicator Code: <b>{{ indicator.IndicatorCode }} </b></p>
         <div class="action-box">
-            <p>Actions:</p>
             <div class="button-box">
-                <button class="gui-button query" onclick="revealQueryMenu('{{indicator.IndicatorCode}}')">Query</button>
+                <button class="gui-button query" onclick="toggleQueryMenu('{{indicator.IndicatorCode}}')">Query</button>
                 <div id="{{indicator.IndicatorCode}}-query-menu" class="query-menu">
                     <ul class="query-button-list">
                         <li><button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_main_data_v3')">Query SSPI Main Data V3</button></li>

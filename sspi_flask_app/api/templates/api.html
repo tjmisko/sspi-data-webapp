@@ -34,7 +34,7 @@
     <section>
         <h2> SSPI API Controls</h2>
             <div id="api-gui-box"></div>
-            <script>$.get("/api/v1/api-gui", (data)=>$("#api-gui-box").html(data))</script>
+            <script>$.get("/api/v1/api-gui", (data)=>{$("#api-gui-box").html(data); $('.query-menu').hide()})</script>
     </section>
 </div>
 </body>
