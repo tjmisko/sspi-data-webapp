@@ -44,7 +44,7 @@ def compute_biodiv():
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
     sspi_clean_api_data.insert_many(final_data_list)
-    return jsonify(final_data_list)
+    return parse_json(final_data_list)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 def compute_rdlst():
@@ -54,7 +54,7 @@ def compute_rdlst():
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     sspi_clean_api_data.insert_many(final_list)
-    return jsonify(final_list)
+    return parse_json(final_list)
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
 def compute_altnrg():
