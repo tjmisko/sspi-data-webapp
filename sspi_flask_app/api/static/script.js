@@ -10,8 +10,8 @@ function toggleQueryMenu(IndicatorCode){
     $(`#${IndicatorCode}-query-menu`).toggle("fast")
 }
 
-async function handleQuery(IndicatorCode){
-    $.get(`/api/v1/query/indicator/${IndicatorCode}`, 
+async function handleQuery(IndicatorCode, database){
+    $.get(`/api/v1/query/indicator/${IndicatorCode}?database=${database}`, 
         (data)=>{
             console.log(data)
             $("#" + IndicatorCode + ".results-box")
