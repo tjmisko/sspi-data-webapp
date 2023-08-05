@@ -6,11 +6,9 @@ function closeBox(obj) {
     $(obj).parent(".results-box").hide()
 }
 
-function revealQueryMenu(IndicatorCode){
-    $(`#${IndicatorCode}-query-menu`).show()
+function toggleQueryMenu(IndicatorCode){
+    $(`#${IndicatorCode}-query-menu`).toggle("fast")
 }
-
-
 
 async function handleQuery(IndicatorCode){
     $.get(`/api/v1/query/indicator/${IndicatorCode}`, 
