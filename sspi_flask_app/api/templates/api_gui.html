@@ -5,16 +5,14 @@
         <div class="action-box">
             <p>Actions:</p>
             <div class="button-box">
-                <div class="query-menu">
-                    <div id="{{indicator.IndicatorCode}}-button">
-                        <button class="gui-button query" onclick="handleQuery('{{indicator.IndicatorCode}}')">Query</button>
-                    </div>
-                    <ul id="{{indicator.IndicatorCode}}-contents">
-                        <button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_main_data_v3')">Query SSPI Main Data V3</button>
-                        <button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_raw_api_data')">Query SSPI Raw API Data</button>
-                        <button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_clean_api_data')">Query SSPI Clean API Data</button>
-                        <button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_imputed_data')">Query SSPI Imputed Data</button>
-                        <button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_clean_api_data')">Query SSPI Clean API Data</button>
+                <button class="gui-button query" onclick="revealQueryMenu('{{indicator.IndicatorCode}}')">Query</button>
+                <div id="{{indicator.IndicatorCode}}-query-menu" class="query-menu">
+                    <ul class="query-button-list">
+                        <li><button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_main_data_v3')">Query SSPI Main Data V3</button></li>
+                        <li><button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_raw_api_data')">Query SSPI Raw API Data</button></li>
+                        <li><button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_clean_api_data')">Query SSPI Clean API Data</button></li>
+                        <li><button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_imputed_data')">Query SSPI Imputed Data</button></li>
+                        <li><button class="query-subbutton" onclick="handleQuery('{{indicator.IndicatorCode}}', 'sspi_final_dynamic_data')">Query SSPI Final Dynamic Data</button></li>
                     </ul>
                 </div>
                 <button class="gui-button collect" onclick="handleCollect('{{indicator.IndicatorCode}}')" {% if not indicator.collect_implemented %}disabled{% endif %}>Collect</button>

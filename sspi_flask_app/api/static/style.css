@@ -80,6 +80,7 @@ body {
     text-align: center;
     border-radius: 5px;
     margin: 0px 5px;
+    width: 75px;
     box-shadow: 0px 1px 5px 2 grey;
 }
 
@@ -97,9 +98,12 @@ body {
     transform: scale(0.9);
     transition: 0.1s;
 }
+
 .query:enabled {
     background-color:rgb(0, 0, 255);
 }
+
+
 .query:disabled{
     background-color: rgba(0,0,225,0.2);
     transform: none;
@@ -128,4 +132,9 @@ body {
 .impute:disabled{
     background-color: rgba(255, 0, 0, 0.2);
     transform:none;
+}
+
+.query-menu {
+    display:none;
+    position: absolute;
 }
