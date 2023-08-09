@@ -7,6 +7,10 @@ This folder contains all of the code for the SSPI website and the full stack Fla
 ## To run and develop the application locally:
 
 0) If you haven't already done so, make sure you have installed a text editor (Visual Studio Code strongly recommended), git, and python3 on your system. Also ensure that a MongoDB process is running on your local machine.  The configuration assumes (in `__init__.py`) that you have you have a `MongoClient('localhost', 27017)` running on port `27017`.   Download, install, and run if necessary.
+    - On MacOS, you can accomplish this via Homebrew.  Install [Homebrew](https://brew.sh/) with ```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"``` from the command line
+    - From there, run `brew update`, then `brew tap mongodb/brew`, then `brew install mongodb-community@6.0` to download and install MongoDB.
+    - To start up MongoDB as a MacOS service, run `brew services start mongodb-community@6.0`
+    - See the documentation [here](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/) for more information, and read [here](https://www.mongodb.com/docs/manual/administration/install-community/) for a step-by-step guide for installation on other operating systems
 1) Clone the application from the repo.  Navigate in your Terminal to your desired parent folder for the project and run `git clone https://github.com/tjmisko/sspi-data-collection`
 2) Navigate into the new `sspi-data-collection` folder.  Create a `wsgi.py` at the top level of the directory file to boot the Flask Application.  WSGI stands for Web Server Gateway Interface and will represent the entry point for the application.  (The file is not included because the WSGI file looks different on the production configuration and contains potentially sensitive security information in addition to the code provided.) Add the following code to your new `wsgi.py` file:
 
