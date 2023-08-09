@@ -39,8 +39,8 @@ log/*
 .pytest_cache
 
 load_remote_data.py
-sspi_main_data_v3.json
-sspi_metadata.json
+# sspi_main_data_v3.json
+# sspi_metadata.json
 
 .DS_Store
 .env
