@@ -1,0 +1,126 @@
+
+body {
+    margin: 60px 50px;
+    background-color: #F3F4F8;
+    color: #101223;
+}
+
+.database-control {
+    margin: 15px;
+}
+
+.indicator {
+    display:flex;
+    flex-direction: column;
+    border-style: solid;
+    border-radius: 5px;
+    width: 650px;
+    padding: 15px;
+    margin: 10px;
+}
+
+.indicator-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.results-box {
+    display: none;
+    position: relative;
+    padding: 20px;
+    margin: 15px;
+    height: 200px;
+    overflow-y: scroll;
+    color:#F3F4F8; 
+    background-color:#323131;
+    border-radius: 5px;
+}
+
+.close-window-button {
+    position: sticky;
+    top: 10px;
+    left: calc(100% - 20px);
+    background-color: transparent;
+    border: none;
+}
+
+.close-window-button:hover {
+    transform: scale(1.04);
+    transition: 0.1s;
+}
+
+.x-svg {
+    color: red;
+    fill:"red";
+}
+
+.action-box {
+    display: flex;
+    display: flex;
+    justify-content: space-between;
+    margin-left: 20px;
+}
+
+.button-box {
+    display: flex;
+    display: flex;
+    justify-content: space-around;
+}
+
+.gui-button {
+    border:none;
+    padding: 5px 10px;
+    color: #F3F4F8;
+    text-align: center;
+    border-radius: 5px;
+    margin: 0px 5px;
+    box-shadow: 0px 1px 5px 2 grey;
+}
+
+.gui-button:hover {
+    transform: scale(1.02);
+    transition: 0.05s;
+}
+
+.gui-button:focus {
+    border-style:solid;
+    border-color: #5a5a5a;
+}
+
+.gui-button:active {
+    transform: scale(0.9);
+    transition: 0.1s;
+}
+.query:enabled {
+    background-color:rgb(0, 0, 255);
+}
+.query:disabled{
+    background-color: rgba(0,0,225,0.2);
+    transform: none;
+}
+
+.collect:enabled {
+    background-color:rgb(255, 165, 0);
+}
+.collect:disabled {
+    background-color: rgba(255, 165, 0, 0.2);
+    transform:none;
+}
+
+.compute:enabled {
+    background-color:rgba(255, 69, 0, 1);
+}
+.compute:disabled {
+    background-color:rgba(255, 69, 0, 0.2);
+    transform: none;
+}
+
+.impute:enabled {
+    background-color: rgb(220, 20, 60);
+}
+
+.impute:disabled{
+    background-color: rgba(255, 0, 0, 0.2);
+    transform:none;
+}
