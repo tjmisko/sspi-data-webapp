@@ -2,7 +2,7 @@ from flask import Blueprint, Response
 from flask_login import login_required, current_user
 from ..source_utilities.sdg import collectSDGIndicatorData
 from ..source_utilities.iea import collectIEAData
-from ..api import parse_json
+from ..dashboard import parse_json
 from flask import redirect, url_for
 import datetime
 import requests

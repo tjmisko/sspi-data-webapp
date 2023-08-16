@@ -5,7 +5,7 @@ from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extrac
 import json
 from bson import json_util
 from pycountry import countries
-from ..api import fetch_raw_data
+from ..dashboard import fetch_raw_data
 import pandas as pd
 
 def parse_json(data):
