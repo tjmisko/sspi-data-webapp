@@ -1,5 +1,5 @@
 from datetime import datetime
-from ..api import api_bp, parse_json
+from ..api import api_bp, parse_json, lookup_database
 import json
 import math
 from io import BytesIO
@@ -13,7 +13,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
 from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
 import pandas as pd
-import numpy as np
 import re
 import os
 
@@ -28,71 +27,9 @@ def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
     return render_template("database_status.html", database=database, ndocs=ndocs)
 
-@api_bp.route("/query")
-def query_full_database():
-    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    if database == "sspi_raw_api_data":
-        return parse_json(sspi_raw_api_data.find())
-    elif database == "sspi_clean_api_data":
-        return parse_json(sspi_clean_api_data.find())
-    else:  
-        return parse_json(sspi_main_data_v3.find())
 
-@api_bp.route("/query/indicator/<IndicatorCode>")
-def query_indicator(IndicatorCode):
-    """
-    Take an indicator code and return the data
-    """
-    country_group = request.args.get('country_group', default = "all", type = str)
-    if country_group != "all":
 
-        query_parameters = {"CountryGroup": country_group}
-    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    if database == "sspi_raw_api_data":
-        indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
-    elif database == "sspi_clean_api_data":
-        indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode}, {"_id": 0, "Intermediates": 0})
-    else:  
-        indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
-    return parse_json(indicator_data)
 
-@api_bp.route("/query/country/<CountryCode>")
-def query_country(CountryCode):
-    """
-    Take a country code and return the data
-    """
-    country_data = sspi_main_data_v3.find({"CountryCode": CountryCode})
-    return parse_json(country_data)
-
-@api_bp.route("/download")
-def download():
-    """
-    Download the data from the database
-    """
-    MongoQuery = {}
-    # implement filter parameters
-    if request.args.getlist('IndicatorCode'):
-        MongoQuery["IndicatorCode"] = {"$in": request.args.getlist('IndicatorCode')}
-    if request.args.getlist('CountryCode'):
-        MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
-    if request.args.getlist('YEAR'):
-        MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
-    dataframe = lookup_database(request.args.get('database'))
-    format = request.args.get('format', default = 'json', type = str)
-    data_to_download = parse_json(dataframe.find(MongoQuery))
-    if format == 'csv':
-        df = pd.DataFrame(data_to_download).to_csv()
-        mem = BytesIO()
-        mem.write(df.encode('utf-8'))
-        mem.seek(0)
-        return send_file(mem,
-                         mimetype='text/csv',
-                         download_name='data.csv',
-                         as_attachment=True)
-    elif format=='json':
-        return data_to_download
-    else:
-        return "Invalid format"
 
 @api_bp.route('/api_coverage')
 def api_coverage():
@@ -254,16 +191,6 @@ def fetch_raw_data(RawDataDestination):
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
 
-def lookup_database(database_name):
-    if database_name == "sspi_main_data_v3":
-        return sspi_main_data_v3
-    elif database_name == "sspi_raw_api_data":
-        return sspi_raw_api_data
-    elif database_name == "sspi_clean_api_data":
-        return sspi_clean_api_data
-    elif database_name == "sspi_metadata":
-        return sspi_metadata
-
 @api_bp.route("/local")
 @login_required
 def local():
@@ -296,14 +223,6 @@ def reload_from_local(database_name):
     ins_count = len(database.insert_many(local_data).inserted_ids)
     json_file.close()
     return "Reload successful: Dropped {0} observations from {1} and reloaded with {2} observations".format(del_count, database_name, ins_count)
-
-def string_to_float(string):
-    """
-    Passes back string 'NaN' instead of float NaN
-    """
-    if math.isnan(float(string)):
-        return "NaN"
-    return float(string)
 
 @api_bp.route("/dashboard")
 def api_internal_buttons():
