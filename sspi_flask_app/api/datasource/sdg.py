@@ -7,8 +7,8 @@ from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
 from pycountry import countries
-from ..api import format_m49_as_string
-from ..api import string_to_float
+from ..core.dashboard import format_m49_as_string
+from ..core.dashboard import string_to_float
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):

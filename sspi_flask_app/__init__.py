@@ -35,8 +35,8 @@ def init_app(Config):
         # read in the appropriate modules
         from .home import routes
         from .auth import auth
-        from .api import dashboard
-        from .api.dashboard import api_bp
+        from .api.core import dashboard
+        from .api.core.dashboard import api_bp
         from .api.core.collect import collect_bp
         from .api.core.compute import compute_bp
         # Register database

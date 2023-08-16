@@ -4,8 +4,8 @@ import math
 from io import BytesIO
 from flask import Blueprint, redirect, request, url_for, escape, send_file, current_app as app, render_template, flash, get_flashed_messages
 from flask_login import current_user, fresh_login_required, login_required
-from ..models.usermodel import User
-from .. import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
+from ...models.usermodel import User
+from ... import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
 from bson import json_util
 from pycountry import countries
 from flask_wtf import FlaskForm

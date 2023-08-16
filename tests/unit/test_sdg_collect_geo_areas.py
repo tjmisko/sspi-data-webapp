@@ -1,8 +1,8 @@
 # Use a python "relative import" to pull in the function you want to test
-from sspi_flask_app.api.source_utilities.sdg import collectAvailableGeoAreas
+from sspi_flask_app.api.datasource.sdg import collectAvailableGeoAreas
 # N.B. statement above uses . instead of / to capture the filepath
 # It's saying "look in the sspi_flask_app folder, then in the  api folder, then 
-# in the source_utilities folder, then in the SDG file"
+# in the datasource folder, then in the SDG file"
 
 def test_collect_geo_area():
     """
