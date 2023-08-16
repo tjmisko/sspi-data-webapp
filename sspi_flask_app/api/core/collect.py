@@ -8,7 +8,6 @@ import datetime
 import requests
 import time
 
-
 collect_bp = Blueprint("collect_bp", __name__,
                        template_folder="templates", 
                        static_folder="static", 

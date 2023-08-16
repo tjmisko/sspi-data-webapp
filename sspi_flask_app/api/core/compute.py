@@ -1,23 +1,13 @@
-import re
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint
+from ..api import indicator_data_available
 from ... import sspi_clean_api_data, sspi_raw_api_data, parse_json
-from ...api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
-import json
-from bson import json_util
-from pycountry import countries
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from .dashboard import fetch_raw_data
-import pandas as pd
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
                        static_folder="static", 
                        url_prefix="/compute")
-
-def indicator_data_available(IndicatorCode):
-    """
-    Check if indicator is in database
-    """
-    return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
 
 @compute_bp.route("/BIODIV", methods=['GET'])
 def compute_biodiv():
