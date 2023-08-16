@@ -48,5 +48,4 @@ function handleCompute(IndicatorCode) {
         });
     $(`#${IndicatorCode}.results-box`).show()
     $("#" + IndicatorCode + ".results-box").children(".return-content").empty().append("processing")
-
 }
