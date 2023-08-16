@@ -318,7 +318,7 @@ def string_to_float(string):
         return "NaN"
     return float(string)
 
-@api_bp.route("/api-gui")
-def api_gui():
+@api_bp.route("/dashboard")
+def api_internal_buttons():
     implementation_data = api_coverage()
-    return render_template("api_gui.html", implementation_data=implementation_data)
+    return render_template("api-internal-buttons.html", implementation_data=implementation_data)
