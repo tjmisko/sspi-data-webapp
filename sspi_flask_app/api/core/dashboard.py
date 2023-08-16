@@ -1,4 +1,5 @@
 from datetime import datetime
+from ..api import api_bp, parse_json
 import json
 import math
 from io import BytesIO
@@ -15,20 +16,6 @@ import pandas as pd
 import numpy as np
 import re
 import os
-
-def parse_json(data):
-    return json.loads(json_util.dumps(data))
-
-def print_json(data):
-    print(json.dumps(data, indent=4, sort_keys=True))
-
-
-api_bp = Blueprint(
-    'api_bp', __name__,
-    template_folder='templates',
-    static_folder='static',
-    url_prefix='/api/v1'
-)
 
 @api_bp.route("/", methods=["GET"])
 @login_required
