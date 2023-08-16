@@ -42,3 +42,15 @@ def lookup_database(database_name):
         return sspi_clean_api_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
+    
+def store_raw_observation(observation, collection_time, RawDataDestination):
+    """
+    Store the response from an API call in the database
+    - Observation to be passed as a well-formed dictionary for entry into pymongo
+    - RawDataDestination is the indicator code for the indicator that the observation is for
+    """
+    sspi_raw_api_data.insert_one(
+    {"collection-info": {"CollectedBy": current_user.username,
+                        "RawDataDestination": RawDataDestination,
+                        "CollectedAt": collection_time}, 
+    "observation": observation})

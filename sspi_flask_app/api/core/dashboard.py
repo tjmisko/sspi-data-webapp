@@ -3,15 +3,13 @@ from ..api import api_bp, parse_json, lookup_database
 import json
 import math
 from io import BytesIO
-from flask import Blueprint, redirect, request, url_for, escape, send_file, current_app as app, render_template, flash, get_flashed_messages
+from flask import redirect, request, url_for, current_app as app, render_template, flash, get_flashed_messages
 from flask_login import current_user, fresh_login_required, login_required
-from ...models.usermodel import User
 from ... import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
-from bson import json_util
 from pycountry import countries
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, SelectField
-from wtforms.validators import InputRequired, Length, ValidationError, DataRequired
+from wtforms import StringField, SubmitField, SelectField
+from wtforms.validators import DataRequired
 import pandas as pd
 import re
 import os
@@ -26,10 +24,6 @@ def api_home():
 def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
     return render_template("database_status.html", database=database, ndocs=ndocs)
-
-
-
-
 
 @api_bp.route('/api_coverage')
 def api_coverage():
@@ -69,18 +63,6 @@ def get_dynamic_data(IndicatorCode):
         return_data.append(country_data)
     return parse_json(return_data)
 
-def store_raw_observation(observation, collection_time, RawDataDestination):
-    """
-    Store the response from an API call in the database
-    - Observation to be passed as a well-formed dictionary for entry into pymongo
-    - RawDataDestination is the indicator code for the indicator that the observation is for
-    """
-    sspi_raw_api_data.insert_one(
-    {"collection-info": {"CollectedBy": current_user.username,
-                        "RawDataDestination": RawDataDestination,
-                        "CollectedAt": collection_time}, 
-    "observation": observation})
-
 @api_bp.route("/post_static_data", methods=["POST"])
 @fresh_login_required
 def post_static_data():
@@ -88,51 +70,6 @@ def post_static_data():
     sspi_main_data_v3.insert_many(data)
     return redirect(url_for('datatest_bp.database'))
 
-class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
-    indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
-    submit = SubmitField('Remove Duplicates')
-
-@api_bp.route("/remove_duplicates", methods=["POST"])
-def remove_duplicates():
-    database = request.form.get("database")
-    IndicatorCode = request.form.get("indicator_code")
-    print(database, IndicatorCode)
-    return redirect(url_for("api_bp.delete"))
-
-class DeleteIndicatorForm(FlaskForm):
-    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
-    indicator_code = SelectField(choices = ["BIODIV", "REDLST", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
-    submit = SubmitField('Delete')
-
-class ClearDatabaseForm(FlaskForm):
-    database = StringField(validators=[DataRequired()], label="Database Name")
-    database_confirm = StringField(validators=[DataRequired()], label="Confirm Database Name")
-    submit = SubmitField('Clear Database')
-
-@api_bp.route("/delete", methods=["GET", "POST"])
-@login_required
-def delete():
-    remove_duplicates_form = RemoveDuplicatesForm(request.form)
-    delete_indicator_form = DeleteIndicatorForm(request.form)
-    clear_database_form = ClearDatabaseForm(request.form)
-    if request.method == "POST" and delete_indicator_form.validate_on_submit():
-        IndicatorCode = delete_indicator_form.indicator_code.data
-        if delete_indicator_form.database.data == "sspi_main_data_v3":
-            count = sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-        elif delete_indicator_form.database.data == "sspi_raw_api_data":
-            count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
-        elif delete_indicator_form.database.data == "sspi_clean_api_data":
-            count = sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-        flash("Deleted " + str(count) + " documents")
-
-    if request.method == "POST" and clear_database_form.validate_on_submit():
-        if clear_database_form.database.data == clear_database_form.database_confirm.data:
-            lookup_database(clear_database_form.database.data).delete_many({})
-            flash("Cleared database " + clear_database_form.database.data)
-        else:
-            flash("Database names do not match")
-    return render_template('api-delete-page.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
 
 @api_bp.route("/metadata", methods=["GET"])
 def metadata():
