@@ -1,6 +1,6 @@
 from flask import Blueprint
-from ..api import indicator_data_available
-from ... import sspi_clean_api_data, sspi_raw_api_data, parse_json
+from ..api import raw_data_available, parse_json
+from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from .dashboard import fetch_raw_data
 
@@ -19,7 +19,7 @@ def compute_biodiv():
     - Indicator computation: average of the three scores for percentage of biodiversity in
     marine, freshwater, and terrestrial ecosystems
     """
-    if not indicator_data_available("BIODIV"):
+    if not raw_data_available("BIODIV"):
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
@@ -31,7 +31,7 @@ def compute_biodiv():
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 def compute_rdlst():
-    if not indicator_data_available("REDLST"):
+    if not raw_data_available("REDLST"):
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
@@ -41,7 +41,7 @@ def compute_rdlst():
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
 def compute_altnrg():
-    if not indicator_data_available("ALTNRG"):
+    if not raw_data_available("ALTNRG"):
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("ALTNRG")
     lst = []

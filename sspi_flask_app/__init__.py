@@ -55,9 +55,3 @@ def init_app(Config):
         if Config.FLASK_ENV == "development":
             compile_static_assets(assets)
         return app
-
-def parse_json(data):
-    return json.loads(json_util.dumps(data))
-
-def print_json(data):
-    print(json.dumps(data, indent=4, sort_keys=True))

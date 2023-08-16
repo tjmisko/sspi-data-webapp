@@ -192,7 +192,7 @@ This is almost exactly the same code, but I've split the functionality up into s
 from ...api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
 
 def compute_biodiv():
-	if not indicator_data_available("BIODIV"):
+	if not raw_data_available("BIODIV"):
 	        return "Data unavailable. Try running collect."
 	    raw_data = fetch_raw_data("BIODIV")
 	    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
@@ -202,7 +202,7 @@ def compute_biodiv():
 	    sspi_clean_api_data.insert_many(final_data_list)
 	    return f"Inserted {len(final_data_list)} observations into the database."
 
-def indicator_data_available(IndicatorCode):
+def raw_data_available(IndicatorCode):
     return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
 ```
 
