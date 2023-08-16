@@ -35,14 +35,13 @@ def init_app(Config):
         # read in the appropriate modules
         from .home import routes
         from .auth import auth
-        from .api import datatest, api
+        from .api import api
         from .api.api import api_bp
-        from .api.sspi.collect import collect_bp
-        from .api.sspi.compute import compute_bp
+        from .api.core.collect import collect_bp
+        from .api.core.compute import compute_bp
         # Register database
         db.create_all()
         # Register Blueprints
-        app.register_blueprint(datatest.datatest_bp)
         app.register_blueprint(routes.home_bp)
         app.register_blueprint(auth.auth_bp)
         api_bp.register_blueprint(collect_bp)
