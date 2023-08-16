@@ -26,10 +26,10 @@ def query_full_database():
 def query_indicator(IndicatorCode):
     """
     Take an indicator code and return the data
+    Update with query parameters for country group
     """
     country_group = request.args.get('country_group', default = "all", type = str)
     if country_group != "all":
-
         query_parameters = {"CountryGroup": country_group}
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
     if database == "sspi_raw_api_data":
