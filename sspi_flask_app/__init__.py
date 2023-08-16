@@ -35,8 +35,8 @@ def init_app(Config):
         # read in the appropriate modules
         from .home import routes
         from .auth import auth
-        from .api import api
-        from .api.api import api_bp
+        from .api import dashboard
+        from .api.dashboard import api_bp
         from .api.core.collect import collect_bp
         from .api.core.compute import compute_bp
         # Register database
@@ -46,7 +46,7 @@ def init_app(Config):
         app.register_blueprint(auth.auth_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
-        app.register_blueprint(api.api_bp)
+        app.register_blueprint(dashboard.api_bp)
         
         # Register Style Bundles and build optimized css, js
         assets.init_app(app)
