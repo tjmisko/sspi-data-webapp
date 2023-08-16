@@ -3,7 +3,7 @@ import requests
 from ... import sspi_raw_api_data
 from flask_login import current_user
 from flask import redirect, url_for
-from ..api import store_raw_observation
+from ..core.dashboard import store_raw_observation
 
 def collectIEAData(IndicatorCode, RawDataDestination):
     collection_time = datetime.now()

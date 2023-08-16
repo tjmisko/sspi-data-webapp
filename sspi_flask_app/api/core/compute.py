@@ -1,11 +1,11 @@
 import re
 from flask import Blueprint, jsonify, request, render_template
 from ... import sspi_clean_api_data, sspi_raw_api_data
-from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
+from ...api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 import json
 from bson import json_util
 from pycountry import countries
-from ..dashboard import fetch_raw_data
+from .dashboard import fetch_raw_data
 import pandas as pd
 
 def parse_json(data):

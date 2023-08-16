@@ -1,5 +1,5 @@
-from sspi_flask_app.api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
-from sspi_flask_app.api.sspi.compute import fetch_raw_data
+from sspi_flask_app.api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
+from sspi_flask_app.api.core.compute import fetch_raw_data
 import json
 import math
 

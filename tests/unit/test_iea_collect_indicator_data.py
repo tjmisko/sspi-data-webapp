@@ -1,4 +1,4 @@
-from sspi_flask_app.api.source_utilities.iea import collect_IEA_indicator_data
+from sspi_flask_app.api.datasource.iea import collect_IEA_indicator_data
 
 def test_collect_indicator_data():
     lst = collect_IEA_indicator_data('TESbySource')
