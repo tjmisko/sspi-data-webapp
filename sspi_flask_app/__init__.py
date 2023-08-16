@@ -1,3 +1,4 @@
+import json
 from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
@@ -5,6 +6,7 @@ from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
 from .assets import compile_static_assets
+from bson import json_util
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -53,3 +55,9 @@ def init_app(Config):
         if Config.FLASK_ENV == "development":
             compile_static_assets(assets)
         return app
+
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
+
+def print_json(data):
+    print(json.dumps(data, indent=4, sort_keys=True))
