@@ -208,17 +208,7 @@ def delete():
             flash("Cleared database " + clear_database_form.database.data)
         else:
             flash("Database names do not match")
-    return render_template('delete.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
-
-@api_bp.route("/post", methods=["POST"])
-def post_data():
-    data = json.loads(request.data)
-    for observation in data:
-        if sspi_main_data_v3.find({"observation": observation}):
-            print("Observation already in database")
-        else: 
-            sspi_main_data_v3.insert_one(observation)
-    return redirect(url_for('datatest_bp.database'))
+    return render_template('api-delete-page.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, messages=get_flashed_messages(), clear_database_form=clear_database_form)
 
 @api_bp.route("/metadata", methods=["GET"])
 def metadata():
