@@ -6,7 +6,6 @@ from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
 from .assets import compile_static_assets
-from bson import json_util
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -35,20 +34,28 @@ def init_app(Config):
 
     with app.app_context():
         # read in the appropriate modules
-        from .home import routes
+        from .client.routes import client_bp
         from .auth import auth
-        from .api.core import dashboard
-        from .api.core.dashboard import api_bp
+        from .api.api import api_bp
         from .api.core.collect import collect_bp
         from .api.core.compute import compute_bp
+        from .api.core.delete import delete_bp
+        from .api.core.download import download_bp
+        from .api.core.impute import impute_bp
+        from .api.core.query import query_bp
+
         # Register database
         db.create_all()
         # Register Blueprints
-        app.register_blueprint(routes.home_bp)
+        app.register_blueprint(client_bp)
         app.register_blueprint(auth.auth_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
-        app.register_blueprint(dashboard.api_bp)
+        api_bp.register_blueprint(delete_bp)
+        api_bp.register_blueprint(download_bp)
+        api_bp.register_blueprint(impute_bp)
+        api_bp.register_blueprint(query_bp)
+        app.register_blueprint(api_bp)
         
         # Register Style Bundles and build optimized css, js
         assets.init_app(app)
