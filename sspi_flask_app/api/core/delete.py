@@ -40,7 +40,7 @@ def get_delete_page():
 @login_required
 def delete_indicator_data():
     delete_indicator_form = DeleteIndicatorForm(request.form)
-    if request.method == "POST" and delete_indicator_form.validate_on_submit():
+    if delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
         if delete_indicator_form.database.data == "sspi_main_data_v3":
             count = sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
@@ -49,6 +49,7 @@ def delete_indicator_data():
         elif delete_indicator_form.database.data == "sspi_clean_api_data":
             count = sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
         flash("Deleted " + str(count) + " documents")
+    return get_delete_page()
 
 @delete_bp.route("/duplicates", methods=["POST"])
 @login_required
