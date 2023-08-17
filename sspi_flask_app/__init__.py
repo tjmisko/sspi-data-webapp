@@ -35,7 +35,7 @@ def init_app(Config):
     with app.app_context():
         # read in the appropriate modules
         from .client.routes import client_bp
-        from .auth import auth
+        from .auth.routes import auth_bp
         from .api.api import api_bp
         from .api.core.collect import collect_bp
         from .api.core.compute import compute_bp
@@ -48,7 +48,7 @@ def init_app(Config):
         db.create_all()
         # Register Blueprints
         app.register_blueprint(client_bp)
-        app.register_blueprint(auth.auth_bp)
+        app.register_blueprint(auth_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(delete_bp)
