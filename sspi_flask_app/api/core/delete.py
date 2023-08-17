@@ -51,6 +51,7 @@ def delete_indicator_data():
         flash("Deleted " + str(count) + " documents")
 
 @delete_bp.route("/duplicates", methods=["POST"])
+@login_required
 def delete_duplicates():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     database = request.form.get("database")
