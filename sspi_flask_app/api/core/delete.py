@@ -21,7 +21,7 @@ class RemoveDuplicatesForm(FlaskForm):
 class DeleteIndicatorForm(FlaskForm):
     database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "REDLST", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
-    submit = SubmitField('Delete')
+    submit = SubmitField('Delete Indicator')
 
 class ClearDatabaseForm(FlaskForm):
     database = StringField(validators=[DataRequired()], label="Database Name")
