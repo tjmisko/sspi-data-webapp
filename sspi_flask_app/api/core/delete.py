@@ -42,14 +42,15 @@ def delete_indicator_data():
     delete_indicator_form = DeleteIndicatorForm(request.form)
     if delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
-        if delete_indicator_form.database.data == "sspi_main_data_v3":
-            count = sspi_main_data_v3.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-        elif delete_indicator_form.database.data == "sspi_raw_api_data":
+        database = lookup_database(delete_indicator_form.database.data)
+        if not database:
+            return "Database not found"
+        elif database is sspi_raw_api_data:
             count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
-        elif delete_indicator_form.database.data == "sspi_clean_api_data":
-            count = sspi_clean_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-        flash("Deleted " + str(count) + " documents")
-    return redirect(url_for('.get_delete_page'))
+        else:
+            count = sspi_raw_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
+    delete_message = "Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, str(database))
+    return redirect(url_for('.get_delete_page', delete_message=delete_message))
 
 @delete_bp.route("/duplicates", methods=["POST"])
 @login_required
@@ -69,4 +70,4 @@ def clear_db():
             flash("Cleared database " + clear_database_form.database.data)
         else:
             flash("Database names do not match")
-    return redirect(url_for(".get_delete_page"))
+    return redirect(url_for(".get_delete_page"))\
