@@ -1,4 +1,5 @@
-from flask import redirect, render_template, request, url_for
+from curses import flash
+from flask import Blueprint, redirect, render_template, request, url_for
 from flask_login import login_required
 from wtforms import StringField
 from flask_wtf import FlaskForm
@@ -6,6 +7,10 @@ from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 from ..api import lookup_database
 
+delete_bp = Blueprint("delete_bp", __name__,
+                      template_folder="templates", 
+                      static_folder="static", 
+                      url_prefix="/delete")
 
 class RemoveDuplicatesForm(FlaskForm):
     database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
