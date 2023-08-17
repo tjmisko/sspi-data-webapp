@@ -1,5 +1,6 @@
 from datetime import datetime
 from ..api import api_bp, parse_json, lookup_database
+from .query import country_group, indicator_codes
 import json
 import math
 from io import BytesIO
@@ -7,9 +8,6 @@ from flask import redirect, request, url_for, current_app as app, render_templat
 from flask_login import current_user, fresh_login_required, login_required
 from ... import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
 from pycountry import countries
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField
-from wtforms.validators import DataRequired
 import pandas as pd
 import re
 import os
@@ -62,71 +60,6 @@ def get_dynamic_data(IndicatorCode):
         country_data["CountryName"] = countries.lookup(country_code).name
         return_data.append(country_data)
     return parse_json(return_data)
-
-@api_bp.route("/post_static_data", methods=["POST"])
-@fresh_login_required
-def post_static_data():
-    data = json.loads(request.data)
-    sspi_main_data_v3.insert_many(data)
-    return redirect(url_for('datatest_bp.database'))
-
-
-@api_bp.route("/metadata", methods=["GET"])
-def metadata():
-    # Implement request.args for filtering the metadata
-    return parse_json(sspi_metadata.find())
-
-@api_bp.route("/metadata", methods=["POST"])
-def post_metadata():
-    data = json.loads(request.data)
-    sspi_metadata.insert_many(data)
-    return redirect(url_for('datatest_bp.database'))
-
-@api_bp.route("/metadata/indicator_codes", methods=["GET"])
-def indicator_codes():
-    """
-    Return a list of all indicator codes in the database
-    """
-    query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
-    return query_result
-
-@api_bp.route("/metadata/country_groups", methods=["GET"])
-def country_groups():
-    """
-    Return a list of all country groups in the database
-    """
-    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
-    return parse_json(query_result.keys())
-
-@api_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
-def country_group(country_group):
-    """
-    Return a list of all countries in a given country group
-    """
-    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
-    return query_result
-
-# utility functions
-def format_m49_as_string(input):
-    """
-    Utility function ensuring that all M49 data is correctly formatted as a
-    string of length 3 for use with the pycountry library
-    """
-    input = int(input)
-    if input >= 100:
-        return str(input) 
-    elif input >= 10:
-        return '0' + str(input)
-    else: 
-        return '00' + str(input)
-    
-def fetch_raw_data(RawDataDestination):
-    """
-    Utility function that handles querying the database
-    """
-    mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
-    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
-    return raw_data
 
 @api_bp.route("/local")
 @login_required

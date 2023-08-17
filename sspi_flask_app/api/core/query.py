@@ -47,3 +47,31 @@ def query_country(CountryCode):
     """
     country_data = sspi_main_data_v3.find({"CountryCode": CountryCode})
     return parse_json(country_data)
+
+####################
+# METADATA QUERIES #
+####################
+
+@query_bp.route("/metadata/indicator_codes", methods=["GET"])
+def indicator_codes():
+    """
+    Return a list of all indicator codes in the database
+    """
+    query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
+    return query_result
+
+@query_bp.route("/metadata/country_groups", methods=["GET"])
+def country_groups():
+    """
+    Return a list of all country groups in the database
+    """
+    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
+    return parse_json(query_result.keys())
+
+@query_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
+def country_group(country_group):
+    """
+    Return a list of all countries in a given country group
+    """
+    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
+    return query_result
