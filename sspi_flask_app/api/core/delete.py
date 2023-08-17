@@ -70,4 +70,4 @@ def clear_db():
             flash("Cleared database " + clear_database_form.database.data)
         else:
             flash("Database names do not match")
-    return redirect(url_for(".get_delete_page"))\
+    return redirect(url_for(".get_delete_page"))
