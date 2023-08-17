@@ -59,7 +59,8 @@ def delete_duplicates():
     IndicatorCode = request.form.get("indicator_code")
     return get_delete_page()
 
-@delete_bp.route("/clear")
+@delete_bp.route("/clear", methods=["POST"])
+@login_required
 def clear_db():
     clear_database_form = ClearDatabaseForm(request.form)
     if request.method == "POST" and clear_database_form.validate_on_submit():
