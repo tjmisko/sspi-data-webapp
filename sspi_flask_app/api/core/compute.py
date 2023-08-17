@@ -2,7 +2,7 @@ from flask import Blueprint
 from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
-from .dashboard import fetch_raw_data
+from ..api import fetch_raw_data
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 

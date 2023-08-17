@@ -35,6 +35,10 @@ def string_to_float(string):
     return float(string)
 
 def lookup_database(database_name):
+    """
+    Utility function used for safe database lookup
+    Returns nothing if the database name is incorrect
+    """
     if database_name == "sspi_main_data_v3":
         return sspi_main_data_v3
     elif database_name == "sspi_raw_api_data":
@@ -46,7 +50,7 @@ def lookup_database(database_name):
     
 def store_raw_observation(observation, collection_time, RawDataDestination):
     """
-    Store the response from an API call in the database
+    Utility Function the response from an API call in the database
     - Observation to be passed as a well-formed dictionary for entry into pymongo
     - RawDataDestination is the indicator code for the indicator that the observation is for
     """
@@ -55,3 +59,25 @@ def store_raw_observation(observation, collection_time, RawDataDestination):
                         "RawDataDestination": RawDataDestination,
                         "CollectedAt": collection_time}, 
     "observation": observation})
+
+# utility functions
+def format_m49_as_string(input):
+    """
+    Utility function ensuring that all M49 data is correctly formatted as a
+    string of length 3 for use with the pycountry library
+    """
+    input = int(input)
+    if input >= 100:
+        return str(input) 
+    elif input >= 10:
+        return '0' + str(input)
+    else: 
+        return '00' + str(input)
+    
+def fetch_raw_data(RawDataDestination):
+    """
+    Utility function that handles querying the database
+    """
+    mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+    return raw_data

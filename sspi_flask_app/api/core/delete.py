@@ -4,6 +4,7 @@ from wtforms import StringField
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
+from ..api import lookup_database
 
 
 class RemoveDuplicatesForm(FlaskForm):
