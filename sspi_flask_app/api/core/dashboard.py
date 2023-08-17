@@ -15,13 +15,13 @@ import os
 @api_bp.route("/", methods=["GET"])
 @login_required
 def api_home():
-    return render_template("api.html")
+    return render_template("internal-dashboard.html")
 
 @api_bp.route("/status/database/<database>")
 @login_required
 def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
-    return render_template("database_status.html", database=database, ndocs=ndocs)
+    return render_template("database-status.html", database=database, ndocs=ndocs)
 
 @api_bp.route('/api_coverage')
 def api_coverage():
@@ -64,7 +64,7 @@ def get_dynamic_data(IndicatorCode):
 @api_bp.route("/local")
 @login_required
 def local():
-    return render_template('local.html', database_names=check_for_local_data())
+    return render_template('local-upload-form.html', database_names=check_for_local_data())
 
 @api_bp.route("/local/database/list", methods=['GET'])
 @login_required
@@ -94,7 +94,8 @@ def reload_from_local(database_name):
     json_file.close()
     return "Reload successful: Dropped {0} observations from {1} and reloaded with {2} observations".format(del_count, database_name, ins_count)
 
-@api_bp.route("/dashboard")
+@api_bp.route("/fetch-controls")
+@login_required
 def api_internal_buttons():
     implementation_data = api_coverage()
-    return render_template("api-internal-buttons.html", implementation_data=implementation_data)
+    return render_template("dashboard-controls.html", implementation_data=implementation_data)
