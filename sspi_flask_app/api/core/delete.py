@@ -70,10 +70,3 @@ def clear_db():
         else:
             flash("Database names do not match")
     return redirect(url_for(".get_delete_page"))
-@delete_bp.route("test")
-def red():
-    print(delete_bp.endpoint)
-    print(str(delete_bp))
-    print(delete_bp.name)
-    print(delete_bp.import_name)
-    return "done"
