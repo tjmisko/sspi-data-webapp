@@ -2,7 +2,7 @@ from flask import Blueprint, Response
 from flask_login import login_required, current_user
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
-from ..datasource.ilo import collectILOIndicatorData
+from ..datasource.ilo import requestILO
 from .dashboard import parse_json
 from flask import redirect, url_for
 import datetime
@@ -62,5 +62,5 @@ def altnrg():
 @login_required
 def lfpart():
     def collect_iterator():
-        yield from collectILOIndicatorData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
+        yield from requestILO("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
     return Response(collect_iterator(), mimetype='text/event-stream')
