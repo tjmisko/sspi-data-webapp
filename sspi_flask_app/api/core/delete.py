@@ -86,7 +86,8 @@ def delete_duplicates():
             ])
         agg = parse_json(agg)
         id_delete_list = sum([obs["ids"][1:] for obs in agg],[])
-        print(id_delete_list)
+        count = database.delete_many(id_delete_list).deleted_count
+        flash("Found and deleted {0} duplicate observations from database {1}".format(count, database.name))
     return redirect(url_for(".get_delete_page"))
 
 @delete_bp.route("/clear", methods=["POST"])
@@ -96,8 +97,8 @@ def clear_db():
     if clear_database_form.validate_on_submit():
         database = lookup_database(clear_database_form.database.data)
         if database and clear_database_form.database.data == clear_database_form.database_confirm.data:
-            database.delete_many({})
-            flash("Cleared database " + clear_database_form.database.data)
+            count = database.delete_many({}).deleted_count
+            flash("Deleted {0} observations in clearing database {1}".format(count, database.name_))
         else:
             flash("Database names do not match")
     return redirect(url_for(".get_delete_page"))
