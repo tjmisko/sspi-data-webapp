@@ -22,8 +22,23 @@
 
   <body>
     {% include 'header.html' %}
-        {% include 'data-hero.html' %}
-        {% include 'data-dashboard.html' %}
+      <section class="hero-section">
+        <h1 class="hero-title">Explore Our Data</h1>
+        <p> 
+            The SSPI brings together policy data from dozens of sources to measure the extent to which country policy
+            promotes wellbeing for people and the planet.  Use the tools below to examine policy data across countries.
+        </p>
+        <div>
+            <button class="data-download-reveal">Download Data</button>
+            <form class="data-download-form">
+                <div></div>
+                <div></div>
+                <div></div>
+            </form>
+            <button class="data-download-close">Close Download From</button>
+        </div>
+      </section>
+      {% include 'data-dashboard.html' %}
     {% include 'footer.html' %}
   </body>
   
