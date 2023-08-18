@@ -1,5 +1,5 @@
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data, sspidb
-from ..api import lookup_database
+from ..api import lookup_database, indicator_codes
 from flask import Blueprint, redirect, render_template, request, session, flash, url_for
 from flask_login import login_required
 from wtforms import StringField
@@ -15,12 +15,12 @@ delete_bp = Blueprint("delete_bp", __name__,
 
 class RemoveDuplicatesForm(FlaskForm):
     database = SelectField(choices = sspidb.list_collection_names, validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
-    indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
+    indicator_code = SelectField(choices = indicator_codes(), validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Remove Duplicates')
 
 class DeleteIndicatorForm(FlaskForm):
     database = SelectField(choices = sspidb.list_collection_names, validators=[DataRequired()], default="None", label="Database")
-    indicator_code = SelectField(choices = ["BIODIV", "REDLST", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
+    indicator_code = SelectField(choices = indicator_codes(), validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Delete Indicator')
 
 class ClearDatabaseForm(FlaskForm):
