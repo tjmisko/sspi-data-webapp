@@ -13,14 +13,17 @@ delete_bp = Blueprint("delete_bp", __name__,
                       static_folder="static", 
                       url_prefix="/delete")
 
+db_choices = ["---"] + sspidb.list_collection_names()
+ic_choices = ["---"] + indicator_codes()
+
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = sspidb.list_collection_names, validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
-    indicator_code = SelectField(choices = indicator_codes(), validators=[DataRequired()], default="None", label="Indicator Code")
+    database = SelectField(choices = db_choices, validators=[DataRequired()], default="---", label="Database")
+    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="---", label="Indicator Code")
     submit = SubmitField('Remove Duplicates')
 
 class DeleteIndicatorForm(FlaskForm):
-    database = SelectField(choices = sspidb.list_collection_names, validators=[DataRequired()], default="None", label="Database")
-    indicator_code = SelectField(choices = indicator_codes(), validators=[DataRequired()], default="None", label="Indicator Code")
+    database = SelectField(choices = db_choices, validators=[DataRequired()], default="---", label="Database")
+    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="---", label="Indicator Code")
     submit = SubmitField('Delete Indicator')
 
 class ClearDatabaseForm(FlaskForm):
@@ -55,8 +58,16 @@ def delete_indicator_data():
 @login_required
 def delete_duplicates():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
-    database = request.form.get("database")
+    database = lookup_database(request.form.get("database"))
     IndicatorCode = request.form.get("indicator_code")
+    if database and remove_duplicates_form.validate_on_submit():
+        if database is sspi_raw_api_data:
+            """Implement"""
+        else:
+            agg = database.aggregate([
+                {"$group": {"IndicatorCode": "$IndicatorCode"}, "count": {"$sum": 1}}
+            ])
+        print(agg)
     return redirect(url_for(".get_delete_page"))
 
 @delete_bp.route("/clear", methods=["POST"])
