@@ -1,0 +1,15 @@
+.data-widget {
+    display: flex;
+    position: relative;
+    background-color: white;
+    border-radius: 0.5em;
+    min-width: 250px;
+    min-height: 300px;
+    padding: 1em;
+}
+
+.widget-controls {
+    position: absolute;
+    top:0;
+    right:0;
+}
