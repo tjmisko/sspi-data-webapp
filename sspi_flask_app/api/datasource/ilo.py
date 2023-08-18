@@ -11,5 +11,7 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     """store_raw"""
     ilo = sdmx.Request('ILO')
     meta = ilo.datastructure(ILOIndicatorCode)
+    yield "SDMX Metadata:\n"
+    yield str(meta)
     print(meta)
     yield "Collection Complete!"
