@@ -45,8 +45,9 @@ def compute_altnrg():
     if not raw_data_available("ALTNRG"):
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("ALTNRG")
-    df = pd.read_json(raw_data)
-    print(df)
+    observations = [entry["observation"] for entry in raw_data]
+    df = pd.DataFrame(observations)
+    return str(df)
     # for row in raw_data:
         #lst.append(row["observation"])
     #return parse_json(lst)
