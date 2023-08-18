@@ -48,7 +48,7 @@ def delete_indicator_data():
         elif database is sspi_raw_api_data:
             count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
         else:
-            count = sspi_raw_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
+            count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
     delete_message = "Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, database.name)
     flash(delete_message)
     return redirect(url_for('.get_delete_page', delete_message=delete_message))
