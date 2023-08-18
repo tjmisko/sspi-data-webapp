@@ -1,48 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<h2> SSPI Main Data 2018 </h2>
-
-<div class="datawindow"> 
-    <nav class="datanav">
-        <a class="datanavlink" href="/"> By Indicator </a>
-        <a class="datanavlink" href="/"> By Country </a>
-        <a class="datanavlink" href="/"> Country Comparison </a>
-    </nav>
-    <div class="dropdown">
-        <label for="Indicator">Indicator:</label>
-        <select name="Indicator" onchange="makeBarChart(value)">
-            {% include 'indicator_options.html' %}
-        </select>
-    </div>
-    <canvas id="BarChart"></canvas>
-</div>
-<h2> SSPI Dynamic Data (1990 - Present) </h2>
-<div class="datawindow">
-    <nav class="datanav">
-        <a class="datanavlink" href="/"> Data Coverage By Indicator </a>
-        <a class="datanavlink" href="/"> Data Coverage By Country </a>
-    </nav>
-    <div class="dropdown">
-        <label for="Indicator">Indicator:</label>
-        <select name="Indicator" onchange="makeBarChart(value)">
-            {% include 'indicator_options.html' %}
-        </select>
-    </div>
-    <div class="tabulator-wrapper">
-        <div id="dynamic-data-table"></div>
-    </div>
-</div>
-
-<h2> SSPI Dynamic Data API Coverage </h2>
-<div class="datawindow">
-    <div id="api-link-coverage-data-table"></div>
-</div>
-
-<h2> Indicator Table </h2>
-<div class="datawindow">
-    <div id="example-table"></div>
-</div>
+    {% include 'data-hero.html' %}
 
 
 {% endblock %}
