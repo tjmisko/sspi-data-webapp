@@ -1,4 +1,4 @@
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
+from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data, sspidb
 from ..api import lookup_database
 from flask import Blueprint, redirect, render_template, request, session, flash, url_for
 from flask_login import login_required
@@ -14,12 +14,12 @@ delete_bp = Blueprint("delete_bp", __name__,
                       url_prefix="/delete")
 
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
+    database = SelectField(choices = sspidb.list_collection_names, validators=[DataRequired()], default="sspi_raw_api_data", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Remove Duplicates')
 
 class DeleteIndicatorForm(FlaskForm):
-    database = SelectField(choices = ["sspi_main_data_v3", "sspi_raw_api_data", "sspi_clean_api_data"], validators=[DataRequired()], default="None", label="Database")
+    database = SelectField(choices = sspidb.list_collection_names, validators=[DataRequired()], default="None", label="Database")
     indicator_code = SelectField(choices = ["BIODIV", "REDLST", "COALPW"], validators=[DataRequired()], default="None", label="Indicator Code")
     submit = SubmitField('Delete Indicator')
 
