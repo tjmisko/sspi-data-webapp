@@ -59,7 +59,7 @@ class LoginForm(FlaskForm):
 def login():
     print(current_user)
     if current_user.is_authenticated:
-        return redirect(url_for('home_bp.data'))
+        return redirect(url_for('client_bp.data'))
     login_form = LoginForm()
     if not login_form.validate_on_submit():
         flash("Invalid Submission Format")
@@ -72,7 +72,7 @@ def login():
         login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
-    return redirect(url_for('home_bp.data'))               
+    return redirect(url_for('client_bp.data'))               
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
@@ -83,13 +83,13 @@ def remote_login():
     user = User.query.filter_by(username=username).first()
     if user and flask_bcrypt.check_password_hash(user.password, password):
         login_user(user)
-    return redirect(url_for('home_bp.data'))
+    return redirect(url_for('client_bp.data'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('home_bp.home'))
+    return redirect(url_for('client_bp.home'))
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])

@@ -1,7 +1,7 @@
 # Backend Documentation
 
 ## Writing a route for `collect.py`
-1. Find and test the link for the source API.  You might be able to test the link from your browser, but if not, you can test it from the application.  If we already have another indicator from that source, look in the `source_utilities` folder to see if we've already written something that can accomplish this task.
+1. Find and test the link for the source API.  You might be able to test the link from your browser, but if not, you can test it from the application.  If we already have another indicator from that source, look in the `datasource` folder to see if we've already written something that can accomplish this task.
 2. The first step of any `collect_bp` route is to hit the source API with an HTTP `GET` request.  In python, this is accomplished via the `requests` module.
 3. In order to process and store the request, we'll need to see its form to know what to do with it.  The best way to do this is to `return parse_json(response)` at the end of the route-in-progress, where `response` is whatever JSON response is handed back in `response = requests.get("https://api-link")`. With that return statement in place, the route-in-progress is now a valid route and can be run without getting a server error.  In your command line, `flask run` the application and navigate to the endpoint `/api/v1/collect/[your_indicator_code]`, which should now display the raw JSON returned by the source API.  
 	* The reason we need to `return parse_json(response)` instead of `return response` is that the object `response` is a Python object, not a JSON object or dictionary.  The `parse_json` function is a simple wrapper that uses `json.dumps` and `json.loads` in order to return a valid object to Flask, can only accept strings and "serializable objects" like properly parsed JSON.
@@ -189,10 +189,10 @@ def compute_biodiv():
 This is almost exactly the same code, but I've split the functionality up into smaller chunks wrapped in functions with descriptive names.  This offers a few benefits.  First of all, reading `compute_biodiv` becomes totally tractable.  And, if you find that something is wrong in `compute_biodiv`, you can easily figure out where it's going wrong by testing that each of these smaller component functions works correctly.  
 
 ```python
-from ...api.source_utilities.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
+from ...api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
 
 def compute_biodiv():
-	if not indicator_data_available("BIODIV"):
+	if not raw_data_available("BIODIV"):
 	        return "Data unavailable. Try running collect."
 	    raw_data = fetch_raw_data("BIODIV")
 	    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
@@ -202,11 +202,11 @@ def compute_biodiv():
 	    sspi_clean_api_data.insert_many(final_data_list)
 	    return f"Inserted {len(final_data_list)} observations into the database."
 
-def indicator_data_available(IndicatorCode):
+def raw_data_available(IndicatorCode):
     return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
 ```
 
-Those smaller component functions are off to the side waiting in `source_utilities/sdg.py` and are also now much more readable because there's not too much going on in each of them.
+Those smaller component functions are off to the side waiting in `datasource/sdg.py` and are also now much more readable because there's not too much going on in each of them.
 
 ```python
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):

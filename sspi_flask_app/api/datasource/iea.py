@@ -11,4 +11,4 @@ def collectIEAData(IndicatorCode, RawDataDestination):
     print(response)
     for observation in response:  
         store_raw_observation(observation, collection_time, RawDataDestination)
-    return redirect(url_for('home_bp.data'))
+    return redirect(url_for('client_bp.data'))

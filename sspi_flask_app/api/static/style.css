@@ -5,6 +5,41 @@ body {
     color: #101223;
 }
 
+.delete-body {
+    display:flex;
+    position:relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 60px;
+    font-size: 18px;
+}
+#delete-header {
+    width: min(100%,550px);
+}
+.message {
+    padding: 10px;
+    margin: 5px;
+    background-color: rgb(229, 124, 124, 0.5);
+    border-radius: 5px;
+    color: rgb(70, 8, 8);
+    max-width: 500px;
+}
+.form-box {
+    padding: 10px 30px;
+    margin: 5px;
+    max-width: 500px;
+}
+.warning {
+    display: block;
+    color: rgb(195, 9, 9);
+    margin-bottom: 10px;
+}
+.form-item {
+    margin: 5px 0px;
+}
+
+
 #gridbox {
     display:grid;
     align-items: top;
