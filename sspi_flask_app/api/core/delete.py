@@ -1,5 +1,5 @@
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data, sspidb
-from ..api import lookup_database, indicator_codes
+from ..api import lookup_database, indicator_codes, parse_json, print_json
 from flask import Blueprint, redirect, render_template, request, session, flash, url_for
 from flask_login import login_required
 from wtforms import StringField
@@ -60,14 +60,22 @@ def delete_duplicates():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     database = lookup_database(request.form.get("database"))
     IndicatorCode = request.form.get("indicator_code")
-    if database and remove_duplicates_form.validate_on_submit():
+    if database is not None and remove_duplicates_form.validate_on_submit():
         if database is sspi_raw_api_data:
             """Implement"""
         else:
             agg = database.aggregate([
-                {"$group": {"IndicatorCode": "$IndicatorCode"}, "count": {"$sum": 1}}
+                {"$group": {
+                    "_id": {
+                        "IndicatorCode": "$IndicatorCode",
+                        "YEAR": "$YEAR",
+                        "CountryCode": "$CountryCode"
+                    },
+                    "count": {"$sum": 1},
+                    "ids": {"$push": "$_id"}
+                }}
             ])
-        print(agg)
+            print_json(parse_json(agg))
     return redirect(url_for(".get_delete_page"))
 
 @delete_bp.route("/clear", methods=["POST"])
