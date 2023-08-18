@@ -13,5 +13,7 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     meta = ilo.datastructure(ILOIndicatorCode)
     yield "SDMX Metadata:\n"
     yield str(meta)
-    print(meta)
+    data = ilo.data(ILOIndicatorCode, key={})
+    yield "SDMX CodeList:\n"
+    yield sdmx.to_pandas(meta.codelist)
     yield "Collection Complete!"
