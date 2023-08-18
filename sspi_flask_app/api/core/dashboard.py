@@ -2,11 +2,10 @@ from datetime import datetime
 from ..api import api_bp, parse_json, lookup_database
 from .query import country_group, indicator_codes
 import json
-import math
 from io import BytesIO
-from flask import redirect, request, url_for, current_app as app, render_template, flash, get_flashed_messages
-from flask_login import current_user, fresh_login_required, login_required
-from ... import sspi_main_data_v3, sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
+from flask import request, current_app as app, render_template
+from flask_login import login_required
+from ... import sspi_clean_api_data
 from pycountry import countries
 import pandas as pd
 import re

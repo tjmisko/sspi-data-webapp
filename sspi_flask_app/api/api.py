@@ -85,11 +85,3 @@ def fetch_raw_data(RawDataDestination):
     mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
-
-@api_bp.route("/metadata/indicator_codes", methods=["GET"])
-def indicator_codes():
-    """
-    Return a list of all indicator codes in the database
-    """
-    query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
-    return query_result

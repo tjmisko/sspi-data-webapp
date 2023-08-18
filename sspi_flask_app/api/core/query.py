@@ -75,3 +75,11 @@ def country_group(country_group):
     """
     query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
     return query_result
+
+@query_bp.route("/metadata/indicator_codes", methods=["GET"])
+def indicator_codes():
+    """
+    Return a list of all indicator codes in the database
+    """
+    query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
+    return query_result
