@@ -85,7 +85,8 @@ def delete_duplicates():
                 }},
             ])
         agg = parse_json(agg)
-        id_delete_list = sum([obs["ids"][1:] for obs in agg],[])
+        id_delete_list = [oid["$oid"] for oid in sum([obs["ids"][1:] for obs in agg],[])]
+        print(id_delete_list)
         count = database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
         flash("Found and deleted {0} duplicate observations from database {1}".format(count, database.name))
     return redirect(url_for(".get_delete_page"))
