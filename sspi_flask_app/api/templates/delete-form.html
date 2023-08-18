@@ -6,7 +6,7 @@
     <title>Page Title</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" type="text/css" href="{{ url_for('api_bp.static', filename = 'style.css') }} "/>
-<body>
+<body class="delete-body">
     <h1 id="delete-header">Data Deletion Dashboard</h1>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
