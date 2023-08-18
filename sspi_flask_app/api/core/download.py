@@ -9,8 +9,8 @@ download_bp = Blueprint("download_bp", __name__,
                         static_folder="static", 
                         url_prefix="/download")
 
-@download_bp.route("/download")
-def download():
+@download_bp.route("/<database_name>/JSON")
+def download(database_name):
     """
     Download the data from the database
     """
