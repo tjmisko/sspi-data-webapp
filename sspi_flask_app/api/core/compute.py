@@ -47,7 +47,10 @@ def compute_altnrg():
     raw_data = fetch_raw_data("ALTNRG")
     observations = [entry["observation"] for entry in raw_data]
     df = pd.DataFrame(observations)
-    return str(df)
+    print(df.head())
+    df = df.pivot(columns="product", values="value", index=["year", "country", "short", "flow", "units"])
+    print(df)
+    return parse_json(df.head().to_json())
     # for row in raw_data:
         #lst.append(row["observation"])
     #return parse_json(lst)
