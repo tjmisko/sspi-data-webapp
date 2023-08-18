@@ -2,6 +2,7 @@ from flask import Blueprint, Response
 from flask_login import login_required, current_user
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
+from ..datasource.ilo import collectILOIndicatorData
 from .dashboard import parse_json
 from flask import redirect, url_for
 import datetime
@@ -22,32 +23,44 @@ def biodiv():
         yield "data: Collection complete"
     return Response(collect_iterator(), mimetype='text/event-stream')
 
-@collect_bp.route("REDLST", methods=['GET'])
+@collect_bp.route("/REDLST", methods=['GET'])
 @login_required
 def redlst():
-    collectSDGIndicatorData("15.5.1", "REDLST")
-    return "success!"
+    def collect_iterator():
+        yield from collectSDGIndicatorData("15.5.1", "REDLST")
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
-@collect_bp.route("WATMAN", methods=['GET'])
+@collect_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def watman():
-    collectSDGIndicatorData("6.4.1", "WATMAN")
-    collectSDGIndicatorData("6.4.2", "WATMAN")
-    return "success!"
+    def collect_iterator():
+        yield from collectSDGIndicatorData("6.4.1", "WATMAN")
+        yield from collectSDGIndicatorData("6.4.2", "WATMAN")
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
-@collect_bp.route("STKHLM", methods=['GET'])
+@collect_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def stkhlm():
-    return collectSDGIndicatorData("12.4.1", "STKHLM")
+    def collect_iterator():
+        yield from collectSDGIndicatorData("12.4.1", "STKHLM")
+    return Response(collect_iterator(), mimetype='text/event-stream')
     
-@collect_bp.route("COALPW", methods=['GET'])
+@collect_bp.route("/COALPW", methods=['GET'])
 @login_required
 def coalpw():
-    collectIEAData("TESbySource", "COALPW")
-    return "success!"
+    def collect_iterator():
+        yield from collectIEAData("TESbySource", "COALPW")
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
-@collect_bp.route("ALTNRG", methods=['GET'])
+@collect_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def altnrg():
     collectIEAData("TFCbySource", "ALTNRG")
     return "success!"
+
+@collect_bp.route("/LFPART")
+@login_required
+def lfpart():
+    def collect_iterator():
+        yield from collectILOIndicatorData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
+    return Response(collect_iterator(), mimetype='text/event-stream')
