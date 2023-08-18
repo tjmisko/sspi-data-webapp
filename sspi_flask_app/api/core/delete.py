@@ -30,11 +30,10 @@ class ClearDatabaseForm(FlaskForm):
 
 @delete_bp.route('/')
 def get_delete_page():
-    delete_message = request.args.get("delete_message")
     delete_indicator_form = DeleteIndicatorForm(request.form)
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     clear_database_form = ClearDatabaseForm(request.form)
-    return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form,delete_message=delete_message)
+    return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form)
 
 @delete_bp.route("/indicator", methods=["POST"])
 @login_required
