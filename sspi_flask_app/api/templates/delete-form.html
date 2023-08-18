@@ -5,42 +5,7 @@
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
     <title>Page Title</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <style>
-        body {
-            display:flex;
-            position:relative;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 60px;
-            font-size: 18px;
-        }
-        #delete-header {
-            width: min(100%,550px);
-        }
-        .message {
-            padding: 10px;
-            margin: 5px;
-            background-color: rgb(229, 124, 124, 0.5);
-            border-radius: 5px;
-            color: rgb(70, 8, 8);
-            max-width: 500px;
-        }
-        .form-box {
-            padding: 10px 30px;
-            margin: 5px;
-            max-width: 500px;
-        }
-        .warning {
-            display: block;
-            color: rgb(195, 9, 9);
-            margin-bottom: 10px;
-        }
-        .form-item {
-            margin: 5px 0px;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('api_bp.static', filename = 'style.css') }} "/>
 <body>
     <h1 id="delete-header">Data Deletion Dashboard</h1>
     {% with messages = get_flashed_messages() %}
