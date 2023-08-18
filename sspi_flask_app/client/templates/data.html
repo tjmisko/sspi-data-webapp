@@ -23,17 +23,19 @@
   <body>
     {% include 'header.html' %}
       <section class="hero-section">
-        <h1 class="hero-title">Explore Our Data</h1>
-        <p> 
-            The SSPI brings together policy data from dozens of sources to measure the extent to which country policy
-            promotes wellbeing for people and the planet.  Use the tools below to examine policy data across countries.
-        </p>
-        <div>
+        <div class="hero-text-content"> 
+          <h1 class="hero-title">Explore Our Data</h1>
+          <p class="hero-blurb"> 
+              The SSPI brings together policy data from dozens of sources to measure the extent to which country policy
+              promotes wellbeing for people and the planet.  Use the tools below to examine policy data across countries.
+          </p>
+        </div>
+        <div class="download-box">
             <button class="data-download-reveal">Download Data</button>
             <form class="data-download-form">
-                <div>{{download_form.database.label}} {{download_form.database}}</div>
-                <div>{{download_form.indicator_code.label}} {{download_form.indicator_code}}</div>
-                <div>{{download_form.country_group.label}} {{download_form.country_group}}</div>
+                <div class="form-item">{{download_form.database.label}} {{download_form.database}}</div>
+                <div class="form-item">{{download_form.indicator_code.label}} {{download_form.indicator_code}}</div>
+                <div class="form-item">{{download_form.country_group.label}} {{download_form.country_group}}</div>
             </form>
             <button class="data-download-close">Close Download From</button>
         </div>

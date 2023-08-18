@@ -7,3 +7,13 @@ $black: rgb(42, 41, 43);
 .data-dashboard-section {
     padding: 1em 2em;
 }
+
+.data-dashboard-dropdown {
+    background-color: rgb(41, 75, 80);
+    color: $white;
+    border-radius: 0.5em;
+}
+
+.data-dashboard-options-list {
+    display: none;
+}
