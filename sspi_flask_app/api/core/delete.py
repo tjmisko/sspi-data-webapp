@@ -13,16 +13,16 @@ delete_bp = Blueprint("delete_bp", __name__,
                       static_folder="static", 
                       url_prefix="/delete")
 
-db_choices = ["---"] + sspidb.list_collection_names()
-ic_choices = ["---"] + indicator_codes()
+db_choices = [""] + sspidb.list_collection_names()
+ic_choices = [""] + indicator_codes()
 
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = db_choices, validators=[DataRequired()], default="---", label="Database")
-    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="---", label="Indicator Code")
+    database = SelectField(choices = db_choices, validators=[DataRequired()], default="", label="Database")
+    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="", label="Indicator Code")
     submit = SubmitField('Remove Duplicates')
 
 class DeleteIndicatorForm(FlaskForm):
-    database = SelectField(choices = db_choices, validators=[DataRequired()], default="---", label="Database")
+    database = SelectField(choices = db_choices, validators=[DataRequired()], default="", label="Database")
     indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="---", label="Indicator Code")
     submit = SubmitField('Delete Indicator')
 
@@ -62,7 +62,16 @@ def delete_duplicates():
     IndicatorCode = request.form.get("indicator_code")
     if database is not None and remove_duplicates_form.validate_on_submit():
         if database is sspi_raw_api_data:
-            """Implement"""
+            agg = database.aggregate([
+                {"$group": {
+                    "_id": {
+                        "RawDataDestination": {"$getField": {"field": "RawDataDestination", "input": "collection-info"}},
+                        "observation": "$observation"
+                    },
+                    "count": {"$sum": 1},
+                    "ids": {"$push": "$_id"}
+                }},
+            ])
         else:
             agg = database.aggregate([
                 {"$group": {
@@ -73,9 +82,11 @@ def delete_duplicates():
                     },
                     "count": {"$sum": 1},
                     "ids": {"$push": "$_id"}
-                }}
+                }},
             ])
-            print_json(parse_json(agg))
+        agg = parse_json(agg)
+        id_delete_list = sum([obs["ids"][1:] for obs in agg],[])
+        print(id_delete_list)
     return redirect(url_for(".get_delete_page"))
 
 @delete_bp.route("/clear", methods=["POST"])
