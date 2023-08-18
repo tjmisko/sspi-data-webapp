@@ -3,6 +3,7 @@ from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..api import fetch_raw_data
+import pandas as pd
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -44,7 +45,8 @@ def compute_altnrg():
     if not raw_data_available("ALTNRG"):
         return "Data unavailable. Try running collect."
     raw_data = fetch_raw_data("ALTNRG")
-    lst = []
-    for row in raw_data:
-        lst.append(row["observation"])
-    return parse_json(lst)
+    df = pd.read_json(raw_data)
+    print(df)
+    # for row in raw_data:
+        #lst.append(row["observation"])
+    #return parse_json(lst)
