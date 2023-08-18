@@ -36,7 +36,6 @@ def get_delete_page():
     clear_database_form = ClearDatabaseForm(request.form)
     return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form,delete_message=delete_message)
 
-
 @delete_bp.route("/indicator", methods=["POST"])
 @login_required
 def delete_indicator_data():
@@ -50,7 +49,8 @@ def delete_indicator_data():
             count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
         else:
             count = sspi_raw_api_data.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-    delete_message = "Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, str(database))
+    delete_message = "Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, database.name)
+    flash(delete_message)
     return redirect(url_for('.get_delete_page', delete_message=delete_message))
 
 @delete_bp.route("/duplicates", methods=["POST"])
