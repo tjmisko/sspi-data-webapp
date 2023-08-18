@@ -1,6 +1,7 @@
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data, sspidb
-from ..api import lookup_database, indicator_codes, parse_json, print_json
-from flask import Blueprint, redirect, render_template, request, session, flash, url_for
+from ... import sspi_raw_api_data, sspidb
+from ..api import lookup_database, parse_json
+from .query import indicator_codes
+from flask import Blueprint, redirect, render_template, request, flash, url_for
 from flask_login import login_required
 from wtforms import StringField
 from bson.objectid import ObjectId

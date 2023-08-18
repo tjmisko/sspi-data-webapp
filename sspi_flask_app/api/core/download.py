@@ -1,7 +1,8 @@
 from io import BytesIO
 from flask import Blueprint, request, send_file
 import pandas as pd
-from ..api import lookup_database, parse_json
+
+from ..api import lookup_database, parse_json, country_group
 
 
 download_bp = Blueprint("download_bp", __name__,
@@ -9,20 +10,22 @@ download_bp = Blueprint("download_bp", __name__,
                         static_folder="static", 
                         url_prefix="/download")
 
-@download_bp.route("/<database_name>/JSON")
-def download(database_name):
+@download_bp.route("/<database_name>/<format>")
+def download(database_name, format):
     """
     Download the data from the database
     """
     MongoQuery = {}
-    # implement filter parameters
+    print(request.args)
     if request.args.getlist('IndicatorCode'):
         MongoQuery["IndicatorCode"] = {"$in": request.args.getlist('IndicatorCode')}
-    if request.args.getlist('CountryCode'):
+    if request.args.get('CountryGroup'):
+        MongoQuery['CountryCode'] = {"$in": country_group(request.args.get('CountryGroup'))}
+    elif request.args.getlist('CountryCode'):
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
     if request.args.getlist('YEAR'):
         MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
-    dataframe = lookup_database(request.args.get('database'))
+    dataframe = lookup_database(database_name)
     format = request.args.get('format', default = 'json', type = str)
     data_to_download = parse_json(dataframe.find(MongoQuery))
     if format == 'csv':
