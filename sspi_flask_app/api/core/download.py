@@ -2,7 +2,8 @@ from io import BytesIO
 from flask import Blueprint, request, send_file
 import pandas as pd
 
-from ..api import lookup_database, parse_json, country_group
+from ..api import lookup_database, parse_json
+from .query import country_group
 
 
 download_bp = Blueprint("download_bp", __name__,
@@ -37,7 +38,5 @@ def download(database_name, format):
                          mimetype='text/csv',
                          download_name='data.csv',
                          as_attachment=True)
-    elif format=='json':
+    elif format == 'json':
         return data_to_download
-    else:
-        return "Invalid format"
