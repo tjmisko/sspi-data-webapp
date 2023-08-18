@@ -3,6 +3,7 @@ from ..api import lookup_database, indicator_codes, parse_json, print_json
 from flask import Blueprint, redirect, render_template, request, session, flash, url_for
 from flask_login import login_required
 from wtforms import StringField
+from bson.objectid import ObjectId
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
@@ -17,8 +18,7 @@ db_choices = [""] + sspidb.list_collection_names()
 ic_choices = [""] + indicator_codes()
 
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = db_choices, validators=[DataRequired()], default="", label="Database")
-    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="", label="Indicator Code")
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_final_dynamic_data"], validators=[DataRequired()], default="", label="Database")
     submit = SubmitField('Remove Duplicates')
 
 class DeleteIndicatorForm(FlaskForm):
@@ -59,7 +59,6 @@ def delete_indicator_data():
 def delete_duplicates():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     database = lookup_database(request.form.get("database"))
-    IndicatorCode = request.form.get("indicator_code")
     if database is not None and remove_duplicates_form.validate_on_submit():
         if database is sspi_raw_api_data:
             agg = database.aggregate([
@@ -85,9 +84,9 @@ def delete_duplicates():
                 }},
             ])
         agg = parse_json(agg)
-        id_delete_list = [oid["$oid"] for oid in sum([obs["ids"][1:] for obs in agg],[])]
+        id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in agg],[])]
         print(id_delete_list)
-        count = database.delete_many({"_id": {"$oid": {"$in": id_delete_list}}}).deleted_count
+        count = database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
         flash("Found and deleted {0} duplicate observations from database {1}".format(count, database.name))
     return redirect(url_for(".get_delete_page"))
 

@@ -19,7 +19,6 @@
         <form action="/api/v1/delete/duplicates" method="POST" id="remove_duplicates">
             {{ remove_duplicates_form.hidden_tag() }}
             <div class="form-item">{{ remove_duplicates_form.database.label }}: {{ remove_duplicates_form.database }} </div>
-            <div class="form-item">{{ remove_duplicates_form.indicator_code.label }}: {{ remove_duplicates_form.indicator_code }} </div>
             <div class="form-item">{{ remove_duplicates_form.submit }} </div>
         </form>
         <h2> Delete Indicator Data </h1>
