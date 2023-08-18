@@ -10,6 +10,6 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     """for sdmx, keep the data in one observation and the meta needed for processing in the other"""
     """store_raw"""
     ilo = sdmx.Request('ILO')
-    meta = ilo.datastructure('DF_EAP_DWAP_SEX_AGE_RT')
+    meta = ilo.datastructure(ILOIndicatorCode)
     print(meta)
     yield "Collection Complete!"
