@@ -24,9 +24,8 @@
     <div class="form-box">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
-                {% for message in messages %}
-                    <div class="message">{{ message }}</div>
-                {% endfor %}
+                {% set newmessage = messages.pop(-1) %}
+                <div class="message">{{ newmessage }}</div>
             {% endif %}
         {% endwith %}
         {% if delete_message %}
