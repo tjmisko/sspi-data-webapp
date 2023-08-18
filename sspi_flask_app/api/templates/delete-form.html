@@ -37,9 +37,6 @@
                 <div class="message">{{ newmessage }}</div>
             {% endif %}
         {% endwith %}
-        {% if delete_message %}
-            <div class="delete-message">{{ delete_message }}</div>
-        {% endif %}
         <h1> Remove Duplicate Data</h1>
         <form action="/api/v1/delete/duplicates" method="POST" id="remove_duplicates">
             <div class="form-item">{{ remove_duplicates_form.database.label }}: {{ remove_duplicates_form.database }} </div>
@@ -55,7 +52,7 @@
             <div class="form-item"> {{ delete_indicator_form.submit }}</div>
         </form>
         <h1> Clear Database </h1>
-        <b> Danger! Clearing an entire database is a big deal! If you wish to proceed, type the name of the database you wish to clear in the fields below: </b>
+        <b class="message"> Danger! Clearing an entire database is a big deal! If you wish to proceed, type the name of the database you wish to clear in the fields below: </b>
         <form action="/api/v1/delete/clear" method="POST">
             {{ clear_database_form.hidden_tag() }}
             <div class="form-item"> {{ clear_database_form.database.label }}: {{ clear_database_form.database }} </div>
