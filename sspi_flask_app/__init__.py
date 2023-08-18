@@ -18,7 +18,7 @@ sspi_raw_api_data = sspidb.sspi_raw_api_data
 sspi_clean_api_data = sspidb.sspi_clean_api_data
 sspi_imputed_data = sspidb.sspi_imputed_data
 sspi_metadata = sspidb.sspi_metadata
-sspi_dynamic_data = sspidb.sspi_dynamic_data
+sspi_final_dynamic_data = sspidb.sspi_final_dynamic_data
 
 assets = Environment()
 
