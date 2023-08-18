@@ -23,10 +23,10 @@ cg_choices = country_groups()
 class ClientDownloadForm(FlaskForm):
     database = SelectField(choices = [("sspi_main_data_v3", "SSPI V3 Data (2018 Only)"), ("sspi_final_api_data", "SSPI Dynamic Data (Experimental)")], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
     indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="All", label="Indicator Code")
-    country_group = SelectField(choices = cg_choices, validators=[DataRequired()], default="sspi49")
+    country_group = SelectField(choices = cg_choices, validators=[DataRequired()], default="sspi49", label="Country Group")
     submit = SubmitField('Delete Indicator')
 
-@download_bp.route("/client")
+@download_bp.route("/client", methods=['POST'])
 def client_download():
     return "data"
 
