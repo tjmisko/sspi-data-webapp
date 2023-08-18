@@ -22,10 +22,12 @@
 </head>
 <body>
     <div class="form-box">
-        {% if messages %}
-        {% for message in get_flashed_messages() %}
-            <div class="message">{{ message }}</div>
-        {% endfor %}
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
         {% endif %}
         {% if delete_message %}
             <div class="delete-message">{{ delete_message }}</div>
