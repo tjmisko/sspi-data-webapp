@@ -27,6 +27,9 @@
             <div class="message">{{ message }}</div>
         {% endfor %}
         {% endif %}
+        {% if delete_message %}
+            <div class="delete-message">{{ delete_message }}</div>
+        {% endif %}
         <h1> Remove Duplicate Data</h1>
         <form action="/api/v1/delete/duplicates" method="POST" id="remove_duplicates">
             <div class="form-item">{{ remove_duplicates_form.database.label }}: {{ remove_duplicates_form.database }} </div>

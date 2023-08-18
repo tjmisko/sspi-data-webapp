@@ -1,6 +1,6 @@
 from flask import Blueprint
 from flask_login import current_user
-from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata
+from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_final_dynamic_data, sspi_imputed_data
 from bson import json_util
 import json
 import math
@@ -45,8 +45,12 @@ def lookup_database(database_name):
         return sspi_raw_api_data
     elif database_name == "sspi_clean_api_data":
         return sspi_clean_api_data
+    elif database_name == "sspi_imputed_data":
+        return sspi_imputed_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
+    elif database_name == "sspi_final_dynamic_data":
+        return sspi_final_dynamic_data
     
 def store_raw_observation(observation, collection_time, RawDataDestination):
     """

@@ -30,10 +30,11 @@ class ClearDatabaseForm(FlaskForm):
 
 @delete_bp.route('/')
 def get_delete_page():
+    delete_message = request.args.get("delete_message")
     delete_indicator_form = DeleteIndicatorForm(request.form)
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     clear_database_form = ClearDatabaseForm(request.form)
-    return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form)
+    return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form,delete_message=delete_message)
 
 
 @delete_bp.route("/indicator", methods=["POST"])
@@ -43,7 +44,7 @@ def delete_indicator_data():
     if delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
         database = lookup_database(delete_indicator_form.database.data)
-        if not database:
+        if database is None:
             return "Database not found"
         elif database is sspi_raw_api_data:
             count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
