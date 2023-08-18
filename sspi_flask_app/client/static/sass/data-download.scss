@@ -1,0 +1,17 @@
+
+
+.data-download-reveal {
+    padding: 0.5em 0.75em;
+    border: none;
+    font-size: 0.9em;
+    border-radius: 0.5em;
+}
+
+.data-download-reveal:hover {
+    transform: scale(1.02);
+    transition: 0.1s;
+}
+
+.data-download-reveal {
+    flex: none 
+}
