@@ -1,3 +1,4 @@
+from ..api import raw_insert_many
 from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
@@ -20,20 +21,8 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         new_url = url_source+ "&page=" + str(p)
         yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
-        for r in response.json().get('data'):
-            if current_user:
-                sspi_raw_api_data.insert_one(
-                    {"collection-info": {"CollectedBy": current_user.username,
-                                        "RawDataDestination": RawDataDestination,
-                                        "CollectedAt": collection_time}, 
-                    "observation": r}
-                )
-            else:
-                sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
-                                    "RawDataDestination": RawDataDestination,
-                                    "CollectedAt": collection_time}, 
-                    "observation": r})
-        time.sleep(1)
+        raw_insert_many(response.json().get('data'))
+            
     yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):

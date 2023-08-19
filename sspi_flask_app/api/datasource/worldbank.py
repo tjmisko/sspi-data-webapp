@@ -1,4 +1,5 @@
 from flask_login import current_user
+from ..core.collect import raw_insert_many
 import requests
 import json
 import time
@@ -14,7 +15,7 @@ def collectWorldBankdata(indicator_code):
     for p in range(2,npage+1):
         new_url=url_source+ "&page=" + str(p)
         response=requests.get(new_url).json()
-        store_raw_observation(response, "GTRANS")
+        raw_insert_many(response, "GTRANS")
         time.sleep(1)
         print(new_url)
     return "Complete"
