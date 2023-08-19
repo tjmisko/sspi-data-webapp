@@ -17,3 +17,11 @@ $black: rgb(42, 41, 43);
 .data-dashboard-options-list {
     display: none;
 }
+
+.widget-canvas {
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-gap: 1rem;
+}
