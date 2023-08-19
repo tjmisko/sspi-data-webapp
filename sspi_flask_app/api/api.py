@@ -88,10 +88,9 @@ def raw_insert_one(observation, RawDataDestination):
     - RawDataDestination is the indicator code for the indicator that the observation is for
     """
     sspi_raw_api_data.insert_one(
-    {"collection-info": {"CollectedBy": current_user,
-                         "RawDataDestination": RawDataDestination,
-                         "CollectedAt": datetime.now()}, 
-    "observation": observation})
+        {"collection-info": {"RawDataDestination": RawDataDestination,
+                            "CollectedAt": datetime.now()}, 
+        "observation": observation})
 
 @api_bp.route("/utility/raw_insert_many")
 @login_required

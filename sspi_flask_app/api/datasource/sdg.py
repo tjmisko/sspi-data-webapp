@@ -1,4 +1,4 @@
-from ..api import raw_insert_many
+from ..api import raw_insert_many, api_bp
 from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
@@ -9,11 +9,11 @@ import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+@api_bp.route("/utilities/collectSDGIndicatorData")
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
     collection_time = datetime.now()
     #session = requests.Session()
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
-    print(url_source)
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
     yield "data: Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
@@ -21,7 +21,8 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         new_url = url_source+ "&page=" + str(p)
         yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
-        raw_insert_many(response.json().get('data'))
+        raw_observation_list = response.json().get('data')
+        raw_insert_many(raw_observation_list)
     yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
