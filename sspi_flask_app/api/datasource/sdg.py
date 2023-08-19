@@ -22,7 +22,6 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         raw_insert_many(response.json().get('data'))
-            
     yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
