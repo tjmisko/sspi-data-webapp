@@ -1,5 +1,5 @@
 from flask_login import current_user
-from ..core.collect import raw_insert_many
+from ..api import raw_insert_many
 import requests
 import json
 import time
