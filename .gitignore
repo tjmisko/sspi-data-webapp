@@ -13,7 +13,7 @@ instance/**
 instance
 instance/*
 
-.env
+.env ' 
 .flaskenv
 *.egg
 *.egg-info/
