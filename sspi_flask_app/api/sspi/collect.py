@@ -2,6 +2,7 @@ from flask import Blueprint
 from flask_login import login_required
 from ..source_utilities.sdg import collectSDGIndicatorData
 from ..source_utilities.iea import collectIEAData
+from ..source_utilities.worldbank import collectWorldBankdata
 from ..api import parse_json
 from flask import redirect, url_for
 import datetime
@@ -49,3 +50,8 @@ def coalpw():
 def altnrg():
     collectIEAData("TFCbySource", "ALTNRG")
     return "success!"
+
+@collect_bp.route("GTRANS", methods=["GET"])
+def gtrans():
+    return collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
+    
