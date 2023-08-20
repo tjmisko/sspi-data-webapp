@@ -73,5 +73,8 @@ def indicator_codes():
     """
     Return a list of all indicator codes in the database
     """
-    query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
+    try:
+        query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
+    except TypeError:
+        return ["Metadata not loaded"]
     return query_result
