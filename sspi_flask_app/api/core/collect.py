@@ -51,3 +51,8 @@ def coalpw():
 def altnrg():
     collectIEAData("TFCbySource", "ALTNRG")
     return "success!"
+
+@collect_bp.route("GTRANS", methods=["GET"])
+def gtrans():
+    return collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
+    
