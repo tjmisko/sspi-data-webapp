@@ -7,14 +7,14 @@ def compile_static_assets(assets):
     assets.auto_build = False
     assets.debug = False
     home_style_bundle = Bundle(
-        'home_bp/sass/*.scss',
+        'client_bp/sass/*.scss',
         filters='pyscss,cssmin',
-        output='home_bp/style.css',
+        output='client_bp/style.css',
     )
     home_js_bundle = Bundle(
-        'home_bp/js/*.js',
+        'client_bp/js/*.js',
         filters='jsmin',
-        output='home_bp/script.js',
+        output='client_bp/script.js',
     )
     # # assets.config['SECRET_KEY'] = "changethis"
     # assets.config['PYSCSS_LOAD_PATHS'] = ["/Users/tristanmisko/Documents/Projects/sspi-flask-app/env/bin/pyscss"]
