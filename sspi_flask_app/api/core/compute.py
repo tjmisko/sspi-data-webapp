@@ -52,7 +52,8 @@ def compute_altnrg():
 
 @compute_bp.route("/GTRANS")
 def compute_gtrans():
-    oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"].decode('utf-8')
+    oecd_raw_data = bytes(fetch_raw_data("GTRANS")[0]["observation"], 'utf-8').decode('utf-8')
+    print(oecd_raw_data)
     return oecd_raw_data
     #oecd_raw_xml = ET.fromstring(oecd_raw_data)
     #return oecd_raw_data
