@@ -14,7 +14,8 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     meta = ilo.datastructure(ILOIndicatorCode)
     yield "SDMX Metadata:\n"
     yield str(meta)
-    yield str("Ref Area: {0}".format(sdmx.to_pandas(meta.codelist["CL_AREA"])))
+    countries_available = sdmx.to_pandas(meta.codelist["CL_AREA"])
+    yield "Ref Area: {0}".format(countries_available)
     print("getting data!")
     data = ilo.data(ILOIndicatorCode, key={"AGE": "AGE_AGGREGATE_Y25-54",
                                            "FREQ": "A",
