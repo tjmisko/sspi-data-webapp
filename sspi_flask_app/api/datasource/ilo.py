@@ -11,17 +11,18 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     """for sdmx, keep the data in one observation and the meta needed for processing in the other"""
     """store_raw"""
     ilo = sdmx.Request('ILO')
+    yield "Requesting Metadata from ILO"
     meta = ilo.datastructure(ILOIndicatorCode)
+    yield "Metadata Recieved.  Processing Metadata to Build Data Query"
     yield "SDMX Metadata:\n"
     yield str(meta)
     countries_available = sdmx.to_pandas(meta.codelist["CL_AREA"])
     yield "Ref Area: {0}".format(countries_available)
-    print("getting data!")
+    print("Requesting Data from ILO")
     data = ilo.data(ILOIndicatorCode, key={"AGE": "AGE_AGGREGATE_Y25-54",
                                            "FREQ": "A",
                                            "SEX": "T"})
-    print(data)
     yield "SDMX CodeList:\n"
-    yield sdmx.to_pandas(meta.codelist)
     yield sdmx.to_pandas(data)
+    # raw_insert_many(data.to_json())
     yield "Collection Complete!"
