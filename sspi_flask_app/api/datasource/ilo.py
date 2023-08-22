@@ -1,3 +1,4 @@
+from ..api import parse_json
 from ... import sspi_raw_api_data
 import pandasdmx as sdmx
 import pandas as pd
@@ -13,7 +14,14 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     meta = ilo.datastructure(ILOIndicatorCode)
     yield "SDMX Metadata:\n"
     yield str(meta)
-    data = ilo.data(ILOIndicatorCode, key={})
+    yield str("Ref Area: {0}".format())
+    yield str(sdmx.to_pandas(meta.codelist))
+    print("getting data!")
+    data = ilo.data(ILOIndicatorCode, key={"AGE": "AGE_AGGREGATE_Y25-54",
+                                           "FREQ": "A",
+                                           "SEX": "T"})
+    print(data)
     yield "SDMX CodeList:\n"
     yield sdmx.to_pandas(meta.codelist)
+    yield sdmx.to_pandas(data)
     yield "Collection Complete!"
