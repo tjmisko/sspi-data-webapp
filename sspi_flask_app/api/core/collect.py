@@ -60,15 +60,6 @@ def coalpw():
 def altnrg():
     collectIEAData("TFCbySource", "ALTNRG")
     return "success!"
-<<<<<<< HEAD
-
-@collect_bp.route("/LFPART")
-@login_required
-def lfpart():
-    def collect_iterator():
-        yield from collectILOIndicatorData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
-    return Response(collect_iterator(), mimetype='text/event-stream')
-=======
     
 @collect_bp.route("GTRANS", methods=['GET'])
 # @login_required
@@ -77,4 +68,10 @@ def gtrans():
     collectOECDIndicator(SDMX_URL_OECD, "GTRANS")
     # collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return "success!"
->>>>>>> oecd-collect-compute
+
+@collect_bp.route("/LFPART")
+@login_required
+def lfpart():
+    def collect_iterator():
+        yield from collectILOIndicatorData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
+    return Response(collect_iterator(), mimetype='text/event-stream')
