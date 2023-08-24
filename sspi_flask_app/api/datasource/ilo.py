@@ -17,12 +17,10 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     yield "SDMX Metadata:\n"
     yield str(meta)
     countries_available = sdmx.to_pandas(meta.codelist["CL_AREA"])
-    yield "Ref Area: {0}".format(countries_available)
+    yield "Ref Area: {0}".format(countries_available.colnames())
     print("Requesting Data from ILO")
-    data = ilo.data(ILOIndicatorCode, key={"AGE": "AGE_AGGREGATE_Y25-54",
-                                           "FREQ": "A",
-                                           "SEX": "T"})
+    data = ilo.data(ILOIndicatorCode, key={})
     yield "SDMX CodeList:\n"
-    yield sdmx.to_pandas(data)
+    yield sdmx.to_pandas(data).to_json()
     # raw_insert_many(data.to_json())
     yield "Collection Complete!"
