@@ -59,6 +59,12 @@ def compute_gtrans():
     # then load in
     xml_file = ET.fromstring(oecd_raw_data)
     print(type(xml_file))
-    return "success!"
-    #oecd_raw_xml = ET.fromstring(oecd_raw_data)
-    #return oecd_raw_data
+    for element in xml_file:
+        for observation in element:
+            for interobs in observation:
+                for finalobs in interobs:
+                    return finalobs.attrib
+        
+        # for observation in element:
+        #     return observation.tag
+    # return 'success!'
