@@ -4,7 +4,6 @@ from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..api import fetch_raw_data
 import xml.etree.ElementTree as ET
-import xml.dom.minidom
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -58,9 +57,14 @@ def compute_gtrans():
     oecd_raw_data = oecd_raw_data[14:]
     oecd_raw_data = oecd_raw_data[:-1]
     # then load in
-    xml_file = ET.fromstring(oecd_raw_data)
-    dom = xml.dom.minidom.parseString(oecd_raw_data)
-    return dom.toprettyxml()
+    xml_file_root = ET.fromstring(oecd_raw_data)
+    dataset = ET.SubElement(xml_file_root, 'DataSet')
+    print(dataset.tag)
+    print(dataset.attrib)
+    for child in dataset:
+        print(child.tag)
+        print(child.attrib)
+    return xml_file_root.tag
     # print(type(xml_file))
     # for element in xml_file:
     #     for observation in element:
