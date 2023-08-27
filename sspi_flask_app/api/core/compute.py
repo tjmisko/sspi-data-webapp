@@ -60,8 +60,10 @@ def compute_gtrans():
     xml_file_root = ET.fromstring(oecd_raw_data)
     for child in xml_file_root:
         for second_child in child:
-            print(second_child.tag)
-            print(second_child.attrib)
+            for third_child in second_child:
+                print(third_child.tag)
+                print(third_child.attrib)
+                print(third_child.text)
     return "hi"
     # print(type(xml_file))
     # for element in xml_file:
