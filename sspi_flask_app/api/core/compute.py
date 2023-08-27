@@ -60,14 +60,8 @@ def compute_gtrans():
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
     print(series_list)
-    #print(ET.tostring(xml_file_root, encoding='utf8').decode('utf8'))
-    #series = xml_file_root.findall(".")
-    #print(series)
+    for series in series_list:
+        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
+        for value in Attributes:
+            print(value.tag, value.attrib)
     return "success"
-    # print(type(xml_file))
-    # for element in xml_file:
-    #     for observation in element:
-    #         for interobs in observation:
-    #             for finalobs in interobs:
-    #                 return finalobs.attrib
-    # return 'success!'
