@@ -31,9 +31,3 @@ def collectOECDIndicator(SDMX_URL, RawDataDestination):
     return "success!"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
-
-
-def extract_xml_oecd(raw_oecd_pivot_data):
-    intermediate_obs_dict = {}
-    # for country in raw_oecd_pivot_data:
-    return raw_oecd_pivot_data.json

@@ -65,6 +65,4 @@ def compute_gtrans():
                 for finalobs in interobs:
                     return finalobs.attrib
         
-        # for observation in element:
-        #     return observation.tag
     # return 'success!'
