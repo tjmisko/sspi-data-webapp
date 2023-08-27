@@ -60,8 +60,9 @@ def compute_gtrans():
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
     for series in series_list:
-        SeriesKey = series.find(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey")
-        print(SeriesKey.tag, SeriesKey.attrib)
+        series_key_values = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
+        for value in series_key_values:
+            print(value.tag, value.attrib)
     #print(ET.tostring(xml_file_root, encoding='utf8').decode('utf8'))
     #series = xml_file_root.findall(".")
     #print(series)
