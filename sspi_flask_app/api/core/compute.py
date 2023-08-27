@@ -58,13 +58,11 @@ def compute_gtrans():
     oecd_raw_data = oecd_raw_data[:-1]
     # then load in
     xml_file_root = ET.fromstring(oecd_raw_data)
-    dataset = ET.SubElement(xml_file_root, 'DataSet')
-    print(dataset.tag)
-    print(dataset.attrib)
-    for child in dataset:
-        print(child.tag)
-        print(child.attrib)
-    return xml_file_root.tag
+    for child in xml_file_root:
+        for second_child in child:
+            print(second_child.tag)
+            print(second_child.attrib)
+    return "hi"
     # print(type(xml_file))
     # for element in xml_file:
     #     for observation in element:
