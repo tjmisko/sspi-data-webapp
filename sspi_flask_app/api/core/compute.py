@@ -67,6 +67,8 @@ def compute_gtrans():
             print(value.tag, value.attrib)
             if "value" in value.attrib.keys():
                 observation_type_set.add(value.attrib["value"])
+
+                
         Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
         for value in Attributes:
             print(value.tag, value.attrib)
