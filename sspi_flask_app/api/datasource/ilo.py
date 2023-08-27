@@ -17,7 +17,7 @@ def collectILOIndicatorData(ILOIndicatorCode, RawDataDestination):
     yield "SDMX Metadata:\n"
     yield str(meta)
     countries_available = sdmx.to_pandas(meta.codelist["CL_AREA"])
-    yield "Ref Area: {0}".format(countries_available.colnames())
+    yield "Ref Area: {0}".format(countries_available)
     print("Requesting Data from ILO")
     data = ilo.data(ILOIndicatorCode, key={})
     yield "SDMX CodeList:\n"
