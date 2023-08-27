@@ -58,11 +58,12 @@ def compute_gtrans():
     oecd_raw_data = oecd_raw_data[:-1]
     # then load in
     xml_file_root = ET.fromstring(oecd_raw_data)
-    for child in xml_file_root:
-        for second_child in child:
-            print(second_child.tag)
-            print(second_child.attrib)
-    return "hi"
+    series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
+    print(series_list)
+    #print(ET.tostring(xml_file_root, encoding='utf8').decode('utf8'))
+    #series = xml_file_root.findall(".")
+    #print(series)
+    return "success"
     # print(type(xml_file))
     # for element in xml_file:
     #     for observation in element:
