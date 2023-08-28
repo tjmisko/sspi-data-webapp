@@ -60,18 +60,25 @@ def compute_gtrans():
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
     print(series_list)
-    observation_type_set = set()
+    serieskey_set = set()
+    attribute_set = set()
+    oberservation_set = set()
     for series in series_list:
         SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
         for value in SeriesKeys:
+            country = value.attrib["value"]
             print(value.tag, value.attrib)
             if "value" in value.attrib.keys():
-                observation_type_set.add(value.attrib["value"])
-
-                
+                serieskey_set.add(value.attrib["value"])
         Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
         for value in Attributes:
             print(value.tag, value.attrib)
             if "value" in value.attrib.keys():
-                observation_type_set.add(value.attrib["value"])
-    return str(observation_type_set)
+                attribute_set.add(value.attrib["value"])
+        Observations = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
+        # for value in Observations:
+        #     print(value.tag, value.attrib)
+        #     if "value" in value.attrib:
+        #         oberservation_set.add(value.attrib["value"])
+    return str(serieskey_set), str(attribute_set)
+# str(oberservation_set)
