@@ -97,9 +97,9 @@ def clear_db():
     clear_database_form = ClearDatabaseForm(request.form)
     if clear_database_form.validate_on_submit():
         database = lookup_database(clear_database_form.database.data)
-        if database and clear_database_form.database.data == clear_database_form.database_confirm.data:
+        if database is not None and clear_database_form.database.data == clear_database_form.database_confirm.data:
             count = database.delete_many({}).deleted_count
-            flash("Deleted {0} observations in clearing database {1}".format(count, database.name_))
+            flash("Deleted {0} observations in clearing database {1}".format(count, database.name))
         else:
             flash("Database names do not match")
     return redirect(url_for(".get_delete_page"))
