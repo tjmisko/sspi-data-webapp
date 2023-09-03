@@ -1,5 +1,5 @@
-$(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideDown();})
-$(".data-download-close").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideDown();})
+$(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
+$(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
 var table=new Tabulator("#api-link-coverage-data-table",{ajaxURL:"/api/v1/api_coverage",columns:[{title:"Indicator Code",field:"IndicatorCode",formatter:"textarea"},{title:"Collect Method Implemented",field:"collect_implemented",formatter:"tickCross",hozAlign:"center"},{title:"Compute Method Implemented",field:"compute_implemented",formatter:"tickCross",hozAlign:"center"}]});const BarChartCanvas=document.getElementById('BarChart');const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}});makeBarChart('BIODIV')
 raw=false
 async function makeBarChart(IndicatorCode){let response=await fetch('/api/v1/query/indicator/'+IndicatorCode)
