@@ -2,9 +2,10 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>Home</title>
+    <title>SSPI Data</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/js/tabulator.min.js" integrity="sha512-BGo9xGWI32ZfTMp/ueR3fZKO5nYkPbt3uwMWr+w8w3e72H8A0sTQGO+iqRADwIT0eJkFP1HDgSC82gA4sTuQ6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/css/tabulator.min.css" integrity="sha512-j3rR7zfij45jvjB25No5oizV4tdpt6buwLrvfhXXboG+F88VMnvA4TsJpKgChHa156f+6gYk951Cv5pInltllQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     {% assets "home_script_bundle" %}
       <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }} " defer></script>
@@ -14,8 +15,6 @@
     {% endassets %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <script src="//unpkg.com/d3"></script>
-    <script src="//unpkg.com/globe.gl"></script>
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
   </head>
@@ -33,11 +32,12 @@
         <div class="download-box">
             <button class="data-download-reveal">Download Data</button>
             <form class="data-download-form">
+                <button class="data-download-close">Close Download Form</button>
                 <div class="form-item">{{download_form.database.label}} {{download_form.database}}</div>
                 <div class="form-item">{{download_form.indicator_code.label}} {{download_form.indicator_code}}</div>
                 <div class="form-item">{{download_form.country_group.label}} {{download_form.country_group}}</div>
+                <div class="form-item">{{download_form.submit}}</div>
             </form>
-            <button class="data-download-close">Close Download From</button>
         </div>
       </section>
       {% include 'data-dashboard.html' %}
