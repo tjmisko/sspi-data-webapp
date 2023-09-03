@@ -9,15 +9,33 @@
 }
 
 .widget-controls {
+    display: flex;
+    flex-direction: row;
     position: absolute;
     top:0.2em;
     right:0.2em;
 }
 
-.widget-button {
-    border: none;
-    background-color: transparent;
+.widget-controls-button {
+    // border: none;
+    // background-color: transparent;
     display: flex;
+    flex: row;
     justify-content: center;
     align-items: center;
+    padding: 1px;
+}
+
+.widget-controls-button:hover {
+    .options {
+        fill: blue;
+    }
+    .fullscreen {
+        fill: blue;
+    }
+    .close {
+        fill: red;
+    }
+    transform: scale(1.02);
+    transition: 0.1s;
 }
