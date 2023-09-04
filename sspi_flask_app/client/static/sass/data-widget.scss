@@ -1,5 +1,6 @@
 .data-widget {
     display: flex;
+    flex-direction: column;
     position: relative;
     background-color: white;
     border-radius: 0.5em;
@@ -11,9 +12,8 @@
 .widget-controls {
     display: flex;
     flex-direction: row;
-    position: absolute;
-    top:0.2em;
-    right:0.2em;
+    align-items: center;
+    justify-content: right;
 }
 
 .widget-controls-button {
@@ -24,6 +24,7 @@
     justify-content: center;
     align-items: center;
     padding: 1px;
+    margin: 0.2em;
 }
 
 .widget-controls-button:hover {
