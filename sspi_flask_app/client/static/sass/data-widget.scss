@@ -17,8 +17,8 @@
 }
 
 .widget-controls-button {
-    // border: none;
-    // background-color: transparent;
+    border: none;
+    background-color: transparent;
     display: flex;
     flex: row;
     justify-content: center;
@@ -28,14 +28,14 @@
 
 .widget-controls-button:hover {
     .options {
-        fill: blue;
+        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
     }
     .fullscreen {
-        fill: blue;
+        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
     }
     .close {
-        fill: red;
+        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(340deg);
     }
-    transform: scale(1.02);
+    transform: scale(1.04);
     transition: 0.1s;
 }
