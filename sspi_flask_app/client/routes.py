@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from flask_login import login_required
 from wtforms import Form, StringField, SelectField, validators
 from ..api.core.download import ClientDownloadForm
@@ -34,3 +34,10 @@ def indicators():
 @client_bp.route('/methodology')
 def methodology():
     return render_template('methodology.html')
+
+@client_bp.route('/widget')
+def make_widget():
+    widgettype = request.args.get("type")
+    if widgettype is None:
+        return render_template("data-widget.html")
+    return render_template("data-widget.html", widgettype=widgettype)
