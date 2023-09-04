@@ -1,3 +1,3 @@
 function closeThisWidget() {
-    $(this).parent().parent().remove()
+    console.log($(this).parent().attr('class'))
 }
