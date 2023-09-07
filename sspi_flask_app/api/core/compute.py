@@ -60,25 +60,27 @@ def compute_gtrans():
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
     print(series_list)
-    serieskey_set = set()
-    attribute_set = set()
-    oberservation_set = set()
+
+    intermediate_dict = {}
     for series in series_list:
         SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        for value in SeriesKeys:
-            country = value.attrib["value"]
-            print(value.tag, value.attrib)
-            if "value" in value.attrib.keys():
-                serieskey_set.add(value.attrib["value"])
         Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        for value in Attributes:
-            print(value.tag, value.attrib)
-            if "value" in value.attrib.keys():
-                attribute_set.add(value.attrib["value"])
-        Observations = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        # for value in Observations:
-        #     print(value.tag, value.attrib)
-        #     if "value" in value.attrib:
-        #         oberservation_set.add(value.attrib["value"])
-    return str(serieskey_set), str(attribute_set)
-# str(oberservation_set)
+        Observation_time = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Time")
+        Observation_value = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}ObsValue")
+        for value1 in Attributes:
+            if "T_CO2_EQVT" in value1.attrib["value"]:
+                unit = value1.attrib["value"]
+                for value in SeriesKeys:
+                    if value.attrib["concept"] == "COU":
+                        cou = value.attrib["value"]
+                        if cou not in intermediate_dict:
+                            intermediate_dict[cou] = {}
+                    for value2 in Observation_time:
+                        for value3 in Observation_value:
+                            year = value2.text
+                            obs = value3.attrib["value"]
+                            if year not in intermediate_dict[cou]:
+                                intermediate_dict[cou][year] = obs
+            else:
+                continue
+    return intermediate_dict
