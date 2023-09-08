@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import login_required
 from wtforms import Form, StringField, SelectField, validators
+
 client_bp = Blueprint(
     'client_bp', __name__,
     template_folder='templates',
