@@ -3,6 +3,7 @@ from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..api import fetch_raw_data
+from ..datasource.oecdstat import organizeOECDdata
 import xml.etree.ElementTree as ET
 
 compute_bp = Blueprint("compute_bp", __name__,
@@ -52,35 +53,16 @@ def compute_altnrg():
 
 @compute_bp.route("/GTRANS")
 def compute_gtrans():
+    if not raw_data_available("GTRANS"):
+        return "Data unavilable. Try running collect."
     oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"]
-    # trim extra unicode charactres
     oecd_raw_data = oecd_raw_data[14:]
     oecd_raw_data = oecd_raw_data[:-1]
-    # then load in
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    print(series_list)
+    final_list = organizeOECDdata(series_list)
+    sspi_clean_api_data.insert_many(final_list)
+    return parse_json(final_list)
+ 
+                    
 
-    intermediate_dict = {}
-    for series in series_list:
-        SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        Observation_time = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Time")
-        Observation_value = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}ObsValue")
-        for value1 in Attributes:
-            if "T_CO2_EQVT" in value1.attrib["value"]:
-                unit = value1.attrib["value"]
-                for value in SeriesKeys:
-                    if value.attrib["concept"] == "COU":
-                        cou = value.attrib["value"]
-                        if cou not in intermediate_dict:
-                            intermediate_dict[cou] = {}
-                    for value2 in Observation_time:
-                        for value3 in Observation_value:
-                            year = value2.text
-                            obs = value3.attrib["value"]
-                            if year not in intermediate_dict[cou]:
-                                intermediate_dict[cou][year] = obs
-            else:
-                continue
-    return intermediate_dict
