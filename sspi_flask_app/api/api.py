@@ -34,6 +34,9 @@ def string_to_float(string):
         return "NaN"
     return float(string)
 
+def string_to_int(string):
+    return int(string)
+
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup

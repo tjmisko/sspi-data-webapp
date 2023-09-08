@@ -10,7 +10,7 @@ from flask_login import current_user
 from datetime import datetime
 from pycountry import countries
 from ..api import format_m49_as_string
-from ..api import string_to_float
+from ..api import string_to_float, string_to_int
 from ..api import fetch_raw_data
 
 def collectOECDIndicator(SDMX_URL, RawDataDestination):
@@ -34,6 +34,7 @@ def collectOECDIndicator(SDMX_URL, RawDataDestination):
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
 def organizeOECDdata(series_list):
+    listofdicts = []
     for series in series_list:
         SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
         Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
@@ -45,18 +46,17 @@ def organizeOECDdata(series_list):
             year_lst = [year.text for year in Observation_time]
             obs_lst = [obs.attrib["value"] for obs in Observation_value]
             for value in SeriesKeys:
-                listofdicts = []
                 if value.attrib["concept"] == "COU":
-                    cou = value.attrib["value"]
+                    cou = value.attrib["value"]   
                     i = 0
                     while i <= (len(year_lst)- 1):
                         new_observation = {
                             "CountryCode": cou,
                             "IndicatorCode": "OECD",
-                            "YEAR": year_lst[i],
-                            "RAW": obs_lst[i]
+                            "YEAR": string_to_int(year_lst[i]),
+                            "RAW": string_to_float(obs_lst[i])
                         }
                         print (new_observation)
                         listofdicts.append(new_observation)
                         i += 1
-            return listofdicts
+    return listofdicts
