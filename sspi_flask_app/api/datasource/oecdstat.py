@@ -33,49 +33,30 @@ def collectOECDIndicator(SDMX_URL, RawDataDestination):
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
-oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"]
-oecd_raw_data = oecd_raw_data[14:]
-oecd_raw_data = oecd_raw_data[:-1]
-xml_file_root = ET.fromstring(oecd_raw_data)
-series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-
-for series in series_list:
-        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value") 
+def organizeOECDdata(series_list):
+    for series in series_list:
         SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
+        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
         Observation_time = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Time")
         Observation_value = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Obs/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}ObsValue")
-
-
-
-def construct_intermediate_dict(series_list):
-    intermediate_dict = {}
-    for series in series_list:
-        SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        for value in Attributes:
-            if "T_CO2_EQVT" in value.attrib["value"]:
-                unit = value.attrib["value"]
-                for value1 in SeriesKeys:
-                    if value1.attrib["concept"] == "COU":
-                        cou = value.attrib["value"]
-                        if cou not in intermediate_dict:
-                            intermediate_dict[cou] = {}
-                    for value2 in Observation_time:
-                        for value3 in Observation_value:
-                            year = value2.text
-                            obs = value3.attrib["value"]
-                            if year not in intermediate_dict:
-                                intermediate_dict[cou][year] = {}
-                            intermediate_dict[cou][year][unit] = obs
-            else:
-                continue
-    return intermediate_dict
-
-def get_attributes():      
-    for series in series_list:
-        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
-        for value in Attributes:
-            if "T_CO2_EQVT" in value.attrib["value"]:
-                unit = value.attrib["value"]
-            print(value.tag, value.attrib)
-            print(unit)
+        relevant_attribute = [True for x in Attributes if x.attrib["value"] == "T_CO2_EQVT"]
+        relevant_key = [True for y in SeriesKeys if y.attrib["value"] == "CO2"]
+        if relevant_attribute and relevant_key:
+            year_lst = [year.text for year in Observation_time]
+            obs_lst = [obs.attrib["value"] for obs in Observation_value]
+            for value in SeriesKeys:
+                listofdicts = []
+                if value.attrib["concept"] == "COU":
+                    cou = value.attrib["value"]
+                    i = 0
+                    while i <= (len(year_lst)- 1):
+                        new_observation = {
+                            "CountryCode": cou,
+                            "IndicatorCode": "OECD",
+                            "YEAR": year_lst[i],
+                            "RAW": obs_lst[i]
+                        }
+                        print (new_observation)
+                        listofdicts.append(new_observation)
+                        i += 1
+            return listofdicts
