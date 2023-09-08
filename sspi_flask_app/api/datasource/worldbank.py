@@ -4,7 +4,8 @@ import json
 import time
 from datetime import datetime
 from ... import sspi_raw_api_data
-from ..api import parse_json
+from ..api import parse_json, format_m49_as_string
+from pycountry import countries
 
 def collectWorldBankdata(IndicatorCode, RawDataDestination):
     collection_time = datetime.now()
@@ -19,10 +20,36 @@ def collectWorldBankdata(IndicatorCode, RawDataDestination):
         response = requests.get(new_url).json()
         for r in response[1]:
             sspi_raw_api_data.insert_one(
-                {"collection_info": {"RawDataDestination": RawDataDestination,
+                {"collection-info": {"RawDataDestination": RawDataDestination,
                                      "CollectedAt": collection_time},
                 "observation": r                    
                 })
         time.sleep(0.5)
     return response
+
+def cleanedWorldBankData(RawData, IndName):
+    """
+    Takes in list of collected raw data and our 6 letter indicator code 
+    and returns a list of dictionaries with only relevant data from wanted countries
+    """
+    clean_data_list = []
+    for entry in RawData:
+        iso3 = entry["observation"]["countryiso3code"]
+        country_data = countries.get(alpha_3=iso3)
+        if not country_data:
+            continue
+        clean_obs = {
+            "CountryCode": iso3,
+            "CountryName": entry["observation"]["country"]["value"],
+            "IndicatorCode": IndName,
+            "YEAR": entry["observation"]["date"],
+            "RAW": entry["observation"]["value"]
+        }
+        clean_data_list.append(clean_obs)
+    return clean_data_list
+
+
+
+
+
 
