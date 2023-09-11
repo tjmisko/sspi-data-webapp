@@ -28,8 +28,9 @@ def biodiv():
 @collect_bp.route("REDLST", methods=['GET'])
 @login_required
 def redlst():
-    collectSDGIndicatorData("15.5.1", "REDLST")
-    return "success!"
+    def collect_iterator():
+        yield from collectSDGIndicatorData("15.5.1", "REDLST")
+    return Response(collect_iterator(), mimetype='text/event')
 
 @collect_bp.route("WATMAN", methods=['GET'])
 @login_required

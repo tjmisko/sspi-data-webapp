@@ -21,18 +21,10 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         for r in response.json().get('data'):
-            if current_user:
-                sspi_raw_api_data.insert_one(
-                    {"collection-info": {"CollectedBy": current_user.username,
-                                        "RawDataDestination": RawDataDestination,
-                                        "CollectedAt": collection_time}, 
-                    "observation": r}
-                )
-            else:
-                sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
-                                    "RawDataDestination": RawDataDestination,
-                                    "CollectedAt": collection_time}, 
-                    "observation": r})
+            sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
+                                "RawDataDestination": RawDataDestination,
+                                "CollectedAt": collection_time}, 
+                "observation": r})
         time.sleep(1)
     yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
 
