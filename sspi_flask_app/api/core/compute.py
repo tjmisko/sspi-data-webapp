@@ -5,6 +5,7 @@ from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot
 from ..api import fetch_raw_data
 from ..datasource.oecdstat import organizeOECDdata
 import xml.etree.ElementTree as ET
+import pandas as pd
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
