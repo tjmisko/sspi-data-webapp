@@ -62,7 +62,10 @@ def compute_gtrans():
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
     final_list = organizeOECDdata(series_list)
-    sspi_clean_api_data.insert_many(final_list)
+    # sspi_clean_api_data.insert_many(final_list)
+    # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
+    # Overwrite all NaN values with String "NaN"
+    # Parse that back into the right list format between 
     return parse_json(final_list)
  
                     
