@@ -1,10 +1,8 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 from wtforms import Form, StringField, SelectField, validators
-<<<<<<< HEAD
 from ..api.core.download import ClientDownloadForm
-=======
->>>>>>> main
+
 
 client_bp = Blueprint(
     'client_bp', __name__,
