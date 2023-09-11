@@ -30,12 +30,16 @@ def biodiv():
 def redlst():
     def collect_iterator():
         yield from collectSDGIndicatorData("15.5.1", "REDLST")
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     return Response(collect_iterator(), mimetype='text/event')
 =======
         yield "data: Collection complete"
     return Response(collect_iterator(), mimetype= 'text/event-stream')
 >>>>>>> Stashed changes
+=======
+    return Response(collect_iterator(), mimetype='text/event A MASSIVE ERROR')
+>>>>>>> oecd-tristan
 
 @collect_bp.route("WATMAN", methods=['GET'])
 @login_required
