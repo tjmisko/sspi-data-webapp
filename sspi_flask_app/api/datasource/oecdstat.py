@@ -52,7 +52,7 @@ def organizeOECDdata(series_list):
                     while i <= (len(year_lst)- 1):
                         new_observation = {
                             "CountryCode": cou,
-                            "IndicatorCode": "OECD",
+                            "IndicatorCode": "GTRANS",
                             "YEAR": string_to_int(year_lst[i]),
                             "RAW": string_to_float(obs_lst[i])
                         }
