@@ -30,7 +30,7 @@ def biodiv():
 def redlst():
     def collect_iterator():
         yield from collectSDGIndicatorData("15.5.1", "REDLST")
-    return Response(collect_iterator(), mimetype='text/event')
+    return Response(collect_iterator(), mimetype='text/event A MASSIVE ERROR')
 
 @collect_bp.route("WATMAN", methods=['GET'])
 @login_required
