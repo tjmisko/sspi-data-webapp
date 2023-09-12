@@ -12,6 +12,7 @@ from pycountry import countries
 from ..api import format_m49_as_string
 from ..api import string_to_float, string_to_int
 from ..api import fetch_raw_data
+from ..api import missing_countries, added_countries
 
 def collectOECDIndicator(SDMX_URL, RawDataDestination):
     response_obj = requests.get(SDMX_URL)
@@ -60,3 +61,20 @@ def organizeOECDdata(series_list):
                         listofdicts.append(new_observation)
                         i += 1
     return listofdicts
+
+def OECD_country_list(series_list):
+    country_lst = []
+    for series in series_list:
+        SeriesKeys = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}SeriesKey/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
+        Attributes = series.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Attributes/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Value")
+        relevant_attribute = [True for x in Attributes if x.attrib["value"] == "T_CO2_EQVT"]
+        relevant_key = [True for y in SeriesKeys if y.attrib["value"] == "CO2"]
+        if relevant_attribute and relevant_key:
+            for value in SeriesKeys:
+                if value.attrib["concept"] == "COU":
+                    cou = value.attrib["value"]
+                    country_lst.append(cou)
+    print("this is the oecd country list:" + str(country_lst))
+    return country_lst
+    
+        
