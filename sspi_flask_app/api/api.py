@@ -37,6 +37,20 @@ def string_to_float(string):
 def string_to_int(string):
     return int(string)
 
+def missing_countries(sspi_country_list, source_country_list):
+    missing_countries = []
+    for country in sspi_country_list:
+        if country not in source_country_list:
+            missing_countries.append(country)
+    return missing_countries
+
+def added_countries(sspi_country_list, source_country_list):
+    additional_countries = []
+    for other_country in source_country_list:
+        if other_country not in sspi_country_list:
+            additional_countries.append(other_country)
+    return additional_countries
+
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup

@@ -2,8 +2,8 @@ from flask import Blueprint
 from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
-from ..api import fetch_raw_data
-from ..datasource.oecdstat import organizeOECDdata
+from ..api import fetch_raw_data, missing_countries, added_countries
+from ..datasource.oecdstat import organizeOECDdata, OECD_country_list
 import xml.etree.ElementTree as ET
 import pandas as pd
 
@@ -66,7 +66,9 @@ def compute_gtrans():
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
     # Parse that back into the right list format between 
+    sspi_country_list = ["ARG","AUS","AUT","BEL","BRA","CAN","CHL","CHN","COL","CZE","DNK","EST","FIN","FRA","DEU","GRC","HUN","ISL","IND","IDN","IRL","ISR","ITA","JPN","KOR","KWT","LVA","LTU","LUX","MEX","NLD","NZL","NOR","POL","PRT","RUS","SAU","SGP","SVK","SVN","ZAF","ESP","SWE","CHE","TUR","ARE","GBR","USA","URY"]
+    missing = missing_countries(sspi_country_list, OECD_country_list(series_list))
+    added = added_countries(sspi_country_list, OECD_country_list(series_list))
+    print ("these are the missing countries:" + str(missing))
+    print ("these are the additonal countries:" + str(added))
     return parse_json(final_list)
- 
-                    
-
