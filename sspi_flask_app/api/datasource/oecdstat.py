@@ -57,7 +57,6 @@ def organizeOECDdata(series_list):
                             "YEAR": string_to_int(year_lst[i]),
                             "RAW": string_to_float(obs_lst[i])
                         }
-                        print (new_observation)
                         listofdicts.append(new_observation)
                         i += 1
     return listofdicts
