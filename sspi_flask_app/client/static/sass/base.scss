@@ -1,15 +1,21 @@
 $accent-color: rgb(41, 75, 80);
+$link-color: rgb(0, 221, 255);
+$dark-blue: #1B2A3C;
+$light-blue: #2c4c73;
+$green-accent: #AECC53;
 $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
+$mobile-break-width: 1135px;
 
 html {
     font-size: 16pt;
 }
+
 body {
     margin: 0;
-    color: $black;
-    background-color: $white;
+    color: $white;
+    background-color: $light-blue;
     line-height: 1.25rem;
 }
 
