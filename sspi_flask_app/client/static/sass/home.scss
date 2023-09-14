@@ -1,20 +1,30 @@
 $accent-color: rgb(41, 75, 80);
 $link-color: rgb(0, 221, 255);
+$dark-blue: #1B2A3C;
+$light-blue: #2A4260;
+$green-accent: #AECC53;
 $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
+$mobile-break-width: 1135px;
 
 
 #hero-box {
-    background-color: $black;
-    padding: 2rem 4rem; 
+    background-color: $dark-blue;
+    padding: 1rem 1rem 0em 5rem; 
     color: $white;
     display: grid;
-    align-items: center;
-    justify-items: center;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    align-items: flex-start;
+    justify-items: right;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
     grid-gap: 1rem;
+    border-bottom-left-radius: 250px;
 }
+@media (max-width: $mobile-break-width) {
+    #hero-box {
+        border-bottom-left-radius: 0px;
+    }
+}  
 
 #hero-datalink {
     color: $link-color;
