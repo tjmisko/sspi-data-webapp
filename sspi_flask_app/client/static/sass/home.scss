@@ -8,7 +8,7 @@ $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
 $mobile-break-width: 1135px;
 
-#hero-box {
+.hero-box {
     background-color: $dark-blue;
     padding: 1rem 1rem 0em 1rem; 
     color: $white;
@@ -20,12 +20,12 @@ $mobile-break-width: 1135px;
 }
 
 @media (max-width: $mobile-break-width) {
-    #hero-box {
+    .hero-box {
         border-bottom-left-radius: 0px;
     }
 }  
 
-#hero-datalink {
+.hero-datalink {
     color: $link-color;
     margin-left: 1rem;
     font-weight: 600;
