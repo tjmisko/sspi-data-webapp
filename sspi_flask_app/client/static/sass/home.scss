@@ -13,13 +13,13 @@ $mobile-break-width: 1135px;
     background-color: $dark-blue;
     padding: 1rem 1rem 0em 5rem; 
     color: $white;
-    display: grid;
-    align-items: flex-start;
-    justify-items: right;
-    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-    grid-gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-items: center;
     border-bottom-left-radius: 250px;
 }
+
 @media (max-width: $mobile-break-width) {
     #hero-box {
         border-bottom-left-radius: 0px;
@@ -32,6 +32,13 @@ $mobile-break-width: 1135px;
     font-weight: 600;
 }
 
+.hero-textbox {
+    z-index: 1;
+}
+
+#globeViz {
+    z-index: 0;
+}
 .globegl-hover {
     background-color: rgba(41, 75, 80, 0.8);
     color:rgb(226, 226, 226);
