@@ -11,12 +11,12 @@ $mobile-break-width: 1135px;
 
 #hero-box {
     background-color: $dark-blue;
-    padding: 1rem 1rem 0em 5rem; 
+    padding: 1rem 1rem 0em 1rem; 
     color: $white;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    justify-items: center;
+    align-items: flex-start;
+    justify-content: space-around;
     border-bottom-left-radius: 250px;
 }
 
@@ -34,6 +34,7 @@ $mobile-break-width: 1135px;
 
 .hero-textbox {
     z-index: 1;
+    max-width: clamp(600px,50%,50%);
 }
 
 #globeViz {
