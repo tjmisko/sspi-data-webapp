@@ -10,11 +10,11 @@ $mobile-break-width: 1135px;
 
 .hero-box {
     background-color: $dark-blue;
-    padding: 1rem 1rem 0em 1rem; 
+    padding: 0em 3em 3em 3em; 
     color: $white;
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;;
     justify-content: space-around;
     border-bottom-left-radius: 250px;
 }
@@ -38,6 +38,7 @@ $mobile-break-width: 1135px;
 
 #globeViz {
     z-index: 0;
+    flex-grow: 1;
 }
 .globegl-hover {
     background-color: rgba(41, 75, 80, 0.8);
