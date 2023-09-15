@@ -1,9 +1,10 @@
 from flask import Blueprint
-from flask_login import current_user
+from flask_login import current_user, login_required
 from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_final_dynamic_data, sspi_imputed_data
 from bson import json_util
 import json
 import math
+from datetime import datetime
 
 api_bp = Blueprint(
     'api_bp', __name__,
@@ -68,18 +69,6 @@ def lookup_database(database_name):
         return sspi_metadata
     elif database_name == "sspi_final_dynamic_data":
         return sspi_final_dynamic_data
-    
-def store_raw_observation(observation, collection_time, RawDataDestination):
-    """
-    Utility Function the response from an API call in the database
-    - Observation to be passed as a well-formed dictionary for entry into pymongo
-    - RawDataDestination is the indicator code for the indicator that the observation is for
-    """
-    sspi_raw_api_data.insert_one(
-    {"collection-info": {"CollectedBy": current_user.username,
-                        "RawDataDestination": RawDataDestination,
-                        "CollectedAt": collection_time}, 
-    "observation": observation})
 
 # utility functions
 def format_m49_as_string(input):
@@ -102,3 +91,31 @@ def fetch_raw_data(RawDataDestination):
     mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
+
+#############################
+# Collect Storage Utilities #
+#############################
+
+@api_bp.route("/utility/raw_insert_one")
+@login_required
+def raw_insert_one(observation, RawDataDestination):
+    """
+    Utility Function the response from an API call in the database
+    - Observation to be passed as a well-formed dictionary for entry into pymongo
+    - RawDataDestination is the indicator code for the indicator that the observation is for
+    """
+    sspi_raw_api_data.insert_one(
+        {"collection-info": {"RawDataDestination": RawDataDestination,
+                            "CollectedAt": datetime.now()}, 
+        "observation": observation})
+
+@api_bp.route("/utility/raw_insert_many")
+@login_required
+def raw_insert_many(observation_list, RawDataDestination):
+    """
+    Utility Function 
+    - Observation to be past as a list of well form observation dictionaries
+    - RawDataDestination is the indicator code for the indicator that the observation is for
+    """
+    for observation in observation_list:
+        raw_insert_one(observation, RawDataDestination)

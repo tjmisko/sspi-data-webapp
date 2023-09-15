@@ -1,3 +1,4 @@
+from ..api import raw_insert_many, api_bp
 from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
@@ -8,11 +9,11 @@ import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+@api_bp.route("/utilities/collectSDGIndicatorData")
 def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
     collection_time = datetime.now()
     #session = requests.Session()
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
-    print(url_source)
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
     yield "data: Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
