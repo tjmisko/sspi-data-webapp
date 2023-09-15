@@ -7,7 +7,7 @@ from ..api import fetch_raw_data, missing_countries, added_countries
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list
 import xml.etree.ElementTree as ET
 import pandas as pd
-import pandas as pd
+
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -71,22 +71,34 @@ def compute_altnrg():
 
 @compute_bp.route("/GTRANS", methods = ['GET'])
 def compute_gtrans():
-    if not raw_data_available("GTRANS"):
-        return "Data unavailable. Try running collect."
-    raw_data = fetch_raw_data("GTRANS")
-    final_list = cleanedWorldBankData(raw_data, "GTRANS")
-    sspi_clean_api_data.insert_many(final_list)
-    return parse_json(final_list)
-@compute_bp.route("/GTRANS")
-def compute_gtrans():
-    if not raw_data_available("GTRANS"):
-        return "Data unavilable. Try running collect."
+    #worldbank compute
+    # if not raw_data_available("GTRANS"):
+    #     return "Data unavailable. Try running collect."
+    # raw_data = fetch_raw_data("GTRANS")
+    # world_bank_data = []
+    # for element in raw_data:
+    #     if element["collection-info"]["Source"] == "WORLDBANK":
+    #         world_bank_data.append(element)
+    # final_list = cleanedWorldBankData(raw_data, "GTRANS")
+    # sspi_clean_api_data.insert_many(final_list)
+
+
+   
+    
+
+
+
+    # return parse_json(final_list)
+
+
+    #oecd compute
     oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"]
     oecd_raw_data = oecd_raw_data[14:]
     oecd_raw_data = oecd_raw_data[:-1]
     xml_file_root = ET.fromstring(oecd_raw_data)
     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
     final_list = organizeOECDdata(series_list)
+    return parse_json(final_list)
     # sspi_clean_api_data.insert_many(final_list)
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
@@ -96,4 +108,5 @@ def compute_gtrans():
     added = added_countries(sspi_country_list, OECD_country_list(series_list))
     print ("these are the missing countries:" + str(missing))
     print ("these are the additonal countries:" + str(added))
-    return parse_json(final_list)
+
+    # return parse_json(final_list)
