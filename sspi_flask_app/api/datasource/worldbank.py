@@ -22,7 +22,9 @@ def collectWorldBankdata(IndicatorCode, RawDataDestination):
         for r in response[1]:
             sspi_raw_api_data.insert_one(
                 {"collection_info": {"RawDataDestination": RawDataDestination,
+                                     "Source": "WORLDBANK",
                                      "CollectedAt": collection_time},
+                
                 "observation": r                    
                 })
         time.sleep(0.5)
@@ -43,6 +45,7 @@ def cleanedWorldBankData(RawData, IndName):
             "CountryCode": iso3,
             "CountryName": entry["observation"]["country"]["value"],
             "IndicatorCode": IndName,
+            "Source": "WORLDBANK",
             "YEAR": entry["observation"]["date"],
             "RAW": entry["observation"]["value"]
         }

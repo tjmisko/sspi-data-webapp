@@ -27,6 +27,7 @@ def collectOECDIndicator(SDMX_URL, RawDataDestination):
     sspi_raw_api_data.insert_one({
         "collection-info": {"CollectedBy": current_user.username,
                                         "RawDataDestination": RawDataDestination,
+                                        "Source": "OECD",
                                         "CollectedAt": datetime.now()}, 
         "observation": str(response_obj.content)
     })
@@ -54,6 +55,7 @@ def organizeOECDdata(series_list):
                         new_observation = {
                             "CountryCode": cou,
                             "IndicatorCode": "GTRANS",
+                            "Source": "OECD",
                             "YEAR": string_to_int(year_lst[i]),
                             "RAW": string_to_float(obs_lst[i])
                         }
