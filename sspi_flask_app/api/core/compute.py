@@ -2,6 +2,7 @@ from flask import Blueprint, redirect, url_for
 from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
+from ..datasource.worldbank import cleanedWorldBankData
 from ..api import fetch_raw_data
 import pandas as pd
 
@@ -64,3 +65,12 @@ def compute_altnrg():
     # for row in raw_data:
         #lst.append(row["observation"])
     #return parse_json(lst)
+
+@compute_bp.route("/GTRANS", methods = ['GET'])
+def compute_gtrans():
+    if not raw_data_available("GTRANS"):
+        return "Data unavailable. Try running collect."
+    raw_data = fetch_raw_data("GTRANS")
+    final_list = cleanedWorldBankData(raw_data, "GTRANS")
+    sspi_clean_api_data.insert_many(final_list)
+    return parse_json(final_list)
