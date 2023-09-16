@@ -10,6 +10,10 @@ $black: rgb(42, 41, 43);
     padding: 0em 2em;
 }
 
+.grid-stack > .grid-stack-item {
+    background-color: $white;
+}
+
 .data-dashboard-dropdown {
     background-color: rgb(41, 75, 80);
     color: $white;
