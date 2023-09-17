@@ -11,7 +11,6 @@
     </nav>
     <section class="grid-stack">
         <button onclick="addWidget()" class="widget-controls-button" id="add-widget-button"><img class="options" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
-        {% include "data-widget.html" %}
         <script type="text/javascript" defer>
             var grid = GridStack.init();
         </script>
