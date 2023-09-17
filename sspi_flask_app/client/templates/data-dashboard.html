@@ -13,10 +13,12 @@
         <button onclick="addWidget()" class="widget-controls-button" id="add-widget-button"><img class="options" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
         <script type="text/javascript" defer>
             let opts = {
-                cellHeight: 'auto',
-                celHeightThrottle: 100
+                margin: 5,
+                cellHeight: 50,
+                sizeToContent: true, // default to make them all fit
+                resizable: { handles: 'all'}
             }
-            var grid = GridStack.init();
+            var grid = GridStack.init(opts);
         </script>
     </section>
 </section>

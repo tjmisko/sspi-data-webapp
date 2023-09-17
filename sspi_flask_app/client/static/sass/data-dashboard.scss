@@ -7,13 +7,7 @@ $black: rgb(42, 41, 43);
 
 
 .data-dashboard-section {
-    padding: 0em 2em;
-}
-
-.grid-stack > .grid-stack-item {
-    background-color: $white;
-    border-radius: 1em;
-    margin: 10px;
+    padding: 1em 2em;
 }
 
 .data-dashboard-dropdown {
@@ -26,11 +20,11 @@ $black: rgb(42, 41, 43);
     display: none;
 }
 
-.widget-canvas {
-    display: grid;
-    align-items: center;
-    justify-items: center;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    grid-gap: 1rem;
-    overflow: hidden;
-}
+// .widget-canvas {
+//     display: grid;
+//     align-items: center;
+//     justify-items: center;
+//     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+//     grid-gap: 1rem;
+//     overflow: hidden;
+// }
