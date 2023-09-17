@@ -1,13 +1,13 @@
 <section class="data-dashboard-section">
     <h1>Explore Policy Data</h1>
     <nav class="data-dashboard-options">
-        <div class="data-dashboard-dropdown">
+        <!-- <div class="data-dashboard-dropdown">
             Data View
             <ul class="data-dashboard-options-list">
                 <li><button>H</button></li>
                 <li><button></button></li>
             </ul>
-        </div>
+        </div> -->
     </nav>
     <section class="grid-stack">
         <button onclick="addWidget()" class="widget-controls-button" id="add-widget-button"><img class="options" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
@@ -15,8 +15,8 @@
             let opts = {
                 margin: 5,
                 cellHeight: 50,
-                sizeToContent: true, // default to make them all fit
-                resizable: { handles: 'all'}
+                float: true,
+
             }
             var grid = GridStack.init(opts);
         </script>
