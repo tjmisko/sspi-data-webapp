@@ -18,11 +18,11 @@ $black: rgb(42, 41, 43);
     // min-height: 240px;
 // }
 
-.grid-stack > .grid-stack-item { 
+.grid-stack > .grid-stack-item {
     background-color: $white;
     border-radius: 0.5em;
     color: $black;
-    box-shadow: rgba(47, 47, 51, 0.4) 0px 7px 29px 0px;
+    // box-shadow: rgba(47, 47, 51, 0.4) 0px 7px 29px 0px;
 }
 
 .grid-stack-item-content {

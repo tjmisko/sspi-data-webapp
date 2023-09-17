@@ -10,6 +10,6 @@ async function addWidget(widgettype) {
 }
 
 function removeWidget(el) {
-    widgetId = $(el).parents().eq(4).attr('gs-id')
+    widgetId = $(el).parents().eq(2).attr('gs-id')
     grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))
 }
