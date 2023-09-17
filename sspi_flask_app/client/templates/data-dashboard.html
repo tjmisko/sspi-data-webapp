@@ -9,21 +9,19 @@
             </ul>
         </div> -->
     </nav>
-    <section class="grid-stack">
-        <button onclick="revealWidgetOptions()" class="widget-controls-button" id="add-widget-button">Add Widget <img class="options" style="width: 32px; height: 32px; margin-left: 5px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
+    <button onclick="revealWidgetOptions()" class="widget-controls-button" id="add-widget-button">Add Widget <img class="options" style="width: 32px; height: 32px; margin-left: 5px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
         <div class="widget-type-options-menu">
             <button onclick="addWidget('barchart')" class="widget-controls-button">Add Bar Chart</button>
             <button onclick="addWidget('linechart')" class="widget-controls-button">Add Line Chart</button>
             <button onclick="addWidget('spiderchart')" class="widget-controls-button">Add Spider Chart</button>
             <button onclick="addWidget('table')" class="widget-controls-button">Add Table</button>
         </div>
-        
+    <section class="grid-stack">
         <script type="text/javascript" defer>
             let opts = {
                 margin: 5,
                 cellHeight: 50,
                 float: true,
-
             }
             var grid = GridStack.init(opts);
         </script>

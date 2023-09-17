@@ -4,7 +4,8 @@ function revealWidgetOptions() {
 
 async function addWidget(widgettype) {
     await $.get(`/widget/${widgettype}`, (data) => {
-        grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: crypto.randomUUID()})    
+        grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: crypto.randomUUID()});
+        revealWidgetOptions();
     })
 }
 
