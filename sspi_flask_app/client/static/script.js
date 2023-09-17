@@ -26,7 +26,7 @@ widgetH=$(widget).attr('gs-h')
 fullscreenHeight=Math.floor(0.95*window.innerHeight/50)
 grid.update(widget,{w:12,h:fullscreenHeight})
 window.scrollTo(0,$(widget).offset().top-10)
-fullscreenButton=$(`[gs-id=${widgetId}]`).find(".fullscreen-button").attr("onclick",`returnWidgetToOriginalSize(this,${widgetW},${widgetH}`)}
+fullscreenButton=$(`[gs-id=${widgetId}]`).find(".fullscreen-button").attr("onclick",`returnWidgetToOriginalSize(this,${widgetW},${widgetH})`)}
 function returnWidgetToOriginalSize(el,widgetW,widgetH){$(el).parents().eq(2).attr('gs-id')
 widget=$(`[gs-id=${widgetId}]`).get(0)
 grid.update(widget,{w:widgetW,h:widgetH})
