@@ -10,7 +10,14 @@
         </div> -->
     </nav>
     <section class="grid-stack">
-        <button onclick="addWidget()" class="widget-controls-button" id="add-widget-button">Add Widget <img class="options" style="width: 32px; height: 32px; margin-left: 5px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
+        <button onclick="revealWidgetOptions()" class="widget-controls-button" id="add-widget-button">Add Widget <img class="options" style="width: 32px; height: 32px; margin-left: 5px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
+        <div class="widget-type-options-menu">
+            <button onclick="addWidget('BarChart')" class="widget-controls-button">Add Bar Chart</button>
+            <button onclick="addWidget('LineChart')" class="widget-controls-button">Add Line Chart</button>
+            <button onclick="addWidget('SpiderChart')" class="widget-controls-button">Add Spider Chart</button>
+            <button onclick="addWidget('Table')" class="widget-controls-button">Add Table</button>
+        </div>
+        
         <script type="text/javascript" defer>
             let opts = {
                 margin: 5,

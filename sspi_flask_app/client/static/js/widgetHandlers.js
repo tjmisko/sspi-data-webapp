@@ -1,9 +1,9 @@
-function addWidget() {
-    $("widget-menu")
+function revealWidgetOptions() {
+    $("widget-type-options-menu").slideIn()
 }
 
-async function addWidget() {
-    await $.get('/widget', (data) => {
+async function addWidget(widgettype) {
+    await $.get(`/widget/${widgettype}`, (data) => {
         grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: crypto.randomUUID()})    
     })
 }
