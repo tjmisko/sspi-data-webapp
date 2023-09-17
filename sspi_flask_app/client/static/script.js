@@ -21,12 +21,13 @@ function removeWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
 grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))}
 function fullscreenWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
 widget=$(`[gs-id=${widgetId}]`).get(0)
-repositionInfo={widgetW:$(widget).attr('gs-w'),widgetH:$(widget).attr('gs-h')}
+widgetW=$(widget).attr('gs-w')
+widgetH=$(widget).attr('gs-h')
 fullscreenHeight=Math.floor(0.95*window.innerHeight/50)
 grid.update(widget,{w:12,h:fullscreenHeight})
 window.scrollTo(0,$(widget).offset().top-10)
-fullscreenButton=$(`[gs-id=${widgetId}]`).find(".fullscreen-button").html(`<button onclick="returnWidgetToOriginalSize(this, ${JSON.stringify(repositionInfo)})"class="widget-controls-button fullscreen-button">button</button>`)}
-function returnWidgetToOriginalSize(el,repositionInfo){$(el).parents().eq(2).attr('gs-id')
+fullscreenButton=$(`[gs-id=${widgetId}]`).find(".fullscreen-button").attr("onclick",`returnWidgetToOriginalSize(this,${widgetW},${widgetH}`)}
+function returnWidgetToOriginalSize(el,widgetW,widgetH){$(el).parents().eq(2).attr('gs-id')
 widget=$(`[gs-id=${widgetId}]`).get(0)
-grid.update(widget,{w:repositionInfo.widgetW,h:repositionInfo.widgetH})
-fullscreenButton=$(`[gs-id=${widgetId}]`).find(".fullscreen-button").html(`<button onclick="fullscreenWidget(this)"class="widget-controls-button fullscreen-button">button</button>`)}
+grid.update(widget,{w:widgetW,h:widgetH})
+fullscreenButton=$(`[gs-id=${widgetId}]`).find(".fullscreen-button").attr("onclick","fullscreenWidget(this)")}

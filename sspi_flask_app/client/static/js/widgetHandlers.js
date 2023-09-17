@@ -25,7 +25,7 @@ function fullscreenWidget(el) {
     window.scrollTo(0,$(widget).offset().top-10)
     fullscreenButton = $(`[gs-id=${widgetId}]`)
         .find(".fullscreen-button")
-        .attr("onclick", `returnWidgetToOriginalSize(this, ${widgetW}, ${widgetH}`)
+        .attr("onclick", `returnWidgetToOriginalSize(this, ${widgetW}, ${widgetH})`)
 }
 
 function returnWidgetToOriginalSize(el, widgetW, widgetH) {
