@@ -73,12 +73,10 @@ def compute_altnrg():
 def compute_gtrans():
     if not raw_data_available("GTRANS"):
         return "Data unavailable. Try running collect." 
-    # #worldbank compute
-    raw_data = fetch_raw_data("GTRANS")
-    semi_cleaned_raw_data = [x for x in raw_data if raw_data[0]["collection-info"]["Source"] == "WORLDBANK"]
-    print (semi_cleaned_raw_data)
+    mongoWBquery = {"collection-info.RawDataDestination":"GTRANS", "collection-info.Source":"WORLDBANK"}
+    worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
+    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
     # it looks like world bank data is not being added to raw database for some reason??
-    world_bank_data = []
     return 'success!'
     # for element in raw_data:
     #     if element["collection-info"]["Source"] == "WORLDBANK":
