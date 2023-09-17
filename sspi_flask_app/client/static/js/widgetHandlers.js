@@ -5,5 +5,5 @@ async function addWidget() {
 }
 
 function removeWidget(el) {
-    grid.removeWidget(el)
+    grid.removeWidget($(el).parent().parent())
 }
