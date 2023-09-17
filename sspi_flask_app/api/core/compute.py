@@ -73,28 +73,27 @@ def compute_altnrg():
 def compute_gtrans():
     if not raw_data_available("GTRANS"):
         return "Data unavailable. Try running collect." 
+    
+    #######    WORLDBANK compute    #########
     mongoWBquery = {"collection-info.RawDataDestination":"GTRANS", "collection-info.Source":"WORLDBANK"}
     worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
     worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
-    # it looks like world bank data is not being added to raw database for some reason??
+    print (parse_json(worldbank_clean_list))
+    
+    #######    OECD compute    #########
+
+    # raw_data = fetch_raw_data("GTRANS")
+    # mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
+    # OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
+    # OECD_raw_data = OECD_raw_data[0]["observation"]
+    # OECD_raw_data = OECD_raw_data[14:]
+    # OECD_raw_data = OECD_raw_data[:-1]
+    # xml_file_root = ET.fromstring(OECD_raw_data)
+    # series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
+    # final_OECD_list = organizeOECDdata(series_list)
+    # print (parse_json(final_OECD_list))
+
     return 'success!'
-    # for element in raw_data:
-    #     if element["collection-info"]["Source"] == "WORLDBANK":
-    #         world_bank_data.append(element)
-    # final_list = cleanedWorldBankData(raw_data, "GTRANS")
-    # sspi_clean_api_data.insert_many(final_list)
-
-
-    #oecd compute
-    # if fetch_raw_data("GTRANS")["collection-info"]["Source"] == "OECD":
-    #     oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"]
-    #     oecd_raw_data = oecd_raw_data[14:]
-    #     oecd_raw_data = oecd_raw_data[:-1]
-    #     xml_file_root = ET.fromstring(oecd_raw_data)
-    #     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    #     final_list = organizeOECDdata(series_list)
-    #     return parse_json(final_list)
-        #sspi_clean_api_data.insert_many(final_list)
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
