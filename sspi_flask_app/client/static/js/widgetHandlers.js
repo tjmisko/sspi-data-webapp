@@ -1,3 +1,7 @@
+function addWidget() {
+    $("widget-menu")
+}
+
 async function addWidget() {
     await $.get('/widget', (data) => {
         grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: crypto.randomUUID()})    

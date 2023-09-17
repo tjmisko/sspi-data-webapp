@@ -5,7 +5,7 @@
             <button class="widget-controls-button"><img class="fullscreen" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/fullscreen.svg') }}"/></button>
             <button onclick="removeWidget(this)" class="widget-controls-button"><img class="close" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/close.svg') }}"/></button>
         </nav>
-        {% if widgettype is barchart %}
+        {% if  barchart %}
             <canvas class="bar-chart"></canvas>
             <script>
                 const BarChartCanvas = document.getElementById('BarChart');
