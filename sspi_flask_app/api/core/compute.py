@@ -71,11 +71,15 @@ def compute_altnrg():
 
 @compute_bp.route("/GTRANS", methods = ['GET'])
 def compute_gtrans():
-    #worldbank compute
-    # if not raw_data_available("GTRANS"):
-    #     return "Data unavailable. Try running collect."
-    # raw_data = fetch_raw_data("GTRANS")
-    # world_bank_data = []
+    if not raw_data_available("GTRANS"):
+        return "Data unavailable. Try running collect." 
+    # #worldbank compute
+    raw_data = fetch_raw_data("GTRANS")
+    semi_cleaned_raw_data = [x for x in raw_data if raw_data[0]["collection-info"]["Source"] == "WORLDBANK"]
+    print (semi_cleaned_raw_data)
+    # it looks like world bank data is not being added to raw database for some reason??
+    world_bank_data = []
+    return 'success!'
     # for element in raw_data:
     #     if element["collection-info"]["Source"] == "WORLDBANK":
     #         world_bank_data.append(element)
@@ -83,30 +87,18 @@ def compute_gtrans():
     # sspi_clean_api_data.insert_many(final_list)
 
 
-   
-    
-
-
-
-    # return parse_json(final_list)
-
-
     #oecd compute
-    oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"]
-    oecd_raw_data = oecd_raw_data[14:]
-    oecd_raw_data = oecd_raw_data[:-1]
-    xml_file_root = ET.fromstring(oecd_raw_data)
-    series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    final_list = organizeOECDdata(series_list)
-    return parse_json(final_list)
-    # sspi_clean_api_data.insert_many(final_list)
+    # if fetch_raw_data("GTRANS")["collection-info"]["Source"] == "OECD":
+    #     oecd_raw_data = fetch_raw_data("GTRANS")[0]["observation"]
+    #     oecd_raw_data = oecd_raw_data[14:]
+    #     oecd_raw_data = oecd_raw_data[:-1]
+    #     xml_file_root = ET.fromstring(oecd_raw_data)
+    #     series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
+    #     final_list = organizeOECDdata(series_list)
+    #     return parse_json(final_list)
+        #sspi_clean_api_data.insert_many(final_list)
+
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
     # Parse that back into the right list format between 
-    sspi_country_list = ["ARG","AUS","AUT","BEL","BRA","CAN","CHL","CHN","COL","CZE","DNK","EST","FIN","FRA","DEU","GRC","HUN","ISL","IND","IDN","IRL","ISR","ITA","JPN","KOR","KWT","LVA","LTU","LUX","MEX","NLD","NZL","NOR","POL","PRT","RUS","SAU","SGP","SVK","SVN","ZAF","ESP","SWE","CHE","TUR","ARE","GBR","USA","URY"]
-    missing = missing_countries(sspi_country_list, OECD_country_list(series_list))
-    added = added_countries(sspi_country_list, OECD_country_list(series_list))
-    print ("these are the missing countries:" + str(missing))
-    print ("these are the additonal countries:" + str(added))
 
-    # return parse_json(final_list)
