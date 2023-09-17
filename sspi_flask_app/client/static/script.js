@@ -20,5 +20,5 @@ async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=
 function removeWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
 grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))}
 function fullscreenWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
-console.log(grid.margin())
+console.log(grid.margin)
 console.log(widgetId)}

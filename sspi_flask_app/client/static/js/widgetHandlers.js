@@ -16,6 +16,6 @@ function removeWidget(el) {
 
 function fullscreenWidget(el) {
     widgetId = $(el).parents().eq(2).attr('gs-id')
-    console.log(grid.margin())
+    console.log(grid.margin)
     console.log(widgetId)
 }
