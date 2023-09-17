@@ -21,7 +21,7 @@ def collectWorldBankdata(IndicatorCode, RawDataDestination):
         response = requests.get(new_url).json()
         for r in response[1]:
             sspi_raw_api_data.insert_one(
-                {"collection_info": {"RawDataDestination": RawDataDestination,
+                {"collection-info": {"RawDataDestination": RawDataDestination,
                                      "Source": "WORLDBANK",
                                      "CollectedAt": collection_time},
                 
