@@ -3,7 +3,7 @@ Assigment 3
     Collaboration: Essential
 
 Deliverables
-- Finish implementing the sspi_flask_app/api/source_utilities collection functions.  These functions are 
+- Finish implementing the sspi_flask_app/api/datasource collection functions.  These functions are 
 the ones that directly access each of the sources.
     - worldbank.py 
     - oecdstat.py
