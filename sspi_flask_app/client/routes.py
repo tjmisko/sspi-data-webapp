@@ -36,9 +36,6 @@ def indicators():
 def methodology():
     return render_template('methodology.html')
 
-@client_bp.route('/widget')
-def make_widget():
-    widgettype = request.args.get("type")
-    if widgettype is None:
-        return render_template("data-widget.html")
+@client_bp.route('/widget/<widgettype>')
+def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
