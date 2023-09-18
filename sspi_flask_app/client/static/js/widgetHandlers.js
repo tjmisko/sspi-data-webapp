@@ -1,5 +1,6 @@
+$(".widget-type-options-menu").hide()
 function revealWidgetOptions() {
-    $(".widget-type-options-menu").slideToggle()
+    $(".widget-type-options-menu").slideToggle(0.1)
 }
 
 async function addWidget(widgettype) {

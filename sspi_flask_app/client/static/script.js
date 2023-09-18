@@ -15,7 +15,8 @@ IndicatorCode=null;}}
 function getCountries(indicator_data){return indicator_data.map(data=>data.Country)}
 function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
-function revealWidgetOptions(){$(".widget-type-options-menu").slideToggle()}
+$(".widget-type-options-menu").hide()
+function revealWidgetOptions(){$(".widget-type-options-menu").slideToggle(0.1)}
 async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=>{grid.addWidget({w:6,h:10,minW:4,minH:5,content:data,id:crypto.randomUUID()});revealWidgetOptions();})}
 function removeWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
 grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))}
