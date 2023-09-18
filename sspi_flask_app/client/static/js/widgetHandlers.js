@@ -9,14 +9,9 @@ async function addWidget(widgettype) {
         grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: gsId});
         revealWidgetOptions();
     }).then(() => {
-        let BarChartCanvas = $(`[gs-id=${gsId}]`).find(".bar-chart").get(0)
-        console.log(BarChartCanvas)
-        const BarChart = new Chart(BarChartCanvas, {
-            type: 'bar',
-            data: {},
-            options: {}
-        })
-        makeBarChart("BIODIV")
+        if (widgettype === "barchart") {
+            setupBarChart(gsId)
+        }
     });
 }
 
@@ -46,4 +41,15 @@ function returnWidgetToOriginalSize(el, widgetW, widgetH) {
     fullscreenButton = $(`[gs-id=${widgetId}]`)
         .find(".fullscreen-button")
         .attr("onclick", "fullscreenWidget(this)")
+}
+
+function setupBarChart(gsId) {
+    let BarChartCanvas = $(`[gs-id=${gsId}]`).find(".bar-chart").get(0)
+    console.log(BarChartCanvas)
+    const BarChart = new Chart(BarChartCanvas, {
+        type: 'bar',
+        data: {},
+        options: {}
+    })
+    makeBarChart(BarChart, "BIODIV")
 }
