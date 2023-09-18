@@ -17,7 +17,11 @@ function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
 $(".widget-type-options-menu").hide()
 function revealWidgetOptions(){$(".widget-type-options-menu").slideToggle(0.1)}
-async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=>{grid.addWidget({w:6,h:10,minW:4,minH:5,content:data,id:crypto.randomUUID()});revealWidgetOptions();})}
+async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=>{gsId=crypto.randomUUID()
+grid.addWidget({w:6,h:10,minW:4,minH:5,content:data,id:gsId});revealWidgetOptions();}).then(()=>{let BarChartCanvas=$(`[gs-id=${gsId}]`).find(".bar-chart").get(0)
+console.log(BarChartCanvas)
+const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})
+makeBarChart("BIODIV")});}
 function removeWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
 grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))}
 function fullscreenWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')

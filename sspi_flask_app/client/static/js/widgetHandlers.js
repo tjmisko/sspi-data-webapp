@@ -8,15 +8,16 @@ async function addWidget(widgettype) {
         gsId = crypto.randomUUID()
         grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: gsId});
         revealWidgetOptions();
-        let BarChartCanvas = $(`[gs-id=${gsId}]`).children(".bar-chart").get(0)
+    }).then(() => {
+        let BarChartCanvas = $(`[gs-id=${gsId}]`).find(".bar-chart").get(0)
         console.log(BarChartCanvas)
         const BarChart = new Chart(BarChartCanvas, {
             type: 'bar',
             data: {},
             options: {}
-        });
+        })
         makeBarChart("BIODIV")
-    })
+    });
 }
 
 function removeWidget(el) {
