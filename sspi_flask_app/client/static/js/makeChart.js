@@ -1,6 +1,6 @@
 raw=false
 
-async function makeBarChart(IndicatorCode){
+async function makeBarChart(BarChart, IndicatorCode){
     let response = await fetch('/api/v1/query/indicator/' + IndicatorCode)
     let indicator_data = await response.json()
     indicator_data.sort((a, b) => b.RANK - a.RANK)

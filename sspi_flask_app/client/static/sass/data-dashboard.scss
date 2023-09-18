@@ -10,19 +10,17 @@ $black: rgb(42, 41, 43);
     padding: 2em 3em;
 }
 
+.widget-add-flex {
+    display: flex;
+}
 .widget-type-options-menu {
-    display: none;
-}
-
-.data-dashboard-dropdown {
-    background-color: rgb(41, 75, 80);
+    display: flex;
     color: $white;
-    border-radius: 0.5em;
+    button {
+        margin: 0em 1em;
+    }
 }
 
-.data-dashboard-options-list {
-    display: none;
-}
 
 // .widget-canvas {
 //     display: grid;
