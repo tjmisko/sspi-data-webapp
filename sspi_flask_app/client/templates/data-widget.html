@@ -5,15 +5,6 @@
 </nav>
 {% if widgettype == "barchart" %}
     <canvas class="bar-chart"></canvas>
-    <script>
-        const BarChartCanvas = document.getElementById('BarChart');
-        const BarChart = new Chart(BarChartCanvas, {
-            type: 'bar',
-            data: {},
-            options: {}
-        });
-        makeBarChart("BIODIV")
-    </script>
     <!-- <div>
         <p>A data widget is a user friendly interactive view of the data.  Each widget
             contains a few standard elements, specified here:</p>

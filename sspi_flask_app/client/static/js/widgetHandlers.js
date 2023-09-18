@@ -5,8 +5,17 @@ function revealWidgetOptions() {
 
 async function addWidget(widgettype) {
     await $.get(`/widget/${widgettype}`, (data) => {
-        grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: crypto.randomUUID()});
+        gsId = crypto.randomUUID()
+        grid.addWidget({w:6, h:10, minW: 4, minH: 5, content: data, id: gsId});
         revealWidgetOptions();
+        let BarChartCanvas = $(`[gs-id=${gsId}]`).children(".bar-chart").get(0)
+        console.log(BarChartCanvas)
+        const BarChart = new Chart(BarChartCanvas, {
+            type: 'bar',
+            data: {},
+            options: {}
+        });
+        makeBarChart("BIODIV")
     })
 }
 
