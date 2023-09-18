@@ -82,19 +82,24 @@ def compute_gtrans():
     
     #######    OECD compute    #########
 
-    # raw_data = fetch_raw_data("GTRANS")
-    # mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
-    # OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    # OECD_raw_data = OECD_raw_data[0]["observation"]
-    # OECD_raw_data = OECD_raw_data[14:]
-    # OECD_raw_data = OECD_raw_data[:-1]
-    # xml_file_root = ET.fromstring(OECD_raw_data)
-    # series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    # final_OECD_list = organizeOECDdata(series_list)
-    # print (parse_json(final_OECD_list))
+    mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
+    OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
+    OECD_raw_data = OECD_raw_data[0]["observation"]
+    OECD_raw_data = OECD_raw_data[14:]
+    OECD_raw_data = OECD_raw_data[:-1]
+    xml_file_root = ET.fromstring(OECD_raw_data)
+    series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
+    final_OECD_list = organizeOECDdata(series_list)
+    print (parse_json(final_OECD_list))
 
-    return 'success!'
+    # pandas merging of two dataframes
 
+    wb_df = pd.DataFrame(worldbank_clean_list)
+
+
+    return "success!"
+
+    
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
     # Parse that back into the right list format between 
