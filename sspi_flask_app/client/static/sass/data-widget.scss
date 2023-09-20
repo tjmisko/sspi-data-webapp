@@ -26,15 +26,21 @@ $black: rgb(42, 41, 43);
     // box-shadow: rgba(47, 47, 51, 0.4) 0px 7px 29px 0px;
 }
 
-.widget-controls {
+.widget-header {
     position: sticky;
     top: 0.5em;
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: right;
+    justify-content: space-between; 
 }
 
+.widget-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: right;
+}
 .widget-controls-button {
     border: none;
     background-color: transparent;
