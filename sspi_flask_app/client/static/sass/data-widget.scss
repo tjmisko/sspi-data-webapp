@@ -27,7 +27,8 @@ $black: rgb(42, 41, 43);
 }
 
 .widget-controls {
-    z-index: 1;
+    position: sticky;
+    top: 0.5em;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -35,7 +36,6 @@ $black: rgb(42, 41, 43);
 }
 
 .widget-controls-button {
-    z-index: 2;
     border: none;
     background-color: transparent;
     display: flex;
@@ -43,7 +43,7 @@ $black: rgb(42, 41, 43);
     justify-content: center;
     align-items: center;
     padding: 1px;
-    margin: 0.2em;
+    margin: 0.4em;
     font-size: 1em;
     color: rgb(32, 32, 32);
 }
