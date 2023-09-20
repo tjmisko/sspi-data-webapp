@@ -1,8 +1,11 @@
-<nav class="widget-controls">
-    <button class="widget-controls-button options-button"><img class="options" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/options-slider.svg') }}"/></button>
-    <button onclick="fullscreenWidget(this)" class="widget-controls-button fullscreen-button"><img class="fullscreen" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/fullscreen.svg') }}"/></button>
-    <button onclick="removeWidget(this)" class="widget-controls-button close-button"><img class="close" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/close.svg') }}"/></button>
-</nav>
+<div class="widget-header">
+    <h3> Chart Title </h3>
+    <nav class="widget-controls">
+        <button class="widget-controls-button options-button"><img class="options" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/options-slider.svg') }}"/></button>
+        <button onclick="fullscreenWidget(this)" class="widget-controls-button fullscreen-button"><img class="fullscreen" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/fullscreen.svg') }}"/></button>
+        <button onclick="removeWidget(this)" class="widget-controls-button close-button"><img class="close" style="width: 32px; height: 32px" src="{{ url_for('client_bp.static', filename='/svg_assets/close.svg') }}"/></button>
+    </nav>
+</div>
 {% if widgettype == "barchart" %}
     <canvas class="bar-chart"></canvas>
     <!-- <div>
@@ -18,6 +21,11 @@
         </ul>
         <p></p>
     </div> -->
+    <div class="data-series-options">
+        <h2> Data Series </h2>
+         - Data Series
+    
+    </div>
 {% endif %}
 {% if widgettype == "spiderchart" %}
 
