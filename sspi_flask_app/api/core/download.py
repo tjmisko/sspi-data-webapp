@@ -24,10 +24,8 @@ def fetch_data_for_download(request_args):
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
     if request_args.getlist('YEAR'):
         MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}'
-    if request_args.get("database"):
-        database_name=
+    database_name = request_args.get("database", default = "sspi_main_data_v3")
     dataframe = lookup_database(database_name)
-    format = request.args.get('format', default = 'json', type = str)
     data_to_download = parse_json(dataframe.find(MongoQuery))
     return data_to_download
   
@@ -37,8 +35,7 @@ def download_csv():
     """
     Download the data from the database in csv format
     """
-    MongoQuery = get_download_query_args(request.args)
-    data_to_download = query_db(MongoQuery)
+    data_to_download = fetch_data_for_download(request.args)
     df = pd.DataFrame(data_to_download).to_csv()
     mem = BytesIO()
     mem.write(df.encode('utf-8'))
@@ -53,6 +50,5 @@ def download_json():
     """
     Download data from the database in json format
     """
-    MongoQuery = get_download_query_args(request.args)
-    df = query_db(MongoQuery)
-    return df.json()
+    data_to_download = get_download_query_args(request.args)
+    return data_to_download
