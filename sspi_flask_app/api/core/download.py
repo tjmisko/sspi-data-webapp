@@ -11,32 +11,48 @@ download_bp = Blueprint("download_bp", __name__,
                         static_folder="static", 
                         url_prefix="/download")
 
-@download_bp.route("/<database_name>/<format>")
-def download(database_name, format):
+def fetch_data_for_download(request_args):
     """
-    Download the data from the database
+    request_args has type ImmutableMultiDict
     """
     MongoQuery = {}
-    print(request.args)
-    if request.args.getlist('IndicatorCode'):
-        MongoQuery["IndicatorCode"] = {"$in": request.args.getlist('IndicatorCode')}
-    if request.args.get('CountryGroup'):
+    if request_args.getlist('IndicatorCode'):
+          MongoQuery["IndicatorCode"] = {"$in": request.args.getlist('IndicatorCode')}
+    if request_args.get('CountryGroup'):
         MongoQuery['CountryCode'] = {"$in": country_group(request.args.get('CountryGroup'))}
-    elif request.args.getlist('CountryCode'):
+    elif request_args.getlist('CountryCode'):
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
-    if request.args.getlist('YEAR'):
-        MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
+    if request_args.getlist('YEAR'):
+        MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}'
+    if request_args.get("database"):
+        database_name=
     dataframe = lookup_database(database_name)
     format = request.args.get('format', default = 'json', type = str)
     data_to_download = parse_json(dataframe.find(MongoQuery))
-    if format == 'csv':
-        df = pd.DataFrame(data_to_download).to_csv()
-        mem = BytesIO()
-        mem.write(df.encode('utf-8'))
-        mem.seek(0)
-        return send_file(mem,
-                         mimetype='text/csv',
-                         download_name='data.csv',
-                         as_attachment=True)
-    elif format == 'json':
-        return data_to_download
+    return data_to_download
+  
+
+@download_bp.route("/csv")
+def download_csv():
+    """
+    Download the data from the database in csv format
+    """
+    MongoQuery = get_download_query_args(request.args)
+    data_to_download = query_db(MongoQuery)
+    df = pd.DataFrame(data_to_download).to_csv()
+    mem = BytesIO()
+    mem.write(df.encode('utf-8'))
+    mem.seek(0)
+    return send_file(mem,
+                     mimetype='text/csv',
+                     download_name='data.csv',
+                     as_attachment=True)
+
+@download_bp.route("/json")
+def download_json():
+    """
+    Download data from the database in json format
+    """
+    MongoQuery = get_download_query_args(request.args)
+    df = query_db(MongoQuery)
+    return df.json()
