@@ -73,7 +73,7 @@ def coalpw():
 @collect_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def altnrg():
-    collectIEAData("TFCbySource", "ALTNRG")
+    collectIEAData("TESbySource", "ALTNRG")
     return "success!"
 
 ##################################################
