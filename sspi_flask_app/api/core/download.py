@@ -44,7 +44,7 @@ def fetch_data_for_download(request_args):
     elif request_args.getlist('CountryCode'):
         MongoQuery["CountryCode"] = {"$in": request.args.getlist('CountryCode')}
     if request_args.getlist('YEAR'):
-        MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}'
+        MongoQuery["timePeriod"] = {"$in": request.args.getlist('timePeriod')}
     database_name = request_args.get("database", default = "sspi_main_data_v3")
     dataframe = lookup_database(database_name)
     data_to_download = parse_json(dataframe.find(MongoQuery))
