@@ -48,6 +48,7 @@ def fetch_data_for_download(request_args):
     database_name = request_args.get("database", default = "sspi_main_data_v3")
     dataframe = lookup_database(database_name)
     data_to_download = parse_json(dataframe.find(MongoQuery))
+    print(MongoQuery)
     return data_to_download
   
 
@@ -71,5 +72,5 @@ def download_json():
     """
     Download data from the database in json format
     """
-    data_to_download = get_download_query_args(request.args)
+    data_to_download = fetch_data_for_download(request.args)
     return data_to_download
