@@ -19,7 +19,7 @@ async function addWidget(widgettype) {
 function removeWidget(el) {
     widget = $(el).parents('.grid-stack-item')
     console.log(widget.attr('gs-id'))
-    grid.removeWidget(widget)
+    grid.removeWidget(widget.get(0))
 }
 
 function fullscreenWidget(el) {
