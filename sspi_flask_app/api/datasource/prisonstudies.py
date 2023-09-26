@@ -3,7 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
-from sspi_flask_app.api.api import print_json
+from sspi_flask_app.api.api import fetch_raw_data, parse_json, print_json
+from ... import sspi_raw_api_data
+from datetime import datetime
 
 def collectPrisonStudiesData():
     url_slugs = get_href_list()
@@ -38,12 +40,10 @@ def collect_all_pages(url_slugs):
                 failed_matches.append(query_string)
                 continue
         yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
-        time.sleep(10)
+        # The site blocked my IP after only a few requests, so 30 is here to be conservative
+        time.sleep(30)
         response = requests.get(url_base + url_slug)
-        html = BeautifulSoup(response.text, 'html.parser')
-        table = html.find("table", {"id": "views-aggregator-datatable"})
-        yield str(table)
-    yield pd.DataFrame(failed_matches).to_json()
+        yield store_webpage_as_raw_data(response, COU)
         
 
 def get_country_code(namestring):
@@ -60,3 +60,24 @@ namefix = {
     "republic south korea": "south korea",
     "cote divorie": "ivoire"
 }
+
+def store_webpage_as_raw_data(response, COU):
+    sspi_raw_api_data.insert_one({
+        "collection-info": {
+            "RawDataDestination": "PRISON",
+            "CountryCode": COU,
+            "CollectedAt": datetime.now()
+        },
+        "observation": response.text
+    })
+    return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data"        
+
+def scrape_stored_pages_for_data():
+    prison_data = parse_json(sspi_raw_api_data.find({"collection-info.RawDataDestination": "PRISON"}))
+    for page_entry in prison_data:
+        COU = page_entry["collection-info"]["CountryCode"]
+        html = BeautifulSoup(page_entry["observation"], 'html.parser')
+        # dynamicDataTable = html.find("table", {"id": "views-aggregator-datatable"})
+        # yield str(dynamicDataTable)
+    return "success!"
+ 
