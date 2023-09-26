@@ -55,5 +55,7 @@ namefix = {
     "democratic republic congo": "cod",
     "myanmar formerly burma": "myanmar",
     "congo republic": "cog",
-    "democratic peoples republic north korea": "north korea"
+    "democratic peoples republic north korea": "north korea",
+    "republic south korea": "south korea",
+    "cote divorie": "ivoire"
 }
