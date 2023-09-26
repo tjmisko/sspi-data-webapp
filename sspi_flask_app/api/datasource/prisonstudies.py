@@ -2,6 +2,10 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
+def get_prison_data():
+    url_slugs = get_href_list()
+    yield from collect_all_pages(url_slugs)
+
 def get_href_list():
     url_for_clist = "https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All"
     response = requests.get(url_for_clist)
@@ -13,13 +17,14 @@ def get_href_list():
     url_slugs = [link["href"] for link in list_of_links]
     return url_slugs
 
-def collect_all_pages():
+def collect_all_pages(url_slugs):
     url_base = "https://www.prisonstudies.org"
-    url_slugs = get_href_list()
+    count = 1
     for url_slug in url_slugs:
         response = requests.get(url_base + url_slug)
         time.sleep(1)
-        print(url_base + url_slug)
+        yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}"
         html = BeautifulSoup(response.text, 'html.parser')
         table = html.find("table", {"id": "views-aggregator-datatable"})
         print(table)
+        count += 1
