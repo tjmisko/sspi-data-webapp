@@ -6,6 +6,7 @@ function revealWidgetOptions() {
 async function addWidget(widgettype) {
     await $.get(`/widget/${widgettype}`, (data) => {
         gsId = crypto.randomUUID()
+        console.log(gsId)
         grid.addWidget({w:6, h:20, minW: 4, minH: 5, content: data, id: gsId});
         revealWidgetOptions();
     }).then(() => {
@@ -16,7 +17,10 @@ async function addWidget(widgettype) {
 }
 
 function removeWidget(el) {
-    widgetId = $(el).parents().eq(2).attr('gs-id')
+    console.log($(el).parents('div'))
+    console.log($(el).parents('div:has(gs-id)').get(0))
+    widgetId = $(el).parents().attr('gs-id')
+    console.log(widgetId)
     grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))
 }
 
