@@ -24,7 +24,7 @@ def collect_all_pages(url_slugs):
     url_base = "https://www.prisonstudies.org"
     count = 0
     failed_matches = []
-    for url_slug in url_slugs:
+    for url_slug in url_slugs[0]:
         query_string = url_slug[9:].replace("-", " ")
         count += 1
         print(url_slug)
@@ -37,11 +37,12 @@ def collect_all_pages(url_slugs):
             else:
                 failed_matches.append(query_string)
                 continue
-        # response = requests.get(url_base + url_slug)
         yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
-        # html = BeautifulSoup(response.text, 'html.parser')
-        # table = html.find("table", {"id": "views-aggregator-datatable"})
-        # print(table)
+        time.sleep(10)
+        response = requests.get(url_base + url_slug)
+        html = BeautifulSoup(response.text, 'html.parser')
+        table = html.find("table", {"id": "views-aggregator-datatable"})
+        yield str(table)
     yield pd.DataFrame(failed_matches).to_json()
         
 
