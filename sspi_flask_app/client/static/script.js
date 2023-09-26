@@ -19,8 +19,12 @@ function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
 $(".widget-type-options-menu").hide()
 function revealWidgetOptions(){$(".widget-type-options-menu").slideToggle(0.1)}
 async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=>{gsId=crypto.randomUUID()
+console.log(gsId)
 grid.addWidget({w:6,h:20,minW:4,minH:5,content:data,id:gsId});revealWidgetOptions();}).then(()=>{if(widgettype==="barchart"){setupBarChart(gsId)}});}
-function removeWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
+function removeWidget(el){console.log($(el).parents())
+console.log($(el).parents('div:has(gs-id)').get(0))
+widgetId=$(el).parents().attr('gs-id')
+console.log(widgetId)
 grid.removeWidget($(`[gs-id=${widgetId}]`).get(0))}
 function fullscreenWidget(el){widgetId=$(el).parents().eq(2).attr('gs-id')
 widget=$(`[gs-id=${widgetId}]`).get(0)
