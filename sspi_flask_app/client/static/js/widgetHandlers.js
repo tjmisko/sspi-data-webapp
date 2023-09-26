@@ -17,7 +17,7 @@ async function addWidget(widgettype) {
 }
 
 function removeWidget(el) {
-    console.log($(el).parents('div'))
+    console.log($(el).parents('.grid-stack-item').attr('gs-id'))
     console.log($(el).parents('div:has(gs-id)').get(0))
     widgetId = $(el).parents().attr('gs-id')
     console.log(widgetId)
