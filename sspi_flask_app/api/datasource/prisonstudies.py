@@ -20,18 +20,23 @@ def get_href_list():
 
 def collect_all_pages(url_slugs):
     url_base = "https://www.prisonstudies.org"
-    count = 1
+    count = 0
     for url_slug in url_slugs:
+        count += 1
         print(url_slug)
-        COU = get_country_code(url_slug[8:])
-        print(COU)
+        try:
+            COU = get_country_code(url_slug[9:])
+            print(COU)
+        except LookupError:
+            yield f"Error! Could not find country based on query string '{url_slug[:9]}'"
+            continue
         # response = requests.get(url_base + url_slug)
         time.sleep(1)
-        yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}"
+        yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
         # html = BeautifulSoup(response.text, 'html.parser')
         # table = html.find("table", {"id": "views-aggregator-datatable"})
         # print(table)
-        count += 1
+        
 
 def get_country_code(namestring):
     return pycountry.countries.search_fuzzy(namestring)[0].alpha_3
