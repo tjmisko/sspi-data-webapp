@@ -7,6 +7,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import requestILO
+from ..datasource.prisonstudies import collectPrisonStudiesData
 from .dashboard import parse_json
 from flask import redirect, url_for
 from datetime import datetime
@@ -94,3 +95,10 @@ def gtrans():
     collectOECDIndicator(SDMX_URL_OECD, "GTRANS")
     collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return "success!"
+
+@collect_bp.route("PRISON", methods=['GET'])
+@login_required
+def prison():
+    def collect_iterator():
+        yield from collectPrisonStudiesData()
+    return Response(collect_iterator(), mimetype='text/event-stream')
