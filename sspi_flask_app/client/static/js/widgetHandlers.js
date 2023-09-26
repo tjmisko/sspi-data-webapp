@@ -23,15 +23,16 @@ function removeWidget(el) {
 }
 
 function fullscreenWidget(el) {
-    widgetId = $(el).parents().eq(2).attr('gs-id')
-    widget = $(`[gs-id=${widgetId}]`).get(0)
-    // console.log(widgetId)
-    widgetW = $(widget).attr('gs-w')
-    widgetH =$(widget).attr('gs-h')
-    fullscreenHeight = Math.floor(0.95*window.innerHeight/50)
-    grid.update(widget, {w:12, h: fullscreenHeight})
-    window.scrollTo(0,$(widget).offset().top-10)
-    fullscreenButton = $(`[gs-id=${widgetId}]`)
+    widget = $(el).parents('.grid-stack-item')
+    console.log(widget.get(0))
+    console.log(widget.attr('gs-id'))
+    widgetW = widget.attr('gs-w')
+    widgetH = widget.attr('gs-h')
+    console.log(widgetW, widgetH)
+    fullscreenHeight = Math.floor(0.95*window.innerHeight/25)
+    grid.update(widget.get(0), {w:12, h: fullscreenHeight})
+    window.scrollTo(0, widget.offset().top-10)
+    fullscreenButton = widget
         .find(".fullscreen-button")
         .attr("onclick", `returnWidgetToOriginalSize(this, ${widgetW}, ${widgetH})`)
 }
