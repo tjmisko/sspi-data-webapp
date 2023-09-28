@@ -7,7 +7,7 @@ indicator_data.sort((a,b)=>b.RANK-a.RANK)
 console.log(indicator_data)
 let y_axis=raw?getRaw(indicator_data):getScores(indicator_data)
 BarChart.data={labels:getCountries(indicator_data),datasets:[{datacode:IndicatorCode,label:indicator_data[0].IndicatorNameShort,data:y_axis,backgroundColor:'rgb(255, 99, 132)',borderColor:'rgb(255, 99, 132)',borderWidth:1}]}
-BarChart.options={scaleShowValues:true,layout:{padding:10},maintainAspectRatio:false,scales:{xAxes:[{id:'x',type:'category',title:{display:true,text:'Country'},ticks:{autoskip:true,}}]}}
+BarChart.options={elements:{bar:{borderWidth:2,}},scaleShowValues:true,maintainAspectRatio:false,scales:{xAxes:[{id:'x',type:'category',title:{display:true,text:'Country'},ticks:{autoskip:true,}}]}}
 BarChart.update();}
 function toggleRaw(){raw=!raw
 try{IndicatorCode=BarChart.data.datasets[0].datacode
@@ -19,7 +19,6 @@ function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
 $(".widget-type-options-menu").hide()
 function revealWidgetOptions(){$(".widget-type-options-menu").slideToggle(0.1)}
 async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=>{gsId=crypto.randomUUID()
-console.log(gsId)
 grid.addWidget({w:6,h:20,minW:4,minH:5,content:data,id:gsId});revealWidgetOptions();}).then(()=>{if(widgettype==="barchart"){setupBarChart(gsId)}});}
 function removeWidget(el){widget=$(el).parents('.grid-stack-item')
 console.log(widget.attr('gs-id'))

@@ -6,7 +6,6 @@ function revealWidgetOptions() {
 async function addWidget(widgettype) {
     await $.get(`/widget/${widgettype}`, (data) => {
         gsId = crypto.randomUUID()
-        console.log(gsId)
         grid.addWidget({w:6, h:20, minW: 4, minH: 5, content: data, id: gsId});
         revealWidgetOptions();
     }).then(() => {

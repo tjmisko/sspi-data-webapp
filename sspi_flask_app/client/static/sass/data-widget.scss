@@ -19,6 +19,9 @@ $black: rgb(42, 41, 43);
 // }
 
 .grid-stack-item-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     padding: 0.9em;
     background-color: $white;
     border-radius: 0.5em;
@@ -27,7 +30,6 @@ $black: rgb(42, 41, 43);
 }
 
 .widget-header {
-    top: 0.5em;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -41,6 +43,7 @@ $black: rgb(42, 41, 43);
     align-items: center;
     justify-content: right;
 }
+
 .widget-controls-button {
     border: none;
     background-color: transparent;
@@ -66,4 +69,14 @@ $black: rgb(42, 41, 43);
     }
     transform: scale(1.04);
     transition: 0.1s;
+}
+
+.chart-container {
+    position: relative;
+    flex-grow: 1;
+    flex-shrink: 3;
+}
+
+.data-series-options {
+    flex-shrink: 0;
 }
