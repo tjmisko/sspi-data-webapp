@@ -19,8 +19,13 @@ async function makeBarChart(BarChart, IndicatorCode){
     }
     
     BarChart.options = {
+        elements: {
+            bar: {
+              borderWidth: 2,
+            }
+        },
         scaleShowValues: true,
-        layout: {padding : 10},
+        // layout: {padding : 10},
         maintainAspectRatio: false,
         scales: {
           xAxes: [{
