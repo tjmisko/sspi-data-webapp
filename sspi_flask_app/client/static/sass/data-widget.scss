@@ -74,9 +74,10 @@ $black: rgb(42, 41, 43);
 
 .chart-container {
     position: relative;
-    flex: 1 1 auto;
+    background-color: #AECC53;
+    flex: 1 3 auto;
 }
 
-.data-series-options {
-    flex: 0 0 auto;
-}
+// .data-series-options {
+//     flex: 0 0 auto;
+// }
