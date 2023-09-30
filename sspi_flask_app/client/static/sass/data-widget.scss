@@ -34,6 +34,7 @@ $black: rgb(42, 41, 43);
     flex-direction: row;
     align-items: center;
     justify-content: space-between; 
+    flex: 0 1 auto;
 }
 
 .widget-controls {
@@ -73,10 +74,9 @@ $black: rgb(42, 41, 43);
 
 .chart-container {
     position: relative;
-    flex-grow: 1;
-    flex-shrink: 3;
+    flex: 1 1 auto;
 }
 
 .data-series-options {
-    flex-shrink: 0;
+    flex: 0 0 auto;
 }
