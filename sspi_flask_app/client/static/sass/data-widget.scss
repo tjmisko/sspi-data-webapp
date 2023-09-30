@@ -37,6 +37,11 @@ $black: rgb(42, 41, 43);
     flex: 0 1 auto;
 }
 
+.widget-title {
+    margin: 0;
+    padding: 0;
+}
+
 .widget-controls {
     display: flex;
     position: sticky;
@@ -72,12 +77,18 @@ $black: rgb(42, 41, 43);
     transition: 0.1s;
 }
 
-.chart-canvas {
+.chart-container {
     position: relative;
+    min-height: 0;
+    overflow: hidden;
     background-color: #AECC53;
     flex: 1 3 auto;
 }
 
 .data-series-options {
     flex: 0 0 auto;
+}
+
+.ui-resizable-handle {
+    opacity: 0;
 }
