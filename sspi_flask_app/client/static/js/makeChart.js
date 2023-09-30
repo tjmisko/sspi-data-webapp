@@ -27,6 +27,11 @@ async function makeBarChart(BarChart, IndicatorCode){
         scaleShowValues: true,
         layout: {padding : 10},
         responsive: true,
+        plugins: {
+            legend: {
+                display: false,
+            }
+        },
         maintainAspectRatio: false,
         scales: {
           xAxes: [{
