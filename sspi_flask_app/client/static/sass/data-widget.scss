@@ -77,7 +77,13 @@ $black: rgb(42, 41, 43);
     transition: 0.1s;
 }
 
+
+
 .chart-container {
+    canvas {
+        margin:0 !important;
+        padding:0;
+    }
     position: relative;
     min-height: 0;
     overflow: hidden;
