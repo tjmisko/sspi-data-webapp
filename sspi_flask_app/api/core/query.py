@@ -57,7 +57,10 @@ def country_groups():
     """
     Return a list of all country groups in the database
     """
-    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
+    try:
+        query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
+    except TypeError:
+        return ["Metadata not Loaded"]
     return parse_json(query_result.keys())
 
 @query_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
@@ -65,7 +68,10 @@ def country_group(country_group):
     """
     Return a list of all countries in a given country group
     """
-    query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
+    try:
+        query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
+    except TypeError:
+        return ["Metadata not Loaded"]
     return query_result
 
 @query_bp.route("/metadata/indicator_codes", methods=["GET"])
