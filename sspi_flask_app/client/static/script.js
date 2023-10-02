@@ -16,7 +16,7 @@ IndicatorCode=null;}}
 function getCountries(indicator_data){return indicator_data.map(data=>data.Country)}
 function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
-$(".widget-type-options-menu").hide()
+var dynamicDataTable=new Tabulator("#methodology-indicator-table",{ajaxURL:"/api/v1/query/metadata/indicator_info",headerSortClickElement:"icon",});$(".widget-type-options-menu").hide()
 function revealWidgetOptions(){$(".widget-type-options-menu").slideToggle(0.1)}
 async function addWidget(widgettype){await $.get(`/widget/${widgettype}`,(data)=>{gsId=crypto.randomUUID()
 grid.addWidget({w:6,h:20,minW:4,minH:5,content:data,id:gsId});revealWidgetOptions();}).then(()=>{if(widgettype==="barchart"){setupBarChart(gsId)}});}
