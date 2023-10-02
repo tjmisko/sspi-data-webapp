@@ -78,3 +78,8 @@ def indicator_codes():
     except TypeError:
         return ["Metadata not loaded"]
     return query_result
+
+@query_bp.route("/metadata/indicator_details")
+def indicator_details():
+    indicator_details = parse_json(sspi_metadata.find({"indicator_details": {"$exists": True}}))["indicator_details"]
+    return indicator_details
