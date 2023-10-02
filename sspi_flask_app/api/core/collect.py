@@ -96,6 +96,12 @@ def gtrans():
     collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return "success!"
 
+@collect_bp.route("GINIPT", methods=['GET'])
+def ginipt():
+    def collect_iterator():  
+        yield from collectWorldBankdata("SI.POV.GINI", "GINIPT")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
 @collect_bp.route("PRISON", methods=['GET'])
 @login_required
 def prison():
