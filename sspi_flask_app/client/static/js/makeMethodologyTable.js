@@ -2,7 +2,7 @@
 var dynamicDataTable = new Tabulator("#methodology-indicator-table", {
     ajaxURL:"/api/v1/query/metadata/indicator_details", //ajax URL
     headerSortClickElement:"icon",
-    groupBy: ["PillarCode", "CategoryCode"],
+    groupBy: ["Pillar", "Category"],
     groupStartOpen: [true, false],
     columns: [
         {title: "Indicator", field: "Indicator"},
