@@ -81,5 +81,5 @@ def indicator_codes():
 
 @query_bp.route("/metadata/indicator_details")
 def indicator_details():
-    indicator_details = parse_json(sspi_metadata.find({"indicator_details": {"$exists": True}}))["indicator_details"]
-    return indicator_details
+    indicator_details = parse_json(sspi_metadata.find_one({"indicator_details": {"$exists": True}}))["indicator_details"].values()
+    return parse_json(indicator_details)
