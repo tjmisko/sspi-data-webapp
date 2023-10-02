@@ -8,11 +8,11 @@ var dynamicDataTable = new Tabulator("#methodology-indicator-table", {
     columns: [
         {title: "Indicator", field: "Indicator", formatter: "textarea", width: 200},
         {title: "Code", field: "IndicatorCodes", width: 75},
+        {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
         {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
-        // {title: "xx", field: "yy"},
-        // {title: "xx", field: "yy"},
-        // {title: "xx", field: "yy"},
-        // {title: "xx", field: "yy"},
+        {title: "Goalposts", field: "GoalpostString"},
+        {title: "Year", field: "SourceYear_sspi_main_data_v3"},
+        // {title: "", field: "yy"},
         // {title: "xx", field: "yy"},
     ] 
 });
