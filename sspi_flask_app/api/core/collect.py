@@ -6,7 +6,7 @@ from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
-from ..datasource.ilo import requestILO
+# from ..datasource.ilo import requestILO
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .dashboard import parse_json
 from flask import redirect, url_for

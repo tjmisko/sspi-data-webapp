@@ -21,8 +21,12 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         new_url = url_source+ "&page=" + str(p)
         yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
-        raw_observation_list = response.json().get('data')
-        raw_insert_many(raw_observation_list)
+        for r in response.json().get('data'):
+            sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
+                                "RawDataDestination": RawDataDestination,
+                                "CollectedAt": collection_time}, 
+                "observation": r})
+        time.sleep(1)
     yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
