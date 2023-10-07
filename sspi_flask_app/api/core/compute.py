@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for
 from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
@@ -104,3 +105,11 @@ def compute_gtrans():
     # Overwrite all NaN values with String "NaN"
     # Parse that back into the right list format between 
 
+@compute_bp.route("/PRISON", methods=['GET'])
+def compute_prison():
+    raw_data_observation_list = parse_json(sspi_raw_api_data.find({"collection-info.RawDataDestination": "PRISON"}))
+    for obs in raw_data_observation_list:
+        table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
+                                                                                               "summary": "Prison population rate"})
+    print(table)
+    return "string"

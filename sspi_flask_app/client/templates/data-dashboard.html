@@ -1,0 +1,21 @@
+<section class="data-dashboard-section">
+    <h1>Explore Policy Data</h1>
+    <div class="widget-add-flex">
+        <button onclick="revealWidgetOptions()" class="widget-controls-button" id="add-widget-button">Add Widget <img class="options" style="width: 32px; height: 32px; margin-left: 5px" src="{{ url_for('client_bp.static', filename='/svg_assets/add-circle.svg') }}"/></button>
+        <div class="widget-type-options-menu">
+            <button onclick="addWidget('barchart')" class="widget-controls-button">Add Bar Chart</button>
+            <button onclick="addWidget('linechart')" class="widget-controls-button">Add Line Chart</button>
+            <button onclick="addWidget('spiderchart')" class="widget-controls-button">Add Spider Chart</button>
+            <button onclick="addWidget('table')" class="widget-controls-button">Add Table</button>
+        </div>
+    </div>
+    <section class="grid-stack">
+        <script type="text/javascript" defer>
+            let opts = {
+                cellHeight: 25,
+                resizable: { handles: 'all'},
+            }
+            var grid = GridStack.init(opts);
+        </script>
+    </section>
+</section>
