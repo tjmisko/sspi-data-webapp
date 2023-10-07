@@ -18,7 +18,6 @@ def get_href_list():
     html = BeautifulSoup(response.text, 'html.parser')
     table = html.find("table", {"summary":"Highest to Lowest"})
     list_of_links = table.findChildren("a", recursive=True)
-
     url_slugs = [link["href"] for link in list_of_links]
     return url_slugs
 
@@ -26,10 +25,12 @@ def collect_all_pages(url_slugs):
     url_base = "https://www.prisonstudies.org"
     count = 0
     failed_matches = []
-    for url_slug in url_slugs[0]:
+    print(url_slugs)
+    for url_slug in url_slugs:
         query_string = url_slug[9:].replace("-", " ")
         count += 1
         print(url_slug)
+        yield f"{url_slug}\n"
         try:
             COU = get_country_code(query_string)
         except LookupError:
@@ -41,7 +42,8 @@ def collect_all_pages(url_slugs):
                 continue
         yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
         # The site blocked my IP after only a few requests, so 30 is here to be conservative
-        time.sleep(30)
+        time.sleep(10)
+        print(url_slug)
         response = requests.get(url_base + url_slug)
         yield store_webpage_as_raw_data(response, COU)
         
@@ -70,7 +72,7 @@ def store_webpage_as_raw_data(response, COU):
         },
         "observation": response.text
     })
-    return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data"        
+    return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
 
 def scrape_stored_pages_for_data():
     prison_data = parse_json(sspi_raw_api_data.find({"collection-info.RawDataDestination": "PRISON"}))
