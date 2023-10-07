@@ -82,12 +82,12 @@ def altnrg():
 # Collection Routes for Pillar: MARKET STRUCTURE #
 ##################################################
 
-@collect_bp.route("/LFPART")
-@login_required
-def lfpart():
-    def collect_iterator():
-        yield from requestILO("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+# @collect_bp.route("/LFPART")
+# @login_required
+# def lfpart():
+    # def collect_iterator():
+        # yield from requestILO("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
+    # return Response(collect_iterator(), mimetype='text/event-stream')
     
 @collect_bp.route("/GTRANS", methods=['GET'])
 # @login_required
