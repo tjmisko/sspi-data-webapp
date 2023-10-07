@@ -7,6 +7,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 # from ..datasource.ilo import requestILO
+from ..datasource.prisonstudies import collectPrisonStudiesData
 from .dashboard import parse_json
 from flask import redirect, url_for
 from datetime import datetime
@@ -73,8 +74,9 @@ def coalpw():
 @collect_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def altnrg():
-    collectIEAData("TFCbySource", "ALTNRG")
-    return "success!"
+    def collect_iterator():
+        yield from collectIEAData("TESbySource", "ALTNRG")
+    return Response(collect_iterator(), mimetype='text/event-stream') 
 
 ##################################################
 # Collection Routes for Pillar: MARKET STRUCTURE #
@@ -87,10 +89,23 @@ def lfpart():
         yield from requestILO("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
     return Response(collect_iterator(), mimetype='text/event-stream')
     
-@collect_bp.route("GTRANS", methods=['GET'])
+@collect_bp.route("/GTRANS", methods=['GET'])
 # @login_required
 def gtrans():
     SDMX_URL_OECD = "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/AIR_GHG/AUS+AUT+BEL+CAN+CHL+COL+CRI+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+NMEC+ARG+BGD+BLR+BRA+BGR+CHN+HRV+CYP+IND+IDN+IRN+KAZ+LIE+MLT+MCO+PER+ROU+RUS+SAU+ZAF+UKR+OECDAM+OECDAO.GHG+CO2.TOTAL+ENER+ENER_IND+ENER_MANUF+ENER_TRANS+ENER_OSECT+ENER_OTH+ENER_FU+ENER_CO2+TOTAL_LULU+INTENS+GHG_CAP+GHG_GDP+GHG_CAP_LULU+GHG_GDP_LULU+INDEX+INDEX_2000+INDEX_1990+PERCENT+ENER_P+ENER_IND_P+ENER_MANUF_P+ENER_TRANS_P+ENER_OSECT_P+ENER_OTH_P+ENER_FU_P+ENER_CO2_P+IND_PROC_P+AGR_P+WAS_P+OTH_P/all?startTime=1990&endTime=2021"
     collectOECDIndicator(SDMX_URL_OECD, "GTRANS")
     collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return "success!"
+
+@collect_bp.route("/GINIPT", methods=['GET'])
+def ginipt():
+    def collect_iterator():  
+        yield from collectWorldBankdata("SI.POV.GINI", "GINIPT")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/PRISON", methods=['GET'])
+@login_required
+def prison():
+    def collect_iterator():
+        yield from collectPrisonStudiesData()
+    return Response(collect_iterator(), mimetype='text/event-stream')
