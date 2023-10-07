@@ -40,12 +40,13 @@ def redlst():
         yield from collectSDGIndicatorData("15.5.1", "REDLST")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
+
 ######################
 ### Category: LAND ###
 ######################
 
 @collect_bp.route("/WATMAN", methods=['GET'])
-@login_required
+# @login_required
 def watman():
     def collect_iterator():
         yield from collectSDGIndicatorData("6.4.1", "WATMAN")
