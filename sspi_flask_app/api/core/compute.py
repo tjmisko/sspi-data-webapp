@@ -5,7 +5,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..datasource.worldbank import cleanedWorldBankData
 from ..api import fetch_raw_data, missing_countries, added_countries
-from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries 
+from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
 import xml.etree.ElementTree as ET
 import pandas as pd
 
@@ -82,7 +82,8 @@ def compute_gtrans():
     mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
     OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
     series_list = extractAllSeries(OECD_raw_data[0]["observation"])
-    
+    observations = filterSeriesList(series_list, "ENER_TRANS")
+    print(observations)
     # OECD_raw_data = OECD_raw_data[0]["observation"]
     # OECD_raw_data = OECD_raw_data[14:]
     # OECD_raw_data = OECD_raw_data[:-1]
@@ -101,7 +102,7 @@ def compute_gtrans():
     # print(merged)
 
         
-    return str(series_list)
+    return parse_json(observations)
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
