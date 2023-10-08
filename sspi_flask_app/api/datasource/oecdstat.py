@@ -15,10 +15,19 @@ from ..api import fetch_raw_data
 from ..api import missing_countries, added_countries
 
 def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
-    SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}/AUS+AUT+BEL+CAN+CHL+COL+CRI+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+NMEC+ARG+BGD+BLR+BRA+BGR+CHN+HRV+CYP+IND+IDN+IRN+KAZ+LIE+MLT+MCO+PER+ROU+RUS+SAU+ZAF+UKR+OECDAM+OECDAO.GHG+CO2.TOTAL+ENER+ENER_IND+ENER_MANUF+ENER_TRANS+ENER_OSECT+ENER_OTH+ENER_FU+ENER_CO2+TOTAL_LULU+INTENS+GHG_CAP+GHG_GDP+GHG_CAP_LULU+GHG_GDP_LULU+INDEX+INDEX_2000+INDEX_1990+PERCENT+ENER_P+ENER_IND_P+ENER_MANUF_P+ENER_TRANS_P+ENER_OSECT_P+ENER_OTH_P+ENER_FU_P+ENER_CO2_P+IND_PROC_P+AGR_P+WAS_P+OTH_P/all?startTime=1990&endTime=2021"
+    SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
+    yield "Sending Data Request to OECD SDMX API"
     response_obj = requests.get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
-    return observation
+    yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data"
+    sspi_raw_api_data.insert_one({
+        "collection-info": {
+            "RawDataDestination": RawDataDestination,
+            "CountryCode": "OECD",
+            "CollectedAt": datetime.now()
+        },
+        "observation": observation
+    })
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
