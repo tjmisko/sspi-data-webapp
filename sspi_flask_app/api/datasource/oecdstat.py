@@ -17,10 +17,10 @@ from ..api import missing_countries, added_countries
 
 def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
     SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
-    yield "Sending Data Request to OECD SDMX API"
+    yield "Sending Data Request to OECD SDMX API\n"
     response_obj = requests.get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
-    yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data"
+    yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
     sspi_raw_api_data.insert_one({
         "collection-info": {
             "RawDataDestination": RawDataDestination,
@@ -29,9 +29,17 @@ def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
         },
         "observation": observation
     })
+    yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
+def processOECDdata(oecd_XML):
+    xml_soup = bs.BeautifulSoup(oecd_XML, "lxml")
+    series_list = xml_soup.find_all("Series")
+    for i, series in enumerate(series_list):
+        print(f"Series {i+1} of {len(series_list)}: {series}")
+    return series_list
+    
 def organizeOECDdata(series_list):
     listofdicts = []
     for series in series_list:
