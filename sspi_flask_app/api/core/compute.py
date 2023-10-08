@@ -5,7 +5,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..datasource.worldbank import cleanedWorldBankData
 from ..api import fetch_raw_data, missing_countries, added_countries
-from ..datasource.oecdstat import organizeOECDdata, OECD_country_list
+from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, processOECDdata
 import xml.etree.ElementTree as ET
 import pandas as pd
 
@@ -75,28 +75,28 @@ def compute_gtrans():
         return "Data unavailable. Try running collect." 
     
     #######    WORLDBANK compute    #########
-    mongoWBquery = {"collection-info.RawDataDestination":"GTRANS", "collection-info.Source":"WORLDBANK"}
-    worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
-    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+    # mongoWBquery = {"collection-info.RawDataDestination":"GTRANS", "collection-info.Source":"WORLDBANK"}
+    # worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
+    # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
     #######    OECD compute    #########
     mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
     OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    OECD_raw_data = OECD_raw_data[0]["observation"]
-    OECD_raw_data = OECD_raw_data[14:]
-    OECD_raw_data = OECD_raw_data[:-1]
-    xml_file_root = ET.fromstring(OECD_raw_data)
-    series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    final_OECD_list = organizeOECDdata(series_list)
-    ### combining in pandas ####
-    wb_df = pd.DataFrame(worldbank_clean_list)
-    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
-    oecd_df = pd.DataFrame(final_OECD_list).astype(str)
+    # OECD_raw_data = OECD_raw_data[0]["observation"]
+    # OECD_raw_data = OECD_raw_data[14:]
+    # OECD_raw_data = OECD_raw_data[:-1]
+    # xml_file_root = ET.fromstring(OECD_raw_data)
+    # series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
+    # final_OECD_list = organizeOECDdata(series_list)
+    # ### combining in pandas ####
+    # wb_df = pd.DataFrame(worldbank_clean_list)
+    # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
+    # oecd_df = pd.DataFrame(final_OECD_list).astype(str)
    
 
     # print(oecd_df)
-    merged = wb_df.drop(columns=["IndicatorCode"]).merge(oecd_df, how="outer", on=["CountryCode", "YEAR"]) 
-    merged = wb_df.rename()
-    print(merged)
+    # merged = wb_df.drop(columns=["IndicatorCode"]).merge(oecd_df, how="outer", on=["CountryCode", "YEAR"]) 
+    # merged = wb_df.rename()
+    # print(merged)
 
     return 'success!'
 
