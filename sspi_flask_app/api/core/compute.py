@@ -84,10 +84,14 @@ def compute_gtrans():
     series = extractAllSeries(OECD_raw_data[0]["observation"])
     OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
     
+    #######    IEA compute ######
+
+    
     ####### SSPI ANALYSIS DB MANAGEMENT #########
     sspi_analysis.delete_many({"RawDataDestination": "GTRANS"})
     sspi_analysis.insert_many(OECD_TCO2_OBS)
     print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
+
 
 
     # OECD_raw_data = OECD_raw_data[0]["observation"]
