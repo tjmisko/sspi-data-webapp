@@ -39,10 +39,22 @@ def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
-def processOECDdata(oecd_XML):
+def extractAllSeries(oecd_XML):
     xml_soup = bs.BeautifulSoup(oecd_XML, "lxml")
     series_list = xml_soup.find_all("series")
     return series_list
+
+def filterSeriesList(series_list, filterVAR):
+    for i, series in enumerate(series_list):
+        print(f"Series {i+1} of {len(series_list)}: {type(series)}")
+        series_key = series.find("serieskey")
+        VAR = series_key.find("value", attrs={"concept": "VAR"}).get("value")
+        if VAR != filterVAR:
+            continue 
+        COU = series_key.find("value", attrs={"concept": "COU"}).get("value")
+        POL = series_key.find("value", attrs={"concept": "POL"}).get("value")
+        UNIT = series.find("attributes").find("value", attrs={"concept": "UNIT"}).get("value")
+        obs_list = series.find_all("obs")
     
 def organizeOECDdata(series_list):
     listofdicts = []
