@@ -81,15 +81,21 @@ def compute_gtrans():
     #######    OECD compute    #########
     mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
     OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    series_list = extractAllSeries(OECD_raw_data[0]["observation"])
-    observations = filterSeriesList(series_list, "ENER_TRANS")
-    print(observations)
+    series = extractAllSeries(OECD_raw_data[0]["observation"])
+    OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
+    
+    ####### SSPI ANALYSIS DB MANAGEMENT #########
+    sspi_analysis.delete_many({"RawDataDestination": "GTRANS"})
+    sspi_analysis.insert_many(OECD_TCO2_OBS)
+    print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
+
+
     # OECD_raw_data = OECD_raw_data[0]["observation"]
     # OECD_raw_data = OECD_raw_data[14:]
     # OECD_raw_data = OECD_raw_data[:-1]
     # xml_file_root = ET.fromstring(OECD_raw_data)
-    # series_list = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    # final_OECD_list = organizeOECDdata(series_list)
+    # series = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
+    # final_OECD_list = organizeOECDdata(series)
     # ### combining in pandas ####
     # wb_df = pd.DataFrame(worldbank_clean_list)
     # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
@@ -101,8 +107,7 @@ def compute_gtrans():
     # merged = wb_df.rename()
     # print(merged)
 
-        
-    return parse_json(observations)
+    return parse_json(OECD_CO2_OBS)
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
