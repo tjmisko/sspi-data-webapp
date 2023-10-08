@@ -35,7 +35,7 @@ def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
 
 def processOECDdata(oecd_XML):
     xml_soup = bs.BeautifulSoup(oecd_XML, "lxml")
-    series_list = xml_soup.find_all("Series")
+    series_list = xml_soup.find_all("series")
     return series_list
     
 def organizeOECDdata(series_list):
