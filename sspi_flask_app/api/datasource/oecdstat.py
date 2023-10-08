@@ -16,7 +16,12 @@ from ..api import fetch_raw_data
 from ..api import missing_countries, added_countries
 
 def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
+    SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
     SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
+    yield "Sending Metadata Request to OECD SDMX API\n"
+    metadata_obj = requests.get(SDMX_URL_OECD_METADATA)
+    metadata = str(metadata_obj.content)
+    yield "Metadata Received from OECD SDMX API.  Sending Data Request to OECD SDMX API\n"
     yield "Sending Data Request to OECD SDMX API\n"
     response_obj = requests.get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
@@ -25,6 +30,7 @@ def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
         "collection-info": {
             "RawDataDestination": RawDataDestination,
             "Source": "OECD",
+            "Metadata": metadata,
             "CollectedAt": datetime.now()
         },
         "observation": observation
