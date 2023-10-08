@@ -98,7 +98,7 @@ def compute_gtrans():
     # merged = wb_df.rename()
     # print(merged)
 
-    return 'success!'
+    return OECD_raw_data
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
