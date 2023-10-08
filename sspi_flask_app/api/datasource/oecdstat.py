@@ -45,6 +45,8 @@ def extractAllSeries(oecd_XML):
     return series_list
 
 def filterSeriesList(series_list, filterVAR):
+    # Return a list of series that match the filterVAR variable name
+    obs_list = []
     for i, series in enumerate(series_list):
         print(f"Series {i+1} of {len(series_list)}: {type(series)}")
         series_key = series.find("serieskey")
@@ -54,7 +56,12 @@ def filterSeriesList(series_list, filterVAR):
         COU = series_key.find("value", attrs={"concept": "COU"}).get("value")
         POL = series_key.find("value", attrs={"concept": "POL"}).get("value")
         UNIT = series.find("attributes").find("value", attrs={"concept": "UNIT"}).get("value")
-        obs_list = series.find_all("obs")
+        id_info = {"CountryCode": COU, "VAR": VAR, "Units": UNIT, "POL": POL, "IntermediateCode": "TCO2EM"}
+        obs_list.append(
+            [{"YEAR": obs.find("time").getText(), "RAW": obs.find("obsvalue").get("value")}.update(id_info) for obs in series.find_all("obs")]
+        )
+    return obs_list
+        
     
 def organizeOECDdata(series_list):
     listofdicts = []
