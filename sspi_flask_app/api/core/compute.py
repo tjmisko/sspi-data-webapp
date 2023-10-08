@@ -81,6 +81,8 @@ def compute_gtrans():
     #######    OECD compute    #########
     mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
     OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
+    print(OECD_raw_data[0]["observation"])
+    series_list = processOECDdata(OECD_raw_data[0]["observation"])
     # OECD_raw_data = OECD_raw_data[0]["observation"]
     # OECD_raw_data = OECD_raw_data[14:]
     # OECD_raw_data = OECD_raw_data[:-1]
@@ -98,7 +100,9 @@ def compute_gtrans():
     # merged = wb_df.rename()
     # print(merged)
 
-    return OECD_raw_data
+    for i, series in enumerate(series_list):
+        print(f"Series {i+1} of {len(series_list)}: {series}")
+    return str(series_list)
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
