@@ -44,22 +44,27 @@ def extractAllSeries(oecd_XML):
     series_list = xml_soup.find_all("series")
     return series_list
 
-def filterSeriesList(series_list, filterVAR):
+def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, RawDataDestination):
     # Return a list of series that match the filterVAR variable name
     obs_list = []
     for i, series in enumerate(series_list):
-        print(f"Series {i+1} of {len(series_list)}: {type(series)}")
-        series_key = series.find("serieskey")
+        series_key, series_attributes = series.find("serieskey"), series.find("attributes")
         VAR = series_key.find("value", attrs={"concept": "VAR"}).get("value")
         if VAR != filterVAR:
-            continue 
-        COU = series_key.find("value", attrs={"concept": "COU"}).get("value")
-        POL = series_key.find("value", attrs={"concept": "POL"}).get("value")
-        UNIT = series.find("attributes").find("value", attrs={"concept": "UNIT"}).get("value")
-        id_info = {"CountryCode": COU, "VAR": VAR, "Units": UNIT, "POL": POL, "IntermediateCode": "TCO2EM"}
-        obs_list.append(
-            [{"YEAR": obs.find("time").getText(), "RAW": obs.find("obsvalue").get("value")}.update(id_info) for obs in series.find_all("obs")]
-        )
+            continue
+        id_info = {
+            "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
+            "VariableCodeOECD": VAR,
+            "IndicatorCodeOECD": OECDIndicatorCode,
+            "Source": "OECD",
+            "RawDataDestination": RawDataDestination,
+            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
+        }
+        new_observations = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        for obs in new_observations:
+            obs.update(id_info)
+        obs_list.extend(new_observations)
     return obs_list
         
     
