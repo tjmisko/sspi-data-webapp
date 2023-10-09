@@ -86,7 +86,7 @@ def compute_gtrans():
     
     #######    IEA compute ######
 
-    
+
     ####### SSPI ANALYSIS DB MANAGEMENT #########
     sspi_analysis.delete_many({"RawDataDestination": "GTRANS"})
     sspi_analysis.insert_many(OECD_TCO2_OBS)
@@ -111,7 +111,7 @@ def compute_gtrans():
     # merged = wb_df.rename()
     # print(merged)
 
-    return parse_json(OECD_CO2_OBS)
+    return parse_json(OECD_TCO2_OBS)
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
