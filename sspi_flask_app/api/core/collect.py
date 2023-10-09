@@ -6,7 +6,7 @@ from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
-# from ..datasource.ilo import requestILO
+from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .dashboard import parse_json
 from flask import redirect, url_for
@@ -78,17 +78,6 @@ def altnrg():
         yield from collectIEAData("TESbySource", "ALTNRG")
     return Response(collect_iterator(), mimetype='text/event-stream') 
 
-##################################################
-# Collection Routes for Pillar: MARKET STRUCTURE #
-##################################################
-
-# @collect_bp.route("/LFPART")
-# @login_required
-# def lfpart():
-    # def collect_iterator():
-        # yield from requestILO("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
-    # return Response(collect_iterator(), mimetype='text/event-stream')
-    
 @collect_bp.route("/GTRANS", methods=['GET'])
 # @login_required
 def gtrans():
@@ -97,6 +86,17 @@ def gtrans():
         yield from collectIEAData("TESbySource", "GTRANS")
         # yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return Response(collect_iterator(), mimetype='text/event-stream') 
+
+##################################################
+# Collection Routes for Pillar: MARKET STRUCTURE #
+##################################################
+
+@collect_bp.route("/LFPART")
+@login_required
+def lfpart():
+    def collect_iterator():
+        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54")
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("/GINIPT", methods=['GET'])
 def ginipt():
