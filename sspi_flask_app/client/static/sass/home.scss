@@ -1,27 +1,45 @@
 $accent-color: rgb(41, 75, 80);
 $link-color: rgb(0, 221, 255);
+$dark-blue: #1B2A3C;
+$light-blue: #2A4260;
+$green-accent: #AECC53;
 $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
+$mobile-break-width: 1135px;
 
-
-#hero-box {
-    background-color: $black;
-    padding: 2rem 4rem; 
+.hero-box {
+    background-color: $dark-blue;
+    padding: 0em 3em 3em 3em; 
     color: $white;
-    display: grid;
-    align-items: center;
-    justify-items: center;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    grid-gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;;
+    justify-content: space-around;
+    border-bottom-left-radius: 250px;
 }
 
-#hero-datalink {
+@media (max-width: $mobile-break-width) {
+    .hero-box {
+        border-bottom-left-radius: 0px;
+    }
+}  
+
+.hero-datalink {
     color: $link-color;
     margin-left: 1rem;
     font-weight: 600;
 }
 
+.hero-textbox {
+    z-index: 1;
+    max-width: clamp(600px,50%,50%);
+}
+
+#globeViz {
+    z-index: 0;
+    flex-grow: 1;
+}
 .globegl-hover {
     background-color: rgba(41, 75, 80, 0.8);
     color:rgb(226, 226, 226);
