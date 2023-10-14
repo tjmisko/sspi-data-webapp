@@ -1,6 +1,6 @@
 import time
 import requests
-from beautifulsoup4 import BeautifulSoup
+from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
 from sspi_flask_app.api.api import fetch_raw_data, parse_json, print_json
