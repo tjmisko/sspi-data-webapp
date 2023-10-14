@@ -26,7 +26,7 @@ Flask-PyMongo==2.3.0
 Flask-Scss==0.5
 Flask-SQLAlchemy==3.0.3
 Flask-WTF==1.1.1
-greenlet==2.0.2
+greenlet==3.0.0
 idna==3.4
 importlib-metadata==6.0.0
 iniconfig==2.0.0
@@ -43,10 +43,9 @@ lxml==4.9.3
 MarkupSafe==2.1.2
 matplotlib-inline==0.1.6
 nest-asyncio==1.5.8
-numpy==1.24.2
+numpy==1.26.0
 packaging==23.0
-pandas==2.0.0
-pandaSDMX==1.9.0
+pandas==2.1.1
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
@@ -72,6 +71,7 @@ pytz==2023.3
 pyzmq==25.1.1
 requests==2.28.2
 scss==0.8.73
+setuptools==68.2.2
 six==1.16.0
 soupsieve==2.5
 SQLAlchemy==2.0.5.post1
@@ -86,6 +86,7 @@ urllib3==1.26.14
 wcwidth==0.2.8
 webassets==2.0
 Werkzeug==2.2.3
+wheel==0.41.2
 WTForms==3.0.1
 yarg==0.1.9
 zipp==3.15.0
