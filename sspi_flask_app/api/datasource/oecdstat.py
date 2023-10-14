@@ -5,7 +5,7 @@ import math
 # import pandasdmx as sdmx
 import pandas as pd
 import xml.etree.ElementTree as ET
-import beautifulsoup4 as bs
+import bs4 as bs
 from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
