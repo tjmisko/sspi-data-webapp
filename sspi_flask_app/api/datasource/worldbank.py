@@ -10,12 +10,12 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode
     total_pages = response[0]['pages']
     for p in range(1, total_pages+1):
         new_url = f"{url_source}&page={p}"
-        print(p)
+        yield f"Fetching data for page {p} of {total_pages}\n"
         response = requests.get(new_url).json()
         data_list = response[1]
         raw_insert_many(data_list, IndicatorCode, IntermediateCode=IntermediateCode)
         time.sleep(0.5)
-    return response
+    yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
 def cleanedWorldBankData(RawData, IndName):
     """
