@@ -13,7 +13,7 @@ from pycountry import countries
 from ..api import format_m49_as_string
 from ..api import string_to_float, string_to_int, raw_insert_one
 
-def collectOECDIndicator(OECDIndicatorCode, IndicatorCode):
+def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, IntermediateCode="NA"):
     SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
     SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
     yield "Sending Metadata Request to OECD SDMX API\n"
@@ -24,16 +24,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode):
     response_obj = requests.get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
-    raw_insert_one(observation, IndicatorCode, IntermediateCode="TCO2EM", Metadata={"Source": "OECD"})
-    # sspi_raw_api_data.insert_one({
-    #     "collection-info": {
-    #         "IndicatorCode": IndicatorCode,
-    #         "Source": "OECD",
-    #         "Metadata": metadata,
-    #         "CollectedAt": datetime.now()
-    #     },
-    #     "observation": observation
-    # })
+    raw_insert_one(observation, IndicatorCode, IntermediateCode=IntermediateCode, Metadata={"Source": "OECD", "metadata": metadata})
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
