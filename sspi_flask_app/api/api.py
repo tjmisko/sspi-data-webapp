@@ -96,7 +96,7 @@ def fetch_raw_data(IndicatorCode):
 # Collect Storage Utilities #
 #############################
 
-def raw_insert_one(observation, IndicatorCode, Intermediate="NA"):
+def raw_insert_one(observation, IndicatorCode, Intermediate="NA", Metadata="NA"):
     """
     Utility Function the response from an API call in the database
     - Observation to be passed as a well-formed dictionary for entry into pymongo
@@ -106,6 +106,7 @@ def raw_insert_one(observation, IndicatorCode, Intermediate="NA"):
         "collection-info": {
             "IndicatorCode": IndicatorCode,
             "Intermediate": Intermediate,
+            "Metadata": Metadata,
             "CollectedAt": datetime.now()
         },
         "observation": observation

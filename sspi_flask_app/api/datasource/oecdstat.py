@@ -11,9 +11,7 @@ from flask_login import current_user
 from datetime import datetime
 from pycountry import countries
 from ..api import format_m49_as_string
-from ..api import string_to_float, string_to_int
-from ..api import fetch_raw_data
-from ..api import missing_countries, added_countries
+from ..api import string_to_float, string_to_int, raw_insert_one
 
 def collectOECDIndicator(OECDIndicatorCode, IndicatorCode):
     SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
