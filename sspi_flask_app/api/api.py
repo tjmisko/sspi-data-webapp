@@ -96,26 +96,25 @@ def fetch_raw_data(RawDataDestination):
 # Collect Storage Utilities #
 #############################
 
-@api_bp.route("/utility/raw_insert_one")
-@login_required
-def raw_insert_one(observation, RawDataDestination):
+def raw_insert_one(observation, RawDataDestination, Intermediate="NA"):
     """
     Utility Function the response from an API call in the database
     - Observation to be passed as a well-formed dictionary for entry into pymongo
     - RawDataDestination is the indicator code for the indicator that the observation is for
     """
-    sspi_raw_api_data.insert_one(
-        {"collection-info": {"RawDataDestination": RawDataDestination,
-                            "CollectedAt": datetime.now()}, 
-        "observation": observation})
+    sspi_raw_api_data.insert_one({
+        "collection-info": {
+        "RawDataDestination": RawDataDestination,
+        "CollectedAt": datetime.now()},
+        "Intermediate": Intermediate,
+        "observation": observation
+    })
 
-@api_bp.route("/utility/raw_insert_many")
-@login_required
-def raw_insert_many(observation_list, RawDataDestination):
+def raw_insert_many(observation_list, RawDataDestination, Intermediate="NA"):
     """
     Utility Function 
     - Observation to be past as a list of well form observation dictionaries
     - RawDataDestination is the indicator code for the indicator that the observation is for
     """
     for observation in observation_list:
-        raw_insert_one(observation, RawDataDestination)
+        raw_insert_one(observation, RawDataDestination, Intermediate)
