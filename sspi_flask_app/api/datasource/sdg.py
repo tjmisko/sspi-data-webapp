@@ -14,15 +14,16 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode):
     url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
-    yield "data: Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
+    yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages):
         new_url = f"{url_source}&page={p}"
-        yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
+        yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        raw_insert_many(data_list, IndicatorCode)
+        count = raw_insert_many(data_list, IndicatorCode)
+        yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
-    yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
+    yield f"Collection complete for SDG {SDGIndicatorCode}"
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
     """

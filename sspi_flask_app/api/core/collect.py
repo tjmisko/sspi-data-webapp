@@ -60,9 +60,16 @@ def stkhlm():
         yield from collectSDGIndicatorData("12.4.1", "STKHLM")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
+
 ####################
 # Category: ENERGY #
 ####################
+
+@collect_bp.route("/NRGINT", methods=['GET'])
+def nrgint():
+    def collect_iterator():
+        yield from collectSDGIndicatorData("7.3.1", "NRGINT")
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("/COALPW", methods=['GET'])
 @login_required
@@ -83,8 +90,8 @@ def altnrg():
 def gtrans():
     def collect_iterator():
         yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
-        yield from collectIEAData("CO2BySector", "GTRANS")
-        yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
+        yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
+        yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
     return Response(collect_iterator(), mimetype='text/event-stream') 
 
 ##################################################
