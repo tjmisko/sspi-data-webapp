@@ -21,12 +21,12 @@
             <div class="form-item">{{ remove_duplicates_form.database.label }}: {{ remove_duplicates_form.database }} </div>
             <div class="form-item">{{ remove_duplicates_form.submit }} </div>
         </form>
-        
+
         <h2> Remove Loose Data</h2>
         <form action="/api/v1/delete/loose" method="POST" id="remove_loose">
             {{ remove_loose_form.hidden_tag() }}
-            <div class="form-item">{{ remove_loose_form.database.label }}: {{ remove_loose_form.database }} </div>
-            <div class="form-item">{{ remove_loose_form.submit }} </div>
+            <div class="form-item">{{ remove_loose_data_form.database.label }}: {{ remove_loose_data_form.database }} </div>
+            <div class="form-item">{{ remove_loose_data_form.submit }} </div>
         </form>
 
         <h2> Delete Indicator Data </h2>
