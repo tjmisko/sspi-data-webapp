@@ -66,6 +66,7 @@ def stkhlm():
 ####################
 
 @collect_bp.route("/NRGINT", methods=['GET'])
+@login_required
 def nrgint():
     def collect_iterator():
         yield from collectSDGIndicatorData("7.3.1", "NRGINT")
@@ -76,6 +77,13 @@ def nrgint():
 def coalpw():
     def collect_iterator():
         yield from collectIEAData("TESbySource", "COALPW")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/AIRPOL", methods=['GET'])
+@login_required
+def airpol():
+    def collect_iterator():
+        yield from collectSDGIndicatorData("11.6.2", "AIRPOL")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
