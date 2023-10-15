@@ -3,29 +3,24 @@ from ... import sspi_raw_api_data
 from flask_login import current_user
 from datetime import datetime
 from pycountry import countries
-from ..api import format_m49_as_string, string_to_float
+from ..api import format_m49_as_string, string_to_float, raw_insert_many
 import json
 import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-@api_bp.route("/utilities/collectSDGIndicatorData")
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode):
     collection_time = datetime.now()
-    #session = requests.Session()
-    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
+    url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
     yield "data: Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages):
-        new_url = url_source+ "&page=" + str(p)
+        new_url = f"{url_source}&page={p}"
         yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
-        for r in response.json().get('data'):
-            sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
-                                "IndicatorCode": IndicatorCode,
-                                "CollectedAt": collection_time}, 
-                "observation": r})
+        data_list = response.json().get('data')
+        raw_insert_many(data_list, IndicatorCode)
         time.sleep(1)
     yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
 
