@@ -8,9 +8,9 @@ from ... import sspi_raw_api_data
 from ..api import parse_json
 from pycountry import countries
 
-def collectWorldBankdata(IndicatorCode, RawDataDestination):
+def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode):
     collection_time = datetime.now()
-    url_source = "https://api.worldbank.org/v2/country/all/indicator/" + IndicatorCode + "?format=json"
+    url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
     print(url_source)
     response = requests.get(url_source).json()
     print(response)
@@ -21,7 +21,7 @@ def collectWorldBankdata(IndicatorCode, RawDataDestination):
         response = requests.get(new_url).json()
         for r in response[1]:
             sspi_raw_api_data.insert_one(
-                {"collection-info": {"RawDataDestination": RawDataDestination,
+                {"collection-info": {"IndicatorCode": IndicatorCode,
                                      "Source": "WORLDBANK",
                                      "CollectedAt": collection_time},
                 

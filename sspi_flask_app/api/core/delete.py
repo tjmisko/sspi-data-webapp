@@ -49,7 +49,7 @@ def delete_indicator_data():
         if database is None:
             return "Database not found"
         elif database is sspi_raw_api_data:
-            count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
+            count = sspi_raw_api_data.delete_many({"collection-info.IndicatorCode": IndicatorCode}).deleted_count
         else:
             count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
     flash("Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, database.name))
@@ -65,7 +65,7 @@ def delete_duplicates():
             agg = database.aggregate([
                 {"$group": {
                     "_id": {
-                        "RawDataDestination": {"$getField": {"field": "RawDataDestination", "input": "collection-info"}},
+                        "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
                         "observation": "$observation"
                     },
                     "count": {"$sum": 1},

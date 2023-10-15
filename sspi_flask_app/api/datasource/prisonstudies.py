@@ -66,7 +66,7 @@ namefix = {
 def store_webpage_as_raw_data(response, COU):
     sspi_raw_api_data.insert_one({
         "collection-info": {
-            "RawDataDestination": "PRISON",
+            "IndicatorCode": "PRISON",
             "CountryCode": COU,
             "CollectedAt": datetime.now()
         },
@@ -75,7 +75,7 @@ def store_webpage_as_raw_data(response, COU):
     return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
 
 def scrape_stored_pages_for_data():
-    prison_data = parse_json(sspi_raw_api_data.find({"collection-info.RawDataDestination": "PRISON"}))
+    prison_data = parse_json(sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
     for page_entry in prison_data:
         COU = page_entry["collection-info"]["CountryCode"]
         html = BeautifulSoup(page_entry["observation"], 'html.parser')
