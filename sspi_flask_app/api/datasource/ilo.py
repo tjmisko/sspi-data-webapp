@@ -1,9 +1,9 @@
-from ... import sspi_raw_api_data
 # import pandas as pd
 # import json
 import requests
 from datetime import datetime
 from ..api import raw_insert_one
+
 def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="...."):
     yield "Sending Data Request to ILO API\n"
     response_obj = requests.get(f"https://www.ilo.org/sdmx/rest/data/ILO,{ILOIndicatorCode}/{QueryParams}")
