@@ -108,7 +108,10 @@ def remove_loose_data():
         else:
             MongoQuery = {"IndicatorCode": {"$nin": indicator_codes()}}
         # count = database.delete_many(MongoQuery).deleted_count
-        return parse_json(database.find(MongoQuery))
+        count = database.delete_many(MongoQuery).deleted_count
+        flash(f"Deleted {count} observations from database {database.name}")
+    return redirect(url_for(".get_delete_page"))
+
 
 @delete_bp.route("/clear", methods=["POST"])
 @login_required
