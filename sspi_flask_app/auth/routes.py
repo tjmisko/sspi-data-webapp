@@ -8,7 +8,7 @@ from flask import Flask, render_template, request, url_for, redirect, Blueprint,
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
 # but it's a nice automation so we don't have to think too much about it)
-from flask_login import UserMixin, fresh_login_required, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import fresh_login_required, login_user, LoginManager, login_required, logout_user, current_user
 # load in the packages that make the forms pretty for submitting login and
 # and restration data
 from flask_wtf import FlaskForm

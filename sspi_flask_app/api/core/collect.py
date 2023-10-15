@@ -83,7 +83,7 @@ def altnrg():
 def gtrans():
     def collect_iterator():
         # yield from collectOECDIndicator("AIR_GHG", "GTRANS")
-        yield from collectIEAData("TESbySource", "GTRANS")
+        yield from collectIEAData("CO2BySector", "GTRANS")
         # yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return Response(collect_iterator(), mimetype='text/event-stream') 
 

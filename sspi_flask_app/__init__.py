@@ -34,6 +34,7 @@ def init_app(Config):
     flask_bcrypt.init_app(app)
     # Initialize Login manager
     login_manager.init_app(app)
+    # Initialize API Key manager
 
     with app.app_context():
         # read in the appropriate modules
