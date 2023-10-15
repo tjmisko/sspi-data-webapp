@@ -75,11 +75,11 @@ def compute_gtrans():
         return "Data unavailable. Try running collect." 
     
     #######    WORLDBANK compute    #########
-    # mongoWBquery = {"collection-info.RawDataDestination":"GTRANS", "collection-info.Source":"WORLDBANK"}
+    # mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
     # worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
     # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
     #######    OECD compute    #########
-    mongoOECDQuery = {"collection-info.RawDataDestination": "GTRANS", "collection-info.Source": "OECD"}
+    mongoOECDQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.Source": "OECD"}
     OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
     series = extractAllSeries(OECD_raw_data[0]["observation"])
     OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
@@ -88,7 +88,7 @@ def compute_gtrans():
 
 
     ####### SSPI ANALYSIS DB MANAGEMENT #########
-    sspi_analysis.delete_many({"RawDataDestination": "GTRANS"})
+    sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
     sspi_analysis.insert_many(OECD_TCO2_OBS)
     print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
 
@@ -119,7 +119,7 @@ def compute_gtrans():
 
 @compute_bp.route("/PRISON", methods=['GET'])
 def compute_prison():
-    raw_data_observation_list = parse_json(sspi_raw_api_data.find({"collection-info.RawDataDestination": "PRISON"}))
+    raw_data_observation_list = parse_json(sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
     for obs in raw_data_observation_list:
         table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
                                                                                                "summary": "Prison population rate"})

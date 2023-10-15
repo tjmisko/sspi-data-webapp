@@ -10,7 +10,7 @@ import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 @api_bp.route("/utilities/collectSDGIndicatorData")
-def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
+def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode):
     collection_time = datetime.now()
     #session = requests.Session()
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
@@ -23,7 +23,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
         response = requests.get(new_url)
         for r in response.json().get('data'):
             sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
-                                "RawDataDestination": RawDataDestination,
+                                "IndicatorCode": IndicatorCode,
                                 "CollectedAt": collection_time}, 
                 "observation": r})
         time.sleep(1)

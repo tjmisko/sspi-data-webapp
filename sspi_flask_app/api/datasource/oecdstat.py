@@ -15,7 +15,7 @@ from ..api import string_to_float, string_to_int
 from ..api import fetch_raw_data
 from ..api import missing_countries, added_countries
 
-def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
+def collectOECDIndicator(OECDIndicatorCode, IndicatorCode):
     SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
     SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
     yield "Sending Metadata Request to OECD SDMX API\n"
@@ -28,7 +28,7 @@ def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
     sspi_raw_api_data.insert_one({
         "collection-info": {
-            "RawDataDestination": RawDataDestination,
+            "IndicatorCode": IndicatorCode,
             "Source": "OECD",
             "Metadata": metadata,
             "CollectedAt": datetime.now()
@@ -44,7 +44,7 @@ def extractAllSeries(oecd_XML):
     series_list = xml_soup.find_all("series")
     return series_list
 
-def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, RawDataDestination):
+def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
     obs_list = []
     for i, series in enumerate(series_list):
@@ -57,7 +57,7 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, RawDataDestinati
             "VariableCodeOECD": VAR,
             "IndicatorCodeOECD": OECDIndicatorCode,
             "Source": "OECD",
-            "RawDataDestination": RawDataDestination,
+            "IndicatorCode": IndicatorCode,
             "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
         }
