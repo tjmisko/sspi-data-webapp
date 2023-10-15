@@ -24,6 +24,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode):
     response_obj = requests.get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
+    raw_insert_one(observation, IndicatorCode, IntermediateCode="OECD", Metadata=metadata)
     sspi_raw_api_data.insert_one({
         "collection-info": {
             "IndicatorCode": IndicatorCode,
