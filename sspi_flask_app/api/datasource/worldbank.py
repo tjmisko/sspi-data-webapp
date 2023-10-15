@@ -3,30 +3,21 @@ from ..api import raw_insert_many
 import requests
 import json
 import time
-from datetime import datetime
 from ... import sspi_raw_api_data
 from ..api import parse_json
 from pycountry import countries
 
-def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode):
-    collection_time = datetime.now()
+def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode):
+    yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
     url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
-    print(url_source)
     response = requests.get(url_source).json()
-    print(response)
     total_pages = response[0]['pages']
     for p in range(1, total_pages+1):
-        new_url = url_source + f"&page={p}"
+        new_url = f"{url_source}&page={p}"
         print(p)
         response = requests.get(new_url).json()
-        for r in response[1]:
-            sspi_raw_api_data.insert_one(
-                {"collection-info": {"IndicatorCode": IndicatorCode,
-                                     "Source": "WORLDBANK",
-                                     "CollectedAt": collection_time},
-                
-                "observation": r                    
-                })
+        data_list = response[1]
+        raw_insert_many(data_list, IndicatorCode, IntermediateCode=IntermediateCode)
         time.sleep(0.5)
     return response
 

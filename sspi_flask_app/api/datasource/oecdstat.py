@@ -5,6 +5,13 @@ import urllib3
 import ssl
 
 def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, IntermediateCode="NA"):
+    """
+    The CustomHTTPAdapter class and the legacy session are necessary to connect to the OECD SDMX API
+    because OECD does not support RFC 5746 secure renegotiation, which is the default for OpenSSL 3
+
+    See Harry Mallon's answer and ahmkara's elaboration on StackOverflow:
+    https://stackoverflow.com/questions/71603314/ssl-error-unsafe-legacy-renegotiation-disabled/71646353#71646353
+    """
     class CustomHttpAdapter (requests.adapters.HTTPAdapter):
     # "Transport adapter" that allows us to use custom ssl_context.
 
@@ -32,7 +39,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, IntermediateCode="NA"
     metadata = str(metadata_obj.content)
     yield "Metadata Received from OECD SDMX API.  Sending Data Request to OECD SDMX API\n"
     yield "Sending Data Request to OECD SDMX API\n"
-    response_obj = requests.get(SDMX_URL_OECD)
+    response_obj = get_legacy_session().get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
     raw_insert_one(observation, IndicatorCode, IntermediateCode=IntermediateCode, Metadata={"Source": "OECD", "metadata": metadata})
