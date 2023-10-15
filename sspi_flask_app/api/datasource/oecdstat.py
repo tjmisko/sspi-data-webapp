@@ -24,16 +24,16 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode):
     response_obj = requests.get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
-    raw_insert_one(observation, IndicatorCode, IntermediateCode="OECD", Metadata=metadata)
-    sspi_raw_api_data.insert_one({
-        "collection-info": {
-            "IndicatorCode": IndicatorCode,
-            "Source": "OECD",
-            "Metadata": metadata,
-            "CollectedAt": datetime.now()
-        },
-        "observation": observation
-    })
+    raw_insert_one(observation, IndicatorCode, IntermediateCode="TCO2EM", Metadata={"Source": "OECD"})
+    # sspi_raw_api_data.insert_one({
+    #     "collection-info": {
+    #         "IndicatorCode": IndicatorCode,
+    #         "Source": "OECD",
+    #         "Metadata": metadata,
+    #         "CollectedAt": datetime.now()
+    #     },
+    #     "observation": observation
+    # })
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
