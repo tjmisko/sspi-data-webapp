@@ -3,6 +3,7 @@ from sqlalchemy_serializer import SerializerMixin
 from .. import db
 from dataclasses import dataclass
 
+
 @dataclass
 class User(db.Model, UserMixin, SerializerMixin):
     id:int = db.Column(db.Integer, primary_key=True)

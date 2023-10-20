@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for
+from flask_login import login_required
 from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
@@ -15,6 +16,7 @@ compute_bp = Blueprint("compute_bp", __name__,
                        url_prefix="/compute")
 
 @compute_bp.route("/BIODIV", methods=['GET'])
+@login_required
 def compute_biodiv():
     """
     If indicator is not in database, return a page with a button to collect the data
@@ -35,6 +37,7 @@ def compute_biodiv():
     return parse_json(final_data_list)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
+@login_required
 def compute_rdlst():
     if not raw_data_available("REDLST"):
         return redirect(url_for("api_bp.collect_bp.REDLST"))
@@ -45,6 +48,7 @@ def compute_rdlst():
     return parse_json(final_list)
 
 @compute_bp.route("/COALPW")
+@login_required
 def compute_coalpw():
     if not raw_data_available("COALPW"):
         return redirect(url_for("api_bp.collect_bp.coalpw"))
@@ -55,6 +59,7 @@ def compute_coalpw():
     return parse_json(df.head().to_json())
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
+@login_required
 def compute_altnrg():
     if not raw_data_available("ALTNRG"):
         return redirect(url_for("collect_bp.ALTNRG"))
@@ -70,6 +75,7 @@ def compute_altnrg():
     #return parse_json(lst)
 
 @compute_bp.route("/GTRANS", methods = ['GET'])
+@login_required
 def compute_gtrans():
     if not raw_data_available("GTRANS"):
         return "Data unavailable. Try running collect." 
@@ -118,6 +124,7 @@ def compute_gtrans():
     # Parse that back into the right list format between 
 
 @compute_bp.route("/PRISON", methods=['GET'])
+@login_required
 def compute_prison():
     raw_data_observation_list = parse_json(sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
     for obs in raw_data_observation_list:
