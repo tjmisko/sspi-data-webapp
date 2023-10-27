@@ -1,6 +1,7 @@
 import secrets
 import string
 from flask import current_app as app, jsonify
+import pyotp
 from ..models.usermodel import User, db
 from .. import login_manager, flask_bcrypt
 from sqlalchemy_serializer import SerializerMixin
@@ -18,8 +19,7 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from dataclasses import dataclass
-import requests
-from datetime import datetime
+import time
 
 auth_bp = Blueprint(
     'auth_bp', __name__,
@@ -99,12 +99,11 @@ def logout():
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-@fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
         hashed_password = flask_bcrypt.generate_password_hash(register_form.password.data)
-        new_user = User(username=register_form.username.data, password=hashed_password)
+        new_user = User(username=register_form.username.data, password=hashed_password, apikey=pyotp.random_base32())
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
