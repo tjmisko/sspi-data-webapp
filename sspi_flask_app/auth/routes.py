@@ -1,4 +1,6 @@
-from flask import current_app as app
+import secrets
+import string
+from flask import current_app as app, jsonify
 from ..models.usermodel import User, db
 from .. import login_manager, flask_bcrypt
 from sqlalchemy_serializer import SerializerMixin
@@ -17,6 +19,7 @@ from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from dataclasses import dataclass
 import requests
+from datetime import datetime
 
 auth_bp = Blueprint(
     'auth_bp', __name__,
@@ -25,7 +28,6 @@ auth_bp = Blueprint(
 )
 
 login_manager.login_view = "auth_bp.login"
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -77,8 +79,8 @@ def login():
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
     print(request.__attrs__)
-    print(request)
     username = request.text.get("username")
+    print(request)
     print(f"{username}\n")
     # password = request.data.get("password")
     # print(f"{password}\n")
@@ -107,3 +109,19 @@ def register():
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
     return render_template('register.html', form=register_form)
+
+@auth_bp.route('/auth/clear', methods=['GET'])
+@fresh_login_required
+def clear():
+    db.session.query(User).delete()
+    db.session.commit()
+    return redirect(url_for('auth_bp.query'))
+
+@auth_bp.route('/auth/query', methods=['GET'])
+@login_required
+def query():
+    return str(db.session.query(User).all())
+
+def generate_api_key(length):
+    api_key_characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join([secrets.choice(api_key_characters) for _ in range(64)])
