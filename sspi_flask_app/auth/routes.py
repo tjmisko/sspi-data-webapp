@@ -20,6 +20,7 @@ from wtforms.validators import InputRequired, Length, ValidationError
 # load in encryption library for passwords
 from dataclasses import dataclass
 import time
+from urllib.parse import urljoin, urlparse
 
 auth_bp = Blueprint(
     'auth_bp', __name__,
@@ -100,13 +101,12 @@ def logout():
     logout_user()
     return redirect(url_for('client_bp.home'))
 
-
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
         hashed_password = flask_bcrypt.generate_password_hash(register_form.password.data)
-        new_user = User(username=register_form.username.data, password=hashed_password, secretkey=pyotp.random_base32())
+        new_user = User(username=register_form.username.data, password=hashed_password, secretkey=pyotp.random_base32(), apikey=secrets.token_hex(64))
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
@@ -124,6 +124,10 @@ def clear():
 def query():
     return str(db.session.query(User).all())
 
-def generate_api_key(length):
-    api_key_characters = string.ascii_letters + string.digits + string.punctuation
-    return ''.join([secrets.choice(api_key_characters) for _ in range(64)])
+def is_safe_url(target):
+    """
+    This could be made very save by checking the target against a list of safe urls on my site
+    """ 
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
