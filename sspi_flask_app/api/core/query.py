@@ -33,7 +33,7 @@ def query_indicator(IndicatorCode):
         query_parameters = {"CountryGroup": country_group}
     database = request.args.get('database', default = "sspi_main_data_v3", type = str)
     if database == "sspi_raw_api_data":
-        indicator_data = sspi_raw_api_data.find({"collection-info.IndicatorCode": IndicatorCode})
+        indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
     elif database == "sspi_clean_api_data":
         indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode}, {"_id": 0, "Intermediates": 0})
     else:  

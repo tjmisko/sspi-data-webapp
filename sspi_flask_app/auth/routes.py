@@ -1,3 +1,4 @@
+from functools import wraps
 import secrets
 import string
 from flask import current_app as app, jsonify
@@ -16,7 +17,7 @@ from flask_login import fresh_login_required, login_user, LoginManager, login_re
 # and restration data
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import InputRequired, Length, ValidationError
+from wtforms.validators import InputRequired, Length, ValidationError, Regexp
 # load in encryption library for passwords
 from dataclasses import dataclass
 import time
@@ -36,10 +37,23 @@ def load_user(user_id):
 
 # create a registration form for new users
 class RegisterForm(FlaskForm):
-    username = StringField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Username"})
-    password = PasswordField(validators=[InputRequired(), Length(
-        min=4, max=20)], render_kw={"placeholder": "Password"})
+    username = StringField(
+        validators=[
+            InputRequired(),
+            Length(min=6, max=20)
+        ],
+        render_kw={"placeholder": "Username"}
+    )
+    password = PasswordField(
+        validators=[
+            InputRequired(),
+            Length(min=8, max=32),
+            Regexp(
+                r'^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[\-!@#$%^&*()_+])[A-Za-z\d!\-@#$%^&*()_+]+$',
+                message="Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character."
+            )
+        ],
+        render_kw={"placeholder": "Password"})
     submit = SubmitField("Register")
 
     def validate_username(self, username):
@@ -49,7 +63,7 @@ class RegisterForm(FlaskForm):
         if username_taken:
             raise ValidationError("That username is already taken!")
 
-# create a registration form for new users
+# create a login form
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(
         min=4, max=20)], render_kw={"placeholder": "Username"}, label="Username")
@@ -60,6 +74,7 @@ class LoginForm(FlaskForm):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    print(request.args.get("next"))
     if current_user.is_authenticated:
         return redirect(url_for('client_bp.data'))
     if 'Authorization' in request.headers:
@@ -102,6 +117,7 @@ def logout():
     return redirect(url_for('client_bp.home'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
@@ -111,6 +127,21 @@ def register():
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
     return render_template('register.html', form=register_form)
+
+@auth_bp.route("/auth/update/password", methods=["GET", "POST"])
+@fresh_login_required
+def update_password():
+    update_password_form = UpdatePasswordForm()
+    if update_password_form.validate_on_submit():
+        user = User.query.filter_by(username=current_user.username).first()
+        if user and flask_bcrypt.check_password_hash(user.password, update_password_form.old_password.data):
+            user.password = flask_bcrypt.generate_password_hash(update_password_form.new_password.data)
+            db.session.commit()
+            flash("Password updated successfully")
+            return redirect(url_for('auth_bp.update_password'))
+        else:
+            flash("Incorrect password")
+            return redirect(url_for('auth_bp.update_password'))
 
 @auth_bp.route('/auth/clear', methods=['GET'])
 @fresh_login_required
@@ -131,3 +162,16 @@ def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
+# def login_required(func):
+#     @wraps(func)
+#     def decorated_view(*args, **kwargs):
+#         if not current_user.is_authenticated:
+#             return app.login_manager.unauthorized()
+
+#         # flask 1.x compatibility
+#         # current_app.ensure_sync is only available in Flask >= 2.0
+#         if callable(getattr(app, "ensure_sync", None)):
+#             return current_app.ensure_sync(func)(*args, **kwargs)
+#         return func(*args, **kwargs)
+#     return decorated_view
