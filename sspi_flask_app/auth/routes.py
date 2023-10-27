@@ -157,7 +157,7 @@ def query():
 
 def is_safe_url(target):
     """
-    This could be made very save by checking the target against a list of safe urls on my site
+    This could be made very safe by checking the target against a list of safe urls on my site
     """ 
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
