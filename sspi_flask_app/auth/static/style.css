@@ -1,3 +1,181 @@
 body {
-    background-color: red;
+    margin: 60px 50px;
+    background-color: #F3F4F8;
+    color: #101223;
 }
+
+.login-body {
+    display:flex;
+    position:relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 60px;
+    font-size: 18px;
+}
+
+#delete-header {
+    width: min(100%,550px);
+}
+.message {
+    padding: 10px;
+    margin: 5px;
+    background-color: rgb(229, 124, 124, 0.5);
+    border-radius: 5px;
+    color: rgb(70, 8, 8);
+    max-width: 500px;
+}
+.form-box {
+    padding: 10px 30px;
+    margin: 5px;
+    max-width: 500px;
+}
+.warning {
+    display: block;
+    color: rgb(195, 9, 9);
+    margin-bottom: 10px;
+}
+.form-item {
+    margin: 5px 0px;
+}
+
+
+#gridbox {
+    display:grid;
+    align-items: top;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr))
+}
+
+.database-control {
+    margin: 15px;
+}
+
+.indicator {
+    display:flex;
+    flex-direction: column;
+    border-style: solid;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 10px;
+}
+
+.indicator-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.results-box {
+    display: none;
+    position: relative;
+    padding: 20px;
+    margin: 15px;
+    height: 200px;
+    overflow-y: scroll;
+    color:#F3F4F8; 
+    background-color:#323131;
+    border-radius: 5px;
+}
+
+.close-window-button {
+    position: sticky;
+    top: 10px;
+    left: calc(100% - 20px);
+    background-color: transparent;
+    border: none;
+}
+
+.close-window-button:hover {
+    transform: scale(1.04);
+    transition: 0.1s;
+}
+
+.x-svg {
+    color: red;
+    fill:"red";
+}
+
+.action-box {
+    display: flex;
+    display: flex;
+    justify-content: space-between;
+    margin-left: 20px;
+}
+
+.button-box {
+    display: flex;
+    display: flex;
+    justify-content: space-around;
+}
+
+.gui-button {
+    border:none;
+    padding: 5px 10px;
+    color: #F3F4F8;
+    text-align: center;
+    border-radius: 5px;
+    margin: 0px 5px;
+    max-width: 100px;
+    box-shadow: 0px 1px 5px 2 grey;
+}
+
+.gui-button:hover {
+    transform: scale(1.02);
+    transition: 0.05s;
+}
+
+.gui-button:focus {
+    border-style:solid;
+    border-color: #5a5a5a;
+}
+
+.gui-button:active {
+    transform: scale(0.9);
+    transition: 0.1s;
+}
+
+.query:enabled {
+    background-color:rgb(0, 0, 255);
+}
+
+
+
+.collect:enabled {
+    background-color:rgb(255, 165, 0);
+}
+.collect:disabled {
+    background-color: rgba(255, 165, 0, 0.2);
+    transform:none;
+}
+
+.compute:enabled {
+    background-color:rgba(255, 69, 0, 1);
+}
+.compute:disabled {
+    background-color:rgba(255, 69, 0, 0.2);
+    transform: none;
+}
+
+.impute:enabled {
+    background-color: rgb(220, 20, 60);
+}
+
+.impute:disabled{
+    background-color: rgba(255, 0, 0, 0.2);
+    transform:none;
+}
+
+.query-button-list {
+    margin: 0;
+    padding:0;
+    list-style: none;
+}
+
+.query-subbutton {
+    padding: 3px 6px;
+    margin: 2px 0px;
+    border-radius: 5px;
+    max-width: 160px;
+
+}
+.ic-label {font: smaller;}
