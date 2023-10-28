@@ -35,6 +35,17 @@ login_manager.login_view = "auth_bp.login"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+class UpdatePasswordForm(FlaskForm):
+    username = StringField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Username"}, label="Username")
+    oldpassword = PasswordField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Old Password"}, label="Old Password")
+    newpassword = PasswordField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "New Password"}, label="New Password")
+    newpasswordconfirm = PasswordField(validators=[InputRequired(), Length(
+        min=4, max=20)], render_kw={"placeholder": "Confirm Password"}, label="Confirm Password")
+    submit = SubmitField("Change Password")
+
 # create a registration form for new users
 class RegisterForm(FlaskForm):
     username = StringField(
@@ -134,14 +145,15 @@ def update_password():
     update_password_form = UpdatePasswordForm()
     if update_password_form.validate_on_submit():
         user = User.query.filter_by(username=current_user.username).first()
-        if user and flask_bcrypt.check_password_hash(user.password, update_password_form.old_password.data):
-            user.password = flask_bcrypt.generate_password_hash(update_password_form.new_password.data)
+        if user and flask_bcrypt.check_password_hash(user.password, update_password_form.oldpassword.data):
+            user.password = flask_bcrypt.generate_password_hash(update_password_form.newpassword.data)
             db.session.commit()
             flash("Password updated successfully")
             return redirect(url_for('auth_bp.update_password'))
         else:
             flash("Incorrect password")
             return redirect(url_for('auth_bp.update_password'))
+    return render_template('update_password.html', form=update_password_form)
 
 @auth_bp.route('/auth/clear', methods=['GET'])
 @fresh_login_required
