@@ -153,7 +153,7 @@ def update_password():
         else:
             flash("Incorrect password")
             return redirect(url_for('auth_bp.update_password'))
-    return render_template('update_password.html', form=update_password_form)
+    return render_template('change_password.html', form=update_password_form)
 
 @auth_bp.route('/auth/clear', methods=['GET'])
 @fresh_login_required
