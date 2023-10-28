@@ -90,8 +90,8 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('client_bp.data'))
     if 'Authorization' in request.headers:
-        api_key = request.headers['Authorization']
-        user = User.query.filter_by(api_key=api_key).first()
+        apikey = request.headers['Authorization']
+        user = User.query.filter_by(apikey=apikey).first()
         login_user(user)
     login_form = LoginForm()
     if not login_form.validate_on_submit():
