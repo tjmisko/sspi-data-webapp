@@ -1,3 +1,6 @@
+{% extends 'layout.html' %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
@@ -17,5 +20,5 @@
       {{ form.remember_me.label }} {{ form.remember_me }} <br>
       {{ form.submit }} <br>
     </form>
-  </body>
-</html>
+
+{% endblock %}

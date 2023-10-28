@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <title>Register</title>
-  </head>
-  <body>
-    <h1>Register a New Administrator to the SSPI Database</h1>
-    <form action="" method="POST">
-      {{ form.hidden_tag() }}
-      {{ form.username }}
-      {{ form.password }}
-      {{ form.submit }}
-    </form>
-  </body>
-</html>
+{% extends 'layout.html' %}
+
+{% block content %}
+<form action="" method="POST">
+  {{ form.hidden_tag() }}
+  {{ form.username }}
+  {{ form.password }}
+  {{ form.submit }}
+</form>
+{% endblock %}
