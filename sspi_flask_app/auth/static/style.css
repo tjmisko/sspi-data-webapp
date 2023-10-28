@@ -4,7 +4,7 @@ body {
     color: #101223;
 }
 
-.login-body {
+.auth-body {
     display:flex;
     position:relative;
     flex-direction: column;

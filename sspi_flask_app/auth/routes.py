@@ -26,7 +26,8 @@ from urllib.parse import urljoin, urlparse
 auth_bp = Blueprint(
     'auth_bp', __name__,
     template_folder='templates',
-    static_folder='static'
+    static_folder='static',
+    static_url_path='/auth/static'
 )
 
 login_manager.login_view = "auth_bp.login"
@@ -94,12 +95,11 @@ def login():
         login_user(user)
     login_form = LoginForm()
     if not login_form.validate_on_submit():
-        flash("Invalid Submission Format")
-        return render_template('login.html', form=login_form, error="Invalid Submission Format")
+        return render_template('login.html', form=login_form, title="Login") 
     user = User.query.filter_by(username=login_form.username.data).first()
     if user is None or not flask_bcrypt.check_password_hash(user.password, login_form.password.data):
         flash("Invalid username or password")
-        return render_template('login.html', form=login_form, error="Invalid username or password")
+        return render_template('login.html', form=login_form, error="Invalid username or password", title="Login")
     if login_form.remember_me:
         login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
@@ -128,7 +128,7 @@ def logout():
     return redirect(url_for('client_bp.home'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-@fresh_login_required
+# @fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
@@ -137,10 +137,9 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
-    return render_template('register.html', form=register_form)
+    return render_template('register.html', form=register_form, title="Register")
 
 @auth_bp.route("/auth/update/password", methods=["GET", "POST"])
-@fresh_login_required
 def update_password():
     update_password_form = UpdatePasswordForm()
     if update_password_form.validate_on_submit():
@@ -153,14 +152,12 @@ def update_password():
         else:
             flash("Incorrect password")
             return redirect(url_for('auth_bp.update_password'))
-    return render_template('change_password.html', form=update_password_form)
+    return render_template('change_password.html', form=update_password_form, title="Change Password")
 
 @auth_bp.route('/auth/clear', methods=['GET'])
-@fresh_login_required
 def clear():
-    db.session.query(User).delete()
-    db.session.commit()
-    return redirect(url_for('auth_bp.query'))
+    db.drop_all()
+    return redirect(url_for('auth_bp.login'))
 
 @auth_bp.route('/auth/query', methods=['GET'])
 @login_required

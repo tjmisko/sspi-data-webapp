@@ -7,10 +7,10 @@
 {% endif %}
 <form action="" method="POST">
   {{ form.hidden_tag() }}
-  {{ form.username }} <br>
-  {{ form.password }} <br>
-  {{ form.remember_me.label }} {{ form.remember_me }} <br>
-  {{ form.submit }} <br>
+  <div class="form-item">{{ form.username }} </div>
+  <div class="form-item">{{ form.password }} </div>
+  <div class="form-item">{{ form.remember_me.label }} {{ form.remember_me }}</div>
+  <div class="form-item">{{ form.submit }}</div>
 </form>
 
 {% endblock %}
