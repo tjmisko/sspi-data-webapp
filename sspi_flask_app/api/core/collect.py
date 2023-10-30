@@ -95,3 +95,16 @@ def gtrans():
     collectOECDIndicator(SDMX_URL_OECD, "GTRANS")
     collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return "success!"
+
+
+##############################################
+# Collection Routes for Pillar: PUBLIC GOODS #
+##############################################
+
+@collect_bp.route("INTRNT", methods=['GET'])
+# @login_required
+def intrnt():
+    def collect_iterator():
+        # yeild from collectWorldBankdata() --> internet access
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT") # --> internet quality (mbps)
+    return Response(collect_iterator(), mimetype='text/event-stream')
