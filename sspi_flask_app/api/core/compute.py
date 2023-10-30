@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, url_for
 from ..api import raw_data_available, parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
 from ..api import fetch_raw_data, missing_countries, added_countries
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list
@@ -95,7 +95,7 @@ def compute_gtrans():
 
     # print(oecd_df)
     merged = wb_df.drop(columns=["IndicatorCode"]).merge(oecd_df, how="outer", on=["CountryCode", "YEAR"]) 
-    merged = wb_df.rename()
+    # merged = wb_df.rename()
     print(merged)
 
     return 'success!'
@@ -104,3 +104,12 @@ def compute_gtrans():
     # Overwrite all NaN values with String "NaN"
     # Parse that back into the right list format between 
 
+@compute_bp.route("/INTRNT", methods = ['GET'])
+def compute_intrnt():
+    if not raw_data_available("INTRNT"):
+        return redirect(url_for("api_bp.collect_bp.INTRNT"))
+    raw_data = fetch_raw_data("INTRNT")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    final_list = flatten_nested_dictionary_intrnt(intermediate_obs_dict)
+    sspi_clean_api_data.insert_many(final_list)
+    return parse_json(final_list)
