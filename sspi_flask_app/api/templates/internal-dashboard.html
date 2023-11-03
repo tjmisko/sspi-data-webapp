@@ -1,3 +1,7 @@
+{% extends 'api-gui-layout.html' %}
+
+{% block content %}
+
 <h1>SSPI Database Status</h1>
 <div id="gridbox">
     <section> 
@@ -25,3 +29,4 @@
             <script>$.get("/api/v1/fetch-controls", (data)=>{$("#api-gui-box").html(data); $('.query-menu').hide()})</script>
     </section>
 </div>
+{% endblock %}

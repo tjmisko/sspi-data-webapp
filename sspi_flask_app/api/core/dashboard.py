@@ -22,6 +22,11 @@ def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
     return render_template("database-status.html", database=database, ndocs=ndocs)
 
+@api_bp.route("/compare")
+@login_required
+def compare():
+    return render_template("compare.html")
+
 @api_bp.route('/api_coverage')
 def api_coverage():
     """
