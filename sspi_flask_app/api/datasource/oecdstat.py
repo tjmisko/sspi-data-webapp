@@ -25,7 +25,7 @@ def collectOECDIndicator(SDMX_URL, RawDataDestination):
     # print(response_obj.headers)
     # print(response_obj.content)
     sspi_raw_api_data.insert_one({
-        "collection-info": {"CollectedBy": current_user.username,
+        "collection-info": {
                                         "RawDataDestination": RawDataDestination,
                                         "Source": "OECD",
                                         "CollectedAt": datetime.now()}, 
