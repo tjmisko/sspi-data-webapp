@@ -1,9 +1,10 @@
 from flask import Blueprint
-from flask_login import current_user
+from flask_login import current_user, login_required
 from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_final_dynamic_data, sspi_imputed_data
 from bson import json_util
 import json
 import math
+from datetime import datetime
 
 api_bp = Blueprint(
     'api_bp', __name__,
@@ -18,7 +19,7 @@ def raw_data_available(IndicatorCode):
     """
     Check if indicator is in database
     """
-    return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
+    return bool(sspi_raw_api_data.find_one({"collection-info.IndicatorCode": IndicatorCode}))
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -33,6 +34,23 @@ def string_to_float(string):
     if math.isnan(float(string)):
         return "NaN"
     return float(string)
+
+def string_to_int(string):
+    return int(string)
+
+def missing_countries(sspi_country_list, source_country_list):
+    missing_countries = []
+    for country in sspi_country_list:
+        if country not in source_country_list:
+            missing_countries.append(country)
+    return missing_countries
+
+def added_countries(sspi_country_list, source_country_list):
+    additional_countries = []
+    for other_country in source_country_list:
+        if other_country not in sspi_country_list:
+            additional_countries.append(other_country)
+    return additional_countries
 
 def lookup_database(database_name):
     """
@@ -51,18 +69,6 @@ def lookup_database(database_name):
         return sspi_metadata
     elif database_name == "sspi_final_dynamic_data":
         return sspi_final_dynamic_data
-    
-def store_raw_observation(observation, collection_time, RawDataDestination):
-    """
-    Utility Function the response from an API call in the database
-    - Observation to be passed as a well-formed dictionary for entry into pymongo
-    - RawDataDestination is the indicator code for the indicator that the observation is for
-    """
-    sspi_raw_api_data.insert_one(
-    {"collection-info": {"CollectedBy": current_user.username,
-                        "RawDataDestination": RawDataDestination,
-                        "CollectedAt": collection_time}, 
-    "observation": observation})
 
 # utility functions
 def format_m49_as_string(input):
@@ -78,10 +84,42 @@ def format_m49_as_string(input):
     else: 
         return '00' + str(input)
     
-def fetch_raw_data(RawDataDestination):
+def fetch_raw_data(IndicatorCode):
     """
     Utility function that handles querying the database
     """
-    mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+    mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
+
+#############################
+# Collect Storage Utilities #
+#############################
+
+def raw_insert_one(observation, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
+    """
+    Utility Function the response from an API call in the database
+    - Observation to be passed as a well-formed dictionary for entry into pymongo
+    - IndicatorCode is the indicator code for the indicator that the observation is for
+    """
+    sspi_raw_api_data.insert_one({
+        "collection-info": {
+            "IndicatorCode": IndicatorCode,
+            "IntermediateCodeCode": IntermediateCode,
+            "Metadata": Metadata,
+            "CollectedAt": datetime.now()
+        },
+        "observation": observation
+    })
+    return 1
+    
+
+def raw_insert_many(observation_list, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
+    """
+    Utility Function 
+    - Observation to be past as a list of well form observation dictionaries
+    - IndicatorCode is the indicator code for the indicator that the observation is for
+    """
+    for i, observation in enumerate(observation_list):
+        raw_insert_one(observation, IndicatorCode, IntermediateCode, Metadata)
+    return i+1

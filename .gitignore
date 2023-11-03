@@ -13,7 +13,7 @@ instance/**
 instance
 instance/*
 
-.env ' 
+.env
 .flaskenv
 *.egg
 *.egg-info/
@@ -26,6 +26,13 @@ instance
 **/__pycache__/
 *.pyc
 *.pyo
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
 
 *.webassets-cache
 */webassets-cache

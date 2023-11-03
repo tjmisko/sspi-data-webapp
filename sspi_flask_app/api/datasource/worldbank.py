@@ -1,29 +1,20 @@
-from flask_login import current_user
+from ..api import raw_insert_many
 import requests
-import json
 import time
-from datetime import datetime
-from ... import sspi_raw_api_data
-from ..api import parse_json, format_m49_as_string
 from pycountry import countries
 
-def collectWorldBankdata(IndicatorCode, RawDataDestination):
-    collection_time = datetime.now()
-    url_source = "https://api.worldbank.org/v2/country/all/indicator/" + IndicatorCode + "?format=json"
-    print(url_source)
+def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode):
+    yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
+    url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
     response = requests.get(url_source).json()
-    print(response)
     total_pages = response[0]['pages']
     for p in range(1, total_pages+1):
-        new_url = url_source + f"&page={p}"
-        print(p)
+        new_url = f"{url_source}&page={p}"
+        yield f"Sending Request for page {p} of {total_pages}\n"
         response = requests.get(new_url).json()
-        for r in response[1]:
-            sspi_raw_api_data.insert_one(
-                {"collection-info": {"RawDataDestination": RawDataDestination,
-                                     "CollectedAt": collection_time},
-                "observation": r                    
-                })
+        data_list = response[1]
+        count = raw_insert_many(data_list, IndicatorCode, IntermediateCode=IntermediateCode)
+        yield f"Inserted {count} new observations into sspi_raw_api_data\n"
         time.sleep(0.5)
     return response
 
@@ -42,6 +33,7 @@ def cleanedWorldBankData(RawData, IndName):
             "CountryCode": iso3,
             "CountryName": entry["observation"]["country"]["value"],
             "IndicatorCode": IndName,
+            "Source": "WORLDBANK",
             "YEAR": entry["observation"]["date"],
             "RAW": entry["observation"]["value"]
         }

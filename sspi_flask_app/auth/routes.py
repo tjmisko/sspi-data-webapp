@@ -8,7 +8,7 @@ from flask import Flask, render_template, request, url_for, redirect, Blueprint,
 from flask_sqlalchemy import SQLAlchemy
 # load in the UserMixin to handle the creation of user objects (not strictly necessary
 # but it's a nice automation so we don't have to think too much about it)
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import fresh_login_required, login_user, LoginManager, login_required, logout_user, current_user
 # load in the packages that make the forms pretty for submitting login and
 # and restration data
 from flask_wtf import FlaskForm
@@ -72,18 +72,22 @@ def login():
         login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
-    return redirect(url_for('client_bp.data'))               
+    return redirect(url_for('api_bp.api_home'))               
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    username = request.form.get("username")
-    print(username)
-    password = request.form.get("password")
-    print(password)
+    print(request.__attrs__)
+    print(request)
+    username = request.text.get("username")
+    print(f"{username}\n")
+    # password = request.data.get("password")
+    # print(f"{password}\n")
+    password = "wrong"
     user = User.query.filter_by(username=username).first()
     if user and flask_bcrypt.check_password_hash(user.password, password):
         login_user(user)
-    return redirect(url_for('client_bp.data'))
+        print(current_user.username)
+    return redirect(url_for('api_bp.api_home'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -93,7 +97,7 @@ def logout():
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-# @login_required
+@fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
