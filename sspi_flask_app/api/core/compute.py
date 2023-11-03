@@ -95,7 +95,7 @@ def compute_gtrans():
 
     # print(oecd_df)
     merged = wb_df.drop(columns=["IndicatorCode"]).merge(oecd_df, how="outer", on=["CountryCode", "YEAR"]) 
-    merged = wb_df.rename()
+    merged = merged.dropna()
     print(merged)
 
     return 'success!'
