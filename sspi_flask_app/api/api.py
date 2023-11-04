@@ -128,8 +128,11 @@ def raw_insert_many(observation_list, IndicatorCode, IntermediateCode="NA", Meta
 def finalize(indicator_code):
     api_data = parse_json(sspi_clean_api_data.find({"IndicatorCode": indicator_code}, {"_id": 0}))
     imputed_data = parse_json(sspi_imputed_data.find({"IndicatorCode": indicator_code}, {"_id": 0}))
+    print(api_data)
+    print(imputed_data)
     final_data = api_data + imputed_data
-    len(final_data)
-    count = sspi_dynamic_data.insert_many(final_data)
+    print(type(final_data))
+    count = len(final_data)
+    sspi_dynamic_data.insert_many(final_data)
     flash(f"Inserted {count} documents into SSPI Dynamic Data Database for {indicator_code}")
     return redirect(url_for("api_bp.api_dashboard"))

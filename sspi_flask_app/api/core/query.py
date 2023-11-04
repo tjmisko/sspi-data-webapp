@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
-from ..api import parse_json
+from ..api import parse_json, lookup_database
 
 
 query_bp = Blueprint("query_bp", __name__,
@@ -10,17 +10,11 @@ query_bp = Blueprint("query_bp", __name__,
 
 @query_bp.route("/")
 def query_full_database():
-    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    if database == "sspi_raw_api_data":
-        return parse_json(sspi_raw_api_data.find())
-    elif database == "sspi_clean_api_data":
-        return parse_json(sspi_clean_api_data.find())
-    elif database == "sspi_metadata":
-        return parse_json(sspi_metadata.find())
-    elif database == "sspi_":
-        return parse_json(sspi_main_data_v3.find())
-    else:
+    database_string = request.args.get('database', default = "sspi_main_data_v3", type = str)
+    database = lookup_database(database_string)
+    if database is None:
         return "database {} not found".format(database)
+    return parse_json(database.find())
 
 @query_bp.route("/indicator/<IndicatorCode>")
 def query_indicator(IndicatorCode):
