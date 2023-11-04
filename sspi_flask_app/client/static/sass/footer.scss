@@ -1,11 +1,15 @@
 $accent-color: rgb(41, 75, 80);
+$link-color: rgb(0, 221, 255);
+$dark-blue: #1B2A3C;
+$light-blue: #2A4260;
+$green-accent: #AECC53;
 $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
-$hover: rgb(255, 102, 0);
+$mobile-break-width: 1135px;
 
 .site-footer {
-    background-color: $accent-color;
+    background-color: $dark-blue;
     color: $white;
     padding: 20px 50px;
 }
@@ -32,13 +36,13 @@ $hover: rgb(255, 102, 0);
 }
 
 .footer-link:hover {
-    color: hover;
+    color: $green-accent;
 }
 
 #admin-login {
     margin: 5px 0px;
     text-decoration: none;
-    color: white;
+    color: $white;
 }
 
 #admin-login:hover {

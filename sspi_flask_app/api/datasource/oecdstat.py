@@ -1,40 +1,80 @@
-import json
-import time
 import requests
-import math
-# import pandasdmx as sdmx
-import pandas as pd
-import xml.etree.ElementTree as ET
-from ... import sspi_raw_api_data
-from flask_login import current_user
-from datetime import datetime
-from pycountry import countries
-from ..api import format_m49_as_string
-from ..api import string_to_float, string_to_int
-from ..api import fetch_raw_data
-from ..api import missing_countries, added_countries
+import bs4 as bs
+from ..api import string_to_float, string_to_int, raw_insert_one
+import urllib3
+import ssl
 
-def collectOECDIndicator(SDMX_URL, RawDataDestination):
-    response_obj = requests.get(SDMX_URL)
-    SDMX_URL = "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/AIR_GHG/AUS+AUT+BEL+CAN+CHL+COL+CRI+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+NMEC+ARG+BGD+BLR+BRA+BGR+CHN+HRV+CYP+IND+IDN+IRN+KAZ+LIE+MLT+MCO+PER+ROU+RUS+SAU+ZAF+UKR+OECDAM+OECDAO.GHG+CO2.TOTAL+ENER+ENER_IND+ENER_MANUF+ENER_TRANS+ENER_OSECT+ENER_OTH+ENER_FU+ENER_CO2+TOTAL_LULU+INTENS+GHG_CAP+GHG_GDP+GHG_CAP_LULU+GHG_GDP_LULU+INDEX+INDEX_2000+INDEX_1990+PERCENT+ENER_P+ENER_IND_P+ENER_MANUF_P+ENER_TRANS_P+ENER_OSECT_P+ENER_OTH_P+ENER_FU_P+ENER_CO2_P+IND_PROC_P+AGR_P+WAS_P+OTH_P/all?startTime=1990&endTime=2021"
-    shorterurl = "https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/AIR_GHG/AUS+AUT+BEL+CAN+CHL+COL+CRI+CZE+DNK+EST+FIN+FRA+DEU+GRC+HUN+ISL+IRL+ISR+ITA+JPN+KOR+LVA+LTU+LUX+MEX+NLD+NZL+NOR+POL+PRT+SVK+SVN+ESP+SWE+CHE+TUR+GBR+USA+NMEC+ARG+BGD+BLR+BRA+BGR+CHN+HRV+CYP+IND+IDN+IRN+KAZ+LIE+MLT+MCO+PER+ROU+RUS+SAU+ZAF+UKR+OECDAM+OECDAO.GHG+CO2.TOTAL+ENER+ENER_TRANS+ENER+ENER_CO2+INDEX+INDEX_2000+INDEX_1990+PERCENT+ENER_P+ENER_IND_P+ENER_MANUF_P+ENER_TRANS_P+ENER_OSECT_P+ENER_OTH_P+ENER_FU_P+ENER_CO2_P+IND_PROC_P+AGR_P+WAS_P+OTH_P/all?startTime=1990&endTime=2021"
-    # nPages = response_obj.json().get('totalPages')
-    print("RawDataDestination: {}".format(RawDataDestination))
+def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, IntermediateCode="NA"):
+    """
+    The CustomHTTPAdapter class and the legacy session are necessary to connect to the OECD SDMX API
+    because OECD does not support RFC 5746 secure renegotiation, which is the default for OpenSSL 3
+
+    See Harry Mallon's answer and ahmkara's elaboration on StackOverflow:
+    https://stackoverflow.com/questions/71603314/ssl-error-unsafe-legacy-renegotiation-disabled/71646353#71646353
+    """
+    class CustomHttpAdapter (requests.adapters.HTTPAdapter):
+    # "Transport adapter" that allows us to use custom ssl_context.
+
+        def __init__(self, ssl_context=None, **kwargs):
+            self.ssl_context = ssl_context
+            super().__init__(**kwargs)
+
+        def init_poolmanager(self, connections, maxsize, block=False):
+            self.poolmanager = urllib3.poolmanager.PoolManager(
+                num_pools=connections, maxsize=maxsize,
+                block=block, ssl_context=self.ssl_context)
     
-    # print(response_obj.status_code)
-    # print(response_obj.headers)
-    # print(response_obj.content)
-    sspi_raw_api_data.insert_one({
-        "collection-info": {
-                                        "RawDataDestination": RawDataDestination,
-                                        "Source": "OECD",
-                                        "CollectedAt": datetime.now()}, 
-        "observation": str(response_obj.content)
-    })
-    return "success!"
+    def get_legacy_session():
+        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+        session = requests.session()
+        session.mount('https://', CustomHttpAdapter(ctx))
+        return session
+        
 
-# ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
+    SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
+    SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
+    yield "Sending Metadata Request to OECD SDMX API\n"
+    metadata_obj = get_legacy_session().get(SDMX_URL_OECD_METADATA)
+    metadata = str(metadata_obj.content)
+    yield "Metadata Received from OECD SDMX API.  Sending Data Request to OECD SDMX API\n"
+    yield "Sending Data Request to OECD SDMX API\n"
+    response_obj = get_legacy_session().get(SDMX_URL_OECD)
+    observation = str(response_obj.content) 
+    yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
+    raw_insert_one(observation, IndicatorCode, IntermediateCode=IntermediateCode, Metadata={"Source": "OECD", "metadata": metadata})
+    yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
+
+def extractAllSeries(oecd_XML):
+    xml_soup = bs.BeautifulSoup(oecd_XML, "lxml")
+    series_list = xml_soup.find_all("series")
+    return series_list
+
+def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
+    # Return a list of series that match the filterVAR variable name
+    obs_list = []
+    for i, series in enumerate(series_list):
+        series_key, series_attributes = series.find("serieskey"), series.find("attributes")
+        VAR = series_key.find("value", attrs={"concept": "VAR"}).get("value")
+        if VAR != filterVAR:
+            continue
+        id_info = {
+            "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
+            "VariableCodeOECD": VAR,
+            "IndicatorCodeOECD": OECDIndicatorCode,
+            "Source": "OECD",
+            "IndicatorCode": IndicatorCode,
+            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
+        }
+        new_observations = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        for obs in new_observations:
+            obs.update(id_info)
+        obs_list.extend(new_observations)
+    return obs_list
+        
+    
 def organizeOECDdata(series_list):
     listofdicts = []
     for series in series_list:
