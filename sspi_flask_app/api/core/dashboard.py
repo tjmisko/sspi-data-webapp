@@ -5,7 +5,7 @@ import json
 from io import BytesIO
 from flask import request, current_app as app, render_template
 from flask_login import login_required
-from ... import sspi_clean_api_data
+from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_dynamic_data
 from pycountry import countries
 import pandas as pd
 import re
@@ -41,6 +41,13 @@ def api_coverage():
         coverage_data_object.append({"IndicatorCode": indicator, "collect_implemented": indicator in collect_implemented, "compute_implemented": indicator in compute_implemented})
     #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data_object)
+
+@api_bp.route('/build/compare/<IndicatorCode>')
+def build_compare(IndicatorCode):
+    main_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
+    api_data = sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}})
+
+
 
 @api_bp.route('/dynamic/<IndicatorCode>')
 def get_dynamic_data(IndicatorCode):
