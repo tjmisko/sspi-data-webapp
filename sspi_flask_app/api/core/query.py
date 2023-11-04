@@ -8,30 +8,51 @@ query_bp = Blueprint("query_bp", __name__,
                      static_folder="static", 
                      url_prefix="/query")
 
-@query_bp.route("/")
-def query_full_database():
-    database_string = request.args.get('database', default = "sspi_main_data_v3", type = str)
+@query_bp.route("/<database>")
+def query_full_database(database_string):
+    query_params = get_query_params(request)
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
     return parse_json(database.find())
 
-@query_bp.route("/indicator/<IndicatorCode>")
-def query_indicator(IndicatorCode):
+def get_query_params(request):
+    """
+    Implements the logic of query parameters and raises an 
+    InvalidQueryError for invalid queries.
+
+    Should always be implemented inside of a try except block
+    with an except that returns a 404 error with the error message.
+    """
+    CountryCode = request.args.getlist("CountryCode")
+    CountryGroup = request.args.get("CountryGroup")
+    Year = request.args.getlist("Year")
+    YearRangeStart = request.args.get("YearRangeStart")
+    YearRangeEnd = request.args.get("YearRangeEnd")
+
+
+@query_bp.route("/<database>/<IndicatorCode>")
+def query_indicator(database, IndicatorCode):
     """
     Take an indicator code and return the data
-    Update with query parameters for country group
+    
+    Query Parameters:
+        Database
+        CountryCode
+        CountryGroup
+        Year
+        YearRangeStart
+        YearRangeEnd
     """
     country_group = request.args.get('country_group', default = "all", type = str)
     if country_group != "all":
         query_parameters = {"CountryGroup": country_group}
-    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    if database == "sspi_raw_api_data":
+    database_string = request.args.get('database', default = "sspi_main_data_v3", type = str)
+    database = lookup_database(database_string)
+    if database.name == "sspi_raw_api_data":
         indicator_data = sspi_raw_api_data.find({"collection-info.IndicatorCode": IndicatorCode})
-    elif database == "sspi_clean_api_data":
-        indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode}, {"_id": 0, "Intermediates": 0})
     else:  
-        indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
+        indicator_data = database.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
     return parse_json(indicator_data)
 
 @query_bp.route("/country/<CountryCode>")
