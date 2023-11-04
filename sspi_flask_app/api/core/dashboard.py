@@ -44,9 +44,9 @@ def api_coverage():
 
 @api_bp.route('/build/compare/<IndicatorCode>')
 def build_compare(IndicatorCode):
-    main_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
+    main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}))
     print(main_data)
-    dynamic_data = sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}})
+    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}}))
     print(dynamic_data)
     return "success"
 
