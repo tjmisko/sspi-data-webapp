@@ -19,6 +19,8 @@ def query_full_database(database_string):
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
+    if database.name == "sspi_raw_api_data" and query_params["IndicatorCode"]:
+        query_params = {"collection-info.IndicatorCode": query_params["IndicatorCode"]}
     return jsonify(parse_json(database.find(query_params, {"_id": 0})))
 
 class InvalidQueryError(Exception):
