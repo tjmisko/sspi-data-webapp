@@ -23,7 +23,7 @@ class InvalidQueryError(Exception):
     """
     pass
 
-def get_query_params(request, accepts_database=False):
+def get_query_params(request, requires_database=False):
     """
     Implements the logic of query parameters and raises an 
     InvalidQueryError for invalid queries.
@@ -33,7 +33,7 @@ def get_query_params(request, accepts_database=False):
     Should always be implemented inside of a try except block
     with an except that returns a 404 error with the error message.
 
-    accepts_database determines whether the query 
+    requires_database determines whether the query 
     """
     # Harvest parameters from query
     raw_query_input = {
@@ -45,20 +45,26 @@ def get_query_params(request, accepts_database=False):
         "YearRangeStart": request.args.get("YearRangeStart"),
         "YearRangeEnd": request.args.get("YearRangeEnd")
     }
-
-    if accepts_database:
+    if requires_database:
         raw_query_input["Database"] = request.args.get("database"),
 
-    # Check that user input is safe
+def check_input_safety(raw_query_input):
+    """
+    Uses is_safe to check that the query parameters are safe
+    """ 
+    if len(raw_query_input.keys()) > 200:
+        raise InvalidQueryError(f"Invalid Query: Too many parameters passed")
     for key, value in enumerate(raw_query_input):
         if type(value) is str and not is_safe(value):
             raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for {key}: {value}")
         elif type(value) is list and any([not is_safe(item) for item in value]):
             raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for list {key}")
-    if len(request.args) > 200:
-        raise InvalidQueryError(f"Invalid Query: Too many parameters passed")
+    return raw_query_input
 
-    # Check Query Logic
+def check_query_logic(raw_query_input, requires_database=False):
+    """
+    Checks that the query parameters are logically valid
+    """
     if raw_query_input["IndicatorCode"] is not None and raw_query_input["IndicatorGroup"] is not None:
         raise InvalidQueryError("Invalid Query: Cannot query both IndicatorCode and IndicatorGroup")
     if raw_query_input["CountryCode"] is not None and raw_query_input["CountryGroup"] is not None:
@@ -77,14 +83,19 @@ def get_query_params(request, accepts_database=False):
         if len(year_list) == 0:
             raise InvalidQueryError("Invalid Query: YearRangeStart must be greater than YearRangeEnd")
         raw_query_input["Year"] = year_list
-    if accepts_database:
+    if requires_database:
         if raw_query_input["Database"] is None:
             raise InvalidQueryError("Invalid Query: Must specify a database")
         database = lookup_database(raw_query_input["Database"])
         if database is None:
-            raw_query_input["Database"] = database
+            raise InvalidQueryError("Invalid Query: Database not found")
+        raw_query_input["Database"] = database
+    return raw_query_input
 
-    # Process Query Items into valid MongoDB Query Parameters
+def build_mongo_query(raw_query_input, requires_database):
+    """
+    Given a safe and logically valid query input, build a mongo query
+    """
     mongo_query = {}
     if raw_query_input["IndicatorCode"] is not None:
         mongo_query["IndicatorCode"] = {"$in": raw_query_input["IndicatorCode"]}
@@ -96,7 +107,7 @@ def get_query_params(request, accepts_database=False):
         mongo_query["CountryCode"] = {"$in": country_group(raw_query_input["CountryGroup"])}
     if raw_query_input["Year"] is not None:
         mongo_query["YEAR"] = {"$in": raw_query_input["Year"]}
-
+    return mongo_query
 
 def is_safe(query_string):
     """
