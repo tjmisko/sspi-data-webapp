@@ -15,7 +15,7 @@ def query_full_database(database_string):
         query_params = get_query_params(request)
         print(query_params)
     except InvalidQueryError as e:
-        return f"Invalid Query: {e}"
+        return f"{e}"
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
@@ -87,17 +87,17 @@ def check_query_logic(raw_query_input, requires_database=False):
     """
     Checks that the query parameters are logically valid
     """
-    if raw_query_input["IndicatorCode"] is not None and raw_query_input["IndicatorGroup"] is not None:
+    if raw_query_input["IndicatorCode"] and raw_query_input["IndicatorGroup"] is not None:
         raise InvalidQueryError("Invalid Query: Cannot query both IndicatorCode and IndicatorGroup")
-    if raw_query_input["CountryCode"] is not None and raw_query_input["CountryGroup"] is not None:
+    if raw_query_input["CountryCode"] and raw_query_input["CountryGroup"] is not None:
         raise InvalidQueryError("Invalid Query: Cannot query both CountryCode and CountryGroup")
     if raw_query_input["YearRangeStart"] is not None and raw_query_input["YearRangeEnd"] is None:
         raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
     if raw_query_input["YearRangeStart"] is None and raw_query_input["YearRangeEnd"] is not None:
         raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
-    if raw_query_input["Year"] is not None and (raw_query_input["YearRangeStart"] is not None or raw_query_input["YearRangeEnd"] is not None):
+    if raw_query_input["Year"] and (raw_query_input["YearRangeStart"] is not None or raw_query_input["YearRangeEnd"] is not None):
         raise InvalidQueryError("Invalid Query: Cannot query both Year and Year Range")
-    if raw_query_input["Year"] is not None:
+    if raw_query_input["Year"]:
         try:
             raw_query_input["Year"] = [int(year) for year in raw_query_input["Year"]]
         except ValueError:
@@ -165,7 +165,7 @@ def query_indicator(database, IndicatorCode):
     try:
         query_params = get_query_params(request, requires_database=True)
     except InvalidQueryError as e:
-        return f"Invalid Query: {e}"
+        return f"{e}"
     if query_params["Database"].name == "sspi_raw_api_data":
         indicator_data = database.find({"collection-info.IndicatorCode": IndicatorCode})
     else:  
