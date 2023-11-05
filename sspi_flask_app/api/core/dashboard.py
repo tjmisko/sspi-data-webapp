@@ -1,4 +1,6 @@
 from datetime import datetime
+
+import numpy as np
 from ..api import api_bp, parse_json, lookup_database
 from .query import country_group, indicator_codes
 import json
@@ -33,13 +35,14 @@ def get_compare_data(IndicatorCode):
     main_data = pd.DataFrame(main_data)
     dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "CountryCode": {"$in": country_group("sspi_49")}}, {"_id": 0}))
     dynamic_data = pd.DataFrame(dynamic_data)
-    # dynamic_data["RAW"].astype(str).astype(float)
-    # dynamic_data["RAW"].round(2)
-    print(main_data)
-    main_data.rename(columns={"RAW": "sspi_static_value"})
+    dynamic_data["RAW"].replace("NaN", np.nan, inplace=True)
+    dynamic_data["RAW"].astype(float)
+    dynamic_data["RAW"] = dynamic_data["RAW"].round(3)
+    main_data = main_data.rename(columns={"RAW": "sspi_static_raw"})
     main_data['YEAR'] = main_data['YEAR'].astype(str).astype(int)
-    dynamic_data.rename(columns={"RAW": "sspi_dynamic_value"})
+    dynamic_data = dynamic_data.rename(columns={"RAW": "sspi_dynamic_raw"})
     comparison_data = main_data.merge(dynamic_data, on=["CountryCode", "IndicatorCode", "YEAR"], how="left")
+    print(comparison_data)
     comparison_data = json.loads(comparison_data.to_json(orient="records"))
     return jsonify(comparison_data)
 
