@@ -14,8 +14,8 @@ def query_full_database(database_string):
     try:
         query_params = get_query_params(request)
         print(query_params)
-    except InvalidQueryError:
-        return f"Invalid Query: {str(InvalidQueryError)}"
+    except InvalidQueryError as e:
+        return f"Invalid Query: {e}"
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
@@ -31,6 +31,10 @@ def get_query_params(request, requires_database=False):
     """
     Implements the logic of query parameters and raises an 
     InvalidQueryError for invalid queries.
+
+    In Flask, request.args is a MultiDict object of query parameters, but
+    I wanted the function to work for simple dictionaries as well so we can
+    use it easily internally
     
     Sanitizes User Input and returns a MongoDB query dictionary.
 
@@ -39,15 +43,26 @@ def get_query_params(request, requires_database=False):
 
     requires_database determines whether the query 
     """
-    raw_query_input = {
-        "IndicatorCode": request.args.getlist("IndicatorCode"),
-        "IndicatorGroup": request.args.get("IndicatorGroup"),
-        "CountryCode": request.args.getlist("CountryCode"),
-        "CountryGroup": request.args.get("CountryGroup"),
-        "Year": request.args.getlist("Year"),
-        "YearRangeStart": request.args.get("YearRangeStart"),
-        "YearRangeEnd": request.args.get("YearRangeEnd")
-    }
+    if type(request) is dict:
+        raw_query_input = {
+            "IndicatorCode": request.get("IndicatorCode", None),
+            "IndicatorGroup": request.get("IndicatorCode", None),
+            "CountryCode": request.get("CountryCode", None),
+            "CountryGroup": request.get("CountryGroup", None),
+            "Year": request.get("Year", None),
+            "YearRangeStart": request.get("YearRangeStart", None),
+            "YearRangeEnd": request.get("YearRangeEnd", None)
+        }
+    else:
+        raw_query_input = {
+            "IndicatorCode": request.args.getlist("IndicatorCode"),
+            "IndicatorGroup": request.args.get("IndicatorGroup"),
+            "CountryCode": request.args.getlist("CountryCode"),
+            "CountryGroup": request.args.get("CountryGroup"),
+            "Year": request.args.getlist("Year"),
+            "YearRangeStart": request.args.get("YearRangeStart"),
+            "YearRangeEnd": request.args.get("YearRangeEnd")
+        }
     if requires_database:
         raw_query_input["Database"] = request.args.get("database"),
     raw_query_input = check_input_safety(raw_query_input)
@@ -149,8 +164,8 @@ def query_indicator(database, IndicatorCode):
     """
     try:
         query_params = get_query_params(request, requires_database=True)
-    except InvalidQueryError:
-        return f"Invalid Query: {str(InvalidQueryError)}"
+    except InvalidQueryError as e:
+        return f"Invalid Query: {e}"
     if query_params["Database"].name == "sspi_raw_api_data":
         indicator_data = database.find({"collection-info.IndicatorCode": IndicatorCode})
     else:  
