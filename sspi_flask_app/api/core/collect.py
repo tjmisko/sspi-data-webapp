@@ -125,3 +125,10 @@ def prison():
     def collect_iterator():
         yield from collectPrisonStudiesData()
     return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/FDEPTH", methods=['GET'])
+def fdepth():
+    def collect_iterator():  
+        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
+        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
+    return Response(collect_iterator(), mimetype='text/event-stream')
