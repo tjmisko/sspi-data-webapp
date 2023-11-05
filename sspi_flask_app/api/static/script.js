@@ -57,8 +57,8 @@ function makeComparisonTable() {
         headerSortClickElement:"icon",
         maxHeight: "100%",
         columns: [
-            {title: "Indicator", field: "Indicator"},
-            {title: "Code", field: "IndicatorCodes"},
+            {title: "Indicator", field: "a"},
+            {title: "Code", field: "a"},
             // {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
             // {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
             // {title: "Goalposts", field: "GoalpostString"},
