@@ -31,7 +31,7 @@ def compare():
 def get_compare_data(IndicatorCode):
     main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}))
     print(main_data)
-    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}}))
+    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "CountryCode": {"$in": country_group("sspi_49")}}))
     print(dynamic_data)
     return jsonify([{"a": 1, "b":2}, {"a": 1, "b":2}, {"a": 1, "b":6}])
 

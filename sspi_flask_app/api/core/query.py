@@ -1,5 +1,5 @@
 import re
-from flask import Blueprint, request
+from flask import Blueprint, jsonify, request
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
 from ..api import parse_json, lookup_database
 
@@ -19,7 +19,7 @@ def query_full_database(database_string):
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
-    return parse_json(database.find(query_params, {"_id": 0}))
+    return jsonify(parse_json(database.find(query_params, {"_id": 0})))
 
 class InvalidQueryError(Exception):
     """
