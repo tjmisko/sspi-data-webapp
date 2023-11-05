@@ -27,8 +27,8 @@ def get_database_status(database):
 def compare():
     return render_template("compare.html")
 
-@api_bp.route('/build/compare/<IndicatorCode>')
-def build_compare(IndicatorCode):
+@api_bp.route('/compare/<IndicatorCode>')
+def get_compare_data(IndicatorCode):
     main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}))
     print(main_data)
     dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}}))
