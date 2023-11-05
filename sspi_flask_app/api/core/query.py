@@ -13,6 +13,7 @@ query_bp = Blueprint("query_bp", __name__,
 def query_full_database(database_string):
     try:
         query_params = get_query_params(request)
+        print(query_params)
     except InvalidQueryError:
         return f"Invalid Query: {str(InvalidQueryError)}"
     database = lookup_database(database_string)
