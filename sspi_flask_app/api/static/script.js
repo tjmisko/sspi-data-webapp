@@ -57,12 +57,12 @@ function makeComparisonTable() {
         headerSortClickElement:"icon",
         maxHeight: "100%",
         columns: [
-            {title: "Indicator", field: "Indicator", formatter: "textarea", width: 200},
-            {title: "Code", field: "IndicatorCodes", width: 75},
-            {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
-            {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
-            {title: "Goalposts", field: "GoalpostString"},
-            {title: "Year", field: "SourceYear_sspi_main_data_v3"},
+            {title: "Indicator", field: "Indicator"},
+            {title: "Code", field: "IndicatorCodes"},
+            // {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
+            // {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
+            // {title: "Goalposts", field: "GoalpostString"},
+            // {title: "Year", field: "SourceYear_sspi_main_data_v3"},
             // {title: "", field: "yy"},
             // {title: "xx", field: "yy"},
         ] 

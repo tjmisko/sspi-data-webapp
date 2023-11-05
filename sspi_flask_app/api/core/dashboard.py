@@ -27,6 +27,14 @@ def get_database_status(database):
 def compare():
     return render_template("compare.html")
 
+@api_bp.route('/build/compare/<IndicatorCode>')
+def build_compare(IndicatorCode):
+    main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}))
+    print(main_data)
+    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}}))
+    print(dynamic_data)
+    return parse_json([{"a": 1, "b":2}, {"a": 1, "b":2}, {"a": 1, "b":6}])
+
 @api_bp.route('/api_coverage')
 def api_coverage():
     """
@@ -41,15 +49,6 @@ def api_coverage():
         coverage_data_object.append({"IndicatorCode": indicator, "collect_implemented": indicator in collect_implemented, "compute_implemented": indicator in compute_implemented})
     #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data_object)
-
-@api_bp.route('/build/compare/<IndicatorCode>')
-def build_compare(IndicatorCode):
-    main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}))
-    print(main_data)
-    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}}))
-    print(dynamic_data)
-    return "success"
-
 
 @api_bp.route('/dynamic/<IndicatorCode>')
 def get_dynamic_data(IndicatorCode):
