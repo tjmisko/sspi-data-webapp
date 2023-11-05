@@ -41,11 +41,35 @@ function handleCompute(IndicatorCode) {
     $.get(`/api/v1/compute/${IndicatorCode}`, 
         (data)=>{
             console.log(data)
-            $("#" + IndicatorCode + ".results-box")
+            $(`#${IndicatorCode}.results-box`)
                 .children(".return-content")
                 .empty()
                 .append(JSON.stringify(data, null, 2))
         });
     $(`#${IndicatorCode}.results-box`).show()
-    $("#" + IndicatorCode + ".results-box").children(".return-content").empty().append("processing")
+    $(`#${IndicatorCode}.results-box`).children(".return-content").empty().append("processing")
+}
+
+function makeComparisonTable() {
+    // Only runs once on pageload and creates the tabulator object with BIODIV default
+    var comparisonTable = new Tabulator("#comparison-table", {
+        ajaxURL:"/api/v1/compare/BIODIV}", //ajax URL
+        headerSortClickElement:"icon",
+        maxHeight: "100%",
+        columns: [
+            {title: "Indicator", field: "Indicator", formatter: "textarea", width: 200},
+            {title: "Code", field: "IndicatorCodes", width: 75},
+            {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
+            {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
+            {title: "Goalposts", field: "GoalpostString"},
+            {title: "Year", field: "SourceYear_sspi_main_data_v3"},
+            // {title: "", field: "yy"},
+            // {title: "xx", field: "yy"},
+        ] 
+    });
+}
+
+function updateComparisonTable(IndicatorCode, comparisonTable) {
+    // takes in an IndicatorCode from the form submission and updates
+    $().get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
 }
