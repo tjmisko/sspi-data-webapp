@@ -29,11 +29,16 @@ def compare():
 
 @api_bp.route('/compare/<IndicatorCode>')
 def get_compare_data(IndicatorCode):
-    main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}))
+    main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
+    main_data = pd.DataFrame(main_data)
+    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "CountryCode": {"$in": country_group("sspi_49")}}, {"_id": 0}))
+    dynamic_data = pd.DataFrame(dynamic_data)
     print(main_data)
-    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "CountryCode": {"$in": country_group("sspi_49")}}))
-    print(dynamic_data)
-    return jsonify([{"a": 1, "b":2}, {"a": 1, "b":2}, {"a": 1, "b":6}])
+    main_data.rename(columns={"RAW": "sspi_static_value"})
+    dynamic_data.rename(columns={"RAW": "sspi_dynamic_value"})
+    comparison_data = main_data.merge(dynamic_data, on=["CountryCode", "IndicatorCode", "YEAR"], how="left")
+    json.loads(comparison_data.to_json(orient="index"))
+    return jsonify(comparison_data)
 
 @api_bp.route('/api_coverage')
 def api_coverage():

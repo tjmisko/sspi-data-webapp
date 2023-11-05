@@ -48,7 +48,7 @@ def get_query_params(request, requires_database=False):
     if type(request) is dict:
         raw_query_input = {
             "IndicatorCode": request.get("IndicatorCode", None),
-            "IndicatorGroup": request.get("IndicatorCode", None),
+            "IndicatorGroup": request.get("IndicatorGroup", None),
             "CountryCode": request.get("CountryCode", None),
             "CountryGroup": request.get("CountryGroup", None),
             "Year": request.get("Year", None),
