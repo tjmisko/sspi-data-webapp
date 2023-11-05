@@ -82,6 +82,11 @@ def check_query_logic(raw_query_input, requires_database=False):
         raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
     if raw_query_input["Year"] is not None and (raw_query_input["YearRangeStart"] is not None or raw_query_input["YearRangeEnd"] is not None):
         raise InvalidQueryError("Invalid Query: Cannot query both Year and Year Range")
+    if raw_query_input["Year"] is not None:
+        try:
+            raw_query_input["Year"] = [int(year) for year in raw_query_input["Year"]]
+        except ValueError:
+            raise InvalidQueryError("Invalid Query: Year must be integers")
     if raw_query_input["YearRangeStart"] is not None and raw_query_input["YearRangeEnd"] is not None:
         try:
             year_list = list(range(int(raw_query_input["YearRangeStart"]), int(raw_query_input["YearRangeEnd"])+1))
