@@ -28,8 +28,10 @@ def get_database_status(database):
 @login_required
 def compare():
     details = indicator_details() 
-    print(indicator_details)
-    return render_template("compare.html")
+    option_details = []
+    for indicator in details:
+        option_details.append({key: indicator[key] for key in ["IndicatorCodes", "Indicator"]})
+    return render_template("compare.html", indicators=option_details)
 
 @api_bp.route('/compare/<IndicatorCode>')
 def get_compare_data(IndicatorCode):

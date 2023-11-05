@@ -8,9 +8,9 @@
     the dynamic SSPI data pulled from API sources. Select an indicator from the dropdown
     to compare data.
 </p>
-<select id="indicator_dropdown" onchange="updateComparisonTable(this)">
+<select id="indicator_dropdown" onchange="updateComparisonTable(this, comparisonTable)">
     {% for indicator in indicators %}
-        <option value="{{ indicator.IndicatorCode }}">{{ indicator.IndicatorName }}</option>
+        <option value="{{ indicator.IndicatorCodes }}">{{ indicator.Indicator }}</option>
     {% endfor %}
 </select>
 

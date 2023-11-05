@@ -71,6 +71,7 @@ function makeComparisonTable() {
 function updateComparisonTable(selectObject, comparisonTable) {
     // takes in an IndicatorCode from the form submission and updates
     IndicatorCode = selectObject.value
+    console.log("Updating comparison table with " + IndicatorCode)
     $().get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
 }
 comparisonTable = makeComparisonTable()
