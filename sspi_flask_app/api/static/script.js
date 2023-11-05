@@ -53,7 +53,7 @@ function handleCompute(IndicatorCode) {
 function makeComparisonTable() {
     // Only runs once on pageload and creates the tabulator object with BIODIV default
     var comparisonTable = new Tabulator("#comparison-table", {
-        ajaxURL:"/api/v1/compare/BIODIV", //ajax URL
+        // ajaxURL:"/api/v1/compare/BIODIV", //ajax URL
         // headerSortClickElement:"icon",
         // maxHeight: "100%",
         columns: [
@@ -70,6 +70,7 @@ function makeComparisonTable() {
 }
 
 async function handleComparisonDataUpdate(selectObject, comparisonTable, comparisonChart) {
+    console.log("I run on startup")
     IndicatorCode = selectObject.value
     updateComparisonChart(IndicatorCode, comparisonChart)
     updateComparisonTable(IndicatorCode, comparisonTable)
@@ -86,50 +87,39 @@ async function updateComparisonChart(IndicatorCode, comparisonChart) {
     let indicator_data = await response.json()
     indicator_data.sort((a, b) => b.RANK - a.RANK)
     console.log(indicator_data)
-    let y_axis = raw ? getRaw(indicator_data) : getScores(indicator_data)
-    BarChart.data = {
-        labels: getCountries(indicator_data),
-        datasets: [{
-            datacode: IndicatorCode,
-            label: indicator_data[0].IndicatorNameShort,
-            data: y_axis,
-            backgroundColor: 'rgb(255, 99, 132)',
-            borderColor: 'rgb(255, 99, 132)',
-            borderWidth: 1
-        }]
-    }
-    
-    BarChart.options = {
-        elements: {
-            bar: {
-              borderWidth: 2,
-            }
-        },
-        scaleShowValues: true,
-        layout: {padding : 10},
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false,
-            }
-        },
-        maintainAspectRatio: false,
-        scales: {
-          xAxes: [{
-            id: 'x',
-            type: 'category',
-            title: {
-                display: true,
-                text: 'Country'
+    // comparisonChart.data = {
+    //     labels: getCountries(indicator_data),
+    //     datasets: [{
+    //         datacode: IndicatorCode,
+    //         label: indicator_data[0].IndicatorNameShort,
+    //         data: y_axis,
+    //         backgroundColor: 'rgb(255, 99, 132)',
+    //         borderColor: 'rgb(255, 99, 132)',
+    //         borderWidth: 1
+    //     }]
+    // }
+    comparisonChart.data = {
+        labels: indicator_data.map(d => d.Country),
+        datasets: [
+            {
+                label: 'SSPI Static Data',
+                data: {
+                    x: indicator_data.map(d => d.RANK),
+                    y: indicator_data.map(d => d.sspi_static_raw)
+                }
             },
-            ticks: {
-              autoskip: true,
+            {
+                label: 'SSPI Dynamic Data',
+                data: {
+                    x: indicator_data.map(d => d.RANK),
+                    y: indicator_data.map(d => d.sspi_static_raw)
+                }
             }
-          }]
-        }
+        ]
     }
-    BarChart.update();
+    comparisonChart.update();
 }
+
 function makeComparisonChart() {
     let comparisonChartCanvas = $("#comparison-chart").get(0)
     const comparisonChart = new Chart(comparisonChartCanvas, {
@@ -141,3 +131,4 @@ function makeComparisonChart() {
 }
 comparisonTable = makeComparisonTable()
 comparisonChart = makeComparisonChart()
+handleComparisonDataUpdate({"value": "BIODIV"}, comparisonTable, comparisonChart)
