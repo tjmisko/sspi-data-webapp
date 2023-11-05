@@ -57,8 +57,12 @@ function makeComparisonTable() {
         // headerSortClickElement:"icon",
         // maxHeight: "100%",
         columns: [
-            {title: "Indicator", field: "a"},
-            {title: "Code", field: "b"}
+            {title: "Country", field: "Country"},
+            {title: "COU", field: "CountryCode"},
+            {title: "Indicator Code", field: "IndicatorCode"},
+            {title: "Indicator", field: "IndicatorNameShort"},
+            {title: "sspi_static_value", field: "RAW_x"},
+            {title: "sspi_dynamic_value", field: "RAW_y"},
             // {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
             // {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
             // {title: "Goalposts", field: "GoalpostString"},
