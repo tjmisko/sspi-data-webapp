@@ -7,7 +7,7 @@ import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode):
+def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="NA"):
     collection_time = datetime.now()
     url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)

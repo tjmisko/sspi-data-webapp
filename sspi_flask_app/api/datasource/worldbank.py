@@ -3,7 +3,7 @@ import requests
 import time
 from pycountry import countries
 
-def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode):
+def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode="NA"):
     yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
     url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
     response = requests.get(url_source).json()
