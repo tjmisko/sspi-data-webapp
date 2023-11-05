@@ -58,7 +58,7 @@ function makeComparisonTable() {
         // maxHeight: "100%",
         columns: [
             {title: "Indicator", field: "a"},
-            {title: "Code", field: "b"},
+            {title: "Code", field: "b"}
             // {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
             // {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
             // {title: "Goalposts", field: "GoalpostString"},

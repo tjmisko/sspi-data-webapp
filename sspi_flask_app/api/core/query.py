@@ -11,7 +11,10 @@ query_bp = Blueprint("query_bp", __name__,
 
 @query_bp.route("/<database>")
 def query_full_database(database_string):
-    query_params = get_query_params(request)
+    try:
+        query_params = get_query_params(request)
+    except InvalidQueryError:
+        return f"Invalid Query: {str(InvalidQueryError)}"
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
@@ -35,7 +38,6 @@ def get_query_params(request, requires_database=False):
 
     requires_database determines whether the query 
     """
-    # Harvest parameters from query
     raw_query_input = {
         "IndicatorCode": request.args.getlist("IndicatorCode"),
         "IndicatorGroup": request.args.get("IndicatorGroup"),
@@ -47,6 +49,10 @@ def get_query_params(request, requires_database=False):
     }
     if requires_database:
         raw_query_input["Database"] = request.args.get("database"),
+    raw_query_input = check_input_safety(raw_query_input)
+    raw_query_input = check_query_logic(raw_query_input, requires_database)
+    return build_mongo_query(raw_query_input, requires_database)
+
 
 def check_input_safety(raw_query_input):
     """
@@ -187,6 +193,16 @@ def indicator_codes():
     """
     try:
         query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
+    except TypeError:
+        return ["Metadata not loaded"]
+    return query_result
+
+def indicator_group(indicator_group):
+    """
+    Return a list of all indicators in a given indicator group
+    """
+    try:
+        query_result = parse_json(sspi_metadata.find_one({"indicator_groups": {"$exists": True}}))["indicator_groups"][indicator_group]
     except TypeError:
         return ["Metadata not loaded"]
     return query_result
