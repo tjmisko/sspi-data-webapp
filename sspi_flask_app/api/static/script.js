@@ -67,10 +67,11 @@ function makeComparisonTable() {
             // {title: "xx", field: "yy"},
         ] 
     });
+    return comparisonTable
 }
 
 function updateComparisonTable(IndicatorCode, comparisonTable) {
     // takes in an IndicatorCode from the form submission and updates
     $().get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
 }
-makeComparisonTable()
+comparisonTable = makeComparisonTable()
