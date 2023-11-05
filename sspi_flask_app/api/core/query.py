@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, request
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
 from ..api import parse_json, lookup_database
@@ -20,15 +21,38 @@ def get_query_params(request):
     """
     Implements the logic of query parameters and raises an 
     InvalidQueryError for invalid queries.
+    
+    Sanitizes User Input and returns a MongoDB query dictionary.
 
     Should always be implemented inside of a try except block
     with an except that returns a 404 error with the error message.
     """
-    CountryCode = request.args.getlist("CountryCode")
-    CountryGroup = request.args.get("CountryGroup")
-    Year = request.args.getlist("Year")
-    YearRangeStart = request.args.get("YearRangeStart")
-    YearRangeEnd = request.args.get("YearRangeEnd")
+    # Harvest parameters from query
+    raw_query_input = {
+        "Database": request.args.get("Database"),
+        "IndicatorCode": request.args.getlist("IndicatorCode"),
+        "IndicatorGroup": request.args.get("IndicatorGroup"),
+        "CountryCode": request.args.getlist("CountryCode"),
+        "CountryGroup": request.args.get("CountryGroup"),
+        "Year": request.args.getlist("Year"),
+        "YearRangeStart": request.args.get("YearRangeStart"),
+        "YearRangeEnd": request.args.get("YearRangeEnd")
+    }
+    # Check that user input is safe
+    # for key, value in enumerate(raw_query_input):
+    #     if type(value) is str and :
+            
+    
+
+def is_safe(query_string):
+    """
+    Returns True if the query_string meets the sanitization criteria.
+
+    Fairly restrictive sanitization that allows only alphanumeric characters, ampersands, and underscores
+    """
+    safe_pattern = r"^[\w\d&]*$"
+    return bool(re.match(safe_pattern, query_string))
+
 
 
 @query_bp.route("/<database>/<IndicatorCode>")
