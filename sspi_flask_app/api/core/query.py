@@ -9,7 +9,7 @@ query_bp = Blueprint("query_bp", __name__,
                      static_folder="static", 
                      url_prefix="/query")
 
-@query_bp.route("/<database>")
+@query_bp.route("/<database_string>")
 def query_full_database(database_string):
     try:
         query_params = get_query_params(request)
@@ -18,7 +18,7 @@ def query_full_database(database_string):
     database = lookup_database(database_string)
     if database is None:
         return "database {} not found".format(database)
-    return parse_json(database.find())
+    return parse_json(database.find(query_params, {"_id": 0}))
 
 class InvalidQueryError(Exception):
     """
@@ -128,7 +128,7 @@ def is_safe(query_string):
 
 
 
-@query_bp.route("/<database>/<IndicatorCode>")
+@query_bp.route("/indicator/<IndicatorCode>")
 def query_indicator(database, IndicatorCode):
     """
     Take an indicator code and return the data
@@ -141,15 +141,14 @@ def query_indicator(database, IndicatorCode):
         YearRangeStart
         YearRangeEnd
     """
-    country_group = request.args.get('country_group', default = "all", type = str)
-    if country_group != "all":
-        query_parameters = {"CountryGroup": country_group}
-    database_string = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    database = lookup_database(database_string)
-    if database.name == "sspi_raw_api_data":
-        indicator_data = sspi_raw_api_data.find({"collection-info.IndicatorCode": IndicatorCode})
+    try:
+        query_params = get_query_params(request, requires_database=True)
+    except InvalidQueryError:
+        return f"Invalid Query: {str(InvalidQueryError)}"
+    if query_params["Database"].name == "sspi_raw_api_data":
+        indicator_data = database.find({"collection-info.IndicatorCode": IndicatorCode})
     else:  
-        indicator_data = database.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
+        indicator_data = database.find({"IndicatorCode": IndicatorCode}.update(query_params), {"_id": 0})
     return parse_json(indicator_data)
 
 @query_bp.route("/country/<CountryCode>")
