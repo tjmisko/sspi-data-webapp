@@ -35,16 +35,21 @@ def compare():
 
 @api_bp.route('/compare/<IndicatorCode>')
 def get_compare_data(IndicatorCode):
+    # Prepare the main data
     main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
     main_data = pd.DataFrame(main_data)
+    main_data = main_data.rename(columns={"RAW": "sspi_static_raw"})
+    main_data['YEAR'] = main_data['YEAR'].astype(str).astype(int)
+    # Prepare the dynamic data
     dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "CountryCode": {"$in": country_group("sspi_49")}}, {"_id": 0}))
+    if not dynamic_data:
+        return jsonify(json.loads(main_data.to_json(orient="records")))
     dynamic_data = pd.DataFrame(dynamic_data)
     dynamic_data["RAW"].replace("NaN", np.nan, inplace=True)
     dynamic_data["RAW"].astype(float)
     dynamic_data["RAW"] = dynamic_data["RAW"].round(3)
-    main_data = main_data.rename(columns={"RAW": "sspi_static_raw"})
-    main_data['YEAR'] = main_data['YEAR'].astype(str).astype(int)
     dynamic_data = dynamic_data.rename(columns={"RAW": "sspi_dynamic_raw"})
+    # Merge the data
     comparison_data = main_data.merge(dynamic_data, on=["CountryCode", "IndicatorCode", "YEAR"], how="left")
     print(comparison_data)
     comparison_data = json.loads(comparison_data.to_json(orient="records"))

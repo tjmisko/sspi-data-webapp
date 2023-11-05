@@ -61,6 +61,7 @@ function makeComparisonTable() {
             {title: "COU", field: "CountryCode"},
             {title: "Indicator Code", field: "IndicatorCode"},
             {title: "Indicator", field: "IndicatorNameShort"},
+            {title: "Year", field: "YEAR"},
             {title: "sspi_static_value", field: "sspi_static_raw"},
             {title: "sspi_dynamic_value", field: "sspi_dynamic_raw"},
         ] 
@@ -68,10 +69,75 @@ function makeComparisonTable() {
     return comparisonTable
 }
 
-function updateComparisonTable(selectObject, comparisonTable) {
-    // takes in an IndicatorCode from the form submission and updates
+async function handleComparisonDataUpdate(selectObject, comparisonTable, comparisonChart) {
     IndicatorCode = selectObject.value
+    updateComparisonChart(IndicatorCode, comparisonChart)
+    updateComparisonTable(IndicatorCode, comparisonTable)
+}
+
+async function updateComparisonTable(IndicatorCode, comparisonTable) {
+    // takes in an IndicatorCode from the form submission and updates
     console.log("Updating comparison table with " + IndicatorCode)
-    $().get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
+    $.get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
+}
+
+async function updateComparisonChart(IndicatorCode, comparisonChart) {
+    let response = await fetch(`/api/v1/compare/${IndicatorCode}`)
+    let indicator_data = await response.json()
+    indicator_data.sort((a, b) => b.RANK - a.RANK)
+    console.log(indicator_data)
+    let y_axis = raw ? getRaw(indicator_data) : getScores(indicator_data)
+    BarChart.data = {
+        labels: getCountries(indicator_data),
+        datasets: [{
+            datacode: IndicatorCode,
+            label: indicator_data[0].IndicatorNameShort,
+            data: y_axis,
+            backgroundColor: 'rgb(255, 99, 132)',
+            borderColor: 'rgb(255, 99, 132)',
+            borderWidth: 1
+        }]
+    }
+    
+    BarChart.options = {
+        elements: {
+            bar: {
+              borderWidth: 2,
+            }
+        },
+        scaleShowValues: true,
+        layout: {padding : 10},
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false,
+            }
+        },
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            id: 'x',
+            type: 'category',
+            title: {
+                display: true,
+                text: 'Country'
+            },
+            ticks: {
+              autoskip: true,
+            }
+          }]
+        }
+    }
+    BarChart.update();
+}
+function makeComparisonChart() {
+    let comparisonChartCanvas = $("#comparison-chart").get(0)
+    const comparisonChart = new Chart(comparisonChartCanvas, {
+        type: 'scatter',
+        data: {},
+        options: {}
+    })
+    return comparisonChart
 }
 comparisonTable = makeComparisonTable()
+comparisonChart = makeComparisonChart()

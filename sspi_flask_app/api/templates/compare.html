@@ -2,18 +2,19 @@
 
 {% block content %}
 
-<h2> Compare 2018 Data to API Data</h2>
+<h2> Compare 2018 Data to Dynamic Data</h2>
 <p class="page-description"> 
     The table and charts below compare the static SSPI data collected for 2018 with 
     the dynamic SSPI data pulled from API sources. Select an indicator from the dropdown
     to compare data.
 </p>
-<select id="indicator_dropdown" onchange="updateComparisonTable(this, comparisonTable)">
+<select id="indicator_dropdown" onchange="handleComparisonDataUpdate(this, comparisonTable, comparisonChart)">
     {% for indicator in indicators %}
         <option value="{{ indicator.IndicatorCodes }}">{{ indicator.Indicator }}</option>
     {% endfor %}
 </select>
 
+<canvas id="comparison-chart"></canvas>
 <div id="comparison-table"></div>
 
 {% endblock %}
