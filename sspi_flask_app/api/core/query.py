@@ -104,15 +104,15 @@ def build_mongo_query(raw_query_input, requires_database):
     Given a safe and logically valid query input, build a mongo query
     """
     mongo_query = {}
-    if raw_query_input["IndicatorCode"] is not None:
+    if raw_query_input["IndicatorCode"]: 
         mongo_query["IndicatorCode"] = {"$in": raw_query_input["IndicatorCode"]}
-    if raw_query_input["IndicatorGroup"] is not None:
+    if raw_query_input["IndicatorGroup"]:
         mongo_query["IndicatorGroup"] = {"$in": indicator_group(raw_query_input["IndicatorGroup"])}
-    if raw_query_input["CountryCode"] is not None:
+    if raw_query_input["CountryCode"]:
         mongo_query["CountryCode"] = {"$in": raw_query_input["CountryCode"]}
-    if raw_query_input["CountryGroup"] is not None:
+    if raw_query_input["CountryGroup"]:
         mongo_query["CountryCode"] = {"$in": country_group(raw_query_input["CountryGroup"])}
-    if raw_query_input["Year"] is not None:
+    if raw_query_input["Year"]:
         mongo_query["YEAR"] = {"$in": raw_query_input["Year"]}
     return mongo_query
 
