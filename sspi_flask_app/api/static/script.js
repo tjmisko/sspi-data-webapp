@@ -55,7 +55,7 @@ function makeComparisonTable() {
     var comparisonTable = new Tabulator("#comparison-table", {
         ajaxURL:"/api/v1/compare/BIODIV}", //ajax URL
         headerSortClickElement:"icon",
-        maxHeight: "100%",
+        // maxHeight: "100%",
         columns: [
             {title: "Indicator", field: "a"},
             {title: "Code", field: "a"},

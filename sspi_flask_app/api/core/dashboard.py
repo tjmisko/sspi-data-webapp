@@ -3,7 +3,7 @@ from ..api import api_bp, parse_json, lookup_database
 from .query import country_group, indicator_codes
 import json
 from io import BytesIO
-from flask import request, current_app as app, render_template
+from flask import jsonify, request, current_app as app, render_template
 from flask_login import login_required
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_dynamic_data
 from pycountry import countries
@@ -33,7 +33,7 @@ def get_compare_data(IndicatorCode):
     print(main_data)
     dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "COU": {"$in": country_group("sspi_49")}}))
     print(dynamic_data)
-    return parse_json([{"a": 1, "b":2}, {"a": 1, "b":2}, {"a": 1, "b":6}])
+    return jsonify([{"a": 1, "b":2}, {"a": 1, "b":2}, {"a": 1, "b":6}])
 
 @api_bp.route('/api_coverage')
 def api_coverage():
