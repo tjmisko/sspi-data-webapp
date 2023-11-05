@@ -33,6 +33,9 @@ body {
     margin: 5px 0px;
 }
 
+.indicator_dropdown {
+    margin: 15px 0px;
+}
 
 #gridbox {
     display:grid;
@@ -42,6 +45,10 @@ body {
 
 .database-control {
     margin: 15px;
+}
+.page-description {
+    margin: 15px;
+    max-width: 800px;
 }
 
 .indicator {

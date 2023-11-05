@@ -63,19 +63,14 @@ function makeComparisonTable() {
             {title: "Indicator", field: "IndicatorNameShort"},
             {title: "sspi_static_value", field: "sspi_static_raw"},
             {title: "sspi_dynamic_value", field: "sspi_dynamic_raw"},
-            // {title: "Policy", field: "Policy", formatter: "textarea", width: 200},
-            // {title: "Indicator Description", field: "Description", formatter: "textarea", width: 400},
-            // {title: "Goalposts", field: "GoalpostString"},
-            // {title: "Year", field: "SourceYear_sspi_main_data_v3"},
-            // {title: "", field: "yy"},
-            // {title: "xx", field: "yy"},
         ] 
     });
     return comparisonTable
 }
 
-function updateComparisonTable(IndicatorCode, comparisonTable) {
+function updateComparisonTable(selectObject, comparisonTable) {
     // takes in an IndicatorCode from the form submission and updates
+    IndicatorCode = selectObject.value
     $().get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
 }
 comparisonTable = makeComparisonTable()
