@@ -17,7 +17,13 @@ def query_full_database(database_string):
         return "database {} not found".format(database)
     return parse_json(database.find())
 
-def get_query_params(request):
+class InvalidQueryError(Exception):
+    """
+    Raised when a query is invalid
+    """
+    pass
+
+def get_query_params(request, accepts_database=False):
     """
     Implements the logic of query parameters and raises an 
     InvalidQueryError for invalid queries.
@@ -26,10 +32,11 @@ def get_query_params(request):
 
     Should always be implemented inside of a try except block
     with an except that returns a 404 error with the error message.
+
+    accepts_database determines whether the query 
     """
     # Harvest parameters from query
     raw_query_input = {
-        "Database": request.args.get("Database"),
         "IndicatorCode": request.args.getlist("IndicatorCode"),
         "IndicatorGroup": request.args.get("IndicatorGroup"),
         "CountryCode": request.args.getlist("CountryCode"),
@@ -38,11 +45,58 @@ def get_query_params(request):
         "YearRangeStart": request.args.get("YearRangeStart"),
         "YearRangeEnd": request.args.get("YearRangeEnd")
     }
+
+    if accepts_database:
+        raw_query_input["Database"] = request.args.get("database"),
+
     # Check that user input is safe
-    # for key, value in enumerate(raw_query_input):
-    #     if type(value) is str and :
-            
-    
+    for key, value in enumerate(raw_query_input):
+        if type(value) is str and not is_safe(value):
+            raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for {key}: {value}")
+        elif type(value) is list and any([not is_safe(item) for item in value]):
+            raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for list {key}")
+    if len(request.args) > 200:
+        raise InvalidQueryError(f"Invalid Query: Too many parameters passed")
+
+    # Check Query Logic
+    if raw_query_input["IndicatorCode"] is not None and raw_query_input["IndicatorGroup"] is not None:
+        raise InvalidQueryError("Invalid Query: Cannot query both IndicatorCode and IndicatorGroup")
+    if raw_query_input["CountryCode"] is not None and raw_query_input["CountryGroup"] is not None:
+        raise InvalidQueryError("Invalid Query: Cannot query both CountryCode and CountryGroup")
+    if raw_query_input["YearRangeStart"] is not None and raw_query_input["YearRangeEnd"] is None:
+        raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
+    if raw_query_input["YearRangeStart"] is None and raw_query_input["YearRangeEnd"] is not None:
+        raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
+    if raw_query_input["Year"] is not None and (raw_query_input["YearRangeStart"] is not None or raw_query_input["YearRangeEnd"] is not None):
+        raise InvalidQueryError("Invalid Query: Cannot query both Year and Year Range")
+    if raw_query_input["YearRangeStart"] is not None and raw_query_input["YearRangeEnd"] is not None:
+        try:
+            year_list = list(range(int(raw_query_input["YearRangeStart"]), int(raw_query_input["YearRangeEnd"])+1))
+        except ValueError:
+            raise InvalidQueryError("Invalid Query: Year Range must be integers")
+        if len(year_list) == 0:
+            raise InvalidQueryError("Invalid Query: YearRangeStart must be greater than YearRangeEnd")
+        raw_query_input["Year"] = year_list
+    if accepts_database:
+        if raw_query_input["Database"] is None:
+            raise InvalidQueryError("Invalid Query: Must specify a database")
+        database = lookup_database(raw_query_input["Database"])
+        if database is None:
+            raw_query_input["Database"] = database
+
+    # Process Query Items into valid MongoDB Query Parameters
+    mongo_query = {}
+    if raw_query_input["IndicatorCode"] is not None:
+        mongo_query["IndicatorCode"] = {"$in": raw_query_input["IndicatorCode"]}
+    if raw_query_input["IndicatorGroup"] is not None:
+        mongo_query["IndicatorGroup"] = {"$in": indicator_group(raw_query_input["IndicatorGroup"])}
+    if raw_query_input["CountryCode"] is not None:
+        mongo_query["CountryCode"] = {"$in": raw_query_input["CountryCode"]}
+    if raw_query_input["CountryGroup"] is not None:
+        mongo_query["CountryCode"] = {"$in": country_group(raw_query_input["CountryGroup"])}
+    if raw_query_input["Year"] is not None:
+        mongo_query["YEAR"] = {"$in": raw_query_input["Year"]}
+
 
 def is_safe(query_string):
     """
@@ -50,6 +104,8 @@ def is_safe(query_string):
 
     Fairly restrictive sanitization that allows only alphanumeric characters, ampersands, and underscores
     """
+    if query_string is None:
+        return True
     safe_pattern = r"^[\w\d&]*$"
     return bool(re.match(safe_pattern, query_string))
 
