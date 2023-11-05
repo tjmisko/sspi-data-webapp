@@ -87,36 +87,28 @@ async function updateComparisonChart(IndicatorCode, comparisonChart) {
     let indicator_data = await response.json()
     indicator_data.sort((a, b) => b.RANK - a.RANK)
     console.log(indicator_data)
-    // comparisonChart.data = {
-    //     labels: getCountries(indicator_data),
-    //     datasets: [{
-    //         datacode: IndicatorCode,
-    //         label: indicator_data[0].IndicatorNameShort,
-    //         data: y_axis,
-    //         backgroundColor: 'rgb(255, 99, 132)',
-    //         borderColor: 'rgb(255, 99, 132)',
-    //         borderWidth: 1
-    //     }]
-    // }
+    console.log(indicator_data.map(d => {return {x: d.RANK, y: d.sspi_static_raw}}))
     comparisonChart.data = {
         labels: indicator_data.map(d => d.Country),
         datasets: [
             {
                 label: 'SSPI Static Data',
-                data: {
-                    x: indicator_data.map(d => d.RANK),
-                    y: indicator_data.map(d => d.sspi_static_raw)
-                }
+                data: indicator_data.map(d => {return {x: d.RANK, y: d.sspi_static_raw}})
             },
             {
                 label: 'SSPI Dynamic Data',
-                data: {
-                    x: indicator_data.map(d => d.RANK),
-                    y: indicator_data.map(d => d.sspi_static_raw)
-                }
+                data: indicator_data.map(d => {return {x: d.RANK, y: d.sspi_dynamic_raw}})
             }
+            // {
+            //     label: 'SSPI Dynamic Data',
+            //     data: {
+            //         x: indicator_data.map(d => d.RANK),
+            //         y: indicator_data.map(d => d.sspi_static_raw)
+            //     }
+            // }
         ]
     }
+    console.log("Updating the data")
     comparisonChart.update();
 }
 
@@ -124,8 +116,32 @@ function makeComparisonChart() {
     let comparisonChartCanvas = $("#comparison-chart").get(0)
     const comparisonChart = new Chart(comparisonChartCanvas, {
         type: 'scatter',
-        data: {},
-        options: {}
+        data: {
+            datasets: [
+                {
+                    label: "Hello",
+                    data: [{RANK: 0.4, y: 0.3}, {RANK: 0.5, y: 0.6}]
+                },
+                {
+                    label: "Goodbye",
+                    data: [{RANK: 0.14, y: 0.33}, {RANK: 0.25, y: 0.6}]
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: "Rank in SSPI Static Data",
+                    type: 'linear',
+                    position: 'bottom'
+                }, 
+                y: {
+                    title: "Indicator Raw Value",
+                    type: 'linear',
+                    position: 'left'
+                }
+            }
+        }
     })
     return comparisonChart
 }
