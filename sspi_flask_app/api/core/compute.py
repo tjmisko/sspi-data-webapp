@@ -132,3 +132,10 @@ def compute_prison():
                                                                                                "summary": "Prison population rate"})
     print(table)
     return "string"
+
+@compute_bp.route("/INTRNT", methods=['GET'])
+# @login_required
+def compute_intrnt():
+    wbMongoQuery = {"collection-info.IndicatorCode": "INTRNT", "collection-info.Source": "WORLDBANK"}
+    wb_raw_data = parse_json(sspi_raw_api_data.find(wbMongoQuery))
+    wb_clean_list = cleanedWorldBankData(wb_raw_data, "INTRNT")
