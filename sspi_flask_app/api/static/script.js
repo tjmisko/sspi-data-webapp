@@ -13,7 +13,6 @@ function toggleQueryMenu(IndicatorCode){
 async function handleQuery(IndicatorCode, database){
     $.get(`/api/v1/query/indicator/${IndicatorCode}?database=${database}`, 
         (data)=>{
-            console.log(data)
             $("#" + IndicatorCode + ".results-box")
                 .children(".return-content")
                 .empty()
@@ -26,12 +25,10 @@ async function handleQuery(IndicatorCode, database){
 function handleCollect(IndicatorCode) {
     $(`#${IndicatorCode}.results-box`).show()
     let message_handler = new EventSource(`/api/v1/collect/${IndicatorCode}`)
-    console.log(`GET /api/v1/collect/${IndicatorCode}`)
     message_handler.addEventListener("message", function (event) {
         if (event.data === "close") {
             message_handler.close()
         } else {
-            console.log(event)
             results_box.children.innerHTML = event.data
         }
     });
@@ -40,7 +37,6 @@ function handleCollect(IndicatorCode) {
 function handleCompute(IndicatorCode) {
     $.get(`/api/v1/compute/${IndicatorCode}`, 
         (data)=>{
-            console.log(data)
             $(`#${IndicatorCode}.results-box`)
                 .children(".return-content")
                 .empty()
@@ -70,7 +66,6 @@ function makeComparisonTable() {
 }
 
 async function handleComparisonDataUpdate(selectObject, comparisonTable, comparisonChart) {
-    console.log("I run on startup")
     IndicatorCode = selectObject.value
     updateComparisonChart(IndicatorCode, comparisonChart)
     updateComparisonTable(IndicatorCode, comparisonTable)
@@ -78,7 +73,6 @@ async function handleComparisonDataUpdate(selectObject, comparisonTable, compari
 
 async function updateComparisonTable(IndicatorCode, comparisonTable) {
     // takes in an IndicatorCode from the form submission and updates
-    console.log("Updating comparison table with " + IndicatorCode)
     $.get(`/api/v1/compare/${IndicatorCode}`, (data) => {comparisonTable.setData(data)})
 }
 
@@ -86,8 +80,6 @@ async function updateComparisonChart(IndicatorCode, comparisonChart) {
     let response = await fetch(`/api/v1/compare/${IndicatorCode}`)
     let indicator_data = await response.json()
     indicator_data.sort((a, b) => b.RANK - a.RANK)
-    console.log(indicator_data)
-    console.log(indicator_data.map(d => {return {x: d.RANK, y: d.sspi_static_raw}}))
     comparisonChart.data = {
         labels: indicator_data.map(d => d.Country),
         datasets: [
@@ -108,7 +100,6 @@ async function updateComparisonChart(IndicatorCode, comparisonChart) {
             // }
         ]
     }
-    console.log("Updating the data")
     comparisonChart.update();
 }
 
@@ -131,12 +122,18 @@ function makeComparisonChart() {
         options: {
             scales: {
                 x: {
-                    title: "Rank in SSPI Static Data",
+                    title: {
+                        display: true,
+                        text: "Rank in SSPI Static Data"
+                    },
                     type: 'linear',
                     position: 'bottom'
                 }, 
                 y: {
-                    title: "Indicator Raw Value",
+                    title: {
+                        display: true,
+                        text: "Indicator Raw Value"
+                    },
                     type: 'linear',
                     position: 'left'
                 }
