@@ -115,9 +115,8 @@ def lfpart():
     return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("/GINIPT", methods=['GET'])
-@login_required
 def ginipt():
-    def collect_iterator():  
+    def collect_iterator():
         yield from collectWorldBankdata("SI.POV.GINI", "GINIPT")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
@@ -126,14 +125,14 @@ def ginipt():
 def prison():
     def collect_iterator():
         yield from collectPrisonStudiesData()
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(), mimetype='text/event-steam')
 
 @collect_bp.route("/SENIOR", methods=['GET'])
-# @login_required
+@login_required
 def seniors():
     def collect_iterator():
         yield from collectOECDIndicator("IDD", "SENIOR")
-        # ["PVTAA6","PVTAA7"] 
-        yield from collectOECDIndicator("GENDER_EMP", "SENIOR")  
-        # ["MEN","WOMEN"]
-    return Response(collect_iterator(), mimetype='text/event-stream')
+        # [PVTAA6, PVTAA7]
+        yield from collectOECDIndicator("GENDER_EMP", "SENIOR")
+        # [MEN, WOMEN]
+    return Response(collect_iterator(), mimetype='text/event-steam')
