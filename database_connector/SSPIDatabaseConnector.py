@@ -20,13 +20,6 @@ class CustomHttpAdapter (requests.adapters.HTTPAdapter):
             num_pools=connections, maxsize=maxsize,
             block=block, ssl_context=self.ssl_context)
 
-def get_legacy_session():
-    ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-    ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
-    session = requests.session()
-    session.mount('https://', CustomHttpAdapter(ctx))
-    return session
-    
 class SSPIDatabaseConnector:
     def __init__(self):
         self.token = self.get_token()
@@ -44,6 +37,8 @@ class SSPIDatabaseConnector:
         headers = {'Authorization': f'Bearer {self.token}'}
         self.session.post("http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
 
-    def request(self, request_string):
-        return self.session.get(f"http://127.0.0.1{request_string}")
+    def get(self, request_string):
+        if request_string[0] == "/":
+            request_string = request_string[1:]
+        return self.session.get(f"http://127.0.0.1:5000/{request_string}")
 

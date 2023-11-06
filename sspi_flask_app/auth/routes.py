@@ -89,10 +89,6 @@ def login():
     print(request.args.get("next"))
     if current_user.is_authenticated:
         return redirect(url_for('client_bp.data'))
-    if 'Authorization' in request.headers:
-        apikey = request.headers['Authorization']
-        user = User.query.filter_by(apikey=apikey).first()
-        login_user(user)
     login_form = LoginForm()
     if not login_form.validate_on_submit():
         return render_template('login.html', form=login_form, title="Login") 
@@ -108,11 +104,10 @@ def login():
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    api_token = request.headers.get('Authorization')
-    print(api_token)
+    api_token = request.headers.get('Authorization')[7:]
     user = User.query.filter_by(apikey=api_token).first()
     print(user)
-    if user: 
+    if user is not None: 
         login_user(user)
         print(current_user.username)
     return redirect(url_for('api_bp.api_dashboard'))
