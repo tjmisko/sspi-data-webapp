@@ -58,7 +58,7 @@ def delete_indicator_data():
             count = sspi_raw_api_data.delete_many({"collection-info.IndicatorCode": IndicatorCode}).deleted_count
         else:
             count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-    flash("Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, database.name))
+    flash(f"Deleted {count} observations of Indicator {IndicatorCode} from database {database.name}")
     return redirect(url_for('.get_delete_page'))
 
 @delete_bp.route("/duplicates", methods=["POST"])
