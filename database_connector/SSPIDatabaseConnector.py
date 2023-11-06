@@ -42,7 +42,7 @@ class SSPIDatabaseConnector:
     
     def login_session(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.session.get("http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
+        self.session.post("http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
 
     def request(self, request_string):
         return self.session.get(f"http://127.0.0.1{request_string}")
