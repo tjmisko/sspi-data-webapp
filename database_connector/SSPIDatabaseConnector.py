@@ -4,16 +4,18 @@ import requests
 
 class SSPIDatabaseConnector:
     def __init__(self):
-        self.token = environ.get("APIKEY")
+        self.token = self.get_token()
+        self.session = requests.Session()
 
-    def print_token(self):
-        print(environ.get("APIKEY"))
-        print(self.token)
-    
     def get_token(self):
-        basedir = path.abspath(path.dirname(__file__))
-        print(basedir)
+        basedir = path.abspath(path.dirname(path.dirname(__file__)))
         load_dotenv(path.join(basedir, '.env'))
-        print(environ.get("APIKEY"))
         return environ.get("APIKEY")
+    
+    def login_session(self):
+        headers = {'Authorization': f'Bearer {self.token}'}
+        self.session.get("https://127.0.0.1/remote/session/login", headers=headers)
+
+    def request(self, request_string):
+        return self.session.get(f"https://127.0.0.1{request_string}")
 

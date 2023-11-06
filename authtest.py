@@ -2,7 +2,7 @@ import urllib3
 import requests
 import ssl
 from os import environ
-from database_connector import SSPIDatabaseConnector
+from database_connector.SSPIDatabaseConnector import SSPIDatabaseConnector
 
 class CustomHttpAdapter (requests.adapters.HTTPAdapter):
 # "Transport adapter" that allows us to use custom ssl_context.
