@@ -97,7 +97,7 @@ def compute_gtrans():
     wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
     iea_df = pd.DataFrame(iea_clean_list).astype(str)
     # iea_df = iea_df[iea_df["RAW"].notna()].astype(str)
-    return(parse_json(iea_df))
+    print(iea_df)
     # print(wb_df)
 
     # print(oecd_df)
