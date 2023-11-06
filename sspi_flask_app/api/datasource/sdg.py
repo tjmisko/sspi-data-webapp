@@ -1,33 +1,27 @@
-from ..api import raw_insert_many, api_bp
-from ... import sspi_raw_api_data
-from flask_login import current_user
+from ..api import raw_insert_many
 from datetime import datetime
 from pycountry import countries
-from ..api import format_m49_as_string, string_to_float
+from ..api import format_m49_as_string, string_to_float, raw_insert_many
 import json
 import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-@api_bp.route("/utilities/collectSDGIndicatorData")
-def collectSDGIndicatorData(SDGIndicatorCode, RawDataDestination):
+def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="NA"):
     collection_time = datetime.now()
-    #session = requests.Session()
-    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=" + SDGIndicatorCode
+    url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
-    yield "data: Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
-    for p in range(1, nPages):
-        new_url = url_source+ "&page=" + str(p)
-        yield "data: Fetching data for page {0} of {1}\n".format(p, nPages)
+    yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
+    for p in range(1, nPages + 1):
+        new_url = f"{url_source}&page={p}"
+        yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
-        for r in response.json().get('data'):
-            sspi_raw_api_data.insert_one({"collection-info": {"CollectedBy": "None",
-                                "RawDataDestination": RawDataDestination,
-                                "CollectedAt": collection_time}, 
-                "observation": r})
+        data_list = response.json().get('data')
+        count = raw_insert_many(data_list, IndicatorCode)
+        yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
-    yield "data: Collection complete for SDG {}\n".format(SDGIndicatorCode)
+    yield f"Collection complete for SDG {SDGIndicatorCode}"
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
     """

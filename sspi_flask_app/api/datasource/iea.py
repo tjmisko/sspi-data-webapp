@@ -5,8 +5,7 @@ from flask_login import current_user
 from flask import redirect, url_for
 from ..api import raw_insert_many
 
-def collectIEAData(IEAIndicatorCode, RawDataDestination):
-    collection_time = datetime.now()
-    response = requests.get("https://api.iea.org/stats/indicator/{0}/".format(IEAIndicatorCode)).json()
-    raw_insert_many(response, RawDataDestination) 
-    return "success!"
+def collectIEAData(IEAIndicatorCode, IndicatorCode, IntermediateCode="NA"):
+    response = requests.get(f"https://api.iea.org/stats/indicator/{IEAIndicatorCode}").json()
+    count = raw_insert_many(response, IndicatorCode, IntermediateCode)
+    yield f"Successfully inserted {count} observations into the database"

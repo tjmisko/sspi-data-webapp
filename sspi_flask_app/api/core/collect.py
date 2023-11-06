@@ -6,7 +6,8 @@ from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
-# from ..datasource.ilo import requestILO
+from ..datasource.ilo import collectILOData
+from ..datasource.prisonstudies import collectPrisonStudiesData
 from .dashboard import parse_json
 from flask import redirect, url_for
 from datetime import datetime
@@ -60,9 +61,17 @@ def stkhlm():
         yield from collectSDGIndicatorData("12.4.1", "STKHLM")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
+
 ####################
 # Category: ENERGY #
 ####################
+
+@collect_bp.route("/NRGINT", methods=['GET'])
+@login_required
+def nrgint():
+    def collect_iterator():
+        yield from collectSDGIndicatorData("7.3.1", "NRGINT")
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
 @collect_bp.route("/COALPW", methods=['GET'])
 @login_required
@@ -71,11 +80,28 @@ def coalpw():
         yield from collectIEAData("TESbySource", "COALPW")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
+@collect_bp.route("/AIRPOL", methods=['GET'])
+@login_required
+def airpol():
+    def collect_iterator():
+        yield from collectSDGIndicatorData("11.6.2", "AIRPOL")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
 @collect_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def altnrg():
-    collectIEAData("TFCbySource", "ALTNRG")
-    return "success!"
+    def collect_iterator():
+        yield from collectIEAData("TESbySource", "ALTNRG")
+    return Response(collect_iterator(), mimetype='text/event-stream') 
+
+@collect_bp.route("/GTRANS", methods=['GET'])
+# @login_required
+def gtrans():
+    def collect_iterator():
+        yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
+        yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
+        yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
+    return Response(collect_iterator(), mimetype='text/event-stream') 
 
 ##################################################
 # Collection Routes for Pillar: MARKET STRUCTURE #
@@ -85,7 +111,7 @@ def altnrg():
 @login_required
 def lfpart():
     def collect_iterator():
-        yield from requestILO("DF_EAP_DWAP_SEX_AGE_RT", "LFPART")
+        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54")
     return Response(collect_iterator(), mimetype='text/event-stream')
     
 @collect_bp.route("GTRANS", methods=['GET'])
@@ -95,6 +121,26 @@ def gtrans():
     collectOECDIndicator(SDMX_URL_OECD, "GTRANS")
     collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS")
     return "success!"
+
+@collect_bp.route("/GINIPT", methods=['GET'])
+def ginipt():
+    def collect_iterator():  
+        yield from collectWorldBankdata("SI.POV.GINI", "GINIPT")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/PRISON", methods=['GET'])
+@login_required
+def prison():
+    def collect_iterator():
+        yield from collectPrisonStudiesData()
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/FDEPTH", methods=['GET'])
+def fdepth():
+    def collect_iterator():  
+        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
+        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
+    return Response(collect_iterator(), mimetype='text/event-stream')
 
 
 ##############################################
