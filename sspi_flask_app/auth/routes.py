@@ -72,7 +72,7 @@ def login():
         login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
-    return redirect(url_for('api_bp.api_home'))               
+    return redirect(url_for('api_bp.api_dashboard'))               
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
@@ -87,7 +87,7 @@ def remote_login():
     if user and flask_bcrypt.check_password_hash(user.password, password):
         login_user(user)
         print(current_user.username)
-    return redirect(url_for('api_bp.api_home'))
+    return redirect(url_for('api_bp.api_dashboard'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
