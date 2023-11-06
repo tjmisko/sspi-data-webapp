@@ -2,7 +2,7 @@ import urllib3
 import requests
 import ssl
 from os import environ
-
+from database_connector import SSPIDatabaseConnector
 
 class CustomHttpAdapter (requests.adapters.HTTPAdapter):
 # "Transport adapter" that allows us to use custom ssl_context.
@@ -23,5 +23,7 @@ def get_legacy_session():
     session.mount('https://', CustomHttpAdapter(ctx))
     return session
 
-remote_session = get_legacy_session()
-remote_session.post("http://127.0.0.1:5000/remote/session/login", data=dict(username=environ.get("USERNAME"), password=environ.get("PASSWORD")))
+# remote_session = get_legacy_session()
+# remote_session.post("http://127.0.0.1:5000/remote/session/login", data=dict(username=environ.get("USERNAME"), password=environ.get("PASSWORD")))
+
+database = SSPIDatabaseConnector()
