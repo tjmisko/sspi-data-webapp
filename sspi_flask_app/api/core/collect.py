@@ -104,7 +104,10 @@ def gtrans():
 @collect_bp.route("INTRNT", methods=['GET'])
 # @login_required
 def intrnt():
-    def collect_iterator():
-        # yeild from collectWorldBankdata() --> internet access
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT") # --> internet quality (mbps)
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
+    collectSDGIndicatorData("17.6.1", "INTRNT")
+    return "success!"
+    # def collect_iterator():
+    #     yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
+    #     yield from collectSDGIndicatorData("17.6.1", "INTRNT")
+    # return Response(collect_iterator(), mimetype='text/event-stream')

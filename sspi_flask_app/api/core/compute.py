@@ -108,6 +108,9 @@ def compute_gtrans():
 def compute_intrnt():
     if not raw_data_available("INTRNT"):
         return redirect(url_for("api_bp.collect_bp.INTRNT"))
+    wbMongoQuery = {"collection-info.RawDataDestination": "INTRNT", "collection-info.Source": "WORLDBANK"}
+    sdgMongoQuery = {"collection-info.RawDataDestination": "INTRNT", "collection-info.Source": ""}
+    
     raw_data = fetch_raw_data("INTRNT")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_intrnt(intermediate_obs_dict)
