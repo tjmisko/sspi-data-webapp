@@ -19,7 +19,7 @@ def raw_data_available(IndicatorCode):
     """
     Check if indicator is in database
     """
-    return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
+    return bool(sspi_raw_api_data.find_one({"collection-info.IndicatorCode": IndicatorCode}))
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -84,11 +84,11 @@ def format_m49_as_string(input):
     else: 
         return '00' + str(input)
     
-def fetch_raw_data(RawDataDestination):
+def fetch_raw_data(IndicatorCode):
     """
     Utility function that handles querying the database
     """
-    mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+    mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
 
@@ -96,26 +96,30 @@ def fetch_raw_data(RawDataDestination):
 # Collect Storage Utilities #
 #############################
 
-@api_bp.route("/utility/raw_insert_one")
-@login_required
-def raw_insert_one(observation, RawDataDestination):
+def raw_insert_one(observation, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
     """
     Utility Function the response from an API call in the database
     - Observation to be passed as a well-formed dictionary for entry into pymongo
-    - RawDataDestination is the indicator code for the indicator that the observation is for
+    - IndicatorCode is the indicator code for the indicator that the observation is for
     """
-    sspi_raw_api_data.insert_one(
-        {"collection-info": {"RawDataDestination": RawDataDestination,
-                            "CollectedAt": datetime.now()}, 
-        "observation": observation})
+    sspi_raw_api_data.insert_one({
+        "collection-info": {
+            "IndicatorCode": IndicatorCode,
+            "IntermediateCodeCode": IntermediateCode,
+            "Metadata": Metadata,
+            "CollectedAt": datetime.now()
+        },
+        "observation": observation
+    })
+    return 1
+    
 
-@api_bp.route("/utility/raw_insert_many")
-@login_required
-def raw_insert_many(observation_list, RawDataDestination):
+def raw_insert_many(observation_list, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
     """
     Utility Function 
     - Observation to be past as a list of well form observation dictionaries
-    - RawDataDestination is the indicator code for the indicator that the observation is for
+    - IndicatorCode is the indicator code for the indicator that the observation is for
     """
-    for observation in observation_list:
-        raw_insert_one(observation, RawDataDestination)
+    for i, observation in enumerate(observation_list):
+        raw_insert_one(observation, IndicatorCode, IntermediateCode, Metadata)
+    return i+1

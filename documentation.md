@@ -8,17 +8,17 @@
 	* You may find that this does still return an `Internal Server Error`.  Oftentimes this has to do with JSON serialization.  Read the error messages in your terminal and follow your nose.
 	* One thing we're looking for here is whether or not the source API is *paginated*.  If it is, then it will only return the first page of the data, and you will have to hit the API one time for each number of pages.  You can accomplish this with a simple `for` loop.  You'll know how many times to iterate based on the first response you received, which should tell you how many total pages there are.  Every time you loop, simply string add the appropriate URL argument (or however the source API implements this) for page numbers to the base URL slug and collect all of the responses.  You may find it easier to process and insert each page one at time, or to batch insert everything at the end.  Use your best judgement based on the response structure.  
 4. From here, we need to store our data in the `sspi_raw_api_data` database.  To accomplish this, we use the `PyMongo` API, documented [here](https://pymongo.readthedocs.io/en/stable/tutorial.html).  For a single observation `obs`, we can insert via `sspi_raw_api_data.insert_one(obs)`.  If you have a list of observations `obs_lst`, then you may use `sspi_raw_api_data.insert_many(obs_lst)` to insert all observations in `obs_lst`.  
-6. Every observation in `sspi_raw_api_data` must contain metadata on the user running the route, the collection time, and the `RawDataDestination`, which is the standard six uppercase letter SSPI Indicator Code for which we are collecting data.  **If an observation does not have a `RawDataDestination` in the `collection-info` field, we won't be able to find it later for compute**.  Hence, a typical `obs` inserted into the database will look like the below.  Here, `r` corresponds to the JSON response we want to store.
+6. Every observation in `sspi_raw_api_data` must contain metadata on the user running the route, the collection time, and the `IndicatorCode`, which is the standard six uppercase letter SSPI Indicator Code for which we are collecting data.  **If an observation does not have a `IndicatorCode` in the `collection-info` field, we won't be able to find it later for compute**.  Hence, a typical `obs` inserted into the database will look like the below.  Here, `r` corresponds to the JSON response we want to store.
 ```python
 {"collection-info": 
 	{"CollectedBy": current_user.username,            
-	"RawDataDestination": RawDataDestination
+	"IndicatorCode": IndicatorCode
 	"CollectedAt": collection_time}, 
 "observation": r}
 ```
 
 ## Writing a route for `compute.py`
-1. First, we grab the data we stored in the `sspi_raw_api_data`.  We stored everything that goes into computing an indicator in `sspi_raw_api_data`, so now we can query `sspi_raw_api_data` using the PyMongo API (documentation [here](https://pymongo.readthedocs.io/en/stable/tutorial.html)).  We want to get all of the observations pertaining to a particular indicator from the database.  Recall that we denoted the indicator to which raw observations belong with the `RawDataDestination` field, which will be populated with the six uppercase letter SSPI Indicator Code string.  Hence, we call `sspi_raw_api_data.find(mongoQuery)`, where the variable `mongoQuery` specifies what data we want to find.  See the addendum below on queries for more information.  For now, you can use the utility function `fetch_raw_data`  below.
+1. First, we grab the data we stored in the `sspi_raw_api_data`.  We stored everything that goes into computing an indicator in `sspi_raw_api_data`, so now we can query `sspi_raw_api_data` using the PyMongo API (documentation [here](https://pymongo.readthedocs.io/en/stable/tutorial.html)).  We want to get all of the observations pertaining to a particular indicator from the database.  Recall that we denoted the indicator to which raw observations belong with the `IndicatorCode` field, which will be populated with the six uppercase letter SSPI Indicator Code string.  Hence, we call `sspi_raw_api_data.find(mongoQuery)`, where the variable `mongoQuery` specifies what data we want to find.  See the addendum below on queries for more information.  For now, you can use the utility function `fetch_raw_data`  below.
 2. Next comes the processing phase, which will be different for every indicator you do.  The goal of the processing phase is operate on the raw data and turn it into cleaned data.  You'll have to be creative to get this done.  
 	* For example, the BIODIV route requires a few steps, in which I harvest the data from the raw observations, group together observations for Marine, Terrestrial, and Freshwater at the country-year level, then I run an average that returns "NaN" if anything is missing, and finally I store everything in an output list.
 		* That was the best way I thought of to do it for BIODIV; it may not be the best way to do it for you.
@@ -46,25 +46,25 @@
 	* Passing the `find` method an empty dictionary `{}` will return everything in the database, since there are no query parameters to filter.  
 	* To implement basic filtering, we can pass a dictionary like `{"color":"red"}`, which will return all of the documents which contain a color field with the value "red."  
 	* A query like {"color": "red", "size": "small"} will get only documents with both "red" color and "small" size.  It's like an AND.  
-	* For us, it will be important to do nested queries.  If we want to look further inside an observation, we can used the `.` syntax to check a subfield.  For example, `{"collection-info.RawDataDestination":"BIODIV"}` returns all documents which have a `collection-info` field which holds dictionary containing a `RawDataDestination` field holding a `"BIODIV"` value. 
+	* For us, it will be important to do nested queries.  If we want to look further inside an observation, we can used the `.` syntax to check a subfield.  For example, `{"collection-info.IndicatorCode":"BIODIV"}` returns all documents which have a `collection-info` field which holds dictionary containing a `IndicatorCode` field holding a `"BIODIV"` value. 
 	* There are a whole bunch of really powerful operators and ways of implementing complex queries in the [Mongo Documentation](https://pymongo.readthedocs.io/en/stable/tutorial.html).
 * For fetching the raw data, I've written a quick utility function, which you're welcome to use to make things a little simpler to read.
 ```python
-def fetch_raw_data(RawDataDestination):
-	mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+def fetch_raw_data(IndicatorCode):
+	mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
 	raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
 	return raw_data
 ```
 * *n.b.* When I refer to an "observation," each observation is a distinct MongoDB "document." There is some potential for confusion here. For example, a single raw data "observation"—one document in MongoDB—for the BIODIV indicator contains data for all of the years, since that's how the API returns the data.  In the example observation below, you can see how the "years" field has a string that can be parsed into JSON to get all of the data we need.  Below, we will refer to cleaned "observations" as documents in the `sspi_clean_api_data` database which contain information for one country, in one year, for one indicator.  Hopefully what I mean by "observation" will be clear from context, but mind the ambiguity in my usage.
 
 ## Example Raw Observation
-This is what the first raw data document looks like for BIODIV, which contains the raw "observation." Notice that there are three top level fields: `_id`, `collection-info`, and `RawDataDestination`.  
+This is what the first raw data document looks like for BIODIV, which contains the raw "observation." Notice that there are three top level fields: `_id`, `collection-info`, and `IndicatorCode`.  
 ```python
 {"_id":{"$oid":"647a0c3524d162df31d2d48f"},
  "collection-info":
 	 {"CollectedAt":{"$date":"2023-0602T11:35:13.966Z"},
 	  "CollectedBy":"tjmisko",
-	  "RawDataDestination":"BIODIV"},
+	  "IndicatorCode":"BIODIV"},
  "observation":
 	{"activity":null,"age":null,
 	 "basePeriod":null,"cities":null,
@@ -147,7 +147,7 @@ This block of code is unreadable and would take me an hour to parse through, eve
 
 ```python
 def compute_biodiv():
-	mongoQuery = {"collection-info.RawDataDestination": RawDataDestination}
+	mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
 	intermediate_obs_dict = {}
 	for country in raw_data:
@@ -203,7 +203,7 @@ def compute_biodiv():
 	    return f"Inserted {len(final_data_list)} observations into the database."
 
 def raw_data_available(IndicatorCode):
-    return bool(sspi_raw_api_data.find_one({"collection-info.RawDataDestination": IndicatorCode}))
+    return bool(sspi_raw_api_data.find_one({"collection-info.IndicatorCode": IndicatorCode}))
 ```
 
 Those smaller component functions are off to the side waiting in `datasource/sdg.py` and are also now much more readable because there's not too much going on in each of them.
