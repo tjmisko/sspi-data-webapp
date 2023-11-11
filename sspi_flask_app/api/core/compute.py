@@ -1,11 +1,11 @@
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for
 from flask_login import login_required
-from ..api import raw_data_available, parse_json
+from ..resources.utilities import parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..datasource.worldbank import cleanedWorldBankData
-from ..api import fetch_raw_data, missing_countries, added_countries
+from ..api import missing_countries, added_countries
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -165,3 +165,17 @@ def compute_prison():
                                                                                                "summary": "Prison population rate"})
     print(table)
     return "string"
+
+def fetch_raw_data(IndicatorCode):
+    """
+    Utility function that handles querying the database
+    """
+    mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
+    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
+    return raw_data
+
+def raw_data_available(IndicatorCode):
+    """
+    Check if indicator is in database
+    """
+    return bool(sspi_raw_api_data.find_one({"collection-info.IndicatorCode": IndicatorCode}))

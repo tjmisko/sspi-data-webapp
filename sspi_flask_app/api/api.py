@@ -15,42 +15,7 @@ api_bp = Blueprint(
 
 # some common utility functions used across the api core functionality
 
-def raw_data_available(IndicatorCode):
-    """
-    Check if indicator is in database
-    """
-    return bool(sspi_raw_api_data.find_one({"collection-info.IndicatorCode": IndicatorCode}))
 
-def parse_json(data):
-    return json.loads(json_util.dumps(data))
-
-def print_json(data):
-    print(json.dumps(data, indent=4, sort_keys=True))
-
-def string_to_float(string):
-    """
-    Passes back string 'NaN' instead of float NaN
-    """
-    if math.isnan(float(string)):
-        return "NaN"
-    return float(string)
-
-def string_to_int(string):
-    return int(string)
-
-def missing_countries(sspi_country_list, source_country_list):
-    missing_countries = []
-    for country in sspi_country_list:
-        if country not in source_country_list:
-            missing_countries.append(country)
-    return missing_countries
-
-def added_countries(sspi_country_list, source_country_list):
-    additional_countries = []
-    for other_country in source_country_list:
-        if other_country not in sspi_country_list:
-            additional_countries.append(other_country)
-    return additional_countries
 
 def lookup_database(database_name):
     """
@@ -70,30 +35,8 @@ def lookup_database(database_name):
     elif database_name == "sspi_dynamic_data":
         return sspi_dynamic_data
 
-# utility functions
-def format_m49_as_string(input):
-    """
-    Utility function ensuring that all M49 data is correctly formatted as a
-    string of length 3 for use with the pycountry library
-    """
-    input = int(input)
-    if input >= 100:
-        return str(input) 
-    elif input >= 10:
-        return '0' + str(input)
-    else: 
-        return '00' + str(input)
-    
-def fetch_raw_data(IndicatorCode):
-    """
-    Utility function that handles querying the database
-    """
-    mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
-    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
-    return raw_data
-
-
 @api_bp.route("/finalize/<indicator_code>")
+@login_required
 def finalize(indicator_code):
     api_data = parse_json(sspi_clean_api_data.find({"IndicatorCode": indicator_code}, {"_id": 0}))
     imputed_data = parse_json(sspi_imputed_data.find({"IndicatorCode": indicator_code}, {"_id": 0}))

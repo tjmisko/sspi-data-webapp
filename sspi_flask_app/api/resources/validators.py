@@ -1,3 +1,17 @@
+from .errors import InvalidQueryError
+import re
+## test these!
+
+def is_safe(query_string):
+    """
+    Returns True if the query_string meets the sanitization criteria.
+
+    Fairly restrictive sanitization that allows only alphanumeric characters, ampersands, and underscores
+    """
+    if query_string is None:
+        return True
+    safe_pattern = r"^[\w\d&]*$"
+    return bool(re.match(safe_pattern, query_string))
 
 def validate_query_safety(raw_query_input):
     """
