@@ -92,36 +92,6 @@ def fetch_raw_data(IndicatorCode):
     raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
     return raw_data
 
-#############################
-# Collect Storage Utilities #
-#############################
-
-def raw_insert_one(observation, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
-    """
-    Utility Function the response from an API call in the database
-    - Observation to be passed as a well-formed dictionary for entry into pymongo
-    - IndicatorCode is the indicator code for the indicator that the observation is for
-    """
-    sspi_raw_api_data.insert_one({
-        "collection-info": {
-            "IndicatorCode": IndicatorCode,
-            "IntermediateCodeCode": IntermediateCode,
-            "Metadata": Metadata,
-            "CollectedAt": datetime.now()
-        },
-        "observation": observation
-    })
-    return 1
-    
-def raw_insert_many(observation_list, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
-    """
-    Utility Function 
-    - Observation to be past as a list of well form observation dictionaries
-    - IndicatorCode is the indicator code for the indicator that the observation is for
-    """
-    for i, observation in enumerate(observation_list):
-        raw_insert_one(observation, IndicatorCode, IntermediateCode, Metadata)
-    return i+1
 
 @api_bp.route("/finalize/<indicator_code>")
 def finalize(indicator_code):
@@ -136,9 +106,9 @@ def finalize(indicator_code):
     flash(f"Inserted {count} documents into SSPI Dynamic Data Database for {indicator_code}")
     return redirect(url_for("api_bp.api_dashboard"))
 
-@api_bp.route("/load_data/<IndicatorCode>", methods=["POST"])
+@api_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
-def load_data(IndicatorCode):
+def load(IndicatorCode):
     """
     Utility function that handles loading data from the API into the database
     """
@@ -148,18 +118,16 @@ def load_data(IndicatorCode):
         check_observation_list_format(observations_list, "sspi_bulk_data", IndicatorCode)
     except InvalidObservationFormatError as e:
         return f"Error: Data Not Loaded!\n{e}", 400
-    except InvalidDatabaseName as e:
+    except InvalidDatabaseError as e:
         return f"Error: Data Not Loaded!\n{e}", 400
     ### If format valid, insert
     sspi_bulk_data.insert_many(observations_list)
     
-
-
 def check_observation_list_format(observations_list, database_name, IndicatorCode):
     ### Check that ID vars are present
     database = lookup_database(database_name)
     if database is None:
-        raise InvalidDatabaseName(database_name)
+        raise InvalidDatabaseError(database_name)
     for i, obs in enumerate(observations_list):
         CountryCode = obs.get("CountryCode")
         Year = obs.get("Year")
@@ -167,3 +135,15 @@ def check_observation_list_format(observations_list, database_name, IndicatorCod
         if CountryCode is None or Year is None or IndicatorCodeFromData is None:
             raise InvalidObservationFormatError(f"Observation missing required ID variable for observation {i+1}")
         if IndicatorCodeFromData not in indicator_codes 
+
+class InvalidObservationFormatError(Exception):
+    """
+    Raised when a query is invalid
+    """
+    pass
+
+class InvalidDatabaseError(Exception):
+    """
+    Raised when a query is invalid
+    """
+    pass
