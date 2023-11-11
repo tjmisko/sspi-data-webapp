@@ -145,15 +145,25 @@ def load_data(IndicatorCode):
     observations_list = request.get_json()
     ### Check that observations match the expected format and declared IndicatorCode
     try:
-        check_observation_list_format(observations_list, "sspi_bulk_data")
+        check_observation_list_format(observations_list, "sspi_bulk_data", IndicatorCode)
     except InvalidObservationFormatError as e:
+        return f"Error: Data Not Loaded!\n{e}", 400
+    except InvalidDatabaseName as e:
         return f"Error: Data Not Loaded!\n{e}", 400
     ### If format valid, insert
     sspi_bulk_data.insert_many(observations_list)
     
 
 
-def check_observation_list_format(observations_list, database):
+def check_observation_list_format(observations_list, database_name, IndicatorCode):
     ### Check that ID vars are present
-    for obs in observations_list:
-        obs.get("CountryCode")
+    database = lookup_database(database_name)
+    if database is None:
+        raise InvalidDatabaseName(database_name)
+    for i, obs in enumerate(observations_list):
+        CountryCode = obs.get("CountryCode")
+        Year = obs.get("Year")
+        IndicatorCodeFromData = obs.get("IndicatorCode")
+        if CountryCode is None or Year is None or IndicatorCodeFromData is None:
+            raise InvalidObservationFormatError(f"Observation missing required ID variable for observation {i+1}")
+        if IndicatorCodeFromData not in indicator_codes 
