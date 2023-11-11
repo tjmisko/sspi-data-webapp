@@ -97,6 +97,7 @@ def altnrg():
 # @login_required
 def gtrans():
     def collect_iterator():
+        # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
