@@ -1,8 +1,9 @@
 import re
 from flask import Blueprint, jsonify, request
+from ..resources.errors import InvalidQueryError
+from ..resources.validators import validate_query_logic, validate_query_safety
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
 from ..api import parse_json, lookup_database
-
 
 query_bp = Blueprint("query_bp", __name__,
                      template_folder="templates", 
@@ -23,11 +24,6 @@ def query_full_database(database_string):
         query_params = {"collection-info.IndicatorCode": query_params["IndicatorCode"]}
     return jsonify(parse_json(database.find(query_params, {"_id": 0})))
 
-class InvalidQueryError(Exception):
-    """
-    Raised when a query is invalid
-    """
-    pass
 
 def get_query_params(request, requires_database=False):
     """
@@ -45,81 +41,21 @@ def get_query_params(request, requires_database=False):
 
     requires_database determines whether the query 
     """
-    if type(request) is dict:
-        raw_query_input = {
-            "IndicatorCode": request.get("IndicatorCode", None),
-            "IndicatorGroup": request.get("IndicatorGroup", None),
-            "CountryCode": request.get("CountryCode", None),
-            "CountryGroup": request.get("CountryGroup", None),
-            "Year": request.get("Year", None),
-            "YearRangeStart": request.get("YearRangeStart", None),
-            "YearRangeEnd": request.get("YearRangeEnd", None)
-        }
-    else:
-        raw_query_input = {
-            "IndicatorCode": request.args.getlist("IndicatorCode"),
-            "IndicatorGroup": request.args.get("IndicatorGroup"),
-            "CountryCode": request.args.getlist("CountryCode"),
-            "CountryGroup": request.args.get("CountryGroup"),
-            "Year": request.args.getlist("Year"),
-            "YearRangeStart": request.args.get("YearRangeStart"),
-            "YearRangeEnd": request.args.get("YearRangeEnd")
-        }
+    raw_query_input = {
+        "IndicatorCode": request.args.getlist("IndicatorCode"),
+        "IndicatorGroup": request.args.get("IndicatorGroup"),
+        "CountryCode": request.args.getlist("CountryCode"),
+        "CountryGroup": request.args.get("CountryGroup"),
+        "Year": request.args.getlist("Year"),
+        "YearRangeStart": request.args.get("YearRangeStart"),
+        "YearRangeEnd": request.args.get("YearRangeEnd")
+    }
     if requires_database:
         raw_query_input["Database"] = request.args.get("database"),
-    raw_query_input = check_input_safety(raw_query_input)
-    raw_query_input = check_query_logic(raw_query_input, requires_database)
+    raw_query_input = validate_query_safety(raw_query_input)
+    raw_query_input = validate_query_logic(raw_query_input, requires_database)
     return build_mongo_query(raw_query_input, requires_database)
 
-
-def check_input_safety(raw_query_input):
-    """
-    Uses is_safe to check that the query parameters are safe
-    """ 
-    if len(raw_query_input.keys()) > 200:
-        raise InvalidQueryError(f"Invalid Query: Too many parameters passed")
-    for key, value in enumerate(raw_query_input):
-        if type(value) is str and not is_safe(value):
-            raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for {key}: {value}")
-        elif type(value) is list and any([not is_safe(item) for item in value]):
-            raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for list {key}")
-    return raw_query_input
-
-def check_query_logic(raw_query_input, requires_database=False):
-    """
-    Checks that the query parameters are logically valid
-    """
-    if raw_query_input["IndicatorCode"] and raw_query_input["IndicatorGroup"] is not None:
-        raise InvalidQueryError("Invalid Query: Cannot query both IndicatorCode and IndicatorGroup")
-    if raw_query_input["CountryCode"] and raw_query_input["CountryGroup"] is not None:
-        raise InvalidQueryError("Invalid Query: Cannot query both CountryCode and CountryGroup")
-    if raw_query_input["YearRangeStart"] is not None and raw_query_input["YearRangeEnd"] is None:
-        raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
-    if raw_query_input["YearRangeStart"] is None and raw_query_input["YearRangeEnd"] is not None:
-        raise InvalidQueryError("Invalid Query: Must specify both YearRangeStart and YearRangeEnd to use a Year Range")
-    if raw_query_input["Year"] and (raw_query_input["YearRangeStart"] is not None or raw_query_input["YearRangeEnd"] is not None):
-        raise InvalidQueryError("Invalid Query: Cannot query both Year and Year Range")
-    if raw_query_input["Year"]:
-        try:
-            raw_query_input["Year"] = [int(year) for year in raw_query_input["Year"]]
-        except ValueError:
-            raise InvalidQueryError("Invalid Query: Year must be integers")
-    if raw_query_input["YearRangeStart"] is not None and raw_query_input["YearRangeEnd"] is not None:
-        try:
-            year_list = list(range(int(raw_query_input["YearRangeStart"]), int(raw_query_input["YearRangeEnd"])+1))
-        except ValueError:
-            raise InvalidQueryError("Invalid Query: Year Range must be integers")
-        if len(year_list) == 0:
-            raise InvalidQueryError("Invalid Query: YearRangeStart must be greater than YearRangeEnd")
-        raw_query_input["Year"] = year_list
-    if requires_database:
-        if raw_query_input["Database"] is None:
-            raise InvalidQueryError("Invalid Query: Must specify a database")
-        database = lookup_database(raw_query_input["Database"])
-        if database is None:
-            raise InvalidQueryError("Invalid Query: Database not found")
-        raw_query_input["Database"] = database
-    return raw_query_input
 
 def build_mongo_query(raw_query_input, requires_database):
     """
