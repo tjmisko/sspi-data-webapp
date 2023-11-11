@@ -1,6 +1,6 @@
-from flask import Blueprint, flash, redirect, url_for
+from flask import Blueprint, flash, redirect, request, url_for
 from flask_login import current_user, login_required
-from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_dynamic_data, sspi_imputed_data
+from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_dynamic_data, sspi_imputed_data, sspi_bulk_data
 from bson import json_util
 import json
 import math
@@ -113,7 +113,6 @@ def raw_insert_one(observation, IndicatorCode, IntermediateCode="NA", Metadata="
     })
     return 1
     
-
 def raw_insert_many(observation_list, IndicatorCode, IntermediateCode="NA", Metadata="NA"):
     """
     Utility Function 
@@ -136,3 +135,25 @@ def finalize(indicator_code):
     sspi_dynamic_data.insert_many(final_data)
     flash(f"Inserted {count} documents into SSPI Dynamic Data Database for {indicator_code}")
     return redirect(url_for("api_bp.api_dashboard"))
+
+@api_bp.route("/load_data/<IndicatorCode>", methods=["POST"])
+@login_required
+def load_data(IndicatorCode):
+    """
+    Utility function that handles loading data from the API into the database
+    """
+    observations_list = request.get_json()
+    ### Check that observations match the expected format and declared IndicatorCode
+    try:
+        check_observation_list_format(observations_list, "sspi_bulk_data")
+    except InvalidObservationFormatError as e:
+        return f"Error: Data Not Loaded!\n{e}", 400
+    ### If format valid, insert
+    sspi_bulk_data.insert_many(observations_list)
+    
+
+
+def check_observation_list_format(observations_list, database):
+    ### Check that ID vars are present
+    for obs in observations_list:
+        obs.get("CountryCode")

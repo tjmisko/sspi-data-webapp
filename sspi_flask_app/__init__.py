@@ -24,6 +24,7 @@ sspi_main_data_v3 = sspidb.sspi_main_data_v3
 sspi_raw_api_data = sspidb.sspi_raw_api_data
 sspi_clean_api_data = sspidb.sspi_clean_api_data
 sspi_imputed_data = sspidb.sspi_imputed_data
+sspi_bulk_data = sspidb.sspi_bulk_data
 sspi_analysis = sspidb.sspi_analysis
 sspi_metadata = sspidb.sspi_metadata
 sspi_dynamic_data = sspidb.sspi_dynamic_data
