@@ -41,13 +41,12 @@ def redlst():
         yield from collectSDGIndicatorData("15.5.1", "REDLST")
     return Response(collect_iterator(), mimetype='text/event-stream')
 
-
 ######################
 ### Category: LAND ###
 ######################
 
 @collect_bp.route("/WATMAN", methods=['GET'])
-# @login_required
+@login_required
 def watman():
     def collect_iterator():
         yield from collectSDGIndicatorData("6.4.1", "WATMAN")
@@ -99,6 +98,7 @@ def altnrg():
 def gtrans():
     def collect_iterator():
         # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
+        yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
     return Response(collect_iterator(), mimetype='text/event-stream') 
@@ -125,4 +125,11 @@ def ginipt():
 def prison():
     def collect_iterator():
         yield from collectPrisonStudiesData()
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/FDEPTH", methods=['GET'])
+def fdepth():
+    def collect_iterator():  
+        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
+        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
     return Response(collect_iterator(), mimetype='text/event-stream')

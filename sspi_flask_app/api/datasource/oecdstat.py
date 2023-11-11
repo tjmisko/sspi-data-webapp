@@ -45,6 +45,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, IntermediateCode="NA"
     raw_insert_one(observation, IndicatorCode, IntermediateCode=IntermediateCode, Metadata={"Source": "OECD", "metadata": metadata})
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
+# ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
 def extractAllSeries(oecd_XML):
     xml_soup = bs.BeautifulSoup(oecd_XML, "lxml")
