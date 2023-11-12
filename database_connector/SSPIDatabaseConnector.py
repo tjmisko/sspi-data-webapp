@@ -2,7 +2,7 @@ from os import environ, path
 from dotenv import load_dotenv
 import requests
 
-class SSPIDatabaseConnector:
+class SSPIDatabase:
     def __init__(self):
         self.token = environ.get("APIKEY")
 
