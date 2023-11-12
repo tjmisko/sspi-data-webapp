@@ -7,7 +7,7 @@ from requests.adapters import HTTPAdapter
 import urllib3
 from urllib3.util.retry import Retry
 
-class SSPIDatabase:
+class SSPIDatabaseConnector:
     def __init__(self):
         self.token = self.get_token()
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
