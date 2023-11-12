@@ -2,8 +2,9 @@ import re
 from flask import Blueprint, jsonify, request
 from ..resources.errors import InvalidQueryError
 from ..resources.validators import validate_query_logic, validate_query_safety
+from ..resources.utilities import parse_json, lookup_database
+from ..resources.metadata import indicator_group, country_group
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
-from ..api import parse_json, lookup_database
 
 query_bp = Blueprint("query_bp", __name__,
                      template_folder="templates", 
@@ -113,49 +114,25 @@ def query_country(CountryCode):
 ####################
 
 @query_bp.route("/metadata/country_groups", methods=["GET"])
-def country_groups():
-    """
-    Return a list of all country groups in the database
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
-    except TypeError:
-        return ["Metadata not Loaded"]
-    return parse_json(query_result.keys())
+def query_country_groups():
+    return country_groups()
 
 @query_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
-def country_group(country_group):
-    """
-    Return a list of all countries in a given country group
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
-    except TypeError:
-        return ["Metadata not Loaded"]
-    return query_result
+def query_country_group(country_group):
+    return country_groups(country_group)
 
 @query_bp.route("/metadata/indicator_codes", methods=["GET"])
-def indicator_codes():
-    """
-    Return a list of all indicator codes in the database
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
-    except TypeError:
-        return ["Metadata not loaded"]
-    return query_result
+def query_indicator_codes():
+    return indicator_codes()
 
-def indicator_group(indicator_group):
-    """
-    Return a list of all indicators in a given indicator group
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"indicator_groups": {"$exists": True}}))["indicator_groups"][indicator_group]
-    except TypeError:
-        return ["Metadata not loaded"]
-    return query_result
+@query_bp.route("/metadata/indicator_groups", methods=["GET"])
+def query_indicator_groups():
+    return indicator_groups()
+
+@query_bp.route("/metadata/indicator_groups/<indicator_group>", methods=["GET"])
+def query_indicator_group(indicator_group):
+    return indicator_codes(indicator_group)
 
 @query_bp.route("/metadata/indicator_details")
-def indicator_details():
-    indicator_details = parse_json(sspi_metadata.find_one({"indicator_details": {"$exists": True}}))["indicator_details"].values()
-    return parse_json(indicator_details)
+def query_indicator_details():
+    return indicator_details()
