@@ -1,8 +1,5 @@
-# import pandas as pd
-# import json
 import requests
-from datetime import datetime
-from ..api import raw_insert_one
+from ..resources.adapters import raw_insert_one
 
 def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", IntermediateCode="NA"):
     yield "Sending Data Request to ILO API\n"
@@ -12,10 +9,3 @@ def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", Intermed
     yield "Data Received from ILO API.  Storing Data in SSPI Raw Data\n"
     count = raw_insert_one(observation, IndicatorCode, IntermediateCode)
     yield f"Inserted {count} observations into the database."
-    # sspi_raw_api_data.insert_one({
-        # "collection-info": {
-    #         "IndicatorCode": IndicatorCode,
-    #         "CollectedAt": datetime.now()
-    #     },
-    #     "observation": observation
-    # })

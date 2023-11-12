@@ -1,11 +1,12 @@
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for
 from flask_login import login_required
-from ..api import raw_data_available, parse_json
+from ..resources.utilities import parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
 from ..datasource.worldbank import cleanedWorldBankData
-from ..api import fetch_raw_data, missing_countries, added_countries
+from ..resources.utilities import missing_countries, added_countries
+from ..resources.adapters import raw_data_available, fetch_raw_data
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -78,25 +79,58 @@ def compute_altnrg():
 @login_required
 def compute_gtrans():
     if not raw_data_available("GTRANS"):
-        return "Data unavailable. Try running collect." 
+        return redirect(url_for("collect_bp.GTRANS"))
+    
+    #######    WORLDBANK compute    #########
+    mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode": "FUELPR"}
+    worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
+    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+
+    
+    #######  IEA compute ######
+    mongoIEAQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.IntermediateCodeCode": "TCO2EQ-IEA"}
+    IEA_raw_data = parse_json(sspi_raw_api_data.find(mongoIEAQuery))
+    iea_clean_list = [entry["observation"] for entry in IEA_raw_data]
+   
+    ### combining in pandas ####
+
+    wb_df = pd.DataFrame(worldbank_clean_list)
+    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
+    iea_df = pd.DataFrame(iea_clean_list)
+    iea_df = iea_df[iea_df['seriesLabel'] == "Transport"][['year', 'value', 'country']].rename(columns={'year':'YEAR', 'value':'RAW', 'country':'CountryCode'})
+    # iea_df = iea_df[iea_df["RAW"].notna()].astype(str)
+    
+    merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
+    merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
+    df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
+    sspi_clean_api_data.insert_many(df.to_dict('records'))
+    return df.to_dict('records')
+
+    
+####### SSPI ANALYSIS DB MANAGEMENT #########
+    
+    # sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
+    # sspi_analysis.insert_many(OECD_TCO2_OBS)
+    # print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
+        # return "Data unavailable. Try running collect." 
     
     #######    WORLDBANK compute    #########
     # mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
     # worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
     # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
     #######    OECD compute    #########
-    mongoOECDQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.Source": "OECD"}
-    OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    series = extractAllSeries(OECD_raw_data[0]["observation"])
-    OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
+    # mongoOECDQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.Source": "OECD"}
+    # OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
+    # series = extractAllSeries(OECD_raw_data[0]["observation"])
+    # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
     
     #######    IEA compute ######
 
 
     ####### SSPI ANALYSIS DB MANAGEMENT #########
-    sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
-    sspi_analysis.insert_many(OECD_TCO2_OBS)
-    print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
+    # sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
+    # sspi_analysis.insert_many(OECD_TCO2_OBS)
+    # print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
 
 
 
@@ -117,7 +151,7 @@ def compute_gtrans():
     # merged = wb_df.rename()
     # print(merged)
 
-    return parse_json(OECD_TCO2_OBS)
+    # return parse_json(OECD_TCO2_OBS)
 
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"

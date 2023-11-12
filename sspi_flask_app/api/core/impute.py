@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data, sspi_imputed_data
-from ..api import parse_json
+from ..resources.utilities import parse_json
 
 
 impute_bp = Blueprint("impute_bp", __name__,

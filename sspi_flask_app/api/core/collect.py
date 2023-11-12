@@ -1,6 +1,6 @@
 from ... import sspi_raw_api_data
 from flask import Blueprint, Response
-from flask_login import login_required, current_user
+from flask_login import login_required
 
 from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.worldbank import collectWorldBankdata
@@ -8,8 +8,6 @@ from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
-from .dashboard import parse_json
-from flask import redirect, url_for
 from datetime import datetime
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -97,6 +95,7 @@ def altnrg():
 # @login_required
 def gtrans():
     def collect_iterator():
+        # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
