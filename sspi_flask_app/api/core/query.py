@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from ..resources.errors import InvalidQueryError
 from ..resources.validators import validate_query_logic, validate_query_safety
 from ..resources.utilities import parse_json, lookup_database
-from ..resources.metadata import indicator_group, country_group
+from ..resources.metadata import indicator_codes, country_codes, indicator_group, indicator_groups, country_group, country_groups, indicator_details
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
 
 query_bp = Blueprint("query_bp", __name__,

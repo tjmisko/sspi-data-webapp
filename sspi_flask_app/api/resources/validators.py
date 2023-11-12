@@ -1,5 +1,6 @@
-from .errors import InvalidQueryError
-from utilities import lookup_database
+from .errors import InvalidDatabaseError, InvalidObservationFormatError, InvalidQueryError
+from .utilities import lookup_database
+from .metadata import indicator_codes
 import re
 ## test these!
 
@@ -64,7 +65,9 @@ def validate_query_logic(raw_query_input, requires_database=False):
     return raw_query_input
 
 def validate_observation_list(observations_list, database_name, IndicatorCode):
-    ### Check that ID vars are present
+    """
+    Checks that observations being inserted into a database have the correct format
+    """
     database = lookup_database(database_name)
     if database is None:
         raise InvalidDatabaseError(database_name)
@@ -74,4 +77,5 @@ def validate_observation_list(observations_list, database_name, IndicatorCode):
         IndicatorCodeFromData = obs.get("IndicatorCode")
         if CountryCode is None or Year is None or IndicatorCodeFromData is None:
             raise InvalidObservationFormatError(f"Observation missing required ID variable for observation {i+1}")
-        if IndicatorCodeFromData not in indicator_codes 
+        if IndicatorCodeFromData not in indicator_codes():
+            raise InvalidObservationFormatError(f"Invalid Indicator Code for observation {i+1}")
