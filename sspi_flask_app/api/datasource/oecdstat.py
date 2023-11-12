@@ -1,7 +1,7 @@
 import requests
 import bs4 as bs
 from ..resources.utilities import string_to_float, string_to_int
-from ..core.collect import raw_insert_one
+from ..resources.adapters import raw_insert_one
 import urllib3
 import ssl
 

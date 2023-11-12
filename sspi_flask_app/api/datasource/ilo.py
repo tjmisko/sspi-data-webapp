@@ -1,5 +1,5 @@
 import requests
-from ..core.collect import raw_insert_one
+from ..resources.adapters import raw_insert_one
 
 def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", IntermediateCode="NA"):
     yield "Sending Data Request to ILO API\n"

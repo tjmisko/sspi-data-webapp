@@ -1,4 +1,4 @@
-from ..core.collect import raw_insert_many
+from ..resources.adapters import raw_insert_many
 import requests
 import time
 from pycountry import countries

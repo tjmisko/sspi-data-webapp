@@ -1,7 +1,6 @@
-from ..core.collect import raw_insert_many
 from datetime import datetime
 from pycountry import countries
-from ..core.collect import raw_insert_many
+from ..resources.adapters import raw_insert_many
 from ..resources.utilities import format_m49_as_string, string_to_float
 import json
 import time
