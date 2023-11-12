@@ -1,6 +1,7 @@
 from os import environ, path
 import ssl
 from dotenv import load_dotenv
+import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 import urllib3
@@ -28,6 +29,18 @@ class SSPIDatabase:
         if request_string[0] == "/":
             request_string = request_string[1:]
         return self.session.get(f"http://127.0.0.1:5000/{request_string}")
+    
+    def load_data(self, dataframe: pd.DataFrame, IndicatorCode):
+        validated_data = self.validate_dataframe(dataframe)
+        observations_list = validated_data.to_json(orient="records")
+        headers = {'Authorization': f'Bearer {self.token}'}
+        return self.session.post(f"http://127.0.0.1:5000/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list, verify=False)
+    
+    def validate_dataframe(self, dataframe: pd.DataFrame):
+        """
+        IMPLEMENT LATER if we think it's necessary
+        """
+        return dataframe
 
 class CustomHttpAdapter (requests.adapters.HTTPAdapter):
 # "Transport adapter" that allows us to use custom ssl_context.
