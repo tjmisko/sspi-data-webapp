@@ -1,9 +1,7 @@
-from datetime import datetime
-
 import numpy as np
 from ..api import api_bp
 from ..resources.utilities import parse_json, lookup_database
-from .query import country_group, indicator_codes, indicator_details
+from ..resources.metadata import country_group, indicator_codes, indicator_details
 import json
 from io import BytesIO
 from flask import jsonify, request, current_app as app, render_template
