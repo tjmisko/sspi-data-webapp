@@ -131,3 +131,11 @@ def fdepth():
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
     return Response(collect_iterator(), mimetype='text/event-stream')
+
+
+@collect_bp.route("INTRNT", methods=['GET'])
+# @login_required
+def intrnt():
+    collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
+    collectSDGIndicatorData("17.6.1", "INTRNT")
+    return "success!"
