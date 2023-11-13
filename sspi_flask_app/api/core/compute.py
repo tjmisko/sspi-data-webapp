@@ -171,6 +171,7 @@ def compute_prison():
 # @login_required
 def compute_intrnt():
     wbQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
-    worldbank_raw = parse_json(sspi_raw_api_data.find(wbquery))
-    sdgQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
+    worldbank_raw = parse_json(sspi_raw_api_data.find(wbQuery))
+    sdgQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode":"QLMBPS"}
+    sdg_raw = parse_json(sspi_raw_api_data.find(sdgQuery))
 
