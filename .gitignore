@@ -1,5 +1,8 @@
 *.DS_Store
 **/.DS_Store
+*~
+*.swp
+*.swo
 
 bin/*
 env/*
@@ -26,6 +29,13 @@ instance
 **/__pycache__/
 *.pyc
 *.pyo
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
 
 *.webassets-cache
 */webassets-cache

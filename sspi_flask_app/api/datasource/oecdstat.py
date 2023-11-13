@@ -1,40 +1,49 @@
-import json
-import time
 import requests
-import math
-# import pandasdmx as sdmx
-import pandas as pd
-import xml.etree.ElementTree as ET
 import bs4 as bs
-from ... import sspi_raw_api_data
-from flask_login import current_user
-from datetime import datetime
-from pycountry import countries
-from ..api import format_m49_as_string
-from ..api import string_to_float, string_to_int
-from ..api import fetch_raw_data
-from ..api import missing_countries, added_countries
+from ..resources.utilities import string_to_float, string_to_int
+from ..resources.adapters import raw_insert_one
+import urllib3
+import ssl
 
-def collectOECDIndicator(OECDIndicatorCode, RawDataDestination):
+def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, IntermediateCode="NA"):
+    """
+    The CustomHTTPAdapter class and the legacy session are necessary to connect to the OECD SDMX API
+    because OECD does not support RFC 5746 secure renegotiation, which is the default for OpenSSL 3
+
+    See Harry Mallon's answer and ahmkara's elaboration on StackOverflow:
+    https://stackoverflow.com/questions/71603314/ssl-error-unsafe-legacy-renegotiation-disabled/71646353#71646353
+    """
+    class CustomHttpAdapter (requests.adapters.HTTPAdapter):
+    # "Transport adapter" that allows us to use custom ssl_context.
+
+        def __init__(self, ssl_context=None, **kwargs):
+            self.ssl_context = ssl_context
+            super().__init__(**kwargs)
+
+        def init_poolmanager(self, connections, maxsize, block=False):
+            self.poolmanager = urllib3.poolmanager.PoolManager(
+                num_pools=connections, maxsize=maxsize,
+                block=block, ssl_context=self.ssl_context)
+    
+    def get_legacy_session():
+        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
+        session = requests.session()
+        session.mount('https://', CustomHttpAdapter(ctx))
+        return session
+        
+
     SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
     SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
     yield "Sending Metadata Request to OECD SDMX API\n"
-    metadata_obj = requests.get(SDMX_URL_OECD_METADATA)
+    metadata_obj = get_legacy_session().get(SDMX_URL_OECD_METADATA)
     metadata = str(metadata_obj.content)
     yield "Metadata Received from OECD SDMX API.  Sending Data Request to OECD SDMX API\n"
     yield "Sending Data Request to OECD SDMX API\n"
-    response_obj = requests.get(SDMX_URL_OECD)
+    response_obj = get_legacy_session().get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
-    sspi_raw_api_data.insert_one({
-        "collection-info": {
-            "RawDataDestination": RawDataDestination,
-            "Source": "OECD",
-            "Metadata": metadata,
-            "CollectedAt": datetime.now()
-        },
-        "observation": observation
-    })
+    raw_insert_one(observation, IndicatorCode, IntermediateCode=IntermediateCode, Metadata={"Source": "OECD", "metadata": metadata})
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
@@ -44,7 +53,7 @@ def extractAllSeries(oecd_XML):
     series_list = xml_soup.find_all("series")
     return series_list
 
-def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, RawDataDestination):
+def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
     obs_list = []
     for i, series in enumerate(series_list):
@@ -57,7 +66,7 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, RawDataDestinati
             "VariableCodeOECD": VAR,
             "IndicatorCodeOECD": OECDIndicatorCode,
             "Source": "OECD",
-            "RawDataDestination": RawDataDestination,
+            "IndicatorCode": IndicatorCode,
             "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
         }

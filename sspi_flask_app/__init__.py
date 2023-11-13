@@ -1,6 +1,8 @@
 import json
 from flask import Flask
 from flask_login import LoginManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
@@ -8,18 +10,25 @@ from flask_assets import Environment
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
+
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 sspi_main_data_v3 = sspidb.sspi_main_data_v3
 sspi_raw_api_data = sspidb.sspi_raw_api_data
+sspi_bulk_data = sspidb.sspi_bulk_data
 sspi_clean_api_data = sspidb.sspi_clean_api_data
 sspi_imputed_data = sspidb.sspi_imputed_data
+sspi_bulk_data = sspidb.sspi_bulk_data
 sspi_analysis = sspidb.sspi_analysis
 sspi_metadata = sspidb.sspi_metadata
-sspi_final_dynamic_data = sspidb.sspi_final_dynamic_data
+sspi_dynamic_data = sspidb.sspi_dynamic_data
 
 assets = Environment()
 
@@ -34,6 +43,8 @@ def init_app(Config):
     flask_bcrypt.init_app(app)
     # Initialize Login manager
     login_manager.init_app(app)
+    # Initialize API rate limiter
+    limiter.init_app(app)
 
     with app.app_context():
         # read in the appropriate modules

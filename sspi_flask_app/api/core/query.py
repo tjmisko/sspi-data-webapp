@@ -1,43 +1,104 @@
-from flask import Blueprint, request
+import re
+from flask import Blueprint, jsonify, request
+from ..resources.errors import InvalidQueryError
+from ..resources.validators import validate_query_logic, validate_query_safety
+from ..resources.utilities import parse_json, lookup_database
+from ..resources.metadata import indicator_codes, country_codes, indicator_group, indicator_groups, country_group, country_groups, indicator_details
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
-from ..api import parse_json
-
 
 query_bp = Blueprint("query_bp", __name__,
                      template_folder="templates", 
                      static_folder="static", 
                      url_prefix="/query")
 
-@query_bp.route("/")
-def query_full_database():
-    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    if database == "sspi_raw_api_data":
-        return parse_json(sspi_raw_api_data.find())
-    elif database == "sspi_clean_api_data":
-        return parse_json(sspi_clean_api_data.find())
-    elif database == "sspi_metadata":
-        return parse_json(sspi_metadata.find())
-    elif database == "sspi_":
-        return parse_json(sspi_main_data_v3.find())
-    else:
+@query_bp.route("/<database_string>")
+def query_full_database(database_string):
+    try:
+        query_params = get_query_params(request)
+        print(query_params)
+    except InvalidQueryError as e:
+        return f"{e}"
+    database = lookup_database(database_string)
+    if database is None:
         return "database {} not found".format(database)
+    if database.name == "sspi_raw_api_data" and query_params.get("IndicatorCode"):
+        query_params = {"collection-info.IndicatorCode": query_params["IndicatorCode"]}
+    return jsonify(parse_json(database.find(query_params, {"_id": 0})))
+
+
+def get_query_params(request, requires_database=False):
+    """
+    Implements the logic of query parameters and raises an 
+    InvalidQueryError for invalid queries.
+
+    In Flask, request.args is a MultiDict object of query parameters, but
+    I wanted the function to work for simple dictionaries as well so we can
+    use it easily internally
+    
+    Sanitizes User Input and returns a MongoDB query dictionary.
+
+    Should always be implemented inside of a try except block
+    with an except that returns a 404 error with the error message.
+
+    requires_database determines whether the query 
+    """
+    raw_query_input = {
+        "IndicatorCode": request.args.getlist("IndicatorCode"),
+        "IndicatorGroup": request.args.get("IndicatorGroup"),
+        "CountryCode": request.args.getlist("CountryCode"),
+        "CountryGroup": request.args.get("CountryGroup"),
+        "Year": request.args.getlist("Year"),
+        "YearRangeStart": request.args.get("YearRangeStart"),
+        "YearRangeEnd": request.args.get("YearRangeEnd")
+    }
+    if requires_database:
+        raw_query_input["Database"] = request.args.get("database"),
+    raw_query_input = validate_query_safety(raw_query_input)
+    raw_query_input = validate_query_logic(raw_query_input, requires_database)
+    return build_mongo_query(raw_query_input, requires_database)
+
+
+def build_mongo_query(raw_query_input, requires_database):
+    """
+    Given a safe and logically valid query input, build a mongo query
+    """
+    mongo_query = {}
+    if raw_query_input["IndicatorCode"]: 
+        mongo_query["IndicatorCode"] = {"$in": raw_query_input["IndicatorCode"]}
+    if raw_query_input["IndicatorGroup"]:
+        mongo_query["IndicatorGroup"] = {"$in": indicator_group(raw_query_input["IndicatorGroup"])}
+    if raw_query_input["CountryCode"]:
+        mongo_query["CountryCode"] = {"$in": raw_query_input["CountryCode"]}
+    if raw_query_input["CountryGroup"]:
+        mongo_query["CountryCode"] = {"$in": country_group(raw_query_input["CountryGroup"])}
+    if raw_query_input["Year"]:
+        mongo_query["YEAR"] = {"$in": raw_query_input["Year"]}
+    return mongo_query
+
+
+
 
 @query_bp.route("/indicator/<IndicatorCode>")
-def query_indicator(IndicatorCode):
+def query_indicator(database, IndicatorCode):
     """
     Take an indicator code and return the data
-    Update with query parameters for country group
+    
+    Query Parameters:
+        Database
+        CountryCode
+        CountryGroup
+        Year
+        YearRangeStart
+        YearRangeEnd
     """
-    country_group = request.args.get('country_group', default = "all", type = str)
-    if country_group != "all":
-        query_parameters = {"CountryGroup": country_group}
-    database = request.args.get('database', default = "sspi_main_data_v3", type = str)
-    if database == "sspi_raw_api_data":
-        indicator_data = sspi_raw_api_data.find({"collection-info.RawDataDestination": IndicatorCode})
-    elif database == "sspi_clean_api_data":
-        indicator_data = sspi_clean_api_data.find({"IndicatorCode": IndicatorCode}, {"_id": 0, "Intermediates": 0})
+    try:
+        query_params = get_query_params(request, requires_database=True)
+    except InvalidQueryError as e:
+        return f"{e}"
+    if query_params["Database"].name == "sspi_raw_api_data":
+        indicator_data = database.find({"collection-info.IndicatorCode": IndicatorCode})
     else:  
-        indicator_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode})
+        indicator_data = database.find({"IndicatorCode": IndicatorCode}.update(query_params), {"_id": 0})
     return parse_json(indicator_data)
 
 @query_bp.route("/country/<CountryCode>")
@@ -53,39 +114,25 @@ def query_country(CountryCode):
 ####################
 
 @query_bp.route("/metadata/country_groups", methods=["GET"])
-def country_groups():
-    """
-    Return a list of all country groups in the database
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"]
-    except TypeError:
-        return ["Metadata not Loaded"]
-    return parse_json(query_result.keys())
+def query_country_groups():
+    return country_groups()
 
 @query_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
-def country_group(country_group):
-    """
-    Return a list of all countries in a given country group
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"country_groups": {"$exists": True}}))["country_groups"][country_group]
-    except TypeError:
-        return ["Metadata not Loaded"]
-    return query_result
+def query_country_group(country_group):
+    return country_groups(country_group)
 
 @query_bp.route("/metadata/indicator_codes", methods=["GET"])
-def indicator_codes():
-    """
-    Return a list of all indicator codes in the database
-    """
-    try:
-        query_result = parse_json(sspi_metadata.find_one({"indicator_codes": {"$exists": True}}))["indicator_codes"]
-    except TypeError:
-        return ["Metadata not loaded"]
-    return query_result
+def query_indicator_codes():
+    return indicator_codes()
+
+@query_bp.route("/metadata/indicator_groups", methods=["GET"])
+def query_indicator_groups():
+    return indicator_groups()
+
+@query_bp.route("/metadata/indicator_groups/<indicator_group>", methods=["GET"])
+def query_indicator_group(indicator_group):
+    return indicator_codes(indicator_group)
 
 @query_bp.route("/metadata/indicator_details")
-def indicator_details():
-    indicator_details = parse_json(sspi_metadata.find_one({"indicator_details": {"$exists": True}}))["indicator_details"].values()
-    return parse_json(indicator_details)
+def query_indicator_details():
+    return indicator_details()

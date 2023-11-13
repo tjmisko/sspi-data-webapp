@@ -1,5 +1,5 @@
 from ... import sspi_raw_api_data, sspidb
-from ..api import lookup_database, parse_json
+from ..resources.utilities import lookup_database, parse_json
 from .query import indicator_codes
 from flask import Blueprint, redirect, render_template, request, flash, url_for
 from flask_login import login_required
@@ -19,8 +19,12 @@ db_choices = [""] + sspidb.list_collection_names()
 ic_choices = [""] + indicator_codes()
 
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_final_dynamic_data"], validators=[DataRequired()], default="", label="Database")
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")
     submit = SubmitField('Remove Duplicates')
+
+class RemoveLooseDataForm(FlaskForm):
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")
+    submit = SubmitField('Remove Loose Data')
 
 class DeleteIndicatorForm(FlaskForm):
     database = SelectField(choices = db_choices, validators=[DataRequired()], default="", label="Database")
@@ -33,11 +37,13 @@ class ClearDatabaseForm(FlaskForm):
     submit = SubmitField('Clear Database')
 
 @delete_bp.route('/')
+@login_required
 def get_delete_page():
     delete_indicator_form = DeleteIndicatorForm(request.form)
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
+    remove_loose_data_form = RemoveLooseDataForm(request.form)
     clear_database_form = ClearDatabaseForm(request.form)
-    return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form)
+    return render_template('delete-form.html', remove_duplicates_form=remove_duplicates_form, remove_loose_data_form=remove_loose_data_form, delete_indicator_form=delete_indicator_form, clear_database_form=clear_database_form)
 
 @delete_bp.route("/indicator", methods=["POST"])
 @login_required
@@ -49,10 +55,10 @@ def delete_indicator_data():
         if database is None:
             return "Database not found"
         elif database is sspi_raw_api_data:
-            count = sspi_raw_api_data.delete_many({"collection-info.RawDataDestination": IndicatorCode}).deleted_count
+            count = sspi_raw_api_data.delete_many({"collection-info.IndicatorCode": IndicatorCode}).deleted_count
         else:
             count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-    flash("Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, database.name))
+    flash(f"Deleted {count} observations of Indicator {IndicatorCode} from database {database.name}")
     return redirect(url_for('.get_delete_page'))
 
 @delete_bp.route("/duplicates", methods=["POST"])
@@ -65,7 +71,7 @@ def delete_duplicates():
             agg = database.aggregate([
                 {"$group": {
                     "_id": {
-                        "RawDataDestination": {"$getField": {"field": "RawDataDestination", "input": "collection-info"}},
+                        "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
                         "observation": "$observation"
                     },
                     "count": {"$sum": 1},
@@ -90,6 +96,22 @@ def delete_duplicates():
         count = database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
         flash("Found and deleted {0} duplicate observations from database {1}".format(count, database.name))
     return redirect(url_for(".get_delete_page"))
+
+@delete_bp.route("/loose", methods=["POST"])
+@login_required
+def remove_loose_data():
+    remove_loose_data_form = RemoveLooseDataForm(request.form)
+    database = lookup_database(request.form.get("database"))
+    if database is not None and remove_loose_data_form.validate_on_submit():
+        if database is sspi_raw_api_data:
+            MongoQuery = {"collection-info.IndicatorCode": {"$nin": indicator_codes()}}
+        else:
+            MongoQuery = {"IndicatorCode": {"$nin": indicator_codes()}}
+        # count = database.delete_many(MongoQuery).deleted_count
+        count = database.delete_many(MongoQuery).deleted_count
+        flash(f"Deleted {count} observations from database {database.name}")
+    return redirect(url_for(".get_delete_page"))
+
 
 @delete_bp.route("/clear", methods=["POST"])
 @login_required

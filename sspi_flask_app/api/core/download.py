@@ -2,7 +2,7 @@ from io import BytesIO
 from flask import Blueprint, request, send_file
 from flask_login import login_required
 import pandas as pd
-from ..api import lookup_database, parse_json
+from ..resources.utilities import lookup_database, parse_json
 from .query import country_group, indicator_codes, country_groups
 from flask_wtf import FlaskForm
 from flask_wtf import FlaskForm
@@ -18,12 +18,12 @@ download_bp = Blueprint("download_bp", __name__,
 
 
 db_choices = sspidb.list_collection_names()
-ic_choices = ["All Indicators"] + indicator_codes()
+ic_choices = indicator_codes()
 cg_choices = country_groups()
 
 class ClientDownloadForm(FlaskForm):
     database = SelectField(choices = [("sspi_main_data_v3", "SSPI V3 Data (2018 Only)"), ("sspi_final_api_data", "SSPI Dynamic Data (Experimental)")], validators=[DataRequired()], default="sspi_main_data_v3", label="Database")
-    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], default="All Indicators", label="Indicator Code")
+    indicator_code = SelectField(choices = ic_choices, validators=[DataRequired()], label="Indicator Code", render_kw={"placeholder": "Indicator Code"})
     country_group = SelectField(choices = cg_choices, validators=[DataRequired()], default="sspi49", label="Country Group")
     submit = SubmitField('Download Data')
 
