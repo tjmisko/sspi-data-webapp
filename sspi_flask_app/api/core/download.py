@@ -2,7 +2,7 @@ from io import BytesIO
 from flask import Blueprint, request, send_file
 from flask_login import login_required
 import pandas as pd
-from ..api import lookup_database, parse_json
+from ..resources.utilities import lookup_database, parse_json
 from .query import country_group, indicator_codes, country_groups
 from flask_wtf import FlaskForm
 from flask_wtf import FlaskForm

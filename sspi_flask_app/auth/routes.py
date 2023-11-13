@@ -89,10 +89,6 @@ def login():
     print(request.args.get("next"))
     if current_user.is_authenticated:
         return redirect(url_for('client_bp.data'))
-    if 'Authorization' in request.headers:
-        apikey = request.headers['Authorization']
-        user = User.query.filter_by(apikey=apikey).first()
-        login_user(user)
     login_form = LoginForm()
     if not login_form.validate_on_submit():
         return render_template('login.html', form=login_form, title="Login") 
@@ -108,15 +104,10 @@ def login():
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    print(request.__attrs__)
-    username = request.text.get("username")
-    print(request)
-    print(f"{username}\n")
-    # password = request.data.get("password")
-    # print(f"{password}\n")
-    password = "wrong"
-    user = User.query.filter_by(username=username).first()
-    if user and flask_bcrypt.check_password_hash(user.password, password):
+    api_token = request.headers.get('Authorization')[7:]
+    user = User.query.filter_by(apikey=api_token).first()
+    print(user)
+    if user is not None: 
         login_user(user)
         print(current_user.username)
     return redirect(url_for('api_bp.api_dashboard'))
