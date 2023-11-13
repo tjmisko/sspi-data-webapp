@@ -18,7 +18,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="N
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        count = raw_insert_many(data_list, IndicatorCode)
+        count = raw_insert_many(data_list, IndicatorCode, IntermediateCode)
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
     yield f"Collection complete for SDG {SDGIndicatorCode}"
