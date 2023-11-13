@@ -1,6 +1,6 @@
-from flask import Blueprint
+from flask import Blueprint, flash, redirect, url_for
 from flask_login import current_user, login_required
-from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_final_dynamic_data, sspi_imputed_data
+from .. import sspi_raw_api_data, sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_dynamic_data, sspi_imputed_data
 from bson import json_util
 import json
 import math
@@ -67,8 +67,8 @@ def lookup_database(database_name):
         return sspi_imputed_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
-    elif database_name == "sspi_final_dynamic_data":
-        return sspi_final_dynamic_data
+    elif database_name == "sspi_dynamic_data":
+        return sspi_dynamic_data
 
 # utility functions
 def format_m49_as_string(input):
@@ -123,3 +123,16 @@ def raw_insert_many(observation_list, IndicatorCode, IntermediateCode="NA", Meta
     for i, observation in enumerate(observation_list):
         raw_insert_one(observation, IndicatorCode, IntermediateCode, Metadata)
     return i+1
+
+@api_bp.route("/finalize/<indicator_code>")
+def finalize(indicator_code):
+    api_data = parse_json(sspi_clean_api_data.find({"IndicatorCode": indicator_code}, {"_id": 0}))
+    imputed_data = parse_json(sspi_imputed_data.find({"IndicatorCode": indicator_code}, {"_id": 0}))
+    print(api_data)
+    print(imputed_data)
+    final_data = api_data + imputed_data
+    print(type(final_data))
+    count = len(final_data)
+    sspi_dynamic_data.insert_many(final_data)
+    flash(f"Inserted {count} documents into SSPI Dynamic Data Database for {indicator_code}")
+    return redirect(url_for("api_bp.api_dashboard"))

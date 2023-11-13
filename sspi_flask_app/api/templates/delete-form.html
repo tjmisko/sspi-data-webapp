@@ -1,19 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Page Title</title>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('api_bp.static', filename = 'style.css') }} "/>
-<body class="delete-body">
-    <h1 id="delete-header">Data Deletion Dashboard</h1>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% set newmessage = messages.pop(-1) %}
-            <div class="message">{{ newmessage }}</div>
-        {% endif %}
-    {% endwith %}
+{% extends 'api-gui-layout.html' %}
+
+{% block content %}
+
     <div class="form-box">
         <h2> Remove Duplicate Data</h2>
         <form action="/api/v1/delete/duplicates" method="POST" id="remove_duplicates">
@@ -45,5 +33,4 @@
             <div class="form-item"> {{ clear_database_form.database_confirm.label }}: {{ clear_database_form.database_confirm }} </div>
             <div class="form-item"> {{ clear_database_form.submit }}</div>
     </div>
-</body>
-</html>
+{% endblock %}

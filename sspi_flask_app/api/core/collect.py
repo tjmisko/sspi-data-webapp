@@ -97,6 +97,7 @@ def altnrg():
 # @login_required
 def gtrans():
     def collect_iterator():
+        # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
@@ -124,4 +125,11 @@ def ginipt():
 def prison():
     def collect_iterator():
         yield from collectPrisonStudiesData()
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+@collect_bp.route("/FDEPTH", methods=['GET'])
+def fdepth():
+    def collect_iterator():  
+        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
+        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
     return Response(collect_iterator(), mimetype='text/event-stream')

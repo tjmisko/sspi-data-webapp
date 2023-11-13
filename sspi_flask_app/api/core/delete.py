@@ -19,11 +19,11 @@ db_choices = [""] + sspidb.list_collection_names()
 ic_choices = [""] + indicator_codes()
 
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_final_dynamic_data"], validators=[DataRequired()], default="", label="Database")
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")
     submit = SubmitField('Remove Duplicates')
 
 class RemoveLooseDataForm(FlaskForm):
-    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_final_dynamic_data"], validators=[DataRequired()], default="", label="Database")
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")
     submit = SubmitField('Remove Loose Data')
 
 class DeleteIndicatorForm(FlaskForm):
@@ -58,7 +58,7 @@ def delete_indicator_data():
             count = sspi_raw_api_data.delete_many({"collection-info.IndicatorCode": IndicatorCode}).deleted_count
         else:
             count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-    flash("Deleted {0} observations of Indicator {1} from database {2}".format(count, IndicatorCode, database.name))
+    flash(f"Deleted {count} observations of Indicator {IndicatorCode} from database {database.name}")
     return redirect(url_for('.get_delete_page'))
 
 @delete_bp.route("/duplicates", methods=["POST"])

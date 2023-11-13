@@ -1,21 +1,16 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('auth_bp.static', filename = 'style.css') }} "/>
-    <title>Login</title>
-  </head>
-  <body>
-    <h1>Administrator Login</h1>
-    {% if form.error %}
-      <p class="error"><strong>Error:</strong> {{ form.error }}</p>
-    {% endif %}
-    <form action="" method="POST">
-      {{ form.hidden_tag() }}
-      {{ form.username }} <br>
-      {{ form.password }} <br>
-      {{ form.remember_me.label }} {{ form.remember_me }} <br>
-      {{ form.submit }} <br>
-    </form>
-  </body>
-</html>
+{% extends 'auth-layout.html' %}
+
+{% block content %}
+
+{% if form.error %}
+  <p class="error"><strong>Error:</strong> {{ form.error }}</p>
+{% endif %}
+<form action="" method="POST">
+  {{ form.hidden_tag() }}
+  <div class="form-item">{{ form.username }} </div>
+  <div class="form-item">{{ form.password }} </div>
+  <div class="form-item">{{ form.remember_me.label }} {{ form.remember_me }}</div>
+  <div class="form-item">{{ form.submit }}</div>
+</form>
+
+{% endblock %}
