@@ -1,6 +1,5 @@
-from flask import Blueprint, flash, redirect, request, url_for
-from flask_login import current_user, login_required
-from bson import json_util
+from flask import Blueprint
+from flask_login import login_required
 
 api_bp = Blueprint(
     'api_bp', __name__,
@@ -8,3 +7,9 @@ api_bp = Blueprint(
     static_folder='static',
     url_prefix='/api/v1'
 )
+
+
+@api_bp.route("/")
+@login_required
+def index():
+    return "Hello World!"
