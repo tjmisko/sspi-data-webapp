@@ -97,9 +97,15 @@ def get_dynamic_data(IndicatorCode):
 def local():
     return render_template('local-upload-form.html', database_names=check_for_local_data())
 
+@api_bp.route("/local/upload", methods=['GET'])
+@login_required
+def upload_local_data():
+    return app.instance_path
+
 @api_bp.route("/local/database/list", methods=['GET'])
 @login_required
 def check_for_local_data():
+    os.path.abspath(__file__)
     try:
         database_files = os.listdir(os.path.join(os.getcwd(),'local'))
     except FileNotFoundError:
