@@ -12,11 +12,6 @@ import pandas as pd
 import re
 import os
 
-@api_bp.route("/", methods=["GET"])
-@login_required
-def api_dashboard():
-    return render_template("internal-dashboard.html")
-
 @api_bp.route("/status/database/<database>")
 @login_required
 def get_database_status(database):
