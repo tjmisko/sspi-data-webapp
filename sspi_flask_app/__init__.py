@@ -53,6 +53,7 @@ def init_app(Config):
         from .api.api import api_bp
         from .api.core.collect import collect_bp
         from .api.core.compute import compute_bp
+        from .api.core.dashboard import dashboard_bp
         from .api.core.delete import delete_bp
         from .api.core.download import download_bp
         from .api.core.impute import impute_bp
@@ -65,6 +66,7 @@ def init_app(Config):
         app.register_blueprint(auth_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
+        api_bp.register_blueprint(dashboard_bp)
         api_bp.register_blueprint(delete_bp)
         api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(impute_bp)
