@@ -47,6 +47,13 @@ def compute_rdlst():
     sspi_clean_api_data.insert_many(final_list)
     return parse_json(final_list)
 
+@compute_bp.route("/NRGINT")
+# @login_required
+def compute_nrgint():
+    if not raw_data_available("NRGINT"):
+        return redirect(url_for("api.bp.collect_bp.coalpw"))
+    return fetch_raw_data("NRGINT")
+
 @compute_bp.route("/COALPW")
 @login_required
 def compute_coalpw():
