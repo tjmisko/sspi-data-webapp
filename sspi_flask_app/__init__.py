@@ -57,6 +57,7 @@ def init_app(Config):
         from .api.core.delete import delete_bp
         from .api.core.download import download_bp
         from .api.core.impute import impute_bp
+        from .api.core.load import load_bp
         from .api.core.query import query_bp
 
         # Register database
@@ -70,6 +71,7 @@ def init_app(Config):
         api_bp.register_blueprint(delete_bp)
         api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(impute_bp)
+        api_bp.register_bluprint(load_bp)
         api_bp.register_blueprint(query_bp)
         app.register_blueprint(api_bp)
         

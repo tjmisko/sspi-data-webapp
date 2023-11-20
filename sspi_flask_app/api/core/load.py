@@ -1,12 +1,12 @@
-from ..api import api_bp
 from flask import request
 from flask_login import login_required
 from ... import sspi_bulk_data
 from ..resources.errors import InvalidObservationFormatError, InvalidDatabaseError
 from ..resources.validators import validate_observation_list
 
+load_bp = Blueprint("load", __name__, url_prefix="/load")
 
-@api_bp.route("/load/<IndicatorCode>", methods=["POST"])
+@load_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
 def load(IndicatorCode):
     """
