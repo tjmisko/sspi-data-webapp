@@ -70,6 +70,7 @@ def validate_observation_list(observations_list, database_name, IndicatorCode):
     """
     database = lookup_database(database_name)
     for i, obs in enumerate(observations_list):
+        print(obs)
         CountryCode = obs.get("CountryCode")
         Year = obs.get("Year")
         IndicatorCodeFromData = obs.get("IndicatorCode")
