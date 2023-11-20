@@ -69,13 +69,14 @@ def validate_observation_list(observations_list, database_name, IndicatorCode):
     Checks that observations being inserted into a database have the correct format
     """
     database = lookup_database(database_name)
-    if database is None:
-        raise InvalidDatabaseError(database_name)
     for i, obs in enumerate(observations_list):
         CountryCode = obs.get("CountryCode")
         Year = obs.get("Year")
         IndicatorCodeFromData = obs.get("IndicatorCode")
+        if IndicatorCodeFromData != IndicatorCode:
+            raise InvalidObservationFormatError(f"Observation has incorrect Indicator Code for observation {i+1}")
         if CountryCode is None or Year is None or IndicatorCodeFromData is None:
             raise InvalidObservationFormatError(f"Observation missing required ID variable for observation {i+1}")
         if IndicatorCodeFromData not in indicator_codes():
             raise InvalidObservationFormatError(f"Invalid Indicator Code for observation {i+1}")
+    return True
