@@ -4,10 +4,10 @@ from ... import sspi_bulk_data
 from ..resources.errors import InvalidObservationFormatError, InvalidDatabaseError
 from ..resources.validators import validate_observation_list
 
-load_bp = Blueprint("load", __name__,
+load_bp = Blueprint("load_bp", __name__,
                     template_folder="templates", 
-                    static_folder="static", 
-                    url_prefix="/load")
+                    static_folder="static")
+                   
 
 @load_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
