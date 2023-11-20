@@ -78,4 +78,4 @@ htmlcov/
 *,cover
 
 # Bulk Data
-**/bulk_data/**
+**/raw_bulk_data/**
