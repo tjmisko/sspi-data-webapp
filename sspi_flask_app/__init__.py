@@ -71,7 +71,7 @@ def init_app(Config):
         api_bp.register_blueprint(delete_bp)
         api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(impute_bp)
-        api_bp.register_bluprint(load_bp)
+        api_bp.register_blueprint(load_bp)
         api_bp.register_blueprint(query_bp)
         app.register_blueprint(api_bp)
         
