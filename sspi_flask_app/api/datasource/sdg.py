@@ -18,7 +18,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="N
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        count = raw_insert_many(data_list, IndicatorCode)
+        count = raw_insert_many(data_list, IndicatorCode, IntermediateCode)
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
     yield f"Collection complete for SDG {SDGIndicatorCode}"
@@ -77,6 +77,20 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "REDLST",
+                "YEAR": year,
+                "RAW": string_to_float(value)
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+
+def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "INTRNT",
                 "YEAR": year,
                 "RAW": string_to_float(value)
             }
