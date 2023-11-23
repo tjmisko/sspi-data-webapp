@@ -125,9 +125,59 @@ def prison():
         yield from collectPrisonStudiesData()
     return Response(collect_iterator(), mimetype='text/event-stream')
 
+####################
+# Category: TAXES #
+####################
+@collect_bp.route("/TAXREV", methods=['GET'])
+def taxrev():
+    def collect_iterator():  
+        yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+####################
+# Category: FINANCIAL SECTOR #
+####################
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
     def collect_iterator():  
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+
+
+##################################################
+# Collection Routes for Pillar: PUBLIC GOODS #
+##################################################
+
+####################
+# Category: EDUCATION #
+####################
+
+@collect_bp.route("/PUPTCH", methods=['GET'])
+def puptch():
+    def collect_iterator():  
+        yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+####################
+# Category: HEALTHCARE #
+####################
+
+@collect_bp.route("/FAMPLN", methods=['GET'])
+@login_required
+def fampln():
+    def collect_iterator():
+        yield from collectSDGIndicatorData("3.7.1", "FAMPLN")
+    return Response(collect_iterator(), mimetype='text/event-stream')
+
+####################
+# Category: GLOBAL ROLE #
+####################
+
+@collect_bp.route("/RDFUND", methods=['GET'])
+@login_required
+def rdfund():
+    def collect_iterator():
+        yield from collectSDGIndicatorData("9.5.1", "RDFUND")
     return Response(collect_iterator(), mimetype='text/event-stream')
