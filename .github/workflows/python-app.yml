@@ -13,11 +13,9 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: debian-latest
-    defaults:
-      run:
-        working-directory: ./sspi_flask_app
+  build:
+    runs-on: ubuntu-latest
+    
     strategy:
       matrix:
         python-version: [3.12]
@@ -26,7 +24,7 @@ jobs:
       MODE: "dev"
     
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
