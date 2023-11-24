@@ -20,8 +20,8 @@ jobs:
       matrix:
         python-version: [3.12]
     
-    environment: "Configure Pytest Automation"
-    
+    environment: configure_pytest_automation
+
     env:
       SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
