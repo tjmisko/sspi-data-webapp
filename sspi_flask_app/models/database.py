@@ -1,12 +1,15 @@
+from .errors import InvalidObservationFormatError
 class MongoWrapper:
     def __init__(self, mongo_database):
         self._mongo_database = mongo_database
     
-    def validate_document_format(self, document: str):
+    def validate_document_format(self, document: dict, observation_number:int=None):
+        if not "IndicatorCode":
+            raise InvalidObservationFormatError(f"IndicatorCode is a required argument (observation {observation_number})")
         return type(document) is dict
     
     def validate_documents_format(self, documents: list):
-        return all([self.validate_document_format(document) for document in documents])
+        return all([self.validate_document_format(document, i) for i, document in enumerate(documents)])
     
     def find_one(self, query):
         return self._mongo_database.find_many(query)
@@ -31,4 +34,7 @@ class MongoWrapper:
     def drop_duplicates(self):
         pass
 
+class SSPIRawAPIData(MongoWrapper):
+    def __init__(self, mongo_database):
+        super().__init__(mongo_database)
     
