@@ -21,7 +21,9 @@ jobs:
         python-version: [3.12]
     
     env:
-      MODE: "dev"
+      SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      API_KEY: ${{ secrets.API_KEY }}
     
     steps:
       - uses: actions/checkout@v4
