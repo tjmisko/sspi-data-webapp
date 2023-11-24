@@ -2,7 +2,7 @@ import json
 from bson import json_util
 import math
 from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_dynamic_data
-from sspi_flask_app.api.resources.errors import InvalidDatabaseError
+from sspi_flask_app.models.errors import InvalidDatabaseError
 
 def format_m49_as_string(input):
     """

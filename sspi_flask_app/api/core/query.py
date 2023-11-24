@@ -1,6 +1,6 @@
 import re
 from flask import Blueprint, jsonify, request
-from ..resources.errors import InvalidQueryError
+from ...models.errors import InvalidQueryError
 from ..resources.validators import validate_query_logic, validate_query_safety
 from ..resources.utilities import parse_json, lookup_database
 from ..resources.metadata import indicator_codes, country_codes, indicator_group, indicator_groups, country_group, country_groups, indicator_details
