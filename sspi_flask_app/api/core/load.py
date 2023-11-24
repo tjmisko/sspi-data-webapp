@@ -2,9 +2,8 @@ import json
 from flask import Blueprint, request
 from flask_login import login_required
 
-from ..resources.utilities import parse_json
 from ... import sspi_bulk_data
-from ..resources.errors import InvalidObservationFormatError, InvalidDatabaseError
+from ...models.errors import InvalidObservationFormatError, InvalidDatabaseError
 from ..resources.validators import validate_observation_list
 
 load_bp = Blueprint("load_bp", __name__,
