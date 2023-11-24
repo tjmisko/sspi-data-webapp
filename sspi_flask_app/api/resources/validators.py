@@ -1,4 +1,4 @@
-from .errors import InvalidDatabaseError, InvalidObservationFormatError, InvalidQueryError
+from ...models.errors import InvalidDatabaseError, InvalidObservationFormatError, InvalidQueryError
 from .utilities import lookup_database
 from .metadata import indicator_codes
 import re
