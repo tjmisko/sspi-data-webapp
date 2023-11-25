@@ -78,4 +78,5 @@ htmlcov/
 *,cover
 
 # Bulk Data
-**/raw_bulk_data/**
+**/raw_bulk_data/*
+**.ipynb_checkpoints
