@@ -42,9 +42,8 @@ def test_insert_one(test_documents, mongo_wrapper):
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[0]
     with pytest.raises(InvalidObservationFormatError) as exception_info:
         mongo_wrapper.insert_one(test_documents[1])
-    assert "InvalidObservationFormatError" in str(exception_info.value)
     assert "IndicatorCode" in str(exception_info.value)
-    assert "1" in str(exception_info.value)
+    assert "Document 0" in str(exception_info.value)
     mongo_wrapper.insert_one(test_documents[2])
     assert mongo_wrapper._mongo_database.count_documents() == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents[2]
@@ -53,14 +52,13 @@ def test_insert_one(test_documents, mongo_wrapper):
 def test_insert_many(test_documents, mongo_wrapper):
     with pytest.raises(InvalidObservationFormatError) as exception_info:
         mongo_wrapper.insert_many(test_documents)
-    assert "InvalidObservationFormatError" in str(exception_info.value)
     assert "IndicatorCode" in str(exception_info.value)
-    assert "1" in str(exception_info.value)
+    assert "Document 1" in str(exception_info.value)
     mongo_wrapper.insert_many(test_documents[3:5])
-    assert mongo_wrapper._mongo_database.count_documents() == 2
+    assert mongo_wrapper._mongo_database.count_documents({}) == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents[3]
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[4]
     mongo_wrapper.insert_many(test_documents[6:])
-    assert mongo_wrapper._mongo_database.count_documents() == 4
+    assert mongo_wrapper._mongo_database.count_documents({}) == 4
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[7]
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIR"}) == test_documents[8]

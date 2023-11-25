@@ -8,13 +8,13 @@ class MongoWrapper:
         self._mongo_database = mongo_database
         self.name = mongo_database.name
     
-    def validate_document_format(self, document: dict, observation_number:int=None):
-        if not "IndicatorCode":
-            raise InvalidObservationFormatError(f"IndicatorCode is a required argument (observation {observation_number})")
+    def validate_document_format(self, document: dict, document_number:int=0):
+        if not "IndicatorCode" in document.keys():
+            raise InvalidObservationFormatError(f"IndicatorCode is a required argument (Error in Document {document_number})")
         return type(document) is dict
     
     def validate_documents_format(self, documents: list):
-        return all([self.validate_document_format(document, i) for i, document in enumerate(documents)])
+        return all([self.validate_document_format(document, document_number=i) for i, document in enumerate(documents)])
     
     def find_one(self, query):
         return self._mongo_database.find_many(query)
@@ -75,7 +75,7 @@ class SSPIRawAPIData(MongoWrapper):
     def __init__(self, mongo_database):
         super().__init__(mongo_database)
     
-    def validate_document_format(self, document: dict, observation_number:int=None):
+    def validate_document_format(self, document: dict, document_number:int=None):
         """
         Raises an InvalidObservationFormatError if the document is not in the valid
 
@@ -90,19 +90,19 @@ class SSPIRawAPIData(MongoWrapper):
         Additional fields are allowed, but not required.
         """
         if not "IndicatorCode" in document.keys():
-            raise InvalidObservationFormatError(f"'IndicatorCode' is a required argument (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'IndicatorCode' is a required argument (observation {document_number})")
         if not "Raw" in document.keys():
-            raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {document_number})")
         if not "CollectedAt":
-            raise InvalidObservationFormatError(f"'CollectedAt' is a required argument (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'CollectedAt' is a required argument (observation {document_number})")
         if not type(document["IndicatorCode"]) is str:
-            raise InvalidObservationFormatError(f"'IndicatorCode' must be a string (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'IndicatorCode' must be a string (observation {document_number})")
         if not len(document["IndicatorCode"]) == 6:
-            raise InvalidObservationFormatError(f"'IndicatorCode' must be 6 characters long (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'IndicatorCode' must be 6 characters long (observation {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float]:
-            raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, or float (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, or float (observation {document_number})")
         if not type(document["CollectedAt"]) is datetime:
-            raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {observation_number})")
+            raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {document_number})")
 
     def tabulate_ids(self, documents: list):
         tab_ids= self._mongo_database.aggregate([
