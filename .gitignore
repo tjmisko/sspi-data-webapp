@@ -79,5 +79,5 @@ htmlcov/
 
 # Bulk Data
 **/raw_bulk_data/*
-**.ipynb_checkpoint
+**.ipynb_checkpoints
 snapshots/**/**.json
