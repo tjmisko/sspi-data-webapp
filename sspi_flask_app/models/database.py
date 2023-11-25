@@ -1,3 +1,4 @@
+from datetime import datetime
 from .errors import InvalidObservationFormatError
 class MongoWrapper:
     def __init__(self, mongo_database):
@@ -59,12 +60,20 @@ class SSPIRawAPIData(MongoWrapper):
         The fields IndicatorCode, Raw, and CollectedAt are required.
         Additional fields are allowed, but not required.
         """
-        if not "IndicatorCode":
+        if not "IndicatorCode" in document.keys():
             raise InvalidObservationFormatError(f"'IndicatorCode' is a required argument (observation {observation_number})")
-        if not "Raw":
+        if not "Raw" in document.keys():
             raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {observation_number})")
         if not "CollectedAt":
             raise InvalidObservationFormatError(f"'CollectedAt' is a required argument (observation {observation_number})")
+        if not type(document["IndicatorCode"]) is str:
+            raise InvalidObservationFormatError(f"'IndicatorCode' must be a string (observation {observation_number})")
+        if not len(document["IndicatorCode"]) == 6:
+            raise InvalidObservationFormatError(f"'IndicatorCode' must be 6 characters long (observation {observation_number})")
+        if not type(document["Raw"]) in [str, dict, int, float]:
+            raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, or float (observation {observation_number})")
+        if not type(document["CollectedAt"]) is datetime:
+            raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {observation_number})")
         
 
 
