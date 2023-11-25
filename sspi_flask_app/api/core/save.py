@@ -23,7 +23,7 @@ def save_database(database_name):
     Saves a snapshot off all databases
     """
     database = lookup_database(database_name)
-    database_contents = json.loads(database.find({}))
+    database_contents = parse_json(database.find({}))
     datetime_str = datetime.now().strftime("%Y-%m-%d - (%H.%M)")
     print(datetime_str)
     print(os.path.dirname(app.instance_path))
