@@ -43,5 +43,17 @@ class MongoWrapper:
 class SSPIRawAPIData(MongoWrapper):
     def __init__(self, mongo_database):
         super().__init__(mongo_database)
+        self.name = "sspi_raw_api_data"
+    
+    def validate_document_format(self, document: dict, observation_number:int=None):
+        if not "IndicatorCode":
+            raise InvalidObservationFormatError(f"'IndicatorCode' is a required argument (observation {observation_number})")
+        if not "Raw":
+            raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {observation_number})")
+        if not "CollectedAt":
+            raise InvalidObservationFormatError(f"'CollectedAt' is a required argument (observation {observation_number})")
+        return type(document) is dict
+
+
     
     
