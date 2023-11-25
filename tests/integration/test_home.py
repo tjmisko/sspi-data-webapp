@@ -29,3 +29,10 @@ def test_about_page(client):
     assert b'<header class="site-header">' in response.data
     assert b'<body>' in response.data
     assert b'<footer class="site-footer">' in response.data
+
+def test_contact_page(client):
+    response = client.get("/contact")
+    assert response.status_code == 200
+    assert b'<header class="site-header">' in response.data
+    assert b'<body>' in response.data
+    assert b'<footer class="site-footer">' in response.data

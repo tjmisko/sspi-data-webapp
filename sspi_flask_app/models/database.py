@@ -1,8 +1,8 @@
 from datetime import datetime
 import json
-
 from bson import ObjectId
 from .errors import InvalidObservationFormatError
+
 class MongoWrapper:
     def __init__(self, mongo_database):
         self._mongo_database = mongo_database
