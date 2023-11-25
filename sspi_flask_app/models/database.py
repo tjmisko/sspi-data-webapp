@@ -103,15 +103,16 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, or float (observation {observation_number})")
         if not type(document["CollectedAt"]) is datetime:
             raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {observation_number})")
-    
-    def drop_duplicates(self):
+
+    def tabulate_ids(self, documents: list):
         tab_ids= self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
                     "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
-                    "observation": "$observation"
+                    "Raw": "$Raw"
                 },
                 "count": {"$sum": 1},
                 "ids": {"$push": "$_id"}
             }},
         ])
+        return json.loads(tab_ids)
