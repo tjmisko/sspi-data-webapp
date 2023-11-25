@@ -24,9 +24,10 @@ def save_database(database_name):
     """
     database = lookup_database(database_name)
     database_contents = parse_json(database.find({}))
-    datetime_str = datetime.now().strftime("%Y-%m-%d - (%H.%M)")
-    print(datetime_str)
-    snapshots_path = os.path.join(os.path.dirname(app.instance_path), "snapshots")
+    datetime_str = datetime.now().strftime("%Y-%m-%d")
+    snapshots_path = os.path.join(os.path.dirname(app.instance_path), f"snapshots/{datetime_str}")
+    if not os.path.exists(snapshots_path):
+        os.mkdir(snapshots_path)
     print(snapshots_path)
     # os.mkdir(f"snapshots/{datetime_str}")
     # with open(f"snapshots/ {datetime_str}.json", "w") as f:
