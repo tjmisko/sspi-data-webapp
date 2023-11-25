@@ -4,7 +4,7 @@ from sspi_flask_app.models.database import MongoWrapper
 from sspi_flask_app import sspidb
 from sspi_flask_app.models.errors import InvalidObservationFormatError
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def test_db():
     sspi_test_db = sspidb.sspi_test_db
     sspi_test_db.delete_many({})
@@ -17,7 +17,7 @@ def test_database_init(test_db):
     assert sspi_test_db.name == "sspi_test_db"
     assert sspi_test_db._mongo_database.name == "sspi_test_db"
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def mongo_wrapper(test_db):
     mongo_wrapper_obj = MongoWrapper(test_db)
     yield mongo_wrapper_obj
@@ -57,7 +57,11 @@ def test_insert_many(test_documents, mongo_wrapper):
     mongo_wrapper.insert_many(test_documents[2:4])
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents[3]
-    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents[4]
-    mongo_wrapper.insert_many(test_documents[5])
-    assert mongo_wrapper._mongo_database.count_documents({}) == 3
-    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[8]
+    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents[2]
+    with pytest.raises(InvalidObservationFormatError) as exception_info:
+        mongo_wrapper.insert_many(test_documents[5])
+    assert "Type" in str(exception_info.value)
+    assert "dict" in str(exception_info.value)
+    assert mongo_wrapper._mongo_database.count_documents({}) == 2
+    mongo_wrapper.insert_many([test_documents])
+    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[5]

@@ -13,7 +13,9 @@ class MongoWrapper:
             raise InvalidObservationFormatError(f"IndicatorCode is a required argument (Error in Document {document_number})")
         return type(document) is dict
     
-    def validate_documents_format(self, documents: list):
+    def validate_documents_format(self, documents:list):
+        if type(documents) is not list:
+            raise InvalidObservationFormatError(f"Type of documents must be a list -- received {type(documents)}")
         return all([self.validate_document_format(document, document_number=i) for i, document in enumerate(documents)])
     
     def find_one(self, query):
@@ -28,7 +30,7 @@ class MongoWrapper:
     
     def insert_many(self, documents):
         self.validate_documents_format(documents)
-        return self._mongo_database.insert_many(documents)
+        return self._mongo_database.insert_many(documents, ordered=False)
     
     def delete_one(self, query):
         return self._mongo_database.delete_one(query)
