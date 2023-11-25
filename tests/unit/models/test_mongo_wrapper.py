@@ -63,5 +63,5 @@ def test_insert_many(test_documents, mongo_wrapper):
     assert "Type" in str(exception_info.value)
     assert "dict" in str(exception_info.value)
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
-    mongo_wrapper.insert_many([test_documents])
+    mongo_wrapper.insert_many([test_documents[5]])
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[5]
