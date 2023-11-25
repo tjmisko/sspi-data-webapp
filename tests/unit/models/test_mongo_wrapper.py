@@ -27,10 +27,10 @@ def test_documents():
     test_documents = [
         {"IndicatorCode": "BIODIV", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
         {"IndicatorCod": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
-        {"IndicatorCode": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
-        {"IndicatorCode": "NITROG", "CountryCode": "CAN", "Raw": {"Value": 1}, "CollectedAt": datetime(2020, 1, 1)},
-        {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1)},
-        {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"a": 1, "b": 2}},
+        {"IndicatorCode": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 2)},
+        {"IndicatorCode": "NITROG", "CountryCode": "CAN", "Raw": {"Value": 1}, "CollectedAt": datetime(2020, 1, 3)},
+        {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 4)},
+        {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"a": 1, "b": 2}},
         {"IndicatorCode": "BIODIv", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         {"IndicatorCode": "BIODI", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
