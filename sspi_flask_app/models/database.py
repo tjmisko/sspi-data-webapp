@@ -119,14 +119,12 @@ class MongoWrapper:
         if not type(document["Value"]) in [int, float]:
             raise InvalidObservationFormatError(f"'Value' must be a float or integer (observation {document_number})")
     
-    
     def validate_unit(self, document: dict, document_number:int=0):
         # Validate Unit format
         if not "Unit" in document.keys():
             raise InvalidObservationFormatError(f"'Unit' is a required argument (observation {document_number})")
         if not type(document["Unit"]) is str:
             raise InvalidObservationFormatError(f"'Unit' must be a string (observation {document_number})")
-    
 
 class SSPIRawAPIData(MongoWrapper):
     
