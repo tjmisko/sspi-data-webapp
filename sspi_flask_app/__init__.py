@@ -11,7 +11,6 @@ from sspi_flask_app.models.database import MongoWrapper
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
-
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
 limiter = Limiter(
