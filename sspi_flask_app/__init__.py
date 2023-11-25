@@ -59,6 +59,7 @@ def init_app(Config):
         from .api.core.impute import impute_bp
         from .api.core.load import load_bp
         from .api.core.query import query_bp
+        from .api.core.test import test_bp
 
         # Register database
         db.create_all()
@@ -73,6 +74,7 @@ def init_app(Config):
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
         api_bp.register_blueprint(query_bp)
+        api_bp.register_blueprint(test_bp)
         app.register_blueprint(api_bp)
         
         # Register Style Bundles and build optimized css, js

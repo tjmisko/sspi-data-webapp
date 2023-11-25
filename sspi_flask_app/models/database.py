@@ -34,7 +34,11 @@ class MongoWrapper:
     def drop_duplicates(self):
         pass
 
+    def sample(self, query, n):
+        return self._mongo_database.aggregate([{"$sample": {"size": n}}])
+
 class SSPIRawAPIData(MongoWrapper):
     def __init__(self, mongo_database):
         super().__init__(mongo_database)
+    
     
