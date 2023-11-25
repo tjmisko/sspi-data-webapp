@@ -26,8 +26,9 @@ def save_database(database_name):
     database_contents = parse_json(database.find({}))
     datetime_str = datetime.now().strftime("%Y-%m-%d - (%H.%M)")
     print(datetime_str)
-    print(os.path.dirname(app.instance_path))
+    snapshots_path = os.path.join(os.path.dirname(app.instance_path), "snapshots")
+    print(snapshots_path)
     # os.mkdir(f"snapshots/{datetime_str}")
     # with open(f"snapshots/ {datetime_str}.json", "w") as f:
         # json.dump(database_contents, f)
-    return "Database Saved"
+    return database_contents
