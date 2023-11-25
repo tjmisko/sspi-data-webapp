@@ -20,8 +20,6 @@ def test_database_init(test_db):
 def mongo_wrapper(test_db):
     mongo_wrapper_obj = MongoWrapper(test_db)
     yield mongo_wrapper_obj
-    mongo_wrapper_obj._mongo_database.delete_many({})
-    
 
 @pytest.fixture(scope="session")
 def test_documents():
