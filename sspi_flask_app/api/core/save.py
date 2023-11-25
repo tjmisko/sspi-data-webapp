@@ -16,7 +16,7 @@ save_bp = Blueprint("save_bp", __name__,
                     static_folder="static")
                    
 
-@save_bp.route("/save/<database_name>", methods=["POST"])
+@save_bp.route("/save/<database_name>", methods=["GET"])
 @login_required
 def save_database(database_name):
     """
