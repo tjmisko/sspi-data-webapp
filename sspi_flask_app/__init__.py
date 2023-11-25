@@ -61,6 +61,7 @@ def init_app(Config):
         from .api.core.impute import impute_bp
         from .api.core.load import load_bp
         from .api.core.query import query_bp
+        from .api.core.save import save_bp
         from .api.core.test import test_bp
 
         # Register database
@@ -76,6 +77,7 @@ def init_app(Config):
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
         api_bp.register_blueprint(query_bp)
+        api_bp.register_blueprint(save_bp)
         api_bp.register_blueprint(test_bp)
         app.register_blueprint(api_bp)
         
