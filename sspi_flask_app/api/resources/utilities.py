@@ -28,7 +28,7 @@ def lookup_database(database_name):
     Utility function used for safe database lookup
     Returns nothing if the database name is incorrect
     """
-    if database_name == "sspi_main_data_v3":
+    if database_name == "sspi_main_data":
         return sspi_main_data_v3
     elif database_name == "sspi_bulk_data":
         return sspi_bulk_data
