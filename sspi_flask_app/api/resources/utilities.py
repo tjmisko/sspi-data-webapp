@@ -26,7 +26,8 @@ def print_json(data):
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup
-    Returns nothing if the database name is incorrect
+
+    Throws an error otherwise
     """
     if database_name == "sspi_main_data_v3":
         return sspi_main_data_v3
