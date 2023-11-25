@@ -36,12 +36,14 @@ class MongoWrapper:
     def delete_many(self, query):
         return self._mongo_database.delete_many(query)
     
-    def count_duplicates(self):
+    def tabulate_ids(self):
         """
-        Returns a list of dictionaries which counts the number of times an observation with
-        duplicate identifiers appears in the database
+        Returns a list of documents with counts of the number of times an observation with
+        duplicate identifiers appears.
+
+        For example, if all documents are unique, count will be 1 for all documents.
         """
-        agg = self._mongo_database.aggregate([
+        tab_ids = self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
                     "IndicatorCode": "$IndicatorCode",
@@ -52,24 +54,16 @@ class MongoWrapper:
                 "ids": {"$push": "$_id"}
             }},
         ])
-        return json.loads(agg)
+        return json.loads(tab_ids)
 
     def drop_duplicates(self):
-        agg = self._mongo_database.aggregate([
-            {"$group": {
-                "_id": {
-                    "IndicatorCode": "$IndicatorCode",
-                    "YEAR": "$YEAR",
-                    "CountryCode": "$CountryCode"
-                },
-                "count": {"$sum": 1},
-                "ids": {"$push": "$_id"}
-            }},
-        ])
-        agg = json.loads(agg)
-        id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in agg],[])]
-        print(id_delete_list)
+        """
+        Deletes all duplicate observations from the database and returns a count of deleted observations
+        """
+        tab_ids= self.tabulate_ids()
+        id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in tab_ids],[])]
         count = self._mongo_database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
+        return count
 
     def sample(self, n: int, query:dict={}):
         """
@@ -83,7 +77,7 @@ class SSPIRawAPIData(MongoWrapper):
     
     def validate_document_format(self, document: dict, observation_number:int=None):
         """
-        Raises an Invaliderror if the document is not in the valid
+        Raises an InvalidObservationFormatError if the document is not in the valid
 
         Valid Document Format:
             {
@@ -111,7 +105,7 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {observation_number})")
     
     def drop_duplicates(self):
-        agg = self._mongo_database.aggregate([
+        tab_ids= self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
                     "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
