@@ -1,4 +1,7 @@
 from datetime import datetime
+import json
+
+from bson import ObjectId
 from .errors import InvalidObservationFormatError
 class MongoWrapper:
     def __init__(self, mongo_database):
@@ -33,8 +36,40 @@ class MongoWrapper:
     def delete_many(self, query):
         return self._mongo_database.delete_many(query)
     
+    def count_duplicates(self):
+        """
+        Returns a list of dictionaries which counts the number of times an observation with
+        duplicate identifiers appears in the database
+        """
+        agg = self._mongo_database.aggregate([
+            {"$group": {
+                "_id": {
+                    "IndicatorCode": "$IndicatorCode",
+                    "YEAR": "$YEAR",
+                    "CountryCode": "$CountryCode"
+                },
+                "count": {"$sum": 1},
+                "ids": {"$push": "$_id"}
+            }},
+        ])
+        return json.loads(agg)
+
     def drop_duplicates(self):
-        pass
+        agg = self._mongo_database.aggregate([
+            {"$group": {
+                "_id": {
+                    "IndicatorCode": "$IndicatorCode",
+                    "YEAR": "$YEAR",
+                    "CountryCode": "$CountryCode"
+                },
+                "count": {"$sum": 1},
+                "ids": {"$push": "$_id"}
+            }},
+        ])
+        agg = json.loads(agg)
+        id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in agg],[])]
+        print(id_delete_list)
+        count = self._mongo_database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
 
     def sample(self, n: int, query:dict={}):
         """
@@ -48,7 +83,7 @@ class SSPIRawAPIData(MongoWrapper):
     
     def validate_document_format(self, document: dict, observation_number:int=None):
         """
-        Raises an error if the document is not in the valid
+        Raises an Invaliderror if the document is not in the valid
 
         Valid Document Format:
             {
@@ -74,8 +109,15 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, or float (observation {observation_number})")
         if not type(document["CollectedAt"]) is datetime:
             raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {observation_number})")
-        
-
-
     
-    
+    def drop_duplicates(self):
+        agg = self._mongo_database.aggregate([
+            {"$group": {
+                "_id": {
+                    "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
+                    "observation": "$observation"
+                },
+                "count": {"$sum": 1},
+                "ids": {"$push": "$_id"}
+            }},
+        ])
