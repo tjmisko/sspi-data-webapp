@@ -7,6 +7,7 @@ from sspi_flask_app.models.errors import InvalidObservationFormatError
 @pytest.fixture(scope="session")
 def test_db():
     sspi_test_db = sspidb.sspi_test_db
+    sspi_test_db.delete_many({})
     yield sspi_test_db
     sspi_test_db.delete_many({})
     sspidb.drop_collection(sspi_test_db)
