@@ -24,18 +24,44 @@ def mongo_wrapper(test_db):
 
 @pytest.fixture(scope="session")
 def test_documents():
-    test_documents = [
-        {"IndicatorCode": "BIODIV", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
-        {"IndicatorCod": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
-        {"IndicatorCode": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 2)},
-        {"IndicatorCode": "NITROG", "CountryCode": "CAN", "Raw": {"Value": 1}, "CollectedAt": datetime(2020, 1, 3)},
-        {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 4)},
-        {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"a": 1, "b": 2}},
-        {"IndicatorCode": "BIODIv", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
-        {"IndicatorCode": "BIODI", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
-        {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Units": "m/s", "Year": "2015", "Value": "25", "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
-    ]
+    test_documents = {
+        0: {"IndicatorCode": "BIODIV", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
+        1: {"IndicatorCod": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 1)},
+        2: {"IndicatorCode": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 2)},
+        3: {"IndicatorCode": "NITROG", "CountryCode": "CAN", "Raw": {"Value": 1}, "CollectedAt": datetime(2020, 1, 3)},
+        4: {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": 2015, "Value": "25", "CollectedAt": datetime(2020, 1, 4)},
+        5: {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Units": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"a": 1, "b": 2}},
+        6: {"IndicatorCode": "BIODIv", "CountryCode": "USA", "Units": "m/s", "Year": 215, "Value": 25, "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
+        7: {"IndicatorCode": "BIODI", "CountryCode": "USA", "Units": "m/s", "Year": 2015, "Value": 2, "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
+        8: {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Units": "m/s", "Year": 2015, "Value": "25", "CollectedAt": "2020-1-1", "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
+    }
     yield test_documents
+
+def test_validate_country_code(test_documents, mongo_wrapper):
+    pass
+
+def test_validate_indicator_code(test_documents, mongo_wrapper):
+    for i in range(9):
+        if i == 1 | i == 6 | i == 7:
+            with pytest.raises(InvalidObservationFormatError) as exception_info:
+                mongo_wrapper.validate_indicator_code(test_documents[i], i)
+            assert "IndicatorCode" in str(exception_info.value)
+            assert f"Document {i}" in str(exception_info.value)
+        else:
+            mongo_wrapper.validate_indicator_code(test_documents[i], i)
+
+def test_validate_year(test_documents, mongo_wrapper):
+    for i in range(9):
+        if i < 4 | i == 6:
+            with pytest.raises(InvalidObservationFormatError) as exception_info:
+                mongo_wrapper.validate_year(test_documents[i], i)
+            assert "Year" in str(exception_info.value)
+            assert f"Document {i}" in str(exception_info.value)
+        else:
+            mongo_wrapper.validate_year(test_documents[i], i)
+
+def test_validate_value(test_documents, mongo_wrapper):
+    pass
 
 def test_insert_one(test_documents, mongo_wrapper):
     mongo_wrapper.insert_one(test_documents[0])
