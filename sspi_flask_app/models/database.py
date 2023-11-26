@@ -68,12 +68,28 @@ class MongoWrapper:
         Raises an InvalidObservationFormatError if the document is not in the valid format
         
         Overridden in with specific validation functions in child classes built from atomic validator functions below
+        Default Valid Document Format:
+            {
+                "IndicatorCode": "BIODIV", (type: str, length: 6, case: upper)
+                "CountryCode": "COU", (type: str, length: 3, case: upper)
+                "Year": 2015, (type: int, length: 4, gt: 1900, lt: 2030)
+                "Value": 42.3005 (float or int)
+                "Unit": "MILLION_HA", (type: str) 
+                "Intermediates": {
+                    "TERRST": 9.7, (float or int)
+                    "FRSHWT": 9.7, (float or int)
+                    ...
+                }
+            ...
+            }
+        By default, additional fields are allowed
         """
         self.validate_country_code(document, document_number)
         self.validate_indicator_code(document, document_number)
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
+        self.validate_intermediates(document, document_number)
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:
@@ -125,6 +141,20 @@ class MongoWrapper:
             raise InvalidObservationFormatError(f"'Unit' is a required argument (observation {document_number})")
         if not type(document["Unit"]) is str:
             raise InvalidObservationFormatError(f"'Unit' must be a string (observation {document_number})")
+    
+    def validate_intermediates(self, document:dict, document_number:int=0):
+        if "Intermediates" in document.keys():
+            if not type(document["Intermediates"]) is dict:
+                raise InvalidObservationFormatError(f"'Intermediates' must be a dictionary (observation {document_number})")
+            for key, value in document["Intermediates"].items():
+                if not type(key) is str:
+                    raise InvalidObservationFormatError(f"'Intermediates' keys must be strings (observation {document_number})")
+                if len(key) != 6:
+                    raise InvalidObservationFormatError(f"'Intermediates' keys must be 6 characters long (observation {document_number})")
+                if not key.isupper():
+                    raise InvalidObservationFormatError(f"'Intermediates' keys must be uppercase (observation {document_number})")
+                if not type(value) in [float, int]:
+                    raise InvalidObservationFormatError(f"'Intermediates' values must be floats or integers (observation {document_number})")
 
 class SSPIRawAPIData(MongoWrapper):
     
@@ -182,41 +212,3 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, float, or list (observation {document_number})")
-
-class SSPICleanAPIData(MongoWrapper):
-    
-    def validate_document_format(self, document: dict, document_number:int=None):
-        """
-        Raises an InvalidObservationFormatError if the document is not in the valid
-
-        Valid Document Format:
-            {
-                "IndicatorCode": "BIODIV", (type: str, length: 6, case: upper)
-                "CountryCode": "COU", (type: str, length: 3, case: upper)
-                "Year": 2015, (type: int, length: 4, gt: 1900, lt: 2030)
-                "Value": 42.3005 (float or int)
-                "Unit": "MILLION_HA", (type: str) 
-                "Intermediates": {
-                    "TERRST": 9.7, (float or int)
-                    "FRSHWT": 9.7, (float or int)
-                    ...
-                }
-            }
-        Additional fields are not allowed.
-        """
-        super().validate_document_format(document, document_number)
-        self.validate_intermediates(document, document_number)
-    
-    def validate_intermediates(self, document:dict, document_number:int=0):
-        if "Intermediates" in document.keys():
-            if not type(document["Intermediates"]) is dict:
-                raise InvalidObservationFormatError(f"'Intermediates' must be a dictionary (observation {document_number})")
-            for key, value in document["Intermediates"].items():
-                if not type(key) is str:
-                    raise InvalidObservationFormatError(f"'Intermediates' keys must be strings (observation {document_number})")
-                if len(key) != 6:
-                    raise InvalidObservationFormatError(f"'Intermediates' keys must be 6 characters long (observation {document_number})")
-                if not key.isupper():
-                    raise InvalidObservationFormatError(f"'Intermediates' keys must be uppercase (observation {document_number})")
-                if not type(value) in [float, int]:
-                    raise InvalidObservationFormatError(f"'Intermediates' values must be floats or integers (observation {document_number})")
