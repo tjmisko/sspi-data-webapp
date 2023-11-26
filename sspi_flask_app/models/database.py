@@ -155,7 +155,13 @@ class SSPIRawAPIData(MongoWrapper):
             }},
         ])
         return json.loads(tab_ids)
-    
+
+    def validate_document_format(self, document: dict, document_number:int=0):
+        self.validate_indicator_code(document, document_number)
+        self.validate_raw(document, document_number)
+        self.validate_collected_at(document, document_number)
+        self.validate_collected_by(document, document_number)
+
     def validate_collected_at(self, document: dict, document_number:int=None):
         # Validate CollectedAt format
         if not "CollectedAt" in document.keys():
@@ -163,12 +169,20 @@ class SSPIRawAPIData(MongoWrapper):
         if not type(document["CollectedAt"]) is datetime:
             raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {document_number})")
     
+    def validate_collected_by(self, document: dict, document_number:int=None):
+        # Validate CollectedBy format
+        if not "CollectedBy" in document.keys():
+            raise InvalidObservationFormatError(f"'CollectedBy' is a required argument (observation {document_number})")
+        if not type(document["CollectedBy"]) is datetime:
+            raise InvalidObservationFormatError(f"'CollectedBy' must be a datetime (observation {document_number})")
+    
     def validate_raw(self, document: dict, document_number:int=0):
         # Validate Raw format
         if not "Raw" in document.keys():
             raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, float, or list (observation {document_number})")
+
 class SSPICleanAPIData(MongoWrapper):
     
     def validate_document_format(self, document: dict, document_number:int=None):
