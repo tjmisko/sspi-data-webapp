@@ -201,21 +201,22 @@ class SSPICleanAPIData(MongoWrapper):
                     "FRSHWT": 9.7, (float or int)
                     ...
                 }
-                ...
             }
-        The fields IndicatorCode, Raw, and CollectedAt are required.
-        Additional fields are allowed, but not required.
+        Additional fields are not allowed.
         """
-
-    def tabulate_ids(self, documents: list):
-        tab_ids= self._mongo_database.aggregate([
-            {"$group": {
-                "_id": {
-                    "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
-                    "Raw": "$Raw"
-                },
-                "count": {"$sum": 1},
-                "ids": {"$push": "$_id"}
-            }},
-        ])
-        return json.loads(tab_ids)
+        super().validate_document_format(document, document_number)
+        self.validate_intermediates(document, document_number)
+    
+    def validate_intermediates(self, document:dict, document_number:int=0):
+        if "Intermediates" in document.keys():
+            if not type(document["Intermediates"]) is dict:
+                raise InvalidObservationFormatError(f"'Intermediates' must be a dictionary (observation {document_number})")
+            for key, value in document["Intermediates"].items():
+                if not type(key) is str:
+                    raise InvalidObservationFormatError(f"'Intermediates' keys must be strings (observation {document_number})")
+                if len(key) != 6:
+                    raise InvalidObservationFormatError(f"'Intermediates' keys must be 6 characters long (observation {document_number})")
+                if not key.isupper():
+                    raise InvalidObservationFormatError(f"'Intermediates' keys must be uppercase (observation {document_number})")
+                if not type(value) in [float, int]:
+                    raise InvalidObservationFormatError(f"'Intermediates' values must be floats or integers (observation {document_number})")
