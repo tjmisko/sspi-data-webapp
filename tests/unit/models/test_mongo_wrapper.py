@@ -91,14 +91,19 @@ def test_validate_unit(test_documents, mongo_wrapper):
             mongo_wrapper.validate_unit(test_documents[i], i)
 
 def test_insert_one(test_documents, mongo_wrapper):
-    with pytest.raises(InvalidDocumentFormatError) as exception_info:
-        mongo_wrapper.insert_one(test_documents[1])
-    assert "IndicatorCode" in str(exception_info.value)
-    assert "Document 0" in str(exception_info.value)
-    mongo_wrapper.insert_one(test_documents[2])
+    for i in range(9):
+        with pytest.raises(InvalidDocumentFormatError) as exception_info:
+            mongo_wrapper.insert_one(test_documents[1])
+        assert "document 0" in str(exception_info.value)
+    mongo_wrapper.insert_one(test_documents["a"])
+    assert mongo_wrapper._mongo_database.count_documents({}) == 1
+    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents["a"]
+    mongo_wrapper.insert_one(test_documents["b"])
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
-    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents[2]
-    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents[0]
+    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents["b"]
+    mongo_wrapper.insert_one(test_documents["c"])
+    assert mongo_wrapper._mongo_database.count_documents({}) == 3
+    assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
 
 def test_insert_many(test_documents, mongo_wrapper):
     with pytest.raises(InvalidDocumentFormatError) as exception_info:
