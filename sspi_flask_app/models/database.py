@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from bson import ObjectId
-from .errors import InvalidObservationFormatError
+from .errors import InvalidDocumentFormatError
 
 class MongoWrapper:
     def __init__(self, mongo_database):
@@ -30,7 +30,7 @@ class MongoWrapper:
     
     def tabulate_ids(self):
         """
-        Returns a list of documents with counts of the number of times an observation with
+        Returns a list of documents with counts of the number of times a document with
         duplicate identifiers appears.
 
         For example, if all documents are unique, count will be 1 for all documents.
@@ -50,7 +50,7 @@ class MongoWrapper:
 
     def drop_duplicates(self):
         """
-        Deletes all duplicate observations from the database and returns a count of deleted observations
+        Deletes all duplicate documents from the database and returns a count of deleted documents
         """
         tab_ids= self.tabulate_ids()
         id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in tab_ids],[])]
@@ -59,13 +59,13 @@ class MongoWrapper:
 
     def sample(self, n: int, query:dict={}):
         """
-        Draws n observations from the database at random, optionally filtered by query
+        Draws n documents from the database at random, optionally filtered by query
         """
         return self._mongo_database.aggregate([{"$match": query}, {"$sample": {"size": n}}])
     
     def validate_document_format(self, document: dict, document_number:int=0):
         """
-        Raises an InvalidObservationFormatError if the document is not in the valid format
+        Raises an InvalidDocumentFormatError if the document is not in the valid format
         
         Overridden in with specific validation functions in child classes built from atomic validator functions below
         Default Valid Document Format:
@@ -93,74 +93,74 @@ class MongoWrapper:
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:
-            raise InvalidObservationFormatError(f"Type of documents must be a list -- received {type(documents)}")
+            raise InvalidDocumentFormatError(f"Type of documents must be a list -- received {type(documents)}")
         return all([self.validate_document_format(document, document_number=i) for i, document in enumerate(documents)])
     
     # Validator functions
     def validate_indicator_code(self, document: dict, document_number:int=0):
         # Validate IndicatorCode format
         if not "IndicatorCode" in document.keys():
-            raise InvalidObservationFormatError(f"'IndicatorCode' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'IndicatorCode' is a required argument (document {document_number})")
         if not len(document["IndicatorCode"]) == 6:
-            raise InvalidObservationFormatError(f"'IndicatorCode' must be 6 characters long (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'IndicatorCode' must be 6 characters long (document {document_number})")
         if not type(document["IndicatorCode"]) is str:
-            raise InvalidObservationFormatError(f"'IndicatorCode' must be a string (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'IndicatorCode' must be a string (document {document_number})")
         if not document["IndicatorCode"].isupper():
-            raise InvalidObservationFormatError(f"'IndicatorCode' must be uppercase (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'IndicatorCode' must be uppercase (document {document_number})")
     
     def validate_country_code(self, document: dict, document_number:int=0):
         # Validate CountryCode format
         if not "CountryCode" in document.keys():
-            raise InvalidObservationFormatError(f"'CountryCode' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CountryCode' is a required argument (document {document_number})")
         if not len(document["CountryCode"]) == 3:
-            raise InvalidObservationFormatError(f"'CountryCode' must be 3 characters long (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CountryCode' must be 3 characters long (document {document_number})")
         if not type(document["CountryCode"]) is str:
-            raise InvalidObservationFormatError(f"'CountryCode' must be a string (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CountryCode' must be a string (document {document_number})")
         if not document["CountryCode"].isupper():
-            raise InvalidObservationFormatError(f"'CountryCode' must be uppercase (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CountryCode' must be uppercase (document {document_number})")
     
     def validate_year(self, document: dict, document_number:int=0):
         # Validate Year format
         if not "Year" in document.keys():
-            raise InvalidObservationFormatError(f"'Year' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Year' is a required argument (document {document_number})")
         if not type(document["Year"]) is int:
-            raise InvalidObservationFormatError(f"'Year' must be an integer (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Year' must be an integer (document {document_number})")
         if not 1900 < document["Year"] < 2030:
-            raise InvalidObservationFormatError(f"'Year' must be between 1900 and 2030 (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Year' must be between 1900 and 2030 (document {document_number})")
     
     def validate_value(self, document: dict, document_number:int=0):
         # Validate Value format
         if not "Value" in document.keys():
-            raise InvalidObservationFormatError(f"'Value' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Value' is a required argument (document {document_number})")
         if not type(document["Value"]) in [int, float]:
-            raise InvalidObservationFormatError(f"'Value' must be a float or integer (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Value' must be a float or integer (document {document_number})")
     
     def validate_unit(self, document: dict, document_number:int=0):
         # Validate Unit format
         if not "Unit" in document.keys():
-            raise InvalidObservationFormatError(f"'Unit' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Unit' is a required argument (document {document_number})")
         if not type(document["Unit"]) is str:
-            raise InvalidObservationFormatError(f"'Unit' must be a string (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Unit' must be a string (document {document_number})")
     
     def validate_intermediates(self, document:dict, document_number:int=0):
         if "Intermediates" in document.keys():
             if not type(document["Intermediates"]) is dict:
-                raise InvalidObservationFormatError(f"'Intermediates' must be a dictionary (observation {document_number})")
+                raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
             for key, value in document["Intermediates"].items():
                 if not type(key) is str:
-                    raise InvalidObservationFormatError(f"'Intermediates' keys must be strings (observation {document_number})")
+                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be strings (document {document_number})")
                 if len(key) != 6:
-                    raise InvalidObservationFormatError(f"'Intermediates' keys must be 6 characters long (observation {document_number})")
+                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be 6 characters long (document {document_number})")
                 if not key.isupper():
-                    raise InvalidObservationFormatError(f"'Intermediates' keys must be uppercase (observation {document_number})")
+                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be uppercase (document {document_number})")
                 if not type(value) in [float, int]:
-                    raise InvalidObservationFormatError(f"'Intermediates' values must be floats or integers (observation {document_number})")
+                    raise InvalidDocumentFormatError(f"'Intermediates' values must be floats or integers (document {document_number})")
 
 class SSPIRawAPIData(MongoWrapper):
     
     def validate_document_format(self, document: dict, document_number:int=None):
         """
-        Raises an InvalidObservationFormatError if the document is not in the valid
+        Raises an InvalidDocumentFormatError if the document is not in the valid
 
         Valid Document Format:
             {
@@ -195,29 +195,29 @@ class SSPIRawAPIData(MongoWrapper):
     def validate_collected_at(self, document: dict, document_number:int=None):
         # Validate CollectedAt format
         if not "CollectedAt" in document.keys():
-            raise InvalidObservationFormatError(f"'CollectedAt' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CollectedAt' is a required argument (document {document_number})")
         if not type(document["CollectedAt"]) is datetime:
-            raise InvalidObservationFormatError(f"'CollectedAt' must be a datetime (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CollectedAt' must be a datetime (document {document_number})")
     
     def validate_collected_by(self, document: dict, document_number:int=None):
         # Validate CollectedBy format
         if not "CollectedBy" in document.keys():
-            raise InvalidObservationFormatError(f"'CollectedBy' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CollectedBy' is a required argument (document {document_number})")
         if not type(document["CollectedBy"]) is datetime:
-            raise InvalidObservationFormatError(f"'CollectedBy' must be a datetime (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'CollectedBy' must be a datetime (document {document_number})")
     
     def validate_raw(self, document: dict, document_number:int=0):
         # Validate Raw format
         if not "Raw" in document.keys():
-            raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
-            raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, float, or list (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
 
 class SSPIMetadata(MongoWrapper):
     
     def validate_document_format(self, document: dict, document_number:int=None):
         """
-        Raises an InvalidObservationFormatError if the document is not in the valid
+        Raises an InvalidDocumentFormatError if the document is not in the valid
 
         Valid Document Format:
             {
@@ -233,13 +233,13 @@ class SSPIMetadata(MongoWrapper):
     def validate_document_type(self, document: dict, document_number:int=None):
         # Validate DocumentType format
         if not "DocumentType" in document.keys():
-            raise InvalidObservationFormatError(f"'DocumentType' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'DocumentType' is a required argument (document {document_number})")
         if not type(document["DocumentType"]) is str:
-            raise InvalidObservationFormatError(f"'DocumentType' must be a string (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'DocumentType' must be a string (document {document_number})")
     
     def validate_metadata(self, document: dict, document_number:int=None):
         # Validate Metadata format
         if not "Metadata" in document.keys():
-            raise InvalidObservationFormatError(f"'Metadata' is a required argument (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Metadata' is a required argument (document {document_number})")
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
-            raise InvalidObservationFormatError(f"'Metadata' must be a string, dict, int, float, or list (observation {document_number})")
+            raise InvalidDocumentFormatError(f"'Metadata' must be a string, dict, int, float, or list (document {document_number})")

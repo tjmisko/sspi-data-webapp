@@ -4,7 +4,7 @@ class InvalidQueryError(Exception):
     """
     pass
 
-class InvalidObservationFormatError(Exception):
+class InvalidDocumentFormatError(Exception):
     """
     Raised when an observation to be inserted into the database is missing a required 
     """
