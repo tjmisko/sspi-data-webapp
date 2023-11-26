@@ -8,23 +8,6 @@ class MongoWrapper:
         self._mongo_database = mongo_database
         self.name = mongo_database.name
     
-    def validate_document_format(self, document: dict, document_number:int=0):
-        """
-        Raises an InvalidObservationFormatError if the document is not in the valid format
-        
-        Overridden in with specific validation functions in child classes built from atomic validator functions below
-        """
-        self.validate_country_code(document, document_number)
-        self.validate_indicator_code(document, document_number)
-        self.validate_year(document, document_number)
-        self.validate_value(document, document_number)
-        self.validate_unit(document, document_number)
-    
-    def validate_documents_format(self, documents:list):
-        if type(documents) is not list:
-            raise InvalidObservationFormatError(f"Type of documents must be a list -- received {type(documents)}")
-        return all([self.validate_document_format(document, document_number=i) for i, document in enumerate(documents)])
-    
     def find_one(self, query):
         return self._mongo_database.find_many(query)
     
@@ -79,6 +62,23 @@ class MongoWrapper:
         Draws n observations from the database at random, optionally filtered by query
         """
         return self._mongo_database.aggregate([{"$match": query}, {"$sample": {"size": n}}])
+    
+    def validate_document_format(self, document: dict, document_number:int=0):
+        """
+        Raises an InvalidObservationFormatError if the document is not in the valid format
+        
+        Overridden in with specific validation functions in child classes built from atomic validator functions below
+        """
+        self.validate_country_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
+        self.validate_year(document, document_number)
+        self.validate_value(document, document_number)
+        self.validate_unit(document, document_number)
+    
+    def validate_documents_format(self, documents:list):
+        if type(documents) is not list:
+            raise InvalidObservationFormatError(f"Type of documents must be a list -- received {type(documents)}")
+        return all([self.validate_document_format(document, document_number=i) for i, document in enumerate(documents)])
     
     # Validator functions
     def validate_indicator_code(self, document: dict, document_number:int=0):
