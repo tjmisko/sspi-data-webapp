@@ -177,7 +177,7 @@ class SSPIRawAPIData(MongoWrapper):
         tab_ids= self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
-                    "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
+                    "IndicatorCode": "$IndicatorCode",
                     "Raw": "$Raw"
                 },
                 "count": {"$sum": 1},
@@ -212,3 +212,34 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidObservationFormatError(f"'Raw' is a required argument (observation {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             raise InvalidObservationFormatError(f"'Raw' must be a string, dict, int, float, or list (observation {document_number})")
+
+class SSPIMetadata(MongoWrapper):
+    
+    def validate_document_format(self, document: dict, document_number:int=None):
+        """
+        Raises an InvalidObservationFormatError if the document is not in the valid
+
+        Valid Document Format:
+            {
+                "DocumentType": str,
+                "Metadata": str or dict or int or float or list,
+                ...
+            }
+        Additional fields are allowed but not required
+        """
+        self.validate_document_type(document, document_number)
+        self.validate_metadata(document, document_number)
+    
+    def validate_document_type(self, document: dict, document_number:int=None):
+        # Validate DocumentType format
+        if not "DocumentType" in document.keys():
+            raise InvalidObservationFormatError(f"'DocumentType' is a required argument (observation {document_number})")
+        if not type(document["DocumentType"]) is str:
+            raise InvalidObservationFormatError(f"'DocumentType' must be a string (observation {document_number})")
+    
+    def validate_metadata(self, document: dict, document_number:int=None):
+        # Validate Metadata format
+        if not "Metadata" in document.keys():
+            raise InvalidObservationFormatError(f"'Metadata' is a required argument (observation {document_number})")
+        if not type(document["Metadata"]) in [str, dict, int, float, list]:
+            raise InvalidObservationFormatError(f"'Metadata' must be a string, dict, int, float, or list (observation {document_number})")
