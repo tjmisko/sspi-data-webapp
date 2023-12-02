@@ -24,3 +24,13 @@ def load(IndicatorCode):
     ### If format valid, insert
     count = sspi_bulk_data.insert_many(observations_list)
     return f"Inserted {count} observations into database."
+
+@dashboard_bp.route("/local/upload", methods=['GET'])
+@login_required
+def upload_local_data():
+    local_path = os.path.join(app.instance_path, "local")
+    indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
+    intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
+    sspi_main_data_v3 = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"))
+    sspi_main_data_v3 = build_main_data(
+    return app.instance_path

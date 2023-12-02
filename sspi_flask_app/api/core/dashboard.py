@@ -96,10 +96,6 @@ def get_dynamic_data(IndicatorCode):
 def local():
     return render_template('local-upload-form.html', database_names=check_for_local_data())
 
-@dashboard_bp.route("/local/upload", methods=['GET'])
-@login_required
-def upload_local_data():
-    return app.instance_path
 
 @dashboard_bp.route("/local/database/list", methods=['GET'])
 @login_required
