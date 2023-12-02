@@ -104,31 +104,13 @@ def upload_local_data():
 @dashboard_bp.route("/local/database/list", methods=['GET'])
 @login_required
 def check_for_local_data():
-    os.path.abspath(__file__)
+    app.instance_path
     try:
         database_files = os.listdir(os.path.join(os.getcwd(),'local'))
     except FileNotFoundError:
         database_files = os.listdir("/var/www/sspi.world/local")
     database_names = [db_file.split(".")[0] for db_file in database_files]
     return parse_json(database_names)
-
-@dashboard_bp.route("/local/reload/<database_name>", methods=["POST"])
-@login_required
-def reload_from_local(database_name):
-    if not database_name in check_for_local_data():
-        return "Unable to Reload Data: Invalid database name"
-    database = lookup_database(database_name)
-    try: 
-        filepath = os.path.join(os.getcwd(),'local', database_name + ".json")
-        json_file = open(filepath)
-    except FileNotFoundError:
-        filepath = os.path.join("/var/www/sspi.world/local", database_name + ".json")
-        json_file = open(filepath)
-    local_data = json.load(json_file)
-    del_count = database.delete_many({}).deleted_count
-    ins_count = len(database.insert_many(local_data).inserted_ids)
-    json_file.close()
-    return "Reload successful: Dropped {0} observations from {1} and reloaded with {2} observations".format(del_count, database_name, ins_count)
 
 @dashboard_bp.route("/fetch-controls")
 @login_required
