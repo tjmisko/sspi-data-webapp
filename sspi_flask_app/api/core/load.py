@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 from flask import Blueprint, request
 from flask_login import login_required
 
@@ -24,3 +25,26 @@ def load(IndicatorCode):
     ### If format valid, insert
     count = sspi_bulk_data.insert_many(observations_list)
     return f"Inserted {count} observations into database."
+
+@load_bp.route("/load/sspi_metadata", methods=['GET'])
+@login_required
+def load_metadata():
+    local_path = os.path.join(app.instance_path, "local")
+    indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
+    intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
+    return app.instance_path
+
+@load_bp.route("/load/sspi_main_data_v3", methods=['GET'])
+@login_required
+def load_maindata():
+    local_path = os.path.join(app.instance_path, "local")
+    sspi_main_data_v3 = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"))
+    sspi_main_data_v3 = build_main_data(sspi_main_data_v3)
+
+def build_main_data(sspi_main_data_v3:pd.DataFrame):
+    """
+    Utility function that builds the main data JSON list from the SSPIMainDataV3.csv file
+    """
+    sspi_main_data_v3 = sspi_main_data_v3.drop(columns=["Unnamed: 0"])
+    sspi_main_data_v3 = sspi_main_data_v3.to_json(orient="records")
+    return sspi_main_data_v3
