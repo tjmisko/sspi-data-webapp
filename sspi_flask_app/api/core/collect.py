@@ -152,6 +152,7 @@ def intrnt():
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
         yield from collectSDGIndicatorData("17.6.1", "INTRNT", "QLMBPS")
     return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 
