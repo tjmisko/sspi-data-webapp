@@ -1,6 +1,12 @@
 from flask import current_app as app
 from flask_assets import Bundle
+import sass
 
+def custom_scss_filter(_in, out, **kw):
+    """Custom filter to compile scss files"""
+    sass.compile(filename=scss_file, output_style='compressed', include_paths=['client_bp/sass/'])
+    with open(out, 'r') as f:
+        return f.read()
 
 def compile_static_assets(assets):
     """Configure bundle building and minification of css and js"""
@@ -8,7 +14,7 @@ def compile_static_assets(assets):
     assets.debug = False
     home_style_bundle = Bundle(
         'client_bp/sass/*.scss',
-        filters='pyscss,cssmin',
+        filters=(custom_scss_filter, 'cssmin'),
         output='client_bp/style.css',
     )
     home_js_bundle = Bundle(

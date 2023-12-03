@@ -25,12 +25,25 @@ def load(IndicatorCode):
     count = sspi_bulk_data.insert_many(observations_list)
     return f"Inserted {count} observations into database."
 
-@dashboard_bp.route("/local/upload", methods=['GET'])
+@dashboard_bp.route("/load/sspi_metadata", methods=['GET'])
 @login_required
-def upload_local_data():
+def load_metadata():
     local_path = os.path.join(app.instance_path, "local")
     indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
     intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
-    sspi_main_data_v3 = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"))
-    sspi_main_data_v3 = build_main_data(
     return app.instance_path
+
+@dashboard_bp.route("/load/sspi_main_data_v3", methods=['GET'])
+@login_required
+def load_maindata():
+    local_path = os.path.join(app.instance_path, "local")
+    sspi_main_data_v3 = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"))
+    sspi_main_data_v3 = build_main_data(sspi_main_data_v3)
+
+def build_main_data(sspi_main_data_v3:DataFrame):
+    """
+    Utility function that builds the main data JSON list from the SSPIMainDataV3.csv file
+    """
+    sspi_main_data_v3 = sspi_main_data_v3.drop(columns=["Unnamed: 0"])
+    sspi_main_data_v3 = sspi_main_data_v3.to_json(orient="records")
+    return sspi_main_data_v3
