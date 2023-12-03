@@ -36,6 +36,7 @@ def load_metadata():
     print(indicator_details.head())
     print(intermediate_details.head())
     metadata = build_metadata(indicator_details, intermediate_details)
+    print(metadata)
     return local_path
 
 @load_bp.route("/load/sspi_main_data_v3", methods=['POST'])
@@ -63,6 +64,20 @@ def build_metadata(indicator_details, intermediate_details):
     metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
     ### Build metadata for IndicatorCodes
     indicator_codes = indicator_details["IndicatorCode"].unique()
-    print(type(indicator_codes))
     metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
+    ### Build metadata for IntermediateCodes
+    intermediate_codes = intermediate_details["IntermediateCode"].unique()
+    metadata.append({"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes})
+    ## Build metadata for IntermediateDetails
+    intermediate_details = json.loads(intermediate_details.to_json(orient="records"))
+    for intermediate_detail in intermediate_details:
+        intermediate_detail["DocumentType"] = "IntermediateDetail"
+        metadata.append(intermediate_detail)
+    ### Build metadata for IndicatorDetail
+    indicator_details = json.loads(indicator_details.to_json(orient="records"))
+    for indicator_detail in indicator_details:
+        if not indicator_detail["IntermediateCodes"] == "NA":
+            indicator_detail["DocumentType"] = "IndicatorDetail"
+            indicator_detail["IntermediateCodes"] = indicator_detail["IntermediateCodes"].split(",")
+            print(indicator_detail["IntermediateCodes"])
     return parse_json(metadata)
