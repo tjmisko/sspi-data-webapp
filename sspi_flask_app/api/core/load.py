@@ -70,8 +70,8 @@ def build_metadata(indicator_details, intermediate_details):
     intermediate_codes = intermediate_details["IntermediateCode"].unique()
     metadata.append({"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes})
     ## Build metadata for IntermediateDetails
-    intermediate_details = json.loads(intermediate_details.to_json(orient="records"))
-    for intermediate_detail in intermediate_details:
+    intermediate_details_list = json.loads(intermediate_details.to_json(orient="records"))
+    for intermediate_detail in intermediate_details_list:
         intermediate_detail["DocumentType"] = "IntermediateDetail"
         metadata.append(intermediate_detail)
     ### Build metadata for IndicatorDetail
@@ -81,4 +81,8 @@ def build_metadata(indicator_details, intermediate_details):
         print(type(indicator_detail["IntermediateCodes"]))
         if indicator_detail["IntermediateCodes"] is not None:
             intermediate_codes = re.findall(r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
+            indicator_detail["IntermediateCodes"] = intermediate_codes
+            intermediate_details = intermediate_details.loc[intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]].to_json(orient="records")
+            indicator_detail["IntermediateDetails"] = intermediate_details
+        metadata.append(indicator_detail)
     return parse_json(metadata)
