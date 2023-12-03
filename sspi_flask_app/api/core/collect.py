@@ -35,9 +35,9 @@ def biodiv():
 @collect_bp.route("/REDLST", methods=['GET'])
 @login_required
 def redlst():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("15.5.1", "REDLST")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 ######################
 ### Category: LAND ###
@@ -46,17 +46,17 @@ def redlst():
 @collect_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def watman():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("6.4.1", "WATMAN")
         yield from collectSDGIndicatorData("6.4.2", "WATMAN")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def stkhlm():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("12.4.1", "STKHLM")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 
 ####################
@@ -66,40 +66,40 @@ def stkhlm():
 @collect_bp.route("/NRGINT", methods=['GET'])
 @login_required
 def nrgint():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("7.3.1", "NRGINT")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/COALPW", methods=['GET'])
 @login_required
 def coalpw():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectIEAData("TESbySource", "COALPW")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/AIRPOL", methods=['GET'])
 @login_required
 def airpol():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("11.6.2", "AIRPOL")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def altnrg():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectIEAData("TESbySource", "ALTNRG")
-    return Response(collect_iterator(), mimetype='text/event-stream') 
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/GTRANS", methods=['GET'])
 # @login_required
 def gtrans():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
         yield from collectIEAData("CO2BySector", "GTRANS", "TCO2EQ-IEA")
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", "FUELPR")
-    return Response(collect_iterator(), mimetype='text/event-stream') 
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 ##################################################
 # Collection Routes for Pillar: MARKET STRUCTURE #
@@ -108,49 +108,50 @@ def gtrans():
 @collect_bp.route("/LFPART")
 @login_required
 def lfpart():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/GINIPT", methods=['GET'])
 def ginipt():
-    def collect_iterator():  
+    def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("SI.POV.GINI", "GINIPT")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/PRISON", methods=['GET'])
 @login_required
 def prison():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectPrisonStudiesData()
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 ####################
 # Category: TAXES #
 ####################
 @collect_bp.route("/TAXREV", methods=['GET'])
 def taxrev():
-    def collect_iterator():  
+    def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 ####################
 # Category: FINANCIAL SECTOR #
 ####################
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
-    def collect_iterator():  
+    def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT")                                        
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 
 @collect_bp.route("INTRNT", methods=['GET'])
 # @login_required
 def intrnt():
-    collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
-    collectSDGIndicatorData("17.6.1", "INTRNT", "QLMBPS")
-    return "success!"
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT", "QLMBPS")
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 
 
@@ -164,9 +165,9 @@ def intrnt():
 
 @collect_bp.route("/PUPTCH", methods=['GET'])
 def puptch():
-    def collect_iterator():  
+    def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 ####################
 # Category: HEALTHCARE #
@@ -175,9 +176,9 @@ def puptch():
 @collect_bp.route("/FAMPLN", methods=['GET'])
 @login_required
 def fampln():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("3.7.1", "FAMPLN")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 ####################
 # Category: GLOBAL ROLE #
@@ -186,6 +187,6 @@ def fampln():
 @collect_bp.route("/RDFUND", methods=['GET'])
 @login_required
 def rdfund():
-    def collect_iterator():
+    def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("9.5.1", "RDFUND")
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')

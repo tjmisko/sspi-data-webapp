@@ -3,7 +3,7 @@ import requests
 import time
 from pycountry import countries
 
-def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode="NA"):
+def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
     url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
     response = requests.get(url_source).json()
@@ -13,7 +13,7 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, IntermediateCode
         yield f"Sending Request for page {p} of {total_pages}\n"
         response = requests.get(new_url).json()
         data_list = response[1]
-        count = raw_insert_many(data_list, IndicatorCode, IntermediateCode=IntermediateCode)
+        count = raw_insert_many(data_list, IndicatorCode, **kwargs)
         yield f"Inserted {count} new observations into sspi_raw_api_data\n"
         time.sleep(0.5)
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
