@@ -1,6 +1,6 @@
 from ... import sspi_raw_api_data
 from flask import Blueprint, Response
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.worldbank import collectWorldBankdata
@@ -26,11 +26,11 @@ collect_bp = Blueprint("collect_bp", __name__,
 @collect_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def biodiv():
-    def collect_iterator():
-        yield from collectSDGIndicatorData("14.5.1", "BIODIV")
-        yield from collectSDGIndicatorData("15.1.2", "BIODIV")
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("14.5.1", "BIODIV", IntermediateCode="MARINE", **kwargs)
+        yield from collectSDGIndicatorData("15.1.2", "BIODIV", Metadata="TERRST,FRSHWT", **kwargs)
         yield "data: Collection complete"
-    return Response(collect_iterator(), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
 
 @collect_bp.route("/REDLST", methods=['GET'])
 @login_required
