@@ -1,6 +1,7 @@
+import os
 import json
 import pandas as pd
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app as app
 from flask_login import login_required
 
 from ..resources.utilities import parse_json
@@ -29,10 +30,13 @@ def load(IndicatorCode):
 @load_bp.route("/load/sspi_metadata", methods=['GET'])
 @login_required
 def load_metadata():
-    local_path = os.path.join(app.instance_path, "local")
+    local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
     intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
-    return app.instance_path
+    print(indicator_details.head())
+    print(intermediate_details.head())
+    metadata = build_metadata(indicator_details, intermediate_details)
+    return local_path
 
 @load_bp.route("/load/sspi_main_data_v3", methods=['GET'])
 @login_required
@@ -48,3 +52,6 @@ def build_main_data(sspi_main_data_v3:pd.DataFrame):
     sspi_main_data_v3 = sspi_main_data_v3.drop(columns=["Unnamed: 0"])
     sspi_main_data_v3 = sspi_main_data_v3.to_json(orient="records")
     return sspi_main_data_v3
+
+def build_metadata(indicator_details, intermediate_details):
+    return "Not Implemented"

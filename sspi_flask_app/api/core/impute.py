@@ -8,11 +8,8 @@ impute_bp = Blueprint("impute_bp", __name__,
                       static_folder="static",
                       url_prefix="/impute")
 
-###################################
-# IMPLEMENT IMPUTE FUNCITONS HERE #
-###################################
-
-# Impute should take csv data and process it into the proper form
-# It should also accept JSON data, properly formatted
-# We should be able to overwrite data from here 
-#   - How to handle overwriting existing data?
+@impute_bp.route("/IndicatorCode", methods=["POST"])
+def impute(IndicatorCode):
+    data = parse_json(request.get_json())
+    sspi_imputed_data.insert_many(data)
+    return f"Inserted {len(data)} documents into the database"
