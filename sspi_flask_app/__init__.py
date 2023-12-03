@@ -80,7 +80,7 @@ def init_app(Config):
         app.register_blueprint(api_bp)
         
         # Register Style Bundles and build optimized css, js
-        assets.init_app(app)
         if Config.FLASK_ENV == "development":
             compile_static_assets(assets)
+        assets.init_app(app)
         return app
