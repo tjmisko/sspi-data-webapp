@@ -7,8 +7,7 @@ import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="NA"):
-    collection_time = datetime.now()
+def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
@@ -18,7 +17,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="N
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        count = raw_insert_many(data_list, IndicatorCode, IntermediateCode)
+        count = raw_insert_many(data_list, IndicatorCode, **kwargs)
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
     yield f"Collection complete for SDG {SDGIndicatorCode}"
