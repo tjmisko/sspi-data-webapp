@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import pandas as pd
 from flask import Blueprint, request, current_app as app
@@ -76,8 +77,8 @@ def build_metadata(indicator_details, intermediate_details):
     ### Build metadata for IndicatorDetail
     indicator_details = json.loads(indicator_details.to_json(orient="records"))
     for indicator_detail in indicator_details:
-        if not indicator_detail["IntermediateCodes"] == "NA":
-            indicator_detail["DocumentType"] = "IndicatorDetail"
-            indicator_detail["IntermediateCodes"] = indicator_detail["IntermediateCodes"].split(",")
-            print(indicator_detail["IntermediateCodes"])
+        indicator_detail["DocumentType"] = "IndicatorDetail"
+        print(type(indicator_detail["IntermediateCodes"]))
+        if indicator_detail["IntermediateCodes"] is not None:
+            intermediate_codes = re.findall(r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
     return parse_json(metadata)

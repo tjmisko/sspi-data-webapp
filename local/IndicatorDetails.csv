@@ -1,4 +1,4 @@
-Pillar,PillarCode,Category,CategoryCode,Indicator,IndicatorCode,Policy,Description,UpdatedDescription,SourceOrganization,SourceOrganizationIndicatorCode,StaticDataURL,SourceOrganizationURL,SourceYear_sspi_main_data_v3,GoalpostString,Inverted,NumberOfIntermediates,LowerGoalpost,UpperGoalpost,Intermediates,IntermediateWeights,NeedsFootnote,Footnote
+Pillar,PillarCode,Category,CategoryCode,Indicator,IndicatorCode,Policy,Description,UpdatedDescription,SourceOrganization,SourceOrganizationIndicatorCode,StaticDataURL,SourceOrganizationURL,SourceYear_sspi_main_data_v3,GoalpostString,Inverted,NumberOfIntermediates,LowerGoalpost,UpperGoalpost,IntermediateCodes,IntermediateWeights,NeedsFootnote,Footnote
 Sustainability,SUS,Ecosystem,ECO,Biodiversity Protection,BIODIV,"Protection of 
 Biodiversity","Percentage of important sites for terrestrial, freshwater, and marine biodiversity that are covered by protected areas, by ecosystem type.",,UN SDG,"[""14.5.1"", ""15.1.2""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2018,"(0, 100) 
 (0, 100) 
