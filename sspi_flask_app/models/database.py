@@ -28,7 +28,7 @@ class MongoWrapper:
     def delete_many(self, query):
         return self._mongo_database.delete_many(query)
 
-    def count_many(self, query):
+    def count_documents(self, query):
         return self._mongo_database.count_documents(query)
     
     def tabulate_ids(self):

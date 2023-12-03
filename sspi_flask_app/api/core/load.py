@@ -38,7 +38,7 @@ def load_metadata():
     metadata = build_metadata(indicator_details, intermediate_details)
     return local_path
 
-@load_bp.route("/load/sspi_main_data_v3", methods=['GET'])
+@load_bp.route("/load/sspi_main_data_v3", methods=['POST'])
 @login_required
 def load_maindata():
     local_path = os.path.join(app.instance_path, "local")
