@@ -35,12 +35,11 @@ def fetch_raw_data(IndicatorCode):
     """
     Utility function that handles querying the database
     """
-    mongoQuery = {"collection-info.IndicatorCode": IndicatorCode}
-    raw_data = parse_json(sspi_raw_api_data.find(mongoQuery))
-    return raw_data
+    mongoQuery = {"IndicatorCode": IndicatorCode}
+    return sspi_raw_api_data.find(mongoQuery)
 
 def raw_data_available(IndicatorCode):
     """
     Check if indicator is in database
     """
-    return bool(sspi_raw_api_data.find_one({"collection-info.IndicatorCode": IndicatorCode}))
+    return bool(sspi_raw_api_data.find_one({"IndicatorCode": IndicatorCode}))

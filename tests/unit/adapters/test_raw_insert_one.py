@@ -16,7 +16,9 @@ def test_db():
 
 def test_kwargs():
     raw_insert_one({"a":1, "b":2},"TESTDB",Username="anything", other="somethingelse", test=True)
-    doc = sspi_raw_api_data.find({"IndicatorCode": "TESTDB"})
+    doc = sspi_raw_api_data.find({"IndicatorCode": "TESTDB"})[0]
     assert doc["other"]=="somethingelse"
     sspi_raw_api_data.delete_many({"test": True})
     assert sspi_raw_api_data.find({"IndicatorCode": "TESTDB"}) == []
+
+    
