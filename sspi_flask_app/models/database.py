@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-from bson import ObjectId
+from bson import ObjectId, json_util
 from .errors import InvalidDocumentFormatError
 
 class MongoWrapper:
@@ -12,7 +12,7 @@ class MongoWrapper:
         return self._mongo_database.find_many(query)
     
     def find(self, query):
-        return self._mongo_database.find(query)
+        return json.loads(json_util.dumps(self._mongo_database.find(query)))
 
     def insert_one(self, document):
         self.validate_document_format(document)
@@ -190,7 +190,7 @@ class SSPIRawAPIData(MongoWrapper):
         self.validate_indicator_code(document, document_number)
         self.validate_raw(document, document_number)
         self.validate_collected_at(document, document_number)
-        self.validate_collected_by(document, document_number)
+        self.validate_username(document, document_number)
 
     def validate_collected_at(self, document: dict, document_number:int=None):
         # Validate CollectedAt format
@@ -199,12 +199,12 @@ class SSPIRawAPIData(MongoWrapper):
         if not type(document["CollectedAt"]) is datetime:
             raise InvalidDocumentFormatError(f"'CollectedAt' must be a datetime (document {document_number})")
     
-    def validate_collected_by(self, document: dict, document_number:int=None):
-        # Validate CollectedBy format
-        if not "CollectedBy" in document.keys():
-            raise InvalidDocumentFormatError(f"'CollectedBy' is a required argument (document {document_number})")
-        if not type(document["CollectedBy"]) is datetime:
-            raise InvalidDocumentFormatError(f"'CollectedBy' must be a datetime (document {document_number})")
+    def validate_username(self, document: dict, document_number:int=None):
+        # Validate Username format
+        if not "Username" in document.keys():
+            raise InvalidDocumentFormatError(f"'Username' is a required argument (document {document_number})")
+        if not type(document["Username"]) is str:
+            raise InvalidDocumentFormatError(f"'Username' must be a str (document {document_number})")
     
     def validate_raw(self, document: dict, document_number:int=0):
         # Validate Raw format

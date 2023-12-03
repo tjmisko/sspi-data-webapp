@@ -15,10 +15,10 @@ def raw_insert_one(observation, IndicatorCode, **kwargs):
     document = {
         "IndicatorCode": IndicatorCode,
         "Raw": observation, 
-        "CollectAt": datetime.now()
+        "CollectedAt": datetime.now()
     }
     document.update(kwargs)
-    sspi_raw_api_data.insert_one()
+    sspi_raw_api_data.insert_one(document)
     return 1
     
 def raw_insert_many(observation_list, IndicatorCode, **kwargs):
