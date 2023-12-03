@@ -54,4 +54,15 @@ def build_main_data(sspi_main_data_v3:pd.DataFrame):
     return sspi_main_data_v3
 
 def build_metadata(indicator_details, intermediate_details):
-    return "Not Implemented"
+    metadata = []
+    ### Build metadata for PillarCodes
+    pillar_codes = indicator_details["PillarCode"].unique()
+    metadata.append({"DocumentType": "PillarCodes", "PillarCodes": pillar_codes})
+    ### Build metadata for CategoryCodes
+    category_codes = indicator_details["CategoryCode"].unique()
+    metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
+    ### Build metadata for IndicatorCodes
+    indicator_codes = indicator_details["IndicatorCode"].unique()
+    print(type(indicator_codes))
+    metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
+    return parse_json(metadata)
