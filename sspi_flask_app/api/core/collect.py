@@ -188,5 +188,5 @@ def fampln():
 @login_required
 def rdfund():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("9.5.1", "RDFUND")
-    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+        yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
