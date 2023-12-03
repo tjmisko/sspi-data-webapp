@@ -145,6 +145,14 @@ def fdepth():
     return Response(collect_iterator(), mimetype='text/event-stream')
 
 
+@collect_bp.route("INTRNT", methods=['GET'])
+# @login_required
+def intrnt():
+    collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
+    collectSDGIndicatorData("17.6.1", "INTRNT", "QLMBPS")
+    return "success!"
+
+
 
 ##################################################
 # Collection Routes for Pillar: PUBLIC GOODS #

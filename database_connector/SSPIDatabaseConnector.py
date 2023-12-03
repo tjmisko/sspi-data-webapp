@@ -33,6 +33,7 @@ class SSPIDatabaseConnector:
     def load_data(self, dataframe: pd.DataFrame, IndicatorCode):
         validated_data = self.validate_dataframe(dataframe)
         observations_list = validated_data.to_json(orient="records")
+        print(observations_list)
         headers = {'Authorization': f'Bearer {self.token}'}
         return self.session.post(f"http://127.0.0.1:5000/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list, verify=False)
     
