@@ -247,12 +247,11 @@ class SSPIMainDataV3(MongoWrapper):
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
         sspi_main_data_wide = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"), skiprows=1)
         sspi_main_data_documents = self.process_sspi_main_data(sspi_main_data_wide)
-        return sspi_main_data_documents
-        # count = self.insert_many(sspi_main_data)
-        # self.drop_duplicates()
-        # print(f"Successfully loaded {count} documents into {self.name}")
+        count = self.insert_many(sspi_main_data_documents)
+        self.drop_duplicates()
+        print(f"Successfully loaded {count} documents into {self.name}")
 
-    def process_sspi_main_data(self, sspi_main_data_wide:pd.DataFrame):
+    def process_sspi_main_data(self, sspi_main_data_wide:pd.DataFrame) -> list[dict]:
         """
         Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
         """
@@ -263,13 +262,13 @@ class SSPIMainDataV3(MongoWrapper):
         sspi_main_data_long.dropna(subset=["IndicatorCode"], inplace=True)
         sspi_main_data_long["VariableType"] = sspi_main_data_long["VariableType"].map(lambda s: s.title())
         sspi_main_data_documents = sspi_main_data_long.pivot(index=["CountryCode", "IndicatorCode"], columns="VariableType", values="Value").reset_index()
-        sspi_main_data_documents["YearString"] = sspi_main_data_documents["Year"].astype(str)
         sspi_main_data_documents["Year"] = sspi_main_data_documents["Year"].astype(str).map(lambda s: re.match(r"[0-9]{4}", s)).map(lambda m: m.group(0) if m else "0").astype(int)
-        print(sspi_main_data_documents[sspi_main_data_documents["Year"] == 0])
+        sspi_main_data_documents = sspi_main_data_documents[sspi_main_data_documents.Year > 0]
         sspi_main_data_documents["Value"] = sspi_main_data_documents["Raw"].astype(float)
         sspi_main_data_documents["Score"] = sspi_main_data_documents["Score"].astype(float)
         sspi_main_data_documents.drop(columns=["Raw"], inplace=True)
-        return sspi_main_data_documents
+        document_list = json.loads(str(sspi_main_data_documents.to_json(orient="records")))
+        return document_list
     
 class SSPIMetadata(MongoWrapper):
     

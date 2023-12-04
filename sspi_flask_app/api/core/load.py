@@ -11,8 +11,8 @@ load_bp = Blueprint("load_bp", __name__,
 @load_bp.route("/load/sspi_main_data_v3", methods=['GET'])
 @login_required
 def load_maindata():
-    data = sspi_main_data_v3.load()
-    return jsonify(json.loads(str(data.to_json(orient="records"))))
+    count = sspi_main_data_v3.load()
+    return f"Inserted {count} metadata documents into database."
 
 @load_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
