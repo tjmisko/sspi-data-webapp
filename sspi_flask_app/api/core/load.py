@@ -28,11 +28,8 @@ def load_metadata():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
     intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
-    print(indicator_details.head())
-    print(intermediate_details.head())
     metadata = build_metadata(indicator_details, intermediate_details)
-    print(metadata)
-    return local_path
+    return jsonify(metadata)
 
 @load_bp.route("/load/sspi_main_data_v3", methods=['POST'])
 @login_required
@@ -49,34 +46,51 @@ def build_main_data(sspi_main_data_v3:pd.DataFrame):
     sspi_main_data_v3 = sspi_main_data_v3.drop(columns=["Unnamed: 0"])
     return sspi_main_data_v3.to_json(orient="records")
 
-def build_metadata(indicator_details, intermediate_details):
+def build_metadata(indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame) -> list:
+    """
+    Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
+    """
     metadata = []
-    ### Build metadata for PillarCodes
+    metadata.append(build_pillar_codes(indicator_details))
+    metadata.append(build_category_codes(indicator_details))
+    metadata.append(build_indicator_codes(indicator_details))
+    metadata.append(build_intermediate_codes(intermediate_details))
+    metadata.extend(build_intermediate_details(intermediate_details))
+    metadata.extend(build_indicator_details(indicator_details, intermediate_details))
+    return metadata
+
+def build_pillar_codes(indicator_details:pd.DataFrame):
     pillar_codes = indicator_details["PillarCode"].unique()
-    metadata.append({"DocumentType": "PillarCodes", "PillarCodes": pillar_codes})
-    ### Build metadata for CategoryCodes
+    return {"DocumentType": "PillarCodes", "PillarCodes": pillar_codes}
+
+def build_category_codes(indicator_details:pd.DataFrame):
     category_codes = indicator_details["CategoryCode"].unique()
-    metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
-    ### Build metadata for IndicatorCodes
+    return {"DocumentType": "CategoryCodes", "CategoryCodes": category_codes}
+
+def build_indicator_codes(indicator_details:pd.DataFrame):
     indicator_codes = indicator_details["IndicatorCode"].unique()
-    metadata.append({"DocumentType": "CategoryCodes", "IndicatorCode": indicator_cdoes})
-    ### Build metadata for IntermediateCodes
+    return {"DocumentType": "CategoryCodes", "IndicatorCode": indicator_codes}
+
+def build_intermediate_codes(intermediate_details:pd.DataFrame):
     intermediate_codes = intermediate_details["IntermediateCode"].unique()
-    metadata.append({"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes})
-    ## Build metadata for IntermediateDetails
-    intermediate_details_list = json.loads(intermediate_details.to_json(orient="records"))
-    for intermediate_detail in intermediate_details_list:
+    return {"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes}
+
+def build_intermediate_details(intermediate_details:pd.DataFrame):
+    intermediate_details = json.loads(str(intermediate_details.to_json(orient="records")))
+    for intermediate_detail in intermediate_details:
         intermediate_detail["DocumentType"] = "IntermediateDetail"
-        metadata.append(intermediate_detail)
-    ### Build metadata for IndicatorDetail
-    indicator_details = json.loads(indicator_details.to_json(orient="records"))
-    for indicator_detail in indicator_details:
+    return intermediate_details
+
+def build_indicator_details(indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame):
+    json_string = str(indicator_details.to_json(orient="records"))
+    indicator_details_list = json.loads(json_string)
+    for indicator_detail in indicator_details_list:
         indicator_detail["DocumentType"] = "IndicatorDetail"
         # Link intermediate_details to their corresponding indicator_detail
         if indicator_detail["IntermediateCodes"] is not None:
             intermediate_codes = re.findall(r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
             indicator_detail["IntermediateCodes"] = intermediate_codes
-            intermediate_details = intermediate_details.loc[intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]].to_json(orient="records")
-            indicator_detail["IntermediateDetails"] = intermediate_details
-        metadata.append(indicator_detail)
-    return jsonify(metadata)
+            filtered_intermediate_details = intermediate_details.loc[intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]]
+            filtered_intermediate_details_list = json.loads(str(filtered_intermediate_details.to_json(orient="records")))
+            indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
+    return indicator_details_list
