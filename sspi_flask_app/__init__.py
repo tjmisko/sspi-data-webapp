@@ -7,11 +7,10 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
-from sspi_flask_app.models.database import MongoWrapper
+from sspi_flask_app.models.database import MongoWrapper, SSPIRawAPIData, SSPIMetadata
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
-
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
 limiter = Limiter(
@@ -23,13 +22,12 @@ client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 
 sspi_main_data_v3 = MongoWrapper(sspidb.sspi_main_data_v3)
-sspi_raw_api_data = MongoWrapper(sspidb.sspi_raw_api_data)
+sspi_raw_api_data = SSPIRawAPIData(sspidb.sspi_raw_api_data)
 sspi_bulk_data = MongoWrapper(sspidb.sspi_bulk_data)
 sspi_clean_api_data = MongoWrapper(sspidb.sspi_clean_api_data)
 sspi_imputed_data = MongoWrapper(sspidb.sspi_imputed_data)
-sspi_bulk_data = MongoWrapper(sspidb.sspi_bulk_data)
 sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
-sspi_metadata = MongoWrapper(sspidb.sspi_metadata)
+sspi_metadata = SSPIMetadata(sspidb.sspi_metadata)
 sspi_dynamic_data = MongoWrapper(sspidb.sspi_dynamic_data)
 
 assets = Environment()
@@ -61,6 +59,7 @@ def init_app(Config):
         from .api.core.impute import impute_bp
         from .api.core.load import load_bp
         from .api.core.query import query_bp
+        from .api.core.save import save_bp
         from .api.core.test import test_bp
 
         # Register database
@@ -76,6 +75,7 @@ def init_app(Config):
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
         api_bp.register_blueprint(query_bp)
+        api_bp.register_blueprint(save_bp)
         api_bp.register_blueprint(test_bp)
         app.register_blueprint(api_bp)
         
