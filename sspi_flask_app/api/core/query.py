@@ -12,16 +12,11 @@ query_bp = Blueprint("query_bp", __name__,
                      url_prefix="/query")
 
 @query_bp.route("/<database_string>")
-def query_full_database(database_string):
-    try:
-        query_params = get_query_params(request)
-        print(query_params)
-    except InvalidQueryError as e:
-        return f"{e}"
+def query_database(database_string):
+    query_params = get_query_params(request)
+    print(query_params)
     database = lookup_database(database_string)
-    if database is None:
-        return "database {} not found".format(database)
-    return jsonify(parse_json(database.find(query_params, {"_id": 0})))
+    return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
 
 
 def get_query_params(request, requires_database=False):

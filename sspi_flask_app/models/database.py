@@ -8,33 +8,30 @@ class MongoWrapper:
         self._mongo_database = mongo_database
         self.name = mongo_database.name
     
-    def find_one(self, query):
+    def find_one(self, query:dict) -> dict:
         return self._mongo_database.find_one(query)
-    
-    def find(self, query):
-        return json.loads(json_util.dumps(self._mongo_database.find(query)))
 
-    def find(self, query, options={}):
+    def find(self, query:dict, options:dict={}) -> list:
         return json.loads(json_util.dumps(self._mongo_database.find(query, options)))
 
-    def insert_one(self, document):
+    def insert_one(self, document:dict):
         self.validate_document_format(document)
         return self._mongo_database.insert_one(document)
     
-    def insert_many(self, documents):
+    def insert_many(self, documents:list):
         self.validate_documents_format(documents)
-        return self._mongo_database.insert_many(documents, ordered=False)
+        return self._mongo_database.insert_many(documents)
     
-    def delete_one(self, query):
-        return self._mongo_database.delete_one(query)
+    def delete_one(self, query:dict) -> int:
+        return self._mongo_database.delete_one(query).deleted_count
     
-    def delete_many(self, query):
-        return self._mongo_database.delete_many(query)
+    def delete_many(self, query:dict) -> int:
+        return self._mongo_database.delete_many(query).deleted_count
 
-    def count_documents(self, query):
+    def count_documents(self, query:dict) -> int:
         return self._mongo_database.count_documents(query)
     
-    def tabulate_ids(self):
+    def tabulate_ids(self) -> list:
         """
         Returns a list of documents with counts of the number of times a document with
         duplicate identifiers appears.
@@ -60,8 +57,7 @@ class MongoWrapper:
         """
         tab_ids= self.tabulate_ids()
         id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in tab_ids],[])]
-        count = self._mongo_database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
-        return count
+        return self._mongo_database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
 
     def sample(self, n: int, query:dict={}):
         """
@@ -164,7 +160,7 @@ class MongoWrapper:
 
 class SSPIRawAPIData(MongoWrapper):
     
-    def validate_document_format(self, document: dict, document_number:int=None):
+    def validate_document_format(self, document: dict, document_number:int=0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the valid
 
@@ -183,7 +179,7 @@ class SSPIRawAPIData(MongoWrapper):
         self.validate_collected_at(document, document_number)
         self.validate_username(document, document_number)
 
-    def tabulate_ids(self, documents: list):
+    def tabulate_ids(self):
         tab_ids= self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
@@ -196,16 +192,14 @@ class SSPIRawAPIData(MongoWrapper):
         ])
         return json.loads(json_util.dumps(tab_ids))
 
-    def validate_document_format(self, document: dict, document_number:int=0):
-
-    def validate_collected_at(self, document: dict, document_number:int=None):
+    def validate_collected_at(self, document: dict, document_number:int=0):
         # Validate CollectedAt format
         if not "CollectedAt" in document.keys():
             raise InvalidDocumentFormatError(f"'CollectedAt' is a required argument (document {document_number})")
         if not type(document["CollectedAt"]) is datetime:
             raise InvalidDocumentFormatError(f"'CollectedAt' must be a datetime (document {document_number})")
     
-    def validate_username(self, document: dict, document_number:int=None):
+    def validate_username(self, document: dict, document_number:int=0):
         # Validate Username format
         if not "Username" in document.keys():
             raise InvalidDocumentFormatError(f"'Username' is a required argument (document {document_number})")
@@ -221,7 +215,7 @@ class SSPIRawAPIData(MongoWrapper):
 
 class SSPIMetadata(MongoWrapper):
     
-    def validate_document_format(self, document: dict, document_number:int=None):
+    def validate_document_format(self, document: dict, document_number:int=0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the valid
 
@@ -236,14 +230,14 @@ class SSPIMetadata(MongoWrapper):
         self.validate_document_type(document, document_number)
         self.validate_metadata(document, document_number)
     
-    def validate_document_type(self, document: dict, document_number:int=None):
+    def validate_document_type(self, document: dict, document_number:int=0):
         # Validate DocumentType format
         if not "DocumentType" in document.keys():
             raise InvalidDocumentFormatError(f"'DocumentType' is a required argument (document {document_number})")
         if not type(document["DocumentType"]) is str:
             raise InvalidDocumentFormatError(f"'DocumentType' must be a string (document {document_number})")
     
-    def validate_metadata(self, document: dict, document_number:int=None):
+    def validate_metadata(self, document: dict, document_number:int=0):
         # Validate Metadata format
         if not "Metadata" in document.keys():
             raise InvalidDocumentFormatError(f"'Metadata' is a required argument (document {document_number})")

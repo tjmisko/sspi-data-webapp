@@ -124,7 +124,26 @@ def test_insert_many(test_documents, mongo_wrapper):
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
 
 def test_tabulate_ids(test_documents, mongo_wrapper):
-    mongo_wrapper.insert_many([v for k, v in test_documents.values() if type(k) is str])
+    mongo_wrapper.insert_many([v for k, v in test_documents.items() if type(k) is str])
     table = mongo_wrapper.tabulate_ids()
-     hj
+    assert type(table) is list
+    assert len(table) == 3
+    assert all([type(document) is dict for document in table])
+    for document in table:
+        if document["_id"]["IndicatorCode"] == "BIODIV" or document["_id"]["IndicatorCode"] == "REDLST":
+            assert document["count"] == 1
+        else:
+            assert document["count"] == 2
+
+def test_drop_duplicates(test_documents, mongo_wrapper):
+    mongo_wrapper.insert_many([v for k, v in test_documents.items() if type(k) is str])
+    mongo_wrapper.drop_duplicates()
+    assert mongo_wrapper.count_documents({}) == 3
+    document_list = mongo_wrapper.find({})
+    assert type(document_list) is list
+    assert len(document_list) == 3
+    assert all([type(document) is dict for document in document_list])
+    assert len(mongo_wrapper.find({"IndicatorCode": "BIODIV"})) == 1
+    assert len(mongo_wrapper.find({"IndicatorCode": "REDLST"})) == 1
+    assert len(mongo_wrapper.find({"IndicatorCode": "NITROG"})) == 1
 
