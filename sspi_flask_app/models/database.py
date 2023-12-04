@@ -9,10 +9,13 @@ class MongoWrapper:
         self.name = mongo_database.name
     
     def find_one(self, query):
-        return self._mongo_database.find_many(query)
+        return self._mongo_database.find_one(query)
     
     def find(self, query):
         return json.loads(json_util.dumps(self._mongo_database.find(query)))
+
+    def find(self, query, options={}):
+        return json.loads(json_util.dumps(self._mongo_database.find(query, options)))
 
     def insert_one(self, document):
         self.validate_document_format(document)

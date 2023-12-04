@@ -152,6 +152,7 @@ def intrnt():
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
         yield from collectSDGIndicatorData("17.6.1", "INTRNT", "QLMBPS")
     return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 
@@ -166,8 +167,8 @@ def intrnt():
 @collect_bp.route("/PUPTCH", methods=['GET'])
 def puptch():
     def collect_iterator(**kwargs):  
-        yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH")
-    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+        yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ####################
 # Category: HEALTHCARE #
@@ -177,8 +178,8 @@ def puptch():
 @login_required
 def fampln():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("3.7.1", "FAMPLN")
-    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+        yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ####################
 # Category: GLOBAL ROLE #
@@ -188,5 +189,5 @@ def fampln():
 @login_required
 def rdfund():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("9.5.1", "RDFUND")
-    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+        yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
