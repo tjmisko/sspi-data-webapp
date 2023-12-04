@@ -362,3 +362,18 @@ class SSPIMetadata(MongoWrapper):
         Return a list of documents containg intermediate details
         """
         return self.find({"DocumentType": "IntermediateDetail"})
+
+class SSPIMainDataV3(MongoWrapper):
+
+    def load(self):
+        """
+        Loads the metadata into the database
+        """
+        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+        sspi_main_data_wide = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"), skiprows=0)
+        pd.melt(sspi_main_data_wide, id_vars=["Country Code", "Country"], var_name="Variable", value_name="Value")
+        return sspi_main_data_wide
+        # count = self.insert_many(sspi_main_data)
+        # self.drop_duplicates()
+        # print(f"Successfully loaded {count} documents into {self.name}")
+    
