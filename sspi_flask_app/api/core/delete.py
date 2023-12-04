@@ -52,13 +52,8 @@ def delete_indicator_data():
     if delete_indicator_form.validate_on_submit():
         IndicatorCode = delete_indicator_form.indicator_code.data
         database = lookup_database(delete_indicator_form.database.data)
-        if database is None:
-            return "Database not found"
-        elif database is sspi_raw_api_data:
-            count = sspi_raw_api_data.delete_many({"collection-info.IndicatorCode": IndicatorCode}).deleted_count
-        else:
-            count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
-    flash(f"Deleted {count} observations of Indicator {IndicatorCode} from database {database.name}")
+        count = database.delete_many({"IndicatorCode": IndicatorCode}).deleted_count
+        flash(f"Deleted {count} observations of Indicator {IndicatorCode} from database {database.name}")
     return redirect(url_for('.get_delete_page'))
 
 @delete_bp.route("/duplicates", methods=["POST"])
@@ -67,33 +62,7 @@ def delete_duplicates():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     database = lookup_database(request.form.get("database"))
     if database is not None and remove_duplicates_form.validate_on_submit():
-        if database is sspi_raw_api_data:
-            agg = database.aggregate([
-                {"$group": {
-                    "_id": {
-                        "IndicatorCode": {"$getField": {"field": "IndicatorCode", "input": "collection-info"}},
-                        "observation": "$observation"
-                    },
-                    "count": {"$sum": 1},
-                    "ids": {"$push": "$_id"}
-                }},
-            ])
-        else:
-            agg = database.aggregate([
-                {"$group": {
-                    "_id": {
-                        "IndicatorCode": "$IndicatorCode",
-                        "YEAR": "$YEAR",
-                        "CountryCode": "$CountryCode"
-                    },
-                    "count": {"$sum": 1},
-                    "ids": {"$push": "$_id"}
-                }},
-            ])
-        agg = parse_json(agg)
-        id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in agg],[])]
-        print(id_delete_list)
-        count = database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
+        database.remove_duplicates
         flash("Found and deleted {0} duplicate observations from database {1}".format(count, database.name))
     return redirect(url_for(".get_delete_page"))
 
@@ -103,11 +72,7 @@ def remove_loose_data():
     remove_loose_data_form = RemoveLooseDataForm(request.form)
     database = lookup_database(request.form.get("database"))
     if database is not None and remove_loose_data_form.validate_on_submit():
-        if database is sspi_raw_api_data:
-            MongoQuery = {"collection-info.IndicatorCode": {"$nin": indicator_codes()}}
-        else:
-            MongoQuery = {"IndicatorCode": {"$nin": indicator_codes()}}
-        # count = database.delete_many(MongoQuery).deleted_count
+        MongoQuery = {"IndicatorCode": {"$nin": indicator_codes()}}
         count = database.delete_many(MongoQuery).deleted_count
         flash(f"Deleted {count} observations from database {database.name}")
     return redirect(url_for(".get_delete_page"))

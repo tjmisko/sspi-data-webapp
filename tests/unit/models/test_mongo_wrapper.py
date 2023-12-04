@@ -36,7 +36,8 @@ def test_documents():
         8: {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": "25", "CollectedAt": "2020-1-1", "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "a": {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "b": {"IndicatorCode": "REDLST", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25.2, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
-        "c": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
+        "c": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
+        "d": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
     }
     yield test_documents
 
@@ -121,3 +122,9 @@ def test_insert_many(test_documents, mongo_wrapper):
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
     mongo_wrapper.insert_many([test_documents["c"]])
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
+
+def test_tabulate_ids(test_documents, mongo_wrapper):
+    mongo_wrapper.insert_many([v for k, v in test_documents.values() if type(k) is str])
+    table = mongo_wrapper.tabulate_ids()
+     hj
+

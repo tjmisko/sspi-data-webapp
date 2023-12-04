@@ -52,7 +52,7 @@ class MongoWrapper:
                 "ids": {"$push": "$_id"}
             }},
         ])
-        return json.loads(tab_ids)
+        return json.loads(json_util.dumps(tab_ids))
 
     def drop_duplicates(self):
         """
@@ -178,6 +178,10 @@ class SSPIRawAPIData(MongoWrapper):
         The fields IndicatorCode, Raw, and CollectedAt are required.
         Additional fields are allowed, but not required.
         """
+        self.validate_indicator_code(document, document_number)
+        self.validate_raw(document, document_number)
+        self.validate_collected_at(document, document_number)
+        self.validate_username(document, document_number)
 
     def tabulate_ids(self, documents: list):
         tab_ids= self._mongo_database.aggregate([
@@ -190,13 +194,9 @@ class SSPIRawAPIData(MongoWrapper):
                 "ids": {"$push": "$_id"}
             }},
         ])
-        return json.loads(tab_ids)
+        return json.loads(json_util.dumps(tab_ids))
 
     def validate_document_format(self, document: dict, document_number:int=0):
-        self.validate_indicator_code(document, document_number)
-        self.validate_raw(document, document_number)
-        self.validate_collected_at(document, document_number)
-        self.validate_username(document, document_number)
 
     def validate_collected_at(self, document: dict, document_number:int=None):
         # Validate CollectedAt format
