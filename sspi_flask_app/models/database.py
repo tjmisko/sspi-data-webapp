@@ -1,3 +1,5 @@
+import re
+import pandas as pd
 from datetime import datetime
 import json
 from bson import ObjectId, json_util
@@ -14,13 +16,14 @@ class MongoWrapper:
     def find(self, query:dict, options:dict={}) -> list:
         return json.loads(json_util.dumps(self._mongo_database.find(query, options)))
 
-    def insert_one(self, document:dict):
+    def insert_one(self, document:dict) -> int:
         self.validate_document_format(document)
-        return self._mongo_database.insert_one(document)
+        self._mongo_database.insert_one(document)
+        return 1
     
-    def insert_many(self, documents:list):
+    def insert_many(self, documents:list) -> int:
         self.validate_documents_format(documents)
-        return self._mongo_database.insert_many(documents)
+        return len(self._mongo_database.insert_many(documents).inserted_ids)
     
     def delete_one(self, query:dict) -> int:
         return self._mongo_database.delete_one(query).deleted_count
@@ -230,6 +233,19 @@ class SSPIMetadata(MongoWrapper):
         self.validate_document_type(document, document_number)
         self.validate_metadata(document, document_number)
     
+    def tabulate_ids(self):
+        tab_ids= self._mongo_database.aggregate([
+            {"$group": {
+                "_id": {
+                    "DocumentType": "$DocumentType",
+                    "Metadata": "$Metadata"
+                },
+                "count": {"$sum": 1},
+                "ids": {"$push": "$_id"}
+            }},
+        ])
+        return json.loads(json_util.dumps(tab_ids))
+    
     def validate_document_type(self, document: dict, document_number:int=0):
         # Validate DocumentType format
         if not "DocumentType" in document.keys():
@@ -243,3 +259,51 @@ class SSPIMetadata(MongoWrapper):
             raise InvalidDocumentFormatError(f"'Metadata' is a required argument (document {document_number})")
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Metadata' must be a string, dict, int, float, or list (document {document_number})")
+    
+    def build_metadata(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame) -> list:
+        """
+        Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
+        """
+        metadata = []
+        metadata.append(self.build_pillar_codes(indicator_details))
+        metadata.append(self.build_category_codes(indicator_details))
+        metadata.append(self.build_indicator_codes(indicator_details))
+        metadata.append(self.build_intermediate_codes(intermediate_details))
+        metadata.extend(self.build_intermediate_details(intermediate_details))
+        metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
+        assert type(metadata) == list
+        return metadata
+
+    def build_pillar_codes(self, indicator_details:pd.DataFrame) -> dict:
+        pillar_codes = indicator_details["PillarCode"].unique().tolist()
+        return {"DocumentType": "PillarCodes", "Metadata": pillar_codes}
+
+    def build_category_codes(self, indicator_details:pd.DataFrame) -> dict:
+        category_codes = indicator_details["CategoryCode"].unique().tolist()
+        return {"DocumentType": "CategoryCodes", "Metadata": category_codes}
+
+    def build_indicator_codes(self, indicator_details:pd.DataFrame) -> dict:
+        indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
+        return {"DocumentType": "CategoryCodes", "Metadata": indicator_codes}
+
+    def build_intermediate_codes(self, intermediate_details:pd.DataFrame) -> dict:
+        intermediate_codes = intermediate_details["IntermediateCode"].unique().tolist()
+        return {"DocumentType": "IntermediateCodes", "Metadata": intermediate_codes}
+
+    def build_intermediate_details(self, intermediate_details:pd.DataFrame) -> list[dict]:
+        intermediate_details_list = json.loads(str(intermediate_details.to_json(orient="records")))
+        return [{"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail} for intermediate_detail in intermediate_details_list]
+
+    def build_indicator_details(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame):
+        json_string = str(indicator_details.to_json(orient="records"))
+        indicator_details_list = json.loads(json_string)
+        for indicator_detail in indicator_details_list:
+            indicator_detail["DocumentType"] = "IndicatorDetail"
+            # Link intermediate_details to their corresponding indicator_detail
+            if indicator_detail["IntermediateCodes"] is not None:
+                intermediate_codes = re.findall(r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
+                indicator_detail["IntermediateCodes"] = intermediate_codes
+                filtered_intermediate_details = intermediate_details.loc[intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]]
+                filtered_intermediate_details_list = json.loads(str(filtered_intermediate_details.to_json(orient="records")))
+                indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
+        return [{"DocumentType": "IndicatorDetail", "Metadata": indicator_detail} for indicator_detail in indicator_details_list]

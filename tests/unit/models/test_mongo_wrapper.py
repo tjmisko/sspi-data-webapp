@@ -96,13 +96,16 @@ def test_insert_one(test_documents, mongo_wrapper):
         with pytest.raises(InvalidDocumentFormatError) as exception_info:
             mongo_wrapper.insert_one(test_documents[1])
         assert "document 0" in str(exception_info.value)
-    mongo_wrapper.insert_one(test_documents["a"])
+    count = mongo_wrapper.insert_one(test_documents["a"])
+    assert count == 1
     assert mongo_wrapper._mongo_database.count_documents({}) == 1
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents["a"]
-    mongo_wrapper.insert_one(test_documents["b"])
+    count = mongo_wrapper.insert_one(test_documents["b"])
+    assert count == 1
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents["b"]
-    mongo_wrapper.insert_one(test_documents["c"])
+    count = mongo_wrapper.insert_one(test_documents["c"])
+    assert count == 1
     assert mongo_wrapper._mongo_database.count_documents({}) == 3
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
 
@@ -111,7 +114,8 @@ def test_insert_many(test_documents, mongo_wrapper):
         mongo_wrapper.insert_many(list(test_documents.values()))
     assert "CountryCode" in str(exception_info.value)
     assert "document 0" in str(exception_info.value)
-    mongo_wrapper.insert_many([test_documents["a"], test_documents["b"]])
+    count = mongo_wrapper.insert_many([test_documents["a"], test_documents["b"]])
+    assert count == 2
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents["a"]
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents["b"]
@@ -120,7 +124,8 @@ def test_insert_many(test_documents, mongo_wrapper):
     assert "Type" in str(exception_info.value)
     assert "dict" in str(exception_info.value)
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
-    mongo_wrapper.insert_many([test_documents["c"]])
+    count = mongo_wrapper.insert_many([test_documents["c"]])
+    assert count == 1
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
 
 def test_tabulate_ids(test_documents, mongo_wrapper):

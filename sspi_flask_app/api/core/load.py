@@ -14,7 +14,7 @@ load_bp = Blueprint("load_bp", __name__,
 
 @load_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
-def load(IndicatorCode):
+def load():
     """
     Utility function that handles loading data from the API into the database
     """
@@ -29,8 +29,9 @@ def load_metadata():
     indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
     intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
     metadata = build_metadata(indicator_details, intermediate_details)
-    sspi_metadata.insert_many(metadata)
-    return jsonify(json.loads(json.dumps(metadata)))
+    count = sspi_metadata.insert_many(metadata)
+    sspi_metadata.drop_duplicates()
+    return f"Inserted {count} metadata documents into database."
 
 @load_bp.route("/load/sspi_main_data_v3", methods=['POST'])
 @login_required
