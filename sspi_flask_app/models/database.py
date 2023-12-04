@@ -218,6 +218,54 @@ class SSPIRawAPIData(MongoWrapper):
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
 
+class SSPIMainDataV3(MongoWrapper):
+
+    def validate_document_format(self, document: dict, document_number:int=0):
+        """
+        Raises an InvalidDocumentFormatError if the document is not in the valid
+
+        Valid Document Format:
+            {
+                "IndicatorCode": str,
+                "CountryCode": str,
+                "Year": int,
+                "Value": float,
+            }
+        Additional fields are allowed but not required
+        """
+        self.validate_country_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
+        self.validate_year(document, document_number)
+        self.validate_value(document, document_number)
+
+    def load(self):
+        """
+        Loads the metadata into the database
+        """
+        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+        sspi_main_data_wide = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"), skiprows=1)
+        sspi_main_data_documents = self.process_sspi_main_data(sspi_main_data_wide)
+        return sspi_main_data_documents
+        # count = self.insert_many(sspi_main_data)
+        # self.drop_duplicates()
+        # print(f"Successfully loaded {count} documents into {self.name}")
+
+    def process_sspi_main_data(self, sspi_main_data_wide:pd.DataFrame):
+        """
+        Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
+        """
+        sspi_main_data_long = pd.melt(sspi_main_data_wide, id_vars=["Country Code", "Country"], var_name="Variable", value_name="Value")
+        sspi_main_data_long = sspi_main_data_long.rename(columns={"Country Code": "CountryCode"})
+        sspi_main_data_long["IndicatorCode"] = sspi_main_data_long["Variable"].str.extract(r"([A-Z0-9]{6})_[A-Z]+")
+        sspi_main_data_long["VariableType"] = sspi_main_data_long["Variable"].str.extract(r"[A-Z0-9]{6}_([A-Z]+)")
+        sspi_main_data_long.dropna(subset=["IndicatorCode"], inplace=True)
+        sspi_main_data_long["VariableType"] = sspi_main_data_long["VariableType"].map(lambda s: s.title())
+        print(sspi_main_data_long)
+        sspi_main_data = sspi_main_data_long.pivot(index=["CountryCode", "IndicatorCode"], columns="VariableType", values="Value").reset_index()
+        print(sspi_main_data)
+        print(sspi_main_data.unstack())
+        return sspi_main_data
+    
 class SSPIMetadata(MongoWrapper):
     
     def validate_document_format(self, document: dict, document_number:int=0):
@@ -286,7 +334,6 @@ class SSPIMetadata(MongoWrapper):
         metadata.append(self.build_country_groups())
         metadata.extend(self.build_intermediate_details(intermediate_details))
         metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
-        assert type(metadata) == list
         return metadata
 
     def build_pillar_codes(self, indicator_details:pd.DataFrame) -> dict:
@@ -363,17 +410,3 @@ class SSPIMetadata(MongoWrapper):
         """
         return self.find({"DocumentType": "IntermediateDetail"})
 
-class SSPIMainDataV3(MongoWrapper):
-
-    def load(self):
-        """
-        Loads the metadata into the database
-        """
-        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
-        sspi_main_data_wide = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"), skiprows=0)
-        pd.melt(sspi_main_data_wide, id_vars=["Country Code", "Country"], var_name="Variable", value_name="Value")
-        return sspi_main_data_wide
-        # count = self.insert_many(sspi_main_data)
-        # self.drop_duplicates()
-        # print(f"Successfully loaded {count} documents into {self.name}")
-    

@@ -12,7 +12,7 @@ load_bp = Blueprint("load_bp", __name__,
 @login_required
 def load_maindata():
     data = sspi_main_data_v3.load()
-    return jsonify(data)
+    return jsonify(json.loads(str(data.to_json(orient="records"))))
 
 @load_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
