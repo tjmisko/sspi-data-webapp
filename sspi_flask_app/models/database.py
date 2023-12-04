@@ -240,7 +240,7 @@ class SSPIMainDataV3(MongoWrapper):
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
 
-    def load(self):
+    def load(self) -> int:
         """
         Loads the metadata into the database
         """
@@ -250,6 +250,8 @@ class SSPIMainDataV3(MongoWrapper):
         count = self.insert_many(sspi_main_data_documents)
         self.drop_duplicates()
         print(f"Successfully loaded {count} documents into {self.name}")
+        return count
+
 
     def process_sspi_main_data(self, sspi_main_data_wide:pd.DataFrame) -> list[dict]:
         """
@@ -314,7 +316,7 @@ class SSPIMetadata(MongoWrapper):
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Metadata' must be a string, dict, int, float, or list (document {document_number})")
 
-    def load(self):
+    def load(self) -> int:
         """
         Loads the metadata into the database
         """
@@ -325,6 +327,7 @@ class SSPIMetadata(MongoWrapper):
         count = self.insert_many(metadata)
         self.drop_duplicates()
         print(f"Successfully loaded {count} documents into {self.name}")
+        return count
     
     def build_metadata(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame) -> list:
         """
