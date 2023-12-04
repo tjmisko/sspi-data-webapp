@@ -50,7 +50,7 @@ def init_app(Config):
 
     with app.app_context():
         # read in the appropriate modules
-        # sspi_main_data_v3.load()
+        sspi_main_data_v3.load()
         sspi_metadata.load()
 
         from .client.routes import client_bp
