@@ -1,4 +1,3 @@
-import json
 from flask import Flask
 from flask_login import LoginManager
 from flask_limiter import Limiter
@@ -22,12 +21,14 @@ client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 
 sspi_main_data_v3 = MongoWrapper(sspidb.sspi_main_data_v3)
+sspi_metadata = SSPIMetadata(sspidb.sspi_metadata)
+
+
 sspi_raw_api_data = SSPIRawAPIData(sspidb.sspi_raw_api_data)
 sspi_bulk_data = MongoWrapper(sspidb.sspi_bulk_data)
 sspi_clean_api_data = MongoWrapper(sspidb.sspi_clean_api_data)
 sspi_imputed_data = MongoWrapper(sspidb.sspi_imputed_data)
 sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
-sspi_metadata = SSPIMetadata(sspidb.sspi_metadata)
 sspi_dynamic_data = MongoWrapper(sspidb.sspi_dynamic_data)
 
 assets = Environment()
@@ -48,6 +49,8 @@ def init_app(Config):
 
     with app.app_context():
         # read in the appropriate modules
+        # sspi_main_data_v3.load()
+        sspi_metadata.load()
         from .client.routes import client_bp
         from .auth.routes import auth_bp
         from .api.api import api_bp

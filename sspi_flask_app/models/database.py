@@ -1,7 +1,9 @@
 import re
+import os
+import json
+from flask import current_app as app
 import pandas as pd
 from datetime import datetime
-import json
 from bson import ObjectId, json_util
 from .errors import InvalidDocumentFormatError
 
@@ -259,6 +261,18 @@ class SSPIMetadata(MongoWrapper):
             raise InvalidDocumentFormatError(f"'Metadata' is a required argument (document {document_number})")
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Metadata' must be a string, dict, int, float, or list (document {document_number})")
+
+    def load(self):
+        """
+        Loads the metadata into the database
+        """
+        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+        indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
+        intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
+        metadata = self.build_metadata(indicator_details, intermediate_details)
+        count = self.insert_many(metadata)
+        self.drop_duplicates()
+        self.insert_many(metadata)
     
     def build_metadata(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame) -> list:
         """
@@ -307,3 +321,40 @@ class SSPIMetadata(MongoWrapper):
                 filtered_intermediate_details_list = json.loads(str(filtered_intermediate_details.to_json(orient="records")))
                 indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
         return [{"DocumentType": "IndicatorDetail", "Metadata": indicator_detail} for indicator_detail in indicator_details_list]
+
+    ## Getters
+    def pillar_codes(self) -> list[str]:
+        """
+        Return a list of all pillar codes
+        """
+        return self.find_one({"DocumentType": "PillarCodes"})["Metadata"]
+
+    def category_codes(self) -> list[str]:
+        """
+        Return a list of all category codes
+        """
+        return self.find_one({"DocumentType": "CategoryCodes"})["Metadata"]
+
+    def indicator_codes(self) -> list[str]:
+        """
+        Return a list of all indicator codes
+        """
+        return self.find_one({"DocumentType": "IndicatorCodes"})["Metadata"]
+
+    def country_groups(self) -> list[str]:
+        """
+        Return a list of all country groups in the database
+        """
+        return self.find_one({"DocumentType": "CountryGroups"})["Metadata"]
+
+    def indicator_details(self) -> list[dict]:
+        """
+        Return a list of documents containg indicator details
+        """
+        return self.find({"DocumentType": "IndicatorDetail"})
+
+    def intermediate_details(self) -> list[dict]:
+        """
+        Return a list of documents containg intermediate details
+        """
+        return self.find({"DocumentType": "IntermediateDetail"})
