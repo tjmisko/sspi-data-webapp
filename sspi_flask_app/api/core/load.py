@@ -5,7 +5,7 @@ import pandas as pd
 from flask import Blueprint, request, current_app as app, jsonify
 from flask_login import login_required
 
-from ... import sspi_bulk_data
+from ... import sspi_bulk_data, sspi_metadata
 
 load_bp = Blueprint("load_bp", __name__,
                     template_folder="templates", 
@@ -29,7 +29,8 @@ def load_metadata():
     indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
     intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
     metadata = build_metadata(indicator_details, intermediate_details)
-    return jsonify(metadata)
+    sspi_metadata.insert_many(metadata)
+    return jsonify(json.loads(json.dumps(metadata)))
 
 @load_bp.route("/load/sspi_main_data_v3", methods=['POST'])
 @login_required
@@ -62,25 +63,23 @@ def build_metadata(indicator_details:pd.DataFrame, intermediate_details:pd.DataF
 
 def build_pillar_codes(indicator_details:pd.DataFrame) -> dict:
     pillar_codes = indicator_details["PillarCode"].unique().tolist()
-    return {"DocumentType": "PillarCodes", "PillarCodes": pillar_codes}
+    return {"DocumentType": "PillarCodes", "Metadata": pillar_codes}
 
 def build_category_codes(indicator_details:pd.DataFrame) -> dict:
     category_codes = indicator_details["CategoryCode"].unique().tolist()
-    return {"DocumentType": "CategoryCodes", "CategoryCodes": category_codes}
+    return {"DocumentType": "CategoryCodes", "Metadata": category_codes}
 
 def build_indicator_codes(indicator_details:pd.DataFrame) -> dict:
     indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
-    return {"DocumentType": "CategoryCodes", "IndicatorCode": indicator_codes}
+    return {"DocumentType": "CategoryCodes", "Metadata": indicator_codes}
 
 def build_intermediate_codes(intermediate_details:pd.DataFrame) -> dict:
     intermediate_codes = intermediate_details["IntermediateCode"].unique().tolist()
-    return {"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes}
+    return {"DocumentType": "IntermediateCodes", "Metadata": intermediate_codes}
 
 def build_intermediate_details(intermediate_details:pd.DataFrame) -> list[dict]:
     intermediate_details_list = json.loads(str(intermediate_details.to_json(orient="records")))
-    for intermediate_detail in intermediate_details_list:
-        intermediate_detail["DocumentType"] = "IntermediateDetail"
-    return intermediate_details_list
+    return [{"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail} for intermediate_detail in intermediate_details_list]
 
 def build_indicator_details(indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame):
     json_string = str(indicator_details.to_json(orient="records"))
@@ -94,4 +93,4 @@ def build_indicator_details(indicator_details:pd.DataFrame, intermediate_details
             filtered_intermediate_details = intermediate_details.loc[intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]]
             filtered_intermediate_details_list = json.loads(str(filtered_intermediate_details.to_json(orient="records")))
             indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
-    return indicator_details_list
+    return [{"DocumentType": "IndicatorDetail", "Metadata": indicator_detail} for indicator_detail in indicator_details_list]
