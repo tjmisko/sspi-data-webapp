@@ -79,3 +79,4 @@ htmlcov/
 
 # Bulk Data
 **/raw_bulk_data/**
+snapshots/**/**
