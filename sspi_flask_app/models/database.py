@@ -228,8 +228,10 @@ class SSPIMainDataV3(MongoWrapper):
             {
                 "IndicatorCode": str,
                 "CountryCode": str,
+                "Raw": float or int
                 "Year": int,
                 "Value": float,
+                "Score": float,
             }
         Additional fields are allowed but not required
         """
@@ -260,11 +262,14 @@ class SSPIMainDataV3(MongoWrapper):
         sspi_main_data_long["VariableType"] = sspi_main_data_long["Variable"].str.extract(r"[A-Z0-9]{6}_([A-Z]+)")
         sspi_main_data_long.dropna(subset=["IndicatorCode"], inplace=True)
         sspi_main_data_long["VariableType"] = sspi_main_data_long["VariableType"].map(lambda s: s.title())
-        print(sspi_main_data_long)
-        sspi_main_data = sspi_main_data_long.pivot(index=["CountryCode", "IndicatorCode"], columns="VariableType", values="Value").reset_index()
-        print(sspi_main_data)
-        print(sspi_main_data.unstack())
-        return sspi_main_data
+        sspi_main_data_documents = sspi_main_data_long.pivot(index=["CountryCode", "IndicatorCode"], columns="VariableType", values="Value").reset_index()
+        sspi_main_data_documents["YearString"] = sspi_main_data_documents["Year"].astype(str)
+        sspi_main_data_documents["Year"] = sspi_main_data_documents["Year"].astype(str).map(lambda s: re.match(r"[0-9]{4}", s)).map(lambda m: m.group(0) if m else "0").astype(int)
+        print(sspi_main_data_documents[sspi_main_data_documents["Year"] == 0])
+        sspi_main_data_documents["Value"] = sspi_main_data_documents["Raw"].astype(float)
+        sspi_main_data_documents["Score"] = sspi_main_data_documents["Score"].astype(float)
+        sspi_main_data_documents.drop(columns=["Raw"], inplace=True)
+        return sspi_main_data_documents
     
 class SSPIMetadata(MongoWrapper):
     

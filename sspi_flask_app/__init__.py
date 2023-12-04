@@ -14,7 +14,9 @@ login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri='mongodb://localhost:27017',
+    strategy="fixed-window"
 )
 
 client = MongoClient('localhost', 27017)
@@ -37,7 +39,6 @@ def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
     app.config.from_object(Config)
-    print("DatabaseURI:" + Config.SQLALCHEMY_DATABASE_URI)
     # Initialize SQLAlchemy Database
     db.init_app(app)
     # Initialize password encryption
