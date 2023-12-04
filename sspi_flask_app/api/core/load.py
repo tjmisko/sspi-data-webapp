@@ -40,14 +40,14 @@ def load_maindata():
     local_path = os.path.join(app.instance_path, "local")
     sspi_main_data_v3 = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"))
     sspi_main_data_v3 = build_main_data(sspi_main_data_v3)
+    return "success!"
 
 def build_main_data(sspi_main_data_v3:pd.DataFrame):
     """
     Utility function that builds the main data JSON list from the SSPIMainDataV3.csv file
     """
     sspi_main_data_v3 = sspi_main_data_v3.drop(columns=["Unnamed: 0"])
-    sspi_main_data_v3 = sspi_main_data_v3.to_json(orient="records")
-    return sspi_main_data_v3
+    return sspi_main_data_v3.to_json(orient="records")
 
 def build_metadata(indicator_details, intermediate_details):
     metadata = []
@@ -59,7 +59,7 @@ def build_metadata(indicator_details, intermediate_details):
     metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
     ### Build metadata for IndicatorCodes
     indicator_codes = indicator_details["IndicatorCode"].unique()
-    metadata.append({"DocumentType": "CategoryCodes", "CategoryCodes": category_codes})
+    metadata.append({"DocumentType": "CategoryCodes", "IndicatorCode": indicator_cdoes})
     ### Build metadata for IntermediateCodes
     intermediate_codes = intermediate_details["IntermediateCode"].unique()
     metadata.append({"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes})
@@ -72,7 +72,7 @@ def build_metadata(indicator_details, intermediate_details):
     indicator_details = json.loads(indicator_details.to_json(orient="records"))
     for indicator_detail in indicator_details:
         indicator_detail["DocumentType"] = "IndicatorDetail"
-        print(type(indicator_detail["IntermediateCodes"]))
+        # Link intermediate_details to their corresponding indicator_detail
         if indicator_detail["IntermediateCodes"] is not None:
             intermediate_codes = re.findall(r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
             indicator_detail["IntermediateCodes"] = intermediate_codes

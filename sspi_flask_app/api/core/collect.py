@@ -80,7 +80,7 @@ def coalpw():
 @login_required
 def airpol():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("11.6.2", "AIRPOL", **kwargs
+        yield from collectSDGIndicatorData("11.6.2", "AIRPOL", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
