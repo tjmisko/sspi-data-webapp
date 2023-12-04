@@ -1,5 +1,5 @@
 from ... import sspi_raw_api_data, sspidb
-from ..api import lookup_database, parse_json
+from ..resources.utilities import lookup_database, parse_json
 from .query import indicator_codes
 from flask import Blueprint, redirect, render_template, request, flash, url_for
 from flask_login import login_required
