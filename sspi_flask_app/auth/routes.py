@@ -151,7 +151,6 @@ def clear():
     return redirect(url_for('auth_bp.login'))
 
 @auth_bp.route('/auth/query', methods=['GET'])
-@login_required
 def query():
     return str(db.session.query(User).all())
 
