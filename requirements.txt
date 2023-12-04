@@ -70,6 +70,7 @@ jupyterlab==4.0.7
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.9
 jupyterlab_server==2.25.0
+libsass==0.22.0
 limits==3.6.0
 lxml==4.9.3
 markdown-it-py==3.0.0
@@ -112,7 +113,8 @@ pyparsing==3.0.9
 pypng==0.20220715.0
 pyproject_hooks==1.0.0
 pyScss==1.4.0
-pytest==7.2.2
+pytest==7.4.3
+pytest-flask==1.3.0
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 python-json-logger==2.0.7
