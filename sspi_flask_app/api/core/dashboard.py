@@ -57,8 +57,8 @@ def api_coverage():
     """
     all_indicators = sspi_metadata.indicator_codes()
     endpoints = [str(r) for r in app.url_map.iter_rules()]
-    collect_implemented = [re.search(r'(?<=api/v1/collect/)(?!static)([\w]*)', r).group() for r in endpoints if re.search(r'(?<=api/v1/collect/)(?!static)[\w]*', r)]
-    compute_implemented = [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r).group() for r in endpoints if re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r)]
+    collect_implemented = [r.group(0) for r in [re.search(r'(?<=api/v1/collect/)(?!static)[\w]*', r) for r in endpoints] if r is not None]
+    compute_implemented = [r.group(0) for r in [re.search(r'(?<=api/v1/compute/)(?!static)[\w]*', r) for r in endpoints] if r is not None]
     coverage_data_object = []
     for indicator in all_indicators:
         coverage_data_object.append({"IndicatorCode": indicator, "collect_implemented": indicator in collect_implemented, "compute_implemented": indicator in compute_implemented})
