@@ -1,5 +1,8 @@
 *.DS_Store
 **/.DS_Store
+*~
+*.swp
+*.swo
 
 bin/*
 env/*
@@ -17,6 +20,7 @@ instance/*
 .flaskenv
 *.egg
 *.egg-info/
+
 
 __pycache__
 /__pycache__/
@@ -47,10 +51,6 @@ log/*
 .sass-cache
 .pytest_cache
 
-load_remote_data.py
-# sspi_main_data_v3.json
-# sspi_metadata.json
-
 .DS_Store
 .env
 .flaskenv
@@ -76,3 +76,8 @@ htmlcov/
 .coverage
 .coverage.*
 *,cover
+
+# Bulk Data
+**/raw_bulk_data/*
+**.ipynb_checkpoints
+snapshots/**/**.json

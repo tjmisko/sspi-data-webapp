@@ -1,11 +1,8 @@
-from datetime import datetime
-
 import numpy as np
-from ..api import api_bp, parse_json, lookup_database
-from .query import country_group, indicator_codes, indicator_details
+from ..resources.utilities import parse_json, lookup_database
+from ..resources.metadata import country_group, indicator_codes, indicator_details
 import json
-from io import BytesIO
-from flask import jsonify, request, current_app as app, render_template
+from flask import Blueprint, jsonify, request, current_app as app, render_template
 from flask_login import login_required
 from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_dynamic_data
 from pycountry import countries
@@ -13,18 +10,19 @@ import pandas as pd
 import re
 import os
 
-@api_bp.route("/", methods=["GET"])
-@login_required
-def api_dashboard():
-    return render_template("internal-dashboard.html")
+dashboard_bp = Blueprint(
+    'dashboard_bp', __name__,
+    template_folder='templates',
+    static_folder='static'
+)
 
-@api_bp.route("/status/database/<database>")
+@dashboard_bp.route("/status/database/<database>")
 @login_required
 def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
     return render_template("database-status.html", database=database, ndocs=ndocs)
 
-@api_bp.route("/compare")
+@dashboard_bp.route("/compare")
 @login_required
 def compare():
     details = indicator_details() 
@@ -33,7 +31,7 @@ def compare():
         option_details.append({key: indicator[key] for key in ["IndicatorCodes", "Indicator"]})
     return render_template("compare.html", indicators=option_details)
 
-@api_bp.route('/compare/<IndicatorCode>')
+@dashboard_bp.route('/compare/<IndicatorCode>')
 def get_compare_data(IndicatorCode):
     # Prepare the main data
     main_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
@@ -55,7 +53,7 @@ def get_compare_data(IndicatorCode):
     comparison_data = json.loads(comparison_data.to_json(orient="records"))
     return jsonify(comparison_data)
 
-@api_bp.route('/api_coverage')
+@dashboard_bp.route('/api_coverage')
 def api_coverage():
     """
     Return a list of all endpoints and whether they are implemented
@@ -70,7 +68,7 @@ def api_coverage():
     #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data_object)
 
-@api_bp.route('/dynamic/<IndicatorCode>')
+@dashboard_bp.route('/dynamic/<IndicatorCode>')
 def get_dynamic_data(IndicatorCode):
     """
     Use the format argument to control whether the document is formatted for the website table
@@ -93,14 +91,20 @@ def get_dynamic_data(IndicatorCode):
         return_data.append(country_data)
     return parse_json(return_data)
 
-@api_bp.route("/local")
+@dashboard_bp.route("/local")
 @login_required
 def local():
     return render_template('local-upload-form.html', database_names=check_for_local_data())
 
-@api_bp.route("/local/database/list", methods=['GET'])
+@dashboard_bp.route("/local/upload", methods=['GET'])
+@login_required
+def upload_local_data():
+    return app.instance_path
+
+@dashboard_bp.route("/local/database/list", methods=['GET'])
 @login_required
 def check_for_local_data():
+    os.path.abspath(__file__)
     try:
         database_files = os.listdir(os.path.join(os.getcwd(),'local'))
     except FileNotFoundError:
@@ -108,7 +112,7 @@ def check_for_local_data():
     database_names = [db_file.split(".")[0] for db_file in database_files]
     return parse_json(database_names)
 
-@api_bp.route("/local/reload/<database_name>", methods=["POST"])
+@dashboard_bp.route("/local/reload/<database_name>", methods=["POST"])
 @login_required
 def reload_from_local(database_name):
     if not database_name in check_for_local_data():
@@ -126,7 +130,7 @@ def reload_from_local(database_name):
     json_file.close()
     return "Reload successful: Dropped {0} observations from {1} and reloaded with {2} observations".format(del_count, database_name, ins_count)
 
-@api_bp.route("/fetch-controls")
+@dashboard_bp.route("/fetch-controls")
 @login_required
 def api_internal_buttons():
     implementation_data = api_coverage()

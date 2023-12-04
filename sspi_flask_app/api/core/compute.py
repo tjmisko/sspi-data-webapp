@@ -1,11 +1,12 @@
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for
 from flask_login import login_required
-from ..api import raw_data_available, parse_json
+from ..resources.utilities import parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
-from ..api import fetch_raw_data, missing_countries, added_countries
+from ..resources.utilities import missing_countries, added_countries
+from ..resources.adapters import raw_data_available, fetch_raw_data
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
 import xml.etree.ElementTree as ET
 import pandas as pd
@@ -165,3 +166,21 @@ def compute_prison():
                                                                                                "summary": "Prison population rate"})
     print(table)
     return "string"
+
+@compute_bp.route("/INTRNT", methods=['GET'])
+# @login_required
+def compute_intrnt():
+    if not raw_data_available("INTRNT"):
+        return redirect(url_for("collect_bp.INTRNT"))
+    # worldbank #
+    wbQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
+    worldbank_raw = parse_json(sspi_raw_api_data.find(wbQuery))
+    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+    wb_df = pd.DataFrame(worldbank_clean_list)
+    # sdg #
+    sdgQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode":"QLMBPS"}
+    sdg_raw = parse_json(sspi_raw_api_data.find(sdgQuery))
+    intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
+    sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
+    sdg_df = pd.DataFrame(sdg_cleaned_list)
+

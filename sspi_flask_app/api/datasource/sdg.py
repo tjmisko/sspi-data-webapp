@@ -1,14 +1,13 @@
-from ..api import raw_insert_many
 from datetime import datetime
 from pycountry import countries
-from ..api import format_m49_as_string, string_to_float, raw_insert_many
+from ..resources.adapters import raw_insert_many
+from ..resources.utilities import format_m49_as_string, string_to_float
 import json
 import time
 import requests
 
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="NA"):
-    collection_time = datetime.now()
+def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)
     nPages = response.json().get('totalPages')
@@ -18,7 +17,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, IntermediateCode="N
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        count = raw_insert_many(data_list, IndicatorCode)
+        count = raw_insert_many(data_list, IndicatorCode, **kwargs)
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
     yield f"Collection complete for SDG {SDGIndicatorCode}"
@@ -77,6 +76,20 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "REDLST",
+                "YEAR": year,
+                "RAW": string_to_float(value)
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+
+def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "INTRNT",
                 "YEAR": year,
                 "RAW": string_to_float(value)
             }

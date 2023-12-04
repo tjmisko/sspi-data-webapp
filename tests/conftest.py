@@ -16,4 +16,4 @@ def client(app):
 
 @pytest.fixture()
 def runner(app):
-    return app.test_cli_runner
+    return app.test_cli_runner()
