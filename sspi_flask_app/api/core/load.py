@@ -57,29 +57,30 @@ def build_metadata(indicator_details:pd.DataFrame, intermediate_details:pd.DataF
     metadata.append(build_intermediate_codes(intermediate_details))
     metadata.extend(build_intermediate_details(intermediate_details))
     metadata.extend(build_indicator_details(indicator_details, intermediate_details))
+    assert type(metadata) == list
     return metadata
 
-def build_pillar_codes(indicator_details:pd.DataFrame):
-    pillar_codes = indicator_details["PillarCode"].unique()
+def build_pillar_codes(indicator_details:pd.DataFrame) -> dict:
+    pillar_codes = indicator_details["PillarCode"].unique().tolist()
     return {"DocumentType": "PillarCodes", "PillarCodes": pillar_codes}
 
-def build_category_codes(indicator_details:pd.DataFrame):
-    category_codes = indicator_details["CategoryCode"].unique()
+def build_category_codes(indicator_details:pd.DataFrame) -> dict:
+    category_codes = indicator_details["CategoryCode"].unique().tolist()
     return {"DocumentType": "CategoryCodes", "CategoryCodes": category_codes}
 
-def build_indicator_codes(indicator_details:pd.DataFrame):
-    indicator_codes = indicator_details["IndicatorCode"].unique()
+def build_indicator_codes(indicator_details:pd.DataFrame) -> dict:
+    indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
     return {"DocumentType": "CategoryCodes", "IndicatorCode": indicator_codes}
 
-def build_intermediate_codes(intermediate_details:pd.DataFrame):
-    intermediate_codes = intermediate_details["IntermediateCode"].unique()
+def build_intermediate_codes(intermediate_details:pd.DataFrame) -> dict:
+    intermediate_codes = intermediate_details["IntermediateCode"].unique().tolist()
     return {"DocumentType": "IntermediateCodes", "IntermediateCodes": intermediate_codes}
 
-def build_intermediate_details(intermediate_details:pd.DataFrame):
-    intermediate_details = json.loads(str(intermediate_details.to_json(orient="records")))
-    for intermediate_detail in intermediate_details:
+def build_intermediate_details(intermediate_details:pd.DataFrame) -> list[dict]:
+    intermediate_details_list = json.loads(str(intermediate_details.to_json(orient="records")))
+    for intermediate_detail in intermediate_details_list:
         intermediate_detail["DocumentType"] = "IntermediateDetail"
-    return intermediate_details
+    return intermediate_details_list
 
 def build_indicator_details(indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame):
     json_string = str(indicator_details.to_json(orient="records"))
