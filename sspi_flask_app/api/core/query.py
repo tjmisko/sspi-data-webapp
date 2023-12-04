@@ -1,10 +1,9 @@
 import re
 from flask import Blueprint, jsonify, request
 from ...models.errors import InvalidQueryError
-from ..resources.validators import validate_query_logic, validate_query_safety
+from ..resources.validators import validate_data_query
 from ..resources.utilities import parse_json, lookup_database
-from ..resources.metadata import indicator_codes, country_codes, indicator_group, indicator_groups, country_group, country_groups, indicator_details
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data
+from ... import sspi_metadata
 
 query_bp = Blueprint("query_bp", __name__,
                      template_folder="templates", 
@@ -17,7 +16,6 @@ def query_database(database_string):
     print(query_params)
     database = lookup_database(database_string)
     return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
-
 
 def get_query_params(request, requires_database=False):
     """
@@ -46,12 +44,10 @@ def get_query_params(request, requires_database=False):
     }
     if requires_database:
         raw_query_input["Database"] = request.args.get("database"),
-    raw_query_input = validate_query_safety(raw_query_input)
-    raw_query_input = validate_query_logic(raw_query_input, requires_database)
-    return build_mongo_query(raw_query_input, requires_database)
+    validated_query_input = validate_data_query(raw_query_input)
+    return build_mongo_query(validated_query_input)
 
-
-def build_mongo_query(raw_query_input, requires_database):
+def build_mongo_query(raw_query_input):
     """
     Given a safe and logically valid query input, build a mongo query
     """
@@ -68,64 +64,18 @@ def build_mongo_query(raw_query_input, requires_database):
         mongo_query["YEAR"] = {"$in": raw_query_input["Year"]}
     return mongo_query
 
-
-
-
-@query_bp.route("/indicator/<IndicatorCode>")
-def query_indicator(database, IndicatorCode):
-    """
-    Take an indicator code and return the data
-    
-    Query Parameters:
-        Database
-        CountryCode
-        CountryGroup
-        Year
-        YearRangeStart
-        YearRangeEnd
-    """
-    try:
-        query_params = get_query_params(request, requires_database=True)
-    except InvalidQueryError as e:
-        return f"{e}"
-    if query_params["Database"].name == "sspi_raw_api_data":
-        indicator_data = database.find({"collection-info.IndicatorCode": IndicatorCode})
-    else:  
-        indicator_data = database.find({"IndicatorCode": IndicatorCode}.update(query_params), {"_id": 0})
-    return parse_json(indicator_data)
-
-@query_bp.route("/country/<CountryCode>")
-def query_country(CountryCode):
-    """
-    Take a country code and return the data
-    """
-    country_data = sspi_main_data_v3.find({"CountryCode": CountryCode})
-    return parse_json(country_data)
-
-####################
-# METADATA QUERIES #
-####################
-
 @query_bp.route("/metadata/country_groups", methods=["GET"])
 def query_country_groups():
-    return country_groups()
-
-@query_bp.route("/metadata/country_groups/<country_group>", methods=["GET"])
-def query_country_group(country_group):
-    return country_groups(country_group)
+    return sspi_metadata.country_groups()
 
 @query_bp.route("/metadata/indicator_codes", methods=["GET"])
 def query_indicator_codes():
-    return indicator_codes()
-
-@query_bp.route("/metadata/indicator_groups", methods=["GET"])
-def query_indicator_groups():
-    return indicator_groups()
-
-@query_bp.route("/metadata/indicator_groups/<indicator_group>", methods=["GET"])
-def query_indicator_group(indicator_group):
-    return indicator_codes(indicator_group)
+    return jsonify(sspi_metadata.indicator_codes())
 
 @query_bp.route("/metadata/indicator_details")
 def query_indicator_details():
-    return indicator_details()
+    return jsonify(sspi_metadata.indicator_details())
+
+@query_bp.route("/metadata/intermediate_details")
+def query_intermediate_details():
+    return jsonify(sspi_metadata.intermediate_details())

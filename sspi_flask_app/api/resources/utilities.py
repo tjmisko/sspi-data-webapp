@@ -20,9 +20,6 @@ def format_m49_as_string(input):
 def parse_json(data):
     return json.loads(json_util.dumps(data))
 
-def print_json(data):
-    print(json.dumps(data, indent=4, sort_keys=True))
-
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup

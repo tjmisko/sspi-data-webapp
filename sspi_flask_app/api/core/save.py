@@ -9,7 +9,6 @@ from sspi_flask_app.models.database import SSPIRawAPIData
 
 from ..resources.utilities import lookup_database, parse_json
 from ... import sspidb
-from ..resources.validators import validate_observation_list
 
 save_bp = Blueprint("save_bp", __name__,
                     template_folder="templates", 
