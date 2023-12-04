@@ -51,6 +51,7 @@ def init_app(Config):
         # read in the appropriate modules
         # sspi_main_data_v3.load()
         sspi_metadata.load()
+
         from .client.routes import client_bp
         from .auth.routes import auth_bp
         from .api.api import api_bp

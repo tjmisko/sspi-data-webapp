@@ -1,6 +1,5 @@
-from ... import sspi_raw_api_data, sspidb
-from ..resources.utilities import lookup_database, parse_json
-from .query import indicator_codes
+from ... import sspidb, sspi_metadata
+from ..resources.utilities import lookup_database
 from flask import Blueprint, redirect, render_template, request, flash, url_for
 from flask_login import login_required
 from wtforms import StringField
@@ -16,7 +15,7 @@ delete_bp = Blueprint("delete_bp", __name__,
                       url_prefix="/delete")
 
 db_choices = [""] + sspidb.list_collection_names()
-ic_choices = [""] + indicator_codes()
+ic_choices = [""] + sspi_metadata.indicator_codes()
 
 class RemoveDuplicatesForm(FlaskForm):
     database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")

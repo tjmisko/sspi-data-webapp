@@ -1,10 +1,9 @@
 import numpy as np
 from ..resources.utilities import parse_json, lookup_database
-from ..resources.metadata import country_group, indicator_codes, indicator_details
 import json
 from flask import Blueprint, jsonify, request, current_app as app, render_template
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_dynamic_data
+from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_dynamic_data, sspi_metadata
 from pycountry import countries
 import pandas as pd
 import re
@@ -25,7 +24,7 @@ def get_database_status(database):
 @dashboard_bp.route("/compare")
 @login_required
 def compare():
-    details = indicator_details() 
+    details = sspi_metadata.indicator_details() 
     option_details = []
     for indicator in details:
         option_details.append({key: indicator[key] for key in ["IndicatorCodes", "Indicator"]})
@@ -41,7 +40,7 @@ def get_compare_data(IndicatorCode):
     # Prepare the dynamic data
     dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "YEAR": 2018, "CountryCode": {"$in": country_group("sspi_49")}}, {"_id": 0}))
     if not dynamic_data:
-        return jsonify(json.loads(main_data.to_json(orient="records")))
+        return jsonify(json.loads(str(main_data.to_json(orient="records"))))
     dynamic_data = pd.DataFrame(dynamic_data)
     dynamic_data["RAW"].replace("NaN", np.nan, inplace=True)
     dynamic_data["RAW"].astype(float)

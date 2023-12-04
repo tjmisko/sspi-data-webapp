@@ -13,7 +13,7 @@ class MongoWrapper:
         self.name = mongo_database.name
     
     def find_one(self, query:dict) -> dict:
-        return self._mongo_database.find_one(query)
+        return json.loads(json_util.dumps(self._mongo_database.find_one(query)))
 
     def find(self, query:dict, options:dict={}) -> list:
         return json.loads(json_util.dumps(self._mongo_database.find(query, options)))
@@ -272,7 +272,7 @@ class SSPIMetadata(MongoWrapper):
         metadata = self.build_metadata(indicator_details, intermediate_details)
         count = self.insert_many(metadata)
         self.drop_duplicates()
-        self.insert_many(metadata)
+        print(f"Successfully loaded {count} documents into {self.name}")
     
     def build_metadata(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame) -> list:
         """
@@ -283,6 +283,7 @@ class SSPIMetadata(MongoWrapper):
         metadata.append(self.build_category_codes(indicator_details))
         metadata.append(self.build_indicator_codes(indicator_details))
         metadata.append(self.build_intermediate_codes(intermediate_details))
+        metadata.append(self.build_country_groups())
         metadata.extend(self.build_intermediate_details(intermediate_details))
         metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
         assert type(metadata) == list
@@ -298,11 +299,14 @@ class SSPIMetadata(MongoWrapper):
 
     def build_indicator_codes(self, indicator_details:pd.DataFrame) -> dict:
         indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
-        return {"DocumentType": "CategoryCodes", "Metadata": indicator_codes}
+        return {"DocumentType": "IndicatorCodes", "Metadata": indicator_codes}
 
     def build_intermediate_codes(self, intermediate_details:pd.DataFrame) -> dict:
         intermediate_codes = intermediate_details["IntermediateCode"].unique().tolist()
         return {"DocumentType": "IntermediateCodes", "Metadata": intermediate_codes}
+
+    def build_country_groups(self) -> dict:
+        return {"DocumentType": "CountryGroups", "Metadata": ["SSPI49", "SSPI67", "G20", "OECD", "EU28", "BRICS"]}
 
     def build_intermediate_details(self, intermediate_details:pd.DataFrame) -> list[dict]:
         intermediate_details_list = json.loads(str(intermediate_details.to_json(orient="records")))
