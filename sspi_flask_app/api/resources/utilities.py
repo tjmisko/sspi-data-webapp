@@ -17,6 +17,10 @@ def format_m49_as_string(input):
     else: 
         return '00' + str(input)
 
+def goalpost(value, lower, upper):
+    """ Implement the goalposting formula"""
+    return max(0, min(1, (value - lower)/(upper - lower)))
+
 def parse_json(data):
     return json.loads(json_util.dumps(data))
 

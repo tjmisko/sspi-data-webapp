@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json
+from ..resources.utilities import parse_json, goalpost
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
@@ -129,6 +129,12 @@ def compute_senior():
     long_senior_data = pd.DataFrame(document_list)
     print(long_senior_data.head())
     wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
+    wide_senior_data["PEN20A_normalized"] = wide_senior_data["PEN20A"].map(lambda x: goalpost(x, 0, 20))
+    wide_senior_data["PEN20B_normalized"] = wide_senior_data["PEN20B"].map(lambda x: goalpost(x, 0, 20))
+    wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
+    wide_senior_data["Score"] = 0.25*wide_senior_data["PEN20A_normalized"] + 0.25*wide_senior_data["PEN20B_normalized"] + 0.5*wide_senior_data["PEN24A_normalized"]
+    wide_senior_data["Score"] = wide_senior_data["Score"].map(lambda x: round(x, 3))
+    wide_senior_data["Score"].dropna()
     print(wide_senior_data.head())
     return jsonify("hello")
 
