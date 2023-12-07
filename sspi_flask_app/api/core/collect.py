@@ -111,7 +111,15 @@ def lfpart():
         yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/SENIOR")
+@login_required
+def senior():
+    def collect_iterator(**kwargs):
+        yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/GINIPT", methods=['GET'])
+@login_required
 def ginipt():
     def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
