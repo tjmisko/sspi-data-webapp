@@ -1,4 +1,5 @@
 import json
+import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
@@ -8,7 +9,6 @@ from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot
 from ..datasource.worldbank import cleanedWorldBankData
 from ..resources.adapters import raw_data_available, fetch_raw_data
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
-import xml.etree.ElementTree as ET
 import pandas as pd
 
 compute_bp = Blueprint("compute_bp", __name__,
@@ -158,10 +158,11 @@ def compute_senior():
     if not raw_data_available("SENIOR"):
         return redirect(url_for("collect_bp.SENIOR"))
     raw_data = fetch_raw_data("SENIOR")
-    print(raw_data)
     metadata = raw_data[0]["Metadata"]
-    return jsonify(metadata)
-    # series = extractAllSeries(raw_data[0]["Raw"])
+    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    print(metadata_soup.find_all("code"))
+    series = extractAllSeries(raw_data[0]["Raw"])
+    return metadata_soup.prettify()
     # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
     # return jsonify(OECD_TCO2_OBS)
 
