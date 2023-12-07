@@ -8,7 +8,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
 from ..resources.adapters import raw_data_available, fetch_raw_data
-from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
+from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
 
 compute_bp = Blueprint("compute_bp", __name__,
@@ -102,56 +102,7 @@ def compute_gtrans():
     document_list = json.loads(str(df.to_json('records')))
     count = sspi_clean_api_data.insert_many(document_list)
     return f"Inserted {count} documents into SSPI Clean Database from OECD"
-
     
-####### SSPI ANALYSIS DB MANAGEMENT #########
-    
-    # sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
-    # sspi_analysis.insert_many(OECD_TCO2_OBS)
-    # print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
-        # return "Data unavailable. Try running collect." 
-    
-    #######    WORLDBANK compute    #########
-    # mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
-    # worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
-    # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
-    #######    OECD compute    #########
-    # mongoOECDQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.Source": "OECD"}
-    # OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    
-    #######    IEA compute ######
-
-
-    ####### SSPI ANALYSIS DB MANAGEMENT #########
-    # sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
-    # sspi_analysis.insert_many(OECD_TCO2_OBS)
-    # print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
-
-
-
-    # OECD_raw_data = OECD_raw_data[0]["observation"]
-    # OECD_raw_data = OECD_raw_data[14:]
-    # OECD_raw_data = OECD_raw_data[:-1]
-    # xml_file_root = ET.fromstring(OECD_raw_data)
-    # series = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    # final_OECD_list = organizeOECDdata(series)
-    # ### combining in pandas ####
-    # wb_df = pd.DataFrame(worldbank_clean_list)
-    # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
-    # oecd_df = pd.DataFrame(final_OECD_list).astype(str)
-   
-
-    # print(oecd_df)
-    # merged = wb_df.drop(columns=["IndicatorCode"]).merge(oecd_df, how="outer", on=["CountryCode", "YEAR"]) 
-    # merged = wb_df.rename()
-    # print(merged)
-
-    # return parse_json(OECD_TCO2_OBS)
-
-    # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
-    # Overwrite all NaN values with String "NaN"
-    # Parse that back into the right list format between 
-
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
@@ -159,13 +110,23 @@ def compute_senior():
         return redirect(url_for("collect_bp.SENIOR"))
     raw_data = fetch_raw_data("SENIOR")
     metadata = raw_data[0]["Metadata"]
-    print(metadata)
     metadata_soup = bs.BeautifulSoup(metadata, "lxml")
-    return jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
-    # series = extractAllSeries(raw_data[0]["Raw"])
-    # return metadata_soup.prettify()
-    # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
-    # return jsonify(OECD_TCO2_OBS)
+    # to see the codes and their descriptions, uncomment and return the following line
+    # jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+    metadata_codes = {
+        "PEN20": "Expected years in retirement",
+        "PEN20A": "Expected years in retirement, men",
+        "PEN20B": "Expected years in retirement, women",
+        "PEN24": "Old age income poverty",
+        "PEN24A": "Old age income poverty, 66+",
+        "PEN24B": "Old age income poverty, 66-75",
+        "PEN24C": "Old age income poverty, 76+",
+        "PEN24D": "Old age income poverty, 66+, Men",
+        "PEN24E": "Old age income poverty, 66+, Women",
+    }
+    series = extractAllSeries(raw_data[0]["Raw"])
+    documents = filterSeriesListSeniors(series, "PEN20", "PAG", "SENIOR")
+    return jsonify(documents)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

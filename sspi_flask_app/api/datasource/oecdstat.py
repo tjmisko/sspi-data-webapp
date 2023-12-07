@@ -70,12 +70,35 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
             "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
         }
-        new_documents = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        new_documents = [{"Year": obs.find("time").text, "Raw":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
         for doc in new_documents:
             doc.update(id_info)
         document_list.extend(new_documents)
     return document_list
         
+def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, IndicatorCode):
+    # Return a list of series that match the filterVAR variable name
+    document_list = []
+    for i, series in enumerate(series_list):
+        series_key, series_attributes = series.find("serieskey"), series.find("attributes")
+        IND = series_key.find("value", attrs={"concept": "IND"}).get("value")
+        print(IND)
+        if IND != filterIND:
+            continue
+        id_info = {
+            "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
+            "VariableCodeOECD": IND,
+            "IndicatorCodeOECD": OECDIndicatorCode,
+            "Source": "OECD",
+            "IndicatorCode": IndicatorCode,
+            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
+        }
+        new_documents = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        for doc in new_documents:
+            doc.update(id_info)
+        document_list.extend(new_documents)
+    return document_list
     
 def organizeOECDdata(series_list):
     listofdicts = []
