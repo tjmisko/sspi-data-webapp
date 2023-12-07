@@ -129,6 +129,12 @@ def compute_senior():
     long_senior_data = pd.DataFrame(document_list)
     print(long_senior_data.head())
     wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
+    astype_dict = {
+        "PEN20A": "float",
+        "PEN20B": "float",
+        "PEN24A": "float",
+    }
+    wide_senior_data = wide_senior_data.astype(astype_dict)
     wide_senior_data["PEN20A_normalized"] = wide_senior_data["PEN20A"].map(lambda x: goalpost(x, 0, 20))
     wide_senior_data["PEN20B_normalized"] = wide_senior_data["PEN20B"].map(lambda x: goalpost(x, 0, 20))
     wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
