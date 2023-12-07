@@ -92,7 +92,6 @@ def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, Indicator
             "Source": "OECD",
             "IndicatorCode": IndicatorCode,
             "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
-            "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
         }
         new_documents = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
         for doc in new_documents:

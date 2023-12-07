@@ -125,7 +125,7 @@ def compute_senior():
         "PEN24E": "Old age income poverty, 66+, Women",
     }
     series = extractAllSeries(raw_data[0]["Raw"])
-    documents = filterSeriesListSeniors(series, "PEN20", "PAG", "SENIOR")
+    documents = filterSeriesListSeniors(series, "PEN20A", "PAG", "SENIOR")
     return jsonify(documents)
 
 @compute_bp.route("/PRISON", methods=['GET'])
