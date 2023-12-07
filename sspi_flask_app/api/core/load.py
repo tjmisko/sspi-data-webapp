@@ -1,15 +1,12 @@
 import json
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from flask_login import login_required
 
-from ..resources.utilities import parse_json
-from ... import sspi_bulk_data
-from ..resources.validators import validate_observation_list
+from ... import sspi_bulk_data, sspi_metadata, sspi_main_data_v3
 
 load_bp = Blueprint("load_bp", __name__,
                     template_folder="templates", 
                     static_folder="static")
-                   
 
 @load_bp.route("/load/<IndicatorCode>", methods=["POST"])
 @login_required
@@ -18,9 +15,17 @@ def load(IndicatorCode):
     Utility function that handles loading data from the API into the database
     """
     observations_list = json.loads(request.get_json())
-    print(type(observations_list))
-    ### Check that observations match the expected format and declared IndicatorCode
-    validate_observation_list(observations_list, "sspi_bulk_data", IndicatorCode)
-    ### If format valid, insert
     count = sspi_bulk_data.insert_many(observations_list)
-    return f"Inserted {count} observations into database."
+    return f"Inserted {count} observations into database for Indicator {IndicatorCode}."
+
+@load_bp.route("/load/sspi_main_data_v3", methods=['GET'])
+@login_required
+def load_maindata():
+    count = sspi_main_data_v3.load()
+    return f"Inserted {count} main data documents into database."
+
+@load_bp.route("/load/sspi_metadata", methods=['GET'])
+@login_required
+def load_metadata():
+    count = sspi_metadata.load()
+    return f"Inserted {count} metadata documents into database."

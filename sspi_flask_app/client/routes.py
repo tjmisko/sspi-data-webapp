@@ -28,6 +28,14 @@ def data():
     download_form = ClientDownloadForm()
     return render_template('data.html', download_form=download_form)
 
+@client_bp.route('/data/<CountryCode>')
+def country_data(CountryCode):
+    return render_template('country-data-template.html', CountryCode=CountryCode)
+
+@client_bp.route('/data/<IndicatorCode>')
+def indicator_data(IndicatorCode):
+    return render_template('indicator-data-template.html', IndicatorCode=IndicatorCode)
+
 @client_bp.route('/indicators')
 def indicators():
     return render_template('indicators.html')
@@ -39,3 +47,4 @@ def methodology():
 @client_bp.route('/widget/<widgettype>')
 def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
+
