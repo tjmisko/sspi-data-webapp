@@ -159,10 +159,11 @@ def compute_senior():
         return redirect(url_for("collect_bp.SENIOR"))
     raw_data = fetch_raw_data("SENIOR")
     metadata = raw_data[0]["Metadata"]
+    print(metadata)
     metadata_soup = bs.BeautifulSoup(metadata, "lxml")
-    print(metadata_soup.find_all("code"))
-    series = extractAllSeries(raw_data[0]["Raw"])
-    return metadata_soup.prettify()
+    return jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+    # series = extractAllSeries(raw_data[0]["Raw"])
+    # return metadata_soup.prettify()
     # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
     # return jsonify(OECD_TCO2_OBS)
 
