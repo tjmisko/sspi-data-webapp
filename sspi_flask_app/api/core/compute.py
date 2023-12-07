@@ -114,10 +114,8 @@ def compute_senior():
     # to see the codes and their descriptions, uncomment and return the following line
     # jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
     metadata_codes = {
-        "PEN20": "Expected years in retirement",
         "PEN20A": "Expected years in retirement, men",
         "PEN20B": "Expected years in retirement, women",
-        "PEN24": "Old age income poverty",
         "PEN24A": "Old age income poverty, 66+",
         "PEN24B": "Old age income poverty, 66-75",
         "PEN24C": "Old age income poverty, 76+",
@@ -125,8 +123,14 @@ def compute_senior():
         "PEN24E": "Old age income poverty, 66+, Women",
     }
     series = extractAllSeries(raw_data[0]["Raw"])
-    documents = filterSeriesListSeniors(series, "PEN20A", "PAG", "SENIOR")
-    return jsonify(documents)
+    document_list = []
+    for code in metadata_codes.keys():
+        document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
+    long_senior_data = pd.DataFrame(document_list)
+    print(long_senior_data.head())
+    wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
+    print(wide_senior_data.head())
+    return jsonify("hello")
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

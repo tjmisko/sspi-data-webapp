@@ -82,18 +82,17 @@ def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, Indicator
     for i, series in enumerate(series_list):
         series_key, series_attributes = series.find("serieskey"), series.find("attributes")
         IND = series_key.find("value", attrs={"concept": "IND"}).get("value")
-        print(IND)
         if IND != filterIND:
             continue
         id_info = {
+            "IndicatorCode": IndicatorCode,
             "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
+            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "VariableCodeOECD": IND,
             "IndicatorCodeOECD": OECDIndicatorCode,
             "Source": "OECD",
-            "IndicatorCode": IndicatorCode,
-            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
         }
-        new_documents = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        new_documents = [{"Year": obs.find("time").text, "Raw":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
         for doc in new_documents:
             doc.update(id_info)
         document_list.extend(new_documents)
