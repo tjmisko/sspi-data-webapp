@@ -31,11 +31,12 @@ def raw_insert_many(observation_list, IndicatorCode, **kwargs):
         raw_insert_one(observation, IndicatorCode, **kwargs)
     return i+1
 
-def fetch_raw_data(IndicatorCode):
+def fetch_raw_data(IndicatorCode, **kwargs):
     """
     Utility function that handles querying the database
     """
     mongoQuery = {"IndicatorCode": IndicatorCode}
+    mongoQuery.update(kwargs)
     return sspi_raw_api_data.find(mongoQuery)
 
 def raw_data_available(IndicatorCode):

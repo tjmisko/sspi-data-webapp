@@ -121,8 +121,6 @@ def compute_gtrans():
     #######    OECD compute    #########
     # mongoOECDQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.Source": "OECD"}
     # OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    # series = extractAllSeries(OECD_raw_data[0]["observation"])
-    # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
     
     #######    IEA compute ######
 
@@ -156,6 +154,18 @@ def compute_gtrans():
     # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
     # Overwrite all NaN values with String "NaN"
     # Parse that back into the right list format between 
+
+@compute_bp.route("/SENIOR", methods=['GET'])
+@login_required
+def compute_senior():
+    if not raw_data_available("SENIOR"):
+        return redirect(url_for("collect_bp.SENIOR"))
+    raw_data = fetch_raw_data("SENIOR")
+    series = extractAllSeries(raw_data[0]["Raw"])
+    OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
+    return jsonify(OECD_TCO2_OBS)
+    
+
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
