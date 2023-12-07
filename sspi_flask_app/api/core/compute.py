@@ -1,11 +1,11 @@
+import json
 from bs4 import BeautifulSoup
-from flask import Blueprint, redirect, url_for
+from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
 from ..resources.utilities import parse_json
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
-from ..resources.utilities import missing_countries, added_countries
 from ..resources.adapters import raw_data_available, fetch_raw_data
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
 import xml.etree.ElementTree as ET
@@ -82,18 +82,14 @@ def compute_gtrans():
         return redirect(url_for("collect_bp.GTRANS"))
     
     #######    WORLDBANK compute    #########
-    mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode": "FUELPR"}
-    worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
+    worldbank_raw = fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="WorldBank")
     worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
 
-    
     #######  IEA compute ######
-    mongoIEAQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.IntermediateCodeCode": "TCO2EQ-IEA"}
-    IEA_raw_data = parse_json(sspi_raw_api_data.find(mongoIEAQuery))
-    iea_clean_list = [entry["observation"] for entry in IEA_raw_data]
+    iea_raw_data = fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="IEA")
+    iea_clean_list = [entry["observation"] for entry in iea_raw_data]
    
     ### combining in pandas ####
-
     wb_df = pd.DataFrame(worldbank_clean_list)
     wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
     iea_df = pd.DataFrame(iea_clean_list)
@@ -103,8 +99,9 @@ def compute_gtrans():
     merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
     merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
     df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
-    sspi_clean_api_data.insert_many(df.to_dict('records'))
-    return df.to_dict('records')
+    document_list = json.loads(str(df.to_json('records')))
+    count = sspi_clean_api_data.insert_many(document_list)
+    return f"Inserted {count} documents into SSPI Clean Database from OECD"
 
     
 ####### SSPI ANALYSIS DB MANAGEMENT #########
@@ -161,11 +158,12 @@ def compute_senior():
     if not raw_data_available("SENIOR"):
         return redirect(url_for("collect_bp.SENIOR"))
     raw_data = fetch_raw_data("SENIOR")
-    series = extractAllSeries(raw_data[0]["Raw"])
-    OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
-    return jsonify(OECD_TCO2_OBS)
-    
-
+    print(raw_data)
+    metadata = raw_data[0]["Metadata"]
+    return jsonify(metadata)
+    # series = extractAllSeries(raw_data[0]["Raw"])
+    # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
+    # return jsonify(OECD_TCO2_OBS)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
