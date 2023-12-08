@@ -127,7 +127,6 @@ def compute_senior():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
-    print(long_senior_data.head())
     wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
     astype_dict = {
         "PEN20A": "float",
@@ -140,9 +139,10 @@ def compute_senior():
     wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
     wide_senior_data["Score"] = 0.25*wide_senior_data["PEN20A_normalized"] + 0.25*wide_senior_data["PEN20B_normalized"] + 0.5*wide_senior_data["PEN24A_normalized"]
     wide_senior_data["Score"] = wide_senior_data["Score"].map(lambda x: round(x, 3))
-    wide_senior_data["Score"].dropna()
+    wide_senior_data["ScoreDrop"] = wide_senior_data["PEN20A_normalized"].isna() or wide_senior_data["PEN20B_normalized"].isna() or wide_senior_data["PEN24A_normalized"].isna()
+    wide_senior_data["ScoreDrop"].dropna()
     print(wide_senior_data.head())
-    return jsonify("hello")
+    return jsonify(str(wide_senior_data.to_json(orient='records')))
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
