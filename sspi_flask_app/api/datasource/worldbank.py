@@ -1,4 +1,4 @@
-from ..resources.adapters import raw_insert_many
+from ... import sspi_raw_api_data
 import requests
 import time
 from pycountry import countries

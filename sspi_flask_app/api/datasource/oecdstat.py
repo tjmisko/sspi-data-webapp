@@ -1,7 +1,7 @@
 import requests
 import bs4 as bs
 from ..resources.utilities import string_to_float, string_to_int
-from ..resources.adapters import raw_insert_one
+from ... import sspi_raw_api_data
 import urllib3
 import ssl
 
@@ -43,7 +43,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
     response_obj = get_legacy_session().get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
-    raw_insert_one(observation, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
+    sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
