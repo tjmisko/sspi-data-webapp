@@ -139,9 +139,13 @@ def compute_senior():
     wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
     wide_senior_data["Score"] = 0.25*wide_senior_data["PEN20A_normalized"] + 0.25*wide_senior_data["PEN20B_normalized"] + 0.5*wide_senior_data["PEN24A_normalized"]
     wide_senior_data["Score"] = wide_senior_data["Score"].map(lambda x: round(x, 3))
-    wide_senior_data["ScoreDrop"] = wide_senior_data["PEN20A_normalized"].isna() or wide_senior_data["PEN20B_normalized"].isna() or wide_senior_data["PEN24A_normalized"].isna()
-    wide_senior_data["ScoreDrop"].dropna()
-    print(wide_senior_data.head())
+    wide_senior_data["IndicatorCode"] = "SENIOR"
+    wide_senior_data.drop(wide_senior_data[wide_senior_data["PEN20A"].isna() & wide_senior_data["PEN20B"].isna() & wide_senior_data["PEN24A"].isna()].index, inplace=True)
+    wide_senior_data["Intermediates"] = [{
+        "PEN20A": wide_senior_data["PEN20A"].iloc[i],
+        "PEN20B": wide_senior_data["PEN20B"].iloc[i],
+        "PEN24A": wide_senior_data["PEN24A"].iloc[i],
+    } for i in wide_senior_data.index]
     return jsonify(str(wide_senior_data.to_json(orient='records')))
 
 @compute_bp.route("/PRISON", methods=['GET'])
