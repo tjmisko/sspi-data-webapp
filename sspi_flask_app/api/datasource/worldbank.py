@@ -12,8 +12,8 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         new_url = f"{url_source}&page={p}"
         yield f"Sending Request for page {p} of {total_pages}\n"
         response = requests.get(new_url).json()
-        data_list = response[1]
-        count = raw_insert_many(data_list, IndicatorCode, **kwargs)
+        document_list = response[1]
+        count = sspi_raw_api_data.raw_insert_many(document_list, IndicatorCode, **kwargs)
         yield f"Inserted {count} new observations into sspi_raw_api_data\n"
         time.sleep(0.5)
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
