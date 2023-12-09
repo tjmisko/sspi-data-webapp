@@ -7,7 +7,6 @@ from ..resources.utilities import parse_json, goalpost
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
-from ..resources.adapters import raw_data_available, fetch_raw_data
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
 
@@ -127,26 +126,28 @@ def compute_senior():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
-    wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
-    astype_dict = {
-        "PEN20A": "float",
-        "PEN20B": "float",
-        "PEN24A": "float",
-    }
-    wide_senior_data = wide_senior_data.astype(astype_dict)
-    wide_senior_data["PEN20A_normalized"] = wide_senior_data["PEN20A"].map(lambda x: goalpost(x, 0, 20))
-    wide_senior_data["PEN20B_normalized"] = wide_senior_data["PEN20B"].map(lambda x: goalpost(x, 0, 20))
-    wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
-    wide_senior_data["Score"] = 0.25*wide_senior_data["PEN20A_normalized"] + 0.25*wide_senior_data["PEN20B_normalized"] + 0.5*wide_senior_data["PEN24A_normalized"]
-    wide_senior_data["Score"] = wide_senior_data["Score"].map(lambda x: round(x, 3))
-    wide_senior_data["IndicatorCode"] = "SENIOR"
-    wide_senior_data.drop(wide_senior_data[wide_senior_data["PEN20A"].isna() & wide_senior_data["PEN20B"].isna() & wide_senior_data["PEN24A"].isna()].index, inplace=True)
-    wide_senior_data["Intermediates"] = [{
-        "PEN20A": wide_senior_data["PEN20A"].iloc[i],
-        "PEN20B": wide_senior_data["PEN20B"].iloc[i],
-        "PEN24A": wide_senior_data["PEN24A"].iloc[i],
-    } for i in wide_senior_data.index]
-    return jsonify(str(wide_senior_data.to_json(orient='records')))
+    return jsonify(long_senior_data.to_json(orient='records'))
+#     wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
+#     astype_dict = {
+#         "PEN20A": "float",
+#         "PEN20B": "float",
+#         "PEN24A": "float",
+#     }
+#     wide_senior_data = wide_senior_data.astype(astype_dict)
+#     wide_senior_data["PEN20A_normalized"] = wide_senior_data["PEN20A"].map(lambda x: goalpost(x, 0, 20))
+#     wide_senior_data["PEN20B_normalized"] = wide_senior_data["PEN20B"].map(lambda x: goalpost(x, 0, 20))
+#     wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
+
+#     wide_senior_data["Score"] = 0.25*wide_senior_data["PEN20A_normalized"] + 0.25*wide_senior_data["PEN20B_normalized"] + 0.5*wide_senior_data["PEN24A_normalized"]
+#     wide_senior_data["Score"] = wide_senior_data["Score"].map(lambda x: round(x, 3))
+#     wide_senior_data["IndicatorCode"] = "SENIOR"
+#     wide_senior_data.drop(wide_senior_data[wide_senior_data["PEN20A"].isna() & wide_senior_data["PEN20B"].isna() & wide_senior_data["PEN24A"].isna()].index, inplace=True)
+#     wide_senior_data["Intermediates"] = [{
+#         "PEN20A": wide_senior_data["PEN20A"].iloc[i],
+#         "PEN20B": wide_senior_data["PEN20B"].iloc[i],
+#         "PEN24A": wide_senior_data["PEN24A"].iloc[i],
+#     } for i in wide_senior_data.index]
+    # return jsonify(str(wide_senior_data.to_json(orient='records')))
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

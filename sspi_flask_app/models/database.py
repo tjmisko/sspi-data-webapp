@@ -252,6 +252,15 @@ class SSPIRawAPIData(MongoWrapper):
         mongoQuery = {"IndicatorCode": IndicatorCode}
         mongoQuery.update(kwargs)
         return self.find(mongoQuery)
+    
+    def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
+        """
+        Returns True if raw data is available for the given indicator code and kwargs
+        """
+        MongoQuery = {"IndicatorCode": IndicatorCode}
+        MongoQuery.update(kwargs)
+        return bool(self.find_one(MongoQuery))
+
 
 
 class SSPIMainDataV3(MongoWrapper):
