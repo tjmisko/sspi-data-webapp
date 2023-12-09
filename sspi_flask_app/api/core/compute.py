@@ -26,9 +26,9 @@ def compute_biodiv():
     - Indicator computation: average of the three scores for percentage of biodiversity in
     marine, freshwater, and terrestrial ecosystems
     """
-    if not raw_data_available("BIODIV"):
+    if not sspi_raw_api_data.raw_data_available("BIODIV"):
         return redirect(url_for("api_bp.collect_bp.BIODIV"))
-    raw_data = fetch_raw_data("BIODIV")
+    raw_data = sspi_raw_api_data.fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
@@ -39,9 +39,9 @@ def compute_biodiv():
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
 def compute_rdlst():
-    if not raw_data_available("REDLST"):
+    if not sspi_raw_api_data.raw_data_available("REDLST"):
         return redirect(url_for("api_bp.collect_bp.REDLST"))
-    raw_data = fetch_raw_data("REDLST")
+    raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     sspi_clean_api_data.insert_many(final_list)
@@ -50,9 +50,9 @@ def compute_rdlst():
 @compute_bp.route("/COALPW")
 @login_required
 def compute_coalpw():
-    if not raw_data_available("COALPW"):
+    if not sspi_raw_api_data.raw_data_available("COALPW"):
         return redirect(url_for("api_bp.collect_bp.coalpw"))
-    raw_data = fetch_raw_data("COALPW")
+    raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
     observations = [entry["observation"] for entry in raw_data]
     observations = [entry["observation"] for entry in raw_data]
     df = pd.DataFrame(observations)
@@ -61,9 +61,9 @@ def compute_coalpw():
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def compute_altnrg():
-    if not raw_data_available("ALTNRG"):
+    if not sspi_raw_api_data.raw_data_available("ALTNRG"):
         return redirect(url_for("collect_bp.ALTNRG"))
-    raw_data = fetch_raw_data("ALTNRG")
+    raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
     observations = [entry["observation"] for entry in raw_data]
     df = pd.DataFrame(observations)
     print(df.head())
@@ -77,15 +77,15 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods = ['GET'])
 @login_required
 def compute_gtrans():
-    if not raw_data_available("GTRANS"):
+    if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     
     #######    WORLDBANK compute    #########
-    worldbank_raw = fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="WorldBank")
+    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="WorldBank")
     worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
 
     #######  IEA compute ######
-    iea_raw_data = fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="IEA")
+    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="IEA")
     iea_clean_list = [entry["observation"] for entry in iea_raw_data]
    
     ### combining in pandas ####
@@ -105,9 +105,9 @@ def compute_gtrans():
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
-    if not raw_data_available("SENIOR"):
+    if not sspi_raw_api_data.raw_data_available("SENIOR"):
         return redirect(url_for("collect_bp.SENIOR"))
-    raw_data = fetch_raw_data("SENIOR")
+    raw_data = sspi_raw_api_data.fetch_raw_data("SENIOR")
     # metadata = raw_data[0]["Metadata"]
     # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
     # to see the codes and their descriptions, uncomment and return the following line
@@ -162,7 +162,7 @@ def compute_prison():
 @compute_bp.route("/INTRNT", methods=['GET'])
 # @login_required
 def compute_intrnt():
-    if not raw_data_available("INTRNT"):
+    if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
     # worldbank #
     wbQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
