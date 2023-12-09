@@ -22,7 +22,7 @@ collect_bp = Blueprint("collect_bp", __name__,
 ###########################
 ### Category: ECOSYSTEM ###
 ###########################
-
+# add some stuff here
 @collect_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def biodiv():
