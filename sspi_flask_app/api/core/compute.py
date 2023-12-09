@@ -109,8 +109,8 @@ def compute_senior():
     if not raw_data_available("SENIOR"):
         return redirect(url_for("collect_bp.SENIOR"))
     raw_data = fetch_raw_data("SENIOR")
-    metadata = raw_data[0]["Metadata"]
-    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    # metadata = raw_data[0]["Metadata"]
+    # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
     # to see the codes and their descriptions, uncomment and return the following line
     # jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
     metadata_codes = {

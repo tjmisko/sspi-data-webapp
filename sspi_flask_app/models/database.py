@@ -217,6 +217,42 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
+    
+    def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
+        """
+        Utility Function the response from an API call in the database
+        - Observation to be passed as a well-formed dictionary for entry into pymongo
+        - IndicatorCode is the indicator code for the indicator that the observation is for
+        """
+        document = {
+            "IndicatorCode": IndicatorCode,
+            "Raw": document, 
+            "CollectedAt": datetime.now()
+        }
+        document.update(kwargs)
+        self.insert_one(document)
+        return 1
+
+    def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
+        """
+        Utility Function 
+        - Observation to be past as a list of well form observation dictionaries
+        - IndicatorCode is the indicator code for the indicator that the observation is for
+        """
+        for observation in enumerate(document_list):
+            self.raw_insert_one(observation, IndicatorCode, **kwargs)
+        return len(document_list) 
+
+    def fetch_raw_data(self, IndicatorCode, **kwargs) -> list:
+        """
+        Utility function that handles querying the database
+        """
+        if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
+            raise ValueError("Indicator Code not found in database")
+        mongoQuery = {"IndicatorCode": IndicatorCode}
+        mongoQuery.update(kwargs)
+        return self.find(mongoQuery)
+
 
 class SSPIMainDataV3(MongoWrapper):
 
