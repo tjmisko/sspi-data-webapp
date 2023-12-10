@@ -81,17 +81,28 @@ def added_countries(sspi_country_list, source_country_list):
 
 def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
     """
-    Utility function for zipping together the sspi_data and source_data
+    Utility function for zipping together intermediate documents into indicator documents
     """
-    validated_intermediate_list = validate_intermediate_list(intermediate_document_list)
-    gp_intermediate_list = append_goalpost_info(validated_intermediate_list)
-    indicator_document_list = group_by_indicator(gp_intermediate_list)
+    sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
+    gp_intermediate_list = append_goalpost_info(intermediate_document_list)
+    indicator_document_list = group_by_indicator(gp_intermediate_list, IndicatorCode)
     scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
     return scored_indicator_document_list
     
-    
-def validate_intermediate_list(intermediate_document_list):
+def append_goalpost_info(intermediate_document_list):
     """
-    Utility function for validating the format of a document
+    Utility function for appending goalpost information to a document
     """
-    for document in intermediate_document_list:
+    pass
+
+def group_by_indicator(intermediate_document_list, IndicatorCode):
+    """
+    Utility function for grouping documents by indicator
+    """
+    pass
+
+def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
+    """
+    Utility function for scoring indicator documents
+    """
+    pass

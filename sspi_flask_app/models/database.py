@@ -161,16 +161,19 @@ class MongoWrapper:
     
     def validate_intermediates(self, document:dict, document_number:int=0):
         if "Intermediates" in document.keys():
-            if not type(document["Intermediates"]) is list:
-                raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number})")
-            for intermediate in document["Intermediates"]:
-                if not type(intermediate) is dict:
-                    raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
-                self.validate_intermediate_code(intermediate, document_number)
-                self.validate_country_code(intermediate, document_number)
-                self.validate_year(intermediate, document_number)
-                self.validate_value(intermediate, document_number)
-                self.validate_unit(intermediate, document_number)
+            self.validate_intermediates_list(document["Intermediaets"], document_number)
+    
+    def validate_intermediates_list(self, intermediates:list, document_number:int=0):
+        if not type(intermediates) is list:
+            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number})")
+        for intermediate in intermediates:
+            if not type(intermediate) is dict:
+                raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
+            self.validate_intermediate_code(intermediate, document_number)
+            self.validate_country_code(intermediate, document_number)
+            self.validate_year(intermediate, document_number)
+            self.validate_value(intermediate, document_number)
+            self.validate_unit(intermediate, document_number)
 
 class SSPIRawAPIData(MongoWrapper):
     
