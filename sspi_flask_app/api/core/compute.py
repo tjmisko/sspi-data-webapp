@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
@@ -129,8 +129,13 @@ def compute_senior():
     long_senior_data = pd.DataFrame(document_list)
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
     long_senior_data.astype({"Year": "int", "Value": "float"})
-    print(long_senior_data.head())
-    return jsonify_df(long_senior_data)
+    final_data = zip_intermediates(
+        json.loads(str(long_senior_data.to_json(orient="records")), parse_int=int, parse_float=float),
+        "SENIOR",
+        ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
+        ScoreBy="Score"
+    )
+    return jsonify(final_data)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

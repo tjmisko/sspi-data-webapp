@@ -84,11 +84,21 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
     """
     Utility function for zipping together intermediate documents into indicator documents
     """
+    intermediate_document_list = convert_data_types(intermediate_document_list)
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
     gp_intermediate_list = append_goalpost_info(intermediate_document_list, ScoreBy)
     indicator_document_list = group_by_indicator(gp_intermediate_list, IndicatorCode)
     scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
     return scored_indicator_document_list
+
+def convert_data_types(intermediate_document_list):
+    """
+    Utility function for converting data types in intermediate documents
+    """
+    for document in intermediate_document_list:
+        document["Year"] = int(document["Year"])
+        document["Value"] = float(document["Value"])
+    return intermediate_document_list
     
 def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
