@@ -22,7 +22,6 @@ collect_bp = Blueprint("collect_bp", __name__,
 ###########################
 ### Category: ECOSYSTEM ###
 ###########################
-
 @collect_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def biodiv():
@@ -95,8 +94,8 @@ def altnrg():
 def gtrans():
     def collect_iterator(**kwargs):
         # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
-        yield from collectOECDIndicator("AIR_GHG", "GTRANS", IntermediateCode="TCO2EQ-OECD", **kwargs)
-        yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ-IEA", **kwargs)
+        yield from collectOECDIndicator("AIR_GHG", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="OECD", **kwargs)
+        yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", IntermediateCode="FUELPR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
@@ -111,7 +110,15 @@ def lfpart():
         yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/SENIOR")
+@login_required
+def senior():
+    def collect_iterator(**kwargs):
+        yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/GINIPT", methods=['GET'])
+@login_required
 def ginipt():
     def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
@@ -139,8 +146,8 @@ def taxrev():
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
     def collect_iterator(**kwargs):  
-        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", "CREDIT")
-        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", "DPOSIT", **kwargs)                                        
+        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT")
+        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)                                        
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -149,7 +156,7 @@ def fdepth():
 def intrnt():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT")
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", "QLMBPS", **kwargs)
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

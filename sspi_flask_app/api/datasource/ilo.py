@@ -1,5 +1,5 @@
 import requests
-from ..resources.adapters import raw_insert_one
+from ... import sspi_raw_api_data
 
 def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs):
     yield "Sending Data Request to ILO API\n"
@@ -7,5 +7,5 @@ def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs
     print(str(response_obj.content))
     observation = str(response_obj.content)
     yield "Data Received from ILO API.  Storing Data in SSPI Raw Data\n"
-    count = raw_insert_one(observation, IndicatorCode, **kwargs)
+    count = sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, **kwargs)
     yield f"Inserted {count} observations into the database."

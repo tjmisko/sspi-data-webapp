@@ -1,5 +1,8 @@
 import json
 from bson import json_util
+from flask import jsonify
+import pandas as pd
+import inspect
 import math
 from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_dynamic_data
 from sspi_flask_app.models.errors import InvalidDatabaseError
@@ -16,6 +19,16 @@ def format_m49_as_string(input):
         return '0' + str(input)
     else: 
         return '00' + str(input)
+
+def jsonify_df(df:pd.DataFrame):
+    """
+    Utility function for converting a dataframe to a JSON object
+    """
+    return jsonify(json.loads(str(df.to_json(orient='records'))))
+
+def goalpost(value, lower, upper):
+    """ Implement the goalposting formula"""
+    return max(0, min(1, (value - lower)/(upper - lower)))
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
@@ -66,3 +79,78 @@ def added_countries(sspi_country_list, source_country_list):
         if other_country not in sspi_country_list:
             additional_countries.append(other_country)
     return additional_countries
+
+def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
+    """
+    Utility function for zipping together intermediate documents into indicator documents
+    """
+    intermediate_document_list = convert_data_types(intermediate_document_list)
+    sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
+    gp_intermediate_list = append_goalpost_info(intermediate_document_list, ScoreBy)
+    indicator_document_list = group_by_indicator(gp_intermediate_list, IndicatorCode)
+    scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
+    return scored_indicator_document_list
+
+def convert_data_types(intermediate_document_list):
+    """
+    Utility function for converting data types in intermediate documents
+    """
+    for document in intermediate_document_list:
+        document["Year"] = int(document["Year"])
+        document["Value"] = float(document["Value"])
+    return intermediate_document_list
+    
+def append_goalpost_info(intermediate_document_list, ScoreBy):
+    """
+    Utility function for appending goalpost information to a document
+    """
+    if ScoreBy == "Value":
+        return intermediate_document_list
+    intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
+    intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
+    print(intermediate_details)
+    for document in intermediate_document_list:
+        for detail in intermediate_details:
+            if document["IntermediateCode"] == detail["Metadata"]["IntermediateCode"]:
+                document["LowerGoalpost"] = detail["Metadata"]["LowerGoalpost"]
+                document["UpperGoalpost"] = detail["Metadata"]["UpperGoalpost"]
+                document["Score"] = goalpost(document["Value"], detail["Metadata"]["LowerGoalpost"], detail["Metadata"]["UpperGoalpost"])
+    return intermediate_document_list
+
+def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
+    """
+    Utility function for grouping documents by indicator
+    """
+    indicator_document_hashmap = dict() 
+    for document in intermediate_document_list:
+        document_id = f"{document['CountryCode']}_{document['Year']}"
+        if document_id not in indicator_document_hashmap.keys():
+            indicator_document_hashmap[document_id] = {
+                "IndicatorCode": IndicatorCode,
+                "CountryCode": document["CountryCode"],
+                "Year": document["Year"],
+                "Intermediates": [],
+            }
+        indicator_document_hashmap[document_id]["Intermediates"].append(document)
+    return list(indicator_document_hashmap.values())
+
+def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
+    """
+    Utility function for scoring indicator documents
+    """
+    arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
+    for document in indicator_document_list:
+        if ScoreBy == "Values":
+            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get("Value", None) for intermediate in document["Intermediates"]}
+        elif ScoreBy == "Score":
+            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get("Score", None) for intermediate in document["Intermediates"]}
+        else:
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
+        if any(arg_value is None for arg_value in arg_value_dict.values()):
+            continue
+        try:
+            arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
+        except KeyError:
+            continue
+        document["Score"] = ScoreFunction(*arg_value_list)
+    return indicator_document_list
