@@ -2,6 +2,7 @@ import json
 from bson import json_util
 from flask import jsonify
 import pandas as pd
+import inspect
 import math
 from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_dynamic_data
 from sspi_flask_app.models.errors import InvalidDatabaseError
@@ -84,15 +85,17 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
     Utility function for zipping together intermediate documents into indicator documents
     """
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
-    gp_intermediate_list = append_goalpost_info(intermediate_document_list)
+    gp_intermediate_list = append_goalpost_info(intermediate_document_list, ScoreBy)
     indicator_document_list = group_by_indicator(gp_intermediate_list, IndicatorCode)
     scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
     return scored_indicator_document_list
     
-def append_goalpost_info(intermediate_document_list):
+def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
     Utility function for appending goalpost information to a document
     """
+    if ScoreBy == "Value":
+        return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
     intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "IntermediateCode": {"$in": list(intermediate_codes)}})
     for document in intermediate_document_list:
@@ -124,4 +127,17 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     """
     Utility function for scoring indicator documents
     """
-    pass
+    arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
+    for document in indicator_document_list:
+        if ScoreBy == "Values":
+            arg_value_dict = {intermediate["IntermediateCode"]: intermediate["Value"] for intermediate in document["Intermediates"]}
+        elif ScoreBy == "Score":
+            arg_value_dict = {intermediate["IntermediateCode"]: intermediate["Score"] for intermediate in document["Intermediates"]}
+        else:
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
+        try:
+            arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
+        except KeyError:
+            continue
+        document["Score"] = ScoreFunction(*arg_value_list)
+    return indicator_document_list
