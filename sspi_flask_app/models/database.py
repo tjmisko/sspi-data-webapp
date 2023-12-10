@@ -96,7 +96,6 @@ class MongoWrapper:
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
-        self.validate_intermediates(document, document_number)
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:
@@ -114,6 +113,17 @@ class MongoWrapper:
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be a string (document {document_number})")
         if not document["IndicatorCode"].isupper():
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be uppercase (document {document_number})")
+    
+    def validate_intermediate_code(self, document: dict, document_number:int=0):
+        # Validate IndicatorCode format
+        if not "IntermediateCode" in document.keys():
+            raise InvalidDocumentFormatError(f"'IntermediateCode' is a required argument (document {document_number})")
+        if not len(document["IntermediateCode"]) == 6:
+            raise InvalidDocumentFormatError(f"'IntermediateCode' must be 6 characters long (document {document_number})")
+        if not type(document["IntermediateCode"]) is str:
+            raise InvalidDocumentFormatError(f"'IntermediateCode' must be a string (document {document_number})")
+        if not document["IntermediateCode"].isupper():
+            raise InvalidDocumentFormatError(f"'IntermediateCode' must be uppercase (document {document_number})")
     
     def validate_country_code(self, document: dict, document_number:int=0):
         # Validate CountryCode format
@@ -151,17 +161,16 @@ class MongoWrapper:
     
     def validate_intermediates(self, document:dict, document_number:int=0):
         if "Intermediates" in document.keys():
-            if not type(document["Intermediates"]) is dict:
-                raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
-            for key, value in document["Intermediates"].items():
-                if not type(key) is str:
-                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be strings (document {document_number})")
-                if len(key) != 6:
-                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be 6 characters long (document {document_number})")
-                if not key.isupper():
-                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be uppercase (document {document_number})")
-                if not type(value) in [float, int]:
-                    raise InvalidDocumentFormatError(f"'Intermediates' values must be floats or integers (document {document_number})")
+            if not type(document["Intermediates"]) is list:
+                raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number})")
+            for intermediate in document["Intermediates"]:
+                if not type(intermediate) is dict:
+                    raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
+                self.validate_intermediate_code(intermediate, document_number)
+                self.validate_country_code(intermediate, document_number)
+                self.validate_year(intermediate, document_number)
+                self.validate_value(intermediate, document_number)
+                self.validate_unit(intermediate, document_number)
 
 class SSPIRawAPIData(MongoWrapper):
     
@@ -260,8 +269,6 @@ class SSPIRawAPIData(MongoWrapper):
         MongoQuery = {"IndicatorCode": IndicatorCode}
         MongoQuery.update(kwargs)
         return bool(self.find_one(MongoQuery))
-
-
 
 class SSPIMainDataV3(MongoWrapper):
 

@@ -1,5 +1,7 @@
 import json
 from bson import json_util
+from flask import jsonify
+import pandas as pd
 import math
 from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_dynamic_data
 from sspi_flask_app.models.errors import InvalidDatabaseError
@@ -16,6 +18,12 @@ def format_m49_as_string(input):
         return '0' + str(input)
     else: 
         return '00' + str(input)
+
+def jsonify_df(df:pd.DataFrame):
+    """
+    Utility function for converting a dataframe to a JSON object
+    """
+    return jsonify(json.loads(str(df.to_json(orient='records'))))
 
 def goalpost(value, lower, upper):
     """ Implement the goalposting formula"""
@@ -70,3 +78,20 @@ def added_countries(sspi_country_list, source_country_list):
         if other_country not in sspi_country_list:
             additional_countries.append(other_country)
     return additional_countries
+
+def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
+    """
+    Utility function for zipping together the sspi_data and source_data
+    """
+    validated_intermediate_list = validate_intermediate_list(intermediate_document_list)
+    gp_intermediate_list = append_goalpost_info(validated_intermediate_list)
+    indicator_document_list = group_by_indicator(gp_intermediate_list)
+    scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
+    return scored_indicator_document_list
+    
+    
+def validate_intermediate_list(intermediate_document_list):
+    """
+    Utility function for validating the format of a document
+    """
+    for document in intermediate_document_list:

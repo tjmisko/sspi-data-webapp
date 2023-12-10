@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost
+from ..resources.utilities import parse_json, goalpost, jsonify_df
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
@@ -126,7 +126,7 @@ def compute_senior():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
-    return jsonify(long_senior_data.to_json(orient='records'))
+    return jsonify_df(long_senior_data)
 #     wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
 #     astype_dict = {
 #         "PEN20A": "float",
