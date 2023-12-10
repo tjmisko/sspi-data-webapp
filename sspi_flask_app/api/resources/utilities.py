@@ -108,6 +108,7 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
     intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "IntermediateCode": {"$in": list(intermediate_codes)}})
+    print(intermediate_details)
     for document in intermediate_document_list:
         for detail in intermediate_details:
             if document["IntermediateCode"] == detail["IntermediateCode"]:
@@ -131,6 +132,7 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
                 "Intermediates": [],
             }
         indicator_document_hashmap[document_id]["Intermediates"].append(document)
+        print(indicator_document_hashmap[document_id])
     return list(indicator_document_hashmap.values())
 
 def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
@@ -140,11 +142,13 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
     for document in indicator_document_list:
         if ScoreBy == "Values":
-            arg_value_dict = {intermediate["IntermediateCode"]: intermediate["Value"] for intermediate in document["Intermediates"]}
+            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get("Value", None) for intermediate in document["Intermediates"]}
         elif ScoreBy == "Score":
-            arg_value_dict = {intermediate["IntermediateCode"]: intermediate["Score"] for intermediate in document["Intermediates"]}
+            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get("Score", None) for intermediate in document["Intermediates"]}
         else:
             raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
+        if any(arg_value is None for arg_value in arg_value_dict.values()):
+            continue
         try:
             arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
         except KeyError:
