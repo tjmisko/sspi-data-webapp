@@ -95,15 +95,30 @@ def append_goalpost_info(intermediate_document_list):
     """
     intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
     intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "IntermediateCode": {"$in": list(intermediate_codes)}})
-
     for document in intermediate_document_list:
+        for detail in intermediate_details:
+            if document["IntermediateCode"] == detail["IntermediateCode"]:
+                document["LowerGoalpost"] = detail["LowerGoalpost"]
+                document["UpperGoalpost"] = detail["UpperGoalpost"]
+                document["Score"] = goalpost(document["Value"], detail["LowerGoalpost"], detail["UpperGoalpost"])
+    return intermediate_document_list
 
-
-def group_by_indicator(intermediate_document_list, IndicatorCode):
+def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
     """
     Utility function for grouping documents by indicator
     """
-    pass
+    indicator_document_hashmap = dict() 
+    for document in intermediate_document_list:
+        document_id = f"{document['CountryCode']}_{document['Year']}"
+        if document_id not in indicator_document_hashmap.keys():
+            indicator_document_hashmap[document_id] = {
+                "IndicatorCode": IndicatorCode,
+                "CountryCode": document["CountryCode"],
+                "Year": document["Year"],
+                "Intermediates": [],
+            }
+        indicator_document_hashmap[document_id]["Intermediates"].append(document)
+    return list(indicator_document_hashmap.values())
 
 def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     """
