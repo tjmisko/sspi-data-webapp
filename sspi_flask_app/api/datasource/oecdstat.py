@@ -67,10 +67,10 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
             "IndicatorCodeOECD": OECDIndicatorCode,
             "Source": "OECD",
             "IndicatorCode": IndicatorCode,
-            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
         }
-        new_documents = [{"Year": obs.find("time").text, "Raw":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        new_documents = [{"Year": obs.find("time").text, "Value":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
         for doc in new_documents:
             doc.update(id_info)
         document_list.extend(new_documents)
@@ -87,12 +87,12 @@ def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, Indicator
         id_info = {
             "IndicatorCode": IndicatorCode,
             "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
-            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "VariableCodeOECD": IND,
             "IndicatorCodeOECD": OECDIndicatorCode,
             "Source": "OECD",
         }
-        new_documents = [{"Year": obs.find("time").text, "Raw":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        new_documents = [{"Year": obs.find("time").text, "Value":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
         for doc in new_documents:
             doc.update(id_info)
         document_list.extend(new_documents)

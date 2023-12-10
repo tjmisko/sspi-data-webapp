@@ -116,38 +116,21 @@ def compute_senior():
         "PEN20A": "Expected years in retirement, men",
         "PEN20B": "Expected years in retirement, women",
         "PEN24A": "Old age income poverty, 66+",
-        "PEN24B": "Old age income poverty, 66-75",
-        "PEN24C": "Old age income poverty, 76+",
-        "PEN24D": "Old age income poverty, 66+, Men",
-        "PEN24E": "Old age income poverty, 66+, Women",
+    }
+    metadata_code_map = {
+        "PEN20A": "YRSRTM",
+        "PEN20B": "YRSRTW",
+        "PEN24A": "POVNRT",
     }
     series = extractAllSeries(raw_data[0]["Raw"])
     document_list = []
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
+    long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
+    long_senior_data.astype({"Year": "int", "Value": "float"})
+    print(long_senior_data.head())
     return jsonify_df(long_senior_data)
-#     wide_senior_data = long_senior_data.pivot(index=["CountryCode", "IndicatorCode", "Year"], columns="VariableCodeOECD", values="Raw").reset_index()
-#     astype_dict = {
-#         "PEN20A": "float",
-#         "PEN20B": "float",
-#         "PEN24A": "float",
-#     }
-#     wide_senior_data = wide_senior_data.astype(astype_dict)
-#     wide_senior_data["PEN20A_normalized"] = wide_senior_data["PEN20A"].map(lambda x: goalpost(x, 0, 20))
-#     wide_senior_data["PEN20B_normalized"] = wide_senior_data["PEN20B"].map(lambda x: goalpost(x, 0, 20))
-#     wide_senior_data["PEN24A_normalized"] = wide_senior_data["PEN24A"].map(lambda x: goalpost(x, 100, 0))
-
-#     wide_senior_data["Score"] = 0.25*wide_senior_data["PEN20A_normalized"] + 0.25*wide_senior_data["PEN20B_normalized"] + 0.5*wide_senior_data["PEN24A_normalized"]
-#     wide_senior_data["Score"] = wide_senior_data["Score"].map(lambda x: round(x, 3))
-#     wide_senior_data["IndicatorCode"] = "SENIOR"
-#     wide_senior_data.drop(wide_senior_data[wide_senior_data["PEN20A"].isna() & wide_senior_data["PEN20B"].isna() & wide_senior_data["PEN24A"].isna()].index, inplace=True)
-#     wide_senior_data["Intermediates"] = [{
-#         "PEN20A": wide_senior_data["PEN20A"].iloc[i],
-#         "PEN20B": wide_senior_data["PEN20B"].iloc[i],
-#         "PEN24A": wide_senior_data["PEN24A"].iloc[i],
-#     } for i in wide_senior_data.index]
-    # return jsonify(str(wide_senior_data.to_json(orient='records')))
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
