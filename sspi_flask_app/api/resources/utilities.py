@@ -93,7 +93,11 @@ def append_goalpost_info(intermediate_document_list):
     """
     Utility function for appending goalpost information to a document
     """
-    pass
+    intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
+    intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "IntermediateCode": {"$in": list(intermediate_codes)}})
+
+    for document in intermediate_document_list:
+
 
 def group_by_indicator(intermediate_document_list, IndicatorCode):
     """
