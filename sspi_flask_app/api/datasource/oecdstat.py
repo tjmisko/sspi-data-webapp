@@ -1,7 +1,7 @@
 import requests
 import bs4 as bs
 from ..resources.utilities import string_to_float, string_to_int
-from ..resources.adapters import raw_insert_one
+from ... import sspi_raw_api_data
 import urllib3
 import ssl
 
@@ -13,7 +13,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
     See Harry Mallon's answer and ahmkara's elaboration on StackOverflow:
     https://stackoverflow.com/questions/71603314/ssl-error-unsafe-legacy-renegotiation-disabled/71646353#71646353
     """
-    class CustomHttpAdapter (requests.adapters.HTTPAdapter):
+    class CustomHttpAdapter(requests.adapters.HTTPAdapter):
     # "Transport adapter" that allows us to use custom ssl_context.
 
         def __init__(self, ssl_context=None, **kwargs):
@@ -43,7 +43,7 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
     response_obj = get_legacy_session().get(SDMX_URL_OECD)
     observation = str(response_obj.content) 
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
-    raw_insert_one(observation, IndicatorCode, Metadata={"Source": "OECD", "Metadata": metadata}, **kwargs)
+    sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
@@ -55,7 +55,7 @@ def extractAllSeries(oecd_XML):
 
 def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
-    obs_list = []
+    document_list = []
     for i, series in enumerate(series_list):
         series_key, series_attributes = series.find("serieskey"), series.find("attributes")
         VAR = series_key.find("value", attrs={"concept": "VAR"}).get("value")
@@ -67,15 +67,36 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
             "IndicatorCodeOECD": OECDIndicatorCode,
             "Source": "OECD",
             "IndicatorCode": IndicatorCode,
-            "Units": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
         }
-        new_observations = [{"YEAR": obs.find("time").text, "RAW":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
-        for obs in new_observations:
-            obs.update(id_info)
-        obs_list.extend(new_observations)
-    return obs_list
+        new_documents = [{"Year": obs.find("time").text, "Value":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        for doc in new_documents:
+            doc.update(id_info)
+        document_list.extend(new_documents)
+    return document_list
         
+def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, IndicatorCode):
+    # Return a list of series that match the filterVAR variable name
+    document_list = []
+    for i, series in enumerate(series_list):
+        series_key, series_attributes = series.find("serieskey"), series.find("attributes")
+        IND = series_key.find("value", attrs={"concept": "IND"}).get("value")
+        if IND != filterIND:
+            continue
+        id_info = {
+            "IndicatorCode": IndicatorCode,
+            "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
+            "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
+            "VariableCodeOECD": IND,
+            "IndicatorCodeOECD": OECDIndicatorCode,
+            "Source": "OECD",
+        }
+        new_documents = [{"Year": obs.find("time").text, "Value":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
+        for doc in new_documents:
+            doc.update(id_info)
+        document_list.extend(new_documents)
+    return document_list
     
 def organizeOECDdata(series_list):
     listofdicts = []

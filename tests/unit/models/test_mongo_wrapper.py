@@ -36,7 +36,8 @@ def test_documents():
         8: {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": "25", "CollectedAt": "2020-1-1", "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "a": {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "b": {"IndicatorCode": "REDLST", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25.2, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
-        "c": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
+        "c": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
+        "d": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}}
     }
     yield test_documents
 
@@ -95,13 +96,16 @@ def test_insert_one(test_documents, mongo_wrapper):
         with pytest.raises(InvalidDocumentFormatError) as exception_info:
             mongo_wrapper.insert_one(test_documents[1])
         assert "document 0" in str(exception_info.value)
-    mongo_wrapper.insert_one(test_documents["a"])
+    count = mongo_wrapper.insert_one(test_documents["a"])
+    assert count == 1
     assert mongo_wrapper._mongo_database.count_documents({}) == 1
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents["a"]
-    mongo_wrapper.insert_one(test_documents["b"])
+    count = mongo_wrapper.insert_one(test_documents["b"])
+    assert count == 1
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents["b"]
-    mongo_wrapper.insert_one(test_documents["c"])
+    count = mongo_wrapper.insert_one(test_documents["c"])
+    assert count == 1
     assert mongo_wrapper._mongo_database.count_documents({}) == 3
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
 
@@ -110,7 +114,8 @@ def test_insert_many(test_documents, mongo_wrapper):
         mongo_wrapper.insert_many(list(test_documents.values()))
     assert "CountryCode" in str(exception_info.value)
     assert "document 0" in str(exception_info.value)
-    mongo_wrapper.insert_many([test_documents["a"], test_documents["b"]])
+    count = mongo_wrapper.insert_many([test_documents["a"], test_documents["b"]])
+    assert count == 2
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "BIODIV"}) == test_documents["a"]
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "REDLST"}) == test_documents["b"]
@@ -119,5 +124,31 @@ def test_insert_many(test_documents, mongo_wrapper):
     assert "Type" in str(exception_info.value)
     assert "dict" in str(exception_info.value)
     assert mongo_wrapper._mongo_database.count_documents({}) == 2
-    mongo_wrapper.insert_many([test_documents["c"]])
+    count = mongo_wrapper.insert_many([test_documents["c"]])
+    assert count == 1
     assert mongo_wrapper._mongo_database.find_one({"IndicatorCode": "NITROG"}) == test_documents["c"]
+
+def test_tabulate_ids(test_documents, mongo_wrapper):
+    mongo_wrapper.insert_many([v for k, v in test_documents.items() if type(k) is str])
+    table = mongo_wrapper.tabulate_ids()
+    assert type(table) is list
+    assert len(table) == 3
+    assert all([type(document) is dict for document in table])
+    for document in table:
+        if document["_id"]["IndicatorCode"] == "BIODIV" or document["_id"]["IndicatorCode"] == "REDLST":
+            assert document["count"] == 1
+        else:
+            assert document["count"] == 2
+
+def test_drop_duplicates(test_documents, mongo_wrapper):
+    mongo_wrapper.insert_many([v for k, v in test_documents.items() if type(k) is str])
+    mongo_wrapper.drop_duplicates()
+    assert mongo_wrapper.count_documents({}) == 3
+    document_list = mongo_wrapper.find({})
+    assert type(document_list) is list
+    assert len(document_list) == 3
+    assert all([type(document) is dict for document in document_list])
+    assert len(mongo_wrapper.find({"IndicatorCode": "BIODIV"})) == 1
+    assert len(mongo_wrapper.find({"IndicatorCode": "REDLST"})) == 1
+    assert len(mongo_wrapper.find({"IndicatorCode": "NITROG"})) == 1
+

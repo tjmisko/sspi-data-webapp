@@ -1,14 +1,13 @@
+import json
+import bs4 as bs
 from bs4 import BeautifulSoup
-from flask import Blueprint, redirect, url_for
+from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
 from ..datasource.worldbank import cleanedWorldBankData
-from ..resources.utilities import missing_countries, added_countries
-from ..resources.adapters import raw_data_available, fetch_raw_data
-from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList
-import xml.etree.ElementTree as ET
+from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
 
 compute_bp = Blueprint("compute_bp", __name__,
@@ -27,9 +26,9 @@ def compute_biodiv():
     - Indicator computation: average of the three scores for percentage of biodiversity in
     marine, freshwater, and terrestrial ecosystems
     """
-    if not raw_data_available("BIODIV"):
+    if not sspi_raw_api_data.raw_data_available("BIODIV"):
         return redirect(url_for("api_bp.collect_bp.BIODIV"))
-    raw_data = fetch_raw_data("BIODIV")
+    raw_data = sspi_raw_api_data.fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
@@ -40,9 +39,9 @@ def compute_biodiv():
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
 def compute_rdlst():
-    if not raw_data_available("REDLST"):
+    if not sspi_raw_api_data.raw_data_available("REDLST"):
         return redirect(url_for("api_bp.collect_bp.REDLST"))
-    raw_data = fetch_raw_data("REDLST")
+    raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     sspi_clean_api_data.insert_many(final_list)
@@ -58,9 +57,9 @@ def compute_nrgint():
 @compute_bp.route("/COALPW")
 @login_required
 def compute_coalpw():
-    if not raw_data_available("COALPW"):
+    if not sspi_raw_api_data.raw_data_available("COALPW"):
         return redirect(url_for("api_bp.collect_bp.coalpw"))
-    raw_data = fetch_raw_data("COALPW")
+    raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
     observations = [entry["observation"] for entry in raw_data]
     observations = [entry["observation"] for entry in raw_data]
     df = pd.DataFrame(observations)
@@ -69,9 +68,9 @@ def compute_coalpw():
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def compute_altnrg():
-    if not raw_data_available("ALTNRG"):
+    if not sspi_raw_api_data.raw_data_available("ALTNRG"):
         return redirect(url_for("collect_bp.ALTNRG"))
-    raw_data = fetch_raw_data("ALTNRG")
+    raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
     observations = [entry["observation"] for entry in raw_data]
     df = pd.DataFrame(observations)
     print(df.head())
@@ -85,22 +84,18 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods = ['GET'])
 @login_required
 def compute_gtrans():
-    if not raw_data_available("GTRANS"):
+    if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     
     #######    WORLDBANK compute    #########
-    mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode": "FUELPR"}
-    worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
+    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="WorldBank")
     worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
 
-    
     #######  IEA compute ######
-    mongoIEAQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.IntermediateCodeCode": "TCO2EQ-IEA"}
-    IEA_raw_data = parse_json(sspi_raw_api_data.find(mongoIEAQuery))
-    iea_clean_list = [entry["observation"] for entry in IEA_raw_data]
+    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="IEA")
+    iea_clean_list = [entry["observation"] for entry in iea_raw_data]
    
     ### combining in pandas ####
-
     wb_df = pd.DataFrame(worldbank_clean_list)
     wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
     iea_df = pd.DataFrame(iea_clean_list)
@@ -110,59 +105,45 @@ def compute_gtrans():
     merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
     merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
     df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
-    sspi_clean_api_data.insert_many(df.to_dict('records'))
-    return df.to_dict('records')
-
+    document_list = json.loads(str(df.to_json('records')))
+    count = sspi_clean_api_data.insert_many(document_list)
+    return f"Inserted {count} documents into SSPI Clean Database from OECD"
     
-####### SSPI ANALYSIS DB MANAGEMENT #########
-    
-    # sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
-    # sspi_analysis.insert_many(OECD_TCO2_OBS)
-    # print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
-        # return "Data unavailable. Try running collect." 
-    
-    #######    WORLDBANK compute    #########
-    # mongoWBquery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
-    # worldbank_raw = parse_json(sspi_raw_api_data.find(mongoWBquery))
-    # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
-    #######    OECD compute    #########
-    # mongoOECDQuery = {"collection-info.IndicatorCode": "GTRANS", "collection-info.Source": "OECD"}
-    # OECD_raw_data = parse_json(sspi_raw_api_data.find(mongoOECDQuery))
-    # series = extractAllSeries(OECD_raw_data[0]["observation"])
-    # OECD_TCO2_OBS = filterSeriesList(series, "ENER_TRANS")
-    
-    #######    IEA compute ######
-
-
-    ####### SSPI ANALYSIS DB MANAGEMENT #########
-    # sspi_analysis.delete_many({"IndicatorCode": "GTRANS"})
-    # sspi_analysis.insert_many(OECD_TCO2_OBS)
-    # print(f"Inserted {len(OECD_TCO2_OBS)} documents into SSPI Analysis Database from OECD")
-
-
-
-    # OECD_raw_data = OECD_raw_data[0]["observation"]
-    # OECD_raw_data = OECD_raw_data[14:]
-    # OECD_raw_data = OECD_raw_data[:-1]
-    # xml_file_root = ET.fromstring(OECD_raw_data)
-    # series = xml_file_root.findall(".//{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}DataSet/{http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic}Series")
-    # final_OECD_list = organizeOECDdata(series)
-    # ### combining in pandas ####
-    # wb_df = pd.DataFrame(worldbank_clean_list)
-    # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
-    # oecd_df = pd.DataFrame(final_OECD_list).astype(str)
-   
-
-    # print(oecd_df)
-    # merged = wb_df.drop(columns=["IndicatorCode"]).merge(oecd_df, how="outer", on=["CountryCode", "YEAR"]) 
-    # merged = wb_df.rename()
-    # print(merged)
-
-    # return parse_json(OECD_TCO2_OBS)
-
-    # Merging files: combined_data = wb_df.merge(oecd_df, how="outer", on=["CountryCode", "YEAR"])
-    # Overwrite all NaN values with String "NaN"
-    # Parse that back into the right list format between 
+@compute_bp.route("/SENIOR", methods=['GET'])
+@login_required
+def compute_senior():
+    if not sspi_raw_api_data.raw_data_available("SENIOR"):
+        return redirect(url_for("collect_bp.SENIOR"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("SENIOR")
+    # metadata = raw_data[0]["Metadata"]
+    # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    # to see the codes and their descriptions, uncomment and return the following line
+    # jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+    metadata_codes = {
+        "PEN20A": "Expected years in retirement, men",
+        "PEN20B": "Expected years in retirement, women",
+        "PEN24A": "Old age income poverty, 66+",
+    }
+    metadata_code_map = {
+        "PEN20A": "YRSRTM",
+        "PEN20B": "YRSRTW",
+        "PEN24A": "POVNRT",
+    }
+    series = extractAllSeries(raw_data[0]["Raw"])
+    document_list = []
+    for code in metadata_codes.keys():
+        document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
+    long_senior_data = pd.DataFrame(document_list)
+    long_senior_data.drop(long_senior_data[long_senior_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
+    long_senior_data.astype({"Year": "int", "Value": "float"})
+    final_data = zip_intermediates(
+        json.loads(str(long_senior_data.to_json(orient="records")), parse_int=int, parse_float=float),
+        "SENIOR",
+        ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
+        ScoreBy="Score"
+    )
+    return jsonify(final_data)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
@@ -177,7 +158,7 @@ def compute_prison():
 @compute_bp.route("/INTRNT", methods=['GET'])
 # @login_required
 def compute_intrnt():
-    if not raw_data_available("INTRNT"):
+    if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
     # worldbank #
     wbQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}

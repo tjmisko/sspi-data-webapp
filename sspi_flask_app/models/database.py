@@ -1,5 +1,9 @@
-from datetime import datetime
+import re
+import os
 import json
+from flask import current_app as app
+import pandas as pd
+from datetime import datetime
 from bson import ObjectId, json_util
 from .errors import InvalidDocumentFormatError
 
@@ -8,27 +12,31 @@ class MongoWrapper:
         self._mongo_database = mongo_database
         self.name = mongo_database.name
     
-    def find_one(self, query):
-        return self._mongo_database.find_many(query)
-    
-    def find(self, query):
-        return json.loads(json_util.dumps(self._mongo_database.find(query)))
+    def find_one(self, query:dict) -> dict:
+        return json.loads(json_util.dumps(self._mongo_database.find_one(query)))
 
-    def insert_one(self, document):
+    def find(self, query:dict, options:dict={}) -> list:
+        return json.loads(json_util.dumps(self._mongo_database.find(query, options)))
+
+    def insert_one(self, document:dict) -> int:
         self.validate_document_format(document)
-        return self._mongo_database.insert_one(document)
+        self._mongo_database.insert_one(document)
+        return 1
     
-    def insert_many(self, documents):
+    def insert_many(self, documents:list) -> int:
         self.validate_documents_format(documents)
-        return self._mongo_database.insert_many(documents, ordered=False)
+        return len(self._mongo_database.insert_many(documents).inserted_ids)
     
-    def delete_one(self, query):
-        return self._mongo_database.delete_one(query)
+    def delete_one(self, query:dict) -> int:
+        return self._mongo_database.delete_one(query).deleted_count
     
-    def delete_many(self, query):
-        return self._mongo_database.delete_many(query)
+    def delete_many(self, query:dict) -> int:
+        return self._mongo_database.delete_many(query).deleted_count
+
+    def count_documents(self, query:dict) -> int:
+        return self._mongo_database.count_documents(query)
     
-    def tabulate_ids(self):
+    def tabulate_ids(self) -> list:
         """
         Returns a list of documents with counts of the number of times a document with
         duplicate identifiers appears.
@@ -46,7 +54,7 @@ class MongoWrapper:
                 "ids": {"$push": "$_id"}
             }},
         ])
-        return json.loads(tab_ids)
+        return json.loads(json_util.dumps(tab_ids))
 
     def drop_duplicates(self):
         """
@@ -54,8 +62,7 @@ class MongoWrapper:
         """
         tab_ids= self.tabulate_ids()
         id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum([obs["ids"][1:] for obs in tab_ids],[])]
-        count = self._mongo_database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
-        return count
+        return self._mongo_database.delete_many({"_id": {"$in": id_delete_list}}).deleted_count
 
     def sample(self, n: int, query:dict={}):
         """
@@ -89,7 +96,6 @@ class MongoWrapper:
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
-        self.validate_intermediates(document, document_number)
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:
@@ -107,6 +113,17 @@ class MongoWrapper:
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be a string (document {document_number})")
         if not document["IndicatorCode"].isupper():
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be uppercase (document {document_number})")
+    
+    def validate_intermediate_code(self, document: dict, document_number:int=0):
+        # Validate IndicatorCode format
+        if not "IntermediateCode" in document.keys():
+            raise InvalidDocumentFormatError(f"'IntermediateCode' is a required argument (document {document_number})")
+        if not len(document["IntermediateCode"]) == 6:
+            raise InvalidDocumentFormatError(f"'IntermediateCode' must be 6 characters long (document {document_number})")
+        if not type(document["IntermediateCode"]) is str:
+            raise InvalidDocumentFormatError(f"'IntermediateCode' must be a string (document {document_number})")
+        if not document["IntermediateCode"].isupper():
+            raise InvalidDocumentFormatError(f"'IntermediateCode' must be uppercase (document {document_number})")
     
     def validate_country_code(self, document: dict, document_number:int=0):
         # Validate CountryCode format
@@ -144,21 +161,29 @@ class MongoWrapper:
     
     def validate_intermediates(self, document:dict, document_number:int=0):
         if "Intermediates" in document.keys():
-            if not type(document["Intermediates"]) is dict:
+            self.validate_intermediates_list(document["Intermediaets"], document_number)
+    
+    def validate_intermediates_list(self, intermediates:list, document_number:int=0):
+        if not type(intermediates) is list:
+            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(intermediates)}")
+        id_set = set()
+        for intermediate in intermediates:
+            print(intermediate)
+            if not type(intermediate) is dict:
                 raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
-            for key, value in document["Intermediates"].items():
-                if not type(key) is str:
-                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be strings (document {document_number})")
-                if len(key) != 6:
-                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be 6 characters long (document {document_number})")
-                if not key.isupper():
-                    raise InvalidDocumentFormatError(f"'Intermediates' keys must be uppercase (document {document_number})")
-                if not type(value) in [float, int]:
-                    raise InvalidDocumentFormatError(f"'Intermediates' values must be floats or integers (document {document_number})")
+            self.validate_intermediate_code(intermediate, document_number)
+            self.validate_country_code(intermediate, document_number)
+            self.validate_year(intermediate, document_number)
+            self.validate_value(intermediate, document_number)
+            self.validate_unit(intermediate, document_number)
+            document_id = f"{intermediate['IntermediateCode']}_{intermediate['CountryCode']}_{intermediate['Year']}"
+            if document_id in id_set:
+                raise InvalidDocumentFormatError(f"Duplicate intermediate document found (document {document_number})")
+            id_set.add(document_id)
 
 class SSPIRawAPIData(MongoWrapper):
     
-    def validate_document_format(self, document: dict, document_number:int=None):
+    def validate_document_format(self, document: dict, document_number:int=0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the valid
 
@@ -172,8 +197,12 @@ class SSPIRawAPIData(MongoWrapper):
         The fields IndicatorCode, Raw, and CollectedAt are required.
         Additional fields are allowed, but not required.
         """
+        self.validate_indicator_code(document, document_number)
+        self.validate_raw(document, document_number)
+        self.validate_collected_at(document, document_number)
+        self.validate_username(document, document_number)
 
-    def tabulate_ids(self, documents: list):
+    def tabulate_ids(self):
         tab_ids= self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
@@ -184,22 +213,16 @@ class SSPIRawAPIData(MongoWrapper):
                 "ids": {"$push": "$_id"}
             }},
         ])
-        return json.loads(tab_ids)
+        return json.loads(json_util.dumps(tab_ids))
 
-    def validate_document_format(self, document: dict, document_number:int=0):
-        self.validate_indicator_code(document, document_number)
-        self.validate_raw(document, document_number)
-        self.validate_collected_at(document, document_number)
-        self.validate_username(document, document_number)
-
-    def validate_collected_at(self, document: dict, document_number:int=None):
+    def validate_collected_at(self, document: dict, document_number:int=0):
         # Validate CollectedAt format
         if not "CollectedAt" in document.keys():
             raise InvalidDocumentFormatError(f"'CollectedAt' is a required argument (document {document_number})")
         if not type(document["CollectedAt"]) is datetime:
             raise InvalidDocumentFormatError(f"'CollectedAt' must be a datetime (document {document_number})")
     
-    def validate_username(self, document: dict, document_number:int=None):
+    def validate_username(self, document: dict, document_number:int=0):
         # Validate Username format
         if not "Username" in document.keys():
             raise InvalidDocumentFormatError(f"'Username' is a required argument (document {document_number})")
@@ -212,10 +235,107 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
+    
+    def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
+        """
+        Utility Function the response from an API call in the database
+        - Observation to be passed as a well-formed dictionary for entry into pymongo
+        - IndicatorCode is the indicator code for the indicator that the observation is for
+        """
+        document = {
+            "IndicatorCode": IndicatorCode,
+            "Raw": document, 
+            "CollectedAt": datetime.now()
+        }
+        document.update(kwargs)
+        self.insert_one(document)
+        return 1
 
+    def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
+        """
+        Utility Function 
+        - Observation to be past as a list of well form observation dictionaries
+        - IndicatorCode is the indicator code for the indicator that the observation is for
+        """
+        for observation in enumerate(document_list):
+            self.raw_insert_one(observation, IndicatorCode, **kwargs)
+        return len(document_list) 
+
+    def fetch_raw_data(self, IndicatorCode, **kwargs) -> list:
+        """
+        Utility function that handles querying the database
+        """
+        if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
+            raise ValueError("Indicator Code not found in database")
+        mongoQuery = {"IndicatorCode": IndicatorCode}
+        mongoQuery.update(kwargs)
+        return self.find(mongoQuery)
+    
+    def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
+        """
+        Returns True if raw data is available for the given indicator code and kwargs
+        """
+        MongoQuery = {"IndicatorCode": IndicatorCode}
+        MongoQuery.update(kwargs)
+        return bool(self.find_one(MongoQuery))
+
+class SSPIMainDataV3(MongoWrapper):
+
+    def validate_document_format(self, document: dict, document_number:int=0):
+        """
+        Raises an InvalidDocumentFormatError if the document is not in the valid
+
+        Valid Document Format:
+            {
+                "IndicatorCode": str,
+                "CountryCode": str,
+                "Raw": float or int
+                "Year": int,
+                "Value": float,
+                "Score": float,
+            }
+        Additional fields are allowed but not required
+        """
+        self.validate_country_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
+        self.validate_year(document, document_number)
+        self.validate_value(document, document_number)
+
+    def load(self) -> int:
+        """
+        Loads the metadata into the database
+        """
+        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+        sspi_main_data_wide = pd.read_csv(os.path.join(local_path, "SSPIMainDataV3.csv"), skiprows=1)
+        sspi_main_data_documents = self.process_sspi_main_data(sspi_main_data_wide)
+        count = self.insert_many(sspi_main_data_documents)
+        self.drop_duplicates()
+        print(f"Successfully loaded {count} documents into {self.name}")
+        return count
+
+
+    def process_sspi_main_data(self, sspi_main_data_wide:pd.DataFrame) -> list[dict]:
+        """
+        Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
+        """
+        sspi_main_data_long = pd.melt(sspi_main_data_wide, id_vars=["Country Code", "Country"], var_name="Variable", value_name="Value")
+        sspi_main_data_long = sspi_main_data_long.rename(columns={"Country Code": "CountryCode"})
+        sspi_main_data_long["IndicatorCode"] = sspi_main_data_long["Variable"].str.extract(r"([A-Z0-9]{6})_[A-Z]+")
+        sspi_main_data_long["VariableType"] = sspi_main_data_long["Variable"].str.extract(r"[A-Z0-9]{6}_([A-Z]+)")
+        sspi_main_data_long.dropna(subset=["IndicatorCode"], inplace=True)
+        sspi_main_data_long["VariableType"] = sspi_main_data_long["VariableType"].map(lambda s: s.title())
+        sspi_main_data_documents = sspi_main_data_long.pivot(index=["CountryCode", "IndicatorCode"], columns="VariableType", values="Value").reset_index()
+        sspi_main_data_documents["Year"] = sspi_main_data_documents["Year"].astype(str).map(lambda s: re.match(r"[0-9]{4}", s)).map(lambda m: m.group(0) if m else "0").astype(int)
+        sspi_main_data_documents = sspi_main_data_documents[sspi_main_data_documents.Year > 0]
+        sspi_main_data_documents["Value"] = sspi_main_data_documents["Raw"].astype(float)
+        sspi_main_data_documents["Score"] = sspi_main_data_documents["Score"].astype(float)
+        sspi_main_data_documents.drop(columns=["Raw"], inplace=True)
+        document_list = json.loads(str(sspi_main_data_documents.to_json(orient="records")))
+        return document_list
+    
 class SSPIMetadata(MongoWrapper):
     
-    def validate_document_format(self, document: dict, document_number:int=None):
+    def validate_document_format(self, document: dict, document_number:int=0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the valid
 
@@ -230,16 +350,130 @@ class SSPIMetadata(MongoWrapper):
         self.validate_document_type(document, document_number)
         self.validate_metadata(document, document_number)
     
-    def validate_document_type(self, document: dict, document_number:int=None):
+    def tabulate_ids(self):
+        tab_ids= self._mongo_database.aggregate([
+            {"$group": {
+                "_id": {
+                    "DocumentType": "$DocumentType",
+                    "Metadata": "$Metadata"
+                },
+                "count": {"$sum": 1},
+                "ids": {"$push": "$_id"}
+            }},
+        ])
+        return json.loads(json_util.dumps(tab_ids))
+    
+    def validate_document_type(self, document: dict, document_number:int=0):
         # Validate DocumentType format
         if not "DocumentType" in document.keys():
             raise InvalidDocumentFormatError(f"'DocumentType' is a required argument (document {document_number})")
         if not type(document["DocumentType"]) is str:
             raise InvalidDocumentFormatError(f"'DocumentType' must be a string (document {document_number})")
     
-    def validate_metadata(self, document: dict, document_number:int=None):
+    def validate_metadata(self, document: dict, document_number:int=0):
         # Validate Metadata format
         if not "Metadata" in document.keys():
             raise InvalidDocumentFormatError(f"'Metadata' is a required argument (document {document_number})")
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
             raise InvalidDocumentFormatError(f"'Metadata' must be a string, dict, int, float, or list (document {document_number})")
+
+    def load(self) -> int:
+        """
+        Loads the metadata into the database
+        """
+        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+        indicator_details = pd.read_csv(os.path.join(local_path, "IndicatorDetails.csv"))
+        intermediate_details = pd.read_csv(os.path.join(local_path, "IntermediateDetails.csv"))
+        metadata = self.build_metadata(indicator_details, intermediate_details)
+        count = self.insert_many(metadata)
+        self.drop_duplicates()
+        print(f"Successfully loaded {count} documents into {self.name}")
+        return count
+    
+    def build_metadata(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame) -> list:
+        """
+        Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
+        """
+        metadata = []
+        metadata.append(self.build_pillar_codes(indicator_details))
+        metadata.append(self.build_category_codes(indicator_details))
+        metadata.append(self.build_indicator_codes(indicator_details))
+        metadata.append(self.build_intermediate_codes(intermediate_details))
+        metadata.append(self.build_country_groups())
+        metadata.extend(self.build_intermediate_details(intermediate_details))
+        metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
+        return metadata
+
+    def build_pillar_codes(self, indicator_details:pd.DataFrame) -> dict:
+        pillar_codes = indicator_details["PillarCode"].unique().tolist()
+        return {"DocumentType": "PillarCodes", "Metadata": pillar_codes}
+
+    def build_category_codes(self, indicator_details:pd.DataFrame) -> dict:
+        category_codes = indicator_details["CategoryCode"].unique().tolist()
+        return {"DocumentType": "CategoryCodes", "Metadata": category_codes}
+
+    def build_indicator_codes(self, indicator_details:pd.DataFrame) -> dict:
+        indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
+        return {"DocumentType": "IndicatorCodes", "Metadata": indicator_codes}
+
+    def build_intermediate_codes(self, intermediate_details:pd.DataFrame) -> dict:
+        intermediate_codes = intermediate_details["IntermediateCode"].unique().tolist()
+        return {"DocumentType": "IntermediateCodes", "Metadata": intermediate_codes}
+
+    def build_country_groups(self) -> dict:
+        return {"DocumentType": "CountryGroups", "Metadata": ["SSPI49", "SSPI67", "G20", "OECD", "EU28", "BRICS"]}
+
+    def build_intermediate_details(self, intermediate_details:pd.DataFrame) -> list[dict]:
+        intermediate_details_list = json.loads(str(intermediate_details.to_json(orient="records")))
+        return [{"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail} for intermediate_detail in intermediate_details_list]
+
+    def build_indicator_details(self, indicator_details:pd.DataFrame, intermediate_details:pd.DataFrame):
+        json_string = str(indicator_details.to_json(orient="records"))
+        indicator_details_list = json.loads(json_string)
+        for indicator_detail in indicator_details_list:
+            indicator_detail["DocumentType"] = "IndicatorDetail"
+            # Link intermediate_details to their corresponding indicator_detail
+            if indicator_detail["IntermediateCodes"] is not None:
+                intermediate_codes = re.findall(r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
+                indicator_detail["IntermediateCodes"] = intermediate_codes
+                filtered_intermediate_details = intermediate_details.loc[intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]]
+                filtered_intermediate_details_list = json.loads(str(filtered_intermediate_details.to_json(orient="records")))
+                indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
+        return [{"DocumentType": "IndicatorDetail", "Metadata": indicator_detail} for indicator_detail in indicator_details_list]
+
+    ## Getters
+    def pillar_codes(self) -> list[str]:
+        """
+        Return a list of all pillar codes
+        """
+        return self.find_one({"DocumentType": "PillarCodes"})["Metadata"]
+
+    def category_codes(self) -> list[str]:
+        """
+        Return a list of all category codes
+        """
+        return self.find_one({"DocumentType": "CategoryCodes"})["Metadata"]
+
+    def indicator_codes(self) -> list[str]:
+        """
+        Return a list of all indicator codes
+        """
+        return self.find_one({"DocumentType": "IndicatorCodes"})["Metadata"]
+
+    def country_groups(self) -> list[str]:
+        """
+        Return a list of all country groups in the database
+        """
+        return self.find_one({"DocumentType": "CountryGroups"})["Metadata"]
+
+    def indicator_details(self) -> list[dict]:
+        """
+        Return a list of documents containg indicator details
+        """
+        return self.find({"DocumentType": "IndicatorDetail"})
+
+    def intermediate_details(self) -> list[dict]:
+        """
+        Return a list of documents containg intermediate details
+        """
+        return self.find({"DocumentType": "IntermediateDetail"})

@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
-from ..resources.utilities import parse_json, print_json
+from ..resources.utilities import parse_json
 from ... import sspi_raw_api_data
 from datetime import datetime
 
@@ -75,7 +75,7 @@ def store_webpage_as_raw_data(response, COU):
     return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
 
 def scrape_stored_pages_for_data():
-    prison_data = parse_json(sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
+    prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
     for page_entry in prison_data:
         COU = page_entry["collection-info"]["CountryCode"]
         html = BeautifulSoup(page_entry["observation"], 'html.parser')

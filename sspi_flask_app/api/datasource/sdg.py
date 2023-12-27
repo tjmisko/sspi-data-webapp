@@ -1,6 +1,5 @@
-from datetime import datetime
 from pycountry import countries
-from ..resources.adapters import raw_insert_many
+from ... import sspi_raw_api_data
 from ..resources.utilities import format_m49_as_string, string_to_float
 import json
 import time
@@ -17,7 +16,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        count = raw_insert_many(data_list, IndicatorCode, **kwargs)
+        count = sspi_raw_api_data.raw_insert_many(data_list, IndicatorCode, **kwargs)
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
     yield f"Collection complete for SDG {SDGIndicatorCode}"
