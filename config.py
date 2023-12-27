@@ -16,6 +16,7 @@ class Config:
     SASS_BIN = "/env/usr/bin/pyscss"
     ASSETS_DEBUG = False
     ASSETS_AUTO_BUILD = True
+    JSONIFY_PRETTYPRINT_REGULAR = True
     REMEMBER_COOKIE_DURATION=timedelta(days=30)
 
 class ProdConfig(Config):
