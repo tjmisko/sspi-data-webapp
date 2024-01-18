@@ -28,14 +28,14 @@ def biodiv():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("14.5.1", "BIODIV", IntermediateCode="MARINE", **kwargs)
         yield from collectSDGIndicatorData("15.1.2", "BIODIV", Metadata="TERRST,FRSHWT", **kwargs)
-    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/REDLST", methods=['GET'])
 @login_required
 def redlst():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("15.5.1", "REDLST", **kwargs)
-    return Response(collect_iterator(Username=current_user), mimetype='text/event-stream')
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ######################
 ### Category: LAND ###

@@ -234,6 +234,7 @@ class SSPIRawAPIData(MongoWrapper):
         if not "Raw" in document.keys():
             raise InvalidDocumentFormatError(f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
+            print(type(document["Raw"]))
             raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
     
     def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
@@ -257,7 +258,8 @@ class SSPIRawAPIData(MongoWrapper):
         - Observation to be past as a list of well form observation dictionaries
         - IndicatorCode is the indicator code for the indicator that the observation is for
         """
-        for observation in enumerate(document_list):
+        for observation in document_list:
+            print(observation)
             self.raw_insert_one(observation, IndicatorCode, **kwargs)
         return len(document_list) 
 
