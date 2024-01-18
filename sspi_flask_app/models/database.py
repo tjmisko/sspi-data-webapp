@@ -234,7 +234,6 @@ class SSPIRawAPIData(MongoWrapper):
         if not "Raw" in document.keys():
             raise InvalidDocumentFormatError(f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
-            print(type(document["Raw"]))
             raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
     
     def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
