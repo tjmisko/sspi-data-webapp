@@ -51,7 +51,7 @@ def compute_rdlst():
 @login_required
 def compute_coalpw():
     if not sspi_raw_api_data.raw_data_available("COALPW"):
-        return redirect(url_for("api_bp.collect_bp.coalpw"))
+        return redirect(url_for("api_bp.collect_bp.COALPW"))
     raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
     observations = [entry["observation"] for entry in raw_data]
     observations = [entry["observation"] for entry in raw_data]
@@ -138,6 +138,21 @@ def compute_senior():
         ScoreBy="Score"
     )
     return jsonify(final_data)
+
+@compute_bp.route("/WATMAN", methods=['GET'])
+@login_required
+def compute_watman():
+    # for intermediary == CWUEFF (change in use of water efficiency), there are several "activites": INDUSTRIES, ISIC4_A01_A0210_A0322, ISIC4_GTT, TOTAL #
+    # for intermediary == WTSTRS (water stress)
+    if not sspi_raw_api_data.raw_data_available("WATMAN"):
+        return redirect(url_for("collect_bp.WATMAN"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
+    series_list = []
+    for observation in raw_data:
+        if observation["Raw"]["activity"] == "TOTAL":
+            series_list.append({"Country": observation["Raw"]["geoAreaName"], "IntermediateCode": observation["IntermediateCode"], 
+                                "Activity": observation["Raw"]["activity"], "Years": observation["Raw"]["years"]})
+    return parse_json(series_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
