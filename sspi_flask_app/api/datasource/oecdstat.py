@@ -96,6 +96,7 @@ def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, Indicator
         for doc in new_documents:
             doc.update(id_info)
         document_list.extend(new_documents)
+    print (document_list)
     return document_list
     
 def organizeOECDdata(series_list):

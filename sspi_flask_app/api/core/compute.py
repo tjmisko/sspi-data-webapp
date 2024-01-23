@@ -3,12 +3,13 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
+from pycountry import countries
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -34,7 +35,7 @@ def compute_biodiv():
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
     sspi_clean_api_data.insert_many(final_data_list)
-    return parse_json(final_data_list)
+    return parse_json(intermediate_obs_dict)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
@@ -144,15 +145,17 @@ def compute_senior():
 def compute_watman():
     # for intermediary == CWUEFF (change in use of water efficiency), there are several "activites": INDUSTRIES, ISIC4_A01_A0210_A0322, ISIC4_GTT, TOTAL #
     # for intermediary == WTSTRS (water stress)
+    metadata_map = {
+        "ER_H2O_WUEYST": "Change in use of water efficiency",
+        "ER_H2O_STRESS": "Water Stress"
+    }
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    series_list = []
-    for observation in raw_data:
-        if observation["Raw"]["activity"] == "TOTAL":
-            series_list.append({"Country": observation["Raw"]["geoAreaName"], "IntermediateCode": observation["IntermediateCode"], 
-                                "Activity": observation["Raw"]["activity"], "Years": observation["Raw"]["years"]})
-    return parse_json(series_list)
+    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
+    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
+    final_list = flatten_nested_dictionary_watman(intermediate_list)
+    return parse_json(final_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

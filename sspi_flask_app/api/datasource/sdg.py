@@ -28,13 +28,13 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
     """
     intermediate_obs_dict = {}
     for country in raw_sdg_pivot_data:
-        geoAreaCode = format_m49_as_string(country["observation"]["geoAreaCode"])
+        geoAreaCode = format_m49_as_string(country["Raw"]["geoAreaCode"])
         country_data = countries.get(numeric=geoAreaCode)
         # make sure that the data corresponds to a valid country (gets rid of regional aggregates)
         if not country_data:
             continue
-        series = country["observation"]["series"]
-        annual_data_list = json.loads(country["observation"]["years"])
+        series = country["Raw"]["series"]
+        annual_data_list = json.loads(country["Raw"]["years"])
         COU = country_data.alpha_3
         # add the country to the dictionary if it's not there already
         if COU not in intermediate_obs_dict.keys():
@@ -94,3 +94,23 @@ def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+def flatten_nested_dictionary_watman(intermediate_obs_dict):
+    final_data_list = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            try:
+                mean = sum([float(x) for x in intermediate_obs_dict[country][year].values()]) / 2
+            except ValueError:
+                mean = "NaN"
+            observation = {
+                "CountryCode": country,
+                "IndicatorCode": "WATMAN",
+                "YEAR": year,
+                "RAW": mean,
+                "Intermediates": intermediate_obs_dict[country][year]
+            }
+            final_data_list.append(observation)
+    return final_data_list
+
+
