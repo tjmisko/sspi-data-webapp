@@ -168,7 +168,6 @@ class MongoWrapper:
             raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(intermediates)}")
         id_set = set()
         for intermediate in intermediates:
-            print(intermediate)
             if not type(intermediate) is dict:
                 raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
             self.validate_intermediate_code(intermediate, document_number)
@@ -258,7 +257,6 @@ class SSPIRawAPIData(MongoWrapper):
         - IndicatorCode is the indicator code for the indicator that the observation is for
         """
         for observation in document_list:
-            print(observation)
             self.raw_insert_one(observation, IndicatorCode, **kwargs)
         return len(document_list) 
 
