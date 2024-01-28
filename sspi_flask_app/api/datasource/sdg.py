@@ -110,7 +110,10 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                     "Intermediates": [{
                         "Country Code": country,
                         "Indicator Code": "WATMAN",
-                        "IntermediateCode": intermediate_obs_dict[country][year]
+                        "IntermediateCode": intermediate,
+                        "Source": "SDG",
+                        
+
 
                     }]
                 }

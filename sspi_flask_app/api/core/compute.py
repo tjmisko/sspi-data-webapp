@@ -128,18 +128,16 @@ def compute_senior():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
-    print(long_senior_data)
     long_senior_data.drop(long_senior_data[long_senior_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
-    # long_senior_data.astype({"Year": "int", "Value": "float"})
+    long_senior_data.astype({"Year": "int", "Value": "float"})
     final_data = zip_intermediates(
         json.loads(str(long_senior_data.to_json(orient="records")), parse_int=int, parse_float=float),
         "SENIOR",
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
-    # return jsonify(final_data)
-    return parse_json(long_senior_data.astype({"Year": "int", "Value": "float"}))
+    return jsonify(final_data)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
