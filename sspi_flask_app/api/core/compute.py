@@ -34,7 +34,7 @@ def compute_biodiv():
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
-    sspi_clean_api_data.insert_many(final_data_list)
+    # sspi_clean_api_data.insert_many(final_data_list)
     return parse_json(intermediate_obs_dict)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
@@ -131,14 +131,15 @@ def compute_senior():
     print(long_senior_data)
     long_senior_data.drop(long_senior_data[long_senior_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
-    long_senior_data.astype({"Year": "int", "Value": "float"})
+    # long_senior_data.astype({"Year": "int", "Value": "float"})
     final_data = zip_intermediates(
         json.loads(str(long_senior_data.to_json(orient="records")), parse_int=int, parse_float=float),
         "SENIOR",
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
-    return jsonify(final_data)
+    # return jsonify(final_data)
+    return parse_json(long_senior_data.astype({"Year": "int", "Value": "float"}))
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
@@ -154,8 +155,8 @@ def compute_watman():
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    final_list = flatten_nested_dictionary_watman(intermediate_list)
-    return parse_json(final_list)
+    # final_list = flatten_nested_dictionary_watman(intermediate_list)
+    return parse_json(intermediate_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

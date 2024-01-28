@@ -103,13 +103,17 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 mean = sum([float(x) for x in intermediate_obs_dict[country][year].values()]) / 2
             except ValueError:
                 mean = "NaN"
-            observation = {
-                "CountryCode": country,
-                "IndicatorCode": "WATMAN",
-                "YEAR": year,
-                "RAW": mean,
-                "Intermediates": intermediate_obs_dict[country][year]
-            }
+            for intermediate in intermediate_obs_dict[country][year]:
+                observation = {
+                    "CountryCode": country,
+                    "IndicatorCode": "WATMAN",
+                    "Intermediates": [{
+                        "Country Code": country,
+                        "Indicator Code": "WATMAN",
+                        "IntermediateCode": intermediate_obs_dict[country][year]
+
+                    }]
+                }
             final_data_list.append(observation)
     return final_data_list
 
