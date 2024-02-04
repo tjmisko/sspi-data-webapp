@@ -137,6 +137,7 @@ def compute_senior():
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
+    # sspi_clean_api_data.insert_many(final_data)
     return jsonify(final_data)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
@@ -153,8 +154,12 @@ def compute_watman():
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    # final_list = flatten_nested_dictionary_watman(intermediate_list)
-    return parse_json(intermediate_list)
+    final_list = flatten_nested_dictionary_watman(intermediate_list)
+    final_zipped = zip_intermediates(final_list, "WATMAN", 
+                           ScoreFunction= lambda ER_H2O_WUEYST, ER_H2O_STRESS: 0.50 * ER_H2O_WUEYST + 0.50 * ER_H2O_STRESS,
+                           ScoreBy= "Values")
+    # sspi_clean_api_data.insert_many(final)
+    return parse_json(final_zipped)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
