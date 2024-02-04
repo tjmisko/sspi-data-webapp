@@ -108,11 +108,15 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",
                     "Unit": "YR",
-                    "IntermediateCode": intermediate.split("_")[2],
+                    "IntermediateCode": find_intermediate_watman(intermediate),
                     "Year": year,
                     "Value": float(intermediate_obs_dict[country][year][intermediate]),
                 }
                 final_data_list.append(observation)
     return final_data_list
 
-
+def find_intermediate_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "CWUEFF"
+    if inter == "ER_H2O_STRESS":
+        return "WTSTRS"
