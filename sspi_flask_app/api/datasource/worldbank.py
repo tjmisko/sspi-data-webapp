@@ -25,17 +25,17 @@ def cleanedWorldBankData(RawData, IndName):
     """
     clean_data_list = []
     for entry in RawData:
-        iso3 = entry["observation"]["countryiso3code"]
+        iso3 = entry["Raw"]["countryiso3code"]
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
         clean_obs = {
             "CountryCode": iso3,
-            "CountryName": entry["observation"]["country"]["value"],
+            "CountryName": entry["Raw"]["country"]["value"],
             "IndicatorCode": IndName,
             "Source": "WORLDBANK",
-            "YEAR": entry["observation"]["date"],
-            "RAW": entry["observation"]["value"]
+            "YEAR": entry["Raw"]["date"],
+            "RAW": entry["Raw"]["value"]
         }
         clean_data_list.append(clean_obs)
     return clean_data_list

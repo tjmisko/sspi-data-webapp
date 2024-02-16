@@ -8,6 +8,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
+from ..datasource.iea import filterSeriesListiea
 import pandas as pd
 from pycountry import countries
 
@@ -82,27 +83,45 @@ def compute_gtrans():
         return redirect(url_for("collect_bp.GTRANS"))
     
     #######    WORLDBANK compute    #########
-    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="WorldBank")
+    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="FUELPR")
     worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
 
     #######  IEA compute ######
-    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="IEA")
-    iea_clean_list = [entry["observation"] for entry in iea_raw_data]
-   
-    ### combining in pandas ####
-    wb_df = pd.DataFrame(worldbank_clean_list)
-    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
-    iea_df = pd.DataFrame(iea_clean_list)
-    iea_df = iea_df[iea_df['seriesLabel'] == "Transport"][['year', 'value', 'country']].rename(columns={'year':'YEAR', 'value':'RAW', 'country':'CountryCode'})
-    # iea_df = iea_df[iea_df["RAW"].notna()].astype(str)
+    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
+    series = extractAllSeries(iea_raw_data[0]["Raw"])
+    keys = iea_raw_data[0].keys()
+    raw = iea_raw_data[0]["Raw"]
+    metadata = iea_raw_data[0]["Metadata"]
+    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    raw_soup = bs.BeautifulSoup(raw, "lxml")
+    metadata_codes = {
+        "ENER_TRANS": "1A3 - Transport"
+    }
+    metadata_code_map = {
+        "ENER_CO2": "TCO2EQ"
+    }
+    document_list = []
+
+    for code in metadata_codes.keys():
+        document_list.extend(filterSeriesListiea(series, code, "TCO2EQ"))
+    # ### combining in pandas ####
+    # wb_df = pd.DataFrame(worldbank_clean_list)
+    # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
+    # iea_df = pd.DataFrame(iea_clean_list)
+    # iea_df = iea_df[iea_df['seriesLabel'] == "Transport"][['year', 'value', 'country']].rename(columns={'year':'YEAR', 'value':'RAW', 'country':'CountryCode'})
+    # # iea_df = iea_df[iea_df["RAW"].notna()].astype(str)
     
-    merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
-    merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
-    df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
-    document_list = json.loads(str(df.to_json('records')))
-    count = sspi_clean_api_data.insert_many(document_list)
-    return f"Inserted {count} documents into SSPI Clean Database from OECD"
-    
+    # merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
+    # merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
+    # df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
+    # document_list = json.loads(str(df.to_json('records')))
+    # count = sspi_clean_api_data.insert_many(document_list)
+    # return f"Inserted {count} documents into SSPI Clean Database from OECD"
+    #print(series)
+    #print(len(document_list))
+    #return jsonify(document_list)
+    return jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
