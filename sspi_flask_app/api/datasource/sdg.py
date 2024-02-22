@@ -1,6 +1,6 @@
 from pycountry import countries
 from ... import sspi_raw_api_data
-from ..resources.utilities import format_m49_as_string, string_to_float, parse_json
+from ..resources.utilities import format_m49_as_string, string_to_float, parse_json, zip_intermediates
 import json
 import time
 import requests
@@ -107,16 +107,19 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 observation = {
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",
-                    "Unit": "YR",
-                    "IntermediateCode": find_intermediate_watman(intermediate),
+                    "Unit": "United States dollars per cubic meter",
                     "Year": year,
-                    "Value": float(intermediate_obs_dict[country][year][intermediate]),
+                    "Value": mean,
+                    "IntermediateCode": find_intermediate_watman(intermediate),
+                    "IntermediateValue": float(intermediate_obs_dict[country][year][intermediate])
                 }
                 final_data_list.append(observation)
     return final_data_list
 
 def find_intermediate_watman(inter):
     if inter == "ER_H2O_WUEYST":
+        # "United States dollars per cubic meter"
         return "CWUEFF"
     if inter == "ER_H2O_STRESS":
+        #  freshwater withdrawal as a proportion of available freshwater resources
         return "WTSTRS"

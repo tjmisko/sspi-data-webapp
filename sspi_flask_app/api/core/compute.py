@@ -158,7 +158,7 @@ def compute_watman():
     final_zipped = zip_intermediates(final_list, "WATMAN", 
                            ScoreFunction= lambda ER_H2O_WUEYST, ER_H2O_STRESS: 0.50 * ER_H2O_WUEYST + 0.50 * ER_H2O_STRESS,
                            ScoreBy= "Values")
-    # sspi_clean_api_data.insert_many(final_zipped)
+    sspi_clean_api_data.insert_many(final_zipped)
     return parse_json(final_zipped)
 
 @compute_bp.route("/PRISON", methods=['GET'])
