@@ -107,7 +107,7 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 observation = {
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",
-                    "Unit": "United States dollars per cubic meter",
+                    "Unit": find_unit_watman(intermediate),
                     "Year": year,
                     "Value": mean,
                     "IntermediateCode": find_intermediate_watman(intermediate),
@@ -118,8 +118,11 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
 
 def find_intermediate_watman(inter):
     if inter == "ER_H2O_WUEYST":
-        # "United States dollars per cubic meter"
         return "CWUEFF"
     if inter == "ER_H2O_STRESS":
-        #  freshwater withdrawal as a proportion of available freshwater resources
         return "WTSTRS"
+def find_unit_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "United States dollars per cubic meter"
+    if inter == "ER_H2O_STRESS":
+        return "Freshwater withdrawal as a proportion of available freshwater resources"

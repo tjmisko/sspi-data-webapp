@@ -5,7 +5,7 @@ import pandas as pd
 import inspect
 import math
 from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_dynamic_data
-from sspi_flask_app.models.errors import InvalidDatabaseError
+from sspi_flask_app.models.errors import InvalidDatabaseError, InvalidAggregationFunction
 
 def format_m49_as_string(input):
     """
@@ -80,14 +80,17 @@ def added_countries(sspi_country_list, source_country_list):
             additional_countries.append(other_country)
     return additional_countries
 
-def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
+def zip_intermediates(intermediate_document_list, IndicatorCode, AggFunction, ScoreFunction, ScoreBy="Value"):
     """
     Utility function for zipping together intermediate documents into indicator documents
+    AggFunction is a string (all lowercase) which defines how to aggregate intermediate values in computing
+    a value for country, year observations
+    Dictionary provided for different function names in apply_aggregation function
     """
     intermediate_document_list = convert_data_types(intermediate_document_list)
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
     gp_intermediate_list = append_goalpost_info(intermediate_document_list, ScoreBy)
-    indicator_document_list = group_by_indicator(gp_intermediate_list, IndicatorCode)
+    indicator_document_list = group_by_indicator(gp_intermediate_list, IndicatorCode, AggFunction)
     scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
     return scored_indicator_document_list
 
@@ -117,7 +120,7 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
                 document["Score"] = goalpost(document["Value"], detail["Metadata"]["LowerGoalpost"], detail["Metadata"]["UpperGoalpost"])
     return intermediate_document_list
 
-def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
+def group_by_indicator(intermediate_document_list, IndicatorCode, AggFunction) -> list:
     """
     Utility function for grouping documents by indicator
     """
@@ -133,14 +136,22 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
                 "Intermediates": [],
             }
         indicator_document_hashmap[document_id]["Intermediates"].append(document)
-        indicator_document_hashmap[document_id]["Value"] = apply_average_aggregation(indicator_document_hashmap, document_id)
+        indicator_document_hashmap[document_id]["Value"] = apply_aggregation(indicator_document_hashmap, document_id, AggFunction)
     return list(indicator_document_hashmap.values())
 
-def apply_average_aggregation(indicator_document_hashmap, document_id):
-    value = 0
-    for intermediate in indicator_document_hashmap[document_id]["Intermediates"]:
-        value += intermediate["IntermediateValue"]
-    return value / len(indicator_document_hashmap[document_id]["Intermediates"])
+def apply_aggregation(indicator_document_hashmap, document_id, AggFunction):
+    AggregationMethods = {"arith_mean": 0,
+                   "weight_mean" : 1
+    }
+    if AggFunction not in AggregationMethods:
+        raise InvalidAggregationFunction(f"The aggregation function passed -- {AggFunction} -- is not valid")
+    function = AggregationMethods[AggFunction]
+    match function:
+        case 0:
+            value = 0
+            for intermediate in indicator_document_hashmap[document_id]["Intermediates"]:
+                value += intermediate["IntermediateValue"]
+            return value / len(indicator_document_hashmap[document_id]["Intermediates"])
 
 def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     """

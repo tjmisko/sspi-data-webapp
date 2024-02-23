@@ -15,3 +15,9 @@ class InvalidDatabaseError(Exception):
     Raised when a query is invalid
     """
     pass
+
+class InvalidAggregationFunction(Exception):
+    """
+    Raised when an aggregation type passed is invalid
+    """
+    pass

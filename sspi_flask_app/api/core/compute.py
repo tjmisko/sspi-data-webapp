@@ -155,7 +155,7 @@ def compute_watman():
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
-    final_zipped = zip_intermediates(final_list, "WATMAN", 
+    final_zipped = zip_intermediates(final_list, "WATMAN", AggFunction = "arith_mean",
                            ScoreFunction= lambda ER_H2O_WUEYST, ER_H2O_STRESS: 0.50 * ER_H2O_WUEYST + 0.50 * ER_H2O_STRESS,
                            ScoreBy= "Values")
     sspi_clean_api_data.insert_many(final_zipped)
