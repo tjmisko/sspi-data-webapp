@@ -152,14 +152,16 @@ def compute_watman():
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
+    print(raw_data)
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
-    final_zipped = zip_intermediates(final_list, "WATMAN", 
-                           ScoreFunction= lambda ER_H2O_WUEYST, ER_H2O_STRESS: 0.50 * ER_H2O_WUEYST + 0.50 * ER_H2O_STRESS,
-                           ScoreBy= "Values")
-    sspi_clean_api_data.insert_many(final_zipped)
-    return parse_json(final_zipped)
+    print(final_list)
+    # final_zipped = zip_intermediates(final_list, "WATMAN", 
+    #                        ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
+    #                        ScoreBy= "Values")
+    # sspi_clean_api_data.insert_many(final_zipped)
+    return parse_json(final_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
