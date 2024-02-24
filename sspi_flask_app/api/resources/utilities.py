@@ -80,7 +80,7 @@ def added_countries(sspi_country_list, source_country_list):
             additional_countries.append(other_country)
     return additional_countries
 
-def zip_intermediates(intermediate_document_list, IndicatorCode, AggFunction, ScoreFunction, ScoreBy="Value"):
+def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
     """
     Utility function for zipping together intermediate documents into indicator documents
     AggFunction is a string (all lowercase) which defines how to aggregate intermediate values in computing
