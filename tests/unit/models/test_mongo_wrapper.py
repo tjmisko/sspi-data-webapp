@@ -30,7 +30,7 @@ def test_documents():
         2: {"IndicatorCode": "REDLST", "CountryCode": "USA", "Raw": "1", "CollectedAt": datetime(2020, 1, 2)},
         3: {"IndicatorCode": "NITROG", "CountryCode": "CAN", "Raw": {"Value": 1}, "CollectedAt": datetime(2020, 1, 3)},
         4: {"IndicatorCode": "BIODIV", "CountryCode": "US", "Unit": "m/s", "Year": 2015, "Value": "25", "CollectedAt": datetime(2020, 1, 4)},
-        5: {"IndicatorCode": "BIODIV", "CountryCode": "usa", "Units": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"a": 1, "b": 2}},
+        5: {"IndicatorCode": "BIODIV", "CountryCode": "usa", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"a": 1, "b": 2}},
         6: {"IndicatorCode": "BIODIv", "CountryCode": "USA", "Unit": "m/s", "Year": 215, "Value": 25.1, "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         7: {"IndicatorCode": "BIODI", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 2, "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         8: {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": "25", "CollectedAt": "2020-1-1", "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
