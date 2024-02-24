@@ -96,7 +96,6 @@ class MongoWrapper:
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
-        self.validate_score(document, document_number)
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:
@@ -180,6 +179,28 @@ class MongoWrapper:
             if document_id in id_set:
                 raise InvalidDocumentFormatError(f"Duplicate intermediate document found (document {document_number})")
             id_set.add(document_id)
+
+class SSPICleanAPIData(MongoWrapper):
+
+    def validate_document_format(self, document: dict, document_number:int=0):
+        self.validate_country_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
+        self.validate_year(document, document_number)
+        self.validate_value(document, document_number)
+        self.validate_score(document, document_number)
+        self.validate_unit(document, document_number)
+
+    def validate_score(self, document: dict, document_number:int=0):
+        # Validate Score format
+        if not "Score" in document.keys():
+            raise InvalidDocumentFormatError(f"'Score' is a required argument (document {document_number})")
+        if not type(document["Score"]) in [int, float]:
+            raise InvalidDocumentFormatError(f"'Score' must be a float or integer (document {document_number})")
+        if not "Score" in document.keys():
+            raise InvalidDocumentFormatError(f"'Score' is a required argument (document {document_number})")
+        if not type(document["Score"]) in [int, float]:
+            raise InvalidDocumentFormatError(f"'Score' must be a float or integer (document {document_number})")
+
 
 class SSPIRawAPIData(MongoWrapper):
     
