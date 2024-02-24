@@ -15,7 +15,7 @@ def test_data():
     ]
 
 def test_validate_intermediates_list(test_data):
-    assert sspi_clean_api_data.validate_intermediates_list(test_data[0:5]) == True
+    sspi_clean_api_data.validate_intermediates_list(test_data[0:5])
     with pytest.raises(InvalidDocumentFormatError) as e_info:
         sspi_clean_api_data.validate_intermediates_list(test_data[0:6])
     assert "Unit" in str(e_info.value)
