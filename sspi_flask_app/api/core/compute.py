@@ -146,8 +146,8 @@ def compute_watman():
     # for intermediary == CWUEFF (change in use of water efficiency), there are several "activites": INDUSTRIES, ISIC4_A01_A0210_A0322, ISIC4_GTT, TOTAL #
     # for intermediary == WTSTRS (water stress)
     metadata_map = {
-        "ER_H2O_WUEYST": "Change in use of water efficiency",
-        "ER_H2O_STRESS": "Water Stress"
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
     }
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
@@ -156,9 +156,9 @@ def compute_watman():
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
     final_zipped = zip_intermediates(final_list, "WATMAN", AggFunction = "arith_mean",
-                           ScoreFunction= lambda ER_H2O_WUEYST, ER_H2O_STRESS: 0.50 * ER_H2O_WUEYST + 0.50 * ER_H2O_STRESS,
+                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Values")
-    sspi_clean_api_data.insert_many(final_zipped)
+    # sspi_clean_api_data.insert_many(final_zipped)
     return parse_json(final_zipped)
 
 @compute_bp.route("/PRISON", methods=['GET'])

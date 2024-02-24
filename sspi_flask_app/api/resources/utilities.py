@@ -136,7 +136,7 @@ def group_by_indicator(intermediate_document_list, IndicatorCode, AggFunction) -
                 "Intermediates": [],
             }
         indicator_document_hashmap[document_id]["Intermediates"].append(document)
-        indicator_document_hashmap[document_id]["Value"] = apply_aggregation(indicator_document_hashmap, document_id, AggFunction)
+        # indicator_document_hashmap[document_id]["Value"] = apply_aggregation(indicator_document_hashmap, document_id, AggFunction)
     return list(indicator_document_hashmap.values())
 
 def apply_aggregation(indicator_document_hashmap, document_id, AggFunction):
