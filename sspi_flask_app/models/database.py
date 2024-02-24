@@ -96,6 +96,7 @@ class MongoWrapper:
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
+        self.validate_score(document, document_number)
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:

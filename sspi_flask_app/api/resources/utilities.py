@@ -133,14 +133,14 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
                 "Intermediates": [],
             }
         indicator_document_hashmap[document_id]["Intermediates"].append(document)
-        indicator_document_hashmap[document_id]["Value"] = apply_average_aggregation(indicator_document_hashmap, document_id)
+        # indicator_document_hashmap[document_id]["Value"] = apply_average_aggregation(indicator_document_hashmap, document_id)
     return list(indicator_document_hashmap.values())
 
-def apply_average_aggregation(indicator_document_hashmap, document_id):
-    value = 0
-    for intermediate in indicator_document_hashmap[document_id]["Intermediates"]:
-        value += intermediate["IntermediateValue"]
-    return value / len(indicator_document_hashmap[document_id]["Intermediates"])
+# def apply_average_aggregation(indicator_document_hashmap, document_id):
+#     value = 0
+#     for intermediate in indicator_document_hashmap[document_id]["Intermediates"]:
+#         value += intermediate["IntermediateValue"]
+#     return value / len(indicator_document_hashmap[document_id]["Intermediates"])
 
 def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     """
