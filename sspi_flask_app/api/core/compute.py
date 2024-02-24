@@ -34,7 +34,7 @@ def compute_biodiv():
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
-    sspi_clean_api_data.insert_many(final_data_list)
+    # sspi_clean_api_data.insert_many(final_data_list)
     return parse_json(intermediate_obs_dict)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
@@ -128,7 +128,6 @@ def compute_senior():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
-    print(long_senior_data)
     long_senior_data.drop(long_senior_data[long_senior_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
     long_senior_data.astype({"Year": "int", "Value": "float"})
@@ -138,6 +137,7 @@ def compute_senior():
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
+    # sspi_clean_api_data.insert_many(final_data)
     return jsonify(final_data)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
@@ -146,16 +146,22 @@ def compute_watman():
     # for intermediary == CWUEFF (change in use of water efficiency), there are several "activites": INDUSTRIES, ISIC4_A01_A0210_A0322, ISIC4_GTT, TOTAL #
     # for intermediary == WTSTRS (water stress)
     metadata_map = {
-        "ER_H2O_WUEYST": "Change in use of water efficiency",
-        "ER_H2O_STRESS": "Water Stress"
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
     }
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
+    print(raw_data)
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
-    return parse_json(final_list)
+    final_zipped = zip_intermediates(final_list, "WATMAN", AggFunction = "arith_mean",
+                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
+                           ScoreBy= "Values")
+    clean_zipped = filter_incomplete_data(final_zipped)
+    # sspi_clean_api_data.insert_many(clean_zipped)
+    return parse_json(final_zipped)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
