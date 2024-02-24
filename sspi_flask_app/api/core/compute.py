@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
@@ -156,12 +156,12 @@ def compute_watman():
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
-    final_zipped = zip_intermediates(final_list, "WATMAN", AggFunction = "arith_mean",
+    zipped_document_list = zip_intermediates(final_list, "WATMAN",
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Values")
-    clean_zipped = filter_incomplete_data(final_zipped)
-    # sspi_clean_api_data.insert_many(clean_zipped)
-    return parse_json(final_zipped)
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

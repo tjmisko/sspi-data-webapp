@@ -161,3 +161,16 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
         document["Unit"] = "Aggregate"
         document["Score"] = score
     return indicator_document_list
+
+def filter_incomplete_data(indicator_document_list):
+    """
+    Utility function for filtering incomplete observations resulting
+    from missing data.
+    
+    Call on the result of `zip_intermediates` before inserting into the
+    clean database.
+    """
+    for document in indicator_document_list:
+        if "Value" not in document.keys() or "Score" not in document.keys() or "Unit" not in document.keys():
+            indicator_document_list.remove(document)
+    return indicator_document_list
