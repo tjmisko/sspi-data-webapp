@@ -152,14 +152,15 @@ def compute_watman():
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    print(raw_data)
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
     zipped_document_list = zip_intermediates(final_list, "WATMAN",
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Values")
+    print(len(zipped_document_list))
     clean_document_list = filter_incomplete_data(zipped_document_list)
+    print(len(clean_document_list))
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
