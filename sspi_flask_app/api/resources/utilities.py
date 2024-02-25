@@ -168,7 +168,10 @@ def filter_incomplete_data(indicator_document_list):
     Call on the result of `zip_intermediates` before inserting into the
     clean database.
     """
+    filtered_list = []
     for document in indicator_document_list:
-        if "Value" not in document.keys() or "Score" not in document.keys() or "Unit" not in document.keys():
-            indicator_document_list.remove(document)
+        key_list = list(document.keys())
+        required_keys = ["IndicatorCode", "CountryCode", "Year", "Value", "Unit", "Score"]
+        if all([key in key_list for key in required_keys]):
+            filtered_list.append(document)
     return indicator_document_list
