@@ -34,8 +34,12 @@ def compute_biodiv():
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
-    # sspi_clean_api_data.insert_many(final_data_list)
-    return parse_json(intermediate_obs_dict)
+    zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
+                           ScoreFunction= lambda MARINE, TERREST, FRSHWT: 0.33 * MARINE + 0.33 * TERREST + 0.33 * FRSHWT,
+                           ScoreBy= "Values")
+    # clean_document_list = filter_incomplete_data(zipped_document_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(zipped_document_list)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required

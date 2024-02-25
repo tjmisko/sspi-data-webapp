@@ -59,6 +59,8 @@ def string_to_float(string):
     """
     Passes back string 'NaN' instead of float NaN
     """
+    if string == "N":
+        return "NaN"
     if math.isnan(float(string)):
         return "NaN"
     return float(string)
