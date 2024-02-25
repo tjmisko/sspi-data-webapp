@@ -174,4 +174,4 @@ def filter_incomplete_data(indicator_document_list):
         required_keys = ["IndicatorCode", "CountryCode", "Year", "Value", "Unit", "Score"]
         if all([key in key_list for key in required_keys]):
             filtered_list.append(document)
-    return indicator_document_list
+    return filtered_list
