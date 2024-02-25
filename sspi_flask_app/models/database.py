@@ -99,6 +99,7 @@ class MongoWrapper:
     
     def validate_documents_format(self, documents:list):
         if type(documents) is not list:
+            print(f"Document Produced an Error: {documents}")
             raise InvalidDocumentFormatError(f"Type of documents must be a list -- received {type(documents)}")
         return all([self.validate_document_format(document, document_number=i) for i, document in enumerate(documents)])
     
@@ -106,57 +107,76 @@ class MongoWrapper:
     def validate_indicator_code(self, document: dict, document_number:int=0):
         # Validate IndicatorCode format
         if not "IndicatorCode" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IndicatorCode' is a required argument (document {document_number})")
         if not len(document["IndicatorCode"]) == 6:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be 6 characters long (document {document_number})")
         if not type(document["IndicatorCode"]) is str:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be a string (document {document_number})")
         if not document["IndicatorCode"].isupper():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IndicatorCode' must be uppercase (document {document_number})")
     
     def validate_intermediate_code(self, document: dict, document_number:int=0):
         # Validate IndicatorCode format
         if not "IntermediateCode" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IntermediateCode' is a required argument (document {document_number})")
         if not len(document["IntermediateCode"]) == 6:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IntermediateCode' must be 6 characters long (document {document_number})")
         if not type(document["IntermediateCode"]) is str:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IntermediateCode' must be a string (document {document_number})")
         if not document["IntermediateCode"].isupper():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'IntermediateCode' must be uppercase (document {document_number})")
     
     def validate_country_code(self, document: dict, document_number:int=0):
         # Validate CountryCode format
         if not "CountryCode" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'CountryCode' is a required argument (document {document_number})")
         if not len(document["CountryCode"]) == 3:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'CountryCode' must be 3 characters long (document {document_number})")
         if not type(document["CountryCode"]) is str:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'CountryCode' must be a string (document {document_number})")
         if not document["CountryCode"].isupper():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'CountryCode' must be uppercase (document {document_number})")
     
     def validate_year(self, document: dict, document_number:int=0):
         # Validate Year format
         if not "Year" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Year' is a required argument (document {document_number})")
         if not type(document["Year"]) is int:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Year' must be an integer (document {document_number})")
         if not 1900 < document["Year"] < 2030:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Year' must be between 1900 and 2030 (document {document_number})")
     
     def validate_value(self, document: dict, document_number:int=0):
         # Validate Value format
         if not "Value" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Value' is a required argument (document {document_number})")
         if not type(document["Value"]) in [int, float]:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Value' must be a float or integer (document {document_number})")
     
     def validate_unit(self, document: dict, document_number:int=0):
         # Validate Unit format
         if not "Unit" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Unit' is a required argument (document {document_number})")
         if not type(document["Unit"]) is str:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Unit' must be a string (document {document_number})")
     
     def validate_intermediates(self, document:dict, document_number:int=0):
@@ -165,10 +185,12 @@ class MongoWrapper:
     
     def validate_intermediates_list(self, intermediates:list, document_number:int=0):
         if not type(intermediates) is list:
+            print(f"Document Produced an Error: {intermediates}")
             raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(intermediates)}")
         id_set = set()
         for intermediate in intermediates:
             if not type(intermediate) is dict:
+                print(f"Document Produced an Error: {intermediates}")
                 raise InvalidDocumentFormatError(f"'Intermediates' must be a dictionary (document {document_number})")
             self.validate_intermediate_code(intermediate, document_number)
             self.validate_country_code(intermediate, document_number)
@@ -177,6 +199,7 @@ class MongoWrapper:
             self.validate_unit(intermediate, document_number)
             document_id = f"{intermediate['IntermediateCode']}_{intermediate['CountryCode']}_{intermediate['Year']}"
             if document_id in id_set:
+                print(f"Document Produced an Error: {intermediates}")
                 raise InvalidDocumentFormatError(f"Duplicate intermediate document found (document {document_number})")
             id_set.add(document_id)
 
@@ -193,17 +216,21 @@ class SSPICleanAPIData(MongoWrapper):
     def validate_score(self, document: dict, document_number:int=0):
         # Validate Score format
         if not "Score" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Score' is a required argument (document {document_number})")
         if not type(document["Score"]) in [int, float]:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Score' must be a float or integer (document {document_number})")
         if not "Score" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Score' is a required argument (document {document_number})")
         if not type(document["Score"]) in [int, float]:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Score' must be a float or integer (document {document_number})")
 
 
 class SSPIRawAPIData(MongoWrapper):
-    
+
     def validate_document_format(self, document: dict, document_number:int=0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the valid
@@ -239,22 +266,28 @@ class SSPIRawAPIData(MongoWrapper):
     def validate_collected_at(self, document: dict, document_number:int=0):
         # Validate CollectedAt format
         if not "CollectedAt" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'CollectedAt' is a required argument (document {document_number})")
         if not type(document["CollectedAt"]) is datetime:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'CollectedAt' must be a datetime (document {document_number})")
-    
+
     def validate_username(self, document: dict, document_number:int=0):
         # Validate Username format
         if not "Username" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Username' is a required argument (document {document_number})")
         if not type(document["Username"]) is str:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Username' must be a str (document {document_number})")
     
     def validate_raw(self, document: dict, document_number:int=0):
         # Validate Raw format
         if not "Raw" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
     
     def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
@@ -287,6 +320,7 @@ class SSPIRawAPIData(MongoWrapper):
         Utility function that handles querying the database
         """
         if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
+            print(f"Document Produced an Error: {IndicatorCode}")
             raise ValueError("Indicator Code not found in database")
         mongoQuery = {"IndicatorCode": IndicatorCode}
         mongoQuery.update(kwargs)
@@ -387,15 +421,19 @@ class SSPIMetadata(MongoWrapper):
     def validate_document_type(self, document: dict, document_number:int=0):
         # Validate DocumentType format
         if not "DocumentType" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'DocumentType' is a required argument (document {document_number})")
         if not type(document["DocumentType"]) is str:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'DocumentType' must be a string (document {document_number})")
     
     def validate_metadata(self, document: dict, document_number:int=0):
         # Validate Metadata format
         if not "Metadata" in document.keys():
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Metadata' is a required argument (document {document_number})")
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
+            print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Metadata' must be a string, dict, int, float, or list (document {document_number})")
 
     def load(self) -> int:

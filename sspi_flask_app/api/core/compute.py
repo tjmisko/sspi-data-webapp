@@ -131,24 +131,25 @@ def compute_senior():
     long_senior_data.drop(long_senior_data[long_senior_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
     long_senior_data.astype({"Year": "int", "Value": "float"})
-    final_data = zip_intermediates(
+    zipped_document_list = zip_intermediates(
         json.loads(str(long_senior_data.to_json(orient="records")), parse_int=int, parse_float=float),
         "SENIOR",
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
-    # sspi_clean_api_data.insert_many(final_data)
-    return jsonify(final_data)
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return jsonify(clean_document_list)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def compute_watman():
-    # for intermediary == CWUEFF (change in use of water efficiency), there are several "activites": INDUSTRIES, ISIC4_A01_A0210_A0322, ISIC4_GTT, TOTAL #
-    # for intermediary == WTSTRS (water stress)
+    """
     metadata_map = {
         "ER_H2O_WUEYST": "CWUEFF",
         "ER_H2O_STRESS": "WTSTRS"
     }
+    """
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
