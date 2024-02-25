@@ -151,7 +151,6 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
         try:
             arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
         except KeyError:
-            print(f"{i}: key error")
             continue
         score = ScoreFunction(*arg_value_list)
         if score is not None:

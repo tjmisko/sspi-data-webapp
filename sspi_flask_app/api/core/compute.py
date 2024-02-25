@@ -139,7 +139,7 @@ def compute_senior():
     )
     clean_document_list = filter_incomplete_data(zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
-    return jsonify(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
@@ -159,9 +159,7 @@ def compute_watman():
     zipped_document_list = zip_intermediates(final_list, "WATMAN",
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Values")
-    print(len(zipped_document_list))
     clean_document_list = filter_incomplete_data(zipped_document_list)
-    print(len(clean_document_list))
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
