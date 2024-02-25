@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
-from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData
+from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData, SSPIPartialAPIData
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
@@ -29,6 +29,7 @@ sspi_metadata = SSPIMetadata(sspidb.sspi_metadata)
 sspi_raw_api_data = SSPIRawAPIData(sspidb.sspi_raw_api_data)
 sspi_bulk_data = MongoWrapper(sspidb.sspi_bulk_data)
 sspi_clean_api_data = SSPICleanAPIData(sspidb.sspi_clean_api_data)
+sspi_partial_api_data = SSPIPartialAPIData(sspidb.sspi_partial_api_data)
 sspi_imputed_data = MongoWrapper(sspidb.sspi_imputed_data)
 sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
 sspi_dynamic_data = MongoWrapper(sspidb.sspi_dynamic_data)
