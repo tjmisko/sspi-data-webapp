@@ -116,7 +116,7 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                     "Unit": sdg_sspi_inter_dict[intermediate][1],
                     "Description": sdg_sspi_inter_dict[intermediate][2],
                     "Year": year,
-                    "Value": float(intermediate_obs_dict[country][year][intermediate]),
+                    "Value": string_to_float(intermediate_obs_dict[country][year][intermediate]),
                     "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
                 }
                 final_data_list.append(observation)
