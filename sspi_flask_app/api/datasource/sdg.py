@@ -97,8 +97,11 @@ def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "INTRNT",
+                "Unit": "PER_100_POP",
+                "Description": "Fixed broadband subscriptions per 100 inhabitants, by speed (per 100 inhabitants)",
                 "Year": year,
-                "Value": string_to_float(value)
+                "Value": string_to_float(value),
+                "IntermediateCode": "QUINTR"
             }
             final_data_lst.append(new_observation)
     return final_data_lst

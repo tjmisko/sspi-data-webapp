@@ -35,11 +35,11 @@ def compute_biodiv():
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
     zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
-                           ScoreFunction= lambda MARINE, TERREST, FRSHWT: 0.33 * MARINE + 0.33 * TERREST + 0.33 * FRSHWT,
+                           ScoreFunction= lambda MARINE, TERRST, FRSHWT: 0.33 * MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
                            ScoreBy= "Values")
-    # clean_document_list = filter_incomplete_data(zipped_document_list)
+    clean_document_list = filter_incomplete_data(zipped_document_list)
     # sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(zipped_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
@@ -49,7 +49,8 @@ def compute_rdlst():
     raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    sspi_clean_api_data.insert_many(final_list)
+    clean_document_list = filter_incomplete_data(final_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(final_list)
 
 @compute_bp.route("/COALPW")
@@ -183,14 +184,13 @@ def compute_intrnt():
     if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
     # worldbank #
-    wbQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
-    worldbank_raw = parse_json(sspi_raw_api_data.find(wbQuery))
-    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
-    wb_df = pd.DataFrame(worldbank_clean_list)
+    worldbank_raw = sspi_raw_api_data.fetch_raw_data("INTRNT")
+    # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+    # wb_df = pd.DataFrame(worldbank_clean_list)
     # sdg #
-    sdgQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode":"QLMBPS"}
-    sdg_raw = parse_json(sspi_raw_api_data.find(sdgQuery))
-    intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
-    sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
-    sdg_df = pd.DataFrame(sdg_cleaned_list)
+    # sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode="QUINTR", Source="")
+    # intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
+    # sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
+    # sdg_df = pd.DataFrame(sdg_cleaned_list)
+    return worldbank_raw
 
