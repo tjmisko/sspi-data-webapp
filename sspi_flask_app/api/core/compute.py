@@ -6,7 +6,7 @@ from flask_login import login_required
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
-from ..datasource.worldbank import cleanedWorldBankData
+from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_intrnt
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
 from pycountry import countries
@@ -184,13 +184,15 @@ def compute_intrnt():
     if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
     # worldbank #
-    worldbank_raw = sspi_raw_api_data.fetch_raw_data("INTRNT")
-    # worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+    wb_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "AVINTR")
+    wb_clean = cleaned_wb_intrnt(wb_raw, "INTRNT")
     # wb_df = pd.DataFrame(worldbank_clean_list)
     # sdg #
-    # sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode="QUINTR", Source="")
+    # sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
+    # sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
+    # sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
     # intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
     # sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
     # sdg_df = pd.DataFrame(sdg_cleaned_list)
-    return worldbank_raw
+    return wb_clean
 

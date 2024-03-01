@@ -155,7 +155,7 @@ def fdepth():
 # @login_required
 def intrnt():
     def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", **kwargs)
+        yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode = "AVINTR", **kwargs)
         yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
