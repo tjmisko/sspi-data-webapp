@@ -2,6 +2,7 @@ from ... import sspi_raw_api_data
 import requests
 import time
 from pycountry import countries
+from ..resources.utilities import string_to_float
 
 def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
@@ -59,7 +60,7 @@ def cleaned_wb_intrnt(RawData, IndName):
             "Description": entry["Raw"]["indicator"]["value"],
             "Year": entry["Raw"]["date"],
             "Unit": "Percent",
-            "Value": entry["Raw"]["value"]
+            "Value": string_to_float(entry["Raw"]["value"])
         }
         clean_data_list.append(clean_obs)
     return clean_data_list

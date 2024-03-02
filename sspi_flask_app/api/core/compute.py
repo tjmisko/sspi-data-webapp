@@ -188,9 +188,9 @@ def compute_intrnt():
     wb_clean = cleaned_wb_intrnt(wb_raw, "INTRNT")
     # wb_df = pd.DataFrame(worldbank_clean_list)
     # sdg #
-    # sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
-    # sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
-    # sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
+    sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
+    sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
+    sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
     # intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
     # sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
     # sdg_df = pd.DataFrame(sdg_cleaned_list)

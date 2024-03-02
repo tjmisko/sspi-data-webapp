@@ -111,7 +111,7 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             for intermediate in intermediate_obs_dict[country][year]:
-                sdg_sspi_inter_dict = {"ER_H2O_WUEYST": ["CWUEFF", "USD/m3", "United States dollars per cubic meter"] ,
+                sdg_sspi_inter_dict = {"ER_H2O_WUEYST": ["CWUEFF", "USD/m3", "Water Use Efficiency (United States dollars per cubic meter)"] ,
                                        "ER_H2O_STRESS": ["WTSTRS", "Percent", "Freshwater withdrawal as a proportion of available freshwater resources"]}
                 observation = {
                     "CountryCode": country,
