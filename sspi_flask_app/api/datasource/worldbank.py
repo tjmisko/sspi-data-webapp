@@ -54,7 +54,6 @@ def cleaned_wb_intrnt(RawData, IndName):
             continue
         clean_obs = {
             "CountryCode": iso3,
-            "CountryName": iso3, # will figure out pycountry to get country names
             "IndicatorCode": IndName,
             "IntermediateCode": entry["IntermediateCode"],
             "Description": entry["Raw"]["indicator"]["value"],

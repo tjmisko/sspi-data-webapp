@@ -36,7 +36,7 @@ def compute_biodiv():
     # store the cleaned data in the database
     zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
                            ScoreFunction= lambda MARINE, TERRST, FRSHWT: 0.33 * MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
-                           ScoreBy= "Values")
+                           ScoreBy= "Score")
     clean_document_list = filter_incomplete_data(zipped_document_list)
     # sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
@@ -49,9 +49,12 @@ def compute_rdlst():
     raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    clean_document_list = filter_incomplete_data(final_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(final_list)
+    zipped = zip_intermediates(final_list, "REDLST",
+                           ScoreFunction= lambda REDLST: REDLST,
+                           ScoreBy= "Values")
+    # clean_document_list = filter_incomplete_data(final_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(zipped)
 
 @compute_bp.route("/COALPW")
 @login_required
@@ -163,7 +166,7 @@ def compute_watman():
     final_list = flatten_nested_dictionary_watman(intermediate_list)
     zipped_document_list = zip_intermediates(final_list, "WATMAN",
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
-                           ScoreBy= "Values")
+                           ScoreBy= "Score")
     clean_document_list = filter_incomplete_data(zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
@@ -191,8 +194,11 @@ def compute_intrnt():
     sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
     sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
     sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
-    # intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
-    # sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
-    # sdg_df = pd.DataFrame(sdg_cleaned_list)
-    return wb_clean
+    combined_list = wb_clean + sdg_clean
+    cleaned_list = zip_intermediates(combined_list, "INTRNT",
+                                     ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
+                                     ScoreBy= "Score")
+    filtered_list = filter_incomplete_data(cleaned_list)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    return parse_json(filtered_list)
 
