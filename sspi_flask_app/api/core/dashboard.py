@@ -76,6 +76,8 @@ def get_dynamic_data(IndicatorCode):
         options={"_id": 0, "Intermediates": 0, "IndicatorCode": 0}
     )
     print(query_results)
+    if len(query_results) == 0:
+        return jsonify({})
     long_data = pd.DataFrame(query_results).drop_duplicates()
     long_data = long_data.astype({"Year": int, "Value": float})
     long_data = long_data.round(3)
