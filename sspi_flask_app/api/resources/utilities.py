@@ -179,26 +179,18 @@ def filter_incomplete_data(indicator_document_list):
             filtered_list.append(document)
     return filtered_list
 
-def score_single_indicator(document_list, IndicatorCode, ScoreFunction, ScoreBy):
+def score_single_indicator(document_list, IndicatorCode):
    document_list = convert_data_types(document_list)
-   sspi_clean_api_data.validate_document_format(document_list)
+#    sspi_clean_api_data.validate_document_format(document_list)
    app_goalpost_info = append_goalpost_single(document_list, IndicatorCode)
+#    scored_documents = scored_single(app_goalpost_info, ScoreFunction, ScoreBy)
+   return app_goalpost_info
+
    
-    
 def append_goalpost_single(document_list, IndicatorCode):
-    details = sspi_metadata.find({"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})
-    print (details)
-
-
-# if ScoreBy == "Values":
-#         return intermediate_document_list
-#     intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
-#     intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
-#     print(intermediate_details)
-#     for document in intermediate_document_list:
-#         for detail in intermediate_details:
-#             if document["IntermediateCode"] == detail["Metadata"]["IntermediateCode"]:
-#                 document["LowerGoalpost"] = detail["Metadata"]["LowerGoalpost"]
-#                 document["UpperGoalpost"] = detail["Metadata"]["UpperGoalpost"]
-#                 document["Score"] = goalpost(document["Value"], detail["Metadata"]["LowerGoalpost"], detail["Metadata"]["UpperGoalpost"])
-#     return intermediate_document_list
+    details = sspi_metadata.find({"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})[0]
+    for document in document_list:
+        document["LowerGoalpost"] = details["Metadata"]["LowerGoalpost"]
+        document["UpperGoalpost"] = details["Metadata"]["UpperGoalpost"]
+        document["Score"] = goalpost(document["Value"], details["Metadata"]["LowerGoalpost"], details["Metadata"]["UpperGoalpost"])
+    return document_list

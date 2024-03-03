@@ -49,14 +49,36 @@ def compute_rdlst():
     raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    meta_data_added = score_single_indicator(final_list, ScoreFunction= lambda REDLST: REDLST, ScoreBy= "Values")
+    meta_data_added = score_single_indicator(final_list, "REDLST")
     
     # zip_intermediates(final_list, "REDLST",
     #                        ScoreFunction= lambda REDLST: REDLST,
     #                        ScoreBy= "Values")
     # clean_document_list = filter_incomplete_data(final_list)
     # sspi_clean_api_data.insert_many(clean_document_list)
-    return "hi!"
+    return meta_data_added
+
+@compute_bp.route("/WATMAN", methods=['GET'])
+@login_required
+def compute_watman():
+    """
+    metadata_map = {
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
+    }
+    """
+    if not sspi_raw_api_data.raw_data_available("WATMAN"):
+        return redirect(url_for("collect_bp.WATMAN"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
+    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
+    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
+    final_list = flatten_nested_dictionary_watman(intermediate_list)
+    zipped_document_list = zip_intermediates(final_list, "WATMAN",
+                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
+                           ScoreBy= "Score")
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/COALPW")
 @login_required
@@ -151,27 +173,6 @@ def compute_senior():
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
-@compute_bp.route("/WATMAN", methods=['GET'])
-@login_required
-def compute_watman():
-    """
-    metadata_map = {
-        "ER_H2O_WUEYST": "CWUEFF",
-        "ER_H2O_STRESS": "WTSTRS"
-    }
-    """
-    if not sspi_raw_api_data.raw_data_available("WATMAN"):
-        return redirect(url_for("collect_bp.WATMAN"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    final_list = flatten_nested_dictionary_watman(intermediate_list)
-    zipped_document_list = zip_intermediates(final_list, "WATMAN",
-                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
-                           ScoreBy= "Score")
-    clean_document_list = filter_incomplete_data(zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

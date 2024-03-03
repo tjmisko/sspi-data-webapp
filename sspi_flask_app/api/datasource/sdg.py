@@ -80,7 +80,6 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "REDLST",
-                "IntermediateCode": "REDLST",
                 "Unit": "Index",
                 "Description": "Red List Index",
                 "Year": year,
