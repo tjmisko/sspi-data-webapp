@@ -83,9 +83,6 @@ def added_countries(sspi_country_list, source_country_list):
 def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
     """
     Utility function for zipping together intermediate documents into indicator documents
-    AggFunction is a string (all lowercase) which defines how to aggregate intermediate values in computing
-    a value for country, year observations
-    Dictionary provided for different function names in apply_aggregation function
     """
     intermediate_document_list = convert_data_types(intermediate_document_list)
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
@@ -132,7 +129,6 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
                 "IndicatorCode": IndicatorCode,
                 "CountryCode": document["CountryCode"],
                 "Year": document["Year"],
-                "Unit": document["Unit"],
                 "Intermediates": [],
             }
         indicator_document_hashmap[document_id]["Intermediates"].append(document)
@@ -143,7 +139,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     Utility function for scoring indicator documents
     """
     arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
-    for document in indicator_document_list:
+    for i, document in enumerate(indicator_document_list):
         if ScoreBy == "Values":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get("Value", None) for intermediate in document["Intermediates"]}
         elif ScoreBy == "Score":
@@ -157,7 +153,27 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
         except KeyError:
             continue
         score = ScoreFunction(*arg_value_list)
-        document["Value"] = score
-        document["Unit"] = "Aggregate"
-        document["Score"] = score
+        if score is not None:
+            document["Value"] = score
+            document["Unit"] = "Aggregate"
+            document["Score"] = score
     return indicator_document_list
+
+def filter_incomplete_data(indicator_document_list):
+    """
+    Utility function for filtering incomplete observations resulting
+    from missing data.
+    
+    Call on the result of `zip_intermediates` before inserting into the
+    clean database.
+    """
+    filtered_list = []
+    partial_observation_list = []
+    for document in indicator_document_list:
+        key_list = list(document.keys())
+        required_keys = ["IndicatorCode", "CountryCode", "Year", "Value", "Unit", "Score"]
+        if all([key in key_list for key in required_keys]):
+            filtered_list.append(document)
+        else:
+            partial_observation_list.append(document)
+    return filtered_list, partial_observation_list
