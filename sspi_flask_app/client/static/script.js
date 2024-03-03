@@ -3,9 +3,15 @@ $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".
 function basicExample(){let canvas=document.getElementById("BasicExample")
 console.log(canvas)
 const BarChart=new Chart(canvas,{type:'bar',data:{},options:{}})
-BarChart.data={datasets:[{data:[{x:"Category1",y:11},{x:"Category1",y:20},{x:"Category2",y:10}],}]}
+BarChart.data={datasets:[{data:[{x:"Category1",y:11},{x:"Category2",y:10},{x:"Category3",y:16}],}]}
 BarChart.update()}
 basicExample()
+function Example2(){let canvas=document.getElementById("Example 2")
+console.log(canvas)
+const BarChart=new Chart(canvas,{type:'bar',data:{},options:{}})
+BarChart.data={datasets:[{data:[{x:"Category1",y:11},{x:"Category2",y:10},{x:"Category3",y:16}],}]}
+BarChart.update()}
+Example2()
 raw=false
 async function makeBarChart(BarChart,IndicatorCode){let response=await fetch('/api/v1/query/sspi_clean_api_data?IndicatorCode='+IndicatorCode)
 let indicator_data=await response.json()
