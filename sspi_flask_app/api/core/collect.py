@@ -146,7 +146,7 @@ def taxrev():
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
     def collect_iterator(**kwargs):  
-        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT")
+        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)                                        
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
@@ -156,7 +156,7 @@ def fdepth():
 def intrnt():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode = "AVINTR", **kwargs)
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode= "QLMBPS", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

@@ -108,7 +108,7 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
     Utility function for appending goalpost information to a document
     """
-    if ScoreBy == "Value":
+    if ScoreBy == "Values":
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
     intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
@@ -178,3 +178,27 @@ def filter_incomplete_data(indicator_document_list):
         if all([key in key_list for key in required_keys]):
             filtered_list.append(document)
     return filtered_list
+
+def score_single_indicator(document_list, IndicatorCode, ScoreFunction, ScoreBy):
+   document_list = convert_data_types(document_list)
+   sspi_clean_api_data.validate_document_format(document_list)
+   app_goalpost_info = append_goalpost_single(document_list, IndicatorCode)
+   
+    
+def append_goalpost_single(document_list, IndicatorCode):
+    details = sspi_metadata.find({"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})
+    print (details)
+
+
+# if ScoreBy == "Values":
+#         return intermediate_document_list
+#     intermediate_codes = set([doc["IntermediateCode"] for doc in intermediate_document_list])
+#     intermediate_details = sspi_metadata.find({"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
+#     print(intermediate_details)
+#     for document in intermediate_document_list:
+#         for detail in intermediate_details:
+#             if document["IntermediateCode"] == detail["Metadata"]["IntermediateCode"]:
+#                 document["LowerGoalpost"] = detail["Metadata"]["LowerGoalpost"]
+#                 document["UpperGoalpost"] = detail["Metadata"]["UpperGoalpost"]
+#                 document["Score"] = goalpost(document["Value"], detail["Metadata"]["LowerGoalpost"], detail["Metadata"]["UpperGoalpost"])
+#     return intermediate_document_list

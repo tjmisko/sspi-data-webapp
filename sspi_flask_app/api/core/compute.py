@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_intrnt
@@ -49,12 +49,14 @@ def compute_rdlst():
     raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    zipped = zip_intermediates(final_list, "REDLST",
-                           ScoreFunction= lambda REDLST: REDLST,
-                           ScoreBy= "Values")
+    meta_data_added = score_single_indicator(final_list, ScoreFunction= lambda REDLST: REDLST, ScoreBy= "Values")
+    
+    # zip_intermediates(final_list, "REDLST",
+    #                        ScoreFunction= lambda REDLST: REDLST,
+    #                        ScoreBy= "Values")
     # clean_document_list = filter_incomplete_data(final_list)
     # sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(zipped)
+    return "hi!"
 
 @compute_bp.route("/COALPW")
 @login_required
@@ -189,7 +191,6 @@ def compute_intrnt():
     # worldbank #
     wb_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "AVINTR")
     wb_clean = cleaned_wb_intrnt(wb_raw, "INTRNT")
-    # wb_df = pd.DataFrame(worldbank_clean_list)
     # sdg #
     sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
     sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)

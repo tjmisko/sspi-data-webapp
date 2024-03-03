@@ -181,7 +181,7 @@ class MongoWrapper:
     
     def validate_intermediates(self, document:dict, document_number:int=0):
         if "Intermediates" in document.keys():
-            self.validate_intermediates_list(document["Intermediaets"], document_number)
+            self.validate_intermediates_list(document["Intermediates"], document_number)
     
     def validate_intermediates_list(self, intermediates:list, document_number:int=0):
         if not type(intermediates) is list:
