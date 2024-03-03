@@ -229,7 +229,6 @@ class SSPICleanAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(f"'Score' must be a float or integer (document {document_number})")
 
 class SSPIPartialAPIData(MongoWrapper):
-
     def validate_document_format(self, document: dict, document_number:int=0):
         """
         """
@@ -239,7 +238,6 @@ class SSPIPartialAPIData(MongoWrapper):
         self.validate_intermediates(document, document_number)
 
 class SSPIRawAPIData(MongoWrapper):
-
     def validate_document_format(self, document: dict, document_number:int=0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the valid

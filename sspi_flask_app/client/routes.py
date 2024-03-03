@@ -48,3 +48,7 @@ def methodology():
 def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
 
+@client_bp.route('/izzy')
+def izzy():
+    return render_template('izzy.html')
+

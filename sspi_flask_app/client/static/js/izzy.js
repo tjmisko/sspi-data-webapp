@@ -1,4 +1,13 @@
-raw=false
+function setupBarChart() {
+    let Chart = $("#izzy")[0].getContext('2d')
+    console.log(Chart)
+    const BarChart = new Chart(BarChartCanvas, {
+        type: 'bar',
+        data: {},
+        options: {}
+    })
+    makeBarChart(BarChart, "BIODIV")
+}
 
 async function makeBarChart(BarChart, IndicatorCode){
     let response = await fetch('/api/v1/query/sspi_clean_api_data?IndicatorCode=' + IndicatorCode)
@@ -74,3 +83,5 @@ function getScores(indicator_data) {
 function getRaw(indicator_data) {
     return indicator_data.map(data => data.RAW)
 }
+
+setupBarChart()
