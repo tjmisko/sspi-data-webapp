@@ -50,13 +50,9 @@ def compute_rdlst():
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     meta_data_added = score_single_indicator(final_list, "REDLST")
-    
-    # zip_intermediates(final_list, "REDLST",
-    #                        ScoreFunction= lambda REDLST: REDLST,
-    #                        ScoreBy= "Values")
-    # clean_document_list = filter_incomplete_data(final_list)
+    clean_document_list = filter_incomplete_data(meta_data_added)
     # sspi_clean_api_data.insert_many(clean_document_list)
-    return meta_data_added
+    return clean_document_list
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
@@ -77,7 +73,7 @@ def compute_watman():
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Score")
     clean_document_list = filter_incomplete_data(zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
 @compute_bp.route("/COALPW")
@@ -170,7 +166,7 @@ def compute_senior():
         ScoreBy="Score"
     )
     clean_document_list = filter_incomplete_data(zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
 

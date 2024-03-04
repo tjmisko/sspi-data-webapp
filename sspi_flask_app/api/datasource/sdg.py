@@ -3,6 +3,7 @@ from ... import sspi_raw_api_data
 from ..resources.utilities import format_m49_as_string, string_to_float, parse_json, zip_intermediates
 import json
 import time
+import math
 import requests
 
 
@@ -112,15 +113,19 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
             for intermediate in intermediate_obs_dict[country][year]:
                 sdg_sspi_inter_dict = {"ER_H2O_WUEYST": ["CWUEFF", "USD/m3", "Water Use Efficiency (United States dollars per cubic meter)"] ,
                                        "ER_H2O_STRESS": ["WTSTRS", "Percent", "Freshwater withdrawal as a proportion of available freshwater resources"]}
+                inter_value = string_to_float(intermediate_obs_dict[country][year][intermediate])
+                log_scaled_value = (lambda intermediate: math.log(inter_value) if intermediate == "ER_H2O_WUEYST" 
+                              and isinstance(inter_value, float) else inter_value)
                 observation = {
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",
                     "Unit": sdg_sspi_inter_dict[intermediate][1],
                     "Description": sdg_sspi_inter_dict[intermediate][2],
                     "Year": year,
-                    "Value": string_to_float(intermediate_obs_dict[country][year][intermediate]),
+                    "Value": inter_value,
                     "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
                 }
+                print(observation["Value"])
                 final_data_list.append(observation)
     return final_data_list
 
