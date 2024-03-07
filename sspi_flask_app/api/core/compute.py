@@ -76,6 +76,16 @@ def compute_watman():
     # sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
+@compute_bp.route("/STKHLM", methods=['GET'])
+@login_required
+def compute_skthlm():
+    if not sspi_raw_api_data.raw_data_available("STKHLM"):
+        return redirect(url_for("api_bp.collect_bp.STKHLM"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
+    full_stk_list = [obs for obs in raw_data if obs["Raw"]["series"] == "SG_HAZ_CMRSTHOLM"]
+    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(full_stk_list)
+    return parse_json(intermediate_list)
+
 @compute_bp.route("/COALPW")
 @login_required
 def compute_coalpw():
