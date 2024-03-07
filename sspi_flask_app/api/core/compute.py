@@ -86,7 +86,9 @@ def compute_skthlm():
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(full_stk_list)
     flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
     scored_list = score_single_indicator(flattened_lst, "STKHLM")
-    return parse_json(scored_list)
+    clean_document_list = filter_incomplete_data(scored_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/COALPW")
 @login_required
