@@ -5,7 +5,7 @@ from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_intrnt
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
@@ -84,7 +84,9 @@ def compute_skthlm():
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
     full_stk_list = [obs for obs in raw_data if obs["Raw"]["series"] == "SG_HAZ_CMRSTHOLM"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(full_stk_list)
-    return parse_json(intermediate_list)
+    flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
+    scored_list = score_single_indicator(flattened_lst, "STKHLM")
+    return parse_json(scored_list)
 
 @compute_bp.route("/COALPW")
 @login_required
