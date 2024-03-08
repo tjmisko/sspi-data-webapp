@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
@@ -36,7 +36,7 @@ def compute_biodiv():
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
-    sspi_clean_api_data.insert_many(final_data_list)
+    # sspi_clean_api_data.insert_many(final_data_list)
     return parse_json(intermediate_obs_dict)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
@@ -154,34 +154,40 @@ def compute_senior():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListSeniors(series, code, "PAG", "SENIOR"))
     long_senior_data = pd.DataFrame(document_list)
-    print(long_senior_data)
     long_senior_data.drop(long_senior_data[long_senior_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(lambda x: metadata_code_map[x])
     long_senior_data.astype({"Year": "int", "Value": "float"})
-    final_data = zip_intermediates(
+    zipped_document_list = zip_intermediates(
         json.loads(str(long_senior_data.to_json(orient="records")), parse_int=int, parse_float=float),
         "SENIOR",
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
-    return jsonify(final_data)
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def compute_watman():
-    # for intermediary == CWUEFF (change in use of water efficiency), there are several "activites": INDUSTRIES, ISIC4_A01_A0210_A0322, ISIC4_GTT, TOTAL #
-    # for intermediary == WTSTRS (water stress)
+    """
     metadata_map = {
-        "ER_H2O_WUEYST": "Change in use of water efficiency",
-        "ER_H2O_STRESS": "Water Stress"
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
     }
+    """
     if not sspi_raw_api_data.raw_data_available("WATMAN"):
         return redirect(url_for("collect_bp.WATMAN"))
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
     final_list = flatten_nested_dictionary_watman(intermediate_list)
-    return parse_json(final_list)
+    zipped_document_list = zip_intermediates(final_list, "WATMAN",
+                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
+                           ScoreBy= "Values")
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required

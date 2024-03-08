@@ -1,6 +1,6 @@
 from pycountry import countries
 from ... import sspi_raw_api_data
-from ..resources.utilities import format_m49_as_string, string_to_float, parse_json
+from ..resources.utilities import format_m49_as_string, string_to_float, parse_json, zip_intermediates
 import json
 import time
 import requests
@@ -103,14 +103,26 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 mean = sum([float(x) for x in intermediate_obs_dict[country][year].values()]) / 2
             except ValueError:
                 mean = "NaN"
-            observation = {
-                "CountryCode": country,
-                "IndicatorCode": "WATMAN",
-                "YEAR": year,
-                "RAW": mean,
-                "Intermediates": intermediate_obs_dict[country][year]
-            }
-            final_data_list.append(observation)
+            for intermediate in intermediate_obs_dict[country][year]:
+                observation = {
+                    "CountryCode": country,
+                    "IndicatorCode": "WATMAN",
+                    "Unit": find_unit_watman(intermediate),
+                    "Year": year,
+                    "Value": mean,
+                    "IntermediateCode": find_intermediate_watman(intermediate),
+                    "IntermediateValue": float(intermediate_obs_dict[country][year][intermediate])
+                }
+                final_data_list.append(observation)
     return final_data_list
 
-
+def find_intermediate_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "CWUEFF"
+    if inter == "ER_H2O_STRESS":
+        return "WTSTRS"
+def find_unit_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "United States dollars per cubic meter"
+    if inter == "ER_H2O_STRESS":
+        return "Freshwater withdrawal as a proportion of available freshwater resources"

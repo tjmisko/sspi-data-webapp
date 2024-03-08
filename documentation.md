@@ -98,10 +98,10 @@ This is what the first raw data document looks like for BIODIV, which contains t
 	{\"year\":\"[1993]\",\"value\":\"\"},
 	{\"year\":\"[1998]\",\"value\":\"\"},
 	{\"year\":\"[1999]\",\"value\":\"\"},
-	{\"year\":\"[2004]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Units\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"},
-	{\"year\":\"[2005]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Units\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"},
-	{\"year\":\"[2010]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Units\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"},
-	{\"year\":\"[2016]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Units\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"}]"}}
+	{\"year\":\"[2004]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Unit\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"},
+	{\"year\":\"[2005]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Unit\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"},
+	{\"year\":\"[2010]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Unit\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"},
+	{\"year\":\"[2016]\",\"value\":\"N\",\"valueType\":\"String\",\"footnotes\":\"Non-relevant\",\"Nature\":\"C\",\"Source Type\":\"\",\"UnitMultiplier\":\"\",\"Unit\":\"PERCENT\",\"Management Level\":\"\",\"Observation Status\":\"A\",\"Geo Info Type\":\"\"}]"}}
 ```
 
 ## Example Clean Observation Format

@@ -139,7 +139,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     Utility function for scoring indicator documents
     """
     arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
-    for document in indicator_document_list:
+    for i, document in enumerate(indicator_document_list):
         if ScoreBy == "Values":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get("Value", None) for intermediate in document["Intermediates"]}
         elif ScoreBy == "Score":
@@ -152,5 +152,28 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
         except KeyError:
             continue
-        document["Score"] = ScoreFunction(*arg_value_list)
+        score = ScoreFunction(*arg_value_list)
+        if score is not None:
+            document["Value"] = score
+            document["Unit"] = "Aggregate"
+            document["Score"] = score
     return indicator_document_list
+
+def filter_incomplete_data(indicator_document_list):
+    """
+    Utility function for filtering incomplete observations resulting
+    from missing data.
+    
+    Call on the result of `zip_intermediates` before inserting into the
+    clean database.
+    """
+    filtered_list = []
+    partial_observation_list = []
+    for document in indicator_document_list:
+        key_list = list(document.keys())
+        required_keys = ["IndicatorCode", "CountryCode", "Year", "Value", "Unit", "Score"]
+        if all([key in key_list for key in required_keys]):
+            filtered_list.append(document)
+        else:
+            partial_observation_list.append(document)
+    return filtered_list, partial_observation_list
