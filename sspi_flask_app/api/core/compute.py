@@ -126,7 +126,7 @@ def compute_gtrans():
     #print(series)
     #print(len(document_list))
     #return jsonify(document_list)
-    
+    final_data = zip_intermediates(long_iea_data)
     return jsonify(document_list)
 
 @compute_bp.route("/SENIOR", methods=['GET'])
