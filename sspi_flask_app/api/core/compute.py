@@ -11,6 +11,7 @@ from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAl
 from ..datasource.iea import filterSeriesListiea
 import pandas as pd
 from pycountry import countries
+import csv
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -98,20 +99,25 @@ def compute_gtrans():
         "ENER_TRANS": "1A3 - Transport"
     }
     metadata_code_map = {
-        "ENER_CO2": "TCO2EQ"
+        "ENER_TRANS": "TCO2EQ"
     }
     document_list = []
 
     for code in metadata_codes.keys():
-        document_list.extend(filterSeriesListiea(series, code, "TCO2EQ"))
-    # ### combining in pandas ####
-    # wb_df = pd.DataFrame(worldbank_clean_list)
-    # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
-    # iea_df = pd.DataFrame(iea_clean_list)
-    # iea_df = iea_df[iea_df['seriesLabel'] == "Transport"][['year', 'value', 'country']].rename(columns={'year':'YEAR', 'value':'RAW', 'country':'CountryCode'})
-    # # iea_df = iea_df[iea_df["RAW"].notna()].astype(str)
+        document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
+    long_iea_data = pd.DataFrame(document_list)
+    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str)
+    # ### combining in pandas for UN population data to conpute correct G####
+    wb_df = pd.DataFrame(worldbank_clean_list)
+    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
+
+    wb_df = wb_df.merge(pop_data, how="left", left_on = ["YEAR","CountryName"], right_on = ["year","country"])
+    test = wb_df[wb_df["pop"] == "na"]
     
-    # merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
+    iea_df = long_iea_data[['Year', 'CountryCode']]
+    iea_df = iea_df[iea_df["Value"].notna()].astype(str)
+    
+    merged = wb_df.merge(iea_df, how="outer", left_on=["CountryCode", "YEAR"], right_on=["CountryCode","Year"]) 
     # merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
     # df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
     # document_list = json.loads(str(df.to_json('records')))
@@ -120,7 +126,8 @@ def compute_gtrans():
     #print(series)
     #print(len(document_list))
     #return jsonify(document_list)
-    return jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+    
+    return jsonify(document_list)
 
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
