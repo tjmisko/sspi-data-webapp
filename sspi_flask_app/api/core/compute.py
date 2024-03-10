@@ -3,7 +3,7 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, append_goalpost_info
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
@@ -68,7 +68,7 @@ def compute_altnrg():
         return redirect(url_for("collect_bp.ALTNRG"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
     intermediate_data = cleanIEAData_altnrg(raw_data, "ALTNRG")
-    final_data = append_goalpost_info(intermediate_data, "Score")
+    final_data = score_single_indicator(intermediate_data, "ALTNRG")
     return jsonify(final_data)
     # for row in raw_data:
         #lst.append(row["observation"])

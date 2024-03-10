@@ -39,7 +39,10 @@ def cleanIEAData_altnrg(RawData, IndName):
     for entry in RawData:
         iso3 = entry["Raw"]["country"]
         country_data = countries.get(alpha_3=iso3)
+        value = entry["Raw"]['value']
         if not country_data:
+            continue
+        if not value:
             continue
         clean_obs = {
             "CountryCode": iso3,
