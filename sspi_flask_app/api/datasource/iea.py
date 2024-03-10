@@ -1,6 +1,7 @@
 import requests
 from ... import sspi_raw_api_data
 import bs4 as bs
+from pycountry import countries
 
 def collectIEAData(IEAIndicatorCode, IndicatorCode, **kwargs):
     raw_data = requests.get(f"https://api.iea.org/stats/indicator/{IEAIndicatorCode}").json()
@@ -28,3 +29,25 @@ def filterSeriesListiea(series_list, filterVAR, IndicatorCode):
             doc.update(id_info)
         document_list.extend(new_documents)
     return document_list
+
+def cleanIEAData_altnrg(RawData, IndName):
+    """
+    Takes in list of collected raw data and our 6 letter indicator code 
+    and returns a list of dictionaries with only relevant data from wanted countries
+    """
+    clean_data_list = []
+    for entry in RawData:
+        iso3 = entry["Raw"]["country"]
+        country_data = countries.get(alpha_3=iso3)
+        if not country_data:
+            continue
+        clean_obs = {
+            "CountryCode": iso3,
+            "IndicatorCode": IndName,
+            "Year": entry["Raw"]["year"],
+            "Value": entry["Raw"]["value"],
+            "Unit": entry['Raw']['units']
+        }
+        clean_data_list.append(clean_obs)
+    return clean_data_list
+

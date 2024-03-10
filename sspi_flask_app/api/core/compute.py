@@ -3,12 +3,12 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, append_goalpost_info
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
-from ..datasource.iea import filterSeriesListiea
+from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
 import pandas as pd
 from pycountry import countries
 import csv
@@ -67,12 +67,9 @@ def compute_altnrg():
     if not sspi_raw_api_data.raw_data_available("ALTNRG"):
         return redirect(url_for("collect_bp.ALTNRG"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
-    observations = [entry["observation"] for entry in raw_data]
-    df = pd.DataFrame(observations)
-    print(df.head())
-    df = df.pivot(columns="product", values="value", index=["year", "country", "short", "flow", "units"])
-    print(df)
-    return parse_json(df.head().to_json())
+    intermediate_data = cleanIEAData_altnrg(raw_data, "ALTNRG")
+    final_data = append_goalpost_info(intermediate_data, "Score")
+    return jsonify(final_data)
     # for row in raw_data:
         #lst.append(row["observation"])
     #return parse_json(lst)
