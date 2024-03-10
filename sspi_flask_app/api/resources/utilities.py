@@ -181,8 +181,8 @@ def filter_incomplete_data(indicator_document_list):
 
 def score_single_indicator(document_list, IndicatorCode):
    document_list = convert_data_types(document_list)
-#    sspi_clean_api_data.validate_document_format(document_list)
    app_goalpost_info = append_goalpost_single(document_list, IndicatorCode)
+   [sspi_clean_api_data.validate_document_format(document) for document in document_list]
    return app_goalpost_info
 
    
