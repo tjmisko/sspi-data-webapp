@@ -38,8 +38,9 @@ def compute_biodiv():
                            ScoreFunction= lambda MARINE, TERRST, FRSHWT: 0.33 * MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
                            ScoreBy= "Score")
     clean_document_list = filter_incomplete_data(zipped_document_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    final = filter_incomplete_data(clean_document_list)
+    sspi_clean_api_data.insert_many(final)
+    return parse_json(final)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
@@ -51,8 +52,8 @@ def compute_rdlst():
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     meta_data_added = score_single_indicator(final_list, "REDLST")
     clean_document_list = filter_incomplete_data(meta_data_added)
-    # sspi_clean_api_data.insert_many(clean_document_list)
-    return clean_document_list
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
@@ -73,7 +74,7 @@ def compute_watman():
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Score")
     clean_document_list = filter_incomplete_data(zipped_document_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
 @compute_bp.route("/STKHLM", methods=['GET'])
@@ -87,7 +88,7 @@ def compute_skthlm():
     flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
     scored_list = score_single_indicator(flattened_lst, "STKHLM")
     clean_document_list = filter_incomplete_data(scored_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
 @compute_bp.route("/COALPW")
@@ -180,7 +181,7 @@ def compute_senior():
         ScoreBy="Score"
     )
     clean_document_list = filter_incomplete_data(zipped_document_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
 
@@ -211,7 +212,7 @@ def compute_intrnt():
                                      ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
                                      ScoreBy= "Score")
     filtered_list = filter_incomplete_data(cleaned_list)
-    # sspi_clean_api_data.insert_many(filtered_list)
+    sspi_clean_api_data.insert_many(filtered_list)
     return parse_json(filtered_list)
 
 @compute_bp.route("/FDEPTH", methods=['GET'])
@@ -228,6 +229,6 @@ def compute_fdepth():
                                      ScoreFunction= lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
                                      ScoreBy= "Score")
     filtered_list = filter_incomplete_data(cleaned_list)
-    # sspi_clean_api_data.insert_many(filtered_list)
+    sspi_clean_api_data.insert_many(filtered_list)
     return parse_json(filtered_list)
 
