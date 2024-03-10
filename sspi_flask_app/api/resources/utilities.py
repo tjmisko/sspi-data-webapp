@@ -179,11 +179,14 @@ def filter_incomplete_data(indicator_document_list):
             filtered_list.append(document)
     return filtered_list
 
-def score_single_indicator(document_list, IndicatorCode):
-   document_list = convert_data_types(document_list)
-#    sspi_clean_api_data.validate_document_format(document_list)
-   app_goalpost_info = append_goalpost_single(document_list, IndicatorCode)
-   return app_goalpost_info
+def score_single_indicator(document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
+    """
+    Utility function for scoring an indicator which does not require 
+    """
+    document_list = convert_data_types(document_list)
+    #    sspi_clean_api_data.validate_document_format(document_list)
+    app_goalpost_info = append_goalpost_single(document_list, IndicatorCode)
+    return app_goalpost_info
 
    
 def append_goalpost_single(document_list, IndicatorCode):
