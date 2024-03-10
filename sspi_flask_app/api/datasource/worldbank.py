@@ -41,7 +41,7 @@ def cleanedWorldBankData(RawData, IndName):
         clean_data_list.append(clean_obs)
     return clean_data_list
 
-def cleaned_wb_intrnt(RawData, IndName):
+def cleaned_wb_current(RawData, IndName, unit):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
     and returns a list of dictionaries with only relevant data from wanted countries
@@ -58,7 +58,7 @@ def cleaned_wb_intrnt(RawData, IndName):
             "IntermediateCode": entry["IntermediateCode"],
             "Description": entry["Raw"]["indicator"]["value"],
             "Year": entry["Raw"]["date"],
-            "Unit": "Percent",
+            "Unit": unit,
             "Value": string_to_float(entry["Raw"]["value"])
         }
         clean_data_list.append(clean_obs)

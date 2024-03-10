@@ -6,7 +6,7 @@ from flask_login import login_required
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm
-from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_intrnt
+from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
 from pycountry import countries
@@ -201,7 +201,7 @@ def compute_intrnt():
         return redirect(url_for("collect_bp.INTRNT"))
     # worldbank #
     wb_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "AVINTR")
-    wb_clean = cleaned_wb_intrnt(wb_raw, "INTRNT")
+    wb_clean = cleaned_wb_current(wb_raw, "INTRNT", unit = "Percent")
     # sdg #
     sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
     sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
@@ -209,6 +209,23 @@ def compute_intrnt():
     combined_list = wb_clean + sdg_clean
     cleaned_list = zip_intermediates(combined_list, "INTRNT",
                                      ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
+                                     ScoreBy= "Score")
+    filtered_list = filter_incomplete_data(cleaned_list)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    return parse_json(filtered_list)
+
+@compute_bp.route("/FDEPTH", methods=['GET'])
+# @login_required
+def compute_fdepth():
+    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
+        return redirect(url_for("collect_bp.FDEPTH"))
+    credit_raw = sspi_raw_api_data.fetch_raw_data("FDEPTH", IntermediateCode = "CREDIT")
+    credit_clean = cleaned_wb_current(credit_raw, "FDEPTH", unit = "Percent")
+    deposit_raw = sspi_raw_api_data.fetch_raw_data("FDEPTH", IntermediateCode = "DPOSIT")
+    deposit_clean = cleaned_wb_current(deposit_raw, "FDEPTH", unit = "Percent")
+    combined_list = credit_clean + deposit_clean
+    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
+                                     ScoreFunction= lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
                                      ScoreBy= "Score")
     filtered_list = filter_incomplete_data(cleaned_list)
     # sspi_clean_api_data.insert_many(filtered_list)
