@@ -3,10 +3,10 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
-from ..datasource.worldbank import cleanedWorldBankData
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm
+from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 import pandas as pd
 from pycountry import countries
@@ -34,8 +34,13 @@ def compute_biodiv():
     # implement a computation function as an argument which can be adapted to different contexts
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
-    # sspi_clean_api_data.insert_many(final_data_list)
-    return parse_json(intermediate_obs_dict)
+    zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
+                           ScoreFunction= lambda MARINE, TERRST, FRSHWT: 0.33 * MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
+                           ScoreBy= "Score")
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    final = filter_incomplete_data(clean_document_list)
+    sspi_clean_api_data.insert_many(final)
+    return parse_json(final)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
@@ -45,8 +50,46 @@ def compute_rdlst():
     raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
-    sspi_clean_api_data.insert_many(final_list)
-    return parse_json(final_list)
+    meta_data_added = score_single_indicator(final_list, "REDLST")
+    clean_document_list = filter_incomplete_data(meta_data_added)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
+
+@compute_bp.route("/WATMAN", methods=['GET'])
+@login_required
+def compute_watman():
+    """
+    metadata_map = {
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
+    }
+    """
+    if not sspi_raw_api_data.raw_data_available("WATMAN"):
+        return redirect(url_for("collect_bp.WATMAN"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
+    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
+    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
+    final_list = flatten_nested_dictionary_watman(intermediate_list)
+    zipped_document_list = zip_intermediates(final_list, "WATMAN",
+                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
+                           ScoreBy= "Score")
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
+
+@compute_bp.route("/STKHLM", methods=['GET'])
+@login_required
+def compute_skthlm():
+    if not sspi_raw_api_data.raw_data_available("STKHLM"):
+        return redirect(url_for("api_bp.collect_bp.STKHLM"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
+    full_stk_list = [obs for obs in raw_data if obs["Raw"]["series"] == "SG_HAZ_CMRSTHOLM"]
+    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(full_stk_list)
+    flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
+    scored_list = score_single_indicator(flattened_lst, "STKHLM")
+    clean_document_list = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/COALPW")
 @login_required
@@ -141,27 +184,6 @@ def compute_senior():
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
-@compute_bp.route("/WATMAN", methods=['GET'])
-@login_required
-def compute_watman():
-    """
-    metadata_map = {
-        "ER_H2O_WUEYST": "CWUEFF",
-        "ER_H2O_STRESS": "WTSTRS"
-    }
-    """
-    if not sspi_raw_api_data.raw_data_available("WATMAN"):
-        return redirect(url_for("collect_bp.WATMAN"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    final_list = flatten_nested_dictionary_watman(intermediate_list)
-    zipped_document_list = zip_intermediates(final_list, "WATMAN",
-                           ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
-                           ScoreBy= "Values")
-    clean_document_list = filter_incomplete_data(zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
@@ -179,14 +201,34 @@ def compute_intrnt():
     if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
     # worldbank #
-    wbQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.Source":"WORLDBANK"}
-    worldbank_raw = parse_json(sspi_raw_api_data.find(wbQuery))
-    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
-    wb_df = pd.DataFrame(worldbank_clean_list)
+    wb_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "AVINTR")
+    wb_clean = cleaned_wb_current(wb_raw, "INTRNT", unit = "Percent")
     # sdg #
-    sdgQuery = {"collection-info.IndicatorCode":"GTRANS", "collection-info.IntermediateCodeCode":"QLMBPS"}
-    sdg_raw = parse_json(sspi_raw_api_data.find(sdgQuery))
-    intermediate_sdg = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
-    sdg_cleaned_list = flatten_nested_dictionary_intrnt(intermediate_sdg)
-    sdg_df = pd.DataFrame(sdg_cleaned_list)
+    sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
+    sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
+    sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
+    combined_list = wb_clean + sdg_clean
+    cleaned_list = zip_intermediates(combined_list, "INTRNT",
+                                     ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
+                                     ScoreBy= "Score")
+    filtered_list = filter_incomplete_data(cleaned_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    return parse_json(filtered_list)
+
+@compute_bp.route("/FDEPTH", methods=['GET'])
+# @login_required
+def compute_fdepth():
+    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
+        return redirect(url_for("collect_bp.FDEPTH"))
+    credit_raw = sspi_raw_api_data.fetch_raw_data("FDEPTH", IntermediateCode = "CREDIT")
+    credit_clean = cleaned_wb_current(credit_raw, "FDEPTH", unit = "Percent")
+    deposit_raw = sspi_raw_api_data.fetch_raw_data("FDEPTH", IntermediateCode = "DPOSIT")
+    deposit_clean = cleaned_wb_current(deposit_raw, "FDEPTH", unit = "Percent")
+    combined_list = credit_clean + deposit_clean
+    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
+                                     ScoreFunction= lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
+                                     ScoreBy= "Score")
+    filtered_list = filter_incomplete_data(cleaned_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    return parse_json(filtered_list)
 
