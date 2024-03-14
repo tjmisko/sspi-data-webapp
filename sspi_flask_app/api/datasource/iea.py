@@ -49,7 +49,8 @@ def cleanIEAData_altnrg(RawData, IndName):
             "IndicatorCode": IndName,
             "Year": entry["Raw"]["year"],
             "Value": entry["Raw"]["value"],
-            "Unit": entry['Raw']['units']
+            "Unit": entry['Raw']['units'],
+            "IntermediateCode": entry['Raw']['product']
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
