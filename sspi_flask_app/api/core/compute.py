@@ -16,6 +16,13 @@ compute_bp = Blueprint("compute_bp", __name__,
                        static_folder="static", 
                        url_prefix="/compute")
 
+################################################
+# Compute Routes for Pillar: SUSTAINABILITY #
+################################################
+
+###########################
+### Category: ECOSYSTEM ###
+###########################
 @compute_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def compute_biodiv():
@@ -55,6 +62,10 @@ def compute_rdlst():
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
+######################
+### Category: LAND ###
+#######################
+
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def compute_watman():
@@ -91,6 +102,10 @@ def compute_skthlm():
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
+########################
+### Category: ENERGY ###
+########################
+
 @compute_bp.route("/COALPW")
 @login_required
 def compute_coalpw():
@@ -117,6 +132,10 @@ def compute_altnrg():
     # for row in raw_data:
         #lst.append(row["observation"])
     #return parse_json(lst)
+
+##################################
+### Category: GREENHOUSE GASES ###
+##################################
 
 @compute_bp.route("/GTRANS", methods = ['GET'])
 @login_required
@@ -145,7 +164,11 @@ def compute_gtrans():
     document_list = json.loads(str(df.to_json('records')))
     count = sspi_clean_api_data.insert_many(document_list)
     return f"Inserted {count} documents into SSPI Clean Database from OECD"
-    
+
+###############################################
+# Compute Routes for Pillar: MARKET STRUCTURE #
+###############################################
+
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
