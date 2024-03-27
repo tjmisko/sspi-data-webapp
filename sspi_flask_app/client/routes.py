@@ -32,9 +32,9 @@ def data():
 def country_data(CountryCode):
     return render_template('country-data-template.html', CountryCode=CountryCode)
 
-@client_bp.route('/data/<IndicatorCode>')
+@client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
-    return render_template('indicator-data-template.html', IndicatorCode=IndicatorCode)
+    return render_template('indicator-data.html', IndicatorCode=IndicatorCode)
 
 @client_bp.route('/indicators')
 def indicators():

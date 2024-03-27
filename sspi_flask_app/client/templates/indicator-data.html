@@ -1,5 +1,13 @@
 {% extends 'layout.html' %}
+{% block javascript %}
+
+{% endblock javascript %}
 
 {% block content %}
-<p> hello world </p>
+<section class="static-data">
+    <canvas id="static-chart"></canvas>
+</section>
+<section class="dynamic-data">
+    <canvas id="dynamic-chart"></canvas>
+</section>
 {% endblock content %}
