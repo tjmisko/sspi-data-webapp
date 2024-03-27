@@ -111,3 +111,11 @@ def check_for_local_data():
 def api_internal_buttons():
     implementation_data = api_coverage()
     return render_template("dashboard-controls.html", implementation_data=implementation_data)
+
+@dashboard_bp.route("/static/<IndicatorCode>")
+def get_static_data(IndicatorCode):
+    """
+    Get the static data for the given indicator code
+    """
+    static_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
+    return parse_json(static_data)

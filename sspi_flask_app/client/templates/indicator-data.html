@@ -1,11 +1,54 @@
 {% extends 'layout.html' %}
-{% block javascript %}
 
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock javascript %}
 
 {% block content %}
+<section class="hero-box">
+    <h1> {{ IndicatorCode | upper }} </h1>
+    <select class="indicator-dropdown">
+        {% include 'indicator-options.html' %}
+    </select>
+    <script>
+        const defaultOption = document.querySelector('select.indicator-dropdown option[value="{{IndicatorCode | upper}}"]')
+        defaultOption.selected = true;
+        document.querySelector('select.indicator-dropdown').addEventListener('change', function() {
+            console.log(this.value)
+            window.location.href = '/data/indicator/' + this.value;
+        });
+    </script>
+</section>
 <section class="static-data">
     <canvas id="static-chart"></canvas>
+    <script defer>
+        const ChartData = fetch('/api/v1/static/{{IndicatorCode}}')
+        const ChartDataJson = ChartData.then(response => response.json())
+        const StaticCanvas = document.getElementById('static-chart')
+        const StaticChart = new Chart(StaticCanvas, {
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            })  
+        console.log(StaticCanvas)
+        console.log(StaticChart)
+       ChartDataJson.then(indicator_data => {
+            console.log(indicator_data)
+            StaticChart.data = {
+                datasets: [{
+                    label: 'Static Data',
+                    data: [{x: 1, y: 2},{x: 2, y: 4}],
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            }
+        }) 
+    </script>
 </section>
 <section class="dynamic-data">
     <canvas id="dynamic-chart"></canvas>

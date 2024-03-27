@@ -1,5 +1,4 @@
-from flask import Blueprint, render_template, request
-from flask_login import login_required
+from flask import Blueprint, render_template
 from wtforms import Form, StringField, SelectField, validators
 from ..api.core.download import ClientDownloadForm
 
@@ -8,7 +7,7 @@ client_bp = Blueprint(
     'client_bp', __name__,
     template_folder='templates',
     static_folder='static',
-    static_url_path='/home/static'
+    static_url_path='/client/static'
 )
 
 @client_bp.route('/')
@@ -28,9 +27,9 @@ def data():
     download_form = ClientDownloadForm()
     return render_template('data.html', download_form=download_form)
 
-@client_bp.route('/data/<CountryCode>')
+@client_bp.route('/data/country/<CountryCode>')
 def country_data(CountryCode):
-    return render_template('country-data-template.html', CountryCode=CountryCode)
+    return render_template('country-template.html', CountryCode=CountryCode)
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
