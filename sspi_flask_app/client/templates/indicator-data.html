@@ -1,7 +1,12 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+<title> {{ IndicatorCode | upper }} Indicator Data </title>
+{% endblock title %}
+
 {% block javascript %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/indicatorData.js') }} " defer></script>
 {% endblock javascript %}
 
 {% block content %}
@@ -19,36 +24,12 @@
         });
     </script>
 </section>
+<div>
+  <canvas id="myChart"></canvas>
+</div>
+
 <section class="static-data">
     <canvas id="static-chart"></canvas>
-    <script defer>
-        const ChartData = fetch('/api/v1/static/{{IndicatorCode}}')
-        const ChartDataJson = ChartData.then(response => response.json())
-        const StaticCanvas = document.getElementById('static-chart')
-        const StaticChart = new Chart(StaticCanvas, {
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            })  
-        console.log(StaticCanvas)
-        console.log(StaticChart)
-       ChartDataJson.then(indicator_data => {
-            console.log(indicator_data)
-            StaticChart.data = {
-                datasets: [{
-                    label: 'Static Data',
-                    data: [{x: 1, y: 2},{x: 2, y: 4}],
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            }
-        }) 
-    </script>
 </section>
 <section class="dynamic-data">
     <canvas id="dynamic-chart"></canvas>
