@@ -117,5 +117,19 @@ def get_static_data(IndicatorCode):
     """
     Get the static data for the given indicator code
     """
-    static_data = sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
-    return parse_json(static_data)
+    static_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
+    labels = [document["CountryCode"] for document in static_data]
+    value_data = [{"x": document["Rank"], "y": document["Value"]} for document in static_data]
+    score_data = [{"x": document["Rank"], "y": document["Score"]} for document in static_data]
+    chart_data = { 
+        "labels": labels, 
+        "datasets": [{ 
+            "label": "Value", 
+            "data": value_data 
+        }, 
+        { 
+             "label": "Score", 
+             "data": score_data 
+        }] 
+    }
+    return jsonify(chart_data)

@@ -1,19 +1,18 @@
 $(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
 $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
-const StaticChartData=fetch('/api/v1/static/{{IndicatorCode}}')
-const StaticChartDataJson=StaticChartData.then(response=>response.json())
-const StaticCanvas=document.getElementById('static-chart')
+async function getStaticData(IndicatorCode){const response=fetch(`/api/v1/static/${IndicatorCode}`).then(response=>response.json()).then(data=>{console.log(data)
+return response}).catch(error=>{console.log(error)})}
+async function getDynamicData(IndicatorCode){const response=fetch(`/api/v1/dynamic/${IndicatorCode}`).then(response=>response.json()).then(data=>{console.log(data)
+return response}).catch(error=>{console.log(error)})}
+function initCharts(){const StaticCanvas=document.getElementById('static-chart')
 const StaticChart=new Chart(StaticCanvas,{options:{type:'bar',scales:{y:{beginAtZero:true}}}})
-StaticChartDataJson.then(indicator_data=>{console.log(indicator_data)
-StaticChart.data={datasets:[{label:'Static Data',data:[{x:1,y:2},{x:2,y:4}],backgroundColor:'rgba(255, 99, 132, 0.2)',borderColor:'rgba(255, 99, 132, 1)',borderWidth:1}]}}).catch(error=>{console.log(error)})
-const DynamicChartData=fetch('/api/v1/dynamic/{{IndicatorCode}}')
-const DynamicChartDataJson=DynamicChartData.then(response=>response.json())
 const DynamicCanvas=document.getElementById('dynamic-chart')
 const DynamicChart=new Chart(DynamicCanvas,{options:{type:'bar',scales:{y:{beginAtZero:true}}}})
-console.log(DynamicCanvas)
-console.log(DynamicChart)
-DynamicChartDataJson.then(indicator_data=>{console.log(indicator_data)
-DynamicChart.data={datasets:[{label:'Static Data',data:[{x:1,y:2},{x:2,y:4}],backgroundColor:'rgba(255, 99, 132, 0.2)',borderColor:'rgba(255, 99, 132, 1)',borderWidth:1}]}}).catch(error=>{console.log(error)})
+return[StaticChart,DynamicChart]}
+[StaticChart,DynamicChart]=initCharts()
+function doChartUpdate(ChartData,ChartObject){ChartObject.data=JSONData
+ChartObject.update()}
+function makeDataObject(JsonData){return{labels:JsonData.labels,datasets:[{label:JsonData.label,data:JsonData.data,borderWidth:1}]}}
 const ctx=document.getElementById('myChart');new Chart(ctx,{type:'bar',data:{labels:['Red','Blue','Yellow','Green','Purple','Orange'],datasets:[{label:'# of Votes',data:[12,19,3,5,2,3],borderWidth:1}]},options:{scales:{y:{beginAtZero:true}}}});function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})
