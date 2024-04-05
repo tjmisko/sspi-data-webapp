@@ -131,6 +131,21 @@ def flatten_nested_dictionary_airpol(intermediate_obs_dict):
             final_data_lst.append(new_observation)
     return final_data_lst
 
+def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            new_observation = {
+                "CountryCode": country,
+                "IntermediateCode": "NRGINT",
+                "Year": int(year),
+                "Value": string_to_float(value),
+                "Unit": "MJ_PER_GDP_CON_PPP_USD"
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+
 def find_intermediate_watman(inter):
     if inter == "ER_H2O_WUEYST":
         return "CWUEFF"
