@@ -105,6 +105,10 @@ def compute_skthlm():
 ########################
 ### Category: ENERGY ###
 ########################
+nrgint_compute
+fixing_energy
+airpol_compute
+sdg-main-merged
 
 @compute_bp.route("/COALPW")
 @login_required
