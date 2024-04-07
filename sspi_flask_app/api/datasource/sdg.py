@@ -128,18 +128,28 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 final_data_list.append(observation)
     return final_data_list
 
-def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
+def flatten_nested_dictionary_airpol(intermediate_obs_dict):
     final_data_lst = []
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
             new_observation = {
                 "CountryCode": country,
-                "IndicatorCode": "STKHLM",
-                "Unit": "Percent",
-                "Description": "Parties meeting their commitments and obligations in transmitting information as required by Stockholm Convention on hazardous waste, and other chemicals (%)",
-                "Year": year,
+                "IntermediateCode": "AIRPOL",
+                "Year": int(year),
                 "Value": string_to_float(value),
+                "Unit": "mgr/m^3"
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+def find_intermediate_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "CWUEFF"
+    if inter == "ER_H2O_STRESS":
+        return "WTSTRS"
+def find_unit_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "United States dollars per cubic meter"
+    if inter == "ER_H2O_STRESS":
+        return "Freshwater withdrawal as a proportion of available freshwater resources"
