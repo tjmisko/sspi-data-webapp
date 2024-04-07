@@ -46,7 +46,7 @@ def compute_biodiv():
                            ScoreBy= "Score")
     clean_document_list = filter_incomplete_data(zipped_document_list)[0]
     final = filter_incomplete_data(clean_document_list)
-    sspi_clean_api_data.insert_many(final)
+    # sspi_clean_api_data.insert_many(final)
     return parse_json(final)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
@@ -254,4 +254,3 @@ def compute_fdepth():
     filtered_list = filter_incomplete_data(cleaned_list)[0]
     sspi_clean_api_data.insert_many(filtered_list)
     return parse_json(filtered_list)
-
