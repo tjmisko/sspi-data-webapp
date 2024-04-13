@@ -1,18 +1,20 @@
 $(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
 $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
-async function getStaticData(IndicatorCode){const response=fetch(`/api/v1/static/${IndicatorCode}`).then(response=>response.json()).then(data=>{console.log(data)
-return response}).catch(error=>{console.log(error)})}
-async function getDynamicData(IndicatorCode){const response=fetch(`/api/v1/dynamic/${IndicatorCode}`).then(response=>response.json()).then(data=>{console.log(data)
-return response}).catch(error=>{console.log(error)})}
+async function getStaticData(IndicatorCode){const response=await fetch(`/api/v1/static/${IndicatorCode}`)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/${IndicatorCode}`)
+try{return response.json()}catch(error){console.error('Error:',error)}}
 function initCharts(){const StaticCanvas=document.getElementById('static-chart')
-const StaticChart=new Chart(StaticCanvas,{options:{type:'bar',scales:{y:{beginAtZero:true}}}})
+const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{scales:{y:{beginAtZero:true}}}})
 const DynamicCanvas=document.getElementById('dynamic-chart')
-const DynamicChart=new Chart(DynamicCanvas,{options:{type:'bar',scales:{y:{beginAtZero:true}}}})
+const DynamicChart=new Chart(DynamicCanvas,{type:'bar',options:{scales:{y:{beginAtZero:true}}}})
 return[StaticChart,DynamicChart]}
 [StaticChart,DynamicChart]=initCharts()
-function doChartUpdate(ChartData,ChartObject){ChartObject.data=JSONData
-ChartObject.update()}
-function makeDataObject(JsonData){return{labels:JsonData.labels,datasets:[{label:JsonData.label,data:JsonData.data,borderWidth:1}]}}
+function doChartUpdate(ChartData,ChartObject){console.log(ChartObject.data)
+ChartObject.data=ChartData
+console.log(ChartObject.data)
+ChartObject.update()
+console.log("Chart Updated")}
 const ctx=document.getElementById('myChart');new Chart(ctx,{type:'bar',data:{labels:['Red','Blue','Yellow','Green','Purple','Orange'],datasets:[{label:'# of Votes',data:[12,19,3,5,2,3],borderWidth:1}]},options:{scales:{y:{beginAtZero:true}}}});function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})
