@@ -24,14 +24,14 @@
         });
     </script>
 </section>
-<div>
-  <canvas id="myChart"></canvas>
-</div>
 
-<section class="static-data">
+<section class="chart-section" id="static-data-section">
     <canvas id="static-chart"></canvas>
+    <script>
+        window.onload = () => getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
+    </script>
 </section>
-<section class="dynamic-data">
-    <canvas id="dynamic-chart"></canvas>
+<section id="dynamic-data-section">
+    <canvas class="chart-section" id="dynamic-chart"></canvas>
 </section>
 {% endblock content %}

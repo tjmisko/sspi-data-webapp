@@ -46,33 +46,31 @@ function initCharts() {
 [StaticChart, DynamicChart] = initCharts()
 
 function doChartUpdate(ChartData, ChartObject) {
-    console.log(ChartObject.data)
     ChartObject.data = ChartData
-    console.log(ChartObject.data)
     ChartObject.update()
-    console.log("Chart Updated")
 }
 
-const ctx = document.getElementById('myChart');
+window.onresize = function() {
+    StaticChart.resize()
+    DynamicChart.resize()
+}
 
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-        datasets: [{
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        scales: {
-            y: {
-                beginAtZero: true
-            }
+function handleSortOrder(ChartObject, option) {
+    const original_data = ChartObject.data
+    if (option === 'Alphabetical') {
+        original_data.datasets.forEach((dataset) => {
+            dataset.data.sort((a, b) => {
+                if (a > b) return 1
+                if (a < b) return -1
+                return 0
+            })
         }
+
+        console.log(original_data)
+        original_data.labels.sort()
+        doChartUpdate(original_data, ChartObject)
+        // Sort Alphabetically
+    } else {
+        console.log(original_data)
     }
-});
-
-//getStaticData("BIODIV").then(data => doChartUpdate(data, StaticChart));
-
+}
