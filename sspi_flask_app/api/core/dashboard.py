@@ -123,11 +123,11 @@ def get_static_data(IndicatorCode):
     chart_data = { 
         "labels": labels, 
         "datasets": [{ 
-            "label": "Value", 
+            "label": "Score", 
             "data": data_series,
             "parsing": {
                 "xAxisKey": "Rank",
-                "yAxisKey": "Value"
+                "yAxisKey": "Score"
             }
         }] 
     }

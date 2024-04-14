@@ -61,10 +61,12 @@ function handleScaleAxis(ChartObject, ScaleByValue) {
         // Sort inner data, then use that to sort labels...sort labels
         console.log('Scale by Value')
         ChartObject.data.datasets[0].parsing.yAxisKey = 'Value'
+        ChartObject.data.datasets[0].label = 'Value'
         // Sort Alphabetically
     } else {
         console.log('Scale by Score')
         ChartObject.data.datasets[0].parsing.yAxisKey = 'Score'
+        ChartObject.data.datasets[0].label = 'Score'
     }
     ChartObject.update()
 }
