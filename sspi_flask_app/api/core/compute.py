@@ -3,13 +3,16 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data
+from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman
 from ..datasource.worldbank import cleanedWorldBankData
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
+from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
 import pandas as pd
 from pycountry import countries
+import csv
+import numpy as np
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates", 
@@ -54,10 +57,46 @@ def compute_coalpw():
     if not sspi_raw_api_data.raw_data_available("COALPW"):
         return redirect(url_for("api_bp.collect_bp.COALPW"))
     raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
-    observations = [entry["observation"] for entry in raw_data]
-    observations = [entry["observation"] for entry in raw_data]
-    df = pd.DataFrame(observations)
-    return parse_json(df.head().to_json())
+
+    product_codes = {
+        "COAL":"Coal",
+        "NATGAS": "Natural gas",
+        "NUCLEAR": "Nuclear",
+        "HYDRO": "Hydro",
+        "GEOTHERM": "Wind, solar, etc.",
+        "COMRENEW": "Biofuels and waste",
+        "MTOTOIL": "Oil"
+    }
+
+    metadata_code_map = {
+        "COAL": "TLCOAL",
+        "NATGAS": "NATGAS",
+        "NUCLEAR": "NCLEAR",
+        "HYDRO": "HYDROP",
+        "GEOTHERM": "GEOPWR",
+        "COMRENEW": "BIOWAS",
+        "MTOTOIL": "FSLOIL"
+    }
+
+    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "COALPW"))
+    intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(lambda x: metadata_code_map[x])
+    intermediate_data.astype({"Year": "int", "Value": "float"})
+    # adding sum of available intermediates as an intermediate, in order to complete data
+    sums = intermediate_data.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
+    sums['IntermediateCode'], sums['Unit'], sums['IndicatorCode'] = 'TTLSUM', 'TJ', 'COALPW'
+
+    intermediate_list = pd.concat([intermediate_data, sums])
+    zipped_document_list = zip_intermediates(
+        json.loads(str(intermediate_list.to_json(orient="records")), parse_int=int, parse_float=float),
+        "COALPW",
+        ScoreFunction=lambda TLCOAL, TTLSUM: (TLCOAL)/(TTLSUM),
+        ScoreBy="Values"
+    )
+
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list[0])
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
@@ -65,15 +104,57 @@ def compute_altnrg():
     if not sspi_raw_api_data.raw_data_available("ALTNRG"):
         return redirect(url_for("collect_bp.ALTNRG"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
-    observations = [entry["observation"] for entry in raw_data]
-    df = pd.DataFrame(observations)
-    print(df.head())
-    df = df.pivot(columns="product", values="value", index=["year", "country", "short", "flow", "units"])
-    print(df)
-    return parse_json(df.head().to_json())
+
+    # most of these intermediates used to compute sum
+    product_codes = {
+        "COAL":"Coal",
+        "NATGAS": "Natural gas",
+        "NUCLEAR": "Nuclear",
+        "HYDRO": "Hydro",
+        "GEOTHERM": "Wind, solar, etc.",
+        "COMRENEW": "Biofuels and waste",
+        "MTOTOIL": "Oil"
+    }
+
+    metadata_code_map = {
+        "COAL": "TLCOAL",
+        "NATGAS": "NATGAS",
+        "NUCLEAR": "NCLEAR",
+        "HYDRO": "HYDROP",
+        "GEOTHERM": "GEOPWR",
+        "COMRENEW": "BIOWAS",
+        "MTOTOIL": "FSLOIL"
+    }
+
+    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "ALTNRG"))
+    intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(lambda x: metadata_code_map[x])
+    intermediate_data.astype({"Year": "int", "Value": "float"})
+    # adding sum of available intermediates as an intermediate, in order to complete data
+    sums = intermediate_data.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
+    sums['IntermediateCode'], sums['Unit'], sums['IndicatorCode'] = 'TTLSUM', 'TJ', 'ALTNRG'
+
+    # running the samce operations for alternative energy sources
+    inter_sums = intermediate_data[intermediate_data["IntermediateCode"].isin(["HYDROP", "NCLEAR", "GEOPWR", "BIOWAS"])]
+    alt_sums = inter_sums.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
+    alt_sums['IntermediateCode'], alt_sums['Unit'], alt_sums['IndicatorCode'] = 'ALTSUM', 'TJ', 'ALTNRG'
+
+    intermediate_list = pd.concat([pd.concat([intermediate_data, sums]), alt_sums])
+    zipped_document_list = zip_intermediates(
+        json.loads(str(intermediate_list.to_json(orient="records")), parse_int=int, parse_float=float),
+        "ALTNRG",
+        ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS)/(TTLSUM),
+        ScoreBy="Values"
+    )
+
+    clean_document_list = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list[0])
+    
+
+    return parse_json(clean_document_list)
     # for row in raw_data:
         #lst.append(row["observation"])
-    #return parse_json(lst)
+    
 
 @compute_bp.route("/GTRANS", methods = ['GET'])
 @login_required
@@ -82,27 +163,51 @@ def compute_gtrans():
         return redirect(url_for("collect_bp.GTRANS"))
     
     #######    WORLDBANK compute    #########
-    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="WorldBank")
+    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="FUELPR")
     worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
 
     #######  IEA compute ######
-    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ", Source="IEA")
-    iea_clean_list = [entry["observation"] for entry in iea_raw_data]
-   
-    ### combining in pandas ####
+    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
+    series = extractAllSeries(iea_raw_data[0]["Raw"])
+    keys = iea_raw_data[0].keys()
+    raw = iea_raw_data[0]["Raw"]
+    metadata = iea_raw_data[0]["Metadata"]
+    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    raw_soup = bs.BeautifulSoup(raw, "lxml")
+    metadata_codes = {
+        "ENER_TRANS": "1A3 - Transport"
+    }
+    metadata_code_map = {
+        "ENER_TRANS": "TCO2EQ"
+    }
+    document_list = []
+
+    for code in metadata_codes.keys():
+        document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
+    long_iea_data = pd.DataFrame(document_list)
+    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str)
+    # ### combining in pandas for UN population data to conpute correct G####
     wb_df = pd.DataFrame(worldbank_clean_list)
     wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
-    iea_df = pd.DataFrame(iea_clean_list)
-    iea_df = iea_df[iea_df['seriesLabel'] == "Transport"][['year', 'value', 'country']].rename(columns={'year':'YEAR', 'value':'RAW', 'country':'CountryCode'})
-    # iea_df = iea_df[iea_df["RAW"].notna()].astype(str)
+
+    wb_df = wb_df.merge(pop_data, how="left", left_on = ["YEAR","CountryName"], right_on = ["year","country"])
+    test = wb_df[wb_df["pop"] == "na"]
     
-    merged = wb_df.drop(columns=["Source", "CountryName"]).merge(iea_df, how="outer", on=["CountryCode", "YEAR"]) 
-    merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
-    df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
-    document_list = json.loads(str(df.to_json('records')))
-    count = sspi_clean_api_data.insert_many(document_list)
-    return f"Inserted {count} documents into SSPI Clean Database from OECD"
+    iea_df = long_iea_data[['Year', 'CountryCode']]
+    iea_df = iea_df[iea_df["Value"].notna()].astype(str)
     
+    merged = wb_df.merge(iea_df, how="outer", left_on=["CountryCode", "YEAR"], right_on=["CountryCode","Year"]) 
+    # merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
+    # df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
+    # document_list = json.loads(str(df.to_json('records')))
+    # count = sspi_clean_api_data.insert_many(document_list)
+    # return f"Inserted {count} documents into SSPI Clean Database from OECD"
+    #print(series)
+    #print(len(document_list))
+    #return jsonify(document_list)
+    final_data = zip_intermediates(long_iea_data)
+    return jsonify(document_list)
+
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
