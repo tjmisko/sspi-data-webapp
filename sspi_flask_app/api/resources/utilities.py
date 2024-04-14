@@ -182,7 +182,6 @@ def filter_incomplete_data(indicator_document_list):
             partial_observation_list.append(document)
     return filtered_list, partial_observation_list
 
-
 def score_single_indicator(document_list, IndicatorCode):
    """
     Utility function for scoring an indicator which does not contain intermediates; does not require score function
