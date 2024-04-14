@@ -55,15 +55,37 @@ window.onresize = function() {
     DynamicChart.resize()
 }
 
-function handleSortOrder(ChartObject, option) {
+function handleScaleAxis(ChartObject, ScaleByValue) {
     const original_data = ChartObject.data
-    if (option === 'Alphabetical') {
+    if (ScaleByValue) {
         // Sort inner data, then use that to sort labels...sort labels
-        console.log(original_data)
-        original_data.labels.sort()
-        doChartUpdate(original_data, ChartObject)
+        console.log('Scale by Value')
+        ChartObject.data.datasets[0].parsing.yAxisKey = 'Value'
         // Sort Alphabetically
     } else {
-        console.log(original_data)
+        console.log('Scale by Score')
+        ChartObject.data.datasets[0].parsing.yAxisKey = 'Score'
+    }
+    ChartObject.update()
+}
+
+function handleSortOrder(ChartObject, SortByCountry) {
+    const original_data = ChartObject.data
+    if (SortByCountry) {
+        // Sort inner data, then use that to sort labels...sort labels
+        console.log('Sort by Country')
+        // Sort Alphabetically
+    } else {
+        console.log('Sort by Value')
     }
 }
+
+const sortOptions = document.getElementById('static-sort-order')
+sortOptions.addEventListener('change', () => {
+    handleSortOrder(StaticChart, sortOptions.checked)
+})
+
+const scaleOptions = document.getElementById('static-axis-scale')
+scaleOptions.addEventListener('change', () => {
+    handleScaleAxis(StaticChart, scaleOptions.checked)
+})

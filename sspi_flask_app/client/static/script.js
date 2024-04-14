@@ -14,11 +14,19 @@ function doChartUpdate(ChartData,ChartObject){ChartObject.data=ChartData
 ChartObject.update()}
 window.onresize=function(){StaticChart.resize()
 DynamicChart.resize()}
-function handleSortOrder(ChartObject,option){const original_data=ChartObject.data
-if(option==='Alphabetical'){console.log(original_data)
-original_data.labels.sort()
-doChartUpdate(original_data,ChartObject)
-}else{console.log(original_data)}}
+function handleScaleAxis(ChartObject,ScaleByValue){const original_data=ChartObject.data
+if(ScaleByValue){console.log('Scale by Value')
+ChartObject.data.datasets[0].parsing.yAxisKey='Value'
+}else{console.log('Scale by Score')
+ChartObject.data.datasets[0].parsing.yAxisKey='Score'}
+ChartObject.update()}
+function handleSortOrder(ChartObject,SortByCountry){const original_data=ChartObject.data
+if(SortByCountry){console.log('Sort by Country')
+}else{console.log('Sort by Value')}}
+const sortOptions=document.getElementById('static-sort-order')
+sortOptions.addEventListener('change',()=>{handleSortOrder(StaticChart,sortOptions.checked)})
+const scaleOptions=document.getElementById('static-axis-scale')
+scaleOptions.addEventListener('change',()=>{handleScaleAxis(StaticChart,scaleOptions.checked)})
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})
