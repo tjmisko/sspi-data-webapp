@@ -70,24 +70,18 @@ def get_dynamic_data(IndicatorCode):
     """
     Use the format argument to control whether the document is formatted for the website table
     """
-    CountryGroup = request.args.get("CountryGroup", default = "SSPI49", type = str)
-    query_results = sspi_clean_api_data.find(
-        {"IndicatorCode": IndicatorCode, "CountryGroup": CountryGroup},
-        options={"_id": 0, "Intermediates": 0, "IndicatorCode": 0}
-    )
+    query_results = sspi_clean_api_data.find( {"IndicatorCode": IndicatorCode})
     print(query_results)
-    long_data = pd.DataFrame(query_results).drop_duplicates()
-    long_data = long_data.astype({"Year": int, "Value": float})
-    long_data = long_data.round(3)
-    wide_dataframe = pd.pivot(long_data, index="CountryCode", columns="Year", values="Value")
-    nested_data = json.loads(str(wide_dataframe.to_json(orient="index")))
-    return_data = []
-    for country_code in nested_data.keys():
-        country_data = nested_data[country_code]
-        country_data["CountryCode"] = country_code
-        country_data["CountryName"] = countries.lookup(country_code).name
-        return_data.append(country_data)
-    return parse_json(return_data)
+    dataset_dictionary = {}
+    for document in query_results:
+        if not document["CountryCode"] in dataset_dictionary.keys():
+            dataset_dictionary[document["CountryCode"]] = []
+        dataset_dictionary[document["CountryCode"]].append(document)
+    return_data = {}
+    for country_code, data in dataset_dictionary.items():
+        dataset_dictionary[country_code] = sorted(data, key=lambda x: x["Year"])
+        return_data[country_code] = dataset_dictionary[country_code]
+    return jsonify(return_data)
 
 @dashboard_bp.route("/local")
 @login_required
@@ -118,7 +112,7 @@ def get_static_data(IndicatorCode):
     Get the static data for the given indicator code
     """
     static_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
-    data_series = [{"CountryCode": document["CountryCode"], "Rank": document["Rank"], "Score": document["Score"], "Value": document["Value"]} for document in static_data]
+    data_series = [{"Year": document["Year"], "CountryCode": document["CountryCode"], "Rank": document["Rank"], "Score": document["Score"], "Value": document["Value"]} for document in static_data]
     labels = [document["CountryCode"] for document in static_data]
     chart_data = { 
         "labels": labels, 
