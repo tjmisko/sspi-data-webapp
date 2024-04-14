@@ -11,10 +11,10 @@
 
 {% block content %}
 <section class="hero-box">
-    <h1> {{ IndicatorCode | upper }} </h1>
     <select class="indicator-dropdown">
         {% include 'indicator-options.html' %}
     </select>
+    <h1> {{ IndicatorCode | upper }} </h1>
     <script>
         const defaultOption = document.querySelector('select.indicator-dropdown option[value="{{IndicatorCode | upper}}"]')
         defaultOption.selected = true;
@@ -26,12 +26,28 @@
 </section>
 
 <section class="chart-section" id="static-data-section">
+    <h2> Static 2018 Data </h2>
     <canvas id="static-chart"></canvas>
+    <fieldset>
+        <legend> Chart Options </legend>
+        Y-Axis Scale:
+        <label class="switch">
+            <input type="checkbox" id="static-axis-scale" name="static axis scale" value="Display Score">
+            <span class="slider">Value/Score</span>
+        </label>
+        Sort By:
+        <label class="switch">
+            <input type="checkbox" id="static-sort-order" name="static sort order" value="Sort by Country">
+            <span class="slider">Value/Country</span>
+        </label>
+
+    </fieldset>
     <script>
         window.onload = () => getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
     </script>
 </section>
-<section id="dynamic-data-section">
-    <canvas class="chart-section" id="dynamic-chart"></canvas>
+<section class="chart-section" id="dynamic-data-section">
+    <h2> Dynamic Data </h2>
+    <canvas id="dynamic-chart"></canvas>
 </section>
 {% endblock content %}

@@ -119,7 +119,7 @@ def get_static_data(IndicatorCode):
     """
     static_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
     labels = [document["CountryCode"] for document in static_data]
-    value_data = [{"Rank": document["Rank"], "Value": document["Value"]} for document in static_data]
+    value_data = [{"CountryCode": document["CountryCode"], "Rank": document["Rank"], "Value": document["Value"]} for document in static_data]
     score_data = [{"Rank": document["Rank"], "Score": document["Score"]} for document in static_data]
     chart_data = { 
         "labels": labels, 

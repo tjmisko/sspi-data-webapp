@@ -58,14 +58,7 @@ window.onresize = function() {
 function handleSortOrder(ChartObject, option) {
     const original_data = ChartObject.data
     if (option === 'Alphabetical') {
-        original_data.datasets.forEach((dataset) => {
-            dataset.data.sort((a, b) => {
-                if (a > b) return 1
-                if (a < b) return -1
-                return 0
-            })
-        }
-
+        // Sort inner data, then use that to sort labels...sort labels
         console.log(original_data)
         original_data.labels.sort()
         doChartUpdate(original_data, ChartObject)
