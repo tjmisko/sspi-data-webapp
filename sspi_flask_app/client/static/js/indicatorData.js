@@ -31,7 +31,7 @@ function initCharts() {
     })  
     const DynamicCanvas = document.getElementById('dynamic-chart')
     const DynamicChart = new Chart(DynamicCanvas, {
-        type: 'bar',
+        type: 'line',
         options: {
             scales: {
                 y: {
@@ -97,4 +97,8 @@ sortOptions.addEventListener('change', () => {
 const scaleOptions = document.getElementById('static-axis-scale')
 scaleOptions.addEventListener('change', () => {
     handleScaleAxis(StaticChart, scaleOptions.checked)
+})
+window.addEventListener("load", (event) => {
+    getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
+    getDynamicData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, DynamicChart));
 })

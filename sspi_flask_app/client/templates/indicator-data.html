@@ -42,12 +42,15 @@
         </label>
 
     </fieldset>
-    <script>
-        window.onload = () => getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
-    </script>
 </section>
 <section class="chart-section" id="dynamic-data-section">
     <h2> Dynamic Data </h2>
     <canvas id="dynamic-chart"></canvas>
 </section>
+<script>
+    window.addEventListener("load", (event) => {
+        getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
+        getDynamicData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, DynamicChart));
+    })
+</script>
 {% endblock content %}

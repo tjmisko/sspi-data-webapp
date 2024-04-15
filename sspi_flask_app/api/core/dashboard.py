@@ -115,7 +115,6 @@ def get_dynamic_data(IndicatorCode):
     Use the format argument to control whether the document is formatted for the website table
     """
     query_results = sspi_clean_api_data.find( {"IndicatorCode": IndicatorCode})
-    print(query_results)
     dataset_dictionary = {}
     for document in query_results:
         if not document["CountryCode"] in dataset_dictionary.keys():
