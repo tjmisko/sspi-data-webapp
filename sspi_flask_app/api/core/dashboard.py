@@ -25,9 +25,10 @@ def get_database_status(database):
 @login_required
 def compare():
     details = sspi_metadata.indicator_details() 
+    print(details)
     option_details = []
     for indicator in details:
-        option_details.append({key: indicator[key] for key in ["IndicatorCodes", "Indicator"]})
+        option_details.append({key: indicator[key] for key in ["IndicatorCode", "Indicator"]})
     return render_template("compare.html", indicators=option_details)
 
 @dashboard_bp.route('/compare/<IndicatorCode>')
@@ -65,35 +66,10 @@ def api_coverage():
     #{"collect_implemented": collect_implemented, "compute_implemented": compute_implemented}
     return parse_json(coverage_data_object)
 
-@dashboard_bp.route('/dynamic/<IndicatorCode>')
-def get_dynamic_data(IndicatorCode):
-    """
-    Use the format argument to control whether the document is formatted for the website table
-    """
-    CountryGroup = request.args.get("CountryGroup", default = "SSPI49", type = str)
-    query_results = sspi_clean_api_data.find(
-        {"IndicatorCode": IndicatorCode, "CountryGroup": CountryGroup},
-        options={"_id": 0, "Intermediates": 0, "IndicatorCode": 0}
-    )
-    print(query_results)
-    long_data = pd.DataFrame(query_results).drop_duplicates()
-    long_data = long_data.astype({"Year": int, "Value": float})
-    long_data = long_data.round(3)
-    wide_dataframe = pd.pivot(long_data, index="CountryCode", columns="Year", values="Value")
-    nested_data = json.loads(str(wide_dataframe.to_json(orient="index")))
-    return_data = []
-    for country_code in nested_data.keys():
-        country_data = nested_data[country_code]
-        country_data["CountryCode"] = country_code
-        country_data["CountryName"] = countries.lookup(country_code).name
-        return_data.append(country_data)
-    return parse_json(return_data)
-
 @dashboard_bp.route("/local")
 @login_required
 def local():
     return render_template('local-upload-form.html', database_names=check_for_local_data())
-
 
 @dashboard_bp.route("/local/database/list", methods=['GET'])
 @login_required
@@ -111,3 +87,45 @@ def check_for_local_data():
 def api_internal_buttons():
     implementation_data = api_coverage()
     return render_template("dashboard-controls.html", implementation_data=implementation_data)
+
+@dashboard_bp.route("/static/<IndicatorCode>")
+def get_static_data(IndicatorCode):
+    """
+    Get the static data for the given indicator code
+    """
+    static_data = parse_json(sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
+    data_series = [{"Year": document["Year"], "CountryCode": document["CountryCode"], "Rank": document["Rank"], "Score": document["Score"], "Value": document["Value"]} for document in static_data]
+    labels = [document["CountryCode"] for document in static_data]
+    chart_data = { 
+        "labels": labels, 
+        "datasets": [{ 
+            "label": "Score", 
+            "data": data_series,
+            "parsing": {
+                "xAxisKey": "Rank",
+                "yAxisKey": "Score"
+            }
+        }] 
+    }
+    return jsonify(chart_data)
+
+@dashboard_bp.route('/dynamic/<IndicatorCode>')
+def get_dynamic_data(IndicatorCode):
+    """
+    Use the format argument to control whether the document is formatted for the website table
+    """
+    query_results = sspi_clean_api_data.find( {"IndicatorCode": IndicatorCode})
+    dataset_dictionary = {}
+    for document in query_results:
+        if not document["CountryCode"] in dataset_dictionary.keys():
+            dataset_dictionary[document["CountryCode"]] = []
+        dataset_dictionary[document["CountryCode"]].append(document)
+    return_data = {"labels": [], "datasets": []}
+    for country_code, data in dataset_dictionary.items():
+        dataset_dictionary[country_code] = sorted(data, key=lambda x: x["Year"])
+        for document in data:
+            if not document["Year"] in return_data["labels"]:
+                return_data["labels"].append(document["Year"])
+        return_data["datasets"].append({"label": country_code, "data": dataset_dictionary[country_code], "parsing": {"xAxisKey": "Year", "yAxisKey": "Value"}})
+    return_data["labels"] = sorted(return_data["labels"])
+    return jsonify(return_data)
