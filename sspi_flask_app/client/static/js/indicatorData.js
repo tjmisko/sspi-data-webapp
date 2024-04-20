@@ -22,6 +22,9 @@ function initCharts() {
     const StaticChart = new Chart(StaticCanvas, {
         type: 'bar',
         options: {
+            legend: {
+                display: false
+            },
             scales: {
                 y: {
                     beginAtZero: true
@@ -33,6 +36,11 @@ function initCharts() {
     const DynamicChart = new Chart(DynamicCanvas, {
         type: 'line',
         options: {
+            plugins: {
+                legend: {
+                    display: false
+                },
+            },
             scales: {
                 y: {
                     beginAtZero: true
