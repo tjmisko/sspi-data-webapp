@@ -119,7 +119,7 @@ def logout():
     return redirect(url_for('client_bp.home'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-# @fresh_login_required
+@fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
@@ -131,6 +131,7 @@ def register():
     return render_template('register.html', form=register_form, title="Register")
 
 @auth_bp.route("/auth/update/password", methods=["GET", "POST"])
+@fresh_login_required
 def update_password():
     update_password_form = UpdatePasswordForm()
     if update_password_form.validate_on_submit():
@@ -146,11 +147,13 @@ def update_password():
     return render_template('change_password.html', form=update_password_form, title="Change Password")
 
 @auth_bp.route('/auth/clear', methods=['GET'])
+@fresh_login_required
 def clear():
     db.drop_all()
     return redirect(url_for('auth_bp.login'))
 
 @auth_bp.route('/auth/query', methods=['GET'])
+@fresh_login_required
 def query():
     return str(db.session.query(User).all())
 
