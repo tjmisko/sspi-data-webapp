@@ -5,7 +5,6 @@ import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 import urllib3
-from urllib3.util.retry import Retry
 
 class SSPIDatabaseConnector:
     def __init__(self):
@@ -27,11 +26,11 @@ class SSPIDatabaseConnector:
     
     def login_session_local(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.session.post("http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
+        self.local_session.post("http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
 
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.session.post("https://sspi.world/remote/session/login", headers=headers, verify=False)
+        self.remote_session.post("https://sspi.world/remote/session/login", headers=headers)
 
     def get_data_local(self, request_string):
         if request_string[0] == "/":
@@ -53,9 +52,9 @@ class SSPIDatabaseConnector:
         observations_list = dataframe.to_json(orient="records")
         print(observations_list)
         headers = {'Authorization': f'Bearer {self.token}'}
-        return self.remote_session.post(f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list, verify=False)
+        return self.remote_session.post(f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list)
 
-class CustomHttpAdapter (requests.adapters.HTTPAdapter):
+class CustomHttpAdapter(requests.adapters.HTTPAdapter):
 # "Transport adapter" that allows us to use custom ssl_context.
 
     def __init__(self, ssl_context=None, **kwargs):
