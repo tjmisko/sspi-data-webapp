@@ -41,7 +41,7 @@ def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30], profile_dir="profiler")
+    # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[5], profile_dir="profiler")
     # Initialize SQLAlchemy Database
     db.init_app(app)
     # Initialize password encryption

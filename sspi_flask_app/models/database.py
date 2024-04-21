@@ -568,3 +568,7 @@ class SSPIProductionData(MongoWrapper):
         if not type(document["Endpoint"]) is str:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(f"'Endpoint' must be a string (document {document_number})")
+    
+    def find_one(self, query:dict, options:dict={}) -> str:
+        """Override to skip parsing for faster response times."""
+        return json_util.dumps(self._mongo_database.find_one(query, options))

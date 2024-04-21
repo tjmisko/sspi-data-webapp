@@ -114,5 +114,5 @@ def get_dynamic_data(IndicatorCode):
     """
     Use the format argument to control whether the document is formatted for the website table
     """
-    return_data = sspi_production_data.find_one({"Endpoint": "/data/indicator/IDCode", "IDCode": IndicatorCode})
-    return jsonify(return_data["data"])
+    return_data = sspi_production_data.find_one({"Endpoint": "/data/indicator/IDCode", "IDCode": IndicatorCode}, {"data": 1, "_id": 0})
+    return jsonify(return_data)
