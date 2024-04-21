@@ -52,6 +52,8 @@ def cleaned_wb_current(RawData, IndName, unit):
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
+        if entry["Raw"]["value"] is None:
+            continue
         clean_obs = {
             "CountryCode": iso3,
             "IndicatorCode": IndName,

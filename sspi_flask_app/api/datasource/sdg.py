@@ -61,6 +61,8 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
                                        "ER_PTD_TERR": ["TERRST", "Percent", "Percentage of important sites covered by protected areas, terrestrial"],
                                        "ER_PTD_FRHWTR": ["FRSHWT", "Percent", "Percentage of important sites covered by protected areas, freshwater"]
                                        }
+                if intermediate_obs_dict[cou][year][intermediate] == "N":
+                    continue
                 observation = {
                     "CountryCode": cou,
                     "IndicatorCode": "BIODIV",
@@ -78,6 +80,8 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "N":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "REDLST",
@@ -94,6 +98,8 @@ def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "N":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "INTRNT",
@@ -116,6 +122,8 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 inter_value = string_to_float(intermediate_obs_dict[country][year][intermediate])
                 log_scaled_value = (lambda intermediate: math.log(inter_value) if intermediate == "ER_H2O_WUEYST" 
                               and isinstance(inter_value, float) else inter_value)
+                if inter_value == "NaN":
+                    continue
                 observation = {
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",

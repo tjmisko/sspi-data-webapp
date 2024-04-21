@@ -91,7 +91,6 @@ def compute_watman():
                            ScoreBy= "Score")
     clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 @compute_bp.route("/STKHLM", methods=['GET'])
@@ -357,7 +356,7 @@ def compute_intrnt():
     filtered_list, incomplete_observations = filter_incomplete_data(cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
-    return parse_json(filtered_list)
+    return parse_json(cleaned_list)
 
 @compute_bp.route("/FDEPTH", methods=['GET'])
 # @login_required
