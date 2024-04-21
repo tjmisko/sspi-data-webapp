@@ -14,9 +14,7 @@ class SSPIDatabaseConnector:
         self.local_session = requests.session()
         self.local_session.mount('https://', CustomHttpAdapter(ctx))
         self.login_session_local()
-
-        self.remote_session = requests.session()
-        self.remote_session.mount('https://', CustomHttpAdapter(ctx))
+        self.remote_session = requests.Session()
         self.login_session_remote()
     
     def get_token(self):
@@ -30,6 +28,7 @@ class SSPIDatabaseConnector:
 
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
+        print(headers)
         self.remote_session.post("https://sspi.world/remote/session/login", headers=headers)
 
     def get_data_local(self, request_string):
@@ -52,6 +51,7 @@ class SSPIDatabaseConnector:
         observations_list = dataframe.to_json(orient="records")
         print(observations_list)
         headers = {'Authorization': f'Bearer {self.token}'}
+        print(headers)
         return self.remote_session.post(f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list)
 
 class CustomHttpAdapter(requests.adapters.HTTPAdapter):

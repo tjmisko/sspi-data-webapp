@@ -104,9 +104,14 @@ def login():
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    print("Warn:", request.headers)
+    print(request.headers)
     print(request.headers.get('Authorization'))
-    api_token = request.headers.get('Authorization')[7:]
+    api_token = request.headers.get('Authorization')
+    if not api_token:
+        response = jsonify({"message": "No API key provided"})
+        response.status_code = 401
+        return response
+    api_token = str(api_token)[7:]
     user = User.query.filter_by(apikey=api_token).first()
     print(user)
     if user is not None: 
