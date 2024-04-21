@@ -104,6 +104,8 @@ def login():
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
+    print("Warn:", request.headers)
+    print(request.headers.get('Authorization'))
     api_token = request.headers.get('Authorization')[7:]
     user = User.query.filter_by(apikey=api_token).first()
     print(user)
