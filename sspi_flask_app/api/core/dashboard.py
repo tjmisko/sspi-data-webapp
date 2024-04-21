@@ -114,18 +114,5 @@ def get_dynamic_data(IndicatorCode):
     """
     Use the format argument to control whether the document is formatted for the website table
     """
-    query_results = sspi_clean_api_data.find( {"IndicatorCode": IndicatorCode})
-    dataset_dictionary = {}
-    for document in query_results:
-        if not document["CountryCode"] in dataset_dictionary.keys():
-            dataset_dictionary[document["CountryCode"]] = []
-        dataset_dictionary[document["CountryCode"]].append(document)
-    return_data = {"labels": [], "datasets": []}
-    for country_code, data in dataset_dictionary.items():
-        dataset_dictionary[country_code] = sorted(data, key=lambda x: x["Year"])
-        for document in data:
-            if not document["Year"] in return_data["labels"]:
-                return_data["labels"].append(document["Year"])
-        return_data["datasets"].append({"label": country_code, "data": dataset_dictionary[country_code], "parsing": {"xAxisKey": "Year", "yAxisKey": "Value"}})
-    return_data["labels"] = sorted(return_data["labels"])
-    return jsonify(return_data)
+    return_data = sspi_production_data.find_one({"Endpoint": "/data/indicator/IDCode", "IDCode": IndicatorCode})
+    return jsonify(return_data["data"])

@@ -45,6 +45,8 @@ def production_data_by_indicator():
                     del intermediate["Year"]
                     del intermediate["LowerGoalpost"]
                     del intermediate["UpperGoalpost"]
+                    del intermediate["Unit"]
+            del document["Unit"]
             document["IDCode"] = document["IndicatorCode"]
             del document["IndicatorCode"]
             document["CCode"] = document["CountryCode"]
