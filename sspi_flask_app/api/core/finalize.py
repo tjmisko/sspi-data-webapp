@@ -43,11 +43,8 @@ def production_data_by_indicator():
                     del intermediate["CountryCode"]
                     del intermediate["Description"]
                     del intermediate["Year"]
-                    intermediate["LG"] = intermediate["LowerGoalpost"]
                     del intermediate["LowerGoalpost"]
-                    intermediate["UG"] = intermediate["UpperGoalpost"]
                     del intermediate["UpperGoalpost"]
-                    print(intermediate)
             document["IDCode"] = document["IndicatorCode"]
             del document["IndicatorCode"]
             document["CCode"] = document["CountryCode"]
@@ -55,6 +52,7 @@ def production_data_by_indicator():
             if not document["CCode"] in dataset_dictionary.keys():
                 dataset_dictionary[document["CCode"]] = []
             dataset_dictionary[document["CCode"]].append(document)
+            print(document)
         return_data = {"labels": [], "datasets": []}
         # Sort the data by Year within CountryCode and create the labels array
         for country_code, data in dataset_dictionary.items():
