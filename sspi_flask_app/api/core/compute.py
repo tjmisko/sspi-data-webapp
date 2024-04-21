@@ -47,7 +47,7 @@ def compute_biodiv():
     zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
                            ScoreFunction= lambda MARINE, TERRST, FRSHWT: 0.33 * MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
                            ScoreBy= "Score")
-    clean_observations, incomplete_observations = filter_incomplete_data(clean_document_list)
+    clean_observations, incomplete_observations = filter_incomplete_data(zipped_document_list)
     sspi_clean_api_data.insert_many(clean_observations)
     print(incomplete_observations)
     return parse_json(clean_observations)

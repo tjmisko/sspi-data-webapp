@@ -2,6 +2,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.profiler import ProfilerMiddleware
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
@@ -40,6 +41,7 @@ def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30], profile_dir="profiler")
     # Initialize SQLAlchemy Database
     db.init_app(app)
     # Initialize password encryption
