@@ -33,7 +33,7 @@ sspi_clean_api_data = SSPICleanAPIData(sspidb.sspi_clean_api_data)
 sspi_partial_api_data = SSPIPartialAPIData(sspidb.sspi_partial_api_data)
 sspi_imputed_data = MongoWrapper(sspidb.sspi_imputed_data)
 sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
-sspi_dynamic_data = MongoWrapper(sspidb.sspi_dynamic_data)
+sspi_production_data = MongoWrapper(sspidb.sspi_production_data)
 
 assets = Environment()
 

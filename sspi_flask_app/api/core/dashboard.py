@@ -3,7 +3,7 @@ from ..resources.utilities import parse_json, lookup_database
 import json
 from flask import Blueprint, jsonify, request, current_app as app, render_template
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_dynamic_data, sspi_metadata
+from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_production_data, sspi_metadata
 from pycountry import countries
 import pandas as pd
 import re
@@ -38,7 +38,7 @@ def get_compare_data(IndicatorCode):
     main_data = pd.DataFrame(main_data)
     main_data = main_data.rename(columns={"Value": "sspi_static_raw"})
     # Prepare the dynamic data
-    dynamic_data = parse_json(sspi_dynamic_data.find({"IndicatorCode": IndicatorCode, "Year": 2018, "CountryGroup": "SSPI49"}, {"_id": 0}))
+    ## dynamic_data = parse_json(sspi_production_data.find({"IndicatorCode": IndicatorCode, "Year": 2018, "CountryGroup": "SSPI49"}, {"_id": 0}))
     if not dynamic_data:
         return jsonify(json.loads(str(main_data.to_json(orient="records"))))
     dynamic_data = pd.DataFrame(dynamic_data)

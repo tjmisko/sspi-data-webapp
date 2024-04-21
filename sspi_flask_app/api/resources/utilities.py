@@ -1,10 +1,11 @@
 import json
+import pycountry
 from bson import json_util
 from flask import jsonify
 import pandas as pd
 import inspect
 import math
-from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_dynamic_data
+from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_production_data
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
 def format_m49_as_string(input):
@@ -51,8 +52,8 @@ def lookup_database(database_name):
         return sspi_imputed_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
-    elif database_name == "sspi_dynamic_data":
-        return sspi_dynamic_data
+    elif database_name == "sspi_production_data":
+        return sspi_production_data
     raise InvalidDatabaseError(database_name)
 
 def string_to_float(string):
@@ -198,3 +199,9 @@ def append_goalpost_single(document_list, IndicatorCode):
         document["UpperGoalpost"] = details["Metadata"]["UpperGoalpost"]
         document["Score"] = goalpost(document["Value"], details["Metadata"]["LowerGoalpost"], details["Metadata"]["UpperGoalpost"])
     return document_list
+
+def country_code_to_name(CountryCode):
+    try:
+        return pycountry.countries.get(alpha_3=CountryCode).name
+    except AttributeError:
+        return CountryCode
