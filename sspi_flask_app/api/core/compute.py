@@ -1,4 +1,4 @@
-import json
+import json, os
 import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
@@ -243,49 +243,69 @@ def compute_gtrans():
     
     #######    WORLDBANK compute    #########
     worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="FUELPR")
-    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+    worldbank_clean_list = cleaned_wb_current(worldbank_raw, "GTRANS", "USD per liter")
 
     #######  IEA compute ######
     iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
     series = extractAllSeries(iea_raw_data[0]["Raw"])
-    keys = iea_raw_data[0].keys()
-    raw = iea_raw_data[0]["Raw"]
-    metadata = iea_raw_data[0]["Metadata"]
-    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
-    raw_soup = bs.BeautifulSoup(raw, "lxml")
+
+    ### Helpful for debugging xml parsing
+    # keys = iea_raw_data[0].keys()
+    # raw = iea_raw_data[0]["Raw"]
+    # metadata = iea_raw_data[0]["Metadata"]
+    # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    # raw_soup = bs.BeautifulSoup(raw, "lxml")
     metadata_codes = {
         "ENER_TRANS": "1A3 - Transport"
     }
     metadata_code_map = {
-        "ENER_TRANS": "TCO2EQ"
+        "ENER_TRANS": "TCO2EM"
     }
     document_list = []
 
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
     long_iea_data = pd.DataFrame(document_list)
-    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str)
-    # ### combining in pandas for UN population data to conpute correct G####
-    wb_df = pd.DataFrame(worldbank_clean_list)
-    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
 
-    wb_df = wb_df.merge(pop_data, how="left", left_on = ["YEAR","CountryName"], right_on = ["year","country"])
-    test = wb_df[wb_df["pop"] == "na"]
+    long_iea_data.drop(long_iea_data[long_iea_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    long_iea_data["IntermediateCode"] = long_iea_data["VariableCodeIEA"].map(lambda x: metadata_code_map[x])
+    long_iea_data = long_iea_data.astype({"Year": "int32", "Value": "float64"}).drop(columns=["Pollutant",  "IndicatorCode", "VariableCodeIEA", "Source"])
+
+    pop = json.load(open(os.path.join("local", "population.json")))
+    pop_data = pd.DataFrame(pop).astype({"Year":"int32", "Population":"float64"})
+
+    long_iea_data = long_iea_data.merge(pop_data, how="left", on = ["Year", "CountryCode"]).dropna()
+    long_iea_data['Value'] = long_iea_data['Value']/long_iea_data['Population']
+    long_iea_data = long_iea_data.drop(columns=["Population", "Country"])
+
+
+    # ### combining in pandas for UN population data to conpute correct G####
+    wb_df = pd.DataFrame(worldbank_clean_list).astype({"Year": "int32", "Value": "float64"}).drop(columns=["Description", "IndicatorCode"])
     
-    iea_df = long_iea_data[['Year', 'CountryCode']]
-    iea_df = iea_df[iea_df["Value"].notna()].astype(str)
     
-    merged = wb_df.merge(iea_df, how="outer", left_on=["CountryCode", "YEAR"], right_on=["CountryCode","Year"]) 
-    # merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
-    # df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
-    # document_list = json.loads(str(df.to_json('records')))
-    # count = sspi_clean_api_data.insert_many(document_list)
-    # return f"Inserted {count} documents into SSPI Clean Database from OECD"
-    #print(series)
-    #print(len(document_list))
-    #return jsonify(document_list)
-    final_data = zip_intermediates(long_iea_data)
-    return jsonify(document_list)
+    merged = pd.concat([wb_df, long_iea_data]).dropna()
+    
+
+    zipped_document_list = zip_intermediates(
+        json.loads(str(merged.to_json(orient="records")), parse_int=int, parse_float=float),
+        "GTRANS",
+        ScoreFunction=lambda FUELPR, TCO2EM: 0.5*FUELPR + 0.5*TCO2EM,
+        ScoreBy="Score"
+    )
+    clean_document_list = filter_incomplete_data(zipped_document_list)[0]
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
+    
+    
+    
+
+    
+    
+
+###############################################
+# Compute Routes for Pillar: MARKET STRUCTURE #
+###############################################
+
 
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
