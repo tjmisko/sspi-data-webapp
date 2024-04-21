@@ -25,8 +25,6 @@ sspidb = client.flask_db
 
 sspi_main_data_v3 = SSPIMainDataV3(sspidb.sspi_main_data_v3)
 sspi_metadata = SSPIMetadata(sspidb.sspi_metadata)
-
-
 sspi_raw_api_data = SSPIRawAPIData(sspidb.sspi_raw_api_data)
 sspi_bulk_data = MongoWrapper(sspidb.sspi_bulk_data)
 sspi_clean_api_data = SSPICleanAPIData(sspidb.sspi_clean_api_data)
