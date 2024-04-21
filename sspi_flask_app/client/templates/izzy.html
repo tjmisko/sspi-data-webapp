@@ -23,7 +23,48 @@
 
   <body>
     {% include 'header.html' %}
-        this is my first!
+      <div>
+      <canvas id="myChart"></canvas>
+      </div>
+
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+      <script>
+        const ctx = document.getElementById('myChart');
+
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['2000', '2006', '2011', '2017'],
+            datasets: [{
+              label: "BIODIV Score For Canada",
+              data: [0.188745711, 0.225071385, 0.26451796800000005, 0.286257972],
+              borderWidth: 1,
+              backgroundColor: "#f38b4a",
+              borderColor: "#f38b4a"
+            }]
+          },
+          options: {
+            scales: {
+              y: {beginAtZero: true,
+                ticks: {font: {
+                  size: 14
+                },
+                color: "#ff6384"
+                },
+                grid: {color: "black"}
+              },
+              x: {ticks: {font: {
+                size: 14
+              },
+              color: "#ff6384"
+              },
+              grid: {color: "black"}
+              }
+            }
+          }
+        });
+      </script>
         <canvas id="izzy" width="800" height="600"></canvas>
     {% include 'footer.html' %}
   </body>
