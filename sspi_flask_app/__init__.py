@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
-from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData, SSPIPartialAPIData
+from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData, SSPIPartialAPIData, SSPIProductionData
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
@@ -33,7 +33,7 @@ sspi_clean_api_data = SSPICleanAPIData(sspidb.sspi_clean_api_data)
 sspi_partial_api_data = SSPIPartialAPIData(sspidb.sspi_partial_api_data)
 sspi_imputed_data = MongoWrapper(sspidb.sspi_imputed_data)
 sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
-sspi_production_data = MongoWrapper(sspidb.sspi_production_data)
+sspi_production_data = SSPIProductionData(sspidb.sspi_production_data)
 
 assets = Environment()
 
@@ -64,6 +64,7 @@ def init_app(Config):
         from .api.core.dashboard import dashboard_bp
         from .api.core.delete import delete_bp
         from .api.core.download import download_bp
+        from .api.core.finalize import finalize_bp
         from .api.core.impute import impute_bp
         from .api.core.load import load_bp
         from .api.core.query import query_bp
@@ -80,6 +81,7 @@ def init_app(Config):
         api_bp.register_blueprint(dashboard_bp)
         api_bp.register_blueprint(delete_bp)
         api_bp.register_blueprint(download_bp)
+        api_bp.register_blueprint(finalize_bp)
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
         api_bp.register_blueprint(query_bp)
