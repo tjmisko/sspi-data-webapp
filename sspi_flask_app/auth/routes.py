@@ -117,7 +117,10 @@ def remote_login():
     if user is not None: 
         login_user(user)
         print(current_user.username)
-    return redirect(url_for('api_bp.api_dashboard'))
+        return redirect(url_for('api_bp.api_dashboard'))
+    response = jsonify({"message": "Invalid API key"})
+    response.status_code = 401
+    return response
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required

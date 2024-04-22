@@ -12,7 +12,7 @@ class SSPIDatabaseConnector:
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
         self.local_session = requests.session()
-        self.local_session.mount('https://', CustomHttpAdapter(ctx))
+        self.local_session.mount('https://', LocalHttpAdapter(ctx))
         self.login_session_local()
         self.remote_session = requests.Session()
         self.login_session_remote()
@@ -28,8 +28,9 @@ class SSPIDatabaseConnector:
 
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        print(headers)
         self.remote_session.post("https://sspi.world/remote/session/login", headers=headers)
+        print(self.remote_session.cookies)
+        print(self.remote_session.headers)
 
     def get_data_local(self, request_string):
         if request_string[0] == "/":
@@ -49,12 +50,20 @@ class SSPIDatabaseConnector:
 
     def load_data_remote(self, dataframe: pd.DataFrame, IndicatorCode):
         observations_list = dataframe.to_json(orient="records")
-        print(observations_list)
         headers = {'Authorization': f'Bearer {self.token}'}
-        print(headers)
-        return self.remote_session.post(f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list)
+        print(f"Sending data: {observations_list}")
+        response = self.remote_session.post(f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list)
+        print(response.text)
+        print(response.status_code)
+        return response
 
-class CustomHttpAdapter(requests.adapters.HTTPAdapter):
+    def logout_local(self):
+        self.local_session.get("http://127.0.0.1:5000/logout")
+
+    def logout_remote(self):
+        self.remote_session.get("https://sspi.world/logout")
+
+class LocalHttpAdapter(HTTPAdapter):
 # "Transport adapter" that allows us to use custom ssl_context.
 
     def __init__(self, ssl_context=None, **kwargs):
