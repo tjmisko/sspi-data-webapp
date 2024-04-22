@@ -50,9 +50,10 @@ def init_app(Config):
     limiter.init_app(app)
 
     with app.app_context():
+        # uncomment these lines to reload the database from the local file
+        # sspi_main_data_v3.load()
+        # sspi_metadata.load()
         # read in the appropriate modules
-        sspi_main_data_v3.load()
-        sspi_metadata.load()
 
         from .client.routes import client_bp
         from .auth.routes import auth_bp
