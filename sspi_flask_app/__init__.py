@@ -39,7 +39,7 @@ def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[5], profile_dir="profiler")
+    ## app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[5], profile_dir="profiler")
     # Initialize SQLAlchemy Database
     db.init_app(app)
     # Initialize password encryption
@@ -50,9 +50,10 @@ def init_app(Config):
     limiter.init_app(app)
 
     with app.app_context():
+        # uncomment these lines to reload the database from the local file
+        # sspi_main_data_v3.load()
+        # sspi_metadata.load()
         # read in the appropriate modules
-        sspi_main_data_v3.load()
-        sspi_metadata.load()
 
         from .client.routes import client_bp
         from .auth.routes import auth_bp

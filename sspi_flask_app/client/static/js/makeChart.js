@@ -17,7 +17,7 @@ async function makeBarChart(BarChart, IndicatorCode){
             borderWidth: 1
         }]
     }
-    
+
     BarChart.options = {
         elements: {
             bar: {
