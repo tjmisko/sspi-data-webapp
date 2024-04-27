@@ -316,13 +316,12 @@ def compute_senior():
 @login_required
 def compute_lfpart():
     if not sspi_raw_api_data.fetch_raw_data("LFPART"):
-        return redirect(url_for("collect_bp.SENIOR"))
+        return redirect(url_for("collect_bp.LFPART"))
     raw_data = sspi_raw_api_data.fetch_raw_data("LFPART")
-    # extractAllSeries(raw_data[0]['Raw'])
-    metadata = raw_data[0]['Metadata']
-    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
-    print(raw_data[0].keys())
-    return jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+    raw_data_soup = bs.BeautifulSoup(raw_data[0]['Raw'], "lxml")
+    return jsonify(raw_data[0]['Raw'])
+    # print(raw_data_soup.find_all('generic:series'))
+    # return None
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
