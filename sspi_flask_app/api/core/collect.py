@@ -114,6 +114,14 @@ def lfpart():
         yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/CHILDW")
+@login_required
+def childw():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("4.1.1", "CHILDW", IntermediateCode = "YSCEDU", **kwargs)
+        yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode = "CHLDLB", **kwargs)
+    return Response(collect_iterator(Username = current_user.username), mimetype = 'text/event-stream')
+
 #################################
 ## Category: WORKER WELLBEING ##
 ################################
