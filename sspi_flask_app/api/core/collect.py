@@ -73,7 +73,7 @@ def airpol():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
-@login_required
+
 def altnrg():
     def collect_iterator(**kwargs):
         yield from collectIEAData("TESbySource", "ALTNRG", **kwargs)
