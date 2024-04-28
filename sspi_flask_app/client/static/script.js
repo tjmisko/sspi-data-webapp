@@ -3,7 +3,7 @@ $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".
 async function getStaticData(IndicatorCode){const response=await fetch(`/api/v1/static/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/${IndicatorCode}`)
-try{return JSON.parse(response)}catch(error){console.error('Error:',error)}}
+try{return response.json()}catch(error){console.error('Error:',error)}}
 function initCharts(){const StaticCanvas=document.getElementById('static-chart')
 const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{legend:{display:false},scales:{y:{beginAtZero:true}}}})
 const DynamicCanvas=document.getElementById('dynamic-chart')

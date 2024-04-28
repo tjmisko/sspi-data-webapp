@@ -11,7 +11,7 @@ async function getStaticData(IndicatorCode) {
 async function getDynamicData(IndicatorCode) {
     const response = await fetch(`/api/v1/dynamic/${IndicatorCode}`)
     try { 
-        return JSON.parse(response)
+        return response.json()
     } catch (error) {
         console.error('Error:', error)
     }

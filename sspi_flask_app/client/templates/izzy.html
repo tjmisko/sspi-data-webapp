@@ -1,4 +1,61 @@
-<!DOCTYPE html>
+{% extends 'layout.html' %}
+
+{% block title %}
+<title> {{ IndicatorCode | upper }} Indicator Data </title>
+{% endblock title %}
+
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/indicatorData.js') }} " defer></script>
+{% endblock javascript %}
+
+{% block content %}
+<section class="hero-box">
+    <select class="indicator-dropdown">
+        {% include 'indicator-options.html' %}
+    </select>
+    <h1> {{ IndicatorCode | upper }} </h1>
+    <script>
+        const defaultOption = document.querySelector('select.indicator-dropdown option[value="{{IndicatorCode | upper}}"]')
+        defaultOption.selected = true;
+        document.querySelector('select.indicator-dropdown').addEventListener('change', function() {
+            console.log(this.value)
+            window.location.href = '/data/indicator/' + this.value;
+        });
+    </script>
+</section>
+
+<section class="chart-section" id="static-data-section">
+    <h2> Static 2018 Data </h2>
+    <canvas id="static-chart"></canvas>
+    <fieldset>
+        <legend> Chart Options </legend>
+        Y-Axis Scale:
+        <label class="switch">
+            <input type="checkbox" id="static-axis-scale" name="static axis scale" value="Display Score">
+            <span class="slider">Value/Score</span>
+        </label>
+        Sort By:
+        <label class="switch">
+            <input type="checkbox" id="static-sort-order" name="static sort order" value="Sort by Country">
+            <span class="slider">Value/Country</span>
+        </label>
+
+    </fieldset>
+</section>
+<section class="chart-section" id="dynamic-data-section">
+    <h2> Dynamic Data </h2>
+    <canvas id="dynamic-chart"></canvas>
+</section>
+<script>
+    window.addEventListener("load", (event) => {
+        getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
+        getDynamicData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, DynamicChart));
+    })
+</script>
+{% endblock content %}
+
+<!-- <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
@@ -68,4 +125,4 @@
         <canvas id="izzy" width="800" height="600"></canvas>
     {% include 'footer.html' %}
   </body>
-</html>
+</html> -->
