@@ -141,6 +141,8 @@ def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "N":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "STKHLM",
@@ -172,6 +174,8 @@ def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "NRGINT",
