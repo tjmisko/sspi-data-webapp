@@ -16,25 +16,21 @@ def extractAllSeriesILO(ilo_sdmxml):
     series = soup.find_all('generic:series')
     return series
 
-def filterSeriesListILO(series_list, filterVAR, ILOIndicatorCode, IndicatorCode):
+def filterSeriesListlfpart(series_list):
     # Return a list of series that match the filterVAR variable name
     document_list = []
     for i, series in enumerate(series_list):
         series_key, series_attributes = series.find("generic:serieskey"), series.find("generic:attributes")
-        VAR = series_key.find("generic:value", attrs={"concept": "VAR"}).get("value")
-        if VAR != filterVAR:
+        VAR = series_key.find("generic:value", attrs={"id": "MEASURE"}).get("value")
+        sex = series_key.find("generic:value", attrs={"id":"SEX"}).get("value")
+        if VAR != "EAP_DWAP_RT" or sex !="SEX_T":
             continue
-        id_info = {
-            "CountryCode": series_key.find("generic:value", attrs={"concept": ""}).get("value"),
-            "VariableCodeOECD": VAR,
-            "IndicatorCodeOECD": ILOIndicatorCode,
-            "Source": "ILO",
-            "IndicatorCode": IndicatorCode,
-            "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
-            "Pollutant": series_key.find("value", attrs={"concept": "POL"}).get("value"),
+        doc = {
+            "CountryCode": series_key.find("generic:value", attrs={"id": "REF_AREA"}).get("value"),
+            "IndicatorCode": "LFPART",
+            "Unit": series_attributes.find("generic:value", attrs={"id": "UNIT_MEASURE"}).get("value"),
+            "Year": series.find("generic:obs").find("generic:obsdimension", attrs={"id": "TIME_PERIOD"}).get("value"),
+            "Value": series.find("generic:obs").find("generic:obsvalue").get("value")
         }
-        new_documents = [{"Year": obs.find("time").text, "Value":obs.find("obsvalue").get("value")} for obs in series.find_all("obs")]
-        for doc in new_documents:
-            doc.update(id_info)
-        document_list.extend(new_documents)
+        document_list.append(doc)
     return document_list

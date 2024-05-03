@@ -9,6 +9,7 @@ from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
+from ..datasource.ilo import extractAllSeriesILO, filterSeriesListlfpart
 import pandas as pd
 from pycountry import countries
 import csv
@@ -318,8 +319,17 @@ def compute_lfpart():
     if not sspi_raw_api_data.fetch_raw_data("LFPART"):
         return redirect(url_for("collect_bp.LFPART"))
     raw_data = sspi_raw_api_data.fetch_raw_data("LFPART")
-    raw_data_soup = bs.BeautifulSoup(raw_data[0]['Raw'], "lxml")
-    return jsonify(raw_data[0]['Raw'])
+    series_list = extractAllSeriesILO(raw_data[0]["Raw"])
+    document_list = filterSeriesListlfpart(series_list)
+    long_lfpart_data = pd.DataFrame(document_list)
+    long_lfpart_data.drop(long_lfpart_data[long_lfpart_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    long_lfpart_data.astype({"Year": "int", "Value": "float"})
+    scored_document_list = score_single_indicator(json.loads(str(long_lfpart_data.to_json(orient="records")), parse_int=int, parse_float=float), 
+                                                  IndicatorCode="LFPART")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return parse_json(clean_document_list)
     # print(raw_data_soup.find_all('generic:series'))
     # return None
 
