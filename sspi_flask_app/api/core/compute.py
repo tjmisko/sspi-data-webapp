@@ -6,7 +6,7 @@ from flask_login import login_required
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm, flatten_nested_dictionary_airpol, flatten_nested_dictionary_nrgint
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm, flatten_nested_dictionary_airpol, flatten_nested_dictionary_nrgint, flatten_nested_dictionary_fampln
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
@@ -115,7 +115,7 @@ def compute_skthlm():
 @compute_bp.route("/NRGINT")
 @login_required
 def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("COALPW"):
+    if not sspi_raw_api_data.raw_data_available("NRGINT"):
         return redirect(url_for("api_bp.collect_bp.NRGINT"))
     raw_data = sspi_raw_api_data.fetch_raw_data("NRGINT")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
@@ -313,9 +313,6 @@ def compute_gtrans():
     
     
 
-    
-    
-
 ###############################################
 # Compute Routes for Pillar: MARKET STRUCTURE #
 ###############################################
@@ -371,6 +368,15 @@ def compute_prison():
     print(table)
     return "string"
 
+@compute_bp.route("/DRKWAT")
+@login_required
+def compute_drkwat():
+    if not sspi_raw_api_data.raw_data_available("DRKWAT"):
+        return redirect(url_for("api_bp.collect_bp.DRKWAT"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
+    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    return parse_json(inter)
+
 @compute_bp.route("/INTRNT", methods=['GET'])
 # @login_required
 def compute_intrnt():
@@ -408,4 +414,23 @@ def compute_fdepth():
     filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_data)
+    return parse_json(filtered_list)
+
+
+###########################################
+# Compute Routes for Pillar: PUBLIC GOODS #
+###########################################
+
+@compute_bp.route("/FAMPLN")
+@login_required
+def compute_fampln():
+    if not sspi_raw_api_data.raw_data_available("FAMPLN"):
+        return redirect(url_for("api_bp.collect_bp.FAMPLN"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("FAMPLN")
+    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    final = flatten_nested_dictionary_fampln(inter)
+    computed_list = score_single_indicator(final, "FAMPLN")
+    filtered_list, incomplete_data = filter_incomplete_data(computed_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(len(incomplete_data))
     return parse_json(filtered_list)

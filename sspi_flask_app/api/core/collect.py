@@ -73,7 +73,6 @@ def airpol():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
-
 def altnrg():
     def collect_iterator(**kwargs):
         yield from collectIEAData("TESbySource", "ALTNRG", **kwargs)
@@ -191,6 +190,13 @@ def fampln():
 ##############################
 ## Category: INFRASTRUCTURE ##
 ##############################
+@collect_bp.route("/DRKWAT", methods=['GET'])
+@login_required
+def drkwat():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("6.2.1", "DRKWAT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/INTRNT", methods=['GET'])
 @login_required
 def intrnt():
@@ -202,9 +208,9 @@ def intrnt():
 #############################
 ## Category: PUBLIC SAFETY ##
 #############################
-@collect_bp.route("/INCARC", methods=['GET'])
+@collect_bp.route("/PRISON", methods=['GET'])
 @login_required
-def incarc():
+def prison():
     def collect_iterator(**kwargs):
         yield from collectPrisonStudiesData(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
