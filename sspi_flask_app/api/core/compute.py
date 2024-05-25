@@ -6,7 +6,7 @@ from flask_login import login_required
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm, flatten_nested_dictionary_airpol, flatten_nested_dictionary_nrgint, flatten_nested_dictionary_fampln
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm, flatten_nested_dictionary_airpol, flatten_nested_dictionary_nrgint, flatten_nested_dictionary_fampln, flatten_nested_dictionary_drkwat
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
@@ -382,46 +382,6 @@ def compute_lfpart():
     # print(raw_data_soup.find_all('generic:series'))
     # return None
 
-@compute_bp.route("/PRISON", methods=['GET'])
-@login_required
-def compute_prison():
-    raw_data_observation_list = parse_json(sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
-    for obs in raw_data_observation_list:
-        table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
-                                                                                               "summary": "Prison population rate"})
-    print(table)
-    return "string"
-
-@compute_bp.route("/DRKWAT")
-@login_required
-def compute_drkwat():
-    if not sspi_raw_api_data.raw_data_available("DRKWAT"):
-        return redirect(url_for("api_bp.collect_bp.DRKWAT"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
-    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    return parse_json(inter)
-
-@compute_bp.route("/INTRNT", methods=['GET'])
-# @login_required
-def compute_intrnt():
-    if not sspi_raw_api_data.raw_data_available("INTRNT"):
-        return redirect(url_for("collect_bp.INTRNT"))
-    # worldbank #
-    wb_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "AVINTR")
-    wb_clean = cleaned_wb_current(wb_raw, "INTRNT", unit = "Percent")
-    # sdg #
-    sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
-    sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
-    sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
-    combined_list = wb_clean + sdg_clean
-    cleaned_list = zip_intermediates(combined_list, "INTRNT",
-                                     ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
-                                     ScoreBy= "Score")
-    filtered_list, incomplete_observations = filter_incomplete_data(cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(cleaned_list)
-
 @compute_bp.route("/FDEPTH", methods=['GET'])
 # @login_required
 def compute_fdepth():
@@ -458,3 +418,48 @@ def compute_fampln():
     sspi_clean_api_data.insert_many(filtered_list)
     print(len(incomplete_data))
     return parse_json(filtered_list)
+
+@compute_bp.route("/PRISON", methods=['GET'])
+@login_required
+def compute_prison():
+    raw_data_observation_list = parse_json(sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
+    for obs in raw_data_observation_list:
+        table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
+                                                                                               "summary": "Prison population rate"})
+    print(table)
+    return "string"
+
+@compute_bp.route("/DRKWAT")
+@login_required
+def compute_drkwat():
+    if not sspi_raw_api_data.raw_data_available("DRKWAT"):
+        return redirect(url_for("api_bp.collect_bp.DRKWAT"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
+    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    cleaned = flatten_nested_dictionary_drkwat(inter)
+    scored = score_single_indicator(cleaned, "DRKWAT")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(filtered_list)
+
+@compute_bp.route("/INTRNT", methods=['GET'])
+# @login_required
+def compute_intrnt():
+    if not sspi_raw_api_data.raw_data_available("INTRNT"):
+        return redirect(url_for("collect_bp.INTRNT"))
+    # worldbank #
+    wb_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "AVINTR")
+    wb_clean = cleaned_wb_current(wb_raw, "INTRNT", unit = "Percent")
+    # sdg #
+    sdg_raw = sspi_raw_api_data.fetch_raw_data("INTRNT", IntermediateCode = "QLMBPS")
+    sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(sdg_raw)
+    sdg_clean = flatten_nested_dictionary_intrnt(sdg_clean)
+    combined_list = wb_clean + sdg_clean
+    cleaned_list = zip_intermediates(combined_list, "INTRNT",
+                                     ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
+                                     ScoreBy= "Score")
+    filtered_list, incomplete_observations = filter_incomplete_data(cleaned_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(cleaned_list)

@@ -194,7 +194,7 @@ def fampln():
 @login_required
 def drkwat():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("6.2.1", "DRKWAT", **kwargs)
+        yield from collectSDGIndicatorData("6.1.1", "DRKWAT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/INTRNT", methods=['GET'])

@@ -216,3 +216,21 @@ def flatten_nested_dictionary_fampln(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+def flatten_nested_dictionary_drkwat(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "DRKWAT",
+                "Unit": "Percent",
+                "Description": "Percentage of population using safely managed drinking water services",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
