@@ -404,6 +404,14 @@ def compute_fdepth():
 ###########################################
 # Compute Routes for Pillar: PUBLIC GOODS #
 ###########################################
+@compute_bp.route("/ATBRTH")
+@login_required
+def compute_atbrth():
+    if not sspi_raw_api_data.raw_data_available("ATBRTH"):
+        return redirect(url_for("api_bp.collect_bp.ATBRTH"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("ATBRTH")
+    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    return parse_json(inter)
 
 @compute_bp.route("/FAMPLN")
 @login_required
@@ -442,6 +450,21 @@ def compute_drkwat():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
     return parse_json(filtered_list)
+
+@compute_bp.route("/SANSRV")
+@login_required
+def compute_sansrv():
+    if not sspi_raw_api_data.raw_data_available("SANSRV"):
+        return redirect(url_for("api_bp.collect_bp.SANSRV"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("SANSRV")
+    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    # cleaned = flatten_nested_dictionary_drkwat(inter)
+    # scored = score_single_indicator(cleaned, "DRKWAT")
+    # filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    # print(incomplete_observations)
+    # return parse_json(filtered_list)
+    return parse_json(inter)
 
 @compute_bp.route("/INTRNT", methods=['GET'])
 # @login_required

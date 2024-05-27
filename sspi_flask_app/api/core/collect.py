@@ -180,6 +180,13 @@ def puptch():
 ##########################
 ## Category: HEALTHCARE ##
 ##########################
+@collect_bp.route("/ATBRTH", methods=['GET'])
+@login_required
+def atbrth():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("3.1.2", "ATBRTH", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/FAMPLN", methods=['GET'])
 @login_required
 def fampln():
