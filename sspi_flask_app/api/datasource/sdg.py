@@ -234,3 +234,25 @@ def flatten_nested_dictionary_drkwat(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+def flatten_nested_dictionary_sansrv(intermediate_obs_dict):
+    intermediates = {"SH_SAN_HNDWSH": "Proportion of population with basic handwashing facilities on premises, by urban/rural (%)",
+                     "SH_SAN_SAFE": "Proportion of population using safely managed sanitation services, by urban/rural (%)"}
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            if "SH_SAN_SAFE" not in intermediate_obs_dict[country][year].keys():
+                continue
+            value = intermediate_obs_dict[country][year]["SH_SAN_SAFE"]
+            if value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "SANSRV",
+                "Unit": "Percent",
+                "Description": "Proportion of population using safely managed sanitation services, by urban/rural (%)",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst

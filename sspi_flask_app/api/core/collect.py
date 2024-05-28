@@ -201,14 +201,14 @@ def fampln():
 @login_required
 def drkwat():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("6.1.1", "DRKWAT", **kwargs)
+        yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/SANSRV", methods=['GET'])
 @login_required
 def sansrv():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("6.2.1", "SANSRV", **kwargs)
+        yield from collectWorldBankdata("SH.STA.BASS.ZS", "SANSRV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/INTRNT", methods=['GET'])
