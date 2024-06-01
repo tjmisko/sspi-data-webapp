@@ -7,6 +7,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
+from ..datasource.who import collectWHOdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from datetime import datetime
 
@@ -184,7 +185,7 @@ def puptch():
 @login_required
 def atbrth():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("3.1.2", "ATBRTH", **kwargs)
+        yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/FAMPLN", methods=['GET'])

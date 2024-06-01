@@ -212,7 +212,7 @@ def flatten_nested_dictionary_fampln(intermediate_obs_dict):
                 "Unit": "Percent",
                 "Description": "Proportion of women of reproductive age (aged 15-49 years) who have their need for family planning satisfied with modern methods",
                 "Year": year,
-                "Value": string_to_float(value),
+                "Value": 100 - string_to_float(value),
             }
             final_data_lst.append(new_observation)
     return final_data_lst

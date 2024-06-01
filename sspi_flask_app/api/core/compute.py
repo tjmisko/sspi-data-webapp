@@ -11,6 +11,7 @@ from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
 from ..datasource.ilo import extractAllSeriesILO, filterSeriesListlfpart
+from ..datasource.who import cleanWHOdata
 import pandas as pd
 from pycountry import countries
 import csv
@@ -410,8 +411,7 @@ def compute_atbrth():
     if not sspi_raw_api_data.raw_data_available("ATBRTH"):
         return redirect(url_for("api_bp.collect_bp.ATBRTH"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ATBRTH")
-    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    return parse_json(inter)
+    return raw_data
 
 @compute_bp.route("/FAMPLN")
 @login_required
