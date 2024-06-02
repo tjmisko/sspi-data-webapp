@@ -411,7 +411,8 @@ def compute_atbrth():
     if not sspi_raw_api_data.raw_data_available("ATBRTH"):
         return redirect(url_for("api_bp.collect_bp.ATBRTH"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ATBRTH")
-    return raw_data
+    cleaned = cleanWHOdata(raw_data, "ATBRTH", "Percent")
+    return cleaned
 
 @compute_bp.route("/FAMPLN")
 @login_required
