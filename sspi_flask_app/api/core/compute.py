@@ -411,8 +411,13 @@ def compute_atbrth():
     if not sspi_raw_api_data.raw_data_available("ATBRTH"):
         return redirect(url_for("api_bp.collect_bp.ATBRTH"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ATBRTH")
-    cleaned = cleanWHOdata(raw_data, "ATBRTH", "Percent")
-    return cleaned
+    cleaned = cleanWHOdata(raw_data, "ATBRTH", "Percent",
+                           "The proportion of births attended by trained and/or skilled health personnel")
+    scored = score_single_indicator(cleaned, "ATBRTH")
+    filtered_list, incomplete_data = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_data)
+    return parse_json(filtered_list)
 
 @compute_bp.route("/FAMPLN")
 @login_required

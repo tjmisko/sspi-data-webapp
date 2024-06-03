@@ -11,15 +11,20 @@ def collectWHOdata(WHOIndicatorCode, IndicatorCode, **kwargs):
     count = sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, **kwargs)
     yield f"Inserted {count} observations into the database."
 
-def cleanWHOdata(raw_data, IndicatorCode, Unit):
+def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
     cleaned_data_list = []
     for entry in raw_data[0]["Raw"]["value"]:
-        if entry["SpecialDimType"] != "Country":
+        if entry["SpatialDimType"] != "COUNTRY":
             continue
         observation = {
-            "CountryCode": entry["SpecialDim"],
+            "CountryCode": entry["SpatialDim"],
             "IndicatorCode": IndicatorCode,
-            "Description": 
+            "Description": Description,
+            "Unit": Unit,
+            "Year": entry["TimeDim"],
+            "Value": entry["Value"]
         }
+        cleaned_data_list.append(observation)
+    return parse_json(cleaned_data_list)
 
 
