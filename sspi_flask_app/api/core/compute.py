@@ -419,6 +419,21 @@ def compute_atbrth():
     print(incomplete_data)
     return parse_json(filtered_list)
 
+@compute_bp.route("/DPTCOV")
+@login_required
+def compute_dptcov():
+    if not sspi_raw_api_data.raw_data_available("DPTCOV"):
+        return redirect(url_for("api_bp.collect_bp.DPTCOV"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("DPTCOV")
+    cleaned = cleanWHOdata(raw_data, "DPTCOV", "Percent",
+                           "DTP3 immunization coverage among one-year-olds (%)")
+    scored = score_single_indicator(cleaned, "DPTCOV")
+    filtered_list, incomplete_data = filter_incomplete_data(scored)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    # print(incomplete_data)
+    return parse_json(filtered_list)
+
+
 @compute_bp.route("/FAMPLN")
 @login_required
 def compute_fampln():

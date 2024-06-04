@@ -188,6 +188,20 @@ def atbrth():
         yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/DPTCOV", methods=['GET'])
+@login_required
+def dptcov():
+    def collect_iterator(**kwargs):
+        yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/PHYSPC", methods=['GET'])
+@login_required
+def physpc():
+    def collect_iterator(**kwargs):
+        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/FAMPLN", methods=['GET'])
 @login_required
 def fampln():
