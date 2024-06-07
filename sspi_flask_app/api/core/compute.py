@@ -433,6 +433,20 @@ def compute_dptcov():
     # print(incomplete_data)
     return parse_json(filtered_list)
 
+@compute_bp.route("/PHYSPC")
+@login_required
+def compute_physpc():
+    if not sspi_raw_api_data.raw_data_available("PHYSPC"):
+        return redirect(url_for("api_bp.collect_bp.PHYSPC"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
+    cleaned = cleanWHOdata(raw_data, "PHYSPC", "Doctors/10000",
+                           "Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.")
+    scored = score_single_indicator(cleaned, "PHYSPC")
+    filtered_list, incomplete_data = filter_incomplete_data(scored)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    # print(incomplete_data)
+    return parse_json(filtered_list)
+
 
 @compute_bp.route("/FAMPLN")
 @login_required
