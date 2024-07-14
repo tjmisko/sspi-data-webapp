@@ -183,16 +183,12 @@ def compute_airpol():
         return redirect(url_for("api_bp.collect_bp.AIRPOL"))
     raw_data = sspi_raw_api_data.fetch_raw_data("AIRPOL")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    long_airpol = pd.DataFrame(flatten_nested_dictionary_airpol(intermediate_obs_dict))
-    zipped_document_list = zip_intermediates(
-        json.loads(str(long_airpol.to_json(orient="records")), parse_int=int, parse_float=float),
-        "AIRPOL",
-        ScoreFunction=lambda AIRPOL: AIRPOL,
-        ScoreBy="Values"
-    )
-    clean_document_list = filter_incomplete_data(zipped_document_list)[0]
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(zipped_document_list)
+    flattened = flatten_nested_dictionary_airpol(intermediate_obs_dict)
+    scored_list = score_single_indicator(flattened, "AIRPOL")
+    cleaned, filtered = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(cleaned)
+    print(filtered)
+    return parse_json(cleaned)
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required

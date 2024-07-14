@@ -171,12 +171,15 @@ def flatten_nested_dictionary_airpol(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
             new_observation = {
                 "CountryCode": country,
-                "IntermediateCode": "AIRPOL",
+                "IndicatorCode": "AIRPOL",
                 "Year": int(year),
                 "Value": string_to_float(value),
-                "Unit": "mgr/m^3"
+                "Description": "Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air",
+                "Unit": "μg/m^3"
             }
             final_data_lst.append(new_observation)
     return final_data_lst
