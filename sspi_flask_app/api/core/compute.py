@@ -9,7 +9,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm, flatten_nested_dictionary_airpol, flatten_nested_dictionary_nrgint, flatten_nested_dictionary_fampln, flatten_nested_dictionary_drkwat, flatten_nested_dictionary_sansrv
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
-from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
+from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg, filter_IEA_cleaned
 from ..datasource.ilo import extractAllSeriesILO, filterSeriesListlfpart
 from ..datasource.who import cleanWHOdata
 import pandas as pd
@@ -168,7 +168,7 @@ def compute_coalpw():
         json.loads(str(intermediate_list.to_json(orient="records")), parse_int=int, parse_float=float),
         "COALPW",
         ScoreFunction=lambda TLCOAL, TTLSUM: (TLCOAL)/(TTLSUM),
-        ScoreBy="Values"
+        ScoreBy= "Score"
     )
 
     clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
@@ -218,30 +218,40 @@ def compute_altnrg():
         "MTOTOIL": "FSLOIL"
     }
 
-    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "ALTNRG"))
-    intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
-    intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(lambda x: metadata_code_map[x])
-    intermediate_data.astype({"Year": "int", "Value": "float"})
-    # adding sum of available intermediates as an intermediate, in order to complete data
-    sums = intermediate_data.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
-    sums['IntermediateCode'], sums['Unit'], sums['IndicatorCode'] = 'TTLSUM', 'TJ', 'ALTNRG'
+    intermediate_data = cleanIEAData_altnrg(raw_data, "ALTNRG", metadata_code_map)
+    codes = ["NCLEAR", "HYDROP", "GEOPWR", "BIOWAS"]
+    filtered_inter = filter_IEA_cleaned(intermediate_data, codes)
+    organized = {}
+    for code in codes:
+        inter_list = []
+        for entry in filtered_inter:
+            if entry["IntermediateCode"] == code:
+                inter_list.append(entry)
+        organized[code] = inter_list
+    return parse_json(organized)
+    # intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    # intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(lambda x: metadata_code_map[x])
+    # intermediate_data.astype({"Year": "int", "Value": "float"})
+    # # adding sum of available intermediates as an intermediate, in order to complete data
+    # sums = intermediate_data.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
+    # sums['IntermediateCode'], sums['Unit'], sums['IndicatorCode'] = 'TTLSUM', 'TJ', 'ALTNRG'
 
-    # running the samce operations for alternative energy sources
-    inter_sums = intermediate_data[intermediate_data["IntermediateCode"].isin(["HYDROP", "NCLEAR", "GEOPWR", "BIOWAS"])]
-    alt_sums = inter_sums.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
-    alt_sums['IntermediateCode'], alt_sums['Unit'], alt_sums['IndicatorCode'] = 'ALTSUM', 'TJ', 'ALTNRG'
+    # # running the samce operations for alternative energy sources
+    # inter_sums = intermediate_data[intermediate_data["IntermediateCode"].isin(["HYDROP", "NCLEAR", "GEOPWR", "BIOWAS"])]
+    # alt_sums = inter_sums.groupby(['Year', 'CountryCode']).agg({'Value': 'sum'}).reset_index()
+    # alt_sums['IntermediateCode'], alt_sums['Unit'], alt_sums['IndicatorCode'] = 'ALTSUM', 'TJ', 'ALTNRG'
 
-    intermediate_list = pd.concat([pd.concat([intermediate_data, sums]), alt_sums])
-    zipped_document_list = zip_intermediates(
-        json.loads(str(intermediate_list.to_json(orient="records")), parse_int=int, parse_float=float),
-        "ALTNRG",
-        ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS)/(TTLSUM),
-        ScoreBy= "Values"
-    )
-    clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
-    print(incomplete_observations)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    # intermediate_list = pd.concat([pd.concat([intermediate_data, sums]), alt_sums])
+    # zipped_document_list = zip_intermediates(
+    #     json.loads(str(intermediate_list.to_json(orient="records")), parse_int=int, parse_float=float),
+    #     "ALTNRG",
+    #     ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS)/(TTLSUM),
+    #     ScoreBy= "Score"
+    # )
+    # clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
+    # print(incomplete_observations)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    # return parse_json(clean_document_list)
 
 ##################################
 ### Category: GREENHOUSE GASES ###

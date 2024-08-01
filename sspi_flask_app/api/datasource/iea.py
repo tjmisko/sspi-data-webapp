@@ -30,7 +30,7 @@ def filterSeriesListiea(series_list, filterVAR, IndicatorCode):
         document_list.extend(new_documents)
     return document_list
 
-def cleanIEAData_altnrg(RawData, IndName):
+def cleanIEAData_altnrg(RawData, IndName, CodeMap):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
     and returns a list of dictionaries with only relevant data from wanted countries
@@ -50,8 +50,17 @@ def cleanIEAData_altnrg(RawData, IndName):
             "Year": entry["Raw"]["year"],
             "Value": entry["Raw"]["value"],
             "Unit": entry['Raw']['units'],
-            "IntermediateCode": entry['Raw']['product']
+            "IntermediateCode": CodeMap[entry['Raw']['product']],
+            "Description": "Percentage of total final energy supply from renewable sources (hydroelectric, geothermal, solar, wind, biofuels) minus half the percentage of total final energy supply from biofuel sources, penalizing countries for unsustainable overreliance on biofuels"
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
 
+def filter_IEA_cleaned(data_dict_list, intermediate_code_list):
+    filtered = []
+    for observation in data_dict_list:
+        if observation["IntermediateCode"] in intermediate_code_list:
+            filtered.append(observation)
+        else:
+            continue
+    return filtered
