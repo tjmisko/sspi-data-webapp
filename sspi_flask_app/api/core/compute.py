@@ -205,7 +205,8 @@ def compute_altnrg():
         "HYDRO": "Hydro",
         "GEOTHERM": "Wind, solar, etc.",
         "COMRENEW": "Biofuels and waste",
-        "MTOTOIL": "Oil"
+        "CRNGFEED": "Crude Oil",
+        "HEAT": "Heat Energy"
     }
 
     metadata_code_map = {
@@ -215,20 +216,75 @@ def compute_altnrg():
         "HYDRO": "HYDROP",
         "GEOTHERM": "GEOPWR",
         "COMRENEW": "BIOWAS",
-        "MTOTOIL": "FSLOIL"
+        "CRNGFEED": "FSLOIL",
+        "HEAT": "HEATNG"
     }
 
     intermediate_data = cleanIEAData_altnrg(raw_data, "ALTNRG", metadata_code_map)
-    codes = ["NCLEAR", "HYDROP", "GEOPWR", "BIOWAS"]
-    filtered_inter = filter_IEA_cleaned(intermediate_data, codes)
-    organized = {}
-    for code in codes:
-        inter_list = []
-        for entry in filtered_inter:
-            if entry["IntermediateCode"] == code:
-                inter_list.append(entry)
-        organized[code] = inter_list
-    return parse_json(organized)
+    country_dict = {}
+    for observation in intermediate_data:
+        country = observation["CountryCode"]
+        if country not in country_dict:
+            country_dict[country] = []
+        else:
+            country_dict[country].append(observation)
+    data_list = []
+    heating_cou = {}
+    country_total = {}
+    for country in country_dict.keys():
+        years = [item["Year"] for item in country_dict[country]]
+        years = list(dict.fromkeys(years))
+        for year in years:
+            year = str(year)
+            yearly_obs = {
+                "CountryCode": country,
+                "Description": "Percentage of total final energy supply from renewable sources (hydroelectric, geothermal, solar, wind, biofuels) minus half the percentage of total final energy supply from biofuel sources, penalizing countries for unsustainable overreliance on biofuels",
+                "IndicatorCode": "ALTNRG",
+                "Unit": "TJ",
+                "Value": 0,
+                "Year": year
+            }
+            numer_clean = 0
+            denom_total = 0
+            clean = ["HYDROP", "NCLEAR", "GEOPWR", "BIOWAS"]
+            for item in country_dict[country]:
+                if item["Year"] == year:
+                    if item["IntermediateCode"] in clean:
+                        numer_clean += item["Value"]
+                    denom_total += item["Value"]
+                    if country not in country_total:
+                        country_total[country] = denom_total
+                    else:
+                        country_total[country] += denom_total
+                if item["IntermediateCode"] == "HEATNG":
+                    if country not in heating_cou:
+                        heating_cou[country] = 0
+                    heating_cou[country] += item["Value"]
+                else:
+                    continue
+            if country not in country_total:
+                country_total[country] = denom_total
+            try:
+                yearly_obs["Value"] = numer_clean / denom_total
+            except ZeroDivisionError:
+                f"This {country, year} does not have enough energy data"
+            data_list.append(yearly_obs)
+    # print (country_total)
+    heating_prop = {}
+    for country in heating_cou:
+        heating_prop[country] = heating_cou[country] / country_total[country]
+    return parse_json(heating_prop)
+    return parse_json(data_list)
+    # codes = ["NCLEAR", "HYDROP", "GEOPWR", "BIOWAS"]
+    # filtered_inter = filter_IEA_cleaned(intermediate_data, codes)
+    # organized = {}
+    # for code in codes:
+    #     inter_list = []
+    #     for entry in filtered_inter:
+    #         if entry["IntermediateCode"] == code:
+    #             inter_list.append(entry)
+    #     organized[code] = inter_list
+    # return parse_json(organized)
     # intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     # intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(lambda x: metadata_code_map[x])
     # intermediate_data.astype({"Year": "int", "Value": "float"})
