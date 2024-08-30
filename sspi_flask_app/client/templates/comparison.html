@@ -1,16 +1,24 @@
-
-
 {% extends 'layout.html' %}
-    
+
+
     {% block content %}
 
-    <p> Our research team has created a policy index that documents the 
-        policies being practiced around the world that create an economy 
-        that cares for people and the planet. We know the policies to create 
-        a sustainable world, to share prosperity and provide a comfortable, 
-        meaningful life for all people, and to reduce suffering globally. 
-        Three pillars—Sustainability, Market Structure, Public Goods and 
-        Services—represent government policies that create and govern the 
-        economy to create the outcomes desired by the society.  </p>
+    <article class="comparison-article"> 
+        {% block comparison_title %} {% endblock %}
+        {% block comparison_subtitle %} {% endblock %}
+
+        <section>
+            <h3> Sustainability </h3>
+            {% block sustainability %} {% endblock %}
+        </section>
+        <section>
+            <h3> Market Structure </h3>
+            {% block market_structure %} {% endblock %}
+        </section>
+        <section>
+            <h3> Public Goods </h3>
+            {% block public_goods %} {% endblock %}
+        </section>
+    </article> 
 
     {% endblock %}
