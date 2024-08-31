@@ -31,4 +31,14 @@ if __name__ == "__main__":
 SECRET_KEY='thiscanbewhateveryouwant'
 SQLALCHEMY_DATABASE_URI='sqlite:////Users/tjmisko/Documents/sspi-data-collection/instance/database.db'
 ```
-8) Run the `flask run` command from your terminal in the top level directory, which contains the `wsgi.py` file.  Your application should boot, and you can open it in the browser.
+8) If this is your first time installing the SSPI application or you have recently completely wiped the MongoDB collection `sspi_metadata`, then you will need to load the metadata from the source files into the database to allow the rest of the application to construct itself. To do this, go to `sspi_flask_app/__init__.py`, in which the `init_app` function is defined. Uncomment the following lines:
+
+```python
+# sspi_main_data_v3.load()
+# sspi_metadata.load()
+```
+
+The application should now load normally. Please comment them out again when you have finished booting the application, as we do not want to reload the database every time the application starts in production.
+
+9) Run the `flask run` command from your terminal in the top level directory, which contains the `wsgi.py` file.  Your application should boot, and you can open it in the browser.
+
