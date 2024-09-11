@@ -62,3 +62,20 @@ def comparison_china_russia_usa():
 @client_bp.route('/comparisons/brazil-india-indonesia')
 def comparison_brazil_india_indonesia():
     return render_template("country-comparisons/brazil-india-indonesia.html")
+
+@client_bp.route('/structure')
+def sspi_structure_tree():
+    return render_template("sspi-structure.html")
+
+@client_bp.route('/map')
+def world_map_page():
+    return render_template("world-map.html")
+
+@client_bp.route('/globe')
+def globe_tree():
+    return render_template("globe.html")
+
+@client_bp.route('/history')
+def project_history():
+    return render_template("history.html")
+
