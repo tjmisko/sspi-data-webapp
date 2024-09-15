@@ -544,3 +544,31 @@ class SSPIMetadata(MongoWrapper):
         Return a list of documents containg intermediate details
         """
         return self.find({"DocumentType": "IntermediateDetail"})
+
+class SSPIProductionData(MongoWrapper):
+
+    def validate_document_format(self, document: dict, document_number:int=0):
+        """
+        Raises an InvalidDocumentFormatError if the document is not in the valid
+
+        Valid Document Format:
+            {
+                "Endpoint": str,
+                ...
+            }
+        Additional fields are allowed but not required
+        """
+        self.validate_endpoint(document, document_number)
+
+    def validate_endpoint(self, document: dict, document_number:int=0):
+        # Validate Metadata format
+        if not "Endpoint" in document.keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(f"'Endpoint' is a required argument (document {document_number})")
+        if not type(document["Endpoint"]) is str:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(f"'Endpoint' must be a string (document {document_number})")
+    
+    def find_one(self, query:dict, options:dict={}) -> str:
+        """Override to skip parsing for faster response times."""
+        return json.loads(json_util.dumps(self._mongo_database.find_one(query, options)))

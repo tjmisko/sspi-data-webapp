@@ -6,7 +6,7 @@ from flask_login import login_required
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
 from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_airpol
+from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm, flatten_nested_dictionary_airpol, flatten_nested_dictionary_nrgint
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
@@ -48,10 +48,10 @@ def compute_biodiv():
     zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
                            ScoreFunction= lambda MARINE, TERRST, FRSHWT: 0.33 * MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
                            ScoreBy= "Score")
-    clean_document_list = filter_incomplete_data(zipped_document_list)[0]
-    final = filter_incomplete_data(clean_document_list)
-    # sspi_clean_api_data.insert_many(final)
-    return parse_json(final)
+    clean_observations, incomplete_observations = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_observations)
+    print(incomplete_observations)
+    return parse_json(clean_observations)
 
 @compute_bp.route("/REDLST", methods = ['GET'])
 @login_required
@@ -62,8 +62,9 @@ def compute_rdlst():
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
     final_list = flatten_nested_dictionary_redlst(intermediate_obs_dict)
     meta_data_added = score_single_indicator(final_list, "REDLST")
-    clean_document_list = filter_incomplete_data(meta_data_added)[0]
+    clean_document_list, incomplete_observations = filter_incomplete_data(meta_data_added)
     sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 ######################
@@ -88,8 +89,9 @@ def compute_watman():
     zipped_document_list = zip_intermediates(final_list, "WATMAN",
                            ScoreFunction= lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
                            ScoreBy= "Score")
-    clean_document_list = filter_incomplete_data(zipped_document_list)[0]
+    clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 @compute_bp.route("/STKHLM", methods=['GET'])
@@ -102,14 +104,34 @@ def compute_skthlm():
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(full_stk_list)
     flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
     scored_list = score_single_indicator(flattened_lst, "STKHLM")
-    clean_document_list = filter_incomplete_data(scored_list)[0]
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
     sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 ########################
 ### Category: ENERGY ###
 ########################
 
+@compute_bp.route("/NRGINT", methods=['GET'])
+@login_required
+def compute_nrgint():
+    if not sspi_raw_api_data.raw_data_available("NRGINT"):
+        return redirect(url_for("collect_bp.NRGINT"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("NRGINT")
+    raw_data = sspi_raw_api_data.fetch_raw_data("NRGINT")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    long_nrgint = pd.DataFrame(flatten_nested_dictionary_nrgint(intermediate_obs_dict))
+    zipped_document_list = zip_intermediates(
+        json.loads(str(long_nrgint.to_json(orient="records")), parse_int=int, parse_float=float),
+        "NRGINT",
+        ScoreFunction=lambda NRGINT: NRGINT,
+        ScoreBy="Values"
+    )
+    clean_document_list = filter_incomplete_data(zipped_document_list)[0]
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(zipped_document_list)
+    
 @compute_bp.route("/COALPW")
 @login_required
 def compute_coalpw():
@@ -153,8 +175,9 @@ def compute_coalpw():
         ScoreBy="Values"
     )
 
-    clean_document_list = filter_incomplete_data(zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list[0])
+    clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 @compute_bp.route("/AIRPOL")
@@ -223,15 +246,10 @@ def compute_altnrg():
         ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS)/(TTLSUM),
         ScoreBy="Values"
     )
-
-    clean_document_list = filter_incomplete_data(zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list[0])
-    
-
+    clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
+    print(incomplete_observations)
+    sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
-    # for row in raw_data:
-        #lst.append(row["observation"])
-    
 
 ##################################
 ### Category: GREENHOUSE GASES ###
@@ -280,14 +298,11 @@ def compute_gtrans():
     long_iea_data['Value'] = long_iea_data['Value']/long_iea_data['Population']
     long_iea_data = long_iea_data.drop(columns=["Population", "Country"])
 
-
     # ### combining in pandas for UN population data to conpute correct G####
     wb_df = pd.DataFrame(worldbank_clean_list).astype({"Year": "int32", "Value": "float64"}).drop(columns=["Description", "IndicatorCode"])
     
-    
     merged = pd.concat([wb_df, long_iea_data]).dropna()
     
-
     zipped_document_list = zip_intermediates(
         json.loads(str(merged.to_json(orient="records")), parse_int=int, parse_float=float),
         "GTRANS",
@@ -297,18 +312,10 @@ def compute_gtrans():
     clean_document_list = filter_incomplete_data(zipped_document_list)[0]
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
-    
-    
-    
-
-    
-    
 
 ###############################################
 # Compute Routes for Pillar: MARKET STRUCTURE #
 ###############################################
-
-
 
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
@@ -344,8 +351,9 @@ def compute_senior():
         ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25*YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
         ScoreBy="Score"
     )
-    clean_document_list = filter_incomplete_data(zipped_document_list)[0]
+    clean_document_list, incomplete_observations = filter_incomplete_data(zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 
@@ -375,8 +383,9 @@ def compute_intrnt():
     cleaned_list = zip_intermediates(combined_list, "INTRNT",
                                      ScoreFunction= lambda AVINTR, QUINTR: 0.5 * AVINTR + 0.5 * QUINTR,
                                      ScoreBy= "Score")
-    filtered_list = filter_incomplete_data(cleaned_list)[0]
+    filtered_list, incomplete_observations = filter_incomplete_data(cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
     return parse_json(filtered_list)
 
 @compute_bp.route("/FDEPTH", methods=['GET'])
@@ -392,6 +401,12 @@ def compute_fdepth():
     cleaned_list = zip_intermediates(combined_list, "FDEPTH",
                                      ScoreFunction= lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
                                      ScoreBy= "Score")
-    filtered_list = filter_incomplete_data(cleaned_list)[0]
+    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
+<<<<<<< HEAD
     return parse_json(filtered_list)
+=======
+    print(incomplete_data)
+    return parse_json(filtered_list)
+
+>>>>>>> 302b0558f834327d77a43b738e6af068a8500ced

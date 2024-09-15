@@ -1,6 +1,4 @@
-from functools import wraps
 import secrets
-import string
 from flask import current_app as app, jsonify
 import pyotp
 from ..models.usermodel import User, db
@@ -104,13 +102,23 @@ def login():
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    api_token = request.headers.get('Authorization')[7:]
+    print(request.headers)
+    print(request.headers.get('Authorization'))
+    api_token = request.headers.get('Authorization')
+    if not api_token:
+        response = jsonify({"message": "No API key provided"})
+        response.status_code = 401
+        return response
+    api_token = str(api_token)[7:]
     user = User.query.filter_by(apikey=api_token).first()
     print(user)
     if user is not None: 
         login_user(user)
         print(current_user.username)
-    return redirect(url_for('api_bp.api_dashboard'))
+        return redirect(url_for('api_bp.api_dashboard'))
+    response = jsonify({"message": "Invalid API key"})
+    response.status_code = 401
+    return response
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -119,7 +127,7 @@ def logout():
     return redirect(url_for('client_bp.home'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-# @fresh_login_required
+@fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
@@ -131,6 +139,7 @@ def register():
     return render_template('register.html', form=register_form, title="Register")
 
 @auth_bp.route("/auth/update/password", methods=["GET", "POST"])
+@fresh_login_required
 def update_password():
     update_password_form = UpdatePasswordForm()
     if update_password_form.validate_on_submit():
@@ -146,11 +155,13 @@ def update_password():
     return render_template('change_password.html', form=update_password_form, title="Change Password")
 
 @auth_bp.route('/auth/clear', methods=['GET'])
+@fresh_login_required
 def clear():
     db.drop_all()
     return redirect(url_for('auth_bp.login'))
 
 @auth_bp.route('/auth/query', methods=['GET'])
+@fresh_login_required
 def query():
     return str(db.session.query(User).all())
 
