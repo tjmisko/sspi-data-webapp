@@ -3,6 +3,7 @@
 *~
 *.swp
 *.swo
+**/.jukit/
 
 bin/*
 env/*

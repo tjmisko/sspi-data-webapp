@@ -47,7 +47,35 @@ def methodology():
 def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
 
-@client_bp.route('/izzy')
-def izzy():
-    return render_template('izzy.html')
+@client_bp.route('/comparisons')
+def comparison_home():
+    return render_template("comparison-home.html")
+
+@client_bp.route('/comparisons/sweden-france-japan')
+def comparison_sweden_france_japan():
+    return render_template("country-comparisons/sweden-france-japan.html")
+
+@client_bp.route('/comparisons/china-russia-usa')
+def comparison_china_russia_usa():
+    return render_template("country-comparisons/china-russia-usa.html")
+
+@client_bp.route('/comparisons/brazil-india-indonesia')
+def comparison_brazil_india_indonesia():
+    return render_template("country-comparisons/brazil-india-indonesia.html")
+
+@client_bp.route('/structure')
+def sspi_structure_tree():
+    return render_template("sspi-structure.html")
+
+@client_bp.route('/map')
+def world_map_page():
+    return render_template("world-map.html")
+
+@client_bp.route('/globe')
+def globe_tree():
+    return render_template("globe.html")
+
+@client_bp.route('/history')
+def project_history():
+    return render_template("history.html")
 

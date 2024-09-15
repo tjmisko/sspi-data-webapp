@@ -53,8 +53,8 @@ def init_app(Config):
         # uncomment these lines to reload the database from the local file
         # sspi_main_data_v3.load()
         # sspi_metadata.load()
-        # read in the appropriate modules
 
+        # read in the appropriate modules
         from .client.routes import client_bp
         from .auth.routes import auth_bp
         from .api.api import api_bp
