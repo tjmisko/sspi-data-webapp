@@ -403,10 +403,5 @@ def compute_fdepth():
                                      ScoreBy= "Score")
     filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
-<<<<<<< HEAD
-    return parse_json(filtered_list)
-=======
     print(incomplete_data)
     return parse_json(filtered_list)
-
->>>>>>> 302b0558f834327d77a43b738e6af068a8500ced
