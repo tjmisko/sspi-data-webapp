@@ -18,11 +18,11 @@ db_choices = [""] + sspidb.list_collection_names()
 ic_choices = [""] + sspi_metadata.indicator_codes()
 
 class RemoveDuplicatesForm(FlaskForm):
-    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_production_data"], validators=[DataRequired()], default="", label="Database")
     submit = SubmitField('Remove Duplicates')
 
 class RemoveLooseDataForm(FlaskForm):
-    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_dynamic_data"], validators=[DataRequired()], default="", label="Database")
+    database = SelectField(choices = ["", "sspi_raw_api_data", "sspi_clean_api_data", "sspi_imputed_data", "sspi_production_data"], validators=[DataRequired()], default="", label="Database")
     submit = SubmitField('Remove Loose Data')
 
 class DeleteIndicatorForm(FlaskForm):

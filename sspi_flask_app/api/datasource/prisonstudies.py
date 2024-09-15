@@ -66,7 +66,7 @@ namefix = {
 def store_webpage_as_raw_data(response, COU):
     sspi_raw_api_data.insert_one({
         "collection-info": {
-            "IndicatorCode": "PRISON",
+            "IndicatorCode": "INCARC",
             "CountryCode": COU,
             "CollectedAt": datetime.now()
         },
