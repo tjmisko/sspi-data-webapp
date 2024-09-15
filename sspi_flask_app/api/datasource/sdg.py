@@ -3,9 +3,12 @@ from ... import sspi_raw_api_data
 from ..resources.utilities import format_m49_as_string, string_to_float, parse_json, zip_intermediates
 import json
 import time
+import math
 import requests
 
+
 # Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
     response = requests.get(url_source)
@@ -53,18 +56,21 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
     final_data_list = []
     for cou in intermediate_obs_dict.keys():
         for year in intermediate_obs_dict[cou].keys():
-            try:
-                mean_across_series = sum([float(x) for x in intermediate_obs_dict[cou][year].values()])/3
-            except ValueError:
-                mean_across_series = "NaN"
-            new_observation = {
-                "CountryCode": cou,
-                "IndicatorCode": "BIODIV",
-                "YEAR": year,
-                "RAW": mean_across_series,
-                "Intermediates": intermediate_obs_dict[cou][year]
-            }
-            final_data_list.append(new_observation)
+            for intermediate in intermediate_obs_dict[cou][year]:
+                sdg_sspi_inter_dict = {"ER_MRN_MPA": ["MARINE", "Percent", "Percentage of important sites covered by protected areas, marine"],
+                                       "ER_PTD_TERR": ["TERRST", "Percent", "Percentage of important sites covered by protected areas, terrestrial"],
+                                       "ER_PTD_FRHWTR": ["FRSHWT", "Percent", "Percentage of important sites covered by protected areas, freshwater"]
+                                       }
+                observation = {
+                    "CountryCode": cou,
+                    "IndicatorCode": "BIODIV",
+                    "Unit": sdg_sspi_inter_dict[intermediate][1],
+                    "Description": sdg_sspi_inter_dict[intermediate][2],
+                    "Year": year,
+                    "Value": string_to_float(intermediate_obs_dict[cou][year][intermediate]),
+                    "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
+                }
+                final_data_list.append(observation)
     return final_data_list
 
 def flatten_nested_dictionary_redlst(intermediate_obs_dict):
@@ -75,8 +81,10 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "REDLST",
-                "YEAR": year,
-                "RAW": string_to_float(value)
+                "Unit": "Index",
+                "Description": "Red List Index",
+                "Year": year,
+                "Value": string_to_float(value),
             }
             final_data_lst.append(new_observation)
     return final_data_lst
@@ -89,8 +97,11 @@ def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "INTRNT",
-                "YEAR": year,
-                "RAW": string_to_float(value)
+                "Unit": "PER_100_POP",
+                "Description": "Fixed broadband subscriptions per 100 inhabitants, by speed (per 100 inhabitants)",
+                "Year": year,
+                "Value": string_to_float(value),
+                "IntermediateCode": "QUINTR"
             }
             final_data_lst.append(new_observation)
     return final_data_lst
@@ -99,22 +110,36 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
     final_data_list = []
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
-            try:
-                mean = sum([float(x) for x in intermediate_obs_dict[country][year].values()]) / 2
-            except ValueError:
-                mean = "NaN"
             for intermediate in intermediate_obs_dict[country][year]:
+                sdg_sspi_inter_dict = {"ER_H2O_WUEYST": ["CWUEFF", "USD/m3", "Water Use Efficiency (United States dollars per cubic meter)"] ,
+                                       "ER_H2O_STRESS": ["WTSTRS", "Percent", "Freshwater withdrawal as a proportion of available freshwater resources"]}
+                inter_value = string_to_float(intermediate_obs_dict[country][year][intermediate])
+                log_scaled_value = (lambda intermediate: math.log(inter_value) if intermediate == "ER_H2O_WUEYST" 
+                              and isinstance(inter_value, float) else inter_value)
                 observation = {
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",
-                    "Unit": find_unit_watman(intermediate),
+                    "Unit": sdg_sspi_inter_dict[intermediate][1],
+                    "Description": sdg_sspi_inter_dict[intermediate][2],
                     "Year": year,
-                    "Value": mean,
-                    "IntermediateCode": find_intermediate_watman(intermediate),
-                    "IntermediateValue": float(intermediate_obs_dict[country][year][intermediate])
+                    "Value": inter_value,
+                    "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
                 }
                 final_data_list.append(observation)
     return final_data_list
+
+def find_intermediate_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "CWUEFF"
+    if inter == "ER_H2O_STRESS":
+        return "WTSTRS"
+
+def find_unit_watman(inter):
+    if inter == "ER_H2O_WUEYST":
+        return "United States dollars per cubic meter"
+    if inter == "ER_H2O_STRESS":
+        return "Freshwater withdrawal as a proportion of available freshwater resources"
+
 
 def flatten_nested_dictionary_airpol(intermediate_obs_dict):
     final_data_lst = []
@@ -131,13 +156,18 @@ def flatten_nested_dictionary_airpol(intermediate_obs_dict):
             final_data_lst.append(new_observation)
     return final_data_lst
 
-def find_intermediate_watman(inter):
-    if inter == "ER_H2O_WUEYST":
-        return "CWUEFF"
-    if inter == "ER_H2O_STRESS":
-        return "WTSTRS"
-def find_unit_watman(inter):
-    if inter == "ER_H2O_WUEYST":
-        return "United States dollars per cubic meter"
-    if inter == "ER_H2O_STRESS":
-        return "Freshwater withdrawal as a proportion of available freshwater resources"
+def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "STKHLM",
+                "Unit": "Percent",
+                "Description": "Parties meeting their commitments and obligations in transmitting information as required by Stockholm Convention on hazardous waste, and other chemicals (%)",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst

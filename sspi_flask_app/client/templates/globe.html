@@ -6,49 +6,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/js/tabulator.min.js" integrity="sha512-BGo9xGWI32ZfTMp/ueR3fZKO5nYkPbt3uwMWr+w8w3e72H8A0sTQGO+iqRADwIT0eJkFP1HDgSC82gA4sTuQ6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 {% endblock %}
 
-{% block stylesheet %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/css/tabulator.min.css" integrity="sha512-j3rR7zfij45jvjB25No5oizV4tdpt6buwLrvfhXXboG+F88VMnvA4TsJpKgChHa156f+6gYk951Cv5pInltllQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-{% endblock %}
-
 {% block content %}
-    <article class="page-content">
-      <section class="hero-box">
-        <div class="hero-textbox"> 
-          <h2 class="hero-h2">Measuring Policy Around the World</h2>
-          <p class="hero-p"> How well are countries doing at guaranteeing wellbeing for
-            people and the planet? The SSPI answers this question using data
-            to score country performance across 57 policy indicators grouped into 16 categories and organized
-            under 3 pillars. </p>
-          <a class="hero-datalink" href="/data"> Explore SSPI Data</a>
-        </div>
-        <div id="globeViz"></div>
-      </section>
-      <section class="side" id="pillars">
-        <h2>Three Pillars of the SSPI</h2>
-        <div id="pillars-description">
-          The three pillars of the SSPI correspond to the three major 
-          policy challenges facing governments around the world.
-          <ul>
-            <li> Protecting the natual environment from degredation to guantee a liveable and thriving planet for all creatures </li>
-            <li> Structuring free and fair markets that promote general prosperity and equality </li>
-            <li> Providing public goods that all citizens share  </li>
-          </ul>
-        </div>
-        <div class="pillar-cards">
-          <button class="pillar-card" id="sus">Sustainability</button>
-          <button class="pillar-card" id="ms">Market Structure</button>
-          <button class="pillar-card" id="pg">Public Goods</button>
-        </div>
-      </section>
-      <section>
-        <h2> Articles </h2>
-
-      </section>
-    </article>
+    <div id="globeViz"></div>
     <script>
       const colorScale = d3.scaleSequentialSqrt(d3.interpolateYlOrRd);
   

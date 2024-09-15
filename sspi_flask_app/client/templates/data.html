@@ -1,49 +1,48 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <title>SSPI Data</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/js/tabulator.min.js" integrity="sha512-BGo9xGWI32ZfTMp/ueR3fZKO5nYkPbt3uwMWr+w8w3e72H8A0sTQGO+iqRADwIT0eJkFP1HDgSC82gA4sTuQ6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/9.2.0/gridstack-all.min.js" integrity="sha512-8cEowOlapRVzH2aQzxdwsrOAyAhMuczMxtDRUMmUYtEiuqa9X232ABMgHyrO1xQMb85ADWTH7+Nie+J0eKgV6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/9.2.0/gridstack.min.css" integrity="sha512-c0A8wU7VMWZRt4qqDc+AxarWQ2XFsQcrJGABe1eyCNxNfj2AI4+YYTytjGlHdrSk7HxA4jHakbXLzw/O/W5WmA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/css/tabulator.min.css" integrity="sha512-j3rR7zfij45jvjB25No5oizV4tdpt6buwLrvfhXXboG+F88VMnvA4TsJpKgChHa156f+6gYk951Cv5pInltllQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    {% assets "home_script_bundle" %}
-      <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }} " defer></script>
-    {% endassets %}
-    {% assets "home_style_bundle" %}
-      <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }} "/>
-    {% endassets %}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-  </head>
+{% extends 'layout.html' %}
 
-  <body>
-    {% include 'header.html' %}
-      <section class="hero-box">
-        <div class="hero-textbox"> 
-          <h2 class="hero-h2">Explore Our Data</h2>
-          <p class="hero-p"> 
-              The SSPI brings together policy data from dozens of sources to measure the extent to which country policy
-              promotes wellbeing for people and the planet.  Use the tools below to examine policy data across countries.
-          </p>
-        </div>
-        <div class="download-box">
-            <button class="data-download-reveal">Download Data</button>
-            <form class="data-download-form">
-                <button class="data-download-close">Close Download Form</button>
-                <div class="form-item">{{download_form.database.label}} {{download_form.database}}</div>
-                <div class="form-item">{{download_form.indicator_code.label}} {{download_form.indicator_code}}</div>
-                <div class="form-item">{{download_form.country_group.label}} {{download_form.country_group}}</div>
-                <div class="form-item">{{download_form.submit}}</div>
-            </form>
-        </div>
-      </section>
-      {% include 'data-dashboard.html' %}
-    {% include 'footer.html' %}
-  </body>
-  
-</html>
+{% block title %}
+<title>SSPI Data</title>
+{% endblock %}
+
+{% block javascript %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/js/tabulator.min.js" integrity="sha512-BGo9xGWI32ZfTMp/ueR3fZKO5nYkPbt3uwMWr+w8w3e72H8A0sTQGO+iqRADwIT0eJkFP1HDgSC82gA4sTuQ6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/9.2.0/gridstack-all.min.js" integrity="sha512-8cEowOlapRVzH2aQzxdwsrOAyAhMuczMxtDRUMmUYtEiuqa9X232ABMgHyrO1xQMb85ADWTH7+Nie+J0eKgV6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/widgetHandlers.js') }} " defer></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/makeChart.js') }} " defer></script>
+{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gridstack.js/9.2.0/gridstack.min.css" integrity="sha512-c0A8wU7VMWZRt4qqDc+AxarWQ2XFsQcrJGABe1eyCNxNfj2AI4+YYTytjGlHdrSk7HxA4jHakbXLzw/O/W5WmA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/css/tabulator.min.css" integrity="sha512-j3rR7zfij45jvjB25No5oizV4tdpt6buwLrvfhXXboG+F88VMnvA4TsJpKgChHa156f+6gYk951Cv5pInltllQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/makeChart.js') }} " defer></script>
+{% endblock %}
+
+{% block content %}
+<section class="hero-box">
+    <div class="hero-textbox"> 
+        <h2 class="hero-h2">Explore Our Data</h2>
+        <p class="hero-p"> 
+            The SSPI brings together policy data from dozens of sources to measure the extent to which country policy
+            promotes wellbeing for people and the planet.  Use the tools below to examine policy data across countries.
+        </p>
+    </div>
+    <div class="download-box">
+        <button class="data-download-reveal">Download Data</button>
+        <form class="data-download-form">
+            <button class="data-download-close">Close Download Form</button>
+            <div class="form-item">{{download_form.database.label}} {{download_form.database}}</div>
+            <div class="form-item">{{download_form.indicator_code.label}} {{download_form.indicator_code}}</div>
+            <div class="form-item">{{download_form.country_group.label}} {{download_form.country_group}}</div>
+            <div class="form-item">{{download_form.submit}}</div>
+        </form>
+    </div>
+</section>
+{% include 'data-dashboard.html' %}
+
+{% endblock %}

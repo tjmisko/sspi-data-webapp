@@ -5,18 +5,18 @@ $white: rgb(226, 226, 226);
 $grey: rgba(184, 188, 190, 1);
 $black: rgb(42, 41, 43);
 
-// .data-widget {
-    // display: flex;
-    // flex-direction: column;
-    // overflow: auto;
-    // resize: both;
-    // position: relative;
-    // background-color: white;
-    // border-radius: 0.5em;
-    // padding: 1em;
-    // min-width: 300px;
-    // min-height: 240px;
-// }
+.data-widget {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    resize: both;
+    position: relative;
+    background-color: white;
+    border-radius: 0.5em;
+    padding: 1em;
+    min-width: 300px;
+    min-height: 240px;
+}
 
 .grid-stack-item-content {
     display: flex;

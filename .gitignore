@@ -3,6 +3,7 @@
 *~
 *.swp
 *.swo
+**/.jukit/
 
 bin/*
 env/*
@@ -82,3 +83,4 @@ htmlcov/
 **/raw_bulk_data/*
 **.ipynb_checkpoints
 snapshots/**/**.json
+profiler/**
