@@ -1,6 +1,4 @@
-from functools import wraps
 import secrets
-import string
 from flask import current_app as app, jsonify
 import pyotp
 from ..models.usermodel import User, db
@@ -104,13 +102,23 @@ def login():
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    api_token = request.headers.get('Authorization')[7:]
+    print(request.headers)
+    print(request.headers.get('Authorization'))
+    api_token = request.headers.get('Authorization')
+    if not api_token:
+        response = jsonify({"message": "No API key provided"})
+        response.status_code = 401
+        return response
+    api_token = str(api_token)[7:]
     user = User.query.filter_by(apikey=api_token).first()
     print(user)
     if user is not None: 
         login_user(user)
         print(current_user.username)
-    return redirect(url_for('api_bp.api_dashboard'))
+        return redirect(url_for('api_bp.api_dashboard'))
+    response = jsonify({"message": "Invalid API key"})
+    response.status_code = 401
+    return response
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required

@@ -571,4 +571,4 @@ class SSPIProductionData(MongoWrapper):
     
     def find_one(self, query:dict, options:dict={}) -> str:
         """Override to skip parsing for faster response times."""
-        return json_util.dumps(self._mongo_database.find_one(query, options))
+        return json.loads(json_util.dumps(self._mongo_database.find_one(query, options)))
