@@ -28,7 +28,6 @@ class ClientDownloadForm(FlaskForm):
 def client_download():
     return "data"
 
-  
 def fetch_data_for_download(request_args):
     """
     request_args has type ImmutableMultiDict
