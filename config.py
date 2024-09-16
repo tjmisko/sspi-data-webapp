@@ -26,8 +26,12 @@ class ProdConfig(Config):
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
 
 class DevConfig(Config):
-    FLASK_ENV = 'development'
     DEBUG = True
-    TESTING = True
+    LOGIN_DISABLED = True
+    SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
+
+class TestConfig(Config):
+    DEBUG = True
+    RELOAD = True
     LOGIN_DISABLED = True
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']

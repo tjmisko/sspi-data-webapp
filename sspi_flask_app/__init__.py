@@ -51,8 +51,9 @@ def init_app(Config):
 
     with app.app_context():
         # uncomment these lines to reload the database from the local file
-        # sspi_main_data_v3.load()
-        # sspi_metadata.load()
+        if Config.RELOAD:
+            sspi_main_data_v3.load()
+            sspi_metadata.load()
 
         # read in the appropriate modules
         from .client.routes import client_bp
@@ -62,7 +63,7 @@ def init_app(Config):
         from .api.core.compute import compute_bp
         from .api.core.dashboard import dashboard_bp
         from .api.core.delete import delete_bp
-        from .api.core.download import download_bp
+        # from .api.core.download import download_bp
         from .api.core.finalize import finalize_bp
         from .api.core.impute import impute_bp
         from .api.core.load import load_bp
@@ -79,7 +80,7 @@ def init_app(Config):
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
         api_bp.register_blueprint(delete_bp)
-        api_bp.register_blueprint(download_bp)
+        # api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(finalize_bp)
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
