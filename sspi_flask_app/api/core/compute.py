@@ -156,6 +156,7 @@ def compute_coalpw():
     }
 
     intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "COALPW"))
+
     intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(lambda x: metadata_code_map[x])
     intermediate_data.astype({"Year": "int", "Value": "float"})
@@ -265,10 +266,12 @@ def compute_gtrans():
     
     #######    WORLDBANK compute    #########
     worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="FUELPR")
+    print(worldbank_raw)
     worldbank_clean_list = cleaned_wb_current(worldbank_raw, "GTRANS", "USD per liter")
 
     #######  IEA compute ######
     iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
+    print(iea_raw_data)
     series = extractAllSeries(iea_raw_data[0]["Raw"])
 
     ### Helpful for debugging xml parsing
@@ -288,7 +291,7 @@ def compute_gtrans():
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
     long_iea_data = pd.DataFrame(document_list)
-
+    print(long_iea_data.head())
     long_iea_data.drop(long_iea_data[long_iea_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
     long_iea_data["IntermediateCode"] = long_iea_data["VariableCodeIEA"].map(lambda x: metadata_code_map[x])
     long_iea_data = long_iea_data.astype({"Year": "int32", "Value": "float64"}).drop(columns=["Pollutant",  "IndicatorCode", "VariableCodeIEA", "Source"])
