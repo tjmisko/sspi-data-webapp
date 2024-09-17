@@ -11,6 +11,7 @@ class Config:
     FLASK_ENV = 'development'
     TESTING = True
     SECRET_KEY = environ['SECRET_KEY']
+    RELOAD = False
     STATIC_FOLDER = 'static'
     TEMPLATES_FOLDER = 'templates'
     SASS_BIN = "/env/usr/bin/pyscss"
