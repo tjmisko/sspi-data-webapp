@@ -24,7 +24,7 @@ jobs:
     environment: configure_pytest_automation
 
     env:
-      SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+      SQLALCHEMY_DATABASE_URI: sqlite:///${{ github.workspace }}/instance/database.db
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       API_KEY: ${{ secrets.API_KEY }}
     

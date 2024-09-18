@@ -1,6 +1,6 @@
 r"""°°°
 ## Standard Boilerplate to Intialize Notebook
-The cell below contains the code needed to import the database connector and start using data. Note that, to use the database connector with the `local` methods, you'll need to have a local instance of the application installed, loaded, and running (`flask run`). See [GitHub](https://github.com/tjmisko/sspi-data-collection/blob/main/README.md) for more information on installation.
+The cell below contains the code needed to import the database connector and start using data. Note that, to use the database connector with the `local` methods, you'll need to have a local instance of the application installed, loaded, and running (`flask run`). See [GitHub](https://github.com/tjmisko/sspi-data-webapp/blob/main/README.md) for more information on installation.
 °°°"""
 # |%%--%%| <UFrPDbghjS|pKFvCEQYLF>
 

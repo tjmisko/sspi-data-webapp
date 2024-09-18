@@ -79,3 +79,6 @@ def globe_tree():
 def project_history():
     return render_template("history.html")
 
+@client_bp.route('/interview')
+def interview():
+    return render_template("interview/tree.html")

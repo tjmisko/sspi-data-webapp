@@ -12,7 +12,7 @@ This folder contains all of the code for the SSPI website and the full stack Fla
     - To start up MongoDB as a MacOS service, run `brew services start mongodb-community@6.0`
     - See the documentation [here](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/) for more information, and read [here](https://www.mongodb.com/docs/manual/administration/install-community/) for a step-by-step guide for installation on other operating systems
 1) Clone the application from the repo.  Navigate in your Terminal to your desired parent folder for the project and run `git clone https://github.com/tjmisko/sspi-data-collection`
-2) Navigate into the new `sspi-data-collection` folder.  Create a `wsgi.py` at the top level of the directory file to boot the Flask Application.  WSGI stands for Web Server Gateway Interface and will represent the entry point for the application.  (The file is not included because the WSGI file looks different on the production configuration and contains potentially sensitive security information in addition to the code provided.) Add the following code to your new `wsgi.py` file:
+2) Navigate into the new `sspi-data-webapp` folder.  Create a `wsgi.py` at the top level of the directory file to boot the Flask Application.  WSGI stands for Web Server Gateway Interface and will represent the entry point for the application.  (The file is not included because the WSGI file looks different on the production configuration and contains potentially sensitive security information in addition to the code provided.) Add the following code to your new `wsgi.py` file:
 
 ```python
 from sspi_flask_app import init_app
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 7) Create a `.env` file in the top level directory containing a `SECRET_KEY`, which can be any string you like (so long as its wrapped in `''`), and an `SQLALCHEMY_DATABASE_URI` which contains the absolute file path to your `database.db` file.  Remember that file paths look different on Unix vs. Windows machines.   Be sure to use the appropriate one for you.  Further, the file path must be prefixed with `sqlite:///`.  You may also have to use escape characters depending on your path—YMMV.  Here's an example of what your `.env` should look like when you're done.
 ```
 SECRET_KEY='thiscanbewhateveryouwant'
-SQLALCHEMY_DATABASE_URI='sqlite:////Users/tjmisko/Documents/sspi-data-collection/instance/database.db'
+SQLALCHEMY_DATABASE_URI='sqlite:////Users/tjmisko/Documents/sspi-data-webapp/instance/database.db'
 ```
 8) If this is your first time installing the SSPI application or you have recently completely wiped the MongoDB collection `sspi_metadata`, then you will need to load the metadata from the source files into the database to allow the rest of the application to construct itself. To do this, go to `sspi_flask_app/__init__.py`, in which the `init_app` function is defined. Uncomment the following lines:
 
