@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture(scope="session")
 def app():
-    app = init_app(DevConfig)
+    app = init_app(TestConfig)
     app.config.update({"TESTING": True})
     # OTHER TESTING SETUP
     yield app
