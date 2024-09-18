@@ -15,7 +15,7 @@ login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["2000 per day", "500 per hour"],
+    default_limits=["200000 per day", "50000 per hour"],
     storage_uri='mongodb://localhost:27017',
     strategy="fixed-window"
 )

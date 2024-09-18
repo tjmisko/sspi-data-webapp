@@ -1,0 +1,158 @@
+{
+    "name": "SSPI",
+    "children": [
+        {
+            "name": "Sustainability",
+            "type": "Pillar",
+            "children": [
+                {
+                    "name": "Ecosystem",
+                    "children": [
+                        { "name": "BIODIV" },
+                        { "name": "REDLST" }
+                    ]
+                },
+                {
+                    "name": "Land",
+                    "children": [
+                        { "name": "NITROG" },
+                        { "name": "WATMAN" },
+                        { "name": "STKHLM" },
+                        { "name": "DEFRST" },
+                        { "name": "CARBON" }
+                    ]
+                },
+                {
+                    "name": "Energy",
+                    "children": [
+                        { "name": "ALTNRG" },
+                        { "name": "NRGINT" },
+                        { "name": "AIRPOL" }
+                    ]
+                },
+                {
+                    "name": "Greenhouse Gases",
+                    "children":[
+                        { "name": "BEEFMK" },
+                        { "name": "COALPW" },
+                        { "name": "GTRANS" }
+                    ]
+                },
+                {
+                    "name": "Waste",
+                    "children": [
+                        { "name": "MSWGEN" },
+                        { "name": "EWASTE" },
+                        { "name": "RECYCL" }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Market Structure",
+            "children": [
+                {
+                    "name": "Worker Engagement",
+                    "children": [
+                        { "name": "LFPART" },
+                        { "name": "CHILDW" },
+                        { "name": "COLBAR" }
+                    ]
+                },
+                {
+                    "name": "Worker Wellbeing",
+                    "children": [
+                        { "name": "UNEMPL" },
+                        { "name": "MATERN" },
+                        { "name": "FATINJ" },
+                        { "name": "SENIOR" }
+                    ]
+                },
+                {
+                    "name": "Taxes",
+                    "children": [
+                        { "name": "CRPTAX" },
+                        { "name": "TAXREV" },
+                        { "name": "TAXEVA" }
+                    ]
+                },
+                {
+                    "name": "Financial Sector",
+                    "children": [
+                        { "name": "FSTABL" },
+                        { "name": "FDEPTH" },
+                        { "name": "PUBACC" }
+                    ]
+                },
+                {
+                    "name": "Inequality",
+                    "children": [
+                        { "name": "GINIPT" },
+                        { "name": "ISHRAT" }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Public Goods",
+            "children": [
+                {
+                    "name": "Education",
+                    "children": [
+                        { "name": "ENRPRI" },
+                        { "name": "ENRSEC" },
+                        { "name": "PUPTCH" }
+                    ]
+                },
+                {
+                    "name": "Healthcare",
+                    "children": [
+                        { "name": "ATBRTH" },
+                        { "name": "DPTCOV" },
+                        { "name": "PHYSPC" },
+                        { "name": "FAMPLN" },
+                        { "name": "CSTUNT" }
+                    ]
+                },
+                {
+                    "name": "Infrastructure",
+                    "children": [
+                        { "name": "AQELEC" },
+                        { "name": "DRKWAT" },
+                        { "name": "SANSRV" },
+                        { "name": "INTRNT" },
+                        { "name": "TRNETW" }
+                    ]
+                },
+                {
+                    "name": "Public Safety",
+                    "children": [
+                        { "name": "MURDER" },
+                        { "name": "CYBSEC" },
+                        { "name": "SECAPP" },
+                        { "name": "INCARC" }
+                    ]
+                },
+                {
+                    "name": "Rights",
+                    "children": [
+                        { "name": "RULELW" },
+                        { "name": "PUBSRV" },
+                        { "name": "EDEMOC" },
+                        { "name": "UNCONV" },
+                        { "name": "GENDEQ" }
+                    ]
+                },
+                {
+                    "name": "Global Role",
+                    "children": [
+                        { "name": "ARMEXP" },
+                        { "name": "MILEXP" },
+                        { "name": "RDFUND" },
+                        { "name": "FORAID" }
+                    ]
+                }
+            ]
+        }
+    ]
+}

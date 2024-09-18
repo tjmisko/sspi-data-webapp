@@ -1,0 +1,16 @@
+{"Category":"Ecosystem","Pillar":"Sustainability","Indicators":["BIODIV","REDLST"]}
+{"Category":"Land","Pillar":"Sustainability","Indicators":["NITROG","WATMAN","STKHLM","DEFRST","CARBON"]}
+{"Category":"Energy","Pillar":"Sustainability","Indicators":["ALTNRG","NRGINT","AIRPOL"]}
+{"Category":"Greenhouse Gases","Pillar":"Sustainability","Indicators":["BEEFMK","COALPW","GTRANS"]}
+{"Category":"Waste","Pillar":"Sustainability","Indicators":["MSWGEN","EWASTE","RECYCL"]}
+{"Category":"Worker Engagement","Pillar":"Market Structure","Indicators":["LFPART","CHILDW","COLBAR"]}
+{"Category":"Worker Wellbeing","Pillar":"Market Structure","Indicators":["UNEMPL","MATERN","FATINJ","SENIOR"]}
+{"Category":"Taxes","Pillar":"Market Structure","Indicators":["CRPTAX","TAXREV","TAXEVA"]}
+{"Category":"Financial Sector","Pillar":"Market Structure","Indicators":["FSTABL","FDEPTH","PUBACC"]}
+{"Category":"Inequality","Pillar":"Market Structure","Indicators":["GINIPT","ISHRAT"]}
+{"Category":"Education","Pillar":"Public Goods","Indicators":["ENRPRI","ENRSEC","PUPTCH"]}
+{"Category":"Healthcare","Pillar":"Public Goods","Indicators":["ATBRTH","DPTCOV","PHYSPC","FAMPLN","CSTUNT"]}
+{"Category":"Infrastructure","Pillar":"Public Goods","Indicators":["AQELEC","DRKWAT","SANSRV","INTRNT","TRNETW"]}
+{"Category":"Public Safety","Pillar":"Public Goods","Indicators":["MURDER","CYBSEC","SECAPP","INCARC"]}
+{"Category":"Rights","Pillar":"Public Goods","Indicators":["RULELW","PUBSRV","EDEMOC","UNCONV","GENDEQ"]}
+{"Category":"Global Role","Pillar":"Public Goods","Indicators":["ARMEXP","MILEXP","RDFUND","FORAID"]}
