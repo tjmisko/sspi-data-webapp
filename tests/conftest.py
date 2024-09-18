@@ -1,5 +1,5 @@
 from sspi_flask_app import init_app
-from config import DevConfig
+from config import TestConfig
 from sspi_flask_app import init_app
 import pytest
 
