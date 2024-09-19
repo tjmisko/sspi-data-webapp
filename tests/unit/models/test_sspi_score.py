@@ -1,4 +1,5 @@
 from sspi_flask_app.models.sspi import SSPI, Pillar, Category, Indicator
+from sspi_flask_app.models.errors import InvalidDocumentFormatError
 import pytest
 
 @pytest.fixture()
@@ -202,7 +203,7 @@ def test_category_score(dummy_category_list):
     assert abs(scores[1] - 0.72) < tol
     assert abs(scores[2] - 0.50) < tol
 
-def test_indicator_getter(dummy_category_list):
+def test_category_indicator_getter(dummy_category_list):
     assert dummy_category_list[0].code == "ECO"
     assert len(dummy_category_list[0].indicators) == 2
     print(dummy_category_list[0].indicators)
@@ -211,7 +212,7 @@ def test_indicator_getter(dummy_category_list):
     assert biodiv is not None
     assert redlst is not None
 
-def test_handles_repeats(dummy_category_list, test_indicator_details):
+def test_category_handles_repeats(dummy_category_list, test_indicator_details):
     tol = 10**-10
     assert abs(dummy_category_list[0].score() - 0.525) < tol
     new_data =  {
@@ -223,3 +224,27 @@ def test_handles_repeats(dummy_category_list, test_indicator_details):
     dummy_category_list[0].load(test_indicator_details[0], new_data)
     assert len(dummy_category_list[0].indicators) == 2
     assert abs(dummy_category_list[0].score() - 0.45) < tol
+
+def test_indicator_fails_to_load_missing(dummy_category_list, test_indicator_details):
+    eco = dummy_category_list[0]
+    new_data =  {
+        "IndicatorCode": "BIODIV",
+        "CountryCode": "AUS",
+        "Year": 2018,
+    }
+    with pytest.raises(InvalidDocumentFormatError) as exception_info:
+        eco.load(test_indicator_details[0], new_data)
+
+def test_category_score_fails_on_missing_data(dummy_category_list, test_indicator_details):
+    eco = dummy_category_list[0]
+    new_data =  {
+        "IndicatorCode": "BIODIV",
+        "CountryCode": "AUS",
+        "Year": 2018,
+        "Score": None
+    }
+    tol = 10**-10
+    eco.load(test_indicator_details[0], new_data)
+    with pytest.raises(TypeError) as exception_info:
+         eco.score()
+

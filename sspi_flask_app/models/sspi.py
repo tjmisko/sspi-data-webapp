@@ -1,3 +1,5 @@
+from .errors import InvalidDocumentFormatError
+
 class SSPI:
     def __init__(self, indicator_details:list, country_scores:list):
         """
@@ -11,7 +13,7 @@ class SSPI:
         self.categories = [p.categories for p in self.pillars]
         self.indicators = [c.indicators for c in self.categories]
 
-    def score(self):
+    def score(self) -> float:
         return sum([pillar.score() for pillar in self.pillars])/len(self.pillars)
     
     def score_tree(self):
@@ -130,6 +132,12 @@ class Indicator:
         return f"Indicator<{self.code}: {self.score}>"
 
     def load(self, detail, indicator_score_data):
-        self.name = detail["Metadata"]["Indicator"]
-        self.code = detail["Metadata"]["IndicatorCode"]
-        self.score = indicator_score_data["Score"]
+        try:
+            self.name = detail["Metadata"]["Indicator"]
+            self.code = detail["Metadata"]["IndicatorCode"]
+        except KeyError as ke:
+            raise InvalidDocumentFormatError(f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
+        try:
+            self.score = indicator_score_data["Score"]
+        except KeyError as ke:
+            raise InvalidDocumentFormatError(f"Indicator Data Missing 'Score' ({indicator_score_data})")
