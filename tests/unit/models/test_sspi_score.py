@@ -1,5 +1,5 @@
 from sspi_flask_app.models.sspi import SSPI, Pillar, Category, Indicator
-from sspi_flask_app.models.errors import InvalidDocumentFormatError
+from sspi_flask_app.models.errors import InvalidDocumentFormatError, DataOrderError
 import pytest
 
 @pytest.fixture()
@@ -225,6 +225,25 @@ def test_category_handles_repeats(dummy_category_list, test_indicator_details):
     assert len(dummy_category_list[0].indicators) == 2
     assert abs(dummy_category_list[0].score() - 0.45) < tol
 
+def test_indicator_catches_invalid_score(dummy_category_list, test_indicator_details):
+    eco = dummy_category_list[0]
+    new_data =  {
+        "IndicatorCode": "BIODIV",
+        "CountryCode": "AUS",
+        "Year": 2018,
+        "Score": 1.05
+    }
+    with pytest.raises(InvalidDocumentFormatError) as exception_info:
+        eco.load(test_indicator_details[0], new_data)
+    new_data =  {
+        "IndicatorCode": "BIODIV",
+        "CountryCode": "AUS",
+        "Year": 2018,
+        "Score": -0.00005
+    }
+    with pytest.raises(InvalidDocumentFormatError) as exception_info:
+        eco.load(test_indicator_details[0], new_data)
+
 def test_indicator_fails_to_load_missing(dummy_category_list, test_indicator_details):
     eco = dummy_category_list[0]
     new_data =  {
@@ -248,3 +267,91 @@ def test_category_score_fails_on_missing_data(dummy_category_list, test_indicato
     with pytest.raises(TypeError) as exception_info:
          eco.score()
 
+@pytest.fixture()
+def dummy_pillar_list(test_indicator_details, test_country_score_data):
+
+    def get_pillar(pillar, pillar_code):
+        for p in pillars:
+            if p.code == pillar_code:
+                return p
+        return None
+
+    pillars = []
+    for i, detail in enumerate(test_indicator_details):
+        matched_pillar = get_pillar(pillars, detail["Metadata"]["PillarCode"])
+        if not matched_pillar:
+            matched_pillar = Pillar(detail, test_country_score_data[i])
+            pillars.append(matched_pillar)
+        else:
+            matched_pillar.load(detail, test_country_score_data[i])
+    yield pillars
+
+def test_pillar_construction(dummy_pillar_list):
+    assert len(dummy_pillar_list) == 2
+    assert len(dummy_pillar_list[0].categories) == 2
+
+def test_pillar_score(dummy_pillar_list):
+    scores = [0, 0]
+    for i, pil in enumerate(dummy_pillar_list):
+        scores[i] = pil.score()
+    tol = 10**-10
+    assert abs(scores[0] - (0.525 + 0.72)/2) < tol
+    assert abs(scores[1] - 0.50) < tol
+
+@pytest.fixture()
+def sspi_overall(test_indicator_details, test_country_score_data):
+    yield SSPI(test_indicator_details, test_country_score_data)
+
+def test_sspi_construction(sspi_overall):
+    assert len(sspi_overall.pillars) == 2
+    assert len(sspi_overall.categories) == 3
+    assert len(sspi_overall.indicators) == 4
+
+def test_sspi_fails_on_mismatch(test_indicator_details, test_country_score_data):
+    new_data = {
+        "IndicatorCode": "FATINJ",
+        "CountryCode": "AUS",
+        "Year": 2018,
+        "Score": 0.7
+    }
+    country_scores = list(test_country_score_data) + [new_data]
+    with pytest.raises(DataOrderError):
+        sspi = SSPI(test_indicator_details, country_scores)
+
+def test_sspi_score(sspi_overall):
+    tol = 10**-10
+    assert abs(sspi_overall.score() - ((0.525 + 0.72)/2 + 0.5)/2) < tol
+
+def test_sspi_pillar_scores(sspi_overall):
+    scores = sspi_overall.pillar_scores()
+    tol = 10**-10
+    assert abs(scores["SUS"] - (0.525 + 0.72)/2) < tol
+    assert abs(scores["MS"] - 0.50) < tol
+
+def test_sspi_category_scores(sspi_overall):
+    scores = sspi_overall.category_scores()
+    tol = 10**-10
+    assert abs(scores["ECO"] - 0.525) < tol
+    assert abs(scores["LND"] - 0.72) < tol
+    assert abs(scores["WEB"] - 0.50) < tol
+
+def test_sspi_indicator_scores(sspi_overall):
+    scores = sspi_overall.indicator_scores()
+    tol = 10**-10
+    assert abs(scores["BIODIV"] - 0.15) < tol
+    assert abs(scores["REDLST"] - 0.90) < tol
+    assert abs(scores["STKHLM"] - 0.72) < tol
+    assert abs(scores["UNEMPL"] - 0.50) < tol
+
+def test_sspi_score_tree(sspi_overall):
+    score_tree = sspi_overall.score_tree()
+    assert len(score_tree["SSPI"].keys()) == 2
+    assert len(score_tree["SSPI"]["Pillars"]) == 2
+    assert len(score_tree["SSPI"]["Pillars"][0].keys()) == 4
+    assert len(score_tree["SSPI"]["Pillars"][1].keys()) == 4
+    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"]) == 2
+    assert len(score_tree["SSPI"]["Pillars"][1]["Categories"]) == 1
+    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][0].keys()) == 4
+    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][1].keys()) == 4
+    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][0]["Indicators"]) == 2
+    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][1]["Indicators"]) == 1

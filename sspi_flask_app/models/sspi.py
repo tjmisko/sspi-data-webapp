@@ -1,7 +1,7 @@
-from .errors import InvalidDocumentFormatError
+from .errors import InvalidDocumentFormatError, DataOrderError
 
 class SSPI:
-    def __init__(self, indicator_details:list, country_scores:list):
+    def __init__(self, indicator_details:list[dict], indicator_scores:list[dict]):
         """
         indicator_details - Expects a list of dictionaries in Metadata format (see sspi_metadata)
         country_scores - Expects a list of dictionaries of scores for a given country
@@ -9,19 +9,36 @@ class SSPI:
         """
         self._indicator_details = indicator_details
         self._indicator_scores = indicator_scores
-        self.pillars = self.load(self._indicator_details, self._indicator_scores)
-        self.categories = [p.categories for p in self.pillars]
-        self.indicators = [c.indicators for c in self.categories]
+        self.pillars = []
+        self.load(indicator_details, indicator_scores)
+        self.categories = []
+        for p in self.pillars:
+            self.categories += p.categories
+        self.indicators = []
+        for c in self.categories:
+            self.indicators += c.indicators
 
     def score(self) -> float:
         return sum([pillar.score() for pillar in self.pillars])/len(self.pillars)
     
     def score_tree(self):
-        # return sum([pillar.score() for pillar in self.pillars])/len(self.pillars)
-        pass
+        tree = {"SSPI": {"Score": self.score(), "Pillars": []}}
+        for i, pillar in enumerate(self.pillars):
+            tree["SSPI"]["Pillars"].append({"Pillar": pillar.name, "PillarCode": pillar.code, "Score": pillar.score(), "Categories": []})
+            for j, category in enumerate(pillar.categories):
+                tree["SSPI"]["Pillars"][i]["Categories"].append({"Category": category.name, "CategoryCode": category.code, "Score": category.score(), "Indicators": []})
+                for indicator in category.indicators:
+                    tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append({"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score})
+        return tree
 
     def pillar_scores(self):
         return {pillar.code: pillar.score() for pillar in self.pillars}
+
+    def category_scores(self):
+        return {category.code: category.score() for category in self.categories}
+
+    def indicator_scores(self):
+        return {indicator.code: indicator.score for indicator in self.indicators}
 
     def extract_score(self, IndicatorCode:str, indicator_scores:list):
         for indicator in indicator_scores:
@@ -29,22 +46,24 @@ class SSPI:
                 return indicator["Score"]
         return None
 
-    def load(indicator_details, indicator_scores):
-        for detail in indicator_details:
-            indicator_score = self.extract_score(detail["Metadata"]["IndicatorCode"], indicator_scores)
+    def load(self, indicator_details, indicator_scores):
+        if len(indicator_details) != len(indicator_scores):
+            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores):} must match!")
+        for i, detail in enumerate(indicator_details):
+            indicator_score = indicator_scores[i]
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
                 self.pillars.append(matched_pillar)
             matched_pillar.load(detail, indicator_score)
 
-    def get_pillar(self, PillarCode):
+    def get_pillar(self, pillar_code):
         """
         Takes in a PillarCode and returns the matching pillar object.
         Returns None if no match exists
         """
         for pillar in self.pillars:
-            if PillarCode == pillar.code:
+            if pillar_code == pillar.code:
                 return pillar
         return None
     
@@ -65,25 +84,33 @@ class Pillar:
     def __init__(self, detail, indicator_score):
         self.name = detail["Metadata"]["Pillar"]
         self.code = detail["Metadata"]["PillarCode"]
-        self.categories = self.load(detail, indicator_score)
+        self.categories = []
+        self.load(detail, indicator_score)
+
+    def __repr__(self):
+        return f"Pillar<{self.code}: {self.score()}; {self.categories}"
+
+    def __str__(self):
+        return f"Pillar<{self.code}: {self.score()}; {self.categories}"
 
     def score(self):
         return sum([category.score() for category in self.categories])/len(self.categories)
     
-    def load(self, detail):
+    def load(self, detail, indicator_score):
         """
-            When called the first time (from the constructor) it loads the first category from the detail.
-            Successive calls load additional categories
+        When called the first time (from the constructor) it loads the first category from the detail.
+        Successive calls load additional categories or revise existing categories with new data
         """
         matched_category = self.get_category(detail["Metadata"]["CategoryCode"])
-        if not matched_category:
-            matched_category = Category(detail)
+        if matched_category:
+            matched_category.load(detail, indicator_score)
+        else:
+            matched_category = Category(detail, indicator_score)
             self.categories.append(matched_category)
-        matched_category.load(detail)
 
-    def get_category(self):
+    def get_category(self, category_code):
         for category in self.categories:
-            if PillarCode == category.code:
+            if category_code == category.code:
                 return category
             return None
 
@@ -141,3 +168,8 @@ class Indicator:
             self.score = indicator_score_data["Score"]
         except KeyError as ke:
             raise InvalidDocumentFormatError(f"Indicator Data Missing 'Score' ({indicator_score_data})")
+        if self.code != indicator_score_data["IndicatorCode"]:
+            raise DataOrderError("Mismatched Data and Indicator Detail")
+        if type(self.score) is float:
+            if self.score < 0 or self.score > 1:
+                raise InvalidDocumentFormatError(f"Score is not between 0 and 1! ({self})")
