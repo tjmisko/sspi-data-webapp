@@ -16,5 +16,3 @@ def test_kwargs():
     assert doc["other"]=="somethingelse"
     sspi_raw_api_data.delete_many({"test": True})
     assert sspi_raw_api_data.find({"IndicatorCode": "TESTDB"}) == []
-
-    

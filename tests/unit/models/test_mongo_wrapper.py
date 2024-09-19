@@ -151,4 +151,3 @@ def test_drop_duplicates(test_documents, mongo_wrapper):
     assert len(mongo_wrapper.find({"IndicatorCode": "BIODIV"})) == 1
     assert len(mongo_wrapper.find({"IndicatorCode": "REDLST"})) == 1
     assert len(mongo_wrapper.find({"IndicatorCode": "NITROG"})) == 1
-
