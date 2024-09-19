@@ -29,7 +29,7 @@ class SSPI:
 
     def load_structure(indicator_details, indicator_scores):
         for detail in indicator_details:
-            indicator_score = self.extract_score(detail["Metadata"]["IndicatorCode"]), indicator_scores)
+            indicator_score = self.extract_score(detail["Metadata"]["IndicatorCode"], indicator_scores)
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
@@ -86,34 +86,38 @@ class Pillar:
             return None
 
 class Category:
-    def __init__(self, detail):
+    def __init__(self, detail:dict, indicator_score_data:dict):
         self.name = detail["Metadata"]["Category"]
         self.code = detail["Metadata"]["CategoryCode"]
-        self.indicators = self.load_structure(detail)
+        self.indicators = []
+        self.load_structure(detail, indicator_score_data)
 
     def score(self):
-        return sum([indicator.score() for indicator in self.indicators])/len(self.indicators)
+        return sum([indicator.score for indicator in self.indicators])/len(self.indicators)
 
-    def load_structure(self, detail):
+    def load_structure(self, detail:dict, indicator_score_data:dict):
         """
             When called the first time (from the constructor) it loads the first category from the detail.
             Successive calls load additional categories
         """
         matched_indicator = self.get_indicator(detail["Metadata"]["CategoryCode"])
-        if not matched_indicator:
-            matched_indicator = Category(detail)
-            self.categories.append(matched_indicator)
-        matched_indicator.load_structure(detail)
+        if matched_indicator:
+            matched_indicator.load_structure(detail, indicator_score_data)
+        else:
+            new_indicator = Indicator(detail, indicator_score_data)
+            self.indicators.append(new_indicator)
 
-    def get_indicator(self):
+    def get_indicator(self, indicator_code):
         for indicator in self.indicators:
-            if PillarCode == indicator.code:
+            if indicator_code == indicator.code:
                 return indicator
             return None
 
 class Indicator:
-    def __init__(self, detail, score):
-        self.code = code
+    def __init__(self, detail, indicator_score_data):
+        self.code = detail["Metadata"]["IndicatorCode"]
+        self.score = indicator_score_data["Score"]
 
-
-        
+    def load_structure(self, detail, indicator_score_data):
+        self.code = detail["Metadata"]["IndicatorCode"]
+        self.score = indicator_score["Score"]
