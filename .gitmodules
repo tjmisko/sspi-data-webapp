@@ -1,3 +1,6 @@
 [submodule "analysis"]
 	path = analysis
 	url = https://github.com/SSPI-Berkeley/SSPI-Analysis
+[submodule "load_data"]
+	path = load_data
+	url = https://github.com/SSPI-Berkeley/SSPI-Data-Loading-Notebooks
