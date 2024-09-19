@@ -50,9 +50,9 @@ def init_app(Config):
     limiter.init_app(app)
 
     with app.app_context():
-        # uncomment these lines to reload the database from the local file
-        if Config.RELOAD:
+        if Config.RELOAD or sspi_main_data_v3.is_empty():
             sspi_main_data_v3.load()
+        if Config.RELOAD or sspi_metadata.is_empty():
             sspi_metadata.load()
 
         # read in the appropriate modules
