@@ -186,8 +186,7 @@ def dummy_category_list(test_indicator_details, test_country_score_data):
             matched_category = Category(detail, test_country_score_data[i])
             categories.append(matched_category)
         else:
-            matched_category.load_structure(detail, test_country_score_data[i])
-    print([c.code for c in categories])
+            matched_category.load(detail, test_country_score_data[i])
     yield categories
 
 def test_category_construction(dummy_category_list):
@@ -202,3 +201,25 @@ def test_category_score(dummy_category_list):
     assert abs(scores[0] - 0.525) < tol
     assert abs(scores[1] - 0.72) < tol
     assert abs(scores[2] - 0.50) < tol
+
+def test_indicator_getter(dummy_category_list):
+    assert dummy_category_list[0].code == "ECO"
+    assert len(dummy_category_list[0].indicators) == 2
+    print(dummy_category_list[0].indicators)
+    biodiv = dummy_category_list[0].get_indicator("BIODIV")
+    redlst = dummy_category_list[0].get_indicator("REDLST")
+    assert biodiv is not None
+    assert redlst is not None
+
+def test_handles_repeats(dummy_category_list, test_indicator_details):
+    tol = 10**-10
+    assert abs(dummy_category_list[0].score() - 0.525) < tol
+    new_data =  {
+        "IndicatorCode": "BIODIV",
+        "CountryCode": "AUS",
+        "Year": 2018,
+        "Score": 0
+    }
+    dummy_category_list[0].load(test_indicator_details[0], new_data)
+    assert len(dummy_category_list[0].indicators) == 2
+    assert abs(dummy_category_list[0].score() - 0.45) < tol
