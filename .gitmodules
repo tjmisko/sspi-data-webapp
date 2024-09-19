@@ -1,0 +1,3 @@
+[submodule "analysis"]
+	path = analysis
+	url = https://github.com/SSPI-Berkeley/SSPI-Analysis
