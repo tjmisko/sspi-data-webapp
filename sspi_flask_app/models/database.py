@@ -12,6 +12,10 @@ class MongoWrapper:
         self._mongo_database = mongo_database
         self.name = mongo_database.name
     
+    def is_empty(self): 
+        doc_count = self._mongo_database.count_documents({})
+        return doc_count == 0
+
     def find_one(self, query:dict) -> dict:
         return json.loads(json_util.dumps(self._mongo_database.find_one(query)))
 
