@@ -118,7 +118,7 @@ class Pillar:
         for category in self.categories:
             if category_code == category.code:
                 return category
-            return None
+        return None
 
 class Category:
     def __init__(self, detail:dict, indicator_score_data:dict):
