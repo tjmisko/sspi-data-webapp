@@ -28,13 +28,13 @@ def finalize_sspi_static_radar_data():
     for country_code, data_dict in country_data.items():
         output_dict = {"CountryCode": country_code}
         sspi = SSPI(indicator_details, country_lookup[country_code]["Data"])
-        output_dict["labels"] = [c.name for in sspi.categories]
+        output_dict["labels"] = [c.name for c in sspi.categories]
         output_dict["datasets"] = []
         for pillar in sspi.pillars:
             data = [None] * len(sspi.categories)
             output_dict["datasets"].append({
                 "label": pillar.name,
-                "data": 
+                "data": data,
                 "backgroundColor": '#28a74566',
                 "borderColor": '#28a74566',
                 "pointBackgroundColor": '#28a74566',
