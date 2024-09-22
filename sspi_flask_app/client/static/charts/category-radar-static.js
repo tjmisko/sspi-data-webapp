@@ -92,7 +92,7 @@ async function getCategoryRadarData(CountryCode) {
             ],
             datasets: [
                 {
-                    label: 'Pillar 1',
+                    label: 'Sustainability',
                     data: [0.55, 0.09, 0.50, 0.50, 0.53, null, null, null, null, null, null, null, null, null, null, null],
                     backgroundColor: '#28a74566',
                     borderColor: '#28a74566',
@@ -103,7 +103,7 @@ async function getCategoryRadarData(CountryCode) {
                     fill: true
                 },
                 {
-                    label: 'Pillar 2',
+                    label: 'Market Structure',
                     data: [null, null, null, null, null, 0.98, 0.45, 0.63, 0.22, 0.33, null, null, null, null, null, null],
                     backgroundColor: '#ff851b66',
                     borderColor: '#ff851b66',
@@ -114,7 +114,7 @@ async function getCategoryRadarData(CountryCode) {
                     fill: true
                 },
                 {
-                    label: 'Pillar 3',
+                    label: 'Public Goods',
                     data: [null, null, null, null, null, null, null, null, null, null, 0.11, 0.66, 0.65, 0.30, 0.11, 0.74],
                     backgroundColor: '#007bff66',
                     borderColor: '#007bff66',
@@ -150,48 +150,58 @@ async function categoryRadarStatic(CountryCode, canvas) {
             },
             scales: {
                 r: {
+                    pointLabels: {
+                        display: true,
+                        font: {
+                            size: 8
+                        },
+                        color: "#ccc",
+                        boxWidth: 0,
+                    },
                     grid: {
-                        color: '#c0c0c033',
+                        color: '#cccccc33',
                         circular: true
+                    },
+                    ticks: {
+                        backdropColor: 'rgba(0, 0, 0, 0)',
+                        clip: true,
+                        font: {
+                            size: 8   
+                        }
                     },
                     suggestedMin: 0,
                     suggestedMax: 1
+
                 }
             },
             plugins: {
-                datalabels: {
-                    display: false,
-                    color: 'black',
-                    formatter: function(value, context) {
-                        return context.chart.data.label[context.dataIndex]; // Display the category name
-                    },
-                    align: 'center',
-                    anchor: 'center'
-                },
-                legend: {
-                    display: false,
-                    position: 'bottom',
-                    generateLabels: function(chart) {
-                        const data = chart.data;
-                        if (data.labels.length && data.datasets.length) {
-                            return data.labels.map(function(label, i) {
-                                return {
-                                    text: label,
-                                    fillStyle: data.datasets[i].backgroundColor,
-                                    hidden: isNaN(data.datasets[i].data[0]),
-                                    index: i
-                                };
-                            });
+                tooltip: {
+                    backgroundColor: '#1B2A3Ccc',
+                    callbacks: {
+                        title: function(context) {
+                            return `${context[0].label}`
+                        },
+                        label: function(context) {
+                            const score = context.raw;
+                            console.log(context.dataset.label)
+                            return [`Category Score: ${score}`] 
                         }
-                        return [];
                     }
-                }
+                },
             }
         }
     };
 
-    var myRadarChart = new Chart(ctx, config);
-    myRadarChart.update() 
+    var CountryComparisonStaticChart = new Chart(ctx, config);
+    // CountryComparisonStaticChart.update() 
+    Chart.overrides["polarArea"].plugins.legend = {
+        display: true,
+        position: 'top',
+        labels: {
+            fontColor: '#ccc'
+        }
+    }        
 
-    return myRadarChart
+    CountryComparisonStaticChart.update();
+    return CountryComparisonStaticChart
 }
