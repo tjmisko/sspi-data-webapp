@@ -6,6 +6,7 @@ class SSPI:
         indicator_details - Expects a list of dictionaries in Metadata format (see sspi_metadata)
         country_scores - Expects a list of dictionaries of scores for a given country
         - [ ] To-do @tjmisko: set up to handle years, maybe with an SSPIDynamic Object with SSPI objects
+        - [ ] How might it make sense to do this? Keep one object in memory and run different lists of data through it to put in new data based on that instead of building a new object fresh every time
         """
         self._indicator_details = indicator_details
         self._indicator_scores = indicator_scores
