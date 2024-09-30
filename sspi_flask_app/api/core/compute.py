@@ -223,9 +223,9 @@ def compute_gtrans():
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     
+    wb_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode= "FUELPR")
+    wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "hi")
     #######    WORLDBANK compute    #########
-    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="FUELPR")
-    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
 
     #######  IEA compute ######
     iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
