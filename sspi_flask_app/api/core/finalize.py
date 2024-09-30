@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify
 from flask_login import login_required
 from ... import sspi_clean_api_data, sspi_imputed_data, sspi_production_data, sspi_metadata, sspi_static_radar_data, sspi_main_data_v3
-from sspi_flask_app.api.resources.utilities import parse_json, country_code_to_name
+from sspi_flask_app.api.resources.utilities import parse_json, country_code_to_name, colormap
+from sspi_flask_app.models.sspi import SSPI
 
 finalize_bp = Blueprint(
     'finalize_bp', __name__,
@@ -12,41 +13,50 @@ finalize_bp = Blueprint(
 @finalize_bp.route("/production/finalize")
 @login_required
 def production_data():
-    return jsonify(production_data_by_indicator())
+    return jsonify(finalize_sspi_static_radar_data())
 
 def finalize_sspi_static_radar_data():
-    main_data = sspi_main_data_v3.find({})
+    sspi_static_radar_data.delete_many({})
+    def make_country_lookup(main_data, indicator_details):
+        country_lookup = {}
+        for document in main_data:
+            country_code = document["CountryCode"]
+            if not country_code in country_lookup.keys():
+                country_lookup[country_code] = {"Data": []}
+            country_lookup[country_code]["Data"].append(document)
+        return country_lookup
+
+    main_data = sspi_main_data_v3.find({}, {"_id": 0})
     indicator_details = sspi_metadata.indicator_details()
     # build country lookup
-    country_lookup = {}
-    for document in main_data:
-        country_code = document["CountryCode"]
-        if not country_code in country_lookup.keys():
-            country_lookup[country_code] = {"Data": []}
-        country_lookup[country_code]["Data"].append(document)
+    country_lookup = make_country_lookup(main_data, indicator_details)
     radar_data = []
-    for country_code, data_dict in country_data.items():
+    for country_code, data_dict in country_lookup.items():
         output_dict = {"CountryCode": country_code}
         sspi = SSPI(indicator_details, country_lookup[country_code]["Data"])
         output_dict["labels"] = [c.name for c in sspi.categories]
         output_dict["datasets"] = []
+        category_start_index = 0
         for pillar in sspi.pillars:
             data = [None] * len(sspi.categories)
+            for i, category in enumerate(pillar.categories):
+                data[category_start_index + i] = round(category.score(), 3)
+            category_start_index += len(pillar.categories)
+            pillar_color = colormap(pillar.code, alpha="66")
             output_dict["datasets"].append({
                 "label": pillar.name,
                 "data": data,
-                "backgroundColor": '#28a74566',
-                "borderColor": '#28a74566',
-                "pointBackgroundColor": '#28a74566',
+                "backgroundColor": pillar_color,
+                "borderColor": pillar_color,
+                "pointBackgroundColor": pillar_color,
                 "pointBorderColor": '#fff',
                 "pointHoverBackgroundColor": '#fff',
-                "pointHoverBorderColor": '#28a745',
+                "pointHoverBorderColor": pillar_color,
                 "fill": True
             })
-
-            # output_dict
+        radar_data.append(output_dict) 
     sspi_static_radar_data.insert_many(radar_data)
-    return ""
+    return "Successfully finalized radar data!"
 
     # sspi_static_radar_data
 
