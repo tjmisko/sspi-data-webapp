@@ -7,10 +7,9 @@
     <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
 {% endblock %}
     
-{% block data_import %} {% endblock %}
 {% block comparison_title %} <h1> China, Russia, and the United States </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Global Superpowers Struggle to Provide for the Common Good </h2> {% endblock %}
-{% block sustainability %}
+{% block comparison_radar %}
 <div class="datawindow"> 
     <nav class="datanav">
         <a class="datanavlink" href="/"> Map </a>
@@ -44,6 +43,8 @@
     categoryRadarStatic("USA", document.getElementById('radar-chart-3'))
     </script>
 </div>
+{% endblock %}
+{% block sustainability %}
 {% endblock %}
 
 {% block market_structure %}
