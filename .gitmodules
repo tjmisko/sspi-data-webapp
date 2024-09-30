@@ -4,3 +4,6 @@
 [submodule "load_data"]
 	path = load_data
 	url = https://github.com/SSPI-Berkeley/SSPI-Data-Loading-Notebooks
+[submodule "documentation"]
+	path = documentation
+	url = https://github.com/tjmisko/sspi-data-webapp.wiki.git
