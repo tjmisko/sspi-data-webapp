@@ -205,3 +205,11 @@ def country_code_to_name(CountryCode):
         return pycountry.countries.get(alpha_3=CountryCode).name
     except AttributeError:
         return CountryCode
+
+def colormap(PillarCode, alpha:str="ff"):
+    if PillarCode == "SUS":
+        return f"#28a745{alpha}"
+    if PillarCode == "MS":
+        return f"#ff851b{alpha}"
+    if PillarCode == "PG":
+        return f"#007bff{alpha}"

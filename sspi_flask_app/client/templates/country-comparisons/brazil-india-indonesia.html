@@ -1,5 +1,11 @@
 {% extends 'comparison.html' %}
 
+{% block javascript_chart_js %}
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/DummyData.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> -->
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
+{% endblock %}
 {% block comparison_title %} <h1> Brazil, India, and Indonesia </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Emerging Economies Vary in Their Policy Needs, But All Must Remain Mindful of Sustainability in Development </h2> {% endblock %}
 {% block sustainability %}
@@ -9,6 +15,32 @@
         <a class="datanavlink" href="/"> Plot </a>
         <a class="datanavlink" href="/"> Table </a>
     </nav>
+
+    <div class="radar-chart-flex-container">
+        <div class="radar-chart-box">
+            <h3> Brazil </h3>
+            <div class="radar-chart-canvas-container"> 
+                <canvas id="radar-chart-1" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="radar-chart-box">
+            <h3> India </h3>
+            <div class="radar-chart-canvas-container">
+                <canvas id="radar-chart-2" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="radar-chart-box">
+            <h3> Indonesia </h3>
+            <div class="radar-chart-canvas-container">
+                <canvas id="radar-chart-3" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    <script defer>
+    categoryRadarStatic("BRA", document.getElementById('radar-chart-1'))
+    categoryRadarStatic("IND", document.getElementById('radar-chart-2'))
+    categoryRadarStatic("IDN", document.getElementById('radar-chart-3'))
+    </script>
 </div>
 
 {% endblock %}

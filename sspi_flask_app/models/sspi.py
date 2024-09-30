@@ -6,6 +6,7 @@ class SSPI:
         indicator_details - Expects a list of dictionaries in Metadata format (see sspi_metadata)
         country_scores - Expects a list of dictionaries of scores for a given country
         - [ ] To-do @tjmisko: set up to handle years, maybe with an SSPIDynamic Object with SSPI objects
+        - [ ] How might it make sense to do this? Keep one object in memory and run different lists of data through it to put in new data based on that instead of building a new object fresh every time
         """
         self._indicator_details = indicator_details
         self._indicator_scores = indicator_scores
@@ -48,7 +49,7 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores):} must match!")
+            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i

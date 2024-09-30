@@ -1,11 +1,49 @@
 {% extends 'comparison.html' %}
 
+{% block javascript_chart_js %}
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/DummyData.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> -->
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
+{% endblock %}
     
 {% block data_import %} {% endblock %}
 {% block comparison_title %} <h1> China, Russia, and the United States </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Global Superpowers Struggle to Provide for the Common Good </h2> {% endblock %}
 {% block sustainability %}
-    Here's some text on sustainability
+<div class="datawindow"> 
+    <nav class="datanav">
+        <a class="datanavlink" href="/"> Map </a>
+        <a class="datanavlink" href="/"> Plot </a>
+        <a class="datanavlink" href="/"> Table </a>
+    </nav>
+
+    <div class="radar-chart-flex-container">
+        <div class="radar-chart-box">
+            <h3> China </h3>
+            <div class="radar-chart-canvas-container"> 
+                <canvas id="radar-chart-1" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="radar-chart-box">
+            <h3> Russia </h3>
+            <div class="radar-chart-canvas-container">
+                <canvas id="radar-chart-2" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="radar-chart-box">
+            <h3> United States </h3>
+            <div class="radar-chart-canvas-container">
+                <canvas id="radar-chart-3" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    <script defer>
+    categoryRadarStatic("CHN", document.getElementById('radar-chart-1'))
+    categoryRadarStatic("RUS", document.getElementById('radar-chart-2'))
+    categoryRadarStatic("USA", document.getElementById('radar-chart-3'))
+    </script>
+</div>
 {% endblock %}
 
 {% block market_structure %}

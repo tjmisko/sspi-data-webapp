@@ -3,7 +3,7 @@ from ..resources.utilities import parse_json, lookup_database
 import json
 from flask import Blueprint, jsonify, request, current_app as app, render_template
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_production_data, sspi_metadata
+from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_production_data, sspi_metadata, sspi_static_radar_data
 from pycountry import countries
 import pandas as pd
 import re
@@ -116,3 +116,8 @@ def get_dynamic_data(IndicatorCode):
     """
     return_data = sspi_production_data.find_one({"Endpoint": "/data/indicator/IDCode", "IDCode": IndicatorCode}, {"data": 1, "_id": 0})
     return jsonify(return_data["data"])
+
+@dashboard_bp.route('/static/radar/<CountryCode>')
+def get_static_radar_data(CountryCode):
+    radar_data = sspi_static_radar_data.find_one({"CountryCode": CountryCode})
+    return jsonify(radar_data)

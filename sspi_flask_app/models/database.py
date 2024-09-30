@@ -576,3 +576,24 @@ class SSPIProductionData(MongoWrapper):
     def find_one(self, query:dict, options:dict={}) -> str:
         """Override to skip parsing for faster response times."""
         return json.loads(json_util.dumps(self._mongo_database.find_one(query, options)))
+
+class SSPIStaticRadarData(MongoWrapper):
+
+    def __init__(self, mongo_database):
+        self._mongo_database = mongo_database
+        self._mongo_database.create_index([("CCode", 1), ("Year", 1)])
+        self.name = mongo_database.name
+
+    def validate_document_format(self, document: dict, document_number:int=0):
+        """
+        Raises an InvalidDocumentFormatError if the document is not in the valid
+
+        Valid Document Format:
+            {
+                "Endpoint": str,
+                ...
+            }
+        Additional fields are allowed but not required
+        """
+        # self.validate_endpoint(document, document_number)
+        pass
