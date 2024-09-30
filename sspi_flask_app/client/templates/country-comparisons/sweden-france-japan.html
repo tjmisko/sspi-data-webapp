@@ -4,6 +4,39 @@
 {% block comparison_subtitle %} <h2> Top Performers Vary in Strengths, and All Have Weak Areas </h2> {% endblock %}
 
 {% block sustainability %}
+<div class="datawindow"> 
+    <nav class="datanav">
+        <a class="datanavlink" href="/"> Map </a>
+        <a class="datanavlink" href="/"> Plot </a>
+        <a class="datanavlink" href="/"> Table </a>
+    </nav>
+
+    <div class="radar-chart-flex-container">
+        <div class="radar-chart-box">
+            <h3> Sweden </h3>
+            <div class="radar-chart-canvas-container"> 
+                <canvas id="radar-chart-1" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="radar-chart-box">
+            <h3> Russia </h3>
+            <div class="radar-chart-canvas-container">
+                <canvas id="radar-chart-2" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+        <div class="radar-chart-box">
+            <h3> Japan </h3>
+            <div class="radar-chart-canvas-container">
+                <canvas id="radar-chart-3" class="radar-chart chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    <script defer>
+    categoryRadarStatic("SWE", document.getElementById('radar-chart-1'))
+    categoryRadarStatic("FRA", document.getElementById('radar-chart-2'))
+    categoryRadarStatic("JPN", document.getElementById('radar-chart-3'))
+    </script>
+</div>
 {% endblock %}
 {% block market_structure %}
 {% endblock %}
