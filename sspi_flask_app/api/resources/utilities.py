@@ -5,7 +5,7 @@ from flask import jsonify
 import pandas as pd
 import inspect
 import math
-from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_production_data
+from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
 def format_m49_as_string(input):
@@ -52,8 +52,6 @@ def lookup_database(database_name):
         return sspi_imputed_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
-    elif database_name == "sspi_production_data":
-        return sspi_production_data
     raise InvalidDatabaseError(database_name)
 
 def string_to_float(string):

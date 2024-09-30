@@ -3,7 +3,7 @@ from ..resources.utilities import parse_json, lookup_database
 import json
 from flask import Blueprint, jsonify, request, current_app as app, render_template
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_production_data, sspi_metadata, sspi_static_radar_data
+from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_static_radar_data, sspi_dynamic_line_data
 from pycountry import countries
 import pandas as pd
 import re
@@ -88,8 +88,8 @@ def api_internal_buttons():
     implementation_data = api_coverage()
     return render_template("dashboard-controls.html", implementation_data=implementation_data)
 
-@dashboard_bp.route("/static/<IndicatorCode>")
-def get_static_data(IndicatorCode):
+@dashboard_bp.route("/static/indicator/<IndicatorCode>")
+def get_static_indicator_data(IndicatorCode):
     """
     Get the static data for the given indicator code
     """
@@ -109,13 +109,13 @@ def get_static_data(IndicatorCode):
     }
     return jsonify(chart_data)
 
-@dashboard_bp.route('/dynamic/<IndicatorCode>')
-def get_dynamic_data(IndicatorCode):
+@dashboard_bp.route('/dynamic/indicator/<IndicatorCode>')
+def get_dynamic_indicator_line_data(IndicatorCode):
     """
-    Use the format argument to control whether the document is formatted for the website table
+    Get the dynamic data for the given indicator code for a line chart 
     """
-    return_data = sspi_production_data.find_one({"Endpoint": "/data/indicator/IDCode", "IDCode": IndicatorCode}, {"data": 1, "_id": 0})
-    return jsonify(return_data["data"])
+    dynamic_indicator_data = parse_json(sspi_dynamic_line_data.find({"IndicatorCode": IndicatorCode}, {"_id": 0}))
+    return jsonify(dynamic_indicator_data)
 
 @dashboard_bp.route('/static/radar/<CountryCode>')
 def get_static_radar_data(CountryCode):

@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_imputed_data, sspi_production_data, sspi_metadata, sspi_static_radar_data, sspi_main_data_v3
+from ... import sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_static_radar_data, sspi_main_data_v3
 from sspi_flask_app.api.resources.utilities import parse_json, country_code_to_name, colormap
 from sspi_flask_app.models.sspi import SSPI
 
@@ -12,9 +12,12 @@ finalize_bp = Blueprint(
 
 @finalize_bp.route("/production/finalize")
 @login_required
-def production_data():
-    return jsonify(finalize_sspi_static_radar_data())
+def finalize_all_production_data():
+    finalize_sspi_static_radar_data()
+    return "Successfully finalized all production data!"
 
+@finalize_bp.route("/production/finalize/static/radar")
+@login_required
 def finalize_sspi_static_radar_data():
     sspi_static_radar_data.delete_many({})
     def make_country_lookup(main_data, indicator_details):
@@ -32,7 +35,10 @@ def finalize_sspi_static_radar_data():
     country_lookup = make_country_lookup(main_data, indicator_details)
     radar_data = []
     for country_code, data_dict in country_lookup.items():
-        output_dict = {"CountryCode": country_code}
+        output_dict = {
+            "CCode": country_code,
+            "Year": 2018
+        }
         sspi = SSPI(indicator_details, country_lookup[country_code]["Data"])
         output_dict["labels"] = [c.name for c in sspi.categories]
         output_dict["datasets"] = []

@@ -2,9 +2,9 @@ async function fetchComparisonData(country1,country2,country3){country_data=awai
 function categoryComparison(chartCanvas,categoryCode,country_data){const chartConfig={type:'bar',data:data,options:{plugins:{title:{display:true,text:'Comparison of Category Scores'},},responsive:true,scales:{x:{stacked:true,},y:{stacked:true}}}};}
 $(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
 $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
-async function getStaticData(IndicatorCode){const response=await fetch(`/api/v1/static/${IndicatorCode}`)
+async function getStaticData(IndicatorCode){const response=await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
-async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/${IndicatorCode}`)
+async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/indicator/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 function initCharts(){const StaticCanvas=document.getElementById('static-chart')
 const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{legend:{display:false},scales:{y:{beginAtZero:true}}}})

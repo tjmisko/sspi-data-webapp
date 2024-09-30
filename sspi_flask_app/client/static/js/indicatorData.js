@@ -1,6 +1,6 @@
 // Static Data
 async function getStaticData(IndicatorCode) {
-    const response = await fetch(`/api/v1/static/${IndicatorCode}`)
+    const response = await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
     try { 
         return response.json()
     } catch (error) {
@@ -9,7 +9,7 @@ async function getStaticData(IndicatorCode) {
 }
 
 async function getDynamicData(IndicatorCode) {
-    const response = await fetch(`/api/v1/dynamic/${IndicatorCode}`)
+    const response = await fetch(`/api/v1/dynamic/indicator/${IndicatorCode}`)
     try { 
         return response.json()
     } catch (error) {
