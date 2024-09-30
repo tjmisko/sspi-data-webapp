@@ -49,7 +49,7 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores):} must match!")
+            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
