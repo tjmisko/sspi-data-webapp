@@ -8,7 +8,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
-from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
+from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg, clean_IEA_data_GTRANS
 import pandas as pd
 from pycountry import countries
 import csv
@@ -229,9 +229,9 @@ def compute_gtrans():
 
     # collect IEA
     iea_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
-    iea_clean = "hi"
-    print(len(iea_raw))
-    return parse_json([wb_clean, iea_raw])
+    iea_clean = clean_IEA_data_GTRANS(iea_raw, 
+                                      "GTRANS", "CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms")
+    return parse_json([iea_clean, wb_clean])
     #######  IEA compute ######
 
     keys = iea_raw_data[0].keys()

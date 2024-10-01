@@ -56,7 +56,8 @@ def cleanIEAData_altnrg(RawData, IndName):
     return clean_data_list
 
 def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
-    for obs in raw_data:
+    clean_data_list = []
+    for obs in raw_data[1:]:
         iso3 = obs["Raw"]["country"]
         country_data = countries.get(alpha_3=iso3)
         value = obs["Raw"]['value']
@@ -77,6 +78,8 @@ def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
             "Description": description,
             "IntermediateCode": intermediate_code
         }
+        clean_data_list.append(clean_obs)
+    return clean_data_list
 
 
 
