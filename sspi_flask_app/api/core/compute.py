@@ -238,7 +238,6 @@ def compute_gtrans():
     df_iea = pd.DataFrame(iea_clean).loc[:, ["CountryCode", "Year", "Value"]]
     merged_iea_pop = df_iea.merge(pop_data, how = "left", on = ["CountryCode", "Year"])
     merged_iea_pop = merged_iea_pop.dropna(axis = 0)
-    # print(merged_iea_pop)
     merged_iea_pop["mt per person"] = merged_iea_pop["Value"].astype(int) / merged_iea_pop["pop"].astype(int)
     print(merged_iea_pop)
     return parse_json(iea_clean)
