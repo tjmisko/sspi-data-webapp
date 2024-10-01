@@ -223,13 +223,17 @@ def compute_gtrans():
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     
-    wb_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode= "FUELPR")
-    wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "hi")
-    #######    WORLDBANK compute    #########
+    # collect World Bank
+    wb_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "FUELPR")
+    wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "USD per liter")
 
+    # collect IEA
+    iea_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
+    iea_clean = "hi"
+    print(len(iea_raw))
+    return parse_json([wb_clean, iea_raw])
     #######  IEA compute ######
-    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
-    series = extractAllSeries(iea_raw_data[0]["Raw"])
+
     keys = iea_raw_data[0].keys()
     raw = iea_raw_data[0]["Raw"]
     metadata = iea_raw_data[0]["Metadata"]
