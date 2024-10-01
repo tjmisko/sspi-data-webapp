@@ -539,7 +539,7 @@ class SSPIMetadata(MongoWrapper):
 
     def indicator_details(self) -> list[dict]:
         """
-        Return a list of documents containg indicator details
+        Return a list of documents containing indicator details
         """
         return self.find({"DocumentType": "IndicatorDetail"})
 

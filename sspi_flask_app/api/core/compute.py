@@ -223,16 +223,27 @@ def compute_gtrans():
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     
-    # collect World Bank
+    # collect, clean World Bank
     wb_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "FUELPR")
     wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "USD per liter")
 
-    # collect IEA
+    # collect, clean IEA
     iea_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
     iea_clean = clean_IEA_data_GTRANS(iea_raw, 
                                       "GTRANS", "CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms")
-    return parse_json([iea_clean, wb_clean])
-    #######  IEA compute ######
+    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str).drop(columns = "Unnamed: 0")
+    pop_data["CountryCode"] = pop_data["country"].map(lambda cou: countries.get(name = cou).alpha_3 
+                                                       if countries.get(name = cou) is not None else np.nan)
+    pop_data = pop_data.dropna(axis = 0).rename(columns = {"year": "Year"})
+    df_iea = pd.DataFrame(iea_clean).loc[:, ["CountryCode", "Year", "Value"]]
+    merged_iea_pop = df_iea.merge(pop_data, how = "left", on = ["CountryCode", "Year"])
+    merged_iea_pop = merged_iea_pop.dropna(axis = 0)
+    # print(merged_iea_pop)
+    merged_iea_pop["mt per person"] = merged_iea_pop["Value"].astype(int) / merged_iea_pop["pop"].astype(int)
+    print(merged_iea_pop)
+    return parse_json(iea_clean)
+   
+
 
     keys = iea_raw_data[0].keys()
     raw = iea_raw_data[0]["Raw"]
