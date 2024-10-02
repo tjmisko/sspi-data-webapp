@@ -26,6 +26,7 @@ def finalize_sspi_dynamic_line_data():
     """
     sspi_dynamic_line_data.delete_many({})
     for IndicatorCode in sspi_metadata.indicator_codes():
+        detail = sspi_metadata.get_detail(IndicatorCode)["Metadata"]
         indicator_dict = {}
         data = sspi_clean_api_data.find(
             {"IndicatorCode": IndicatorCode},
@@ -40,12 +41,21 @@ def finalize_sspi_dynamic_line_data():
             document = sorted(document, key=lambda x: x["Year"])
             document = {
                 "CCode": CountryCode,
+                "CName": country_code_to_name(CountryCode),
                 "ICode": IndicatorCode,
-                "label": f"{CountryCode} - {IndicatorCode}",
+                "IName": detail["Indicator"],
+                "CatCode": detail["CategoryCode"],
+                "CatName": detail["Category"],
+                "PilCode": detail["PillarCode"],
+                "PilName": detail["Pillar"],
+                "label": [
+                    f"{detail["Indicator"]} ({IndicatorCode})",
+                    f"{country_code_to_name(CountryCode)} ({CountryCode})"
+                ],
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],
                 "data": [round(d["Score"], 3) for d in document],
-                "values": [d["Value"] for d in document],
+                "values": [round(d["Value"], 3) for d in document],
             }
             sspi_dynamic_line_data.insert_one(document)
     return jsonify(sspi_dynamic_line_data.find({}, {"_id": 0}))

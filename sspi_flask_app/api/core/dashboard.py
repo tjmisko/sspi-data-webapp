@@ -143,7 +143,42 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         min_year = min(min_year, min(document["years"]))
         max_year = max(max_year, max(document["years"]))
     year_labels = [str(year) for year in range(min_year, max_year + 1)]
-    return jsonify({"data": dynamic_indicator_data, "labels": year_labels})
+    chart_title = f"{dynamic_indicator_data[0]["IName"]} ({IndicatorCode}) Score"
+    return jsonify({
+        "data": dynamic_indicator_data,
+        "title": {
+                "display": True,
+                "text": chart_title,
+                "font": {
+                    "size": 18
+                },
+                "color": "#ccc",
+                "align": "start"
+        },
+        "scales": {
+            "x": {
+                "title": {
+                    "display": True,
+                    "text": "Year",
+                    "color": "#bbb",
+                    "font": {
+                        "size": 16
+                    }
+                },
+            },
+            "y": {
+                "title": {
+                    "display": True,
+                    "text": f"{IndicatorCode} Score",
+                    "color": "#bbb",
+                    "font": {
+                        "size": 16
+                    }
+                },
+            }
+        },
+        "labels": year_labels
+    })
 
 
 @dashboard_bp.route('/static/radar/<CountryCode>')
