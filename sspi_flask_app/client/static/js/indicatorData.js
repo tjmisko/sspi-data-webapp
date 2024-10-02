@@ -22,8 +22,10 @@ function initCharts() {
     const StaticChart = new Chart(StaticCanvas, {
         type: 'bar',
         options: {
-            legend: {
-                display: false
+            plugins: {
+                legend: {
+                    display: false,
+                }
             },
             scales: {
                 y: {
@@ -31,15 +33,21 @@ function initCharts() {
                 }
             }
         }
-    })  
+    })
     const DynamicCanvas = document.getElementById('dynamic-chart')
     const DynamicChart = new Chart(DynamicCanvas, {
         type: 'line',
         options: {
             plugins: {
                 legend: {
-                    display: false
+                    display: false,
+                    position: 'bottom'
                 },
+                layout: {
+                    padding: {
+                        bottom: 50
+                    }
+                }
             },
             scales: {
                 y: {
@@ -62,6 +70,8 @@ function doDynamicChartUpdate(ChartData, ChartObject) {
     // ChartData returns two elements: dataset and labels
     ChartObject.data.labels = ChartData.labels
     ChartObject.data.datasets = ChartData.data
+    ChartObject.options.scales = ChartData.scales
+    ChartObject.options.plugins.title = ChartData.title
     // ChartData.forEach(document => {
     //     document.dataset.data = document.dataset.scores
     // })
@@ -117,3 +127,19 @@ const scaleOptions = document.getElementById('static-axis-scale')
 scaleOptions.addEventListener('change', () => {
     handleScaleAxis(StaticChart, scaleOptions.checked)
 })
+
+function showRandomN(ChartObject, N = 10) {
+    let shownIndexArray = Array(N).fill(0).map(
+        () => Math.floor(Math.random() * ChartObject.data.datasets.length)
+    )
+    ChartObject.data.datasets.forEach((dataset, index) => {
+        if (shownIndexArray.includes(index)) {
+            dataset.hidden = false
+        }
+        else {
+            dataset.hidden = true
+        }
+    })
+    ChartObject.options.plugins.legend.display = true
+    ChartObject.update()
+}

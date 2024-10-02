@@ -7,15 +7,17 @@ try{return response.json()}catch(error){console.error('Error:',error)}}
 async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/line/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 function initCharts(){const StaticCanvas=document.getElementById('static-chart')
-const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{legend:{display:false},scales:{y:{beginAtZero:true}}}})
+const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{plugins:{legend:{display:false,}},scales:{y:{beginAtZero:true}}}})
 const DynamicCanvas=document.getElementById('dynamic-chart')
-const DynamicChart=new Chart(DynamicCanvas,{type:'line',options:{plugins:{legend:{display:false},},scales:{y:{beginAtZero:true}}}})
+const DynamicChart=new Chart(DynamicCanvas,{type:'line',options:{plugins:{legend:{display:false,position:'bottom'},layout:{padding:{bottom:50}}},scales:{y:{beginAtZero:true}}}})
 return[StaticChart,DynamicChart]}
 [StaticChart,DynamicChart]=initCharts()
 function doStaticChartUpdate(ChartData,ChartObject){ChartObject.data=ChartData
 ChartObject.update()}
 function doDynamicChartUpdate(ChartData,ChartObject){ChartObject.data.labels=ChartData.labels
 ChartObject.data.datasets=ChartData.data
+ChartObject.options.scales=ChartData.scales
+ChartObject.options.plugins.title=ChartData.title
 ChartObject.update()}
 window.onresize=function(){StaticChart.resize()
 DynamicChart.resize()}
@@ -41,6 +43,11 @@ const sortOptions=document.getElementById('static-sort-order')
 sortOptions.addEventListener('change',()=>{handleSortOrder(StaticChart,sortOptions.checked)})
 const scaleOptions=document.getElementById('static-axis-scale')
 scaleOptions.addEventListener('change',()=>{handleScaleAxis(StaticChart,scaleOptions.checked)})
+function showRandomN(ChartObject,N=10){let shownIndexArray=Array(N).fill(0).map(()=>Math.floor(Math.random()*ChartObject.data.datasets.length))
+ChartObject.data.datasets.forEach((dataset,index)=>{if(shownIndexArray.includes(index)){dataset.hidden=false}
+else{dataset.hidden=true}})
+ChartObject.options.plugins.legend.display=true
+ChartObject.update()}
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})

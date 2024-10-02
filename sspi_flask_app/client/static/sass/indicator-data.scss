@@ -11,3 +11,14 @@ $mobile-break-width: 1135px;
 .chart-section { 
     padding: 60px;
 }
+
+.chart-section-title-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    button {
+      font-size: 16px;
+    } 
+}
