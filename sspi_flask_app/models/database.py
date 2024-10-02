@@ -617,6 +617,16 @@ class SSPIMetadata(MongoWrapper):
         """
         return self.find({"DocumentType": "IndicatorDetail"})
 
+    def get_detail(self, IndicatorCode: str) -> dict:
+        """
+        Return a list of documents containg indicator details
+        """
+        query = {
+            "DocumentType": "IndicatorDetail",
+            "Metadata.IndicatorCode": IndicatorCode
+        }
+        return self.find_one(query)
+
     def intermediate_details(self) -> list[dict]:
         """
         Return a list of documents containg intermediate details
