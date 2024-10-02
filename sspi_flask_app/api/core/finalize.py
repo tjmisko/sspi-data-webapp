@@ -39,14 +39,13 @@ def finalize_sspi_dynamic_line_data():
         for CountryCode, document in indicator_dict.items():
             document = sorted(document, key=lambda x: x["Year"])
             document = {
-                "CountryCode": CountryCode,
-                "IndicatorCode": IndicatorCode,
-                "dataset": {
-                    "label": f"{CountryCode} - {IndicatorCode}",
-                    "years": [d["Year"] for d in document],
-                    "scores": [d["Score"] for d in document],
-                    "values": [d["Value"] for d in document],
-                }
+                "CCode": CountryCode,
+                "ICode": IndicatorCode,
+                "label": f"{CountryCode} - {IndicatorCode}",
+                "years": [d["Year"] for d in document],
+                "scores": [round(d["Score"], 3) for d in document],
+                "data": [round(d["Score"], 3) for d in document],
+                "values": [d["Value"] for d in document],
             }
             sspi_dynamic_line_data.insert_one(document)
     return jsonify(sspi_dynamic_line_data.find({}, {"_id": 0}))
