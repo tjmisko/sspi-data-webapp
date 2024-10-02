@@ -9,7 +9,7 @@ async function getStaticData(IndicatorCode) {
 }
 
 async function getDynamicData(IndicatorCode) {
-    const response = await fetch(`/api/v1/dynamic/indicator/${IndicatorCode}`)
+    const response = await fetch(`/api/v1/dynamic/line/${IndicatorCode}`)
     try { 
         return response.json()
     } catch (error) {
@@ -53,8 +53,19 @@ function initCharts() {
 
 [StaticChart, DynamicChart] = initCharts()
 
-function doChartUpdate(ChartData, ChartObject) {
+function doStaticChartUpdate(ChartData, ChartObject) {
     ChartObject.data = ChartData
+    ChartObject.update()
+}
+
+function doDynamicChartUpdate(ChartData, ChartObject) {
+    // ChartData returns two elements: dataset and labels
+    ChartObject.data.labels = ChartData.labels
+    ChartObject.data.datasets = ChartData.data
+    // ChartData.forEach(document => {
+    //     document.dataset.data = document.dataset.scores
+    // })
+    // ChartObject.data.labels = ChartData.map(document => document.CountryCode)
     ChartObject.update()
 }
 
@@ -84,7 +95,7 @@ function handleSortOrder(ChartObject, SortByCountry) {
     if (SortByCountry) {
         const sorted_data = original_data.datasets[0].data.sort((a, b) => a.CountryCode.localeCompare(b.CountryCode))
         ChartObject.data.datasets[0].data = sorted_data
-        ChartObject.data.labels = sorted_data.map(document =>  document.CountryCode )   
+        ChartObject.data.labels = sorted_data.map(document => document.CountryCode)   
         // Sort inner data, then use that to sort labels...sort labels
         console.log('Sort by Country')
         // Sort Alphabetically

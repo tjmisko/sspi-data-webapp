@@ -4,7 +4,7 @@ $(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".d
 $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
 async function getStaticData(IndicatorCode){const response=await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
-async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/indicator/${IndicatorCode}`)
+async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/line/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 function initCharts(){const StaticCanvas=document.getElementById('static-chart')
 const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{legend:{display:false},scales:{y:{beginAtZero:true}}}})
@@ -12,7 +12,10 @@ const DynamicCanvas=document.getElementById('dynamic-chart')
 const DynamicChart=new Chart(DynamicCanvas,{type:'line',options:{plugins:{legend:{display:false},},scales:{y:{beginAtZero:true}}}})
 return[StaticChart,DynamicChart]}
 [StaticChart,DynamicChart]=initCharts()
-function doChartUpdate(ChartData,ChartObject){ChartObject.data=ChartData
+function doStaticChartUpdate(ChartData,ChartObject){ChartObject.data=ChartData
+ChartObject.update()}
+function doDynamicChartUpdate(ChartData,ChartObject){ChartObject.data.labels=ChartData.labels
+ChartObject.data.datasets=ChartData.data
 ChartObject.update()}
 window.onresize=function(){StaticChart.resize()
 DynamicChart.resize()}

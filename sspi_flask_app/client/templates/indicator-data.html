@@ -49,8 +49,8 @@
 </section>
 <script>
     window.addEventListener("load", (event) => {
-        getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
-        getDynamicData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, DynamicChart));
+        getStaticData("{{ IndicatorCode | upper }}").then(data => doStaticChartUpdate(data, StaticChart));
+        getDynamicData("{{ IndicatorCode | upper }}").then(data => doDynamicChartUpdate(data, DynamicChart))
     })
 </script>
 {% endblock content %}
