@@ -10,6 +10,8 @@ from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg, clean_IEA_data_GTRANS
 import pandas as pd
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 from pycountry import countries
 import csv
 import numpy as np
@@ -238,9 +240,11 @@ def compute_gtrans():
     df_iea = pd.DataFrame(iea_clean).loc[:, ["CountryCode", "Year", "Value"]]
     merged_iea_pop = df_iea.merge(pop_data, how = "left", on = ["CountryCode", "Year"])
     merged_iea_pop = merged_iea_pop.dropna(axis = 0)
-    merged_iea_pop["mt per person"] = merged_iea_pop["Value"].astype(int) / merged_iea_pop["pop"].astype(int)
-    print(merged_iea_pop)
-    return parse_json(iea_clean)
+    merged_iea_pop["tonnes"] = (merged_iea_pop["Value"]) * 10**6
+    merged_iea_pop["mt per person"] = merged_iea_pop["tonnes"].astype(int) / merged_iea_pop["pop"].astype(int)
+    filtered = merged_iea_pop[merged_iea_pop["Year"] == "2018"]
+    print(filtered)
+    return parse_json(filtered)
    
 
 
