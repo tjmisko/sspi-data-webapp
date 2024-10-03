@@ -20,7 +20,7 @@ ChartObject.options.scales=ChartData.scales
 ChartObject.options.plugins.title=ChartData.title
 ChartObject.update()}
 window.onresize=function(){StaticChart.resize()
-DynamicChart.resize()}
+}
 function handleScaleAxis(ChartObject,ScaleByValue){const original_data=ChartObject.data
 if(ScaleByValue){console.log('Scale by Value')
 ChartObject.data.datasets[0].parsing.yAxisKey='Value'
@@ -43,11 +43,30 @@ const sortOptions=document.getElementById('static-sort-order')
 sortOptions.addEventListener('change',()=>{handleSortOrder(StaticChart,sortOptions.checked)})
 const scaleOptions=document.getElementById('static-axis-scale')
 scaleOptions.addEventListener('change',()=>{handleScaleAxis(StaticChart,scaleOptions.checked)})
-function showRandomN(ChartObject,N=10){let shownIndexArray=Array(N).fill(0).map(()=>Math.floor(Math.random()*ChartObject.data.datasets.length))
-ChartObject.data.datasets.forEach((dataset,index)=>{if(shownIndexArray.includes(index)){dataset.hidden=false}
+class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
+this.IndicatorCode=IndicatorCode
+this.CountryList=CountryList
+this.root=document.createElement('div')
+this.root.classList.add('chart-section-dynamic-line')
+this.parentElement.appendChild(this.root)
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2>${IndicatorCode}</h2><button>Random N</button></div>`this.canvas=document.createElement('canvas')
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'line',options:{plugins:{legend:{display:false,}},scales:{y:{beginAtZero:true}}}})
+this.fetch().then(data=>{this.updateChart(data)})}
+async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+update(data){this.chart.data=data
+this.chart.data.labels=data.labels
+this.chart.data.datasets=data.data
+this.chart.options.scales=data.scales
+this.chart.options.plugins.title=data.title
+this.chart.update()}
+showRandomN(N=10){let shownIndexArray=Array(N).fill(0).map(()=>Math.floor(Math.random()*this.chart.data.datasets.length))
+this.chart.data.datasets.forEach((dataset,index)=>{if(shownIndexArray.includes(index)){dataset.hidden=false}
 else{dataset.hidden=true}})
-ChartObject.options.plugins.legend.display=true
-ChartObject.update()}
+this.chart.options.plugins.legend.display=true
+this.chart.update()}}
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})

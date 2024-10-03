@@ -128,18 +128,115 @@ scaleOptions.addEventListener('change', () => {
     handleScaleAxis(StaticChart, scaleOptions.checked)
 })
 
-function showRandomN(ChartObject, N = 10) {
-    let shownIndexArray = Array(N).fill(0).map(
-        () => Math.floor(Math.random() * ChartObject.data.datasets.length)
-    )
-    ChartObject.data.datasets.forEach((dataset, index) => {
-        if (shownIndexArray.includes(index)) {
-            dataset.hidden = false
+// function showRandomN(ChartObject, N = 10) {
+//     let shownIndexArray = Array(N).fill(0).map(
+//         () => Math.floor(Math.random() * ChartObject.data.datasets.length)
+//     )
+//     ChartObject.data.datasets.forEach((dataset, index) => {
+//         if (shownIndexArray.includes(index)) {
+//             dataset.hidden = false
+//         }
+//         else {
+//             dataset.hidden = true
+//         }
+//     })
+//     ChartObject.options.plugins.legend.display = true
+//     ChartObject.update()
+// }
+
+class DynamicLineChart {
+    // API:
+    // showRandomN(N) - Show N random countries
+    // update - 
+    constructor(parentElement, IndicatorCode, CountryList = []) {
+        // ParentElement is the element to attach the canvas to
+        // CountryList is an array of CountryCodes (empty array means all countries)
+        // Initialize the class
+        this.parentElement = parentElement
+        this.IndicatorCode = IndicatorCode
+        this.CountryList = CountryList
+
+        // Create the root element
+        this.root = document.createElement('div')
+        this.root.classList.add('chart-section-dynamic-line')
+        this.parentElement.appendChild(this.root)
+        this.root.innerHTML = `
+        <div class="chart-section-title-bar">
+            <h2>${IndicatorCode}</h2>
+            <div class="chart-section-title-bar-buttons">
+                <button class="draw-button">Draw 10 Countries</button>
+                <button class="reset-button">Reset</button>
+            </div>
+        </div>
+        `
+        this.rigTitleBarButtons()
+        // Initialize the canvas
+        this.canvas = document.createElement('canvas')
+        this.context = this.canvas.getContext('2d')
+        this.root.appendChild(this.canvas)
+
+        // Initialize the chart
+        this.chart = new Chart(this.context, {
+            type: 'line',
+            options: {
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        })
+
+        // Fetch data and update the chart
+            this.fetch().then(data => {
+                this.update(data)
+        })
+
+    }
+
+    rigTitleBarButtons() {
+        this.drawButton = this.root.querySelector('.draw-button')
+        this.drawButton.addEventListener('click', () => {
+            this.showRandomN(10)
+        })
+        this.resetButton = this.root.querySelector('.reset-button')
+        this.drawButton.addEventListener('click', () => {
+            this.showRandomN(10)
+        })
+    }
+
+    async fetch() {
+        const response = await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
+        try { 
+            return response.json()
+        } catch (error) {
+            console.error('Error:', error)
         }
-        else {
+    }
+
+    update(data) {
+        this.chart.data = data
+        this.chart.data.labels = data.labels
+        this.chart.data.datasets = data.data
+        this.chart.options.scales = data.scales
+        this.chart.options.plugins.title = data.title
+        this.chart.update()
+    }
+
+    showRandomN(N = 10) {
+        let shownIndexArray = Array(N).fill(0).map(
+            () => Math.floor(Math.random() * this.chart.data.datasets.length)
+        )
+        this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = true
-        }
-    })
-    ChartObject.options.plugins.legend.display = true
-    ChartObject.update()
+        })
+        shownIndexArray.forEach(index => {
+            this.chart.data.datasets[index].hidden = false
+        })
+    }
 }
