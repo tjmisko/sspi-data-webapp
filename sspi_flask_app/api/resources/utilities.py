@@ -8,6 +8,7 @@ import math
 from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_static_radar_data, sspi_dynamic_line_data
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
+
 def format_m49_as_string(input):
     """
     Utility function ensuring that all M49 data is correctly formatted as a
@@ -15,11 +16,12 @@ def format_m49_as_string(input):
     """
     input = int(input)
     if input >= 100:
-        return str(input) 
+        return str(input)
     elif input >= 10:
         return '0' + str(input)
     else: 
         return '00' + str(input)
+
 
 def jsonify_df(df:pd.DataFrame):
     """
@@ -27,12 +29,15 @@ def jsonify_df(df:pd.DataFrame):
     """
     return jsonify(json.loads(str(df.to_json(orient='records'))))
 
+
 def goalpost(value, lower, upper):
     """ Implement the goalposting formula"""
     return max(0, min(1, (value - lower)/(upper - lower)))
 
+
 def parse_json(data):
     return json.loads(json_util.dumps(data))
+
 
 def lookup_database(database_name):
     """
@@ -58,6 +63,7 @@ def lookup_database(database_name):
         return sspi_dynamic_line_data
     raise InvalidDatabaseError(database_name)
 
+
 def string_to_float(string):
     """
     Passes back string 'NaN' instead of float NaN
@@ -70,8 +76,10 @@ def string_to_float(string):
         return "NaN"
     return float(string)
 
+
 def string_to_int(string):
     return int(string)
+
 
 def missing_countries(sspi_country_list, source_country_list):
     missing_countries = []
@@ -80,12 +88,14 @@ def missing_countries(sspi_country_list, source_country_list):
             missing_countries.append(country)
     return missing_countries
 
+
 def added_countries(sspi_country_list, source_country_list):
     additional_countries = []
     for other_country in source_country_list:
         if other_country not in sspi_country_list:
             additional_countries.append(other_country)
     return additional_countries
+
 
 def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
     """
@@ -98,6 +108,7 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
     scored_indicator_document_list = score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy)
     return scored_indicator_document_list
 
+
 def convert_data_types(intermediate_document_list):
     """
     Utility function for converting data types in intermediate documents
@@ -106,7 +117,8 @@ def convert_data_types(intermediate_document_list):
         document["Year"] = int(document["Year"])
         document["Value"] = float(document["Value"])
     return intermediate_document_list
-    
+
+
 def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
     Utility function for appending goalpost information to a document
@@ -141,6 +153,7 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
         indicator_document_hashmap[document_id]["Intermediates"].append(document)
     return list(indicator_document_hashmap.values())
 
+
 def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
     """
     Utility function for scoring indicator documents
@@ -166,6 +179,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             document["Score"] = score
     return indicator_document_list
 
+
 def filter_incomplete_data(indicator_document_list):
     """
     Utility function for filtering incomplete observations resulting
@@ -185,6 +199,7 @@ def filter_incomplete_data(indicator_document_list):
             partial_observation_list.append(document)
     return filtered_list, partial_observation_list
 
+
 def score_single_indicator(document_list, IndicatorCode):
    """
     Utility function for scoring an indicator which does not contain intermediates; does not require score function
@@ -194,6 +209,7 @@ def score_single_indicator(document_list, IndicatorCode):
    [sspi_clean_api_data.validate_document_format(document) for document in document_list]
    return final
    
+
 def append_goalpost_single(document_list, IndicatorCode):
     details = sspi_metadata.find({"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})[0]
     for document in document_list:
@@ -202,11 +218,13 @@ def append_goalpost_single(document_list, IndicatorCode):
         document["Score"] = goalpost(document["Value"], details["Metadata"]["LowerGoalpost"], details["Metadata"]["UpperGoalpost"])
     return document_list
 
+
 def country_code_to_name(CountryCode):
     try:
         return pycountry.countries.get(alpha_3=CountryCode).name
     except AttributeError:
         return CountryCode
+
 
 def colormap(PillarCode, alpha:str="ff"):
     if PillarCode == "SUS":
