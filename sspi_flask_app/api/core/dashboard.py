@@ -147,6 +147,7 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         max_year = max(max_year, max(document["years"]))
     year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{dynamic_indicator_data[0]["IName"]} ({IndicatorCode}) Score"
+    group_options = sspi_metadata.country_groups()
     return jsonify({
         "data": dynamic_indicator_data,
         "title": {
@@ -158,32 +159,8 @@ def get_dynamic_indicator_line_data(IndicatorCode):
                 "color": "#ccc",
                 "align": "start"
         },
-        "scales": {
-            "x": {
-                "title": {
-                    "display": True,
-                    "text": "Year",
-                    "color": "#bbb",
-                    "font": {
-                        "size": 16
-                    }
-                },
-            },
-            "y": {
-                "beginAtZero": True,
-                "min": 0,
-                "max": 1,
-                "title": {
-                    "display": True,
-                    "text": "Indicator Score",
-                    "color": "#bbb",
-                    "font": {
-                        "size": 16
-                    }
-                },
-            }
-        },
-        "labels": year_labels
+        "labels": year_labels,
+        "groupOptions": group_options
     })
 
 

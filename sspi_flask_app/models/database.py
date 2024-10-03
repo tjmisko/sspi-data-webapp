@@ -523,13 +523,19 @@ class SSPIMetadata(MongoWrapper):
             os.path.join(local_path, "IndicatorDetails.csv"))
         intermediate_details = pd.read_csv(
             os.path.join(local_path, "IntermediateDetails.csv"))
-        metadata = self.build_metadata(indicator_details, intermediate_details)
+        with open(os.path.join(local_path, "CountryGroups.json")) as file:
+            country_groups = json.load(file)
+        metadata = self.build_metadata(
+            indicator_details,
+            intermediate_details,
+            country_groups
+        )
         count = self.insert_many(metadata)
         self.drop_duplicates()
         print(f"Successfully loaded {count} documents into {self.name}")
         return count
 
-    def build_metadata(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame) -> list:
+    def build_metadata(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame, country_groups: dict) -> list:
         """
         Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
         """
@@ -538,7 +544,7 @@ class SSPIMetadata(MongoWrapper):
         metadata.append(self.build_category_codes(indicator_details))
         metadata.append(self.build_indicator_codes(indicator_details))
         metadata.append(self.build_intermediate_codes(intermediate_details))
-        metadata.append(self.build_country_groups())
+        metadata.extend(self.build_country_groups(country_groups))
         metadata.extend(self.build_intermediate_details(intermediate_details))
         metadata.extend(self.build_indicator_details(
             indicator_details, intermediate_details))
@@ -561,8 +567,21 @@ class SSPIMetadata(MongoWrapper):
         ).tolist()
         return {"DocumentType": "IntermediateCodes", "Metadata": intermediate_codes}
 
-    def build_country_groups(self) -> dict:
-        return {"DocumentType": "CountryGroups", "Metadata": ["SSPI49", "SSPI67", "G20", "OECD", "EU28", "BRICS"]}
+    def build_country_groups(self, country_groups: dict) -> list[dict]:
+        country_groups_lookup = [{
+            "DocumentType": "CountryGroups",
+            "Metadata": list(country_groups.keys())
+        }]
+        country_group_list = []
+        for group_name, codelist in country_groups.items():
+            country_group_list.append({
+                "DocumentType": "CountryGroup",
+                "Metadata": {
+                    "CountryGroupName": group_name,
+                    "Countries": codelist
+                }
+            })
+        return country_groups_lookup + country_group_list
 
     def build_intermediate_details(self, intermediate_details: pd.DataFrame) -> list[dict]:
         intermediate_details_list = json.loads(
@@ -610,6 +629,17 @@ class SSPIMetadata(MongoWrapper):
         Return a list of all country groups in the database
         """
         return self.find_one({"DocumentType": "CountryGroups"})["Metadata"]
+
+    def get_country_groups(self, CountryCode: str) -> list[str]:
+        """
+        Return a list containing the group names to which the country belongs
+        """
+        groups = self.find({"DocumentType": "CountryGroup"})
+        group_list = []
+        for g in groups:
+            if CountryCode in g["Metadata"]["Countries"]:
+                group_list.append(g["Metadata"]["CountryGroupName"])
+        return group_list
 
     def indicator_details(self) -> list[dict]:
         """

@@ -50,7 +50,6 @@ function doDynamicChartUpdate(ChartData, ChartObject) {
 
 window.onresize = function() {
     StaticChart.resize()
-    DynamicChart.resize()
 }
 
 function handleScaleAxis(ChartObject, ScaleByValue) {
@@ -133,8 +132,9 @@ class DynamicLineChart {
         this.fixedArray = Array()
 
         this.initRoot()
-        this.initChartJSCanvas()
         this.rigTitleBarButtons()
+        this.rigCountryGroupSelector()
+        this.initChartJSCanvas()
         this.rigLegend()
 
         // Fetch data and update the chart
@@ -196,6 +196,31 @@ class DynamicLineChart {
                         right: 40
                     }
                 },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year',
+                            color: '#bbb',
+                            font: {
+                                size: 16
+                            }
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: 'Indicator Score',
+                            color: '#bbb',
+                            font: {
+                                size: 16
+                            }
+                        },
+                    }
+                }
             },
             plugins: [endLabelPlugin]
         })
@@ -214,6 +239,60 @@ class DynamicLineChart {
         this.hideAllButton.addEventListener('click', () => {
             this.hideAll()
         })
+    }
+    rigCountryGroupSelector() {
+        const container = document.createElement('div')
+        container.id = 'country-group-selector-container'
+        this.countryGroupContainer = this.root.appendChild(container)
+    }
+
+    updateCountryGroups() {
+
+        const numOptions = this.groupOptions.length;
+        this.countryGroupContainer.style.setProperty('--num-options', numOptions);
+
+        this.groupOptions.forEach((option, index) => {
+            const id = `option${index+1}`;
+
+            // Create the radio input
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.id = id;
+            input.name = 'options';
+            input.value = option;
+
+            // Set the first option as checked by default
+            if (index === 0) {
+                input.checked = true;
+                // Set the initial selected index
+                this.countryGroupContainer.style.setProperty('--selected-index', index);
+            }
+
+            // Add event listener to update the selected index
+            input.addEventListener('change', () => {
+                const countryGroupOptions = document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);
+                countryGroupOptions.forEach((countryGroup, index) => {
+                    if (countryGroup.checked) {
+                        this.countryGroupContainer.style.setProperty('--selected-index', index);
+                        this.showGroup(countryGroup.value)
+                    }
+                });
+            });
+
+          // Create the label
+          const label = document.createElement('label');
+          label.htmlFor = id;
+          label.textContent = option;
+
+          // Append input and label to the container
+          this.countryGroupContainer.appendChild(input);
+          this.countryGroupContainer.appendChild(label);
+        });
+
+        // Create the sliding indicator
+        const slider = document.createElement('div');
+        slider.className = 'slider';
+        this.countryGroupContainer.appendChild(slider);
     }
 
     rigLegend() {
@@ -244,15 +323,28 @@ class DynamicLineChart {
         this.chart.data = data
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
-        this.chart.options.scales = data.scales
         this.chart.options.plugins.title = data.title
+        this.groupOptions = data.groupOptions
         this.chart.update()
+        this.updateCountryGroups()
     }
 
     showAll() {
         console.log('Showing all countries')
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
+        })
+        this.chart.update({duration: 0, lazy: false})
+    }
+
+    showGroup(groupName) {
+        console.log('Showing group:', groupName)
+        this.chart.data.datasets.forEach((dataset) => {
+            if (dataset.CGroup.includes(groupName)) {
+                dataset.hidden = false
+            } else {
+                dataset.hidden = true
+            }
         })
         this.chart.update({duration: 0, lazy: false})
     }

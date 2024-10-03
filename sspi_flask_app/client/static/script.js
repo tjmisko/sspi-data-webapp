@@ -15,8 +15,7 @@ ChartObject.data.datasets=ChartData.data
 ChartObject.options.scales=ChartData.scales
 ChartObject.options.plugins.title=ChartData.title
 ChartObject.update()}
-window.onresize=function(){StaticChart.resize()
-DynamicChart.resize()}
+window.onresize=function(){StaticChart.resize()}
 function handleScaleAxis(ChartObject,ScaleByValue){const original_data=ChartObject.data
 if(ScaleByValue){console.log('Scale by Value')
 ChartObject.data.datasets[0].parsing.yAxisKey='Value'
@@ -46,8 +45,10 @@ this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
 this.fixedArray=Array()
 this.initRoot()
-this.initChartJSCanvas()
 this.rigTitleBarButtons()
+this.rigCountryGroupSelector()
+this.initChartJSCanvas()
+this.rigLegend()
 this.fetch().then(data=>{this.update(data)})}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
@@ -59,21 +60,36 @@ this.canvas.width=400
 this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.chart.data.datasets[element.datasetIndex].fixed=!this.chart.data.datasets[element.datasetIndex].fixed})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{y:{beginAtZero:true,min:0,suggestedMin:0,max:1,suggestedMax:1}}},plugins:[endLabelPlugin]})}
+this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+dataset.fixed=!dataset.fixed
+if(dataset.fixed){this.fixedArray.push(dataset.CCode)}else{this.fixedArray=this.fixedArray.filter((item)=>item!==dataset.CCode)}
+this.updateLegend()})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{x:{title:{display:true,text:'Year',color:'#bbb',font:{size:16}},},y:{beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:'#bbb',font:{size:16}},}}},plugins:[endLabelPlugin]})}
 rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
 this.hideAllButton=this.root.querySelector('.hideall-button')
 this.hideAllButton.addEventListener('click',()=>{this.hideAll()})}
+rigCountryGroupSelector(){const container=document.createElement('div')
+container.id='country-group-selector-container'
+this.countryGroupContainer=this.root.appendChild(container)}
+updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGroupContainer.style.setProperty('--num-options',numOptions);this.groupOptions.forEach((option,index)=>{const id=`option${index+1}`;const input=document.createElement('input');input.type='radio';input.id=id;input.name='options';input.value=option;if(index===0){input.checked=true;this.countryGroupContainer.style.setProperty('--selected-index',index);}
+input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);console.log(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
+rigLegend(){const legend=document.createElement('legend')
+legend.classList.add('dynamic-line-legend')
+this.legend=this.root.appendChild(legend)
+console.log(this.legend)}
+updateLegend(){this.legend.innerHTML=''
+this.fixedArray.forEach((CCode)=>{this.legend.innerHTML+=`<div class="legend-item">${CCode}</div>`})}
 async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
-this.chart.options.scales=data.scales
 this.chart.options.plugins.title=data.title
-this.chart.update()}
+this.groupOptions=data.groupOptions
+this.chart.update()
+this.updateCountryGroups()}
 showAll(){console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
 this.chart.update({duration:0,lazy:false})}

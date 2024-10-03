@@ -48,6 +48,7 @@ def finalize_sspi_dynamic_line_data():
                 "CatName": detail["Category"],
                 "PilCode": detail["PillarCode"],
                 "PilName": detail["Pillar"],
+                "CGroup": sspi_metadata.get_country_groups(CountryCode),
                 "fixed": False,
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],
