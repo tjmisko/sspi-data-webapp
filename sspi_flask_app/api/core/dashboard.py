@@ -107,8 +107,13 @@ def get_static_indicator_data(IndicatorCode):
     """
     static_data = parse_json(sspi_main_data_v3.find(
         {"IndicatorCode": IndicatorCode}, {"_id": 0}))
-    data_series = [{"Year": document["Year"], "CountryCode": document["CountryCode"], "Rank": document["Rank"],
-                    "Score": document["Score"], "Value": document["Value"]} for document in static_data]
+    data_series = [{
+        "Year": document["Year"],
+        "CountryCode": document["CountryCode"],
+        "Rank": document["Rank"],
+        "Score": document["Score"],
+        "Value": document["Value"]
+    } for document in static_data]
     labels = [document["CountryCode"] for document in static_data]
     chart_data = {
         "labels": labels,
@@ -130,11 +135,9 @@ def get_dynamic_indicator_line_data(IndicatorCode):
     Get the dynamic data for the given indicator code for a line chart
     """
     country_query = request.args.getlist("CountryCode")
-    print(country_query)
     query = {"ICode": IndicatorCode}
     if country_query:
         query["CCode"] = {"$in": country_query}
-    print(query)
     dynamic_indicator_data = parse_json(
         sspi_dynamic_line_data.find(query, {"_id": 0})
     )
