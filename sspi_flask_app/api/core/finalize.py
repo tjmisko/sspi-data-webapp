@@ -39,6 +39,7 @@ def finalize_sspi_dynamic_line_data():
             indicator_dict[CountryCode].append(observation)
         for CountryCode, document in indicator_dict.items():
             document = sorted(document, key=lambda x: x["Year"])
+            group_list = sspi_metadata.get_country_groups(CountryCode)
             document = {
                 "CCode": CountryCode,
                 "CName": country_code_to_name(CountryCode),
@@ -48,8 +49,9 @@ def finalize_sspi_dynamic_line_data():
                 "CatName": detail["Category"],
                 "PilCode": detail["PillarCode"],
                 "PilName": detail["Pillar"],
-                "CGroup": sspi_metadata.get_country_groups(CountryCode),
+                "CGroup": group_list,
                 "fixed": False,
+                "hidden": (lambda group_list: False if "SSPI49" in group_list else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],

@@ -74,7 +74,7 @@ rigCountryGroupSelector(){const container=document.createElement('div')
 container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}
 updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGroupContainer.style.setProperty('--num-options',numOptions);this.groupOptions.forEach((option,index)=>{const id=`option${index+1}`;const input=document.createElement('input');input.type='radio';input.id=id;input.name='options';input.value=option;if(index===0){input.checked=true;this.countryGroupContainer.style.setProperty('--selected-index',index);}
-input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);console.log(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
+input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
 rigLegend(){const legend=document.createElement('legend')
 legend.classList.add('dynamic-line-legend')
 this.legend=this.root.appendChild(legend)
@@ -92,6 +92,9 @@ this.chart.update()
 this.updateCountryGroups()}
 showAll(){console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
+this.chart.update({duration:0,lazy:false})}
+showGroup(groupName){console.log('Showing group:',groupName)
+this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)){dataset.hidden=false}else{dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
 hideAll(){console.log('Hiding all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=true})
