@@ -170,9 +170,12 @@ def get_dynamic_indicator_line_data(IndicatorCode):
                 },
             },
             "y": {
+                "beginAtZero": True,
+                "min": 0,
+                "max": 1,
                 "title": {
                     "display": True,
-                    "text": f"{IndicatorCode} Score",
+                    "text": "Indicator Score",
                     "color": "#bbb",
                     "font": {
                         "size": 16

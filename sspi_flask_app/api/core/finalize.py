@@ -48,10 +48,8 @@ def finalize_sspi_dynamic_line_data():
                 "CatName": detail["Category"],
                 "PilCode": detail["PillarCode"],
                 "PilName": detail["Pillar"],
-                "label": [
-                    f"{detail["Indicator"]} ({IndicatorCode})",
-                    f"{country_code_to_name(CountryCode)} ({CountryCode})"
-                ],
+                "fixed": False,
+                "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],
                 "data": [round(d["Score"], 3) for d in document],

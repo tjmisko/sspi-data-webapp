@@ -44,25 +44,12 @@
     </fieldset>
 </section>
 <section class="chart-section" id="dynamic-data-section">
-    <div class="chart-section-dynamic-line">
-        <div class="chart-section-title-bar">
-            <h2> Dynamic Data </h2>
-            <button onclick="showRandomN(DynamicChart, 10)"> Show Random 10 Countries </button>
-        </div>
-        <canvas id="dynamic-chart"></canvas>
-        <legend> Chart Options </legend>
-    <div>
-</section>
-<section class="chart-section" id="dynamic-data-test">
-    <script defer>
-        const parentElement = document.getElementById("dynamic-data-test")
-        const DynamicLineTest = new DynamicLineChart(parentElement, {{ IndicatorCode | upper }})
-    </script>
 </section>
 <script>
     window.addEventListener("load", (event) => {
         getStaticData("{{ IndicatorCode | upper }}").then(data => doStaticChartUpdate(data, StaticChart));
-        getDynamicData("{{ IndicatorCode | upper }}").then(data => doDynamicChartUpdate(data, DynamicChart))
+        const parentElement = document.getElementById("dynamic-data-section");
+        window.IndicatorDynamicLine = new DynamicLineChart(parentElement, "{{ IndicatorCode | upper }}")
     })
 </script>
 {% endblock content %}

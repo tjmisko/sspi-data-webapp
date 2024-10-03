@@ -4,14 +4,10 @@ $(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".d
 $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
 async function getStaticData(IndicatorCode){const response=await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
-async function getDynamicData(IndicatorCode){const response=await fetch(`/api/v1/dynamic/line/${IndicatorCode}`)
-try{return response.json()}catch(error){console.error('Error:',error)}}
 function initCharts(){const StaticCanvas=document.getElementById('static-chart')
 const StaticChart=new Chart(StaticCanvas,{type:'bar',options:{plugins:{legend:{display:false,}},scales:{y:{beginAtZero:true}}}})
-const DynamicCanvas=document.getElementById('dynamic-chart')
-const DynamicChart=new Chart(DynamicCanvas,{type:'line',options:{plugins:{legend:{display:false,position:'bottom'},layout:{padding:{bottom:50}}},scales:{y:{beginAtZero:true}}}})
-return[StaticChart,DynamicChart]}
-[StaticChart,DynamicChart]=initCharts()
+return[StaticChart]}
+[StaticChart]=initCharts()
 function doStaticChartUpdate(ChartData,ChartObject){ChartObject.data=ChartData
 ChartObject.update()}
 function doDynamicChartUpdate(ChartData,ChartObject){ChartObject.data.labels=ChartData.labels
@@ -20,7 +16,7 @@ ChartObject.options.scales=ChartData.scales
 ChartObject.options.plugins.title=ChartData.title
 ChartObject.update()}
 window.onresize=function(){StaticChart.resize()
-}
+DynamicChart.resize()}
 function handleScaleAxis(ChartObject,ScaleByValue){const original_data=ChartObject.data
 if(ScaleByValue){console.log('Scale by Value')
 ChartObject.data.datasets[0].parsing.yAxisKey='Value'
@@ -43,17 +39,33 @@ const sortOptions=document.getElementById('static-sort-order')
 sortOptions.addEventListener('change',()=>{handleSortOrder(StaticChart,sortOptions.checked)})
 const scaleOptions=document.getElementById('static-axis-scale')
 scaleOptions.addEventListener('change',()=>{handleScaleAxis(StaticChart,scaleOptions.checked)})
+const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart,args,options){const{ctx,chartArea:{top,bottom},scales:{x,y}}=chart;chart.data.datasets.forEach(function(dataset,i){if(dataset.hidden){return;}
+const meta=chart.getDatasetMeta(i);const lastPoint=meta.data[meta.data.length-1];const value=dataset.CCode;ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor;ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();});}}
 class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
-this.root=document.createElement('div')
+this.fixedArray=Array()
+this.initRoot()
+this.initChartJSCanvas()
+this.rigTitleBarButtons()
+this.fetch().then(data=>{this.update(data)})}
+initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2>${IndicatorCode}</h2><button>Random N</button></div>`this.canvas=document.createElement('canvas')
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2>Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideall-button">Hide All</button></div></div>`}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id='dynamic-line-chart-canvas'
+this.canvas.width=400
+this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',options:{plugins:{legend:{display:false,}},scales:{y:{beginAtZero:true}}}})
-this.fetch().then(data=>{this.updateChart(data)})}
+this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.chart.data.datasets[element.datasetIndex].fixed=!this.chart.data.datasets[element.datasetIndex].fixed})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{y:{beginAtZero:true,min:0,suggestedMin:0,max:1,suggestedMax:1}}},plugins:[endLabelPlugin]})}
+rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
+this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
+this.showAllButton=this.root.querySelector('.showall-button')
+this.showAllButton.addEventListener('click',()=>{this.showAll()})
+this.hideAllButton=this.root.querySelector('.hideall-button')
+this.hideAllButton.addEventListener('click',()=>{this.hideAll()})}
 async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){this.chart.data=data
@@ -62,11 +74,18 @@ this.chart.data.datasets=data.data
 this.chart.options.scales=data.scales
 this.chart.options.plugins.title=data.title
 this.chart.update()}
-showRandomN(N=10){let shownIndexArray=Array(N).fill(0).map(()=>Math.floor(Math.random()*this.chart.data.datasets.length))
-this.chart.data.datasets.forEach((dataset,index)=>{if(shownIndexArray.includes(index)){dataset.hidden=false}
-else{dataset.hidden=true}})
-this.chart.options.plugins.legend.display=true
-this.chart.update()}}
+showAll(){console.log('Showing all countries')
+this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
+this.chart.update({duration:0,lazy:false})}
+hideAll(){console.log('Hiding all countries')
+this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=true})
+this.chart.update({duration:0,lazy:false})}
+showRandomN(N=10){console.log('Showing',N,'random countries')
+let shownIndexArray=Array(N).fill(0).map(()=>Math.floor(Math.random()*this.chart.data.datasets.length))
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.fixed){dataset.hidden=true}})
+shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
+console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
+this.chart.update({duration:0,lazy:false})}}
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})

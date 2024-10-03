@@ -1,16 +1,7 @@
 // Static Data
 async function getStaticData(IndicatorCode) {
     const response = await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
-    try { 
-        return response.json()
-    } catch (error) {
-        console.error('Error:', error)
-    }
-}
-
-async function getDynamicData(IndicatorCode) {
-    const response = await fetch(`/api/v1/dynamic/line/${IndicatorCode}`)
-    try { 
+    try {
         return response.json()
     } catch (error) {
         console.error('Error:', error)
@@ -34,32 +25,10 @@ function initCharts() {
             }
         }
     })
-    const DynamicCanvas = document.getElementById('dynamic-chart')
-    const DynamicChart = new Chart(DynamicCanvas, {
-        type: 'line',
-        options: {
-            plugins: {
-                legend: {
-                    display: false,
-                    position: 'bottom'
-                },
-                layout: {
-                    padding: {
-                        bottom: 50
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    })  
-    return [StaticChart, DynamicChart]
+    return [StaticChart]
 }
 
-[StaticChart, DynamicChart] = initCharts()
+[StaticChart] = initCharts()
 
 function doStaticChartUpdate(ChartData, ChartObject) {
     ChartObject.data = ChartData
@@ -105,14 +74,14 @@ function handleSortOrder(ChartObject, SortByCountry) {
     if (SortByCountry) {
         const sorted_data = original_data.datasets[0].data.sort((a, b) => a.CountryCode.localeCompare(b.CountryCode))
         ChartObject.data.datasets[0].data = sorted_data
-        ChartObject.data.labels = sorted_data.map(document => document.CountryCode)   
+        ChartObject.data.labels = sorted_data.map(document => document.CountryCode)
         // Sort inner data, then use that to sort labels...sort labels
         console.log('Sort by Country')
         // Sort Alphabetically
     } else {
         const sorted_data = original_data.datasets[0].data.sort((a, b) => a.Value - b.Value)
         ChartObject.data.datasets[0].data = sorted_data
-        ChartObject.data.labels = sorted_data.map(document =>  document.CountryCode )
+        ChartObject.data.labels = sorted_data.map(document => document.CountryCode)
         console.log('Sort by Value')
     }
     ChartObject.update()
@@ -128,26 +97,30 @@ scaleOptions.addEventListener('change', () => {
     handleScaleAxis(StaticChart, scaleOptions.checked)
 })
 
-// function showRandomN(ChartObject, N = 10) {
-//     let shownIndexArray = Array(N).fill(0).map(
-//         () => Math.floor(Math.random() * ChartObject.data.datasets.length)
-//     )
-//     ChartObject.data.datasets.forEach((dataset, index) => {
-//         if (shownIndexArray.includes(index)) {
-//             dataset.hidden = false
-//         }
-//         else {
-//             dataset.hidden = true
-//         }
-//     })
-//     ChartObject.options.plugins.legend.display = true
-//     ChartObject.update()
-// }
+const endLabelPlugin = {
+    id: 'endLabelPlugin',
+    afterDatasetsDraw(chart, args, options) {
+        const { ctx, chartArea: { top, bottom }, scales: { x, y } } = chart;
+
+        chart.data.datasets.forEach(function(dataset, i) {
+            if (dataset.hidden) {
+                return;
+            }
+            const meta = chart.getDatasetMeta(i);
+            const lastPoint = meta.data[meta.data.length - 1];
+            const value = dataset.CCode;
+
+            ctx.save();
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = dataset.borderColor;
+            ctx.textAlign = 'left';
+            ctx.fillText(value, lastPoint.x + 5, lastPoint.y + 4);
+            ctx.restore();
+        });
+    }
+}
 
 class DynamicLineChart {
-    // API:
-    // showRandomN(N) - Show N random countries
-    // update - 
     constructor(parentElement, IndicatorCode, CountryList = []) {
         // ParentElement is the element to attach the canvas to
         // CountryList is an array of CountryCodes (empty array means all countries)
@@ -156,47 +129,76 @@ class DynamicLineChart {
         this.IndicatorCode = IndicatorCode
         this.CountryList = CountryList
 
+        // fixedArray contains a list of fixed countries
+        this.fixedArray = Array()
+
+        this.initRoot()
+        this.initChartJSCanvas()
+        this.rigTitleBarButtons()
+        this.rigLegend()
+
+        // Fetch data and update the chart
+        this.fetch().then(data => {
+            this.update(data)
+        })
+
+        
+    }
+
+    initRoot() {
         // Create the root element
         this.root = document.createElement('div')
         this.root.classList.add('chart-section-dynamic-line')
         this.parentElement.appendChild(this.root)
         this.root.innerHTML = `
         <div class="chart-section-title-bar">
-            <h2>${IndicatorCode}</h2>
+            <h2>Dynamic Indicator Data</h2>
             <div class="chart-section-title-bar-buttons">
                 <button class="draw-button">Draw 10 Countries</button>
-                <button class="reset-button">Reset</button>
+                <button class="showall-button">Show All</button>
+                <button class="hideall-button">Hide All</button>
             </div>
         </div>
         `
-        this.rigTitleBarButtons()
-        // Initialize the canvas
+    }
+
+    initChartJSCanvas() {
+        // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
+        this.canvas.id = 'dynamic-line-chart-canvas'
+        this.canvas.width = 400
+        this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
-
-        // Initialize the chart
         this.chart = new Chart(this.context, {
             type: 'line',
             options: {
+                onClick: (event, elements) => {
+                    elements.forEach(element => {
+                        const dataset = this.chart.data.datasets[element.datasetIndex]
+                        dataset.fixed = !dataset.fixed
+                        if (dataset.fixed) {
+                            this.fixedArray.push(dataset.CCode)
+                        } else {
+                            this.fixedArray = this.fixedArray.filter((item) => item !== dataset.CCode)
+                        }
+                        this.updateLegend()
+                    })
+                },
                 plugins: {
                     legend: {
                         display: false,
+                    },
+                    endLabelPlugin: {}
+                },
+                layout: {
+                    padding: {
+                        right: 40
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            },
+            plugins: [endLabelPlugin]
         })
-
-        // Fetch data and update the chart
-            this.fetch().then(data => {
-                this.update(data)
-        })
-
     }
 
     rigTitleBarButtons() {
@@ -204,15 +206,34 @@ class DynamicLineChart {
         this.drawButton.addEventListener('click', () => {
             this.showRandomN(10)
         })
-        this.resetButton = this.root.querySelector('.reset-button')
-        this.drawButton.addEventListener('click', () => {
-            this.showRandomN(10)
+        this.showAllButton = this.root.querySelector('.showall-button')
+        this.showAllButton.addEventListener('click', () => {
+            this.showAll()
+        })
+        this.hideAllButton = this.root.querySelector('.hideall-button')
+        this.hideAllButton.addEventListener('click', () => {
+            this.hideAll()
         })
     }
 
+    rigLegend() {
+        const legend = document.createElement('legend')
+        legend.classList.add('dynamic-line-legend') 
+        this.legend = this.root.appendChild(legend)
+        console.log(this.legend)
+    }
+
+    updateLegend() {
+        this.legend.innerHTML = ''
+        this.fixedArray.forEach((CCode) => {
+            this.legend.innerHTML += `<div class="legend-item">${CCode}</div>`
+        })
+    }
+
+
     async fetch() {
         const response = await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
-        try { 
+        try {
             return response.json()
         } catch (error) {
             console.error('Error:', error)
@@ -228,15 +249,37 @@ class DynamicLineChart {
         this.chart.update()
     }
 
+    showAll() {
+        console.log('Showing all countries')
+        this.chart.data.datasets.forEach((dataset) => {
+            dataset.hidden = false
+        })
+        this.chart.update({duration: 0, lazy: false})
+    }
+
+    hideAll() {
+        console.log('Hiding all countries')
+        this.chart.data.datasets.forEach((dataset) => {
+            dataset.hidden = true
+        })
+        this.chart.update({duration: 0, lazy: false})
+    }
+
     showRandomN(N = 10) {
+        console.log('Showing', N, 'random countries')
         let shownIndexArray = Array(N).fill(0).map(
             () => Math.floor(Math.random() * this.chart.data.datasets.length)
         )
         this.chart.data.datasets.forEach((dataset) => {
-            dataset.hidden = true
+            if ( !dataset.fixed ) {
+                dataset.hidden = true
+            }
         })
-        shownIndexArray.forEach(index => {
+        shownIndexArray.forEach((index) => {
             this.chart.data.datasets[index].hidden = false
+            console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
         })
+        this.chart.update({duration: 0, lazy: false})
     }
+
 }
