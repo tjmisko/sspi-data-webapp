@@ -43,9 +43,8 @@ const meta=chart.getDatasetMeta(i);const lastPoint=meta.data[meta.data.length-1]
 class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
-this.fixedArray=Array()
+this.pinnedArray=Array()
 this.initRoot()
-this.rigTitleBarButtons()
 this.rigCountryGroupSelector()
 this.initChartJSCanvas()
 this.rigLegend()
@@ -53,23 +52,31 @@ this.fetch().then(data=>{this.update(data)})}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2>Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideall-button">Hide All</button></div></div>`}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=400
-this.canvas.height=300
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
-dataset.fixed=!dataset.fixed
-if(dataset.fixed){this.fixedArray.push(dataset.CCode)}else{this.fixedArray=this.fixedArray.filter((item)=>item!==dataset.CCode)}
-this.updateLegend()})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{x:{title:{display:true,text:'Year',color:'#bbb',font:{size:16}},},y:{beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:'#bbb',font:{size:16}},}}},plugins:[endLabelPlugin]})}
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2>Dynamic Indicator Data</h2><div class="group-individual-selector-container"><input type="radio"id="group"name="group-individual"value="group"><label for="group">Group</label><input type="radio"id="individual"name="group-individual"value="individual"><label for="individual">Individual</label></div><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideall-button">Hide All</button><button class="saveprefs-button">Save Prefs</button></div></div>`this.rigGroupIndividualSelector()
+this.rigTitleBarButtons()}
 rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
 this.hideAllButton=this.root.querySelector('.hideall-button')
-this.hideAllButton.addEventListener('click',()=>{this.hideAll()})}
+this.hideAllButton.addEventListener('click',()=>{this.hideAll()})
+this.saveAllButton=this.root.querySelector('.saveprefs-button')
+this.saveAllButton.addEventListener('click',()=>{this.sendPrefs()})}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id='dynamic-line-chart-canvas'
+this.canvas.width=400
+this.canvas.height=200
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+dataset.pinned=!dataset.pinned
+if(dataset.pinned){this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}else{this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}
+this.updateLegend()})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{x:{ticks:{color:'#bbb',},title:{display:true,text:'Year',color:'#bbb',font:{size:16}},},y:{ticks:{color:'#bbb',},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:'#bbb',font:{size:16}},}}},plugins:[endLabelPlugin]})}
+rigGroupIndividualSelector(){const container=this.root.querySelector('.group-individual-selector-container')
+const options=container.querySelectorAll('input[type="radio"]')
+options.forEach((option,index)=>{if(index===0){option.checked=true}
+option.addEventListener('change',()=>{if(option.value==='group'){console.log('Group Selected')}else{console.log('Individual Selected')}})})
+}
 rigCountryGroupSelector(){const container=document.createElement('div')
 container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}
@@ -77,16 +84,18 @@ updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGrou
 input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
 rigLegend(){const legend=document.createElement('legend')
 legend.classList.add('dynamic-line-legend')
-this.legend=this.root.appendChild(legend)
-console.log(this.legend)}
-updateLegend(){this.legend.innerHTML=''
-this.fixedArray.forEach((CCode)=>{this.legend.innerHTML+=`<div class="legend-item">${CCode}</div>`})}
+legend.innerHTML=''
+this.legend=this.root.appendChild(legend)}
+updateLegend(){if(this.pinnedArray.length===0){this.legend.innerHTML=''}
+else{this.legend.innerHTML='<h4>Pinned Countries</h4>'
+this.pinnedArray.forEach((PinnedCountry)=>{this.legend.innerHTML+=`<div class="legend-item">${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</div>`})}}
 async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
+this.pinnedArray=data.chartPreferences.pinnedArray
 this.groupOptions=data.groupOptions
 this.chart.update()
 this.updateCountryGroups()}
@@ -94,17 +103,25 @@ showAll(){console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
 this.chart.update({duration:0,lazy:false})}
 showGroup(groupName){console.log('Showing group:',groupName)
-this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)){dataset.hidden=false}else{dataset.hidden=true}})
+this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
 hideAll(){console.log('Hiding all countries')
-this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=true})
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
-showRandomN(N=10){console.log('Showing',N,'random countries')
-let shownIndexArray=Array(N).fill(0).map(()=>Math.floor(Math.random()*this.chart.data.datasets.length))
-this.chart.data.datasets.forEach((dataset)=>{if(!dataset.fixed){dataset.hidden=true}})
+showRandomN(N=10){const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+let availableDatasetIndices=[]
+this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
+console.log('Showing',N,'random countries from group',activeGroup)
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
+let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
 shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
 console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
-this.chart.update({duration:0,lazy:false})}}
+this.chart.update({duration:0,lazy:false})}
+sendPrefs(){console.log('Sending preferences')
+console.log(this.pinnedArray)
+const groupIndividual=document.querySelector('input[name="group-individual"]:checked').value
+const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({groupIndividual:groupIndividual,pinnedArray:this.pinnedArray,activeGroup:activeGroup,})})}}
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})

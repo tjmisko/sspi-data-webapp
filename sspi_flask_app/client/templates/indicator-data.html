@@ -50,6 +50,17 @@
         getStaticData("{{ IndicatorCode | upper }}").then(data => doStaticChartUpdate(data, StaticChart));
         const parentElement = document.getElementById("dynamic-data-section");
         window.IndicatorDynamicLine = new DynamicLineChart(parentElement, "{{ IndicatorCode | upper }}")
+
+        const x = localStorage.getItem('windowX');
+        const y = localStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
     })
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('windowX', window.screenX);
+      localStorage.setItem('windowY', window.screenY);
+    });
 </script>
 {% endblock content %}

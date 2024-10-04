@@ -71,10 +71,3 @@ $mobile-break-width: 1135px;
   z-index: 0;
   transform: translateX(calc(var(--selected-index) * 100% ));
 }
-
-.dynamic-line-legend {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1em;
-  font-size: 0.8em;
-}

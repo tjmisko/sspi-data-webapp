@@ -1,4 +1,5 @@
 // Static Data
+
 async function getStaticData(IndicatorCode) {
     const response = await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
     try {
@@ -162,6 +163,7 @@ class DynamicLineChart {
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
                 <button class="hideall-button">Hide All</button>
+                <button class="saveprefs-button">Save Prefs</button>
             </div>
         </div>
         `
@@ -181,6 +183,10 @@ class DynamicLineChart {
         this.hideAllButton = this.root.querySelector('.hideall-button')
         this.hideAllButton.addEventListener('click', () => {
             this.hideAll()
+        })
+        this.saveAllButton = this.root.querySelector('.saveprefs-button')
+        this.saveAllButton.addEventListener('click', () => {
+            this.sendPrefs()
         })
     }
 
@@ -401,9 +407,21 @@ class DynamicLineChart {
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
         this.chart.options.plugins.title = data.title
+        this.pinnedArray = data.chartPreferences.pinnedArray
         this.groupOptions = data.groupOptions
         this.chart.update()
+        this.updateLegend()
+        this.updatePins()
         this.updateCountryGroups()
+    }
+
+    updatePins() {
+        this.chart.data.datasets.forEach(dataset => {
+            if (this.pinnedArray.includes(dataset.CCode)) {
+                dataset.pinned = true
+                dataset.hidden = false
+            }
+        })
     }
 
     showAll() {
@@ -457,6 +475,24 @@ class DynamicLineChart {
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
         })
         this.chart.update({ duration: 0, lazy: false })
+    }
+
+    sendPrefs() {
+        console.log('Sending preferences')
+        console.log(this.pinnedArray)
+        const groupIndividual = document.querySelector('input[name="group-individual"]:checked').value
+        const activeGroup = this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+        fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                groupIndividual: groupIndividual,
+                pinnedArray: this.pinnedArray, 
+                activeGroup: activeGroup,
+            })
+        })
     }
 
 }
