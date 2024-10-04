@@ -132,7 +132,6 @@ class DynamicLineChart {
         this.pinnedArray = Array()
 
         this.initRoot()
-        this.rigTitleBarButtons()
         this.rigCountryGroupSelector()
         this.initChartJSCanvas()
         this.rigLegend()
@@ -153,6 +152,12 @@ class DynamicLineChart {
         this.root.innerHTML = `
         <div class="chart-section-title-bar">
             <h2>Dynamic Indicator Data</h2>
+            <div class="group-individual-selector-container">
+                <input type="radio" id="group" name="group-individual" value="group">
+                <label for="group">Group</label>
+                <input type="radio" id="individual" name="group-individual" value="individual">
+                <label for="individual">Individual</label>
+            </div>
             <div class="chart-section-title-bar-buttons">
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
@@ -160,6 +165,23 @@ class DynamicLineChart {
             </div>
         </div>
         `
+        this.rigGroupIndividualSelector()
+        this.rigTitleBarButtons()
+    }
+
+    rigTitleBarButtons() {
+        this.drawButton = this.root.querySelector('.draw-button')
+        this.drawButton.addEventListener('click', () => {
+            this.showRandomN(10)
+        })
+        this.showAllButton = this.root.querySelector('.showall-button')
+        this.showAllButton.addEventListener('click', () => {
+            this.showAll()
+        })
+        this.hideAllButton = this.root.querySelector('.hideall-button')
+        this.hideAllButton.addEventListener('click', () => {
+            this.hideAll()
+        })
     }
 
     initChartJSCanvas() {
@@ -178,9 +200,9 @@ class DynamicLineChart {
                         const dataset = this.chart.data.datasets[element.datasetIndex]
                         dataset.pinned = !dataset.pinned
                         if (dataset.pinned) {
-                            this.pinnedArray.push(dataset.CCode)
+                            this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
                         } else {
-                            this.pinnedArray = this.pinnedArray.filter((item) => item !== dataset.CCode)
+                            this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
                         }
                         this.updateLegend()
                     })
@@ -232,20 +254,64 @@ class DynamicLineChart {
         })
     }
 
-    rigTitleBarButtons() {
-        this.drawButton = this.root.querySelector('.draw-button')
-        this.drawButton.addEventListener('click', () => {
-            this.showRandomN(10)
+    rigGroupIndividualSelector() {
+        const container = this.root.querySelector('.group-individual-selector-container')
+        const options = container.querySelectorAll('input[type="radio"]')
+        options.forEach((option, index) => {
+            if (index === 0) {
+                option.checked = true
+            }
+            option.addEventListener('change', () => {
+                if (option.value === 'group') {
+                    console.log('Group Selected')
+                } else {
+                    console.log('Individual Selected')
+                }
+            })
         })
-        this.showAllButton = this.root.querySelector('.showall-button')
-        this.showAllButton.addEventListener('click', () => {
-            this.showAll()
-        })
-        this.hideAllButton = this.root.querySelector('.hideall-button')
-        this.hideAllButton.addEventListener('click', () => {
-            this.hideAll()
-        })
+
+        //         // Create the radio input
+        //         const input = document.createElement('input');
+        //         input.type = 'radio';
+        //         input.id = id;
+        //         input.name = 'options';
+        //         input.value = option;
+
+        //         // Set the first option as checked by default
+        //         if (index === 0) {
+        //             input.checked = true;
+        //             // Set the initial selected index
+        //             this.countryGroupContainer.style.setProperty('--selected-index', index);
+        //         }
+
+        //         // Add event listener to update the selected index
+        //         input.addEventListener('change', () => {
+        //             const countryGroupOptions = document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);
+        //             countryGroupOptions.forEach((countryGroup, index) => {
+        //                 if (countryGroup.checked) {
+        //                     this.countryGroupContainer.style.setProperty('--selected-index', index);
+        //                     this.showGroup(countryGroup.value)
+        //                 }
+        //             });
+        //         });
+
+        //       // Create the label
+        //       const label = document.createElement('label');
+        //       label.htmlFor = id;
+        //       label.textContent = option;
+
+        // Append input and label to the container
+        // container.appendChild(input);
+
+        // container.appendChild(label);
+        //     });
+
+        //     // Create the sliding indicator
+        //     const slider = document.createElement('div');
+        //     slider.className = 'slider';
+        //     this.countryGroupContainer.appendChild(slider);
     }
+
     rigCountryGroupSelector() {
         const container = document.createElement('div')
         container.id = 'country-group-selector-container'
@@ -304,15 +370,20 @@ class DynamicLineChart {
     rigLegend() {
         const legend = document.createElement('legend')
         legend.classList.add('dynamic-line-legend')
+        legend.innerHTML = ''
         this.legend = this.root.appendChild(legend)
-        console.log(this.legend)
     }
 
     updateLegend() {
-        this.legend.innerHTML = ''
-        this.pinnedArray.forEach((CCode) => {
-            this.legend.innerHTML += `<div class="legend-item">${CCode}</div>`
-        })
+        if (this.pinnedArray.length === 0) {
+            this.legend.innerHTML = ''
+        }
+        else {
+            this.legend.innerHTML = '<h4>Pinned Countries</h4>'
+            this.pinnedArray.forEach((PinnedCountry) => {
+                this.legend.innerHTML += `<div class="legend-item">${PinnedCountry.CName} (<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</div>`
+            })
+        }
     }
 
 
