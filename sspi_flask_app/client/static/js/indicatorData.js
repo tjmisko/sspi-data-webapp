@@ -258,7 +258,7 @@ class DynamicLineChart {
         this.countryGroupContainer.style.setProperty('--num-options', numOptions);
 
         this.groupOptions.forEach((option, index) => {
-            const id = `option${index+1}`;
+            const id = `option${index + 1}`;
 
             // Create the radio input
             const input = document.createElement('input');
@@ -285,14 +285,14 @@ class DynamicLineChart {
                 });
             });
 
-          // Create the label
-          const label = document.createElement('label');
-          label.htmlFor = id;
-          label.textContent = option;
+            // Create the label
+            const label = document.createElement('label');
+            label.htmlFor = id;
+            label.textContent = option;
 
-          // Append input and label to the container
-          this.countryGroupContainer.appendChild(input);
-          this.countryGroupContainer.appendChild(label);
+            // Append input and label to the container
+            this.countryGroupContainer.appendChild(input);
+            this.countryGroupContainer.appendChild(label);
         });
 
         // Create the sliding indicator
@@ -303,7 +303,7 @@ class DynamicLineChart {
 
     rigLegend() {
         const legend = document.createElement('legend')
-        legend.classList.add('dynamic-line-legend') 
+        legend.classList.add('dynamic-line-legend')
         this.legend = this.root.appendChild(legend)
         console.log(this.legend)
     }
