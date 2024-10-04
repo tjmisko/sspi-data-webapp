@@ -358,15 +358,21 @@ class DynamicLineChart {
     }
 
     showRandomN(N = 10) {
-        console.log('Showing', N, 'random countries')
-        let shownIndexArray = Array(N).fill(0).map(
-            () => Math.floor(Math.random() * this.chart.data.datasets.length)
-        )
+        // Adjust this to only select from those in the current country group
+        const activeGroup = this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+        let availableDatasetIndices = []
+        this.chart.data.datasets.filter((dataset, index) => {
+            if (dataset.CGroup.includes(activeGroup)) {
+                availableDatasetIndices.push(index)
+            }
+        })
+        console.log('Showing', N, 'random countries from group', activeGroup)
         this.chart.data.datasets.forEach((dataset) => {
             if ( !dataset.fixed ) {
                 dataset.hidden = true
             }
         })
+        let shownIndexArray = availableDatasetIndices.sort(() => Math.random() - 0.5).slice(0, N)
         shownIndexArray.forEach((index) => {
             this.chart.data.datasets[index].hidden = false
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
