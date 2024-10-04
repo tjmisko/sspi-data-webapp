@@ -167,7 +167,7 @@ class DynamicLineChart {
         this.canvas = document.createElement('canvas')
         this.canvas.id = 'dynamic-line-chart-canvas'
         this.canvas.width = 400
-        this.canvas.height = 300
+        this.canvas.height = 200
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
@@ -198,6 +198,9 @@ class DynamicLineChart {
                 },
                 scales: {
                     x: {
+                        ticks: {
+                            color: '#bbb',
+                        },
                         title: {
                             display: true,
                             text: 'Year',
@@ -208,6 +211,9 @@ class DynamicLineChart {
                         },
                     },
                     y: {
+                        ticks: {
+                            color: '#bbb',
+                        },
                         beginAtZero: true,
                         min: 0,
                         max: 1,
