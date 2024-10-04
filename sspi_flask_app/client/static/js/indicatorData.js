@@ -128,8 +128,8 @@ class DynamicLineChart {
         this.IndicatorCode = IndicatorCode
         this.CountryList = CountryList
 
-        // fixedArray contains a list of fixed countries
-        this.fixedArray = Array()
+        // pinnedArray contains a list of pinned countries
+        this.pinnedArray = Array()
 
         this.initRoot()
         this.rigTitleBarButtons()
@@ -142,7 +142,7 @@ class DynamicLineChart {
             this.update(data)
         })
 
-        
+
     }
 
     initRoot() {
@@ -176,11 +176,11 @@ class DynamicLineChart {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
                         const dataset = this.chart.data.datasets[element.datasetIndex]
-                        dataset.fixed = !dataset.fixed
-                        if (dataset.fixed) {
-                            this.fixedArray.push(dataset.CCode)
+                        dataset.pinned = !dataset.pinned
+                        if (dataset.pinned) {
+                            this.pinnedArray.push(dataset.CCode)
                         } else {
-                            this.fixedArray = this.fixedArray.filter((item) => item !== dataset.CCode)
+                            this.pinnedArray = this.pinnedArray.filter((item) => item !== dataset.CCode)
                         }
                         this.updateLegend()
                     })
@@ -304,7 +304,7 @@ class DynamicLineChart {
 
     updateLegend() {
         this.legend.innerHTML = ''
-        this.fixedArray.forEach((CCode) => {
+        this.pinnedArray.forEach((CCode) => {
             this.legend.innerHTML += `<div class="legend-item">${CCode}</div>`
         })
     }
@@ -334,27 +334,29 @@ class DynamicLineChart {
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
         })
-        this.chart.update({duration: 0, lazy: false})
+        this.chart.update({ duration: 0, lazy: false })
     }
 
     showGroup(groupName) {
         console.log('Showing group:', groupName)
         this.chart.data.datasets.forEach((dataset) => {
-            if (dataset.CGroup.includes(groupName)) {
+            if (dataset.CGroup.includes(groupName) | dataset.pinned) {
                 dataset.hidden = false
             } else {
                 dataset.hidden = true
             }
         })
-        this.chart.update({duration: 0, lazy: false})
+        this.chart.update({ duration: 0, lazy: false })
     }
 
     hideAll() {
         console.log('Hiding all countries')
         this.chart.data.datasets.forEach((dataset) => {
-            dataset.hidden = true
+            if (!dataset.pinned) {
+                dataset.hidden = true
+            }
         })
-        this.chart.update({duration: 0, lazy: false})
+        this.chart.update({ duration: 0, lazy: false })
     }
 
     showRandomN(N = 10) {
@@ -368,7 +370,7 @@ class DynamicLineChart {
         })
         console.log('Showing', N, 'random countries from group', activeGroup)
         this.chart.data.datasets.forEach((dataset) => {
-            if ( !dataset.fixed ) {
+            if (!dataset.pinned) {
                 dataset.hidden = true
             }
         })
@@ -377,7 +379,7 @@ class DynamicLineChart {
             this.chart.data.datasets[index].hidden = false
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
         })
-        this.chart.update({duration: 0, lazy: false})
+        this.chart.update({ duration: 0, lazy: false })
     }
 
 }
