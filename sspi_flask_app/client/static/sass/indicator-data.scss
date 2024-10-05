@@ -71,3 +71,34 @@ $mobile-break-width: 1135px;
   z-index: 0;
   transform: translateX(calc(var(--selected-index) * 100% ));
 }
+
+.legend-item {
+  display: flex;
+  background-color: $dark-blue;
+  padding: 0.5em;
+  border-radius: 5px;
+  justify-content: space-between;
+  margin: 0.5em 0;
+}
+
+.add-country-pin-results-window {
+  display: flex;
+  font-size: 0.7em;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow-y: scroll;
+  max-height: 300px;
+  align-items: center;
+}
+
+.add-country-pin-result {
+  width: 90%;
+}
+
+.add-country-pin-result:hover {
+  width: 100%;
+  background-color: $green-accent;
+  height: auto;
+  border-radius: 5px;
+}

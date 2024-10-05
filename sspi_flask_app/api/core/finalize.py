@@ -50,7 +50,7 @@ def finalize_sspi_dynamic_line_data():
                 "PilCode": detail["PillarCode"],
                 "PilName": detail["Pillar"],
                 "CGroup": group_list,
-                "fixed": False,
+                "pinned": False,
                 "hidden": (lambda group_list: False if "SSPI49" in group_list else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],

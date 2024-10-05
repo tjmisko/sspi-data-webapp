@@ -52,16 +52,13 @@ this.fetch().then(data=>{this.update(data)})}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2>Dynamic Indicator Data</h2><div class="group-individual-selector-container"><input type="radio"id="group"name="group-individual"value="group"><label for="group">Group</label><input type="radio"id="individual"name="group-individual"value="individual"><label for="individual">Individual</label></div><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideall-button">Hide All</button><button class="saveprefs-button">Save Prefs</button></div></div>`this.rigGroupIndividualSelector()
-this.rigTitleBarButtons()}
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2>Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideall-button">Hide All</button></div></div>`this.rigTitleBarButtons()}
 rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
 this.hideAllButton=this.root.querySelector('.hideall-button')
-this.hideAllButton.addEventListener('click',()=>{this.hideAll()})
-this.saveAllButton=this.root.querySelector('.saveprefs-button')
-this.saveAllButton.addEventListener('click',()=>{this.sendPrefs()})}
+this.hideAllButton.addEventListener('click',()=>{this.hideAll()})}
 initChartJSCanvas(){this.canvas=document.createElement('canvas')
 this.canvas.id='dynamic-line-chart-canvas'
 this.canvas.width=400
@@ -69,14 +66,7 @@ this.canvas.height=200
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
-dataset.pinned=!dataset.pinned
-if(dataset.pinned){this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}else{this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}
-this.updateLegend()})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{x:{ticks:{color:'#bbb',},title:{display:true,text:'Year',color:'#bbb',font:{size:16}},},y:{ticks:{color:'#bbb',},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:'#bbb',font:{size:16}},}}},plugins:[endLabelPlugin]})}
-rigGroupIndividualSelector(){const container=this.root.querySelector('.group-individual-selector-container')
-const options=container.querySelectorAll('input[type="radio"]')
-options.forEach((option,index)=>{if(index===0){option.checked=true}
-option.addEventListener('change',()=>{if(option.value==='group'){console.log('Group Selected')}else{console.log('Individual Selected')}})})
-}
+this.togglePin(dataset)})},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{x:{ticks:{color:'#bbb',},title:{display:true,text:'Year',color:'#bbb',font:{size:16}},},y:{ticks:{color:'#bbb',},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:'#bbb',font:{size:16}},}}},plugins:[endLabelPlugin]})}
 rigCountryGroupSelector(){const container=document.createElement('div')
 container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}
@@ -84,21 +74,32 @@ updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGrou
 input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
 rigLegend(){const legend=document.createElement('legend')
 legend.classList.add('dynamic-line-legend')
-legend.innerHTML=''
-this.legend=this.root.appendChild(legend)}
-updateLegend(){if(this.pinnedArray.length===0){this.legend.innerHTML=''}
-else{this.legend.innerHTML='<h4>Pinned Countries</h4>'
-this.pinnedArray.forEach((PinnedCountry)=>{this.legend.innerHTML+=`<div class="legend-item">${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</div>`})}}
+legend.innerHTML=`<div class="legend-title-bar"><h4>Pinned Countries</h4><button class="saveprefs-button">Save Pins</button><button class="clearpins-button">Clear Pins</button></div><div class="legend-items"></div>`this.savePrefsButton=legend.querySelector('.saveprefs-button')
+this.savePrefsButton.addEventListener('click',()=>{this.sendPrefs()})
+this.clearPinsButton=legend.querySelector('.clearpins-button')
+this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
+this.legend=this.root.appendChild(legend)
+this.legendItems=this.legend.querySelector('.legend-items')}
+updateLegend(){this.legendItems.innerHTML=''
+this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item">${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)<button class="remove-button">Remove</button></div>`})
+this.legendItems.innerHTML+=`<div class="legend-item"><button class="add-country-button">Add Country</button></div>`this.addCountryButton=this.legend.querySelector('.add-country-button')
+this.addCountryButton.addEventListener('click',()=>{const search=new SearchDropdown(this.addCountryButton,this.chart.data.datasets,this)})}
 async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
-this.pinnedArray=data.chartPreferences.pinnedArray
+this.pinnedArray.push(...data.chartPreferences.pinnedArray)
 this.groupOptions=data.groupOptions
-this.chart.update()
-this.updateCountryGroups()}
+this.updatePins()
+this.updateLegend()
+this.updateCountryGroups()
+this.chart.update()}
+updatePins(){if(this.pinnedArray.length===0){return}
+this.chart.data.datasets.forEach(dataset=>{if(this.pinnedArray.map(cou=>cou.CCode).includes(dataset.CCode)){dataset.pinned=true
+dataset.hidden=false}})
+this.chart.update()}
 showAll(){console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
 this.chart.update({duration:0,lazy:false})}
@@ -119,9 +120,57 @@ console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index
 this.chart.update({duration:0,lazy:false})}
 sendPrefs(){console.log('Sending preferences')
 console.log(this.pinnedArray)
-const groupIndividual=document.querySelector('input[name="group-individual"]:checked').value
 const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
-fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({groupIndividual:groupIndividual,pinnedArray:this.pinnedArray,activeGroup:activeGroup,})})}}
+fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pinnedArray:this.pinnedArray,activeGroup:activeGroup,})})}
+pinCountry(dataset){dataset.pinned=false
+this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
+this.updateLegend()}
+unpinCountry(dataset){dataset.pinned=false
+this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)
+this.updateLegend()}
+togglePin(dataset){dataset.pinned=!dataset.pinned
+if(dataset.pinned){this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}else{this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}
+this.updateLegend()}
+clearPins(){this.pinnedArray=Array()
+this.updateLegend()}}
+class SearchDropdown{constructor(parentElement,datasets,pinCallback,unpinCallback){this.parentElement=parentElement
+this.datasets=datasets
+this.pinCountry=pinCallback
+this.unpinCountry=unpinCallback
+console.log("Beginning Search")
+this.initResultsWindow()
+this.initSearch()}
+initResultsWindow(){const resultsWindow=document.createElement('div')
+resultsWindow.classList.add('add-country-pin-results-window')
+resultsWindow.classList.add('legend-item')
+resultsWindow.style.display='none'
+this.resultsWindow=this.parentElement.parentNode.parentNode.appendChild(resultsWindow)}
+initSearch(){this.parentElement.innerHTML=`<form class="add-country-pin-search-form"><input type="text"name="Country"placeholder="Country"></form>`this.textInput=this.parentElement.querySelector("input")
+this.textInput.focus()
+this.textInput.addEventListener("input",()=>this.runSearch())}
+async runSearch(){const queryString=this.textInput.value
+const options=await this.getOptions(queryString)
+if(options.length===0){this.resultsWindow.style.display='none'
+return}
+this.resultsWindow.style.display='flex'
+this.resultsWindow.innerHTML=''
+options.forEach(option=>{const resultElement=document.createElement('div')
+resultElement.classList.add('add-country-pin-result')
+const resultSpan=document.createElement('span')
+resultSpan.classList.add('add-country-pin-button')
+resultSpan.innerHTML=`${option.CName}(<b style="color: ${option.borderColor};">${option.CCode}</b>)`resultSpan.addEventListener('click',()=>{this.pinCountry(option)
+this.closeResults()})
+resultElement.appendChild(resultSpan)
+this.resultsWindow.appendChild(resultElement)})}
+async getOptions(queryString,limit=10){queryString=queryString.toLowerCase()
+if(!queryString){return[]}
+let optionArray=Array()
+for(let i=0;i<this.datasets.length;i++){const matched_name=this.datasets[i].CName.toLowerCase().includes(queryString)
+const matched_code=this.datasets[i].CCode.toLowerCase().includes(queryString)
+if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
+if(optionArray.length===limit){break;}}
+return optionArray}
+completeSearch(){}}
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})

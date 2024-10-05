@@ -153,21 +153,13 @@ class DynamicLineChart {
         this.root.innerHTML = `
         <div class="chart-section-title-bar">
             <h2>Dynamic Indicator Data</h2>
-            <div class="group-individual-selector-container">
-                <input type="radio" id="group" name="group-individual" value="group">
-                <label for="group">Group</label>
-                <input type="radio" id="individual" name="group-individual" value="individual">
-                <label for="individual">Individual</label>
-            </div>
             <div class="chart-section-title-bar-buttons">
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
                 <button class="hideall-button">Hide All</button>
-                <button class="saveprefs-button">Save Prefs</button>
             </div>
         </div>
         `
-        this.rigGroupIndividualSelector()
         this.rigTitleBarButtons()
     }
 
@@ -183,10 +175,6 @@ class DynamicLineChart {
         this.hideAllButton = this.root.querySelector('.hideall-button')
         this.hideAllButton.addEventListener('click', () => {
             this.hideAll()
-        })
-        this.saveAllButton = this.root.querySelector('.saveprefs-button')
-        this.saveAllButton.addEventListener('click', () => {
-            this.sendPrefs()
         })
     }
 
@@ -204,13 +192,7 @@ class DynamicLineChart {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
                         const dataset = this.chart.data.datasets[element.datasetIndex]
-                        dataset.pinned = !dataset.pinned
-                        if (dataset.pinned) {
-                            this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
-                        } else {
-                            this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
-                        }
-                        this.updateLegend()
+                        this.togglePin(dataset)
                     })
                 },
                 plugins: {
@@ -260,64 +242,6 @@ class DynamicLineChart {
         })
     }
 
-    rigGroupIndividualSelector() {
-        const container = this.root.querySelector('.group-individual-selector-container')
-        const options = container.querySelectorAll('input[type="radio"]')
-        options.forEach((option, index) => {
-            if (index === 0) {
-                option.checked = true
-            }
-            option.addEventListener('change', () => {
-                if (option.value === 'group') {
-                    console.log('Group Selected')
-                } else {
-                    console.log('Individual Selected')
-                }
-            })
-        })
-
-        //         // Create the radio input
-        //         const input = document.createElement('input');
-        //         input.type = 'radio';
-        //         input.id = id;
-        //         input.name = 'options';
-        //         input.value = option;
-
-        //         // Set the first option as checked by default
-        //         if (index === 0) {
-        //             input.checked = true;
-        //             // Set the initial selected index
-        //             this.countryGroupContainer.style.setProperty('--selected-index', index);
-        //         }
-
-        //         // Add event listener to update the selected index
-        //         input.addEventListener('change', () => {
-        //             const countryGroupOptions = document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);
-        //             countryGroupOptions.forEach((countryGroup, index) => {
-        //                 if (countryGroup.checked) {
-        //                     this.countryGroupContainer.style.setProperty('--selected-index', index);
-        //                     this.showGroup(countryGroup.value)
-        //                 }
-        //             });
-        //         });
-
-        //       // Create the label
-        //       const label = document.createElement('label');
-        //       label.htmlFor = id;
-        //       label.textContent = option;
-
-        // Append input and label to the container
-        // container.appendChild(input);
-
-        // container.appendChild(label);
-        //     });
-
-        //     // Create the sliding indicator
-        //     const slider = document.createElement('div');
-        //     slider.className = 'slider';
-        //     this.countryGroupContainer.appendChild(slider);
-    }
-
     rigCountryGroupSelector() {
         const container = document.createElement('div')
         container.id = 'country-group-selector-container'
@@ -325,7 +249,6 @@ class DynamicLineChart {
     }
 
     updateCountryGroups() {
-
         const numOptions = this.groupOptions.length;
         this.countryGroupContainer.style.setProperty('--num-options', numOptions);
 
@@ -376,20 +299,48 @@ class DynamicLineChart {
     rigLegend() {
         const legend = document.createElement('legend')
         legend.classList.add('dynamic-line-legend')
-        legend.innerHTML = ''
+        legend.innerHTML = `
+            <div class="legend-title-bar">
+                <h4>Pinned Countries</h4>
+                <button class="saveprefs-button">Save Pins</button>
+                <button class="clearpins-button">Clear Pins</button>
+            </div>
+            <div class="legend-items">
+            </div>
+        `
+
+        this.savePrefsButton = legend.querySelector('.saveprefs-button')
+        this.savePrefsButton.addEventListener('click', () => {
+            this.sendPrefs()
+        })
+        this.clearPinsButton = legend.querySelector('.clearpins-button')
+        this.clearPinsButton.addEventListener('click', () => {
+            this.clearPins()
+        })
         this.legend = this.root.appendChild(legend)
+        this.legendItems = this.legend.querySelector('.legend-items')
+
     }
 
     updateLegend() {
-        if (this.pinnedArray.length === 0) {
-            this.legend.innerHTML = ''
-        }
-        else {
-            this.legend.innerHTML = '<h4>Pinned Countries</h4>'
-            this.pinnedArray.forEach((PinnedCountry) => {
-                this.legend.innerHTML += `<div class="legend-item">${PinnedCountry.CName} (<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</div>`
-            })
-        }
+        this.legendItems.innerHTML = ''
+        this.pinnedArray.forEach((PinnedCountry) => {
+            this.legendItems.innerHTML += `
+                <div class="legend-item">
+                    ${PinnedCountry.CName} (<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)
+                    <button class="remove-button">Remove</button>
+                </div>
+            `
+        })
+        this.legendItems.innerHTML += `
+            <div class="legend-item">
+                <button class="add-country-button">Add Country</button>
+            </div>
+        `
+        this.addCountryButton = this.legend.querySelector('.add-country-button')
+        this.addCountryButton.addEventListener('click', () => {
+            const search = new SearchDropdown(this.addCountryButton, this.chart.data.datasets, this)
+        })
     }
 
 
@@ -407,21 +358,25 @@ class DynamicLineChart {
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
         this.chart.options.plugins.title = data.title
-        this.pinnedArray = data.chartPreferences.pinnedArray
+        this.pinnedArray.push(...data.chartPreferences.pinnedArray) 
         this.groupOptions = data.groupOptions
-        this.chart.update()
-        this.updateLegend()
         this.updatePins()
+        this.updateLegend()
         this.updateCountryGroups()
+        this.chart.update()
     }
 
     updatePins() {
+        if (this.pinnedArray.length === 0) {
+            return
+        }
         this.chart.data.datasets.forEach(dataset => {
-            if (this.pinnedArray.includes(dataset.CCode)) {
+            if (this.pinnedArray.map(cou => cou.CCode).includes(dataset.CCode)) {
                 dataset.pinned = true
                 dataset.hidden = false
             }
         })
+        this.chart.update()
     }
 
     showAll() {
@@ -480,7 +435,6 @@ class DynamicLineChart {
     sendPrefs() {
         console.log('Sending preferences')
         console.log(this.pinnedArray)
-        const groupIndividual = document.querySelector('input[name="group-individual"]:checked').value
         const activeGroup = this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
         fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`, {
             method: 'POST',
@@ -488,11 +442,117 @@ class DynamicLineChart {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
-                groupIndividual: groupIndividual,
                 pinnedArray: this.pinnedArray, 
                 activeGroup: activeGroup,
             })
         })
     }
 
+    pinCountry(dataset) {
+        dataset.pinned = true
+        this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+        this.updateLegend()
+    }
+
+    unpinCountry(dataset) {
+        dataset.pinned = false
+        this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
+        this.updateLegend()
+    }
+    
+    togglePin(dataset) {
+        dataset.pinned = !dataset.pinned
+        if (dataset.pinned) {
+            this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+        } else {
+            this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
+        }
+        this.updateLegend()
+    }
+    
+    clearPins() {
+        this.pinnedArray = Array()
+        this.updateLegend()
+    }
+}
+
+class SearchDropdown {
+    constructor(parentElement, datasets, parentChart) {
+        this.parentElement = parentElement
+        this.datasets = datasets
+        this.parentChart = parentChart
+        console.log("Beginning Search")
+        this.initResultsWindow()
+        this.initSearch()
+    }
+    
+    initResultsWindow() {
+        const resultsWindow = document.createElement('div')
+        resultsWindow.classList.add('add-country-pin-results-window')
+        resultsWindow.classList.add('legend-item')
+        resultsWindow.style.display = 'none'
+        this.resultsWindow = this.parentElement.parentNode.parentNode.appendChild(resultsWindow)
+    }
+
+    initSearch() {
+        this.parentElement.innerHTML = `
+            <form class="add-country-pin-search-form">
+                <input type="text" name="Country" placeholder="Country">
+            </form>
+        `
+        this.textInput = this.parentElement.querySelector("input")
+        this.textInput.focus()
+        this.textInput.addEventListener("input", () => this.runSearch())
+    }
+
+    async runSearch() {
+        const queryString = this.textInput.value
+        const options = await this.getOptions(queryString)
+        if (options.length === 0) {
+            this.resultsWindow.style.display = 'none'
+            return
+        }
+        this.resultsWindow.style.display = 'flex'
+        this.resultsWindow.innerHTML = ''
+        options.forEach(option => {
+            const resultElement = document.createElement('div')
+            resultElement.classList.add('add-country-pin-result')
+            const resultSpan = document.createElement('span')
+            resultSpan.classList.add('add-country-pin-button')
+            resultSpan.innerHTML = `
+                ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
+            `
+            resultSpan.addEventListener('click', () => {
+                this.parentChart.pinCountry(option)
+                this.closeResults()
+            })
+            resultElement.appendChild(resultSpan)
+            this.resultsWindow.appendChild(resultElement)
+        })
+    }
+
+
+    async getOptions(queryString, limit = 10) {
+        queryString = queryString.toLowerCase()
+        if (!queryString) {
+            return []
+        }
+        let optionArray = Array()
+
+        for (let i = 0; i < this.datasets.length; i++) {
+            const matched_name = this.datasets[i].CName.toLowerCase().includes(queryString) 
+            const matched_code = this.datasets[i].CCode.toLowerCase().includes(queryString)
+            if (matched_code | matched_name) {  // Condition: only even numbers
+                optionArray.push(this.datasets[i]);
+            }
+            if (optionArray.length === limit) {  // Termination condition
+                break;
+            }
+        }
+        return optionArray
+    }
+
+    closeResults() {
+        this.resultsWindow.remove()
+    }
 }

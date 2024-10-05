@@ -134,14 +134,22 @@ def get_dynamic_indicator_line_data(IndicatorCode):
     """
     Get the dynamic data for the given indicator code for a line chart
     """
+    def validate_preferences(preferences):
+        if not preferences:
+            return None
+        if not preferences.get("pinnedArray"):
+            return None
+        return preferences
+
     if request.method == "POST":
         chart_preferences = request.get_json()
         session["chart_preferences"] = chart_preferences
         return "Preferences saved"
     else:
         chart_preferences = session.get("chart_preferences")
+        chart_preferences = validate_preferences(chart_preferences)
         if chart_preferences is None:
-            chart_preferences = {}
+            chart_preferences = {"pinnedArray": []}
         country_query = request.args.getlist("CountryCode")
         query = {"ICode": IndicatorCode}
         if country_query:
