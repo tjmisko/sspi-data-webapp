@@ -233,18 +233,19 @@ def compute_gtrans():
     iea_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
     iea_clean = clean_IEA_data_GTRANS(iea_raw, 
                                       "GTRANS", "CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms")
-    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str).drop(columns = "Unnamed: 0")
-    pop_data["CountryCode"] = pop_data["country"].map(lambda cou: countries.get(name = cou).alpha_3 
-                                                       if countries.get(name = cou) is not None else np.nan)
-    pop_data = pop_data.dropna(axis = 0).rename(columns = {"year": "Year"})
-    df_iea = pd.DataFrame(iea_clean).loc[:, ["CountryCode", "Year", "Value"]]
-    merged_iea_pop = df_iea.merge(pop_data, how = "left", on = ["CountryCode", "Year"])
-    merged_iea_pop = merged_iea_pop.dropna(axis = 0)
-    merged_iea_pop["tonnes"] = (merged_iea_pop["Value"]) * 10**6
-    merged_iea_pop["mt per person"] = merged_iea_pop["tonnes"].astype(int) / merged_iea_pop["pop"].astype(int)
-    filtered = merged_iea_pop[merged_iea_pop["Year"] == "2018"]
-    print(filtered)
-    return parse_json(filtered)
+    return parse_json(iea_clean + wb_clean)
+    
+    # pop_data = pd.read_csv("local/UN_population_data.csv").astype(str).drop(columns = "Unnamed: 0")
+    # pop_data["CountryCode"] = pop_data["country"].map(lambda cou: countries.get(name = cou).alpha_3 
+    #                                                    if countries.get(name = cou) is not None else np.nan)
+    # pop_data = pop_data.dropna(axis = 0).rename(columns = {"year": "Year"})
+    # df_iea = pd.DataFrame(iea_clean).loc[:, ["CountryCode", "Year", "Value"]]
+    # merged_iea_pop = df_iea.merge(pop_data, how = "left", on = ["CountryCode", "Year"])
+    # merged_iea_pop = merged_iea_pop.dropna(axis = 0)
+    # merged_iea_pop["tonnes"] = (merged_iea_pop["Value"]) * 10**6
+    # merged_iea_pop["mt per person"] = merged_iea_pop["tonnes"].astype(int) / merged_iea_pop["pop"].astype(int)
+    # filtered = merged_iea_pop[merged_iea_pop["Year"] == "2018"]
+    # print(filtered)
    
 
 

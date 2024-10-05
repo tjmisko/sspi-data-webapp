@@ -56,8 +56,10 @@ def cleanIEAData_altnrg(RawData, IndName):
     return clean_data_list
 
 def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
+    def convert_to_kg(value):
+        return value * 1000000
     clean_data_list = []
-    for obs in raw_data[1:]:
+    for obs in raw_data:
         iso3 = obs["Raw"]["country"]
         country_data = countries.get(alpha_3=iso3)
         value = obs["Raw"]['value']
@@ -73,8 +75,8 @@ def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
             "CountryCode": iso3,
             "IndicatorCode": indicator_code,
             "Year": obs["Raw"]["year"],
-            "Value": obs["Raw"]["value"],
-            "Unit": obs['Raw']['units'],
+            "Value": convert_to_kg(obs["Raw"]["value"]),
+            "Unit": "Tonnes C02 per inhabitant",
             "Description": description,
             "IntermediateCode": intermediate_code
         }

@@ -93,9 +93,7 @@ def coalpw():
 @login_required
 def gtrans():
     def collect_iterator(**kwargs):
-        # yield from collectOECDIndicator("AIR_GHG", "GTRANS", "TCO2EQ-OECD")
-        yield from collectOECDIndicator("AIR_GHG", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="OECD", **kwargs)
-        yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
+        # yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", IntermediateCode="FUELPR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
