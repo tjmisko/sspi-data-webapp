@@ -8,7 +8,9 @@ from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
+from .countrychar import insert_pop_data
 from datetime import datetime
+
 
 collect_bp = Blueprint("collect_bp", __name__,
                        template_folder="templates", 
@@ -207,4 +209,15 @@ def incarc():
 def rdfund():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+##############################################
+## Category: Adding Country Characteristics ##
+##############################################
+@collect_bp.route("/UNPOPL", methods=['GET'])
+@login_required
+def unpopl():
+    def collect_iterator(**kwargs):
+        yield from insert_pop_data() # insert UN population data into sspi_country_characteristics database
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
