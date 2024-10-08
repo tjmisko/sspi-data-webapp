@@ -142,7 +142,6 @@ class DynamicLineChart {
             this.update(data)
         })
 
-
     }
 
     initRoot() {
@@ -152,11 +151,11 @@ class DynamicLineChart {
         this.parentElement.appendChild(this.root)
         this.root.innerHTML = `
         <div class="chart-section-title-bar">
-            <h2>Dynamic Indicator Data</h2>
+            <h2 class="chart-section-title">Dynamic Indicator Data</h2>
             <div class="chart-section-title-bar-buttons">
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
-                <button class="hideall-button">Hide All</button>
+                <button class="hideunpinned-button">Hide Unpinned</button>
             </div>
         </div>
         `
@@ -172,9 +171,9 @@ class DynamicLineChart {
         this.showAllButton.addEventListener('click', () => {
             this.showAll()
         })
-        this.hideAllButton = this.root.querySelector('.hideall-button')
-        this.hideAllButton.addEventListener('click', () => {
-            this.hideAll()
+        this.hideUnpinnedButton = this.root.querySelector('.hideunpinned-button')
+        this.hideUnpinnedButton.addEventListener('click', () => {
+            this.hideUnpinned()
         })
     }
 
@@ -301,9 +300,11 @@ class DynamicLineChart {
         legend.classList.add('dynamic-line-legend')
         legend.innerHTML = `
             <div class="legend-title-bar">
-                <h4>Pinned Countries</h4>
-                <button class="saveprefs-button">Save Pins</button>
-                <button class="clearpins-button">Clear Pins</button>
+                <h4 class="legend-title">Pinned Countries</h4>
+                <div class="legend-title-bar-buttons">
+                    <button class="saveprefs-button">Save Pins</button>
+                    <button class="clearpins-button">Clear Pins</button>
+                </div>
             </div>
             <div class="legend-items">
             </div>
@@ -327,10 +328,17 @@ class DynamicLineChart {
         this.pinnedArray.forEach((PinnedCountry) => {
             this.legendItems.innerHTML += `
                 <div class="legend-item">
-                    ${PinnedCountry.CName} (<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)
-                    <button class="remove-button">Remove</button>
+                    <span> ${PinnedCountry.CName} (<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>) </span>
+                    <button class="remove-button-legend-item" id="${PinnedCountry.CCode}-remove-button-legend">Remove</button>
                 </div>
             `
+        })
+        this.removeButtons = this.legend.querySelectorAll('.remove-button-legend-item')
+        this.removeButtons.forEach((button) => {
+            const CountryCode = button.id.split('-')[0]
+            button.addEventListener('click', () => {
+                this.unpinCountryByCode(CountryCode)
+            })
         })
         this.legendItems.innerHTML += `
             <div class="legend-item">
@@ -358,11 +366,15 @@ class DynamicLineChart {
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
         this.chart.options.plugins.title = data.title
-        this.pinnedArray.push(...data.chartPreferences.pinnedArray) 
+        this.pinnedArray.push(...data.chartPreferences.pinnedArray)
         this.groupOptions = data.groupOptions
+        this.pinnedOnly = data.chartPreferences.pinnedOnly
         this.updatePins()
         this.updateLegend()
         this.updateCountryGroups()
+        if (this.pinnedOnly) {
+            this.hideUnpinned()
+        }
         this.chart.update()
     }
 
@@ -380,6 +392,7 @@ class DynamicLineChart {
     }
 
     showAll() {
+        this.pinnedOnly = false
         console.log('Showing all countries')
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
@@ -388,6 +401,7 @@ class DynamicLineChart {
     }
 
     showGroup(groupName) {
+        this.pinnedOnly = false
         console.log('Showing group:', groupName)
         this.chart.data.datasets.forEach((dataset) => {
             if (dataset.CGroup.includes(groupName) | dataset.pinned) {
@@ -399,7 +413,8 @@ class DynamicLineChart {
         this.chart.update({ duration: 0, lazy: false })
     }
 
-    hideAll() {
+    hideUnpinned() {
+        this.pinnedOnly = true
         console.log('Hiding all countries')
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
@@ -411,6 +426,7 @@ class DynamicLineChart {
 
     showRandomN(N = 10) {
         // Adjust this to only select from those in the current country group
+        this.pinnedOnly = false
         const activeGroup = this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
         let availableDatasetIndices = []
         this.chart.data.datasets.filter((dataset, index) => {
@@ -433,33 +449,60 @@ class DynamicLineChart {
     }
 
     sendPrefs() {
-        console.log('Sending preferences')
-        console.log(this.pinnedArray)
         const activeGroup = this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
         fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                pinnedArray: this.pinnedArray, 
+            body: JSON.stringify({
+                pinnedArray: this.pinnedArray,
                 activeGroup: activeGroup,
+                pinnedOnly: this.pinnedOnly
             })
         })
     }
 
     pinCountry(dataset) {
+        if (dataset.pinned) {
+            return
+        }
         dataset.pinned = true
+        dataset.hidden = false
         this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
         this.updateLegend()
     }
 
+    pinCountryByCode(CountryCode) {
+        this.chart.data.datasets.forEach(dataset => {
+            if (dataset.CCode === CountryCode) {
+                dataset.pinned = true
+                dataset.hidden = false
+                this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+            }
+        })
+        this.updateLegend()
+    }
+
     unpinCountry(dataset) {
+        if (this.pinnedOnly) {
+            dataset.hidden = true
+        }
         dataset.pinned = false
         this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
         this.updateLegend()
     }
-    
+
+    unpinCountryByCode(CountryCode) {
+        this.chart.data.datasets.forEach(dataset => {
+            if (dataset.CCode === CountryCode) {
+                dataset.pinned = false
+                this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
+            }
+        })
+        this.updateLegend()
+    }
+
     togglePin(dataset) {
         dataset.pinned = !dataset.pinned
         if (dataset.pinned) {
@@ -469,9 +512,12 @@ class DynamicLineChart {
         }
         this.updateLegend()
     }
-    
+
     clearPins() {
         this.pinnedArray = Array()
+        this.chart.data.datasets.forEach(dataset => {
+            dataset.pinned = false
+        })
         this.updateLegend()
     }
 }
@@ -485,13 +531,14 @@ class SearchDropdown {
         this.initResultsWindow()
         this.initSearch()
     }
-    
+
     initResultsWindow() {
         const resultsWindow = document.createElement('div')
         resultsWindow.classList.add('add-country-pin-results-window')
         resultsWindow.classList.add('legend-item')
         resultsWindow.style.display = 'none'
         this.resultsWindow = this.parentElement.parentNode.parentNode.appendChild(resultsWindow)
+        console.log(this.resultsWindow)
     }
 
     initSearch() {
@@ -503,6 +550,23 @@ class SearchDropdown {
         this.textInput = this.parentElement.querySelector("input")
         this.textInput.focus()
         this.textInput.addEventListener("input", () => this.runSearch())
+        this.formElement = this.parentElement.querySelector("form")
+        this.formElement.addEventListener("submit", (event) => {
+            event.preventDefault()
+            let topOption = this.readResults()
+            if (!topOption) {
+                return
+            }
+            this.parentChart.pinCountryByCode(topOption)
+        })
+    }
+
+    readResults() {
+        let result = this.resultsWindow.querySelector('.add-country-pin-result')
+        console.log(result)
+        console.log(result.id)
+        let CountryCode = result.id.split('-')[0]
+        return CountryCode
     }
 
     async runSearch() {
@@ -517,20 +581,26 @@ class SearchDropdown {
         options.forEach(option => {
             const resultElement = document.createElement('div')
             resultElement.classList.add('add-country-pin-result')
+            resultElement.id = option.CCode + '-add-country-pin-result'
+            resultElement.addEventListener('click', () => {
+                this.selectResult(option)
+                this.closeResults()
+            })
             const resultSpan = document.createElement('span')
             resultSpan.classList.add('add-country-pin-button')
+            
             resultSpan.innerHTML = `
                 ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
             `
-            resultSpan.addEventListener('click', () => {
-                this.parentChart.pinCountry(option)
-                this.closeResults()
-            })
             resultElement.appendChild(resultSpan)
             this.resultsWindow.appendChild(resultElement)
         })
     }
 
+    selectResult(option) {
+        this.parentChart.pinCountry(option)
+        this.parentChart.chart.update()
+    }
 
     async getOptions(queryString, limit = 10) {
         queryString = queryString.toLowerCase()
@@ -540,7 +610,7 @@ class SearchDropdown {
         let optionArray = Array()
 
         for (let i = 0; i < this.datasets.length; i++) {
-            const matched_name = this.datasets[i].CName.toLowerCase().includes(queryString) 
+            const matched_name = this.datasets[i].CName.toLowerCase().includes(queryString)
             const matched_code = this.datasets[i].CCode.toLowerCase().includes(queryString)
             if (matched_code | matched_name) {  // Condition: only even numbers
                 optionArray.push(this.datasets[i]);

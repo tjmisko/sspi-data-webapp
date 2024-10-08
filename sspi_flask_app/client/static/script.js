@@ -52,13 +52,13 @@ this.fetch().then(data=>{this.update(data)})}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2>Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideall-button">Hide All</button></div></div>`this.rigTitleBarButtons()}
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`this.rigTitleBarButtons()}
 rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
-this.hideAllButton=this.root.querySelector('.hideall-button')
-this.hideAllButton.addEventListener('click',()=>{this.hideAll()})}
+this.hideUnpinnedButton=this.root.querySelector('.hideunpinned-button')
+this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
 initChartJSCanvas(){this.canvas=document.createElement('canvas')
 this.canvas.id='dynamic-line-chart-canvas'
 this.canvas.width=400
@@ -74,14 +74,17 @@ updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGrou
 input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
 rigLegend(){const legend=document.createElement('legend')
 legend.classList.add('dynamic-line-legend')
-legend.innerHTML=`<div class="legend-title-bar"><h4>Pinned Countries</h4><button class="saveprefs-button">Save Pins</button><button class="clearpins-button">Clear Pins</button></div><div class="legend-items"></div>`this.savePrefsButton=legend.querySelector('.saveprefs-button')
+legend.innerHTML=`<div class="legend-title-bar"><h4 class="legend-title">Pinned Countries</h4><div class="legend-title-bar-buttons"><button class="saveprefs-button">Save Pins</button><button class="clearpins-button">Clear Pins</button></div></div><div class="legend-items"></div>`this.savePrefsButton=legend.querySelector('.saveprefs-button')
 this.savePrefsButton.addEventListener('click',()=>{this.sendPrefs()})
 this.clearPinsButton=legend.querySelector('.clearpins-button')
 this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
 this.legend=this.root.appendChild(legend)
 this.legendItems=this.legend.querySelector('.legend-items')}
 updateLegend(){this.legendItems.innerHTML=''
-this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item">${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)<button class="remove-button">Remove</button></div>`})
+this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})
+this.removeButtons=this.legend.querySelectorAll('.remove-button-legend-item')
+this.removeButtons.forEach((button)=>{const CountryCode=button.id.split('-')[0]
+button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode)})})
 this.legendItems.innerHTML+=`<div class="legend-item"><button class="add-country-button">Add Country</button></div>`this.addCountryButton=this.legend.querySelector('.add-country-button')
 this.addCountryButton.addEventListener('click',()=>{const search=new SearchDropdown(this.addCountryButton,this.chart.data.datasets,this)})}
 async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
@@ -92,24 +95,30 @@ this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
 this.pinnedArray.push(...data.chartPreferences.pinnedArray)
 this.groupOptions=data.groupOptions
+this.pinnedOnly=data.chartPreferences.pinnedOnly
 this.updatePins()
 this.updateLegend()
 this.updateCountryGroups()
+if(this.pinnedOnly){this.hideUnpinned()}
 this.chart.update()}
 updatePins(){if(this.pinnedArray.length===0){return}
 this.chart.data.datasets.forEach(dataset=>{if(this.pinnedArray.map(cou=>cou.CCode).includes(dataset.CCode)){dataset.pinned=true
 dataset.hidden=false}})
 this.chart.update()}
-showAll(){console.log('Showing all countries')
+showAll(){this.pinnedOnly=false
+console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
 this.chart.update({duration:0,lazy:false})}
-showGroup(groupName){console.log('Showing group:',groupName)
+showGroup(groupName){this.pinnedOnly=false
+console.log('Showing group:',groupName)
 this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
-hideAll(){console.log('Hiding all countries')
+hideUnpinned(){this.pinnedOnly=true
+console.log('Hiding all countries')
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
-showRandomN(N=10){const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+showRandomN(N=10){this.pinnedOnly=false
+const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
 let availableDatasetIndices=[]
 this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
 console.log('Showing',N,'random countries from group',activeGroup)
@@ -118,25 +127,29 @@ let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,
 shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
 console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
 this.chart.update({duration:0,lazy:false})}
-sendPrefs(){console.log('Sending preferences')
-console.log(this.pinnedArray)
-const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
-fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pinnedArray:this.pinnedArray,activeGroup:activeGroup,})})}
-pinCountry(dataset){dataset.pinned=false
+sendPrefs(){const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pinnedArray:this.pinnedArray,activeGroup:activeGroup,pinnedOnly:this.pinnedOnly})})}
+pinCountry(dataset){if(dataset.pinned){return}
+dataset.pinned=true
+dataset.hidden=false
 this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
 this.updateLegend()}
-unpinCountry(dataset){dataset.pinned=false
+unpinCountry(dataset){if(this.pinnedOnly){dataset.hidden=true}
+dataset.pinned=false
 this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)
+this.updateLegend()}
+unpinCountryByCode(CountryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=false
+this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}})
 this.updateLegend()}
 togglePin(dataset){dataset.pinned=!dataset.pinned
 if(dataset.pinned){this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}else{this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}
 this.updateLegend()}
 clearPins(){this.pinnedArray=Array()
+this.chart.data.datasets.forEach(dataset=>{dataset.pinned=false})
 this.updateLegend()}}
-class SearchDropdown{constructor(parentElement,datasets,pinCallback,unpinCallback){this.parentElement=parentElement
+class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
-this.pinCountry=pinCallback
-this.unpinCountry=unpinCallback
+this.parentChart=parentChart
 console.log("Beginning Search")
 this.initResultsWindow()
 this.initSearch()}
@@ -158,7 +171,8 @@ options.forEach(option=>{const resultElement=document.createElement('div')
 resultElement.classList.add('add-country-pin-result')
 const resultSpan=document.createElement('span')
 resultSpan.classList.add('add-country-pin-button')
-resultSpan.innerHTML=`${option.CName}(<b style="color: ${option.borderColor};">${option.CCode}</b>)`resultSpan.addEventListener('click',()=>{this.pinCountry(option)
+resultSpan.innerHTML=`${option.CName}(<b style="color: ${option.borderColor};">${option.CCode}</b>)`resultSpan.addEventListener('click',()=>{this.parentChart.pinCountry(option)
+this.parentChart.chart.update()
 this.closeResults()})
 resultElement.appendChild(resultSpan)
 this.resultsWindow.appendChild(resultElement)})}
@@ -170,7 +184,7 @@ const matched_code=this.datasets[i].CCode.toLowerCase().includes(queryString)
 if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
 if(optionArray.length===limit){break;}}
 return optionArray}
-completeSearch(){}}
+closeResults(){this.resultsWindow.remove()}}
 function setupBarChart(){let Chart=$("#izzy")[0].getContext('2d')
 console.log(Chart)
 const BarChart=new Chart(BarChartCanvas,{type:'bar',data:{},options:{}})
