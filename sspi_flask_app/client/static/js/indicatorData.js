@@ -333,13 +333,6 @@ class DynamicLineChart {
                 </div>
             `
         })
-        this.removeButtons = this.legend.querySelectorAll('.remove-button-legend-item')
-        this.removeButtons.forEach((button) => {
-            const CountryCode = button.id.split('-')[0]
-            button.addEventListener('click', () => {
-                this.unpinCountryByCode(CountryCode)
-            })
-        })
         this.legendItems.innerHTML += `
             <div class="legend-item">
                 <button class="add-country-button">Add Country</button>
@@ -347,8 +340,16 @@ class DynamicLineChart {
         `
         this.addCountryButton = this.legend.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
-            const search = new SearchDropdown(this.addCountryButton, this.chart.data.datasets, this)
+            new SearchDropdown(this.addCountryButton, this.chart.data.datasets, this)
         })
+        let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
+        removeButtons.forEach((button) => {
+            let CountryCode = button.id.split('-')[0]
+            button.addEventListener('click', () => {
+                this.unpinCountryByCode(CountryCode, true)
+            })
+        })
+
     }
 
 
@@ -366,7 +367,11 @@ class DynamicLineChart {
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
         this.chart.options.plugins.title = data.title
-        this.pinnedArray.push(...data.chartPreferences.pinnedArray)
+        if (data.chartPreferences.pinnedArray !== undefined) {
+            this.pinnedArray.push(...data.chartPreferences.pinnedArray)
+        } else {
+            this.pinnedArray = []
+        }
         this.groupOptions = data.groupOptions
         this.pinnedOnly = data.chartPreferences.pinnedOnly
         this.updatePins()
@@ -415,7 +420,7 @@ class DynamicLineChart {
 
     hideUnpinned() {
         this.pinnedOnly = true
-        console.log('Hiding all countries')
+        console.log('Hiding unpinned countries')
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
                 dataset.hidden = true
@@ -471,6 +476,7 @@ class DynamicLineChart {
         dataset.hidden = false
         this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
         this.updateLegend()
+        this.chart.update()
     }
 
     pinCountryByCode(CountryCode) {
@@ -482,42 +488,48 @@ class DynamicLineChart {
             }
         })
         this.updateLegend()
+        this.chart.update()
     }
 
-    unpinCountry(dataset) {
+    unpinCountry(dataset, hide = false) {
         if (this.pinnedOnly) {
             dataset.hidden = true
         }
         dataset.pinned = false
         this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
         this.updateLegend()
+        this.chart.update()
     }
 
-    unpinCountryByCode(CountryCode) {
+    unpinCountryByCode(CountryCode, hide = false) {
         this.chart.data.datasets.forEach(dataset => {
             if (dataset.CCode === CountryCode) {
                 dataset.pinned = false
+                if (hide) {
+                    dataset.hidden = true
+                }
                 this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
             }
         })
         this.updateLegend()
+        this.chart.update()
     }
 
     togglePin(dataset) {
-        dataset.pinned = !dataset.pinned
         if (dataset.pinned) {
-            this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+            this.unpinCountry(dataset, false)
         } else {
-            this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
+            this.pinCountry(dataset, false)
         }
         this.updateLegend()
+        this.chart.update()
     }
 
     clearPins() {
-        this.pinnedArray = Array()
-        this.chart.data.datasets.forEach(dataset => {
-            dataset.pinned = false
+        this.pinnedArray.forEach((PinnedCountry) => {
+            this.unpinCountryByCode(PinnedCountry.CCode, true)
         })
+        this.pinnedArray = Array()
         this.updateLegend()
     }
 }
@@ -527,7 +539,6 @@ class SearchDropdown {
         this.parentElement = parentElement
         this.datasets = datasets
         this.parentChart = parentChart
-        console.log("Beginning Search")
         this.initResultsWindow()
         this.initSearch()
     }
@@ -538,7 +549,6 @@ class SearchDropdown {
         resultsWindow.classList.add('legend-item')
         resultsWindow.style.display = 'none'
         this.resultsWindow = this.parentElement.parentNode.parentNode.appendChild(resultsWindow)
-        console.log(this.resultsWindow)
     }
 
     initSearch() {
@@ -553,18 +563,21 @@ class SearchDropdown {
         this.formElement = this.parentElement.querySelector("form")
         this.formElement.addEventListener("submit", (event) => {
             event.preventDefault()
-            let topOption = this.readResults()
-            if (!topOption) {
-                return
-            }
-            this.parentChart.pinCountryByCode(topOption)
+            this.selectResultEnter()
         })
+    }
+
+    selectResultEnter() {
+        let CountryCode = this.readResults()
+        if (!CountryCode) {
+            return
+        }
+        this.parentChart.pinCountryByCode(CountryCode)
+        this.closeResults()
     }
 
     readResults() {
         let result = this.resultsWindow.querySelector('.add-country-pin-result')
-        console.log(result)
-        console.log(result.id)
         let CountryCode = result.id.split('-')[0]
         return CountryCode
     }
@@ -583,7 +596,7 @@ class SearchDropdown {
             resultElement.classList.add('add-country-pin-result')
             resultElement.id = option.CCode + '-add-country-pin-result'
             resultElement.addEventListener('click', () => {
-                this.selectResult(option)
+                this.selectResultClick(option)
                 this.closeResults()
             })
             const resultSpan = document.createElement('span')
@@ -597,9 +610,8 @@ class SearchDropdown {
         })
     }
 
-    selectResult(option) {
+    selectResultClick(option) {
         this.parentChart.pinCountry(option)
-        this.parentChart.chart.update()
     }
 
     async getOptions(queryString, limit = 10) {

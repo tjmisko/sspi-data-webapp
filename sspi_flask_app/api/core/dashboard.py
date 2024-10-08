@@ -1,10 +1,20 @@
-import numpy as np
 from ..resources.utilities import parse_json, lookup_database
 import json
-from flask import Blueprint, session, jsonify, request, current_app as app, render_template
+from flask import (
+    Blueprint,
+    session,
+    jsonify,
+    request,
+    render_template
+)
+from flask import current_app as app
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_static_radar_data, sspi_dynamic_line_data
-from pycountry import countries
+from ... import (
+    sspi_main_data_v3,
+    sspi_metadata,
+    sspi_static_radar_data,
+    sspi_dynamic_line_data
+)
 import pandas as pd
 import re
 import os
@@ -20,7 +30,11 @@ dashboard_bp = Blueprint(
 @login_required
 def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
-    return render_template("database-status.html", database=database, ndocs=ndocs)
+    return render_template(
+        "database-status.html",
+        database=database,
+        ndocs=ndocs
+    )
 
 
 @dashboard_bp.route("/compare")
@@ -69,8 +83,11 @@ def api_coverage():
         r'(?<=api/v1/compute/)(?!static)[\w]*', r) for r in endpoints] if r is not None]
     coverage_data_object = []
     for indicator in all_indicators:
-        coverage_data_object.append({"IndicatorCode": indicator, "collect_implemented": indicator in collect_implemented,
-                                    "compute_implemented": indicator in compute_implemented})
+        coverage_data_object.append({
+            "IndicatorCode": indicator,
+            "collect_implemented": indicator in collect_implemented,
+            "compute_implemented": indicator in compute_implemented
+        })
     return parse_json(coverage_data_object)
 
 
@@ -106,7 +123,8 @@ def get_static_indicator_data(IndicatorCode):
     Get the static data for the given indicator code
     """
     static_data = parse_json(sspi_main_data_v3.find(
-        {"IndicatorCode": IndicatorCode}, {"_id": 0}))
+        {"IndicatorCode": IndicatorCode}, {"_id": 0})
+    )
     data_series = [{
         "Year": document["Year"],
         "CountryCode": document["CountryCode"],
@@ -143,6 +161,7 @@ def get_dynamic_indicator_line_data(IndicatorCode):
 
     if request.method == "POST":
         chart_preferences = request.get_json()
+        print(type(chart_preferences))
         session["chart_preferences"] = chart_preferences
         return "Preferences saved"
     else:
@@ -162,18 +181,21 @@ def get_dynamic_indicator_line_data(IndicatorCode):
             min_year = min(min_year, min(document["years"]))
             max_year = max(max_year, max(document["years"]))
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
-        chart_title = f"{dynamic_indicator_data[0]["IName"]} ({IndicatorCode}) Score"
+        if not dynamic_indicator_data:
+            return jsonify({"error": "No data found"})
+        chart_title = f"{dynamic_indicator_data[0]["IName"]} ({
+            IndicatorCode}) Score"
         group_options = sspi_metadata.country_groups()
         return jsonify({
             "data": dynamic_indicator_data,
             "title": {
-                    "display": True,
-                    "text": chart_title,
-                    "font": {
-                        "size": 18
-                    },
-                    "color": "#ccc",
-                    "align": "start"
+                "display": True,
+                "text": chart_title,
+                "font": {
+                    "size": 18
+                },
+                "color": "#ccc",
+                "align": "start"
             },
             "labels": year_labels,
             "groupOptions": group_options,
