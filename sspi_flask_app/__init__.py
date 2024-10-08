@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
-from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData, SSPIPartialAPIData, SSPIProductionData, SSPIStaticRadarData
+from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData, SSPIPartialAPIData, SSPIProductionData
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
@@ -31,10 +31,10 @@ sspi_clean_api_data = SSPICleanAPIData(sspidb.sspi_clean_api_data)
 sspi_partial_api_data = SSPIPartialAPIData(sspidb.sspi_partial_api_data)
 sspi_imputed_data = MongoWrapper(sspidb.sspi_imputed_data)
 sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
-sspi_production_data = SSPIProductionData(sspidb.sspi_production_data)
 
 # Production Databases -- More granular for fast queries
-sspi_static_radar_data = SSPIStaticRadarData(sspidb.sspi_static_radar_data)
+sspi_static_radar_data = SSPIProductionData(sspidb.sspi_static_radar_data)
+sspi_dynamic_line_data = SSPIProductionData(sspidb.sspi_dynamic_line_data)
 
 assets = Environment()
 

@@ -25,6 +25,9 @@
     </script>
 </section>
 
+<section class="chart-section" id="dynamic-data-section">
+</section>
+
 <section class="chart-section" id="static-data-section">
     <h2> Static 2018 Data </h2>
     <canvas id="static-chart"></canvas>
@@ -43,14 +46,22 @@
 
     </fieldset>
 </section>
-<section class="chart-section" id="dynamic-data-section">
-    <h2> Dynamic Data </h2>
-    <canvas id="dynamic-chart"></canvas>
-</section>
 <script>
     window.addEventListener("load", (event) => {
-        getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
-        getDynamicData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, DynamicChart));
+        getStaticData("{{ IndicatorCode | upper }}").then(data => doStaticChartUpdate(data, StaticChart));
+        const parentElement = document.getElementById("dynamic-data-section");
+        window.IndicatorDynamicLine = new DynamicLineChart(parentElement, "{{ IndicatorCode | upper }}")
+
+        const x = localStorage.getItem('windowX');
+        const y = localStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
     })
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('windowX', window.screenX);
+      localStorage.setItem('windowY', window.screenY);
+    });
 </script>
 {% endblock content %}
