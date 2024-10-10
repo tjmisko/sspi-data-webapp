@@ -17,6 +17,7 @@ instance/**
 instance
 instance/*
 
+start
 .env
 .flaskenv
 *.egg
