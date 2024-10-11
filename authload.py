@@ -23,7 +23,7 @@ for filename in os.listdir(auth_dir):
             for line in line_list:
                 line_split = line.split("=")
                 output_dict[line_split[0]] = line_split[1]
-            print(user_info)
+            print(output_dict)
             user_info.append(output_dict)
 
 # with app.app_context():
@@ -38,7 +38,10 @@ for filename in os.listdir(auth_dir):
 #             apikey=secrets.token_hex(64)
 #         )
 #         db.session.add(new_user)
-#     db.session.commit()
+#         db.session.commit()
 
 with app.app_context():
     print(str(db.session.query(User).all()))
+
+# with app.app_context():
+#     db.drop_all()
