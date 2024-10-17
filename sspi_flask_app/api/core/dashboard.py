@@ -205,5 +205,5 @@ def get_dynamic_indicator_line_data(IndicatorCode):
 
 @dashboard_bp.route('/static/radar/<CountryCode>')
 def get_static_radar_data(CountryCode):
-    radar_data = sspi_static_radar_data.find_one({"CountryCode": CountryCode})
+    radar_data = sspi_static_radar_data.find_one({"CCode": CountryCode})
     return jsonify(radar_data)
