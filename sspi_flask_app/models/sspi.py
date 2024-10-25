@@ -1,5 +1,6 @@
 from .errors import InvalidDocumentFormatError, DataOrderError
 
+
 class SSPI:
     def __init__(self, indicator_details:list[dict], indicator_scores:list[dict]):
         """
