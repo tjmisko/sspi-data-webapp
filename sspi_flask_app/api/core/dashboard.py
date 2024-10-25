@@ -212,5 +212,9 @@ def get_static_radar_data(CountryCode):
 
 @dashboard_bp.route('/dynamic/matrix')
 def get_dynamic_matrix_data():
-    matrix_data = sspi_dynamic_matrix_data.find({})
-    return jsonify(parse_json(matrix_data))
+    data = sspi_dynamic_matrix_data.find({}, {"_id": 0})
+    return jsonify({
+        "data": data,
+        "icodes": sspi_metadata.indicator_codes(),
+        "ccodes": sspi_metadata.country_group("SSPI49")
+    })
