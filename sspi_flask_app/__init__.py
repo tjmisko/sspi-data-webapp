@@ -2,12 +2,20 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from werkzeug.middleware.profiler import ProfilerMiddleware
+# from werkzeug.middleware.profiler import ProfilerMiddleware
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
-from sspi_flask_app.models.database import MongoWrapper, SSPIMainDataV3, SSPIMetadata, SSPIRawAPIData, SSPICleanAPIData, SSPIPartialAPIData, SSPIProductionData
+from sspi_flask_app.models.database import (
+    MongoWrapper,
+    SSPIMainDataV3,
+    SSPIMetadata,
+    SSPIRawAPIData,
+    SSPICleanAPIData,
+    SSPIPartialAPIData,
+    SSPIProductionData
+)
 from .assets import compile_static_assets
 
 db = SQLAlchemy()
@@ -35,14 +43,19 @@ sspi_analysis = MongoWrapper(sspidb.sspi_analysis)
 # Production Databases -- More granular for fast queries
 sspi_static_radar_data = SSPIProductionData(sspidb.sspi_static_radar_data)
 sspi_dynamic_line_data = SSPIProductionData(sspidb.sspi_dynamic_line_data)
-
+sspi_dynamic_matrix_data = SSPIProductionData(sspidb.sspi_dynamic_matrix_data)
 assets = Environment()
+
 
 def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
     app.config.from_object(Config)
-    ## app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[5], profile_dir="profiler")
+    # app.wsgi_app = ProfilerMiddleware(
+    #     app.wsgi_app,
+    #     restrictions=[5],
+    #     profile_dir="profiler"
+    # )
     # Initialize SQLAlchemy Database
     db.init_app(app)
     # Initialize password encryption
@@ -91,7 +104,7 @@ def init_app(Config):
         api_bp.register_blueprint(save_bp)
         api_bp.register_blueprint(test_bp)
         app.register_blueprint(api_bp)
-        
+
         # Register Style Bundles and build optimized css, js
         if Config.FLASK_ENV == "development":
             compile_static_assets(assets)

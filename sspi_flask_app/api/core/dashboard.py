@@ -13,7 +13,8 @@ from ... import (
     sspi_main_data_v3,
     sspi_metadata,
     sspi_static_radar_data,
-    sspi_dynamic_line_data
+    sspi_dynamic_line_data,
+    sspi_dynamic_matrix_data
 )
 import pandas as pd
 import re
