@@ -7,7 +7,7 @@
 {% block javascript %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/dataMatrix.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/data-matrix-dynamic.js') }}"></script>
 {% endblock %}
 
 {% block stylesheet %}
@@ -21,9 +21,9 @@
 {% block content %}
 <section class="overview-section">
     <h1> Dynamic Data Overview </h1>
-    <canvas id="dataMatrix" width="400" height="400"></canvas>
+    <canvas id="data-matrix-dynamic" width="400" height="400"></canvas>
     <script defer>
-        const canvas = document.getElementById('dataMatrix');
+        const canvas = document.getElementById('data-matrix-dynamic');
         var DataMatrixOverviewChart = dataMatrixDynamic(canvas);
     </script>
 </section>
