@@ -1,5 +1,4 @@
 // Static Data
-
 async function getStaticData(IndicatorCode) {
     const response = await fetch(`/api/v1/static/indicator/${IndicatorCode}`)
     try {
