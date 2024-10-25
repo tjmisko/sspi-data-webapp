@@ -39,6 +39,14 @@
     </div>
     {% endblock %}
     {% block sustainability %}
+    <canvas id="sustainability-differential-1-2" class="chart-canvas"></canvas>
+    <canvas id="sustainability-differential-1-3" class="chart-canvas"></canvas>
+    <canvas id="sustainability-differential-2-3" class="chart-canvas"></canvas>
+    <script defer>
+    pillarDifferentialStatic("SWE", "FRA", "SUS", document.getElementById('sustainability-differential-1-2'))
+    // categoryDifferentialStatic("SWE", "JPN", "SUS", document.getElementById('sustainability-differential-1-3'))
+    // categoryDifferentialStatic("FRA", "SWE", "SUS", document.getElementById('sustainability-differential-2-3'))
+    </script>
     {% endblock %}
     {% block market_structure %}
     {% endblock %}

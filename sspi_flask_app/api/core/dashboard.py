@@ -221,7 +221,7 @@ def get_dynamic_matrix_data():
     })
 
 
-@dashboard_bp.route('/static/pillar/differential/<pillar_code>')
+@dashboard_bp.route('/static/differential/pillar/<pillar_code>')
 def get_static_pillar_differential(pillar_code):
     """
     Get the static category data
@@ -230,7 +230,7 @@ def get_static_pillar_differential(pillar_code):
     comparison_country = request.args.get("ComparisonCountry")
     if not (base_country and comparison_country):
         return jsonify({
-            "error": "BaseCountry and ComparisonCountry are URL parameters."
+            "error": "BaseCountry and ComparisonCountry are required URL parameters."
         }), 400
     indicator_details = sspi_metadata.indicator_details()
     base_country_data = parse_json(
@@ -239,16 +239,44 @@ def get_static_pillar_differential(pillar_code):
             {"_id": 0}
         )
     )
-    base_scores = SSPI(indicator_details, base_country_data)
+    base_sspi = SSPI(indicator_details, base_country_data)
+    base_pillar = base_sspi.get_pillar(pillar_code)
     comparison_country_data = parse_json(
         sspi_main_data_v3.find(
             {"CountryCode": comparison_country},
             {"_id": 0}
         )
     )
-    comparison_scores = SSPI(indicator_details, comparison_country_data)
+    comparison_sspi = SSPI(indicator_details, comparison_country_data)
+    comparison_pillar = comparison_sspi.get_pillar(pillar_code)
+    by_category = []
+    by_indicator = []
+    for category in base_pillar.categories:
+        category_code = category.code
+        comparison_category = comparison_pillar.get_category(category_code)
+        base_score = category.score()
+        comparison_score = comparison_category.score()
+        for indicator in category.indicators:
+            indicator_code = indicator.code
+            base_indicator_score = indicator.score
+            comparison_indicator = comparison_category.get_indicator(indicator.code)
+            comparison_indicator_score = comparison_indicator.score
+            by_indicator.append({
+                "IndicatorCode": indicator_code,
+                "BaseScore": base_indicator_score,
+                "ComparisonScore": comparison_indicator_score,
+                "Diff": comparison_indicator_score - base_indicator_score
+            })
+        by_category.append({
+            "CategoryCode": category_code,
+            "BaseScore": base_score,
+            "ComparisonScore": comparison_score,
+            "Diff": comparison_score - base_score
+        })
+    by_category.sort(key=lambda x: x["Diff"])
+    by_indicator.sort(key=lambda x: x["Diff"])
     return jsonify({
         "pillar_code": pillar_code,
-        "base_country": base_scores.score_tree(),
-        "comparison_country": comparison_scores.score_tree()
+        "by_category": by_category,
+        "by_indicator": by_indicator
     })
