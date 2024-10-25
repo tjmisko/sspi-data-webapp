@@ -142,14 +142,28 @@ def production_data_by_indicator():
 
 @finalize_bp.route("/production/finalize/dynamic/matrix")
 def finalize_dynamic_matrix_data():
-    icodes = sspi_metadata.indicator_details()
+    indicator_details = sspi_metadata.indicator_details()
     countries = sspi_metadata.country_group("SSPI49")
-    for icode in icodes:
+    final_data = []
+    for detail in indicator_details:
+        indicator_code = detail["Metadata"]["IndicatorCode"]
         for country in countries:
             stored_observations = sspi_clean_api_data.find(
-                {"IndicatorCode": icode, "CountryCode": country}
+                {"IndicatorCode": indicator_code, "CountryCode": country}
             )
-            if len(stored_observations) == 0:
-
+            final_data.append(
+                {
+                    "x": indicator_code,
+                    "IName": detail["Metadata"]["Indicator"],
+                    "CatCode": detail["Metadata"]["CategoryCode"],
+                    "CatName": detail["Metadata"]["Category"],
+                    "PilCode": detail["Metadata"]["PillarCode"],
+                    "PilName": detail["Metadata"]["Pillar"],
+                    "y": country,
+                    "CName": country_code_to_name(country),
+                    "v": len(stored_observations)
+                }
+            )
+    count = sspi_dynamic_matrix_data.insert_many(final_data)
     # sspi_dynamic_matrix_data
-    return jsonify(countries)
+    return f"Inserted {count} documents into sspi_dynamic_matrix_data"
