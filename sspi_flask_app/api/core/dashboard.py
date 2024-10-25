@@ -208,3 +208,9 @@ def get_dynamic_indicator_line_data(IndicatorCode):
 def get_static_radar_data(CountryCode):
     radar_data = sspi_static_radar_data.find_one({"CCode": CountryCode})
     return jsonify(radar_data)
+
+
+@dashboard_bp.route('/dynamic/matrix')
+def get_dynamic_matrix_data():
+    matrix_data = sspi_dynamic_matrix_data.find({})
+    return jsonify(parse_json(matrix_data))
