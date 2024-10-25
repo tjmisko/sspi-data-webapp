@@ -13,7 +13,8 @@ from ... import (
     sspi_main_data_v3,
     sspi_metadata,
     sspi_static_radar_data,
-    sspi_dynamic_line_data
+    sspi_dynamic_line_data,
+    sspi_dynamic_matrix_data
 )
 import pandas as pd
 import re
@@ -207,3 +208,13 @@ def get_dynamic_indicator_line_data(IndicatorCode):
 def get_static_radar_data(CountryCode):
     radar_data = sspi_static_radar_data.find_one({"CCode": CountryCode})
     return jsonify(radar_data)
+
+
+@dashboard_bp.route('/dynamic/matrix')
+def get_dynamic_matrix_data():
+    data = sspi_dynamic_matrix_data.find({}, {"_id": 0})
+    return jsonify({
+        "data": data,
+        "icodes": sspi_metadata.indicator_codes(),
+        "ccodes": sspi_metadata.country_group("SSPI49")
+    })

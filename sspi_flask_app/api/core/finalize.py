@@ -1,7 +1,20 @@
 from flask import Blueprint, jsonify
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_static_radar_data, sspi_main_data_v3, sspi_dynamic_line_data
-from sspi_flask_app.api.resources.utilities import parse_json, country_code_to_name, colormap
+from ... import (
+    sspi_clean_api_data,
+    # sspi_imputed_data,
+    sspi_metadata,
+    sspi_static_radar_data,
+    sspi_main_data_v3,
+    sspi_dynamic_line_data,
+    sspi_dynamic_matrix_data
+)
+from sspi_flask_app.api.resources.utilities import (
+    # parse_json,
+    country_code_to_name,
+    colormap
+)
+
 from sspi_flask_app.models.sspi import SSPI
 
 finalize_bp = Blueprint(
@@ -125,3 +138,32 @@ def production_data_by_indicator():
     IntermediateCode -> IMCode
     """
     return "0"
+
+
+@finalize_bp.route("/production/finalize/dynamic/matrix")
+def finalize_dynamic_matrix_data():
+    indicator_details = sspi_metadata.indicator_details()
+    countries = sspi_metadata.country_group("SSPI49")
+    final_data = []
+    for detail in indicator_details:
+        indicator_code = detail["Metadata"]["IndicatorCode"]
+        for country in countries:
+            stored_observations = sspi_clean_api_data.find(
+                {"IndicatorCode": indicator_code, "CountryCode": country}
+            )
+            final_data.append(
+                {
+                    "x": indicator_code,
+                    "IName": detail["Metadata"]["Indicator"],
+                    "CatCode": detail["Metadata"]["CategoryCode"],
+                    "CatName": detail["Metadata"]["Category"],
+                    "PilCode": detail["Metadata"]["PillarCode"],
+                    "PilName": detail["Metadata"]["Pillar"],
+                    "y": country,
+                    "CName": country_code_to_name(country),
+                    "v": len(stored_observations)
+                }
+            )
+    count = sspi_dynamic_matrix_data.insert_many(final_data)
+    # sspi_dynamic_matrix_data
+    return f"Inserted {count} documents into sspi_dynamic_matrix_data"
