@@ -185,3 +185,4 @@ def is_safe_url(target):
 #             return current_app.ensure_sync(func)(*args, **kwargs)
 #         return func(*args, **kwargs)
 #     return decorated_view
+
