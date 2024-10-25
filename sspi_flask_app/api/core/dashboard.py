@@ -7,6 +7,7 @@ from flask import (
     request,
     render_template
 )
+from ...models.sspi import SSPI
 from flask import current_app as app
 from flask_login import login_required
 from ... import (
@@ -217,4 +218,37 @@ def get_dynamic_matrix_data():
         "data": data,
         "icodes": sspi_metadata.indicator_codes(),
         "ccodes": sspi_metadata.country_group("SSPI49")
+    })
+
+
+@dashboard_bp.route('/static/pillar/differential/<pillar_code>')
+def get_static_pillar_differential(pillar_code):
+    """
+    Get the static category data
+    """
+    base_country = request.args.get("BaseCountry")
+    comparison_country = request.args.get("ComparisonCountry")
+    if not (base_country and comparison_country):
+        return jsonify({
+            "error": "BaseCountry and ComparisonCountry are URL parameters."
+        }), 400
+    indicator_details = sspi_metadata.indicator_details()
+    base_country_data = parse_json(
+        sspi_main_data_v3.find(
+            {"CountryCode": base_country},
+            {"_id": 0}
+        )
+    )
+    base_scores = SSPI(indicator_details, base_country_data)
+    comparison_country_data = parse_json(
+        sspi_main_data_v3.find(
+            {"CountryCode": comparison_country},
+            {"_id": 0}
+        )
+    )
+    comparison_scores = SSPI(indicator_details, comparison_country_data)
+    return jsonify({
+        "pillar_code": pillar_code,
+        "base_country": base_scores.score_tree(),
+        "comparison_country": comparison_scores.score_tree()
     })
