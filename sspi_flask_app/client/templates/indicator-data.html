@@ -62,6 +62,9 @@
     window.addEventListener('beforeunload', () => {
       localStorage.setItem('windowX', window.screenX);
       localStorage.setItem('windowY', window.screenY);
+      localStorage.setItem('pins', JSON.stringify(IndicatorDynamicLine.chart.data.datasets.map(
+            (dataset) => { dataset.pinned }
+      )));
     });
 </script>
 {% endblock content %}
