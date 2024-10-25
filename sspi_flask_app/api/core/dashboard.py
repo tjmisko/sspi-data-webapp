@@ -232,6 +232,10 @@ def get_static_pillar_differential(pillar_code):
         return jsonify({
             "error": "BaseCountry and ComparisonCountry are required URL parameters."
         }), 400
+    if base_country == "undefined" or comparison_country == "undefined":
+        return jsonify({
+            "error": "BaseCountry and ComparisonCountry must not be undefined"
+        }), 400
     indicator_details = sspi_metadata.indicator_details()
     base_country_data = parse_json(
         sspi_main_data_v3.find(
@@ -265,18 +269,28 @@ def get_static_pillar_differential(pillar_code):
                 "IndicatorCode": indicator_code,
                 "BaseScore": base_indicator_score,
                 "ComparisonScore": comparison_indicator_score,
-                "Diff": comparison_indicator_score - base_indicator_score
+                "Diff": comparison_indicator_score - base_indicator_score,
             })
         by_category.append({
+            "label": category_code,
             "CategoryCode": category_code,
             "BaseScore": base_score,
             "ComparisonScore": comparison_score,
-            "Diff": comparison_score - base_score
+            "Diff": comparison_score - base_score,
         })
     by_category.sort(key=lambda x: x["Diff"])
     by_indicator.sort(key=lambda x: x["Diff"])
     return jsonify({
-        "pillar_code": pillar_code,
-        "by_category": by_category,
-        "by_indicator": by_indicator
+        "labels": [c["CategoryCode"] for c in by_category],
+        "datasets": [
+            {
+                "label": "Category Differential",
+                "data": by_category
+            },
+            {
+                "label": "Indicator Differential",
+                "data": by_indicator,
+                "hidden": True
+            }
+        ]
     })
