@@ -1,16 +1,17 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-<title>SSPI Data</title>
+<title>SSPI Dynamic Data Overview</title>
 {% endblock %}
 
 {% block javascript %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/dataMatrix.js') }} " defer></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/dataMatrix.js') }}"></script>
 {% endblock %}
 
-{% block stylesheets %}
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/data-overview.css') }}"> 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
@@ -18,5 +19,12 @@
 {% endblock %}
 
 {% block content %}
-
+<section class="overview-section">
+    <h1> Dynamic Data Overview </h1>
+    <canvas id="dataMatrix" width="400" height="400"></canvas>
+    <script defer>
+        const canvas = document.getElementById('dataMatrix');
+        var DataMatrixOverviewChart = dataMatrixDynamic(canvas);
+    </script>
+</section>
 {% endblock %}
