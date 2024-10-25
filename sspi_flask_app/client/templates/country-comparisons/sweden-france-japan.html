@@ -5,12 +5,6 @@
 
     {% block comparison_radar %}
     <div class="datawindow"> 
-        <nav class="datanav">
-            <a class="datanavlink" href="/"> Map </a>
-            <a class="datanavlink" href="/"> Plot </a>
-            <a class="datanavlink" href="/"> Table </a>
-        </nav>
-
         <div class="radar-chart-flex-container">
             <div class="radar-chart-box">
                 <h3> Sweden </h3>
@@ -39,13 +33,12 @@
     </div>
     {% endblock %}
     {% block sustainability %}
-    <canvas id="sustainability-differential-1-2" class="chart-canvas"></canvas>
-    <canvas id="sustainability-differential-1-3" class="chart-canvas"></canvas>
-    <canvas id="sustainability-differential-2-3" class="chart-canvas"></canvas>
+    <div id="sus-diff" class="data-window">
+    </div>
     <script defer>
-    pillarDifferentialStatic("SWE", "FRA", "SUS", document.getElementById('sustainability-differential-1-2'))
-    // categoryDifferentialStatic("SWE", "JPN", "SUS", document.getElementById('sustainability-differential-1-3'))
-    // categoryDifferentialStatic("FRA", "SWE", "SUS", document.getElementById('sustainability-differential-2-3'))
+    const StaticDiffSWEvFRA = new StaticPillarDifferentialChart("SWE", "FRA", "SUS", document.getElementById("sus-diff"))
+    const StaticDiffSWEvJPN = new StaticPillarDifferentialChart("SWE", "JPN", "SUS", document.getElementById("sus-diff"))
+    const StaticDiffFRAvJPN = new StaticPillarDifferentialChart("FRA", "JPN", "SUS", document.getElementById("sus-diff"))
     </script>
     {% endblock %}
     {% block market_structure %}
