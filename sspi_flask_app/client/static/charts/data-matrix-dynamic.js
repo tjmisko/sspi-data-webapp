@@ -5,6 +5,7 @@ async function getMatrixDynamicData() {
 
 async function dataMatrixDynamic(canvas) {
     const res = await getMatrixDynamicData().then(data => data);
+    const n_indicators = res.icodes.length;
 
     // Map categories to numbers and provide corresponding data
     const data = {
@@ -22,8 +23,8 @@ async function dataMatrixDynamic(canvas) {
                 return "rgba(0, 0, 0, " + alpha + ")";
             },
             borderWidth: 1,
-            width: ({chart}) => (chart.chartArea || {}).width / 57 - 1,
-            height: ({chart}) =>(chart.chartArea || {}).height / 57 - 1
+            width: ({chart}) => (chart.chartArea || {}).width / n_indicators - 1,
+            height: ({chart}) =>(chart.chartArea || {}).height / n_indicators - 1
         }]
     };
 
