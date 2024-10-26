@@ -303,3 +303,60 @@ def get_static_pillar_differential(pillar_code):
         "comparisonCCode": comparison_country,
         "comparisonCName": comparison_country_name,
     })
+
+
+@dashboard_bp.route('/static/stacked/pillar/<pillar_code>')
+def get_static_pillar_stack(pillar_code):
+    country_codes = request.args.getlist("CountryCode")
+    if not (country_codes):
+        return jsonify({
+            "error": "CountryCode URL Parameter not provided"
+        }), 400
+    if "undefined" in country_codes:
+        return jsonify({
+            "error": "CountryCode URL Parameter must not be undefined"
+        }), 400
+    indicator_details = sspi_metadata.indicator_details()
+    datasets = []
+    labels = []
+    for i, cou in enumerate(country_codes):
+        cou_data = parse_json(
+            sspi_main_data_v3.find(
+                {"CountryCode": cou},
+                {"_id": 0}
+            )
+        )
+        cou_sspi = SSPI(indicator_details, cou_data)
+        cou_pillar = cou_sspi.get_pillar(pillar_code)
+        dataset = {}
+        for category in cou_pillar.categories:
+            category_code = category.code
+            # Only add the category label once
+            if i == 0:
+                labels.append(category_code)
+            n_indicators = len(category.indicators)
+            dataset["CatCode"] = category_code
+            dataset["CName"] = category.name
+            dataset["stack"] = category_code
+            dataset["CCode"] = cou
+            dataset["CName"] = pycountry.countries.get(alpha_3=cou).name
+            dataset["NIndicators"]: n_indicators
+            data = []
+            for indicator in category.indicators:
+                indicator_code = indicator.code
+                indicator_score = indicator.score
+                data.append({
+                    "CCode": cou,
+                    "CatCode": category_code,
+                    "ICode": indicator_code,
+                    "IName": indicator.name,
+                    "IScore": indicator_score,
+                    "IScoreScaled": indicator_score / n_indicators,
+                })
+            dataset["data"] = data
+            datasets.append(dataset)
+    return jsonify({
+        "labels": labels,
+        "datasets": datasets,
+        "title": f"{pillar_code} Score by Category and Indicator"
+    })
