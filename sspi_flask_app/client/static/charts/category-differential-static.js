@@ -49,6 +49,28 @@ class StaticPillarDifferentialChart {
                     legend: {
                         display: false,
                     },
+                    tooltip: {
+                        callbacks: {
+                            // Customize the title (top line in tooltip)
+                            title: function(tooltipItems) {
+                                console.log(tooltipItems)
+                                return `Category: ${tooltipItems[0].raw.CategoryName}`;
+                            },
+                            // Customize the label (each line below the title)
+                            label: function(tooltipItem) {
+                                // const diff = tooltipItem.raw;
+                                if (tooltipItem.raw.Diff > 0) {
+                                    return `Difference: +${tooltipItem.formattedValue}`;
+                                }
+                                return `Difference: ${tooltipItem.formattedValue}`;
+                            },
+                            // Customize any additional lines
+                        },
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',  // Customize tooltip background color
+                        titleColor: '#ffffff',                 // Customize tooltip title color
+                        bodyColor: '#ffcc00',                  // Customize tooltip body color
+                        padding: 5                            // Tooltip padding
+                    }
                 },
                 parsing:
                 {
@@ -68,7 +90,6 @@ class StaticPillarDifferentialChart {
                         title: {
                             display: true,
                             color: '#bbb',
-                            text: 'Score Difference (Base - Comparison)'
                         },
                         min: -1,
                         max: 1,
@@ -96,13 +117,23 @@ class StaticPillarDifferentialChart {
     }
 
     update(data) {
+        this.baseCCode = data.baseCCode
+        this.baseCName = data.baseCName
+        this.comparisonCCode = data.comparisonCCode
+        this.comparisonCName = data.comparisonCName
         data.datasets.forEach(dataset => {
             dataset.backgroundColor = dataset.data.map(item => this.colormap(item.Diff)) // Assign colors dynamically
             dataset.borderColor = dataset.data.map(item => this.colormap(item.Diff).slice(0, -2)) // Assign colors dynamically
             dataset.borderWidth = 1
         })
         this.chart.data.datasets = data.datasets
+        this.chart.options.scales.x.title.text = data.title
         this.chart.labels = data.labels
+        this.chart.options.plugins.tooltip.callbacks.beforeLabel = (tooltipItem) => {
+            const base = `${this.baseCCode} Score: ${tooltipItem.raw.baseScore.toFixed(3)}`;
+            const comparison = `${this.comparisonCCode} Score: ${tooltipItem.raw.comparisonScore.toFixed(3)}`;
+            return [base, comparison];
+        }
         this.chart.update()
     }
 }

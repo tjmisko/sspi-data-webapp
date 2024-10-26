@@ -1,4 +1,5 @@
 from ..resources.utilities import parse_json, lookup_database
+import pycountry
 import json
 from flask import (
     Blueprint,
@@ -274,12 +275,15 @@ def get_static_pillar_differential(pillar_code):
         by_category.append({
             "label": category_code,
             "CategoryCode": category_code,
-            "BaseScore": base_score,
-            "ComparisonScore": comparison_score,
+            "CategoryName": category.name,
+            "baseScore": base_score,
+            "comparisonScore": comparison_score,
             "Diff": comparison_score - base_score,
         })
     by_category.sort(key=lambda x: x["Diff"])
     by_indicator.sort(key=lambda x: x["Diff"])
+    base_country_name = pycountry.countries.get(alpha_3=base_country).name
+    comparison_country_name = pycountry.countries.get(alpha_3=comparison_country).name
     return jsonify({
         "labels": [c["CategoryCode"] for c in by_category],
         "datasets": [
@@ -292,5 +296,10 @@ def get_static_pillar_differential(pillar_code):
                 "data": by_indicator,
                 "hidden": True
             }
-        ]
+        ],
+        "title": f"Category Score Difference ({comparison_country} - {base_country})",
+        "baseCCode": base_country,
+        "baseCName": base_country_name,
+        "comparisonCCode": comparison_country,
+        "comparisonCName": comparison_country_name,
     })
