@@ -33,15 +33,27 @@
     </div>
     {% endblock %}
     {% block sustainability %}
-    <div id="sus-diff" class="data-window">
+    <div id="sus-diff" class="pillar-diff-window">
     </div>
     <script defer>
-    const StaticDiffSWEvFRA = new StaticPillarDifferentialChart("SWE", "FRA", "SUS", document.getElementById("sus-diff"))
-    const StaticDiffSWEvJPN = new StaticPillarDifferentialChart("SWE", "JPN", "SUS", document.getElementById("sus-diff"))
-    const StaticDiffFRAvJPN = new StaticPillarDifferentialChart("FRA", "JPN", "SUS", document.getElementById("sus-diff"))
+        window.StaticDiffSWEvFRAinSUS = new StaticPillarDifferentialChart("SWE", "FRA", "SUS", document.getElementById("sus-diff"))
+        window.StaticDiffSWEvJPNinSUS = new StaticPillarDifferentialChart("SWE", "JPN", "SUS", document.getElementById("sus-diff"))
+        window.StaticDiffFRAvJPNinSUS = new StaticPillarDifferentialChart("FRA", "JPN", "SUS", document.getElementById("sus-diff"))
     </script>
     {% endblock %}
     {% block market_structure %}
+    <div id="ms-diff" class="pillar-diff-window">
+    <script defer>
+        window.StaticDiffSWEvFRAinMS = new StaticPillarDifferentialChart("SWE", "FRA", "MS", document.getElementById("ms-diff"))
+        window.StaticDiffSWEvJPNinMS = new StaticPillarDifferentialChart("SWE", "JPN", "MS", document.getElementById("ms-diff"))
+        window.StaticDiffFRAvJPNinMS = new StaticPillarDifferentialChart("FRA", "JPN", "MS", document.getElementById("ms-diff"))
+    </script>
     {% endblock %}
     {% block public_goods %}
+    <div id="pg-diff" class="pillar-diff-window">
+    <script defer>
+        window.StaticDiffSWEvFRAinPG = new StaticPillarDifferentialChart("SWE", "FRA", "PG", document.getElementById("pg-diff"))
+        window.StaticDiffSWEvJPNinPG = new StaticPillarDifferentialChart("SWE", "JPN", "PG", document.getElementById("pg-diff"))
+        window.StaticDiffFRAvJPNinPG = new StaticPillarDifferentialChart("FRA", "JPN", "PG", document.getElementById("pg-diff"))
+    </script>
     {% endblock %}
