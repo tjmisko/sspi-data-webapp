@@ -25,3 +25,16 @@
   flex-direction: row;
   justify-content: space-around;
 }
+
+.pillar-stack-window {
+  padding: 0.5em 0.5em 2em 0.5em;
+}
+
+.chart-section-pillar-stack {
+  padding: 0.5em;
+  display: flex;
+  max-height: 600px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
