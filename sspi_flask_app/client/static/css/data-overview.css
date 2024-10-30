@@ -1,3 +1,38 @@
 .overview-section {
     padding: 2em 3em;
 }
+
+.matrix-legend {
+    font-size: 0.8em;
+    margin-bottom: 0.5em;
+}
+
+.matrix-legend-element {
+    display: flex;
+    align-items: center;
+}
+
+.legend-box {
+    width: 1em;
+    height: 1em;
+    padding: 0em 0.5em 0.5em 0.2em;
+    margin-right: 0.5em;
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.green-box {
+    background-color: #00FF0088;
+}
+
+.yellow-box {
+    background-color: #88880088;
+}
+
+.orange-box {
+    background-color: #FF880088;
+}
+
+.red-outline {
+    border: 3px solid #FF000088;
+}
