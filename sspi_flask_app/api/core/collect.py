@@ -159,9 +159,10 @@ def pubacc():
 @collect_bp.route("/GINIPT", methods=['GET'])
 @login_required
 def ginipt():
-    def collect_iterator(**kwargs):  
-        yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+    # def collect_iterator(**kwargs):  
+    #     yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
+    # return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+    # NEEDS TO BE REWRITTEN FOR WID SOURCE, NOT 
 
 ##################################################
 ### Collection Routes for Pillar: PUBLIC GOODS ###

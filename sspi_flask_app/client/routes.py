@@ -82,3 +82,7 @@ def project_history():
 @client_bp.route('/interview')
 def interview():
     return render_template("interview/tree.html")
+
+@client_bp.route('/data/overview')
+def data_overview():
+    return render_template("data-overview.html")

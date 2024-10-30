@@ -1,7 +1,8 @@
 from .errors import InvalidDocumentFormatError, DataOrderError
 
+
 class SSPI:
-    def __init__(self, indicator_details:list[dict], indicator_scores:list[dict]):
+    def __init__(self, indicator_details: list[dict], indicator_scores: list[dict]):
         """
         indicator_details - Expects a list of dictionaries in Metadata format (see sspi_metadata)
         country_scores - Expects a list of dictionaries of scores for a given country
@@ -21,15 +22,18 @@ class SSPI:
 
     def score(self) -> float:
         return sum([pillar.score() for pillar in self.pillars])/len(self.pillars)
-    
+
     def score_tree(self):
         tree = {"SSPI": {"Score": self.score(), "Pillars": []}}
         for i, pillar in enumerate(self.pillars):
-            tree["SSPI"]["Pillars"].append({"Pillar": pillar.name, "PillarCode": pillar.code, "Score": pillar.score(), "Categories": []})
+            tree["SSPI"]["Pillars"].append(
+                {"Pillar": pillar.name, "PillarCode": pillar.code, "Score": pillar.score(), "Categories": []})
             for j, category in enumerate(pillar.categories):
-                tree["SSPI"]["Pillars"][i]["Categories"].append({"Category": category.name, "CategoryCode": category.code, "Score": category.score(), "Indicators": []})
+                tree["SSPI"]["Pillars"][i]["Categories"].append(
+                    {"Category": category.name, "CategoryCode": category.code, "Score": category.score(), "Indicators": []})
                 for indicator in category.indicators:
-                    tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append({"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score})
+                    tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append(
+                        {"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score})
         return tree
 
     def pillar_scores(self):
@@ -41,7 +45,7 @@ class SSPI:
     def indicator_scores(self):
         return {indicator.code: indicator.score for indicator in self.indicators}
 
-    def extract_score(self, IndicatorCode:str, indicator_scores:list):
+    def extract_score(self, IndicatorCode: str, indicator_scores: list):
         for indicator in indicator_scores:
             if indicator["IndicatorCode"] == IndicatorCode:
                 return indicator["Score"]
@@ -49,16 +53,23 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
+            raise DataOrderError(f"Length of indicator_details {len(
+                indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
         for detail in indicator_details:
             try:
-                indicator_score = indicator_score_lookup[detail["Metadata"]["IndicatorCode"]]
+                indicator_score = indicator_score_lookup[detail["Metadata"]
+                                                         ["IndicatorCode"]]
             except KeyError:
+<<<<<<< HEAD
                 indicator = detail["Metadata"]["IndicatorCode"]
                 raise DataOrderError(f"No data for indicator {indicator} found!")
+=======
+                raise DataOrderError(f"No data for indicator {
+                                     detail["Metadata"]["IndicatorCode"]} found!")
+>>>>>>> 0a3b6da750fe6f0b1c86841a4b7fec57109be698
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
@@ -74,7 +85,7 @@ class SSPI:
             if pillar_code == pillar.code:
                 return pillar
         return None
-    
+
     def get_category(self, CategoryCode):
         pass
 
@@ -88,8 +99,9 @@ class SSPI:
         """
         pass
 
+
 class Pillar:
-    def __init__(self, detail:dict, indicator_score:dict):
+    def __init__(self, detail: dict, indicator_score: dict):
         self.name = detail["Metadata"]["Pillar"]
         self.code = detail["Metadata"]["PillarCode"]
         self.categories = []
@@ -103,13 +115,14 @@ class Pillar:
 
     def score(self):
         return sum([category.score() for category in self.categories])/len(self.categories)
-    
+
     def load(self, detail, indicator_score):
         """
         When called the first time (from the constructor) it loads the first category from the detail.
         Successive calls load additional categories or revise existing categories with new data
         """
-        matched_category = self.get_category(detail["Metadata"]["CategoryCode"])
+        matched_category = self.get_category(
+            detail["Metadata"]["CategoryCode"])
         if matched_category:
             matched_category.load(detail, indicator_score)
         else:
@@ -122,8 +135,9 @@ class Pillar:
                 return category
         return None
 
+
 class Category:
-    def __init__(self, detail:dict, indicator_score_data:dict):
+    def __init__(self, detail: dict, indicator_score_data: dict):
         self.name = detail["Metadata"]["Category"]
         self.code = detail["Metadata"]["CategoryCode"]
         self.indicators = []
@@ -138,12 +152,13 @@ class Category:
     def score(self):
         return sum([indicator.score for indicator in self.indicators])/len(self.indicators)
 
-    def load(self, detail:dict, indicator_score_data:dict):
+    def load(self, detail: dict, indicator_score_data: dict):
         """
         When called the first time (from the constructor) it loads the first indicator from the detail.
         Successive calls load additional indicator
         """
-        matched_indicator = self.get_indicator(detail["Metadata"]["IndicatorCode"])
+        matched_indicator = self.get_indicator(
+            detail["Metadata"]["IndicatorCode"])
         if matched_indicator:
             matched_indicator.load(detail, indicator_score_data)
         else:
@@ -155,6 +170,7 @@ class Category:
             if indicator.code == indicator_code:
                 return indicator
         return None
+
 
 class Indicator:
     def __init__(self, detail, indicator_score_data):
@@ -171,13 +187,17 @@ class Indicator:
             self.name = detail["Metadata"]["Indicator"]
             self.code = detail["Metadata"]["IndicatorCode"]
         except KeyError as ke:
-            raise InvalidDocumentFormatError(f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
+            raise InvalidDocumentFormatError(
+                f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
         try:
             self.score = indicator_score_data["Score"]
         except KeyError as ke:
-            raise InvalidDocumentFormatError(f"Indicator Data Missing 'Score' ({indicator_score_data})")
+            raise InvalidDocumentFormatError(
+                f"Indicator Data Missing 'Score' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
-            raise DataOrderError(f"Mismatched Data and Indicator Detail {detail}; {indicator_score_data}")
+            raise DataOrderError(f"Mismatched Data and Indicator Detail {
+                                 detail}; {indicator_score_data}")
         if type(self.score) is float:
             if self.score < 0 or self.score > 1:
-                raise InvalidDocumentFormatError(f"Score is not between 0 and 1! ({self})")
+                raise InvalidDocumentFormatError(
+                    f"Score is not between 0 and 1! ({self})")
