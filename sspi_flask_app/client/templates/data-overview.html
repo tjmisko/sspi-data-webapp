@@ -21,10 +21,31 @@
 {% block content %}
 <section class="overview-section">
     <h1> Dynamic Data Overview </h1>
-    <canvas id="data-matrix-dynamic" width="400" height="400"></canvas>
+    <div class="matrix-legend">
+        <h2 class="legend-title">Data Coverage Legend</h2>
+        <div class="legend-container">
+            <div class="matrix-legend-element">
+                <div class="legend-box green-box"> </div>
+                Data is collected, cleaned, and ready to be used. Opacity indicates years available.
+            </div>
+            <div class="matrix-legend-element">
+                <div class="legend-box yellow-box"> </div>
+                Code to collect the data is written, but is not currently in the database.
+            </div>
+            <div class="matrix-legend-element">
+                <div class="legend-box orange-box"> </div>
+                Data is collected in files, but not yet cleaned or ready to be used.
+            </div>
+            <div class="matrix-legend-element">
+                <div class="legend-box red-outline"> </div>
+                A known problem exists with the indicator for dynamic data, and it requires attention
+            </div>
+        </div>
+    </div>
+    <div id="data-matrix-dynamic" width="400" height="400"></div>
     <script defer>
-        const canvas = document.getElementById('data-matrix-dynamic');
-        var DataMatrixOverviewChart = dataMatrixDynamic(canvas);
+        const matrixParent = document.getElementById('data-matrix-dynamic');
+        window.IndicatorOverviewDynamicMatrix = new DynamicMatrixChart(matrixParent);
     </script>
 </section>
 {% endblock %}

@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+from flask import current_app as app
 from flask_login import login_required
 from ... import (
     sspi_clean_api_data,
@@ -14,8 +15,9 @@ from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
     colormap
 )
-
 from sspi_flask_app.models.sspi import SSPI
+import re
+import json
 
 finalize_bp = Blueprint(
     'finalize_bp', __name__,
@@ -142,7 +144,19 @@ def production_data_by_indicator():
 
 @finalize_bp.route("/production/finalize/dynamic/matrix")
 def finalize_dynamic_matrix_data():
+    sspi_dynamic_matrix_data.delete_many({})
+    with open("local/indicator-problems.json") as f:
+        problems = json.load(f)
     indicator_details = sspi_metadata.indicator_details()
+    endpoints = [str(r) for r in app.url_map.iter_rules()]
+    collect_implemented = [r.group(0) for r in [re.search(
+        r'(?<=api/v1/collect/)(?!static)[\w]*', r)
+        for r in endpoints] if r is not None
+    ]
+    compute_implemented = [r.group(0) for r in [re.search(
+        r'(?<=api/v1/compute/)(?!static)[\w]*', r)
+        for r in endpoints] if r is not None
+    ]
     countries = sspi_metadata.country_group("SSPI49")
     final_data = []
     for detail in indicator_details:
@@ -154,6 +168,12 @@ def finalize_dynamic_matrix_data():
             final_data.append(
                 {
                     "x": indicator_code,
+                    "collect": indicator_code in collect_implemented,
+                    "compute": indicator_code in compute_implemented,
+                    "problems": (lambda code:
+                                 problems[indicator_code]
+                                 if code in problems.keys()
+                                 else None)(indicator_code),
                     "IName": detail["Metadata"]["Indicator"],
                     "CatCode": detail["Metadata"]["CategoryCode"],
                     "CatName": detail["Metadata"]["Category"],
