@@ -143,6 +143,12 @@ def fdepth():
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)                                        
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/PUBACC", methods=['GET'])
+def pubacc():
+    def collect_iterator(**kwargs):  
+        yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)                                    
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 # @collect_bp.route("/FSTABL", methods=['GET'])
 # def fstabl():
 #     def collect_iterator(**kwargs):
