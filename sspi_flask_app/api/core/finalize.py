@@ -170,10 +170,10 @@ def finalize_dynamic_matrix_data():
                     "x": indicator_code,
                     "collect": indicator_code in collect_implemented,
                     "compute": indicator_code in compute_implemented,
-                    "problems": lambda code:
-                        problems[indicator_code]
-                        if code in problems.keys()
-                        else None,
+                    "problems": (lambda code:
+                                 problems[indicator_code]
+                                 if code in problems.keys()
+                                 else None)(indicator_code),
                     "IName": detail["Metadata"]["Indicator"],
                     "CatCode": detail["Metadata"]["CategoryCode"],
                     "CatName": detail["Metadata"]["Category"],
