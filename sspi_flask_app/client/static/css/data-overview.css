@@ -22,17 +22,17 @@
 }
 
 .green-box {
-    background-color: #00FF0088;
+    background-color: rgb(15, 200, 15, 0.7);
 }
 
 .yellow-box {
-    background-color: #88880088;
+    background-color: #FFBF0066;
 }
 
 .orange-box {
-    background-color: #FF880088;
+    background-color: #FF9900AA;
 }
 
 .red-outline {
-    border: 3px solid #FF000088;
+    border: 2px solid rgba(255, 99, 132, 1);
 }
