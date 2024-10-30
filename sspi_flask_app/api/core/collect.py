@@ -170,6 +170,18 @@ def ginipt():
 #########################
 ## Category: EDUCATION ##
 #########################
+@collect_bp.route("/ENRPRI", methods=['GET'])
+def enrpri():
+    def collect_iterator(**kwargs):  
+        yield from collectSDGIndicatorData("4.1.1", "ENRPRI", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/ENRSEC", methods=['GET'])
+def enrsec():
+    def collect_iterator(**kwargs):  
+        yield from collectSDGIndicatorData("4.1.1", "ENRSEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/PUPTCH", methods=['GET'])
 def puptch():
     def collect_iterator(**kwargs):  
