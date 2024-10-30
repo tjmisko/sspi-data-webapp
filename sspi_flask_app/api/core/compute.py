@@ -220,7 +220,6 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods = ['GET'])
 @login_required
 def compute_gtrans():
-    insert_pop_data()
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     

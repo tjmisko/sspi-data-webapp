@@ -111,7 +111,7 @@ def gtrans():
 @login_required
 def lfpart():
     def collect_iterator(**kwargs):
-        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
+        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #################################
