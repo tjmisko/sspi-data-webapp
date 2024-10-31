@@ -1,15 +1,14 @@
-from ... import sspi_raw_api_data
 from flask import Blueprint, Response
 from flask_login import login_required, current_user
 
 from ..datasource.oecdstat import collectOECDIndicator
+from ..datasoure.epi import collectEPIData
 from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
-from datetime import datetime
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -42,6 +41,13 @@ def redlst():
 ####################
 ## Category: LAND ##
 ####################
+@collect_bp.route("/NITROG", methods=['GET'])
+@login_required
+def nitrog():
+    def collect_iterator(**kwargs):
+        yield from collectEPIData("15.1.1", "NITROG", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def watman():
