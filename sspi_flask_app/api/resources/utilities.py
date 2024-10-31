@@ -5,9 +5,6 @@ from flask import jsonify
 import pandas as pd
 import inspect
 import math
-<<<<<<< HEAD
-from ... import sspi_main_data_v3, sspi_bulk_data, sspi_raw_api_data, sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_production_data, sspi_country_characteristics
-=======
 from ... import (
     sspi_main_data_v3,
     sspi_bulk_data,
@@ -19,7 +16,6 @@ from ... import (
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
->>>>>>> 0a3b6da750fe6f0b1c86841a4b7fec57109be698
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
 
@@ -71,19 +67,12 @@ def lookup_database(database_name):
         return sspi_imputed_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
-<<<<<<< HEAD
-    elif database_name == "sspi_production_data":
-        return sspi_production_data
-    elif database_name == "sspi_country_characteristics":
-        return sspi_country_characteristics
-=======
     elif database_name == "sspi_static_radar_data":
         return sspi_static_radar_data
     elif database_name == "sspi_dynamic_line_data":
         return sspi_dynamic_line_data
     elif database_name == "sspi_dynamic_matrix_data":
         return sspi_dynamic_matrix_data
->>>>>>> 0a3b6da750fe6f0b1c86841a4b7fec57109be698
     raise InvalidDatabaseError(database_name)
 
 
@@ -201,8 +190,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
         if any(arg_value is None for arg_value in arg_value_dict.values()):
             continue
         try:
