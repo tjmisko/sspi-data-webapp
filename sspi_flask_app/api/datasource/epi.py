@@ -5,7 +5,7 @@ from ... import sspi_raw_api_data
 
 
 def collectEPIData(SourceIndicatorCode, IndicatorCode, **kwargs):
-    url = "https://epi.yale.edu/downloads/epi2024raw.zip"
+    url = "https://epi.yale.edu/downloads/epi2024indicators.zip"
     res = requests.get(url)
     if res.status_code != 200:
         err = f"(HTTP Error {res.status_code})"
@@ -13,9 +13,9 @@ def collectEPIData(SourceIndicatorCode, IndicatorCode, **kwargs):
         return
     with zipfile.ZipFile(BytesIO(res.content)) as z:
         for f in z.namelist():
-            yield str(f) + "\n"
             if "__MACOSX" in f:
                 continue
+            yield str(f) + "\n"
             if SourceIndicatorCode in f:
                 with z.open(f) as data:
                     csv_string = data.read().decode("utf-8")
