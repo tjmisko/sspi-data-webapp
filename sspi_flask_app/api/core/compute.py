@@ -59,6 +59,23 @@ compute_bp = Blueprint("compute_bp", __name__,
 ###########################
 
 
+@compute_bp.route("/all", methods=['GET'])
+@login_required
+def compute_all():
+    """
+    """
+    sspi_clean_api_data.delete_many({})
+    compute_biodiv()
+    compute_rdlst()
+    compute_nitrog()
+    # compute_watman()
+    compute_stkhlm()
+    compute_intrnt()
+    compute_fdepth()
+    compute_altnrg()
+    return "Placeholder for a function that will compute all indicators"
+
+
 @compute_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def compute_biodiv():
@@ -167,7 +184,7 @@ def compute_watman():
 
 @compute_bp.route("/STKHLM", methods=['GET'])
 @login_required
-def compute_skthlm():
+def compute_stkhlm():
     if not sspi_raw_api_data.raw_data_available("STKHLM"):
         return redirect(url_for("api_bp.collect_bp.STKHLM"))
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
