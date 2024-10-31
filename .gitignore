@@ -85,4 +85,6 @@ htmlcov/
 **.ipynb_checkpoints
 snapshots/**/**.json
 profiler/**
-bulk
+bulk/SUS/LND/NITROG/*
+!bulk/SUS/LND/NITROG/replicate
+
