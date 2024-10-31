@@ -89,11 +89,9 @@ nest-asyncio==1.5.8
 networkx==3.3
 notebook==7.0.5
 notebook_shim==0.2.3
-numpy==1.26.0
 ordered-set==4.1.0
 overrides==7.4.0
 packaging==23.0
-pandas==2.1.1
 pandocfilters==1.5.0
 parso==0.8.3
 passlib==1.7.4
@@ -135,7 +133,6 @@ requests==2.31.0
 rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rich==13.6.0
-rpds-py==0.10.6
 scss==0.8.73
 Send2Trash==1.8.2
 setuptools==68.2.2

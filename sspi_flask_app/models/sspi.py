@@ -53,8 +53,7 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            raise DataOrderError(f"Length of indicator_details {len(
-                indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
+            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
@@ -63,13 +62,7 @@ class SSPI:
                 indicator_score = indicator_score_lookup[detail["Metadata"]
                                                          ["IndicatorCode"]]
             except KeyError:
-<<<<<<< HEAD
-                indicator = detail["Metadata"]["IndicatorCode"]
-                raise DataOrderError(f"No data for indicator {indicator} found!")
-=======
-                raise DataOrderError(f"No data for indicator {
-                                     detail["Metadata"]["IndicatorCode"]} found!")
->>>>>>> 0a3b6da750fe6f0b1c86841a4b7fec57109be698
+                raise DataOrderError(f"No data for indicator {detail["Metadata"]["IndicatorCode"]} found!")
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
