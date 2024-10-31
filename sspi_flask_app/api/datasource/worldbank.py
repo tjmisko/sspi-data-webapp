@@ -52,6 +52,9 @@ def cleaned_wb_current(RawData, IndName, unit):
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
+        value = entry["Raw"]["value"]
+        if value == "NaN":
+            continue
         clean_obs = {
             "CountryCode": iso3,
             "IndicatorCode": IndName,
@@ -59,7 +62,7 @@ def cleaned_wb_current(RawData, IndName, unit):
             "Description": entry["Raw"]["indicator"]["value"],
             "Year": entry["Raw"]["date"],
             "Unit": unit,
-            "Value": string_to_float(entry["Raw"]["value"])
+            "Value": string_to_float(value)
         }
         clean_data_list.append(clean_obs)
     return clean_data_list

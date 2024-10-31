@@ -8,7 +8,7 @@ from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
 from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
-from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
+from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg, clean_IEA_data_GTRANS
 import pandas as pd
 from pycountry import countries
 import csv
@@ -220,16 +220,22 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods = ['GET'])
 @login_required
 def compute_gtrans():
+    insert_pop_data()
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
     
-    #######    WORLDBANK compute    #########
-    worldbank_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="FUELPR")
-    worldbank_clean_list = cleanedWorldBankData(worldbank_raw, "GTRANS")
+    # collect, clean World Bank
+    wb_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "FUELPR")
+    wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "USD per liter")
 
-    #######  IEA compute ######
-    iea_raw_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
-    series = extractAllSeries(iea_raw_data[0]["Raw"])
+    # collect, clean IEA
+    iea_raw = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
+    iea_clean = clean_IEA_data_GTRANS(iea_raw, 
+                                      "GTRANS", "CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms")
+    return parse_json(iea_clean + wb_clean)
+   
+
+
     keys = iea_raw_data[0].keys()
     raw = iea_raw_data[0]["Raw"]
     metadata = iea_raw_data[0]["Metadata"]

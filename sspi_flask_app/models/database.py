@@ -97,8 +97,8 @@ class MongoWrapper:
                 "Value": 42.3005 (float or int)
                 "Unit": "MILLION_HA", (type: str)
                 "Intermediates": {
-                    "TERRST": 9.7, (float or int)
-                    "FRSHWT": 9.7, (float or int)
+                    "TERRST": dict (see below for format)
+                    "FRSHWT": dict (see below for format)
                     ...
                 }
             ...
@@ -652,7 +652,7 @@ class SSPIMetadata(MongoWrapper):
 
     def indicator_details(self) -> list[dict]:
         """
-        Return a list of documents containg indicator details
+        Return a list of documents containing indicator details
         """
         return self.find({"DocumentType": "IndicatorDetail"})
 
@@ -693,3 +693,26 @@ class SSPIProductionData(MongoWrapper):
         Additional fields are allowed but not required
         """
         pass
+
+
+class SSPICountryCharacteristics(MongoWrapper):
+    def validate_document_format(self, document: dict, document_number: int=0):
+        """
+        Raises an InvalidDocumentFormatError if the document is not in the
+        valid format
+
+        Valid Document Format:
+            {
+                "CountryCode": str,
+                "IntemediateCode": str,
+                "Year": int,
+                "Value": float,
+                "Unit": str
+            }
+        Additional fields are allowed but not required
+        """
+        self.validate_country_code(document, document_number)
+        self.validate_intermediate_code(document, document_number)
+        self.validate_year(document, document_number)
+        self.validate_value(document, document_number)
+        self.validate_unit(document, document_number)

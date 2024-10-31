@@ -12,6 +12,7 @@ from ... import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_metadata,
+    sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
@@ -67,6 +68,8 @@ def lookup_database(database_name):
         return sspi_imputed_data
     elif database_name == "sspi_metadata":
         return sspi_metadata
+    elif database_name == "sspi_country_characteristics":
+        return sspi_country_characteristics
     elif database_name == "sspi_static_radar_data":
         return sspi_static_radar_data
     elif database_name == "sspi_dynamic_line_data":
