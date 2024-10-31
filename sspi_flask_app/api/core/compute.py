@@ -3,20 +3,51 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import parse_json, goalpost, jsonify_df, zip_intermediates, format_m49_as_string, filter_incomplete_data, score_single_indicator
-from ... import sspi_clean_api_data, sspi_raw_api_data, sspi_analysis
-from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary, flatten_nested_dictionary_redlst, flatten_nested_dictionary_intrnt, flatten_nested_dictionary_watman, flatten_nested_dictionary_stkhlm
+from ..resources.utilities import (
+    parse_json,
+    goalpost,
+    jsonify_df,
+    zip_intermediates,
+    format_m49_as_string,
+    filter_incomplete_data,
+    score_single_indicator
+)
+from ... import (
+    sspi_clean_api_data,
+    sspi_raw_api_data,
+    # sspi_analysis
+)
+from ..datasource.sdg import (
+    flatten_nested_dictionary_biodiv,
+    extract_sdg_pivot_data_to_nested_dictionary,
+    flatten_nested_dictionary_redlst,
+    flatten_nested_dictionary_intrnt,
+    flatten_nested_dictionary_watman,
+    flatten_nested_dictionary_stkhlm
+)
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
-from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
-from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg, clean_IEA_data_GTRANS
+from ..datasource.oecdstat import (
+    organizeOECDdata,
+    OECD_country_list,
+    extractAllSeries,
+    filterSeriesList,
+    filterSeriesListSeniors
+)
+from ..datasource.iea import (
+    filterSeriesListiea,
+    cleanIEAData_altnrg,
+    clean_IEA_data_GTRANS
+)
 import pandas as pd
 from pycountry import countries
+from io import StringIO
 import csv
+import re
 import numpy as np
 
 compute_bp = Blueprint("compute_bp", __name__,
-                       template_folder="templates", 
-                       static_folder="static", 
+                       template_folder="templates",
+                       static_folder="static",
                        url_prefix="/compute")
 
 ################################################
