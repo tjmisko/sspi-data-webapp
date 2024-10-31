@@ -85,3 +85,4 @@ htmlcov/
 **.ipynb_checkpoints
 snapshots/**/**.json
 profiler/**
+bulk
