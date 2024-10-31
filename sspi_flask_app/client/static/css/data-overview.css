@@ -36,3 +36,7 @@
 .red-outline {
     border: 2px solid rgba(255, 99, 132, 1);
 }
+
+.green-outline {
+    border: 2px solid rgb(15, 200, 15, 0.7);
+}
