@@ -1,17 +1,22 @@
 from pycountry import countries
 from ... import sspi_raw_api_data
-from ..resources.utilities import format_m49_as_string, string_to_float, parse_json, zip_intermediates
+from ..resources.utilities import (
+    format_m49_as_string,
+    string_to_float,
+)
 import json
 import time
 import math
 import requests
 
 
-# Implement API Collection for https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
+# Implement API Collection for
+# https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
-    url_source = f"https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator={SDGIndicatorCode}" 
-    response = requests.get(url_source)
+    url_params = f"indicator={SDGIndicatorCode}"
+    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?"
+    response = requests.get(url_source + url_params)
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages + 1):
@@ -19,10 +24,13 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
-        count = sspi_raw_api_data.raw_insert_many(data_list, IndicatorCode, **kwargs)
+        count = sspi_raw_api_data.raw_insert_many(
+            data_list, IndicatorCode, **kwargs
+        )
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
     yield f"Collection complete for SDG {SDGIndicatorCode}"
+
 
 def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
     """
@@ -51,16 +59,26 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
                 intermediate_obs_dict[COU][year] = {}
             intermediate_obs_dict[COU][year][series] = obs["value"]
     return intermediate_obs_dict
-    
+
+
 def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
     final_data_list = []
     for cou in intermediate_obs_dict.keys():
         for year in intermediate_obs_dict[cou].keys():
             for intermediate in intermediate_obs_dict[cou][year]:
-                sdg_sspi_inter_dict = {"ER_MRN_MPA": ["MARINE", "Percent", "Percentage of important sites covered by protected areas, marine"],
-                                       "ER_PTD_TERR": ["TERRST", "Percent", "Percentage of important sites covered by protected areas, terrestrial"],
-                                       "ER_PTD_FRHWTR": ["FRSHWT", "Percent", "Percentage of important sites covered by protected areas, freshwater"]
-                                       }
+                sdg_sspi_inter_dict = {
+                    "ER_MRN_MPA": [
+                        "MARINE",
+                        "Percent",
+                        "Percentage of important sites covered by protected areas, marine"
+                    ],
+                    "ER_PTD_TERR": [
+                        "TERRST",
+                        "Percent",
+                        "Percentage of important sites covered by protected areas, terrestrial"
+                    ],
+                    "ER_PTD_FRHWTR": ["FRSHWT", "Percent", "Percentage of important sites covered by protected areas, freshwater"]
+                }
                 observation = {
                     "CountryCode": cou,
                     "IndicatorCode": "BIODIV",
@@ -72,6 +90,7 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
                 }
                 final_data_list.append(observation)
     return final_data_list
+
 
 def flatten_nested_dictionary_redlst(intermediate_obs_dict):
     final_data_lst = []
@@ -88,6 +107,7 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
 
 def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
     final_data_lst = []
@@ -106,16 +126,18 @@ def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
             final_data_lst.append(new_observation)
     return final_data_lst
 
+
 def flatten_nested_dictionary_watman(intermediate_obs_dict):
     final_data_list = []
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             for intermediate in intermediate_obs_dict[country][year]:
-                sdg_sspi_inter_dict = {"ER_H2O_WUEYST": ["CWUEFF", "USD/m3", "Water Use Efficiency (United States dollars per cubic meter)"] ,
+                sdg_sspi_inter_dict = {"ER_H2O_WUEYST": ["CWUEFF", "USD/m3", "Water Use Efficiency (United States dollars per cubic meter)"],
                                        "ER_H2O_STRESS": ["WTSTRS", "Percent", "Freshwater withdrawal as a proportion of available freshwater resources"]}
-                inter_value = string_to_float(intermediate_obs_dict[country][year][intermediate])
-                log_scaled_value = (lambda intermediate: math.log(inter_value) if intermediate == "ER_H2O_WUEYST" 
-                              and isinstance(inter_value, float) else inter_value)
+                inter_value = string_to_float(
+                    intermediate_obs_dict[country][year][intermediate])
+                log_scaled_value = (lambda intermediate: math.log(inter_value) if intermediate == "ER_H2O_WUEYST"
+                                    and isinstance(inter_value, float) else inter_value)
                 observation = {
                     "CountryCode": country,
                     "IndicatorCode": "WATMAN",
@@ -127,6 +149,7 @@ def flatten_nested_dictionary_watman(intermediate_obs_dict):
                 }
                 final_data_list.append(observation)
     return final_data_list
+
 
 def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
     final_data_lst = []
