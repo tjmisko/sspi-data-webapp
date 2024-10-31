@@ -51,7 +51,7 @@ def redlst():
 @login_required
 def nitrog():
     def collect_iterator(**kwargs):
-        yield from collectEPIData("SNM_raw.csv", "NITROG", **kwargs)
+        yield from collectEPIData("SNM_ind_na.csv", "NITROG", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
