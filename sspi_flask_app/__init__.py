@@ -14,7 +14,8 @@ from sspi_flask_app.models.database import (
     SSPIRawAPIData,
     SSPICleanAPIData,
     SSPIPartialAPIData,
-    SSPIProductionData
+    SSPIProductionData,
+    SSPICountryCharacteristics
 )
 from .assets import compile_static_assets
 

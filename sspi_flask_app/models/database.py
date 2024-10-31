@@ -696,7 +696,7 @@ class SSPIProductionData(MongoWrapper):
 
 
 class SSPICountryCharacteristics(MongoWrapper):
-    def validate_document_format(self, document: dict, document_number: int=0):
+    def validate_document_format(self, document: dict, document_number: int = 0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the
         valid format
