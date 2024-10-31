@@ -17,7 +17,9 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.sspi import SSPI
 import re
+import os
 import json
+
 
 finalize_bp = Blueprint(
     'finalize_bp', __name__,
@@ -143,13 +145,15 @@ def production_data_by_indicator():
 
 
 @finalize_bp.route("/production/finalize/dynamic/matrix")
+@login_required
 def finalize_dynamic_matrix_data():
     sspi_dynamic_matrix_data.delete_many({})
-    with open("local/indicator-problems.json") as f:
+    local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+    with open(os.path.join(local_path, "indicator-problems.json")) as f:
         problems = json.load(f)
-    with open("local/indicator-local-load.json") as f:
+    with open(os.path.join(local_path, "indicator-local-load.json")) as f:
         to_be_loaded = json.load(f)
-    with open("local/indicator-confident.json") as f:
+    with open(os.path.join(local_path, "indicator-confident.json")) as f:
         confident = json.load(f)
     indicator_details = sspi_metadata.indicator_details()
     endpoints = [str(r) for r in app.url_map.iter_rules()]
