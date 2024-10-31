@@ -55,7 +55,7 @@ class MongoWrapper:
             {"$group": {
                 "_id": {
                     "IndicatorCode": "$IndicatorCode",
-                    "YEAR": "$YEAR",
+                    "Year": "$Year",
                     "CountryCode": "$CountryCode"
                 },
                 "count": {"$sum": 1},
