@@ -83,6 +83,7 @@ def init_app(Config):
         from .api.core.delete import delete_bp
         # from .api.core.download import download_bp
         from .api.core.finalize import finalize_bp
+        from .api.core.host import host_bp
         from .api.core.impute import impute_bp
         from .api.core.load import load_bp
         from .api.core.query import query_bp
@@ -100,6 +101,7 @@ def init_app(Config):
         api_bp.register_blueprint(delete_bp)
         # api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(finalize_bp)
+        api_bp.register_blueprint(host_bp)
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
         api_bp.register_blueprint(query_bp)
