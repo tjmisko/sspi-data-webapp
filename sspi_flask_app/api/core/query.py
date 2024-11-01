@@ -1,9 +1,9 @@
 import re
 from flask import Blueprint, jsonify, request
-from ...models.errors import InvalidQueryError
+from sspi_flask_app.models.errors import InvalidQueryError
 from ..resources.validators import validate_data_query
 from ..resources.utilities import parse_json, lookup_database
-from ... import sspi_metadata
+from sspi_flask_app.models.database import sspi_metadata
 
 query_bp = Blueprint("query_bp", __name__,
                      template_folder="templates", 

@@ -1,4 +1,7 @@
-from .errors import InvalidDocumentFormatError, DataOrderError
+from sspi_flask_app.models.errors import (
+    InvalidDocumentFormatError,
+    DataOrderError
+)
 
 
 class SSPI:

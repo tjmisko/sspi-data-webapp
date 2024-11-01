@@ -5,8 +5,13 @@ from ..resources.utilities import lookup_database, parse_json
 from flask_wtf import FlaskForm
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
-from wtforms.validators import DataRequired, InputRequired, Length, ValidationError
-from ... import sspidb, sspi_metadata
+from wtforms.validators import (
+    DataRequired,
+    InputRequired,
+    Length,
+    ValidationError
+)
+from sspi_flask_app.models.database import sspidb, sspi_metadata
 
 
 download_bp = Blueprint("download_bp", __name__,

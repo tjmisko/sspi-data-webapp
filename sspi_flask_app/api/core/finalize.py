@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from flask import current_app as app
 from flask_login import login_required
-from ... import (
+from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     # sspi_imputed_data,
     sspi_metadata,

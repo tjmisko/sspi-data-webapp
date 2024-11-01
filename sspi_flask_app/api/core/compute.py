@@ -12,7 +12,7 @@ from ..resources.utilities import (
     filter_incomplete_data,
     score_single_indicator
 )
-from ... import (
+from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_raw_api_data,
     # sspi_analysis

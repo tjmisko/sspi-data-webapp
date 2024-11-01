@@ -1,5 +1,5 @@
 from pycountry import countries
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 from ..resources.utilities import (
     format_m49_as_string,
     string_to_float,

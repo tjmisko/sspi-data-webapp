@@ -1,5 +1,5 @@
 import requests
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 import bs4 as bs
 from pycountry import countries
 

@@ -2,7 +2,7 @@ import json
 from flask import Blueprint, request, jsonify
 from flask_login import login_required
 
-from ... import sspi_bulk_data, sspi_metadata, sspi_main_data_v3
+from sspi_flask_app.models.database import sspi_bulk_data, sspi_metadata, sspi_main_data_v3
 
 load_bp = Blueprint("load_bp", __name__,
                     template_folder="templates", 

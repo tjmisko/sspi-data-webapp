@@ -1,5 +1,11 @@
 from flask import Blueprint, request
-from ... import sspi_clean_api_data, sspi_main_data_v3, sspi_metadata, sspi_raw_api_data, sspi_imputed_data
+from sspi_flask_app.models.database import (
+    sspi_clean_api_data,
+    sspi_main_data_v3,
+    sspi_metadata,
+    sspi_raw_api_data,
+    sspi_imputed_data
+)
 from ..resources.utilities import parse_json
 
 

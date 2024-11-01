@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from pycountry import countries
-from ... import sspi_country_characteristics
+from sspi_flask_app.models.database import sspi_country_characteristics
 
 def insert_pop_data():
     pop_data = pd.read_csv("local/UN_population_data.csv").astype(str).drop(columns = "Unnamed: 0")
