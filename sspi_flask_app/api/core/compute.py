@@ -3,12 +3,12 @@ import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import Blueprint, redirect, url_for, jsonify
 from flask_login import login_required
-from ..resources.utilities import (
+from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    goalpost,
-    jsonify_df,
+    # goalpost,
+    # jsonify_df,
     zip_intermediates,
-    format_m49_as_string,
+    # format_m49_as_string,
     filter_incomplete_data,
     score_single_indicator
 )
@@ -39,7 +39,7 @@ from ..datasource.iea import (
     clean_IEA_data_GTRANS
 )
 import pandas as pd
-from pycountry import countries
+# from pycountry import countries
 from io import StringIO
 import csv
 import re
@@ -73,7 +73,7 @@ def compute_all():
     compute_intrnt()
     compute_fdepth()
     compute_altnrg()
-    return "Placeholder for a function that will compute all indicators"
+    return "Computed all indicators"
 
 
 @compute_bp.route("/BIODIV", methods=['GET'])
