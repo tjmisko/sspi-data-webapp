@@ -1,7 +1,7 @@
 from io import BytesIO
 from flask import Blueprint, request, send_file
 import pandas as pd
-from ..resources.utilities import lookup_database, parse_json
+from sspi_flask_app.api.resources.utilities import lookup_database, parse_json
 from flask_wtf import FlaskForm
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
