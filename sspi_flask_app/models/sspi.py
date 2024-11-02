@@ -62,7 +62,8 @@ class SSPI:
                 indicator_score = indicator_score_lookup[detail["Metadata"]
                                                          ["IndicatorCode"]]
             except KeyError:
-                raise DataOrderError(f"No data for indicator {detail["Metadata"]["IndicatorCode"]} found!")
+                detail = detail["Metadata"]["IndicatorCode"]
+                raise DataOrderError(f"No data for indicator {detail} found!")
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
@@ -188,8 +189,7 @@ class Indicator:
             raise InvalidDocumentFormatError(
                 f"Indicator Data Missing 'Score' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
-            raise DataOrderError(f"Mismatched Data and Indicator Detail {
-                                 detail}; {indicator_score_data}")
+            raise DataOrderError(f"Mismatched Data and Indicator Detail {detail}; {indicator_score_data}")
         if type(self.score) is float:
             if self.score < 0 or self.score > 1:
                 raise InvalidDocumentFormatError(
