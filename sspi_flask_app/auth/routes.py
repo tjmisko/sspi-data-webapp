@@ -132,7 +132,7 @@ def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
         hashed_password = flask_bcrypt.generate_password_hash(register_form.password.data)
-        new_user = User(username=register_form.username.data, password=hashed_password, secretkey=pyotp.random_base32(), apikey=secrets.token_hex(64))
+        new_user = User(username=register_form.username.data, password=hashed_password, secretkey=secrets.token_hex(32), apikey=secrets.token_hex(64))
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
@@ -185,3 +185,4 @@ def is_safe_url(target):
 #             return current_app.ensure_sync(func)(*args, **kwargs)
 #         return func(*args, **kwargs)
 #     return decorated_view
+

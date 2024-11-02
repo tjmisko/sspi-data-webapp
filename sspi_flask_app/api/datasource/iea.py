@@ -1,5 +1,5 @@
 import requests
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 import bs4 as bs
 from pycountry import countries
 
@@ -54,4 +54,34 @@ def cleanIEAData_altnrg(RawData, IndName):
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
+
+def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
+    def convert_to_kg(value):
+        return value * 1000000
+    clean_data_list = []
+    for obs in raw_data:
+        iso3 = obs["Raw"]["country"]
+        country_data = countries.get(alpha_3=iso3)
+        value = obs["Raw"]['value']
+        intermediate_code = obs["IntermediateCode"]
+        series_label = obs["Raw"]["seriesLabel"]
+        if series_label != "Transport":
+            continue
+        if not country_data:
+            continue
+        if not value:
+            continue
+        clean_obs = {
+            "CountryCode": iso3,
+            "IndicatorCode": indicator_code,
+            "Year": obs["Raw"]["year"],
+            "Value": convert_to_kg(obs["Raw"]["value"]),
+            "Unit": "Tonnes C02 per inhabitant",
+            "Description": description,
+            "IntermediateCode": intermediate_code
+        }
+        clean_data_list.append(clean_obs)
+    return clean_data_list
+
+
 

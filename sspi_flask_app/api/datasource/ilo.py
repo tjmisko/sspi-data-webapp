@@ -1,8 +1,7 @@
 import requests
-from ... import sspi_raw_api_data
-import json 
+from sspi_flask_app.models.database import sspi_raw_api_data
+import json
 from flask import jsonify
-
 
 # def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs):
 #     yield "Sending Data Request to ILO API\n"
@@ -13,8 +12,6 @@ from flask import jsonify
 #     count = sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, **kwargs)
 #     yield f"Inserted {count} observations into the database."
 
-
-# https://sdmx.ilo.org/rest/data/ILO,DF_ILR_CBCT_NOC_RT/?format=jsondata&startPeriod=1990-01-01&endPeriod=2024-12-31 
 
 def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs):
     yield "Sending Data Request to ILO API\n"

@@ -1,8 +1,25 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Response, stream_with_context
+from flask import current_app as app
 from flask_login import login_required
-from ... import sspi_clean_api_data, sspi_imputed_data, sspi_metadata, sspi_static_radar_data, sspi_main_data_v3, sspi_dynamic_line_data
-from sspi_flask_app.api.resources.utilities import parse_json, country_code_to_name, colormap
+from sspi_flask_app.models.database import (
+    sspi_clean_api_data,
+    # sspi_imputed_data,
+    sspi_metadata,
+    sspi_static_radar_data,
+    sspi_main_data_v3,
+    sspi_dynamic_line_data,
+    sspi_dynamic_matrix_data
+)
+from sspi_flask_app.api.resources.utilities import (
+    # parse_json,
+    country_code_to_name,
+    colormap
+)
 from sspi_flask_app.models.sspi import SSPI
+import re
+import os
+import json
+
 
 finalize_bp = Blueprint(
     'finalize_bp', __name__,
@@ -11,11 +28,22 @@ finalize_bp = Blueprint(
 )
 
 
+def finalize_iterator():
+    yield "Finalizing Static Radar Data"
+    finalize_sspi_static_radar_data()
+    yield "Finalizing Dynamic Line Data"
+    finalize_sspi_dynamic_line_data()
+    yield "Finalizing Dynamic Matrix Data"
+    finalize_dynamic_matrix_data()
+
+
 @finalize_bp.route("/production/finalize")
 @login_required
 def finalize_all_production_data():
-    finalize_sspi_static_radar_data()
-    return "Successfully finalized all production data!"
+    return Response(
+        stream_with_context(finalize_iterator()),
+        mimetype='text/event-stream'
+    )
 
 
 @finalize_bp.route("/production/finalize/dynamic/line")
@@ -51,7 +79,9 @@ def finalize_sspi_dynamic_line_data():
                 "PilName": detail["Pillar"],
                 "CGroup": group_list,
                 "pinned": False,
-                "hidden": (lambda group_list: False if "SSPI49" in group_list else True)(group_list),
+                "hidden": (lambda group_list: False
+                           if "SSPI49" in group_list
+                           else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],
@@ -125,3 +155,64 @@ def production_data_by_indicator():
     IntermediateCode -> IMCode
     """
     return "0"
+
+
+@finalize_bp.route("/production/finalize/dynamic/matrix")
+@login_required
+def finalize_dynamic_matrix_data():
+    sspi_dynamic_matrix_data.delete_many({})
+    local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+    with open(os.path.join(local_path, "indicator-problems.json")) as f:
+        problems = json.load(f)
+    with open(os.path.join(local_path, "indicator-local-load.json")) as f:
+        to_be_loaded = json.load(f)
+    with open(os.path.join(local_path, "indicator-confident.json")) as f:
+        confident = json.load(f)
+    indicator_details = sspi_metadata.indicator_details()
+    endpoints = [str(r) for r in app.url_map.iter_rules()]
+    collect_implemented = [r.group(0) for r in [re.search(
+        r'(?<=api/v1/collect/)(?!static)[\w]*', r)
+        for r in endpoints] if r is not None
+    ]
+    compute_implemented = [r.group(0) for r in [re.search(
+        r'(?<=api/v1/compute/)(?!static)[\w]*', r)
+        for r in endpoints] if r is not None
+    ]
+    countries = sspi_metadata.country_group("SSPI49")
+    final_data = []
+    for detail in indicator_details:
+        indicator_code = detail["Metadata"]["IndicatorCode"]
+        for country in countries:
+            stored_observations = sspi_clean_api_data.find(
+                {"IndicatorCode": indicator_code, "CountryCode": country}
+            )
+            final_data.append(
+                {
+                    "x": indicator_code,
+                    "collect": indicator_code in collect_implemented,
+                    "compute": indicator_code in compute_implemented,
+                    "problems": (lambda code:
+                                 problems[indicator_code]
+                                 if code in problems.keys()
+                                 else None)(indicator_code),
+                    "to_be_loaded": (lambda code:
+                                     to_be_loaded[indicator_code]
+                                     if code in to_be_loaded.keys()
+                                     else None)(indicator_code),
+                    "confident": (lambda code:
+                                  confident[indicator_code]
+                                  if code in confident.keys()
+                                  else None)(indicator_code),
+                    "IName": detail["Metadata"]["Indicator"],
+                    "CatCode": detail["Metadata"]["CategoryCode"],
+                    "CatName": detail["Metadata"]["Category"],
+                    "PilCode": detail["Metadata"]["PillarCode"],
+                    "PilName": detail["Metadata"]["Pillar"],
+                    "y": country,
+                    "CName": country_code_to_name(country),
+                    "v": len(stored_observations)
+                }
+            )
+    count = sspi_dynamic_matrix_data.insert_many(final_data)
+    # sspi_dynamic_matrix_data
+    return f"Inserted {count} documents into sspi_dynamic_matrix_data"

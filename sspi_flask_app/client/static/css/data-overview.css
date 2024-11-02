@@ -1,0 +1,42 @@
+.overview-section {
+    padding: 2em 3em;
+}
+
+.matrix-legend {
+    font-size: 0.8em;
+    margin-bottom: 0.5em;
+}
+
+.matrix-legend-element {
+    display: flex;
+    align-items: center;
+}
+
+.legend-box {
+    width: 1em;
+    height: 1em;
+    padding: 0em 0.5em 0.5em 0.2em;
+    margin-right: 0.5em;
+    border-radius: 2px;
+    box-sizing: border-box;
+}
+
+.green-box {
+    background-color: rgb(15, 200, 15, 0.7);
+}
+
+.yellow-box {
+    background-color: #FFBF0066;
+}
+
+.orange-box {
+    background-color: #FF9900AA;
+}
+
+.red-outline {
+    border: 2px solid rgba(255, 99, 132, 1);
+}
+
+.green-outline {
+    border: 2px solid rgb(15, 200, 15, 0.7);
+}

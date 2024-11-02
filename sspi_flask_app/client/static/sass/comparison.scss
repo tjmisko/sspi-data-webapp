@@ -9,3 +9,19 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.chart-section-pillar-differential {
+  padding: 0.5em;
+  display: flex;
+  max-height: 250px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pillar-diff-window {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-around;
+}
