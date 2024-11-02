@@ -1,7 +1,7 @@
 import requests
 from io import BytesIO
 import zipfile
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 
 
 def collectEPIData(SourceIndicatorCode, IndicatorCode, **kwargs):

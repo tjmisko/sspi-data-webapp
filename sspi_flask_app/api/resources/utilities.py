@@ -5,7 +5,7 @@ from flask import jsonify
 import pandas as pd
 import inspect
 import math
-from ... import (
+from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_bulk_data,
     sspi_raw_api_data,

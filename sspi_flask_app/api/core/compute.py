@@ -1,18 +1,26 @@
 import json
 import bs4 as bs
 from bs4 import BeautifulSoup
-from flask import Blueprint, redirect, url_for, jsonify
+from flask import (
+    Blueprint,
+    redirect,
+    url_for,
+    jsonify,
+    Response,
+    stream_with_context
+)
+from flask import current_app as app
 from flask_login import login_required
-from ..resources.utilities import (
+from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    goalpost,
-    jsonify_df,
+    # goalpost,
+    # jsonify_df,
     zip_intermediates,
-    format_m49_as_string,
+    # format_m49_as_string,
     filter_incomplete_data,
     score_single_indicator
 )
-from ... import (
+from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_raw_api_data,
     # sspi_analysis
@@ -25,12 +33,12 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_watman,
     flatten_nested_dictionary_stkhlm
 )
-from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import (
-    organizeOECDdata,
-    OECD_country_list,
+    # organizeOECDdata,
+    # OECD_country_list,
     extractAllSeries,
-    filterSeriesList,
+    # filterSeriesList,
     filterSeriesListSeniors
 )
 from ..datasource.iea import (
@@ -39,11 +47,13 @@ from ..datasource.iea import (
     clean_IEA_data_GTRANS
 )
 import pandas as pd
-from pycountry import countries
+# from pycountry import countries
 from io import StringIO
-import csv
 import re
-import numpy as np
+from sspi_flask_app.api.core.finalize import (
+   finalize_iterator
+)
+
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates",
@@ -57,6 +67,49 @@ compute_bp = Blueprint("compute_bp", __name__,
 ###########################
 ### Category: ECOSYSTEM ###
 ###########################
+
+
+@compute_bp.route("/all", methods=['GET'])
+@login_required
+def compute_all():
+    """
+    """
+    sspi_clean_api_data.delete_many({})
+
+    def compute_iterator():
+        yield "Cleared existing sspi_clean_api_data collection\n"
+        with app.app_context():
+            yield "Computing BIODIV\n"
+            with app.app_context():
+                compute_biodiv()
+            yield "Computing REDLST\n"
+            with app.app_context():
+                compute_rdlst()
+            yield "Computing NITROG\n"
+            with app.app_context():
+                compute_nitrog()
+            # yield "Computing WATMAN"
+            # compute_watman()
+            yield "Computing STKHLM\n"
+            with app.app_context():
+                compute_stkhlm()
+            yield "Computing INTRNT\n"
+            with app.app_context():
+                compute_intrnt()
+            yield "Computing FDEPTH\n"
+            with app.app_context():
+                compute_fdepth()
+            yield "Computing ALTNRG\n"
+            with app.app_context():
+                compute_altnrg()
+            yield "Finalizing Production Data\n"
+            yield from finalize_iterator()
+            yield "Data is up to date\n"
+
+    return Response(
+        stream_with_context(compute_iterator()),
+        mimetype='text/event-stream'
+    )
 
 
 @compute_bp.route("/BIODIV", methods=['GET'])
@@ -167,7 +220,7 @@ def compute_watman():
 
 @compute_bp.route("/STKHLM", methods=['GET'])
 @login_required
-def compute_skthlm():
+def compute_stkhlm():
     if not sspi_raw_api_data.raw_data_available("STKHLM"):
         return redirect(url_for("api_bp.collect_bp.STKHLM"))
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")

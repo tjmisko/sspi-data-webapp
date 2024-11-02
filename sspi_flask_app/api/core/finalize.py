@@ -1,7 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Response, stream_with_context
 from flask import current_app as app
 from flask_login import login_required
-from ... import (
+from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     # sspi_imputed_data,
     sspi_metadata,
@@ -28,11 +28,22 @@ finalize_bp = Blueprint(
 )
 
 
+def finalize_iterator():
+    yield "Finalizing Static Radar Data"
+    finalize_sspi_static_radar_data()
+    yield "Finalizing Dynamic Line Data"
+    finalize_sspi_dynamic_line_data()
+    yield "Finalizing Dynamic Matrix Data"
+    finalize_dynamic_matrix_data()
+
+
 @finalize_bp.route("/production/finalize")
 @login_required
 def finalize_all_production_data():
-    finalize_sspi_static_radar_data()
-    return "Successfully finalized all production data!"
+    return Response(
+        stream_with_context(finalize_iterator()),
+        mimetype='text/event-stream'
+    )
 
 
 @finalize_bp.route("/production/finalize/dynamic/line")
@@ -68,7 +79,9 @@ def finalize_sspi_dynamic_line_data():
                 "PilName": detail["Pillar"],
                 "CGroup": group_list,
                 "pinned": False,
-                "hidden": (lambda group_list: False if "SSPI49" in group_list else True)(group_list),
+                "hidden": (lambda group_list: False
+                           if "SSPI49" in group_list
+                           else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],
