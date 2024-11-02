@@ -9,15 +9,7 @@ from .assets import compile_static_assets
 from sspi_flask_app.models.usermodel import db
 from sspi_flask_app.models.database import (
     sspi_metadata,
-    sspi_main_data_v3,
-    mongo_wrapper,
-    SSPIMainDataV3,
-    SSPIMetadata,
-    SSPIRawAPIData,
-    SSPICleanAPIData,
-    SSPIPartialAPIData,
-    SSPICountryCharacteristics,
-    SSPIProductionData
+    sspi_main_data_v3
 )
 from .assets import compile_static_assets
 
