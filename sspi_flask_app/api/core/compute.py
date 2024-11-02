@@ -1,7 +1,15 @@
 import json
 import bs4 as bs
 from bs4 import BeautifulSoup
-from flask import Blueprint, redirect, url_for, jsonify
+from flask import (
+    Blueprint,
+    redirect,
+    url_for,
+    jsonify,
+    Response,
+    stream_with_context
+)
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
@@ -25,12 +33,12 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_watman,
     flatten_nested_dictionary_stkhlm
 )
-from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import (
-    organizeOECDdata,
-    OECD_country_list,
+    # organizeOECDdata,
+    # OECD_country_list,
     extractAllSeries,
-    filterSeriesList,
+    # filterSeriesList,
     filterSeriesListSeniors
 )
 from ..datasource.iea import (
@@ -41,9 +49,11 @@ from ..datasource.iea import (
 import pandas as pd
 # from pycountry import countries
 from io import StringIO
-import csv
 import re
-import numpy as np
+from sspi_flask_app.api.core.finalize import (
+   finalize_iterator
+)
+
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates",

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Response, stream_with_context
 from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.models.database import (
@@ -68,7 +68,9 @@ def finalize_sspi_dynamic_line_data():
                 "PilName": detail["Pillar"],
                 "CGroup": group_list,
                 "pinned": False,
-                "hidden": (lambda group_list: False if "SSPI49" in group_list else True)(group_list),
+                "hidden": (lambda group_list: False
+                           if "SSPI49" in group_list
+                           else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],
