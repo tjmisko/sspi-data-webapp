@@ -1,4 +1,4 @@
-from ... import sspidb, sspi_metadata
+from sspi_flask_app.models.database import sspidb, sspi_metadata
 from ..resources.utilities import lookup_database
 from flask import Blueprint, redirect, render_template, request, flash, url_for
 from flask_login import login_required

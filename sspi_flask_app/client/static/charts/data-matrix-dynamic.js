@@ -38,7 +38,11 @@ class DynamicMatrixChart {
                             label(context) {
                                 const v = context.dataset.data[context.dataIndex];
                                 if (v.problems) {
-                                    return v.problems
+                                    return [
+                                        "Issue:" + v.problems,
+                                        'Country: ' + v.CName, 
+                                        'Indicator: ' + v.IName
+                                    ]
                                 }
                                 return [
                                     'Country: ' + v.CName, 
@@ -66,21 +70,29 @@ class DynamicMatrixChart {
                 data: res.data,
                 backgroundColor(context) {
                     const years = context.dataset.data[context.dataIndex].v;
+                    const load = context.dataset.data[context.dataIndex].to_be_loaded;
                     const collect = context.dataset.data[context.dataIndex].collect;
                     const compute = context.dataset.data[context.dataIndex].collect;
                     if (years != 0) {
-                        const alpha = (years - 5) / 40;
+                        const alpha = (years + 5) / 40;
                         return `rgba(15, 200, 15, ${alpha})`;
                     }
                     if (collect && compute) {
                         return '#FFBF0066';
                     }
+                    if (load) {
+                        return '#FFBF00';
+                    }
                     return "rgba(0, 0, 0, 0)";
                 },
                 borderColor(context) {
                     const problems = context.dataset.data[context.dataIndex].problems;
+                    const confident = context.dataset.data[context.dataIndex].confident;
                     if (problems) {
                         return "rgba(255, 99, 132, 1)";
+                    }
+                    if (confident) {
+                        return `rgba(15, 200, 15, 0.5)`;
                     }
                 },
                 borderWidth: 1,

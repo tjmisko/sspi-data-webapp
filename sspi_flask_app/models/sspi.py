@@ -1,4 +1,7 @@
-from .errors import InvalidDocumentFormatError, DataOrderError
+from sspi_flask_app.models.errors import (
+    InvalidDocumentFormatError,
+    DataOrderError
+)
 
 
 class SSPI:
@@ -62,8 +65,8 @@ class SSPI:
                 indicator_score = indicator_score_lookup[detail["Metadata"]
                                                          ["IndicatorCode"]]
             except KeyError:
-                detail = detail["Metadata"]["IndicatorCode"]
-                raise DataOrderError(f"No data for indicator {detail} found!")
+                indicator = detail["Metadata"]["IndicatorCode"]
+                raise DataOrderError(f"No data for indicator {indicator} found!")
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)

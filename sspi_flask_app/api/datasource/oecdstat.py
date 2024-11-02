@@ -1,7 +1,7 @@
 import requests
 import bs4 as bs
 from ..resources.utilities import string_to_float, string_to_int
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 import urllib3
 import ssl
 
