@@ -1,5 +1,5 @@
 import pytest
-from sspi_flask_app import sspidb
+from sspi_flask_app. import sspidb
 from sspi_flask_app import sspi_raw_api_data
 
 @pytest.fixture(scope="function")
