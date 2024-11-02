@@ -532,5 +532,4 @@ def compute_fdepth():
 # @login_required
 def compute_colbar():
     cleaned = cleanILOData("COLBAR")
-    #  print(cleaned)
     return jsonify(cleaned)
