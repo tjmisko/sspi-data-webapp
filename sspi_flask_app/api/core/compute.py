@@ -9,6 +9,7 @@ from ..datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import organizeOECDdata, OECD_country_list, extractAllSeries, filterSeriesList, filterSeriesListSeniors
 from ..datasource.iea import filterSeriesListiea, cleanIEAData_altnrg
+from ..datasource.ilo import cleanILOData
 import pandas as pd
 from pycountry import countries
 import csv
@@ -357,4 +358,11 @@ def compute_fdepth():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_data)
     return parse_json(filtered_list)
+
+@compute_bp.route("/COLBAR", methods=['GET'])
+# @login_required
+def compute_colbar():
+    cleaned = cleanILOData("COLBAR")
+  #  print(cleaned)
+    return jsonify(cleaned)
 
