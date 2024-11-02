@@ -133,7 +133,7 @@ def gtrans():
 @login_required
 def lfpart():
     def collect_iterator(**kwargs):
-        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
+        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #################################
@@ -171,6 +171,12 @@ def fdepth():
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/PUBACC", methods=['GET'])
+def pubacc():
+    def collect_iterator(**kwargs):  
+        yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)                                    
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 # @collect_bp.route("/FSTABL", methods=['GET'])
 # def fstabl():
 #     def collect_iterator(**kwargs):
@@ -178,14 +184,13 @@ def fdepth():
 ##########################
 ## Category: INEQUALITY ##
 ##########################
-
-
-@collect_bp.route("/GINIPT", methods=['GET'])
-@login_required
-def ginipt():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/GINIPT", methods=['GET'])
+# @login_required
+# def ginipt():
+    # def collect_iterator(**kwargs):  
+    #     yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
+    # return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+    # NEEDS TO BE REWRITTEN FOR WID SOURCE, NOT 
 
 ##################################################
 ### Collection Routes for Pillar: PUBLIC GOODS ###
@@ -194,7 +199,17 @@ def ginipt():
 #########################
 ## Category: EDUCATION ##
 #########################
+@collect_bp.route("/ENRPRI", methods=['GET'])
+def enrpri():
+    def collect_iterator(**kwargs):  
+        yield from collectSDGIndicatorData("4.1.1", "ENRPRI", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/ENRSEC", methods=['GET'])
+def enrsec():
+    def collect_iterator(**kwargs):  
+        yield from collectSDGIndicatorData("4.1.1", "ENRSEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/PUPTCH", methods=['GET'])
 def puptch():
@@ -205,8 +220,6 @@ def puptch():
 ##########################
 ## Category: HEALTHCARE ##
 ##########################
-
-
 @collect_bp.route("/FAMPLN", methods=['GET'])
 @login_required
 def fampln():
