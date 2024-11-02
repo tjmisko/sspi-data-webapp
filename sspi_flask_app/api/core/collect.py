@@ -154,6 +154,7 @@ def senior():
 
 
 @collect_bp.route("/TAXREV", methods=['GET'])
+@login_required
 def taxrev():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
@@ -165,6 +166,7 @@ def taxrev():
 
 
 @collect_bp.route("/FDEPTH", methods=['GET'])
+@login_required
 def fdepth():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
@@ -172,6 +174,7 @@ def fdepth():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/PUBACC", methods=['GET'])
+@login_required
 def pubacc():
     def collect_iterator(**kwargs):  
         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)                                    
@@ -200,18 +203,21 @@ def pubacc():
 ## Category: EDUCATION ##
 #########################
 @collect_bp.route("/ENRPRI", methods=['GET'])
+@login_required
 def enrpri():
     def collect_iterator(**kwargs):  
         yield from collectSDGIndicatorData("4.1.1", "ENRPRI", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ENRSEC", methods=['GET'])
+@login_required
 def enrsec():
     def collect_iterator(**kwargs):  
         yield from collectSDGIndicatorData("4.1.1", "ENRSEC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/PUPTCH", methods=['GET'])
+@login_required
 def puptch():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)
