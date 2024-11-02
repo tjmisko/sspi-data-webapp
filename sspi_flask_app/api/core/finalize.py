@@ -28,11 +28,22 @@ finalize_bp = Blueprint(
 )
 
 
+def finalize_iterator():
+    yield "Finalizing Static Radar Data"
+    finalize_sspi_static_radar_data()
+    yield "Finalizing Dynamic Line Data"
+    finalize_sspi_dynamic_line_data()
+    yield "Finalizing Dynamic Matrix Data"
+    finalize_dynamic_matrix_data()
+
+
 @finalize_bp.route("/production/finalize")
 @login_required
 def finalize_all_production_data():
-    finalize_sspi_static_radar_data()
-    return "Successfully finalized all production data!"
+    return Response(
+        stream_with_context(finalize_iterator()),
+        mimetype='text/event-stream'
+    )
 
 
 @finalize_bp.route("/production/finalize/dynamic/line")

@@ -75,15 +75,41 @@ def compute_all():
     """
     """
     sspi_clean_api_data.delete_many({})
-    compute_biodiv()
-    compute_rdlst()
-    compute_nitrog()
-    # compute_watman()
-    compute_stkhlm()
-    compute_intrnt()
-    compute_fdepth()
-    compute_altnrg()
-    return "Computed all indicators"
+
+    def compute_iterator():
+        yield "Cleared existing sspi_clean_api_data collection\n"
+        with app.app_context():
+            yield "Computing BIODIV\n"
+            with app.app_context():
+                compute_biodiv()
+            yield "Computing REDLST\n"
+            with app.app_context():
+                compute_rdlst()
+            yield "Computing NITROG\n"
+            with app.app_context():
+                compute_nitrog()
+            # yield "Computing WATMAN"
+            # compute_watman()
+            yield "Computing STKHLM\n"
+            with app.app_context():
+                compute_stkhlm()
+            yield "Computing INTRNT\n"
+            with app.app_context():
+                compute_intrnt()
+            yield "Computing FDEPTH\n"
+            with app.app_context():
+                compute_fdepth()
+            yield "Computing ALTNRG\n"
+            with app.app_context():
+                compute_altnrg()
+            yield "Finalizing Production Data\n"
+            yield from finalize_iterator()
+            yield "Data is up to date\n"
+
+    return Response(
+        stream_with_context(compute_iterator()),
+        mimetype='text/event-stream'
+    )
 
 
 @compute_bp.route("/BIODIV", methods=['GET'])
