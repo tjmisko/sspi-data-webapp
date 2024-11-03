@@ -1,9 +1,16 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response,  request
 from flask_login import login_required, current_user
 import pandas as pd
 import numpy as np
 from pycountry import countries
 from sspi_flask_app.models.database import sspi_country_characteristics
+import json
+
+from sspi_flask_app.models.database import (
+    sspi_bulk_data,
+    sspi_metadata,
+    sspi_main_data_v3
+)
 
 load_bp = Blueprint("load_bp", __name__,
                     template_folder="templates",
@@ -38,7 +45,7 @@ def insert_pop_data():
     country_list = pop_data["CountryCode"].unique().tolist()
     count = 0
     for country in country_list:
-        yield f"Processing {country}"
+        yield f"Processing {country}\n"
         country_df = pop_data[pop_data["CountryCode"] == country]
         country_years = country_df["year"].tolist()
         for year in country_years:
@@ -53,3 +60,28 @@ def insert_pop_data():
             obs_list.append(obs)
     sspi_country_characteristics.insert_many(obs_list)
     yield f"Done! {count} UN population observations inserted into sspi_country_characteristics"
+
+
+@load_bp.route("/load/<IndicatorCode>", methods=["POST"])
+@login_required
+def load(IndicatorCode):
+    """
+    Utility function that handles loading data from the API into the database
+    """
+    observations_list = json.loads(request.get_json())
+    count = sspi_bulk_data.insert_many(observations_list)
+    return f"Inserted {count} observations into database for Indicator {IndicatorCode}."
+
+
+@load_bp.route("/load/sspi_main_data_v3", methods=['GET'])
+@login_required
+def load_maindata():
+    count = sspi_main_data_v3.load()
+    return f"Inserted {count} main data documents into database."
+
+
+@load_bp.route("/load/sspi_metadata", methods=['GET'])
+@login_required
+def load_metadata():
+    count = sspi_metadata.load()
+    return f"Inserted {count} metadata documents into database."
