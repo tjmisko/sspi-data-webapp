@@ -111,13 +111,13 @@ def coalpw():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/GTRANS", methods=['GET'])
-@login_required
-def gtrans():
-    def collect_iterator(**kwargs):
-        # yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
-        yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", IntermediateCode="FUELPR", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/GTRANS", methods=['GET'])
+# @login_required
+# def gtrans():
+#     def collect_iterator(**kwargs):
+#         # yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
+#         yield from collectWorldBankdata("EP.PMP.SGAS.CD", "GTRANS", IntermediateCode="FUELPR", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ######################################################
 ### Collection Routes for Pillar: MARKET STRUCTURE ###
@@ -186,13 +186,12 @@ def pubacc():
 ##########################
 ## Category: INEQUALITY ##
 ##########################
-# @collect_bp.route("/GINIPT", methods=['GET'])
-# @login_required
-# def ginipt():
-    # def collect_iterator(**kwargs):  
-    #     yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
-    # return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-    # NEEDS TO BE REWRITTEN FOR WID SOURCE, NOT 
+@collect_bp.route("/GINIPT", methods=['GET'])
+@login_required
+def ginipt():
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("SI.POV.GINI", "GINIPT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ##################################################
 ### Collection Routes for Pillar: PUBLIC GOODS ###

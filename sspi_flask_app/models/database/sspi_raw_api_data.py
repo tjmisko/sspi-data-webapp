@@ -114,4 +114,3 @@ class SSPIRawAPIData(MongoWrapper):
         MongoQuery = {"IndicatorCode": IndicatorCode}
         MongoQuery.update(kwargs)
         return bool(self.find_one(MongoQuery))
-
