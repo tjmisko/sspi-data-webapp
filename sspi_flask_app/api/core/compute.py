@@ -160,8 +160,7 @@ def compute_rdlst():
 
 ######################
 ### Category: LAND ###
-#######################
-
+######################
 
 @compute_bp.route("/NITROG", methods=['GET'])
 @login_required
