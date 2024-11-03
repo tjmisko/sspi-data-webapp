@@ -1,82 +1,130 @@
-async function getMatrixDynamicData() {
-    const response = await fetch(`/api/v1/dynamic/matrix`);
-    return response.json();
-}
+class DynamicMatrixChart {
+    constructor(parentElement) {
+        this.parentElement = parentElement
 
-async function dataMatrixDynamic(canvas) {
-    const res = await getMatrixDynamicData().then(data => data);
-    const n_indicators = res.icodes.length;
+        this.initRoot()
+        this.initChartJSCanvas()
 
-    // Map categories to numbers and provide corresponding data
-    const data = {
-        datasets: [{
-            label: 'My Matrix',
-            data: res.data,
-            backgroundColor(context) {
-                const value = context.dataset.data[context.dataIndex].v;
-                const alpha = (value - 5) / 40;
-                return "rgba(255, 99, 132, " + alpha + ")";
-            },
-            borderColor(context) {
-                const value = context.dataset.data[context.dataIndex].v;
-                const alpha = (value - 5) / 40;
-                return "rgba(0, 0, 0, " + alpha + ")";
-            },
-            borderWidth: 1,
-            width: ({chart}) => (chart.chartArea || {}).width / n_indicators - 1,
-            height: ({chart}) =>(chart.chartArea || {}).height / n_indicators - 1
-        }]
-    };
 
-    const ctx = canvas.getContext('2d');
-    const config = {
-        type: 'matrix',
-        data: data,
-        options: {
-            plugins: {
-                legend: false,
-                tooltip: {
-                    callbacks: {
-                        title() {
-                            return '';
-                        },
-                        label(context) {
-                            const v = context.dataset.data[context.dataIndex];
-                            return ['x: ' + v.x, 'y: ' + v.y, 'v: ' + v.v];
+        this.fetch().then(res => {
+            this.update(res)
+        })
+    }
+
+    initRoot() {
+        this.root = document.createElement('div')
+        this.root.classList.add('chart-section-dynamic-matrix')
+        this.parentElement.appendChild(this.root)
+    }
+
+    initChartJSCanvas() {
+        // Initialize the chart canvas
+        this.canvas = document.createElement('canvas')
+        this.canvas.id = 'dynamic-line-chart-canvas'
+        this.canvas.width = 400
+        this.canvas.height = 400
+        this.context = this.canvas.getContext('2d')
+        this.root.appendChild(this.canvas)
+        this.chart = new Chart(this.context, {
+            type: 'matrix',
+            options: {
+                plugins: {
+                    legend: false,
+                    tooltip: {
+                        callbacks: {
+                            title() {
+                                return 'Dynamic Data Status';
+                            },
+                            label(context) {
+                                const v = context.dataset.data[context.dataIndex];
+                                if (v.problems) {
+                                    return [
+                                        "Issue:" + v.problems,
+                                        'Country: ' + v.CName, 
+                                        'Indicator: ' + v.IName
+                                    ]
+                                }
+                                return [
+                                    'Country: ' + v.CName, 
+                                    'Indicator: ' + v.IName, 
+                                    'Years: ' + v.v
+                                ];
+                            }
                         }
                     }
                 }
-            },
-            scales: {
-                x: {
-                    type: 'category',
-                    labels: res.icodes,
-                    position: 'top',
-                    ticks: {
-                        display: true
-                    },
-                    grid: {
-                        display: false
+            }
+        })
+    }
+
+    async fetch() {
+        const response = await fetch(`/api/v1/dynamic/matrix`);
+        return response.json();
+    }
+
+    update(res) {
+        this.n_indicators = res.icodes.length;
+        this.chart.data = {
+            datasets: [{
+                label: 'My Matrix',
+                data: res.data,
+                backgroundColor(context) {
+                    const years = context.dataset.data[context.dataIndex].v;
+                    const load = context.dataset.data[context.dataIndex].to_be_loaded;
+                    const collect = context.dataset.data[context.dataIndex].collect;
+                    const compute = context.dataset.data[context.dataIndex].collect;
+                    if (years != 0) {
+                        const alpha = (years + 5) / 40;
+                        return `rgba(15, 200, 15, ${alpha})`;
+                    }
+                    if (collect && compute) {
+                        return '#FFBF0066';
+                    }
+                    if (load) {
+                        return '#FFBF00';
+                    }
+                    return "rgba(0, 0, 0, 0)";
+                },
+                borderColor(context) {
+                    const problems = context.dataset.data[context.dataIndex].problems;
+                    const confident = context.dataset.data[context.dataIndex].confident;
+                    if (problems) {
+                        return "rgba(255, 99, 132, 1)";
+                    }
+                    if (confident) {
+                        return `rgba(15, 200, 15, 0.5)`;
                     }
                 },
-                y: {
-                    type: 'category',
-                    labels: res.ccodes,
-                    reverse: true,
-                    offset: true,
-                    ticks: {
-                        display: true
-                    },
-                    grid: {
-                        display: false
-                    }
+                borderWidth: 1,
+                width: ({ chart }) => (chart.chartArea || {}).width / this.n_indicators - 1,
+                height: ({ chart }) => (chart.chartArea || {}).height / this.n_indicators - 1
+            }]
+        }
+        this.chart.options.scales = {
+            x: {
+                type: 'category',
+                labels: res.icodes,
+                position: 'top',
+                ticks: {
+                    display: true
+                },
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                type: 'category',
+                labels: res.ccodes,
+                offset: true,
+                reverse: true,
+                ticks: {
+                    display: true
+                },
+                grid: {
+                    display: false
                 }
             }
         }
-    };
-
-
-    var DataMatrixOverviewChart = new Chart(ctx, config);
-    DataMatrixOverviewChart.update();
-    return DataMatrixOverviewChart
+        this.chart.update()
+    }
 }

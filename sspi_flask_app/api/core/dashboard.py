@@ -11,7 +11,7 @@ from flask import (
 from ...models.sspi import SSPI
 from flask import current_app as app
 from flask_login import login_required
-from ... import (
+from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_metadata,
     sspi_static_radar_data,

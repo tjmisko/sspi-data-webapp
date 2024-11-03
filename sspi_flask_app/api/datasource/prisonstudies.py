@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
 from ..resources.utilities import parse_json
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 from datetime import datetime
 
 def collectPrisonStudiesData():
