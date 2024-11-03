@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytest
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
-from sspi_flask_app import sspidb
+from sspi_flask_app.models.database import sspidb
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 
 

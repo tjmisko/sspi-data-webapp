@@ -2,7 +2,7 @@ import pytest
 from sspi_flask_app.models.database.sspi_country_characteristics import (
     SSPICountryCharacteristics
 )
-from sspi_flask_app import sspidb
+from sspi_flask_app.models.database import sspidb
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from sspi_flask_app.api.resources.utilities import parse_json
 

@@ -5,7 +5,7 @@ from sspi_flask_app.api.resources.utilities import (
     group_by_indicator
     # score_indicator_documents
 )
-from sspi_flask_app.models.database.sspi_clean_api_data import (
+from sspi_flask_app.models.database import (
     sspi_clean_api_data
 )
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
