@@ -87,7 +87,7 @@ class StaticPillarDifferentialChart {
                             color: '#bbb',
                             stepSize: 0.1
                         },
-                        title: {
+                       title: {
                             display: true,
                             color: '#bbb',
                         },
