@@ -193,8 +193,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
         if any(arg_value is None for arg_value in arg_value_dict.values()):
             continue
         try:
