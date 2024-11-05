@@ -264,7 +264,8 @@ def get_static_pillar_differential(pillar_code):
         for indicator in category.indicators:
             indicator_code = indicator.code
             base_indicator_score = indicator.score
-            comparison_indicator = comparison_category.get_indicator(indicator.code)
+            comparison_indicator = comparison_category.get_indicator(
+                indicator.code)
             comparison_indicator_score = comparison_indicator.score
             by_indicator.append({
                 "IndicatorCode": indicator_code,
@@ -283,7 +284,8 @@ def get_static_pillar_differential(pillar_code):
     by_category.sort(key=lambda x: x["Diff"])
     by_indicator.sort(key=lambda x: x["Diff"])
     base_country_name = pycountry.countries.get(alpha_3=base_country).name
-    comparison_country_name = pycountry.countries.get(alpha_3=comparison_country).name
+    comparison_country_name = pycountry.countries.get(
+        alpha_3=comparison_country).name
     return jsonify({
         "labels": [c["CategoryCode"] for c in by_category],
         "datasets": [
@@ -319,6 +321,13 @@ def get_static_pillar_stack(pillar_code):
     indicator_details = sspi_metadata.indicator_details()
     datasets = []
     labels = []
+    pattern = [
+        "cross",
+        "diagnoal",
+        "horizontal",
+        "diagonal-right-left",
+        "vertical"
+    ]
     for i, cou in enumerate(country_codes):
         cou_data = parse_json(
             sspi_main_data_v3.find(
@@ -328,33 +337,36 @@ def get_static_pillar_stack(pillar_code):
         )
         cou_sspi = SSPI(indicator_details, cou_data)
         cou_pillar = cou_sspi.get_pillar(pillar_code)
-        dataset = {}
-        for category in cou_pillar.categories:
+        country_name = pycountry.countries.get(alpha_3=cou).name
+        country_flag = pycountry.countries.get(alpha_3=cou).flag
+        for j, category in enumerate(cou_pillar.categories):
             category_code = category.code
+            print(category_code)
             # Only add the category label once
             if i == 0:
-                labels.append(category_code)
-            n_indicators = len(category.indicators)
-            dataset["CatCode"] = category_code
-            dataset["CName"] = category.name
-            dataset["stack"] = category_code
-            dataset["CCode"] = cou
-            dataset["CName"] = pycountry.countries.get(alpha_3=cou).name
-            dataset["NIndicators"]: n_indicators
-            data = []
+                labels.append(category.name)
             for indicator in category.indicators:
+                dataset = {}
+                data = [None] * len(cou_pillar.categories)
                 indicator_code = indicator.code
                 indicator_score = indicator.score
-                data.append({
-                    "CCode": cou,
-                    "CatCode": category_code,
-                    "ICode": indicator_code,
-                    "IName": indicator.name,
-                    "IScore": indicator_score,
-                    "IScoreScaled": indicator_score / n_indicators,
-                })
-            dataset["data"] = data
-            datasets.append(dataset)
+                n_indicators = len(category.indicators)
+                dataset["CatCode"] = category_code
+                dataset["CName"] = category.name
+                dataset["stack"] = cou + "-" + category_code
+                dataset["CCode"] = cou
+                dataset["CName"] = country_name
+                dataset["NIndicators"] = n_indicators
+                dataset["flag"] = country_flag
+                dataset["CCode"] = cou
+                dataset["CatCode"] = category_code
+                dataset["ICode"] = indicator_code
+                dataset["IName"] = indicator.name
+                dataset["IScore"] = indicator_score
+                dataset["IScoreScaled"] = indicator_score / n_indicators
+                data[j] = indicator_score / n_indicators
+                dataset["data"] = data
+                datasets.append(dataset)
     return jsonify({
         "labels": labels,
         "datasets": datasets,
