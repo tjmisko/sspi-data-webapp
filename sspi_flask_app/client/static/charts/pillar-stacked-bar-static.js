@@ -1,49 +1,51 @@
 function createDiagonalPattern(color) {
-  // create a 10x10 px canvas for the pattern's base shape
-  let shape = document.createElement('canvas')
-  shape.width = 5
-  shape.height = 5
-  // get the context for drawing
-  let c = shape.getContext('2d')
-  // draw 1st line of the shape 
-  c.strokeStyle = color
-  c.beginPath()
-  c.moveTo(1, 0)
-  c.lineTo(5, 4)
-  c.stroke()
-  // draw 2nd line of the shape 
-  c.beginPath()
-  c.moveTo(0, 4)
-  c.lineTo(1, 5)
-  c.stroke()
-  // create the pattern from the shape
-  return c.createPattern(shape, 'repeat')
+    // create a 10x10 px canvas for the pattern's base shape
+    let shape = document.createElement('canvas')
+    shape.width = 5
+    shape.height = 5
+    // get the context for drawing
+    let c = shape.getContext('2d')
+    // draw 1st line of the shape 
+    c.strokeStyle = color
+    c.beginPath()
+    c.moveTo(1, 0)
+    c.lineTo(5, 4)
+    c.stroke()
+    // draw 2nd line of the shape 
+    c.beginPath()
+    c.moveTo(0, 4)
+    c.lineTo(1, 5)
+    c.stroke()
+    // create the pattern from the shape
+    return c.createPattern(shape, 'repeat')
 }
 
 function createCrossHatch(color = 'black') {
-  // create a 10x10 px canvas for the pattern's base shape
-  let shape = document.createElement('canvas')
-  shape.width = 4
-  shape.height = 4
-  // get the context for drawing
-  let c = shape.getContext('2d')
-  // draw 1st line of the shape 
-  c.strokeStyle = color
-  c.beginPath()
-  c.moveTo(0, 2)
-  c.lineTo(4, 2)
-  c.stroke()
-  return c.createPattern(shape, 'repeat')
+    // create a 10x10 px canvas for the pattern's base shape
+    let shape = document.createElement('canvas')
+    shape.width = 4
+    shape.height = 4
+    // get the context for drawing
+    let c = shape.getContext('2d')
+    // draw 1st line of the shape 
+    c.strokeStyle = color
+    c.beginPath()
+    c.moveTo(0, 2)
+    c.lineTo(4, 2)
+    c.stroke()
+    return c.createPattern(shape, 'repeat')
 }
 
 
 class StaticPillarStackedBarChart {
-    constructor(countryCodes, pillarCode, parentElement) {
+    constructor(countryCodes, pillarCode, parentElement, colormap = {}) {
         this.parentElement = parentElement;
         this.countryCodes = countryCodes;
         this.pillarCode = pillarCode;
         this.initRoot()
-        this.initColormap()
+        if (Object.keys(colormap).length === 0) {
+            this.initColormap()
+        }
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -69,12 +71,12 @@ class StaticPillarStackedBarChart {
 
     initColormap() {
         const colors = [
-            "#f95d6aAA",
-            "#ff7c43AA",
-            "#ffa600AA",
-            "#665191AA",
-            "#a05195AA",
-            "#d45087AA"
+            "#f95d6a",
+            "#ff7c43",
+            "#ffa600",
+            "#665191",
+            "#a05195",
+            "#d45087"
         ]
         this.colormap = {}
         this.countryCodes.map((countryCode, index) => {
@@ -102,50 +104,88 @@ class StaticPillarStackedBarChart {
                     },
                     legend: {
                         display: false,
+                    },
+                    tooltip: {
+                        intersect: false,
+                        yAlign: 'center',
+                        callbacks: {
+                            title(context) {
+                                if (context.length === 0) {
+                                    return
+                                }
+                                const currentCatName = context[0].label
+                                if (currentCatName !== context[0].dataset.CatName) {
+                                    return null
+                                }
+                                return context[0].dataset.CatCode + " - " + context[0].dataset.ICode;
+                            },
+                            label(context) {
+                                const dataset = context.dataset
+                                const currentCatName = context.label
+                                if (currentCatName !== dataset.CatName) {
+                                    return null
+                                }
+                                return [
+                                    'Country: ' + dataset.CName + " " + dataset.flag,
+                                    'Indicator: ' + dataset.IName,
+                                    'Score: ' + Number.parseFloat(dataset.IScore).toFixed(3),
+                                ];
+                            }
+                        }
                     }
                 },
                 responsive: true,
-                barPercentage: 1,
+                barPercentage: 3,
                 interaction: {
                     intersect: false,
                 },
                 scales: {
                     x: {
-                        stacked: true,
+                        stacked: true
                     },
                     y: {
-                        stacked: true
+                        title: {
+                            display: true,
+                            text: 'Category Score',
+                        },
+                        stacked: true,
+                        min: 0,
+                        max: 1,
                     }
                 }
-            }
+            },
         })
     }
 
-    computeColor(dataset) {
-        console.log(dataset)
+    computePattern(dataset, color) {
+        let colorAlpha = color + "AA"
         if (this.patternState === null) {
             this.patternState = dataset.CatCode
-            return this.colormap[dataset.CCode]
+            return color
         }
         if (this.patternState === dataset.CatCode) {
             this.patternCount += 1
             if (this.patternCount % 3 === 1) {
-                return createDiagonalPattern(this.colormap[dataset.CCode])
+                return createDiagonalPattern(colorAlpha)
             } else if (this.patternCount % 3 === 2) {
-                return createCrossHatch(this.colormap[dataset.CCode])
+                return createCrossHatch(colorAlpha)
             }
-            return this.colormap[dataset.CCode]
+            return colorAlpha
         }
         this.patternState = dataset.CatCode
         this.patternCount = 0
-        return this.colormap[dataset.CCode]
+        return colorAlpha
     }
 
     update(data) {
         this.chart.data.datasets = data.datasets
         this.chart.data.labels = data.labels
         this.chart.data.datasets.forEach((dataset) => {
-            dataset.backgroundColor = this.computeColor(dataset)
+            const color = this.colormap[dataset.CCode]
+            const pattern = this.computePattern(dataset, color)
+            dataset.backgroundColor = pattern
+            dataset.borderColor = color
+            dataset.borderWidth = 1
         })
         this.chart.update()
     }

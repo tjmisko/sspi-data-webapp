@@ -340,31 +340,28 @@ def get_static_pillar_stack(pillar_code):
         country_name = pycountry.countries.get(alpha_3=cou).name
         country_flag = pycountry.countries.get(alpha_3=cou).flag
         for j, category in enumerate(cou_pillar.categories):
-            category_code = category.code
-            print(category_code)
             # Only add the category label once
             if i == 0:
                 labels.append(category.name)
             for indicator in category.indicators:
                 dataset = {}
                 data = [None] * len(cou_pillar.categories)
-                indicator_code = indicator.code
-                indicator_score = indicator.score
                 n_indicators = len(category.indicators)
-                dataset["CatCode"] = category_code
+                dataset["CatCode"] = category.code
+                dataset["CatName"] = category.name
                 dataset["CName"] = category.name
-                dataset["stack"] = cou + "-" + category_code
+                dataset["stack"] = cou + "-" + category.code
                 dataset["CCode"] = cou
                 dataset["CName"] = country_name
                 dataset["NIndicators"] = n_indicators
                 dataset["flag"] = country_flag
                 dataset["CCode"] = cou
-                dataset["CatCode"] = category_code
-                dataset["ICode"] = indicator_code
+                dataset["CatCode"] = category.code
+                dataset["ICode"] = indicator.code
                 dataset["IName"] = indicator.name
-                dataset["IScore"] = indicator_score
-                dataset["IScoreScaled"] = indicator_score / n_indicators
-                data[j] = indicator_score / n_indicators
+                dataset["IScore"] = indicator.score
+                dataset["IScoreScaled"] = indicator.score / n_indicators
+                data[j] = indicator.score / n_indicators
                 dataset["data"] = data
                 datasets.append(dataset)
     return jsonify({
