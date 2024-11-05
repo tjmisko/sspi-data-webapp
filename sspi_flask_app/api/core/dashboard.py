@@ -328,6 +328,8 @@ def get_static_pillar_stack(pillar_code):
         "diagonal-right-left",
         "vertical"
     ]
+    code_map = {}
+    pillar_name = ""
     for i, cou in enumerate(country_codes):
         cou_data = parse_json(
             sspi_main_data_v3.find(
@@ -337,8 +339,11 @@ def get_static_pillar_stack(pillar_code):
         )
         cou_sspi = SSPI(indicator_details, cou_data)
         cou_pillar = cou_sspi.get_pillar(pillar_code)
+        if i == 0:
+            pillar_name = cou_pillar.name
         country_name = pycountry.countries.get(alpha_3=cou).name
         country_flag = pycountry.countries.get(alpha_3=cou).flag
+        code_map[cou] = {"name": country_name, "flag": country_flag}
         for j, category in enumerate(cou_pillar.categories):
             # Only add the category label once
             if i == 0:
@@ -367,5 +372,6 @@ def get_static_pillar_stack(pillar_code):
     return jsonify({
         "labels": labels,
         "datasets": datasets,
-        "title": f"{pillar_code} Score by Category and Indicator"
+        "title": f"{pillar_name} Score Breakdown by Category and Indicator",
+        "codeMap": code_map
     })

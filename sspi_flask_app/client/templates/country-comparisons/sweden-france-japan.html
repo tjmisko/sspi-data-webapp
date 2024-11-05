@@ -36,7 +36,12 @@
     <div id="sus-stack" class="pillar-stack-window"> </div>
     <div id="sus-diff" class="pillar-diff-window"> </div>
     <script defer>
-        window.SUSStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "SUS", document.getElementById("sus-stack"))
+        window.SUSStack = new StaticPillarStackedBarChart(
+            ["SWE", "FRA", "JPN"],
+            "SUS",
+            document.getElementById("sus-stack"),
+            {"SWE": "#FECC02", "FRA": "#BBBBBB", "JPN": "#BC002D"}
+        )
         window.StaticDiffSWEvFRAinSUS = new StaticPillarDifferentialChart("SWE", "FRA", "SUS", document.getElementById("sus-diff"))
         window.StaticDiffSWEvJPNinSUS = new StaticPillarDifferentialChart("SWE", "JPN", "SUS", document.getElementById("sus-diff"))
         window.StaticDiffFRAvJPNinSUS = new StaticPillarDifferentialChart("FRA", "JPN", "SUS", document.getElementById("sus-diff"))
@@ -46,7 +51,9 @@
     <div id="ms-stack" class="pillar-stack-window"> </div>
     <div id="ms-diff" class="pillar-diff-window"> </div>
     <script defer>
-        window.MSStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "MS", document.getElementById("ms-stack"))
+        window.MSStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "MS", document.getElementById("ms-stack"),
+            {"SWE": "#FECC02", "FRA": "#BBBBBB", "JPN": "#BC002D"}
+        )
         window.StaticDiffSWEvFRAinMS = new StaticPillarDifferentialChart("SWE", "FRA", "MS", document.getElementById("ms-diff"))
         window.StaticDiffSWEvJPNinMS = new StaticPillarDifferentialChart("SWE", "JPN", "MS", document.getElementById("ms-diff"))
         window.StaticDiffFRAvJPNinMS = new StaticPillarDifferentialChart("FRA", "JPN", "MS", document.getElementById("ms-diff"))
@@ -56,7 +63,9 @@
     <div id="pg-stack" class="pillar-stack-window"> </div>
     <div id="pg-diff" class="pillar-diff-window"> </div>
     <script defer>
-        window.PGStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "PG", document.getElementById("pg-stack"))
+        window.PGStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "PG", document.getElementById("pg-stack"),
+            {"SWE": "#FECC02", "FRA": "#BBBBBB", "JPN": "#BC002D"}
+        )
         window.StaticDiffSWEvFRAinPG = new StaticPillarDifferentialChart("SWE", "FRA", "PG", document.getElementById("pg-diff"))
         window.StaticDiffSWEvJPNinPG = new StaticPillarDifferentialChart("SWE", "JPN", "PG", document.getElementById("pg-diff"))
         window.StaticDiffFRAvJPNinPG = new StaticPillarDifferentialChart("FRA", "JPN", "PG", document.getElementById("pg-diff"))

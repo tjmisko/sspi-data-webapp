@@ -40,12 +40,17 @@ function createCrossHatch(color = 'black') {
 class StaticPillarStackedBarChart {
     constructor(countryCodes, pillarCode, parentElement, colormap = {}) {
         this.parentElement = parentElement;
+        this.textColor = '#bbb';
         this.countryCodes = countryCodes;
         this.pillarCode = pillarCode;
         this.initRoot()
+        this.initTitle()
         if (Object.keys(colormap).length === 0) {
             this.initColormap()
+        } else {
+            this.colormap = colormap
         }
+        this.createLegend()
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -69,6 +74,12 @@ class StaticPillarStackedBarChart {
         this.parentElement.appendChild(this.root)
     }
 
+    initTitle() {
+        this.title = document.createElement('h4')
+        this.title.classList.add('stack-bar-title')
+        this.root.appendChild(this.title)
+    }
+
     initColormap() {
         const colors = [
             "#f95d6a",
@@ -86,11 +97,30 @@ class StaticPillarStackedBarChart {
         this.patternCount = 0
     }
 
+    createLegend() {
+        this.legend = document.createElement('div')
+        this.legend.classList.add('stack-bar-legend')
+        this.countryCodes.map((countryCode) => {
+            const legendElement = document.createElement('div')
+            legendElement.classList.add('stack-bar-legend-element')
+            const legendBox = document.createElement('div')
+            legendBox.classList.add('legend-box')
+            legendBox.style.backgroundColor = this.colormap[countryCode]
+            legendElement.appendChild(legendBox)
+            const legendText = document.createElement('span')
+            legendText.id = countryCode + '-' + this.pillarCode + '-stack-bar-legend-text'
+            legendText.innerText = countryCode
+            legendElement.appendChild(legendText)
+            this.legend.appendChild(legendElement)
+        })
+        this.root.appendChild(this.legend)
+    }
+
 
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
         this.canvas.id = `pillar-differential-canvas-${this.pillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`
-        this.canvas.width = 700
+        this.canvas.width = 800
         this.canvas.height = 400
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
@@ -98,15 +128,13 @@ class StaticPillarStackedBarChart {
             type: 'bar',
             options: {
                 plugins: {
-                    title: {
-                        display: true,
-                        text: 'Chart.js Bar Chart - Stacked'
-                    },
                     legend: {
                         display: false,
                     },
                     tooltip: {
                         intersect: false,
+                        padding: 10,
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
                         yAlign: 'center',
                         callbacks: {
                             title(context) {
@@ -141,12 +169,19 @@ class StaticPillarStackedBarChart {
                 },
                 scales: {
                     x: {
-                        stacked: true
+                        stacked: true,
+                        ticks: {
+                            color: this.textColor,
+                        },
                     },
                     y: {
                         title: {
                             display: true,
                             text: 'Category Score',
+                            color: this.textColor,
+                        },
+                        ticks: {
+                            color: this.textColor,
                         },
                         stacked: true,
                         min: 0,
@@ -187,6 +222,14 @@ class StaticPillarStackedBarChart {
             dataset.borderColor = color
             dataset.borderWidth = 1
         })
+        console.log(this.legend.children)
+        Array.from(this.legend.children).forEach((item) => {
+            const cou = item.querySelector('span').id.split('-')[0]
+            const flag = data.codeMap[cou].flag 
+            const name = data.codeMap[cou].name
+            item.querySelector('span').innerText = name + " (" + cou + ")"
+        })
+        this.title.innerText = data.title
         this.chart.update()
     }
 }
