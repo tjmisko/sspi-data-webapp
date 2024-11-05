@@ -1,7 +1,7 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 
 
-class SSPICountryCharacteristics(MongoWrapper):
+class SSPIOutcomeData(MongoWrapper):
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
         Raises an InvalidDocumentFormatError if the document is not in the

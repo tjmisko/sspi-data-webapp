@@ -9,6 +9,7 @@ from sspi_flask_app.models.database import (
     sspi_partial_api_data,
     sspi_production_data,
     sspi_raw_api_data,
+    sspi_outcome_data
 )
 
 client = MongoClient('localhost', 27017)
@@ -25,6 +26,9 @@ sspi_raw_api_data = sspi_raw_api_data.SSPIRawAPIData(
 )
 sspi_country_characteristics = sspi_country_characteristics.SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
+)
+sspi_outcome_data = sspi_outcome_data.OutcomeData(
+    sspidb.sspi_outcome_data
 )
 sspi_bulk_data = mongo_wrapper.MongoWrapper(
     sspidb.sspi_bulk_data

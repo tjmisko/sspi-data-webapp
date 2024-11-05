@@ -9,6 +9,7 @@ from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
+from .outcomedata import insert_outcome_data
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -270,3 +271,11 @@ def unpopl():
         # insert UN population data into sspi_country_characteristics database
         yield from insert_pop_data()
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/OCDATA", methods=['GET'])
+@login_required
+def ocdata():
+    def collect_iterator(**kwargs):
+        yield from insert_outcome_data()
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
