@@ -3,7 +3,6 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 import json
 from flask import jsonify
 import re
-import ujson
 
 # def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs):
 #     yield "Sending Data Request to ILO API\n"
