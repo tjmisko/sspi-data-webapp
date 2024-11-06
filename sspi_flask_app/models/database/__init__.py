@@ -27,7 +27,7 @@ sspi_raw_api_data = sspi_raw_api_data.SSPIRawAPIData(
 sspi_country_characteristics = sspi_country_characteristics.SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
 )
-sspi_outcome_data = sspi_outcome_data.OutcomeData(
+sspi_outcome_data = sspi_outcome_data.SSPIOutcomeData(
     sspidb.sspi_outcome_data
 )
 sspi_bulk_data = mongo_wrapper.MongoWrapper(

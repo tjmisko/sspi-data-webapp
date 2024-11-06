@@ -15,7 +15,7 @@ from sspi_flask_app.models.database import (
     sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
-    sspi_dynamic_matrix_data
+    sspi_dynamic_matrix_data,
     sspi_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError

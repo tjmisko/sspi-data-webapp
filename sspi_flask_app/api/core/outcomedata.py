@@ -7,6 +7,15 @@ def insert_outcome_data():
     outcome_data = pd.read_excel("local/2024-10-20 - FROZEN 3.0 Indicator and Outcome Data.xlsx", 
                 sheet_name = "Outcome Variables").loc[4:52, :].rename(columns = {"Source": "Country", "Unnamed: 1": 
                 "Country_code", "Unnamed: 2": "Region", "Unnamed: 3": "Region", "World Bank": "GDP per capita"}).reset_index(drop = True)
+    index_mappings = {'SDG Index': ["UNSDGI", "Index"],
+       'Legatum Prosperity Index': ["LGPROS", "Index"],
+       'Social Progress Imperative': ["SOCPRO", "Index"],
+       'UN Human Development Index (HDI)': ["HUMDEV", "Index"],
+       'Environmental Performance Index': ["ENVPER", "Index"],
+       'Global Footprint Network': ["GLFOOT", "Global hectares per person"],
+       'World Happiness Report': ["CANLAD", "Index"],
+       'GDP per capita': ["GDPCAP", "Index"]
+    }
     obs_list = []
     count = 0
     for index in range(0, len(outcome_data)):
@@ -15,8 +24,9 @@ def insert_outcome_data():
             obs = {"CountryCode": row["Country_code"],
                     "Value": row[index],
                     "Year": 2018,
-                    "Unit": index,
-                    "IntermediateCode": "OCDATA"}
+                    "Description": index,
+                    "Unit": index_mappings[index][1],
+                    "IntermediateCode": index_mappings[index][0]}
             obs_list.append(obs)
             count += 1
     sspi_outcome_data.insert_many(obs_list)
