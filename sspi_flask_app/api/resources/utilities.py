@@ -15,7 +15,8 @@ from sspi_flask_app.models.database import (
     sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
-    sspi_dynamic_matrix_data
+    sspi_dynamic_matrix_data,
+    sspi_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -76,6 +77,8 @@ def lookup_database(database_name):
         return sspi_dynamic_line_data
     elif database_name == "sspi_dynamic_matrix_data":
         return sspi_dynamic_matrix_data
+    elif database_name == "sspi_outcome_data":
+        return sspi_outcome_data
     raise InvalidDatabaseError(database_name)
 
 
@@ -193,8 +196,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
         if any(arg_value is None for arg_value in arg_value_dict.values()):
             continue
         try:

@@ -11,6 +11,7 @@ from flask import (
 )
 from flask import current_app as app
 from flask_login import login_required
+from ..datasource.ilo import cleanILOData
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     # goalpost,
@@ -525,3 +526,10 @@ def compute_fdepth():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_data)
     return parse_json(filtered_list)
+
+
+@compute_bp.route("/COLBAR", methods=['GET'])
+# @login_required
+def compute_colbar():
+    cleaned = cleanILOData("COLBAR")
+    return jsonify(cleaned)
