@@ -2,6 +2,7 @@ import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 import json
 from flask import jsonify
+import re
 
 # def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs):
 #     yield "Sending Data Request to ILO API\n"
@@ -27,8 +28,12 @@ def cleanILOData(IndicatorCode):
     data = sspi_raw_api_data.fetch_raw_data(IndicatorCode)
  #   print(type(data[0]['Raw']))
     data_decoded = str(data[0]['Raw'])
-   # print(data_raw)
+    # print(data_raw)
     print(len(data_decoded))
-    loaded_json = json.loads(data_decoded[2:-1])
-    return ""
+    # loaded_json = json.loads(data_decoded[44500:45000])
+    substring = data_decoded[40000:50000]
+    structures = re.findall(pattern = "structures", string = data_decoded)
+    # metadata = str(data0]['Raw']["structures"]
+    str(structures)
+    return data_decoded
 

@@ -16,6 +16,7 @@ import requests
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_params = f"indicator={SDGIndicatorCode}"
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?"
+    print(url_source + url_params)
     response = requests.get(url_source + url_params)
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
@@ -166,3 +167,23 @@ def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
+    final_data_lst = []
+    # for country in intermediate_obs_dict:
+    #     for year in intermediate_obs_dict[country]:
+    #         final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "NRGINT",
+                "Unit": "Percent",
+                "Description": "Energy intensity level of primary energy measured in megajoules per constant 2017 purchasing power parity GDP.",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+                
