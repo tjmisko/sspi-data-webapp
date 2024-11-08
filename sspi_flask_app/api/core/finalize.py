@@ -5,8 +5,9 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     # sspi_imputed_data,
     sspi_metadata,
-    sspi_static_radar_data,
     sspi_main_data_v3,
+    sspi_static_rank_data,
+    sspi_static_radar_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
@@ -44,6 +45,61 @@ def finalize_all_production_data():
         stream_with_context(finalize_iterator()),
         mimetype='text/event-stream'
     )
+
+
+@finalize_bp.route("/production/finalize/static/rank")
+@login_required
+def finalize_sspi_static_rank():
+    """
+    Computes the SSPI scores at all levels and stores them in a database
+    ItemCode is the PillarCode, CategoryCode, or IndicatorCode
+    """
+    country_codes = sspi_metadata.country_group("SSPI49")
+    indicator_details = sspi_metadata.indicator_details()
+    sspi_item_codes = ["SSPI"] + sspi_metadata.pillar_codes() + \
+        sspi_metadata.category_codes() + \
+        sspi_metadata.indicator_codes()
+    score_group_dictionary = dict.fromkeys(
+        sspi_item_codes,
+        [{"CountryCode": "", "Score": 0, "Rank": 0}] * len(country_codes)
+    )
+    print('Fetching and scoring data')
+    for i, cou in enumerate(country_codes):
+        country_data = sspi_main_data_v3.find({"CountryCode": cou})
+        sspi_scores = SSPI(indicator_details, country_data)
+        score_group_dictionary["SSPI"][i]["CountryCode"] = cou
+        score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
+        for pillar in sspi_scores.pillars:
+            score_group_dictionary[pillar.code][i]["CountryCode"] = cou
+            score_group_dictionary[pillar.code][i]["Score"] = pillar.score()
+            for category in pillar.categories:
+                score_group_dictionary[category.code][i]["CountryCode"] = cou
+                score_group_dictionary[category.code][i]["Score"] = category.score()
+                for indicator in category.indicators:
+                    score_group_dictionary[indicator.code][i]["CountryCode"] = cou
+                    score_group_dictionary[indicator.code][i]["Score"] = indicator.score
+    print('Sorting and ranking data')
+    for item_code in sspi_item_codes:
+        score_group_dictionary[item_code] = sorted(
+            score_group_dictionary[item_code],
+            key=lambda x: x["Score"],
+        )
+        for i, country_data in enumerate(score_group_dictionary[item_code]):
+            country_data["Rank"] = score_group_dictionary[item_code].index(
+                country_data) + 1
+    print('Formatting and inserting data')
+    for item_code, score_list in score_group_dictionary.items():
+        for score in score_list:
+            sspi_static_rank_data.insert_one({
+                "ICode": item_code,
+                "CCode": score["CountryCode"],
+                "Year": 2018,
+                "Score": score["Score"],
+                "Rank": score["Rank"]
+            })
+    return "Successfully finalized rank data!"
+
+
 
 
 @finalize_bp.route("/production/finalize/dynamic/line")
