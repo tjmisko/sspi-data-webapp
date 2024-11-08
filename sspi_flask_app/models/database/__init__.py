@@ -43,6 +43,9 @@ sspi_analysis = mongo_wrapper.MongoWrapper(
 )
 
 # Production Databases -- More granular for fast queries
+sspi_static_rank_data = sspi_production_data.SSPIProductionData(
+    sspidb.sspi_static_rank_data
+)
 sspi_static_radar_data = sspi_production_data.SSPIProductionData(
     sspidb.sspi_static_radar_data
 )
