@@ -42,3 +42,5 @@ The application should now load normally. Please comment them out again when you
 
 9) Run the `flask run` command from your terminal in the top level directory, which contains the `wsgi.py` file.  Your application should boot, and you can open it in the browser.
 
+10) In order to run `@login_protected` routes, you will need to register yourself in the SSPI database. To do this, navigate to the `/register` route in your browser and fill out the form.  You will be redirected to the login page, where you can enter your credentials and access the protected routes. Otherwise, you will receive an error message upon running `/api/v1/collect` routes which will prevent you from collecting data.
+
