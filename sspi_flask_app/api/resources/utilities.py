@@ -15,7 +15,10 @@ from sspi_flask_app.models.database import (
     sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
-    sspi_dynamic_matrix_data
+    sspi_dynamic_matrix_data,
+    sspi_static_rank_data,
+    sspi_analysis,
+    sspi_partial_api_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -56,20 +59,26 @@ def lookup_database(database_name):
 
     Throws an error otherwise
     """
-    if database_name == "sspi_main_data_v3":
+    if database_name == "sspi_metadata":
+        return sspi_metadata
+    elif database_name == "sspi_main_data_v3":
         return sspi_main_data_v3
-    elif database_name == "sspi_bulk_data":
-        return sspi_bulk_data
     elif database_name == "sspi_raw_api_data":
         return sspi_raw_api_data
+    elif database_name == "sspi_bulk_data":
+        return sspi_bulk_data
     elif database_name == "sspi_clean_api_data":
         return sspi_clean_api_data
     elif database_name == "sspi_imputed_data":
         return sspi_imputed_data
-    elif database_name == "sspi_metadata":
-        return sspi_metadata
+    elif database_name == "sspi_analysis":
+        return sspi_analysis
+    elif database_name == "sspi_production_data":
+        return sspi_partial_api_data
     elif database_name == "sspi_country_characteristics":
         return sspi_country_characteristics
+    elif database_name == "sspi_static_rank_data":
+        return sspi_static_rank_data
     elif database_name == "sspi_static_radar_data":
         return sspi_static_radar_data
     elif database_name == "sspi_dynamic_line_data":

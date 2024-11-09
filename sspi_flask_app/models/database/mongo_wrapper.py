@@ -12,8 +12,8 @@ class MongoWrapper:
         doc_count = self._mongo_database.count_documents({})
         return doc_count == 0
 
-    def find_one(self, query: dict) -> dict:
-        cursor = self._mongo_database.find_one(query)
+    def find_one(self, query: dict, options: dict = {}) -> dict:
+        cursor = self._mongo_database.find_one(query, options)
         return json.loads(json_util.dumps(cursor))
 
     def find(self, query: dict, options: dict = {}) -> list:
