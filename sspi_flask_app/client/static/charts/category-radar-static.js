@@ -90,17 +90,7 @@ class CategoryRadarStatic {
                     },
                     tooltip: {
                         backgroundColor: '#1B2A3Ccc',
-                        callbacks: {
-                            title: function(context) {
-                                return `${context[0].label}`
-                            },
-                            label: function(context) {
-                                const score = context.raw;
-                                const categoryCode = context.dataset.label;
-                                const categoryName = context.dataset.category;
-                                return [`Category Score: ${score}`, `Category Rank:`]
-                            }
-                        }
+
                     },
                 }
             }
@@ -115,9 +105,20 @@ class CategoryRadarStatic {
     update(data) {
         this.labelMap = data.labelMap
         this.chart.data.labels = data.labels
+        this.ranks = data.ranks
         this.chart.data.datasets = data.datasets
         this.title.innerText = data.title
         this.legendItems = data.legendItems
+        this.chart.options.plugins.tooltip.callbacks.title = (context) => {
+            const categoryName = this.labelMap[context[0].label]
+            return categoryName
+        }
+        this.chart.options.plugins.tooltip.callbacks.label = (context) => {
+            return [
+                "Category Score: " + context.raw.toFixed(3),
+                "Category Rank: " + this.ranks[context.dataIndex].Rank,
+            ]
+        }
         this.chart.update()
     }
 }
