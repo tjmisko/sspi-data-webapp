@@ -56,8 +56,7 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            raise DataOrderError(f"Length of indicator_details {len(
-                indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
+            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
@@ -193,8 +192,7 @@ class Indicator:
             raise InvalidDocumentFormatError(
                 f"Indicator Data Missing 'Score' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
-            raise DataOrderError(f"Mismatched Data and Indicator Detail {
-                                 detail}; {indicator_score_data}")
+            raise DataOrderError(f"Mismatched Data and Indicator Detail {detail}; {indicator_score_data}")
         if type(self.score) is float:
             if self.score < 0 or self.score > 1:
                 raise InvalidDocumentFormatError(

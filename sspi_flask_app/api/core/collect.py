@@ -241,9 +241,9 @@ def intrnt():
 #############################
 
 
-@collect_bp.route("/INCARC", methods=['GET'])
+@collect_bp.route("/PRISON", methods=['GET'])
 @login_required
-def incarc():
+def prison():
     def collect_iterator(**kwargs):
         yield from collectPrisonStudiesData(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')

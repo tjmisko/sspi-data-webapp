@@ -7,11 +7,14 @@ from ..resources.utilities import parse_json
 from sspi_flask_app.models.database import sspi_raw_api_data
 from datetime import datetime
 
-def collectPrisonStudiesData():
+def collectPrisonStudiesData(**kwargs):
     url_slugs = get_href_list()
-    yield from collect_all_pages(url_slugs)
+    yield from collect_all_pages(url_slugs, **kwargs)
 
 def get_href_list():
+    '''
+    Collects unique ends of URLs for each country, each of which hosts time series data (along with other characteristics)
+    '''
     url_for_clist = "https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All"
     response = requests.get(url_for_clist)
     # root = ET.fromstring(response.text)
@@ -21,15 +24,15 @@ def get_href_list():
     url_slugs = [link["href"] for link in list_of_links]
     return url_slugs
 
-def collect_all_pages(url_slugs):
+def collect_all_pages(url_slugs, **kwargs):
     url_base = "https://www.prisonstudies.org"
     count = 0
     failed_matches = []
+    webpages = []
     print(url_slugs)
     for url_slug in url_slugs:
         query_string = url_slug[9:].replace("-", " ")
         count += 1
-        print(url_slug)
         yield f"{url_slug}\n"
         try:
             COU = get_country_code(query_string)
@@ -45,7 +48,9 @@ def collect_all_pages(url_slugs):
         time.sleep(10)
         print(url_slug)
         response = requests.get(url_base + url_slug)
-        yield store_webpage_as_raw_data(response, COU)
+        webpages.append({COU: response})
+    store_webpages_as_raw_data(webpages, **kwargs)
+        # yield store_webpage_as_raw_data(response, COU, **kwargs)
         
 
 def get_country_code(namestring):
@@ -63,16 +68,25 @@ namefix = {
     "cote divorie": "ivoire"
 }
 
-def store_webpage_as_raw_data(response, COU):
-    sspi_raw_api_data.insert_one({
-        "collection-info": {
-            "IndicatorCode": "INCARC",
-            "CountryCode": COU,
-            "CollectedAt": datetime.now()
-        },
-        "observation": response.text
-    })
-    return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
+def store_webpages_as_raw_data(webpage_list, **kwargs):
+    data_list = []
+    count = 0
+    for country in webpage_list:
+        obs = {"IndicatorCode": "PRISON",
+         "CountryCode": country,
+         "Raw": webpage_list[country],
+         "ColllectedAt": datetime.now()}
+        data_list.append(obs)
+        # yield f"Scraped webpage for {country} and inserted HTML data into sspi_raw_api_data\n"
+    sspi_raw_api_data.insert_many(data_list, **kwargs)
+    return f"All {count} countries' data inserted into raw database"
+    # sspi_raw_api_data.insert_one({
+    #         "IndicatorCode": "PRISON",
+    #         "CountryCode": COU,
+    #         "Raw": response.text,
+    #         "CollectedAt": datetime.now()
+    #     })
+    # return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
 
 def scrape_stored_pages_for_data():
     prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
