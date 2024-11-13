@@ -116,7 +116,6 @@ class StaticPillarStackedBarChart {
         this.root.appendChild(this.legend)
     }
 
-
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
         this.canvas.id = `pillar-differential-canvas-${this.pillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`
@@ -157,6 +156,7 @@ class StaticPillarStackedBarChart {
                                     'Country: ' + dataset.CName + " " + dataset.flag,
                                     'Indicator: ' + dataset.IName,
                                     'Score: ' + Number.parseFloat(dataset.IScore).toFixed(3),
+                                    'Rank: ' + dataset.IRank,
                                 ];
                             }
                         }
@@ -222,10 +222,9 @@ class StaticPillarStackedBarChart {
             dataset.borderColor = color
             dataset.borderWidth = 1
         })
-        console.log(this.legend.children)
         Array.from(this.legend.children).forEach((item) => {
             const cou = item.querySelector('span').id.split('-')[0]
-            const flag = data.codeMap[cou].flag 
+            const flag = data.codeMap[cou].flag
             const name = data.codeMap[cou].name
             item.querySelector('span').innerText = name + " (" + cou + ")"
         })
