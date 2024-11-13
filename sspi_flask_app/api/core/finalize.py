@@ -30,14 +30,15 @@ finalize_bp = Blueprint(
 
 
 def finalize_iterator():
-    yield "Finalizing Static Rank Data"
+    yield "Finalizing Static Rank Data\n"
     finalize_sspi_static_rank_data()
-    yield "Finalizing Static Radar Data"
+    yield "Finalizing Static Radar Data\n"
     finalize_sspi_static_radar_data()
-    yield "Finalizing Dynamic Line Data"
+    yield "Finalizing Dynamic Line Data\n"
     finalize_sspi_dynamic_line_data()
-    yield "Finalizing Dynamic Matrix Data"
+    yield "Finalizing Dynamic Matrix Data\n"
     finalize_dynamic_matrix_data()
+    yield "Finalization Complete\n"
 
 
 @finalize_bp.route("/production/finalize")
