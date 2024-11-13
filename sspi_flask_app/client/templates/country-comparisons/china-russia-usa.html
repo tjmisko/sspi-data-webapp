@@ -10,48 +10,51 @@
 {% block comparison_title %} <h1> China, Russia, and the United States </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Global Superpowers Struggle to Provide for the Common Good </h2> {% endblock %}
 {% block comparison_radar %}
-<div class="datawindow"> 
-    <nav class="datanav">
-        <a class="datanavlink" href="/"> Map </a>
-        <a class="datanavlink" href="/"> Plot </a>
-        <a class="datanavlink" href="/"> Table </a>
-    </nav>
-
-    <div class="radar-chart-flex-container">
-        <div class="radar-chart-box">
-            <h3> China </h3>
-            <div class="radar-chart-canvas-container"> 
-                <canvas id="radar-chart-1" class="radar-chart chart-canvas"></canvas>
-            </div>
-        </div>
-        <div class="radar-chart-box">
-            <h3> Russia </h3>
-            <div class="radar-chart-canvas-container">
-                <canvas id="radar-chart-2" class="radar-chart chart-canvas"></canvas>
-            </div>
-        </div>
-        <div class="radar-chart-box">
-            <h3> United States </h3>
-            <div class="radar-chart-canvas-container">
-                <canvas id="radar-chart-3" class="radar-chart chart-canvas"></canvas>
-            </div>
-        </div>
-    </div>
+    <section id="radar-chart-flex-container" class="radar-chart-flex-container datawindow"> </section>
     <script defer>
-    categoryRadarStatic("CHN", document.getElementById('radar-chart-1'))
-    categoryRadarStatic("RUS", document.getElementById('radar-chart-2'))
-    categoryRadarStatic("USA", document.getElementById('radar-chart-3'))
+        window.RadarCHN = new CategoryRadarStatic("CHN", document.getElementById('radar-chart-flex-container'))
+        window.RadarRUS = new CategoryRadarStatic("RUS", document.getElementById('radar-chart-flex-container'))
+        window.RadarUSA = new CategoryRadarStatic("USA", document.getElementById('radar-chart-flex-container'))
     </script>
-</div>
 {% endblock %}
 {% block sustainability %}
+    <div id="sus-stack" class="pillar-stack-window"> </div>
+    <div id="sus-diff" class="pillar-diff-window"> </div>
+    <script defer>
+        window.SUSStack = new StaticPillarStackedBarChart(
+            ["CHN", "RUS", "USA"],
+            "SUS",
+            document.getElementById("sus-stack"),
+            {"CHN": "#FECC02", "USA": "#BBBBBB", "RUS": "#BC002D"}
+        )
+        window.StaticDiffCHNvRUSinSUS = new StaticPillarDifferentialChart("CHN", "RUS", "SUS", document.getElementById("sus-diff"))
+        window.StaticDiffCHNvUSAinSUS = new StaticPillarDifferentialChart("CHN", "USA", "SUS", document.getElementById("sus-diff"))
+        window.StaticDiffRUSvUSAinSUS = new StaticPillarDifferentialChart("RUS", "USA", "SUS", document.getElementById("sus-diff"))
+    </script>
 {% endblock %}
 
 {% block market_structure %}
-    Here's some text on market structure
-    <script>
+    <div id="ms-stack" class="pillar-stack-window"> </div>
+    <div id="ms-diff" class="pillar-diff-window"> </div>
+    <script defer>
+        window.MSStack = new StaticPillarStackedBarChart(["CHN", "RUS", "USA"], "MS", document.getElementById("ms-stack"),
+            {"CHN": "#FECC02", "USA": "#BBBBBB", "RUS": "#BC002D"}
+        )
+        window.StaticDiffCHNvRUSinMS = new StaticPillarDifferentialChart("CHN", "RUS", "MS", document.getElementById("ms-diff"))
+        window.StaticDiffCHNvUSAinMS = new StaticPillarDifferentialChart("CHN", "USA", "MS", document.getElementById("ms-diff"))
+        window.StaticDiffRUSvUSAinMS = new StaticPillarDifferentialChart("RUS", "USA", "MS", document.getElementById("ms-diff"))
     </script>
 {% endblock %}
 
 {% block public_goods %}
+    <div id="pg-stack" class="pillar-stack-window"> </div>
+    <div id="pg-diff" class="pillar-diff-window"> </div>
+    <script defer>
+        window.PGStack = new StaticPillarStackedBarChart(["CHN", "RUS", "USA"], "PG", document.getElementById("pg-stack"),
+            {"CHN": "#FECC02", "USA": "#BBBBBB", "RUS": "#BC002D"}
+        )
+        window.StaticDiffCHNvRUSinPG = new StaticPillarDifferentialChart("CHN", "RUS", "PG", document.getElementById("pg-diff"))
+        window.StaticDiffCHNvUSAinPG = new StaticPillarDifferentialChart("CHN", "USA", "PG", document.getElementById("pg-diff"))
+        window.StaticDiffRUSvUSAinPG = new StaticPillarDifferentialChart("RUS", "USA", "PG", document.getElementById("pg-diff"))
+    </script>
 {% endblock %}
