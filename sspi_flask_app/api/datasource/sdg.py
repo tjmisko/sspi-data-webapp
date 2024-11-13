@@ -12,11 +12,15 @@ import requests
 
 # Implement API Collection for
 # https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_params = f"indicator={SDGIndicatorCode}"
     url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?"
     response = requests.get(url_source + url_params)
+    print(response.request.url)
+    print(response.status_code)
+    print(response.request.headers)
+    print(response.request.__getattribute__('headers'))
+    print(response.request)
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages + 1):
