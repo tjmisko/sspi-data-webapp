@@ -56,12 +56,10 @@ function handleScaleAxis(ChartObject, ScaleByValue) {
     const original_data = ChartObject.data
     if (ScaleByValue) {
         // Sort inner data, then use that to sort labels...sort labels
-        console.log('Scale by Value')
         ChartObject.data.datasets[0].parsing.yAxisKey = 'Value'
         ChartObject.data.datasets[0].label = 'Value'
         // Sort Alphabetically
     } else {
-        console.log('Scale by Score')
         ChartObject.data.datasets[0].parsing.yAxisKey = 'Score'
         ChartObject.data.datasets[0].label = 'Score'
     }
@@ -75,13 +73,11 @@ function handleSortOrder(ChartObject, SortByCountry) {
         ChartObject.data.datasets[0].data = sorted_data
         ChartObject.data.labels = sorted_data.map(document => document.CountryCode)
         // Sort inner data, then use that to sort labels...sort labels
-        console.log('Sort by Country')
         // Sort Alphabetically
     } else {
         const sorted_data = original_data.datasets[0].data.sort((a, b) => a.Value - b.Value)
         ChartObject.data.datasets[0].data = sorted_data
         ChartObject.data.labels = sorted_data.map(document => document.CountryCode)
-        console.log('Sort by Value')
     }
     ChartObject.update()
 }

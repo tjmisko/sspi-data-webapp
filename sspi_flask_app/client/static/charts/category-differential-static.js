@@ -53,7 +53,6 @@ class StaticPillarDifferentialChart {
                         callbacks: {
                             // Customize the title (top line in tooltip)
                             title: function(tooltipItems) {
-                                console.log(tooltipItems)
                                 return `Category: ${tooltipItems[0].raw.CategoryName}`;
                             },
                             // Customize the label (each line below the title)

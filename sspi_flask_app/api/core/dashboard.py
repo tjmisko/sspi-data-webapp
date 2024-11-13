@@ -14,6 +14,7 @@ from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_metadata,
+    sspi_static_rank_data,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
@@ -321,13 +322,6 @@ def get_static_pillar_stack(pillar_code):
     indicator_details = sspi_metadata.indicator_details()
     datasets = []
     labels = []
-    pattern = [
-        "cross",
-        "diagnoal",
-        "horizontal",
-        "diagonal-right-left",
-        "vertical"
-    ]
     code_map = {}
     pillar_name = ""
     for i, cou in enumerate(country_codes):
@@ -350,6 +344,10 @@ def get_static_pillar_stack(pillar_code):
                 labels.append(category.name)
             for indicator in category.indicators:
                 dataset = {}
+                indicator_rank = sspi_static_rank_data.find_one(
+                    {"ICode": indicator.code, "CCode": cou},
+                    {"_id": 0}
+                )["Rank"]
                 data = [None] * len(cou_pillar.categories)
                 n_indicators = len(category.indicators)
                 dataset["CatCode"] = category.code
@@ -364,6 +362,7 @@ def get_static_pillar_stack(pillar_code):
                 dataset["CatCode"] = category.code
                 dataset["ICode"] = indicator.code
                 dataset["IName"] = indicator.name
+                dataset["IRank"] = indicator_rank
                 dataset["IScore"] = indicator.score
                 dataset["IScoreScaled"] = indicator.score / n_indicators
                 data[j] = indicator.score / n_indicators

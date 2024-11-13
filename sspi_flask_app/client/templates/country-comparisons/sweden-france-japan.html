@@ -4,33 +4,12 @@
     {% block comparison_subtitle %} <h2> Top Performers Vary in Strengths, and All Have Weak Areas </h2> {% endblock %}
 
     {% block comparison_radar %}
-    <div class="datawindow"> 
-        <div class="radar-chart-flex-container">
-            <div class="radar-chart-box">
-                <h3> Sweden </h3>
-                <div class="radar-chart-canvas-container"> 
-                    <canvas id="radar-chart-1" class="radar-chart chart-canvas"></canvas>
-                </div>
-            </div>
-            <div class="radar-chart-box">
-                <h3> France </h3>
-                <div class="radar-chart-canvas-container">
-                    <canvas id="radar-chart-2" class="radar-chart chart-canvas"></canvas>
-                </div>
-            </div>
-            <div class="radar-chart-box">
-                <h3> Japan </h3>
-                <div class="radar-chart-canvas-container">
-                    <canvas id="radar-chart-3" class="radar-chart chart-canvas"></canvas>
-                </div>
-            </div>
-        </div>
-        <script defer>
-        categoryRadarStatic("SWE", document.getElementById('radar-chart-1'))
-        categoryRadarStatic("FRA", document.getElementById('radar-chart-2'))
-        categoryRadarStatic("JPN", document.getElementById('radar-chart-3'))
-        </script>
-    </div>
+    <section id="radar-chart-flex-container" class="radar-chart-flex-container datawindow"> </section>
+    <script defer>
+        window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container'))
+        window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container'))
+        window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container'))
+    </script>
     {% endblock %}
     {% block sustainability %}
     <div id="sus-stack" class="pillar-stack-window"> </div>
