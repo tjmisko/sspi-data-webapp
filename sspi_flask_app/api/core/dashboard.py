@@ -374,3 +374,12 @@ def get_static_pillar_stack(pillar_code):
         "title": f"{pillar_name} Score Breakdown by Category and Indicator",
         "codeMap": code_map
     })
+
+
+@dashboard_bp.route("/static/bar/score/<item_code>")
+def get_static_score_item(item_code):
+    return jsonify({
+        "itemCode": item_code,
+        "datasets": [],
+        "title": item_code
+    })
