@@ -20,6 +20,7 @@ from sspi_flask_app.models.sspi import SSPI
 import re
 import os
 import json
+import pycountry
 
 
 finalize_bp = Blueprint(
@@ -101,6 +102,9 @@ def finalize_sspi_static_rank_data():
                 "ICode": item_code,
                 "IName": score["IName"],
                 "CCode": score["CountryCode"],
+                "CName": country_code_to_name(score["CountryCode"]),
+                "CFlag": pycountry.countries.get(
+                    alpha_3=score["CountryCode"]).flag,
                 "Year": 2018,
                 "Score": score["Score"],
                 "Rank": score["Rank"]
