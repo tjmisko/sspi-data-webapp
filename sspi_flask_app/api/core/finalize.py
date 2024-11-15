@@ -8,6 +8,7 @@ from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_static_rank_data,
     sspi_static_radar_data,
+    sspi_static_stack_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
@@ -39,6 +40,8 @@ def finalize_iterator():
     finalize_sspi_dynamic_line_data()
     yield "Finalizing Dynamic Matrix Data\n"
     finalize_dynamic_matrix_data()
+    yield "Finalizing Static Stack Data\n"
+    finalize_static_overall_stack_data()
     yield "Finalization Complete\n"
 
 
@@ -80,7 +83,8 @@ def finalize_sspi_static_rank_data():
             score_group_dictionary[pillar.code][i]["IName"] = pillar.name
             for category in pillar.categories:
                 score_group_dictionary[category.code][i]["CountryCode"] = cou
-                score_group_dictionary[category.code][i]["Score"] = category.score()
+                score_group_dictionary[category.code][i]["Score"] = category.score(
+                )
                 score_group_dictionary[category.code][i]["IName"] = category.name
                 for indicator in category.indicators:
                     score_group_dictionary[indicator.code][i]["CountryCode"] = cou
@@ -293,3 +297,60 @@ def finalize_dynamic_matrix_data():
     count = sspi_dynamic_matrix_data.insert_many(final_data)
     # sspi_dynamic_matrix_data
     return f"Inserted {count} documents into sspi_dynamic_matrix_data"
+
+
+@finalize_bp.route("/production/finalize/static/stack")
+def finalize_static_overall_stack_data():
+    sspi_static_stack_data.delete_many({})
+    overall_scores = sspi_static_rank_data.find({"ICode": "SSPI"}, {"_id": 0})
+
+    def fetch_overall(observation, field="Rank"):
+        for score in overall_scores:
+            if score["CCode"] == observation["CCode"]:
+                return score[field]
+        return None
+
+    sus_scores = sspi_static_rank_data.find({"ICode": "SUS"}, {"_id": 0})
+    sus_scores.sort(key=fetch_overall)
+    for score in sus_scores:
+        score["SSPIScore"] = fetch_overall(score, "Score")
+        score["SSPIRank"] = fetch_overall(score)
+    sus_dataset = {
+        "label": "SUS",
+        "data": [c["Score"]/3 for c in sus_scores],
+        "info": sus_scores,
+        "borderWidth": 2
+    }
+    ms_scores = sspi_static_rank_data.find({"ICode": "MS"}, {"_id": 0})
+    ms_scores.sort(key=fetch_overall)
+    for score in ms_scores:
+        score["SSPIScore"] = fetch_overall(score, "Score")
+        score["SSPIRank"] = fetch_overall(score)
+    ms_dataset = {
+        "label": "MS",
+        "data": [c["Score"]/3 for c in ms_scores],
+        "info": ms_scores,
+        "borderWidth": 2
+    }
+    pg_scores = sspi_static_rank_data.find({"ICode": "PG"}, {"_id": 0})
+    pg_scores.sort(key=fetch_overall)
+    for score in pg_scores:
+        score["SSPIScore"] = fetch_overall(score, "Score")
+        score["SSPIRank"] = fetch_overall(score)
+    pg_dataset = {
+        "label": "PG",
+        "data": [c["Score"]/3 for c in pg_scores],
+        "info": pg_scores,
+        "borderWidth": 2
+    }
+    sspi_static_stack_data.insert_one({
+        "data": {
+            "labels": [c["CName"] + " " + c["CFlag"] for c in overall_scores],
+            "datasets": [
+                sus_dataset,
+                ms_dataset,
+                pg_dataset
+            ]
+        }
+    })
+    return "Successfully finalized stack data!"

@@ -55,3 +55,6 @@ sspi_dynamic_line_data = sspi_production_data.SSPIProductionData(
 sspi_dynamic_matrix_data = sspi_production_data.SSPIProductionData(
     sspidb.sspi_dynamic_matrix_data
 )
+sspi_static_stack_data = sspi_production_data.SSPIProductionData(
+    sspidb.sspi_static_stack_data
+)
