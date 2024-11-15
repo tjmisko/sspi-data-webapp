@@ -16,6 +16,7 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_static_rank_data,
     sspi_static_radar_data,
+    sspi_static_stack_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
@@ -394,4 +395,13 @@ def get_static_score_item(item_code):
         },
         "title": f"{item_name} Score by Country",
         "xTitle": f"{item_name} Score"
+    })
+
+
+@dashboard_bp.route("/static/stacked/sspi")
+def get_static_stacked_sspi():
+    score_data = sspi_static_stack_data.find_one({}, {"_id": 0})
+    return jsonify({
+        "title": "SSPI Overall Scores by Country",
+        "data": score_data["data"]
     })
