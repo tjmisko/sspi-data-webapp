@@ -29,8 +29,8 @@
         const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
         const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
         window.scoreBarSSPI = new ScoreBarStatic(scoreBarSSPIParent, "SSPI");
-        window.scoreBarSUS = new ScoreBarStatic(scoreBarSUSParent, "SUS");
-        window.scoreBarMS = new ScoreBarStatic(scoreBarMSParent, "MS");
-        window.scoreBarPG = new ScoreBarStatic(scoreBarPGParent, "PG");
+        window.scoreBarSUS = new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS);
+        window.scoreBarMS = new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS);
+        window.scoreBarPG = new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG);
     </script>
 {% endblock %}

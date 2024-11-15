@@ -1,10 +1,11 @@
 class ScoreBarStatic {
-    constructor(parentElement, itemCode, backgroundColor = "#FFD54F99") {
+    constructor(parentElement, itemCode, backgroundColor = SSPIColors.SSPI) {
         this.parentElement = parentElement
         this.itemCode = itemCode
         this.textColor = "#bbb"
         this.gridColor = "#cccccc33"
-        this.backgroundColor = backgroundColor
+        this.backgroundColor = backgroundColor + "99"
+        this.borderColor = backgroundColor
 
         this.initRoot()
         this.initTitle()
@@ -40,8 +41,12 @@ class ScoreBarStatic {
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
-                        console.log(this.chart.data.datasets[0].backgroundColor)
-                        this.chart.data.datasets[0].backgroundColor[element.index] = "red"
+                        const color = this.chart.data.datasets[0].backgroundColor[element.index] 
+                        if (color === this.backgroundColor) {
+                            this.chart.data.datasets[0].backgroundColor[element.index] = "#ff0000"
+                        } else {
+                            this.chart.data.datasets[0].backgroundColor[element.index] = this.backgroundColor
+                        }
                     })
                     this.chart.update()
                 },
@@ -101,10 +106,14 @@ class ScoreBarStatic {
                         position: 'left',
                         ticks: {
                             color: this.textColor,
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            },
                             callback: function(value, index, values) {
                                 return index + 1
                             },
-                            padding: 5
+                            padding: 8
                         },
                     },
                     y: {
@@ -136,6 +145,8 @@ class ScoreBarStatic {
     update(data) {
         this.chart.data = data.data
         this.chart.data.datasets[0].backgroundColor = Array(49).fill(this.backgroundColor)
+        this.chart.data.datasets[0].borderColor = Array(49).fill(this.borderColor)
+        this.chart.data.datasets[0].borderWidth = 2
         this.title.innerText = data.title
         this.chart.options.scales.x.title.text = data.xTitle
         this.chart.update()
