@@ -20,6 +20,7 @@ from sspi_flask_app.models.sspi import SSPI
 import re
 import os
 import json
+import pycountry
 
 
 finalize_bp = Blueprint(
@@ -64,7 +65,7 @@ def finalize_sspi_static_rank_data():
         sspi_metadata.category_codes() + \
         sspi_metadata.indicator_codes()
     score_group_dictionary = {
-        item_code: [{"CountryCode": "", "Score": 0, "Rank": 0}
+        item_code: [{"CountryCode": "", "Score": 0, "Rank": 0, "IName": ""}
                     for _ in country_codes]
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
@@ -72,16 +73,19 @@ def finalize_sspi_static_rank_data():
         sspi_scores = SSPI(indicator_details, country_data)
         score_group_dictionary["SSPI"][i]["CountryCode"] = cou
         score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
+        score_group_dictionary["SSPI"][i]["IName"] = "SSPI"
         for pillar in sspi_scores.pillars:
             score_group_dictionary[pillar.code][i]["CountryCode"] = cou
             score_group_dictionary[pillar.code][i]["Score"] = pillar.score()
+            score_group_dictionary[pillar.code][i]["IName"] = pillar.name
             for category in pillar.categories:
                 score_group_dictionary[category.code][i]["CountryCode"] = cou
-                score_group_dictionary[category.code][i]["Score"] = category.score(
-                )
+                score_group_dictionary[category.code][i]["Score"] = category.score()
+                score_group_dictionary[category.code][i]["IName"] = category.name
                 for indicator in category.indicators:
                     score_group_dictionary[indicator.code][i]["CountryCode"] = cou
                     score_group_dictionary[indicator.code][i]["Score"] = indicator.score
+                    score_group_dictionary[indicator.code][i]["IName"] = indicator.name
     for item_code in sspi_item_codes:
         score_group_dictionary[item_code] = sorted(
             score_group_dictionary[item_code],
@@ -96,7 +100,11 @@ def finalize_sspi_static_rank_data():
         for score in score_list:
             sspi_static_rank_data.insert_one({
                 "ICode": item_code,
+                "IName": score["IName"],
                 "CCode": score["CountryCode"],
+                "CName": country_code_to_name(score["CountryCode"]),
+                "CFlag": pycountry.countries.get(
+                    alpha_3=score["CountryCode"]).flag,
                 "Year": 2018,
                 "Score": score["Score"],
                 "Rank": score["Rank"]

@@ -374,3 +374,24 @@ def get_static_pillar_stack(pillar_code):
         "title": f"{pillar_name} Score Breakdown by Category and Indicator",
         "codeMap": code_map
     })
+
+
+@dashboard_bp.route("/static/bar/score/<item_code>")
+def get_static_score_item(item_code):
+    score_data = sspi_static_rank_data.find({"ICode": item_code})
+    item_name = score_data[0]["IName"]
+    score_data_formatted = {
+        "label": item_name,
+        "data": [document["Score"] for document in score_data],
+        "info": score_data,
+    }
+    return jsonify({
+        "itemCode": item_code,
+        "data": {
+            "labels": [document["CName"] + " " + document["CFlag"]
+                       for document in score_data],
+            "datasets": [score_data_formatted]
+        },
+        "title": f"{item_name} Score by Country",
+        "xTitle": f"{item_name} Score"
+    })
