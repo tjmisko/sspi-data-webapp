@@ -1,11 +1,13 @@
 class ScoreBarStatic {
-    constructor(parentElement, itemCode, backgroundColor = SSPIColors.SSPI) {
+    constructor(parentElement, itemCode, backgroundColor = SSPIColors.SSPI, width = 800, height = 1000) {
         this.parentElement = parentElement
         this.itemCode = itemCode
         this.textColor = "#bbb"
         this.gridColor = "#cccccc33"
         this.backgroundColor = backgroundColor + "99"
         this.borderColor = backgroundColor
+        this.width = width
+        this.height = height
 
         this.initRoot()
         this.initTitle()
@@ -32,8 +34,8 @@ class ScoreBarStatic {
         // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
         this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`
-        this.canvas.width = 800
-        this.canvas.height = 1000
+        this.canvas.width = this.width
+        this.canvas.height = this.height
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {

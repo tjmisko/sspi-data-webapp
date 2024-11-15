@@ -19,18 +19,22 @@
 {% endblock %}
 
 {% block content %}
-    <section id="sspi-score-bar-parent" class="score-bar-parent"></section>
-    <section id="sus-score-bar-parent" class="score-bar-parent"></section>
-    <section id="ms-score-bar-parent" class="score-bar-parent"></section>
-    <section id="pg-score-bar-parent" class="score-bar-parent"></section>
+    <section class="score-bar-overall-flexbox">
+        <div id="sspi-score-bar-parent" class="score-bar-parent"></div>
+    </section>
+    <section class="score-bar-pillar-flexbox">
+        <div id="sus-score-bar-parent" class="score-bar-parent"></div>
+        <div id="ms-score-bar-parent" class="score-bar-parent"></div>
+        <div id="pg-score-bar-parent" class="score-bar-parent"></div>
+    </section>
     <script defer>
         const scoreBarSSPIParent = document.getElementById('sspi-score-bar-parent');
         const scoreBarSUSParent = document.getElementById('sus-score-bar-parent');
         const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
         const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
         window.scoreBarSSPI = new ScoreBarStatic(scoreBarSSPIParent, "SSPI");
-        window.scoreBarSUS = new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS);
-        window.scoreBarMS = new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS);
-        window.scoreBarPG = new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG);
+        window.scoreBarSUS = new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS, width=450);
+        window.scoreBarMS = new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS, width=450);
+        window.scoreBarPG = new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG, width=450);
     </script>
 {% endblock %}
