@@ -90,7 +90,6 @@ class CategoryRadarStatic {
                     },
                     tooltip: {
                         backgroundColor: '#1B2A3Ccc',
-
                     },
                 }
             }
