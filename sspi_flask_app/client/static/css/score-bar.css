@@ -2,5 +2,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0 0 1rem 0;
+  padding: 2em 3em;
+}
+
+.chart-container-bar-score-static {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
 }
