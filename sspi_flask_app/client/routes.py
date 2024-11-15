@@ -42,6 +42,11 @@ def indicator_data(IndicatorCode):
     return render_template('indicator-data.html', IndicatorCode=IndicatorCode)
 
 
+@client_bp.route('/data/category/<CategoryCode>')
+def category_data(CategoryCode):
+    return render_template('category-data.html', CategoryCode=CategoryCode)
+
+
 @client_bp.route('/indicators')
 def indicators():
     return render_template('indicators.html')
