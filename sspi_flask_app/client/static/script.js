@@ -1,3 +1,9 @@
+class ColorMap{constructor(){this.SSPI="#FFD54F"
+this.SUS="#28a745"
+this.MS="#ff851b"
+this.PG="#007bff"}
+}
+const SSPIColors=new ColorMap()
 async function fetchComparisonData(country1,country2,country3){country_data=await fetch(`/api/v1/query/sspi_main_data_v3?CountryCode=${country1}&CountryCode=${country2}&CountryCode=${country3}`)}
 function categoryComparison(chartCanvas,categoryCode,country_data){const chartConfig={type:'bar',data:data,options:{plugins:{title:{display:true,text:'Comparison of Category Scores'},},responsive:true,scales:{x:{stacked:true,},y:{stacked:true}}}};}
 $(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
@@ -65,6 +71,8 @@ function getCountries(indicator_data){return indicator_data.map(data=>data.Count
 function getScores(indicator_data){return indicator_data.map(data=>data.SCORE)}
 function getRaw(indicator_data){return indicator_data.map(data=>data.RAW)}
 setupBarChart()
+=======
+>>>>>>> main
 raw=false
 async function makeBarChart(BarChart,IndicatorCode){let response=await fetch('/api/v1/query/sspi_clean_api_data?IndicatorCode='+IndicatorCode)
 let indicator_data=await response.json()

@@ -1,6 +1,7 @@
-from ...models.errors import InvalidQueryError
-from .utilities import lookup_database
+from sspi_flask_app.models.errors import InvalidQueryError
+# from sspi_flask_app.resources.utilities import lookup_database
 import re
+
 
 def validate_data_query(raw_query_input:dict):
     """

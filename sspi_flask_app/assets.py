@@ -1,10 +1,11 @@
-from flask import current_app as app
 from flask_assets import Bundle
 import sass
+
 
 def scss_to_css(_in, out, **kw):
     """Custom filter to compile scss files"""
     out.write(sass.compile(string=_in.read(), output_style='compressed'))
+
 
 def compile_static_assets(assets):
     """Configure bundle building and minification of css and js"""

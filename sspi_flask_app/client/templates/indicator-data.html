@@ -6,7 +6,8 @@
 
 {% block javascript %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/indicatorData.js') }} " defer></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/indicator-line-dynamic.js') }}" defer></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/indicator-bar-static.js') }}" defer></script>
 {% endblock javascript %}
 
 {% block content %}
@@ -19,10 +20,12 @@
         const defaultOption = document.querySelector('select.indicator-dropdown option[value="{{IndicatorCode | upper}}"]')
         defaultOption.selected = true;
         document.querySelector('select.indicator-dropdown').addEventListener('change', function() {
-            console.log(this.value)
             window.location.href = '/data/indicator/' + this.value;
         });
     </script>
+</section>
+
+<section class="chart-section" id="dynamic-data-section">
 </section>
 
 <section class="chart-section" id="static-data-section">
@@ -43,14 +46,25 @@
 
     </fieldset>
 </section>
-<section class="chart-section" id="dynamic-data-section">
-    <h2> Dynamic Data </h2>
-    <canvas id="dynamic-chart"></canvas>
-</section>
 <script>
     window.addEventListener("load", (event) => {
-        getStaticData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, StaticChart));
-        getDynamicData("{{ IndicatorCode | upper }}").then(data => doChartUpdate(data, DynamicChart));
+        getStaticData("{{ IndicatorCode | upper }}").then(data => doStaticChartUpdate(data, StaticChart));
+        const parentElement = document.getElementById("dynamic-data-section");
+        window.IndicatorDynamicLine = new DynamicLineChart(parentElement, "{{ IndicatorCode | upper }}")
+
+        const x = localStorage.getItem('windowX');
+        const y = localStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
     })
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('windowX', window.screenX);
+      localStorage.setItem('windowY', window.screenY);
+      localStorage.setItem('pins', JSON.stringify(IndicatorDynamicLine.chart.data.datasets.map(
+            (dataset) => { dataset.pinned }
+      )));
+    });
 </script>
 {% endblock content %}

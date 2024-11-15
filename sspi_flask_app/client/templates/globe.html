@@ -18,7 +18,6 @@
       {
         const maxVal = Math.max(...countries.features.map(getVal));
         colorScale.domain([0, maxVal]);
-        console.log(countries.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
         const world = Globe()
           .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
           .backgroundColor("#1B2A3C")
