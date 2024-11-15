@@ -1,13 +1,12 @@
 {% extends 'layout.html' %}
 
 {% block javascript %}
-<script src="//unpkg.com/d3"></script>
-<script src="//unpkg.com/globe.gl"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/js/tabulator.min.js" integrity="sha512-BGo9xGWI32ZfTMp/ueR3fZKO5nYkPbt3uwMWr+w8w3e72H8A0sTQGO+iqRADwIT0eJkFP1HDgSC82gA4sTuQ6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/colorMap.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/overall-stacked-bar-static.js') }}"></script>
 {% endblock %}
 
 {% block stylesheet %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/css/tabulator.min.css" integrity="sha512-j3rR7zfij45jvjB25No5oizV4tdpt6buwLrvfhXXboG+F88VMnvA4TsJpKgChHa156f+6gYk951Cv5pInltllQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
@@ -26,13 +25,18 @@
           <a class="hero-datalink" href="/data"> Explore SSPI Data</a>
         </div>
       </section>
+      <section class="chart-section" id="overall-score-chart">
+        <h2>SSPI Scores</h2>
+        <script defer>
+            window.overallStackedBar = new StaticOverallStackedBarChart(document.getElementById('overall-score-chart'));
+        </script>
+      </section>
       <section class="side" id="pillars">
         <h2>Three Pillars of the SSPI</h2>
         <div id="pillars-description">
-          The three pillars of the SSPI correspond to the three major 
-          policy challenges facing governments around the world.
+          The three pillars of the SSPI correspond to the three major policy challenges facing governments around the world.
           <ul>
-            <li> Protecting the natual environment from degredation to guantee a liveable and thriving planet for all creatures </li>
+            <li> Protecting the natual environment from degredation to guarantee a liveable and thriving planet for all creatures </li>
             <li> Structuring free and fair markets that promote general prosperity and equality </li>
             <li> Providing public goods that all citizens share  </li>
           </ul>

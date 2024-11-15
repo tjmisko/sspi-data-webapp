@@ -83,7 +83,8 @@ def finalize_sspi_static_rank_data():
             score_group_dictionary[pillar.code][i]["IName"] = pillar.name
             for category in pillar.categories:
                 score_group_dictionary[category.code][i]["CountryCode"] = cou
-                score_group_dictionary[category.code][i]["Score"] = category.score()
+                score_group_dictionary[category.code][i]["Score"] = category.score(
+                )
                 score_group_dictionary[category.code][i]["IName"] = category.name
                 for indicator in category.indicators:
                     score_group_dictionary[indicator.code][i]["CountryCode"] = cou
