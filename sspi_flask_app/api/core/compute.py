@@ -47,6 +47,7 @@ from ..datasource.iea import (
     cleanIEAData_altnrg,
     clean_IEA_data_GTRANS
 )
+from ..datasource.prisonstudies import scrape_stored_pages_for_data
 import pandas as pd
 # from pycountry import countries
 from io import StringIO
@@ -473,13 +474,14 @@ def compute_senior():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
-    raw_data_observation_list = parse_json(
-        sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
-    for obs in raw_data_observation_list:
-        table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
-                                                                                      "summary": "Prison population rate"})
-    print(table)
-    return "string"
+    scraped = scrape_stored_pages_for_data()
+    # raw_data_observation_list = parse_json(
+    #     sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
+    # for obs in raw_data_observation_list:
+    #     table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
+    #                                                                                   "summary": "Prison population rate"})
+    # print(table)
+    return scraped
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])
