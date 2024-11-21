@@ -471,17 +471,11 @@ def compute_senior():
     return parse_json(clean_document_list)
 
 
-@compute_bp.route("/PRISON", methods=['GET'])
+@compute_bp.route("/INCARC", methods=['GET'])
 @login_required
-def compute_prison():
-    scraped = scrape_stored_pages_for_data()
-    # raw_data_observation_list = parse_json(
-    #     sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
-    # for obs in raw_data_observation_list:
-    #     table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
-    #                                                                                   "summary": "Prison population rate"})
-    # print(table)
-    return scraped
+def compute_incarc():
+    clean_data_list = scrape_stored_pages_for_data()
+    return clean_data_list
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])

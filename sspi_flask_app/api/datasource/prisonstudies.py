@@ -32,8 +32,6 @@ def collect_all_pages(url_slugs, **kwargs):
     webpages = []
     print(url_slugs)
     for url_slug in url_slugs:
-        if count == 5:
-            break
         query_string = url_slug[9:].replace("-", " ")
         count += 1
         yield f"{url_slug}\n"
@@ -77,14 +75,14 @@ def store_webpages_as_raw_data(webpage_list, **kwargs):
     for webpage in webpage_list:
         country_code = list(webpage.keys())[0]
         print(country_code)
-        obs = {"IndicatorCode": "PRISON",
+        obs = {"IndicatorCode": "INCARC",
          "CountryCode": country_code,
          "Raw": webpage[country_code],
          "ColllectedAt": datetime.now()}
         data_list.append(obs)
         count += 1
         # yield f"Scraped webpage for {country} and inserted HTML data into sspi_raw_api_data\n"
-    sspi_raw_api_data.raw_insert_many(data_list, "PRISON", **kwargs)
+    sspi_raw_api_data.raw_insert_many(data_list, "INCARC", **kwargs)
     return f"All {count} countries' data inserted into raw database"
     # sspi_raw_api_data.insert_one({
     #         "IndicatorCode": "PRISON",
@@ -95,15 +93,20 @@ def store_webpages_as_raw_data(webpage_list, **kwargs):
     # return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
 
 def scrape_stored_pages_for_data():
-    prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
+    prison_data = sspi_raw_api_data.find({"IndicatorCode": "INCARC"})
     final_data = []
     for entry in prison_data:
         country = entry["Raw"]["CountryCode"]
         data = entry["Raw"]["Raw"]["$binary"]["base64"]
         web_page = base64.b64decode(data).decode('utf-8')
-        table = BeautifulSoup(web_page, 'html.parser').find(
-            "table", attrs = {"id": "views-aggregator-datatable", "summary": "Prison population rate"})
-        
+        try:
+            table = BeautifulSoup(web_page, 'html.parser').find(
+                "table", attrs = {"id": "views-aggregator-datatable", "summary": "Prison population rate"})
+        except AttributeError:
+            print(f"{country} does not have relevant table")
+            continue
+        if table is None:
+            continue
         # iterate through rows of html table
         table_rows = table.find_all('tr')
         prison_data = []
@@ -115,7 +118,7 @@ def scrape_stored_pages_for_data():
                 prison_data.append(row)
         df = pd.DataFrame(prison_data, columns=["Year", "Prison Population Total", "Prison Population Rate"])
         df.apply(lambda row: final_data.append(
-            {"IndicatorCode": "PRISON",
+            {"IndicatorCode": "INCARC",
              "Value": row["Prison Population Rate"],
              "Year": row["Year"],
              "CountryCode": country,
