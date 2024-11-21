@@ -22,7 +22,6 @@ class SSPIBulkData(MongoWrapper):
         self.validate_source_organization(document, document_number)
         self.validate_dataset_name(document, document_number)
         self.validate_dataset_description(document, document_number)
-        self.validate_dataset_fields(document, document_number)
         self.validate_raw_data(document, document_number)
         self.validate_raw_page(document, document_number)
 
@@ -63,25 +62,6 @@ class SSPIBulkData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                     f"Provide a more detailed 'DatasetDescription' (document {document_number})")
-
-    def validate_dataset_fields(self, document: dict, document_number: int = 0):
-        if "DatasetFields" not in document.keys():
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'DatasetFields' is a required argument (document {document_number})")
-        if not type(document["CountryCode"]) is list:
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'DatasetFields' must be a list of dictionaries (document {document_number})")
-        if not all([type(field) is dict for field in document["DatasetFields"]]):
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'DatasetFields' must be a list of dictionaries (document {document_number})")
-        for field in document["DatasetFields"]:
-            if not all([type(field.get(key)) is str for key in ["FieldName", "FieldType", "FieldDescription"]]):
-                print(f"Document Produced an Error: {document}")
-                raise InvalidDocumentFormatError(
-                    f"'DatasetFields' must be a list of dictionaries with keys 'FieldName', 'FieldType', and 'FieldDescription' (document {document_number})")
 
     def validate_raw_data(self, document: dict, document_number: int = 0):
         if "Raw" not in document.keys():

@@ -1,6 +1,8 @@
 import requests
 import io
 import zipfile
+import pycountry
+from sspi_flask_app.models.database import sspi_bulk_data
 
 
 def bulkCollectWIDData(**kwargs):
@@ -11,5 +13,31 @@ def bulkCollectWIDData(**kwargs):
     zip_file = io.BytesIO(res.content)
 
     with zipfile.ZipFile(zip_file) as z:
-        for file_name in z.namelist():
-            yield f"Reading {file_name}"
+        total_pages = len(z.namelist)
+        for i, file_name in enumerate(z.namelist()):
+            yield f"Processing {file_name}\n"
+            with z.open(file_name) as f:
+                raw = f.read().decode('utf-8')
+                file_name_fields = file_name.split(".")[0].split("_")
+                dataset_type = file_name_fields[1]
+                country_code_alpha2 = file_name_fields[2]
+                country_code = ""
+                try:
+                    country_code = pycountry.countries.get(alpha_2=country_code_alpha2).alpha_3
+                except AttributeError:
+                    country_code = ""
+                if len(country_code) != 3:
+                    # Don't save state-level data
+                    continue
+                sspi_bulk_data.insert_one({
+                    "SourceOrganization": "WID",
+                    "SourceOrganizationName": "World Inequality Database",
+                    "SourceOrganizationURL": "https://wid.world/",
+                    "SourceOrganizationDownloadURL": "https://wid.world/bulk_download/wid_all_data.zip",
+                    "DatasetName": file_name,
+                    "CountryCode": country_code,
+                    "DatasetDescription": f"World Inequality Database All {dataset_type} for {country_code}",
+                    "Raw": raw,
+                    "RawPage": i,
+                    "RawPageTotal": total_pages
+                })
