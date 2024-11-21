@@ -1,5 +1,6 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
+import bson
 
 
 class SSPIBulkData(MongoWrapper):
@@ -7,6 +8,27 @@ class SSPIBulkData(MongoWrapper):
     def __init__(self, mongo_database):
         self._mongo_database = mongo_database
         self.name = mongo_database.name
+        # True max is 16793598, giving 93598 bytes of headroom
+        self.max_document_size = 16700000
+
+    def bulk_insert_one(self, document: dict):
+        self.validate_document_format(document)
+        bson_document = bson.BSON.encode(document)
+        if len(bson_document) < self.max_document_size:
+            return self._mongo_database.insert_one(document)
+        if document["RawFormat"] == "csv":
+            fragment_counter = 0
+            for i in range(0, len(bson_document), self.max_document_size):
+                fragment = {}
+                for k, v in document.items():
+                    if k != "Raw":
+                        fragment[k] = v
+                fragment["Raw"] = bson_document[i:i+self.max_document_size]
+                self._mongo_database.insert_one(fragment)
+                fragment_counter += 1
+        else:
+            raise InvalidDocumentFormatError(
+                f"Fragmenter Not Implemented for 'RawFormat' {document['RawFormat']}")
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
@@ -23,6 +45,7 @@ class SSPIBulkData(MongoWrapper):
         self.validate_dataset_name(document, document_number)
         self.validate_dataset_description(document, document_number)
         self.validate_raw_data(document, document_number)
+        self.validate_raw_format(document, document_number)
         self.validate_raw_page(document, document_number)
 
     def validate_source_organization(self, document: dict, document_number: int = 0):
@@ -61,7 +84,7 @@ class SSPIBulkData(MongoWrapper):
         if not len(document["DatasetDescription"]) > 20:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                    f"Provide a more detailed 'DatasetDescription' (document {document_number})")
+                f"Provide a more detailed 'DatasetDescription' (document {document_number})")
 
     def validate_raw_data(self, document: dict, document_number: int = 0):
         if "Raw" not in document.keys():
@@ -72,6 +95,16 @@ class SSPIBulkData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Raw' cannot be falsey. Did you forget to add the data to the document? (document {document_number})")
+
+    def validate_raw_format(self, document: dict, document_number: int = 0):
+        if "RawFormat" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'RawFormat' is a required argument (document {document_number})")
+        if not document["RawFormat"]:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'RawFormat' cannot be falsey. Did you forget to add the data to the document? (document {document_number})")
 
     def validate_raw_page(self, document: dict, document_number: int = 0):
         if "RawPage" not in document.keys():
