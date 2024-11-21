@@ -118,8 +118,8 @@ def scrape_stored_pages_for_data():
         df = pd.DataFrame(prison_data, columns=["Year", "Prison Population Total", "Prison Population Rate"])
         df.apply(lambda row: final_data.append(
             {"IndicatorCode": "INCARC",
-             "Value": row["Prison Population Rate"],
-             "Year": row["Year"],
+             "Value": int(row["Prison Population Rate"]),
+             "Year": int(row["Year"]),
              "CountryCode": country,
              "Unit": "People per 100,000",
              "Description": "Prison population rate per 100,000 of the national population."}), axis = 1)
