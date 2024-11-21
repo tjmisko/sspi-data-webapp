@@ -116,6 +116,7 @@ def scrape_stored_pages_for_data():
             if row:
                 prison_data.append(row)
         df = pd.DataFrame(prison_data, columns=["Year", "Prison Population Total", "Prison Population Rate"])
+        df["Prison Population Rate"] = df["Prison Population Rate"].replace("c ", "", regex = True)
         df.apply(lambda row: final_data.append(
             {"IndicatorCode": "INCARC",
              "Value": int(row["Prison Population Rate"]),
