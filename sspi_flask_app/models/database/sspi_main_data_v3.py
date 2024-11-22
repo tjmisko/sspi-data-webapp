@@ -10,7 +10,7 @@ class SSPIMainDataV3(MongoWrapper):
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
-        Raises an InvalidDocumentFormatError if the document is not 
+        Raises an InvalidDocumentFormatError if the document is not
         in the valid document format
         Valid Document Format:
             {
