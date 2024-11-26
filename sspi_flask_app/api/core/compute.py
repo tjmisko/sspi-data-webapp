@@ -11,7 +11,6 @@ from flask import (
 )
 from flask import current_app as app
 from flask_login import login_required
-from ..datasource.ilo import cleanILOData
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     # goalpost,
@@ -46,12 +45,13 @@ from ..datasource.oecdstat import (
 from ..datasource.iea import (
     filterSeriesListiea,
     cleanIEAData_altnrg,
-    clean_IEA_data_GTRANS
+    clean_IEA_data_GTRANS,
 )
 import pandas as pd
 # from pycountry import countries
 from io import StringIO
 import re
+from ..datasource.ilo import cleanILOData
 from sspi_flask_app.api.core.finalize import (
    finalize_iterator
 )
@@ -134,11 +134,11 @@ def compute_biodiv():
     final_data_list = flatten_nested_dictionary_biodiv(intermediate_obs_dict)
     # store the cleaned data in the database
     zipped_document_list = zip_intermediates(final_data_list, "BIODIV",
-                                              ScoreFunction=lambda MARINE, TERRST, FRSHWT: 0.33 *
-                                              MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
-                                              ScoreBy="Score")
+                                             ScoreFunction=lambda MARINE, TERRST, FRSHWT: 0.33 *
+                                             MARINE + 0.33 * TERRST + 0.33 * FRSHWT,
+                                             ScoreBy="Score")
     clean_observations, incomplete_observations = filter_incomplete_data(
-    zipped_document_list)
+        zipped_document_list)
     sspi_clean_api_data.insert_many(clean_observations)
     print(incomplete_observations)
     return parse_json(clean_observations)
@@ -532,8 +532,23 @@ def compute_fdepth():
 @compute_bp.route("/COLBAR", methods=['GET'])
 # @login_required
 def compute_colbar():
-    cleaned = cleanILOData("COLBAR")
-    return jsonify(cleaned)
+    if not sspi_raw_api_data.raw_data_available("COLBAR"):
+        return redirect(url_for("collect_bp.COLBAR"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("COLBAR")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    colbar_raw = pd.read_csv(csv_virtual_file)
+    colbar_raw = colbar_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    colbar_raw = colbar_raw.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    colbar_raw['IndicatorCode'] = 'COLBAR'
+    colbar_raw['Unit'] = 'Proportion'
+    colbar_raw['Value'] = colbar_raw['Value']
+    obs_list = json.loads(colbar_raw.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "COLBAR")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/NRGINT", methods=['GET'])
