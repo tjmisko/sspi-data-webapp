@@ -133,8 +133,17 @@ def gtrans():
 @login_required
 def lfpart():
     def collect_iterator(**kwargs):
-        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
+        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/COLBAR")
+@login_required
+def colbar():
+    def collect_iterator(**kwargs):
+        yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 #################################
 ## Category: WORKER WELLBEING ##

@@ -44,7 +44,7 @@ from ..datasource.oecdstat import (
 from ..datasource.iea import (
     filterSeriesListiea,
     cleanIEAData_altnrg,
-    clean_IEA_data_GTRANS
+    clean_IEA_data_GTRANS,
 )
 import pandas as pd
 # from pycountry import countries
@@ -525,3 +525,42 @@ def compute_fdepth():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_data)
     return parse_json(filtered_list)
+
+
+@compute_bp.route("/COLBAR", methods=['GET'])
+# @login_required
+def compute_colbar():
+    if not sspi_raw_api_data.raw_data_available("COLBAR"):
+        return redirect(url_for("collect_bp.COLBAR"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("COLBAR")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    colbar_raw = pd.read_csv(csv_virtual_file)
+    colbar_raw = colbar_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    colbar_raw = colbar_raw.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    colbar_raw['IndicatorCode'] = 'COLBAR'
+    colbar_raw['Unit'] = 'Proportion'
+    colbar_raw['Value'] = colbar_raw['Value']
+    obs_list = json.loads(colbar_raw.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "COLBAR")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
+
+@compute_bp.route("/NRGINT", methods=['GET'])
+# @login_required
+def compute_nrgint():
+    if not sspi_raw_api_data.raw_data_available("NRGINT"):
+        return redirect(url_for("collect_bp.NRGINT"))
+    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
+    nrgint_raw)
+    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
+    scored_list = score_single_indicator(flattened_lst, "NRGINT")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return parse_json(clean_document_list)
