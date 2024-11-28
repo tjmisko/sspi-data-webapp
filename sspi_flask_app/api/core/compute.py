@@ -31,7 +31,8 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_redlst,
     flatten_nested_dictionary_intrnt,
     flatten_nested_dictionary_watman,
-    flatten_nested_dictionary_stkhlm
+    flatten_nested_dictionary_stkhlm,
+    flatten_nested_dictionary_nrgint
 )
 # from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import (
@@ -50,6 +51,7 @@ import pandas as pd
 # from pycountry import countries
 from io import StringIO
 import re
+from ..datasource.ilo import cleanILOData
 from sspi_flask_app.api.core.finalize import (
    finalize_iterator
 )

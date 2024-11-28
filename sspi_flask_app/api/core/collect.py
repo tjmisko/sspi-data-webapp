@@ -141,9 +141,8 @@ def lfpart():
 @login_required
 def colbar():
     def collect_iterator(**kwargs):
-        yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", **kwargs)
+        yield from collectILOData("ILR_CBCT_NOC_RT", "COLBAR", "startPeriod=1990-01-01&endPeriod=2024-12-31",**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 
 #################################
 ## Category: WORKER WELLBEING ##
