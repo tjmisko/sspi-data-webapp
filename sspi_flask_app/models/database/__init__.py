@@ -9,6 +9,7 @@ from sspi_flask_app.models.database import (
     sspi_partial_api_data,
     sspi_production_data,
     sspi_raw_api_data,
+    sspi_bulk_data
 )
 
 client = MongoClient('localhost', 27017)
@@ -26,7 +27,7 @@ sspi_raw_api_data = sspi_raw_api_data.SSPIRawAPIData(
 sspi_country_characteristics = sspi_country_characteristics.SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
 )
-sspi_bulk_data = mongo_wrapper.MongoWrapper(
+sspi_bulk_data = sspi_bulk_data.SSPIBulkData(
     sspidb.sspi_bulk_data
 )
 sspi_clean_api_data = sspi_clean_api_data.SSPICleanAPIData(
@@ -43,6 +44,9 @@ sspi_analysis = mongo_wrapper.MongoWrapper(
 )
 
 # Production Databases -- More granular for fast queries
+sspi_static_rank_data = sspi_production_data.SSPIProductionData(
+    sspidb.sspi_static_rank_data
+)
 sspi_static_radar_data = sspi_production_data.SSPIProductionData(
     sspidb.sspi_static_radar_data
 )
@@ -51,4 +55,7 @@ sspi_dynamic_line_data = sspi_production_data.SSPIProductionData(
 )
 sspi_dynamic_matrix_data = sspi_production_data.SSPIProductionData(
     sspidb.sspi_dynamic_matrix_data
+)
+sspi_static_stack_data = sspi_production_data.SSPIProductionData(
+    sspidb.sspi_static_stack_data
 )

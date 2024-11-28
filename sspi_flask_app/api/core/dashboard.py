@@ -14,7 +14,9 @@ from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_metadata,
+    sspi_static_rank_data,
     sspi_static_radar_data,
+    sspi_static_stack_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
@@ -264,7 +266,8 @@ def get_static_pillar_differential(pillar_code):
         for indicator in category.indicators:
             indicator_code = indicator.code
             base_indicator_score = indicator.score
-            comparison_indicator = comparison_category.get_indicator(indicator.code)
+            comparison_indicator = comparison_category.get_indicator(
+                indicator.code)
             comparison_indicator_score = comparison_indicator.score
             by_indicator.append({
                 "IndicatorCode": indicator_code,
@@ -283,7 +286,8 @@ def get_static_pillar_differential(pillar_code):
     by_category.sort(key=lambda x: x["Diff"])
     by_indicator.sort(key=lambda x: x["Diff"])
     base_country_name = pycountry.countries.get(alpha_3=base_country).name
-    comparison_country_name = pycountry.countries.get(alpha_3=comparison_country).name
+    comparison_country_name = pycountry.countries.get(
+        alpha_3=comparison_country).name
     return jsonify({
         "labels": [c["CategoryCode"] for c in by_category],
         "datasets": [
@@ -302,4 +306,102 @@ def get_static_pillar_differential(pillar_code):
         "baseCName": base_country_name,
         "comparisonCCode": comparison_country,
         "comparisonCName": comparison_country_name,
+    })
+
+
+@dashboard_bp.route('/static/stacked/pillar/<pillar_code>')
+def get_static_pillar_stack(pillar_code):
+    country_codes = request.args.getlist("CountryCode")
+    if not (country_codes):
+        return jsonify({
+            "error": "CountryCode URL Parameter not provided"
+        }), 400
+    if "undefined" in country_codes:
+        return jsonify({
+            "error": "CountryCode URL Parameter must not be undefined"
+        }), 400
+    indicator_details = sspi_metadata.indicator_details()
+    datasets = []
+    labels = []
+    code_map = {}
+    pillar_name = ""
+    for i, cou in enumerate(country_codes):
+        cou_data = parse_json(
+            sspi_main_data_v3.find(
+                {"CountryCode": cou},
+                {"_id": 0}
+            )
+        )
+        cou_sspi = SSPI(indicator_details, cou_data)
+        cou_pillar = cou_sspi.get_pillar(pillar_code)
+        if i == 0:
+            pillar_name = cou_pillar.name
+        country_name = pycountry.countries.get(alpha_3=cou).name
+        country_flag = pycountry.countries.get(alpha_3=cou).flag
+        code_map[cou] = {"name": country_name, "flag": country_flag}
+        for j, category in enumerate(cou_pillar.categories):
+            # Only add the category label once
+            if i == 0:
+                labels.append(category.name)
+            for indicator in category.indicators:
+                dataset = {}
+                indicator_rank = sspi_static_rank_data.find_one(
+                    {"ICode": indicator.code, "CCode": cou},
+                    {"_id": 0}
+                )["Rank"]
+                data = [None] * len(cou_pillar.categories)
+                n_indicators = len(category.indicators)
+                dataset["CatCode"] = category.code
+                dataset["CatName"] = category.name
+                dataset["CName"] = category.name
+                dataset["stack"] = cou + "-" + category.code
+                dataset["CCode"] = cou
+                dataset["CName"] = country_name
+                dataset["NIndicators"] = n_indicators
+                dataset["flag"] = country_flag
+                dataset["CCode"] = cou
+                dataset["CatCode"] = category.code
+                dataset["ICode"] = indicator.code
+                dataset["IName"] = indicator.name
+                dataset["IRank"] = indicator_rank
+                dataset["IScore"] = indicator.score
+                dataset["IScoreScaled"] = indicator.score / n_indicators
+                data[j] = indicator.score / n_indicators
+                dataset["data"] = data
+                datasets.append(dataset)
+    return jsonify({
+        "labels": labels,
+        "datasets": datasets,
+        "title": f"{pillar_name} Score Breakdown by Category and Indicator",
+        "codeMap": code_map
+    })
+
+
+@dashboard_bp.route("/static/bar/score/<item_code>")
+def get_static_score_item(item_code):
+    score_data = sspi_static_rank_data.find({"ICode": item_code})
+    item_name = score_data[0]["IName"]
+    score_data_formatted = {
+        "label": item_name,
+        "data": [document["Score"] for document in score_data],
+        "info": score_data,
+    }
+    return jsonify({
+        "itemCode": item_code,
+        "data": {
+            "labels": [document["CName"] + " " + document["CFlag"]
+                       for document in score_data],
+            "datasets": [score_data_formatted]
+        },
+        "title": f"{item_name} Score by Country",
+        "xTitle": f"{item_name} Score"
+    })
+
+
+@dashboard_bp.route("/static/stacked/sspi")
+def get_static_stacked_sspi():
+    score_data = sspi_static_stack_data.find_one({}, {"_id": 0})
+    return jsonify({
+        "title": "SSPI Overall Scores by Country",
+        "data": score_data["data"]
     })

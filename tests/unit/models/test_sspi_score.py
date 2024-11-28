@@ -2,6 +2,7 @@ from sspi_flask_app.models.sspi import SSPI, Pillar, Category, Indicator
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, DataOrderError
 import pytest
 
+
 @pytest.fixture()
 def test_country_score_data():
     yield [

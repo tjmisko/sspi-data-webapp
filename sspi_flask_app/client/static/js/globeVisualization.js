@@ -1,23 +1,19 @@
-{% extends 'layout.html' %}
+class GlobeVisualization {
+    constructor() {
+        this.initalizeGlobe();
+    }
 
-{% block javascript %}
-<script src="//unpkg.com/d3"></script>
-<script src="//unpkg.com/globe.gl"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.4.4/js/tabulator.min.js" integrity="sha512-BGo9xGWI32ZfTMp/ueR3fZKO5nYkPbt3uwMWr+w8w3e72H8A0sTQGO+iqRADwIT0eJkFP1HDgSC82gA4sTuQ6w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-{% endblock %}
-
-{% block content %}
-    <div id="globeViz"></div>
-    <script>
+    initalizeGlobe() {
       const colorScale = d3.scaleSequentialSqrt(d3.interpolateYlOrRd);
-  
+
       // GDP per capita (avoiding countries with small pop)
       const getVal = feat => feat.properties.GDP_MD_EST / Math.max(1e5, feat.properties.POP_EST);
-  
+
       fetch("{{ url_for('client_bp.static', filename = 'globe_data.geojson') }}").then(res => res.json()).then(countries =>
       {
         const maxVal = Math.max(...countries.features.map(getVal));
         colorScale.domain([0, maxVal]);
+        console.log(countries.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
         const world = Globe()
           .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
           .backgroundColor("#1B2A3C")
@@ -49,5 +45,5 @@
         world.controls().autoRotateSpeed = 0.3
         world.controls().enableZoom = false;
       });
-    </script>
-{% endblock %}
+    }
+}

@@ -4,54 +4,47 @@
     {% block comparison_subtitle %} <h2> Top Performers Vary in Strengths, and All Have Weak Areas </h2> {% endblock %}
 
     {% block comparison_radar %}
-    <div class="datawindow"> 
-        <div class="radar-chart-flex-container">
-            <div class="radar-chart-box">
-                <h3> Sweden </h3>
-                <div class="radar-chart-canvas-container"> 
-                    <canvas id="radar-chart-1" class="radar-chart chart-canvas"></canvas>
-                </div>
-            </div>
-            <div class="radar-chart-box">
-                <h3> France </h3>
-                <div class="radar-chart-canvas-container">
-                    <canvas id="radar-chart-2" class="radar-chart chart-canvas"></canvas>
-                </div>
-            </div>
-            <div class="radar-chart-box">
-                <h3> Japan </h3>
-                <div class="radar-chart-canvas-container">
-                    <canvas id="radar-chart-3" class="radar-chart chart-canvas"></canvas>
-                </div>
-            </div>
-        </div>
-        <script defer>
-        categoryRadarStatic("SWE", document.getElementById('radar-chart-1'))
-        categoryRadarStatic("FRA", document.getElementById('radar-chart-2'))
-        categoryRadarStatic("JPN", document.getElementById('radar-chart-3'))
-        </script>
-    </div>
+    <section id="radar-chart-flex-container" class="radar-chart-flex-container datawindow"> </section>
+    <script defer>
+        window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container'))
+        window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container'))
+        window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container'))
+    </script>
     {% endblock %}
     {% block sustainability %}
-    <div id="sus-diff" class="pillar-diff-window">
-    </div>
+    <div id="sus-stack" class="pillar-stack-window"> </div>
+    <div id="sus-diff" class="pillar-diff-window"> </div>
     <script defer>
+        window.SUSStack = new StaticPillarStackedBarChart(
+            ["SWE", "FRA", "JPN"],
+            "SUS",
+            document.getElementById("sus-stack"),
+            {"SWE": "#FECC02", "FRA": "#BBBBBB", "JPN": "#BC002D"}
+        )
         window.StaticDiffSWEvFRAinSUS = new StaticPillarDifferentialChart("SWE", "FRA", "SUS", document.getElementById("sus-diff"))
         window.StaticDiffSWEvJPNinSUS = new StaticPillarDifferentialChart("SWE", "JPN", "SUS", document.getElementById("sus-diff"))
         window.StaticDiffFRAvJPNinSUS = new StaticPillarDifferentialChart("FRA", "JPN", "SUS", document.getElementById("sus-diff"))
     </script>
     {% endblock %}
     {% block market_structure %}
-    <div id="ms-diff" class="pillar-diff-window">
+    <div id="ms-stack" class="pillar-stack-window"> </div>
+    <div id="ms-diff" class="pillar-diff-window"> </div>
     <script defer>
+        window.MSStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "MS", document.getElementById("ms-stack"),
+            {"SWE": "#FECC02", "FRA": "#BBBBBB", "JPN": "#BC002D"}
+        )
         window.StaticDiffSWEvFRAinMS = new StaticPillarDifferentialChart("SWE", "FRA", "MS", document.getElementById("ms-diff"))
         window.StaticDiffSWEvJPNinMS = new StaticPillarDifferentialChart("SWE", "JPN", "MS", document.getElementById("ms-diff"))
         window.StaticDiffFRAvJPNinMS = new StaticPillarDifferentialChart("FRA", "JPN", "MS", document.getElementById("ms-diff"))
     </script>
     {% endblock %}
     {% block public_goods %}
-    <div id="pg-diff" class="pillar-diff-window">
+    <div id="pg-stack" class="pillar-stack-window"> </div>
+    <div id="pg-diff" class="pillar-diff-window"> </div>
     <script defer>
+        window.PGStack = new StaticPillarStackedBarChart(["SWE", "FRA", "JPN"], "PG", document.getElementById("pg-stack"),
+            {"SWE": "#FECC02", "FRA": "#BBBBBB", "JPN": "#BC002D"}
+        )
         window.StaticDiffSWEvFRAinPG = new StaticPillarDifferentialChart("SWE", "FRA", "PG", document.getElementById("pg-diff"))
         window.StaticDiffSWEvJPNinPG = new StaticPillarDifferentialChart("SWE", "JPN", "PG", document.getElementById("pg-diff"))
         window.StaticDiffFRAvJPNinPG = new StaticPillarDifferentialChart("FRA", "JPN", "PG", document.getElementById("pg-diff"))

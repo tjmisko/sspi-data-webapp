@@ -12,8 +12,8 @@ class MongoWrapper:
         doc_count = self._mongo_database.count_documents({})
         return doc_count == 0
 
-    def find_one(self, query: dict) -> dict:
-        cursor = self._mongo_database.find_one(query)
+    def find_one(self, query: dict, options: dict = {}) -> dict:
+        cursor = self._mongo_database.find_one(query, options)
         return json.loads(json_util.dumps(cursor))
 
     def find(self, query: dict, options: dict = {}) -> list:
@@ -251,7 +251,7 @@ class SSPICleanAPIData(MongoWrapper):
 
     def validate_score(self, document: dict, document_number: int = 0):
         # Validate Score format
-        if not "Score" in document.keys():
+        if "Score" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' is a required argument (document {document_number})")
@@ -259,7 +259,7 @@ class SSPICleanAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
-        if not "Score" in document.keys():
+        if "Score" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' is a required argument (document {document_number})")
