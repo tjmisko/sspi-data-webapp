@@ -25,7 +25,7 @@ from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     # sspi_analysis
 )
-from ..datasource.prisonstudies import scrape_stored_pages_for_data
+from ..datasource.prisonstudies import scrape_stored_pages_for_data, compute_prison_rate
 from ..datasource.sdg import (
     flatten_nested_dictionary_biodiv,
     extract_sdg_pivot_data_to_nested_dictionary,
@@ -473,8 +473,8 @@ def compute_senior():
 @login_required
 def compute_incarc():
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    print(missing_data_list)
-    return clean_data_list
+    # print(missing_data_list)
+    return compute_prison_rate(clean_data_list)
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])

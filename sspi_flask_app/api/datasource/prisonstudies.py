@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
-from ..resources.utilities import parse_json
+from ..resources.utilities import parse_json, find_population
 from sspi_flask_app.models.database import sspi_raw_api_data
 from datetime import datetime
 import base64
@@ -153,3 +153,11 @@ def scrape_stored_pages_for_data():
                 "Description": "Prison population rate per 100,000 of the national population."}
         final_data.append(obs)
     return final_data, missing_countries
+
+
+def compute_prison_rate(final_data_list):
+    for obs in final_data_list:
+        cou = obs["CountryCode"]
+        year = obs["Year"]
+        pop = find_population(cou, year)
+        

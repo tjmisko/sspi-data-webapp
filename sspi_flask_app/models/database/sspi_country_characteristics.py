@@ -22,3 +22,14 @@ class SSPICountryCharacteristics(MongoWrapper):
         self.validate_year(document, document_number)
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
+
+    def fetch_population_data(self, InterMediateCode, Country, Year **kwargs) -> list:
+        """
+        Utility function which returns population of country in specific year
+        """
+        if not bool(self.find_one({"IntermediateCode": InterMediateCode})):
+            print(f"Document Produced an Error: {InterMediateCode}")
+            raise ValueError("Intermediate Code not found in database")
+        mongoQuery = {"IntermediateCode": InterMediateCode, "CountryCode": Country, "Year" : Year}
+        mongoQuery.update(kwargs)
+        return self.find(mongoQuery)
