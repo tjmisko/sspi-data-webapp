@@ -472,9 +472,8 @@ def compute_senior():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_incarc():
-    # clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    # print(missing_data_list)
-    clean_data_list = scrape_stored_pages_for_data()
+    clean_data_list, missing_data_list = scrape_stored_pages_for_data()
+    print(missing_data_list)
     return clean_data_list
 
 
