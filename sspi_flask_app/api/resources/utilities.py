@@ -277,5 +277,10 @@ def colormap(PillarCode, alpha: str = "ff"):
         return f"#007bff{alpha}"
     
 def find_population(country_code, year):
-    population_data = sspi_country_characteristics.fetch_data("UNPOPL", "GBR", 2000)
+    '''
+    Fetches population data from sspi_country_characteristics for a country in a given year
+    country_code: str of alpha-3 code
+    year: int of year
+    '''
+    population_data = sspi_country_characteristics.fetch_population_data("UNPOPL", country_code, year)
     return population_data

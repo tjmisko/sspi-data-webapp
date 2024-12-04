@@ -156,8 +156,16 @@ def scrape_stored_pages_for_data():
 
 
 def compute_prison_rate(final_data_list):
+    final_list = []
+    missing_entries= []
     for obs in final_data_list:
         cou = obs["CountryCode"]
         year = obs["Year"]
         pop = find_population(cou, year)
+        if pop == 0:
+            missing_entries.append(obs)
+            continue
+        obs["Value"] = (obs["Value"] / pop) * 100000
+        final_list.append(obs)
+    return final_list, missing_entries
         

@@ -473,8 +473,10 @@ def compute_senior():
 @login_required
 def compute_incarc():
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    # print(missing_data_list)
-    return compute_prison_rate(clean_data_list)
+    final_list, incomplete_observations = compute_prison_rate(clean_data_list)
+    print(f"Missing from World Prison Brief: {missing_data_list}")
+    print(f"Missing from UN population: {incomplete_observations}")
+    return final_list
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])
