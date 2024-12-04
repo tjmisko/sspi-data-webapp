@@ -25,6 +25,7 @@ from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     # sspi_analysis
 )
+from ..datasource.prisonstudies import scrape_stored_pages_for_data
 from ..datasource.sdg import (
     flatten_nested_dictionary_biodiv,
     extract_sdg_pivot_data_to_nested_dictionary,
@@ -365,7 +366,6 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
-    insert_pop_data()
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
 
@@ -471,14 +471,10 @@ def compute_senior():
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
-def compute_prison():
-    raw_data_observation_list = parse_json(
-        sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
-    for obs in raw_data_observation_list:
-        table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
-                                                                                      "summary": "Prison population rate"})
-    print(table)
-    return "string"
+def compute_incarc():
+    clean_data_list, missing_data_list = scrape_stored_pages_for_data()
+    print(missing_data_list)
+    return clean_data_list
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])
