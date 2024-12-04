@@ -116,14 +116,25 @@ def scrape_stored_pages_for_data():
             if row:
                 prison_data.append(row)
         df = pd.DataFrame(prison_data, columns=["Year", "Prison Population Total", "Prison Population Rate"])
+        df["Prison Population Total"] = df["Prison Population Total"].replace(",", "", regex = True)
+        df["Prison Population Total"] = df["Prison Population Total"].replace("c ", "", regex = True)
         df["Prison Population Rate"] = df["Prison Population Rate"].replace("c ", "", regex = True)
         df.apply(lambda row: final_data.append(
             {"IndicatorCode": "INCARC",
-             "Value": int(row["Prison Population Rate"]),
+             "Value": int(row["Prison Population Total"]),
              "Year": int(row["Year"]),
              "CountryCode": country,
              "Unit": "People per 100,000",
              "Description": "Prison population rate per 100,000 of the national population."}), axis = 1)
+    # combine uk values
+    gbr_obs = {}
+    for obs in final_data:
+        if "GBR" in obs["CountryCode"]:
+            year = obs["Year"]
+            if year not in gbr_obs:
+                gbr_obs[year] = []
+            gbr_obs[year].append(obs["Value"])
+        else:
+            continue
+    return gbr_obs
     return final_data, missing_countries
-        
- 
