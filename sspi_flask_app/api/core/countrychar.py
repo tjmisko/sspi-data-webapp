@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
+import pycountry
 from pycountry import countries
 from sspi_flask_app.models.database import sspi_country_characteristics
 
 def insert_pop_data():
     pop_data = pd.read_csv("local/UN_population_data.csv").astype(str).drop(columns = "Unnamed: 0")
-    pop_data["CountryCode"] = pop_data["country"].map(lambda cou: countries.get(name = cou).alpha_3 
-                                                       if countries.get(name = cou) is not None else np.nan)
+    pop_data["CountryCode"] = pop_data["country"].map(lambda cou: "KOR" if cou == "Republic of Korea" else (pycountry.countries.search_fuzzy(cou)[0].alpha_3 
+                                                       if pycountry.countries.search_fuzzy(cou)[0] is not None else np.nan))
     pop_data = pop_data.dropna()
     pop_data["year"] = (pop_data["year"]).astype(int)
     pop_data["pop"] = (pop_data["pop"]).astype(int)
