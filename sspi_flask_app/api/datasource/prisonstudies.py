@@ -124,6 +124,7 @@ def scrape_stored_pages_for_data():
             df.apply(lambda row: gbr_data.append(
                 {"IndicatorCode": "INCARC",
                 "Value": int(row["Prison Population Total"]),
+                "WPB Rate": int(row["Prison Population Rate"]),
                 "Year": int(row["Year"]),
                 "CountryCode": country,
                 "Unit": "People per 100,000",
@@ -132,6 +133,7 @@ def scrape_stored_pages_for_data():
             df.apply(lambda row: final_data.append(
                 {"IndicatorCode": "INCARC",
                 "Value": int(row["Prison Population Total"]),
+                "WPB Rate": int(row["Prison Population Rate"]),
                 "Year": int(row["Year"]),
                 "CountryCode": country,
                 "Unit": "People per 100,000",
@@ -146,7 +148,8 @@ def scrape_stored_pages_for_data():
     for year in gbr_obs:
         year_sum = sum(gbr_obs[year])
         obs = {"IndicatorCode": "INCARC",
-               "Value": year_sum,
+                "Value": year_sum,
+                "WPB Rate": obs["WPB Rate"],
                 "Year": year,
                 "CountryCode": "GBR",
                 "Unit": "People per 100,000",
