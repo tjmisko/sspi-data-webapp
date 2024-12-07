@@ -74,7 +74,7 @@ class SSPIRawAPIData(MongoWrapper):
     def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
-        - Observation to be passed as a well-formed dictionary for entry into pymongo
+        - Document to be passed as a well-formed dictionary or string for entry into pymongo
         - IndicatorCode is the indicator code for the indicator that the observation is for
         """
         document = {
