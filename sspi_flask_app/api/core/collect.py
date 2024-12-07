@@ -153,7 +153,6 @@ def colbar():
         yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", URLParams=url_params, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
-
 #################################
 ## Category: WORKER WELLBEING ##
 ################################

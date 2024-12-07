@@ -31,7 +31,8 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_redlst,
     flatten_nested_dictionary_intrnt,
     flatten_nested_dictionary_watman,
-    flatten_nested_dictionary_stkhlm
+    flatten_nested_dictionary_stkhlm,
+    flatten_nested_dictionary_nrgint
 )
 # from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import (
