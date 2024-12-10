@@ -528,6 +528,10 @@ def compute_fdepth():
     return parse_json(filtered_list)
 
 
+##################################
+### Category: WORKER ENGAGEMENT ###
+##################################
+
 @compute_bp.route("/COLBAR", methods=['GET'])
 # @login_required
 def compute_colbar():
@@ -565,3 +569,7 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+##################################
+### Category: WORKER WELLBEING ###
+##################################
