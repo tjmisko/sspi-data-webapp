@@ -244,6 +244,13 @@ def intrnt():
         yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/AQELEC", methods=['GET'])
+@login_required
+def aqelec():
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 #############################
 ## Category: PUBLIC SAFETY ##
 #############################
