@@ -153,6 +153,16 @@ def colbar():
         yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", URLParams=url_params, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/CHILDW", methods=['GET'])
+@login_required
+def childw():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("8.7.1", "CHILDW", **kwargs)
+        yield from collectSDGIndicatorData("4.1.1", "CHILDW", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 #################################
 ## Category: WORKER WELLBEING ##
 ################################
