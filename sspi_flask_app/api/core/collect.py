@@ -249,6 +249,7 @@ def intrnt():
 def aqelec():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+        yield from collectWEFdata("WEF+GCIHH+EOSQ064", )
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #############################
