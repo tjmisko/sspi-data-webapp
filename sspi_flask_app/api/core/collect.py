@@ -279,3 +279,19 @@ def unpopl():
         # insert UN population data into sspi_country_characteristics database
         yield from insert_pop_data()
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+
+###########################
+## Category: RIGHTS ##
+###########################
+
+
+@collect_bp.route("/RULELW", methods=['GET'])
+@login_required
+def rulelw():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
