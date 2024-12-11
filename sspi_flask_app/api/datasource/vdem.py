@@ -9,14 +9,16 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
     res = requests.get(url)
     if res.status_code != 200:
         err = f"(HTTP Error {res.status_code})"
-        yield "Failed to fetch data from source" + err
+        yield "Failed to fetch data from source " + err
         return
+    
     with zipfile.ZipFile(BytesIO(res.content)) as z:
         for f in z.namelist():
             if "__MACOSX" in f:
+                # Skip system folders
                 continue
-            yield str(f) + "\n"
-            if SourceIndicatorCode in f:
+            if f.lower().endswith(".csv"):
+                yield f"Found CSV file: {f}\n"
                 with z.open(f) as data:
                     csv_string = data.read().decode("utf-8")
                     sspi_raw_api_data.raw_insert_one(
