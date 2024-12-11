@@ -565,3 +565,36 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+@compute_bp.route("/EDEMOC", methods=['GET'])
+@login_required
+def compute_edemoc():
+    if not sspi_raw_api_data.raw_data_available("EDEMOC"):
+        return redirect(url_for("collect_bp.EDEMOC"))
+    
+    raw_data = sspi_raw_api_data.fetch_raw_data("EDEMOC")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    df = pd.read_csv(csv_virtual_file)
+    
+
+    df = df.rename(columns={
+        "country_text_id": "CountryCode",
+        "year": "Year",
+        "EDEMOC": "Value"
+    })
+    
+
+    df = df.dropna(subset=["Value"])
+    df = df[(df["Value"] >= 0) & (df["Value"] <= 1)]
+    
+    df["IndicatorCode"] = "EDEMOC"
+    df["Unit"] = "Index"
+    
+    obs_list = json.loads(df.to_json(orient="records"))
+    
+    scored_list = score_single_indicator(obs_list, "EDEMOC")
+    
+    sspi_clean_api_data.insert_many(scored_list)
+    
+    return parse_json(scored_list)
