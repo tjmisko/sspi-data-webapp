@@ -565,3 +565,38 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+
+@compute_bp.route("/RULELW", methods=['GET'])
+@login_required
+def compute_rulelw():
+    if not sspi_raw_api_data.raw_data_available("RULELW"):
+        return redirect(url_for("collect_bp.RULELW"))
+    
+    raw_data = sspi_raw_api_data.fetch_raw_data("RULELW")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    
+    df = pd.read_csv(csv_virtual_file)
+
+    df = df.rename(columns={
+        "ountry_text_id": "CountryCode",
+        "year": "Year",
+        "RULELW": "Value"  
+    })
+    
+    df = df.dropna(subset=["Value"])
+    df = df[(df["Value"] >= 0) & (df["Value"] <= 1)]
+    
+
+    df["IndicatorCode"] = "RULELW"
+    df["Unit"] = "Index"
+    
+    obs_list = json.loads(df.to_json(orient="records"))
+    
+    scored_list = score_single_indicator(obs_list, "RULELW")
+    
+
+    sspi_clean_api_data.insert_many(scored_list)
+    
+    return parse_json(scored_list)
