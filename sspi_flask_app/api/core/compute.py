@@ -565,3 +565,29 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+
+@compute_bp.route("/AQELEC", methods=['GET'])
+# @login_required
+def compute_aqelec():
+    if not sspi_raw_api_data.raw_data_available("AQELEC"):
+        return redirect(url_for("collect_bp.aqelec"))
+    avelec_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
+    quelct_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")
+    
+ 
+    avelec_clean = cleaned_wb_current(avelec_raw, "AQELEC", unit="Percent")
+    quelct_clean = cleaned_wb_current(quelct_raw, "AQELEC", unit="Percent")
+    combined_list = avelec_clean + quelct_clean
+    cleaned_list = zip_intermediates(
+        combined_list, 
+        "AQELEC", 
+        ScoreFunction=lambda AVELEC, QUELCT: 0.5 * AVELEC + 0.5 * QUELCT,
+        ScoreBy="Score"
+    )
+    
+    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_data)
+    return parse_json(filtered_list)
