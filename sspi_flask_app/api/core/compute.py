@@ -573,3 +573,24 @@ def compute_nrgint():
 ##################################
 ### Category: WORKER WELLBEING ###
 ##################################
+
+@compute_bp.route("/FATINJ", methods=['GET'])
+# @login_required
+def compute_fatinj():
+    if not sspi_raw_api_data.raw_data_available("FATINJ"):
+        return redirect(url_for("collect_bp.FATINJ"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("FATINJ")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    fatinj_raw = pd.read_csv(csv_virtual_file)
+    fatinj_raw = fatinj_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    fatinj_raw = fatinj_raw.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    fatinj_raw['IndicatorCode'] = 'FATINJ'
+    fatinj_raw['Unit'] = 'Rate'
+    fatinj_raw['Value'] = fatinj_raw['Value']
+    obs_list = json.loads(fatinj_raw.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "FATINJ")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
