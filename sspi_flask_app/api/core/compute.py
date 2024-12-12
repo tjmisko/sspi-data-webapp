@@ -566,3 +566,36 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+################################################
+# Compute Routes for Pillar: MARKET STRUCTURE #
+################################################
+
+#########################
+### Category: TAXES ###
+#########################
+@compute_bp.route("/TAXREV")
+@login_required
+def compute_taxrev():
+    if not sspi_raw_api_data.raw_data_available("TAXREV"):
+        return redirect(url_for("api_bp.collect_bp.TAXREV"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("TAXREV")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    taxrev_raw = pd.read_csv(csv_virtual_file)
+    taxrev_raw = taxrev_raw.reset_index()
+    taxrev_raw = taxrev_raw.rename(columns = {"economy":"CountryCode"})
+    taxrev_raw = taxrev_raw.melt(id_vars = ["CountryCode"], var_name = "Year", value_name = "Value")
+    taxrev_raw["Year"] = taxrev_raw["Year"].str.replace("YR", "")
+    taxrev_raw["Year"] = pd.to_numeric(taxrev_raw["Year"])
+    taxrev_raw = taxrev_raw.dropna()
+    taxrev_raw["IndicatorCode"] = "TAXREV"
+    taxrev_raw["Unit"] = "Index"
+    taxrev_raw = taxrev_raw[["IndicatorCode","CountryCode","Year","Value","Unit"]]
+    taxrev_raw = taxrev_raw.sort_values(by=["CountryCode","Year"])
+    taxrev_raw = taxrev_raw.reset_index(drop=True)
+    obs_list = json.loads(taxrev_raw.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "TAXREV")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+    

@@ -60,8 +60,7 @@ class SSPI:
                            for d in indicator_details])
             scores = set([s["IndicatorCode"] for s in indicator_scores])
             print(details.symmetric_difference(scores))
-            raise DataOrderError(f"Length of indicator_details {len(
-                indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
+            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
@@ -71,8 +70,7 @@ class SSPI:
                                                          ["IndicatorCode"]]
             except KeyError:
                 indicator = detail["Metadata"]["IndicatorCode"]
-                raise DataOrderError(f"No data for indicator {
-                                     indicator} found!")
+                raise DataOrderError(f"No data for indicator {indicator} found!")
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
@@ -198,8 +196,7 @@ class Indicator:
             raise InvalidDocumentFormatError(
                 f"Indicator Data Missing 'Score' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
-            raise DataOrderError(f"Mismatched Data and Indicator Detail {
-                                 detail}; {indicator_score_data}")
+            raise DataOrderError(f"Mismatched Data and Indicator Detail {detail}; {indicator_score_data}")
         if type(self.score) is float:
             if self.score < 0 or self.score > 1:
                 raise InvalidDocumentFormatError(
