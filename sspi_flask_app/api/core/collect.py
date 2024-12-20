@@ -165,6 +165,12 @@ def senior():
         yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/FATINJ")
+@login_required
+def fatinj():
+    def collect_iterator(**kwargs):
+        yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 #####################
 ## Category: TAXES ##
 #####################
