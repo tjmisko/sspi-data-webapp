@@ -592,8 +592,7 @@ def compute_fatinj():
     fatinj_raw['IndicatorCode'] = 'FATINJ'
     fatinj_raw['Unit'] = 'Rate'
     print(type(fatinj_raw['Value']))
-    #fatinj_raw['Value'] = fatinj_raw['Value']
-    fatinj_raw['Value'] = fatinj_raw['Value'].fillna(0)  #
+    fatinj_raw['Value'] = fatinj_raw['Value'].fillna(0)  
     obs_list = json.loads(fatinj_raw.to_json(orient="records"))
     value = obs_list[0].get("Value", None) 
     scored_list = score_single_indicator(obs_list, "FATINJ")
