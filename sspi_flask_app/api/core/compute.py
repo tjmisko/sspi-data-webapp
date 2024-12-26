@@ -46,11 +46,13 @@ from ..datasource.iea import (
     filterSeriesListiea,
     cleanIEAData_altnrg,
     clean_IEA_data_GTRANS,
+    
 )
 import pandas as pd
 # from pycountry import countries
 from io import StringIO
 import re
+#from ..datasource.ilo import cleanILOData
 from sspi_flask_app.api.core.finalize import (
    finalize_iterator
 )
@@ -295,6 +297,22 @@ def compute_coalpw():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
+@compute_bp.route("/NRGINT", methods=['GET'])
+# @login_required
+def compute_nrgint():
+    if not sspi_raw_api_data.raw_data_available("NRGINT"):
+        return redirect(url_for("collect_bp.NRGINT"))
+    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
+    nrgint_raw)
+    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
+    scored_list = score_single_indicator(flattened_lst, "NRGINT")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return parse_json(clean_document_list)
+
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
@@ -357,6 +375,8 @@ def compute_altnrg():
     print(incomplete_observations)
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
+
+
 
 ##################################
 ### Category: GREENHOUSE GASES ###
@@ -550,18 +570,32 @@ def compute_colbar():
     return parse_json(scored_list)
 
 
-@compute_bp.route("/NRGINT", methods=['GET'])
+
+
+##################################
+### Category: WORKER WELLBEING ###
+##################################
+
+@compute_bp.route("/FATINJ", methods=['GET'])
 # @login_required
-def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("collect_bp.NRGINT"))
-    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-    nrgint_raw)
-    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+def compute_fatinj():
+    if not sspi_raw_api_data.raw_data_available("FATINJ"):
+        return redirect(url_for("collect_bp.FATINJ"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("FATINJ")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"])
+    fatinj_raw = pd.read_csv(csv_virtual_file)
+    fatinj_raw = fatinj_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    fatinj_raw = fatinj_raw.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                           'UNIT_MEASURE': 'Unit'})
+    fatinj_raw['IndicatorCode'] = 'FATINJ'
+    fatinj_raw['Unit'] = 'Rate'
+    print(type(fatinj_raw['Value']))
+    fatinj_raw['Value'] = fatinj_raw['Value'].fillna(0)  
+    obs_list = json.loads(fatinj_raw.to_json(orient="records"))
+    value = obs_list[0].get("Value", None) 
+    scored_list = score_single_indicator(obs_list, "FATINJ")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list) 
+

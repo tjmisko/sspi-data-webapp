@@ -256,6 +256,7 @@ def append_goalpost_single(document_list, IndicatorCode):
         {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})[0]
     for document in document_list:
         document["LowerGoalpost"] = details["Metadata"]["LowerGoalpost"]
+        print(details)
         document["UpperGoalpost"] = details["Metadata"]["UpperGoalpost"]
         document["Score"] = goalpost(
             document["Value"], details["Metadata"]["LowerGoalpost"], details["Metadata"]["UpperGoalpost"])
