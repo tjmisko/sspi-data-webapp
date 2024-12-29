@@ -580,14 +580,15 @@ def compute_unempl():
     raw_data = sspi_raw_api_data.fetch_raw_data("UNEMPL")
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     colbar_raw = pd.read_csv(csv_virtual_file)
-    colbar_raw = colbar_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
-    colbar_raw = colbar_raw.rename(columns={'REF_AREA': 'CountryCode',
+    colbar_raw_f = colbar_raw[colbar_raw['SOC'] == 'SOC_CONTIG_UNE']
+    colbar_raw_f = colbar_raw_f[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    colbar_raw_f = colbar_raw_f.rename(columns={'REF_AREA': 'CountryCode',
                                             'TIME_PERIOD': 'Year',
                                             'OBS_VALUE': 'Value',
                                             'UNIT_MEASURE': 'Unit'})
-    colbar_raw['IndicatorCode'] = 'UNEMPL'
-    colbar_raw['Unit'] = 'Rate'
-    obs_list = json.loads(colbar_raw.to_json(orient="records"))
+    colbar_raw_f['IndicatorCode'] = 'UNEMPL'
+    colbar_raw_f['Unit'] = 'Rate'
+    obs_list = json.loads(colbar_raw_f.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "UNEMPL")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
