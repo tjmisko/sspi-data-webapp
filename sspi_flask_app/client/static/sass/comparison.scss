@@ -11,12 +11,18 @@
 }
 
 .chart-section-pillar-differential {
-  padding: 0.5em;
+  padding: 0.4em;
   display: flex;
   max-height: 250px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: space-around;
+}
+
+.differential-chart-title {
+  width: 100%;
+  text-align: center;
+  font-size: 0.9em;
 }
 
 .pillar-diff-window {
