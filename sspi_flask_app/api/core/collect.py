@@ -165,6 +165,7 @@ def senior():
         yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/FATINJ")
 @login_required
 def fatinj():
