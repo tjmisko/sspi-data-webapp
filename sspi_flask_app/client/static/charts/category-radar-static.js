@@ -97,7 +97,7 @@ class CategoryRadarStatic {
     }
 
     async fetch() {
-        const response = await fetch(`/api/v1/static/radar/${this.countryCode}`);
+        const response = await fetch(`/api/v1/static/radar/${this.countryCode}`)
         return response.json();
     }
 
