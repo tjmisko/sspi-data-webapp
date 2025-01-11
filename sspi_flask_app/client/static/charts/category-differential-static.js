@@ -4,8 +4,6 @@ const chartArrowLabels = {
         const {ctx, chartArea} = chart;
         ctx.save();
 
-        console.log(optionVars.LeftCountry)
-        console.log(optionVars.RightCountry)
         ctx.fillStyle = '#FF634799';
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
