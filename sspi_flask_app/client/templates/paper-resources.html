@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+    {% block javascript %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+        <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
+        <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
+        <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
+        {% block data_import %}{% endblock %} 
+    {% endblock %}
+
+    {% block javascript_chart_js %}
+        <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/DummyData.js') }}" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+        <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> -->
+        <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
+    {% endblock %}
+
+    {% block content %}
+
+    <article class="comparison-article"> 
+    <section id="radar-chart-flex-container-1" class="radar-chart-flex-container datawindow"> </section>
+    <script defer>
+        window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container-1'))
+        window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container-1'))
+        window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container-1'))
+    </script>
+    <section id="radar-chart-flex-container-2" class="radar-chart-flex-container datawindow"> </section>
+    <script defer>
+        window.RadarCHN = new CategoryRadarStatic("CHN", document.getElementById('radar-chart-flex-container-2'))
+        window.RadarRUS = new CategoryRadarStatic("RUS", document.getElementById('radar-chart-flex-container-2'))
+        window.RadarUSA = new CategoryRadarStatic("USA", document.getElementById('radar-chart-flex-container-2'))
+    </script>
+    <section id="radar-chart-flex-container-3" class="radar-chart-flex-container datawindow"> </section>
+    <script defer>
+        window.RadarBRA = new CategoryRadarStatic("BRA", document.getElementById('radar-chart-flex-container-3'))
+        window.RadarIND = new CategoryRadarStatic("IND", document.getElementById('radar-chart-flex-container-3'))
+        window.RadarIDN = new CategoryRadarStatic("IDN", document.getElementById('radar-chart-flex-container-3'))
+    </script>
+    </article> 
+
+    {% endblock %}
