@@ -9,8 +9,8 @@ class CategoryRadarStatic {
         this.gridColor = '#cccccc33'
         this.initRoot()
         this.initTitle()
-        this.initChartJSCanvas()
         this.initLegend()
+        this.initChartJSCanvas()
 
         this.fetch().then(data => {
             this.update(data)
