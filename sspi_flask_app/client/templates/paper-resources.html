@@ -5,6 +5,7 @@
         <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
         <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
         <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
         {% block data_import %}{% endblock %} 
     {% endblock %}
@@ -71,6 +72,55 @@
                     window.RadarJPN]
                 )
             }, 1000)
+            const save1 = document.createElement('div')
+            save1.id = 'save1'
+            save1.innerHTML = 'Save SWE-FRA-JPN'
+            save1.style.marginBottom = '20px'
+            save1.style.color = 'black'
+            save1.style.backgroundColor = 'red'
+            document.getElementById('radar-chart-flex-container-1').appendChild(save1)
+            const save2 = document.createElement('div')
+            save2.id = 'save2'
+            save2.innerHTML = 'Save CHN-RUS-USA'
+            save2.style.marginBottom = '20px'
+            save2.style.color = 'black'
+            save2.style.backgroundColor = 'red'
+
+            document.getElementById('radar-chart-flex-container-2').appendChild(save2)
+            const save3 = document.createElement('div')
+            save3.id = 'save3'
+            save3.innerHTML = 'Save BRA-IND-IDN'
+            save3.style.marginBottom = '20px'
+            save3.style.color = 'black'
+            save3.style.backgroundColor = 'red'
+            document.getElementById('radar-chart-flex-container-3').appendChild(save3)
+            document.getElementById('save1').addEventListener('click', function () {
+                const element = document.getElementById('radar-chart-flex-container-1');
+                html2canvas(element).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'capture.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+            document.getElementById('save2').addEventListener('click', function () {
+                const element = document.getElementById('radar-chart-flex-container-2');
+                html2canvas(element).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'capture.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
+            document.getElementById('save3').addEventListener('click', function () {
+                const element = document.getElementById('radar-chart-flex-container-3');
+                html2canvas(element).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'capture.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            });
             </script>
         </article> 
 
