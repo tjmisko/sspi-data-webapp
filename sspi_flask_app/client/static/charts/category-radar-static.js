@@ -1,12 +1,12 @@
 class CategoryRadarStatic {
-    constructor(countryCode, parentElement) {
+    constructor(countryCode, parentElement, textColor="#bbb", gridColor="#cccccc33") {
         this.parentElement = parentElement
         this.countryCode = countryCode
+        this.textColor = textColor
+        this.gridColor = gridColor
 
         this.initRoot()
         this.legend = this.initLegend()
-        this.textColor = '#bbb'
-        this.gridColor = '#cccccc33'
         this.initRoot()
         this.initTitle()
         this.initLegend()

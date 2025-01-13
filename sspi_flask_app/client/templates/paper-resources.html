@@ -18,53 +18,60 @@
 
     {% block content %}
 
-    <script defer>
-    function redefineLabels(chartObject) {
-        const newLabels = chartObject.chart.data.labels.map(label => chartObject.labelMap[label])
-        for (let i = 0; i < newLabels.length; i++) {
-            if (newLabels[i].includes(" ")) {
-                newLabels[i] = newLabels[i].split(" ")
+        <script defer>
+        function redefineLabels(chartObject) {
+            const newLabels = chartObject.chart.data.labels.map(label => chartObject.labelMap[label])
+            for (let i = 0; i < newLabels.length; i++) {
+                if (newLabels[i].includes(" ")) {
+                    newLabels[i] = newLabels[i].split(" ")
+                }
             }
+            chartObject.chart.data.labels = newLabels
+            chartObject.chart.update()
         }
-        chartObject.chart.data.labels = newLabels
-        chartObject.chart.update()
-    }
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    </script>
-    <article class="paper-resources-article"> 
-    <section id="radar-chart-flex-container-1" class="radar-chart-flex-container datawindow"> </section>
-    <script defer>
-        window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container-1'))
-        window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container-1'))
-        window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container-1'))
-    </script>
-    <section id="radar-chart-flex-container-2" class="radar-chart-flex-container datawindow"> </section>
-    <script defer>
-        window.RadarCHN = new CategoryRadarStatic("CHN", document.getElementById('radar-chart-flex-container-2'))
-        window.RadarRUS = new CategoryRadarStatic("RUS", document.getElementById('radar-chart-flex-container-2'))
-        window.RadarUSA = new CategoryRadarStatic("USA", document.getElementById('radar-chart-flex-container-2'))
-    </script>
-    <section id="radar-chart-flex-container-3" class="radar-chart-flex-container datawindow"> </section>
-    <script defer>
-        window.RadarBRA = new CategoryRadarStatic("BRA", document.getElementById('radar-chart-flex-container-3'))
-        window.RadarIND = new CategoryRadarStatic("IND", document.getElementById('radar-chart-flex-container-3'))
-        window.RadarIDN = new CategoryRadarStatic("IDN", document.getElementById('radar-chart-flex-container-3'))
-    </script>
-    <script defer>
-        setTimeout(() => {
-            redefineLabels(window.RadarSWE)
-            redefineLabels(window.RadarFRA)
-            redefineLabels(window.RadarBRA)
-            redefineLabels(window.RadarCHN)
-            redefineLabels(window.RadarRUS)
-            redefineLabels(window.RadarUSA)
-            redefineLabels(window.RadarIND)
-            redefineLabels(window.RadarIDN)
-            redefineLabels(window.RadarJPN)
-        }, 2000)
-    </script>
-    </article> 
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        function adjustCharts(objectList) {
+            objectList.forEach(object => {
+                redefineLabels(object)
+            })
+        }
+        </script>
+        <article class="paper-resources-article"> 
+            <section id="radar-chart-flex-container-1" class="radar-chart-flex-container datawindow"> </section>
+            <script defer>
+            window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
+            window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
+            window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
+            </script>
+            <section id="radar-chart-flex-container-2" class="radar-chart-flex-container datawindow"> </section>
+            <script defer>
+            window.RadarCHN = new CategoryRadarStatic("CHN", document.getElementById('radar-chart-flex-container-2'), "#111", "#33333333")
+            window.RadarRUS = new CategoryRadarStatic("RUS", document.getElementById('radar-chart-flex-container-2'), "#111", "#33333333")
+            window.RadarUSA = new CategoryRadarStatic("USA", document.getElementById('radar-chart-flex-container-2'), "#111", "#33333333")
+            </script>
+            <section id="radar-chart-flex-container-3" class="radar-chart-flex-container datawindow"> </section>
+            <script defer>
+            window.RadarBRA = new CategoryRadarStatic("BRA", document.getElementById('radar-chart-flex-container-3'), "#111", "#33333333")
+            window.RadarIND = new CategoryRadarStatic("IND", document.getElementById('radar-chart-flex-container-3'), "#111", "#33333333")
+            window.RadarIDN = new CategoryRadarStatic("IDN", document.getElementById('radar-chart-flex-container-3'), "#111", "#33333333")
+            </script>
+            <script defer>
+            setTimeout(() => {
+                adjustCharts([
+                    window.RadarSWE,
+                    window.RadarFRA,
+                    window.RadarBRA,
+                    window.RadarCHN,
+                    window.RadarRUS,
+                    window.RadarUSA,
+                    window.RadarIND,
+                    window.RadarIDN,
+                    window.RadarJPN]
+                )
+            }, 1000)
+            </script>
+        </article> 
 
     {% endblock %}
