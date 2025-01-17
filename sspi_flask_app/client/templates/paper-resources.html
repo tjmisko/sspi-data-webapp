@@ -78,28 +78,31 @@
                     window.RadarJPN]
                 )
             }, 1000)
-            const save1 = document.createElement('div')
+            const save1 = document.createElement('button')
             save1.id = 'save1'
             save1.innerHTML = 'Save SWE-FRA-JPN'
-            save1.style.marginBottom = '20px'
+            save1.style.padding = '10px'
+            save1.style.margin = '10px'
+            save1.style.fontSize = '16px'
             save1.style.color = 'black'
-            save1.style.backgroundColor = 'red'
-            document.getElementById('chart-and-button-wrapper-1').appendChild(save1)
-            const save2 = document.createElement('div')
+            document.getElementById('chart-and-button-wrapper-1').prepend(save1)
+            const save2 = document.createElement('button')
             save2.id = 'save2'
             save2.innerHTML = 'Save CHN-RUS-USA'
-            save2.style.marginBottom = '20px'
+            save2.style.padding = '10px'
+            save1.style.margin = '10px'
+            save1.style.fontSize = '16px'
             save2.style.color = 'black'
-            save2.style.backgroundColor = 'red'
 
-            document.getElementById('chart-and-button-wrapper-2').appendChild(save2)
-            const save3 = document.createElement('div')
+            document.getElementById('chart-and-button-wrapper-2').prepend(save2)
+            const save3 = document.createElement('button')
             save3.id = 'save3'
             save3.innerHTML = 'Save BRA-IND-IDN'
-            save3.style.marginBottom = '20px'
+            save3.style.padding = '10px'
+            save1.style.margin = '10px'
+            save1.style.fontSize = '16px'
             save3.style.color = 'black'
-            save3.style.backgroundColor = 'red'
-            document.getElementById('chart-and-button-wrapper-3').appendChild(save3)
+            document.getElementById('chart-and-button-wrapper-3').prepend(save3)
             document.getElementById('save1').addEventListener('click', function () {
                 const element = document.getElementById('radar-chart-flex-container-1');
                 html2canvas(element, {backgroundColor: null}).then(canvas => {
