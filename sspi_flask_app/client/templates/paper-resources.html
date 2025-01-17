@@ -102,7 +102,7 @@
             document.getElementById('chart-and-button-wrapper-3').appendChild(save3)
             document.getElementById('save1').addEventListener('click', function () {
                 const element = document.getElementById('radar-chart-flex-container-1');
-                html2canvas(element).then(canvas => {
+                html2canvas(element, {backgroundColor: null}).then(canvas => {
                     const link = document.createElement('a');
                     link.download = 'SWE-FRA-JPN.png';
                     link.href = canvas.toDataURL('image/png');
@@ -111,7 +111,7 @@
             });
             document.getElementById('save2').addEventListener('click', function () {
                 const element = document.getElementById('radar-chart-flex-container-2');
-                html2canvas(element).then(canvas => {
+                html2canvas(element, {backgroundColor: null}).then(canvas => {
                     const link = document.createElement('a');
                     link.download = 'CHN-RUS-USA.png';
                     link.href = canvas.toDataURL('image/png');
@@ -120,7 +120,7 @@
             });
             document.getElementById('save3').addEventListener('click', function () {
                 const element = document.getElementById('radar-chart-flex-container-3');
-                html2canvas(element).then(canvas => {
+                html2canvas(element, {backgroundColor: null}).then(canvas => {
                     const link = document.createElement('a');
                     link.download = 'BRA-IND-IDN.png';
                     link.href = canvas.toDataURL('image/png');
