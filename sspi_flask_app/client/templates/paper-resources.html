@@ -40,19 +40,25 @@
         }
         </script>
         <article class="paper-resources-article"> 
-            <section id="radar-chart-flex-container-1" class="radar-chart-flex-container datawindow"> </section>
+            <div id="chart-and-button-wrapper-1" class="chart-and-button-wrapper">
+                <section id="radar-chart-flex-container-1" class="radar-chart-flex-container datawindow"> </section>
+            </div>
             <script defer>
             window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
             window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
             window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
             </script>
-            <section id="radar-chart-flex-container-2" class="radar-chart-flex-container datawindow"> </section>
+            <div id="chart-and-button-wrapper-2" class="chart-and-button-wrapper">
+                <section id="radar-chart-flex-container-2" class="radar-chart-flex-container datawindow"> </section>
+            </div>
             <script defer>
             window.RadarCHN = new CategoryRadarStatic("CHN", document.getElementById('radar-chart-flex-container-2'), "#111", "#33333333")
             window.RadarRUS = new CategoryRadarStatic("RUS", document.getElementById('radar-chart-flex-container-2'), "#111", "#33333333")
             window.RadarUSA = new CategoryRadarStatic("USA", document.getElementById('radar-chart-flex-container-2'), "#111", "#33333333")
             </script>
-            <section id="radar-chart-flex-container-3" class="radar-chart-flex-container datawindow"> </section>
+            <div id="chart-and-button-wrapper-3" class="chart-and-button-wrapper">
+                <section id="radar-chart-flex-container-3" class="radar-chart-flex-container datawindow"> </section>
+            </div>
             <script defer>
             window.RadarBRA = new CategoryRadarStatic("BRA", document.getElementById('radar-chart-flex-container-3'), "#111", "#33333333")
             window.RadarIND = new CategoryRadarStatic("IND", document.getElementById('radar-chart-flex-container-3'), "#111", "#33333333")
@@ -78,7 +84,7 @@
             save1.style.marginBottom = '20px'
             save1.style.color = 'black'
             save1.style.backgroundColor = 'red'
-            document.getElementById('radar-chart-flex-container-1').appendChild(save1)
+            document.getElementById('chart-and-button-wrapper-1').appendChild(save1)
             const save2 = document.createElement('div')
             save2.id = 'save2'
             save2.innerHTML = 'Save CHN-RUS-USA'
@@ -86,19 +92,19 @@
             save2.style.color = 'black'
             save2.style.backgroundColor = 'red'
 
-            document.getElementById('radar-chart-flex-container-2').appendChild(save2)
+            document.getElementById('chart-and-button-wrapper-2').appendChild(save2)
             const save3 = document.createElement('div')
             save3.id = 'save3'
             save3.innerHTML = 'Save BRA-IND-IDN'
             save3.style.marginBottom = '20px'
             save3.style.color = 'black'
             save3.style.backgroundColor = 'red'
-            document.getElementById('radar-chart-flex-container-3').appendChild(save3)
+            document.getElementById('chart-and-button-wrapper-3').appendChild(save3)
             document.getElementById('save1').addEventListener('click', function () {
                 const element = document.getElementById('radar-chart-flex-container-1');
                 html2canvas(element).then(canvas => {
                     const link = document.createElement('a');
-                    link.download = 'capture.png';
+                    link.download = 'SWE-FRA-JPN.png';
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                 });
@@ -107,7 +113,7 @@
                 const element = document.getElementById('radar-chart-flex-container-2');
                 html2canvas(element).then(canvas => {
                     const link = document.createElement('a');
-                    link.download = 'capture.png';
+                    link.download = 'CHN-RUS-USA.png';
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                 });
@@ -116,7 +122,7 @@
                 const element = document.getElementById('radar-chart-flex-container-3');
                 html2canvas(element).then(canvas => {
                     const link = document.createElement('a');
-                    link.download = 'capture.png';
+                    link.download = 'BRA-IND-IDN.png';
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                 });
