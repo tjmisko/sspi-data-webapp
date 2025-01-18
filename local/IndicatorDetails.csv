@@ -12,13 +12,13 @@ Sustainability,SUS,Land,LND,Water Management,WATMAN,Water Conservation,"Average 
 freshwater resources, after taking into account environmental water requirements. This indicator is also known as water withdrawal intensity.",,UN SDG,"[""6.4.1"", ""6.4.2""]",https://www.fao.org/faostat/en/#data/SDGB ,https://unstats.un.org/sdgapi/swagger/,2018,"(-25,50) 
 (0, 100)V",true,2,NA,NA,"[""CWUEFF"", ""WTSTRS""]","[0.5, 0.5]",,,,
 Sustainability,SUS,Land,LND,Stockholm Convention Compliance,STKHLM,"Chemical Waste 
-Management",Percent of provisions concerning Persistent Organic Pollutants from Stockholm Convention ratified and followed.,,UN SDG,"[""12.4.1""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2015,"(0, 100)",false,1,0,100,NA,NA,,,,
+Management",Percent of provisions concerning Persistent Organic Pollutants from Stockholm Convention ratified and followed.,,UN SDG,12.4.1,https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2015,"(0, 100)",false,1,0,100,NA,NA,,,,
 Sustainability,SUS,Land,LND,Deforestation,DEFRST,Forest Management,Percentage change in naturally regenerating forests from a 1990’s average to 2018.,Percentage change of share in forest land in naturally regenerating forests from a 1990’s average to 2018.,UN FAO,,https://www.fao.org/faostat/en/#data/RL ,https://www.fao.org/faostat/en/#data/RL,2018,"(-20, 40)",false,1,-20,40,NA,NA,Y (Maybe),,,"UNFAO allows downloads as csv files. Select only ""Naturally regenerating forest "" as the item attribute"
 Sustainability,SUS,Land,LND,Carbon Capture,CARBON,Carbon Sequestration,Percentage change in the ratio of carbon stock in living biomass over forestland from a 1990’s average to 2018.,,UN FAO,,https://www.fao.org/faostat/en/#data/RL ,https://www.fao.org/faostat/en/#data/RL,2018,"(-5, 50)",false,1,-5,50,NA,NA,Y (Maybe),,,
 Sustainability,SUS,Energy,NRG,Alternative Energy Generation,ALTNRG,Renewable Energy Incentives,"Percentage of total final energy consumption generated from “renewable sources” (RS, collected from WorldBank; includes hydroelectric, geothermal, solar, tidal, wind, and biofuels) minus half the percentage of total final energy consumption generated from biofuel sources (BIO, collected from IEA) to penalize countries for unsustainable overreliance on biofuels. 
-AE = RE – 0.5 *BIO.","Percentage of total final energy supply from “renewable sources” (RS, collected from IEA; includes hydroelectric, geothermal, solar, wind, and biofuels) minus half the percentage of total final energy supply from biofuel sources (BIO, collected from IEA) to penalize countries for unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.",IEA,"[""TESbySource""] [""DomesticProduction""]","[https://data.worldbank.org/indicator, https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20consumption&indicator=TFCbySource]",[https://www.iea.org/],2018,"(0, 60)",false,1,0,60,"[""NRGREN"", ""NRGBIO""]",NA,Y,,,
+AE = RE – 0.5 *BIO.","Total energy supply (excluding exports) supply from “renewable sources” (RE = nuclear, hydroelectric, geothermal, solar, wind, and biofuels) minus half of total final energy supply from biofuel sources (BIO) to penalize countries for unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.",IEA,"[""TESbySource""] ","[https://data.worldbank.org/indicator, https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20consumption&indicator=TFCbySource]",[https://www.iea.org/],2018,"(0, 60)",false,1,0,60,"[""NRGREN"", ""NRGBIO""]",NA,Y,,,
 Sustainability,SUS,Energy,NRG,Energy Intensity,NRGINT,Energy Efficiency,Energy intensity level of primary energy measured in megajoules per constant 2017 purchasing power parity GDP.,,UN SDG,"[""7.3.1""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2018,"(0, 15)V",true,1,15,0,NA,NA,,,,
-Sustainability,SUS,Energy,NRG,Air Pollution,AIRPOL,Pollution Limitation,Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air (μg/m3).,,UN SDG,"[""11.6.2""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2016,"(0, 40) V",true,1,40,0,NA,NA,,,,
+Sustainability,SUS,Energy,NRG,Air Pollution,AIRPOL,Pollution Limitation,Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air (μg/m3).,,UN SDG,"[""11.6.2""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2016,"(0, 40)V",true,1,40,0,NA,NA,,,,
 Sustainability,SUS,Greenhouse Gases,GHG,Green Transport Index,GTRANS,"1) 
 Gas/petrol Tax 
 2) 
@@ -33,9 +33,8 @@ Sustainability,SUS,Greenhouse Gases,GHG,Energy From Coal,COALPW,Fossil Fuel and 
 Sustainability,SUS,Waste,WST,Municipal Solid Waste Generation,MSWGEN,Wasteful Consumption,"Annual amount of per capita Municipal Solid Waste (kg/capita/year), which is defined as residential, commercial, and institutional waste (Industrial, medical, hazardous, electronic, and construction and demolition waste are not included).",,World Bank ,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,750) V",true,1,50,0,NA,NA,,,,
 Sustainability,SUS,Waste,WST,E-waste Generation,EWASTE,Special Waste,"Annual amount of per capita electronic waste (kg/capita/year), which is one of special waste streams together with hazardous waste or medical waste.",,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,40) V",true,1,0,0,NA,NA,,,,
 Sustainability,SUS,Waste,WST,Recycling Rate,RECYCL,Circular End-of-Life Waste Treatment,The quantity of material recycled in the country over total waste generated  (recycling does not include controlled combustion (incineration) or land  application).,,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,70)",false,1,0,0,NA,NA,,,,
-Market Structure,MS,Worker Engagement,WEN,"Labor Force 
-Participation",LFPART,"Job placement 
-policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,,ILO,"[""DF_EAP_DWAP_SEX_AGE_RT""]",https://data.oecd.org/emp/labour-force-participation-rate.htm,https://ilostat.ilo.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
+Market Structure,MS,Worker Engagement,WEN,Participation in Paid Employment,EMPLOY,"Job placement 
+policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,,ILO,DF_EAP_DWAP_SEX_AGE_RT,https://data.oecd.org/emp/labour-force-participation-rate.htm,https://ilostat.ilo.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
 Market Structure,MS,Worker Engagement,WEN,Child Labor Rate,CHILDW,"Engagement of 
 Child Workers","Conditional scoring based on two policies: 
 1) If the child labor rate is statistically nonzero, a country scores between 0.00 and 0.50 based on their level of child labor. 
@@ -45,18 +44,18 @@ Child Workers","Conditional scoring based on two policies:
 (5, 12)",true,2,NA,NA,"[""CHLDLB"", ""YRCEDU""]",Conditional,,,,
 Market Structure,MS,Worker Engagement,WEN,"Collective 
 Bargaining 
-Coverage",COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,,ILO,"[""ILR_CBCT_NOC_RT""]",,https://ilostat.ilo.org/,2016,"(0, 1)",false,1,0,1,NA,NA,,,,
+Coverage",COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,,ILO,,,https://ilostat.ilo.org/,2016,"(0, 100)",false,1,0,100,NA,NA,,,,
 Market Structure,MS,Worker Wellbeing,WEB,"Unemployment 
 Benefits Coverage",UNEMPL,"Unemployment 
-Benefits",Percentage of unemployed receiving unemployment benefits.,,ILO,,,https://ilostat.ilo.org/,2018,"(0, 100)",false,1,0,100,NA,NA,,,,
+Benefits",Percentage of unemployed receiving unemployment benefits.,,ILO,DF_SDG_0131_SEX_SOC_RT,,https://ilostat.ilo.org/,2018,"(0, 100)",false,1,0,100,NA,NA,,,,
 Market Structure,MS,Worker Wellbeing,WEB,"Paid Maternity 
 Leave",MATERN,Maternity leave,Paid parental leave available to mothers (full-rate equivalent) in weeks during the first year.,,OECD,,,https://stats.oecd.org/,2018,"(0, 52)",false,1,0,52,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",,ILO,,,https://ilostat.ilo.org/,2015,"(0, 25)V",true,1,25,0,NA,NA,,,,
+Market Structure,MS,Worker Wellbeing,WEB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",,ILO,DF_SDG_F881_SEX_MIG_RT,,https://ilostat.ilo.org/,2015,"(0, 25)V",true,1,25,0,NA,NA,,,,
 Market Structure,MS,Worker Wellbeing,WEB,Senior Wellbeing,SENIOR,"1) Old Age Income Poverty 
 2) Retirement 
 Wellbeing","Arithmetic average of the following measures: 
 1) Percentage of individuals over the age of 65 living in relative income poverty 
-2) Expected number of years in retirement",,OECD,"[""PAG""]",,https://stats.oecd.org/,"2018 
+2) Expected number of years in retirement",,OECD,PAG,,https://stats.oecd.org/,"2018 
 2018","(0, 100)V 
 (0, 1)",true,2,15,25,"[""POVNRT"", ""YRSRTM"", ""YRSRTW""]","[0.5, 0.25, 0.25]",,,,
 Market Structure,MS,Taxes,TAX,Corporate Tax Rate,CRPTAX,Corporate Tax,Tax imposed on the net income of the company.,,Tax Foundation,,,https://taxfoundation.org/data/all/global/corporate-tax-rates-by-country-2023/,2018,"(0, 40)",false,1,0,40,NA,NA,,,,
