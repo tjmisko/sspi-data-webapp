@@ -58,7 +58,6 @@ def find_discrepancies(sheet_data_long, database_data, tol=0.01):
 
     discrepancies = []
     for sheet_row in sheet_data_long:
-        print(sheet_row)
         data_row = lookup_data(
             sheet_row["CountryCode"], sheet_row["ItemCode"], database_data)
         if not data_row:
@@ -78,4 +77,7 @@ def find_discrepancies(sheet_data_long, database_data, tol=0.01):
 
 
 discrepancies = find_discrepancies(sheet_data_long, database_data)
-print(json.dumps(discrepancies))
+if discrepancies:
+    print(json.dumps(discrepancies))
+else:
+    print("No discrepancies found")
