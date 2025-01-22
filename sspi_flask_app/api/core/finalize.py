@@ -18,6 +18,7 @@ from sspi_flask_app.api.resources.utilities import (
     colormap
 )
 from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.rank import SSPIRankingTable
 import re
 import os
 import json
@@ -95,29 +96,15 @@ def finalize_sspi_static_rank_data():
                     score_group_dictionary[indicator.code][i]["Score"] = indicator.score
                     score_group_dictionary[indicator.code][i]["IName"] = indicator.name
                     score_group_dictionary[indicator.code][i]["Year"] = indicator.year
+                    score_group_dictionary[indicator.code][i]["Value"] = indicator.value
+                    score_group_dictionary[indicator.code][i]["LowerGoalpost"] = indicator.lower_goalpost
+                    score_group_dictionary[indicator.code][i]["UpperGoalpost"] = indicator.upper_goalpost
     for item_code in sspi_item_codes:
-        score_group_dictionary[item_code] = sorted(
-            score_group_dictionary[item_code],
-            key=lambda x: x["Score"],
-            reverse=True
-        )
-        rank = 0
-        for country_data in score_group_dictionary[item_code]:
-            rank += 1
-            country_data["Rank"] = rank
+        table = SSPIRankingTable(score_group_dictionary[item_code])
+        print(table.classes)
     for item_code, score_list in score_group_dictionary.items():
         for score in score_list:
-            sspi_static_rank_data.insert_one({
-                "ICode": item_code,
-                "IName": score["IName"],
-                "CCode": score["CountryCode"],
-                "CName": country_code_to_name(score["CountryCode"]),
-                "CFlag": pycountry.countries.get(
-                    alpha_3=score["CountryCode"]).flag,
-                "Year": score["Year"],
-                "Score": score["Score"],
-                "Rank": score["Rank"]
-            })
+            sspi_static_rank_data.insert_one()
     return "Successfully finalized rank data!"
 
 

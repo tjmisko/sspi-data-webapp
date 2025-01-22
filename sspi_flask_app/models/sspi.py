@@ -189,11 +189,14 @@ class Indicator:
         try:
             self.name = detail["Metadata"]["Indicator"]
             self.code = detail["Metadata"]["IndicatorCode"]
+            self.lower_goalpost = detail["Metadata"]["LowerGoalpost"]
+            self.upper_goalpost = detail["Metadata"]["UpperGoalpost"]
         except KeyError as ke:
             raise InvalidDocumentFormatError(
                 f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
         try:
             self.score = indicator_score_data["Score"]
+            self.value = indicator_score_data["Value"]
             self.year = indicator_score_data["Year"]
         except KeyError:
             raise InvalidDocumentFormatError(
