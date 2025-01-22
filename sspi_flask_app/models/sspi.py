@@ -36,7 +36,7 @@ class SSPI:
                     {"Category": category.name, "CategoryCode": category.code, "Score": category.score(), "Indicators": []})
                 for indicator in category.indicators:
                     tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append(
-                        {"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score})
+                        {"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score, "Year": indicator.year})
         return tree
 
     def pillar_scores(self):
@@ -194,9 +194,10 @@ class Indicator:
                 f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
         try:
             self.score = indicator_score_data["Score"]
-        except KeyError as ke:
+            self.year = indicator_score_data["Year"]
+        except KeyError:
             raise InvalidDocumentFormatError(
-                f"Indicator Data Missing 'Score' ({indicator_score_data})")
+                f"Indicator Data Missing 'Score' or 'Year' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
             raise DataOrderError(f"Mismatched Data and Indicator Detail {
                                  detail}; {indicator_score_data}")
