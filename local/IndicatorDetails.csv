@@ -45,13 +45,13 @@ Child Workers","Conditional scoring based on two policies:
 Market Structure,MS,Worker Engagement,WEN,"Collective 
 Bargaining 
 Coverage",COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,,ILO,,,https://ilostat.ilo.org/,2016,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,"Unemployment 
+Market Structure,MS,Worker Wellbeing,WWB,"Unemployment 
 Benefits Coverage",UNEMPL,"Unemployment 
 Benefits",Percentage of unemployed receiving unemployment benefits.,,ILO,DF_SDG_0131_SEX_SOC_RT,,https://ilostat.ilo.org/,2018,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,"Paid Maternity 
+Market Structure,MS,Worker Wellbeing,WWB,"Paid Maternity 
 Leave",MATERN,Maternity leave,Paid parental leave available to mothers (full-rate equivalent) in weeks during the first year.,,OECD,,,https://stats.oecd.org/,2018,"(0, 52)",false,1,0,52,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",,ILO,DF_SDG_F881_SEX_MIG_RT,,https://ilostat.ilo.org/,2015,"(0, 25)V",true,1,25,0,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,Senior Wellbeing,SENIOR,"1) Old Age Income Poverty 
+Market Structure,MS,Worker Wellbeing,WWB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",,ILO,DF_SDG_F881_SEX_MIG_RT,,https://ilostat.ilo.org/,2015,"(0, 25)V",true,1,25,0,NA,NA,,,,
+Market Structure,MS,Worker Wellbeing,WWB,Senior Wellbeing,SENIOR,"1) Old Age Income Poverty 
 2) Retirement 
 Wellbeing","Arithmetic average of the following measures: 
 1) Percentage of individuals over the age of 65 living in relative income poverty 
@@ -79,7 +79,7 @@ Private Sector
 (0, 200)",false,2,NA,NA,"[""CREDIT"", ""DPOSIT""]","[0.5, 0.5]",,,,
 Market Structure,MS,Financial Sector,FIN,Public Access,PUBACC,"Bank Account 
 Ownership",Account ownership at a financial institution or with a mobile-money-service provider (% of population ages 15+).,,World Bank,"[""FX.OWN.TOTL.ZS""]",,https://databank.worldbank.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Inequality,NEQ,Income Share Ratio,GINIPT,"Income Inequality and 
+Market Structure,MS,Inequality,NEQ,Income Share Ratio,Income Share Ratio,"Income Inequality and 
 Redistribution",The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households.,,WID,"[""p0p50, ""p90p100""]",https://wid.world/data,https://databank.worldbank.org/,2018,"(0.2, 1.25)",false,1,0.2,1.25,NA,NA,,,,
 Market Structure,MS,Inequality,NEQ,"Gini-coefficient 
 After Taxes",ISHRAT,"Income Inequality and 
