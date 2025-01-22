@@ -79,10 +79,10 @@ Private Sector
 (0, 200)",false,2,NA,NA,"[""CREDIT"", ""DPOSIT""]","[0.5, 0.5]",,,,
 Market Structure,MS,Financial Sector,FIN,Public Access,PUBACC,"Bank Account 
 Ownership",Account ownership at a financial institution or with a mobile-money-service provider (% of population ages 15+).,,World Bank,"[""FX.OWN.TOTL.ZS""]",,https://databank.worldbank.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Inequality,NEQ,Income Share Ratio,Income Share Ratio,"Income Inequality and 
+Market Structure,MS,Inequality,NEQ,Income Share Ratio,ISHRAT,"Income Inequality and 
 Redistribution",The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households.,,WID,"[""p0p50, ""p90p100""]",https://wid.world/data,https://databank.worldbank.org/,2018,"(0.2, 1.25)",false,1,0.2,1.25,NA,NA,,,,
 Market Structure,MS,Inequality,NEQ,"Gini-coefficient 
-After Taxes",ISHRAT,"Income Inequality and 
+After Taxes",GINIPT,"Income Inequality and 
 Redistribution",GINI Coefficient for post-tax-and-transfer income distribution.,,CIA,,,https://www.cia.gov/the-world-factbook/,"1997- 
 2018","(20,70)V",true,1,0,20,NA,NA,,,,
 Public Goods,PG,Education,EDU,Primary School Net Enrollment,ENRPRI,"Accessibility of 
@@ -92,15 +92,15 @@ Lower Secondary Education","The net total of students in the lower secondary sch
 Public Goods,PG,Education,EDU,"Primary 
 Education Pupil to Teacher Ratio",PUPTCH,"Investment in 
 Teachers","Average number of pupils per teacher in primary school, based on headcounts of both pupils and teachers.",,World Bank,"[""SE.PRM.ENRL.TC.ZS""]",,https://data.worldbank.org/indicator/SE.PRM.ENRL.TC.ZS,2018,"(9, 40)V",true,1,40,9,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,"Attended Births by Skilled 
+Public Goods,PG,Healthcare,HLC,"Attended Births by Skilled 
 Personnel",ATBRTH,Basic Healthcare,The proportion of births attended by trained and/or skilled health personnel.,,WHO,"[""MDG_0000000025""]",,https://apps.who.int/gho/data/node.main.SKILLEDBIRTHATTENDANTS?lang=en,2017,"(80, 100)",false,1,80,100,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,"Infant DTP 
+Public Goods,PG,Healthcare,HLC,"Infant DTP 
 Vaccine 
 Coverage",DPTCOV,Preventative Health,"The estimated percentage of children aged 12–23 months who received three doses of the combined diphtheria, tetanus toxoid and pertussis vaccine time before the survey.",,WHO,"[""UHCIMMUNIZATION""] OR [""vdvp""]",,https://apps.who.int/gho/data/view.main.UHCIMMUNIZATIONv?lang=en,2017,"(75, 100)",false,1,75,100,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,"Physicians per 
+Public Goods,PG,Healthcare,HLC,"Physicians per 
 10,000",PHYSPC,"Investments in 
 Healthcare","Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.",,WHO,"[""HWF_0001""]",,https://www.who.int/data/gho/data/indicators/indicator-details/GHO/medical-doctors-(per-10-000-population),2010,"(0, 70)",false,1,0,70,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,Unmet Need for Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",,WHO,"[""MDG_0000000006_AGE1519""]",,"https://www.who.int/data/gho/indicator-metadata-registry/imr-details/3414#:~:text=Women%20with%20unmet%20need%20are,to%20delay%20the%20next%20child.",2018,"(0, 20)V",true,1,20,0,NA,NA,,,,
+Public Goods,PG,Healthcare,HLC,Unmet Need for Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",,WHO,"[""MDG_0000000006_AGE1519""]",,"https://www.who.int/data/gho/indicator-metadata-registry/imr-details/3414#:~:text=Women%20with%20unmet%20need%20are,to%20delay%20the%20next%20child.",2018,"(0, 20)V",true,1,20,0,NA,NA,,,,
 Public Goods,PG,Healthcare,HLT,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,,IHME,,https://ghdx.healthdata.org/record/ihme-data/child-growth-failure-visualization-input-data,https://vizhub.healthdata.org/lbd/cgf,2018,"(0, 50)V",true,1,50,0,NA,NA,Y,You have to go to home → modeled data → files → download input data ,,
 Public Goods,PG,Infrastructure,INF,"Availability and Quality of 
 Electricity",AQELEC,Electrification,"Arithmetic mean of two measures: 
