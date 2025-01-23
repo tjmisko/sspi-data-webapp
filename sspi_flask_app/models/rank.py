@@ -14,6 +14,10 @@ class EquivalenceClass:
         for obs in self.data:
             obs["Rank"] = rank
 
+    def label_tie(self):
+        for obs in self.data:
+            obs["Tie"] = len(self.data) > 1
+
 
 class SSPIRankingTable:
     def __init__(self, data: list[dict]):
@@ -21,8 +25,10 @@ class SSPIRankingTable:
         self.classes = []
         self.rank_by_value = all([
             all(["Value" in obs.keys() for obs in data]),
-            all(["LowerGoalpost" in obs.keys() for obs in data]),
-            all(["UpperGoalpost" in obs.keys() for obs in data])
+            all(["LowerGoalpost" in obs.keys() and obs["LowerGoalpost"] is not None
+                for obs in data]),
+            all(["UpperGoalpost" in obs.keys() and obs["UpperGoalpost"] is not None
+                for obs in data])
         ])
         if self.rank_by_value:
             self.inverted = self.detect_inversion()
@@ -31,6 +37,7 @@ class SSPIRankingTable:
             self.inverted = False
             self.assign_classes("Score")
         self.compute_ranks()
+        self.label_ties()
 
     def assign_classes(self, key):
         for obs in self.data:
@@ -74,3 +81,7 @@ class SSPIRankingTable:
     def detect_inversion(self):
         self.validate_goalposts()
         return self.data[0]["LowerGoalpost"] > self.data[0]["UpperGoalpost"]
+
+    def label_ties(self):
+        for cls in self.classes:
+            cls.label_tie()

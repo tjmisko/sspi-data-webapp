@@ -100,11 +100,11 @@ def finalize_sspi_static_rank_data():
                     score_group_dictionary[indicator.code][i]["LowerGoalpost"] = indicator.lower_goalpost
                     score_group_dictionary[indicator.code][i]["UpperGoalpost"] = indicator.upper_goalpost
     for item_code in sspi_item_codes:
-        table = SSPIRankingTable(score_group_dictionary[item_code])
-        print(table.classes)
+        # Ranking table modifies each list and dictionary in place
+        SSPIRankingTable(score_group_dictionary[item_code])
     for item_code, score_list in score_group_dictionary.items():
         for score in score_list:
-            sspi_static_rank_data.insert_one()
+            sspi_static_rank_data.insert_one(score)
     return "Successfully finalized rank data!"
 
 
