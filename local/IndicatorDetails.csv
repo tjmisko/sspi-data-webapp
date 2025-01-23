@@ -31,7 +31,7 @@ Sustainability,SUS,Greenhouse Gases,GHG,Beef Market,BEEFMK,Methane Emissions,,"T
 (0, 50) V",true,2,NA,NA,"[""BFPROD"", ""BFCONS""]","[0.5, 0.5]",,,,
 Sustainability,SUS,Greenhouse Gases,GHG,Energy From Coal,COALPW,Fossil Fuel and Air Pollution,Percentage of a country's total energy supply generated from coal and coal derived sources.,,IEA,"[""TESbySource""]",https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource ,https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource,2018,"(0, 40)V",true,1,40,0,NA,NA,Y,,,
 Sustainability,SUS,Waste,WST,Municipal Solid Waste Generation,MSWGEN,Wasteful Consumption,"Annual amount of per capita Municipal Solid Waste (kg/capita/year), which is defined as residential, commercial, and institutional waste (Industrial, medical, hazardous, electronic, and construction and demolition waste are not included).",,World Bank ,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,750) V",true,1,50,0,NA,NA,,,,
-Sustainability,SUS,Waste,WST,E-waste Generation,EWASTE,Special Waste,"Annual amount of per capita electronic waste (kg/capita/year), which is one of special waste streams together with hazardous waste or medical waste.",,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,40) V",true,1,0,0,NA,NA,,,,
+Sustainability,SUS,Waste,WST,E-waste Generation,EWASTE,Special Waste,"Annual amount of per capita electronic waste (kg/capita/year), which is one of special waste streams together with hazardous waste or medical waste.",,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,40) V",true,1,40,0,NA,NA,,,,
 Sustainability,SUS,Waste,WST,Recycling Rate,RECYCL,Circular End-of-Life Waste Treatment,The quantity of material recycled in the country over total waste generated  (recycling does not include controlled combustion (incineration) or land  application).,,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,70)",false,1,0,0,NA,NA,,,,
 Market Structure,MS,Worker Engagement,WEN,Participation in Paid Employment,EMPLOY,"Job placement 
 policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,,ILO,DF_EAP_DWAP_SEX_AGE_RT,https://data.oecd.org/emp/labour-force-participation-rate.htm,https://ilostat.ilo.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
@@ -79,12 +79,12 @@ Private Sector
 (0, 200)",false,2,NA,NA,"[""CREDIT"", ""DPOSIT""]","[0.5, 0.5]",,,,
 Market Structure,MS,Financial Sector,FIN,Public Access,PUBACC,"Bank Account 
 Ownership",Account ownership at a financial institution or with a mobile-money-service provider (% of population ages 15+).,,World Bank,"[""FX.OWN.TOTL.ZS""]",,https://databank.worldbank.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Inequality,NEQ,Income Share Ratio,ISHRAT,"Income Inequality and 
+e,MS,Inequality,NEQ,Income Share Ratio,ISHRAT,"Income Inequality and 
 Redistribution",The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households.,,WID,"[""p0p50, ""p90p100""]",https://wid.world/data,https://databank.worldbank.org/,2018,"(0.2, 1.25)",false,1,0.2,1.25,NA,NA,,,,
 Market Structure,MS,Inequality,NEQ,"Gini-coefficient 
 After Taxes",GINIPT,"Income Inequality and 
 Redistribution",GINI Coefficient for post-tax-and-transfer income distribution.,,CIA,,,https://www.cia.gov/the-world-factbook/,"1997- 
-2018","(20,70)V",true,1,0,20,NA,NA,,,,
+2018","(20,70)V",true,1,70,20,NA,NA,,,,
 Public Goods,PG,Education,EDU,Primary School Net Enrollment,ENRPRI,"Accessibility of 
 Primary Education","The ratio of the number of children of official primary school age who are enrolled in primary education to the total population of children of official primary school age, expressed as a percentage.",,UN SDG,"[""4.1.1""]",,https://unstats.un.org/sdgapi/swagger/,2016,"(80, 100)",false,1,80,100,NA,NA,,,,
 Public Goods,PG,Education,EDU,Lower Secondary Net Enrollment,ENRSEC,"Accessibility of 
