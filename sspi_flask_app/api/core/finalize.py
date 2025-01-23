@@ -70,37 +70,42 @@ def finalize_sspi_static_rank_data():
         sspi_metadata.indicator_codes()
     score_group_dictionary = {
         item_code: [
-            {"CountryCode": "", "Score": 0, "Rank": 0, "IName": "", "Year": 0}
+            {"CCode": "", "Score": 0, "Rank": 0,
+                "IName": "", "ICode": "", "Year": 0}
             for _ in country_codes]
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
         country_data = sspi_main_data_v3.find({"CountryCode": cou})
         sspi_scores = SSPI(indicator_details, country_data)
-        score_group_dictionary["SSPI"][i]["CountryCode"] = cou
+        score_group_dictionary["SSPI"][i]["CCode"] = cou
         score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
         score_group_dictionary["SSPI"][i]["IName"] = "SSPI"
+        score_group_dictionary["SSPI"][i]["ICode"] = "SSPI"
         score_group_dictionary["SSPI"][i]["Year"] = 2018
         for pillar in sspi_scores.pillars:
-            score_group_dictionary[pillar.code][i]["CountryCode"] = cou
+            score_group_dictionary[pillar.code][i]["CCode"] = cou
             score_group_dictionary[pillar.code][i]["Score"] = pillar.score()
             score_group_dictionary[pillar.code][i]["IName"] = pillar.name
+            score_group_dictionary[pillar.code][i]["ICode"] = pillar.code
             score_group_dictionary[pillar.code][i]["Year"] = 2018
             for category in pillar.categories:
-                score_group_dictionary[category.code][i]["CountryCode"] = cou
+                score_group_dictionary[category.code][i]["CCode"] = cou
                 score_group_dictionary[category.code][i]["Score"] = category.score(
                 )
                 score_group_dictionary[category.code][i]["IName"] = category.name
+                score_group_dictionary[category.code][i]["ICode"] = category.code
                 score_group_dictionary[category.code][i]["Year"] = 2018
                 for indicator in category.indicators:
-                    score_group_dictionary[indicator.code][i]["CountryCode"] = cou
+                    score_group_dictionary[indicator.code][i]["CCode"] = cou
                     score_group_dictionary[indicator.code][i]["Score"] = indicator.score
                     score_group_dictionary[indicator.code][i]["IName"] = indicator.name
+                    score_group_dictionary[indicator.code][i]["ICode"] = indicator.code
                     score_group_dictionary[indicator.code][i]["Year"] = indicator.year
                     score_group_dictionary[indicator.code][i]["Value"] = indicator.value
                     score_group_dictionary[indicator.code][i]["LowerGoalpost"] = indicator.lower_goalpost
                     score_group_dictionary[indicator.code][i]["UpperGoalpost"] = indicator.upper_goalpost
     for item_code in sspi_item_codes:
-        # Ranking table modifies each list and dictionary in place
+        # Ranking table modifies each list[dict] in place
         SSPIRankingTable(score_group_dictionary[item_code])
     for item_code, score_list in score_group_dictionary.items():
         for score in score_list:
