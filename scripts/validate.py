@@ -53,7 +53,6 @@ database_data = requests.get(
 def find_discrepancies(sheet_data_long, database_data, tol=0.01):
     def lookup_data(cou, icode, database_data):
         for data_row in database_data:
-            print(data_row)
             if data_row["CCode"] == cou and data_row["ICode"] == icode:
                 return data_row
 

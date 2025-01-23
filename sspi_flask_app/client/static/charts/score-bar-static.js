@@ -111,7 +111,7 @@ class ScoreBarStatic {
                                 weight: 'bold'
                             },
                             callback: function(value, index, values) {
-                                return index + 1
+                                return this.chart.data.datasets[0].info[index].Rank
                             },
                             padding: 8
                         },
