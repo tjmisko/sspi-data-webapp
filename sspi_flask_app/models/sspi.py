@@ -200,7 +200,7 @@ class Indicator:
             self.year = indicator_score_data["Year"]
         except KeyError:
             raise InvalidDocumentFormatError(
-                f"Indicator Data Missing 'Score' or 'Year' ({indicator_score_data})")
+                f"Indicator Data Missing 'Value,' 'Score,' or 'Year' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
             raise DataOrderError(f"Mismatched Data and Indicator Detail {
                                  detail}; {indicator_score_data}")
