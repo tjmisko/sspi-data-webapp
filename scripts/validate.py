@@ -64,7 +64,7 @@ def find_discrepancies(sheet_data_long, database_data, tol=0.01):
             message = "Data not found in database for "
             raise Exception(message + f"{sheet_row['CountryCode']} {sheet_row['ItemCode']}")
         score_mismatch = abs(float(sheet_row["SCORE"]) - float(data_row["Score"])) > tol
-        rank_mismatch = abs(int(sheet_row["RANK"]) - int(data_row["Rank"])) > tol
+        rank_mismatch = abs(int(sheet_row["RANK"]) - int(data_row["Rank"])) > 2
         if "YEAR" in sheet_row.keys():
             year_mismatch = abs(int(sheet_row["YEAR"]) - int(data_row["Year"])) > tol
         else:

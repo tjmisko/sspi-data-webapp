@@ -108,7 +108,7 @@ def finalize_sspi_static_rank_data():
         )
     for item_code, score_list in score_group_dictionary.items():
         for score in score_list:
-            sspi_static_rank_data.insert_one({
+            doc = {
                 "ICode": item_code,
                 "IName": score["IName"],
                 "CCode": score["CCode"],
@@ -116,9 +116,17 @@ def finalize_sspi_static_rank_data():
                 "CFlag": pycountry.countries.get(
                     alpha_3=score["CCode"]).flag,
                 "Year": score["Year"],
+                "Tie": score["Tie"],
                 "Score": score["Score"],
                 "Rank": score["Rank"]
-            })
+            }
+            if score.get("Value") is not None:
+                doc["Value"] = score["Value"]
+            if score.get("LowerGoalpost") is not None:
+                doc["LowerGoalpost"] = score["LowerGoalpost"]
+            if score.get("UpperGoalpost") is not None:
+                doc["UpperGoalpost"] = score["UpperGoalpost"]
+            sspi_static_rank_data.insert_one(doc)
     return "Successfully finalized rank data!"
 
 

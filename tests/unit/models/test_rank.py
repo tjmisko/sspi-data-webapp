@@ -120,25 +120,25 @@ def test_ranking_standard_ties(test_country_score_data):
     assert rankings.classes[3].value == 15
     assert rankings.classes[3].data[0]["Rank"] == 6
 
-
-def test_ranking_end_ties(test_country_score_data):
-    rankings = SSPIRankingTable(test_country_score_data)
-    assert len(rankings.classes) == 4
-    assert rankings.classes[0].value == 90
-    assert rankings.classes[0].data[0]["Rank"] == 1
-    assert rankings.classes[1].value == 72
-    assert rankings.classes[1].data[0]["Rank"] == 2
-    assert rankings.classes[2].value == 50
-    assert len(rankings.classes[2].data) == 3
-    assert all([x["Tie"] for x in rankings.classes[2].data])
-    assert rankings.classes[2].data[0]["Rank"] == 3
-    assert rankings.classes[2].data[1]["Rank"] == 3
-    assert rankings.classes[2].data[2]["Rank"] == 3
-    assert rankings.classes[3].value == 15
-    assert len(rankings.classes[3].data) == 2
-    assert all([x["Tie"] for x in rankings.classes[3].data])
-    assert rankings.classes[3].data[0]["Rank"] == 7
-    assert rankings.classes[3].data[0]["Rank"] == 7
+# DEPRECATED to harmonize with VBASIC Rank Function
+# def test_ranking_end_ties(test_country_score_data):
+#     rankings = SSPIRankingTable(test_country_score_data)
+#     assert len(rankings.classes) == 4
+#     assert rankings.classes[0].value == 90
+#     assert rankings.classes[0].data[0]["Rank"] == 1
+#     assert rankings.classes[1].value == 72
+#     assert rankings.classes[1].data[0]["Rank"] == 2
+#     assert rankings.classes[2].value == 50
+#     assert len(rankings.classes[2].data) == 3
+#     assert all([x["Tie"] for x in rankings.classes[2].data])
+#     assert rankings.classes[2].data[0]["Rank"] == 3
+#     assert rankings.classes[2].data[1]["Rank"] == 3
+#     assert rankings.classes[2].data[2]["Rank"] == 3
+#     assert rankings.classes[3].value == 15
+#     assert len(rankings.classes[3].data) == 2
+#     assert all([x["Tie"] for x in rankings.classes[3].data])
+#     assert rankings.classes[3].data[0]["Rank"] == 7
+#     assert rankings.classes[3].data[0]["Rank"] == 7
 
 
 def test_rankings_modify_in_place(test_country_score_data):

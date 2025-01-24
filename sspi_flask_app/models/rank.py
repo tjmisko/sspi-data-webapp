@@ -58,10 +58,7 @@ class SSPIRankingTable:
         for i, cls in enumerate(self.classes):
             # When tied for last, the ranking should be last (e.g. 49
             # in the 2018 SSPI)
-            if i + 1 == len(self.classes):
-                cls.rank(len(self.data))
-            else:
-                cls.rank(r)
+            cls.rank(r)
             r += len(cls.data)
 
     def validate_goalposts(self):
