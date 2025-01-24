@@ -45,10 +45,10 @@ class ScoreBarStatic {
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
-                    this.toggleHighlight(
-                        this.chart.data.datasets[element.datasetIndex].info[element.index].CCode
-                    )
-                    console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
+                        this.toggleHighlight(
+                            this.chart.data.datasets[element.datasetIndex].info[element.index].CCode
+                        )
+                        console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
                     })
                 },
                 plugins: {
