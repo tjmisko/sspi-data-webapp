@@ -18,7 +18,9 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_partial_api_data
+    sspi_partial_api_data,
+    sspi_clean_outcome_data,
+    sspi_raw_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -85,6 +87,10 @@ def lookup_database(database_name):
         return sspi_dynamic_line_data
     elif database_name == "sspi_dynamic_matrix_data":
         return sspi_dynamic_matrix_data
+    elif database_name == "sspi_raw_outcome_data":
+        return sspi_raw_outcome_data
+    elif database_name == "sspi_clean_outcome_data":
+        return sspi_clean_outcome_data
     raise InvalidDatabaseError(database_name)
 
 
