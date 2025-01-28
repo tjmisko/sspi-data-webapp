@@ -7,6 +7,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
+from ..datasource.vdem import collectVDEMData
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
 
@@ -291,7 +292,7 @@ def unpopl():
 @login_required
 def rulelw():
     def collect_iterator(**kwargs):
-        yield from collectVDEMData()
+        yield from collectVDEMData("v2x_rule", "RULELW")
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

@@ -21,7 +21,7 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
                 yield f"Found CSV file: {f}\n"
                 with z.open(f) as data:
                     csv_string = data.read().decode("utf-8")
-
+                    print(csv_string)
 
                 df = pd.read_csv(StringIO(csv_string))
                 
