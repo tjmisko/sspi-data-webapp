@@ -7,6 +7,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
+from ..datasource.wef import collectWEFdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
 
