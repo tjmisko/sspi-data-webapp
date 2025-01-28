@@ -42,8 +42,11 @@ sspi_imputed_data = mongo_wrapper.MongoWrapper(
 sspi_analysis = mongo_wrapper.MongoWrapper(
     sspidb.sspi_analysis
 )
-sspi_outcome_data = mongo_wrapper.MongoWrapper(
-    sspidb.sspi_outcome_data
+sspi_raw_outcome_data = sspi_raw_api_data.SSPIRawAPIData(
+    sspidb.sspi_raw_outcome_data
+)
+sspi_clean_outcome_data = sspi_raw_api_data.SSPICleanAPIData(
+    sspidb.sspi_raw_outcome_data
 )
 
 # Production Databases -- More granular for fast queries
