@@ -43,7 +43,7 @@ sspi_raw_api_data = SSPIRawAPIData(
 sspi_raw_outcome_data = SSPIRawAPIData(
     sspidb.sspi_raw_outcome_data
 )
-sspi_clean_outcome_data = SSPIRawAPIData(
+sspi_clean_outcome_data = SSPICleanAPIData(
     sspidb.sspi_clean_outcome_data
 )
 sspi_country_characteristics = SSPICountryCharacteristics(
