@@ -294,7 +294,7 @@ def unpopl():
         yield from insert_pop_data()
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
-@collect_bp.route("/GDPMEK", methods=['GET'])
+@collect_bp.route("/GDPMER", methods=['GET'])
 @login_required
 def gdpmek():
     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
