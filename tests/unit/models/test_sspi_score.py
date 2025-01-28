@@ -10,25 +10,29 @@ def test_country_score_data():
             "IndicatorCode": "BIODIV",
             "CountryCode": "AUS",
             "Year": 2018,
-            "Score": 0.15
+            "Score": 0.15,
+            "Value": 15.0,
         },
         {
             "IndicatorCode": "REDLST",
             "CountryCode": "AUS",
             "Year": 2018,
-            "Score": 0.90
+            "Score": 0.90,
+            "Value": 90
         },
         {
             "IndicatorCode": "STKHLM",
             "CountryCode": "AUS",
             "Year": 2018,
-            "Score": 0.72
+            "Score": 0.72,
+            "Value": 72
         },
         {
             "IndicatorCode": "UNEMPL",
             "CountryCode": "AUS",
             "Year": 2018,
-            "Score": 0.50
+            "Score": 0.50,
+            "Value": 50.0
         }
     ]
 
@@ -172,6 +176,7 @@ def test_indicator_construction(test_indicator_details, test_country_score_data)
     assert unempl.score == 0.50
     assert unempl.code == "UNEMPL"
 
+
 @pytest.fixture()
 def dummy_category_list(test_indicator_details, test_country_score_data):
 
@@ -183,7 +188,8 @@ def dummy_category_list(test_indicator_details, test_country_score_data):
 
     categories = []
     for i, detail in enumerate(test_indicator_details):
-        matched_category = get_category(categories, detail["Metadata"]["CategoryCode"])
+        matched_category = get_category(
+            categories, detail["Metadata"]["CategoryCode"])
         if not matched_category:
             matched_category = Category(detail, test_country_score_data[i])
             categories.append(matched_category)
@@ -191,9 +197,11 @@ def dummy_category_list(test_indicator_details, test_country_score_data):
             matched_category.load(detail, test_country_score_data[i])
     yield categories
 
+
 def test_category_construction(dummy_category_list):
     assert len(dummy_category_list) == 3
     assert len(dummy_category_list[0].indicators) == 2
+
 
 def test_category_score(dummy_category_list):
     scores = [0, 0, 0]
@@ -204,6 +212,7 @@ def test_category_score(dummy_category_list):
     assert abs(scores[1] - 0.72) < tol
     assert abs(scores[2] - 0.50) < tol
 
+
 def test_category_indicator_getter(dummy_category_list):
     assert dummy_category_list[0].code == "ECO"
     assert len(dummy_category_list[0].indicators) == 2
@@ -213,41 +222,47 @@ def test_category_indicator_getter(dummy_category_list):
     assert biodiv is not None
     assert redlst is not None
 
+
 def test_category_handles_repeats(dummy_category_list, test_indicator_details):
     tol = 10**-10
     assert abs(dummy_category_list[0].score() - 0.525) < tol
-    new_data =  {
+    new_data = {
         "IndicatorCode": "BIODIV",
         "CountryCode": "AUS",
         "Year": 2018,
+        "Value": 0,
         "Score": 0
     }
     dummy_category_list[0].load(test_indicator_details[0], new_data)
     assert len(dummy_category_list[0].indicators) == 2
     assert abs(dummy_category_list[0].score() - 0.45) < tol
 
+
 def test_indicator_catches_invalid_score(dummy_category_list, test_indicator_details):
     eco = dummy_category_list[0]
-    new_data =  {
+    new_data = {
         "IndicatorCode": "BIODIV",
         "CountryCode": "AUS",
         "Year": 2018,
+        "Value": 105,
         "Score": 1.05
     }
     with pytest.raises(InvalidDocumentFormatError) as exception_info:
         eco.load(test_indicator_details[0], new_data)
-    new_data =  {
+    new_data = {
         "IndicatorCode": "BIODIV",
         "CountryCode": "AUS",
         "Year": 2018,
+        "Value": -0.005,
         "Score": -0.00005
     }
     with pytest.raises(InvalidDocumentFormatError) as exception_info:
         eco.load(test_indicator_details[0], new_data)
 
+
 def test_indicator_fails_to_load_missing(dummy_category_list, test_indicator_details):
     eco = dummy_category_list[0]
-    new_data =  {
+    new_data = {
         "IndicatorCode": "BIODIV",
         "CountryCode": "AUS",
         "Year": 2018,
@@ -255,18 +270,20 @@ def test_indicator_fails_to_load_missing(dummy_category_list, test_indicator_det
     with pytest.raises(InvalidDocumentFormatError) as exception_info:
         eco.load(test_indicator_details[0], new_data)
 
+
 def test_category_score_fails_on_missing_data(dummy_category_list, test_indicator_details):
     eco = dummy_category_list[0]
-    new_data =  {
+    new_data = {
         "IndicatorCode": "BIODIV",
         "CountryCode": "AUS",
         "Year": 2018,
+        "Value": None,
         "Score": None
     }
-    tol = 10**-10
     eco.load(test_indicator_details[0], new_data)
     with pytest.raises(TypeError) as exception_info:
-         eco.score()
+        eco.score()
+
 
 @pytest.fixture()
 def dummy_pillar_list(test_indicator_details, test_country_score_data):
@@ -287,9 +304,11 @@ def dummy_pillar_list(test_indicator_details, test_country_score_data):
             matched_pillar.load(detail, test_country_score_data[i])
     yield pillars
 
+
 def test_pillar_construction(dummy_pillar_list):
     assert len(dummy_pillar_list) == 2
     assert len(dummy_pillar_list[0].categories) == 2
+
 
 def test_pillar_score(dummy_pillar_list):
     scores = [0, 0]
@@ -299,14 +318,17 @@ def test_pillar_score(dummy_pillar_list):
     assert abs(scores[0] - (0.525 + 0.72)/2) < tol
     assert abs(scores[1] - 0.50) < tol
 
+
 @pytest.fixture()
 def sspi_overall(test_indicator_details, test_country_score_data):
     yield SSPI(test_indicator_details, test_country_score_data)
+
 
 def test_sspi_construction(sspi_overall):
     assert len(sspi_overall.pillars) == 2
     assert len(sspi_overall.categories) == 3
     assert len(sspi_overall.indicators) == 4
+
 
 def test_sspi_fails_on_mismatch(test_indicator_details, test_country_score_data):
     new_data = {
@@ -319,15 +341,18 @@ def test_sspi_fails_on_mismatch(test_indicator_details, test_country_score_data)
     with pytest.raises(DataOrderError):
         sspi = SSPI(test_indicator_details, country_scores)
 
+
 def test_sspi_score(sspi_overall):
     tol = 10**-10
     assert abs(sspi_overall.score() - ((0.525 + 0.72)/2 + 0.5)/2) < tol
+
 
 def test_sspi_pillar_scores(sspi_overall):
     scores = sspi_overall.pillar_scores()
     tol = 10**-10
     assert abs(scores["SUS"] - (0.525 + 0.72)/2) < tol
     assert abs(scores["MS"] - 0.50) < tol
+
 
 def test_sspi_category_scores(sspi_overall):
     scores = sspi_overall.category_scores()
@@ -336,6 +361,7 @@ def test_sspi_category_scores(sspi_overall):
     assert abs(scores["LND"] - 0.72) < tol
     assert abs(scores["WEB"] - 0.50) < tol
 
+
 def test_sspi_indicator_scores(sspi_overall):
     scores = sspi_overall.indicator_scores()
     tol = 10**-10
@@ -343,6 +369,7 @@ def test_sspi_indicator_scores(sspi_overall):
     assert abs(scores["REDLST"] - 0.90) < tol
     assert abs(scores["STKHLM"] - 0.72) < tol
     assert abs(scores["UNEMPL"] - 0.50) < tol
+
 
 def test_sspi_score_tree(sspi_overall):
     score_tree = sspi_overall.score_tree()
@@ -354,5 +381,7 @@ def test_sspi_score_tree(sspi_overall):
     assert len(score_tree["SSPI"]["Pillars"][1]["Categories"]) == 1
     assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][0].keys()) == 4
     assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][1].keys()) == 4
-    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][0]["Indicators"]) == 2
-    assert len(score_tree["SSPI"]["Pillars"][0]["Categories"][1]["Indicators"]) == 1
+    assert len(score_tree["SSPI"]["Pillars"][0]
+               ["Categories"][0]["Indicators"]) == 2
+    assert len(score_tree["SSPI"]["Pillars"][0]
+               ["Categories"][1]["Indicators"]) == 1

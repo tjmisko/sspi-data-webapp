@@ -364,6 +364,7 @@ def get_static_pillar_stack(pillar_code):
                 dataset["IName"] = indicator.name
                 dataset["IRank"] = indicator_rank
                 dataset["IScore"] = indicator.score
+                dataset["Year"] = indicator.year
                 dataset["IScoreScaled"] = indicator.score / n_indicators
                 data[j] = indicator.score / n_indicators
                 dataset["data"] = data

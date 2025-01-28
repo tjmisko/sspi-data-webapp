@@ -51,7 +51,6 @@ import pandas as pd
 # from pycountry import countries
 from io import StringIO
 import re
-from ..datasource.ilo import cleanILOData
 from sspi_flask_app.api.core.finalize import (
    finalize_iterator
 )
@@ -581,8 +580,44 @@ def compute_taxrev():
     if not sspi_raw_api_data.raw_data_available("TAXREV"):
         return redirect(url_for("api_bp.collect_bp.TAXREV"))
     raw_data = sspi_raw_api_data.fetch_raw_data("TAXREV")
+    cleaned_data = cleaned_wb_current(raw_data, "TAXREV", "Tax Revenue")
+    scored_list = score_single_indicator(cleaned_data, "TAXREV")
+    filtered_list, incomplete_data = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_data)
+    
+    '''
     csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
     taxrev_raw = pd.read_csv(csv_virtual_file)
+    taxrev_raw = taxrev_raw.reset_index()
+    taxrev_raw = taxrev_raw.rename(columns = {"economy":"CountryCode"})
+    taxrev_raw = taxrev_raw.melt(id_vars = ["CountryCode"], var_name = "Year", value_name = "Value")
+    taxrev_raw["Year"] = taxrev_raw["Year"].str.replace("YR", "")
+    taxrev_raw["Year"] = pd.to_numeric(taxrev_raw["Year"])
+    taxrev_raw = taxrev_raw.dropna()
+    taxrev_raw["IndicatorCode"] = "TAXREV"
+    taxrev_raw["Unit"] = "Index"
+    taxrev_raw = taxrev_raw[["IndicatorCode","CountryCode","Year","Value","Unit"]]
+    taxrev_raw = taxrev_raw.sort_values(by=["CountryCode","Year"])
+    taxrev_raw = taxrev_raw.reset_index(drop=True)
+    obs_list = json.loads(taxrev_raw.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "TAXREV")
+    sspi_clean_api_data.insert_many(scored_list)
+    '''
+    return parse_json(scored_list)
+
+
+####################################
+### Category: CORPORATE TAX RATE ###
+####################################
+@compute_bp.route("/CRPTAX")
+@login_required
+def compute_crptax():
+    if not sspi_raw_api_data.raw_data_available("CRPTAX"):
+        return redirect(url_for("api_bp.collect_bp.CRPTAX"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("CRPTAX")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    crptax_raw = pd.read_csv(csv_virtual_file)
     taxrev_raw = taxrev_raw.reset_index()
     taxrev_raw = taxrev_raw.rename(columns = {"economy":"CountryCode"})
     taxrev_raw = taxrev_raw.melt(id_vars = ["CountryCode"], var_name = "Year", value_name = "Value")

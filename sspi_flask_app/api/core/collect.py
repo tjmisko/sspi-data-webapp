@@ -133,15 +133,24 @@ def gtrans():
 @login_required
 def lfpart():
     def collect_iterator(**kwargs):
-        yield from collectILOData("DF_EAP_DWAP_SEX_AGE_RT", "LFPART", ".A...AGE_AGGREGATE_Y25-54", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+        yield from collectILOData(
+            "DF_EAP_DWAP_SEX_AGE_RT",
+            "LFPART",
+            QueryParams=".A...AGE_AGGREGATE_Y25-54",
+            **kwargs
+        )
+    return Response(
+        collect_iterator(Username=current_user.username),
+        mimetype='text/event-stream'
+    )
 
 
 @collect_bp.route("/COLBAR")
 @login_required
 def colbar():
     def collect_iterator(**kwargs):
-        yield from collectILOData("ILR_CBCT_NOC_RT", "COLBAR", "startPeriod=1990-01-01&endPeriod=2024-12-31",**kwargs)
+        url_params = ["startPeriod=1990-01-01", "endPeriod=2024-12-31"]
+        yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", URLParams=url_params, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #################################
@@ -156,6 +165,13 @@ def senior():
         yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/FATINJ")
+@login_required
+def fatinj():
+    def collect_iterator(**kwargs):
+        yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 #####################
 ## Category: TAXES ##
 #####################
@@ -165,6 +181,16 @@ def senior():
 def taxrev():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+###################################
+## Category: CORPORATE TAX RATES ##
+###################################
+
+@collect_bp.route("/CRPTAX", methods=['GET'])
+def crptax():
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "CRPTAX", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ################################
