@@ -286,7 +286,7 @@ def rdfund():
 ##############################################
 ## Category: Adding Country Characteristics ##
 ##############################################
-@collect_bp.route("/UNPOPL", methods=['GET'])
+@collect_bp.route("/characteristic/UNPOPL", methods=['GET'])
 @login_required
 def unpopl():
     def collect_iterator(**kwargs):
@@ -294,13 +294,16 @@ def unpopl():
         yield from insert_pop_data()
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
-@collect_bp.route("/GDPMER", methods=['GET'])
+
+@collect_bp.route("/outcome/GDPMER", methods=['GET'])
 @login_required
 def gdpmek():
     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
-        yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        yield "Collecting data for World Bank Indicator" + \
+            "{WorldBankIndicatorCode}\n"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages+1):
@@ -308,19 +311,12 @@ def gdpmek():
             yield f"Sending Request for page {p} of {total_pages}\n"
             response = requests.get(new_url).json()
             document_list = response[1]
-            count = 0
-            for obs in document_list:
-                doc = {
-                    "IndicatorCode": IndicatorCode,
-                    "Raw": obs,
-                    "CollectedAt": datetime.now()
-                }
-                doc.update(kwargs)
-                sspi_raw_outcome_data.insert_one(doc)
-                count += 1
+            count = sspi_raw_outcome_data.raw_insert_many(
+                document_list, IndicatorCode, **kwargs)
             yield f"Inserted {count} new observations into sspi_outcome_data\n"
             time.sleep(0.5)
-        yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
+        yield "Collection complete for World Bank Indicator" + \
+            WorldBankIndicatorCode
 
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
