@@ -23,6 +23,8 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_raw_api_data,
+    sspi_raw_outcome_data,
+    sspi_clean_outcome_data
     # sspi_analysis
 )
 from ..datasource.sdg import (
@@ -565,3 +567,28 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+@compute_bp.route("/outcome/GDPMER", methods=['GET'])
+# @login_required
+def compute_gdpmer():
+    if not sspi_raw_outcome_data.raw_data_available("GDPMER"):
+        return "No Data for GDPMER found in raw database! Try running collect."
+    gdpmer_raw = sspi_raw_outcome_data.fetch_raw_data("GDPMER")
+    extracted_data = []
+    for obs in gdpmer_raw:
+        value = obs["Raw"]["value"]
+        if not value or value == "None" or value == "null":
+            continue
+        if not len(obs["Raw"]["countryiso3code"]) == 3:
+            continue
+        extracted_data.append({
+            "CountryCode": obs["Raw"]["countryiso3code"],
+            "IndicatorCode": "GDPMER",
+            "Year": int(obs["Raw"]["date"]),
+            "Value": float(obs["Raw"]["value"]),
+            "Unit": obs["Raw"]["indicator"]["value"],
+            "Score": float(obs["Raw"]["value"])
+        })
+    sspi_clean_outcome_data.insert_many(extracted_data)
+    return parse_json(extracted_data)
