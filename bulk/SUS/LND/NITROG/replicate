@@ -1,0 +1,7 @@
+#!/bin/bash
+source ~/.config/secrets/sspi.world
+curl --output $SSPI_DIR_ROOT_PATH/bulk/SUS/LND/NITROG/epi2024raw.zip https://epi.yale.edu/downloads/epi2024raw.zip
+curl --output $SSPI_DIR_ROOT_PATH/bulk/SUS/LND/NITROG/2024-epi-report.pdf https://epi.yale.edu/downloads/2024epireport.pdf
+curl --output $SSPI_DIR_ROOT_PATH/bulk/SUS/LND/NITROG/2024-epi-technical-appendix.pdf https://epi.yale.edu/downloads/2024-epi-technical-appendix.pdf
+unzip -d $SSPI_DIR_ROOT_PATH/bulk/SUS/LND/NITROG $SSPI_DIR_ROOT_PATH/bulk/SUS/LND/NITROG/epi2024raw.zip
+rm -rf $SSPI_DIR_ROOT_PATH/bulk/SUS/LND/NITROG/__MACOSX

@@ -2,18 +2,19 @@ from datetime import datetime
 import json
 import os
 from flask import Response, current_app as app
-from flask import Blueprint, request
+from flask import Blueprint
 from flask_login import login_required
 
-from sspi_flask_app.models.database import SSPIRawAPIData
-
 from ..resources.utilities import lookup_database, parse_json
-from ... import sspidb
+from sspi_flask_app.models.database import sspidb
 
-save_bp = Blueprint("save_bp", __name__,
-                    template_folder="templates", 
-                    static_folder="static")
-                   
+save_bp = Blueprint(
+    "save_bp",
+    __name__,
+    template_folder="templates",
+    static_folder="static"
+)
+
 
 @save_bp.route("/save/<database_name>", methods=["GET"])
 @login_required
@@ -22,6 +23,7 @@ def save_database_protected_route(database_name):
     Creates a local snapshot of a SSPI database
     """
     return save_database(database_name, os.path.join(os.path.dirname(app.instance_path), "snapshots"))
+
 
 @save_bp.route("/save", methods=["GET"])
 @login_required

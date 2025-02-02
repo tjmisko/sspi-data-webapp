@@ -3,6 +3,7 @@
 *~
 *.swp
 *.swo
+**/.jukit/
 
 bin/*
 env/*
@@ -16,6 +17,7 @@ instance/**
 instance
 instance/*
 
+start
 .env
 .flaskenv
 *.egg
@@ -83,3 +85,7 @@ htmlcov/
 **.ipynb_checkpoints
 snapshots/**/**.json
 profiler/**
+bulk/SUS/LND/NITROG/*
+!bulk/SUS/LND/NITROG/replicate
+
+node_modules

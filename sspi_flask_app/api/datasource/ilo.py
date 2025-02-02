@@ -1,36 +1,27 @@
 import requests
-from ... import sspi_raw_api_data
-import bs4 as bs
+from sspi_flask_app.models.database import sspi_raw_api_data
+from io import BytesIO
+import zipfile
 
-def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="....", **kwargs):
+def collectILOData(ILOIndicatorCode, IndicatorCode, QueryParams="", URLParams=[], **kwargs):
     yield "Sending Data Request to ILO API\n"
-    response_obj = requests.get(f"https://www.ilo.org/sdmx/rest/data/ILO,{ILOIndicatorCode}/{QueryParams}")
-    print(str(response_obj.content))
-    observation = str(response_obj.content)
-    yield "Data Received from ILO API.  Storing Data in SSPI Raw Data\n"
-    count = sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, **kwargs)
-    yield f"Inserted {count} observations into the database."
-
-def extractAllSeriesILO(ilo_sdmxml):
-    soup = bs.BeautifulSoup(ilo_sdmxml, 'lxml')
-    series = soup.find_all('generic:series')
-    return series
-
-def filterSeriesListlfpart(series_list):
-    # Return a list of series that match the filterVAR variable name
-    document_list = []
-    for i, series in enumerate(series_list):
-        series_key, series_attributes = series.find("generic:serieskey"), series.find("generic:attributes")
-        VAR = series_key.find("generic:value", attrs={"id": "MEASURE"}).get("value")
-        sex = series_key.find("generic:value", attrs={"id":"SEX"}).get("value")
-        if VAR != "EAP_DWAP_RT" or sex !="SEX_T":
-            continue
-        doc = {
-            "CountryCode": series_key.find("generic:value", attrs={"id": "REF_AREA"}).get("value"),
-            "IndicatorCode": "LFPART",
-            "Unit": series_attributes.find("generic:value", attrs={"id": "UNIT_MEASURE"}).get("value"),
-            "Year": series.find("generic:obs").find("generic:obsdimension", attrs={"id": "TIME_PERIOD"}).get("value"),
-            "Value": series.find("generic:obs").find("generic:obsvalue").get("value")
-        }
-        document_list.append(doc)
-    return document_list
+    api_url = f"https://sdmx.ilo.org/rest/data/ILO,{ILOIndicatorCode}"
+    if QueryParams:
+        api_url += f"/{QueryParams}/?format=csv"
+    else:
+        api_url += "/?format=csv"
+    if URLParams:
+        api_url += "&"
+        api_url += "&".join(URLParams)
+    yield "Requesting data from " + api_url
+    response_obj = requests.get(api_url)
+    if response_obj.status_code != 200:
+        err = f"(HTTP Error {response_obj.status_code})"
+        yield "\nFailed to fetch data from source" + err
+        return
+    csv_string = response_obj.content.decode("utf-8")
+    count = sspi_raw_api_data.raw_insert_one(
+        csv_string, IndicatorCode, **kwargs
+    )
+    yield f"\nInserted {count} observations into the database.\n"
+    yield f"Collection complete for {IndicatorCode} (ILO {ILOIndicatorCode})\n"

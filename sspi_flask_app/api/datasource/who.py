@@ -1,6 +1,6 @@
 import requests
 import json
-from ... import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data
 from ..resources.utilities import parse_json
 
 
