@@ -25,7 +25,11 @@ from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     # sspi_analysis
 )
-from ..datasource.prisonstudies import scrape_stored_pages_for_data, compute_prison_rate
+from ..datasource.prisonstudies import (
+    scrape_stored_pages_for_data, 
+    compute_prison_rate
+    )
+
 from ..datasource.sdg import (
     flatten_nested_dictionary_biodiv,
     extract_sdg_pivot_data_to_nested_dictionary,
@@ -422,6 +426,9 @@ def compute_gtrans():
     final_data = zip_intermediates(long_iea_data)
     return jsonify(document_list)
 
+##################################
+### Category: WORKER WELLBEING ###
+##################################
 
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
@@ -468,6 +475,9 @@ def compute_senior():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
+##################################
+### Category: PUBLIC SAFETY ###
+##################################
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
@@ -478,6 +488,9 @@ def compute_incarc():
     print(f"Missing from UN population: {incomplete_observations}")
     return final_list
 
+##################################
+### Category: INFRASTRUCTURE ###
+##################################
 
 @compute_bp.route("/INTRNT", methods=['GET'])
 # @login_required
