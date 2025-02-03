@@ -387,55 +387,55 @@ def compute_altnrg():
 ##################################
 
 
-@compute_bp.route("/GTRANS", methods=['GET'])
-@login_required
-def compute_gtrans():
-    insert_pop_data()
-    if not sspi_raw_api_data.raw_data_available("GTRANS"):
-        return redirect(url_for("collect_bp.GTRANS"))
+# @compute_bp.route("/GTRANS", methods=['GET'])
+# @login_required
+# def compute_gtrans():
+#     insert_pop_data()
+#     if not sspi_raw_api_data.raw_data_available("GTRANS"):
+#         return redirect(url_for("collect_bp.GTRANS"))
 
-    # collect, clean World Bank
-    wb_raw = sspi_raw_api_data.fetch_raw_data(
-        "GTRANS", IntermediateCode="FUELPR")
-    wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "USD per liter")
+#     # collect, clean World Bank
+#     wb_raw = sspi_raw_api_data.fetch_raw_data(
+#         "GTRANS", IntermediateCode="FUELPR")
+#     wb_clean = cleaned_wb_current(wb_raw, "GTRANS", "USD per liter")
 
-    # collect, clean IEA
-    iea_raw = sspi_raw_api_data.fetch_raw_data(
-        "GTRANS", IntermediateCode="TCO2EQ")
-    iea_clean = clean_IEA_data_GTRANS(iea_raw,
-                                      "GTRANS", "CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms")
-    return parse_json(iea_clean + wb_clean)
+#     # collect, clean IEA
+#     iea_raw = sspi_raw_api_data.fetch_raw_data(
+#         "GTRANS", IntermediateCode="TCO2EQ")
+#     iea_clean = clean_IEA_data_GTRANS(iea_raw,
+#                                       "GTRANS", "CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms")
+#     return parse_json(iea_clean + wb_clean)
 
-    keys = iea_raw_data[0].keys()
-    raw = iea_raw_data[0]["Raw"]
-    metadata = iea_raw_data[0]["Metadata"]
-    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
-    raw_soup = bs.BeautifulSoup(raw, "lxml")
-    metadata_codes = {
-        "ENER_TRANS": "1A3 - Transport"
-    }
-    metadata_code_map = {
-        "ENER_TRANS": "TCO2EQ"
-    }
-    document_list = []
+#     keys = iea_raw_data[0].keys()
+#     raw = iea_raw_data[0]["Raw"]
+#     metadata = iea_raw_data[0]["Metadata"]
+#     metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+#     raw_soup = bs.BeautifulSoup(raw, "lxml")
+#     metadata_codes = {
+#         "ENER_TRANS": "1A3 - Transport"
+#     }
+#     metadata_code_map = {
+#         "ENER_TRANS": "TCO2EQ"
+#     }
+#     document_list = []
 
-    for code in metadata_codes.keys():
-        document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
-    long_iea_data = pd.DataFrame(document_list)
-    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str)
-    # ### combining in pandas for UN population data to conpute correct G####
-    wb_df = pd.DataFrame(worldbank_clean_list)
-    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
+    # for code in metadata_codes.keys():
+    #     document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
+    # long_iea_data = pd.DataFrame(document_list)
+    # pop_data = pd.read_csv("local/UN_population_data.csv").astype(str)
+    # # ### combining in pandas for UN population data to conpute correct G####
+    # wb_df = pd.DataFrame(worldbank_clean_list)
+    # wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
 
-    wb_df = wb_df.merge(pop_data, how="left", left_on=[
-                        "YEAR", "CountryName"], right_on=["year", "country"])
-    test = wb_df[wb_df["pop"] == "na"]
+    # wb_df = wb_df.merge(pop_data, how="left", left_on=[
+    #                     "YEAR", "CountryName"], right_on=["year", "country"])
+    # test = wb_df[wb_df["pop"] == "na"]
 
-    iea_df = long_iea_data[['Year', 'CountryCode']]
-    iea_df = iea_df[iea_df["Value"].notna()].astype(str)
+    # iea_df = long_iea_data[['Year', 'CountryCode']]
+    # iea_df = iea_df[iea_df["Value"].notna()].astype(str)
 
-    merged = wb_df.merge(iea_df, how="outer", left_on=[
-                         "CountryCode", "YEAR"], right_on=["CountryCode", "Year"])
+    # merged = wb_df.merge(iea_df, how="outer", left_on=[
+                         # "CountryCode", "YEAR"], right_on=["CountryCode", "Year"])
     # merged['RAW'] = (merged['RAW_x'].astype(float) + merged['RAW_y'].astype(float))/2
     # df = merged.dropna()[['IndicatorCode', 'CountryCode', 'YEAR', 'RAW']]
     # document_list = json.loads(str(df.to_json('records')))
@@ -444,8 +444,8 @@ def compute_gtrans():
     # print(series)
     # print(len(document_list))
     # return jsonify(document_list)
-    final_data = zip_intermediates(long_iea_data)
-    return jsonify(document_list)
+    # final_data = zip_intermediates(long_iea_data)
+    # return jsonify(document_list)
 
 
 @compute_bp.route("/SENIOR", methods=['GET'])
@@ -454,10 +454,10 @@ def compute_senior():
     if not sspi_raw_api_data.raw_data_available("SENIOR"):
         return redirect(url_for("collect_bp.SENIOR"))
     raw_data = sspi_raw_api_data.fetch_raw_data("SENIOR")
-    # metadata = raw_data[0]["Metadata"]
-    # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    metadata = raw_data[0]["Metadata"]
+    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
     # to see the codes and their descriptions, uncomment and return the following line
-    # jsonify([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
+    print([[tag.get("value"), tag.get_text()] for tag in metadata_soup.find_all("code")])
     metadata_codes = {
         "PEN20A": "Expected years in retirement, men",
         "PEN20B": "Expected years in retirement, women",
@@ -603,26 +603,6 @@ def compute_fatinj():
     scored_list = score_single_indicator(obs_list, "FATINJ")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
-
-
-################################
-### Category: INFRASTRUCTURE ###
-################################
-@compute_bp.route("/NRGINT", methods=['GET'])
-@login_required
-def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("collect_bp.NRGINT"))
-    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-    nrgint_raw)
-    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
 
 
 ##################################
