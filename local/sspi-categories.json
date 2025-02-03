@@ -11,6 +11,6 @@
 {"Category":"Education","Pillar":"Public Goods","Indicators":["ENRPRI","ENRSEC","PUPTCH"]}
 {"Category":"Healthcare","Pillar":"Public Goods","Indicators":["ATBRTH","DPTCOV","PHYSPC","FAMPLN","CSTUNT"]}
 {"Category":"Infrastructure","Pillar":"Public Goods","Indicators":["AQELEC","DRKWAT","SANSRV","INTRNT","TRNETW"]}
-{"Category":"Public Safety","Pillar":"Public Goods","Indicators":["MURDER","CYBSEC","SECAPP","INCARC"]}
+{"Category":"Public Safety","Pillar":"Public Goods","Indicators":["MURDER","CYBSEC","SECAPP","PRISON"]}
 {"Category":"Rights","Pillar":"Public Goods","Indicators":["RULELW","PUBSRV","EDEMOC","UNCONV","GENDEQ"]}
 {"Category":"Global Role","Pillar":"Public Goods","Indicators":["ARMEXP","MILEXP","RDFUND","FORAID"]}

@@ -28,6 +28,7 @@ defusedxml==0.7.1
 Deprecated==1.2.14
 dnspython==2.3.0
 docopt==0.6.2
+et_xmlfile==2.0.0
 exceptiongroup==1.1.1
 executing==2.0.0
 fastjsonschema==2.18.1
@@ -90,6 +91,7 @@ networkx==3.3
 notebook==7.0.5
 notebook_shim==0.2.3
 numpy==1.26.0
+openpyxl==3.1.5
 ordered-set==4.1.0
 overrides==7.4.0
 packaging==23.0

@@ -188,8 +188,8 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
         if not dynamic_indicator_data:
             return jsonify({"error": "No data found"})
-        chart_title = f"{dynamic_indicator_data[0]["IName"]} ({
-            IndicatorCode}) Score"
+        name = dynamic_indicator_data[0]["IName"]
+        chart_title = f"{name} ({IndicatorCode}) Score"
         group_options = sspi_metadata.country_groups()
         return jsonify({
             "data": dynamic_indicator_data,
@@ -365,6 +365,7 @@ def get_static_pillar_stack(pillar_code):
                 dataset["IName"] = indicator.name
                 dataset["IRank"] = indicator_rank
                 dataset["IScore"] = indicator.score
+                dataset["Year"] = indicator.year
                 dataset["IScoreScaled"] = indicator.score / n_indicators
                 data[j] = indicator.score / n_indicators
                 dataset["data"] = data
