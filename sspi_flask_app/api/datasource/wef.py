@@ -15,7 +15,7 @@ def collectWEFdata(SourceIndicatorCode, IndicatorCode, **kwargs):
     df = pd.read_excel(BytesIO(res.content))
     
     if SourceIndicatorCode in df.columns:
-        df = df[[SourceIndicatorCode]]  #
+        df = df[[SourceIndicatorCode]]  
         df = df.rename(columns={SourceIndicatorCode: IndicatorCode})
     else:
         yield f"Column {SourceIndicatorCode} not found in the Excel sheet."
