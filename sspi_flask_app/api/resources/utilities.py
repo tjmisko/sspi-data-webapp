@@ -248,8 +248,9 @@ def filter_incomplete_data(indicator_document_list):
 
 def score_single_indicator(document_list, IndicatorCode):
     """
-     Utility function for scoring an indicator which does not contain intermediates; does not require score function
-     """
+    Utility function for scoring an indicator which does not
+    contain intermediates; does not require score function
+    """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
     [sspi_clean_api_data.validate_document_format(
