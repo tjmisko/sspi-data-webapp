@@ -208,8 +208,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
         if any(arg_value is None for arg_value in arg_value_dict.values()):
             continue
         try:
@@ -283,3 +282,13 @@ def colormap(PillarCode, alpha: str = "ff"):
         return f"#ff851b{alpha}"
     if PillarCode == "PG":
         return f"#007bff{alpha}"
+
+
+def find_population(country_code, year):
+    '''
+    Fetches population data from sspi_country_characteristics for a country in a given year
+    country_code: str of alpha-3 code
+    year: int of year
+    '''
+    population_data = sspi_country_characteristics.fetch_population_data("UNPOPL", country_code, year)
+    return population_data

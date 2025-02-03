@@ -29,6 +29,10 @@ from sspi_flask_app.models.database import (
     sspi_clean_outcome_data
     # sspi_analysis
 )
+from ..datasource.prisonstudies import (
+    scrape_stored_pages_for_data, compute_prison_rate
+    )
+
 from ..datasource.sdg import (
     flatten_nested_dictionary_biodiv,
     extract_sdg_pivot_data_to_nested_dictionary,
@@ -390,7 +394,6 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
-    insert_pop_data()
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
 
@@ -447,6 +450,9 @@ def compute_gtrans():
     final_data = zip_intermediates(long_iea_data)
     return jsonify(document_list)
 
+##################################
+### Category: WORKER WELLBEING ###
+##################################
 
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
@@ -493,18 +499,22 @@ def compute_senior():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
+##################################
+### Category: PUBLIC SAFETY ###
+##################################
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
-    raw_data_observation_list = parse_json(
-        sspi_raw_api_data.find({"collection-info.IndicatorCode": "PRISON"}))
-    for obs in raw_data_observation_list:
-        table = BeautifulSoup(obs["observation"], 'html.parser').find("table", attrs={"id": "views-aggregator-datatable",
-                                                                                      "summary": "Prison population rate"})
-    print(table)
-    return "string"
+    clean_data_list, missing_data_list = scrape_stored_pages_for_data()
+    final_list, incomplete_observations = compute_prison_rate(clean_data_list)
+    # print(f"Missing from World Prison Brief: {missing_data_list}")
+    # print(f"Missing from UN population: {incomplete_observations}")
+    return final_list
 
+##################################
+### Category: INFRASTRUCTURE ###
+##################################
 
 @compute_bp.route("/INTRNT", methods=['GET'])
 @login_required
@@ -603,26 +613,6 @@ def compute_fatinj():
     scored_list = score_single_indicator(obs_list, "FATINJ")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
-
-
-################################
-### Category: INFRASTRUCTURE ###
-################################
-@compute_bp.route("/NRGINT", methods=['GET'])
-@login_required
-def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("collect_bp.NRGINT"))
-    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-    nrgint_raw)
-    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
 
 
 ##################################
