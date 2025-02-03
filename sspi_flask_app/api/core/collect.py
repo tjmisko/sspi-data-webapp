@@ -272,7 +272,7 @@ def intrnt():
 #############################
 
 
-@collect_bp.route("/INCARC", methods=['GET'])
+@collect_bp.route("/PRISON", methods=['GET'])
 @login_required
 def incarc():
     def collect_iterator(**kwargs):

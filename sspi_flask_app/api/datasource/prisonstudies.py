@@ -25,6 +25,7 @@ def get_href_list():
     url_slugs = [link["href"] for link in list_of_links]
     return url_slugs
 
+
 def collect_all_pages(url_slugs, **kwargs):
     url_base = "https://www.prisonstudies.org"
     count = 0
@@ -45,7 +46,7 @@ def collect_all_pages(url_slugs, **kwargs):
                 failed_matches.append(query_string)
                 continue
         yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
-        # The site blocked my IP after only a few requests, so 30 is here to be conservative
+        # The site blocked my IP after only a few requests
         time.sleep(10)
         response = requests.get(url_base + url_slug)
         # special case of UK being split into three --> scotland, northern ireland, england + wales
@@ -54,8 +55,7 @@ def collect_all_pages(url_slugs, **kwargs):
         webpages.append({COU: response.content})
     print(failed_matches)
     return store_webpages_as_raw_data(webpages, **kwargs)
-        # yield store_webpage_as_raw_data(response, COU, **kwargs)
-        
+
 
 def get_country_code(namestring):
     return pycountry.countries.search_fuzzy(namestring)[0].alpha_3
@@ -82,18 +82,18 @@ def store_webpages_as_raw_data(webpage_list, **kwargs):
     count = 0
     for webpage in webpage_list:
         country_code = list(webpage.keys())[0]
-        obs = {"IndicatorCode": "INCARC",
+        obs = {"IndicatorCode": "PRISON",
          "CountryCode": country_code,
          "Raw": webpage[country_code],
-         "ColllectedAt": datetime.now()}
+         "CollectedAt": datetime.now()}
         data_list.append(obs)
         count += 1
         # yield f"Scraped webpage for {country} and inserted HTML data into sspi_raw_api_data\n"
-    sspi_raw_api_data.raw_insert_many(data_list, "INCARC", **kwargs)
+    sspi_raw_api_data.raw_insert_many(data_list, "PRISON", **kwargs)
     return f"All {count} countries' data inserted into raw database"     
 
 def scrape_stored_pages_for_data():
-    prison_data = sspi_raw_api_data.find({"IndicatorCode": "INCARC"})
+    prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
     final_data = []
     gbr_data = []
     missing_countries = []

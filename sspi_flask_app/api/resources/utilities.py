@@ -282,7 +282,8 @@ def colormap(PillarCode, alpha: str = "ff"):
         return f"#ff851b{alpha}"
     if PillarCode == "PG":
         return f"#007bff{alpha}"
-    
+
+
 def find_population(country_code, year):
     '''
     Fetches population data from sspi_country_characteristics for a country in a given year
