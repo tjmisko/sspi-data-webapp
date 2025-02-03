@@ -692,4 +692,3 @@ def compute_gdpppp():
         })
     sspi_clean_outcome_data.insert_many(extracted_data)
     return parse_json(extracted_data)
->>>>>>> main
