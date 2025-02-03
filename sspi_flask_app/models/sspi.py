@@ -36,7 +36,7 @@ class SSPI:
                     {"Category": category.name, "CategoryCode": category.code, "Score": category.score(), "Indicators": []})
                 for indicator in category.indicators:
                     tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append(
-                        {"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score})
+                        {"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score, "Year": indicator.year})
         return tree
 
     def pillar_scores(self):
@@ -56,7 +56,13 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
+            details = set([d["Metadata"]["IndicatorCode"]
+                           for d in indicator_details])
+            scores = set([s["IndicatorCode"] for s in indicator_scores])
+            print(details.symmetric_difference(scores))
+            detail_length = "len(indicator_details)=" + len(indicator_details)
+            score_length = "len(indicator_scores)=" + len(indicator_scores)
+            raise DataOrderError(f"{detail_length} =/= {score_length}")
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
@@ -66,7 +72,8 @@ class SSPI:
                                                          ["IndicatorCode"]]
             except KeyError:
                 indicator = detail["Metadata"]["IndicatorCode"]
-                raise DataOrderError(f"No data for indicator {indicator} found!")
+                raise DataOrderError(f"No data for indicator {
+                                     indicator} found!")
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
@@ -183,14 +190,18 @@ class Indicator:
         try:
             self.name = detail["Metadata"]["Indicator"]
             self.code = detail["Metadata"]["IndicatorCode"]
+            self.lower_goalpost = detail["Metadata"]["LowerGoalpost"]
+            self.upper_goalpost = detail["Metadata"]["UpperGoalpost"]
         except KeyError as ke:
             raise InvalidDocumentFormatError(
                 f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
         try:
             self.score = indicator_score_data["Score"]
-        except KeyError as ke:
+            self.value = indicator_score_data["Value"]
+            self.year = indicator_score_data["Year"]
+        except KeyError:
             raise InvalidDocumentFormatError(
-                f"Indicator Data Missing 'Score' ({indicator_score_data})")
+                f"Indicator Data Missing 'Value,' 'Score,' or 'Year' ({indicator_score_data})")
         if self.code != indicator_score_data["IndicatorCode"]:
             raise DataOrderError(f"Mismatched Data and Indicator Detail {detail}; {indicator_score_data}")
         if type(self.score) is float:

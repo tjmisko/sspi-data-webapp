@@ -11,12 +11,18 @@
 }
 
 .chart-section-pillar-differential {
-  padding: 0.5em;
+  padding: 0.4em;
   display: flex;
   max-height: 250px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: space-around;
+}
+
+.differential-chart-title {
+  width: 100%;
+  text-align: center;
+  font-size: 0.9em;
 }
 
 .pillar-diff-window {
@@ -67,4 +73,47 @@
    margin: 0;
    padding: 0.2em;
    font-size: 1em;
+}
+
+.radar-chart-legend-box {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8em;
+  padding-bottom: 0.5em;
+}
+
+.radar-chart-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  padding: 0.1em 0.1em;
+  border-radius: 2px;
+  border-width: 1px;
+}
+
+.radar-chart-legend-item-canvas {
+  width: 100%;
+  height: 100%;
+  padding: 0em 0.5em 0.5em 0.2em;
+  margin-right: 0.5em;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.radar-chart-legend-canvas-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+}
+
+.radar-chart-legend-item-text {
+  text-align: center;
+  justify-content: left;
+  padding: 0.1em 0.1em;
+}
+
+.paper-resources-article {
+  background-color: #ffffff;
+  color: #000000;
 }

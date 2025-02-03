@@ -249,7 +249,7 @@ class SSPICleanAPIData(MongoWrapper):
 
     def validate_score(self, document: dict, document_number: int = 0):
         # Validate Score format
-        if not "Score" in document.keys():
+        if "Score" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' is a required argument (document {document_number})")
@@ -257,7 +257,7 @@ class SSPICleanAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
-        if not "Score" in document.keys():
+        if "Score" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' is a required argument (document {document_number})")

@@ -18,7 +18,9 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_partial_api_data
+    sspi_partial_api_data,
+    sspi_clean_outcome_data,
+    sspi_raw_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -85,6 +87,10 @@ def lookup_database(database_name):
         return sspi_dynamic_line_data
     elif database_name == "sspi_dynamic_matrix_data":
         return sspi_dynamic_matrix_data
+    elif database_name == "sspi_raw_outcome_data":
+        return sspi_raw_outcome_data
+    elif database_name == "sspi_clean_outcome_data":
+        return sspi_clean_outcome_data
     raise InvalidDatabaseError(database_name)
 
 
@@ -241,8 +247,9 @@ def filter_incomplete_data(indicator_document_list):
 
 def score_single_indicator(document_list, IndicatorCode):
     """
-     Utility function for scoring an indicator which does not contain intermediates; does not require score function
-     """
+    Utility function for scoring an indicator which does not
+    contain intermediates; does not require score function
+    """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
     [sspi_clean_api_data.validate_document_format(
