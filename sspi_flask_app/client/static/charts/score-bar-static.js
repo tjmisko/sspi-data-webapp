@@ -13,6 +13,7 @@ class ScoreBarStatic {
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
+        this.initSummaryBox()
 
         this.fetch().then(data => {
             this.update(data)
@@ -44,10 +45,10 @@ class ScoreBarStatic {
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
-                    this.toggleHighlight(
-                        this.chart.data.datasets[element.datasetIndex].info[element.index].CCode
-                    )
-                    console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
+                        this.toggleHighlight(
+                            this.chart.data.datasets[element.datasetIndex].info[element.index].CCode
+                        )
+                        console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
                     })
                 },
                 plugins: {
@@ -111,7 +112,7 @@ class ScoreBarStatic {
                                 weight: 'bold'
                             },
                             callback: function(value, index, values) {
-                                return index + 1
+                                return this.chart.data.datasets[0].info[index].Rank
                             },
                             padding: 8
                         },
@@ -135,6 +136,39 @@ class ScoreBarStatic {
                 indexAxis: 'y',
             }
         })
+    }
+
+    initSummaryBox() {
+        this.summaryBox = document.createElement('div')
+        this.summaryBox.classList.add('score-bar-summary-box')
+        this.summaryBox.style.color = this.textColor
+        this.summaryBox.style.fontSize = '16px'
+        this.root.appendChild(this.summaryBox)
+    }
+
+    computeSummaryStats(data) {
+        const scores = data.datasets[0].info.map(info => info.Score)
+        const meanScore = scores.reduce((a, b) => a + b, 0) / scores.length
+        const medianScore = scores.sort()[Math.floor(scores.length / 2)]
+        const minScore = Math.min(...scores)
+        const maxScore = Math.max(...scores)
+        const sdScore = Math.sqrt(scores.reduce((a, b) => a + (b - meanScore) ** 2, 0) / (scores.length -1))
+        return {
+            Mean: meanScore.toFixed(3),
+            Median: medianScore.toFixed(3),
+            Min: minScore.toFixed(3),
+            Max: maxScore.toFixed(3),
+            SD: sdScore.toFixed(3),
+        }
+    }
+
+    updateSummaryBox(summaryStats) {
+        for (const key in summaryStats) {
+            const stat = document.createElement('div')
+            stat.classList.add('score-bar-summary-stat')
+            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`
+            this.summaryBox.appendChild(stat)
+        }
     }
 
     async fetch() {
@@ -238,6 +272,7 @@ class ScoreBarStatic {
         this.title.innerText = data.title
         this.chart.options.scales.x.title.text = data.xTitle
         this.initHighlights()
+        this.updateSummaryBox(this.computeSummaryStats(data.data))
         this.chart.update()
     }
 

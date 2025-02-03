@@ -1,5 +1,8 @@
 from flask import Blueprint, Response
 from flask_login import login_required, current_user
+import requests
+import time
+from datetime import datetime
 
 from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.epi import collectEPIData
@@ -9,6 +12,10 @@ from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
+from sspi_flask_app.models.database import (
+    sspi_raw_outcome_data,
+    sspi_clean_outcome_data
+)
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -165,11 +172,20 @@ def senior():
         yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/UNEMPL")
 @login_required
 def unempl():
     def collect_iterator(**kwargs):
         yield from collectILOData("DF_SDG_0131_SEX_SOC_RT", "UNEMPL", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/FATINJ")
+@login_required
+def fatinj():
+    def collect_iterator(**kwargs):
+        yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #####################
@@ -279,10 +295,70 @@ def rdfund():
 ##############################################
 ## Category: Adding Country Characteristics ##
 ##############################################
-@collect_bp.route("/UNPOPL", methods=['GET'])
+@collect_bp.route("/characteristic/UNPOPL", methods=['GET'])
 @login_required
 def unpopl():
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
         yield from insert_pop_data()
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/outcome/GDPMER", methods=['GET'])
+@login_required
+def gdpmek():
+    """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
+    def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
+        yield "Collecting data for World Bank Indicator" + \
+            "{WorldBankIndicatorCode}\n"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
+        response = requests.get(url_source).json()
+        total_pages = response[0]['pages']
+        for p in range(1, total_pages+1):
+            new_url = f"{url_source}&page={p}"
+            yield f"Sending Request for page {p} of {total_pages}\n"
+            response = requests.get(new_url).json()
+            document_list = response[1]
+            count = sspi_raw_outcome_data.raw_insert_many(
+                document_list, IndicatorCode, **kwargs)
+            yield f"Inserted {count} new observations into sspi_outcome_data\n"
+            time.sleep(0.5)
+        yield "Collection complete for World Bank Indicator" + \
+            WorldBankIndicatorCode
+
+    def collect_iterator(**kwargs):
+        # insert UN population data into sspi_country_characteristics database
+        yield from collectWorldBankOutcomeData("NY.GDP.PCAP.CD", "GDPMER", **kwargs)
+
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/outcome/GDPPPP", methods=['GET'])
+@login_required
+def gdpppp():
+    """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
+    def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
+        yield "Collecting data for World Bank Indicator" + \
+            "{WorldBankIndicatorCode}\n"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
+        response = requests.get(url_source).json()
+        total_pages = response[0]['pages']
+        for p in range(1, total_pages+1):
+            new_url = f"{url_source}&page={p}"
+            yield f"Sending Request for page {p} of {total_pages}\n"
+            response = requests.get(new_url).json()
+            document_list = response[1]
+            count = sspi_raw_outcome_data.raw_insert_many(
+                document_list, IndicatorCode, **kwargs)
+            yield f"Inserted {count} new observations into sspi_outcome_data\n"
+            time.sleep(0.5)
+        yield "Collection complete for World Bank Indicator" + \
+            WorldBankIndicatorCode
+
+    def collect_iterator(**kwargs):
+        # insert UN population data into sspi_country_characteristics database
+        yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
+
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')

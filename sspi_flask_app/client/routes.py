@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-from wtforms import Form, StringField, SelectField, validators
+from flask_login import login_required
 from ..api.core.download import ClientDownloadForm
 
 
@@ -115,3 +115,9 @@ def data_overview():
 @client_bp.route('/scores')
 def overall_scores():
     return render_template("scores.html")
+
+
+@client_bp.route('/resources')
+@login_required
+def paper_resources():
+    return render_template("paper-resources.html")
