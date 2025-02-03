@@ -121,8 +121,9 @@ def scrape_stored_pages_for_data():
         df["Prison Population Total"] = df["Prison Population Total"].replace("c ", "", regex = True)
         df["Prison Population Rate"] = df["Prison Population Rate"].replace("c ", "", regex = True)
         if "GBR" in country:
+            print(df)
             df.apply(lambda row: gbr_data.append(
-                {"IndicatorCode": "INCARC",
+                {"IndicatorCode": "PRISON",
                 "Value": int(row["Prison Population Total"]),
                 "WPB Rate": int(row["Prison Population Rate"]),
                 "Year": int(row["Year"]),
@@ -131,7 +132,7 @@ def scrape_stored_pages_for_data():
                 "Description": "Prison population rate per 100,000 of the national population."}), axis = 1)
         else:
             df.apply(lambda row: final_data.append(
-                {"IndicatorCode": "INCARC",
+                {"IndicatorCode": "PRISON",
                 "Value": int(row["Prison Population Total"]),
                 "WPB Rate": int(row["Prison Population Rate"]),
                 "Year": int(row["Year"]),
@@ -147,7 +148,7 @@ def scrape_stored_pages_for_data():
         gbr_obs[year].append(obs["Value"])
     for year in gbr_obs:
         year_sum = sum(gbr_obs[year])
-        obs = {"IndicatorCode": "INCARC",
+        obs = {"IndicatorCode": "PRISON",
                 "Value": year_sum,
                 "WPB Rate": obs["WPB Rate"],
                 "Year": year,
