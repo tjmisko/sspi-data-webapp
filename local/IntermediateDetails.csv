@@ -30,7 +30,7 @@ Gender Equality Index,GENDEQ,Mobility,WMMOBL,"Women have equal access to passpor
 Gender Equality Index,GENDEQ,Marrital Freedom,WMMARR,"Women protected by law from domestic violence and subservience; have equal access to divorce and remarriage. (5Qs, worth 0.2 for yes, 0 for no).",0.20,FALSE,0,1,WB-WBL,,https://wbl.worldbank.org/en/wbl-data
 Gender Equality Index,GENDEQ,Assets and Finances,WMFNMN,"Women have equal access to credit, inheritance, pensions, and retirement. Combines two measurements made up of 7 questions.",0.20,FALSE,0,1,WB-WBL,,https://wbl.worldbank.org/en/wbl-data
 Incarceration Rate,PRISON,Prison Population,PRIPOP,Prison population,NA,FALSE,NA,NA,World Prison Brief,,https://prisonstudies.org/world-prison-brief-data
-Incarceration Rate,PRISON,Population,UNPOPL,Population,NA,FALSE,NA,NA,UN,,https://population.un.org/dataportal/home
+Incarceration Rate,PRISON,Population,WBPOPL,Population,NA,FALSE,NA,NA,World Bank,,https://data.worldbank.org/indicator/SP.POP.TOTL?locations=ID.
 Research and Development,RDFUND,Government R&D,GVTRDP,Proportion of GDP spent on government R&D,0.25,FALSE,0,0.5,UIS,,http://data.uis.unesco.org/
 Research and Development,RDFUND,Educational R&D,EDURDP,Proportion of GDP spent on higher education R&D,0.25,FALSE,0,0.5,UIS,,http://data.uis.unesco.org/
 Research and Development,RDFUND,Number of Researchers,NRSRCH,"Number of researchers per 1 million people, data weight of 50%.",0.50,FALSE,0,7500,UIS,,http://data.uis.unesco.org/
