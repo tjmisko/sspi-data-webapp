@@ -485,7 +485,7 @@ def compute_prison():
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])
-# @login_required
+@login_required
 def compute_intrnt():
     if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
@@ -510,7 +510,7 @@ def compute_intrnt():
 
 
 @compute_bp.route("/FDEPTH", methods=['GET'])
-# @login_required
+@login_required
 def compute_fdepth():
     if not sspi_raw_api_data.raw_data_available("FDEPTH"):
         return redirect(url_for("collect_bp.FDEPTH"))
@@ -531,7 +531,7 @@ def compute_fdepth():
 
 
 @compute_bp.route("/COLBAR", methods=['GET'])
-# @login_required
+@login_required
 def compute_colbar():
     if not sspi_raw_api_data.raw_data_available("COLBAR"):
         return redirect(url_for("collect_bp.COLBAR"))
@@ -553,7 +553,7 @@ def compute_colbar():
 
 
 @compute_bp.route("/NRGINT", methods=['GET'])
-# @login_required
+@login_required
 def compute_nrgint():
     if not sspi_raw_api_data.raw_data_available("NRGINT"):
         return redirect(url_for("collect_bp.NRGINT"))
@@ -570,7 +570,7 @@ def compute_nrgint():
 
 
 @compute_bp.route("/outcome/GDPMER", methods=['GET'])
-# @login_required
+@login_required
 def compute_gdpmer():
     if not sspi_raw_outcome_data.raw_data_available("GDPMER"):
         return "No Data for GDPMER found in raw database! Try running collect."
@@ -585,6 +585,31 @@ def compute_gdpmer():
         extracted_data.append({
             "CountryCode": obs["Raw"]["countryiso3code"],
             "IndicatorCode": "GDPMER",
+            "Year": int(obs["Raw"]["date"]),
+            "Value": float(obs["Raw"]["value"]),
+            "Unit": obs["Raw"]["indicator"]["value"],
+            "Score": float(obs["Raw"]["value"])
+        })
+    sspi_clean_outcome_data.insert_many(extracted_data)
+    return parse_json(extracted_data)
+
+
+@compute_bp.route("/outcome/GDPPPP", methods=['GET'])
+@login_required
+def compute_gdpppp():
+    if not sspi_raw_outcome_data.raw_data_available("GDPPPP"):
+        return "No Data for GDPPPP found in raw database! Try running collect."
+    gdpppp_raw = sspi_raw_outcome_data.fetch_raw_data("GDPPPP")
+    extracted_data = []
+    for obs in gdpppp_raw:
+        value = obs["Raw"]["value"]
+        if not value or value == "None" or value == "null":
+            continue
+        if not len(obs["Raw"]["countryiso3code"]) == 3:
+            continue
+        extracted_data.append({
+            "CountryCode": obs["Raw"]["countryiso3code"],
+            "IndicatorCode": "GDPPPP",
             "Year": int(obs["Raw"]["date"]),
             "Value": float(obs["Raw"]["value"]),
             "Unit": obs["Raw"]["indicator"]["value"],
