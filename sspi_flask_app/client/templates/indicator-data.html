@@ -12,6 +12,10 @@
 <!-- <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/indicator-bar-static.js') }}" defer></script> -->
 {% endblock javascript %}
 
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/score-bar.css') }}"> 
+{% endblock stylesheet %}
+
 {% block content %}
 <section class="hero-box">
     <select class="indicator-dropdown">

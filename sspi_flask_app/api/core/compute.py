@@ -25,6 +25,8 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_raw_api_data,
+    sspi_raw_outcome_data,
+    sspi_clean_outcome_data
     # sspi_analysis
 )
 from ..datasource.sdg import (
@@ -505,7 +507,7 @@ def compute_prison():
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])
-# @login_required
+@login_required
 def compute_intrnt():
     if not sspi_raw_api_data.raw_data_available("INTRNT"):
         return redirect(url_for("collect_bp.INTRNT"))
@@ -530,7 +532,7 @@ def compute_intrnt():
 
 
 @compute_bp.route("/FDEPTH", methods=['GET'])
-# @login_required
+@login_required
 def compute_fdepth():
     if not sspi_raw_api_data.raw_data_available("FDEPTH"):
         return redirect(url_for("collect_bp.FDEPTH"))
@@ -551,7 +553,7 @@ def compute_fdepth():
 
 
 @compute_bp.route("/COLBAR", methods=['GET'])
-# @login_required
+@login_required
 def compute_colbar():
     if not sspi_raw_api_data.raw_data_available("COLBAR"):
         return redirect(url_for("collect_bp.COLBAR"))
@@ -601,3 +603,76 @@ def compute_fatinj():
     scored_list = score_single_indicator(obs_list, "FATINJ")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+
+################################
+### Category: INFRASTRUCTURE ###
+################################
+@compute_bp.route("/NRGINT", methods=['GET'])
+@login_required
+def compute_nrgint():
+    if not sspi_raw_api_data.raw_data_available("NRGINT"):
+        return redirect(url_for("collect_bp.NRGINT"))
+    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
+    nrgint_raw)
+    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
+    scored_list = score_single_indicator(flattened_lst, "NRGINT")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return parse_json(clean_document_list)
+
+
+##################################
+###      Outcome Variables     ###
+##################################
+@compute_bp.route("/outcome/GDPMER", methods=['GET'])
+@login_required
+def compute_gdpmer():
+    if not sspi_raw_outcome_data.raw_data_available("GDPMER"):
+        return "No Data for GDPMER found in raw database! Try running collect."
+    gdpmer_raw = sspi_raw_outcome_data.fetch_raw_data("GDPMER")
+    extracted_data = []
+    for obs in gdpmer_raw:
+        value = obs["Raw"]["value"]
+        if not value or value == "None" or value == "null":
+            continue
+        if not len(obs["Raw"]["countryiso3code"]) == 3:
+            continue
+        extracted_data.append({
+            "CountryCode": obs["Raw"]["countryiso3code"],
+            "IndicatorCode": "GDPMER",
+            "Year": int(obs["Raw"]["date"]),
+            "Value": float(obs["Raw"]["value"]),
+            "Unit": obs["Raw"]["indicator"]["value"],
+            "Score": float(obs["Raw"]["value"])
+        })
+    sspi_clean_outcome_data.insert_many(extracted_data)
+    return parse_json(extracted_data)
+
+
+@compute_bp.route("/outcome/GDPPPP", methods=['GET'])
+@login_required
+def compute_gdpppp():
+    if not sspi_raw_outcome_data.raw_data_available("GDPPPP"):
+        return "No Data for GDPPPP found in raw database! Try running collect."
+    gdpppp_raw = sspi_raw_outcome_data.fetch_raw_data("GDPPPP")
+    extracted_data = []
+    for obs in gdpppp_raw:
+        value = obs["Raw"]["value"]
+        if not value or value == "None" or value == "null":
+            continue
+        if not len(obs["Raw"]["countryiso3code"]) == 3:
+            continue
+        extracted_data.append({
+            "CountryCode": obs["Raw"]["countryiso3code"],
+            "IndicatorCode": "GDPPPP",
+            "Year": int(obs["Raw"]["date"]),
+            "Value": float(obs["Raw"]["value"]),
+            "Unit": obs["Raw"]["indicator"]["value"],
+            "Score": float(obs["Raw"]["value"])
+        })
+    sspi_clean_outcome_data.insert_many(extracted_data)
+    return parse_json(extracted_data)
