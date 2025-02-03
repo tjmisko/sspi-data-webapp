@@ -276,7 +276,8 @@ def intrnt():
 @login_required
 def incarc():
     def collect_iterator(**kwargs):
-        yield from collectPrisonStudiesData(**kwargs)
+        yield from collectWorldBankdata("SP.POP.TOTL", "PRISON", IntermediateCode="UNPOPL", **kwargs)
+        yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ###########################
