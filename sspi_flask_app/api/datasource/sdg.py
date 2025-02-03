@@ -190,4 +190,23 @@ def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+
+def flatten_nested_dictionary_physpc(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "0.0" or value == 0 or value == 0.0 or value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "PHYSDG",
+                "Unit": "Percent",
+                "Description": "Coverage of essential health services (defined as the average coverage of essential services based on tracer interventions that include reproductive, maternal, newborn and child health, infectious diseases, non-communicable diseases and service capacity and access, among the general and the most disadvantaged population). ",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
                 

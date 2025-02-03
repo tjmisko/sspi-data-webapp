@@ -248,6 +248,14 @@ def fampln():
         yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/PHYSPC", methods=['GET'])
+@login_required
+def physpc():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 ##############################
 ## Category: INFRASTRUCTURE ##
 ##############################
