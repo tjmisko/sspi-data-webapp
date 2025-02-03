@@ -175,11 +175,9 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         if chart_preferences is None:
             chart_preferences = {"pinnedArray": []}
         country_query = request.args.getlist("CountryCode")
-        print(country_query)
         query = {"ICode": IndicatorCode}
         if country_query:
             query["CCode"] = {"$in": country_query}
-        print(query)
         dynamic_indicator_data = parse_json(
             # sspi_dynamic_line_data.find(query, {"_id": 0})
             sspi_dynamic_line_data.find(query)
