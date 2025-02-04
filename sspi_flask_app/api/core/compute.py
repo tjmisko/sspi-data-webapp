@@ -1,4 +1,4 @@
-import json
+import json, os
 import bs4 as bs
 from bs4 import BeautifulSoup
 from flask import (
@@ -23,18 +23,22 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_raw_api_data,
+    sspi_raw_outcome_data,
+    sspi_clean_outcome_data,
+    sspi_dynamic_line_data
     # sspi_analysis
 )
 
 from ..datasource.sdg import (
     flatten_nested_dictionary_biodiv,
     extract_sdg_pivot_data_to_nested_dictionary,
-    flatten_nested_dictionary_physpc,
+    flatten_nested_dictionary_airpol,
     flatten_nested_dictionary_redlst,
     flatten_nested_dictionary_intrnt,
     flatten_nested_dictionary_watman,
     flatten_nested_dictionary_stkhlm,
-    flatten_nested_dictionary_nrgint
+    flatten_nested_dictionary_nrgint,
+    flatten_nested_dictionary_fampln
 )
 # from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import (
@@ -48,6 +52,10 @@ from ..datasource.iea import (
     filterSeriesListiea,
     cleanIEAData_altnrg,
     clean_IEA_data_GTRANS,
+)
+from ..datasource.who import (
+    cleanWHOdata,
+    cleanWHOdata_UHC
 )
 import pandas as pd
 # from pycountry import countries
@@ -217,7 +225,6 @@ def compute_watman():
     clean_document_list, incomplete_observations = filter_incomplete_data(
         zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
     return parse_json(clean_document_list)
 
 
@@ -243,6 +250,19 @@ def compute_stkhlm():
 ### Category: ENERGY ###
 ########################
 
+@compute_bp.route("/NRGINT")
+@login_required
+def compute_nrgint():
+    if not sspi_raw_api_data.raw_data_available("NRGINT"):
+        return redirect(url_for("api_bp.collect_bp.NRGINT"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("NRGINT")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    computed = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
+    scored_list = score_single_indicator(computed, "NRGINT")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/COALPW")
 @login_required
@@ -297,6 +317,19 @@ def compute_coalpw():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
+@compute_bp.route("/AIRPOL")
+@login_required
+def compute_airpol():
+    if not sspi_raw_api_data.raw_data_available("AIRPOL"):
+        return redirect(url_for("api_bp.collect_bp.AIRPOL"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("AIRPOL")
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    flattened = flatten_nested_dictionary_airpol(intermediate_obs_dict)
+    scored_list = score_single_indicator(flattened, "AIRPOL")
+    cleaned, filtered = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(cleaned)
+    print(filtered)
+    return parse_json(cleaned)
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
@@ -368,7 +401,7 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
-    insert_pop_data()
+    # insert_pop_data()
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
 
@@ -393,17 +426,13 @@ def compute_gtrans():
         "ENER_TRANS": "1A3 - Transport"
     }
     metadata_code_map = {
-        "ENER_TRANS": "TCO2EQ"
+        "ENER_TRANS": "TCO2EM"
     }
     document_list = []
 
     for code in metadata_codes.keys():
         document_list.extend(filterSeriesListiea(series, code, "GTRANS"))
     long_iea_data = pd.DataFrame(document_list)
-    pop_data = pd.read_csv("local/UN_population_data.csv").astype(str)
-    # ### combining in pandas for UN population data to conpute correct G####
-    wb_df = pd.DataFrame(worldbank_clean_list)
-    wb_df = wb_df[wb_df["RAW"].notna()].astype(str)
 
     wb_df = wb_df.merge(pop_data, how="left", left_on=[
                         "YEAR", "CountryName"], right_on=["year", "country"])
@@ -471,6 +500,124 @@ def compute_senior():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
+#################################
+## Category: WORKER ENGAGEMENT ##
+#################################
+
+@compute_bp.route("/LFPART", methods=['GET'])
+@login_required
+def compute_lfpart():
+    if not sspi_raw_api_data.fetch_raw_data("LFPART"):
+        return redirect(url_for("collect_bp.LFPART"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("LFPART")
+    series_list = extractAllSeriesILO(raw_data[0]["Raw"])
+    document_list = filterSeriesListlfpart(series_list)
+    long_lfpart_data = pd.DataFrame(document_list)
+    long_lfpart_data.drop(long_lfpart_data[long_lfpart_data["CountryCode"].map(lambda s: len(s) != 3)].index, inplace=True)
+    long_lfpart_data.astype({"Year": "int", "Value": "float"})
+    scored_document_list = score_single_indicator(json.loads(str(long_lfpart_data.to_json(orient="records")), parse_int=int, parse_float=float), 
+                                                  IndicatorCode="LFPART")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_document_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return parse_json(clean_document_list)
+    # print(raw_data_soup.find_all('generic:series'))
+    # return None
+
+@compute_bp.route("/FDEPTH", methods=['GET'])
+# @login_required
+def compute_fdepth():
+    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
+        return redirect(url_for("collect_bp.FDEPTH"))
+    credit_raw = sspi_raw_api_data.fetch_raw_data("FDEPTH", IntermediateCode = "CREDIT")
+    credit_clean = cleaned_wb_current(credit_raw, "FDEPTH", unit = "Percent")
+    deposit_raw = sspi_raw_api_data.fetch_raw_data("FDEPTH", IntermediateCode = "DPOSIT")
+    deposit_clean = cleaned_wb_current(deposit_raw, "FDEPTH", unit = "Percent")
+    combined_list = credit_clean + deposit_clean
+    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
+                                     ScoreFunction= lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
+                                     ScoreBy= "Score")
+    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_data)
+    return parse_json(filtered_list)
+
+
+###########################################
+# Compute Routes for Pillar: PUBLIC GOODS #
+###########################################
+@compute_bp.route("/ATBRTH")
+@login_required
+def compute_atbrth():
+    if not sspi_raw_api_data.raw_data_available("ATBRTH"):
+        return redirect(url_for("api_bp.collect_bp.ATBRTH"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("ATBRTH")
+    cleaned = cleanWHOdata(raw_data, "ATBRTH", "Percent",
+                           "The proportion of births attended by trained and/or skilled health personnel")
+    scored = score_single_indicator(cleaned, "ATBRTH")
+    filtered_list, incomplete_data = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_data)
+    return parse_json(filtered_list)
+
+@compute_bp.route("/DPTCOV")
+@login_required
+def compute_dptcov():
+    if not sspi_raw_api_data.raw_data_available("DPTCOV"):
+        return redirect(url_for("api_bp.collect_bp.DPTCOV"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("DPTCOV")
+    cleaned = cleanWHOdata(raw_data, "DPTCOV", "Percent",
+                           "DTP3 immunization coverage among one-year-olds (%)")
+    scored = score_single_indicator(cleaned, "DPTCOV")
+    filtered_list, incomplete_data = filter_incomplete_data(scored)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    # print(incomplete_data)
+    return parse_json(filtered_list)
+
+# @compute_bp.route("/PHYSPC")
+# @login_required
+# def compute_physpc():
+#     if not sspi_raw_api_data.raw_data_available("PHYSPC"):
+#         return redirect(url_for("api_bp.collect_bp.PHYSPC"))
+#     raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
+#     cleaned = cleanWHOdata(raw_data, "PHYSPC", "Doctors/10000",
+#                            "Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.")
+#     scored = score_single_indicator(cleaned, "PHYSPC")
+#     filtered_list, incomplete_data = filter_incomplete_data(scored)
+#     sspi_clean_api_data.insert_many(filtered_list)
+#     print(incomplete_data)
+#     return parse_json(filtered_list)
+
+@compute_bp.route("/PHYSPC")
+@login_required
+def compute_physpc():
+    if not sspi_raw_api_data.raw_data_available("PHYSPC"):
+        return redirect(url_for("api_bp.collect_bp.PHYSPC"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
+    cleaned = cleanWHOdata_UHC(raw_data, "PHYSPC", "UHC Service Coverage Index",
+                           "Coverage of essential health services (defined as the average coverage of essential services based on tracer interventions that include reproductive, maternal, newborn and child health, infectious diseases, non-communicable diseases and service capacity and access, among the general and the most disadvantaged population).")
+    scored = score_single_indicator(cleaned, "PHYSPC")
+    filtered_list, incomplete_data = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_data)
+    return parse_json(filtered_list)
+
+
+
+
+@compute_bp.route("/FAMPLN")
+@login_required
+def compute_fampln():
+    if not sspi_raw_api_data.raw_data_available("FAMPLN"):
+        return redirect(url_for("api_bp.collect_bp.FAMPLN"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("FAMPLN")
+    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    final = flatten_nested_dictionary_fampln(inter)
+    computed_list = score_single_indicator(final, "FAMPLN")
+    filtered_list, incomplete_data = filter_incomplete_data(computed_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(len(incomplete_data))
+    return parse_json(filtered_list)
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
@@ -483,6 +630,31 @@ def compute_prison():
     print(table)
     return "string"
 
+@compute_bp.route("/DRKWAT")
+@login_required
+def compute_drkwat():
+    if not sspi_raw_api_data.raw_data_available("DRKWAT"):
+        return redirect(url_for("api_bp.collect_bp.DRKWAT"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
+    cleaned = cleaned_wb_current(raw_data, "DRKWAT", "Percent")
+    scored = score_single_indicator(cleaned, "DRKWAT")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(filtered_list)
+
+@compute_bp.route("/SANSRV")
+@login_required
+def compute_sansrv():
+    if not sspi_raw_api_data.raw_data_available("SANSRV"):
+        return redirect(url_for("api_bp.collect_bp.SANSRV"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("SANSRV")
+    cleaned = cleaned_wb_current(raw_data, "SANSRV", "Percent")
+    scored = score_single_indicator(cleaned, "SANSRV")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(filtered_list)
 
 @compute_bp.route("/INTRNT", methods=['GET'])
 # @login_required
@@ -509,27 +681,6 @@ def compute_intrnt():
     return parse_json(filtered_list)
 
 
-@compute_bp.route("/FDEPTH", methods=['GET'])
-# @login_required
-def compute_fdepth():
-    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
-        return redirect(url_for("collect_bp.FDEPTH"))
-    credit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="CREDIT")
-    credit_clean = cleaned_wb_current(credit_raw, "FDEPTH", unit="Percent")
-    deposit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="DPOSIT")
-    deposit_clean = cleaned_wb_current(deposit_raw, "FDEPTH", unit="Percent")
-    combined_list = credit_clean + deposit_clean
-    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
-                                     ScoreFunction=lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
-                                     ScoreBy="Score")
-    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
-
-
 @compute_bp.route("/COLBAR", methods=['GET'])
 # @login_required
 def compute_colbar():
@@ -552,110 +703,26 @@ def compute_colbar():
     return parse_json(scored_list)
 
 
-@compute_bp.route("/NRGINT", methods=['GET'])
+@compute_bp.route("/outcome/GDPMER", methods=['GET'])
 # @login_required
-def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("collect_bp.NRGINT"))
-    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-    nrgint_raw)
-    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
-
-
-################################################
-# Compute Routes for Pillar: MARKET STRUCTURE #
-################################################
-
-#########################
-### Category: TAXES ###
-#########################
-@compute_bp.route("/TAXREV")
-@login_required
-def compute_taxrev():
-    if not sspi_raw_api_data.raw_data_available("TAXREV"):
-        return redirect(url_for("api_bp.collect_bp.TAXREV"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("TAXREV")
-    cleaned_data = cleaned_wb_current(raw_data, "TAXREV", "Tax Revenue")
-    scored_list = score_single_indicator(cleaned_data, "TAXREV")
-    filtered_list, incomplete_data = filter_incomplete_data(scored_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-
-    '''
-    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
-    taxrev_raw = pd.read_csv(csv_virtual_file)
-    taxrev_raw = taxrev_raw.reset_index()
-    taxrev_raw = taxrev_raw.rename(columns = {"economy":"CountryCode"})
-    taxrev_raw = taxrev_raw.melt(id_vars = ["CountryCode"], var_name = "Year", value_name = "Value")
-    taxrev_raw["Year"] = taxrev_raw["Year"].str.replace("YR", "")
-    taxrev_raw["Year"] = pd.to_numeric(taxrev_raw["Year"])
-    taxrev_raw = taxrev_raw.dropna()
-    taxrev_raw["IndicatorCode"] = "TAXREV"
-    taxrev_raw["Unit"] = "Index"
-    taxrev_raw = taxrev_raw[["IndicatorCode","CountryCode","Year","Value","Unit"]]
-    taxrev_raw = taxrev_raw.sort_values(by=["CountryCode","Year"])
-    taxrev_raw = taxrev_raw.reset_index(drop=True)
-    obs_list = json.loads(taxrev_raw.to_json(orient="records"))
-    scored_list = score_single_indicator(obs_list, "TAXREV")
-    sspi_clean_api_data.insert_many(scored_list)
-    '''
-    return parse_json(scored_list)
-
-
-####################################
-### Category: CORPORATE TAX RATE ###
-####################################
-@compute_bp.route("/CRPTAX")
-@login_required
-def compute_crptax():
-    if not sspi_raw_api_data.raw_data_available("CRPTAX"):
-        return redirect(url_for("api_bp.collect_bp.CRPTAX"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("CRPTAX")
-    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
-    crptax_raw = pd.read_csv(csv_virtual_file)
-    taxrev_raw = taxrev_raw.reset_index()
-    taxrev_raw = taxrev_raw.rename(columns = {"economy":"CountryCode"})
-    taxrev_raw = taxrev_raw.melt(id_vars = ["CountryCode"], var_name = "Year", value_name = "Value")
-    taxrev_raw["Year"] = taxrev_raw["Year"].str.replace("YR", "")
-    taxrev_raw["Year"] = pd.to_numeric(taxrev_raw["Year"])
-    taxrev_raw = taxrev_raw.dropna()
-    taxrev_raw["IndicatorCode"] = "TAXREV"
-    taxrev_raw["Unit"] = "Index"
-    taxrev_raw = taxrev_raw[["IndicatorCode","CountryCode","Year","Value","Unit"]]
-    taxrev_raw = taxrev_raw.sort_values(by=["CountryCode","Year"])
-    taxrev_raw = taxrev_raw.reset_index(drop=True)
-    obs_list = json.loads(taxrev_raw.to_json(orient="records"))
-    scored_list = score_single_indicator(obs_list, "TAXREV")
-    sspi_clean_api_data.insert_many(scored_list)
-    return parse_json(scored_list)
-    
-###########################################
-# Compute Routes for Pillar: PUBLIC GOODS #
-###########################################
-
-
-#################################################
-### Category: UNIVERSAL HEALTH COVERAGE INDEX ###
-#################################################
-@compute_bp.route("/PHYSPC")
-@login_required
-def compute_physpc():
-    if not sspi_raw_api_data.raw_data_available("PHYSPC"):
-            return redirect(url_for("collect_bp.PHYSPC"))
-    
-    raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    flattened_lst = flatten_nested_dictionary_physpc(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "PHYSPC")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+def compute_gdpmer():
+    if not sspi_raw_outcome_data.raw_data_available("GDPMER"):
+        return "No Data for GDPMER found in raw database! Try running collect."
+    gdpmer_raw = sspi_raw_outcome_data.fetch_raw_data("GDPMER")
+    extracted_data = []
+    for obs in gdpmer_raw:
+        value = obs["Raw"]["value"]
+        if not value or value == "None" or value == "null":
+            continue
+        if not len(obs["Raw"]["countryiso3code"]) == 3:
+            continue
+        extracted_data.append({
+            "CountryCode": obs["Raw"]["countryiso3code"],
+            "IndicatorCode": "GDPMER",
+            "Year": int(obs["Raw"]["date"]),
+            "Value": float(obs["Raw"]["value"]),
+            "Unit": obs["Raw"]["indicator"]["value"],
+            "Score": float(obs["Raw"]["value"])
+        })
+    sspi_clean_outcome_data.insert_many(extracted_data)
+    return parse_json(extracted_data)
