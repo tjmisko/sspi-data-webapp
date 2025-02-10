@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
-from ..resources.utilities import parse_json, find_population
+from ..resources.utilities import parse_json
 from sspi_flask_app.models.database import sspi_raw_api_data
 from datetime import datetime
 import base64
@@ -30,7 +30,6 @@ def collect_all_pages(url_slugs, **kwargs):
     url_base = "https://www.prisonstudies.org"
     count = 0
     failed_matches = []
-    print(url_slugs)
     for url_slug in url_slugs:
         query_string = url_slug[9:].replace("-", " ")
         count += 1
@@ -57,8 +56,7 @@ def collect_all_pages(url_slugs, **kwargs):
          "Raw": response.content,
          "CollectedAt": datetime.now()}
         sspi_raw_api_data.raw_insert_one(obs, "PRISON", **kwargs)
-        count += 1
-        yield f"Inserted {COU} page"
+        yield f"Inserted {COU} page\n"
     print(failed_matches)
     return f"Collected {count} country webpages"
 
@@ -79,31 +77,16 @@ namefix = {
     "united kingdom england wales": "united kingdom",
     "united kingdom scotland": "united kingdom",
     "united kingdom northern ireland": "united kingdom",
-    "bosnia and herzegovina federation": "bosnia and heregovina",
     "kosovokosova": "kosovo"
-}
-
-# def store_webpages_as_raw_data(webpage_list, **kwargs):
-#     data_list = []
-#     count = 0
-#     for webpage in webpage_list:
-#         country_code = list(webpage.keys())[0]
-#         obs = {"IndicatorCode": "PRISON",
-#          "CountryCode": country_code,
-#          "Raw": webpage[country_code],
-#          "CollectedAt": datetime.now()}
-#         data_list.append(obs)
-#         count += 1
-#         # yield f"Scraped webpage for {country} and inserted HTML data into sspi_raw_api_data\n"
-#     sspi_raw_api_data.raw_insert_many(data_list, "PRISON", **kwargs)
-#     return f"All {count} countries' data inserted into raw database"     
+}    
 
 def scrape_stored_pages_for_data():
     prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
+    prison_pop_data = sspi_raw_api_data.fetch_raw_data("PRISON", IntermediateCode= "PRIPOP")
     final_data = []
     gbr_data = []
     missing_countries = []
-    for entry in prison_data:
+    for entry in prison_pop_data:
         country = entry["Raw"]["CountryCode"]
         data = entry["Raw"]["Raw"]["$binary"]["base64"]
         web_page = base64.b64decode(data).decode('utf-8')
@@ -127,11 +110,10 @@ def scrape_stored_pages_for_data():
         df["Prison Population Total"] = df["Prison Population Total"].replace("c ", "", regex = True)
         df["Prison Population Rate"] = df["Prison Population Rate"].replace("c ", "", regex = True)
         if "GBR" in country:
-            print(df)
             df.apply(lambda row: gbr_data.append(
                 {"IndicatorCode": "PRISON",
                 "Value": int(row["Prison Population Total"]),
-                "WPB Rate": int(row["Prison Population Rate"]),
+                # "WPB Rate": int(row["Prison Population Rate"]),
                 "Year": int(row["Year"]),
                 "CountryCode": country,
                 "Unit": "People per 100,000",
@@ -140,7 +122,7 @@ def scrape_stored_pages_for_data():
             df.apply(lambda row: final_data.append(
                 {"IndicatorCode": "PRISON",
                 "Value": int(row["Prison Population Total"]),
-                "WPB Rate": int(row["Prison Population Rate"]),
+                # "WPB Rate": int(row["Prison Population Rate"]),
                 "Year": int(row["Year"]),
                 "CountryCode": country,
                 "Unit": "People per 100,000",
@@ -156,26 +138,11 @@ def scrape_stored_pages_for_data():
         year_sum = sum(gbr_obs[year])
         obs = {"IndicatorCode": "PRISON",
                 "Value": year_sum,
-                "WPB Rate": obs["WPB Rate"],
+                # "WPB Rate": obs["WPB Rate"],
                 "Year": year,
                 "CountryCode": "GBR",
                 "Unit": "People per 100,000",
                 "Description": "Prison population rate per 100,000 of the national population."}
         final_data.append(obs)
     return final_data, missing_countries
-
-
-def compute_prison_rate(final_data_list):
-    final_list = []
-    missing_entries= []
-    for obs in final_data_list:
-        cou = obs["CountryCode"]
-        year = obs["Year"]
-        pop = find_population(cou, year)
-        if pop == 0:
-            missing_entries.append(obs)
-            continue
-        obs["Value"] = (obs["Value"] / pop) * 100000
-        final_list.append(obs)
-    return final_list, missing_entries
         

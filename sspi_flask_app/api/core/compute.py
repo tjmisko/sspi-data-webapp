@@ -42,7 +42,11 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_stkhlm,
     flatten_nested_dictionary_nrgint
 )
-# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.worldbank import (
+    cleanedWorldBankData, 
+    cleaned_wb_current,
+    clean_WB_population
+    )
 from ..datasource.oecdstat import (
     # organizeOECDdata,
     # OECD_country_list,
@@ -506,11 +510,17 @@ def compute_senior():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
+    cleaned_pop = clean_WB_population("PRISON", Intermediate = "WBPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    final_list, incomplete_observations = compute_prison_rate(clean_data_list)
-    # print(f"Missing from World Prison Brief: {missing_data_list}")
-    # print(f"Missing from UN population: {incomplete_observations}")
-    return final_list
+    final_list = zip_intermediates(
+        cleaned_pop + clean_data_list, "PRISON", 
+        ScoreFunction = lambda PRIPOP, WBPOPL: (PRIPOP / WBPOPL) * 100000,
+        ScoreBy = "Score")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        final_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
+    return clean_document_list
 
 ##################################
 ### Category: INFRASTRUCTURE ###
