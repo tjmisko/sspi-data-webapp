@@ -30,7 +30,7 @@ from sspi_flask_app.models.database import (
     # sspi_analysis
 )
 from ..datasource.prisonstudies import (
-    scrape_stored_pages_for_data, compute_prison_rate
+    scrape_stored_pages_for_data
     )
 
 from ..datasource.sdg import (
