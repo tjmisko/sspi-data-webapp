@@ -256,7 +256,7 @@ def compute_stkhlm():
 ########################
 
 
-@compute_bp.route("/COALPW")
+@compute_bp.route("/COALPW", methods=['GET'])
 @login_required
 def compute_coalpw():
     if not sspi_raw_api_data.raw_data_available("COALPW"):
@@ -598,9 +598,8 @@ def compute_colbar():
 ##################################
 ### Category: WORKER WELLBEING ###
 ##################################
-
 @compute_bp.route("/FATINJ", methods=['GET'])
-# @login_required
+@login_required
 def compute_fatinj():
     if not sspi_raw_api_data.raw_data_available("FATINJ"):
         return redirect(url_for("collect_bp.FATINJ"))
@@ -621,6 +620,33 @@ def compute_fatinj():
     fatinj_raw.dropna(subset=['Value'], inplace=True)
     obs_list = json.loads(str(fatinj_raw.to_json(orient="records")))
     scored_list = score_single_indicator(obs_list, "FATINJ")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
+
+###########################
+### Category: Worker Wellbeing###
+###########################
+
+
+@compute_bp.route("/UNEMPL", methods=['GET'])
+@login_required
+def compute_unempl():
+    if not sspi_raw_api_data.raw_data_available("UNEMPL"):
+        return redirect(url_for("collect_bp.UNEMPL"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("UNEMPL")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"])
+    colbar_raw = pd.read_csv(csv_virtual_file)
+    colbar_raw_f = colbar_raw[colbar_raw['SOC'] == 'SOC_CONTIG_UNE']
+    colbar_raw_f = colbar_raw_f[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    colbar_raw_f = colbar_raw_f.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    colbar_raw_f['IndicatorCode'] = 'UNEMPL'
+    colbar_raw_f['Unit'] = 'Rate'
+    obs_list = json.loads(colbar_raw_f.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "UNEMPL")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 
