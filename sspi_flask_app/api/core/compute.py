@@ -510,11 +510,11 @@ def compute_senior():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
-    cleaned_pop = clean_WB_population("PRISON", Intermediate = "WBPOPL")
+    cleaned_pop = clean_WB_population("PRISON", Intermediate = "UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     final_list = zip_intermediates(
         cleaned_pop + clean_data_list, "PRISON", 
-        ScoreFunction = lambda PRIPOP, WBPOPL: (PRIPOP / WBPOPL) * 100000,
+        ScoreFunction = lambda PRIPOP, UNPOPL: (PRIPOP / UNPOPL) * 100000,
         ScoreBy = "Score")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)

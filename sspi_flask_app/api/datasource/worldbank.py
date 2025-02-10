@@ -68,10 +68,10 @@ def cleaned_wb_current(RawData, IndName, unit):
         clean_data_list.append(clean_obs)
     return clean_data_list
 
-def clean_WB_population(IndicatorCode, Intermediate = "WBPOPL"):
-    if Intermediate != "WBPOPL":
-        return "Intermediate for world bank population should be 'WBPOPL'"
-    pop_data = sspi_raw_api_data.fetch_raw_data(IndicatorCode, IntermediateCode = "WBPOPL")
+def clean_WB_population(IndicatorCode, Intermediate = "UNPOPL"):
+    if Intermediate != "UNPOPL":
+        return "Intermediate for world bank population should be 'UNPOPL'"
+    pop_data = sspi_raw_api_data.fetch_raw_data(IndicatorCode, IntermediateCode = "UNPOPL")
     cleaned_pop = cleaned_wb_current(pop_data, IndicatorCode, "Population")
     return cleaned_pop
 
