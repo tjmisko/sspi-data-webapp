@@ -1,4 +1,5 @@
 import json
+import jq
 
 import bs4 as bs
 import numpy as np
@@ -640,10 +641,38 @@ def compute_unempl():
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 
+############################
+### Category: Healthcare ###
+############################
+
+
+@compute_bp.route("/CSTUNT", methods=['GET'])
+@login_required
+def compute_cstunt():
+    raw_data = sspi_raw_api_data.fetch_raw_data("CSTUNT")[0]["Raw"]["fact"]
+    # Slice out the relevant data and identifiers (in Dim array)
+    first_slice = '.[] | {IndicatorCode: "CSTUNT", Value: .value.numeric, Dim }'
+    first_slice_filter = jq.compile(first_slice)
+    dim_list = first_slice_filter.input(raw_data).all()
+    # Reduce/Flatten the Dim array
+    map_reduce = '.[] |  reduce .Dim[] as $d (.; .[$d.category] = $d.code)'
+    map_reduce_filter = jq.compile(map_reduce)
+    reduced_list = map_reduce_filter.input(dim_list).all()
+    # Remap the keys to the correct names
+    rename_keys = '.[] | { IndicatorCode, CountryCode: .COUNTRY, Year: .YEAR, Value, Unit: "Percentage" }'
+    rename_keys_filter = jq.compile(rename_keys)
+    value_list = rename_keys_filter.input(reduced_list).all()
+    # Score the indicator data
+    scored_list = score_single_indicator(value_list, "CSTUNT")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
 
 ##################################
 ###      Outcome Variables     ###
 ##################################
+
+
 @compute_bp.route("/outcome/GDPMER", methods=['GET'])
 @login_required
 def compute_gdpmer():
