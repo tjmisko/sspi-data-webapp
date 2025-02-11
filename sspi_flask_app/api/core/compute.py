@@ -518,7 +518,7 @@ def compute_prison():
         ScoreBy = "Score")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return clean_document_list
 

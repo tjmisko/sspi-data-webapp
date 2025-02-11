@@ -81,7 +81,6 @@ namefix = {
 }    
 
 def scrape_stored_pages_for_data():
-    prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
     prison_pop_data = sspi_raw_api_data.fetch_raw_data("PRISON", IntermediateCode= "PRIPOP")
     final_data = []
     gbr_data = []
@@ -114,6 +113,7 @@ def scrape_stored_pages_for_data():
                 {"IndicatorCode": "PRISON",
                 "Value": int(row["Prison Population Total"]),
                 # "WPB Rate": int(row["Prison Population Rate"]),
+                "IntermediateCode": "PRIPOP",
                 "Year": int(row["Year"]),
                 "CountryCode": country,
                 "Unit": "People per 100,000",
@@ -123,6 +123,7 @@ def scrape_stored_pages_for_data():
                 {"IndicatorCode": "PRISON",
                 "Value": int(row["Prison Population Total"]),
                 # "WPB Rate": int(row["Prison Population Rate"]),
+                "IntermediateCode": "PRIPOP",
                 "Year": int(row["Year"]),
                 "CountryCode": country,
                 "Unit": "People per 100,000",
@@ -139,6 +140,7 @@ def scrape_stored_pages_for_data():
         obs = {"IndicatorCode": "PRISON",
                 "Value": year_sum,
                 # "WPB Rate": obs["WPB Rate"],
+                "IntermediateCode": "PRIPOP",
                 "Year": year,
                 "CountryCode": "GBR",
                 "Unit": "People per 100,000",
