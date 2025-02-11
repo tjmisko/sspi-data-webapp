@@ -34,7 +34,7 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_stkhlm,
     flatten_nested_dictionary_nrgint
 )
-# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
 from ..datasource.oecdstat import (
     # organizeOECDdata,
     # OECD_country_list,
@@ -506,6 +506,20 @@ def compute_intrnt():
     print(incomplete_observations)
     return parse_json(filtered_list)
 
+@compute_bp.route("/PUBACC", methods=['GET'])
+@login_required
+def compute_pubacc():
+    if not sspi_raw_api_data.raw_data_available("PUBACC"):
+        return redirect(url_for("collect_bp.PUBACC"))
+    pubacc_raw = sspi_raw_api_data.fetch_raw_data("PUBACC")
+    pubacc_clean = cleaned_wb_current(pubacc_raw, "PUBACC", unit="Percent", interpolate = True)
+    pubacc_df = pd.DataFrame(pubacc_clean)
+    pubacc_interpolated = pubacc_df.interpolate(method="linear")
+    filtered_list, incomplete_data = filter_incomplete_data(pubacc_interpolated)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    # print(incomplete_data)
+
+    return parse_json(filtered_list)
 
 @compute_bp.route("/FDEPTH", methods=['GET'])
 # @login_required
