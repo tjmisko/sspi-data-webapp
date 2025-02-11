@@ -292,3 +292,6 @@ def find_population(country_code, year):
     '''
     population_data = sspi_country_characteristics.fetch_population_data("UNPOPL", country_code, year)
     return population_data
+
+    
+
