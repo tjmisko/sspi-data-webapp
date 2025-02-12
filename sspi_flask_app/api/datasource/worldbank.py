@@ -19,6 +19,7 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         time.sleep(0.5)
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
+
 def cleanedWorldBankData(RawData, IndName):
     """
     Takes in list of collected raw data and our 6 letter indicator code 

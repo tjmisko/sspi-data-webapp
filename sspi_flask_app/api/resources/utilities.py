@@ -247,8 +247,9 @@ def filter_incomplete_data(indicator_document_list):
 
 def score_single_indicator(document_list, IndicatorCode):
     """
-     Utility function for scoring an indicator which does not contain intermediates; does not require score function
-     """
+    Utility function for scoring an indicator which does not
+    contain intermediates; does not require score function
+    """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
     [sspi_clean_api_data.validate_document_format(
@@ -281,3 +282,13 @@ def colormap(PillarCode, alpha: str = "ff"):
         return f"#ff851b{alpha}"
     if PillarCode == "PG":
         return f"#007bff{alpha}"
+
+
+def find_population(country_code, year):
+    '''
+    Fetches population data from sspi_country_characteristics for a country in a given year
+    country_code: str of alpha-3 code
+    year: int of year
+    '''
+    population_data = sspi_country_characteristics.fetch_population_data("UNPOPL", country_code, year)
+    return population_data

@@ -1,8 +1,7 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, jsonify
 from flask_login import login_required, current_user
 import requests
 import time
-from datetime import datetime
 
 from ..datasource.oecdstat import collectOECDIndicator
 from ..datasource.epi import collectEPIData
@@ -12,6 +11,8 @@ from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.who import collectWHOdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
+from ..datasource.who import collectCSTUNTData
+
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (
     sspi_raw_outcome_data,
@@ -181,12 +182,21 @@ def senior():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+@collect_bp.route("/UNEMPL")
+@login_required
+def unempl():
+    def collect_iterator(**kwargs):
+        yield from collectILOData("DF_SDG_0131_SEX_SOC_RT", "UNEMPL", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/FATINJ")
 @login_required
 def fatinj():
     def collect_iterator(**kwargs):
         yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 #####################
 ## Category: TAXES ##
 #####################
@@ -273,6 +283,15 @@ def fampln():
         yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/CSTUNT", methods=['GET'])
+@login_required
+def cstunt():
+    def collect_iterator(**kwargs):
+        yield from collectCSTUNTData(**kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 ##############################
 ## Category: INFRASTRUCTURE ##
 ##############################
@@ -303,11 +322,12 @@ def intrnt():
 ## Category: PUBLIC SAFETY ##
 #############################
 
-@collect_bp.route("/INCARC", methods=['GET'])
+@collect_bp.route("/PRISON", methods=['GET'])
 @login_required
 def prison():
     def collect_iterator(**kwargs):
-        yield from collectPrisonStudiesData(**kwargs)
+        yield from collectWorldBankdata("SP.POP.TOTL", "PRISON", IntermediateCode="UNPOPL", **kwargs)
+        yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ###########################
