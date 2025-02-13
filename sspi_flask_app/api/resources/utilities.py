@@ -133,6 +133,8 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
     """
     intermediate_document_list = convert_data_types(intermediate_document_list)
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
+    intermediate_document_list, noneish_list = drop_none_or_na(intermediate_document_list)
+    print(f"There were {len(noneish_list)} none/na documents found in intermediate_document_list")
     gp_intermediate_list = append_goalpost_info(
         intermediate_document_list, ScoreBy)
     indicator_document_list = group_by_indicator(
@@ -150,6 +152,19 @@ def convert_data_types(intermediate_document_list):
         document["Year"] = int(document["Year"])
         document["Value"] = float(document["Value"])
     return intermediate_document_list
+
+
+def drop_none_or_na(intermediate_document_list):
+    """
+    Utility function for dropping documents with None or NaN values
+    """
+    noneish_list = []
+    for document in intermediate_document_list:
+        if document["Value"] is None or math.isnan(document["Value"]):
+            noneish_list.append(document)
+    intermediate_document_list = [
+        document for document in intermediate_document_list if document not in noneish_list]
+    return intermediate_document_list, noneish_list
 
 
 def append_goalpost_info(intermediate_document_list, ScoreBy):
