@@ -577,9 +577,8 @@ def compute_aqelec():
     quelct_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")
     
  
-    avelec_clean = cleaned_wb_current(avelec_raw, "AQELEC", unit="Percent")
-    quelct_clean = cleaned_wb_current(quelct_raw, "AQELEC", unit="Percent")
-    combined_list = avelec_clean + quelct_clean
+
+    combined_list = avelec_raw + quelct_raw
     cleaned_list = zip_intermediates(
         combined_list, 
         "AQELEC", 
