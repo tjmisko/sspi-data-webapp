@@ -53,6 +53,29 @@ def cleaned_wb_current(RawData, IndName, unit):
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
+        if entry["Raw"]["value"] is None:
+            continue
+        if "IntermediateCode" in entry.keys():
+            clean_obs_inter = {
+                "CountryCode": iso3,
+                "IndicatorCode": IndName,
+                "IntermediateCode": entry["IntermediateCode"],
+                "Description": entry["Raw"]["indicator"]["value"],
+                "Year": entry["Raw"]["date"],
+                "Unit": unit,
+                "Value": string_to_float(entry["Raw"]["value"])
+            }
+            clean_data_list.append(clean_obs_inter)
+        else:
+            clean_obs_wo_inter = {
+                "CountryCode": iso3,
+                "IndicatorCode": IndName,
+                "Description": entry["Raw"]["indicator"]["value"],
+                "Year": entry["Raw"]["date"],
+                "Unit": unit,
+                "Value": string_to_float(entry["Raw"]["value"])
+            }
+            clean_data_list.append(clean_obs_wo_inter)
         value = entry["Raw"]["value"]
         if value == "NaN":
             continue
@@ -67,8 +90,6 @@ def cleaned_wb_current(RawData, IndName, unit):
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
-
-
 
 
 
