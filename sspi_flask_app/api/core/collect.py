@@ -363,3 +363,5 @@ def gdpppp():
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
 
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
