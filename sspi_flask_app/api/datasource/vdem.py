@@ -21,6 +21,7 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
             print("Files in ZIP:", file_list) 
             
             csv_files = [f for f in file_list if f.lower().endswith(".csv") and "__MACOSX" not in f]
+            print("csv files:", csv_files)
             if not csv_files:
                 yield "No CSV files found in the ZIP."
                 return
