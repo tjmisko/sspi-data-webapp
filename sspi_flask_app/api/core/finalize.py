@@ -170,7 +170,7 @@ def finalize_sspi_dynamic_line_data():
                 "years": [d["Year"] for d in document],
                 "scores": [round(d["Score"], 3) for d in document],
                 "data": [round(d["Score"], 3) for d in document],
-                "values": [round(d["Value"], 3) for d in document],
+                "values": [round(d["Value"], 3) for d in document]
             }
             sspi_dynamic_line_data.insert_one(document)
     return jsonify(sspi_dynamic_line_data.find({}, {"_id": 0}))
