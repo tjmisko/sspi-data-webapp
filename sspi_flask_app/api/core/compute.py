@@ -615,9 +615,9 @@ def compute_fatinj():
     return parse_json(scored_list)
 
 
-###########################
-### Category: Worker Wellbeing###
-###########################
+##################################
+### Category: Worker Wellbeing ###
+##################################
 
 
 @compute_bp.route("/UNEMPL", methods=['GET'])
