@@ -571,8 +571,8 @@ def compute_nrgint():
 @compute_bp.route("/AQELEC", methods=['GET'])
 # @login_required
 def compute_aqelec():
-    # if not sspi_raw_api_data.raw_data_available("AQELEC"):
-    #     return redirect(url_for("collect_bp.aqelec"))
+    if not sspi_raw_api_data.raw_data_available("AQELEC"):
+        return redirect(url_for("collect_bp.aqelec"))
     avelec_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
     quelct_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")
     
