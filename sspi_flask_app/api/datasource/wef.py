@@ -13,6 +13,8 @@ def collectWEFdata(SourceIndicatorCode, IndicatorCode, **kwargs):
     
 
     df = pd.read_excel(BytesIO(res.content))
+
+    print("Dataframe", df)
     
     if SourceIndicatorCode in df.columns:
         df = df[[SourceIndicatorCode]]  
