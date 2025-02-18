@@ -293,5 +293,18 @@ def find_population(country_code, year):
     population_data = sspi_country_characteristics.fetch_population_data("UNPOPL", country_code, year)
     return population_data
 
+def match_pop_intermediates(pop_data, ind_data):
+    '''
+    Matches all countries in population data with all countries in the indicator data, removing extras before zip intermediates
+    Assumes there is better or equal coverage in population data
+    Returns reduced population data
+    pop_data = list of population observations
+    ind_data = list of all indicator intermediates
+    '''
+    pop_df = pd.DataFrame(pop_data)
+    ind_df = pd.DataFrame(ind_data)
+    pop_df_filtered = pop_df[pop_df["CountryCode"].isin(ind_df["CountryCode"].unique())]
+    return pop_df_filtered.to_dict(orient = "records")
+
     
 

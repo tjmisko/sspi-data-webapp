@@ -232,6 +232,8 @@ class MongoWrapper:
             document_id = f"{intermediate['IntermediateCode']}_{intermediate['CountryCode']}_{intermediate['Year']}"
             if document_id in id_set:
                 print(f"Document Produced an Error: {intermediates}")
+                print(document_id)
+                print(document_number)
                 raise InvalidDocumentFormatError(
                     f"Duplicate intermediate document found (document {document_number})")
             id_set.add(document_id)
