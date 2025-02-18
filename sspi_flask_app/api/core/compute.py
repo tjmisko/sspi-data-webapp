@@ -21,7 +21,8 @@ from sspi_flask_app.api.resources.utilities import (
     zip_intermediates,
     # format_m49_as_string,
     filter_incomplete_data,
-    score_single_indicator
+    score_single_indicator,
+    match_pop_intermediates
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -32,7 +33,7 @@ from sspi_flask_app.models.database import (
     # sspi_analysis
 )
 from ..datasource.prisonstudies import (
-    scrape_stored_pages_for_data, compute_prison_rate
+    scrape_stored_pages_for_data
     )
 
 from ..datasource.sdg import (
@@ -46,7 +47,11 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_nrgint,
     flatten_nested_dictionary_fampln
 )
-# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.worldbank import (
+    cleanedWorldBankData, 
+    cleaned_wb_current,
+    clean_WB_population
+    )
 from ..datasource.oecdstat import (
     # organizeOECDdata,
     # OECD_country_list,
@@ -586,10 +591,18 @@ def compute_fampln():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
+    cleaned_pop = clean_WB_population("PRISON", Intermediate = "UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    final_list, incomplete_observations = compute_prison_rate(clean_data_list)
-    # print(f"Missing from World Prison Brief: {missing_data_list}")
-    # print(f"Missing from UN population: {incomplete_observations}")
+    filtered_pop = match_pop_intermediates(cleaned_pop, clean_data_list)
+    combined_list = filtered_pop + clean_data_list
+    final_list = zip_intermediates(
+        combined_list, "PRISON", 
+        ScoreFunction = lambda PRIPOP, UNPOPL: (PRIPOP / UNPOPL) * 100000,
+        ScoreBy = "Score")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        final_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    print(incomplete_observations)
     return final_list
 
 @compute_bp.route("/DRKWAT")
