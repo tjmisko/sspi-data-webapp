@@ -541,7 +541,6 @@ def compute_intrnt():
     print(incomplete_observations)
     return parse_json(filtered_list)
 
-
 @compute_bp.route("/FDEPTH", methods=['GET'])
 @login_required
 def compute_fdepth():
@@ -640,6 +639,29 @@ def compute_unempl():
     scored_list = score_single_indicator(obs_list, "UNEMPL")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+@compute_bp.route("/MATERN", methods=['GET'])
+@login_required
+def compute_matern():
+    if not sspi_raw_api_data.raw_data_available("MATERN"):
+        return redirect(url_for("collect_bp.MATERN"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("MATERN")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"])
+    matern_raw = pd.read_csv(csv_virtual_file)
+    matern_raw_f = matern_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
+    matern_raw_f = matern_raw_f.rename(columns={
+        'REF_AREA': 'CountryCode',
+        'TIME_PERIOD': 'Year',
+        'OBS_VALUE': 'Value',
+        'UNIT_MEASURE': 'Unit'
+    })
+    matern_raw_f['IndicatorCode'] = 'MATERN'
+    matern_raw_f['Unit'] = 'Weeks'
+    obs_list = json.loads(matern_raw_f.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "MATERN")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
 
 ############################
 ### Category: Healthcare ###

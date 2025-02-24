@@ -192,8 +192,8 @@ def fatinj():
 @collect_bp.route("/MATERN")
 @login_required
 def matern():
-    def collect_iterator(**kwargs):
-        yield "to do"
+    def collect_iterator(**kwargs): #C1_4
+        yield collectOECDIndicator("OECD.WISE.CWB,DSD_CWB@DF_CWB", "MATERN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #####################
