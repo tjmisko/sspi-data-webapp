@@ -338,23 +338,6 @@ def compute_airpol():
     print(filtered)
     return parse_json(cleaned)
 
-@compute_bp.route("/NRGINT", methods=['GET'])
-# @login_required
-def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("collect_bp.NRGINT"))
-    nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-        nrgint_raw)
-    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
-
-
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def compute_altnrg():
@@ -645,27 +628,6 @@ def compute_intrnt():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
     return parse_json(filtered_list)
-
-@compute_bp.route("/FDEPTH", methods=['GET'])
-@login_required
-def compute_fdepth():
-    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
-        return redirect(url_for("collect_bp.FDEPTH"))
-    credit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="CREDIT")
-    credit_clean = cleaned_wb_current(credit_raw, "FDEPTH", unit="Percent")
-    deposit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="DPOSIT")
-    deposit_clean = cleaned_wb_current(deposit_raw, "FDEPTH", unit="Percent")
-    combined_list = credit_clean + deposit_clean
-    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
-                                     ScoreFunction=lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
-                                     ScoreBy="Score")
-    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
-
 
 @compute_bp.route("/COLBAR", methods=['GET'])
 @login_required
