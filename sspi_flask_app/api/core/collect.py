@@ -9,6 +9,7 @@ from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
+from ..datasource.itu import collect_itu_data
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -262,6 +263,14 @@ def incarc():
     def collect_iterator(**kwargs):
         yield from collectPrisonStudiesData(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/CYBSEC", methods=['GET'])
+@login_required
+def cybsec():
+    def collect_iterator(**kwargs):
+        yield from collect_itu_data("CYBSEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 ###########################
 ## Category: GLOBAL ROLE ##

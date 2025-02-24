@@ -47,6 +47,9 @@ from ..datasource.iea import (
     cleanIEAData_altnrg,
     clean_IEA_data_GTRANS,
 )
+from ..datasource.itu import(
+    cleanITUData_cybsec
+)
 import pandas as pd
 # from pycountry import countries
 from io import StringIO
@@ -565,3 +568,21 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+@compute_bp.route("/CYBSEC", methods=['GET'])
+# @login_required
+def compute_cybsec():
+    if not sspi_raw_api_data.raw_data_available("CYBSEC"):
+        return redirect(url_for("collect_bp.CYBSEC"))
+    cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
+    cleaned_list = cleanITUData_cybsec(cybsec_raw, 'CYBSEC')
+    obs_list = json.loads(cleaned_list.to_json(orient="records"))
+  #  scored_list = score_single_indicator(obs_list, "COLBAR")
+    return obs_list
+   # scored_list = score_single_indicator(cleaned_list, "CYBSEC")
+    # clean_document_list, incomplete_observations = filter_incomplete_data(
+    #     scored_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    # print(incomplete_observations)
+    #return parse_json(scored_list)
+

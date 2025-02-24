@@ -69,7 +69,3 @@ def cleaned_wb_current(RawData, IndName, unit):
 
 
 
-
-
-
-
