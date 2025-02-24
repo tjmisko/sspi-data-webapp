@@ -517,13 +517,13 @@ def compute_prison():
     combined_list = filtered_pop + clean_data_list
     final_list = zip_intermediates(
         combined_list, "PRISON", 
-        ScoreFunction = lambda PRIPOP, UNPOPL: (PRIPOP / UNPOPL) * 100000,
+        ScoreFunction = lambda PRIPOP, UNPOPL: PRIPOP * 1/UNPOPL * 100000,
         ScoreBy = "Score")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
-    return final_list
+    return combined_list
 
 ##################################
 ### Category: INFRASTRUCTURE ###

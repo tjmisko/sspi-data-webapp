@@ -54,7 +54,7 @@ def cleaned_wb_current(RawData, IndName, unit):
         if not country_data:
             continue
         value = entry["Raw"]["value"]
-        if value == "NaN":
+        if value == "NaN" or value == None:
             continue
         clean_obs = {
             "CountryCode": iso3,
