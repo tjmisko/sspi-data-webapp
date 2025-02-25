@@ -764,5 +764,5 @@ def compute_crptax():
     filtered_list, incomplete_observations = filter_incomplete_data(scored)
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
-    return parse_json(filtered_list)
+    return parse_json(scored)
 

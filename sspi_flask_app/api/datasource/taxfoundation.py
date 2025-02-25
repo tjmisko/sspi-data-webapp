@@ -1,6 +1,7 @@
 import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 from io import StringIO
+import json
 import pandas as pd
 
 
@@ -34,6 +35,7 @@ def cleanTaxFoundation(RawData, IndName, Unit, Description):
     crptax_melted['IndicatorCode'] = IndName
     crptax_melted['Unit'] = Unit
     crptax_melted['Description'] = Description
-    crptax = crptax_melted.to_json(orient='records',lines=False)
+    crptax_str = crptax_melted.to_json(orient='records',lines=False)
+    crptax = json.loads(crptax_str)
     return crptax
     
