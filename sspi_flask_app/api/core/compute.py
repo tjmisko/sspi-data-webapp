@@ -577,12 +577,7 @@ def compute_cybsec():
     cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
     cleaned_list = cleanITUData_cybsec(cybsec_raw, 'CYBSEC')
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
-  #  scored_list = score_single_indicator(obs_list, "COLBAR")
-    return obs_list
-   # scored_list = score_single_indicator(cleaned_list, "CYBSEC")
-    # clean_document_list, incomplete_observations = filter_incomplete_data(
-    #     scored_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
-    # print(incomplete_observations)
-    #return parse_json(scored_list)
+    scored_list = score_single_indicator(obs_list, "CYBSEC")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
