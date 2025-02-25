@@ -38,9 +38,11 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_watman,
     flatten_nested_dictionary_stkhlm,
     flatten_nested_dictionary_nrgint,
-    flatten_nested_dictionary_fampln
+    flatten_nested_dictionary_fampln,
+    flatten_nested_dictionary_physpc
 )
-# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.taxfoundation import cleanTaxFoundation
 from ..datasource.oecdstat import (
     # organizeOECDdata,
     # OECD_country_list,
@@ -54,7 +56,7 @@ from ..datasource.iea import (
     clean_IEA_data_GTRANS,
 )
 from ..datasource.who import (
-    cleanWHOdata,
+    cleanWHOdata, 
     cleanWHOdata_UHC
 )
 import pandas as pd
@@ -574,20 +576,23 @@ def compute_dptcov():
     # print(incomplete_data)
     return parse_json(filtered_list)
 
+
 # @compute_bp.route("/PHYSPC")
 # @login_required
 # def compute_physpc():
 #     if not sspi_raw_api_data.raw_data_available("PHYSPC"):
 #         return redirect(url_for("api_bp.collect_bp.PHYSPC"))
 #     raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
-#     cleaned = cleanWHOdata(raw_data, "PHYSPC", "Doctors/10000",
-#                            "Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.")
-#     scored = score_single_indicator(cleaned, "PHYSPC")
-#     filtered_list, incomplete_data = filter_incomplete_data(scored)
-#     sspi_clean_api_data.insert_many(filtered_list)
-#     print(incomplete_data)
-#     return parse_json(filtered_list)
+#     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+#     computed = flatten_nested_dictionary_physpc(intermediate_obs_dict)
+#     scored_list = score_single_indicator(computed, "PHYSPC")
+#     clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
+#     sspi_clean_api_data.insert_many(clean_document_list)
+#     print(incomplete_observations)
+#     print("This was right")
+#     return parse_json(clean_document_list)
 
+# PHYSPC for Correlation Analysis with UHC
 @compute_bp.route("/PHYSPC")
 @login_required
 def compute_physpc():
@@ -597,10 +602,8 @@ def compute_physpc():
     cleaned = cleanWHOdata_UHC(raw_data, "PHYSPC", "UHC Service Coverage Index",
                            "Coverage of essential health services (defined as the average coverage of essential services based on tracer interventions that include reproductive, maternal, newborn and child health, infectious diseases, non-communicable diseases and service capacity and access, among the general and the most disadvantaged population).")
     scored = score_single_indicator(cleaned, "PHYSPC")
-    filtered_list, incomplete_data = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
+    sspi_clean_api_data.insert_many(scored)
+    return parse_json(scored)
 
 
 
@@ -726,3 +729,41 @@ def compute_gdpmer():
         })
     sspi_clean_outcome_data.insert_many(extracted_data)
     return parse_json(extracted_data)
+
+
+################################################
+# Compute Routes for Pillar: MARKET STRUCTURE #
+################################################
+
+#########################
+### Category: TAXES ###
+#########################
+@compute_bp.route("/TAXREV")
+@login_required
+def compute_taxrev():
+    if not sspi_raw_api_data.raw_data_available("TAXREV"):
+        return redirect(url_for("api_bp.collect_bp.TAXREV"))
+    taxrev_raw = sspi_raw_api_data.fetch_raw_data("TAXREV")
+    taxrev_clean = cleaned_wb_current(taxrev_raw, "TAXREV", "% of GDP")
+    scored = score_single_indicator(taxrev_clean, "TAXREV")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(filtered_list)
+
+#################################
+### Category: CORPORATE TAXES ###
+#################################
+@compute_bp.route("/CRPTAX")
+@login_required
+def compute_crptax():
+    if not sspi_raw_api_data.raw_data_available("CRPTAX"):
+        return redirect(url_for("api_bp.collect_bp.CRPTAX"))
+    crptax_raw = sspi_raw_api_data.fetch_raw_data("CRPTAX")
+    crptax_clean = cleanTaxFoundation(crptax_raw, "CRPTAX", "Tax Rate", "Corporate Taxes")
+    scored = score_single_indicator(crptax_clean, "CRPTAX")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(filtered_list)
+

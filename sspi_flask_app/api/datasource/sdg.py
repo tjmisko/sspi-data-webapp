@@ -282,9 +282,9 @@ def flatten_nested_dictionary_physpc(intermediate_obs_dict):
                 continue
             new_observation = {
                 "CountryCode": country,
-                "IndicatorCode": "PHYSDG",
-                "Unit": "Percent",
-                "Description": "Coverage of essential health services (defined as the average coverage of essential services based on tracer interventions that include reproductive, maternal, newborn and child health, infectious diseases, non-communicable diseases and service capacity and access, among the general and the most disadvantaged population). ",
+                "IndicatorCode": "PHYSPC",
+                "Unit": "Index",
+                "Description": "Physicians per 10,000.",
                 "Year": year,
                 "Value": string_to_float(value),
             }

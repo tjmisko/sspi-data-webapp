@@ -46,32 +46,18 @@ def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
 
 def cleanWHOdata_UHC(raw_data, IndicatorCode, Unit, Description):
     cleaned_data_list = []
+    
     for entry in raw_data[0]["Raw"]["value"]:
-        if IndicatorCode == "UHC_INDEX_REPORTED":
-            if entry["SpatialDimType"] != "COUNTRY":
-                continue
-            if entry["Value"] == "No data":
-                continue
-            observation = {
-            "CountryCode": entry["SpatialDim"],
-            "IndicatorCode": IndicatorCode,
-            "Description": Description,
-            "Unit": Unit,
-            "Year": entry["TimeDim"],
-            "Value": entry["Value"].split(" ")[0]
-        }
-        else:
-            if entry["SpatialDimType"] != "COUNTRY":
-                continue
-            observation = {
-                "CountryCode": entry["SpatialDim"],
-                "IndicatorCode": IndicatorCode,
-                "Description": Description,
-                "Unit": Unit,
-                "Year": entry["TimeDim"],
-                "Value": entry["Value"]
-            }
-        cleaned_data_list.append(observation)
+        observation = {
+        "CountryCode": entry["SpatialDim"],
+        "IndicatorCode": IndicatorCode,
+        "Description": Description,
+        "Unit": Unit,
+        "Year": entry["TimeDim"],
+        "Value": entry["NumericValue"]
+    }
+    cleaned_data_list.append(observation)
+
     return parse_json(cleaned_data_list)
 
 

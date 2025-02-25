@@ -75,19 +75,23 @@ def cleaned_wb_current(RawData, IndName, unit):
                 "Value": string_to_float(entry["Raw"]["value"])
             }
             clean_data_list.append(clean_obs_wo_inter)
-        value = entry["Raw"]["value"]
-        if value == "NaN":
-            continue
-        clean_obs = {
-            "CountryCode": iso3,
-            "IndicatorCode": IndName,
-            "IntermediateCode": entry["IntermediateCode"],
-            "Description": entry["Raw"]["indicator"]["value"],
-            "Year": entry["Raw"]["date"],
-            "Unit": unit,
-            "Value": string_to_float(value)
-        }
-        clean_data_list.append(clean_obs)
+
+        ## Not sure what this code was supposed to achieve, but it was causing errors
+        ## so I temporarily commented it out:
+        
+        # value = entry["Raw"]["value"]
+        # if value == "NaN":
+        #     continue
+        # clean_obs = {
+        #     "CountryCode": iso3,
+        #     "IndicatorCode": IndName,
+        #     "IntermediateCode": entry["IntermediateCode"],
+        #     "Description": entry["Raw"]["indicator"]["value"],
+        #     "Year": entry["Raw"]["date"],
+        #     "Unit": unit,
+        #     "Value": string_to_float(value)
+        # }
+        # clean_data_list.append(clean_obs)
     return clean_data_list
 
 

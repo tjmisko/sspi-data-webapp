@@ -12,6 +12,7 @@ from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.who import collectWHOdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
+from ..datasource.taxfoundation import collectTaxFoundationData
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (
     sspi_raw_outcome_data,
@@ -187,12 +188,14 @@ def fatinj():
     def collect_iterator(**kwargs):
         yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 #####################
 ## Category: TAXES ##
 #####################
 
 
 @collect_bp.route("/TAXREV", methods=['GET'])
+@login_required
 def taxrev():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
@@ -203,9 +206,10 @@ def taxrev():
 ###################################
 
 @collect_bp.route("/CRPTAX", methods=['GET'])
+@login_required
 def crptax():
     def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "CRPTAX", **kwargs)
+        yield from collectTaxFoundationData('CRPTAX',**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ################################
@@ -268,6 +272,7 @@ def dptcov():
         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+# PHYSPC for Correlation Analysis with UHC 
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
 def physpc():
@@ -276,13 +281,6 @@ def physpc():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/FAMPLN", methods=['GET'])
-@login_required
-def fampln():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 # @collect_bp.route("/PHYSPC", methods=['GET'])
 # @login_required
 # def physpc():
@@ -290,6 +288,13 @@ def fampln():
 #         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/FAMPLN", methods=['GET'])
+@login_required
+def fampln():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ##############################
 ## Category: INFRASTRUCTURE ##
