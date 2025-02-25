@@ -583,14 +583,13 @@ def compute_dptcov():
 #     if not sspi_raw_api_data.raw_data_available("PHYSPC"):
 #         return redirect(url_for("api_bp.collect_bp.PHYSPC"))
 #     raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
-#     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-#     computed = flatten_nested_dictionary_physpc(intermediate_obs_dict)
-#     scored_list = score_single_indicator(computed, "PHYSPC")
-#     clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
-#     sspi_clean_api_data.insert_many(clean_document_list)
-#     print(incomplete_observations)
-#     print("This was right")
-#     return parse_json(clean_document_list)
+#     cleaned = cleanWHOdata(raw_data, "PHYSPC", "Doctors/10000",
+#                           "Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.")
+#     scored = score_single_indicator(cleaned, "PHYSPC")
+#     filtered_list, incomplete_data = filter_incomplete_data(scored)
+#     sspi_clean_api_data.insert_many(filtered_list)
+#     print(incomplete_data)
+#     return parse_json(filtered_list)
 
 # PHYSPC for Correlation Analysis with UHC
 @compute_bp.route("/PHYSPC")
