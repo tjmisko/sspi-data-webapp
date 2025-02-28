@@ -7,3 +7,6 @@
 [submodule "documentation"]
 	path = documentation
 	url = https://github.com/tjmisko/sspi-data-webapp.wiki.git
+[submodule "SSPI-Analysis"]
+	path = SSPI-Analysis
+	url = https://github.com/SSPI-Berkeley/SSPI-Analysis

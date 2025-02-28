@@ -20,7 +20,7 @@ def collectExcelData(IndicatorCode, **kwargs):
         yield f"Failed to download Excel file. Status code: {response.status_code}\n"
         return
     
-    # Load the Excel file from memory
+    # Load file
     excel_file = io.BytesIO(response.content)
     try:
         df = pd.read_excel(excel_file)
@@ -30,7 +30,7 @@ def collectExcelData(IndicatorCode, **kwargs):
     
     yield f"Excel file downloaded successfully. Found {len(df)} rows.\n"
     
-    # Convert DataFrame rows to a list of dictionaries (flat structure)
+    # Convert DF rows to a list of dictionaries 
     document_list = df.to_dict(orient='records')
     
     # Insert the raw data into the database
@@ -67,7 +67,7 @@ def cleaned_excel_current(RawData, IndName, unit):
         
         clean_obs = {
             "CountryCode": iso3,
-            "IndicatorCode": IndName,
+            "IndicatorCode": IndName,   
             "IntermediateCode": entry.get("IntermediateCode", ""),
             "Description": entry.get("indicator", ""),
             "Year": entry.get("date"),
