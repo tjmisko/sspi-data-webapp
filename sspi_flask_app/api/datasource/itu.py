@@ -19,15 +19,16 @@ def cleanITUData_cybsec(RawData, IndName):
     df['Country'] = df['Country'].replace('Cape Verde', 'Cabo Verde')
     df['Country'] = df['Country'].replace('Swaziland', 'Eswatini')
 
+
     df_year_only = df.drop(['Rank_2014','Rank_2017', 'Rank_2018', 'Rank_2020', 'Rank_2024'], axis = 1)
     df_melted = df_year_only.melt(id_vars=['Country'], 
                      value_vars=['2014', '2017', '2018', '2020', '2024'], 
                      var_name='Year', 
                      value_name='Value')
     
-
     df_melted['Unit'] = 'Percentage'
     df_melted['IndicatorCode'] = 'CYBSEC'
+    
     df_final = df_melted.dropna()
 
     def get_country_code(country_name):
@@ -40,14 +41,14 @@ def cleanITUData_cybsec(RawData, IndName):
         
     df_final['CountryCode'] = df_final['Country'].apply(get_country_code)
     df_final['Year'] = df_final['Year'].astype(int)
+    df_final.loc[df_final['Country'] == 'Korea (the Republic of)', 'CountryCode'] = 'KOR'
+    df_final.loc[df_final['Country'] == 'Democratic Republic of the Congo', 'CountryCode'] = 'COD'
+    df_final.loc[df_final['Country'] == 'Niger', 'CountryCode'] = 'NER'
 
-    df_final.loc[df_final['Country'] == 'Korea (the Republic of)', 'CountryCode'] = df_final.loc[df_final['Country'] == 'Korea (the Republic of)', 'CountryCode'].fillna('KOR')
-    df_final.loc[df_final['Country'] == 'Democratic Republic of the Congo', 'CountryCode'] = df_final.loc[df_final['Country'] == 'Democratic Republic of the Congo', 'CountryCode'].fillna('COD')
     # missing_country_codes = df_final[df_final['CountryCode'].isnull()]
     # print("Countries with missing or invalid codes:")
     # print(missing_country_codes['Country'])
     df_f = df_final.drop('Country', axis = 1)
-
     return df_f
     
     
