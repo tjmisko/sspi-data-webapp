@@ -9,6 +9,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
+from ..datasource.wef import collectWEFdata
 from ..datasource.who import collectWHOdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from ..datasource.who import collectCSTUNTData
@@ -318,8 +319,16 @@ def intrnt():
         yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/AQELEC", methods=['GET'])
+@login_required
+def aqelec():
+    def collect_iterator(**kwargs):
+        #yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+        yield from collectWEFdata("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 #############################
-## Category: PUBLIC SAFETY ##
+## Category: PUBLIC SAFETY #
 #############################
 
 @collect_bp.route("/PRISON", methods=['GET'])
