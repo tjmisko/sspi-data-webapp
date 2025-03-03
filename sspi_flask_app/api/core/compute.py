@@ -510,19 +510,18 @@ def compute_senior():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
-    cleaned_pop = clean_WB_population("PRISON", Intermediate = "UNPOPL")
+    cleaned_pop = clean_WB_population("PRISON", Intermediate="UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    filtered_pop = match_pop_intermediates(cleaned_pop, clean_data_list)
-    combined_list = filtered_pop + clean_data_list
-    final_list = zip_intermediates(
-        combined_list, "PRISON", 
-        ScoreFunction = lambda PRIPOP, UNPOPL: (PRIPOP / UNPOPL) * 100000,
-        ScoreBy = "Score")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        final_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return final_list
+    combined_list = cleaned_pop + clean_data_list
+    # final_list = zip_intermediates(
+    #     combined_list, "PRISON",
+    #     ScoreFunction=lambda PRIPOP, UNPOPL: (PRIPOP / UNPOPL) * 100000,
+    #     ScoreBy="Score")
+    # clean_document_list, incomplete_observations = filter_incomplete_data(
+    #     final_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    # print(incomplete_observations)
+    return jsonify(clean_data_list)
 
 ##################################
 ### Category: INFRASTRUCTURE ###
