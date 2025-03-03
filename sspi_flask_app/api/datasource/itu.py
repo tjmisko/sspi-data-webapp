@@ -1,7 +1,7 @@
 from sspi_flask_app.models.database import sspi_raw_api_data
 import pycountry 
-import pandas as pd
-
+import pandas as pd 
+from ..resources.utilities import get_country_code
 def collect_itu_data(IndicatorCode, **kwargs):
     local_csv_file = pd.read_csv('local/gci-local-indicator-summary.csv')
     csv_string = local_csv_file.to_csv(index=False)  
@@ -31,20 +31,12 @@ def cleanITUData_cybsec(RawData, IndName):
     #country with only one year data might not be ideal - no over time comparison.
     df_final = df_melted.dropna()
 
-    def get_country_code(country_name):
-        if pd.isna(country_name):  
-            return None
-        try:
-            return pycountry.countries.search_fuzzy(country_name)[0].alpha_3
-        except (LookupError, AttributeError, IndexError):
-         return None  
-
     #manually adjust the code
     df_final['CountryCode'] = df_final['Country'].apply(get_country_code)
     df_final['Year'] = df_final['Year'].astype(int)
-    df_final.loc[df_final['Country'] == 'Korea (the Republic of)', 'CountryCode'] = 'KOR'
-    df_final.loc[df_final['Country'] == 'Democratic Republic of the Congo', 'CountryCode'] = 'COD'
-    df_final.loc[df_final['Country'] == 'Niger', 'CountryCode'] = 'NER'
+    # df_final.loc[df_final['Country'] == 'Korea (the Republic of)', 'CountryCode'] = 'KOR'
+    # df_final.loc[df_final['Country'] == 'Democratic Republic of the Congo', 'CountryCode'] = 'COD'
+    # df_final.loc[df_final['Country'] == 'Niger', 'CountryCode'] = 'NER'
     df_f = df_final.drop('Country', axis = 1)
     return df_f
     
