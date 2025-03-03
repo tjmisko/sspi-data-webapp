@@ -189,7 +189,8 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
         if not dynamic_indicator_data:
             return jsonify({"error": "No data found"})
-        chart_title = f"{dynamic_indicator_data[0]} {IndicatorCode} Score"
+        name = dynamic_indicator_data[0]["IName"]
+        chart_title = f"{name} ({IndicatorCode}) Score"
         group_options = sspi_metadata.country_groups()
         return jsonify({
             "data": dynamic_indicator_data,

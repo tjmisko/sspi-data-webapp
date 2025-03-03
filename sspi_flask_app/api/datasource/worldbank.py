@@ -19,6 +19,7 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         time.sleep(0.5)
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
+
 def cleanedWorldBankData(RawData, IndName):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
@@ -41,9 +42,10 @@ def cleanedWorldBankData(RawData, IndName):
         clean_data_list.append(clean_obs)
     return clean_data_list
 
+
 def cleaned_wb_current(RawData, IndName, unit):
     """
-    Takes in list of collected raw data and our 6 letter indicator code 
+    Takes in list of collected raw data and our 6 letter indicator code
     and returns a list of dictionaries with only relevant data from wanted countries
     """
     clean_data_list = []
@@ -54,47 +56,18 @@ def cleaned_wb_current(RawData, IndName, unit):
             continue
         if entry["Raw"]["value"] is None:
             continue
+        value = entry["Raw"]["value"]
+        if value == "NaN" or value is None or not value:
+            continue
+        clean_obs = {
+            "CountryCode": iso3,
+            "IndicatorCode": IndName,
+            "Description": entry["Raw"]["indicator"]["value"],
+            "Year": int(str(entry["Raw"]["date"])),
+            "Unit": unit,
+            "Value": string_to_float(value)
+        }
         if "IntermediateCode" in entry.keys():
-            clean_obs_inter = {
-                "CountryCode": iso3,
-                "IndicatorCode": IndName,
-                "IntermediateCode": entry["IntermediateCode"],
-                "Description": entry["Raw"]["indicator"]["value"],
-                "Year": entry["Raw"]["date"],
-                "Unit": unit,
-                "Value": string_to_float(entry["Raw"]["value"])
-            }
-            clean_data_list.append(clean_obs_inter)
-        else:
-            clean_obs_wo_inter = {
-                "CountryCode": iso3,
-                "IndicatorCode": IndName,
-                "Description": entry["Raw"]["indicator"]["value"],
-                "Year": entry["Raw"]["date"],
-                "Unit": unit,
-                "Value": string_to_float(entry["Raw"]["value"])
-            }
-            clean_data_list.append(clean_obs_wo_inter)
-
-        ## Not sure what this code was supposed to achieve, but it was causing errors
-        ## so I temporarily commented it out:
-        
-        # value = entry["Raw"]["value"]
-        # if value == "NaN":
-        #     continue
-        # clean_obs = {
-        #     "CountryCode": iso3,
-        #     "IndicatorCode": IndName,
-        #     "IntermediateCode": entry["IntermediateCode"],
-        #     "Description": entry["Raw"]["indicator"]["value"],
-        #     "Year": entry["Raw"]["date"],
-        #     "Unit": unit,
-        #     "Value": string_to_float(value)
-        # }
-        # clean_data_list.append(clean_obs)
+            clean_obs["IntermediateCode"] = entry["IntermediateCode"]
+        clean_data_list.append(clean_obs)
     return clean_data_list
-
-
-
-
-
