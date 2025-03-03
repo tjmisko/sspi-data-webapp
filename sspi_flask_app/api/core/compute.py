@@ -311,7 +311,7 @@ def compute_coalpw():
 
 
 @compute_bp.route("/NRGINT", methods=['GET'])
-# @login_required
+@login_required
 def compute_nrgint():
     if not sspi_raw_api_data.raw_data_available("NRGINT"):
         return redirect(url_for("collect_bp.NRGINT"))
