@@ -32,7 +32,7 @@ from sspi_flask_app.models.database import (
     # sspi_analysis
 )
 from ..datasource.prisonstudies import (
-    scrape_stored_pages_for_data, compute_prison_rate
+    scrape_stored_pages_for_data
     )
 
 from ..datasource.sdg import (
@@ -46,7 +46,11 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_nrgint,
     flatten_nested_dictionary_fampln
 )
-# from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.worldbank import (
+    cleanedWorldBankData, 
+    cleaned_wb_current,
+    clean_WB_population
+    )
 from ..datasource.oecdstat import (
     # organizeOECDdata,
     # OECD_country_list,
@@ -257,20 +261,6 @@ def compute_stkhlm():
 ### Category: ENERGY ###
 ########################
 
-@compute_bp.route("/NRGINT")
-@login_required
-def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("api_bp.collect_bp.NRGINT"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
-    computed = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(computed, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
-
 @compute_bp.route("/COALPW", methods=['GET'])
 @login_required
 def compute_coalpw():
@@ -339,7 +329,7 @@ def compute_airpol():
     return parse_json(cleaned)
 
 @compute_bp.route("/NRGINT", methods=['GET'])
-# @login_required
+@login_required
 def compute_nrgint():
     if not sspi_raw_api_data.raw_data_available("NRGINT"):
         return redirect(url_for("collect_bp.NRGINT"))
@@ -586,11 +576,18 @@ def compute_fampln():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
+    cleaned_pop = clean_WB_population("PRISON", Intermediate="UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    final_list, incomplete_observations = compute_prison_rate(clean_data_list)
-    # print(f"Missing from World Prison Brief: {missing_data_list}")
-    # print(f"Missing from UN population: {incomplete_observations}")
-    return final_list
+    combined_list = cleaned_pop + clean_data_list
+    # final_list = zip_intermediates(
+    #     combined_list, "PRISON",
+    #     ScoreFunction=lambda PRIPOP, UNPOPL: (PRIPOP / UNPOPL) * 100000,
+    #     ScoreBy="Score")
+    # clean_document_list, incomplete_observations = filter_incomplete_data(
+    #     final_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    # print(incomplete_observations)
+    return jsonify(clean_data_list)
 
 @compute_bp.route("/DRKWAT")
 @login_required
@@ -644,27 +641,6 @@ def compute_intrnt():
         cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
-    return parse_json(filtered_list)
-
-
-@compute_bp.route("/FDEPTH", methods=['GET'])
-@login_required
-def compute_fdepth():
-    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
-        return redirect(url_for("collect_bp.FDEPTH"))
-    credit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="CREDIT")
-    credit_clean = cleaned_wb_current(credit_raw, "FDEPTH", unit="Percent")
-    deposit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="DPOSIT")
-    deposit_clean = cleaned_wb_current(deposit_raw, "FDEPTH", unit="Percent")
-    combined_list = credit_clean + deposit_clean
-    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
-                                     ScoreFunction=lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
-                                     ScoreBy="Score")
-    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
     return parse_json(filtered_list)
 
 
