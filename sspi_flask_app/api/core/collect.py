@@ -11,6 +11,7 @@ from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
 from ..datasource.who import collectWHOdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
+from ..datasource.taxfoundation import collectTaxFoundationData
 from ..datasource.who import collectCSTUNTData
 
 from .countrychar import insert_pop_data
@@ -203,9 +204,21 @@ def fatinj():
 
 
 @collect_bp.route("/TAXREV", methods=['GET'])
+@login_required
 def taxrev():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+###################################
+## Category: CORPORATE TAX RATES ##
+###################################
+
+@collect_bp.route("/CRPTAX", methods=['GET'])
+@login_required
+def crptax():
+    def collect_iterator(**kwargs):
+        yield from collectTaxFoundationData('CRPTAX',**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ################################
@@ -266,6 +279,7 @@ def atbrth():
         yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/DPTCOV", methods=['GET'])
 @login_required
 def dptcov():
@@ -273,11 +287,21 @@ def dptcov():
         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+# PHYSPC for Correlation Analysis with UHC
+@collect_bp.route("/PHYSPC", methods=['GET'])
+@login_required
+def physpc_uhc():
+    def collect_iterator(**kwargs):
+        yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
 def physpc():
     def collect_iterator(**kwargs):
-        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
+        yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -413,5 +437,4 @@ def gdpppp():
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
-
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')

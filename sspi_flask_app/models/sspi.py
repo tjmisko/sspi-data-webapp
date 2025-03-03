@@ -72,8 +72,7 @@ class SSPI:
                                                          ["IndicatorCode"]]
             except KeyError:
                 indicator = detail["Metadata"]["IndicatorCode"]
-                raise DataOrderError(f"No data for indicator {
-                                     indicator} found!")
+                raise DataOrderError(f"No data for indicator {indicator} found!")
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)

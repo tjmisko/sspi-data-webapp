@@ -47,6 +47,23 @@ def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
     return parse_json(cleaned_data_list)
 
 
+def cleanWHOdata_UHC(raw_data, IndicatorCode, Unit, Description):
+    cleaned_data_list = []
+    
+    for entry in raw_data[0]["Raw"]["value"]:
+        observation = {
+        "CountryCode": entry["SpatialDim"],
+        "IndicatorCode": IndicatorCode,
+        "Description": Description,
+        "Unit": Unit,
+        "Year": entry["TimeDim"],
+        "Value": entry["NumericValue"]
+    }
+    cleaned_data_list.append(observation)
+
+    return parse_json(cleaned_data_list)
+
+
 def collectCSTUNTData(**kwargs):
     yield "Collecting data from WHO API\n"
     base_url = "https://apps.who.int/gho/athena/data/GHO/"

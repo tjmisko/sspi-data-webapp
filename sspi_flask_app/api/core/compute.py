@@ -32,8 +32,9 @@ from sspi_flask_app.models.database import (
     # sspi_analysis
 )
 from ..datasource.prisonstudies import (
-    scrape_stored_pages_for_data, compute_prison_rate
-    )
+    scrape_stored_pages_for_data,
+    compute_prison_rate
+)
 
 from ..datasource.sdg import (
     flatten_nested_dictionary_biodiv,
@@ -44,9 +45,11 @@ from ..datasource.sdg import (
     flatten_nested_dictionary_watman,
     flatten_nested_dictionary_stkhlm,
     flatten_nested_dictionary_nrgint,
-    flatten_nested_dictionary_fampln
+    flatten_nested_dictionary_fampln,
+    flatten_nested_dictionary_physpc
 )
 from ..datasource.worldbank import cleanedWorldBankData, cleaned_wb_current
+from ..datasource.taxfoundation import cleanTaxFoundation
 from ..datasource.oecdstat import (
     # organizeOECDdata,
     # OECD_country_list,
@@ -61,7 +64,8 @@ from ..datasource.iea import (
 
 )
 from ..datasource.who import (
-    cleanWHOdata
+    cleanWHOdata, 
+    cleanWHOdata_UHC
 )
 import pandas as pd
 # from pycountry import countries
@@ -503,6 +507,110 @@ def compute_fdepth():
     return parse_json(filtered_list)
 
 
+
+@compute_bp.route("/COLBAR", methods=['GET'])
+@login_required
+def compute_colbar():
+    if not sspi_raw_api_data.raw_data_available("COLBAR"):
+        return redirect(url_for("collect_bp.COLBAR"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("COLBAR")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    colbar_raw = pd.read_csv(csv_virtual_file)
+    colbar_raw = colbar_raw[['REF_AREA',
+                             'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
+    colbar_raw = colbar_raw.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    colbar_raw['IndicatorCode'] = 'COLBAR'
+    colbar_raw['Unit'] = 'Proportion'
+    colbar_raw['Value'] = colbar_raw['Value']
+    obs_list = json.loads(colbar_raw.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "COLBAR")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
+
+##################################
+### Category: WORKER WELLBEING ###
+##################################
+@compute_bp.route("/FATINJ", methods=['GET'])
+@login_required
+def compute_fatinj():
+    if not sspi_raw_api_data.raw_data_available("FATINJ"):
+        return redirect(url_for("collect_bp.FATINJ"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("FATINJ")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"])
+    fatinj_raw = pd.read_csv(csv_virtual_file)
+    fatinj_raw = fatinj_raw[fatinj_raw["SEX"] == "SEX_T"]
+    fatinj_raw = fatinj_raw[['REF_AREA',
+                             'TIME_PERIOD',
+                             'UNIT_MEASURE',
+                             'OBS_VALUE']]
+    fatinj_raw = fatinj_raw.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    fatinj_raw['IndicatorCode'] = 'FATINJ'
+    fatinj_raw['Unit'] = 'Rate per 100,000'
+    fatinj_raw.dropna(subset=['Value'], inplace=True)
+    obs_list = json.loads(str(fatinj_raw.to_json(orient="records")))
+    scored_list = score_single_indicator(obs_list, "FATINJ")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
+
+@compute_bp.route("/UNEMPL", methods=['GET'])
+@login_required
+def compute_unempl():
+    if not sspi_raw_api_data.raw_data_available("UNEMPL"):
+        return redirect(url_for("collect_bp.UNEMPL"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("UNEMPL")
+    csv_virtual_file = StringIO(raw_data[0]["Raw"])
+    colbar_raw = pd.read_csv(csv_virtual_file)
+    colbar_raw_f = colbar_raw[colbar_raw['SOC'] == 'SOC_CONTIG_UNE']
+    colbar_raw_f = colbar_raw_f[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
+    colbar_raw_f = colbar_raw_f.rename(columns={'REF_AREA': 'CountryCode',
+                                            'TIME_PERIOD': 'Year',
+                                            'OBS_VALUE': 'Value',
+                                            'UNIT_MEASURE': 'Unit'})
+    colbar_raw_f['IndicatorCode'] = 'UNEMPL'
+    colbar_raw_f['Unit'] = 'Rate'
+    obs_list = json.loads(colbar_raw_f.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "UNEMPL")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
+#########################
+### Category: TAXES ###
+#########################
+@compute_bp.route("/TAXREV")
+@login_required
+def compute_taxrev():
+    if not sspi_raw_api_data.raw_data_available("TAXREV"):
+        return redirect(url_for("api_bp.collect_bp.TAXREV"))
+    taxrev_raw = sspi_raw_api_data.fetch_raw_data("TAXREV")
+    taxrev_clean = cleaned_wb_current(taxrev_raw, "TAXREV", "% of GDP")
+    scored = score_single_indicator(taxrev_clean, "TAXREV")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(filtered_list)
+
+@compute_bp.route("/CRPTAX")
+@login_required
+def compute_crptax():
+    if not sspi_raw_api_data.raw_data_available("CRPTAX"):
+        return redirect(url_for("api_bp.collect_bp.CRPTAX"))
+    crptax_raw = sspi_raw_api_data.fetch_raw_data("CRPTAX")
+    crptax_clean = cleanTaxFoundation(crptax_raw, "CRPTAX", "Tax Rate", "Corporate Taxes")
+    scored = score_single_indicator(crptax_clean, "CRPTAX")
+    filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(filtered_list)
+    print(incomplete_observations)
+    return parse_json(scored)
+
+
 ###########################################
 # Compute Routes for Pillar: PUBLIC GOODS #
 ###########################################
@@ -542,13 +650,11 @@ def compute_physpc():
     if not sspi_raw_api_data.raw_data_available("PHYSPC"):
         return redirect(url_for("api_bp.collect_bp.PHYSPC"))
     raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
-    cleaned = cleanWHOdata(raw_data, "PHYSPC", "Doctors/10000",
-                           "Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.")
+    cleaned = cleanWHOdata_UHC(raw_data, "PHYSPC", "UHC Service Coverage Index",
+                           "Coverage of essential health services (defined as the average coverage of essential services based on tracer interventions that include reproductive, maternal, newborn and child health, infectious diseases, non-communicable diseases and service capacity and access, among the general and the most disadvantaged population).")
     scored = score_single_indicator(cleaned, "PHYSPC")
-    filtered_list, incomplete_data = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
+    sspi_clean_api_data.insert_many(scored)
+    return parse_json(scored)
 
 
 @compute_bp.route("/FAMPLN")
@@ -645,89 +751,9 @@ def compute_pubacc():
     return parse_json(pubacc_clean)
 
 
-@compute_bp.route("/COLBAR", methods=['GET'])
-@login_required
-def compute_colbar():
-    if not sspi_raw_api_data.raw_data_available("COLBAR"):
-        return redirect(url_for("collect_bp.COLBAR"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("COLBAR")
-    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
-    colbar_raw = pd.read_csv(csv_virtual_file)
-    colbar_raw = colbar_raw[['REF_AREA',
-                             'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
-    colbar_raw = colbar_raw.rename(columns={'REF_AREA': 'CountryCode',
-                                            'TIME_PERIOD': 'Year',
-                                            'OBS_VALUE': 'Value',
-                                            'UNIT_MEASURE': 'Unit'})
-    colbar_raw['IndicatorCode'] = 'COLBAR'
-    colbar_raw['Unit'] = 'Proportion'
-    colbar_raw['Value'] = colbar_raw['Value']
-    obs_list = json.loads(colbar_raw.to_json(orient="records"))
-    scored_list = score_single_indicator(obs_list, "COLBAR")
-    sspi_clean_api_data.insert_many(scored_list)
-    return parse_json(scored_list)
-
-
-##################################
-### Category: WORKER WELLBEING ###
-##################################
-@compute_bp.route("/FATINJ", methods=['GET'])
-@login_required
-def compute_fatinj():
-    if not sspi_raw_api_data.raw_data_available("FATINJ"):
-        return redirect(url_for("collect_bp.FATINJ"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("FATINJ")
-    csv_virtual_file = StringIO(raw_data[0]["Raw"])
-    fatinj_raw = pd.read_csv(csv_virtual_file)
-    fatinj_raw = fatinj_raw[fatinj_raw["SEX"] == "SEX_T"]
-    fatinj_raw = fatinj_raw[['REF_AREA',
-                             'TIME_PERIOD',
-                             'UNIT_MEASURE',
-                             'OBS_VALUE']]
-    fatinj_raw = fatinj_raw.rename(columns={'REF_AREA': 'CountryCode',
-                                            'TIME_PERIOD': 'Year',
-                                            'OBS_VALUE': 'Value',
-                                            'UNIT_MEASURE': 'Unit'})
-    fatinj_raw['IndicatorCode'] = 'FATINJ'
-    fatinj_raw['Unit'] = 'Rate per 100,000'
-    fatinj_raw.dropna(subset=['Value'], inplace=True)
-    obs_list = json.loads(str(fatinj_raw.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "FATINJ")
-    sspi_clean_api_data.insert_many(scored_list)
-    return parse_json(scored_list)
-
-
-##################################
-### Category: Worker Wellbeing ###
-##################################
-
-
-@compute_bp.route("/UNEMPL", methods=['GET'])
-@login_required
-def compute_unempl():
-    if not sspi_raw_api_data.raw_data_available("UNEMPL"):
-        return redirect(url_for("collect_bp.UNEMPL"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("UNEMPL")
-    csv_virtual_file = StringIO(raw_data[0]["Raw"])
-    colbar_raw = pd.read_csv(csv_virtual_file)
-    colbar_raw_f = colbar_raw[colbar_raw['SOC'] == 'SOC_CONTIG_UNE']
-    colbar_raw_f = colbar_raw_f[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE','OBS_VALUE']]
-    colbar_raw_f = colbar_raw_f.rename(columns={'REF_AREA': 'CountryCode',
-                                            'TIME_PERIOD': 'Year',
-                                            'OBS_VALUE': 'Value',
-                                            'UNIT_MEASURE': 'Unit'})
-    colbar_raw_f['IndicatorCode'] = 'UNEMPL'
-    colbar_raw_f['Unit'] = 'Rate'
-    obs_list = json.loads(colbar_raw_f.to_json(orient="records"))
-    scored_list = score_single_indicator(obs_list, "UNEMPL")
-    sspi_clean_api_data.insert_many(scored_list)
-    return parse_json(scored_list)
-
 ############################
 ### Category: Healthcare ###
 ############################
-
-
 @compute_bp.route("/CSTUNT", methods=['GET'])
 @login_required
 def compute_cstunt():
@@ -754,7 +780,6 @@ def compute_cstunt():
 ###      Outcome Variables     ###
 ##################################
 
-
 @compute_bp.route("/outcome/GDPMER", methods=['GET'])
 @login_required
 def compute_gdpmer():
@@ -778,7 +803,6 @@ def compute_gdpmer():
         })
     sspi_clean_outcome_data.insert_many(extracted_data)
     return parse_json(extracted_data)
-
 
 @compute_bp.route("/outcome/GDPPPP", methods=['GET'])
 @login_required
