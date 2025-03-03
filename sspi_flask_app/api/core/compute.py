@@ -579,9 +579,9 @@ def compute_fampln():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
-    cleaned_pop = clean_WB_population("PRISON", Intermediate="UNPOPL")
+    cleaned_pop = clean_WB_population("PRISON", Intermediate = "UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    combined_list = filtered_pop + clean_data_list
+    combined_list = cleaned_pop + clean_data_list
     final_list = zip_intermediates(
         combined_list, "PRISON", 
         ScoreFunction = lambda PRIPOP, UNPOPL: PRIPOP * 1/UNPOPL * 100000,

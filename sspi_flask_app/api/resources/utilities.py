@@ -278,8 +278,10 @@ def get_country_code(CountryName):
     '''
     Handles edge cases of country fuzzy matching
     '''
-    if "korea" in str.lower(CountryName):
+    if "korea" in str.lower(CountryName) and "democratic" not in str.lower(CountryName):
         return "KOR"
+    if "korea" in str.lower(CountryName) and "democratic" in str.lower(CountryName):
+        return "PRK"
     if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
         return "NER"
     if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
