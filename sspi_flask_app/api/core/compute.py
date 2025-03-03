@@ -1,5 +1,4 @@
 import json
-
 import bs4 as bs
 import numpy as np
 from bs4 import BeautifulSoup
