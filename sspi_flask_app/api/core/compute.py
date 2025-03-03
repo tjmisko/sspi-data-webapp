@@ -572,12 +572,11 @@ def compute_nrgint():
 # @login_required
 def compute_aqelec():
     if not sspi_raw_api_data.raw_data_available("AQELEC"):
-        return redirect(url_for("collect_bp.aqelec"))
+        return "Error: Raw data for AQELEC is not available. Please run the data collection process."
+    
     avelec_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
     quelct_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")
     
- 
-
     combined_list = avelec_raw + quelct_raw
     cleaned_list = zip_intermediates(
         combined_list, 
@@ -590,3 +589,4 @@ def compute_aqelec():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_data)
     return parse_json(filtered_list)
+
