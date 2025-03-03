@@ -3,15 +3,20 @@ import requests
 from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
-from ..resources.utilities import parse_json
+from ..resources.utilities import parse_json, get_country_code
 from sspi_flask_app.models.database import sspi_raw_api_data
 from datetime import datetime
+import base64
 
-def collectPrisonStudiesData():
+
+def collectPrisonStudiesData(**kwargs):
     url_slugs = get_href_list()
-    yield from collect_all_pages(url_slugs)
+    yield from collect_all_pages(url_slugs, **kwargs)
 
 def get_href_list():
+    '''
+    Collects unique ends of URLs for each country, each of which hosts time series data (along with other characteristics)
+    '''
     url_for_clist = "https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All"
     response = requests.get(url_for_clist)
     # root = ET.fromstring(response.text)
@@ -21,15 +26,14 @@ def get_href_list():
     url_slugs = [link["href"] for link in list_of_links]
     return url_slugs
 
-def collect_all_pages(url_slugs):
+
+def collect_all_pages(url_slugs, **kwargs):
     url_base = "https://www.prisonstudies.org"
     count = 0
     failed_matches = []
-    print(url_slugs)
     for url_slug in url_slugs:
         query_string = url_slug[9:].replace("-", " ")
         count += 1
-        print(url_slug)
         yield f"{url_slug}\n"
         try:
             COU = get_country_code(query_string)
@@ -41,15 +45,21 @@ def collect_all_pages(url_slugs):
                 failed_matches.append(query_string)
                 continue
         yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
-        # The site blocked my IP after only a few requests, so 30 is here to be conservative
+        # The site blocked my IP after only a few requests
         time.sleep(10)
-        print(url_slug)
         response = requests.get(url_base + url_slug)
-        yield store_webpage_as_raw_data(response, COU)
-        
-
-def get_country_code(namestring):
-    return pycountry.countries.search_fuzzy(namestring)[0].alpha_3
+        # special case of UK being split into three --> scotland, northern ireland, england + wales
+        if COU == "GBR":
+            COU = COU + url_slug.split("-")[-1]
+        obs = {"IndicatorCode": "PRISON",
+         "IntermediateCode": "PRIPOP",
+         "CountryCode": COU,
+         "Raw": response.content,
+         "CollectedAt": datetime.now()}
+        sspi_raw_api_data.raw_insert_one(obs, "PRISON", **kwargs)
+        yield f"Inserted {COU} page\n"
+    print(failed_matches)
+    return f"Collected {count} country webpages"
 
 namefix = {
     "ireland republic": "ireland",
@@ -60,26 +70,78 @@ namefix = {
     "congo republic": "cog",
     "democratic peoples republic north korea": "north korea",
     "republic south korea": "south korea",
-    "cote divorie": "ivoire"
-}
-
-def store_webpage_as_raw_data(response, COU):
-    sspi_raw_api_data.insert_one({
-        "collection-info": {
-            "IndicatorCode": "INCARC",
-            "CountryCode": COU,
-            "CollectedAt": datetime.now()
-        },
-        "observation": response.text
-    })
-    return f"Scraped webpage for {COU} and inserted HTML data into sspi_raw_api_data\n"        
+    "cote divorie": "ivoire",
+    "united kingdom england wales": "united kingdom",
+    "united kingdom scotland": "united kingdom",
+    "united kingdom northern ireland": "united kingdom",
+    "kosovokosova": "kosovo"
+}    
 
 def scrape_stored_pages_for_data():
-    prison_data = sspi_raw_api_data.find({"IndicatorCode": "PRISON"})
-    for page_entry in prison_data:
-        COU = page_entry["collection-info"]["CountryCode"]
-        html = BeautifulSoup(page_entry["observation"], 'html.parser')
-        # dynamicDataTable = html.find("table", {"id": "views-aggregator-datatable"})
-        # yield str(dynamicDataTable)
-    return "success!"
- 
+    prison_pop_data = sspi_raw_api_data.fetch_raw_data("PRISON", IntermediateCode= "PRIPOP")
+    final_data = []
+    gbr_data = []
+    missing_countries = []
+    for entry in prison_pop_data:
+        country = entry["Raw"]["CountryCode"]
+        data = entry["Raw"]["Raw"]["$binary"]["base64"]
+        web_page = base64.b64decode(data).decode('utf-8')
+        table = BeautifulSoup(web_page, 'html.parser').find(
+            "table", attrs = {"id": "views-aggregator-datatable", "summary": "Prison population rate"})
+        if table is None: 
+            print(f"{country} does not have relevant table")
+            missing_countries.append(country)
+            continue
+        # iterate through rows of html table
+        table_rows = table.find_all('tr')
+        prison_data = []
+        for tr in table_rows:
+            # row data
+            td = tr.find_all("td")
+            row = [tr.text.strip() for tr in td if tr.text.strip()]
+            if row:
+                prison_data.append(row)
+        df = pd.DataFrame(prison_data, columns=["Year", "Prison Population Total", "Prison Population Rate"])
+        df["Prison Population Total"] = df["Prison Population Total"].replace(",", "", regex = True)
+        df["Prison Population Total"] = df["Prison Population Total"].replace("c ", "", regex = True)
+        df["Prison Population Rate"] = df["Prison Population Rate"].replace("c ", "", regex = True)
+        if "GBR" in country:
+            df.apply(lambda row: gbr_data.append(
+                {"IndicatorCode": "PRISON",
+                "Value": int(row["Prison Population Total"]),
+                # "WPB Rate": int(row["Prison Population Rate"]),
+                "IntermediateCode": "PRIPOP",
+                "Year": int(row["Year"]),
+                "CountryCode": country,
+                "Unit": "People per 100,000",
+                "Description": "Prison population rate per 100,000 of the national population."}), axis = 1)
+        else:
+            df.apply(lambda row: final_data.append(
+                {"IndicatorCode": "PRISON",
+                "Value": int(row["Prison Population Total"]),
+                # "WPB Rate": int(row["Prison Population Rate"]),
+                "IntermediateCode": "PRIPOP",
+                "Year": int(row["Year"]),
+                "CountryCode": country,
+                "Unit": "People per 100,000",
+                "Description": "Prison population rate per 100,000 of the national population."}), axis = 1)
+    # combine uk values
+    gbr_obs = {}
+    for obs in gbr_data:
+        year = obs["Year"]
+        if year not in gbr_obs:
+            gbr_obs[year] = []
+        gbr_obs[year].append(obs["Value"])
+    for year in gbr_obs:
+        year_sum = sum(gbr_obs[year])
+        obs = {"IndicatorCode": "PRISON",
+                "Value": year_sum,
+                # "WPB Rate": obs["WPB Rate"],
+                "IntermediateCode": "PRIPOP",
+                "Year": year,
+                "CountryCode": "GBR",
+                "Unit": "People per 100,000",
+                "Description": "Prison population rate per 100,000 of the national population."}
+        final_data.append(obs)
+    return final_data, missing_countries
+        

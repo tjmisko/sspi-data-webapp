@@ -19,6 +19,7 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         time.sleep(0.5)
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
+
 def cleanedWorldBankData(RawData, IndName):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
@@ -52,8 +53,31 @@ def cleaned_wb_current(RawData, IndName, unit):
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
+        if entry["Raw"]["value"] is None:
+            continue
+        if "IntermediateCode" in entry.keys():
+            clean_obs_inter = {
+                "CountryCode": iso3,
+                "IndicatorCode": IndName,
+                "IntermediateCode": entry["IntermediateCode"],
+                "Description": entry["Raw"]["indicator"]["value"],
+                "Year": entry["Raw"]["date"],
+                "Unit": unit,
+                "Value": string_to_float(entry["Raw"]["value"])
+            }
+            clean_data_list.append(clean_obs_inter)
+        else:
+            clean_obs_wo_inter = {
+                "CountryCode": iso3,
+                "IndicatorCode": IndName,
+                "Description": entry["Raw"]["indicator"]["value"],
+                "Year": entry["Raw"]["date"],
+                "Unit": unit,
+                "Value": string_to_float(entry["Raw"]["value"])
+            }
+            clean_data_list.append(clean_obs_wo_inter)
         value = entry["Raw"]["value"]
-        if value == "NaN":
+        if value == "NaN" or value == None:
             continue
         clean_obs = {
             "CountryCode": iso3,
@@ -67,5 +91,10 @@ def cleaned_wb_current(RawData, IndName, unit):
         clean_data_list.append(clean_obs)
     return clean_data_list
 
-
+def clean_WB_population(IndicatorCode, Intermediate = "UNPOPL"):
+    if Intermediate != "UNPOPL":
+        return "Intermediate for world bank population should be 'UNPOPL'"
+    pop_data = sspi_raw_api_data.fetch_raw_data(IndicatorCode, IntermediateCode = "UNPOPL")
+    cleaned_pop = cleaned_wb_current(pop_data, IndicatorCode, "Population")
+    return cleaned_pop
 

@@ -18,7 +18,9 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_partial_api_data
+    sspi_partial_api_data,
+    sspi_clean_outcome_data,
+    sspi_raw_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -85,6 +87,10 @@ def lookup_database(database_name):
         return sspi_dynamic_line_data
     elif database_name == "sspi_dynamic_matrix_data":
         return sspi_dynamic_matrix_data
+    elif database_name == "sspi_raw_outcome_data":
+        return sspi_raw_outcome_data
+    elif database_name == "sspi_clean_outcome_data":
+        return sspi_clean_outcome_data
     raise InvalidDatabaseError(database_name)
 
 
@@ -202,8 +208,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
         if any(arg_value is None for arg_value in arg_value_dict.values()):
             continue
         try:
@@ -242,8 +247,9 @@ def filter_incomplete_data(indicator_document_list):
 
 def score_single_indicator(document_list, IndicatorCode):
     """
-     Utility function for scoring an indicator which does not contain intermediates; does not require score function
-     """
+    Utility function for scoring an indicator which does not
+    contain intermediates; does not require score function
+    """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
     [sspi_clean_api_data.validate_document_format(
@@ -267,6 +273,21 @@ def country_code_to_name(CountryCode):
         return pycountry.countries.get(alpha_3=CountryCode).name
     except AttributeError:
         return CountryCode
+    
+def get_country_code(CountryName):
+    '''
+    Handles edge cases of country fuzzy matching
+    '''
+    if "korea" in str.lower(CountryName):
+        return "KOR"
+    if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
+        return "NER"
+    if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
+        return "COD"
+    if "turkiye" in str.lower(CountryName) or "turkey" in str.lower(CountryName):
+        return "TUR"
+    else:
+        return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
 
 
 def colormap(PillarCode, alpha: str = "ff"):
@@ -276,3 +297,13 @@ def colormap(PillarCode, alpha: str = "ff"):
         return f"#ff851b{alpha}"
     if PillarCode == "PG":
         return f"#007bff{alpha}"
+
+
+def find_population(country_code, year):
+    '''
+    Fetches population data from sspi_country_characteristics for a country in a given year
+    country_code: str of alpha-3 code
+    year: int of year
+    '''
+    population_data = sspi_country_characteristics.fetch_population_data("UNPOPL", country_code, year)
+    return population_data
