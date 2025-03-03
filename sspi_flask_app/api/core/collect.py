@@ -279,6 +279,7 @@ def atbrth():
         yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/DPTCOV", methods=['GET'])
 @login_required
 def dptcov():
@@ -286,21 +287,22 @@ def dptcov():
         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
-# PHYSPC for Correlation Analysis with UHC 
+
+# PHYSPC for Correlation Analysis with UHC
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
-def physpc():
+def physpc_uhc():
     def collect_iterator(**kwargs):
         yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-# @collect_bp.route("/PHYSPC", methods=['GET'])
-# @login_required
-# def physpc():
-#     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+@collect_bp.route("/PHYSPC", methods=['GET'])
+@login_required
+def physpc():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @collect_bp.route("/FAMPLN", methods=['GET'])
@@ -435,5 +437,4 @@ def gdpppp():
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
-
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')

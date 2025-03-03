@@ -18,12 +18,6 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     base_url = url_source + url_params
     print(base_url)
     response = requests.get(url_source + url_params)
-    print(response.request.url)
-    print(response.status_code)
-    print(response.request.headers)
-    print(response.request.__getattribute__('headers'))
-    print(response.request)
-    print(response.json())
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages + 1):
