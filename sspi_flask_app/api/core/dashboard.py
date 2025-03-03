@@ -179,7 +179,8 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         if country_query:
             query["CCode"] = {"$in": country_query}
         dynamic_indicator_data = parse_json(
-            sspi_dynamic_line_data.find(query, {"_id": 0})
+            # sspi_dynamic_line_data.find(query, {"_id": 0})
+            sspi_dynamic_line_data.find(query)
         )
         min_year, max_year = 9999, 0
         for document in dynamic_indicator_data:
