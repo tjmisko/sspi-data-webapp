@@ -6,6 +6,7 @@ import requests
 from requests.adapters import HTTPAdapter
 import urllib3
 
+
 class SSPIDatabaseConnector:
     def __init__(self):
         self.token = self.get_token()
@@ -16,30 +17,40 @@ class SSPIDatabaseConnector:
         self.login_session_local()
         self.remote_session = requests.Session()
         self.login_session_remote()
-    
+
     def get_token(self):
         basedir = path.abspath(path.dirname(path.dirname(__file__)))
         load_dotenv(path.join(basedir, '.env'))
         return environ.get("APIKEY")
-    
+
     def login_session_local(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.local_session.post("http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
+        self.local_session.post(
+            "http://127.0.0.1:5000/remote/session/login", headers=headers, verify=False)
 
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.remote_session.post("https://sspi.world/remote/session/login", headers=headers)
+        self.remote_session.post(
+            "https://sspi.world/remote/session/login", headers=headers)
         print(self.remote_session.cookies)
         print(self.remote_session.headers)
 
     def get_data_local(self, request_string):
         if request_string[0] == "/":
             request_string = request_string[1:]
+        if "api/v1/collect" in request_string:
+            with self.local_session.get(f"http://127.0.0.1:5000/{request_string}", stream=True) as response:
+                for line in response.iter_lines():
+                    if line:
+                        print(line.decode('utf-8'))
+                return response
         return self.local_session.get(f"http://127.0.0.1:5000/{request_string}")
 
     def get_data_remote(self, request_string):
         if request_string[0] == "/":
             request_string = request_string[1:]
+        if "api/v1/collect" in request_string:
+            return self.remote_session.get(f"https://sspi.world/{request_string}", stream=True)
         return self.remote_session.get(f"https://sspi.world/{request_string}")
 
     def load_data_local(self, dataframe: pd.DataFrame, IndicatorCode):
@@ -52,7 +63,8 @@ class SSPIDatabaseConnector:
         observations_list = dataframe.to_json(orient="records")
         headers = {'Authorization': f'Bearer {self.token}'}
         print(f"Sending data: {observations_list}")
-        response = self.remote_session.post(f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list)
+        response = self.remote_session.post(
+            f"https://sspi.world/api/v1/load/{IndicatorCode}", headers=headers, json=observations_list)
         print(response.text)
         print(response.status_code)
         return response
@@ -63,9 +75,9 @@ class SSPIDatabaseConnector:
     def logout_remote(self):
         self.remote_session.get("https://sspi.world/logout")
 
-class LocalHttpAdapter(HTTPAdapter):
-# "Transport adapter" that allows us to use custom ssl_context.
 
+class LocalHttpAdapter(HTTPAdapter):
+    # "Transport adapter" that allows us to use custom ssl_context.
     def __init__(self, ssl_context=None, **kwargs):
         self.ssl_context = ssl_context
         super().__init__(**kwargs)
