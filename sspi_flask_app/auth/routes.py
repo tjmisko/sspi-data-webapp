@@ -30,9 +30,11 @@ auth_bp = Blueprint(
 
 login_manager.login_view = "auth_bp.login"
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 class UpdatePasswordForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(
@@ -46,6 +48,8 @@ class UpdatePasswordForm(FlaskForm):
     submit = SubmitField("Change Password")
 
 # create a registration form for new users
+
+
 class RegisterForm(FlaskForm):
     username = StringField(
         validators=[
@@ -74,6 +78,8 @@ class RegisterForm(FlaskForm):
             raise ValidationError("That username is already taken!")
 
 # create a login form
+
+
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(
         min=4, max=20)], render_kw={"placeholder": "Username"}, label="Username")
@@ -82,6 +88,7 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField(default=False, label="Remember me for 30 days")
     submit = SubmitField("Login as Administrator")
 
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     print(request.args.get("next"))
@@ -89,16 +96,18 @@ def login():
         return redirect(url_for('client_bp.data'))
     login_form = LoginForm()
     if not login_form.validate_on_submit():
-        return render_template('login.html', form=login_form, title="Login") 
+        return render_template('login.html', form=login_form, title="Login")
     user = User.query.filter_by(username=login_form.username.data).first()
     if user is None or not flask_bcrypt.check_password_hash(user.password, login_form.password.data):
         flash("Invalid username or password")
         return render_template('login.html', form=login_form, error="Invalid username or password", title="Login")
     if login_form.remember_me:
-        login_user(user, remember=True, duration=app.config['REMEMBER_COOKIE_DURATION'])
+        login_user(user, remember=True,
+                   duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
-    return redirect(url_for('api_bp.api_dashboard'))               
+    return redirect(url_for('api_bp.api_dashboard'))
+
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
@@ -111,8 +120,8 @@ def remote_login():
         return response
     api_token = str(api_token)[7:]
     user = User.query.filter_by(apikey=api_token).first()
-    print(user)
-    if user is not None: 
+    print("User: " + user)
+    if user is not None:
         login_user(user)
         print(current_user.username)
         return redirect(url_for('api_bp.api_dashboard'))
@@ -120,23 +129,28 @@ def remote_login():
     response.status_code = 401
     return response
 
+
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('client_bp.home'))
 
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 @fresh_login_required
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
-        hashed_password = flask_bcrypt.generate_password_hash(register_form.password.data)
-        new_user = User(username=register_form.username.data, password=hashed_password, secretkey=secrets.token_hex(32), apikey=secrets.token_hex(64))
+        hashed_password = flask_bcrypt.generate_password_hash(
+            register_form.password.data)
+        new_user = User(username=register_form.username.data, password=hashed_password,
+                        secretkey=secrets.token_hex(32), apikey=secrets.token_hex(64))
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('auth_bp.login'))
     return render_template('register.html', form=register_form, title="Register")
+
 
 @auth_bp.route("/auth/update/password", methods=["GET", "POST"])
 @fresh_login_required
@@ -145,7 +159,8 @@ def update_password():
     if update_password_form.validate_on_submit():
         user = User.query.filter_by(username=current_user.username).first()
         if user and flask_bcrypt.check_password_hash(user.password, update_password_form.oldpassword.data):
-            user.password = flask_bcrypt.generate_password_hash(update_password_form.newpassword.data)
+            user.password = flask_bcrypt.generate_password_hash(
+                update_password_form.newpassword.data)
             db.session.commit()
             flash("Password updated successfully")
             return redirect(url_for('auth_bp.update_password'))
@@ -154,21 +169,29 @@ def update_password():
             return redirect(url_for('auth_bp.update_password'))
     return render_template('change_password.html', form=update_password_form, title="Change Password")
 
+
 @auth_bp.route('/auth/clear', methods=['GET'])
 @fresh_login_required
 def clear():
     db.drop_all()
     return redirect(url_for('auth_bp.login'))
 
+
+@auth_bp.route('/auth/whoami', methods=['GET'])
+def whoami():
+    return str(current_user)
+
+
 @auth_bp.route('/auth/query', methods=['GET'])
 @fresh_login_required
 def query():
     return str(db.session.query(User).all())
 
+
 def is_safe_url(target):
     """
     This could be made very safe by checking the target against a list of safe urls on my site
-    """ 
+    """
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
@@ -185,4 +208,3 @@ def is_safe_url(target):
 #             return current_app.ensure_sync(func)(*args, **kwargs)
 #         return func(*args, **kwargs)
 #     return decorated_view
-

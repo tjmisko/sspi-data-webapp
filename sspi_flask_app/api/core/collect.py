@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, jsonify
+from flask import Blueprint, Response
 from flask_login import login_required, current_user
 import requests
 import time
@@ -15,6 +15,7 @@ from ..datasource.who import collectCSTUNTData
 
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (
+    sspi_raw_api_data,
     sspi_raw_outcome_data,
     sspi_clean_outcome_data
 )
@@ -24,6 +25,7 @@ collect_bp = Blueprint("collect_bp", __name__,
                        template_folder="templates",
                        static_folder="static",
                        url_prefix="/collect")
+
 
 ####################################################
 ### Collection Routes for Pillar: SUSTAINABILITY ###
@@ -54,7 +56,6 @@ def redlst():
 ####################
 ## Category: LAND ##
 ####################
-
 
 @collect_bp.route("/NITROG", methods=['GET'])
 @login_required
