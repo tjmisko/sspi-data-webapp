@@ -14,18 +14,20 @@ import requests
 # https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_params = f"indicator={SDGIndicatorCode}"
-    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?"
-    print(url_source + url_params)
+    url_source = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
+    base_url = url_source + url_params
+    print(base_url)
     response = requests.get(url_source + url_params)
     print(response.request.url)
     print(response.status_code)
     print(response.request.headers)
     print(response.request.__getattribute__('headers'))
     print(response.request)
+    print(response.json())
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages + 1):
-        new_url = f"{url_source}&page={p}"
+        new_url = f"{base_url}&page={p}"
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
