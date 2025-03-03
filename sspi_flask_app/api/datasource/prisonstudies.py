@@ -3,10 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
-from ..resources.utilities import parse_json
+from ..resources.utilities import parse_json, get_country_code
 from sspi_flask_app.models.database import sspi_raw_api_data
 from datetime import datetime
 import base64
+
 
 def collectPrisonStudiesData(**kwargs):
     url_slugs = get_href_list()
@@ -59,10 +60,6 @@ def collect_all_pages(url_slugs, **kwargs):
         yield f"Inserted {COU} page\n"
     print(failed_matches)
     return f"Collected {count} country webpages"
-
-
-def get_country_code(namestring):
-    return pycountry.countries.search_fuzzy(namestring)[0].alpha_3
 
 namefix = {
     "ireland republic": "ireland",
