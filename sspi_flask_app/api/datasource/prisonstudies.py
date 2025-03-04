@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import pycountry
 import pandas as pd
 from ..resources.utilities import parse_json, get_country_code
-from sspi_flask_app.models.database import sspi_raw_api_data
+from sspi_flask_app.models.database import sspi_raw_api_data, sspi_metadata
 from datetime import datetime
 import base64
 
@@ -73,8 +73,7 @@ namefix = {
     "cote divorie": "ivoire",
     "united kingdom england wales": "united kingdom",
     "united kingdom scotland": "united kingdom",
-    "united kingdom northern ireland": "united kingdom",
-    "kosovokosova": "kosovo"
+    "united kingdom northern ireland": "united kingdom"
 }    
 
 def scrape_stored_pages_for_data():

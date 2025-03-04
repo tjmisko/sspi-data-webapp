@@ -21,14 +21,16 @@ from sspi_flask_app.api.resources.utilities import (
     zip_intermediates,
     # format_m49_as_string,
     filter_incomplete_data,
-    score_single_indicator
+    score_single_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_raw_api_data,
     sspi_raw_outcome_data,
     sspi_clean_outcome_data,
-    sspi_dynamic_line_data
+    sspi_dynamic_line_data,
+    sspi_metadata
     # sspi_analysis
 )
 from ..datasource.prisonstudies import (
@@ -576,18 +578,22 @@ def compute_fampln():
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
+    details = sspi_metadata.find(
+        {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": "PRISON"})[0]
+    lower_goalpost = details["Metadata"]["LowerGoalpost"]
+    upper_goalpost = details["Metadata"]["UpperGoalpost"]
     cleaned_pop = clean_WB_population("PRISON", Intermediate = "UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     combined_list = cleaned_pop + clean_data_list
     final_list = zip_intermediates(
         combined_list, "PRISON", 
-        ScoreFunction = lambda PRIPOP, UNPOPL: PRIPOP * 1/UNPOPL * 100000,
-        ScoreBy = "Score")
+        ScoreFunction = lambda PRIPOP, UNPOPL: goalpost(PRIPOP * 1/UNPOPL * 100000, lower_goalpost, upper_goalpost),
+        ScoreBy = "Values")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return combined_list
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    # print(incomplete_observations)
+    return clean_document_list
 
 @compute_bp.route("/DRKWAT")
 @login_required
