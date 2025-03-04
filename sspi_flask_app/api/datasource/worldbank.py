@@ -20,29 +20,6 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
 
-def cleanedWorldBankData(RawData, IndName):
-    """
-    Takes in list of collected raw data and our 6 letter indicator code 
-    and returns a list of dictionaries with only relevant data from wanted countries
-    """
-    clean_data_list = []
-    for entry in RawData:
-        iso3 = entry["Raw"]["countryiso3code"]
-        country_data = countries.get(alpha_3=iso3)
-        if not country_data:
-            continue
-        clean_obs = {
-            "CountryCode": iso3,
-            "CountryName": entry["Raw"]["country"]["value"],
-            "IndicatorCode": IndName,
-            "Source": "WORLDBANK",
-            "YEAR": entry["Raw"]["date"],
-            "RAW": entry["Raw"]["value"]
-        }
-        clean_data_list.append(clean_obs)
-    return clean_data_list
-
-
 def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
     clean_data_list = []
     for entry in raw_data:
