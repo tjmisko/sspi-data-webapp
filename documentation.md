@@ -189,7 +189,7 @@ def compute_biodiv():
 This is almost exactly the same code, but I've split the functionality up into smaller chunks wrapped in functions with descriptive names.  This offers a few benefits.  First of all, reading `compute_biodiv` becomes totally tractable.  And, if you find that something is wrong in `compute_biodiv`, you can easily figure out where it's going wrong by testing that each of these smaller component functions works correctly.  
 
 ```python
-from ...api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
+from sspi_flask_app.api.datasource.sdg import flatten_nested_dictionary_biodiv, extract_sdg_pivot_data_to_nested_dictionary
 
 def compute_biodiv():
 	if not raw_data_available("BIODIV"):
