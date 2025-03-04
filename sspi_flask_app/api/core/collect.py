@@ -3,15 +3,15 @@ from flask_login import login_required, current_user
 import requests
 import time
 
-from ..datasource.oecdstat import collectOECDIndicator
-from ..datasource.epi import collectEPIData
-from ..datasource.worldbank import collectWorldBankdata
-from ..datasource.sdg import collectSDGIndicatorData
-from ..datasource.iea import collectIEAData
-from ..datasource.ilo import collectILOData
-from ..datasource.who import collectWHOdata
-from ..datasource.prisonstudies import collectPrisonStudiesData
-from ..datasource.who import collectCSTUNTData
+from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator
+from sspi_flask_app.api.datasource.epi import collectEPIData
+from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
+from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
+from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.who import collectWHOdata
+from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
+from sspi_flask_app.api.datasource.who import collectCSTUNTData
 
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (

@@ -43,46 +43,21 @@ def cleanedWorldBankData(RawData, IndName):
     return clean_data_list
 
 
-def cleaned_wb_current(RawData, IndName, unit):
-    """
-    Takes in list of collected raw data and our 6 letter indicator code
-    and returns a list of dictionaries with only relevant data from wanted countries
-    """
+def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
     clean_data_list = []
-    for entry in RawData:
+    for entry in raw_data:
         iso3 = entry["Raw"]["countryiso3code"]
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
         if entry["Raw"]["value"] is None:
             continue
-        if "IntermediateCode" in entry.keys():
-            clean_obs_inter = {
-                "CountryCode": iso3,
-                "IndicatorCode": IndName,
-                "IntermediateCode": entry["IntermediateCode"],
-                "Description": entry["Raw"]["indicator"]["value"],
-                "Year": entry["Raw"]["date"],
-                "Unit": unit,
-                "Value": string_to_float(entry["Raw"]["value"])
-            }
-            clean_data_list.append(clean_obs_inter)
-        else:
-            clean_obs_wo_inter = {
-                "CountryCode": iso3,
-                "IndicatorCode": IndName,
-                "Description": entry["Raw"]["indicator"]["value"],
-                "Year": entry["Raw"]["date"],
-                "Unit": unit,
-                "Value": string_to_float(entry["Raw"]["value"])
-            }
-            clean_data_list.append(clean_obs_wo_inter)
         value = entry["Raw"]["value"]
         if value == "NaN" or value is None or not value:
             continue
         clean_obs = {
             "CountryCode": iso3,
-            "IndicatorCode": IndName,
+            "IndicatorCode": IndicatorCode,
             "Description": entry["Raw"]["indicator"]["value"],
             "Year": int(str(entry["Raw"]["date"])),
             "Unit": unit,
