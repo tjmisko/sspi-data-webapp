@@ -3,7 +3,11 @@ from flask_login import login_required, current_user
 import requests
 import time
 
-from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collectOECDSDMXData
+from sspi_flask_app.api.datasource.oecdstat import (
+    collectOECDIndicator,
+    collectOECDSDMXData,
+    collectOECDSDMXFORAID
+)
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
 from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
@@ -352,8 +356,10 @@ def rdfund():
 def foraid():
     def collect_iterator(**kwargs):
         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
-        yield from collectOECDSDMXData("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,/.DPGC.206.USD.Q",
-                                       "FORAID", metadata_url=metadata_url, **kwargs)
+        yield from collectOECDSDMXFORAID("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,",
+                                         "FORAID",
+                                         filter_parameters="..206.USD.Q",
+                                         metadata_url=metadata_url, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
