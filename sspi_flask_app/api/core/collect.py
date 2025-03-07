@@ -3,16 +3,16 @@ from flask_login import login_required, current_user
 import requests
 import time
 
-from ..datasource.oecdstat import collectOECDIndicator
-from ..datasource.epi import collectEPIData
-from ..datasource.worldbank import collectWorldBankdata
-from ..datasource.sdg import collectSDGIndicatorData
-from ..datasource.iea import collectIEAData
-from ..datasource.ilo import collectILOData
-from ..datasource.wef import collectWEFQUELCT
-from ..datasource.who import collectWHOdata
-from ..datasource.prisonstudies import collectPrisonStudiesData
-from ..datasource.who import collectCSTUNTData
+from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collectOECDSDMXData
+from sspi_flask_app.api.datasource.epi import collectEPIData
+from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
+from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
+from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
+from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.who import collectWHOdata
+from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
+from sspi_flask_app.api.datasource.who import collectCSTUNTData
 
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (
@@ -214,12 +214,17 @@ def taxrev():
 ## Category: FINANCIAL SECTOR ##
 ################################
 
-
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/PUBACC", methods=['GET'])
+def pubacc():
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 # @collect_bp.route("/FSTABL", methods=['GET'])
@@ -361,9 +366,19 @@ def rdfund():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-##############################################
-## Category: Adding Country Characteristics ##
-##############################################
+@collect_bp.route("/FORAID", methods=['GET'])
+@login_required
+def foraid():
+    def collect_iterator(**kwargs):
+        metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
+        yield from collectOECDSDMXData("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,/.DPGC.206.USD.Q",
+                                       "FORAID", metadata_url=metadata_url, **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+#######################################
+## Category: Country Characteristics ##
+#######################################
 @collect_bp.route("/characteristic/UNPOPL", methods=['GET'])
 @login_required
 def unpopl():
