@@ -570,31 +570,48 @@ def compute_nrgint():
 @compute_bp.route("/EDEMOC", methods=['GET'])
 @login_required
 def compute_edemoc():
+    # Check if raw data is available; if not, redirect to the collection route.
     if not sspi_raw_api_data.raw_data_available("EDEMOC"):
         return redirect(url_for("collect_bp.EDEMOC"))
-    
+
+    # Fetch the raw data for EDEMOC.
     raw_data = sspi_raw_api_data.fetch_raw_data("EDEMOC")
-    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
-    df = pd.read_csv(csv_virtual_file)
-    
+    document_list = []
 
-    df = df.rename(columns={
-        "country_text_id": "CountryCode",
-        "year": "Year",
-        "EDEMOC": "Value"
-    })
-    
+    for obs in raw_data:
+        try:
+            # Access the nested raw data.
+            data = obs["Raw"]["Raw"]
+            country_code = data["Country"]  # Should be a three-letter ISO code (e.g., "MEX")
 
-    df = df.dropna(subset=["Value"])
-    df = df[(df["Value"] >= 0) & (df["Value"] <= 1)]
-    
-    df["IndicatorCode"] = "EDEMOC"
-    df["Unit"] = "Index"
-    
-    obs_list = json.loads(df.to_json(orient="records"))
-    
-    scored_list = score_single_indicator(obs_list, "EDEMOC")
-    
-    sspi_clean_api_data.insert_many(scored_list)
-    
-    return parse_json(scored_list)
+            # Convert the raw "Year" field to an integer.
+            raw_year = int(data["Year"])
+
+            # Drop observations where the year is not within the allowed range.
+            if raw_year < 1900 or raw_year > 2030:
+                print(f"Skipping observation with out-of-range year: {raw_year}")
+                continue
+
+            # Convert the v2x_polyarchy value to a float.
+            v2x_polyarchy = float(data["Value"])
+
+            # Build the computed document.
+            document = {
+                "IndicatorCode": "EDEMOC",
+                "CountryCode": country_code,
+                "Year": raw_year,
+                "Intermediates": {"v2x_polyarchy": v2x_polyarchy},
+                "Value": v2x_polyarchy,  # The computed value is the v2x_polyarchy value.
+                "Unit": "Index",  # Data is sourced from a published index.
+                "Score": v2x_polyarchy  # Score is the computed value.
+            }
+            document_list.append(document)
+        except Exception as e:
+            # Log error and skip this observation if an exception occurs.
+            print(f"Error processing observation: {e}")
+            continue
+
+    # Insert computed documents into the clean API data collection.
+    sspi_clean_api_data.insert_many(document_list)
+    return parse_json(document_list)
+
