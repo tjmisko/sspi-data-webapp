@@ -1,6 +1,10 @@
+
+
+import csv
 import json
 import bs4 as bs
 from bs4 import BeautifulSoup
+import io
 from flask import (
     Blueprint,
     redirect,
@@ -9,6 +13,7 @@ from flask import (
     Response,
     stream_with_context
 )
+
 from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.resources.utilities import (
@@ -54,7 +59,7 @@ import re
 from sspi_flask_app.api.core.finalize import (
    finalize_iterator
 )
-
+from ..datasource.worldbank import cleaned_wb_current
 
 compute_bp = Blueprint("compute_bp", __name__,
                        template_folder="templates",
@@ -366,7 +371,7 @@ def compute_altnrg():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
-    insert_pop_data()
+    #insert_pop_data()
     if not sspi_raw_api_data.raw_data_available("GTRANS"):
         return redirect(url_for("collect_bp.GTRANS"))
 
@@ -568,25 +573,127 @@ def compute_nrgint():
 
 
 
-@compute_bp.route("/AQELEC", methods=['GET'])
-# @login_required
+
+
+def extract_csv_value(csv_text, target_year):
+    """
+    Given CSV text and a target year, parse the CSV and extract the observation
+    value for that year. The CSV is expected to have a header row containing years.
+    """
+    f = io.StringIO(csv_text)
+    reader = csv.reader(f)
+    rows = list(reader)
+    if not rows:
+        return None
+    header = rows[0]
+    try:
+        col_index = header.index(str(target_year))
+    except ValueError:
+        return None
+    # Assume the first data row holds the desired "Value"
+    if len(rows) >= 2 and len(rows[1]) > col_index:
+        try:
+            return float(rows[1][col_index])
+        except ValueError:
+            return None
+    return None
+
+
+def extract_csv_country_code(csv_text):
+    """
+    Given CSV text, extract the country code from the first column of the first data row.
+    Assumes that the CSV header's first column represents the country ISO code.
+    """
+    f = io.StringIO(csv_text)
+    reader = csv.reader(f)
+    rows = list(reader)
+    if len(rows) < 2:
+        return None
+    # Get the country code from the first column of the first data row.
+    country_code = rows[1][0].strip()
+    return country_code
+
+
+@compute_bp.route("/AQELEC", methods=["GET"])
+@login_required
 def compute_aqelec():
+    """
+    Compute route for AQELEC.
+
+    - Checks if raw data for AQELEC is available; if not, redirects to the collection route.
+    - Processes each raw document to extract CountryCode, Year, IntermediateCode, and Value.
+      If the value is not directly available, CSV content is parsed.
+    - Uses CSV data to extract a valid CountryCode if the raw document does not include one.
+    - Skips any document that does not yield a valid numeric value or a valid 3-character CountryCode.
+    - Uses zip_intermediates to group observations by CountryCode and Year and computes the
+      final score as the average of the available intermediate values.
+    - Filters out incomplete documents. If no clean documents exist, returns an empty JSON array.
+    - Otherwise, stores the cleaned data and returns a JSON response.
+    """
     if not sspi_raw_api_data.raw_data_available("AQELEC"):
-        return "Error: Raw data for AQELEC is not available. Please run the data collection process."
-    
-    avelec_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
-    quelct_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")
-    
-    combined_list = avelec_raw + quelct_raw
-    cleaned_list = zip_intermediates(
-        combined_list, 
-        "AQELEC", 
-        ScoreFunction=lambda AVELEC, QUELCT: 0.5 * AVELEC + 0.5 * QUELCT,
+        return redirect(url_for("api_bp.collect_bp.AQELEC"))
+
+    raw_data = sspi_raw_api_data.fetch_raw_data("AQELEC")
+    processed_docs = []
+
+    # Process each raw document into a standardized format.
+    for doc in raw_data:
+        raw = doc.get("Raw", {})
+        # First try to get the three letter code
+        country = raw.get("countryiso3code")
+        # If not present, try to extract from CSV data.
+        if not country and "csv" in raw:
+            country = extract_csv_country_code(raw["csv"])
+        # Ensure the country code is exactly 3 characters.
+        if not country or len(country) != 3:
+            continue
+
+        date_str = raw.get("date")
+        try:
+            year = int(date_str)
+        except (ValueError, TypeError):
+            continue  # Skip if year is not valid
+
+        intermediate_code = doc.get("IntermediateCode")
+
+        # Get the value either directly or by parsing CSV content.
+        value = raw.get("value")
+        if value is None and "csv" in raw:
+            value = extract_csv_value(raw["csv"], year)
+
+        # If no valid value, skip this document.
+        if value is None:
+            continue
+        try:
+            value = float(value)
+        except (ValueError, TypeError):
+            continue
+
+        processed_docs.append({
+            "IndicatorCode": "AQELEC",
+            "CountryCode": country,
+            "Year": year,
+            "IntermediateCode": intermediate_code,
+            "Value": value,
+            "Unit": "Aggregate"  # As this value is computed as an average.
+        })
+
+    # Group intermediate observations by CountryCode and Year,
+    # and compute a final score using the average of the available values.
+    zipped_docs = zip_intermediates(
+        processed_docs,
+        "AQELEC",
+        ScoreFunction=lambda AVELEC, QUELCT: (AVELEC + QUELCT) / 2
+        if (AVELEC is not None and QUELCT is not None)
+        else (AVELEC if QUELCT is None else QUELCT),
         ScoreBy="Score"
     )
-    
-    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
 
+    clean_docs, incomplete_data = filter_incomplete_data(zipped_docs)
+
+    # If no clean documents are present, return an empty JSON array.
+    if not clean_docs:
+        return parse_json([])
+
+    sspi_clean_api_data.insert_many(clean_docs)
+    return parse_json(clean_docs)
