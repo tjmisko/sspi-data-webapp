@@ -32,7 +32,8 @@ def compute_prison():
         {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": "PRISON"})[0]
     lower_goalpost = details["Metadata"]["LowerGoalpost"]
     upper_goalpost = details["Metadata"]["UpperGoalpost"]
-    cleaned_pop = clean_WB_population("PRISON", Intermediate="UNPOPL")
+    pop_data = sspi_raw_api_data.fetch_raw_data("PRISON", IntermediateCode="UNPOPL")
+    cleaned_pop = cleaned_wb_current("PRISON", IndicatorCode, "Population")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     combined_list = cleaned_pop + clean_data_list
     final_list = zip_intermediates(
