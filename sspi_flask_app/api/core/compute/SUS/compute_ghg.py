@@ -16,7 +16,8 @@ from sspi_flask_app.api.datasource.iea import (
     cleanIEAData_altnrg
 )
 from sspi_flask_app.api.datasource.worldbank import(
-    clean_wb_data
+    clean_wb_data,
+    clean_wb_current
 )
 import pandas as pd
 import json
@@ -77,4 +78,4 @@ def compute_coalpw():
 @login_required
 def compute_gtrans():
     pop_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IndicatorCode = "UNPOPL")
-    cleaned_pop = clean_wb_data("PRISON", IndicatorCode, "Population")
+    cleaned_pop = clean_wb_current("PRISON", IndicatorCode, "Population")
