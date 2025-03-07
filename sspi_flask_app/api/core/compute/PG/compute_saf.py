@@ -10,11 +10,13 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
     filter_incomplete_data,
-    score_single_indicator
+    score_single_indicator,
+    goalpost
 )
 
 
 from sspi_flask_app.api.datasource.worldbank import (
+    clean_WB_population,
     clean_wb_data
 )
 from sspi_flask_app.api.datasource.prisonstudies import (
@@ -30,13 +32,14 @@ def compute_prison():
         {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": "PRISON"})[0]
     lower_goalpost = details["Metadata"]["LowerGoalpost"]
     upper_goalpost = details["Metadata"]["UpperGoalpost"]
-    cleaned_pop = clean_WB_population("PRISON", Intermediate = "UNPOPL")
+    cleaned_pop = clean_WB_population("PRISON", Intermediate="UNPOPL")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     combined_list = cleaned_pop + clean_data_list
     final_list = zip_intermediates(
-        combined_list, "PRISON", 
-        ScoreFunction = lambda PRIPOP, UNPOPL: goalpost(PRIPOP * 1/UNPOPL * 100000, lower_goalpost, upper_goalpost),
-        ScoreBy = "Values")
+        combined_list, "PRISON",
+        ScoreFunction=lambda PRIPOP, UNPOPL: goalpost(
+            PRIPOP * 1/UNPOPL * 100000, lower_goalpost, upper_goalpost),
+        ScoreBy="Values")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
     sspi_clean_api_data.insert_many(clean_document_list)
