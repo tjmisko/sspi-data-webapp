@@ -565,3 +565,53 @@ def compute_nrgint():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+
+@compute_bp.route("/RULELW", methods=['GET'])
+@login_required
+def compute_rulelw():
+    # Check if raw data is available; if not, redirect to the collection route.
+    if not sspi_raw_api_data.raw_data_available("RULELW"):
+        return redirect(url_for("collect_bp.RULELW"))
+
+    # Fetch the raw data for RULELW.
+    raw_data = sspi_raw_api_data.fetch_raw_data("RULELW")
+    document_list = []
+
+    for obs in raw_data:
+        try:
+            # Access the nested raw data.
+            data = obs["Raw"]["Raw"]
+            country_code = data["Country"]  # Should be a three-letter ISO code (e.g., "MEX")
+
+            # Convert the raw "Year" field to an integer.
+            raw_year = int(data["Year"])
+
+            # Drop observations where the year is not within the allowed range.
+            if raw_year < 1900 or raw_year > 2030:
+                print(f"Skipping observation with out-of-range year: {raw_year}")
+                continue
+
+            # Convert the SourceIndicator to a float.
+            source_indicator = float(data["Value"])
+
+            # Build the computed document.
+            document = {
+                "IndicatorCode": "RULELW",
+                "CountryCode": country_code,
+                "Year": raw_year,
+                "Intermediates": {"v2x_rule": source_indicator},
+                "Value": source_indicator,  # Computed value is the source indicator.
+                "Unit": "Index",  # Data are sourced from a published index.
+                "Score": source_indicator  # Score is the final computed value.
+            }
+            document_list.append(document)
+        except Exception as e:
+            # Log the error and skip this observation if an exception occurs.
+            print(f"Error processing observation: {e}")
+            continue
+
+    # Insert computed documents into the clean API data collection.
+    sspi_clean_api_data.insert_many(document_list)
+    return parse_json(document_list)
