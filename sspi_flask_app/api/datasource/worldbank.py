@@ -42,7 +42,7 @@ def cleanedWorldBankData(RawData, IndName):
         clean_data_list.append(clean_obs)
     return clean_data_list
 
-def cleaned_wb_current(RawData, IndName, unit):
+def cleaned_wb_current(RawData, IndName, unit, interpolate = False):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
     and returns a list of dictionaries with only relevant data from wanted countries
@@ -53,8 +53,12 @@ def cleaned_wb_current(RawData, IndName, unit):
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
-        if entry["Raw"]["value"] is None:
-            continue
+        value = entry["Raw"]["value"]
+        if not interpolate:
+            if value == "NaN":
+                continue
+            if entry["Raw"]["value"] is None:
+                continue
         if "IntermediateCode" in entry.keys():
             clean_obs_inter = {
                 "CountryCode": iso3,
@@ -76,19 +80,6 @@ def cleaned_wb_current(RawData, IndName, unit):
                 "Value": string_to_float(entry["Raw"]["value"])
             }
             clean_data_list.append(clean_obs_wo_inter)
-        value = entry["Raw"]["value"]
-        if value == "NaN":
-            continue
-        clean_obs = {
-            "CountryCode": iso3,
-            "IndicatorCode": IndName,
-            "IntermediateCode": entry["IntermediateCode"],
-            "Description": entry["Raw"]["indicator"]["value"],
-            "Year": entry["Raw"]["date"],
-            "Unit": unit,
-            "Value": string_to_float(value)
-        }
-        clean_data_list.append(clean_obs)
     return clean_data_list
 
 
