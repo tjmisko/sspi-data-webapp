@@ -25,6 +25,7 @@ def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
     for entry in raw_data:
         iso3 = entry["Raw"]["countryiso3code"]
         country_data = countries.get(alpha_3=iso3)
+        value = entry["Raw"]["value"]
         if not country_data:
             continue
         if entry["Raw"]["value"] is None:
