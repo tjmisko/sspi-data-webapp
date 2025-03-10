@@ -13,11 +13,11 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 from sspi_flask_app.api.datasource.iea import (
-    cleanIEAData_altnrg
+    cleanIEAData_altnrg,
+    clean_IEA_data_GTRANS
 )
 from sspi_flask_app.api.datasource.worldbank import(
-    clean_wb_data,
-    clean_wb_current
+    clean_wb_data
 )
 import pandas as pd
 import json
@@ -77,5 +77,11 @@ def compute_coalpw():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
-    pop_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IndicatorCode = "UNPOPL")
-    cleaned_pop = clean_wb_current("PRISON", IndicatorCode, "Population")
+    pop_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "UNPOPL")
+    cleaned_pop = clean_wb_data(pop_data, "GTRANS", "Population")
+    gtrans = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
+    cleaned_co2 = clean_IEA_data_GTRANS(gtrans, "GTRANS", "Tonnes CO2 from transport sources")
+    document_list = cleaned_pop + cleaned_co2
+    scored = zip_intermediates(document_list, "GTRANS", 
+                               ScoreFunction = lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy = "Value")
+    return scored
