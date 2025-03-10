@@ -4,6 +4,7 @@ import time
 from pycountry import countries
 from ..resources.utilities import string_to_float
 
+
 def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
     url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
@@ -26,8 +27,6 @@ def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
         iso3 = entry["Raw"]["countryiso3code"]
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
-            continue
-        if entry["Raw"]["value"] is None:
             continue
         value = entry["Raw"]["value"]
         if value == "NaN" or value is None or not value:

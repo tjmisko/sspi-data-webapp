@@ -29,3 +29,4 @@ def load_maindata():
 def load_metadata():
     count = sspi_metadata.load()
     return f"Inserted {count} metadata documents into database."
+
