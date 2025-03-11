@@ -224,15 +224,14 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
             raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
-        if any(arg_value is None for arg_value in arg_value_dict.values()):
+        if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
-            arg_value_list = [arg_value_dict[arg_name]
-                              for arg_name in arg_name_list]
+            arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
         except KeyError:
             continue
         score = ScoreFunction(*arg_value_list)
-        if score is not None:
+        if score:
             document["Value"] = score
             document["Unit"] = "Aggregate"
             document["Score"] = score
