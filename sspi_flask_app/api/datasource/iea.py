@@ -2,6 +2,7 @@ import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 import bs4 as bs
 from pycountry import countries
+from ..resources.utilities import get_country_code, country_code_to_code
 
 def collectIEAData(IEAIndicatorCode, IndicatorCode, **kwargs):
     raw_data = requests.get(f"https://api.iea.org/stats/indicator/{IEAIndicatorCode}").json()
@@ -37,15 +38,17 @@ def cleanIEAData_altnrg(RawData, IndName):
     """
     clean_data_list = []
     for entry in RawData:
-        iso3 = entry["Raw"]["country"]
-        country_data = countries.get(alpha_3=iso3)
+        country = entry["Raw"]["country"]
+        if len(country) > 3:
+            continue
+        country_code = countries.get(alpha_3 = country).alpha_3
         value = entry["Raw"]['value']
-        if not country_data:
+        if not country_code:
             continue
         if not value:
             continue
         clean_obs = {
-            "CountryCode": iso3,
+            "CountryCode": country_code,
             "IndicatorCode": IndName,
             "Year": entry["Raw"]["year"],
             "Value": entry["Raw"]["value"],
@@ -58,23 +61,28 @@ def cleanIEAData_altnrg(RawData, IndName):
 def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
     clean_data_list = []
     for obs in raw_data:
-        iso3 = obs["Raw"]["country"]
-        country_data = countries.get(alpha_3=iso3)
+        country = obs["Raw"]["country"]
+        if len(country) > 3:
+            continue
+        if countries.get(alpha_3 = country) == None:
+            continue
+        country_code = country_code_to_code(country)
         value = obs["Raw"]['value']
         intermediate_code = obs["IntermediateCode"]
         series_label = obs["Raw"]["seriesLabel"]
         if series_label != "Transport Sector":
             continue
-        if not country_data:
+        if not country_code:
             continue
         if not value:
             continue
+        print(obs)
         clean_obs = {
-            "CountryCode": iso3,
+            "CountryCode": country_code,
             "IndicatorCode": indicator_code,
             "Year": obs["Raw"]["year"],
-            "Value": obs["Raw"]["value"],
-            "Unit": "Metric tonnes",
+            "Value": (obs["Raw"]["value"]) * 1000, # Metric tonnes to thousands of kilograms
+            "Unit": "Kilograms of CO2",
             "Description": description,
             "IntermediateCode": intermediate_code
         }

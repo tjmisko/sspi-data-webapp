@@ -274,6 +274,14 @@ def country_code_to_name(CountryCode):
     except AttributeError:
         return CountryCode
     
+def country_code_to_code(CountryCode):
+    try: 
+        country_code = pycountry.countries.get(alpha_3 = CountryCode).alpha_3
+        return country_code
+    except LookupError:
+        print(CountryCode)
+        return CountryCode
+    
 def get_country_code(CountryName):
     '''
     Handles edge cases of country fuzzy matching
@@ -294,8 +302,11 @@ def get_country_code(CountryName):
         return "CPV"
     if "swaziland" in str.lower(CountryName):
         return "SWZ"
-    else:
-        return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
+    try:
+        country_code = pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
+        return country_code
+    except LookupError:
+        return CountryName
 
 
 def colormap(PillarCode, alpha: str = "ff"):

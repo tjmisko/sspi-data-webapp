@@ -17,16 +17,15 @@ from sspi_flask_app.api.datasource.worldbank import (
     clean_wb_data
 )
 from sspi_flask_app.api.datasource.prisonstudies import (
-    scrape_stored_pages_for_data,
-    compute_prison_rate
+    scrape_stored_pages_for_data
 )
 
 
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
-    clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    final_list, incomplete_observations = compute_prison_rate(clean_data_list)
+    # clean_data_list, missing_data_list = scrape_stored_pages_for_data()
+    # final_list, incomplete_observations = compute_prison_rate(clean_data_list)
     # print(f"Missing from World Prison Brief: {missing_data_list}")
     # print(f"Missing from UN population: {incomplete_observations}")
     return final_list

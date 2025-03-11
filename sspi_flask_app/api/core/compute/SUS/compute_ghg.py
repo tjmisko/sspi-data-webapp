@@ -3,13 +3,15 @@ from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
     filter_incomplete_data,
-    score_single_indicator
+    score_single_indicator,
+    goalpost
 )
 
 from sspi_flask_app.api.datasource.iea import (
@@ -74,14 +76,16 @@ def compute_coalpw():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
-@compute_bp.route("/GTRANS", methods=['GET'])
+@compute_bp.route("/Outcome", methods=['GET'])
 @login_required
 def compute_gtrans():
     pop_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "UNPOPL")
     cleaned_pop = clean_wb_data(pop_data, "GTRANS", "Population")
     gtrans = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "TCO2EQ")
-    cleaned_co2 = clean_IEA_data_GTRANS(gtrans, "GTRANS", "Tonnes CO2 from transport sources")
+    cleaned_co2 = clean_IEA_data_GTRANS(gtrans, "GTRANS", "CO2 from transport sources")
     document_list = cleaned_pop + cleaned_co2
     scored = zip_intermediates(document_list, "GTRANS", 
-                               ScoreFunction = lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy = "Value")
-    return scored
+                               ScoreFunction = lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy = "Values")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)

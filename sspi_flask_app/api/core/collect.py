@@ -121,14 +121,6 @@ def coalpw():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/GTRANS", methods=['GET'])
-@login_required
-def gtrans():
-    def collect_iterator(**kwargs):
-        yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode= "TCO2EQ", SourceOrganization="IEA", **kwargs)
-        yield from collectWorldBankdata("SP.POP.TOTL", "GTRANS", IntermediateCode = "UNPOPL", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 ######################################################
 ### Collection Routes for Pillar: MARKET STRUCTURE ###
 ######################################################
@@ -442,4 +434,12 @@ def gdpppp():
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
 
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/GTRANS", methods=['GET'])
+@login_required
+def gtrans():
+    def collect_iterator(**kwargs):
+        yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode= "TCO2EQ", SourceOrganization="IEA", **kwargs)
+        yield from collectWorldBankdata("SP.POP.TOTL", "GTRANS", IntermediateCode = "UNPOPL", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')

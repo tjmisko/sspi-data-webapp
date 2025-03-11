@@ -2,7 +2,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 import requests
 import time
 from pycountry import countries
-from ..resources.utilities import string_to_float
+from ..resources.utilities import string_to_float, get_country_code, country_code_to_name, country_code_to_code
 
 def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
@@ -23,10 +23,14 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
 def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
     clean_data_list = []
     for entry in raw_data:
-        iso3 = entry["Raw"]["countryiso3code"]
-        country_data = countries.get(alpha_3=iso3)
+        country = entry["Raw"]["countryiso3code"]
+        if len(country) > 3:
+            continue
+        if countries.get(alpha_3 = country) == None:
+            continue
+        country_code = country_code_to_code(country)
         value = entry["Raw"]["value"]
-        if not country_data:
+        if not country_code:
             continue
         if entry["Raw"]["value"] is None:
             continue
@@ -34,7 +38,7 @@ def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
         if value == "NaN" or value is None or not value:
             continue
         clean_obs = {
-            "CountryCode": iso3,
+            "CountryCode": country_code,
             "IndicatorCode": IndicatorCode,
             "Description": entry["Raw"]["indicator"]["value"],
             "Year": int(str(entry["Raw"]["date"])),
