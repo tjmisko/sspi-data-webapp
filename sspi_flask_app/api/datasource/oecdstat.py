@@ -167,14 +167,20 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
     Code had to be specially adapted to foreign aid data to iterate through countries one by one
     """
     metadata = None
+    g_size = 15
+    all_country_codes = [cou.alpha_3 for cou in pycountry.countries]
+    country_groups = ["+".join(all_country_codes[i:i + g_size]) for i in range(0, len(all_country_codes), g_size)]
+    print(country_groups)
+    for g in country_groups:
+        yield f"Processing group of countries: {g}\n"
     if metadata_url:
         yield f"Sending Metadata Request to OECD SDMX API ({metadata_url})\n"
         meta_res = requests.get(metadata_url)
         metadata = str(meta_res.content)
-    for cou in pycountry.countries:
-        yield f"Sending Data Request to OECD SDMX API for {cou.alpha_3}\n"
+    for cou_g in country_groups:
+        yield f"Sending Data Request to OECD SDMX API for {cou_g}\n"
         base_url = "https://sdmx.oecd.org/public/rest/data/"
-        cou_filter_parameters = filter_parameters[0] + cou.alpha_3 + filter_parameters[1:]
+        cou_filter_parameters = filter_parameters[0] + cou_g + filter_parameters[1:]
         if not query_parameters:
             query_parameters = "startPeriod=1990&dimensionAtObservation=AllDimensions"
         url = f"{base_url}{oecd_series_code}/{cou_filter_parameters}?{query_parameters}"
@@ -182,8 +188,9 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
         raw_data = str(res.content)
         print(raw_data)
         if raw_data == "NoRecordsFound":
-            print(f"No records found for {cou.alpha_3}! Skipping Insertion")
+            print(f"No records found for {cou_g}! Skipping Insertion")
             continue
-        sspi_raw_api_data.raw_insert_one(raw_data, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
+        sspi_raw_api_data.raw_insert_one(raw_data, IndicatorCode,
+                                         Source="OECD", Metadata=metadata, **kwargs)
         time.sleep(30)
     yield f"Data collection complete for indicator {IndicatorCode}\n"
