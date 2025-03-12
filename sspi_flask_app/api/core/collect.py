@@ -165,13 +165,14 @@ def colbar():
         yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", URLParams=url_params, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/CHILDW")
 @login_required
 def childw():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("4.1.1", "CHILDW", IntermediateCode = "YSCEDU", **kwargs)
-        yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode = "CHLDLB", **kwargs)
-    return Response(collect_iterator(Username = current_user.username), mimetype = 'text/event-stream')
+        yield from collectSDGIndicatorData("4.1.1", "CHILDW", IntermediateCode="YSCEDU", **kwargs)
+        yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode="CHLDLB", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #################################
 ## Category: WORKER WELLBEING ##
@@ -216,12 +217,14 @@ def taxrev():
 ## Category: FINANCIAL SECTOR ##
 ################################
 
+
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 @collect_bp.route("/PUBACC", methods=['GET'])
 def pubacc():
@@ -263,6 +266,8 @@ def puptch():
 ##########################
 ## Category: HEALTHCARE ##
 ##########################
+
+
 @collect_bp.route("/ATBRTH", methods=['GET'])
 @login_required
 def atbrth():
@@ -270,12 +275,14 @@ def atbrth():
         yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/DPTCOV", methods=['GET'])
 @login_required
 def dptcov():
     def collect_iterator(**kwargs):
         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
@@ -311,6 +318,7 @@ def drkwat():
         yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/SANSRV", methods=['GET'])
 @login_required
 def sansrv():
@@ -331,6 +339,7 @@ def intrnt():
 ## Category: PUBLIC SAFETY ##
 #############################
 
+
 @collect_bp.route("/PRISON", methods=['GET'])
 @login_required
 def prison():
@@ -342,6 +351,7 @@ def prison():
 ###########################
 ## Category: GLOBAL ROLE ##
 ###########################
+
 
 @collect_bp.route("/RDFUND", methods=['GET'])
 @login_required
@@ -356,8 +366,7 @@ def rdfund():
 def foraid():
     def collect_iterator(**kwargs):
         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
-        yield from collectOECDSDMXFORAID("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,",
-                                         "FORAID",
+        yield from collectOECDSDMXFORAID("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,", "FORAID",
                                          filter_parameters="..206.USD.Q",
                                          metadata_url=metadata_url, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
@@ -380,12 +389,12 @@ def unpopl():
 def gdpmek():
     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
-        yield "Collecting data for World Bank Indicator" + \
-            "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        yield "Collecting data for World Bank Indicator f{WorldBankIndicatorCode}\n"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
-        for p in range(1, total_pages+1):
+        for p in range(1, total_pages + 1):
             new_url = f"{url_source}&page={p}"
             yield f"Sending Request for page {p} of {total_pages}\n"
             response = requests.get(new_url).json()
@@ -394,8 +403,7 @@ def gdpmek():
                 document_list, IndicatorCode, **kwargs)
             yield f"Inserted {count} new observations into sspi_outcome_data\n"
             time.sleep(0.5)
-        yield "Collection complete for World Bank Indicator" + \
-            WorldBankIndicatorCode
+        yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
@@ -411,10 +419,11 @@ def gdpppp():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
-        for p in range(1, total_pages+1):
+        for p in range(1, total_pages + 1):
             new_url = f"{url_source}&page={p}"
             yield f"Sending Request for page {p} of {total_pages}\n"
             response = requests.get(new_url).json()
@@ -423,8 +432,7 @@ def gdpppp():
                 document_list, IndicatorCode, **kwargs)
             yield f"Inserted {count} new observations into sspi_outcome_data\n"
             time.sleep(0.5)
-        yield "Collection complete for World Bank Indicator" + \
-            WorldBankIndicatorCode
+        yield "Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
