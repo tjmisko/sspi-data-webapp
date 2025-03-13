@@ -200,8 +200,9 @@ def fatinj():
 @collect_bp.route("/MATERN")
 @login_required
 def matern():
-    def collect_iterator(**kwargs): #C1_4
-        yield collectOECDIndicator("OECD.WISE.CWB,DSD_CWB@DF_CWB", "MATERN", **kwargs)
+    def collect_iterator(**kwargs):  # C1_4
+        for chunk in collectOECDIndicator("OECD.WISE.CWB,DSD_CWB@DF_CWB", "MATERN", **kwargs):
+            yield chunk.encode('utf-8') if isinstance(chunk, str) else chunk  # Convert strings to bytes
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #####################
@@ -350,9 +351,8 @@ def prison():
 @login_required
 def rdfund():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+        yield from collectSDGIndicatorData("9.5.1", "RDFUND", IntermediateCode="GVTRDP,EDURDP,NRSRCH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 
 ##############################################
 ## Category: Adding Country Characteristics ##
