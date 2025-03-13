@@ -40,8 +40,8 @@ class CategoryRadarStatic {
         this.canvasContainer.classList.add('radar-chart-canvas-container')
         this.canvas = document.createElement('canvas')
         this.canvasContainer.appendChild(this.canvas)
-        this.canvas.width = 400
-        this.canvas.height = 400
+        this.canvas.width = 300
+        this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvasContainer)
         this.chart = new Chart(this.context, {
