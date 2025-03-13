@@ -174,7 +174,6 @@ def finalize_sspi_dynamic_line_data():
                 "CName": country_code_to_name(CountryCode),
                 "ICode": IndicatorCode,
                 "IName": detail["Indicator"],
-                "spanGaps": True,
                 "CatCode": detail["CategoryCode"],
                 "CatName": detail["Category"],
                 "PilCode": detail["PillarCode"],

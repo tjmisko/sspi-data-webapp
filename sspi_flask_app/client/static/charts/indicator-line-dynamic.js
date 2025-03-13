@@ -93,6 +93,17 @@ class DynamicLineChart {
                         this.togglePin(dataset)
                     })
                 },
+                datasets: {
+                    line: {
+                        spanGaps: true,
+                        segment: {
+                            borderDash: ctx => {
+                                return ctx.p0.skip || ctx.p1.skip ? [5, 5] : [];
+                                // Dashed when spanning gaps, solid otherwise
+                            }
+                        }
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false,
@@ -109,6 +120,7 @@ class DynamicLineChart {
                         ticks: {
                             color: '#bbb',
                         },
+                        type: "category",
                         title: {
                             display: true,
                             text: 'Year',
@@ -432,7 +444,7 @@ class DynamicLineChart {
         this.updateLegend()
     }
 
-    dumpChartDataJSON(screenVisibility=true) {
+    dumpChartDataJSON(screenVisibility = true) {
         const observations = this.chart.data.datasets.map(dataset => {
             if (screenVisibility && dataset.hidden) {
                 return []
@@ -458,7 +470,7 @@ class DynamicLineChart {
         URL.revokeObjectURL(url);
     }
 
-    dumpChartDataCSV(screenVisibility=true) {
+    dumpChartDataCSV(screenVisibility = true) {
         const observations = this.chart.data.datasets.map(dataset => {
             if (screenVisibility && dataset.hidden) {
                 return []
