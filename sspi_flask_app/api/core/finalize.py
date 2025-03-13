@@ -144,6 +144,13 @@ def finalize_sspi_dynamic_line_data():
             {"IndicatorCode": IndicatorCode},
             {"_id": 0}
         )
+        year_list = [int(o["Year"]) for o in data]
+        if len(year_list) == 0:
+            continue
+        print(IndicatorCode, len(year_list))
+        min_year = min(year_list)
+        max_year = max(year_list)
+        label_list = list(range(min_year, max_year + 1))
         for observation in data:
             CountryCode = observation["CountryCode"]
             if CountryCode not in indicator_dict.keys():
@@ -152,11 +159,22 @@ def finalize_sspi_dynamic_line_data():
         for CountryCode, document in indicator_dict.items():
             document = sorted(document, key=lambda x: x["Year"])
             group_list = sspi_metadata.get_country_groups(CountryCode)
+            years = [None] * len(label_list)
+            scores = [None] * len(label_list)
+            values = [None] * len(label_list)
+            data = [None] * len(label_list)
+            for doc in document:
+                year_index = label_list.index(doc["Year"])
+                years[year_index] = doc["Year"]
+                scores[year_index] = doc["Score"]
+                values[year_index] = doc["Value"]
+                data[year_index] = doc["Score"]
             document = {
                 "CCode": CountryCode,
                 "CName": country_code_to_name(CountryCode),
                 "ICode": IndicatorCode,
                 "IName": detail["Indicator"],
+                "spanGaps": True,
                 "CatCode": detail["CategoryCode"],
                 "CatName": detail["Category"],
                 "PilCode": detail["PillarCode"],
@@ -167,10 +185,12 @@ def finalize_sspi_dynamic_line_data():
                            if "SSPI49" in group_list
                            else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
-                "years": [d["Year"] for d in document],
-                "scores": [round(d["Score"], 3) for d in document],
-                "data": [round(d["Score"], 3) for d in document],
-                "values": [round(d["Value"], 3) for d in document]
+                "years": years,
+                "minYear": min_year,
+                "maxYear": max_year,
+                "scores": scores,
+                "data": data,
+                "values": values
             }
             sspi_dynamic_line_data.insert_one(document)
     return jsonify(sspi_dynamic_line_data.find({}, {"_id": 0}))
