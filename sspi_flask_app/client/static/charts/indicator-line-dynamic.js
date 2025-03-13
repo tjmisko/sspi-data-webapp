@@ -97,8 +97,9 @@ class DynamicLineChart {
                     line: {
                         spanGaps: true,
                         segment: {
+                            borderWidth: 2,
                             borderDash: ctx => {
-                                return ctx.p0.skip || ctx.p1.skip ? [5, 5] : [];
+                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
                                 // Dashed when spanning gaps, solid otherwise
                             }
                         }
