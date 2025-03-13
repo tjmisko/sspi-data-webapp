@@ -20,69 +20,27 @@ def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
 
-def cleanedWorldBankData(RawData, IndName):
-    """
-    Takes in list of collected raw data and our 6 letter indicator code 
-    and returns a list of dictionaries with only relevant data from wanted countries
-    """
+def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
     clean_data_list = []
-    for entry in RawData:
+    for entry in raw_data:
         iso3 = entry["Raw"]["countryiso3code"]
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
+            continue
+        if entry["Raw"]["value"] is None:
+            continue
+        value = entry["Raw"]["value"]
+        if value == "NaN" or value is None or not value:
             continue
         clean_obs = {
             "CountryCode": iso3,
-            "CountryName": entry["Raw"]["country"]["value"],
-            "IndicatorCode": IndName,
-            "Source": "WORLDBANK",
-            "YEAR": entry["Raw"]["date"],
-            "RAW": entry["Raw"]["value"]
+            "IndicatorCode": IndicatorCode,
+            "Description": entry["Raw"]["indicator"]["value"],
+            "Year": int(str(entry["Raw"]["date"])),
+            "Unit": unit,
+            "Value": string_to_float(value)
         }
+        if "IntermediateCode" in entry.keys():
+            clean_obs["IntermediateCode"] = entry["IntermediateCode"]
         clean_data_list.append(clean_obs)
     return clean_data_list
-
-def cleaned_wb_current(RawData, IndName, unit, interpolate = False):
-    """
-    Takes in list of collected raw data and our 6 letter indicator code 
-    and returns a list of dictionaries with only relevant data from wanted countries
-    """
-    clean_data_list = []
-    for entry in RawData:
-        iso3 = entry["Raw"]["countryiso3code"]
-        country_data = countries.get(alpha_3=iso3)
-        if not country_data:
-            continue
-        value = entry["Raw"]["value"]
-        if not interpolate:
-            if value == "NaN":
-                continue
-            if entry["Raw"]["value"] is None:
-                continue
-        if "IntermediateCode" in entry.keys():
-            clean_obs_inter = {
-                "CountryCode": iso3,
-                "IndicatorCode": IndName,
-                "IntermediateCode": entry["IntermediateCode"],
-                "Description": entry["Raw"]["indicator"]["value"],
-                "Year": entry["Raw"]["date"],
-                "Unit": unit,
-                "Value": string_to_float(entry["Raw"]["value"])
-            }
-            clean_data_list.append(clean_obs_inter)
-        else:
-            clean_obs_wo_inter = {
-                "CountryCode": iso3,
-                "IndicatorCode": IndName,
-                "Description": entry["Raw"]["indicator"]["value"],
-                "Year": entry["Raw"]["date"],
-                "Unit": unit,
-                "Value": string_to_float(entry["Raw"]["value"])
-            }
-            clean_data_list.append(clean_obs_wo_inter)
-    return clean_data_list
-
-
-
-
-
