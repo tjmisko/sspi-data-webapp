@@ -1,3 +1,8 @@
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from flask import redirect, url_for
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
@@ -76,7 +81,7 @@ def compute_coalpw():
     print(incomplete_observations)
     return parse_json(clean_document_list)
 
-@compute_bp.route("/Outcome", methods=['GET'])
+@compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
     pop_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode = "UNPOPL")
@@ -87,5 +92,9 @@ def compute_gtrans():
     scored = zip_intermediates(document_list, "GTRANS", 
                                ScoreFunction = lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy = "Values")
     clean_document_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(clean_document_list)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    df = pd.DataFrame(clean_document_list)
+    plt.figure(figsize = (8, 6))
+    plt.hist(df["Value"])
+    plt.savefig("histogram.png")
     return parse_json(clean_document_list)
