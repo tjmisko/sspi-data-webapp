@@ -131,34 +131,33 @@ def compute_defrst():
             obs["Score"] = 0
         if average_1990s_dict[obs["CountryCode"]]["Average"] == 0:
             continue
-        intermediates_list.extend([
-            {
-                "IntermediateCode": "FRSTLV",
-                "CountryCode": obs["CountryCode"],
-                "Year": obs["Year"],
-                "Value": obs["Value"],
-                "Unit": obs["Unit"]
-            },
-            {
-                "IntermediateCode": "FRSTAV",
-                "CountryCode": obs["CountryCode"],
-                "Year": obs["Year"],
-                "Value": average_1990s_dict[obs["CountryCode"]]["Average"],
-                "Unit": obs["Unit"]
-            }
-        ])
-    clean_data = zip_intermediates(
-        intermediates_list,
-        IndicatorCode="DEFRST",
-        ScoreFunction=lambda FRSTLV, FRSTAV:
-            goalpost((FRSTLV - FRSTAV) / FRSTAV * 100, lg, ug),
-        ScoreBy="Values"
-    )
-    for obs in clean_data:
-        ints = obs["Intermediates"]
-        lv = next((o["Value"] for o in ints if o["IntermediateCode"] == "FRSTLV"), None)
-        av = next((o["Value"] for o in ints if o["IntermediateCode"] == "FRSTAV"), None)
-        obs["Value"] = (lv - av) / av * 100
-        obs["Unit"] = "Percentage Change in Forest Cover from 1990s Average"
-    sspi_clean_api_data.insert_many(clean_data)
-    return parse_json(clean_data)
+        lv = obs["Value"]
+        av = average_1990s_dict[obs["CountryCode"]]["Average"]
+        final_data_list.append({
+            "IndicatorCode": "DEFRST",
+            "CountryCode": obs["CountryCode"],
+            "Year": obs["Year"],
+            "Value": (lv - av) / av * 100,
+            "Score": goalpost((lv - av) / av * 100, lg, ug),
+            "LowerGoalpost": lg,
+            "UpperGoalpost": ug,
+            "Unit": "Percentage Change in Forest Cover from 1990s Average",
+            "Intermediates": [
+                {
+                    "IntermediateCode": "FRSTLV",
+                    "CountryCode": obs["CountryCode"],
+                    "Year": obs["Year"],
+                    "Value": lv,
+                    "Unit": obs["Unit"]
+                },
+                {
+                    "IntermediateCode": "FRSTAV",
+                    "CountryCode": obs["CountryCode"],
+                    "Year": obs["Year"],
+                    "Value": average_1990s_dict[obs["CountryCode"]]["Average"],
+                    "Unit": obs["Unit"] + " (1990s Average)"
+                }
+            ]
+        })
+    sspi_clean_api_data.insert_many(final_data_list)
+    return parse_json(final_data_list)
