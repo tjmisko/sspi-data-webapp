@@ -229,12 +229,12 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
         try:
             arg_value_list = [arg_value_dict[arg_name] for arg_name in arg_name_list]
         except KeyError:
+            print(f"KeyError: {arg_name_list} for {arg_value_dict}")
             continue
         score = ScoreFunction(*arg_value_list)
-        if score:
-            document["Value"] = score
-            document["Unit"] = "Aggregate"
-            document["Score"] = score
+        document["Value"] = score
+        document["Unit"] = "Aggregate"
+        document["Score"] = score
     return indicator_document_list
 
 
