@@ -118,9 +118,10 @@ def compute_defrst():
             average_1990s_dict[obs["CountryCode"]] = {"Values": []}
         average_1990s_dict[obs["CountryCode"]]["Values"].append(obs["Value"])
     for country in average_1990s_dict.keys():
-        average_1990s_dict[country]["Average"] = sum(
-            average_1990s_dict[country]["Values"]) / len(average_1990s_dict[country]["Values"])
-    intermediates_list = []
+        sum_1990s = sum(average_1990s_dict[country]["Values"])
+        len_1990s = len(average_1990s_dict[country]["Values"])
+        average_1990s_dict[country]["Average"] = sum_1990s / len_1990s
+    final_data_list = []
     for obs in clean_obs_list:
         if obs["Year"] in list(range(1900, 2000)):
             continue
