@@ -6,6 +6,7 @@ from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data
 )
+from sspi_flask_app.api.datasource.fao import format_FAO_data_series
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
@@ -108,21 +109,7 @@ def compute_defrst():
     lg = indicator_detail["Metadata"]["LowerGoalpost"]
     ug = indicator_detail["Metadata"]["UpperGoalpost"]
     raw_data = sspi_raw_api_data.fetch_raw_data("DEFRST")[0]["Raw"]["data"]
-    clean_obs_list = []
-    for raw in raw_data:
-        if not len(raw["Area Code (ISO3)"]) == 3:
-            continue
-        if any([str(i) in raw["Area Code (ISO3)"] for i in range(0, 10)]):
-            continue
-        if not raw["Value"]:
-            continue
-        clean_obs_list.append({
-            "IndicatorCode": "DEFRST",
-            "CountryCode": raw["Area Code (ISO3)"],
-            "Year": int(raw["Year"]),
-            "Value": float(raw["Value"]),
-            "Unit": raw["Unit"]
-        })
+    clean_obs_list = format_FAO_data_series(raw_data, "DEFRST")
     average_1990s_dict = {}
     for obs in clean_obs_list:
         if obs["Year"] not in list(range(1990, 2000)):
