@@ -83,6 +83,14 @@ def stkhlm():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+@collect_bp.route("/DEFRST", methods=['GET'])
+@login_required
+def defrst():
+    def collect_iterator(**kwargs):
+        yield from collectUNFAOData("5110", "6717", "DEFRST", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/CARBON", methods=['GET'])
 @login_required
 def carbon():
