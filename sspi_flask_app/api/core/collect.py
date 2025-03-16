@@ -95,7 +95,7 @@ def defrst():
 @login_required
 def carbon():
     def collect_iterator(**kwargs):
-        yield from collectUNFAOData("5110%2C7215", "6646", "CARBON", **kwargs)
+        yield from collectUNFAOData("7215", "6646", "CARBON", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
