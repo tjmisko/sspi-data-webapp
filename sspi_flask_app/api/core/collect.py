@@ -7,6 +7,7 @@ from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collect
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
 from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
+from sspi_flask_app.api.datasource.fao import collectUNFAOData
 from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
 from sspi_flask_app.api.datasource.ilo import collectILOData
@@ -80,6 +81,15 @@ def stkhlm():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("12.4.1", "STKHLM", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/CARBON", methods=['GET'])
+@login_required
+def carbon():
+    def collect_iterator(**kwargs):
+        yield from collectUNFAOData("5110%2C7215", "6646", "CARBON", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 ######################
 ## Category: ENERGY ##
