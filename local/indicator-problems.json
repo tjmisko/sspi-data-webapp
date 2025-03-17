@@ -1,8 +1,12 @@
 {
-  "GTRANS": "Fuel price data no longer available. Looking into fuel tax data.",
-  "BEEFMK": "Data collected, but need to decide on keeping or modifying consumption",
   "EWASTE": "Data Sourced from What a Waste 2.0. No dynamic data available",
+  "STKHLM": "Very low data coverage",
   "RECYCL": "Data Sourced from What a Waste 2.0. No dynamic data available",
+  "GENDEQ": "Potential Indicator Redesign to Reflect Labor Market Outcomes",
   "CHILDW": "Dynamic Data is not available",
+  "FSTABL": "What is the status of this indicator?",
+  "PUBSRV": "What is the status of this indicator?",
   "TAXEVA": "Tax Haven Data is not Dynamic.",
+  "TRNETW": "Indicator Redesign Underway",
+  "UNCONV": "Drop this indicator? Replacements for Human Rights?"
 }
