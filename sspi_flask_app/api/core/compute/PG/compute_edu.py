@@ -11,3 +11,11 @@ from sspi_flask_app.api.resources.utilities import (
     filter_incomplete_data,
     score_single_indicator
 )
+
+@compute_bp.route("/ENRPRI", methods=['GET'])
+@login_required
+def compute_enrpri():
+    if not sspi_raw_api_data.raw_data_available("ENRPRI"):
+        return redirect(url_for("api_bp.collect_bp.ENRPRI"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("ENRPRI")
+
