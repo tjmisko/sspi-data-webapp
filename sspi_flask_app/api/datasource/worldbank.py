@@ -7,7 +7,7 @@ from ..resources.utilities import string_to_float
 
 def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
-    url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+    url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?per_page=1000&format=json"
     response = requests.get(url_source).json()
     total_pages = response[0]['pages']
     for p in range(1, total_pages+1):
