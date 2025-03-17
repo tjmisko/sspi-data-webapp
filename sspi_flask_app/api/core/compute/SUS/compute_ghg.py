@@ -1,8 +1,3 @@
-import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 from flask import redirect, url_for
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
@@ -93,8 +88,4 @@ def compute_gtrans():
                                ScoreFunction = lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy = "Values")
     clean_document_list, incomplete_observations = filter_incomplete_data(scored)
     # sspi_clean_api_data.insert_many(clean_document_list)
-    df = pd.DataFrame(clean_document_list)
-    plt.figure(figsize = (8, 6))
-    plt.hist(df["Value"])
-    plt.savefig("histogram.png")
     return parse_json(clean_document_list)
