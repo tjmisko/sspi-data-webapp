@@ -274,12 +274,17 @@ def enrpri():
         yield from collectSDGIndicatorData("4.1.1", "ENRPRI", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/EPRIWB", methods=['GET'])
+def epriwb():
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("SE.SEC.ENRR", "EPRIWB", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 @collect_bp.route("/ENRSEC", methods=['GET'])
 def enrsec():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("4.1.1", "ENRSEC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 
 
 @collect_bp.route("/PUPTCH", methods=['GET'])
