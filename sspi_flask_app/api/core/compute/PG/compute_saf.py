@@ -16,12 +16,10 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 from sspi_flask_app.api.datasource.worldbank import (
-    clean_WB_population,
     clean_wb_data
 )
 from sspi_flask_app.api.datasource.prisonstudies import (
     scrape_stored_pages_for_data,
-    compute_prison_rate
 )
 
 
@@ -32,20 +30,21 @@ def compute_prison():
         {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": "PRISON"})[0]
     lower_goalpost = details["Metadata"]["LowerGoalpost"]
     upper_goalpost = details["Metadata"]["UpperGoalpost"]
-    pop_data = sspi_raw_api_data.fetch_raw_data("PRISON", IntermediateCode="UNPOPL")
-    cleaned_pop = cleaned_wb_current("PRISON", IndicatorCode, "Population")
+    pop_data = sspi_raw_api_data.fetch_raw_data(
+        "PRISON", IntermediateCode="UNPOPL")
+    cleaned_pop = clean_wb_data(pop_data, "PRISON", "Population")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     combined_list = cleaned_pop + clean_data_list
     final_list = zip_intermediates(
         combined_list, "PRISON",
         ScoreFunction=lambda PRIPOP, UNPOPL: goalpost(
-            PRIPOP * 1/UNPOPL * 100000, lower_goalpost, upper_goalpost),
+            PRIPOP / UNPOPL * 100000, lower_goalpost, upper_goalpost),
         ScoreBy="Values")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
-    return clean_document_list
+    return parse_json(clean_document_list)
 
 
 @compute_bp.route("/DRKWAT")
