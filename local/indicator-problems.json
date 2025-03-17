@@ -1,8 +1,5 @@
 {
   "BIODIV": "Landlocked countries require imputations",
-  "WATMAN": "Static methodology required comparison to base period",
-  "DEFRST": "Static methodology required comparison to base period",
-  "CARBON": "Static methodology required comparison to base period",
   "GTRANS": "Fuel price data no longer available. Looking into fuel tax data.",
   "BEEFMK": "Data collected, but need to decide on keeping or modifying consumption",
   "EWASTE": "Data Sourced from What a Waste 2.0. No dynamic data available",
@@ -10,11 +7,8 @@
   "CHILDW": "Dynamic Data is not available",
   "RECYCL": "Data Sourced from What a Waste 2.0. No dynamic data available",
   "TAXEVA": "Financial secrecy is fine, but Tax Haven only has back to 2017",
-  "GINIPT": "CIA Static Data, no Dynamic Available", 
   "PHYSPC": "Unexpected noisy data variation",
   "TRNETW": "Road network, but need to find a new source for rail network",
   "CYBSEC": "PDF Data source",
-  "PUBACC": "Data for every three to four years, consider averaging or interpolating",
-  "FORAID": "Review methodology for dynamic data"
+  "PUBACC": "Data for every three to four years, consider averaging or interpolating"
 }
-
