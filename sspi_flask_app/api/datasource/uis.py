@@ -35,7 +35,7 @@ def cleanUISdata(raw_data, IndicatorCode, unit, description):
             "Unit": unit,
             "Value": string_to_float(value)
         }
-        clean_data_list.append(obs)
+        clean_data_list.append(clean_obs)
     return clean_data_list
 
         

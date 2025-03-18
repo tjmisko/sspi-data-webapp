@@ -272,14 +272,13 @@ def ginipt():
 @collect_bp.route("/ENRPRI", methods=['GET'])
 def enrpri():
     def collect_iterator(**kwargs):
-        # yield from collectWorldBankdata("SE.PRM.NENR", "ENRPRI", **kwargs)
         yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ENRSEC", methods=['GET'])
 def enrsec():
     def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SE.SEC.NENR", "ENRSEC", **kwargs)
+        yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

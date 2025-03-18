@@ -16,7 +16,6 @@ from sspi_flask_app.api.datasource.uis import (
 )
 
 
-
 @compute_bp.route("/ENRPRI", methods=['GET'])
 @login_required
 def compute_enrpri():
@@ -24,13 +23,10 @@ def compute_enrpri():
         return redirect(url_for("api_bp.collect_bp.ENRPRI"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ENRPRI")
     cleaned_list = cleanUISdata(raw_data, "ENRPRI", "Percent", "Net enrollment in primary school (%)")
-    # cleaned_list = clean_wb_data(raw_data, "ENRPRI", "Percent")
-    # scored_list = score_single_indicator(cleaned_list, "ENRPRI")
-    # clean_document_list, incomplete_observations = filter_incomplete_data(
-    #     scored_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
-    # return parse_json(clean_document_list)
-    return cleaned_list
+    scored_list = score_single_indicator(cleaned_list, "ENRPRI")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
 @compute_bp.route("/ENRSEC", methods=['GET'])
 @login_required
@@ -38,10 +34,8 @@ def compute_enrsec():
     if not sspi_raw_api_data.raw_data_available("ENRSEC"):
         return redirect(url_for("api_bp.collect_bp.ENRSEC"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ENRSEC")
-    # cleaned_list = cleanUISdata(raw_data)
-    # cleaned_list = clean_wb_data(raw_data, "ENRSEC", "Percent")
-    # scored_list = score_single_indicator(cleaned_list, "ENRSEC")
-    # clean_document_list, incomplete_observations = filter_incomplete_data(
-    #     scored_list)
-    # sspi_clean_api_data.insert_many(clean_document_list)
-    return "TO DO"
+    cleaned_list = cleanUISdata(raw_data, "ENRSEC", "Percent", "Net enrollment in lower secondary school (%)")
+    scored_list = score_single_indicator(cleaned_list, "ENRSEC")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
