@@ -11,11 +11,9 @@ from sspi_flask_app.api.resources.utilities import (
     filter_incomplete_data,
     score_single_indicator
 )
-from sspi_flask_app.api.datasource.sdg import (
-    extract_sdg_pivot_data_to_nested_dictionary,
-    flatten_nested_dictionary_enrpri
+from sspi_flask_app.api.datasource.worldbank import (
+    clean_wb_data
 )
-
 
 
 @compute_bp.route("/ENRPRI", methods=['GET'])
@@ -24,8 +22,23 @@ def compute_enrpri():
     if not sspi_raw_api_data.raw_data_available("ENRPRI"):
         return redirect(url_for("api_bp.collect_bp.ENRPRI"))
     raw_data = sspi_raw_api_data.fetch_raw_data("ENRPRI")
-    both_sex_primary = [obs for obs in raw_data if obs["Raw"]
-                     ["education_level"] == "PRIMAR" and obs["Raw"]["sex"] == "BOTHSEX"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(both_sex_primary)
-    return parse_json(intermediate_list)
+    cleaned_list = clean_wb_data(raw_data, "ENRPRI", "Percent")
+    scored_list = score_single_indicator(cleaned_list, "ENRPRI")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
+
+@compute_bp.route("/ENRSEC", methods=['GET'])
+@login_required
+def compute_enrsec():
+    if not sspi_raw_api_data.raw_data_available("ENRSEC"):
+        return redirect(url_for("api_bp.collect_bp.ENRSEC"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("ENRSEC")
+    cleaned_list = clean_wb_data(raw_data, "ENRSEC", "Percent")
+    scored_list = score_single_indicator(cleaned_list, "ENRSEC")
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 

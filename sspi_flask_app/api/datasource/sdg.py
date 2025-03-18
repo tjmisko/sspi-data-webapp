@@ -65,13 +65,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
                 continue
             if year not in intermediate_obs_dict[COU].keys():
                 intermediate_obs_dict[COU][year] = {}
-            # education indicators
-            skill = "type_of_skill"
-            if skill in country["Raw"].keys():
-                skill_type = country["Raw"][skill]
-                intermediate_obs_dict[COU][year][skill_type] = obs["value"]
-            else:
-                intermediate_obs_dict[COU][year][series] = obs["value"]
+            intermediate_obs_dict[COU][year][series] = obs["value"]
     return intermediate_obs_dict
 
 
@@ -290,6 +284,3 @@ def flatten_nested_dictionary_sansrv(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
-
-def flatten_nested_dictionary_enrpri(intermediate_obs_dict):
-    return "hi!"
