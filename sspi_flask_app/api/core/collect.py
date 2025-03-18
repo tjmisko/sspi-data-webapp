@@ -14,6 +14,7 @@ from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.who import collectWHOdata
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
+from sspi_flask_app.api.datasource.uis import collectUISdata
 
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (
@@ -271,7 +272,8 @@ def ginipt():
 @collect_bp.route("/ENRPRI", methods=['GET'])
 def enrpri():
     def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SE.PRM.NENR", "ENRPRI", **kwargs)
+        # yield from collectWorldBankdata("SE.PRM.NENR", "ENRPRI", **kwargs)
+        yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ENRSEC", methods=['GET'])
