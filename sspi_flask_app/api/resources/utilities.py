@@ -287,6 +287,29 @@ def country_code_to_name(CountryCode):
         return pycountry.countries.get(alpha_3=CountryCode).name
     except AttributeError:
         return CountryCode
+    
+def get_country_code(CountryName):
+    '''
+    Handles edge cases of country fuzzy matching
+    '''
+    if "kosovo" in str.lower(CountryName):
+        return "XKX"
+    if "korea" in str.lower(CountryName) and "democratic" not in str.lower(CountryName):
+        return "KOR"
+    if "korea" in str.lower(CountryName) and "democratic" in str.lower(CountryName):
+        return "PRK"
+    if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
+        return "NER"
+    if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
+        return "COD"
+    if "turkiye" in str.lower(CountryName) or "turkey" in str.lower(CountryName):
+        return "TUR"
+    if "cape verde" in str.lower(CountryName):
+        return "CPV"
+    if "swaziland" in str.lower(CountryName):
+        return "SWZ"
+    else:
+        return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
 
 
 def colormap(PillarCode, alpha: str = "ff"):
