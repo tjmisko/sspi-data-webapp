@@ -278,8 +278,6 @@ def finalize_dynamic_matrix_data():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     with open(os.path.join(local_path, "indicator-problems.json")) as f:
         problems = json.load(f)
-    with open(os.path.join(local_path, "indicator-local-load.json")) as f:
-        to_be_loaded = json.load(f)
     with open(os.path.join(local_path, "indicator-confident.json")) as f:
         confident = json.load(f)
     indicator_details = sspi_metadata.indicator_details()
@@ -309,10 +307,6 @@ def finalize_dynamic_matrix_data():
                                  problems[indicator_code]
                                  if code in problems.keys()
                                  else None)(indicator_code),
-                    "to_be_loaded": (lambda code:
-                                     to_be_loaded[indicator_code]
-                                     if code in to_be_loaded.keys()
-                                     else None)(indicator_code),
                     "confident": (lambda code:
                                   confident[indicator_code]
                                   if code in confident.keys()
