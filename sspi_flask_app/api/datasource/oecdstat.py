@@ -140,5 +140,20 @@ def OECD_country_list(series_list):
                     country_lst.append(cou)
     print("this is the oecd country list:" + str(country_lst))
     return country_lst
-    
-        
+
+
+def collectOECDSDMXData(oecd_series_code, IndicatorCode, query_parameters="", metadata_url="", **kwargs):
+    metadata = None
+    if metadata_url:
+        yield f"Sending Metadata Request to OECD SDMX API ({metadata_url})\n"
+        meta_res = requests.get(metadata_url)
+        metadata = str(meta_res.content)
+    yield "Sending Data Request to OECD SDMX API\n"
+    base_url = "https://sdmx.oecd.org/public/rest/data/"
+    if not query_parameters:
+        query_parameters = "startPeriod=1990&dimensionAtObservation=AllDimensions"
+    url = f"{base_url}{oecd_series_code}?{query_parameters}"
+    res = requests.get(url)
+    raw_data = str(res.content)
+    sspi_raw_api_data.raw_insert_one(raw_data, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
+    yield f"Data collection complete for indicator {IndicatorCode}\n"

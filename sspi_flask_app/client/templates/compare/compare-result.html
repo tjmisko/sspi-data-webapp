@@ -1,0 +1,59 @@
+<article class="comparison-article">
+    <h1> {{ country_name_1 }}, {{ country_name_2 }}, and {{ country_name_3 }} </h1>
+    <h2> Emerging Economies Vary in Their Policy Needs, But All Must Remain Mindful of Sustainability in Development
+    </h2>
+    <section id="radar-chart-flex-container" class="radar-chart-flex-container datawindow"> </section>
+    <script defer>
+        window.Radar1 = new CategoryRadarStatic("{{ country_code_1 }}", document.getElementById('radar-chart-flex-container'))
+        window.Radar2 = new CategoryRadarStatic("{{ country_code_2 }}", document.getElementById('radar-chart-flex-container'))
+        window.Radar3 = new CategoryRadarStatic("{{ country_code_3 }}", document.getElementById('radar-chart-flex-container'))
+    </script>
+    <section class="pillar-section">
+        <h3> Sustainability </h3>
+        <div id="sus-stack" class="pillar-stack-window"> </div>
+        <div id="sus-diff" class="pillar-diff-window"> </div>
+        <script defer>
+            window.SUSStack = new StaticPillarStackedBarChart(
+                ["{{ country_code_1 }}", "{{ country_code_2 }}", "{{ country_code_3 }}"],
+                "SUS",
+                document.getElementById("sus-stack"),
+                {"{{ country_code_1 }}": "#FECC02", "{{ country_code_2 }}": "#BBBBBB", "{{ country_code_3 }}": "#BC002D"}
+            )
+            window.StaticDiffSUS1 = new StaticPillarDifferentialChart("{{ country_code_1 }}", "{{ country_code_2 }}", "SUS", document.getElementById("sus-diff"))
+            window.StaticDiffSUS2 = new StaticPillarDifferentialChart("{{ country_code_1 }}", "{{ country_code_3 }}", "SUS", document.getElementById("sus-diff"))
+            window.StaticDiffSUS3 = new StaticPillarDifferentialChart("{{ country_code_2 }}", "{{ country_code_3 }}", "SUS", document.getElementById("sus-diff"))
+        </script>
+    </section>
+    <section class="pillar-section">
+        <h3> Market Structure </h3>
+        <div id="ms-stack" class="pillar-stack-window"> </div>
+        <div id="ms-diff" class="pillar-diff-window"> </div>
+        <script defer>
+            window.MSStack = new StaticPillarStackedBarChart(
+                ["{{ country_code_1 }}", "{{ country_code_2 }}", "{{ country_code_3 }}"],
+                "MS", 
+                document.getElementById("ms-stack"),
+                {"{{ country_code_1 }}": "#FECC02", "{{ country_code_2 }}": "#BBBBBB", "{{ country_code_3 }}": "#BC002D"}
+            )
+            window.StaticDiffMS1 = new StaticPillarDifferentialChart("{{ country_code_1 }}", "{{ country_code_2 }}", "MS", document.getElementById("ms-diff"))
+            window.StaticDiffMS2 = new StaticPillarDifferentialChart("{{ country_code_1 }}", "{{ country_code_3 }}", "MS", document.getElementById("ms-diff"))
+            window.StaticDiffMS3 = new StaticPillarDifferentialChart("{{ country_code_2 }}", "{{ country_code_3 }}", "MS", document.getElementById("ms-diff"))
+        </script>
+    </section>
+    <section class="pillar-section">
+        <h3> Public Goods </h3>
+        <div id="pg-stack" class="pillar-stack-window"> </div>
+        <div id="pg-diff" class="pillar-diff-window"> </div>
+        <script defer>
+            window.PGStack = new StaticPillarStackedBarChart(
+                ["{{ country_code_1 }}", "{{ country_code_2 }}", "{{ country_code_3 }}"],
+                "PG",
+                document.getElementById("pg-stack"),
+                {"{{ country_code_1 }}": "#FECC02", "{{ country_code_2 }}": "#BBBBBB", "{{ country_code_3 }}": "#BC002D"}
+            )
+            window.StaticDiffPG1 = new StaticPillarDifferentialChart("{{ country_code_1 }}", "{{ country_code_2 }}", "PG", document.getElementById("pg-diff"))
+            window.StaticDiffPG2 = new StaticPillarDifferentialChart("{{ country_code_1 }}", "{{ country_code_3 }}", "PG", document.getElementById("pg-diff"))
+            window.StaticDiffPG3 = new StaticPillarDifferentialChart("{{ country_code_2 }}", "{{ country_code_3 }}", "PG", document.getElementById("pg-diff"))
+        </script>
+    </section>
+</article>

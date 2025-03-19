@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+
+{% block javascript %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
+    <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
+    <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
+{% endblock %}
+
+{% block content %}
+<section class="comparison-article-links">
+    <h1> Selected Country Comparisons (2018 Data) </h1>
+    <article class="comparsion-article">
+        <a href="/compare/sweden-france-japan"> Sweden, France, Japan </a>
+    </article>
+    <article class="comparsion-article">
+        <a href="/compare/china-russia-usa"> China, Russia, USA </a>
+    </article>
+    <article class="comparsion-article">
+        <a href="/compare/brazil-india-indonesia"> Brazil, India, and Indonesia</a>
+    </article>
+</section>
+<section class="comparison-article-links">
+    <h1> Compare Countries </h1>
+    <form id="comparison-country-selection-menu">
+        <label for="country1"> Country 1: </label>
+        <input list="country-options" id="compare-country1-selection" name="compare-country-selection-1" required>
+        <label for="country2"> Country 2: </label>
+        <input list="country-options" id="compare-country2-selection" name="compare-country-selection-2" required>
+        <label for="country3"> Country 3: </label>
+        <input list="country-options" id="compare-country3-selection" name="compare-country-selection-3" required>
+        <datalist id="country-options">
+            {% include 'country-namecode-options.html' %}
+        </datalist>
+        <button id="comparison-selection-submit" type="submit"> Compare </button>
+    </form>
+    <script>
+        document.getElementById('comparison-country-selection-menu').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this); // Collect form data
+            const data = Object.fromEntries(formData.entries());
+            const country1 = data['compare-country-selection-1'];
+            const country2 = data['compare-country-selection-2'];
+            const country3 = data['compare-country-selection-3'];
+            fetch(`/compare/`)
+            window.location.href = `/compare/${country1}-${country2}-${country3}`;
+        });
+    </script>
+    <section id="comparison-results">
+    </section>
+</section>
+{% endblock %}
