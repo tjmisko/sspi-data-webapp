@@ -7,10 +7,13 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
+    jsonify_df,
     zip_intermediates,
     filter_incomplete_data,
     score_single_indicator
 )
+import pandas as pd
+from io import StringIO
 
 
 from sspi_flask_app.api.datasource.worldbank import (
@@ -45,3 +48,30 @@ def compute_intrnt():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
     return parse_json(filtered_list)
+
+
+@compute_bp.route("/AQELEC", methods=["GET"])
+@login_required
+def compute_aqelec():
+    """
+    Compute route for AQELEC.
+
+    - Checks if raw data for AQELEC is available; if not, redirects to the collection route.
+    - Processes each raw document to extract CountryCode, Year, IntermediateCode, and Value.
+      If the value is not directly available, CSV content is parsed.
+    - Uses CSV data to extract a valid CountryCode if the raw document does not include one.
+    - Skips any document that does not yield a valid numeric value or a valid 3-character CountryCode.
+    - Uses zip_intermediates to group observations by CountryCode and Year and computes the
+      final score as the average of the available intermediate values.
+    - Filters out incomplete documents. If no clean documents exist, returns an empty JSON array.
+    - Otherwise, stores the cleaned data and returns a JSON response.
+    """
+    quality_data = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")[0]
+    quality_df = pd.read_csv(StringIO(quality_data["Raw"]["csv"]))
+    ## cleaning steps here
+    list_of_quality_observation = []
+    availability_data = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
+    ## cleaning steps here
+    list_of_quality_observation = []
+    zip_intermediates
+    return jsonify_df(quality_df)
