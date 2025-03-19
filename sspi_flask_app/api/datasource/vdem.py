@@ -13,7 +13,6 @@ from datetime import datetime
 def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
     """
     Collect V-Dem data for the given indicator.
-
     For each CSV file in the downloaded zip, if the CSV contains a column named
     SourceIndicatorCode, then for every row, a record is created and inserted using
     sspi_raw_api_data.raw_insert_one. Each record has the following required fields:
@@ -35,8 +34,7 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
     collected_count = 0
     with zipfile.ZipFile(BytesIO(res.content)) as z:
         for filename in z.namelist():
-            # Skip macOS system folders or non-CSV files
-            if "__MACOSX" in filename or not filename.lower().endswith('.csv'):
+            if ".csv" not in filename:
                 continue
             yield f"Processing file: {filename}\n"
             with z.open(filename) as data:

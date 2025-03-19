@@ -294,5 +294,3 @@ def rulelw():
     def collect_iterator(**kwargs):
         yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
