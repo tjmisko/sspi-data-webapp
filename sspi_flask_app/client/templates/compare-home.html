@@ -41,18 +41,19 @@
             const formData = new FormData(this); // Collect form data
             const data = Object.fromEntries(formData.entries());
             fetch('/compare/custom', {
-                method: "GET",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json()) // Parse JSON response
+            .then(response => response.text())
             .then(data => {
-                document.getElementById("response").innerText = "Response: " + JSON.stringify(data);
+                document.getElementById("comparison-result-section").innerText = "Response: " + data;
             })
             .catch(error => console.error("Error:", error));
             });
     </script>
+    <section id="comparison-result-section"> </section>
 <section>
 {% endblock %}

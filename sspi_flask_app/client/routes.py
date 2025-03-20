@@ -1,6 +1,9 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from flask_login import login_required
 from ..api.core.download import ClientDownloadForm
+import re
+import pycountry
+from sspi_flask_app.api.resources.utilities import parse_json
 
 
 client_bp = Blueprint(
@@ -65,6 +68,39 @@ def make_widget(widgettype):
 @client_bp.route('/compare')
 def compare_home():
     return render_template("compare-home.html")
+
+
+@client_bp.route('/compare/custom', methods=['POST'])
+def compare_custom():
+    def bind_country_information(selection):
+        selection_match = re.match(r'([A-Za-z ]+)\(([A-Z]{3})\)$', selection)
+        if selection_match:
+            country_code = selection_match.group(2)
+            country_name = selection_match.group(1)
+            country_name = pycountry.countries.get(alpha_3=country_code).name
+        else:
+            try:
+                country_guess = pycountry.countries.search_fuzzy(selection)
+            except LookupError:
+                raise LookupError(f"Country not found for query '{selection}'.")
+            country_guess = pycountry.countries.search_fuzzy(selection)
+            country_code = country_guess[0].alpha_3
+            country_name = country_guess[0].name
+        return country_code, country_name
+    country_data = request.get_json()
+    if not len(country_data.keys()) == 3:
+        return "Please select exactly three countries to compare."
+    country_codes = []
+    country_names = []
+    for country_string in country_data.values():
+        try:
+            code, name = bind_country_information(country_string)
+        except LookupError as e:
+            return str(e)
+        country_codes.append(code)
+        country_names.append(name)
+    print(country_codes, country_names)
+    return parse_json([country_codes, country_names])
 
 
 @client_bp.route('/compare/sweden-france-japan')
