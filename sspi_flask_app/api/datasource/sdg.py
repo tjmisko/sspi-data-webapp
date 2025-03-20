@@ -14,18 +14,20 @@ import requests
 # https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_params = f"indicator={SDGIndicatorCode}"
-    url_source = "https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?"
-    print(url_source + url_params)
+    url_source = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
+    base_url = url_source + url_params
+    print(base_url)
     response = requests.get(url_source + url_params)
     print(response.request.url)
     print(response.status_code)
     print(response.request.headers)
     print(response.request.__getattribute__('headers'))
     print(response.request)
+    print(response.json())
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages + 1):
-        new_url = f"{url_source}&page={p}"
+        new_url = f"{base_url}&page={p}"
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
@@ -68,6 +70,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
 
 def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
     final_data_list = []
+    nan_data_list = []
     for cou in intermediate_obs_dict.keys():
         for year in intermediate_obs_dict[cou].keys():
             for intermediate in intermediate_obs_dict[cou][year]:
@@ -84,16 +87,25 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
                     ],
                     "ER_PTD_FRHWTR": ["FRSHWT", "Percent", "Percentage of important sites covered by protected areas, freshwater"]
                 }
+                intermediate_value = string_to_float(intermediate_obs_dict[cou][year][intermediate])
+                # if not type(intermediate_value) in [float, int]:
+                #     nan_data_list.append({
+                #         "type": type(intermediate_value),
+                #         "original": intermediate_obs_dict[cou][year][intermediate],
+                #         "converted": intermediate_value
+                #     })
+                #     continue
                 observation = {
                     "CountryCode": cou,
                     "IndicatorCode": "BIODIV",
                     "Unit": sdg_sspi_inter_dict[intermediate][1],
                     "Description": sdg_sspi_inter_dict[intermediate][2],
                     "Year": year,
-                    "Value": string_to_float(intermediate_obs_dict[cou][year][intermediate]),
+                    "Value": intermediate_value,
                     "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
                 }
                 final_data_list.append(observation)
+    print(nan_data_list)
     return final_data_list
 
 
@@ -102,6 +114,8 @@ def flatten_nested_dictionary_redlst(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "N":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "REDLST",
@@ -119,6 +133,8 @@ def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "N":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "INTRNT",
@@ -161,6 +177,8 @@ def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "N":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "STKHLM",
@@ -172,22 +190,96 @@ def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
             final_data_lst.append(new_observation)
     return final_data_lst
 
-def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
+def flatten_nested_dictionary_airpol(intermediate_obs_dict):
     final_data_lst = []
-    # for country in intermediate_obs_dict:
-    #     for year in intermediate_obs_dict[country]:
-    #         final_data_lst = []
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
             value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "AIRPOL",
+                "Year": int(year),
+                "Value": string_to_float(value),
+                "Description": "Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air",
+                "Unit": "μg/m^3"
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+
+def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
             new_observation = {
                 "CountryCode": country,
                 "IndicatorCode": "NRGINT",
-                "Unit": "Percent",
-                "Description": "Energy intensity level of primary energy measured in megajoules per constant 2017 purchasing power parity GDP.",
+                "Unit": "MJ_PER_GDP_CON_PPP_USD",
+                "Description": "Energy intensity level of primary energy (megajoules per constant 2017 purchasing power parity GDP)",
                 "Year": year,
                 "Value": string_to_float(value),
             }
             final_data_lst.append(new_observation)
     return final_data_lst
-                
+
+def flatten_nested_dictionary_fampln(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "FAMPLN",
+                "Unit": "Percent",
+                "Description": "Proportion of women of reproductive age (aged 15-49 years) who have their need for family planning satisfied with modern methods",
+                "Year": year,
+                "Value": 100 - string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+
+def flatten_nested_dictionary_drkwat(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "DRKWAT",
+                "Unit": "Percent",
+                "Description": "Percentage of population using safely managed drinking water services",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+
+def flatten_nested_dictionary_sansrv(intermediate_obs_dict):
+    intermediates = {"SH_SAN_HNDWSH": "Proportion of population with basic handwashing facilities on premises, by urban/rural (%)",
+                     "SH_SAN_SAFE": "Proportion of population using safely managed sanitation services, by urban/rural (%)"}
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            if "SH_SAN_SAFE" not in intermediate_obs_dict[country][year].keys():
+                continue
+            value = intermediate_obs_dict[country][year]["SH_SAN_SAFE"]
+            if value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "SANSRV",
+                "Unit": "Percent",
+                "Description": "Proportion of population using safely managed sanitation services, by urban/rural (%)",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst

@@ -1,6 +1,6 @@
 from flask import Blueprint, Response
 from flask_login import login_required, current_user
-from ..datasource.wid import bulkCollectWIDData
+from sspi_flask_app.api.datasource.wid import bulkCollectWIDData
 
 
 bulk_bp = Blueprint("bulk_bp", __name__,
