@@ -12,6 +12,7 @@ from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.who import collectWHOdata
+from sspi_flask_app.api.datasource.vdem import collectVDEMData
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 
@@ -358,6 +359,19 @@ def aqelec():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+###########################
+## Category: RIGHTS ##
+###########################
+
+
+@collect_bp.route("/RULELW", methods=['GET'])
+@login_required
+def rulelw():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 #############################
 ## Category: PUBLIC SAFETY #
 #############################
@@ -394,9 +408,11 @@ def foraid():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-#######################################
-## Category: Country Characteristics ##
-#######################################
+#############################
+## Country Characteristics ##
+#############################
+
+
 @collect_bp.route("/characteristic/UNPOPL", methods=['GET'])
 @login_required
 def unpopl():
@@ -462,5 +478,3 @@ def gdpppp():
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
-
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
