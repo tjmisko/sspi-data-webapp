@@ -63,23 +63,23 @@ def make_widget(widgettype):
 
 
 @client_bp.route('/compare')
-def comparison_home():
-    return render_template("comparison-home.html")
+def compare_home():
+    return render_template("compare-home.html")
 
 
 @client_bp.route('/compare/sweden-france-japan')
-def comparison_sweden_france_japan():
-    return render_template("country-comparisons/sweden-france-japan.html")
+def compare_sweden_france_japan():
+    return render_template("compare/sweden-france-japan.html")
 
 
 @client_bp.route('/compare/china-russia-usa')
-def comparison_china_russia_usa():
-    return render_template("country-comparisons/china-russia-usa.html")
+def compare_china_russia_usa():
+    return render_template("compare/china-russia-usa.html")
 
 
 @client_bp.route('/compare/brazil-india-indonesia')
-def comparison_brazil_india_indonesia():
-    return render_template("country-comparisons/brazil-india-indonesia.html")
+def compare_brazil_india_indonesia():
+    return render_template("compare/brazil-india-indonesia.html")
 
 
 @client_bp.route('/structure')
