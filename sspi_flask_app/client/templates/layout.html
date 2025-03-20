@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     {% block title %}{% endblock %}
     <script async src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/capture-chart.js') }}" defer></script>
     {% block stylesheet %}{% endblock %}
     {% assets "home_script_bundle" %}
       <!-- <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }} " defer></script> -->
@@ -16,7 +18,9 @@
 
   <body>
     {% include 'header.html' %}
-      {% block content %}{% endblock %}
+        <main>
+            {% block content %}{% endblock %}
+        </main>
     {% include 'footer.html' %}
   </body>
   

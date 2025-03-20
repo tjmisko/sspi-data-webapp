@@ -12,13 +12,13 @@ Sustainability,SUS,Land,LND,Water Management,WATMAN,Water Conservation,"Average 
 freshwater resources, after taking into account environmental water requirements. This indicator is also known as water withdrawal intensity.",,UN SDG,"[""6.4.1"", ""6.4.2""]",https://www.fao.org/faostat/en/#data/SDGB ,https://unstats.un.org/sdgapi/swagger/,2018,"(-25,50) 
 (0, 100)V",true,2,NA,NA,"[""CWUEFF"", ""WTSTRS""]","[0.5, 0.5]",,,,
 Sustainability,SUS,Land,LND,Stockholm Convention Compliance,STKHLM,"Chemical Waste 
-Management",Percent of provisions concerning Persistent Organic Pollutants from Stockholm Convention ratified and followed.,,UN SDG,"[""12.4.1""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2015,"(0, 100)",false,1,0,100,NA,NA,,,,
+Management",Percent of provisions concerning Persistent Organic Pollutants from Stockholm Convention ratified and followed.,,UN SDG,12.4.1,https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2015,"(0, 100)",false,1,0,100,NA,NA,,,,
 Sustainability,SUS,Land,LND,Deforestation,DEFRST,Forest Management,Percentage change in naturally regenerating forests from a 1990’s average to 2018.,Percentage change of share in forest land in naturally regenerating forests from a 1990’s average to 2018.,UN FAO,,https://www.fao.org/faostat/en/#data/RL ,https://www.fao.org/faostat/en/#data/RL,2018,"(-20, 40)",false,1,-20,40,NA,NA,Y (Maybe),,,"UNFAO allows downloads as csv files. Select only ""Naturally regenerating forest "" as the item attribute"
 Sustainability,SUS,Land,LND,Carbon Capture,CARBON,Carbon Sequestration,Percentage change in the ratio of carbon stock in living biomass over forestland from a 1990’s average to 2018.,,UN FAO,,https://www.fao.org/faostat/en/#data/RL ,https://www.fao.org/faostat/en/#data/RL,2018,"(-5, 50)",false,1,-5,50,NA,NA,Y (Maybe),,,
 Sustainability,SUS,Energy,NRG,Alternative Energy Generation,ALTNRG,Renewable Energy Incentives,"Percentage of total final energy consumption generated from “renewable sources” (RS, collected from WorldBank; includes hydroelectric, geothermal, solar, tidal, wind, and biofuels) minus half the percentage of total final energy consumption generated from biofuel sources (BIO, collected from IEA) to penalize countries for unsustainable overreliance on biofuels. 
-AE = RE – 0.5 *BIO.","Percentage of total final energy supply from “renewable sources” (RS, collected from IEA; includes hydroelectric, geothermal, solar, wind, and biofuels) minus half the percentage of total final energy supply from biofuel sources (BIO, collected from IEA) to penalize countries for unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.",IEA,"[""TESbySource""] [""DomesticProduction""]","[https://data.worldbank.org/indicator, https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20consumption&indicator=TFCbySource]",[https://www.iea.org/],2018,"(0, 60)",false,1,0,60,"[""NRGREN"", ""NRGBIO""]",NA,Y,,,
+AE = RE – 0.5 *BIO.","Total energy supply (excluding exports) supply from “renewable sources” (RE = nuclear, hydroelectric, geothermal, solar, wind, and biofuels) minus half of total final energy supply from biofuel sources (BIO) to penalize countries for unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.",IEA,"[""TESbySource""] ","[https://data.worldbank.org/indicator, https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20consumption&indicator=TFCbySource]",[https://www.iea.org/],2018,"(0, 60)",false,1,0,60,"[""NRGREN"", ""NRGBIO""]",NA,Y,,,
 Sustainability,SUS,Energy,NRG,Energy Intensity,NRGINT,Energy Efficiency,Energy intensity level of primary energy measured in megajoules per constant 2017 purchasing power parity GDP.,,UN SDG,"[""7.3.1""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2018,"(0, 15)V",true,1,15,0,NA,NA,,,,
-Sustainability,SUS,Energy,NRG,Air Pollution,AIRPOL,Pollution Limitation,Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air (μg/m3).,,UN SDG,"[""11.6.2""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2016,"(0, 40) V",true,1,40,0,NA,NA,,,,
+Sustainability,SUS,Energy,NRG,Air Pollution,AIRPOL,Pollution Limitation,Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air (μg/m3).,,UN SDG,"[""11.6.2""]",https://unstats.un.org/sdgs/dataportal/database ,https://unstats.un.org/sdgapi/swagger/,2016,"(0, 40)V",true,1,40,0,NA,NA,,,,
 Sustainability,SUS,Greenhouse Gases,GHG,Green Transport Index,GTRANS,"1) 
 Gas/petrol Tax 
 2) 
@@ -31,13 +31,11 @@ Sustainability,SUS,Greenhouse Gases,GHG,Beef Market,BEEFMK,Methane Emissions,,"T
 (0, 50) V",true,2,NA,NA,"[""BFPROD"", ""BFCONS""]","[0.5, 0.5]",,,,
 Sustainability,SUS,Greenhouse Gases,GHG,Energy From Coal,COALPW,Fossil Fuel and Air Pollution,Percentage of a country's total energy supply generated from coal and coal derived sources.,,IEA,"[""TESbySource""]",https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource ,https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource,2018,"(0, 40)V",true,1,40,0,NA,NA,Y,,,
 Sustainability,SUS,Waste,WST,Municipal Solid Waste Generation,MSWGEN,Wasteful Consumption,"Annual amount of per capita Municipal Solid Waste (kg/capita/year), which is defined as residential, commercial, and institutional waste (Industrial, medical, hazardous, electronic, and construction and demolition waste are not included).",,World Bank ,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,750) V",true,1,50,0,NA,NA,,,,
-Sustainability,SUS,Waste,WST,E-waste Generation,EWASTE,Special Waste,"Annual amount of per capita electronic waste (kg/capita/year), which is one of special waste streams together with hazardous waste or medical waste.",,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,40) V",true,1,0,0,NA,NA,,,,
+Sustainability,SUS,Waste,WST,E-waste Generation,EWASTE,Special Waste,"Annual amount of per capita electronic waste (kg/capita/year), which is one of special waste streams together with hazardous waste or medical waste.",,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,40) V",true,1,40,0,NA,NA,,,,
 Sustainability,SUS,Waste,WST,Recycling Rate,RECYCL,Circular End-of-Life Waste Treatment,The quantity of material recycled in the country over total waste generated  (recycling does not include controlled combustion (incineration) or land  application).,,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,70)",false,1,0,0,NA,NA,,,,
-Market Structure,MS,Worker Engagement,WEN,"Labor Force 
-Participation",LFPART,"Job placement 
-policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,,ILO,"[""DF_EAP_DWAP_SEX_AGE_RT""]",https://data.oecd.org/emp/labour-force-participation-rate.htm,https://ilostat.ilo.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Worker Engagement,WEN,Child Labor Rate,CHILDW,"Engagement of 
-Child Workers","Conditional scoring based on two policies: 
+Market Structure,MS,Worker Engagement,WEN,Participation in Paid Employment,EMPLOY,"Job placement 
+policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,,ILO,DF_EAP_DWAP_SEX_AGE_RT,https://data.oecd.org/emp/labour-force-participation-rate.htm,https://ilostat.ilo.org/,2017,"(50, 95)",false,1,50,95,NA,NA,,,,
+Market Structure,MS,Worker Engagement,WEN,Child Labor Rate,CHILDW,,"Conditional scoring based on two policies: 
 1) If the child labor rate is statistically nonzero, a country scores between 0.00 and 0.50 based on their level of child labor. 
 2) If the child labor rate in a country is statistically indistinguishable from zero, a country scores between 0.50 and 1.00 based on years of compulsory education.*",Combination of Compulsory Education (4.1.1) and Child Labor rate (8.7.1),UN SDG,"[""8.7.1"", ""4.1.1""]",https://www.ilo.org/shinyapps/bulkexplorer29/?lang=en&segment=indicator&id=HOW_2TOT_NOC_NB_A,https://unstats.un.org/sdgapi/swagger/,"2012- 
 2020 
@@ -45,18 +43,18 @@ Child Workers","Conditional scoring based on two policies:
 (5, 12)",true,2,NA,NA,"[""CHLDLB"", ""YRCEDU""]",Conditional,,,,
 Market Structure,MS,Worker Engagement,WEN,"Collective 
 Bargaining 
-Coverage",COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,,ILO,"[""ILR_CBCT_NOC_RT""]",,https://ilostat.ilo.org/,2016,"(0, 1)",false,1,0,1,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,"Unemployment 
+Coverage",COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,,ILO,,,https://ilostat.ilo.org/,2016,"(0, 100)",false,1,0,100,NA,NA,,,,
+Market Structure,MS,Worker Wellbeing,WWB,"Unemployment 
 Benefits Coverage",UNEMPL,"Unemployment 
-Benefits",Percentage of unemployed receiving unemployment benefits.,,ILO,,,https://ilostat.ilo.org/,2018,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,"Paid Maternity 
+Benefits",Percentage of unemployed receiving unemployment benefits.,,ILO,DF_SDG_0131_SEX_SOC_RT,,https://ilostat.ilo.org/,2018,"(0, 100)",false,1,0,100,NA,NA,,,,
+Market Structure,MS,Worker Wellbeing,WWB,"Paid Maternity 
 Leave",MATERN,Maternity leave,Paid parental leave available to mothers (full-rate equivalent) in weeks during the first year.,,OECD,,,https://stats.oecd.org/,2018,"(0, 52)",false,1,0,52,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",,ILO,,,https://ilostat.ilo.org/,2015,"(0, 25)V",true,1,25,0,NA,NA,,,,
-Market Structure,MS,Worker Wellbeing,WEB,Senior Wellbeing,SENIOR,"1) Old Age Income Poverty 
+Market Structure,MS,Worker Wellbeing,WWB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",,ILO,DF_SDG_F881_SEX_MIG_RT,,https://ilostat.ilo.org/,2015,"(0, 25)V",true,1,25,0,NA,NA,,,,
+Market Structure,MS,Worker Wellbeing,WWB,Senior Wellbeing,SENIOR,"1) Old Age Income Poverty 
 2) Retirement 
 Wellbeing","Arithmetic average of the following measures: 
 1) Percentage of individuals over the age of 65 living in relative income poverty 
-2) Expected number of years in retirement",,OECD,"[""PAG""]",,https://stats.oecd.org/,"2018 
+2) Expected number of years in retirement",,OECD,PAG,,https://stats.oecd.org/,"2018 
 2018","(0, 100)V 
 (0, 1)",true,2,15,25,"[""POVNRT"", ""YRSRTM"", ""YRSRTW""]","[0.5, 0.25, 0.25]",,,,
 Market Structure,MS,Taxes,TAX,Corporate Tax Rate,CRPTAX,Corporate Tax,Tax imposed on the net income of the company.,,Tax Foundation,,,https://taxfoundation.org/data/all/global/corporate-tax-rates-by-country-2023/,2018,"(0, 40)",false,1,0,40,NA,NA,,,,
@@ -80,12 +78,12 @@ Private Sector
 (0, 200)",false,2,NA,NA,"[""CREDIT"", ""DPOSIT""]","[0.5, 0.5]",,,,
 Market Structure,MS,Financial Sector,FIN,Public Access,PUBACC,"Bank Account 
 Ownership",Account ownership at a financial institution or with a mobile-money-service provider (% of population ages 15+).,,World Bank,"[""FX.OWN.TOTL.ZS""]",,https://databank.worldbank.org/,2017,"(0, 100)",false,1,0,100,NA,NA,,,,
-Market Structure,MS,Inequality,NEQ,Income Share Ratio,GINIPT,"Income Inequality and 
+e,MS,Inequality,NEQ,Income Share Ratio,ISHRAT,"Income Inequality and 
 Redistribution",The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households.,,WID,"[""p0p50, ""p90p100""]",https://wid.world/data,https://databank.worldbank.org/,2018,"(0.2, 1.25)",false,1,0.2,1.25,NA,NA,,,,
 Market Structure,MS,Inequality,NEQ,"Gini-coefficient 
-After Taxes",ISHRAT,"Income Inequality and 
+After Taxes",GINIPT,"Income Inequality and 
 Redistribution",GINI Coefficient for post-tax-and-transfer income distribution.,,CIA,,,https://www.cia.gov/the-world-factbook/,"1997- 
-2018","(20,70)V",true,1,0,20,NA,NA,,,,
+2018","(20,70)V",true,1,70,20,NA,NA,,,,
 Public Goods,PG,Education,EDU,Primary School Net Enrollment,ENRPRI,"Accessibility of 
 Primary Education","The ratio of the number of children of official primary school age who are enrolled in primary education to the total population of children of official primary school age, expressed as a percentage.",,UN SDG,"[""4.1.1""]",,https://unstats.un.org/sdgapi/swagger/,2016,"(80, 100)",false,1,80,100,NA,NA,,,,
 Public Goods,PG,Education,EDU,Lower Secondary Net Enrollment,ENRSEC,"Accessibility of 
@@ -93,16 +91,16 @@ Lower Secondary Education","The net total of students in the lower secondary sch
 Public Goods,PG,Education,EDU,"Primary 
 Education Pupil to Teacher Ratio",PUPTCH,"Investment in 
 Teachers","Average number of pupils per teacher in primary school, based on headcounts of both pupils and teachers.",,World Bank,"[""SE.PRM.ENRL.TC.ZS""]",,https://data.worldbank.org/indicator/SE.PRM.ENRL.TC.ZS,2018,"(9, 40)V",true,1,40,9,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,"Attended Births by Skilled 
+Public Goods,PG,Healthcare,HLC,"Attended Births by Skilled 
 Personnel",ATBRTH,Basic Healthcare,The proportion of births attended by trained and/or skilled health personnel.,,WHO,"[""MDG_0000000025""]",,https://apps.who.int/gho/data/node.main.SKILLEDBIRTHATTENDANTS?lang=en,2017,"(80, 100)",false,1,80,100,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,"Infant DTP 
+Public Goods,PG,Healthcare,HLC,"Infant DTP 
 Vaccine 
 Coverage",DPTCOV,Preventative Health,"The estimated percentage of children aged 12–23 months who received three doses of the combined diphtheria, tetanus toxoid and pertussis vaccine time before the survey.",,WHO,"[""UHCIMMUNIZATION""] OR [""vdvp""]",,https://apps.who.int/gho/data/view.main.UHCIMMUNIZATIONv?lang=en,2017,"(75, 100)",false,1,75,100,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,"Physicians per 
+Public Goods,PG,Healthcare,HLC,"Physicians per 
 10,000",PHYSPC,"Investments in 
 Healthcare","Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.",,WHO,"[""HWF_0001""]",,https://www.who.int/data/gho/data/indicators/indicator-details/GHO/medical-doctors-(per-10-000-population),2010,"(0, 70)",false,1,0,70,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,Unmet Need for Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",,WHO,"[""MDG_0000000006_AGE1519""]",,"https://www.who.int/data/gho/indicator-metadata-registry/imr-details/3414#:~:text=Women%20with%20unmet%20need%20are,to%20delay%20the%20next%20child.",2018,"(0, 20)V",true,1,20,0,NA,NA,,,,
-Public Goods,PG,Healthcare,HLT,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,,IHME,,https://ghdx.healthdata.org/record/ihme-data/child-growth-failure-visualization-input-data,https://vizhub.healthdata.org/lbd/cgf,2018,"(0, 50)V",true,1,50,0,NA,NA,Y,You have to go to home → modeled data → files → download input data ,,
+Public Goods,PG,Healthcare,HLC,Unmet Need for Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",,WHO,"[""MDG_0000000006_AGE1519""]",,"https://www.who.int/data/gho/indicator-metadata-registry/imr-details/3414#:~:text=Women%20with%20unmet%20need%20are,to%20delay%20the%20next%20child.",2018,"(0, 20)V",true,1,20,0,NA,NA,,,,
+Public Goods,PG,Healthcare,HLC,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,,IHME,,https://ghdx.healthdata.org/record/ihme-data/child-growth-failure-visualization-input-data,https://vizhub.healthdata.org/lbd/cgf,2018,"(0, 50)V",true,1,50,0,NA,NA,Y,You have to go to home → modeled data → files → download input data ,,
 Public Goods,PG,Infrastructure,INF,"Availability and Quality of 
 Electricity",AQELEC,Electrification,"Arithmetic mean of two measures: 
 1) The percentage of the population with access to electricity 
@@ -158,9 +156,9 @@ Public Goods,PG,Public Safety,SAF,"Security
 Apparatus",SECAPP,Capability of the Security Apparatus,"The Security Apparatus is a component of the Fragile State Index. It considers the security threats to a state such as bombings, attacks and battle-related deaths, rebel movements, mutinies, coups, or terrorism.6",,The Fund for Peace,,https://fragilestatesindex.org/global-data/ ,https://fragilestatesindex.org/global-data/,2019,"(0, 10)V",true,1,10,0,NA,NA,,,,
 Public Goods,PG,Public Safety,SAF,"Incarceration 
 Rates",PRISON,"Criminal Justice 
-Policy","Prison population rate per 100,000 of the national population.",,"World 
+Policy","Prison population rate per 100,000 of the national population. Population sourced from the WorldBank.",,"World 
 Prison 
-Brief",,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All ,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All,2018,"(40, 540)V",true,1,540,40,NA,NA,,,,
+Brief",,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All ,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All,2018,"(40, 540)V",true,1,540,40,"[""PRIPOP"", ""WBPOPL""]",NA,,,,
 Public Goods,PG,Global Role,GLB,Arms Transfers,ARMEXP,Arms Policy,"Arm transfers: the supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.7",,SIPRI,,https://www.sipri.org/databases/armstransfers ,https://www.sipri.org/databases,2018,"(0,1500)V",true,1,500,0,NA,NA,,,,
 Public Goods,PG,Global Role,GLB,"Military 
 Expenditure",MILEXP,Defense Policy,Military expenditure (local currency at current prices) is presented according to both the financial year of each country and according to the calendar year as a percentage of GDP.,,SIPRI,,https://www.sipri.org/databases/milex ,https://www.sipri.org/databases,2018,"(0, 10)V",true,1,10,0,NA,NA,,,,
