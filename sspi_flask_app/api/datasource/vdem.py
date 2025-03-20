@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import requests
 from io import BytesIO, StringIO
 import zipfile
@@ -6,7 +5,6 @@ import pandas as pd
 from sspi_flask_app.models.database import sspi_raw_api_data
 
 def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
-=======
 
 from sspi_flask_app.models.database import sspi_raw_api_data
 import csv
