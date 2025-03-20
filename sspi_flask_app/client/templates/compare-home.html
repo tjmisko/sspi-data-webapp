@@ -1,0 +1,58 @@
+{% extends 'layout.html' %}
+
+{% block javascript %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
+    <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
+    <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
+{% endblock %}
+
+{% block content %}
+<section class="comparison-article-options">
+    <h1> Selected Country Comparisons (2018 Data) </h1>
+    <article class="comparsion-article">
+        <a href="/compare/sweden-france-japan"> Sweden, France, Japan </a>
+    </article>
+    <article class="comparsion-article">
+        <a href="/compare/china-russia-usa"> China, Russia, USA </a>
+    </article>
+    <article class="comparsion-article">
+        <a href="/compare/brazil-india-indonesia"> Brazil, India, and Indonesia</a>
+    </article>
+</section>
+<section class="custom-country-comparison-section">
+    <h1> Custom Country Comparisons </h1>
+    <form id="comparison-country-selection-form">
+        <datalist id="countries">
+            {% include "country-selection-options.html" %}
+        </datalist>
+        <label for="country-selection-1">Country 1:</label>
+        <input list="countries" id="country-selection-1" name="country-selection-1" placeholder="Country Name or Code">
+        <label for="country-selection-2">Country 2:</label>
+        <input list="countries" id="country-selection-2" name="country-selection-2" placeholder="Country Name or Code">
+        <label for="country-selection-3">Country 3:</label>
+        <input list="countries" id="country-selection-3" name="country-selection-3" placeholder="Country Name or Code">
+    <button type="submit"> Generate Comparison </button>
+    </form>
+    <script>
+        document.getElementById("comparison-country-selection-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const formData = new FormData(this); // Collect form data
+            const data = Object.fromEntries(formData.entries());
+            fetch('/compare/custom', {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json()) // Parse JSON response
+            .then(data => {
+                document.getElementById("response").innerText = "Response: " + JSON.stringify(data);
+            })
+            .catch(error => console.error("Error:", error));
+            });
+    </script>
+<section>
+{% endblock %}
