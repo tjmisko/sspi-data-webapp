@@ -290,7 +290,7 @@ def unpopl():
 
 @collect_bp.route("/EDEMOC", methods=['GET'])
 @login_required
-def rulelw():
+def edemoc():
     def collect_iterator(**kwargs):
         yield from collectVDEMData("v2x_polyarchy", "EDEMOC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
