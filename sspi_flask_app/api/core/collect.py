@@ -12,6 +12,7 @@ from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.who import collectWHOdata
+from sspi_flask_app.api.datasource.vdem import collectVDEMData
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 
@@ -356,6 +357,26 @@ def aqelec():
         yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
         yield from collectWEFQUELCT("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+###########################
+## Category: RIGHTS ##
+###########################
+
+
+@collect_bp.route("/EDEMOC", methods=['GET'])
+@login_required
+def edemoc():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData("v2x_polyarchy", "EDEMOC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/RULELW", methods=['GET'])
+@login_required
+def rulelw():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
 
 
 #############################
