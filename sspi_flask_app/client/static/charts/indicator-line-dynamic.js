@@ -93,6 +93,18 @@ class DynamicLineChart {
                         this.togglePin(dataset)
                     })
                 },
+                datasets: {
+                    line: {
+                        spanGaps: true,
+                        segment: {
+                            borderWidth: 2,
+                            borderDash: ctx => {
+                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
+                                // Dashed when spanning gaps, solid otherwise
+                            }
+                        }
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false,
@@ -109,6 +121,7 @@ class DynamicLineChart {
                         ticks: {
                             color: '#bbb',
                         },
+                        type: "category",
                         title: {
                             display: true,
                             text: 'Year',
@@ -431,6 +444,57 @@ class DynamicLineChart {
         this.pinnedArray = Array()
         this.updateLegend()
     }
+
+    dumpChartDataJSON(screenVisibility = true) {
+        const observations = this.chart.data.datasets.map(dataset => {
+            if (screenVisibility && dataset.hidden) {
+                return []
+            }
+            return dataset.data.map((_, i) => ({
+                "ItemCode": dataset.ICode,
+                "CountryCode": dataset.CCode,
+                "Score": dataset.scores[i],
+                "Value": dataset.values[i],
+                "Year": dataset.years[i]
+            }));
+        }).flat();
+
+        const jsonString = JSON.stringify(observations, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.IndicatorCode + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    dumpChartDataCSV(screenVisibility = true) {
+        const observations = this.chart.data.datasets.map(dataset => {
+            if (screenVisibility && dataset.hidden) {
+                return []
+            }
+            return dataset.data.map((_, i) => ({
+                "ItemCode": dataset.ICode,
+                "CountryCode": dataset.CCode,
+                "Score": dataset.scores[i].toString(),
+                "Value": dataset.values[i].toString(),
+                "Year": dataset.years[i].toString()
+            }));
+        }).flat();
+        const csvString = Papa.unparse(observations);
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.IndicatorCode + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 }
 
 class SearchDropdown {
@@ -500,7 +564,7 @@ class SearchDropdown {
             })
             const resultSpan = document.createElement('span')
             resultSpan.classList.add('add-country-pin-button')
-            
+
             resultSpan.innerHTML = `
                 ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
             `

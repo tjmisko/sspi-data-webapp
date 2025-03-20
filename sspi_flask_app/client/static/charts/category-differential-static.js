@@ -1,3 +1,24 @@
+const chartArrowLabels = {
+    id: 'chartArrowLabels',
+    afterDraw(chart, args, optionVars) {
+        const {ctx, chartArea} = chart;
+        ctx.save();
+
+        ctx.fillStyle = '#FF634799';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        const offset = 10
+        const xLeftMid = (chartArea.left + chartArea.right + offset) / 4;
+        const xRightMid = 3 * (chartArea.left + chartArea.right - offset) / 4;
+        const yTop = (chartArea.top + chartArea.bottom) / 10 + 5;
+        ctx.fillText(optionVars.LeftCountry + " Higher", xLeftMid, yTop);
+        ctx.fillStyle = '#32CD3299';
+        ctx.fillText(optionVars.RightCountry + " Higher", xRightMid, yTop);
+
+        ctx.restore();
+    }
+}
+
 class StaticPillarDifferentialChart {
     constructor(BaseCountry, ComparisonCountry, PillarCode, parentElement) {
         this.parentElement = parentElement;
@@ -7,6 +28,7 @@ class StaticPillarDifferentialChart {
         this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry}`
 
         this.initRoot()
+        this.initTitle()
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -33,21 +55,33 @@ class StaticPillarDifferentialChart {
         this.parentElement.appendChild(this.root)
     }
 
+    initTitle() {
+        this.title = document.createElement('h2')
+        this.title.classList.add('differential-chart-title')
+        this.title.textContent = "Test Title"
+        this.root.appendChild(this.title)
+    }
+
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
         this.canvas.id = `pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`
-        this.canvas.width = 450
+        this.canvas.width = 300
         this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
             type: 'bar',
+            plugins: [ chartArrowLabels ],
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 plugins: {
                     legend: {
                         display: false,
+                    },
+                    chartArrowLabels: {
+                        LeftCountry: this.BaseCountry,
+                        RightCountry: this.ComparisonCountry
                     },
                     tooltip: {
                         callbacks: {
@@ -86,7 +120,7 @@ class StaticPillarDifferentialChart {
                             color: '#bbb',
                             stepSize: 0.1
                         },
-                       title: {
+                        title: {
                             display: true,
                             color: '#bbb',
                         },
@@ -120,6 +154,7 @@ class StaticPillarDifferentialChart {
         this.baseCName = data.baseCName
         this.comparisonCCode = data.comparisonCCode
         this.comparisonCName = data.comparisonCName
+        this.title.textContent = data.title
         data.datasets.forEach(dataset => {
             dataset.backgroundColor = dataset.data.map(item => this.colormap(item.Diff)) // Assign colors dynamically
             dataset.borderColor = dataset.data.map(item => this.colormap(item.Diff).slice(0, -2)) // Assign colors dynamically
@@ -133,6 +168,8 @@ class StaticPillarDifferentialChart {
             const comparison = `${this.comparisonCCode} Score: ${tooltipItem.raw.comparisonScore.toFixed(3)}`;
             return [base, comparison];
         }
+        // this.chart.plugins[0].options.LeftCountry = this.baseCName
+        // this.chart.plugins[0].options.RightCountry = this.comparisonCName
         this.chart.update()
     }
 }
