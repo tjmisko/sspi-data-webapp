@@ -59,6 +59,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
             intermediate_obs_dict[COU] = {}
         # iterate through each of the annual observations and add the appropriate entry
         for obs in annual_data_list:
+            print(obs)
             year = int(obs["year"][1:5])
             if obs["value"] == '':
                 continue
