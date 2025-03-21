@@ -86,7 +86,8 @@ def compare_custom():
             try:
                 country_guess = pycountry.countries.search_fuzzy(selection)
             except LookupError:
-                raise LookupError(f"Country not found for query '{selection}'.")
+                raise LookupError(
+                    f"Country not found for query '{selection}'.")
             country_guess = pycountry.countries.search_fuzzy(selection)
             country_code = country_guess[0].alpha_3
             country_name = country_guess[0].name
@@ -105,7 +106,13 @@ def compare_custom():
             country_codes.append(code)
         if name is not None:
             country_names.append(name)
-    return parse_json([country_codes, country_names])
+    comparison_list = [{'code': code, 'name': name}
+                       for code, name in zip(country_codes, country_names)]
+    print(comparison_list)
+    return parse_json({
+        "html": render_template("compare/comparison-result.html", comparison_list=comparison_list),
+        "data": comparison_list
+    })
 
 
 @client_bp.route('/compare/sweden-france-japan')

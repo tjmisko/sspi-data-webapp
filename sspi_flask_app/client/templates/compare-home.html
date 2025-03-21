@@ -35,7 +35,7 @@
         <input list="countries" id="country-selection-3" name="country-selection-3" placeholder="Country Name or Code">
     <button type="submit"> Generate Comparison </button>
     </form>
-    <script>
+    <script defer>
         document.getElementById("comparison-country-selection-form").addEventListener("submit", function(event) {
             event.preventDefault();
             const formData = new FormData(this); // Collect form data
@@ -47,9 +47,13 @@
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById("comparison-result-section").innerText = "Response: " + data;
+            .then(response => response.json())
+            .then(res => {
+                document.getElementById("comparison-result-section").innerHTML = res.html;
+                window.custom_comparison_list = res.data;
+                window.custom_comparison_list.forEach(cdata => {
+                    new CategoryRadarChart(cdata.code, document.getElementById("radar-chart-flex-container"));
+                });
             })
             .catch(error => console.error("Error:", error));
             });
