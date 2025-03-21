@@ -1,10 +1,10 @@
 {% extends 'layout.html' %}
 
 {% block javascript %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
     <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
     <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
 {% endblock %}
 
@@ -35,7 +35,7 @@
         <input list="countries" id="country-selection-3" name="country-selection-3" placeholder="Country Name or Code">
     <button type="submit"> Generate Comparison </button>
     </form>
-    <script defer>
+    <script>
         document.getElementById("comparison-country-selection-form").addEventListener("submit", function(event) {
             event.preventDefault();
             const formData = new FormData(this); // Collect form data
@@ -52,7 +52,7 @@
                 document.getElementById("comparison-result-section").innerHTML = res.html;
                 window.custom_comparison_list = res.data;
                 window.custom_comparison_list.forEach(cdata => {
-                    new CategoryRadarChart(cdata.code, document.getElementById("radar-chart-flex-container"));
+                    new CategoryRadarStatic(cdata.code, document.getElementById("radar-chart-flex-container"));
                 });
             })
             .catch(error => console.error("Error:", error));
