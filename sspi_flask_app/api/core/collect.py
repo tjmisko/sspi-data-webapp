@@ -15,6 +15,7 @@ from sspi_flask_app.api.datasource.who import collectWHOdata
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 from sspi_flask_app.api.datasource.uis import collectUISdata
+from sspi_flask_app.api.datasource.fsi import collectFSIdata
 
 from .countrychar import insert_pop_data
 from sspi_flask_app.models.database import (
@@ -382,6 +383,13 @@ def prison():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("SP.POP.TOTL", "PRISON", IntermediateCode="UNPOPL", **kwargs)
         yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/SECAPP", methods=['GET'])
+@login_required
+def secapp():
+    def collect_iterator(**kwargs):
+        yield from collectFSIdata("SECAPP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ###########################
