@@ -14,6 +14,9 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.api.datasource.uis import (
     cleanUISdata
 )
+from sspi_flask_app.api.datasource.worldbank import (
+    clean_wb_data
+)
 
 
 @compute_bp.route("/ENRPRI", methods=['GET'])
@@ -46,3 +49,8 @@ def compute_puptch():
     if not sspi_raw_api_data.raw_data_available("PUPTCH"):
         return redirect(url_for("api_bp.collect_bp.PUPTCH"))
     raw_data = sspi_raw_api_data.fetch_raw_data("PUPTCH")
+    cleaned_list = clean_wb_data(raw_data, "PUPTCH", "Average")
+    scored_list = score_single_indicator(cleaned_list, "PUPTCH")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
