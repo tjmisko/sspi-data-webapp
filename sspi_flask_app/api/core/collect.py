@@ -287,7 +287,7 @@ def enrsec():
 @collect_bp.route("/PUPTCH", methods=['GET'])
 def puptch():
     def collect_iterator(**kwargs):
-        yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
+        yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ##########################
