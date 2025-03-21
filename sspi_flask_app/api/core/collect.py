@@ -269,6 +269,8 @@ def ginipt():
 #########################
 ## Category: EDUCATION ##
 #########################
+
+
 @collect_bp.route("/ENRPRI", methods=['GET'])
 def enrpri():
     def collect_iterator(**kwargs):

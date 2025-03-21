@@ -43,6 +43,7 @@ def compute_enrsec():
     sspi_clean_api_data.insert_many(clean_document_list)
     return parse_json(clean_document_list)
 
+
 @compute_bp.route("/PUPTCH", methods=['GET'])
 @login_required
 def compute_puptch():
