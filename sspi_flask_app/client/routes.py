@@ -72,7 +72,11 @@ def compare_home():
 
 @client_bp.route('/compare/custom', methods=['POST'])
 def compare_custom():
-    def bind_country_information(selection):
+    def bind_country_information(selection, index):
+        if len(selection) == 0 and index < 2:
+            raise LookupError("Please provide a country name.")
+        if len(selection) == 0 and index == 2:
+            return None, None
         selection_match = re.match(r'([A-Za-z ]+)\(([A-Z]{3})\)$', selection)
         if selection_match:
             country_code = selection_match.group(2)
@@ -92,14 +96,15 @@ def compare_custom():
         return "Please select exactly three countries to compare."
     country_codes = []
     country_names = []
-    for country_string in country_data.values():
+    for i, country_string in enumerate(country_data.values()):
         try:
-            code, name = bind_country_information(country_string)
+            code, name = bind_country_information(country_string, i)
         except LookupError as e:
             return str(e)
-        country_codes.append(code)
-        country_names.append(name)
-    print(country_codes, country_names)
+        if code is not None:
+            country_codes.append(code)
+        if name is not None:
+            country_names.append(name)
     return parse_json([country_codes, country_names])
 
 
