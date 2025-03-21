@@ -84,29 +84,31 @@ def compute_aqelec():
     df_sorted["CountryCode"] = df_sorted["Economy ISO3"]
     df_sorted["Unit"] = df_sorted["Indicator"].apply(lambda x: x.split(",")[1].strip() if "," in x else "")
     df_final = df_sorted[["IntermediateCode", "CountryCode", "Year", "Value", "Unit"]]
-    ordered_entries = []
-    for record in df_final.to_dict(orient="records"):
-        ordered_entries.append(OrderedDict([
-            ("IntermediateCode", record["IntermediateCode"]),
-            ("CountryCode", record["CountryCode"]),
-            ("Year", record["Year"]),
-            ("Value", record["Value"]),
-            ("Unit", record["Unit"])
-        ]))
-    response_json = json.dumps(ordered_entries, sort_keys=False)
-    wb_raw = sspi_raw_api_data.fetch_raw_data(
-        "AQELEC", IntermediateCode="QUELCT")
+    df_final = df_final.to_dict(orient="records")
+
+    wb_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
     wb_clean = clean_wb_data(wb_raw, "AQELEC", unit="Percent")
+    for d in wb_clean:
+        d.pop("Description", None)
+        d.pop("IndicatorCode", None)
 
-    availability_data = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
 
-    combined_list = wb_clean + response_json
-    cleaned_list = zip_intermediates(combined_list, "INTRNT",
+    wb_raw = sspi_raw_api_data.fetch_raw_data(
+        "AQELEC", IntermediateCode="AVELEC")
+    wb_clean = clean_wb_data(wb_raw, "AQELEC", unit="Percent")
+    for d in wb_clean:
+        d.pop("Description", None)
+        d.pop("IndicatorCode", None)
+
+    combined_list = wb_clean + df_final
+    for intermediate in combined_list:
+        print(type(intermediate))
+
+    cleaned_list = zip_intermediates(combined_list, "AQELEC",
                                      ScoreFunction=lambda AVELEC, QUELCT: 0.5 * AVELEC + 0.5 * QUELCT,
-                                     ScoreBy="Score")
+                                     ScoreBy="Values")
     filtered_list, incomplete_observations = filter_incomplete_data(
-        cleaned_list)
+         cleaned_list)
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
     return parse_json(filtered_list)
-
