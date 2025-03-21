@@ -3,7 +3,9 @@ import requests
 import pandas as pd
 import numpy
 from io import BytesIO
+import re
 from sspi_flask_app.models.database import sspi_raw_api_data
+from sspi_flask_app.api.resources.utilities import get_country_code
 
 
 def collectFSIdata(IndicatorCode, **kwargs):
@@ -16,14 +18,38 @@ def collectFSIdata(IndicatorCode, **kwargs):
         return "Add header with user agent so request is not blocked"
     soup = BeautifulSoup(response.text, "html.parser")
     excel_a_tags = soup.find_all('a')
-    links = []
+    links = {}
     for a_tag in excel_a_tags:
         link = a_tag.get("href")
-        links.append(link)
-    for link in links:
-        excel = requests.get(link, headers = header).content
-        excel_readable = BytesIO(excel)
-        df = pd.read_excel(excel_readable, engine = "openpyxl")
-        print(df)
-        break
-    return "hi"
+        if link.find("xlsx") == -1:
+            continue
+        # multiple links per year for some reason so only want one
+        year = re.findall(r'[0-9]{4}', string = link)[0]
+        if year not in links.keys():
+            links[year] = link
+    for year in links.keys():
+        data = links[year]
+        excel = requests.get(data, headers = header)
+        excel_readable = BytesIO(excel.content)
+        df = pd.read_excel(excel_readable)
+        obs = len(df.index)
+        json = df.to_dict(orient = "records")
+        sspi_raw_api_data.raw_insert_one({"json": json}, IndicatorCode, **kwargs)
+        yield f"Insered {obs} observations for {year} into raw database\n"
+    yield f"Collection complete for {IndicatorCode}"
+
+
+def cleanFSIdata(raw_data, IndicatorCode, unit, description):
+    clean_list = []
+    for obs in raw_data:
+        data = obs["Raw"]["json"]
+        full_df = pd.DataFrame(data)
+        filtered = full_df.loc[:, ["Country", "Year", "C1: Security Apparatus"]].rename(
+            columns = {"C1: Security Apparatus": "Value"})
+        filtered["IndicatorCode"] = IndicatorCode
+        filtered["CountryCode"] = filtered["Country"].map(lambda country_name: get_country_code(country_name))
+        filtered = filtered.drop(columns = "Country")
+        filtered["Unit"] = unit
+        filtered["Description"] = description
+        clean_list.extend(filtered.to_dict(orient = "records"))
+    return clean_list

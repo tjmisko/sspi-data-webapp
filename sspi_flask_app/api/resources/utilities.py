@@ -302,12 +302,20 @@ def get_country_code(CountryName):
         return "NER"
     if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
         return "COD"
+    if "congo republic" in str.lower(CountryName):
+        return "COG"
+    if "guinea bissau" in str.lower(CountryName):
+        return "GNB"
+    if "laos" in str.lower(CountryName):
+        return "LAO"
     if "turkiye" in str.lower(CountryName) or "turkey" in str.lower(CountryName):
         return "TUR"
     if "cape verde" in str.lower(CountryName):
         return "CPV"
     if "swaziland" in str.lower(CountryName):
         return "SWZ"
+    if "israel and west bank" in str.lower(CountryName):
+        return "ISR"
     else:
         return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
 
