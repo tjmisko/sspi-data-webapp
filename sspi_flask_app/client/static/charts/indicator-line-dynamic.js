@@ -1,14 +1,26 @@
 const endLabelPlugin = {
     id: 'endLabelPlugin',
     afterDatasetsDraw(chart) {
-        chart.data.datasets.forEach(function(dataset, i) {
+        chart.data.datasets.forEach((dataset, i) => {
             if (dataset.hidden) {
                 return;
             }
             const meta = chart.getDatasetMeta(i);
-            const lastPoint = meta.data[meta.data.length - 1];
+            let lastNonNullIndex = meta.data.length - 1;
+            for (let j = meta.data.length; j >= 0; j--) {
+                console.log(j)
+                if (meta.data[j] === undefined) {
+                    continue
+                }
+                console.log(meta.data[j])
+                if (meta.data[j].raw !== null) {
+                    lastNonNullIndex = j
+                    break
+                }
+            }
+            const lastPoint = meta.data[lastNonNullIndex];
+            console.log(lastNonNullIndex, lastPoint)
             const value = dataset.CCode;
-
             chart.ctx.save();
             chart.ctx.font = 'bold 14px Arial';
             chart.ctx.fillStyle = dataset.borderColor;
