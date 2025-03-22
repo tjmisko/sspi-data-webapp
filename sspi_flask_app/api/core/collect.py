@@ -318,6 +318,7 @@ def physpc():
         yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/FAMPLN", methods=['GET'])
 @login_required
 def fampln():
