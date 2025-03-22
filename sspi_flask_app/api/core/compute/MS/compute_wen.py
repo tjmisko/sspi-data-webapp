@@ -26,12 +26,14 @@ def compute_unempl():
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     colbar_raw = pd.read_csv(csv_virtual_file)
     colbar_raw_f = colbar_raw[colbar_raw['SOC'] == 'SOC_CONTIG_UNE']
-    colbar_raw_f = colbar_raw_f[['REF_AREA',
-                                 'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
-    colbar_raw_f = colbar_raw_f.rename(columns={'REF_AREA': 'CountryCode',
-                                                'TIME_PERIOD': 'Year',
-                                                'OBS_VALUE': 'Value',
-                                                'UNIT_MEASURE': 'Unit'})
+    colbar_raw_f = colbar_raw_f[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
+    colmap_rename = {
+        'REF_AREA': 'CountryCode',
+        'TIME_PERIOD': 'Year',
+        'OBS_VALUE': 'Value',
+        'UNIT_MEASURE': 'Unit'
+    }
+    colbar_raw_f = colbar_raw_f.rename(columns=colmap_rename)
     colbar_raw_f['IndicatorCode'] = 'UNEMPL'
     colbar_raw_f['Unit'] = 'Rate'
     obs_list = json.loads(colbar_raw_f.to_json(orient="records"))
