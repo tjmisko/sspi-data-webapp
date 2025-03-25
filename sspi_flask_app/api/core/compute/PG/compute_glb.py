@@ -36,16 +36,15 @@ def compute_foraid():
         return formatted_observations
 
     def build_metadata_map(metadata_xml):
-        print("String start:", metadata_xml[0:150])
-        print("String end:", metadata_xml[-150:])
+        meta_string = raw[0]["Metadata"][2:][:-1]
+        meta_string = meta_string.replace("\\r\\n", "\n")
         soup = BeautifulSoup(metadata_xml, "xml")
-        print(soup.prettify())
-        return metadata_xml
+        return soup
 
     raw = sspi_raw_api_data.fetch_raw_data("FORAID")
-    # raw_data_combined = []
-    # for r in raw:
-    #     obs = parse_observations(r["Raw"][2:][:-1])
-    #     raw_data_combined.extend(obs)
-    metadata_map = build_metadata_map(raw[0]["Raw"][2:][:-1])
-    return parse_json(raw[0])
+    raw_data_combined = []
+    for r in raw:
+        obs = parse_observations(r["Raw"][2:][:-1])
+        raw_data_combined.extend(obs)
+    meta_soup = build_metadata_map(raw[0]["Metadata"])
+    return parse_json(raw_data_combined)
