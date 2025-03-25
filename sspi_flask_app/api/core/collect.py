@@ -442,9 +442,9 @@ def foraid():
         yield from collectOECDSDMXFORAID("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,", "FORAID",
                                          filter_parameters="..206.USD.Q",
                                          metadata_url=metadata_url,
-                                         IntermediateCode="", **kwargs)
+                                         IntermediateCode="ODAFLW", **kwargs)
         yield from collectWorldBankdata("SP.POP.TOTL", "FORAID", IntermediateCode="POPULN", **kwargs)
-        yield from collectWorldBankdata("NY.GDP.PCAP.CD", "FORAID", IntermediateCode="GDPMER", **kwargs)
+        yield from collectWorldBankdata("NY.GDP.MKTP.KD", "FORAID", IntermediateCode="GDPMKT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
