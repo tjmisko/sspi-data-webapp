@@ -10,8 +10,10 @@ from sspi_flask_app.api.resources.utilities import (
     filter_incomplete_data,
     score_single_indicator
 )
+from sspi_flask_app.api.resources.utilities import goalpost
 from bs4 import BeautifulSoup
 import pycountry
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data
 
 
 @compute_bp.route('/FORAID', methods=['GET'])
@@ -56,31 +58,51 @@ def compute_foraid():
         donor_year = f"{donor}_{year}"
         recipient_year = f"{recipient}_{year}"
         if donor_year not in aid_dict.keys():
-            aid_dict[donor_year] = {"donations": [], "receptions": [], "year": year, "cou": donor}
+            aid_dict[donor_year] = {"donations": [],
+                                    "receptions": [], "year": year, "cou": donor}
         if recipient_year not in aid_dict.keys():
-            aid_dict[recipient_year] = {"donations": [], "receptions": [], "year": year, "cou": recipient}
+            aid_dict[recipient_year] = {
+                "donations": [], "receptions": [], "year": year, "cou": recipient}
         aid_dict[donor_year]["donations"].append(obs)
         aid_dict[recipient_year]["receptions"].append(obs)
     print("Computing ODA Totals")
-    aid_totals = []
+    intermediates_list = []
     for cou_year, report in aid_dict.items():
         if not pycountry.countries.get(alpha_3=report["cou"]):
             continue
-        aid_totals.append({
+        intermediates_list.extend([{
             "CountryCode": report["cou"],
+            "IntermediateCode": "TOTDON",
             "Year": report["year"],
-            "TotalDonations": sum([float(d["Value"]) for d in report["donations"] if d.get("Value")]),
-            "TotalReceptions": sum([float(d["Value"]) for d in report["receptions"] if d.get("Value")])
-        })
-    print("Sorting Receivers and Donors")
-    for obs in aid_totals:
-        if obs["TotalDonations"] > obs["TotalReceptions"]:
-            obs["CountryType"] = "Donor"
-        else:
-            obs["CountryType"] = "Recipient"
+            "Unit": "USD (Millions)",
+            "Value": sum([float(d["Value"]) for d in report["donations"]]),
+        }, {
+            "CountryCode": report["cou"],
+            "IntermediateCode": "TOTREC",
+            "Year": report["year"],
+            "Unit": "USD (Millions)",
+            "Value": sum([float(d["Value"]) for d in report["receptions"]])
+        }])
     print("Preparing Population Data")
-
+    population_raw = sspi_raw_api_data.fetch_raw_data(
+        "FORAID", IntermediateCode="POPULN")
+    population_clean = clean_wb_data(population_raw, "FORAID", "Population")
+    intermediates_list.extend(population_clean)
     print("Preparing GDP Data")
-
-
-    return parse_json(aid_totals)
+    gdp_raw = sspi_raw_api_data.fetch_raw_data(
+        "FORAID", IntermediateCode="GDPMER")
+    gdp_clean = clean_wb_data(
+        gdp_raw, "FORAID", "National GDP in 2015 Constant Dollars")
+    intermediates_list.extend(gdp_clean)
+    dlg = 0  # 0% of GDP Donated
+    dug = 1  # 1% of GDP Donated
+    rlg = 0  # 0 Dollars per Capita
+    rug = 20  # 20 Dollars per Capita
+    clean_foraid_data = zip_intermediates(
+        intermediates_list,
+        "FORAID",
+        ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMEK: goalpost(
+            TOTDON / GDPMEK, dlg, dug) if TOTDON > TOTREC else goalpost(
+            TOTREC / POPULN, rlg, rug),
+        ScoreBy="Values")
+    return parse_json(clean_foraid_data)
