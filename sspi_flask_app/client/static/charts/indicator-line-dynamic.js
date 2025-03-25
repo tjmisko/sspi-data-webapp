@@ -1,14 +1,26 @@
 const endLabelPlugin = {
     id: 'endLabelPlugin',
     afterDatasetsDraw(chart) {
-        chart.data.datasets.forEach(function(dataset, i) {
+        chart.data.datasets.forEach((dataset, i) => {
             if (dataset.hidden) {
                 return;
             }
             const meta = chart.getDatasetMeta(i);
-            const lastPoint = meta.data[meta.data.length - 1];
+            let lastNonNullIndex = meta.data.length - 1;
+            for (let j = meta.data.length; j >= 0; j--) {
+                console.log(j)
+                if (meta.data[j] === undefined) {
+                    continue
+                }
+                console.log(meta.data[j])
+                if (meta.data[j].raw !== null) {
+                    lastNonNullIndex = j
+                    break
+                }
+            }
+            const lastPoint = meta.data[lastNonNullIndex];
+            console.log(lastNonNullIndex, lastPoint)
             const value = dataset.CCode;
-
             chart.ctx.save();
             chart.ctx.font = 'bold 14px Arial';
             chart.ctx.fillStyle = dataset.borderColor;
@@ -93,6 +105,18 @@ class DynamicLineChart {
                         this.togglePin(dataset)
                     })
                 },
+                datasets: {
+                    line: {
+                        spanGaps: true,
+                        segment: {
+                            borderWidth: 2,
+                            borderDash: ctx => {
+                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
+                                // Dashed when spanning gaps, solid otherwise
+                            }
+                        }
+                    }
+                },
                 plugins: {
                     legend: {
                         display: false,
@@ -109,6 +133,7 @@ class DynamicLineChart {
                         ticks: {
                             color: '#bbb',
                         },
+                        type: "category",
                         title: {
                             display: true,
                             text: 'Year',
@@ -431,6 +456,57 @@ class DynamicLineChart {
         this.pinnedArray = Array()
         this.updateLegend()
     }
+
+    dumpChartDataJSON(screenVisibility = true) {
+        const observations = this.chart.data.datasets.map(dataset => {
+            if (screenVisibility && dataset.hidden) {
+                return []
+            }
+            return dataset.data.map((_, i) => ({
+                "ItemCode": dataset.ICode,
+                "CountryCode": dataset.CCode,
+                "Score": dataset.scores[i],
+                "Value": dataset.values[i],
+                "Year": dataset.years[i]
+            }));
+        }).flat();
+
+        const jsonString = JSON.stringify(observations, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.IndicatorCode + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    dumpChartDataCSV(screenVisibility = true) {
+        const observations = this.chart.data.datasets.map(dataset => {
+            if (screenVisibility && dataset.hidden) {
+                return []
+            }
+            return dataset.data.map((_, i) => ({
+                "ItemCode": dataset.ICode,
+                "CountryCode": dataset.CCode,
+                "Score": dataset.scores[i].toString(),
+                "Value": dataset.values[i].toString(),
+                "Year": dataset.years[i].toString()
+            }));
+        }).flat();
+        const csvString = Papa.unparse(observations);
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.IndicatorCode + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 }
 
 class SearchDropdown {
@@ -500,7 +576,7 @@ class SearchDropdown {
             })
             const resultSpan = document.createElement('span')
             resultSpan.classList.add('add-country-pin-button')
-            
+
             resultSpan.innerHTML = `
                 ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
             `

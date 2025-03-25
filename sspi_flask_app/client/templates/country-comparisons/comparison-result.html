@@ -1,11 +1,23 @@
-{% extends 'comparison.html' %}
 
-{% block javascript_chart_js %}
-    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/DummyData.js') }}" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> -->
-    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
-{% endblock %}
+<article class="comparison-article"> 
+    {% block comparison_title %} {% endblock %}
+    {% block comparison_subtitle %} {% endblock %}
+    {% block comparison_radar %} {% endblock %}
+
+    <section class="pillar-section">
+        <h3> Sustainability </h3>
+        {% block sustainability %} {% endblock %}
+    </section>
+    <section class="pillar-section">
+        <h3> Market Structure </h3>
+        {% block market_structure %} {% endblock %}
+    </section>
+    <section class="pillar-section">
+        <h3> Public Goods </h3>
+        {% block public_goods %} {% endblock %}
+    </section>
+</article> 
+
     
 {% block comparison_title %} <h1> China, Russia, and the United States </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Global Superpowers Struggle to Provide for the Common Good </h2> {% endblock %}

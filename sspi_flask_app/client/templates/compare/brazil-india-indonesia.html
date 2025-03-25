@@ -1,11 +1,5 @@
-{% extends 'comparison.html' %}
+{% extends 'compare.html' %}
 
-{% block javascript_chart_js %}
-    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/DummyData.js') }}" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script> -->
-    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
-{% endblock %}
 {% block comparison_title %} <h1> Brazil, India, and Indonesia </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Emerging Economies Vary in Their Policy Needs, But All Must Remain Mindful of Sustainability in Development </h2> {% endblock %}
 {% block comparison_radar %} 

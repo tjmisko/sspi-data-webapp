@@ -59,6 +59,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
             intermediate_obs_dict[COU] = {}
         # iterate through each of the annual observations and add the appropriate entry
         for obs in annual_data_list:
+            print(obs)
             year = int(obs["year"][1:5])
             if obs["value"] == '':
                 continue
@@ -70,6 +71,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
 
 def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
     final_data_list = []
+    nan_data_list = []
     for cou in intermediate_obs_dict.keys():
         for year in intermediate_obs_dict[cou].keys():
             for intermediate in intermediate_obs_dict[cou][year]:
@@ -86,16 +88,25 @@ def flatten_nested_dictionary_biodiv(intermediate_obs_dict):
                     ],
                     "ER_PTD_FRHWTR": ["FRSHWT", "Percent", "Percentage of important sites covered by protected areas, freshwater"]
                 }
+                intermediate_value = string_to_float(intermediate_obs_dict[cou][year][intermediate])
+                # if not type(intermediate_value) in [float, int]:
+                #     nan_data_list.append({
+                #         "type": type(intermediate_value),
+                #         "original": intermediate_obs_dict[cou][year][intermediate],
+                #         "converted": intermediate_value
+                #     })
+                #     continue
                 observation = {
                     "CountryCode": cou,
                     "IndicatorCode": "BIODIV",
                     "Unit": sdg_sspi_inter_dict[intermediate][1],
                     "Description": sdg_sspi_inter_dict[intermediate][2],
                     "Year": year,
-                    "Value": string_to_float(intermediate_obs_dict[cou][year][intermediate]),
+                    "Value": intermediate_value,
                     "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
                 }
                 final_data_list.append(observation)
+    print(nan_data_list)
     return final_data_list
 
 
