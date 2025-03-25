@@ -271,6 +271,7 @@ def score_single_indicator(document_list, IndicatorCode):
     return final
 
 
+
 def append_goalpost_single(document_list, IndicatorCode):
     details = sspi_metadata.find(
         {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})[0]

@@ -2,7 +2,9 @@ from flask import Blueprint, Response
 from flask_login import login_required, current_user
 import requests
 import time
-
+from sspi_flask_app.models.database import (
+    sspi_raw_outcome_data
+)
 from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collectOECDSDMXData
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
@@ -16,6 +18,7 @@ from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
+from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 
 from .countrychar import insert_pop_data
 from ..datasource.itu import collect_itu_data
@@ -222,14 +225,24 @@ def fatinj():
 
 
 @collect_bp.route("/TAXREV", methods=['GET'])
+@login_required
 def taxrev():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/CRPTAX", methods=['GET'])
+@login_required
+def crptax():
+    def collect_iterator(**kwargs):
+        yield from collectTaxFoundationData('CRPTAX', **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 ################################
 ## Category: FINANCIAL SECTOR ##
 ################################
+
 
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
@@ -238,11 +251,13 @@ def fdepth():
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/PUBACC", methods=['GET'])
 def pubacc():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 # @collect_bp.route("/FSTABL", methods=['GET'])
 # def fstabl():
@@ -274,6 +289,7 @@ def enrpri():
     def collect_iterator(**kwargs):
         yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 @collect_bp.route("/ENRSEC", methods=['GET'])
 def enrsec():
@@ -313,7 +329,7 @@ def dptcov():
 @login_required
 def physpc():
     def collect_iterator(**kwargs):
-        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
+        yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -442,7 +458,8 @@ def gdpmek():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages+1):
@@ -471,7 +488,8 @@ def gdpppp():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages+1):
@@ -489,5 +507,4 @@ def gdpppp():
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
-
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
