@@ -18,10 +18,7 @@ from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
 
 from .countrychar import insert_pop_data
-from sspi_flask_app.models.database import (
-    sspi_raw_outcome_data,
-    sspi_clean_outcome_data
-)
+from ..datasource.itu import collect_itu_data
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -387,12 +384,21 @@ def prison():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+@collect_bp.route("/CYBSEC", methods=['GET'])
+@login_required
+def cybsec():
+    def collect_iterator(**kwargs):
+        yield from collect_itu_data("CYBSEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/SECAPP", methods=['GET'])
 @login_required
 def secapp():
     def collect_iterator(**kwargs):
         yield from collectFSIdata("SECAPP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 ###########################
 ## Category: GLOBAL ROLE ##

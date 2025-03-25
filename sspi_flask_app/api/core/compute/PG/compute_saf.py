@@ -13,6 +13,8 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator,
     goalpost
 )
+from sspi_flask_app.api.datasource.itu import cleanITUData_cybsec
+import json
 
 
 from sspi_flask_app.api.datasource.worldbank import (
@@ -48,6 +50,19 @@ def compute_prison():
     sspi_clean_api_data.insert_many(clean_document_list)
     print(incomplete_observations)
     return parse_json(clean_document_list)
+
+
+@compute_bp.route("/CYBSEC", methods=['GET'])
+# @login_required
+def compute_cybsec():
+    if not sspi_raw_api_data.raw_data_available("CYBSEC"):
+        return redirect(url_for("collect_bp.CYBSEC"))
+    cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
+    cleaned_list = cleanITUData_cybsec(cybsec_raw, 'CYBSEC')
+    obs_list = json.loads(cleaned_list.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "CYBSEC")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/SECAPP")
