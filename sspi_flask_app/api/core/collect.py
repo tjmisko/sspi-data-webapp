@@ -385,6 +385,7 @@ def prison():
         yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/SECAPP", methods=['GET'])
 @login_required
 def secapp():
