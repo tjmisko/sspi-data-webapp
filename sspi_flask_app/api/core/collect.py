@@ -368,7 +368,10 @@ def foraid():
         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
         yield from collectOECDSDMXFORAID("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,", "FORAID",
                                          filter_parameters="..206.USD.Q",
-                                         metadata_url=metadata_url, **kwargs)
+                                         metadata_url=metadata_url,
+                                         IntermediateCode="", **kwargs)
+        yield from collectWorldBankdata("SP.POP.TOTL", "FORAID", IntermediateCode="POPULN", **kwargs)
+        yield from collectWorldBankdata("NY.GDP.PCAP.CD", "FORAID", IntermediateCode="GDPMER", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

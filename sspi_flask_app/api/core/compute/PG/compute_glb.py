@@ -78,6 +78,9 @@ def compute_foraid():
             obs["CountryType"] = "Donor"
         else:
             obs["CountryType"] = "Recipient"
+    print("Preparing Population Data")
+
+    print("Preparing GDP Data")
 
 
     return parse_json(aid_totals)
