@@ -7,9 +7,10 @@ const chartArrowLabels = {
         ctx.fillStyle = '#FF634799';
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        const xLeftMid = (chartArea.left + chartArea.right) / 4;
-        const xRightMid = 3 * (chartArea.left + chartArea.right) / 4;
-        const yTop = (chartArea.top + chartArea.bottom) / 10 + 10;
+        const offset = 10
+        const xLeftMid = (chartArea.left + chartArea.right + offset) / 4;
+        const xRightMid = 3 * (chartArea.left + chartArea.right - offset) / 4;
+        const yTop = (chartArea.top + chartArea.bottom) / 10 + 5;
         ctx.fillText(optionVars.LeftCountry + " Higher", xLeftMid, yTop);
         ctx.fillStyle = '#32CD3299';
         ctx.fillText(optionVars.RightCountry + " Higher", xRightMid, yTop);
@@ -64,7 +65,7 @@ class StaticPillarDifferentialChart {
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
         this.canvas.id = `pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`
-        this.canvas.width = 450
+        this.canvas.width = 300
         this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
