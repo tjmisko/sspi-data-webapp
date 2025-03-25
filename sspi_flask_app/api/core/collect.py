@@ -465,14 +465,8 @@ def unpopl():
 def gdpmek():
     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
-<<<<<<< HEAD
-        yield "Collecting data for World Bank Indicator f{WorldBankIndicatorCode}\n"
-=======
-        yield "Collecting data for World Bank Indicator" + \
-            "{WorldBankIndicatorCode}\n"
->>>>>>> main
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
-            WorldBankIndicatorCode}?format=json"
+        yield f"Collecting data for World Bank Indicator{WorldBankIndicatorCode}\n"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages + 1):
