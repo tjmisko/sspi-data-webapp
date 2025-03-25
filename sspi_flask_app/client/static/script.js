@@ -1,4 +1,13 @@
-function captureChart(element,title,alpha=false){if(alpha){html2canvas(element,{backgroundColor:null}).then(canvas=>{const link=document.createElement('a');link.download=title+'.png';link.href=canvas.toDataURL('image/png');link.click();});}else{html2canvas(element).then(canvas=>{const link=document.createElement('a');link.download=title+'.png';link.href=canvas.toDataURL('image/png');link.click();});}};class ColorMap{constructor(){this.SSPI="#FFD54F"
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function captureChart(chartObject,alpha=false){const textColorOriginal=chartObject.textColor
+const gridColorOriginal=chartObject.gridColor
+chartObject.textColor='#222'
+chartObject.gridColor='#777'
+chartObject.chart.update()
+sleep(1000).then(()=>{if(alpha){html2canvas(chartObject.parentElement,{backgroundColor:null}).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}else{html2canvas(chartObject.parentElement).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}
+chartObject.textColor=textColorOriginal
+chartObject.gridColor=gridColorOriginal
+chartObject.chart.update()})};class ColorMap{constructor(){this.SSPI="#FFD54F"
 this.SUS="#28a745"
 this.MS="#ff851b"
 this.PG="#007bff"}
@@ -6,7 +15,7 @@ this.PG="#007bff"}
 const SSPIColors=new ColorMap()
 async function fetchComparisonData(country1,country2,country3){country_data=await fetch(`/api/v1/query/sspi_main_data_v3?CountryCode=${country1}&CountryCode=${country2}&CountryCode=${country3}`)}
 function categoryComparison(chartCanvas,categoryCode,country_data){const chartConfig={type:'bar',data:data,options:{plugins:{title:{display:true,text:'Comparison of Category Scores'},},responsive:true,scales:{x:{stacked:true,},y:{stacked:true}}}};}
-$(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
+document.getElementById("comparison-country-selection-form").addEventListener("submit",function(event){event.preventDefault();const formData=new FormData(this);const data=Object.fromEntries(formData.entries());fetch('/compare/custom',{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)}).then(response=>response.json()).then(res=>{document.getElementById("comparison-result-section").innerHTML=res.html;window.custom_comparison_list=res.data;window.custom_comparison_list.forEach(cdata=>{new CategoryRadarChart(cdata.code,document.getElementById("radar-chart-flex-container"));});}).catch(error=>console.error("Error:",error));});$(".data-download-reveal").click(()=>{$(".data-download-form").slideDown();$(".data-download-reveal").slideUp();})
 $(".data-download-close").click(()=>{$(".data-download-reveal").slideDown();$(".data-download-form").slideUp();})
 class GlobeVisualization{constructor(){this.initalizeGlobe();}
 initalizeGlobe(){const colorScale=d3.scaleSequentialSqrt(d3.interpolateYlOrRd);const getVal=feat=>feat.properties.GDP_MD_EST/Math.max(1e5,feat.properties.POP_EST);fetch("{{ url_for('client_bp.static', filename = 'globe_data.geojson') }}").then(res=>res.json()).then(countries=>{const maxVal=Math.max(...countries.features.map(getVal));colorScale.domain([0,maxVal]);console.log(countries.features.filter(d=>d.properties.ISO_A2!=='AQ'))

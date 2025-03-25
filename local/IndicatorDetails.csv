@@ -156,9 +156,9 @@ Public Goods,PG,Public Safety,SAF,"Security
 Apparatus",SECAPP,Capability of the Security Apparatus,"The Security Apparatus is a component of the Fragile State Index. It considers the security threats to a state such as bombings, attacks and battle-related deaths, rebel movements, mutinies, coups, or terrorism.6",,The Fund for Peace,,https://fragilestatesindex.org/global-data/ ,https://fragilestatesindex.org/global-data/,2019,"(0, 10)V",true,1,10,0,NA,NA,,,,
 Public Goods,PG,Public Safety,SAF,"Incarceration 
 Rates",PRISON,"Criminal Justice 
-Policy","Prison population rate per 100,000 of the national population.",,"World 
+Policy","Prison population rate per 100,000 of the national population. Population sourced from the WorldBank.",,"World 
 Prison 
-Brief",,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All ,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All,2018,"(40, 540)V",true,1,540,40,NA,NA,,,,
+Brief",,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All ,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All,2018,"(40, 540)V",true,1,540,40,"[""PRIPOP"", ""WBPOPL""]",NA,,,,
 Public Goods,PG,Global Role,GLB,Arms Transfers,ARMEXP,Arms Policy,"Arm transfers: the supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.7",,SIPRI,,https://www.sipri.org/databases/armstransfers ,https://www.sipri.org/databases,2018,"(0,1500)V",true,1,500,0,NA,NA,,,,
 Public Goods,PG,Global Role,GLB,"Military 
 Expenditure",MILEXP,Defense Policy,Military expenditure (local currency at current prices) is presented according to both the financial year of each country and according to the calendar year as a percentage of GDP.,,SIPRI,,https://www.sipri.org/databases/milex ,https://www.sipri.org/databases,2018,"(0, 10)V",true,1,10,0,NA,NA,,,,

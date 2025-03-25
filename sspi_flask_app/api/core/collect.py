@@ -1,24 +1,27 @@
-from flask import Blueprint, Response, jsonify
+from flask import Blueprint, Response
 from flask_login import login_required, current_user
 import requests
 import time
-
-from ..datasource.oecdstat import collectOECDIndicator
-from ..datasource.epi import collectEPIData
-from ..datasource.worldbank import collectWorldBankdata
-from ..datasource.sdg import collectSDGIndicatorData
-from ..datasource.iea import collectIEAData
-from ..datasource.ilo import collectILOData
-from ..datasource.who import collectWHOdata
-from ..datasource.prisonstudies import collectPrisonStudiesData
-from ..datasource.taxfoundation import collectTaxFoundationData
-from ..datasource.who import collectCSTUNTData
+from sspi_flask_app.models.database import (
+    sspi_raw_outcome_data
+)
+from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collectOECDSDMXData
+from sspi_flask_app.api.datasource.epi import collectEPIData
+from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
+from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
+from sspi_flask_app.api.datasource.fao import collectUNFAOData
+from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
+from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.who import collectWHOdata
+from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
+from sspi_flask_app.api.datasource.who import collectCSTUNTData
+from sspi_flask_app.api.datasource.uis import collectUISdata
+from sspi_flask_app.api.datasource.fsi import collectFSIdata
+from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 
 from .countrychar import insert_pop_data
-from sspi_flask_app.models.database import (
-    sspi_raw_outcome_data,
-    sspi_clean_outcome_data
-)
+from ..datasource.itu import collect_itu_data
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -80,6 +83,23 @@ def stkhlm():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("12.4.1", "STKHLM", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/DEFRST", methods=['GET'])
+@login_required
+def defrst():
+    def collect_iterator(**kwargs):
+        yield from collectUNFAOData("5110", "6717", "DEFRST", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/CARBON", methods=['GET'])
+@login_required
+def carbon():
+    def collect_iterator(**kwargs):
+        yield from collectUNFAOData("7215", "6646", "CARBON", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 ######################
 ## Category: ENERGY ##
@@ -162,13 +182,14 @@ def colbar():
         yield from collectILOData("DF_ILR_CBCT_NOC_RT", "COLBAR", URLParams=url_params, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/CHILDW")
 @login_required
 def childw():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("4.1.1", "CHILDW", IntermediateCode = "YSCEDU", **kwargs)
-        yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode = "CHLDLB", **kwargs)
-    return Response(collect_iterator(Username = current_user.username), mimetype = 'text/event-stream')
+        yield from collectSDGIndicatorData("4.1.1", "CHILDW", IntermediateCode="YSCEDU", **kwargs)
+        yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode="CHLDLB", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #################################
 ## Category: WORKER WELLBEING ##
@@ -210,20 +231,18 @@ def taxrev():
         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
-###################################
-## Category: CORPORATE TAX RATES ##
-###################################
 
 @collect_bp.route("/CRPTAX", methods=['GET'])
 @login_required
 def crptax():
     def collect_iterator(**kwargs):
-        yield from collectTaxFoundationData('CRPTAX',**kwargs)
+        yield from collectTaxFoundationData('CRPTAX', **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ################################
 ## Category: FINANCIAL SECTOR ##
 ################################
+
 
 @collect_bp.route("/FDEPTH", methods=['GET'])
 def fdepth():
@@ -232,11 +251,13 @@ def fdepth():
         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/PUBACC", methods=['GET'])
 def pubacc():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 # @collect_bp.route("/FSTABL", methods=['GET'])
 # def fstabl():
@@ -263,6 +284,20 @@ def ginipt():
 #########################
 
 
+@collect_bp.route("/ENRPRI", methods=['GET'])
+def enrpri():
+    def collect_iterator(**kwargs):
+        yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/ENRSEC", methods=['GET'])
+def enrsec():
+    def collect_iterator(**kwargs):
+        yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/PUPTCH", methods=['GET'])
 def puptch():
     def collect_iterator(**kwargs):
@@ -272,6 +307,8 @@ def puptch():
 ##########################
 ## Category: HEALTHCARE ##
 ##########################
+
+
 @collect_bp.route("/ATBRTH", methods=['GET'])
 @login_required
 def atbrth():
@@ -285,15 +322,6 @@ def atbrth():
 def dptcov():
     def collect_iterator(**kwargs):
         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
-# PHYSPC for Correlation Analysis with UHC
-@collect_bp.route("/PHYSPC", methods=['GET'])
-@login_required
-def physpc_uhc():
-    def collect_iterator(**kwargs):
-        yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -331,6 +359,7 @@ def drkwat():
         yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/SANSRV", methods=['GET'])
 @login_required
 def sansrv():
@@ -347,9 +376,20 @@ def intrnt():
         yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/AQELEC", methods=['GET'])
+@login_required
+def aqelec():
+    def collect_iterator(**kwargs):
+        yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+        yield from collectWEFQUELCT("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 #############################
-## Category: PUBLIC SAFETY ##
+## Category: PUBLIC SAFETY #
 #############################
+
 
 @collect_bp.route("/PRISON", methods=['GET'])
 @login_required
@@ -359,9 +399,27 @@ def prison():
         yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/CYBSEC", methods=['GET'])
+@login_required
+def cybsec():
+    def collect_iterator(**kwargs):
+        yield from collect_itu_data("CYBSEC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/SECAPP", methods=['GET'])
+@login_required
+def secapp():
+    def collect_iterator(**kwargs):
+        yield from collectFSIdata("SECAPP", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 ###########################
 ## Category: GLOBAL ROLE ##
 ###########################
+
 
 @collect_bp.route("/RDFUND", methods=['GET'])
 @login_required
@@ -371,9 +429,19 @@ def rdfund():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-##############################################
-## Category: Adding Country Characteristics ##
-##############################################
+@collect_bp.route("/FORAID", methods=['GET'])
+@login_required
+def foraid():
+    def collect_iterator(**kwargs):
+        metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
+        yield from collectOECDSDMXData("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,/.DPGC.206.USD.Q",
+                                       "FORAID", metadata_url=metadata_url, **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+#######################################
+## Category: Country Characteristics ##
+#######################################
 @collect_bp.route("/characteristic/UNPOPL", methods=['GET'])
 @login_required
 def unpopl():
@@ -390,7 +458,8 @@ def gdpmek():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages+1):
@@ -419,7 +488,8 @@ def gdpppp():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
+            WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages+1):
