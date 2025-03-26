@@ -2,6 +2,11 @@ from flask import Blueprint, Response
 from flask_login import login_required, current_user
 import requests
 import time
+from sspi_flask_app.api.datasource.oecdstat import (
+    collectOECDIndicator,
+    collectOECDSDMXData,
+    collectOECDSDMXFORAID
+)
 from sspi_flask_app.models.database import (
     sspi_raw_outcome_data
 )
@@ -434,8 +439,12 @@ def rdfund():
 def foraid():
     def collect_iterator(**kwargs):
         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
-        yield from collectOECDSDMXData("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,/.DPGC.206.USD.Q",
-                                       "FORAID", metadata_url=metadata_url, **kwargs)
+        yield from collectOECDSDMXFORAID("OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,", "FORAID",
+                                         filter_parameters="..206.USD.Q",
+                                         metadata_url=metadata_url,
+                                         IntermediateCode="ODAFLW", **kwargs)
+        yield from collectWorldBankdata("SP.POP.TOTL", "FORAID", IntermediateCode="POPULN", **kwargs)
+        yield from collectWorldBankdata("NY.GDP.MKTP.KD", "FORAID", IntermediateCode="GDPMKT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -456,13 +465,11 @@ def unpopl():
 def gdpmek():
     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
-        yield "Collecting data for World Bank Indicator" + \
-            "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
-            WorldBankIndicatorCode}?format=json"
+        yield f"Collecting data for World Bank Indicator{WorldBankIndicatorCode}\n"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
-        for p in range(1, total_pages+1):
+        for p in range(1, total_pages + 1):
             new_url = f"{url_source}&page={p}"
             yield f"Sending Request for page {p} of {total_pages}\n"
             response = requests.get(new_url).json()
@@ -471,8 +478,7 @@ def gdpmek():
                 document_list, IndicatorCode, **kwargs)
             yield f"Inserted {count} new observations into sspi_outcome_data\n"
             time.sleep(0.5)
-        yield "Collection complete for World Bank Indicator" + \
-            WorldBankIndicatorCode
+        yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
@@ -492,7 +498,7 @@ def gdpppp():
             WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
-        for p in range(1, total_pages+1):
+        for p in range(1, total_pages + 1):
             new_url = f"{url_source}&page={p}"
             yield f"Sending Request for page {p} of {total_pages}\n"
             response = requests.get(new_url).json()
@@ -501,8 +507,7 @@ def gdpppp():
                 document_list, IndicatorCode, **kwargs)
             yield f"Inserted {count} new observations into sspi_outcome_data\n"
             time.sleep(0.5)
-        yield "Collection complete for World Bank Indicator" + \
-            WorldBankIndicatorCode
+        yield "Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
 
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
