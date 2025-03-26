@@ -5,8 +5,6 @@ class ColorMap {
         this.MS = "#ff851b"
         this.PG = "#007bff"
     }
-
     // To-do: Add standard colors for countries based on flags
 }
-
 const SSPIColors = new ColorMap()

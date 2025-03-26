@@ -69,7 +69,7 @@ class DynamicLineChart {
                 <button class="hideunpinned-button">Hide Unpinned</button>
             </div>
         </div>
-        `
+        `;
         this.rigTitleBarButtons()
     }
 
@@ -232,7 +232,7 @@ class DynamicLineChart {
             </div>
             <div class="legend-items">
             </div>
-        `
+        `;
 
         this.savePrefsButton = legend.querySelector('.saveprefs-button')
         this.savePrefsButton.addEventListener('click', () => {
@@ -261,7 +261,7 @@ class DynamicLineChart {
             <div class="legend-item">
                 <button class="add-country-button">Add Country</button>
             </div>
-        `
+        `;
         this.addCountryButton = this.legend.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
             new SearchDropdown(this.addCountryButton, this.chart.data.datasets, this)
@@ -531,7 +531,7 @@ class SearchDropdown {
             <form class="add-country-pin-search-form">
                 <input type="text" name="Country" placeholder="Country">
             </form>
-        `
+        `;
         this.textInput = this.parentElement.querySelector("input")
         this.textInput.focus()
         this.textInput.addEventListener("input", () => this.runSearch())
@@ -579,7 +579,7 @@ class SearchDropdown {
 
             resultSpan.innerHTML = `
                 ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
-            `
+            `;
             resultElement.appendChild(resultSpan)
             this.resultsWindow.appendChild(resultElement)
         })

@@ -25,8 +25,7 @@ class StaticPillarDifferentialChart {
         this.BaseCountry = BaseCountry;
         this.ComparisonCountry = ComparisonCountry;
         this.PillarCode = PillarCode;
-        this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry}`
-
+        this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry})`;
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
@@ -64,7 +63,7 @@ class StaticPillarDifferentialChart {
 
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
-        this.canvas.id = `pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`
+        this.canvas.id = `pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;
         this.canvas.width = 300
         this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
