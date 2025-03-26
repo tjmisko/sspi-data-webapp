@@ -9,15 +9,16 @@ def scss_to_css(_in, out, **kw):
 
 def compile_static_assets(assets):
     """Configure bundle building and minification of css and js"""
-    assets.auto_build = False
-    assets.debug = False
+    print("Rebuilding Static Assets")
     home_style_bundle = Bundle(
         'client_bp/sass/*.scss',
         filters=(scss_to_css, 'cssmin'),
         output='client_bp/style.css',
     )
     home_js_bundle = Bundle(
+        'client_bp/dist/*.js',
         'client_bp/js/*.js',
+        'client_bp/charts/*.js',
         filters='jsmin',
         output='client_bp/script.js',
     )

@@ -35,7 +35,7 @@ class ScoreBarStatic {
     initChartJSCanvas() {
         // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
-        this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`
+        this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`;
         this.canvas.width = this.width
         this.canvas.height = this.height
         this.context = this.canvas.getContext('2d')
@@ -166,7 +166,7 @@ class ScoreBarStatic {
         for (const key in summaryStats) {
             const stat = document.createElement('div')
             stat.classList.add('score-bar-summary-stat')
-            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`
+            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`;
             this.summaryBox.appendChild(stat)
         }
     }

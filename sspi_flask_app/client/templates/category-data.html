@@ -4,11 +4,7 @@
 <title> {{ CategoryCode | upper }} Category Data </title>
 {% endblock title %}
 
-{% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/colorMap.js') }}" defer></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/score-bar-static.js') }}" defer></script>
-{% endblock javascript %}
+{% block javascript %}{% endblock javascript %}
 
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/score-bar.css') }}"> 
