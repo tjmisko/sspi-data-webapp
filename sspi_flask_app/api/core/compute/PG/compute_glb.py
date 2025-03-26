@@ -75,13 +75,13 @@ def compute_foraid():
             "IntermediateCode": "TOTDON",
             "Year": report["year"],
             "Unit": "USD (Millions)",
-            "Value": sum([float(d["Value"]) for d in report["donations"]]),
+            "Value": sum([float(d["Value"]) for d in report["donations"] if d.get("Value")]),
         }, {
             "CountryCode": report["cou"],
             "IntermediateCode": "TOTREC",
             "Year": report["year"],
             "Unit": "USD (Millions)",
-            "Value": sum([float(d["Value"]) for d in report["receptions"]])
+            "Value": sum([float(d["Value"]) for d in report["receptions"] if d.get("Value")])
         }])
     print("Preparing Population Data")
     population_raw = sspi_raw_api_data.fetch_raw_data(
@@ -90,19 +90,26 @@ def compute_foraid():
     intermediates_list.extend(population_clean)
     print("Preparing GDP Data")
     gdp_raw = sspi_raw_api_data.fetch_raw_data(
-        "FORAID", IntermediateCode="GDPMER")
+        "FORAID", IntermediateCode="GDPMKT")
     gdp_clean = clean_wb_data(
         gdp_raw, "FORAID", "National GDP in 2015 Constant Dollars")
     intermediates_list.extend(gdp_clean)
     dlg = 0  # 0% of GDP Donated
     dug = 1  # 1% of GDP Donated
-    rlg = 0  # 0 Dollars per Capita
-    rug = 20  # 20 Dollars per Capita
+    rlg = 0  # 0 Dollars per Capita?
+    rug = 500  # 500 Dollars per Capita?
     clean_foraid_data = zip_intermediates(
         intermediates_list,
         "FORAID",
-        ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMEK: goalpost(
-            TOTDON / GDPMEK, dlg, dug) if TOTDON > TOTREC else goalpost(
-            TOTREC / POPULN, rlg, rug),
+        ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
+            TOTDON * 10**8 / GDPMKT, dlg, dug) if TOTDON > TOTREC else goalpost(
+            TOTREC * 10**6 / POPULN, rlg, rug),
+        ValueFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT:
+            TOTDON * 10**8 / GDPMKT if TOTDON > TOTREC else TOTREC * 10**6 / POPULN,
+        UnitFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT:
+            "Donor: ODA Donations (% GDP)" if TOTDON > TOTREC else
+            "Recipient: ODA Received per Capita (USD per Capita)",
         ScoreBy="Values")
-    return parse_json(clean_foraid_data)
+    complete, incomplete = filter_incomplete_data(clean_foraid_data)
+    sspi_clean_api_data.insert_many(complete)
+    return parse_json(complete)
