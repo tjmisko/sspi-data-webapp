@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     {% block title %}{% endblock %}
     <script>
-        let theme = localStorage.getItem("theme")
-        if (theme === "light") {
+        window.theme = localStorage.getItem("theme")
+        if (window.theme === "light") {
             document.documentElement.classList.add("light-theme")
             localStorage.setItem("theme", "light")
         } else {

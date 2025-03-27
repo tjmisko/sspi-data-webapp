@@ -28,14 +28,3 @@
 .footer-link:hover {
     color: var(--green-accent, #000);
 }
-
-#admin-login {
-    margin: 5px 0px;
-    text-decoration: none;
-    color: var(--text-color, #000);
-}
-
-#admin-login:hover {
-    transform: scale(1.01);
-    transition: 0.1s ease;
-}

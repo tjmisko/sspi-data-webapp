@@ -12,7 +12,7 @@
         </ol>
     </div>
     <div class="theme-toggle-container">
-        <span class="theme-label">Dark Mode</span>
+        <span id="theme-label-header-span" class="theme-label"></span>
         <label class="theme-toggle">
             <input type="checkbox" id="darkModeToggle" />
             <span class="icons">
@@ -39,17 +39,21 @@
     <script>
         // Dark Mode Toggle
         const checkbox = document.getElementById("darkModeToggle")
-        checkbox.checked = theme === "light"
+        checkbox.checked = window.theme === "light"
+        const label = document.getElementById("theme-label-header-span")
+        label.innerText = window.theme.replace(/\b\w/g, char => char.toUpperCase()) + " Theme Enabled"
         checkbox.addEventListener("change", function () {
             const htmlTag = document.documentElement
             if (this.checked) {
                 htmlTag.classList.remove("dark-theme")
                 htmlTag.classList.add("light-theme")
                 localStorage.setItem("theme", "light")
+                label.innerText = "Light Theme Enabled"
             } else {
                 htmlTag.classList.remove("light-theme")
                 htmlTag.classList.add("dark-theme")
                 localStorage.setItem("theme", "dark")
+                label.innerText = "Dark Theme Enabled"
             }
         })
     </script>

@@ -29,11 +29,11 @@
 
 <script>
     window.addEventListener("load", (event) => {
-        window.IndicatorScoreBarStatic = new ScoreBarStatic(document.getElementById("static-data-section"), "{{ IndicatorCode | upper }}");
-        const parentElement = document.getElementById("dynamic-data-section");
-        window.IndicatorDynamicLine = new DynamicLineChart(parentElement, "{{ IndicatorCode | upper }}")
-
-        const x = localStorage.getItem('windowX');
+        window.SSPICharts = [
+            new DynamicLineChart(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
+            new ScoreBarStatic(document.getElementById("static-data-section"), "{{ IndicatorCode | upper }}")
+        ];
+        const x = loalStorage.getItem('windowX');
         const y = localStorage.getItem('windowY');
         
         if (x !== null && y !== null) {
