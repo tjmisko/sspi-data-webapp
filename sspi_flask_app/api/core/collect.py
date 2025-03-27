@@ -241,6 +241,7 @@ def fampln():
         yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 ##############################
 ## Category: INFRASTRUCTURE ##
 ##############################
@@ -278,6 +279,12 @@ def rdfund():
         yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/MILEXP", methods=['GET'])
+@login_required
+def milexp():
+    def collect_iterator(**kwargs):
+        yield from collectsipriData("9.5.1", "RDFUND", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ##############################################
 ## Category: Adding Country Characteristics ##
