@@ -1,10 +1,3 @@
-$dark-blue: #1B2A3C;
-$light-blue: #2A4260;
-$green-accent: #AECC53;
-$white: rgb(226, 226, 226);
-$grey: rgba(184, 188, 190, 1);
-$black: rgb(42, 41, 43);
-
 .data-widget {
     display: flex;
     flex-direction: column;
@@ -23,9 +16,9 @@ $black: rgb(42, 41, 43);
     flex-direction: column;
     justify-content: space-between;
     padding: 0.6em;
-    background-color: $white;
+    background-color: var(--white, #000);
     border-radius: 0.5em;
-    color: $black;
+    color: var(--black, #000);
     box-shadow: rgba(47, 47, 51, 0.4) 0px 7px 29px 0px;
 }
 
@@ -60,19 +53,22 @@ $black: rgb(42, 41, 43);
     padding: 1px;
     margin: 0.4em;
     font-size: 1em;
-    color: $white;
+    color: var(--white, #000);
+}
+
+.widget-controls-button:hover .options {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+.widget-controls-button:hover .fullscreen {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+.widget-controls-button:hover .close {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(340deg);
 }
 
 .widget-controls-button:hover {
-    .options {
-        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
-    }
-    .fullscreen {
-        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
-    }
-    .close {
-        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(340deg);
-    }
     transform: scale(1.04);
     transition: 0.1s;
 }
@@ -80,14 +76,15 @@ $black: rgb(42, 41, 43);
 
 
 .chart-container {
-    canvas {
-        margin:0 !important;
-        padding:0;
-    }
     position: relative;
     min-height: 0;
     overflow: hidden;
     flex: 1 3 auto;
+}
+
+.chart-container canvas {
+    margin: 0 !important;
+    padding: 0;
 }
 
 .series-options {
