@@ -12,10 +12,13 @@
         </ol>
     </div>
     <div class="theme-toggle-container">
-        <span class="label">Dark Mode</span>
+        <span class="theme-label">Dark Mode</span>
         <label class="theme-toggle">
             <input type="checkbox" id="darkModeToggle" />
             <span class="icons">
+                <svg class="icon moon" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
                 <svg class="icon sun" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="5" />
                     <g stroke-width="2">
@@ -29,9 +32,6 @@
                         <line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />
                     </g>
                 </svg>
-                <svg class="icon moon" viewBox="0 0 24 24">
-                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                </svg>
             </span>
             <span class="slider"></span>
         </label>
@@ -39,12 +39,17 @@
     <script>
         // Dark Mode Toggle
         const checkbox = document.getElementById("darkModeToggle")
+        checkbox.checked = theme === "light"
         checkbox.addEventListener("change", function () {
             const htmlTag = document.documentElement
             if (this.checked) {
-                htmlTag.classList.add("dark-mode")
+                htmlTag.classList.remove("dark-theme")
+                htmlTag.classList.add("light-theme")
+                localStorage.setItem("theme", "light")
             } else {
-                htmlTag.classList.remove("dark-mode")
+                htmlTag.classList.remove("light-theme")
+                htmlTag.classList.add("dark-theme")
+                localStorage.setItem("theme", "dark")
             }
         })
     </script>
