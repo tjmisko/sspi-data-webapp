@@ -3,10 +3,14 @@
   <head>
     <meta charset="utf-8">
     {% block title %}{% endblock %}
-    {% block stylesheet %}{% endblock %}
     <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }}"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
     {% block javascript %}{% endblock %}
+    {% block stylesheet %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
   </head>
 
   <body>
