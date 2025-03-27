@@ -8,8 +8,8 @@ html {
 
 body {
     margin: 0;
-    color: var(--white, #000);
-    background-color: var(--light-blue, #000);
+    color: var(--text-color, #000);
+    background-color: var(--page-background, #000);
     line-height: 1.25rem;
 }
 

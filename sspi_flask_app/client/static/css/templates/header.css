@@ -16,7 +16,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--dark-blue, #000);
+    background-color: var(--header-color, #000);
 }
 
 .titlebox {
@@ -30,9 +30,9 @@
 
 
 .title {
-    font-size: 1.7em;
+    font-size: 1.3em;
     font-weight: 300;
-    margin: 10px 0px;
+    margin: 5px 0px;
     white-space: nowrap;
 }
 
@@ -49,8 +49,8 @@
 }
 
 .header-nav-bar-link {
-    font-size: 1.2em;
-    color: var(--white, #000);
+    font-size: 0.9em;
+    color: var(--header-text-color, #fff);
     text-decoration: none;
 }
 
@@ -125,6 +125,11 @@
   transition: opacity 0.3s;
 }
 
+.theme-toggle-container .theme-label {
+  font-size: 0.5em;
+  color: --low-importance-font-color;
+}
+
 .theme-toggle .sun {
   color: #f39c12;
 }
@@ -132,10 +137,10 @@
   color: #f1c40f;
 }
 
-.theme-toggle input:checked ~ .icons .sun {
+.theme-toggle input:not(:checked) ~ .icons .sun {
   opacity: 0.2;
 }
-.theme-toggle input:not(:checked) ~ .icons .moon {
+.theme-toggle input:checked ~ .icons .moon {
   opacity: 0.2;
 }
 

@@ -1,5 +1,5 @@
 .site-footer {
-    background-color: var(--dark-blue, #000);
+    background-color: var(--header-color, #000);
     color: var(--white, #000);
     padding: 20px 50px;
 }
@@ -32,7 +32,7 @@
 #admin-login {
     margin: 5px 0px;
     text-decoration: none;
-    color: var(--white, #000);
+    color: var(--text-color, #000);
 }
 
 #admin-login:hover {
