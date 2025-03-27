@@ -1,18 +1,15 @@
 from flask_assets import Bundle
-import sass
-
-
-def scss_to_css(_in, out, **kw):
-    """Custom filter to compile scss files"""
-    out.write(sass.compile(string=_in.read(), output_style='compressed'))
 
 
 def compile_static_assets(assets):
     """Configure bundle building and minification of css and js"""
     print("Rebuilding Static Assets")
     home_style_bundle = Bundle(
-        'client_bp/sass/*.scss',
-        filters=(scss_to_css, 'cssmin'),
+        'client_bp/css/variables.css',
+        'client_bp/css/base.css',
+        'client_bp/css/templates/*.css',
+        'client_bp/css/pages/*.css',
+        filters='cssmin',
         output='client_bp/style.css',
     )
     home_js_bundle = Bundle(
