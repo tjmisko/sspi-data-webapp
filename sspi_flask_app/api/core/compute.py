@@ -575,25 +575,9 @@ def compute_nrgint():
 
 
 def compute_rulelw():
-    """
-    Compute route for RULELW.
-
-    This function:
-      - Checks if raw RULELW data is available; if not, redirects to the collection route.
-      - Fetches all raw RULELW observations (each containing a fragment of CSV data).
-      - Reassembles the complete CSV string by sorting the fragments by their FragmentNumber.
-      - Reads the CSV string into a pandas DataFrame.
-      - Converts the DataFrame into a list of records, tags each with the IndicatorCode ("RULELW"),
-        and inserts the clean records.
-    """
-    # Redirect if raw data is not available.
     if not sspi_raw_api_data.raw_data_available("RULELW"):
         return redirect(url_for("collect_bp.RULELW"))
-
-    # Fetch the raw RULELW data.
     raw_data = sspi_raw_api_data.fetch_raw_data("RULELW")
-
-    # Collect all CSV fragments with their associated fragment number.
     fragments = []
     for obs in raw_data:
         try:
@@ -602,26 +586,21 @@ def compute_rulelw():
             if fragment_num is not None and csv_fragment:
                 fragments.append((fragment_num, csv_fragment))
         except Exception as e:
-            # Optionally log the error or continue silently.
             continue
 
     if not fragments:
         return "No CSV fragments found for RULELW."
 
-    # Sort fragments in order and reassemble the full CSV string.
     fragments.sort(key=lambda x: x[0])
     full_csv = "".join(fragment for _, fragment in fragments)
 
-    # Parse the CSV string into a pandas DataFrame.
     try:
         df = pd.read_csv(StringIO(full_csv))
     except Exception as e:
         return f"Error reading CSV data: {e}"
 
-    # Filter only the needed columns.
     filtered_df = df[['country_text_id', 'year', 'v2x_rule']]
     filtered_df = df[(df["year"] > 1900) & (df["year"] < 2030)]
-    # Identify year columns. If none are found (since 'year' is already present), we use the existing 'year'.
     year_columns = [col for col in filtered_df.columns if col.isdigit()]
     id_vars = [col for col in filtered_df.columns if col not in year_columns]
     if year_columns:
@@ -633,29 +612,15 @@ def compute_rulelw():
         )
         df_melted["Year"] = df_melted["Year"].astype(int)
     else:
-        # Rename the existing 'year' column to 'Year' and 'v2x_rule' to 'Value'
         df_melted = filtered_df.rename(columns={"year": "Year", "v2x_rule": "Value"})
         df_melted["Year"] = df_melted["Year"].astype(int)
 
-    # Sort the data by country and year.
     df_sorted = df_melted.sort_values(by=["country_text_id", "Year"])
-
-    # Rename columns as needed.
     df_sorted["CountryCode"] = df_sorted["country_text_id"]
-
-    # Create a Unit column.
-    # Since the original code expected an 'Indicator' column to derive a Unit, but it's not present,
-    # we assign an empty string (or a default value if appropriate).
     df_sorted["Unit"] = ""
-
-    # Tag each record with the IndicatorCode "RULELW"
     df_sorted["IndicatorCode"] = "RULELW"
-
-    # Select the final columns.
     df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode"]]
-
     records = df_final.to_dict(orient="records")
-
     scored_list = score_single_indicator(records, "RULELW")
     filtered_list, incomplete_observations = filter_incomplete_data(
          scored_list)
