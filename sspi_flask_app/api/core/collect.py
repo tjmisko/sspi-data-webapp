@@ -7,6 +7,7 @@ from ..datasource.worldbank import collectWorldBankdata
 from ..datasource.sdg import collectSDGIndicatorData
 from ..datasource.iea import collectIEAData
 from ..datasource.ilo import collectILOData
+from ..datasource.sipri import collectSIPRIdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from .countrychar import insert_pop_data
 
@@ -283,7 +284,7 @@ def rdfund():
 @login_required
 def milexp():
     def collect_iterator(**kwargs):
-        yield from collectsipriData("9.5.1", "RDFUND", **kwargs)
+        yield from collectSIPRIdata("MILEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ##############################################
