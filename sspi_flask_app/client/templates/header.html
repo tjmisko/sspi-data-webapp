@@ -1,8 +1,8 @@
 <header class="site-header">
-    <a class="titlebox" href="/">
-        <h1 class="title"> Sustainable and</h1>
-        <h1 class="title"> Shared-Prosperity</h1>
-        <h1 class="title"> Policy Index</h1>
+    <a class="header-titlebox" href="/">
+        <span class="site-title-line"> Sustainable and</span>
+        <span class="site-title-line"> Shared-Prosperity</span>
+        <span class="site-title-line"> Policy Index</span>
     </a>
     <div class="header-nav-bar">
         <ol class="header-nav-bar-link-list">
@@ -39,22 +39,27 @@
     <script>
         // Dark Mode Toggle
         const checkbox = document.getElementById("darkModeToggle")
+        checkbox.title = "Toggle Light/Dark Page Theme"
         checkbox.checked = window.theme === "light"
         const label = document.getElementById("theme-label-header-span")
-        label.innerText = window.theme.replace(/\b\w/g, char => char.toUpperCase()) + " Theme Enabled"
+        label.innerText = window.theme.replace(/\b\w/g, char => char.toUpperCase()) + " Theme"
         checkbox.addEventListener("change", function () {
             const htmlTag = document.documentElement
             if (this.checked) {
                 htmlTag.classList.remove("dark-theme")
                 htmlTag.classList.add("light-theme")
                 localStorage.setItem("theme", "light")
-                label.innerText = "Light Theme Enabled"
+                label.innerText = "Light Theme"
             } else {
                 htmlTag.classList.remove("light-theme")
                 htmlTag.classList.add("dark-theme")
                 localStorage.setItem("theme", "dark")
-                label.innerText = "Dark Theme Enabled"
+                label.innerText = "Dark Theme"
             }
+            window.SSPICharts.forEach((chartObj) => {
+                chartObj.setTheme(window.theme)
+                chartObj.chart.update()
+            })
         })
     </script>
 </header>

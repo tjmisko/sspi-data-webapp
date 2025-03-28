@@ -4,16 +4,12 @@
 <title> {{ IndicatorCode | upper }} Indicator Data </title>
 {% endblock title %}
 
-{% block stylesheet %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/score-bar.css') }}"> 
-{% endblock stylesheet %}
-
 {% block content %}
 <section class="hero-box">
     <select class="indicator-dropdown">
         {% include 'indicator-options.html' %}
     </select>
-    <h1> {{ IndicatorCode | upper }} </h1>
+    <h2> {{ IndicatorCode | upper }} </h2>
     <script>
         const defaultOption = document.querySelector('select.indicator-dropdown option[value="{{IndicatorCode | upper}}"]')
         defaultOption.selected = true;
@@ -33,7 +29,7 @@
             new DynamicLineChart(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
             new ScoreBarStatic(document.getElementById("static-data-section"), "{{ IndicatorCode | upper }}")
         ];
-        const x = loalStorage.getItem('windowX');
+        const x = localStorage.getItem('windowX');
         const y = localStorage.getItem('windowY');
         
         if (x !== null && y !== null) {
@@ -43,9 +39,6 @@
     window.addEventListener('beforeunload', () => {
       localStorage.setItem('windowX', window.screenX);
       localStorage.setItem('windowY', window.screenY);
-      localStorage.setItem('pins', JSON.stringify(IndicatorDynamicLine.chart.data.datasets.map(
-            (dataset) => { dataset.pinned }
-      )));
     });
 </script>
 {% endblock content %}

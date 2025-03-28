@@ -7,7 +7,7 @@
 }
 .widget-type-options-menu {
     display: flex;
-    color: --text-color;
+    color: var(--text-color, #000);
     button {
         margin: 0em 1em;
     }

@@ -2,13 +2,10 @@ class ScoreBarStatic {
     constructor(parentElement, itemCode, backgroundColor = SSPIColors.SSPI, width = 800, height = 1000) {
         this.parentElement = parentElement
         this.itemCode = itemCode
-        this.textColor = "#bbb"
-        this.gridColor = "#cccccc33"
-        this.backgroundColor = backgroundColor + "99"
-        this.highlightColor = "#ff0000ee"
-        this.borderColor = backgroundColor
+        this.backgroundBase = backgroundColor
         this.width = width
         this.height = height
+        this.setTheme(localStorage.getItem("theme"))
 
         this.initRoot()
         this.initTitle()
@@ -174,6 +171,26 @@ class ScoreBarStatic {
     async fetch() {
         const response = await fetch(`/api/v1/static/bar/score/${this.itemCode}`);
         return response.json();
+    }
+
+    setTheme(theme) {
+        if (theme !== "light") {
+            this.theme = "dark"
+            this.textColor = "#bbb"
+            this.gridColor = "#cccccc33"
+            this.backgroundColor = this.backgroundBase + "99"
+            this.highlightColor = "#ff0000ee"
+            this.borderColor = this.backgroundBase
+            this.titleColor = "#ccc"
+        } else {
+            this.theme = "light"
+            this.textColor = "#444"
+            this.gridColor = "#333333cc"
+            this.backgroundColor = this.backgroundBase + "cc"
+            this.highlightColor = "#ff0000ee"
+            this.borderColor = this.backgroundBase
+            this.titleColor = "#333"
+        }
     }
 
     getStoredHighlights() {

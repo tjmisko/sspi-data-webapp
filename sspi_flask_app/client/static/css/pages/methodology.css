@@ -1,13 +1,15 @@
 .print-style-article {
-    max-width: 75ch;
+    max-width: 70ch;
     margin: 0 auto;
     text-align: justify;
     hyphens: auto;
 }
 
 .print-style-article p {
-    margin-top: 0;
-    margin-bottom: 0;
+    max-width: 70ch;
+    margin: 0 auto;
+    text-align: justify;
+    hyphens: auto;
 }
 
 .print-style-article p + p {

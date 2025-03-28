@@ -8,18 +8,15 @@ const endLabelPlugin = {
             const meta = chart.getDatasetMeta(i);
             let lastNonNullIndex = meta.data.length - 1;
             for (let j = meta.data.length; j >= 0; j--) {
-                console.log(j)
                 if (meta.data[j] === undefined) {
                     continue
                 }
-                console.log(meta.data[j])
                 if (meta.data[j].raw !== null) {
                     lastNonNullIndex = j
                     break
                 }
             }
             const lastPoint = meta.data[lastNonNullIndex];
-            console.log(lastNonNullIndex, lastPoint)
             const value = dataset.CCode;
             chart.ctx.save();
             chart.ctx.font = 'bold 14px Arial';
@@ -33,26 +30,20 @@ const endLabelPlugin = {
 
 class DynamicLineChart {
     constructor(parentElement, IndicatorCode, CountryList = []) {
-        // ParentElement is the element to attach the canvas to
-        // CountryList is an array of CountryCodes (empty array means all countries)
-        // Initialize the class
-        this.parentElement = parentElement
+        this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.IndicatorCode = IndicatorCode
-        this.CountryList = CountryList
-
-        // pinnedArray contains a list of pinned countries
-        this.pinnedArray = Array()
-
+        this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
+        this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
+        this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
         this.rigCountryGroupSelector()
         this.initChartJSCanvas()
         this.rigLegend()
-
         // Fetch data and update the chart
         this.fetch().then(data => {
             this.update(data)
         })
-
+        this.rigPinStorageOnUnload()
     }
 
     initRoot() {
@@ -98,6 +89,7 @@ class DynamicLineChart {
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
             type: 'line',
+            plugins: [endLabelPlugin],
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
@@ -127,42 +119,45 @@ class DynamicLineChart {
                     padding: {
                         right: 40
                     }
+                }
+            }
+        })
+        this.updateChartOptions()
+    }
+
+    updateChartOptions() {
+        this.chart.options.scales = {
+            x: {
+                ticks: {
+                    color: this.tickColor,
                 },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#bbb',
-                        },
-                        type: "category",
-                        title: {
-                            display: true,
-                            text: 'Year',
-                            color: '#bbb',
-                            font: {
-                                size: 16
-                            }
-                        },
-                    },
-                    y: {
-                        ticks: {
-                            color: '#bbb',
-                        },
-                        beginAtZero: true,
-                        min: 0,
-                        max: 1,
-                        title: {
-                            display: true,
-                            text: 'Indicator Score',
-                            color: '#bbb',
-                            font: {
-                                size: 16
-                            }
-                        },
+                type: "category",
+                title: {
+                    display: true,
+                    text: 'Year',
+                    color: this.axisTitleColor,
+                    font: {
+                        size: 16
+                    }
+                },
+            },
+            y: {
+                ticks: {
+                    color: this.tickColor,
+                },
+                beginAtZero: true,
+                min: 0,
+                max: 1,
+                title: {
+                    display: true,
+                    text: 'Indicator Score',
+                    color: this.axisTitleColor,
+                    font: {
+                        size: 16
                     }
                 }
-            },
-            plugins: [endLabelPlugin]
-        })
+            }
+        }
     }
 
     rigCountryGroupSelector() {
@@ -174,24 +169,20 @@ class DynamicLineChart {
     updateCountryGroups() {
         const numOptions = this.groupOptions.length;
         this.countryGroupContainer.style.setProperty('--num-options', numOptions);
-
         this.groupOptions.forEach((option, index) => {
             const id = `option${index + 1}`;
-
             // Create the radio input
             const input = document.createElement('input');
             input.type = 'radio';
             input.id = id;
             input.name = 'options';
             input.value = option;
-
             // Set the first option as checked by default
             if (index === 0) {
                 input.checked = true;
                 // Set the initial selected index
                 this.countryGroupContainer.style.setProperty('--selected-index', index);
             }
-
             // Add event listener to update the selected index
             input.addEventListener('change', () => {
                 const countryGroupOptions = document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);
@@ -202,17 +193,14 @@ class DynamicLineChart {
                     }
                 });
             });
-
             // Create the label
             const label = document.createElement('label');
             label.htmlFor = id;
             label.textContent = option;
-
             // Append input and label to the container
             this.countryGroupContainer.appendChild(input);
             this.countryGroupContainer.appendChild(label);
         });
-
         // Create the sliding indicator
         const slider = document.createElement('div');
         slider.className = 'slider';
@@ -233,7 +221,6 @@ class DynamicLineChart {
             <div class="legend-items">
             </div>
         `;
-
         this.savePrefsButton = legend.querySelector('.saveprefs-button')
         this.savePrefsButton.addEventListener('click', () => {
             this.sendPrefs()
@@ -244,7 +231,6 @@ class DynamicLineChart {
         })
         this.legend = this.root.appendChild(legend)
         this.legendItems = this.legend.querySelector('.legend-items')
-
     }
 
     updateLegend() {
@@ -273,9 +259,21 @@ class DynamicLineChart {
                 this.unpinCountryByCode(CountryCode, true)
             })
         })
-
     }
 
+    setTheme(theme) {
+        if (theme !== "light") {
+            this.theme = "dark"
+            this.tickColor = "#bbb"
+            this.axisTitleColor = "#bbb"
+            this.titleColor = "#ccc"
+        } else {
+            this.theme = "light"
+            this.tickColor = "#444"
+            this.axisTitleColor = "#444"
+            this.titleColor = "#444"
+        }
+    }
 
     async fetch() {
         const response = await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
@@ -470,7 +468,6 @@ class DynamicLineChart {
                 "Year": dataset.years[i]
             }));
         }).flat();
-
         const jsonString = JSON.stringify(observations, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -506,6 +503,14 @@ class DynamicLineChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    rigPinStorageOnUnload() {
+        window.addEventListener("beforeunload", () => {
+            localStorage.setItem('pins', JSON.stringify(this.chart.data.datasets.map(
+                (dataset) => { dataset.pinned }
+            )));
+        })
     }
 }
 
