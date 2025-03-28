@@ -11,6 +11,32 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_main_data_v3
 )
+from sspi_flask_app.api.core.compute.SUS import (
+    compute_eco,
+    compute_lnd,
+    compute_ghg,
+    compute_nrg,
+    compute_wst
+)
+
+from sspi_flask_app.api.core.compute.MS import (
+    compute_wen,
+    compute_wwb,
+    compute_tax,
+    compute_fin,
+    compute_neq
+)
+from sspi_flask_app.api.core.compute.PG import (
+    compute_edu,
+    compute_hlc,
+    compute_inf,
+    compute_rts,
+    compute_saf,
+    compute_glb
+)
+from sspi_flask_app.api.core.compute.Outcome import (
+    compute_gdp
+)
 
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
@@ -40,6 +66,7 @@ def init_app(Config):
     login_manager.init_app(app)
     # Initialize API rate limiter
     limiter.init_app(app)
+    assets.init_app(app)
 
     with app.app_context():
         if Config.RELOAD or sspi_main_data_v3.is_empty():
@@ -83,6 +110,7 @@ def init_app(Config):
 
         # Register Style Bundles and build optimized css, js
         if Config.FLASK_ENV == "development":
+            assets.auto_build = True
+            assets.debug = True
             compile_static_assets(assets)
-        assets.init_app(app)
         return app

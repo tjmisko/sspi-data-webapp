@@ -4,12 +4,6 @@
 <title>SSPI Dynamic Data Overview</title>
 {% endblock %}
 
-{% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/data-matrix-dynamic.js') }}"></script>
-{% endblock %}
-
 {% block stylesheet %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/data-overview.css') }}"> 
 <link rel="preconnect" href="https://fonts.googleapis.com">

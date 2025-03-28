@@ -18,10 +18,12 @@ from sspi_flask_app.api.resources.utilities import (
     colormap
 )
 from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.rank import SSPIRankingTable
 import re
 import os
 import json
 import pycountry
+from datetime import datetime
 
 
 finalize_bp = Blueprint(
@@ -68,51 +70,64 @@ def finalize_sspi_static_rank_data():
         sspi_metadata.category_codes() + \
         sspi_metadata.indicator_codes()
     score_group_dictionary = {
-        item_code: [{"CountryCode": "", "Score": 0, "Rank": 0, "IName": ""}
-                    for _ in country_codes]
+        item_code: [
+            {"CCode": "", "Score": 0, "Rank": 0,
+                "IName": "", "ICode": "", "Year": 0}
+            for _ in country_codes]
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
         country_data = sspi_main_data_v3.find({"CountryCode": cou})
+        cname = country_code_to_name(cou)
         sspi_scores = SSPI(indicator_details, country_data)
-        score_group_dictionary["SSPI"][i]["CountryCode"] = cou
+        score_group_dictionary["SSPI"][i]["CCode"] = cou
         score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
         score_group_dictionary["SSPI"][i]["IName"] = "SSPI"
+        score_group_dictionary["SSPI"][i]["Year"] = 2018
         for pillar in sspi_scores.pillars:
-            score_group_dictionary[pillar.code][i]["CountryCode"] = cou
+            score_group_dictionary[pillar.code][i]["CCode"] = cou
             score_group_dictionary[pillar.code][i]["Score"] = pillar.score()
             score_group_dictionary[pillar.code][i]["IName"] = pillar.name
+            score_group_dictionary[pillar.code][i]["Year"] = 2018
             for category in pillar.categories:
-                score_group_dictionary[category.code][i]["CountryCode"] = cou
-                score_group_dictionary[category.code][i]["Score"] = category.score(
-                )
+                score_group_dictionary[category.code][i]["CCode"] = cou
+                score_group_dictionary[category.code][i]["Score"] = category.score()
                 score_group_dictionary[category.code][i]["IName"] = category.name
+                score_group_dictionary[category.code][i]["Year"] = 2018
                 for indicator in category.indicators:
-                    score_group_dictionary[indicator.code][i]["CountryCode"] = cou
+                    score_group_dictionary[indicator.code][i]["CCode"] = cou
                     score_group_dictionary[indicator.code][i]["Score"] = indicator.score
                     score_group_dictionary[indicator.code][i]["IName"] = indicator.name
+                    score_group_dictionary[indicator.code][i]["Year"] = indicator.year
+                    score_group_dictionary[indicator.code][i]["Value"] = indicator.value
+                    score_group_dictionary[indicator.code][i]["LowerGoalpost"] = indicator.lower_goalpost
+                    score_group_dictionary[indicator.code][i]["UpperGoalpost"] = indicator.upper_goalpost
     for item_code in sspi_item_codes:
+        # Ranking table modifies each list[dict] in place
+        SSPIRankingTable(score_group_dictionary[item_code])
         score_group_dictionary[item_code] = sorted(
-            score_group_dictionary[item_code],
-            key=lambda x: x["Score"],
-            reverse=True
+            score_group_dictionary[item_code], key=lambda x: x["Rank"]
         )
-        rank = 0
-        for country_data in score_group_dictionary[item_code]:
-            rank += 1
-            country_data["Rank"] = rank
     for item_code, score_list in score_group_dictionary.items():
         for score in score_list:
-            sspi_static_rank_data.insert_one({
+            doc = {
                 "ICode": item_code,
                 "IName": score["IName"],
-                "CCode": score["CountryCode"],
-                "CName": country_code_to_name(score["CountryCode"]),
+                "CCode": score["CCode"],
+                "CName": country_code_to_name(score["CCode"]),
                 "CFlag": pycountry.countries.get(
-                    alpha_3=score["CountryCode"]).flag,
-                "Year": 2018,
+                    alpha_3=score["CCode"]).flag,
+                "Year": score["Year"],
+                "Tie": score["Tie"],
                 "Score": score["Score"],
                 "Rank": score["Rank"]
-            })
+            }
+            if score.get("Value") is not None:
+                doc["Value"] = score["Value"]
+            if score.get("LowerGoalpost") is not None:
+                doc["LowerGoalpost"] = score["LowerGoalpost"]
+            if score.get("UpperGoalpost") is not None:
+                doc["UpperGoalpost"] = score["UpperGoalpost"]
+            sspi_static_rank_data.insert_one(doc)
     return "Successfully finalized rank data!"
 
 
@@ -130,6 +145,9 @@ def finalize_sspi_dynamic_line_data():
             {"IndicatorCode": IndicatorCode},
             {"_id": 0}
         )
+        min_year = 2000
+        max_year = datetime.now().year
+        label_list = list(range(min_year, max_year + 1))
         for observation in data:
             CountryCode = observation["CountryCode"]
             if CountryCode not in indicator_dict.keys():
@@ -138,6 +156,19 @@ def finalize_sspi_dynamic_line_data():
         for CountryCode, document in indicator_dict.items():
             document = sorted(document, key=lambda x: x["Year"])
             group_list = sspi_metadata.get_country_groups(CountryCode)
+            years = [None] * len(label_list)
+            scores = [None] * len(label_list)
+            values = [None] * len(label_list)
+            data = [None] * len(label_list)
+            for doc in document:
+                try:
+                    year_index = label_list.index(doc["Year"])
+                except ValueError:
+                    continue
+                years[year_index] = doc["Year"]
+                scores[year_index] = doc["Score"]
+                values[year_index] = doc["Value"]
+                data[year_index] = doc["Score"]
             document = {
                 "CCode": CountryCode,
                 "CName": country_code_to_name(CountryCode),
@@ -153,10 +184,12 @@ def finalize_sspi_dynamic_line_data():
                            if "SSPI49" in group_list
                            else True)(group_list),
                 "label": f"{country_code_to_name(CountryCode)} ({CountryCode})",
-                "years": [d["Year"] for d in document],
-                "scores": [round(d["Score"], 3) for d in document],
-                "data": [round(d["Score"], 3) for d in document],
-                "values": [round(d["Value"], 3) for d in document],
+                "years": years,
+                "minYear": min_year,
+                "maxYear": max_year,
+                "scores": scores,
+                "data": data,
+                "values": values
             }
             sspi_dynamic_line_data.insert_one(document)
     return jsonify(sspi_dynamic_line_data.find({}, {"_id": 0}))
@@ -245,8 +278,6 @@ def finalize_dynamic_matrix_data():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     with open(os.path.join(local_path, "indicator-problems.json")) as f:
         problems = json.load(f)
-    with open(os.path.join(local_path, "indicator-local-load.json")) as f:
-        to_be_loaded = json.load(f)
     with open(os.path.join(local_path, "indicator-confident.json")) as f:
         confident = json.load(f)
     indicator_details = sspi_metadata.indicator_details()
@@ -276,10 +307,6 @@ def finalize_dynamic_matrix_data():
                                  problems[indicator_code]
                                  if code in problems.keys()
                                  else None)(indicator_code),
-                    "to_be_loaded": (lambda code:
-                                     to_be_loaded[indicator_code]
-                                     if code in to_be_loaded.keys()
-                                     else None)(indicator_code),
                     "confident": (lambda code:
                                   confident[indicator_code]
                                   if code in confident.keys()

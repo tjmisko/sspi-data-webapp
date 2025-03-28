@@ -1,0 +1,100 @@
+.data-widget {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    resize: both;
+    position: relative;
+    background-color: white;
+    border-radius: 0.5em;
+    padding: 1em;
+    min-width: 300px;
+    min-height: 240px;
+}
+
+.grid-stack-item-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0.6em;
+    background-color: var(--white, #000);
+    border-radius: 0.5em;
+    color: var(--black, #000);
+    box-shadow: rgba(47, 47, 51, 0.4) 0px 7px 29px 0px;
+}
+
+.widget-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between; 
+    flex: 0 1 auto;
+}
+
+.widget-title {
+    margin: 0;
+    padding: 0;
+}
+
+.widget-controls {
+    display: flex;
+    position: sticky;
+    flex-direction: row;
+    align-items: center;
+    justify-content: right;
+}
+
+.widget-controls-button {
+    border: none;
+    background-color: transparent;
+    display: flex;
+    flex: row;
+    justify-content: center;
+    align-items: center;
+    padding: 1px;
+    margin: 0.4em;
+    font-size: 1em;
+    color: var(--white, #000);
+}
+
+.widget-controls-button:hover .options {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+.widget-controls-button:hover .fullscreen {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+}
+
+.widget-controls-button:hover .close {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(340deg);
+}
+
+.widget-controls-button:hover {
+    transform: scale(1.04);
+    transition: 0.1s;
+}
+
+
+
+.chart-container {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    flex: 1 3 auto;
+}
+
+.chart-container canvas {
+    margin: 0 !important;
+    padding: 0;
+}
+
+.series-options {
+    flex: 0 0 auto;
+}
+
+.series-options-title {
+    margin: 0.3em 0em 0em 0em;
+}
+
+.ui-resizable-handle {
+    opacity: 0;
+}
