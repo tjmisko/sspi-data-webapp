@@ -570,48 +570,54 @@ def compute_nrgint():
 @compute_bp.route("/EDEMOC", methods=['GET'])
 @login_required
 def compute_edemoc():
-    # Check if raw data is available; if not, redirect to the collection route.
     if not sspi_raw_api_data.raw_data_available("EDEMOC"):
         return redirect(url_for("collect_bp.EDEMOC"))
-
-    # Fetch the raw data for EDEMOC.
     raw_data = sspi_raw_api_data.fetch_raw_data("EDEMOC")
-    document_list = []
-
+    fragments = []
     for obs in raw_data:
         try:
-            # Access the nested raw data.
-            data = obs["Raw"]["Raw"]
-            country_code = data["Country"]  # Should be a three-letter ISO code (e.g., "MEX")
-
-            # Convert the raw "Year" field to an integer.
-            raw_year = int(data["Year"])
-
-            # Drop observations where the year is not within the allowed range.
-            if raw_year < 1900 or raw_year > 2030:
-                print(f"Skipping observation with out-of-range year: {raw_year}")
-                continue
-
-            # Convert the v2x_polyarchy value to a float.
-            v2x_polyarchy = float(data["Value"])
-
-            # Build the computed document.
-            document = {
-                "IndicatorCode": "EDEMOC",
-                "CountryCode": country_code,
-                "Year": raw_year,
-                "Intermediates": {"v2x_polyarchy": v2x_polyarchy},
-                "Value": v2x_polyarchy,  # The computed value is the v2x_polyarchy value.
-                "Unit": "Index",  # Data is sourced from a published index.
-                "Score": v2x_polyarchy  # Score is the computed value.
-            }
-            document_list.append(document)
+            fragment_num = obs.get("FragmentNumber")
+            csv_fragment = obs.get("Raw", {}).get("csv_fragment", "")
+            if fragment_num is not None and csv_fragment:
+                fragments.append((fragment_num, csv_fragment))
         except Exception as e:
-            # Log error and skip this observation if an exception occurs.
-            print(f"Error processing observation: {e}")
             continue
 
-    # Insert computed documents into the clean API data collection.
-    sspi_clean_api_data.insert_many(document_list)
-    return parse_json(document_list)
+    if not fragments:
+        return "No CSV fragments found for EDEMOC."
+    fragments.sort(key=lambda x: x[0])
+    full_csv = "".join(fragment for _, fragment in fragments)
+    try:
+        df = pd.read_csv(StringIO(full_csv))
+    except Exception as e:
+        return f"Error reading CSV data: {e}"
+    filtered_df = df[['country_text_id', 'year', 'v2x_polyarchy']]
+    filtered_df = df[(df["year"] > 1900) & (df["year"] < 2030)]
+    # Identify year columns. If none are found (since 'year' is already present), we use the existing 'year'.
+    year_columns = [col for col in filtered_df.columns if col.isdigit()]
+    id_vars = [col for col in filtered_df.columns if col not in year_columns]
+    if year_columns:
+        df_melted = filtered_df.melt(
+            id_vars=id_vars,
+            value_vars=year_columns,
+            var_name="Year",
+            value_name="Value"
+        )
+        df_melted["Year"] = df_melted["Year"].astype(int)
+    else:
+        df_melted = filtered_df.rename(columns={"year": "Year", "v2x_polyarchy": "Value"})
+        df_melted["Year"] = df_melted["Year"].astype(int)
+
+    df_sorted = df_melted.sort_values(by=["country_text_id", "Year"])
+    df_sorted["CountryCode"] = df_sorted["country_text_id"]
+    df_sorted["Unit"] = ""
+    df_sorted["IndicatorCode"] = "EDEMOC"
+    df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode"]]
+    records = df_final.to_dict(orient="records")
+    scored_list = score_single_indicator(records, "EDEMOC")
+    filtered_list, incomplete_observations = filter_incomplete_data(
+         scored_list)
+    sspi_clean_api_data.insert_many(filtered_list)
+
+    return parse_json(filtered_list)
 
