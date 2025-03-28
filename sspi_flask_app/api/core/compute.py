@@ -620,7 +620,7 @@ def compute_rulelw():
 
     # Filter only the needed columns.
     filtered_df = df[['country_text_id', 'year', 'v2x_rule']]
-
+    filtered_df = df[(df["year"] > 1900) & (df["year"] < 2030)]
     # Identify year columns. If none are found (since 'year' is already present), we use the existing 'year'.
     year_columns = [col for col in filtered_df.columns if col.isdigit()]
     id_vars = [col for col in filtered_df.columns if col not in year_columns]
@@ -653,15 +653,15 @@ def compute_rulelw():
 
     # Select the final columns.
     df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode"]]
+
     records = df_final.to_dict(orient="records")
 
-    # Optionally, print the records for debugging.
-    print(records)
+    scored_list = score_single_indicator(records, "RULELW")
+    filtered_list, incomplete_observations = filter_incomplete_data(
+         scored_list)
+    sspi_clean_api_data.insert_many(filtered_list)
 
-    # Insert the cleaned records into the clean API data store.
-    sspi_clean_api_data.insert_many(records)
-
-    return parse_json(records)
+    return parse_json(filtered_list)
 
 
 def compute_aqelec():
