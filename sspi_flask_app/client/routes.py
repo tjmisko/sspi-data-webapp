@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-from wtforms import Form, StringField, SelectField, validators
+from flask_login import login_required
 from ..api.core.download import ClientDownloadForm
 
 
@@ -62,22 +62,22 @@ def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
 
 
-@client_bp.route('/comparisons')
+@client_bp.route('/compare')
 def comparison_home():
     return render_template("comparison-home.html")
 
 
-@client_bp.route('/comparisons/sweden-france-japan')
+@client_bp.route('/compare/sweden-france-japan')
 def comparison_sweden_france_japan():
     return render_template("country-comparisons/sweden-france-japan.html")
 
 
-@client_bp.route('/comparisons/china-russia-usa')
+@client_bp.route('/compare/china-russia-usa')
 def comparison_china_russia_usa():
     return render_template("country-comparisons/china-russia-usa.html")
 
 
-@client_bp.route('/comparisons/brazil-india-indonesia')
+@client_bp.route('/compare/brazil-india-indonesia')
 def comparison_brazil_india_indonesia():
     return render_template("country-comparisons/brazil-india-indonesia.html")
 
@@ -115,3 +115,9 @@ def data_overview():
 @client_bp.route('/scores')
 def overall_scores():
     return render_template("scores.html")
+
+
+@client_bp.route('/resources')
+@login_required
+def paper_resources():
+    return render_template("paper-resources.html")
