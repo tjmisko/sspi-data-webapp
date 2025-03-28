@@ -3,7 +3,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 import pandas as pd 
 from ..resources.utilities import get_country_code
 def collectSIPRIdata(IndicatorCode, **kwargs):
-    local_csv_file = pd.read_csv('local/gci-local-indicator-summary.csv')
+    local_csv_file = pd.read_csv('local/MILEXP.csv')
     csv_string = local_csv_file.to_csv(index=False)  
     count = sspi_raw_api_data.raw_insert_one(csv_string, IndicatorCode, **kwargs)
     yield f"\nInserted {count} observations into the database.\n"
