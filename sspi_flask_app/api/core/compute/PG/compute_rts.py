@@ -12,7 +12,7 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 import pandas as pd
-
+from io import StringIO
 @compute_bp.route("/EDEMOC", methods=['GET'])
 @login_required
 def compute_edemoc():
