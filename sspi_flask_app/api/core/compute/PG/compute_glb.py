@@ -138,5 +138,6 @@ def compute_armexp():
     cleaned_list = cleanSIPRIData('local/armexp.csv', 'ARMEXP', 'in millions')
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")
-   # sspi_clean_api_data.insert_many(scored_list)
+    sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
