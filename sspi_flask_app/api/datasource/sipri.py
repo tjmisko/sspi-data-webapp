@@ -3,14 +3,14 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 import pandas as pd 
 from ..resources.utilities import get_country_code
 def collectSIPRIdata(IndicatorCode, **kwargs):
-    local_csv_file = pd.read_csv('local/MILEXP.csv')
+    local_csv_file = pd.read_csv('local/share.csv')
     csv_string = local_csv_file.to_csv(index=False)  
     count = sspi_raw_api_data.raw_insert_one(csv_string, IndicatorCode, **kwargs)
     yield f"\nInserted {count} observations into the database.\n"
     yield f"Collection complete for {IndicatorCode}\n"
 
 def cleanSIPRIData(RawData, IndName):
-    local_csv_file = pd.read_csv('local/MILEXP.csv')
+    local_csv_file = pd.read_csv('local/share.csv')
    # columns = ['Country', '2014', 'Rank_2014', '2017', 'Rank_2017', '2018', 'Rank_2018','2020', 'Rank_2020', '2024', 'Rank_2024']
     #df = pd.DataFrame(local_csv_file, columns=columns)
 
@@ -20,7 +20,7 @@ def cleanSIPRIData(RawData, IndName):
                      var_name='Year', 
                      value_name='Value')
     
-    df_melted['Unit'] = '$ in millions'
+    df_melted['Unit'] = 'Percentage'
     df_melted['IndicatorCode'] = 'MILEXP'
     df_final = df_melted.dropna()
 
