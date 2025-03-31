@@ -117,15 +117,3 @@ def compute_foraid():
     complete, incomplete = filter_incomplete_data(clean_foraid_data)
     sspi_clean_api_data.insert_many(complete)
     return parse_json(complete)
-
-
-@compute_bp.route("/ARMEXP", methods=['GET'])
-def compute_armexp():
-    # if not sspi_raw_api_data.raw_data_available("ARMEXP"):
-    #     return redirect(url_for("collect_bp.ARMEXP"))
-    # armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
-    cleaned_list = cleanSIPRIData('local/armexp.csv', 'ARMEXP', 'in millions')
-    obs_list = json.loads(cleaned_list.to_json(orient="records"))
-    scored_list = score_single_indicator(obs_list, "ARMEXP")
-   # sspi_clean_api_data.insert_many(scored_list)
-    return parse_json(scored_list)
