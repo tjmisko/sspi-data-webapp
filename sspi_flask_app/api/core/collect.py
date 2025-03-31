@@ -456,6 +456,13 @@ def milexp():
         yield from collectSIPRIdata("MILEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/ARMEXP", methods=['GET'])
+@login_required
+def armexp():
+    def collect_iterator(**kwargs):
+        yield from collectSIPRIdata("ARMEXP", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 #######################################
 ## Category: Country Characteristics ##
 #######################################

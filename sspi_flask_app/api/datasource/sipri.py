@@ -21,7 +21,7 @@ def cleanSIPRIData(RawData, IndName):
                      value_name='Value')
     
     df_melted['Unit'] = 'Percentage'
-    df_melted['IndicatorCode'] = 'MILEXP'
+    df_melted['IndicatorCode'] = IndName
     # df_melted.to_csv('transformed_data.csv', index=False)
     df_final = df_melted.dropna()
    # df_final['CountryCode'] = df_final['Country'].apply(get_country_code)
