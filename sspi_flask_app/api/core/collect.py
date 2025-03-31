@@ -460,7 +460,7 @@ def milexp():
 @login_required
 def armexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("ARMEXP", **kwargs)
+        yield from collectSIPRIdata("local/armexpprocessed.csv", "ARMEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #######################################
