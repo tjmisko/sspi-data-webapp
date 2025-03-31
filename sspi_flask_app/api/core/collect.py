@@ -390,6 +390,14 @@ def aqelec():
         yield from collectWEFQUELCT("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/HOUING", methods=['GET'])
+@login_required
+def aqelec():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("11.1.1", "HOUING", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 
 #############################
 ## Category: PUBLIC SAFETY #
@@ -494,8 +502,7 @@ def gdpppp():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
-            WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages + 1):
