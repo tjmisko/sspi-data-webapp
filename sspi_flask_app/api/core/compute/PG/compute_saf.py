@@ -54,6 +54,11 @@ def compute_prison():
 @login_required
 def compute_secapp():
     raw_data = sspi_raw_api_data.fetch_raw_data("SECAPP")
-    cleaned_list = cleanFSIdata(raw_data, "SECAPP", "Index", "Security Apparatus")
-    return parse_json(cleaned_list)
+    cleaned_list = cleanFSIdata(
+        raw_data, "SECAPP", "Index", 
+        "The Security Apparatus is a component of the Fragile State Index, which considers the security threats to a state such as bombings, attacks/battle-related deaths, rebel movements, mutinies, coups, or terrorism. It is an index scored between 0 and 10.")
+    scored = score_single_indicator(cleaned_list, "SECAPP")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
 
