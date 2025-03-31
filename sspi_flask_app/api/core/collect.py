@@ -188,17 +188,6 @@ def colbar():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-<<<<<<< HEAD
-@collect_bp.route("/CHILDW", methods=['GET'])
-@login_required
-def childw():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("8.7.1", "CHILDW", **kwargs)
-        yield from collectSDGIndicatorData("4.1.1", "CHILDW", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
-=======
 @collect_bp.route("/CHILDW")
 @login_required
 def childw():
@@ -207,7 +196,6 @@ def childw():
         yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode="CHLDLB", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
->>>>>>> 3149e9e98234317e2a2e616809e25d161479e4a3
 #################################
 ## Category: WORKER WELLBEING ##
 ################################
