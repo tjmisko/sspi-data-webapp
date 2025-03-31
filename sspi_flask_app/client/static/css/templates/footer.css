@@ -1,0 +1,41 @@
+.site-footer {
+    background-color: var(--dark-blue, #000);
+    color: var(--white, #000);
+    padding: 20px 50px;
+}
+
+.footer-col-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#footer-title {
+    font-size: 1.4em;
+}
+
+.footer-col-title {
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.footer-col-list {
+    list-style: none;
+    margin: 0;
+    padding-left: 15px;
+}
+
+.footer-link:hover {
+    color: var(--green-accent, #000);
+}
+
+#admin-login {
+    margin: 5px 0px;
+    text-decoration: none;
+    color: var(--white, #000);
+}
+
+#admin-login:hover {
+    transform: scale(1.01);
+    transition: 0.1s ease;
+}

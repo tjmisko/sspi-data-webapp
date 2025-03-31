@@ -18,7 +18,9 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_partial_api_data
+    sspi_partial_api_data,
+    sspi_clean_outcome_data,
+    sspi_raw_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -85,6 +87,10 @@ def lookup_database(database_name):
         return sspi_dynamic_line_data
     elif database_name == "sspi_dynamic_matrix_data":
         return sspi_dynamic_matrix_data
+    elif database_name == "sspi_raw_outcome_data":
+        return sspi_raw_outcome_data
+    elif database_name == "sspi_clean_outcome_data":
+        return sspi_clean_outcome_data
     raise InvalidDatabaseError(database_name)
 
 
@@ -121,18 +127,22 @@ def added_countries(sspi_country_list, source_country_list):
     return additional_countries
 
 
-def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ScoreBy="Value"):
+def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ValueFunction=None, UnitFunction=None, ScoreBy="Value"):
     """
     Utility function for zipping together intermediate documents into indicator documents
     """
     intermediate_document_list = convert_data_types(intermediate_document_list)
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
+    intermediate_document_list, noneish_list = drop_none_or_na(
+        intermediate_document_list)
+    print(f"There were {len(noneish_list)
+                        } none/na documents found in intermediate_document_list")
     gp_intermediate_list = append_goalpost_info(
         intermediate_document_list, ScoreBy)
     indicator_document_list = group_by_indicator(
         gp_intermediate_list, IndicatorCode)
     scored_indicator_document_list = score_indicator_documents(
-        indicator_document_list, ScoreFunction, ScoreBy)
+        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy)
     return scored_indicator_document_list
 
 
@@ -144,6 +154,19 @@ def convert_data_types(intermediate_document_list):
         document["Year"] = int(document["Year"])
         document["Value"] = float(document["Value"])
     return intermediate_document_list
+
+
+def drop_none_or_na(intermediate_document_list):
+    """
+    Utility function for dropping documents with None or NaN values
+    """
+    noneish_list = []
+    for document in intermediate_document_list:
+        if document["Value"] is None or math.isnan(document["Value"]):
+            noneish_list.append(document)
+    intermediate_document_list = [
+        document for document in intermediate_document_list if document not in noneish_list]
+    return intermediate_document_list, noneish_list
 
 
 def append_goalpost_info(intermediate_document_list, ScoreBy):
@@ -189,11 +212,13 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
     return list(indicator_document_hashmap.values())
 
 
-def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
+def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy):
     """
     Utility function for scoring indicator documents
     """
     arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
+    if ValueFunction is None:
+        ValueFunction = ScoreFunction
     for i, document in enumerate(indicator_document_list):
         if ScoreBy == "Values":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
@@ -204,18 +229,19 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ScoreBy):
         else:
             raise ValueError(f"Invalid ScoreBy value: {
                              ScoreBy}; must be one of 'Values' or 'Score'")
-        if any(arg_value is None for arg_value in arg_value_dict.values()):
+        if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
             arg_value_list = [arg_value_dict[arg_name]
                               for arg_name in arg_name_list]
         except KeyError:
+            print(f"KeyError: {arg_name_list} for {arg_value_dict}")
             continue
         score = ScoreFunction(*arg_value_list)
-        if score is not None:
-            document["Value"] = score
-            document["Unit"] = "Aggregate"
-            document["Score"] = score
+        value = ValueFunction(*arg_value_list)
+        document["Value"] = value
+        document["Unit"] = UnitFunction(*arg_value_list) if UnitFunction else "Aggregate"
+        document["Score"] = score
     return indicator_document_list
 
 
@@ -242,8 +268,9 @@ def filter_incomplete_data(indicator_document_list):
 
 def score_single_indicator(document_list, IndicatorCode):
     """
-     Utility function for scoring an indicator which does not contain intermediates; does not require score function
-     """
+    Utility function for scoring an indicator which does not
+    contain intermediates; does not require score function
+    """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
     [sspi_clean_api_data.validate_document_format(
@@ -269,6 +296,38 @@ def country_code_to_name(CountryCode):
         return CountryCode
 
 
+def get_country_code(CountryName):
+    '''
+    Handles edge cases of country fuzzy matching
+    '''
+    if "kosovo" in str.lower(CountryName):
+        return "XKX"
+    if "korea" in str.lower(CountryName) and "democratic" not in str.lower(CountryName):
+        return "KOR"
+    if "korea" in str.lower(CountryName) and "democratic" in str.lower(CountryName):
+        return "PRK"
+    if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
+        return "NER"
+    if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
+        return "COD"
+    if "congo republic" in str.lower(CountryName):
+        return "COG"
+    if "guinea bissau" in str.lower(CountryName):
+        return "GNB"
+    if "laos" in str.lower(CountryName):
+        return "LAO"
+    if "turkiye" in str.lower(CountryName) or "turkey" in str.lower(CountryName):
+        return "TUR"
+    if "cape verde" in str.lower(CountryName):
+        return "CPV"
+    if "swaziland" in str.lower(CountryName):
+        return "SWZ"
+    if "israel and west bank" in str.lower(CountryName):
+        return "ISR"
+    else:
+        return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
+
+
 def colormap(PillarCode, alpha: str = "ff"):
     if PillarCode == "SUS":
         return f"#28a745{alpha}"
@@ -276,3 +335,14 @@ def colormap(PillarCode, alpha: str = "ff"):
         return f"#ff851b{alpha}"
     if PillarCode == "PG":
         return f"#007bff{alpha}"
+
+
+def find_population(country_code, year):
+    '''
+    Fetches population data from sspi_country_characteristics for a country in a given year
+    country_code: str of alpha-3 code
+    year: int of year
+    '''
+    population_data = sspi_country_characteristics.fetch_population_data(
+        "UNPOPL", country_code, year)
+    return population_data
