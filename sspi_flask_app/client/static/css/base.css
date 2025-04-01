@@ -1,0 +1,76 @@
+html, body, canvas, div {
+    margin: 0;
+}
+
+html {
+    font-size: 16pt;
+}
+
+body {
+    color: var(--text-color, #000);
+    background-color: var(--page-background, #000);
+    line-height: 1.4rem;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1em;
+}
+
+h1 {
+    font-family: 'REM', sans-serif;
+    font-weight: 300;
+    font-size: 3rem;
+    line-height: 1.2rem;
+}
+
+h2 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 400;
+    font-size: 2.25rem;
+    line-height: 1.25rem;
+}
+
+h3 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 500;
+    font-size: 1.875rem;
+    line-height: 1.3rem;
+}
+
+h4 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.35rem;
+}
+
+h5 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1.4rem;
+}
+
+h6 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 900;
+    font-size: 1.125rem;
+    line-height: 1.4rem;
+}
+
+
+.hero-section {
+    padding: 1em 3em;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hero-text-content {
+    min-width: 350px;
+    flex: 2 1 0;
+}

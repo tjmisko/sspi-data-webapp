@@ -1,14 +1,5 @@
 {% extends 'layout.html' %}
 
-{% block javascript %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
-    <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
-    <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
-{% endblock %}
-
-
 {% block content %}
 <section class="comparison-article-options">
     <h1> Selected Country Comparisons (2018 Data) </h1>

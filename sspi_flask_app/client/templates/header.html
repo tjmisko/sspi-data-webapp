@@ -1,14 +1,68 @@
 <header class="site-header">
-  <a class="titlebox" href="/">
-    <h1 class="title"> Sustainable and</h1>
-    <h1 class="title"> Shared-Prosperity</h1>
-    <h1 class="title"> Policy Index</h1>
-  </a>
-  <div class="header-nav-bar">
-    <ol class="header-nav-bar-link-list">
-      <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.data') }}"> Data</a></li>
-      <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.methodology') }}"> Methodology </a></li>
-      <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.about') }}">About</a></li>
-    </ol>
-  </div>
+    <a class="header-titlebox" href="/">
+        <span class="site-title-line"> Sustainable and</span>
+        <span class="site-title-line"> Shared-Prosperity</span>
+        <span class="site-title-line"> Policy Index</span>
+    </a>
+    <div class="header-nav-bar">
+        <ol class="header-nav-bar-link-list">
+            <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.data') }}"> Data</a></li>
+            <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.methodology') }}"> Methodology </a></li>
+            <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.about') }}">About</a></li>
+        </ol>
+    </div>
+    <div class="theme-toggle-container">
+        <span id="theme-label-header-span" class="theme-label"></span>
+        <label class="theme-toggle">
+            <input type="checkbox" id="darkModeToggle" />
+            <span class="icons">
+                <svg class="icon moon" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+                <svg class="icon sun" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="5" />
+                    <g stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />
+                        <line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />
+                        <line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />
+                    </g>
+                </svg>
+            </span>
+            <span class="slider"></span>
+        </label>
+    </div>
+    <script>
+        // Dark Mode Toggle
+        const checkbox = document.getElementById("darkModeToggle")
+        checkbox.title = "Toggle Light/Dark Page Theme"
+        checkbox.checked = window.theme === "light"
+        const label = document.getElementById("theme-label-header-span")
+        label.innerText = window.theme.replace(/\b\w/g, char => char.toUpperCase()) + " Theme"
+        checkbox.addEventListener("change", function () {
+            const htmlTag = document.documentElement
+            if (this.checked) {
+                htmlTag.classList.remove("dark-theme")
+                htmlTag.classList.add("light-theme")
+                localStorage.setItem("theme", "light")
+                window.theme = "light"
+                label.innerText = "Light Theme"
+            } else {
+                htmlTag.classList.remove("light-theme")
+                htmlTag.classList.add("dark-theme")
+                localStorage.setItem("theme", "dark")
+                window.theme = "dark"
+                label.innerText = "Dark Theme"
+            }
+            window.SSPICharts.forEach(function(chartObj) {
+                chartObj.setTheme(window.theme)
+                chartObj.updateChartOptions()
+                chartObj.chart.update()
+            })
+        })
+    </script>
 </header>
