@@ -220,7 +220,7 @@ this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
 initChartJSCanvas(){this.canvas=document.createElement('canvas')
 this.canvas.id='dynamic-line-chart-canvas'
 this.canvas.width=400
-this.canvas.height=200
+this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
