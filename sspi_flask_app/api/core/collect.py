@@ -392,7 +392,7 @@ def aqelec():
 
 @collect_bp.route("/HOUING", methods=['GET'])
 @login_required
-def aqelec():
+def houing():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("11.1.1", "HOUING", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')

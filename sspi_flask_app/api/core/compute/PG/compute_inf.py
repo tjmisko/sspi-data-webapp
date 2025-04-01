@@ -19,6 +19,7 @@ from sspi_flask_app.api.datasource.worldbank import (
 from sspi_flask_app.api.datasource.sdg import (
     extract_sdg_pivot_data_to_nested_dictionary,
     flatten_nested_dictionary_intrnt,
+    flatten_nested_dictionary_houing
 )
 
 
@@ -60,15 +61,19 @@ def compute_drkwat():
     return parse_json(filtered_list)
 
 
-@compute_bp.route("/SANSRV")
+@compute_bp.route("/HOUING")
 @login_required
-def compute_sansrv():
-    if not sspi_raw_api_data.raw_data_available("SANSRV"):
-        return redirect(url_for("api_bp.collect_bp.SANSRV"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("SANSRV")
-    cleaned = clean_wb_data(raw_data, "SANSRV", "Percent")
-    scored = score_single_indicator(cleaned, "SANSRV")
-    filtered_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(filtered_list)
+def compute_houing():
+    if not sspi_raw_api_data.raw_data_available("HOUING"):
+        return redirect(url_for("api_bp.collect_bp.HOUING"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("HOUING")
+    sdg_clean = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    # cleaned = flatten_nested_dictionary_houing(sdg_clean)
+    # scored = score_single_indicator(cleaned, "SANSRV")
+    # filtered_list, incomplete_observations = filter_incomplete_data(scored)
+    # sspi_clean_api_data.insert_many(filtered_list)
+    # print(incomplete_observations)
+    return parse_json(sdg_clean)
+
+
+

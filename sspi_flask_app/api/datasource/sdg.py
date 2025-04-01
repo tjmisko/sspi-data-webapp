@@ -298,3 +298,20 @@ def flatten_nested_dictionary_physpc(intermediate_obs_dict):
             final_data_lst.append(new_observation)
     return final_data_lst
                 
+def flatten_nested_dictionary_houing(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "0.0" or value == 0 or value == 0.0 or value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "HOUING",
+                "Unit": "Index",
+                "Description": "Proportion of urban population living in inadequate housing (%)",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
