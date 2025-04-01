@@ -191,22 +191,22 @@ if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(cha
 this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{display:true},grid:{display:false}},y:{type:'category',labels:res.ccodes,offset:true,reverse:true,ticks:{display:true},grid:{display:false}}}
 this.chart.update()}}
 const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){chart.data.datasets.forEach((dataset,i)=>{if(dataset.hidden){return;}
-const meta=chart.getDatasetMeta(i);let lastNonNullIndex=meta.data.length-1;for(let j=meta.data.length;j>=0;j--){console.log(j)
-if(meta.data[j]===undefined){continue}
-console.log(meta.data[j])
+const meta=chart.getDatasetMeta(i);let lastNonNullIndex=meta.data.length-1;for(let j=meta.data.length;j>=0;j--){if(meta.data[j]===undefined){continue}
 if(meta.data[j].raw!==null){lastNonNullIndex=j
 break}}
-const lastPoint=meta.data[lastNonNullIndex];console.log(lastNonNullIndex,lastPoint)
-const value=dataset.CCode;chart.ctx.save();chart.ctx.font='bold 14px Arial';chart.ctx.fillStyle=dataset.borderColor;chart.ctx.textAlign='left';chart.ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);chart.ctx.restore();});}}
+const lastPoint=meta.data[lastNonNullIndex];const value=dataset.CCode;chart.ctx.save();chart.ctx.font='bold 14px Arial';chart.ctx.fillStyle=dataset.borderColor;chart.ctx.textAlign='left';chart.ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);chart.ctx.restore();});}}
 class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
 this.pinnedArray=Array()
+this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
 this.rigCountryGroupSelector()
 this.initChartJSCanvas()
+this.updateChartOptions()
 this.rigLegend()
-this.fetch().then(data=>{this.update(data)})}
+this.fetch().then(data=>{this.update(data)})
+this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
@@ -220,11 +220,12 @@ this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
 initChartJSCanvas(){this.canvas=document.createElement('canvas')
 this.canvas.id='dynamic-line-chart-canvas'
 this.canvas.width=400
-this.canvas.height=200
+this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
-this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}},scales:{x:{ticks:{color:'#bbb',},type:"category",title:{display:true,text:'Year',color:'#bbb',font:{size:16}},},y:{ticks:{color:'#bbb',},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:'#bbb',font:{size:16}},}}},plugins:[endLabelPlugin]})}
+this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){const container=document.createElement('div')
 container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}
@@ -245,6 +246,13 @@ this.addCountryButton.addEventListener('click',()=>{new SearchDropdown(this.addC
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
+setTheme(theme){if(theme!=="light"){this.theme="dark"
+this.tickColor="#bbb"
+this.axisTitleColor="#bbb"
+this.titleColor="#ccc"}else{this.theme="light"
+this.tickColor="#444"
+this.axisTitleColor="#444"
+this.titleColor="#444"}}
 async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){this.chart.data=data
@@ -317,7 +325,8 @@ this.updateLegend()}
 dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
 return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
-return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}}
 class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
 this.parentChart=parentChart
@@ -490,16 +499,14 @@ this.title.innerText=data.title
 this.chart.update()}}
 class ScoreBarStatic{constructor(parentElement,itemCode,backgroundColor=SSPIColors.SSPI,width=800,height=1000){this.parentElement=parentElement
 this.itemCode=itemCode
-this.textColor="#bbb"
-this.gridColor="#cccccc33"
-this.backgroundColor=backgroundColor+"99"
-this.highlightColor="#ff0000ee"
-this.borderColor=backgroundColor
+this.backgroundBase=backgroundColor
 this.width=width
 this.height=height
+this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
 this.initTitle()
 this.initChartJSCanvas()
+this.updateChartOptions()
 this.initSummaryBox()
 this.fetch().then(data=>{this.update(data)})}
 initRoot(){this.root=document.createElement('div')
@@ -515,7 +522,8 @@ this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'bar',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
 console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)})},plugins:{legend:false,tooltip:{backgroundColor:'#1B2A3Ccc',callbacks:{label:function(context){const info=context.dataset.info[context.dataIndex]
-return[`${info.IName}Score:${info.Score.toFixed(3)}`,`${info.IName}Rank:${info.Rank}`,`Year:${info.Year}`]}}},},scales:{x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:12,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},},indexAxis:'y',}})}
+return[`${info.IName}Score:${info.Score.toFixed(3)}`,`${info.IName}Rank:${info.Rank}`,`Year:${info.Year}`]}}},},indexAxis:'y',}})}
+updateChartOptions(){this.chart.options.scales={x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:12,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}}
 initSummaryBox(){this.summaryBox=document.createElement('div')
 this.summaryBox.classList.add('score-bar-summary-box')
 this.summaryBox.style.color=this.textColor
@@ -532,6 +540,19 @@ updateSummaryBox(summaryStats){for(const key in summaryStats){const stat=documen
 stat.classList.add('score-bar-summary-stat')
 stat.innerHTML=`${key}:<b>${summaryStats[key]}</b>`;this.summaryBox.appendChild(stat)}}
 async fetch(){const response=await fetch(`/api/v1/static/bar/score/${this.itemCode}`);return response.json();}
+setTheme(theme){if(theme!=="light"){this.theme="dark"
+this.textColor="#bbb"
+this.gridColor="#cccccc33"
+this.backgroundColor=this.backgroundBase+"99"
+this.highlightColor="#ff0000ee"
+this.borderColor=this.backgroundBase
+this.titleColor="#ccc"}else{this.theme="light"
+this.textColor="#444"
+this.gridColor="#333333cc"
+this.backgroundColor=this.backgroundBase+"cc"
+this.highlightColor="#ff0000ee"
+this.borderColor=this.backgroundBase
+this.titleColor="#333"}}
 getStoredHighlights(){let highlights=[]
 if(localStorage.getItem('scoreBarHighlights')===null){highlights=[]}else{highlights=localStorage.getItem('scoreBarHighlights').split(',')}
 return highlights}

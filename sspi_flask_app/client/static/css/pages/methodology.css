@@ -1,0 +1,17 @@
+.print-style-article {
+    max-width: 70ch;
+    margin: 0 auto;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.print-style-article p {
+    max-width: 70ch;
+    margin: 0 auto;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.print-style-article p + p {
+    text-indent: 3em;
+}

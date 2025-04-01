@@ -1,25 +1,25 @@
-:root {
-  --toggle-bg: #ccc;
-  --toggle-thumb: #fff;
-  --toggle-bg-checked: #333;
+.light-theme {
+  --toggle-bg: var(--green-accent, #666);
+  --toggle-thumb: #121212;
+  --toggle-bg-checked: var(--green-accent, #666);
 }
 
-.dark-mode {
-  --toggle-bg: #666;
+.dark-theme {
+  --toggle-bg: grey;
   --toggle-thumb: #121212;
   --toggle-bg-checked: #fff;
 }
 
 .site-header {
     display: flex;
-    padding: 20px 50px 20px;
+    padding: 1em 2.5em;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--dark-blue, #000);
+    background-color: var(--header-color, #000);
 }
 
-.titlebox {
+.header-titlebox {
     flex-basis: 0;
     display: flex;
     flex-direction: column;
@@ -29,10 +29,12 @@
 }
 
 
-.title {
-    font-size: 1.7em;
+.site-title-line {
+    font-family: 'REM', sans-serif;
     font-weight: 300;
-    margin: 10px 0px;
+    font-size: 1.4em;
+    font-weight: 300;
+    margin: 3px 0px;
     white-space: nowrap;
 }
 
@@ -44,14 +46,16 @@
 .header-nav-bar-link-list {
     list-style: none;
     display: flex;
-    justify-content: space-around;
-    padding: 0;
+    justify-content: right;
+    padding: 0 0.5em;
 }
 
 .header-nav-bar-link {
-    font-size: 1.2em;
-    color: var(--white, #000);
+    font-size: 0.9em;
+    color: var(--header-text-color, #fff);
+    font-family: sans-serif;
     text-decoration: none;
+    padding: 0 1em;
 }
 
 .title-subdiv {
@@ -69,74 +73,113 @@
     transition: all 0.25s linear;
 }
 
-// Convert this from SCSS to CSS
-// @media screen and (max-width: 600px) {
-//     .site-header {
-//         flex-direction: row;
-//     }
-//     .header-nav-bar-link {
-//         margin: 5px;
-//     }
-//     .header-nav-bar-link-list {
-//         display: block;
-//     }
-//     .title-subdiv {
-//         flex: 0 1 min-content;
-//         transition: all 0.25s linear;
-//     }
-//     .titlebox {
-//         width: 70%;
-//     }
-//     .title-collapse {
-//         opacity: 0.1;
-//         flex: 0.0001;
-//         overflow: hidden;
-//         margin-right: 0;
-//         transition: all 0.25s ease;
-//     }
-// }
+/* // Convert this from SCSS to CSS */
+/* // @media screen and (max-width: 600px) { */
+/* //     .site-header { */
+/* //         flex-direction: row; */
+/* //     } */
+/* //     .header-nav-bar-link { */
+/* //         margin: 5px; */
+/* //     } */
+/* //     .header-nav-bar-link-list { */
+/* //         display: block; */
+/* //     } */
+/* //     .title-subdiv { */
+/* //         flex: 0 1 min-content; */
+/* //         transition: all 0.25s linear; */
+/* //     } */
+/* //     .titlebox { */
+/* //         width: 70%; */
+/* //     } */
+/* //     .title-collapse { */
+/* //         opacity: 0.1; */
+/* //         flex: 0.0001; */
+/* //         overflow: hidden; */
+/* //         margin-right: 0; */
+/* //         transition: all 0.25s ease; */
+/* //     } */
+/* // } */
 
 /* theme-toggle.css */
+.theme-toggle-container {
+    max-width: 5em;
+}
 .theme-toggle {
-    position: relative;
-      display: inline-block;
-      width: 48px;
-      height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
 }
 
 .theme-toggle input {
-    opacity: 0;
-      width: 0;
-      height: 0;
+  display: none;
 }
 
-.slider {
-    position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background-color: var(--toggle-bg, #ccc);
-      border-radius: 24px;
-      transition: background-color 0.3s;
+.theme-toggle .icons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-.slider::before {
-    content: "";
-      position: absolute;
-      height: 20px;
-      width: 20px;
-      left: 2px;
-      bottom: 2px;
-      background-color: var(--toggle-thumb, white);
-      border-radius: 50%;
-      transition: transform 0.3s;
+.theme-toggle .icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  opacity: 0.5;
+  transition: opacity 0.3s;
 }
 
-/* When checked, move the thumb and change bg */
-.theme-toggle input:checked + .slider {
-    background-color: var(--toggle-bg-checked, #666);
+.theme-toggle-container .theme-label {
+  font-size: 0.6em;
+  color: var(--theme-indicator-text-color, #fff);
 }
 
-.theme-toggle input:checked + .slider::before {
-    transform: translateX(24px);
+.theme-toggle .sun {
+  color: #f39c12;
+}
+.theme-toggle .moon {
+  color: #f1c40f;
 }
 
+.theme-toggle input:not(:checked) ~ .icons .sun {
+  opacity: 0.2;
+}
+.theme-toggle input:checked ~ .icons .moon {
+  opacity: 0.2;
+}
+
+.theme-toggle .slider {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background-color: var(--toggle-bg, #ccc);
+  border-radius: 24px;
+  transition: background-color 0.3s;
+}
+
+.theme-toggle .slider::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  top: 2px;
+  background-color: var(--toggle-thumb, white);
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.theme-toggle input:checked ~ .slider {
+  background-color: var(--toggle-bg-checked, #666);
+}
+
+.theme-toggle input:checked ~ .slider::before {
+  transform: translateX(24px);
+}
+
+.theme-toggle .label {
+  font-size: 0.875rem;
+}
