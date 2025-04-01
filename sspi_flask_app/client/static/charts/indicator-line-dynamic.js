@@ -158,6 +158,7 @@ class DynamicLineChart {
                 }
             }
         }
+        this.chart.update()
     }
 
     rigCountryGroupSelector() {

@@ -225,7 +225,8 @@ this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
 this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})
 this.updateChartOptions()}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}
+this.chart.update()}
 rigCountryGroupSelector(){const container=document.createElement('div')
 container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}

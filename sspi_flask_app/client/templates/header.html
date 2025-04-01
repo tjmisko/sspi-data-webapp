@@ -49,15 +49,18 @@
                 htmlTag.classList.remove("dark-theme")
                 htmlTag.classList.add("light-theme")
                 localStorage.setItem("theme", "light")
+                window.theme = "light"
                 label.innerText = "Light Theme"
             } else {
                 htmlTag.classList.remove("light-theme")
                 htmlTag.classList.add("dark-theme")
                 localStorage.setItem("theme", "dark")
+                window.theme = "dark"
                 label.innerText = "Dark Theme"
             }
-            window.SSPICharts.forEach((chartObj) => {
+            window.SSPICharts.forEach(function(chartObj) {
                 chartObj.setTheme(window.theme)
+                chartObj.updateChartOptions()
                 chartObj.chart.update()
             })
         })
