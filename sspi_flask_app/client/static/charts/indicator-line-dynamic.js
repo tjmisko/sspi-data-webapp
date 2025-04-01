@@ -38,6 +38,7 @@ class DynamicLineChart {
         this.initRoot()
         this.rigCountryGroupSelector()
         this.initChartJSCanvas()
+        this.updateChartOptions()
         this.rigLegend()
         // Fetch data and update the chart
         this.fetch().then(data => {
@@ -84,7 +85,7 @@ class DynamicLineChart {
         this.canvas = document.createElement('canvas')
         this.canvas.id = 'dynamic-line-chart-canvas'
         this.canvas.width = 400
-        this.canvas.height = 200
+        this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
@@ -122,7 +123,6 @@ class DynamicLineChart {
                 }
             }
         })
-        this.updateChartOptions()
     }
 
     updateChartOptions() {
@@ -158,7 +158,6 @@ class DynamicLineChart {
                 }
             }
         }
-        this.chart.update()
     }
 
     rigCountryGroupSelector() {

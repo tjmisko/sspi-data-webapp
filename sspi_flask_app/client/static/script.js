@@ -203,6 +203,7 @@ this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
 this.rigCountryGroupSelector()
 this.initChartJSCanvas()
+this.updateChartOptions()
 this.rigLegend()
 this.fetch().then(data=>{this.update(data)})
 this.rigPinStorageOnUnload()}
@@ -223,10 +224,8 @@ this.canvas.height=200
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
-this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})
-this.updateChartOptions()}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}
-this.chart.update()}
+this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){const container=document.createElement('div')
 container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}
@@ -507,6 +506,7 @@ this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
 this.initTitle()
 this.initChartJSCanvas()
+this.updateChartOptions()
 this.initSummaryBox()
 this.fetch().then(data=>{this.update(data)})}
 initRoot(){this.root=document.createElement('div')
@@ -522,7 +522,8 @@ this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'bar',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
 console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)})},plugins:{legend:false,tooltip:{backgroundColor:'#1B2A3Ccc',callbacks:{label:function(context){const info=context.dataset.info[context.dataIndex]
-return[`${info.IName}Score:${info.Score.toFixed(3)}`,`${info.IName}Rank:${info.Rank}`,`Year:${info.Year}`]}}},},scales:{x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:12,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},},indexAxis:'y',}})}
+return[`${info.IName}Score:${info.Score.toFixed(3)}`,`${info.IName}Rank:${info.Rank}`,`Year:${info.Year}`]}}},},indexAxis:'y',}})}
+updateChartOptions(){this.chart.options.scales={x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:12,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}}
 initSummaryBox(){this.summaryBox=document.createElement('div')
 this.summaryBox.classList.add('score-bar-summary-box')
 this.summaryBox.style.color=this.textColor
