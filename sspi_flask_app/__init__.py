@@ -74,7 +74,6 @@ def init_app(Config):
         from sspi_flask_app.client.routes import client_bp
         from sspi_flask_app.auth.routes import auth_bp
         from sspi_flask_app.api.api import api_bp
-        from sspi_flask_app.api.core.bulk import bulk_bp
         from sspi_flask_app.api.core.collect import collect_bp
         from sspi_flask_app.api.core.compute import compute_bp
         from sspi_flask_app.api.core.dashboard import dashboard_bp
@@ -89,9 +88,6 @@ def init_app(Config):
         # Register database
         db.create_all()
         # Register Blueprints
-        app.register_blueprint(client_bp)
-        app.register_blueprint(auth_bp)
-        api_bp.register_blueprint(bulk_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
@@ -104,6 +100,8 @@ def init_app(Config):
         api_bp.register_blueprint(query_bp)
         api_bp.register_blueprint(save_bp)
         app.register_blueprint(api_bp)
+        app.register_blueprint(client_bp)
+        app.register_blueprint(auth_bp)
 
         configure_logging(app)
         if Config.FLASK_ENV == "development":
