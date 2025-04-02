@@ -39,7 +39,13 @@ login_manager.login_view = "auth_bp.login"
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    app.logger.info(f"Loading user {user_id} from session")
+    user = User.query.get(user_id)
+    if not user:
+        app.logger.warning(f"User {user_id} not found in session")
+        return None
+    app.logger.info(f"Found user {user.username} in session")
+    return user
 
 
 class UpdatePasswordForm(FlaskForm):

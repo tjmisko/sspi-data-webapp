@@ -119,7 +119,7 @@ class SSPIDatabaseConnector:
         return response
 
     def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
-        log.info(f"Cookies: {self.remote_session.cookies}")
+        log.info(f"Delete Cookies: {self.remote_session.cookies}")
         response = self.remote_session.delete(
             f"https://sspi.world/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
         )
