@@ -77,8 +77,10 @@ def delete_indicator_data():
         IndicatorCode = delete_indicator_form.indicator_code.data
         database = lookup_database(delete_indicator_form.database.data)
         count = database.delete_many({"IndicatorCode": IndicatorCode})
-        flash(f"Deleted {count} observations of Indicator {
-              IndicatorCode} from database {database.name}")
+        message_1 = f"Deleted {count} observations of Indicator"
+        message_2 = f"{IndicatorCode} from database {database.name}"
+        print(message_1 + message_2)
+        flash(message_1 + message_2)
     return redirect(url_for('.get_delete_page'))
 
 
@@ -119,3 +121,14 @@ def clear_db():
         else:
             flash("Database names do not match")
     return redirect(url_for(".get_delete_page"))
+
+
+@delete_bp.route("/<database_name>/<IndicatorCode>", methods=["DEL"])
+@login_required
+def delete_database_indicator(database_name, IndicatorCode):
+    database = lookup_database(database_name)
+    count = database.delete_many({"IndicatorCode": IndicatorCode})
+    message_1 = f"Deleted {count} observations of Indicator"
+    message_2 = f"{IndicatorCode} from database {database.name}"
+    print(message_1 + message_2)
+    return message_1 + message_2
