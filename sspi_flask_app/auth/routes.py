@@ -210,15 +210,23 @@ def is_safe_url(target):
     return target in {str(rule) for rule in app.url_map.iter_rules()}
 
 
-# def login_required(func):
-#     @wraps(func)
-#     def decorated_view(*args, **kwargs):
-#         if not current_user.is_authenticated:
-#             return app.login_manager.unauthorized()
+@login_manager.unauthorized_handler
+def unauthorized():
+    return "Unauthorized to Access Requested Route", 401
 
-#         # flask 1.x compatibility
-#         # current_app.ensure_sync is only available in Flask >= 2.0
-#         if callable(getattr(app, "ensure_sync", None)):
-#             return current_app.ensure_sync(func)(*args, **kwargs)
-#         return func(*args, **kwargs)
-#     return decorated_view
+
+@login_manager.request_loader
+def load_user_from_request(request):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return None
+    api_token = str(auth_header).replace("Bearer ", "")
+    if not api_token:
+        app.logger.warning("No API key provided!")
+        return None
+    user = User.query.filter_by(apikey=api_token).first()
+    if not user:
+        app.logger.warning("No user associated with provided API key")
+        return None
+    app.logger.info(f"User {user.username} Loaded from API Key")
+    return user
