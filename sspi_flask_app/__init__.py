@@ -74,21 +74,21 @@ def init_app(Config):
         if Config.RELOAD or sspi_metadata.is_empty():
             sspi_metadata.load()
         # Import All Blueprints
-        from .client.routes import client_bp
-        from .auth.routes import auth_bp
-        from .api.api import api_bp
-        from .api.core.bulk import bulk_bp
-        from .api.core.collect import collect_bp
-        from .api.core.compute import compute_bp
-        from .api.core.dashboard import dashboard_bp
-        from .api.core.delete import delete_bp
-        # from .api.core.download import download_bp
-        from .api.core.finalize import finalize_bp
-        from .api.core.host import host_bp
-        from .api.core.impute import impute_bp
-        from .api.core.load import load_bp
-        from .api.core.query import query_bp
-        from .api.core.save import save_bp
+        from sspi_flask_app.client.routes import client_bp
+        from sspi_flask_app.auth.routes import auth_bp
+        from sspi_flask_app.api.api import api_bp
+        from sspi_flask_app.api.core.bulk import bulk_bp
+        from sspi_flask_app.api.core.collect import collect_bp
+        from sspi_flask_app.api.core.compute import compute_bp
+        from sspi_flask_app.api.core.dashboard import dashboard_bp
+        from sspi_flask_app.api.core.delete import delete_bp
+        from sspi_flask_app.api.core.finalize import finalize_bp
+        from sspi_flask_app.api.core.host import host_bp
+        from sspi_flask_app.api.core.impute import impute_bp
+        from sspi_flask_app.api.core.load import load_bp
+        from sspi_flask_app.api.core.pull import pull_bp
+        from sspi_flask_app.api.core.query import query_bp
+        from sspi_flask_app.api.core.save import save_bp
         # Register database
         db.create_all()
         # Register Blueprints
@@ -99,11 +99,11 @@ def init_app(Config):
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
         api_bp.register_blueprint(delete_bp)
-        # api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(finalize_bp)
         api_bp.register_blueprint(host_bp)
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
+        api_bp.register_blueprint(pull_bp)
         api_bp.register_blueprint(query_bp)
         api_bp.register_blueprint(save_bp)
         app.register_blueprint(api_bp)
