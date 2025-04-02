@@ -39,12 +39,12 @@ login_manager.login_view = "auth_bp.login"
 
 @login_manager.user_loader
 def load_user(user_id):
-    app.logger.info(f"Loading user {user_id} from session")
+    app.logger.DEBUG(f"User Loader: Loading user {user_id} from session")
     user = User.query.get(user_id)
     if not user:
-        app.logger.warning(f"User {user_id} not found in session")
+        app.logger.warning(f"User Loader: User {user_id} not found in session")
         return None
-    app.logger.info(f"Found user {user.username} in session")
+    app.logger.info(f"User Loader: Found user {user.username} in session")
     return user
 
 
@@ -137,7 +137,7 @@ def remote_login():
     if user is not None:
         login_user(user, remember=True,
                    duration=app.config['REMEMBER_COOKIE_DURATION'])
-        app.logger.info(f"User {user.username} successful login with API key {api_token}")
+        app.logger.info(f"User {user.username} successful login")
         return "Remote Login Successful"
     app.logger.warning("Login attempt failed!")
     return Response({"message": "Invalid API key"}, status=401, mimetype='application/json')
