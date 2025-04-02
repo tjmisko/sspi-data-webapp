@@ -123,7 +123,7 @@ def remote_login():
         app.logger.warning("No API key provided or incorrect format!")
         response = jsonify({"message": "No API key provided or incorrect format"})
         return Response(response, status=401, mimetype='application/json')
-    api_token = auth_header.split(" ")[1]
+    api_token = str(auth_header).replace("Bearer ", "")
     if not api_token:
         app.logger.warning("No API key provided!")
         response = jsonify({"message": "No API key provided"})
