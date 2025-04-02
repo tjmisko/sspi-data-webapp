@@ -18,10 +18,9 @@ class SSPIDatabaseConnector:
         ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
         self.local_session = requests.Session()
         self.local_session.mount('https://', LocalHttpAdapter(ctx))
-        self.login_session_local()
         self.remote_session = requests.Session()
+        self.login_session_local()
         self.login_session_remote()
-        log.info(f"Login Cookies: {self.remote_session.cookies}")
 
     def get_token(self):
         basedir = path.abspath(path.dirname(path.dirname(__file__)))
@@ -35,17 +34,10 @@ class SSPIDatabaseConnector:
     def login_session_local(self):
         headers = {'Authorization': f'Bearer {self.token}'}
         self.local_session.headers.update(headers)
-        self.local_session.post(
-            "http://127.0.0.1:5000/remote/session/login",
-            verify=False
-        )
 
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
         self.remote_session.headers.update(headers)
-        self.remote_session.post(
-            "https://sspi.world/remote/session/login"
-        )
 
     def get_data_local(self, request_string):
         if request_string[0] == "/":
@@ -90,6 +82,7 @@ class SSPIDatabaseConnector:
         """
         Load a list of observations in JSON format into the local database
         """
+        log.debug("Headers for Local Load: " + str(self.local_session.headers))
         response = self.local_session.post(
             f"http://127.0.0.1:5000/api/v1/load/{database_name}/{IndicatorCode}",
             json=observations_list,
@@ -100,6 +93,7 @@ class SSPIDatabaseConnector:
 
     def load_json_remote(self, observations_list: list[dict], database_name: str,
                          IndicatorCode: str):
+        log.debug("Headers for Remote Load: " + str(self.remote_session.headers))
         response = self.remote_session.post(
             f"https://sspi.world/api/v1/load/{database_name}/{IndicatorCode}",
             json=observations_list
@@ -108,6 +102,7 @@ class SSPIDatabaseConnector:
         return response
 
     def delete_indicator_data_local(self, database_name: str, IndicatorCode: str):
+        log.debug("Headers for Local Delete: " + str(self.local_session.headers))
         response = self.local_session.delete(
             f"http://127.0.0.1:5000/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
         )
@@ -115,7 +110,7 @@ class SSPIDatabaseConnector:
         return response
 
     def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
-        log.info(f"Delete Cookies: {self.remote_session.cookies}")
+        log.debug("Headers for Remote Delete: " + str(self.remote_session.headers))
         response = self.remote_session.delete(
             f"https://sspi.world/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
         )
