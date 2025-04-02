@@ -129,8 +129,6 @@ def remote_login():
         app.logger.warning("No API key provided!")
         response = jsonify({"message": "No API key provided"})
         return Response(response, status=401, mimetype='application/json')
-    api_token = api_token.split(" ")[1]
-    app.logger.debug(f"API Token: {api_token}")
     user = User.query.filter_by(apikey=api_token).first()
     app.logger.debug(f"User Type: {type(user)}")
     app.logger.debug(f"User Type: {user}")
