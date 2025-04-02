@@ -34,13 +34,11 @@ class SSPIDatabaseConnector:
 
     def login_session_local(self):
         headers = {'Authorization': f'Bearer {self.token}'}
+        self.local_session.headers.update(headers)
         self.local_session.post(
             "http://127.0.0.1:5000/remote/session/login",
-            headers=headers,
             verify=False
         )
-        log.info(f"Local Session Cookies: {self.local_session.cookies}")
-        log.info(f"Local Session Headers: {self.local_session.headers}")
 
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
@@ -48,8 +46,6 @@ class SSPIDatabaseConnector:
         self.remote_session.post(
             "https://sspi.world/remote/session/login"
         )
-        log.info(f"Remote Session Cookies: {self.remote_session.cookies}")
-        log.info(f"Remote Session Headers: {self.remote_session.headers}")
 
     def get_data_local(self, request_string):
         if request_string[0] == "/":
