@@ -1,9 +1,8 @@
 import secrets
-from flask import current_app as app
-log = app.logger
 from flask import (
     current_app as app,
     Blueprint,
+    Response,
     jsonify,
     render_template,
     request,
@@ -11,10 +10,10 @@ from flask import (
     redirect,
     flash
 )
-from ..models.usermodel import User, db
-from .. import login_manager, flask_bcrypt
-from sqlalchemy_serializer import SerializerMixin
-from flask_sqlalchemy import SQLAlchemy
+from sspi_flask_app.models.usermodel import User, db
+from sspi_flask_app import login_manager, flask_bcrypt
+# from sqlalchemy_serializer import SerializerMixin
+# from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     fresh_login_required,
     login_user,
@@ -112,7 +111,7 @@ def login():
                    duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
-    log.info(f"User {user.username} successful login")
+    app.logger.info(f"User {user.username} successful login")
     return redirect(url_for('api_bp.api_dashboard'))
 
 
@@ -120,27 +119,30 @@ def login():
 def remote_login():
     api_token = request.headers.get('Authorization')
     if not api_token:
+        app.logger.warning("No API key provided!")
         response = jsonify({"message": "No API key provided"})
-        response.status_code = 401
-        return response
-    api_token = str(api_token)[7:]
+        return Response(response, status=401, mimetype='application/json')
+    api_token = api_token.split(" ")[1]
+    app.logger.debug(f"API Token: {api_token}")
     user = User.query.filter_by(apikey=api_token).first()
+    app.logger.debug(f"User Type: {type(user)}")
+    app.logger.debug(f"User Type: {user}")
     if user is not None:
-        login_user(user)
-        log.info(f"User {user.username} successful login with API key {api_token}")
-        return redirect(url_for('api_bp.api_dashboard'))
-    response = jsonify({"message": "Invalid API key"})
-    response.status_code = 401
-    return response
+        login_user(user, remember=True,
+                   duration=app.config['REMEMBER_COOKIE_DURATION'])
+        app.logger.info(f"User {user.username} successful login with API key {api_token}")
+        return "Remote Login Successful"
+    app.logger.warning("Login attempt failed!")
+    return Response({"message": "Invalid API key"}, status=401, mimetype='application/json')
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     current_username = current_user.username
-    log.info(f"Processing logout request for {current_username}")
+    app.logger.info(f"Processing logout request for {current_username}")
     logout_user()
-    log.info(f"User {current_username} logged out")
+    app.logger.info(f"User {current_username} logged out")
     return redirect(url_for('client_bp.home'))
 
 

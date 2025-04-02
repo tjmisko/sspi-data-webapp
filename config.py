@@ -35,11 +35,13 @@ class ProdConfig(Config):
 class DevConfig(Config):
     DEBUG = True
     LOGIN_DISABLED = True
+    LOG_LEVEL = logging.DEBUG
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
 
 
 class TestConfig(Config):
     DEBUG = True
     RELOAD = True
+    LOG_LEVEL = logging.DEBUG
     LOGIN_DISABLED = True
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']

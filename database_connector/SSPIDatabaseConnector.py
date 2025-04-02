@@ -1,3 +1,4 @@
+from flask import session as sesh
 from os import environ, path
 import ssl
 from dotenv import load_dotenv
@@ -37,19 +38,26 @@ class SSPIDatabaseConnector:
             headers=headers,
             verify=False
         )
-        print(res.headers)
-        print("Local Session Cookies: ", self.local_session.cookies)
-        print("Local Session Headers: ", self.local_session.headers)
+        log.debug(f"Response Status Code: {res.status_code}")
+        log.debug(f"Response Headers: {res.headers}")
+        log.debug(f"Response Text: {res.text}")
+        log.info(f"Local Session Cookies: {self.local_session.cookies}")
+        log.info(f"Local Session Headers: {self.local_session.headers}")
 
     def login_session_remote(self):
         log.info("Logging into remote session")
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.remote_session.post(
+        log.debug(f"Flask Session (Pre): {sesh}")
+        res = self.remote_session.post(
             "https://sspi.world/remote/session/login",
             headers=headers
         )
-        log.info("Remote Session Cookies: ", self.remote_session.cookies)
-        log.info("Remote Session Headers: ", self.remote_session.headers)
+        log.debug(f"Flask Session (Post): {sesh}")
+        log.debug(f"Response Status Code: {res.status_code}")
+        log.debug(f"Response Headers: {res.headers}")
+        log.debug(f"Response Text: {res.text}")
+        log.info(f"Remote Session Cookies: {self.remote_session.cookies}")
+        log.info(f"Remote Session Headers: {self.remote_session.headers}")
 
     def get_data_local(self, request_string):
         if request_string[0] == "/":
@@ -94,23 +102,21 @@ class SSPIDatabaseConnector:
         """
         Load a list of observations in JSON format into the local database
         """
-        print(observations_list)
-        return self.local_session.post(
+        response = self.local_session.post(
             f"http://127.0.0.1:5000/api/v1/load/{database_name}/{IndicatorCode}",
             json=observations_list,
             verify=False
         )
+        log.info("Local Load Request Returned with Status Code ", response.status_code)
+        return response
 
     def load_json_remote(self, observations_list: list[dict], database_name: str,
                          IndicatorCode: str):
-        print(f"Sending data: {observations_list}")
         response = self.remote_session.post(
             f"https://sspi.world/api/v1/load/{database_name}/{IndicatorCode}",
             json=observations_list
         )
-        print(response.text)
-        print(response.status_code)
-        print(response.headers)
+        log.info("Remote Load Request Returned with Status Code ", response.status_code)
         return response
 
     def delete_indicator_data_local(self, database_name: str, IndicatorCode: str):
@@ -119,9 +125,7 @@ class SSPIDatabaseConnector:
             f"http://127.0.0.1:5000/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
             headers=headers,
         )
-        print(response.text)
-        print(response.status_code)
-        print(response.headers)
+        log.info(f"Local Delete Request Returned with Status Code {response.status_code}")
         return response
 
     def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
@@ -130,9 +134,7 @@ class SSPIDatabaseConnector:
             f"https://sspi.world/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
             headers=headers,
         )
-        print(response.text)
-        print(response.status_code)
-        print(response.headers)
+        log.info(f"Remote Delete Request Returned with Status Code {response.status_code}")
         return response
 
     def logout_local(self):
