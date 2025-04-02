@@ -118,12 +118,13 @@ def login():
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
     auth_header = request.headers.get('Authorization', None)
-    app.logger.info(f"Auth Header: {auth_header}")
+    app.logger.debug(f"Auth Header: {auth_header}")
     if not auth_header or not auth_header.startswith('Bearer '):
         app.logger.warning("No API key provided or incorrect format!")
         response = jsonify({"message": "No API key provided or incorrect format"})
         return Response(response, status=401, mimetype='application/json')
     api_token = str(auth_header).replace("Bearer ", "")
+    app.logger.debug(f"API TOKEN: {api_token}")
     if not api_token:
         app.logger.warning("No API key provided!")
         response = jsonify({"message": "No API key provided"})
