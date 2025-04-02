@@ -138,27 +138,29 @@ def register():
         return redirect(url_for('auth_bp.login'))
     return render_template('register.html', form=register_form, title="Register")
 
-@auth_bp.route("/auth/update/password", methods=["GET", "POST"])
-@fresh_login_required
-def update_password():
-    update_password_form = UpdatePasswordForm()
-    if update_password_form.validate_on_submit():
-        user = User.query.filter_by(username=current_user.username).first()
-        if user and flask_bcrypt.check_password_hash(user.password, update_password_form.oldpassword.data):
-            user.password = flask_bcrypt.generate_password_hash(update_password_form.newpassword.data)
-            db.session.commit()
-            flash("Password updated successfully")
-            return redirect(url_for('auth_bp.update_password'))
-        else:
-            flash("Incorrect password")
-            return redirect(url_for('auth_bp.update_password'))
-    return render_template('change_password.html', form=update_password_form, title="Change Password")
+
+# @auth_bp.route("/auth/update/password", methods=["GET", "POST"])
+# @fresh_login_required
+# def update_password():
+#     update_password_form = UpdatePasswordForm()
+#     if update_password_form.validate_on_submit():
+#         user = User.query.filter_by(username=current_user.username).first()
+#         if user and flask_bcrypt.check_password_hash(user.password, update_password_form.oldpassword.data):
+#             user.password = flask_bcrypt.generate_password_hash(update_password_form.newpassword.data)
+#             db.session.commit()
+#             flash("Password updated successfully")
+#             return redirect(url_for('auth_bp.update_password'))
+#         else:
+#             flash("Incorrect password")
+#             return redirect(url_for('auth_bp.update_password'))
+#     return render_template('change_password.html', form=update_password_form, title="Change Password")
 
 @auth_bp.route('/auth/clear', methods=['GET'])
 @fresh_login_required
 def clear():
     db.drop_all()
     return redirect(url_for('auth_bp.login'))
+
 
 @auth_bp.route('/auth/query', methods=['GET'])
 @fresh_login_required
