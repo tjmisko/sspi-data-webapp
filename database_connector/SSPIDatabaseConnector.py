@@ -38,24 +38,15 @@ class SSPIDatabaseConnector:
             headers=headers,
             verify=False
         )
-        log.debug(f"Response Status Code: {res.status_code}")
-        log.debug(f"Response Headers: {res.headers}")
-        log.debug(f"Response Text: {res.text}")
         log.info(f"Local Session Cookies: {self.local_session.cookies}")
         log.info(f"Local Session Headers: {self.local_session.headers}")
 
     def login_session_remote(self):
-        log.info("Logging into remote session")
         headers = {'Authorization': f'Bearer {self.token}'}
-        log.debug(f"Flask Session (Pre): {sesh}")
+        self.remote_session.headers.update(headers)
         res = self.remote_session.post(
-            "https://sspi.world/remote/session/login",
-            headers=headers
+            "https://sspi.world/remote/session/login"
         )
-        log.debug(f"Flask Session (Post): {sesh}")
-        log.debug(f"Response Status Code: {res.status_code}")
-        log.debug(f"Response Headers: {res.headers}")
-        log.debug(f"Response Text: {res.text}")
         log.info(f"Remote Session Cookies: {self.remote_session.cookies}")
         log.info(f"Remote Session Headers: {self.remote_session.headers}")
 
