@@ -1,9 +1,12 @@
 from flask_login import login_required
+from flask import redirect, url_for
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    
 )
+import json
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
@@ -14,6 +17,7 @@ from sspi_flask_app.api.resources.utilities import goalpost
 from bs4 import BeautifulSoup
 import pycountry
 from sspi_flask_app.api.datasource.worldbank import clean_wb_data
+from sspi_flask_app.api.datasource.sipri import cleanSIPRIData
 
 
 @compute_bp.route('/FORAID', methods=['GET'])
@@ -113,3 +117,12 @@ def compute_foraid():
     complete, incomplete = filter_incomplete_data(clean_foraid_data)
     sspi_clean_api_data.insert_many(complete)
     return parse_json(complete)
+
+
+@compute_bp.route("/MILEXP", methods=['GET'])
+def compute_milexp():
+    cleaned_list = cleanSIPRIData('local/share.csv', 'MILEXP', 'Percentage')
+    obs_list = json.loads(cleaned_list.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "MILEXP")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
