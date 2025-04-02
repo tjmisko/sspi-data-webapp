@@ -28,6 +28,7 @@ class Config:
 class ProdConfig(Config):
     FLASK_ENV = 'production'
     DEBUG = False
+    LOG_LEVEL = logging.DEBUG
     TESTING = False
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
 
