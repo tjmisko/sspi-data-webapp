@@ -21,6 +21,7 @@ class SSPIDatabaseConnector:
         self.login_session_local()
         self.remote_session = requests.Session()
         self.login_session_remote()
+        log.info(f"Login Cookies: {self.remote_session.cookies}")
 
     def get_token(self):
         basedir = path.abspath(path.dirname(path.dirname(__file__)))
@@ -111,19 +112,16 @@ class SSPIDatabaseConnector:
         return response
 
     def delete_indicator_data_local(self, database_name: str, IndicatorCode: str):
-        headers = {'Authorization': f'Bearer {self.token}'}
         response = self.local_session.delete(
             f"http://127.0.0.1:5000/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
-            headers=headers,
         )
         log.info(f"Local Delete Request Returned with Status Code {response.status_code}")
         return response
 
     def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
-        headers = {'Authorization': f'Bearer {self.token}'}
+        log.info(f"Cookies: {self.remote_session.cookies}")
         response = self.remote_session.delete(
             f"https://sspi.world/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
-            headers=headers,
         )
         log.info(f"Remote Delete Request Returned with Status Code {response.status_code}")
         return response
