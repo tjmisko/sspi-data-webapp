@@ -16,7 +16,7 @@ class SSPIDatabaseConnector:
         self.token = self.get_token()
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
-        self.local_session = requests.session()
+        self.local_session = requests.Session()
         self.local_session.mount('https://', LocalHttpAdapter(ctx))
         self.login_session_local()
         self.remote_session = requests.Session()
@@ -33,7 +33,7 @@ class SSPIDatabaseConnector:
 
     def login_session_local(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        res = self.local_session.post(
+        self.local_session.post(
             "http://127.0.0.1:5000/remote/session/login",
             headers=headers,
             verify=False
@@ -44,7 +44,7 @@ class SSPIDatabaseConnector:
     def login_session_remote(self):
         headers = {'Authorization': f'Bearer {self.token}'}
         self.remote_session.headers.update(headers)
-        res = self.remote_session.post(
+        self.remote_session.post(
             "https://sspi.world/remote/session/login"
         )
         log.info(f"Remote Session Cookies: {self.remote_session.cookies}")
