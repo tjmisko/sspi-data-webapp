@@ -1,4 +1,6 @@
 import secrets
+from flask import current_app as app
+log = app.logger
 from flask import (
     current_app as app,
     Blueprint,
@@ -110,13 +112,12 @@ def login():
                    duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
     flash("Login Successful! Redirecting...")
+    log.info(f"User {user.username} successful login")
     return redirect(url_for('api_bp.api_dashboard'))
 
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
 def remote_login():
-    print(request)
-    print(request.headers)
     api_token = request.headers.get('Authorization')
     if not api_token:
         response = jsonify({"message": "No API key provided"})
@@ -124,10 +125,9 @@ def remote_login():
         return response
     api_token = str(api_token)[7:]
     user = User.query.filter_by(apikey=api_token).first()
-    print(user)
     if user is not None:
         login_user(user)
-        print(current_user.username)
+        log.info(f"User {user.username} successful login with API key {api_token}")
         return redirect(url_for('api_bp.api_dashboard'))
     response = jsonify({"message": "Invalid API key"})
     response.status_code = 401
@@ -137,7 +137,10 @@ def remote_login():
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
+    current_username = current_user.username
+    log.info(f"Processing logout request for {current_username}")
     logout_user()
+    log.info(f"User {current_username} logged out")
     return redirect(url_for('client_bp.home'))
 
 

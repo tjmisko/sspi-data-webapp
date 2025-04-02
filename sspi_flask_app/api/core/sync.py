@@ -1,8 +1,9 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.resources.utilities import lookup_database
 from database_connector import SSPIDatabaseConnector
 
+log = app.logger
 
 sync_bp = Blueprint(
     "sync_bp", __name__,
@@ -17,7 +18,7 @@ def pull(database_name, IndicatorCode):
     local_database = lookup_database(database_name)
     count = local_database.delete_many({"IndicatorCode": IndicatorCode})
     message_1 = (
-        f"Deleted {count} local observations of Indicator ",
+        f"Deleted {count} local observations of Indicator "
         f"{IndicatorCode} from local database {database_name}\n"
     )
     print(message_1)
@@ -27,7 +28,7 @@ def pull(database_name, IndicatorCode):
     remote_data = connector.get_data_remote(remote_query_url).json()
     local_database.insert_many(remote_data)
     message_2 = (
-        f"Inserted {len(remote_data)} remote observations of Indicator ",
+        f"Inserted {len(remote_data)} remote observations of Indicator "
         f"{IndicatorCode} into local database {database_name}\n"
     )
     print(message_2)
@@ -40,11 +41,13 @@ def push(database_name, IndicatorCode):
     local_database = lookup_database(database_name)
     local_data = local_database.find({"IndicatorCode": IndicatorCode})
     message_1 = (
-        f"Sourced {len(local_data)} local observations of Indicator ",
+        f"Sourced {len(local_data)} local observations of Indicator "
         f"{IndicatorCode} from local database {database_name}\n"
     )
     print(message_1)
     connector = SSPIDatabaseConnector()
+    message_2 = connector.delete_indicator_data_remote(database_name, IndicatorCode).text
+    print(message_2)
     remote_data = connector.load_json_remote(
         local_data, database_name, IndicatorCode
     ).json()

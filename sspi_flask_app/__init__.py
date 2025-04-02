@@ -5,7 +5,8 @@ from flask_limiter.util import get_remote_address
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
-from .assets import compile_static_assets
+from sspi_flask_app.assets import compile_static_assets
+from sspi_flask_app.logging import configure_logging
 from sspi_flask_app.models.usermodel import db
 from sspi_flask_app.models.database import (
     sspi_metadata,
@@ -58,13 +59,9 @@ def init_app(Config):
     #     restrictions=[5],
     #     profile_dir="profiler"
     # )
-    # Initialize SQLAlchemy Database
     db.init_app(app)
-    # Initialize password encryption
     flask_bcrypt.init_app(app)
-    # Initialize Login manager
     login_manager.init_app(app)
-    # Initialize API rate limiter
     limiter.init_app(app)
     assets.init_app(app)
 
@@ -108,9 +105,10 @@ def init_app(Config):
         api_bp.register_blueprint(save_bp)
         app.register_blueprint(api_bp)
 
-        # Register Style Bundles and build optimized css, js
+        configure_logging(app)
         if Config.FLASK_ENV == "development":
             assets.auto_build = True
             assets.debug = True
             compile_static_assets(assets)
+        app.logger.info("Application Initialized")
         return app

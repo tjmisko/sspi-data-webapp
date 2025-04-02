@@ -1,4 +1,4 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, current_app as app
 from flask_login import login_required, current_user
 import requests
 import time
@@ -28,6 +28,8 @@ from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 from .countrychar import insert_pop_data
 from ..datasource.itu import collect_itu_data
 
+log = app.logger
+
 
 collect_bp = Blueprint("collect_bp", __name__,
                        template_folder="templates",
@@ -49,6 +51,7 @@ def biodiv():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("14.5.1", "BIODIV", IntermediateCode="MARINE", **kwargs)
         yield from collectSDGIndicatorData("15.1.2", "BIODIV", Metadata="TERRST,FRSHWT", **kwargs)
+    log.info("Running /api/v1/collect/BIODIV")
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -57,6 +60,7 @@ def biodiv():
 def redlst():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("15.5.1", "REDLST", **kwargs)
+    log.info("Running /api/v1/collect/REDLST")
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
