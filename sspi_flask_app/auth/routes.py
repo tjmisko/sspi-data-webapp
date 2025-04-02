@@ -102,7 +102,7 @@ class LoginForm(FlaskForm):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    print(request.args.get("next"))
+    next = request.args.get('next', None)
     if current_user.is_authenticated:
         return redirect(url_for('client_bp.data'))
     login_form = LoginForm()
@@ -116,9 +116,11 @@ def login():
         login_user(user, remember=True,
                    duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
+    if not is_safe_url(next):
+        return Response("Invalid next URL", status=400, mimetype='text/plain')
     flash("Login Successful! Redirecting...")
     app.logger.info(f"User {user.username} successful login")
-    return redirect(url_for('api_bp.api_dashboard'))
+    return redirect(url_for(next))
 
 
 @auth_bp.route('/remote/session/login', methods=['POST'])
@@ -199,11 +201,14 @@ def query():
 
 def is_safe_url(target):
     """
-    This could be made very safe by checking the target against a list of safe urls on my site
+    Check if the target URL is a valid endpoint within the Flask application.
     """
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+    if test_url.scheme not in ('http', 'https') or ref_url.netloc != test_url.netloc:
+        return False
+    return target in {str(rule) for rule in app.url_map.iter_rules()}
+
 
 # def login_required(func):
 #     @wraps(func)
