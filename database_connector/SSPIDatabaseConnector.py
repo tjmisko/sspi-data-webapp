@@ -25,11 +25,12 @@ class SSPIDatabaseConnector:
 
     def login_session_local(self):
         headers = {'Authorization': f'Bearer {self.token}'}
-        self.local_session.post(
+        res = self.local_session.post(
             "http://127.0.0.1:5000/remote/session/login",
             headers=headers,
             verify=False
         )
+        print(res.headers)
         print("Local Session Cookies: ", self.local_session.cookies)
         print("Local Session Headers: ", self.local_session.headers)
 
@@ -89,8 +90,7 @@ class SSPIDatabaseConnector:
             verify=False
         )
 
-    def load_json_remote(self, observations_list: list[dict], IndicatorCode):
-        headers = {'Authorization': f'Bearer {self.token}'}
+    def load_json_remote(self, observations_list: list[dict], database_name: str, IndicatorCode: str):
         print(f"Sending data: {observations_list}")
         response = self.remote_session.post(
             f"https://sspi.world/api/v1/load/{IndicatorCode}",
@@ -100,6 +100,17 @@ class SSPIDatabaseConnector:
         print(response.text)
         print(response.status_code)
         return response
+
+    def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
+        headers = {'Authorization': f'Bearer {self.token}'}
+        response = self.remote_session.post(
+            f"https://sspi.world/api/v1/load/{IndicatorCode}",
+            headers=headers,
+        )
+        print(response.text)
+        print(response.status_code)
+        return response
+
 
     def logout_local(self):
         self.local_session.get("http://127.0.0.1:5000/logout")

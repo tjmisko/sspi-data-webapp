@@ -4,13 +4,14 @@ from sspi_flask_app.api.resources.utilities import lookup_database
 from database_connector import SSPIDatabaseConnector
 
 
-pull_bp = Blueprint("pull_bp", __name__,
-                    template_folder="templates",
-                    static_folder="static",
-                    url_prefix="/pull")
+sync_bp = Blueprint(
+    "sync_bp", __name__,
+    template_folder="templates",
+    static_folder="static"
+)
 
 
-@pull_bp.route("/<database_name>/<IndicatorCode>", methods=["GET"])
+@sync_bp.route("/pull/<database_name>/<IndicatorCode>", methods=["GET"])
 @login_required
 def pull(database_name, IndicatorCode):
     local_database = lookup_database(database_name)
@@ -28,6 +29,28 @@ def pull(database_name, IndicatorCode):
     message_2 = (
         f"Inserted {len(remote_data)} remote observations of Indicator ",
         f"{IndicatorCode} into local database {database_name}\n"
+    )
+    print(message_2)
+    return Response(message_1 + message_2, mimetype="text/plain")
+
+
+@sync_bp.route("/push/<database_name>/<IndicatorCode>", methods=["GET"])
+@login_required
+def push(database_name, IndicatorCode):
+    local_database = lookup_database(database_name)
+    local_data = local_database.find({"IndicatorCode": IndicatorCode})
+    message_1 = (
+        f"Sourced {len(local_data)} local observations of Indicator ",
+        f"{IndicatorCode} from local database {database_name}\n"
+    )
+    print(message_1)
+    connector = SSPIDatabaseConnector()
+    remote_data = connector.load_json_remote(
+        local_data, database_name, IndicatorCode
+    ).json()
+    message_2 = (
+        f"Inserted {len(remote_data)} local observations of Indicator ",
+        f"{IndicatorCode} into remote database {database_name}\n"
     )
     print(message_2)
     return Response(message_1 + message_2, mimetype="text/plain")

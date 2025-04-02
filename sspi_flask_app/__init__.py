@@ -86,7 +86,7 @@ def init_app(Config):
         from sspi_flask_app.api.core.host import host_bp
         from sspi_flask_app.api.core.impute import impute_bp
         from sspi_flask_app.api.core.load import load_bp
-        from sspi_flask_app.api.core.pull import pull_bp
+        from sspi_flask_app.api.core.sync import sync_bp
         from sspi_flask_app.api.core.query import query_bp
         from sspi_flask_app.api.core.save import save_bp
         # Register database
@@ -103,7 +103,7 @@ def init_app(Config):
         api_bp.register_blueprint(host_bp)
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
-        api_bp.register_blueprint(pull_bp)
+        api_bp.register_blueprint(sync_bp)
         api_bp.register_blueprint(query_bp)
         api_bp.register_blueprint(save_bp)
         app.register_blueprint(api_bp)
