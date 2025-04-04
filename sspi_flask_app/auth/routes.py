@@ -199,10 +199,18 @@ def query():
     return str(db.session.query(User).all())
 
 
+@auth_bp.route('/auth/token', methods=['GET'])
+@fresh_login_required
+def token():
+    return str(current_user.apikey)
+
+
 def is_safe_url(target):
     """
     Check if the target URL is a valid endpoint within the Flask application.
     """
+    if not target:
+        return redirect(url_for('client_bp.home'))
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     if test_url.scheme not in ('http', 'https') or ref_url.netloc != test_url.netloc:
