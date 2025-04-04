@@ -50,7 +50,6 @@ def init_app(Config):
         from .client.routes import client_bp
         from .auth.routes import auth_bp
         from .api.api import api_bp
-        from .api.core.bulk import bulk_bp
         from .api.core.collect import collect_bp
         from .api.core.compute import compute_bp
         from .api.core.dashboard import dashboard_bp
@@ -67,7 +66,6 @@ def init_app(Config):
         # Register Blueprints
         app.register_blueprint(client_bp)
         app.register_blueprint(auth_bp)
-        api_bp.register_blueprint(bulk_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
