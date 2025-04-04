@@ -39,7 +39,7 @@ login_manager.login_view = "auth_bp.login"
 
 @login_manager.user_loader
 def load_user(user_id):
-    app.logger.DEBUG(f"User Loader: Loading user {user_id} from session")
+    app.logger.debug(f"User Loader: Loading user {user_id} from session")
     user = User.query.get(user_id)
     if not user:
         app.logger.warning(f"User Loader: User {user_id} not found in session")
