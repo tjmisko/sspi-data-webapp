@@ -17,10 +17,12 @@ from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 
 
-delete_bp = Blueprint("delete_bp", __name__,
-                      template_folder="templates",
-                      static_folder="static",
-                      url_prefix="/delete")
+delete_bp = Blueprint(
+    "delete_bp", __name__,
+    template_folder="templates",
+    static_folder="static",
+    url_prefix="/delete"
+)
 
 
 def sort_db(choice):
