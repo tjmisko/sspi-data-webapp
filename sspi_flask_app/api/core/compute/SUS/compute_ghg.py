@@ -75,16 +75,16 @@ def compute_coalpw():
 @login_required
 def compute_gtrans():
     pop_data = sspi_raw_api_data.fetch_raw_data(
-        "GTRANS", IntermediateCode="POPULN")
+        "GTRANS", IntermediateCode= "POPULN")
     cleaned_pop = clean_wb_data(pop_data, "GTRANS", "Population")
     gtrans = sspi_raw_api_data.fetch_raw_data(
         "GTRANS", IntermediateCode="TCO2EQ")
     cleaned_co2 = clean_IEA_data_GTRANS(
         gtrans, "GTRANS", "CO2 from transport sources")
     document_list = cleaned_pop + cleaned_co2
-    scored = zip_intermediates(document_list, "GTRANS",
-                               ScoreFunction=lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy="Values")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    # scored = zip_intermediates(document_list, "GTRANS",
+    #                            ScoreFunction=lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy="Values")
+    # clean_document_list, incomplete_observations = filter_incomplete_data(
+    #     scored)
+    # sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(document_list)
