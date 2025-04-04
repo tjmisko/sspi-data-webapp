@@ -217,6 +217,7 @@ def unauthorized():
 
 @login_manager.request_loader
 def load_user_from_request(request):
+    app.logger.debug(f"request_loader fired for request {request}")
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return None
