@@ -64,7 +64,7 @@ def push(database_name, IndicatorCode):
             status=remote_delete.status_code, mimetype="text/plain"
         )
     message_2 = (
-        f"Inserted {len(remote_data)} local observations of Indicator ",
+        f"Inserted {len(remote_data)} local observations of Indicator "
         f"{IndicatorCode} into remote database {database_name}\n"
     )
     app.logger.info(message_1 + message_2)
