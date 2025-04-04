@@ -9,7 +9,7 @@ def configure_logging(app):
     log_level = app.config.get('LOG_LEVEL', logging.DEBUG)
     app.logger.setLevel(log_level)
     formatter = logging.Formatter(
-        '%(levelname)s %(pathname)s:%(lineno)d:\t%(message)s\t[%(asctime)s]'
+        '%(levelname)s %(pathname)s:%(lineno)d:\n\t%(message)s\t[%(asctime)s]'
     )
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
