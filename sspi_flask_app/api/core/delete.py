@@ -123,7 +123,7 @@ def clear_db():
     return redirect(url_for(".get_delete_page"))
 
 
-@delete_bp.route("/<database_name>/<IndicatorCode>", methods=["DEL"])
+@delete_bp.route("/indicator/<database_name>/<IndicatorCode>", methods=["DEL"])
 @login_required
 def delete_database_indicator(database_name, IndicatorCode):
     database = lookup_database(database_name)
