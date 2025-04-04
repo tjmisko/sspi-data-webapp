@@ -3,7 +3,6 @@ from sqlalchemy_serializer import SerializerMixin
 from dataclasses import dataclass
 from flask_sqlalchemy import SQLAlchemy
 
-
 db = SQLAlchemy()
 
 

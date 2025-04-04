@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -31,10 +31,12 @@ from sspi_flask_app.api.datasource.fsi import (
 @compute_bp.route("/PRISON", methods=['GET'])
 @login_required
 def compute_prison():
+    app.logger.info("Running /api/v1/compute/PRISON")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "PRISON"})
     details = sspi_metadata.find(
         {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": "PRISON"})[0]
-    lower_goalpost = details["Metadata"]["LowerGoalpost"]
-    upper_goalpost = details["Metadata"]["UpperGoalpost"]
+    lg = details["Metadata"]["LowerGoalpost"]
+    ug = details["Metadata"]["UpperGoalpost"]
     pop_data = sspi_raw_api_data.fetch_raw_data(
         "PRISON", IntermediateCode="UNPOPL")
     cleaned_pop = clean_wb_data(pop_data, "PRISON", "Population")
@@ -43,7 +45,9 @@ def compute_prison():
     final_list = zip_intermediates(
         combined_list, "PRISON",
         ScoreFunction=lambda PRIPOP, UNPOPL: goalpost(
-            PRIPOP / UNPOPL * 100000, lower_goalpost, upper_goalpost),
+            PRIPOP / UNPOPL * 100000, lg, ug),
+        ValueFunction=lambda PRIPOP, UNPOPL: PRIPOP / UNPOPL * 100000,
+        UnitFunction=lambda PRIPOP, UNPOPL: "Prisoners Per 100,000",
         ScoreBy="Values")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
@@ -55,8 +59,8 @@ def compute_prison():
 @compute_bp.route("/CYBSEC", methods=['GET'])
 @login_required
 def compute_cybsec():
-    if not sspi_raw_api_data.raw_data_available("CYBSEC"):
-        return redirect(url_for("collect_bp.CYBSEC"))
+    app.logger.info("Running /api/v1/compute/CYBSEC")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "CYBSEC"})
     cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
     cleaned_list = cleanITUData_cybsec(cybsec_raw, 'CYBSEC')
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
@@ -68,12 +72,14 @@ def compute_cybsec():
 @compute_bp.route("/SECAPP")
 @login_required
 def compute_secapp():
+    app.logger.info("Running /api/v1/compute/SECAPP")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "SECAPP"})
     raw_data = sspi_raw_api_data.fetch_raw_data("SECAPP")
     description = (
-        "The Security Apparatus is a component of the Fragile State Index, which",
-        "considers the security threats to a state such as bombings, attacks/battle-",
-        "related deaths, rebel movements, mutinies, coups, or terrorism. It is an",
-        "index scored between 0 and 10."
+        "The Security Apparatus is a component of the Fragile State Index, "
+        "which considers the security threats to a state such as bombings, "
+        "attacks/battle-related deaths, rebel movements, mutinies, coups, or "
+        "terrorism. It is an index scored between 0 and 10."
     )
     cleaned_list = cleanFSIdata(
         raw_data, "SECAPP", "Index", description

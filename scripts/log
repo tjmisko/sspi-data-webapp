@@ -1,0 +1,2 @@
+#!/bin/bash
+nvim +"normal G" logs/sspi.world.log
