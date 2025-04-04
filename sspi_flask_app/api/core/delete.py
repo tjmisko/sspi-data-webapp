@@ -1,9 +1,17 @@
 from sspi_flask_app.models.database import sspidb, sspi_metadata
-from ..resources.utilities import lookup_database
-from flask import Blueprint, redirect, render_template, request, flash, url_for
+from sspi_flask_app.api.resources.utilities import lookup_database
+from flask import (
+    Blueprint,
+    redirect,
+    render_template,
+    request,
+    flash,
+    url_for,
+    current_app as app
+)
 from flask_login import login_required
-from wtforms import StringField
-from bson.objectid import ObjectId
+# from wtforms import StringField
+# from bson.objectid import ObjectId
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
@@ -128,7 +136,9 @@ def clear_db():
 def delete_database_indicator(database_name, IndicatorCode):
     database = lookup_database(database_name)
     count = database.delete_many({"IndicatorCode": IndicatorCode})
-    message_1 = f"Deleted {count} observations of Indicator"
-    message_2 = f"{IndicatorCode} from database {database.name}"
-    print(message_1 + message_2)
-    return message_1 + message_2
+    message = (
+        f"Deleted {count} observations of Indicator "
+        f"{IndicatorCode} from database {database.name}"
+    )
+    app.logger.info(message)
+    return message
