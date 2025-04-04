@@ -82,23 +82,21 @@ class SSPIDatabaseConnector:
         """
         Load a list of observations in JSON format into the local database
         """
-        log.debug("Headers for Local Load: " + str(self.local_session.headers))
         response = self.local_session.post(
             f"http://127.0.0.1:5000/api/v1/load/{database_name}/{IndicatorCode}",
             json=observations_list,
             verify=False
         )
-        log.info("Local Load Request Returned with Status Code ", response.status_code)
+        log.info(f"Remote Load Request Returned with Status Code {response.status_code}")
         return response
 
     def load_json_remote(self, observations_list: list[dict], database_name: str,
                          IndicatorCode: str):
-        log.debug("Headers for Remote Load: " + str(self.remote_session.headers))
         response = self.remote_session.post(
             f"https://sspi.world/api/v1/load/{database_name}/{IndicatorCode}",
             json=observations_list
         )
-        log.info("Remote Load Request Returned with Status Code ", response.status_code)
+        log.info(f"Remote Load Request Returned with Status Code {response.status_code}")
         return response
 
     def delete_indicator_data_local(self, database_name: str, IndicatorCode: str):
@@ -110,7 +108,6 @@ class SSPIDatabaseConnector:
         return response
 
     def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
-        log.debug("Headers for Remote Delete: " + str(self.remote_session.headers))
         response = self.remote_session.delete(
             f"https://sspi.world/api/v1/delete/indicator/{database_name}/{IndicatorCode}",
         )
