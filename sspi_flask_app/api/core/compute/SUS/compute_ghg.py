@@ -6,6 +6,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
+    goalpost,
     parse_json,
     zip_intermediates,
     filter_incomplete_data,
@@ -74,6 +75,8 @@ def compute_coalpw():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
+    lg = 7500
+    ug = 0
     pop_data = sspi_raw_api_data.fetch_raw_data(
         "GTRANS", IntermediateCode= "POPULN")
     cleaned_pop = clean_wb_data(pop_data, "GTRANS", "Population")
@@ -82,9 +85,14 @@ def compute_gtrans():
     cleaned_co2 = clean_IEA_data_GTRANS(
         gtrans, "GTRANS", "CO2 from transport sources")
     document_list = cleaned_pop + cleaned_co2
-    # scored = zip_intermediates(document_list, "GTRANS",
-    #                            ScoreFunction=lambda TCO2EQ, UNPOPL: TCO2EQ / UNPOPL, ScoreBy="Values")
-    # clean_document_list, incomplete_observations = filter_incomplete_data(
-    #     scored)
-    # sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(document_list)
+    scored = zip_intermediates(
+        document_list,
+        "GTRANS",
+        ScoreFunction=lambda TCO2EQ, POPULN: goalpost(TCO2EQ / POPULN, lg, ug),
+        ValueFunction=lambda TCO2EQ, POPULN: TCO2EQ / POPULN,
+        ScoreBy="Values"
+    )
+    clean_document_list, incomplete_observations = filter_incomplete_data(
+        scored)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)

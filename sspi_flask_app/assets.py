@@ -7,6 +7,7 @@ def compile_static_assets(assets):
     home_style_bundle = Bundle(
         'client_bp/css/variables.css',
         'client_bp/css/base.css',
+        'client_bp/css/components/*.css',
         'client_bp/css/templates/*.css',
         'client_bp/css/pages/*.css',
         filters='cssmin',

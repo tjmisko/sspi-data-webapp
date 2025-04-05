@@ -27,7 +27,7 @@
   display: flex;
   position: relative;
   margin: 5px auto;
-  background: var(--dark-blue, #000);
+  background: var(--header-color, #000);
   border-radius: 5px;
   font-size: 0.65em;
   overflow: hidden;
@@ -53,7 +53,7 @@
 }
 
 #country-group-selector-container input[type="radio"]:checked + label {
-  color: var(--white, #000);
+  color: var(--text-color, #000);
 }
 
 #country-group-selector-container .slider {
@@ -90,7 +90,7 @@
 .legend-item {
   display: flex;
   font-size: 0.70em;
-  background-color: var(--dark-blue, #000);
+  background-color: var(--header-color, #000);
   padding: 0.3em;
   padding-right: 0.3em;
   padding-left: 0.5em;
