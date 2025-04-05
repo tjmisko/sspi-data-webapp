@@ -19,6 +19,7 @@ from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.who import collectWHOdata
+from sspi_flask_app.api.datasource.vdem import collectVDEMData
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 from sspi_flask_app.api.datasource.uis import collectUISdata
@@ -391,6 +392,26 @@ def aqelec():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+###########################
+## Category: RIGHTS ##
+###########################
+
+
+@collect_bp.route("/EDEMOC", methods=['GET'])
+@login_required
+def edemoc():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData("v2x_polyarchy", "EDEMOC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/RULELW", methods=['GET'])
+@login_required
+def rulelw():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
+
+
 #############################
 ## Category: PUBLIC SAFETY #
 #############################
@@ -465,8 +486,12 @@ def unpopl():
 def gdpmek():
     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
-        yield f"Collecting data for World Bank Indicator{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
+        yield "Collecting data for World Bank Indicator" + \
+            "{WorldBankIndicatorCode}\n"
+        url_source = (
+            "https://api.worldbank.org/v2/country/all/"
+            f"indicator/{WorldBankIndicatorCode}?format=json"
+        )
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages + 1):
@@ -494,8 +519,10 @@ def gdpppp():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
-            WorldBankIndicatorCode}?format=json"
+        url_source = (
+            "https://api.worldbank.org/v2/country/all/"
+            f"indicator/{WorldBankIndicatorCode}?format=json"
+        )
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages + 1):

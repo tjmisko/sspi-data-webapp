@@ -78,7 +78,7 @@ def compute_gtrans():
     lg = 7500
     ug = 0
     pop_data = sspi_raw_api_data.fetch_raw_data(
-        "GTRANS", IntermediateCode="POPULN")
+        "GTRANS", IntermediateCode= "POPULN")
     cleaned_pop = clean_wb_data(pop_data, "GTRANS", "Population")
     gtrans = sspi_raw_api_data.fetch_raw_data(
         "GTRANS", IntermediateCode="TCO2EQ")
