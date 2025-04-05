@@ -292,21 +292,21 @@ def dptcov():
         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
-# PHYSPC for Correlation Analysis with UHC 
-@collect_bp.route("/PHYSPC", methods=['GET'])
-@login_required
-def physpc():
-    def collect_iterator(**kwargs):
-        yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
+# # PHYSPC for Correlation Analysis with UHC 
 # @collect_bp.route("/PHYSPC", methods=['GET'])
 # @login_required
 # def physpc():
 #     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
+#         yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/PHYSPC", methods=['GET'])
+@login_required
+def physpc():
+    def collect_iterator(**kwargs):
+        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @collect_bp.route("/FAMPLN", methods=['GET'])
