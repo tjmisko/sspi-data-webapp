@@ -1,14 +1,20 @@
 <header class="site-header">
-  <a class="titlebox" href="/">
-    <h1 class="title"> Sustainable and</h1>
-    <h1 class="title"> Shared-Prosperity</h1>
-    <h1 class="title"> Policy Index</h1>
-  </a>
-  <div class="header-nav-bar">
-    <ol class="header-nav-bar-link-list">
-      <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.data') }}"> Data</a></li>
-      <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.methodology') }}"> Methodology </a></li>
-      <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.about') }}">About</a></li>
-    </ol>
-  </div>
+    <a class="titlebox" href="/">
+        <h1 class="title"> Sustainable and</h1>
+        <h1 class="title"> Shared-Prosperity</h1>
+        <h1 class="title"> Policy Index</h1>
+    </a>
+    <div class="header-nav-bar">
+        <ol class="header-nav-bar-link-list">
+            <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.data') }}"> Data</a></li>
+            <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.methodology') }}"> Methodology </a></li>
+            <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.about') }}">About</a></li>
+        </ol>
+    </div>
+    <div class="theme-toggle-container">
+        <label class="theme-toggle">
+            <input type="checkbox" id="darkModeToggle" />
+            <span class="slider"></span>
+        </label>
+    </div>
 </header>

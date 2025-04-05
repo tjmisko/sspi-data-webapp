@@ -1,0 +1,46 @@
+html, body, canvas, div {
+    margin: 0;
+}
+
+html {
+    font-size: 16pt;
+}
+
+body {
+    margin: 0;
+    color: var(--white, #000);
+    background-color: var(--light-blue, #000);
+    line-height: 1.25rem;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1em;
+}
+
+h1 {
+    font-family: 'REM', sans-serif;
+    font-weight:600;
+    font-size: 1.4rem;
+}
+
+h2 {
+    font-family: 'Libra Baskerville', serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.hero-section {
+    padding: 1em 3em;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hero-text-content {
+    min-width: 350px;
+    flex: 2 1 0;
+}

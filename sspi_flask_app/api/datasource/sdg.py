@@ -18,12 +18,6 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     base_url = url_source + url_params
     print(base_url)
     response = requests.get(url_source + url_params)
-    print(response.request.url)
-    print(response.status_code)
-    print(response.request.headers)
-    print(response.request.__getattribute__('headers'))
-    print(response.request)
-    print(response.json())
     nPages = response.json().get('totalPages')
     yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
     for p in range(1, nPages + 1):
@@ -59,6 +53,7 @@ def extract_sdg_pivot_data_to_nested_dictionary(raw_sdg_pivot_data):
             intermediate_obs_dict[COU] = {}
         # iterate through each of the annual observations and add the appropriate entry
         for obs in annual_data_list:
+            print(obs)
             year = int(obs["year"][1:5])
             if obs["value"] == '':
                 continue
@@ -283,3 +278,23 @@ def flatten_nested_dictionary_sansrv(intermediate_obs_dict):
             }
             final_data_lst.append(new_observation)
     return final_data_lst
+
+
+def flatten_nested_dictionary_physpc(intermediate_obs_dict):
+    final_data_lst = []
+    for country in intermediate_obs_dict:
+        for year in intermediate_obs_dict[country]:
+            value = [x for x in intermediate_obs_dict[country][year].values()][0]
+            if value == "0.0" or value == 0 or value == 0.0 or value == "NaN":
+                continue
+            new_observation = {
+                "CountryCode": country,
+                "IndicatorCode": "PHYSPC",
+                "Unit": "Index",
+                "Description": "Physicians per 10,000.",
+                "Year": year,
+                "Value": string_to_float(value),
+            }
+            final_data_lst.append(new_observation)
+    return final_data_lst
+                

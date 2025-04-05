@@ -1,6 +1,5 @@
 import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
-import bs4 as bs
 from pycountry import countries
 
 def collectIEAData(IEAIndicatorCode, IndicatorCode, **kwargs):
@@ -65,7 +64,7 @@ def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
         value = obs["Raw"]['value']
         intermediate_code = obs["IntermediateCode"]
         series_label = obs["Raw"]["seriesLabel"]
-        if series_label != "Transport":
+        if series_label != "Transport Sector":
             continue
         if not country_data:
             continue
