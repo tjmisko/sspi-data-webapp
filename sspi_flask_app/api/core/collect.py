@@ -12,6 +12,7 @@ from ..datasource.ilo import collectILOData
 from ..datasource.who import collectWHOdata
 from ..datasource.prisonstudies import collectPrisonStudiesData
 from ..datasource.who import collectCSTUNTData
+from ..datasource.wid import collectWIDData
 
 from ..datasource.taxfoundation import collectTaxFoundationData
 from .countrychar import insert_pop_data
@@ -245,7 +246,12 @@ def pubacc():
 ##########################
 ## Category: INEQUALITY ##
 ##########################
-
+@collect_bp.route("/ISHRAT", methods=['GET'])
+@login_required
+def ishrat():
+    def collect_iterator(**kwargs):
+        yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/GINIPT", methods=['GET'])
 @login_required
