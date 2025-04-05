@@ -66,6 +66,9 @@ from ..datasource.who import (
     cleanWHOdata, 
     cleanWHOdata_UHC
 )
+from ..datasource.wid import (
+    cleanWIDData
+)
 import pandas as pd
 # from pycountry import countries
 from io import StringIO
@@ -566,6 +569,27 @@ def compute_physpc():
     sspi_clean_api_data.insert_many(scored)
     return parse_json(scored)
 
+@compute_bp.route("/ISHRAT")
+@login_required
+def compute_ishrat():
+    if not sspi_raw_api_data.raw_data_available("ISHRAT"):
+        return redirect(url_for("api_bp.collect_bp.ISHRAT"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("ISHRAT")
+    
+    return cleanWIDData(raw_data)
+
+# # PHYSPC for Correlation Analysis with UHC
+# @compute_bp.route("/PHYSPC")
+# @login_required
+# def compute_physpc():
+#     if not sspi_raw_api_data.raw_data_available("PHYSPC"):
+#         return redirect(url_for("api_bp.collect_bp.PHYSPC"))
+#     raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
+#     cleaned = cleanWHOdata_UHC(raw_data, "PHYSPC", "UHC Service Coverage Index",
+#                            "Coverage of essential health services (defined as the average coverage of essential services based on tracer interventions that include reproductive, maternal, newborn and child health, infectious diseases, non-communicable diseases and service capacity and access, among the general and the most disadvantaged population).")
+#     scored = score_single_indicator(cleaned, "PHYSPC")
+#     sspi_clean_api_data.insert_many(scored)
+#     return parse_json(scored)
 
 
 
