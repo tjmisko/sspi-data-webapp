@@ -322,8 +322,13 @@ def get_country_code(CountryName):
         return "SWZ"
     if "israel and west bank" in str.lower(CountryName):
         return "ISR"
+    if "gambia the" in str.lower(CountryName):
+        return "GMB"
+    if "timor leste" in str.lower(CountryName):
+        return "TLS"
     else:
         return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
+
 
 
 def colormap(PillarCode, alpha: str = "ff"):

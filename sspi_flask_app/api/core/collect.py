@@ -24,6 +24,7 @@ from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
+from sspi_flask_app.api.datasource.sipri import collectSIPRIdata
 from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 
 from .countrychar import insert_pop_data
@@ -468,6 +469,20 @@ def foraid():
         yield from collectWorldBankdata("NY.GDP.MKTP.KD", "FORAID", IntermediateCode="GDPMKT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/MILEXP", methods=['GET'])
+@login_required
+def milexp():
+    def collect_iterator(**kwargs):
+        yield from collectSIPRIdata("MILEXP", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/ARMEXP", methods=['GET'])
+@login_required
+def armexp():
+    def collect_iterator(**kwargs):
+        yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #######################################
 ## Category: Country Characteristics ##
