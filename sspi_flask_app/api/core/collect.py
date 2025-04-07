@@ -460,7 +460,7 @@ def milexp():
 @login_required
 def armexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("local/armexpprocessed.csv", "ARMEXP", **kwargs)
+        yield from collectSIPRIdata("local/ARMEXP/armexpprocessed.csv", "ARMEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #######################################
@@ -509,8 +509,7 @@ def gdpppp():
     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
         yield "Collecting data for World Bank Indicator" + \
             "{WorldBankIndicatorCode}\n"
-        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{
-            WorldBankIndicatorCode}?format=json"
+        url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?format=json"
         response = requests.get(url_source).json()
         total_pages = response[0]['pages']
         for p in range(1, total_pages + 1):
