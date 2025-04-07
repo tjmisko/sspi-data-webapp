@@ -1,32 +1,27 @@
 {% extends 'layout.html' %}
 
-{% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/colorMap.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/overall-stacked-bar-static.js') }}"></script>
-{% endblock %}
-
-{% block stylesheet %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-{% endblock %}
-
 {% block content %}
     <article class="page-content">
       <section class="hero-box">
         <div class="hero-textbox"> 
-          <h2 class="hero-h2">Measuring Policy Around the World</h2>
-          <p class="hero-p"> How well are countries doing at guaranteeing wellbeing for
-            people and the planet? The SSPI answers this question using data
-            to score country performance across 57 policy indicators grouped into 16 categories and organized
-            under 3 pillars. </p>
+          <h1 class="hero-title">How well are countries doing at guaranteeing wellbeing for people and the planet?</h1>
+          <p class="hero-p"> The SSPI assembles data measuring country
+                performance across 57 Policy Indicators, offering a
+                comprehensive and data-driven look at policy around the world.
+          </p> 
+          <p class="hero-p"> The SSPI groups these Policy Indicators
+                into sixteen Categories, each of measures the performance of a
+                package of related policies in a specific sector. The
+                Categories are grouped into three Pillars corresponding to the
+                three core purposes of governments in the twenty-first century:
+                protecting the planet (Sustainability), structuring markets
+                (Market Structure), and providing Public Goods. 
+          </p>
           <a class="hero-datalink" href="/data"> Explore SSPI Data</a>
         </div>
       </section>
       <section class="chart-section" id="overall-score-chart">
-        <h2>SSPI Scores</h2>
+        <h2>SSPI Scores (2018 Data)</h2>
         <script defer>
             window.overallStackedBar = new StaticOverallStackedBarChart(document.getElementById('overall-score-chart'));
         </script>

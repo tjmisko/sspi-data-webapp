@@ -33,7 +33,5 @@ SQLALCHEMY_DATABASE_URI='sqlite:////home/tjmisko/Projects/sspi-data-webapp/insta
 ```
 
 8) Run the `flask run` command from your terminal in the top level directory, which contains the `wsgi.py` file.  Your application should boot, and you can open it in the browser.
-
     > Use `flask run --debug` to run the application in debug mode. This will cause the application to automatically reload when making changes, saving you a whole lot of `Ctrl-C` and up-arrows.
-
 9) In order to run `@login_protected` routes, you will need to register yourself in the SSPI database. To do this, navigate to the `/register` route in your browser and fill out the form.  You will be redirected to the login page, where you can enter your credentials and access the protected routes. Otherwise, you will receive an error message upon running `/api/v1/collect` routes which will prevent you from collecting data.

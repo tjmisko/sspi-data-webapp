@@ -85,7 +85,7 @@ htmlcov/
 **.ipynb_checkpoints
 snapshots/**/**.json
 profiler/**
-bulk/SUS/LND/NITROG/*
-!bulk/SUS/LND/NITROG/replicate
 
 node_modules
+sspi_flask_app/client/static/style.css
+sspi_flask_app/client/static/script.js
