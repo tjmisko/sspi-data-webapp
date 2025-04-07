@@ -3,17 +3,24 @@
   <head>
     <meta charset="utf-8">
     {% block title %}{% endblock %}
-    <script async src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/capture-chart.js') }}" defer></script>
-    {% block stylesheet %}{% endblock %}
-    {% assets "home_script_bundle" %}
-      <!-- <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }} " defer></script> -->
-    {% endassets %}
-    {% assets "home_style_bundle" %}
-      <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }} "/>
-    {% endassets %}
+    <script>
+        window.theme = localStorage.getItem("theme")
+        if (window.theme === "light") {
+            document.documentElement.classList.add("light-theme")
+            localStorage.setItem("theme", "light")
+        } else {
+            document.documentElement.classList.add("dark-theme")
+            localStorage.setItem("theme", "dark")
+        }
+    </script>
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
     {% block javascript %}{% endblock %}
+    {% block stylesheet %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
   </head>
 
   <body>
@@ -23,6 +30,4 @@
         </main>
     {% include 'footer.html' %}
   </body>
-  
 </html>
-

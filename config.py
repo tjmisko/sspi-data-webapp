@@ -6,6 +6,7 @@ basedir = path.abspath(path.dirname(__file__))
 print("basedir: " + basedir)
 load_dotenv(path.join(basedir, '.env'))
 
+
 class Config:
     # Flask config
     FLASK_ENV = 'development'
@@ -18,7 +19,8 @@ class Config:
     ASSETS_DEBUG = False
     ASSETS_AUTO_BUILD = True
     JSONIFY_PRETTYPRINT_REGULAR = True
-    REMEMBER_COOKIE_DURATION=timedelta(days=30)
+    REMEMBER_COOKIE_DURATION = timedelta(days=30)
+
 
 class ProdConfig(Config):
     FLASK_ENV = 'production'
@@ -26,10 +28,12 @@ class ProdConfig(Config):
     TESTING = False
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
 
+
 class DevConfig(Config):
     DEBUG = True
     LOGIN_DISABLED = True
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
+
 
 class TestConfig(Config):
     DEBUG = True

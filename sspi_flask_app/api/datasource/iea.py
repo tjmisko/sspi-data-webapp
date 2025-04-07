@@ -1,7 +1,6 @@
 import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
-import bs4 as bs
-from pycountry import countries
+import pycountry
 
 def collectIEAData(IEAIndicatorCode, IndicatorCode, **kwargs):
     raw_data = requests.get(f"https://api.iea.org/stats/indicator/{IEAIndicatorCode}").json()
@@ -38,7 +37,7 @@ def cleanIEAData_altnrg(RawData, IndName):
     clean_data_list = []
     for entry in RawData:
         iso3 = entry["Raw"]["country"]
-        country_data = countries.get(alpha_3=iso3)
+        country_data = pycountry.countries.get(alpha_3=iso3)
         value = entry["Raw"]['value']
         if not country_data:
             continue
@@ -55,21 +54,22 @@ def cleanIEAData_altnrg(RawData, IndName):
         clean_data_list.append(clean_obs)
     return clean_data_list
 
+
 def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
     def convert_to_kg(value):
-        return value * 1000000
+        return value * 10**9
     clean_data_list = []
     for obs in raw_data:
         iso3 = obs["Raw"]["country"]
-        country_data = countries.get(alpha_3=iso3)
+        country_data = pycountry.countries.get(alpha_3=iso3)
         value = obs["Raw"]['value']
         intermediate_code = obs["IntermediateCode"]
         series_label = obs["Raw"]["seriesLabel"]
-        if series_label != "Transport":
+        if series_label != "Transport Sector":
             continue
         if not country_data:
             continue
-        if not value:
+        if not value and (type(value) is not float or type(value) is not int):
             continue
         clean_obs = {
             "CountryCode": iso3,
@@ -82,6 +82,3 @@ def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
-
-
-

@@ -13,6 +13,8 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator,
     goalpost
 )
+from sspi_flask_app.api.datasource.itu import cleanITUData_cybsec
+import json
 
 
 from sspi_flask_app.api.datasource.worldbank import (
@@ -20,6 +22,9 @@ from sspi_flask_app.api.datasource.worldbank import (
 )
 from sspi_flask_app.api.datasource.prisonstudies import (
     scrape_stored_pages_for_data,
+)
+from sspi_flask_app.api.datasource.fsi import (
+    cleanFSIdata
 )
 
 
@@ -47,29 +52,33 @@ def compute_prison():
     return parse_json(clean_document_list)
 
 
-@compute_bp.route("/DRKWAT")
+@compute_bp.route("/CYBSEC", methods=['GET'])
 @login_required
-def compute_drkwat():
-    if not sspi_raw_api_data.raw_data_available("DRKWAT"):
-        return redirect(url_for("api_bp.collect_bp.DRKWAT"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
-    cleaned = clean_wb_data(raw_data, "DRKWAT", "Percent")
-    scored = score_single_indicator(cleaned, "DRKWAT")
-    filtered_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(filtered_list)
+def compute_cybsec():
+    if not sspi_raw_api_data.raw_data_available("CYBSEC"):
+        return redirect(url_for("collect_bp.CYBSEC"))
+    cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
+    cleaned_list = cleanITUData_cybsec(cybsec_raw, 'CYBSEC')
+    obs_list = json.loads(cleaned_list.to_json(orient="records"))
+    scored_list = score_single_indicator(obs_list, "CYBSEC")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
-@compute_bp.route("/SANSRV")
+@compute_bp.route("/SECAPP")
 @login_required
-def compute_sansrv():
-    if not sspi_raw_api_data.raw_data_available("SANSRV"):
-        return redirect(url_for("api_bp.collect_bp.SANSRV"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("SANSRV")
-    cleaned = clean_wb_data(raw_data, "SANSRV", "Percent")
-    scored = score_single_indicator(cleaned, "SANSRV")
-    filtered_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(filtered_list)
+def compute_secapp():
+    raw_data = sspi_raw_api_data.fetch_raw_data("SECAPP")
+    description = (
+        "The Security Apparatus is a component of the Fragile State Index, which",
+        "considers the security threats to a state such as bombings, attacks/battle-",
+        "related deaths, rebel movements, mutinies, coups, or terrorism. It is an",
+        "index scored between 0 and 10."
+    )
+    cleaned_list = cleanFSIdata(
+        raw_data, "SECAPP", "Index", description
+    )
+    scored = score_single_indicator(cleaned_list, "SECAPP")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored)
+    sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
