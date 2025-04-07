@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, url_for, current_app as app
 from flask_login import login_required
 from ..api.core.download import ClientDownloadForm
 import re
@@ -17,6 +17,11 @@ client_bp = Blueprint(
 @client_bp.route('/')
 def home():
     return render_template('home.html')
+
+
+@client_bp.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('favicon.ico')
 
 
 @client_bp.route('/about')

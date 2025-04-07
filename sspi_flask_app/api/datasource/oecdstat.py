@@ -35,10 +35,8 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
         session.mount('https://', CustomHttpAdapter(ctx))
         return session
 
-    SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{
-        OECDIndicatorCode}"
-    SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{
-        OECDIndicatorCode}"
+    SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{OECDIndicatorCode}"
+    SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{OECDIndicatorCode}"
     yield "Sending Metadata Request to OECD SDMX API\n"
     metadata_obj = get_legacy_session().get(SDMX_URL_OECD_METADATA)
     metadata = str(metadata_obj.content)
@@ -205,8 +203,7 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
             cou_g + filter_parameters[1:]
         if not query_parameters:
             query_parameters = "startPeriod=1990&dimensionAtObservation=AllDimensions"
-        url = f"{base_url}{
-            oecd_series_code}/{cou_filter_parameters}?{query_parameters}"
+        url = f"{base_url}{oecd_series_code}/{cou_filter_parameters}?{query_parameters}"
         res = requests.get(url)
         raw_data = str(res.content)
         print(raw_data)
