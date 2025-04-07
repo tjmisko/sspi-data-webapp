@@ -3,6 +3,7 @@ import csv
 import requests
 import zipfile
 from io import BytesIO, StringIO
+import pandas as pd
 
 
 def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
@@ -96,8 +97,9 @@ def cleanEDEMOCdata(raw_data):
 
     df_sorted = df_melted.sort_values(by=["country_text_id", "Year"])
     df_sorted["CountryCode"] = df_sorted["country_text_id"]
-    df_sorted["Unit"] = ""
+    df_sorted["Unit"] = "Index"
+    df_sorted["Description"] = "Index seeks to embody the core values that make rulers responsive to citizens through elections and freedom of expression."
     df_sorted["IndicatorCode"] = "EDEMOC"
-    df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode"]]
+    df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode", "Description"]]
     records = df_final.to_dict(orient="records")
     return records
