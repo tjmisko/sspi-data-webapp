@@ -3,6 +3,7 @@ import csv
 import requests
 import zipfile
 from io import BytesIO, StringIO
+import pandas as pd
 
 
 def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
@@ -56,3 +57,49 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
                     )
                     collected_count += 1
     yield f"Collection complete for {IndicatorCode} (VDEM {SourceIndicatorCode}). {collected_count} fragments inserted."
+
+
+def cleanEDEMOCdata(raw_data):
+    fragments = []
+    for obs in raw_data:
+        try:
+            fragment_num = obs.get("FragmentNumber")
+            csv_fragment = obs.get("Raw", {}).get("csv_fragment", "")
+            if fragment_num is not None and csv_fragment:
+                fragments.append((fragment_num, csv_fragment))
+        except Exception as e:
+            continue
+
+    if not fragments:
+        return "No CSV fragments found for EDEMOC."
+    fragments.sort(key=lambda x: x[0])
+    full_csv = "".join(fragment for _, fragment in fragments)
+    try:
+        df = pd.read_csv(StringIO(full_csv))
+    except Exception as e:
+        return f"Error reading CSV data: {e}"
+    filtered_df = df[['country_text_id', 'year', 'v2x_polyarchy']]
+    filtered_df = df[(df["year"] > 1900) & (df["year"] < 2030)]
+    # Identify year columns. If none are found (since 'year' is already present), we use the existing 'year'.
+    year_columns = [col for col in filtered_df.columns if col.isdigit()]
+    id_vars = [col for col in filtered_df.columns if col not in year_columns]
+    if year_columns:
+        df_melted = filtered_df.melt(
+            id_vars=id_vars,
+            value_vars=year_columns,
+            var_name="Year",
+            value_name="Value"
+        )
+        df_melted["Year"] = df_melted["Year"].astype(int)
+    else:
+        df_melted = filtered_df.rename(columns={"year": "Year", "v2x_polyarchy": "Value"})
+        df_melted["Year"] = df_melted["Year"].astype(int)
+
+    df_sorted = df_melted.sort_values(by=["country_text_id", "Year"])
+    df_sorted["CountryCode"] = df_sorted["country_text_id"]
+    df_sorted["Unit"] = "Index"
+    df_sorted["Description"] = "Index seeks to embody the core values that make rulers responsive to citizens through elections and freedom of expression."
+    df_sorted["IndicatorCode"] = "EDEMOC"
+    df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode", "Description"]]
+    records = df_final.to_dict(orient="records")
+    return records
