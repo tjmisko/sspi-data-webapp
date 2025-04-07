@@ -118,7 +118,6 @@ def compute_foraid():
     sspi_clean_api_data.insert_many(complete)
     return parse_json(complete)
 
-
 @compute_bp.route("/MILEXP", methods=['GET'])
 def compute_milexp():
     if not sspi_raw_api_data.raw_data_available("MILEXP"):
