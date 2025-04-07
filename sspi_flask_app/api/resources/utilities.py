@@ -135,8 +135,7 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
     intermediate_document_list, noneish_list = drop_none_or_na(
         intermediate_document_list)
-    print(f"There were {len(noneish_list)
-                        } none/na documents found in intermediate_document_list")
+    print(f"There were {len(noneish_list)} none/na documents found in intermediate_document_list")
     gp_intermediate_list = append_goalpost_info(
         intermediate_document_list, ScoreBy)
     indicator_document_list = group_by_indicator(
@@ -227,8 +226,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
