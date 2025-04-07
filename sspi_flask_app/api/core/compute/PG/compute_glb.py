@@ -126,6 +126,6 @@ def compute_milexp():
     milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
     cleaned_list = cleanSIPRIData(milexp_raw, 'MILEXP')
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
- #   scored_list = score_single_indicator(obs_list, "MILEXP")
-   # sspi_clean_api_data.insert_many(scored_list)
+    scored_list = score_single_indicator(obs_list, "MILEXP")
+    sspi_clean_api_data.insert_many(scored_list)
     return parse_json(obs_list)
