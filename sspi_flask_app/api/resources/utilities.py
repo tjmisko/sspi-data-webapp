@@ -306,7 +306,7 @@ def get_country_code(CountryName):
         return "PRK"
     if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
         return "NER"
-    if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
+    if "democratic republic" in str.lower(CountryName) or "dr" in str.lower(CountryName) and "congo" in str.lower(CountryName):
         return "COD"
     if "congo republic" in str.lower(CountryName):
         return "COG"
@@ -314,6 +314,8 @@ def get_country_code(CountryName):
         return "GNB"
     if "laos" in str.lower(CountryName):
         return "LAO"
+    if "kiye" in str.lower(CountryName):
+        return "TUR"
     if "turkiye" in str.lower(CountryName) or "turkey" in str.lower(CountryName):
         return "TUR"
     if "cape verde" in str.lower(CountryName):
