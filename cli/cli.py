@@ -1,4 +1,5 @@
 import click
+import json
 from cli.utilities import full_name
 from database_connector import SSPIDatabaseConnector
 
@@ -16,6 +17,7 @@ def query(database, indicator_code=None):
     if indicator_code:
         request_string += f"IndicatorCode={indicator_code}"
     res = session.get_data_local(request_string)
+    click.echo(json.dumps(res.json()))
     return res.json()
 
 if __name__ == "__main__":
