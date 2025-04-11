@@ -122,19 +122,22 @@ def compute_foraid():
 def compute_milexp():
     if not sspi_raw_api_data.raw_data_available("MILEXP"):
         return redirect(url_for("collect_bp.MILEXP"))
-    milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
-    cleaned_list = cleanSIPRIData(milexp_raw, 'MILEXP')
+    # milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
+    # milexp_raw = milexp_raw[0]["Raw"]
+    cleaned_list = cleanSIPRIData("local/MILEXP/MILEXP.csv", 'MILEXP', "Percent", 
+                                  "Military expenditure (local currency at current prices) according to the calendar year as a percentage of GDP.")
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "MILEXP")
-   # sspi_clean_api_data.insert_many(scored_list)
+    sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 
 @compute_bp.route("/ARMEXP", methods=['GET'])
 def compute_armexp():
     if not sspi_raw_api_data.raw_data_available("ARMEXP"):
         return redirect(url_for("collect_bp.ARMEXP"))
-    armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
-    cleaned_list = cleanSIPRIData('local/armexp.csv', 'ARMEXP', 'Millions of arms', 
+    # armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
+    # armexp_raw = armexp_raw[0]["Raw"]
+    cleaned_list = cleanSIPRIData("local/ARMEXP/armexp.csv", 'ARMEXP', 'Millions of arms', 
                                   "The supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.")
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")
