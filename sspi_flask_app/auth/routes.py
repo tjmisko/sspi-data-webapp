@@ -116,6 +116,8 @@ def login():
         login_user(user, remember=True,
                    duration=app.config['REMEMBER_COOKIE_DURATION'])
     login_user(user)
+    if not next:
+        return redirect(url_for("client_bp.data"))
     if not is_safe_url(next):
         return Response("Invalid next URL", status=400, mimetype='text/plain')
     flash("Login Successful! Redirecting...")
