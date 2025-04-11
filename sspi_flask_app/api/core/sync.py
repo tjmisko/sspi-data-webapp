@@ -38,34 +38,35 @@ def pull(database_name, IndicatorCode):
 @login_required
 def push(database_name, IndicatorCode):
     local_database = lookup_database(database_name)
-    local_data = local_database.find({"IndicatorCode": IndicatorCode})
+    local_data = local_database.find(
+        {"IndicatorCode": IndicatorCode}, {"_id": 0}
+    )
     message_1 = (
         f"Sourced {len(local_data)} local observations of Indicator "
         f"{IndicatorCode} from local database {database_name}\n"
     )
     app.logger.info(message_1)
     connector = SSPIDatabaseConnector()
-    remote_delete = connector.delete_indicator_data_remote(
+    remote_delete_res = connector.delete_indicator_data_remote(
         database_name, IndicatorCode
     )
-    if remote_delete.status_code != 200:
-        app.logger.error(f"Failed to delete remote data\n{remote_delete.text}")
+    if remote_delete_res.status_code != 200:
+        app.logger.error(f"Failed to delete remote data\n{remote_delete_res.text}")
         return Response(
-            remote_delete.text,
-            status=remote_delete.status_code, mimetype="text/plain"
+            remote_delete_res.text,
+            status=remote_delete_res.status_code, mimetype="text/plain"
         )
-    remote_data = connector.load_json_remote(
+    remote_load_res = connector.load_json_remote(
         local_data, database_name, IndicatorCode
     )
-    if remote_data.status_code != 200:
-        app.logger.error(f"Failed to upload new remote data\n{remote_delete.text}")
+    if remote_load_res.status_code != 200:
+        app.logger.error(f"Failed to upload new remote data\n{
+                         remote_load_res.text}")
         return Response(
-            remote_delete.text,
-            status=remote_delete.status_code, mimetype="text/plain"
+            remote_delete_res.text,
+            status=remote_delete_res.status_code, mimetype="text/plain"
         )
-    message_2 = (
-        f"Inserted {len(remote_data)} local observations of Indicator "
-        f"{IndicatorCode} into remote database {database_name}\n"
+    return Response(
+        "Successfully Completed Database Push\n" + remote_load_res.text,
+        mimetype="text/plain"
     )
-    app.logger.info(message_1 + message_2)
-    return Response(message_1 + message_2, mimetype="text/plain")
