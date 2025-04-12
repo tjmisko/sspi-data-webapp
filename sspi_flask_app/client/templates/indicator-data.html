@@ -9,7 +9,7 @@
     <select class="indicator-dropdown">
         {% include 'indicator-options.html' %}
     </select>
-    <h2> {{ IndicatorCode | upper }} </h2>
+    <p class="hero-text" id="dynamic-indicator-description"></p>
     <script>
         const defaultOption = document.querySelector('select.indicator-dropdown option[value="{{IndicatorCode | upper}}"]')
         defaultOption.selected = true;

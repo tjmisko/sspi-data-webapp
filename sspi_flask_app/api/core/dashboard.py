@@ -6,10 +6,10 @@ from flask import (
     session,
     jsonify,
     request,
-    render_template
+    render_template,
+    current_app as app
 )
 from ...models.sspi import SSPI
-from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
@@ -163,7 +163,11 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         if not preferences.get("pinnedArray"):
             return None
         return preferences
-
+    indicator_description = sspi_metadata.find_one({
+        "DocumentType": "IndicatorDetail",
+        "Metadata.IndicatorCode": IndicatorCode
+    })["Metadata"]["Description"]
+    app.logger.debug(f"Indicator Description: {indicator_description}")
     if request.method == "POST":
         chart_preferences = request.get_json()
         print(type(chart_preferences))
@@ -178,7 +182,6 @@ def get_dynamic_indicator_line_data(IndicatorCode):
     if country_query:
         query["CCode"] = {"$in": country_query}
     dynamic_indicator_data = parse_json(
-        # sspi_dynamic_line_data.find(query, {"_id": 0})
         sspi_dynamic_line_data.find(query)
     )
     min_year = dynamic_indicator_data[0]["minYear"]
@@ -201,6 +204,7 @@ def get_dynamic_indicator_line_data(IndicatorCode):
             "align": "start"
         },
         "labels": year_labels,
+        "description": indicator_description,
         "groupOptions": group_options,
         "chartPreferences": chart_preferences
     })

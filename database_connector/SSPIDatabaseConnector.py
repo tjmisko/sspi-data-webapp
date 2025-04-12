@@ -1,6 +1,6 @@
-from flask import session as sesh
 from os import environ, path
 import ssl
+import json
 from dotenv import load_dotenv
 import pandas as pd
 import requests
@@ -102,7 +102,7 @@ class SSPIDatabaseConnector:
         """
         response = self.local_session.post(
             f"http://127.0.0.1:5000/api/v1/load/{database_name}/{IndicatorCode}",
-            json=observations_list,
+            json=json.dumps(observations_list),
             verify=False
         )
         log.info(f"Remote Load Request Returned with Status Code {response.status_code}")
@@ -112,7 +112,7 @@ class SSPIDatabaseConnector:
                          IndicatorCode: str):
         response = self.remote_session.post(
             f"https://sspi.world/api/v1/load/{database_name}/{IndicatorCode}",
-            json=observations_list
+            json=json.dumps(observations_list)
         )
         log.info(f"Remote Load Request Returned with Status Code {response.status_code}")
         return response
