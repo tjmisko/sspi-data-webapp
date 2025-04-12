@@ -1,6 +1,10 @@
 import click
 import json
-from cli.utilities import full_name, is_numeric_string
+from cli.utilities import (
+    full_name,
+    is_numeric_string,
+    echo_pretty
+)
 from database_connector import SSPIDatabaseConnector
 
 
@@ -39,9 +43,9 @@ def indicator(database, indicator_code):
         raise click.ClickException(
             f"Error! Delete Request Failed with Status Code {res.status_code}"
         )
-        click.echo(res.header)
-        click.echo(res.text)
-    click.echo(res.text)
+        echo_pretty(res.header)
+        echo_pretty(res.text)
+    echo_pretty(res.text)
     return res.text
 
 
@@ -53,14 +57,7 @@ cli.add_command(delete)
 def collect(indicator_code):
     session = SSPIDatabaseConnector()
     for msg in session.collect_data_local(indicator_code):
-        tokens = msg.split(" ")
-        output = []
-        for i, t in enumerate(tokens):
-            if is_numeric_string(t):
-                output.append(click.style(t, fg='cyan'))
-            else:
-                output.append(t)
-        click.echo(" ".join(output))
+        echo_pretty(msg)
 
 
 @cli.command()
@@ -72,6 +69,15 @@ def compute(indicator_code):
     click.echo(json.dumps(res.json()))
     return res.json()
 
+
+@cli.group(invoke_without_command=True)
+def finalize():
+    session = SSPIDatabaseConnector()
+    for msg in session.finalize_data_local():
+        echo_pretty(msg)
+
+
+cli.add_command(finalize)
 
 if __name__ == "__main__":
     cli()

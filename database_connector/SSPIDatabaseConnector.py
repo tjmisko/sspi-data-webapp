@@ -72,16 +72,36 @@ class SSPIDatabaseConnector:
     def collect_data_local(self, indicator_code):
         endpoint = f"http://127.0.0.1:5000/api/v1/collect/{indicator_code}"
         with self.local_session.get(endpoint, stream=True) as res:
-            log.debug(res.url)
             for line in res.iter_lines(decode_unicode=True):
                 yield line
 
     def collect_data_remote(self, indicator_code):
         endpoint = f"https://sspi.world/api/v1/collect/{indicator_code}"
         with self.remote_session.get(endpoint, stream=True) as res:
-            log.debug(res.url)
             for line in res.iter_lines(decode_unicode=True):
                 yield line
+
+    def finalize_data_local(self, special=""):
+        endpoint = "http://127.0.0.1:5000/api/v1/production/finalize"
+        if special:
+            endpoint += special
+            res = self.local_session.get(endpoint)
+            return res.text
+        else:
+            with self.local_session.get(endpoint, stream=True) as res:
+                for line in res.iter_lines(decode_unicode=True):
+                    yield line
+
+    def finalize_data_remote(self, special=""):
+        endpoint = "https://sspi.world/api/v1/production/finalize"
+        if special:
+            endpoint += special
+            res = self.remote_session.get(endpoint)
+            return res.text
+        else:
+            with self.remote_session.get(endpoint, stream=True) as res:
+                for line in res.iter_lines(decode_unicode=True):
+                    yield line
 
     # - [ ] Decide what to do with this method
     def load_dataframe_local(self, dataframe: pd.DataFrame, IndicatorCode):

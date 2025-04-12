@@ -1,4 +1,5 @@
 import re
+import click
 
 
 def full_name(name):
@@ -14,3 +15,14 @@ def full_name(name):
 def is_numeric_string(string):
     pattern = r"^[0-9,.]+$"
     return bool(re.match(pattern, string))
+
+
+def echo_pretty(msg):
+    tokens = msg.split(" ")
+    output = []
+    for i, t in enumerate(tokens):
+        if is_numeric_string(t):
+            output.append(click.style(t, fg='cyan'))
+        else:
+            output.append(t)
+    click.echo(" ".join(output))
