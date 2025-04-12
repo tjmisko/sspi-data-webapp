@@ -18,7 +18,7 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     base_url = url_source + url_params
     response = requests.get(url_source + url_params)
     nPages = response.json().get('totalPages')
-    yield "Iterating through {nPages} pages of source data for SDG {SDGIndicatorCode}\n"
+    yield f"Iterating through {nPages} pages of source data for SDG {SDGIndicatorCode}\n"
     for p in range(1, nPages + 1):
         new_url = f"{base_url}&page={p}"
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
