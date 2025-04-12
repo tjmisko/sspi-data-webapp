@@ -1,11 +1,13 @@
 import click
 import json
-from cli.utilities import full_name
+from cli.utilities import full_name, is_numeric_string
 from database_connector import SSPIDatabaseConnector
+
 
 @click.group()
 def cli():
     pass
+
 
 @cli.command()
 @click.argument("database", type=str, required=True)
@@ -28,8 +30,8 @@ def delete():
 
 @delete.command()
 @click.argument("database", type=str, required=True)
-@click.argument("indicator_code", type=str, required=False)
-def indicator(database, indicator_code=None):
+@click.argument("indicator_code", type=str, required=True)
+def indicator(database, indicator_code):
     database = full_name(database)
     session = SSPIDatabaseConnector()
     res = session.delete_indicator_data_local(database, indicator_code)
@@ -44,6 +46,22 @@ def indicator(database, indicator_code=None):
 
 
 cli.add_command(delete)
+
+
+@cli.command()
+@click.argument("indicator_code", type=str)
+def collect(indicator_code):
+    session = SSPIDatabaseConnector()
+    for msg in session.collect_data_local(indicator_code):
+        tokens = msg.split(" ")
+        output = []
+        for i, t in enumerate(tokens):
+            if is_numeric_string(t):
+                output.append(click.style(t, fg='cyan'))
+            else:
+                output.append(t)
+        click.echo(" ".join(output))
+
 
 if __name__ == "__main__":
     cli()
