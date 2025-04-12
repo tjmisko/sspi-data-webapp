@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
-import sseclient
 import urllib3
 import logging
 
