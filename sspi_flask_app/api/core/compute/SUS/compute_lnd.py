@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -30,8 +30,8 @@ from sspi_flask_app.api.datasource.sdg import (
 @compute_bp.route("/NITROG", methods=['GET'])
 @login_required
 def compute_nitrog():
-    if not sspi_raw_api_data.raw_data_available("NITROG"):
-        return redirect(url_for("collect_bp.NITROG"))
+    app.logger.info("Running /api/v1/compute/NITROG")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "NITROG"})
     raw_data = sspi_raw_api_data.fetch_raw_data("NITROG")
     csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
     SNM_raw = pd.read_csv(csv_virtual_file)
@@ -66,8 +66,8 @@ def compute_watman():
         "ER_H2O_STRESS": "WTSTRS"
     }
     """
-    if not sspi_raw_api_data.raw_data_available("WATMAN"):
-        return redirect(url_for("collect_bp.WATMAN"))
+    app.logger.info("Running /api/v1/compute/WATMAN")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
     total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
     intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
@@ -84,8 +84,8 @@ def compute_watman():
 @compute_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def compute_stkhlm():
-    if not sspi_raw_api_data.raw_data_available("STKHLM"):
-        return redirect(url_for("api_bp.collect_bp.STKHLM"))
+    app.logger.info("Running /api/v1/compute/STKHLM")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "STKHLM"})
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
     full_stk_list = [obs for obs in raw_data if obs["Raw"]
                      ["series"] == "SG_HAZ_CMRSTHOLM"]
@@ -103,8 +103,8 @@ def compute_stkhlm():
 @compute_bp.route("/DEFRST", methods=['GET'])
 @login_required
 def compute_defrst():
-    if not sspi_raw_api_data.raw_data_available("DEFRST"):
-        return redirect(url_for("collect_bp.DEFRST"))
+    app.logger.info("Running /api/v1/compute/DEFRST")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "DEFRST"})
     indicator_detail = sspi_metadata.get_detail("DEFRST")
     lg = indicator_detail["Metadata"]["LowerGoalpost"]
     ug = indicator_detail["Metadata"]["UpperGoalpost"]
@@ -166,8 +166,8 @@ def compute_defrst():
 @compute_bp.route("/CARBON", methods=['GET'])
 @login_required
 def compute_carbon():
-    if not sspi_raw_api_data.raw_data_available("CARBON"):
-        return redirect(url_for("collect_bp.DEFRST"))
+    app.logger.info("Running /api/v1/compute/CARBON")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "CARBON"})
     indicator_detail = sspi_metadata.get_detail("CARBON")
     lg = indicator_detail["Metadata"]["LowerGoalpost"]
     ug = indicator_detail["Metadata"]["UpperGoalpost"]

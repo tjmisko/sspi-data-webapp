@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -28,8 +28,8 @@ from sspi_flask_app.api.datasource.oecdstat import (
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
-    if not sspi_raw_api_data.raw_data_available("SENIOR"):
-        return redirect(url_for("collect_bp.SENIOR"))
+    app.logger.info("Running /api/v1/compute/SENIOR")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "SENIOR"})
     raw_data = sspi_raw_api_data.fetch_raw_data("SENIOR")
     # metadata = raw_data[0]["Metadata"]
     # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
@@ -76,8 +76,8 @@ def compute_senior():
 @compute_bp.route("/FATINJ", methods=['GET'])
 @login_required
 def compute_fatinj():
-    if not sspi_raw_api_data.raw_data_available("FATINJ"):
-        return redirect(url_for("collect_bp.FATINJ"))
+    app.logger.info("Running /api/v1/compute/FATINJ")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "FATINJ"})
     raw_data = sspi_raw_api_data.fetch_raw_data("FATINJ")
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     fatinj_raw = pd.read_csv(csv_virtual_file)
