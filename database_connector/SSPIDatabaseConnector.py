@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
+import sseclient
 import urllib3
 import logging
 
@@ -13,7 +14,8 @@ log = logging.getLogger(__name__)
 
 class SSPIDatabaseConnector:
     def __init__(self):
-        self.token = self.get_token()
+        self.remote_token = self.get_token()
+        self.local_token = self.get_token(token_name="SSPI_APIKEY_LOCAL")
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
         self.local_session = requests.Session()
@@ -22,21 +24,22 @@ class SSPIDatabaseConnector:
         self.login_session_local()
         self.login_session_remote()
 
-    def get_token(self):
+    def get_token(self, token_name="SSPI_APIKEY"):
         basedir = path.abspath(path.dirname(path.dirname(__file__)))
         load_dotenv(path.join(basedir, '.env'))
-        if environ.get("SSPI_APIKEY") is None:
+        key = environ.get(token_name)
+        if key is None:
             log.error("No API key found in environment variables")
             raise ValueError("No API key found in environment variables")
         log.info("API key retrieval successful")
-        return environ.get("SSPI_APIKEY")
+        return key
 
     def login_session_local(self):
-        headers = {'Authorization': f'Bearer {self.token}'}
+        headers = {'Authorization': f'Bearer {self.local_token}'}
         self.local_session.headers.update(headers)
 
     def login_session_remote(self):
-        headers = {'Authorization': f'Bearer {self.token}'}
+        headers = {'Authorization': f'Bearer {self.remote_token}'}
         self.remote_session.headers.update(headers)
 
     def get_data_local(self, request_string):
@@ -48,6 +51,20 @@ class SSPIDatabaseConnector:
         if request_string[0] == "/":
             request_string = request_string[1:]
         return self.remote_session.get(f"https://sspi.world/{request_string}")
+
+    def collect_data_local(self, indicator_code):
+        endpoint = f"http://127.0.0.1:5000/api/v1/collect{indicator_code}"
+        with self.local_session.get(endpoint, stream=True) as response:
+            client = sseclient.SSEClient(response)
+            for event in client.events():
+                yield event.data
+
+    def collect_data_remote(self, indicator_code):
+        endpoint = f"http://127.0.0.1:5000/api/v1/collect{indicator_code}"
+        with self.local_session.get(endpoint, stream=True) as response:
+            client = sseclient.SSEClient(response)
+            for event in client.events():
+                yield event.data
 
     # - [ ] Decide what to do with this method
     def load_dataframe_local(self, dataframe: pd.DataFrame, IndicatorCode):
