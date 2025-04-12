@@ -42,6 +42,24 @@ class SSPIDatabaseConnector:
         headers = {'Authorization': f'Bearer {self.remote_token}'}
         self.remote_session.headers.update(headers)
 
+    def call_local(self, request_string, request_method="GET"):
+        if request_string[0] == "/":
+            request_string = request_string[1:]
+        if request_method == "POST":
+            return self.local_session.post(f"http://127.0.0.1:5000/{request_string}")
+        if request_method == "DELETE":
+            return self.local_session.delete(f"http://127.0.0.1:5000/{request_string}")
+        return self.local_session.get(f"http://127.0.0.1:5000/{request_string}")
+
+    def call_remote(self, request_string, request_method="GET"):
+        if request_string[0] == "/":
+            request_string = request_string[1:]
+        if request_method == "POST":
+            return self.remote_session.post(f"https://sspi.world/{request_string}")
+        if request_method == "DELETE":
+            return self.remote_session.delete(f"https://sspi.world/{request_string}")
+        return self.remote_session.get(f"https://sspi.world/{request_string}")
+
     def get_data_local(self, request_string):
         if request_string[0] == "/":
             request_string = request_string[1:]
