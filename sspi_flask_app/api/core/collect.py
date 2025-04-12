@@ -474,7 +474,8 @@ def foraid():
 @login_required
 def milexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("local/MILEXP/MILEXP.csv", "MILEXP", **kwargs)
+        yield from collectSIPRIdataNEW("MILEXP", **kwargs)
+        # yield from collectSIPRIdata("local/MILEXP/MILEXP.csv", "MILEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/ARMEXP", methods=['GET'])
