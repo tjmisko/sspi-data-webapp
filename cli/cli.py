@@ -63,5 +63,15 @@ def collect(indicator_code):
         click.echo(" ".join(output))
 
 
+@cli.command()
+@click.argument("indicator_code", type=str, required=True)
+def compute(indicator_code):
+    session = SSPIDatabaseConnector()
+    request_string = f"/api/v1/compute/{indicator_code}"
+    res = session.get_data_local(request_string)
+    click.echo(json.dumps(res.json()))
+    return res.json()
+
+
 if __name__ == "__main__":
     cli()
