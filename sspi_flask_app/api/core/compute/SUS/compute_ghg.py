@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -10,7 +10,6 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
     filter_incomplete_data,
-    score_single_indicator
 )
 from sspi_flask_app.api.datasource.worldbank import (
     clean_wb_data
@@ -26,9 +25,7 @@ import json
 @compute_bp.route("/COALPW", methods=['GET'])
 @login_required
 def compute_coalpw():
-    if not sspi_raw_api_data.raw_data_available("COALPW"):
-        return redirect(url_for("api_bp.collect_bp.COALPW"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
+    """
     product_codes = {
         "COAL": "Coal",
         "NATGAS": "Natural gas",
@@ -38,6 +35,10 @@ def compute_coalpw():
         "COMRENEW": "Biofuels and waste",
         "MTOTOIL": "Oil"
     }
+    """
+    app.logger.info("Running /api/v1/compute/COALPW")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "COALPW"})
+    raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
     metadata_code_map = {
         "COAL": "TLCOAL",
         "NATGAS": "NATGAS",
@@ -75,6 +76,8 @@ def compute_coalpw():
 @compute_bp.route("/GTRANS", methods=['GET'])
 @login_required
 def compute_gtrans():
+    app.logger.info("Running /api/v1/compute/GTRANS")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "GTRANS"})
     lg = 7500
     ug = 0
     pop_data = sspi_raw_api_data.fetch_raw_data(

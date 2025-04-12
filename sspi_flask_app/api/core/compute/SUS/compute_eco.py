@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -22,8 +22,8 @@ from sspi_flask_app.api.datasource.sdg import (
 @compute_bp.route("/BIODIV", methods=['GET'])
 @login_required
 def compute_biodiv():
-    if not sspi_raw_api_data.raw_data_available("BIODIV"):
-        return redirect(url_for("api_bp.collect_bp.BIODIV"))
+    app.logger.info("Running /api/v1/compute/BIODIV")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "BIODIV"})
     raw_data = sspi_raw_api_data.fetch_raw_data("BIODIV")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
         raw_data)
@@ -42,8 +42,8 @@ def compute_biodiv():
 @compute_bp.route("/REDLST", methods=['GET'])
 @login_required
 def compute_rdlst():
-    if not sspi_raw_api_data.raw_data_available("REDLST"):
-        return redirect(url_for("api_bp.collect_bp.REDLST"))
+    app.logger.info("Running /api/v1/compute/REDLST")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "REDLST"})
     raw_data = sspi_raw_api_data.fetch_raw_data("REDLST")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
         raw_data)

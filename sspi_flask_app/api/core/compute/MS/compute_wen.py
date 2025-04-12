@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -7,8 +7,6 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 
@@ -20,8 +18,8 @@ from io import StringIO
 @compute_bp.route("/UNEMPL", methods=['GET'])
 @login_required
 def compute_unempl():
-    if not sspi_raw_api_data.raw_data_available("UNEMPL"):
-        return redirect(url_for("collect_bp.UNEMPL"))
+    app.logger.info("Running /api/v1/compute/UNEMPL")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "UNEMPL"})
     raw_data = sspi_raw_api_data.fetch_raw_data("UNEMPL")
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     colbar_raw = pd.read_csv(csv_virtual_file)
@@ -45,8 +43,8 @@ def compute_unempl():
 @compute_bp.route("/COLBAR", methods=['GET'])
 @login_required
 def compute_colbar():
-    if not sspi_raw_api_data.raw_data_available("COLBAR"):
-        return redirect(url_for("collect_bp.COLBAR"))
+    app.logger.info("Running /api/v1/compute/COLBAR")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "COLBAR"})
     raw_data = sspi_raw_api_data.fetch_raw_data("COLBAR")
     csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
     colbar_raw = pd.read_csv(csv_virtual_file)

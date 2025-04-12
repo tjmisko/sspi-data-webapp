@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -19,8 +19,8 @@ from sspi_flask_app.api.datasource.worldbank import (
 @compute_bp.route("/FDEPTH", methods=['GET'])
 @login_required
 def compute_fdepth():
-    if not sspi_raw_api_data.raw_data_available("FDEPTH"):
-        return redirect(url_for("collect_bp.FDEPTH"))
+    app.logger.info("Running /api/v1/compute/FDEPTH")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "FDEPTH"})
     credit_raw = sspi_raw_api_data.fetch_raw_data(
         "FDEPTH", IntermediateCode="CREDIT")
     credit_clean = clean_wb_data(credit_raw, "FDEPTH", unit="Percent")
@@ -40,8 +40,8 @@ def compute_fdepth():
 @compute_bp.route("/PUBACC", methods=['GET'])
 @login_required
 def compute_pubacc():
-    if not sspi_raw_api_data.raw_data_available("PUBACC"):
-        return redirect(url_for("collect_bp.PUBACC"))
+    app.logger.info("Running /api/v1/compute/PUBACC")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "PUBACC"})
     pubacc_raw = sspi_raw_api_data.fetch_raw_data("PUBACC")
     pubacc_clean = clean_wb_data(pubacc_raw, "PUBACC", unit="Percent")
     pubacc_clean = score_single_indicator(pubacc_clean, "PUBACC")

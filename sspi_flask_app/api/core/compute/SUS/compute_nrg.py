@@ -25,62 +25,14 @@ from sspi_flask_app.api.datasource.sdg import (
 )
 
 
-# @compute_bp.route("/COALPW", methods=['GET'])
-# @login_required
-# def compute_coalpw():
-#     if not sspi_raw_api_data.raw_data_available("COALPW"):
-#         return redirect(url_for("api_bp.collect_bp.COALPW"))
-#     raw_data = sspi_raw_api_data.fetch_raw_data("COALPW")
-#     product_codes = {
-#         "COAL": "Coal",
-#         "NATGAS": "Natural gas",
-#         "NUCLEAR": "Nuclear",
-#         "HYDRO": "Hydro",
-#         "GEOTHERM": "Wind, solar, etc.",
-#         "COMRENEW": "Biofuels and waste",
-#         "MTOTOIL": "Oil"
-#     }
-#     metadata_code_map = {
-#         "COAL": "TLCOAL",
-#         "NATGAS": "NATGAS",
-#         "NUCLEAR": "NCLEAR",
-#         "HYDRO": "HYDROP",
-#         "GEOTHERM": "GEOPWR",
-#         "COMRENEW": "BIOWAS",
-#         "MTOTOIL": "FSLOIL"
-#     }
-#     intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "COALPW"))
-#     intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(
-#         lambda s: len(s) != 3)].index, inplace=True)
-#     intermediate_data["IntermediateCode"] = intermediate_data["IntermediateCode"].map(
-#         lambda x: metadata_code_map[x])
-#     intermediate_data.astype({"Year": "int", "Value": "float"})
-#     # adding sum of available intermediates as an intermediate, in order to complete data
-#     sums = intermediate_data.groupby(['Year', 'CountryCode']).agg({
-#         'Value': 'sum'}).reset_index()
-#     sums['IntermediateCode'], sums['Unit'], sums['IndicatorCode'] = 'TTLSUM', 'TJ', 'COALPW'
-#     intermediate_list = pd.concat([intermediate_data, sums])
-#     zipped_document_list = zip_intermediates(
-#         json.loads(str(intermediate_list.to_json(orient="records")),
-#                    parse_int=int, parse_float=float),
-#         "COALPW",
-#         ScoreFunction=lambda TLCOAL, TTLSUM: (TLCOAL)/(TTLSUM),
-#         ScoreBy="Values"
-#     )
-#     clean_document_list, incomplete_observations = filter_incomplete_data(
-#         zipped_document_list)
-#     sspi_clean_api_data.insert_many(clean_document_list)
-#     print(incomplete_observations)
-#     return parse_json(clean_document_list)
-
-
 @compute_bp.route("/AIRPOL")
 @login_required
 def compute_airpol():
-    if not sspi_raw_api_data.raw_data_available("AIRPOL"):
-        return redirect(url_for("api_bp.collect_bp.AIRPOL"))
+    app.logger.info("Running /api/v1/compute/AIRPOL")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "AIRPOL"})
     raw_data = sspi_raw_api_data.fetch_raw_data("AIRPOL")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
+        raw_data)
     flattened = flatten_nested_dictionary_airpol(intermediate_obs_dict)
     scored_list = score_single_indicator(flattened, "AIRPOL")
     cleaned, filtered = filter_incomplete_data(scored_list)
@@ -90,10 +42,10 @@ def compute_airpol():
 
 
 @compute_bp.route("/NRGINT", methods=['GET'])
-# @login_required
+@login_required
 def compute_nrgint():
-    if not sspi_raw_api_data.raw_data_available("NRGINT"):
-        return redirect(url_for("collect_bp.NRGINT"))
+    app.logger.info("Running /api/v1/compute/NRGINT")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "NRGINT"})
     nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
     intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
         nrgint_raw)
@@ -109,11 +61,7 @@ def compute_nrgint():
 @compute_bp.route("/ALTNRG", methods=['GET'])
 @login_required
 def compute_altnrg():
-    if not sspi_raw_api_data.raw_data_available("ALTNRG"):
-        return redirect(url_for("collect_bp.ALTNRG"))
-    raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
-
-    # most of these intermediates used to compute sum
+    """
     product_codes = {
         "COAL": "Coal",
         "NATGAS": "Natural gas",
@@ -123,7 +71,10 @@ def compute_altnrg():
         "COMRENEW": "Biofuels and waste",
         "MTOTOIL": "Oil"
     }
-
+    """
+    app.logger.info("Running /api/v1/compute/ALTNRG")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "ALTNRG"})
+    raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
     metadata_code_map = {
         "COAL": "TLCOAL",
         "NATGAS": "NATGAS",
@@ -133,7 +84,6 @@ def compute_altnrg():
         "COMRENEW": "BIOWAS",
         "MTOTOIL": "FSLOIL"
     }
-
     intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "ALTNRG"))
     intermediate_data.drop(intermediate_data[intermediate_data["CountryCode"].map(
         lambda s: len(s) != 3)].index, inplace=True)
@@ -144,7 +94,6 @@ def compute_altnrg():
     sums = intermediate_data.groupby(['Year', 'CountryCode']).agg({
         'Value': 'sum'}).reset_index()
     sums['IntermediateCode'], sums['Unit'], sums['IndicatorCode'] = 'TTLSUM', 'TJ', 'ALTNRG'
-
     # running the samce operations for alternative energy sources
     inter_sums = intermediate_data[intermediate_data["IntermediateCode"].isin(
         ["HYDROP", "NCLEAR", "GEOPWR", "BIOWAS"])]
