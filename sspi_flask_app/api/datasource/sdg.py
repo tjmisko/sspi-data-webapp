@@ -1,6 +1,6 @@
 from pycountry import countries
 from sspi_flask_app.models.database import sspi_raw_api_data
-from ..resources.utilities import (
+from sspi_flask_app.api.resources.utilities import (
     format_m49_as_string,
     string_to_float,
 )
@@ -16,10 +16,9 @@ def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
     url_params = f"indicator={SDGIndicatorCode}"
     url_source = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
     base_url = url_source + url_params
-    print(base_url)
     response = requests.get(url_source + url_params)
     nPages = response.json().get('totalPages')
-    yield "Iterating through {0} pages of source data for SDG {1}\n".format(nPages, SDGIndicatorCode)
+    yield "Iterating through {nPages} pages of source data for SDG {SDGIndicatorCode}\n"
     for p in range(1, nPages + 1):
         new_url = f"{base_url}&page={p}"
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
