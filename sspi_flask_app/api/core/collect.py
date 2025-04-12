@@ -24,7 +24,7 @@ from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.who import collectCSTUNTData
 from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
-from sspi_flask_app.api.datasource.sipri import collectSIPRIdata
+from sspi_flask_app.api.datasource.sipri import collectSIPRIdata, collectSIPRIdataNEW
 from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 
 from .countrychar import insert_pop_data
@@ -481,7 +481,8 @@ def milexp():
 @login_required
 def armexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+        # yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+        yield from collectSIPRIdataNEW("ARMEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #######################################

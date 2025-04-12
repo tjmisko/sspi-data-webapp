@@ -4,23 +4,42 @@ import pandas as pd
 from ..resources.utilities import get_country_code
 import requests
 
+def collectSIPRIdataNEW(IndicatorCode, **kwargs):
+    if IndicatorCode == "ARMEXP":
 
+        url = "https://atbackend.sipri.org/api/p/trades/import-export-csv/"
+        headers = {
+            "Origin": "https://armstransfers.sipri.org",
+            "Referer": "https://armstransfers.sipri.org",
+            "Content-Type": "application/json"
+            }
+        query_payload = {
+            "filters":[{"field":"Year range 1","oldField":"","condition":"contains","value1":1990,"value2":2025,"listData":[]},
+                    {"field":"orderbyseller","oldField":"","condition":"","value1":"","value2":"","listData":[]},
+                    {"field":"DeliveryType","oldField":"","condition":"","value1":"delivered","value2":"","listData":[]},
+                    {"field":"Status","oldField":"","condition":"","value1":"0","value2":"","listData":[]}],
+            "logic":"AND"}
+        response = requests.post(url, headers = headers, payload = query_payload)
+        print(response.content)
+    yield "done!"
 
 def collectSIPRIdata(RawData, IndicatorCode, **kwargs):
-    url = "https://atbackend.sipri.org/api/p/trades/import-export-csv/"
-    headers = {
-        "Origin": "https://armstransfers.sipri.org",
-        "Referer": "https://armstransfers.sipri.org",
-        "Content-Type": "application/json"
-        }
-    query_payload = {
-        "filters":[{"field":"Year range 1","oldField":"","condition":"contains","value1":1990,"value2":2025,"listData":[]},
-                   {"field":"orderbyseller","oldField":"","condition":"","value1":"","value2":"","listData":[]},
-                   {"field":"DeliveryType","oldField":"","condition":"","value1":"delivered","value2":"","listData":[]},
-                   {"field":"Status","oldField":"","condition":"","value1":"0","value2":"","listData":[]}],
-        "logic":"AND"}
-    response = requests.post(url, headers = headers, payload = query_payload)
-    print(response.content)
+    if IndicatorCode == "ARMEXP":
+
+        url = "https://atbackend.sipri.org/api/p/trades/import-export-csv/"
+        headers = {
+            "Origin": "https://armstransfers.sipri.org",
+            "Referer": "https://armstransfers.sipri.org",
+            "Content-Type": "application/json"
+            }
+        query_payload = {
+            "filters":[{"field":"Year range 1","oldField":"","condition":"contains","value1":1990,"value2":2025,"listData":[]},
+                    {"field":"orderbyseller","oldField":"","condition":"","value1":"","value2":"","listData":[]},
+                    {"field":"DeliveryType","oldField":"","condition":"","value1":"delivered","value2":"","listData":[]},
+                    {"field":"Status","oldField":"","condition":"","value1":"0","value2":"","listData":[]}],
+            "logic":"AND"}
+        response = requests.post(url, headers = headers, payload = query_payload)
+        print(response.content)
 
     local_csv_file = pd.read_csv(RawData)
     csv_string = local_csv_file.to_csv(index=False)  
