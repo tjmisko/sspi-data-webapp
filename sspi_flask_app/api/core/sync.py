@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.resources.utilities import lookup_database
-from database_connector import SSPIDatabaseConnector
+from connector import SSPIDatabaseConnector
 
 
 sync_bp = Blueprint(

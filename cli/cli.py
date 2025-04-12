@@ -5,7 +5,7 @@ from cli.utilities import (
     is_numeric_string,
     echo_pretty
 )
-from database_connector import SSPIDatabaseConnector
+from connector import SSPIDatabaseConnector
 
 
 @click.group()

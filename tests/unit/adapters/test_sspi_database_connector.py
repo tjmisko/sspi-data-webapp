@@ -1,4 +1,4 @@
-from database_connector import SSPIDatabaseConnector
+from connector import SSPIDatabaseConnector
 
 
 def test_connector_login():
