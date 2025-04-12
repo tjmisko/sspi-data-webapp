@@ -13,7 +13,7 @@ def cli():
     pass
 
 
-@cli.command()
+@cli.command(help="Query an SSPI Database")
 @click.argument("database", type=str, required=True)
 @click.argument("indicator_code", type=str, required=False)
 def query(database, indicator_code=None):
@@ -27,7 +27,7 @@ def query(database, indicator_code=None):
     return res.json()
 
 
-@click.group()
+@click.group(help="Delete data from an SSPI Database")
 def delete():
     pass
 
@@ -52,7 +52,7 @@ def indicator(database, indicator_code):
 cli.add_command(delete)
 
 
-@cli.command()
+@cli.command(help="Collect raw data from source APIs")
 @click.argument("indicator_code", type=str)
 def collect(indicator_code):
     session = SSPIDatabaseConnector()
@@ -60,7 +60,7 @@ def collect(indicator_code):
         echo_pretty(msg)
 
 
-@cli.command()
+@cli.command(help="Clean raw indicator data and compute indicator scores")
 @click.argument("indicator_code", type=str, required=True)
 def compute(indicator_code):
     session = SSPIDatabaseConnector()
@@ -70,7 +70,7 @@ def compute(indicator_code):
     return res.json()
 
 
-@cli.group(invoke_without_command=True)
+@cli.group(invoke_without_command=True, help="Finalize clean data for plotting")
 def finalize():
     session = SSPIDatabaseConnector()
     for msg in session.finalize_data_local():
