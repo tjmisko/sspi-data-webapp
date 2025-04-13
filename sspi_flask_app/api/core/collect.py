@@ -384,7 +384,7 @@ def sansrv():
 def intrnt():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
