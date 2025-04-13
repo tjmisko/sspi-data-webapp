@@ -174,3 +174,8 @@ def overall_scores():
 @login_required
 def paper_resources():
     return render_template("paper-resources.html")
+
+
+@client_bp.route('/api/v1/view/line/<idcode>')
+def view_chart_resource(idcode):
+    return render_template("headless/dynamic-line.html", idcode=idcode)
