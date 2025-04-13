@@ -11,7 +11,7 @@ sync_bp = Blueprint(
 )
 
 
-@sync_bp.route("/pull/<database_name>/<IndicatorCode>", methods=["GET"])
+@sync_bp.route("/pull/<database_name>/<IndicatorCode>", methods=["POST"])
 @login_required
 def pull(database_name, IndicatorCode):
     local_database = lookup_database(database_name)
