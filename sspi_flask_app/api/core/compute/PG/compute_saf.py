@@ -48,7 +48,7 @@ def compute_prison():
             PRIPOP / UNPOPL * 100000, lg, ug),
         ValueFunction=lambda PRIPOP, UNPOPL: PRIPOP / UNPOPL * 100000,
         UnitFunction=lambda PRIPOP, UNPOPL: "Prisoners Per 100,000",
-        ScoreBy="Values")
+        ScoreBy="Value")
     clean_document_list, incomplete_observations = filter_incomplete_data(
         final_list)
     sspi_clean_api_data.insert_many(clean_document_list)
