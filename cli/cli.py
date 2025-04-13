@@ -2,7 +2,6 @@ import click
 import json
 from cli.utilities import (
     full_name,
-    is_numeric_string,
     echo_pretty
 )
 from connector import SSPIDatabaseConnector
@@ -18,6 +17,7 @@ def cli():
 @click.argument("indicator_code", type=str, required=False)
 def query(database, indicator_code=None):
     database = full_name(database)
+    indicator_code = indicator_code.upper()
     session = SSPIDatabaseConnector()
     request_string = f"/api/v1/query/{database}?"
     if indicator_code:
@@ -37,6 +37,7 @@ def delete():
 @click.argument("indicator_code", type=str, required=True)
 def indicator(database, indicator_code):
     database = full_name(database)
+    indicator_code = indicator_code.upper()
     session = SSPIDatabaseConnector()
     res = session.delete_indicator_data_local(database, indicator_code)
     if res.status_code != 200:
@@ -56,6 +57,7 @@ cli.add_command(delete)
 @click.argument("indicator_code", type=str)
 def collect(indicator_code):
     session = SSPIDatabaseConnector()
+    indicator_code = indicator_code.upper()
     for msg in session.collect_data_local(indicator_code):
         echo_pretty(msg)
 
@@ -64,6 +66,7 @@ def collect(indicator_code):
 @click.argument("indicator_code", type=str, required=True)
 def compute(indicator_code):
     session = SSPIDatabaseConnector()
+    indicator_code = indicator_code.upper()
     request_string = f"/api/v1/compute/{indicator_code}"
     res = session.get_data_local(request_string)
     click.echo(json.dumps(res.json()))
