@@ -55,15 +55,20 @@ def duplicates(database, remote=False):
 def indicator(database, indicator_code, remote=False):
     database = full_name(database)
     indicator_code = indicator_code.upper()
-    connector = SSPIDatabaseConnector()
-    res = connector.delete_indicator_data(database, indicator_code, remote=remote)
-    if res.status_code != 200:
-        raise click.ClickException(
-            f"Error! Delete Request Failed with Status Code {res.status_code}"
-        )
-        echo_pretty(res.header)
-        echo_pretty(res.text)
-    echo_pretty(res.text)
+    confirm_msg_lst = [
+        "Confirm ",
+        click.style("DELETE", fg="red"),
+        " of all observations of ",
+        click.style(indicator_code, fg="red"),
+        " from ",
+        click.style((lambda x: "Remote" if x else "Local")(remote), fg="red"),
+        " database ",
+        click.style(database, fg="red")
+    ]
+    if click.confirm("".join(confirm_msg_lst)):
+        connector = SSPIDatabaseConnector()
+        msg = connector.delete_indicator_data(database, indicator_code, remote=remote)
+        echo_pretty(msg)
 
 
 cli.add_command(delete)
