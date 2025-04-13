@@ -189,11 +189,11 @@ class MongoWrapper:
 
     def validate_value(self, document: dict, document_number: int = 0):
         # Validate Value format
-        if not "Value" in document.keys():
+        if "Value" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' is a required argument (document {document_number})")
-        if not type(document["Value"]) in [int, float]:
+        if type(document["Value"]) not in [int, float]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' must be a float or integer (document {document_number})")

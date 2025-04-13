@@ -94,15 +94,18 @@ def lookup_database(database_name):
     raise InvalidDatabaseError(database_name)
 
 
-def string_to_float(string):
+def string_to_float(string) -> str | float:
     """
-    Passes back string 'NaN' instead of float NaN
+    Attempts conversion to float, otherwise returns "NaN" string.
+
+    To filter any non-numeric observations, simply check whether the return
+    value is a string or a float.
     """
-    if string is None:
+    if not string:
         return "NaN"
-    if string == "N":
-        return "NaN"
-    if math.isnan(float(string)):
+    try:
+        return float(string)
+    except ValueError:
         return "NaN"
 
 
