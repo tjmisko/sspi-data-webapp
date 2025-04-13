@@ -135,12 +135,15 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
         intermediate_document_list)
     print(f"There were {len(noneish_list)} none/na documents found in intermediate_document_list")
     gp_intermediate_list = append_goalpost_info(
-        intermediate_document_list, ScoreBy)
+        intermediate_document_list, ScoreBy
+    )
     indicator_document_list = group_by_indicator(
-        gp_intermediate_list, IndicatorCode)
+        gp_intermediate_list, IndicatorCode
+    )
     scored_indicator_document_list = score_indicator_documents(
-        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy)
-    return scored_indicator_document_list
+        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+    )
+    return filter_incomplete_data(scored_indicator_document_list)
 
 
 def convert_data_types(intermediate_document_list):
@@ -245,9 +248,6 @@ def filter_incomplete_data(indicator_document_list):
     """
     Utility function for filtering incomplete observations resulting
     from missing data.
-
-    Call on the result of `zip_intermediates` before inserting into the
-    clean database.
     """
     filtered_list = []
     partial_observation_list = []
