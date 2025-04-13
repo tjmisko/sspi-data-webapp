@@ -101,8 +101,12 @@ def delete_duplicates():
     database = lookup_database(request.form.get("database"))
     if remove_duplicates_form.validate_on_submit():
         count = database.drop_duplicates()
-        flash("Found and deleted {0} duplicate observations from database {1}".format(
-            count, database.name))
+        msg = (
+            f"Found and deleted {count} duplicate observations "
+            f"from database {database.name}"
+        )
+        app.logger.info(msg)
+        flash(msg)
     return redirect(url_for(".get_delete_page"))
 
 
@@ -111,8 +115,9 @@ def delete_duplicates():
 def remove_loose_data():
     remove_loose_data_form = RemoveLooseDataForm(request.form)
     database = lookup_database(request.form.get("database"))
+    indicator_codes = sspi_metadata.indicator_codes()
     if remove_loose_data_form.validate_on_submit():
-        MongoQuery = {"IndicatorCode": {"$nin": indicator_codes()}}
+        MongoQuery = {"IndicatorCode": {"$nin": indicator_codes}}
         count = database.delete_many(MongoQuery)
         flash(f"Deleted {count} observations from database {database.name}")
     return redirect(url_for(".get_delete_page"))
