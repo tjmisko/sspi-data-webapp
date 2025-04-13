@@ -4,6 +4,7 @@ import time
 from pycountry import countries
 from ..resources.utilities import string_to_float
 
+
 def collectUISdata(UISIndicatorCode, IndicatorCode, **kwargs):
     yield f"Collecting data for UNESCO Institute for Statistics Indicator {UISIndicatorCode}\n"
     url_source = f"https://api.uis.unesco.org/api/public/data/indicators?indicator={UISIndicatorCode}"
@@ -15,6 +16,7 @@ def collectUISdata(UISIndicatorCode, IndicatorCode, **kwargs):
         document_list.append(obs)
     sspi_raw_api_data.raw_insert_many(document_list, IndicatorCode, **kwargs)
     yield f"Inserted {count} data points; collection complete for UNESCO Institute for Statistics Indicator {UISIndicatorCode}"
+
 
 def cleanUISdata(raw_data, IndicatorCode, unit, description):
     clean_data_list = []
@@ -37,5 +39,3 @@ def cleanUISdata(raw_data, IndicatorCode, unit, description):
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
-
-        
