@@ -7,7 +7,6 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    filter_incomplete_data,
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.worldbank import clean_wb_data
@@ -21,11 +20,9 @@ def compute_taxrev():
     sspi_clean_api_data.delete_many({"IndicatorCode": "TAXREV"})
     taxrev_raw = sspi_raw_api_data.fetch_raw_data("TAXREV")
     taxrev_clean = clean_wb_data(taxrev_raw, "TAXREV", "% of GDP")
-    scored = score_single_indicator(taxrev_clean, "TAXREV")
-    filtered_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(filtered_list)
+    scored_list = score_single_indicator(taxrev_clean, "TAXREV")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/CRPTAX")
@@ -35,8 +32,6 @@ def compute_crptax():
     sspi_clean_api_data.delete_many({"IndicatorCode": "CRPTAX"})
     crptax_raw = sspi_raw_api_data.fetch_raw_data("CRPTAX")
     crptax_clean = cleanTaxFoundation(crptax_raw, "CRPTAX", "Tax Rate", "Corporate Taxes")
-    scored = score_single_indicator(crptax_clean, "CRPTAX")
-    filtered_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(scored)
+    scored_list = score_single_indicator(crptax_clean, "CRPTAX")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)

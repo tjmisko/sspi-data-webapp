@@ -6,14 +6,13 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    filter_incomplete_data,
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.who import (
     cleanWHOdata
 )
 from sspi_flask_app.api.datasource.sdg import (
-    extract_sdg_pivot_data_to_nested_dictionary,
+    extract_sdg,
     flatten_nested_dictionary_fampln
 )
 from flask import current_app as app
@@ -31,11 +30,9 @@ def compute_atbrth():
     health personnel
     """
     cleaned = cleanWHOdata(raw_data, "ATBRTH", "Percent", description)
-    scored = score_single_indicator(cleaned, "ATBRTH")
-    filtered_list, incomplete_data = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
+    scored_list = score_single_indicator(cleaned, "ATBRTH")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/DPTCOV")
@@ -46,11 +43,9 @@ def compute_dptcov():
     raw_data = sspi_raw_api_data.fetch_raw_data("DPTCOV")
     description = "DTP3 immunization coverage among one-year-olds (%)"
     cleaned = cleanWHOdata(raw_data, "DPTCOV", "Percent", description)
-    scored = score_single_indicator(cleaned, "DPTCOV")
-    filtered_list, incomplete_data = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
+    scored_list = score_single_indicator(cleaned, "DPTCOV")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/PHYSPC")
@@ -59,17 +54,15 @@ def compute_physpc():
     app.logger.info("Running /api/v1/compute/PHYSPC")
     sspi_clean_api_data.delete_many({"IndicatorCode": "PHYSPC"})
     raw_data = sspi_raw_api_data.fetch_raw_data("PHYSPC")
-    unit = "Doctors/10000"
-    description = """
-    Number of medical doctors (physicians), both generalists and specialists,
-    expressed per 10,000 people.
-    """
+    unit = "Doctors per 10000"
+    description = (
+        "Number of medical doctors (physicians), both generalists and "
+        "specialists, expressed per 10,000 people."
+    )
     cleaned = cleanWHOdata(raw_data, "PHYSPC", unit, description)
-    scored = score_single_indicator(cleaned, "PHYSPC")
-    filtered_list, incomplete_data = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
+    scored_list = score_single_indicator(cleaned, "PHYSPC")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/FAMPLN")
@@ -78,13 +71,11 @@ def compute_fampln():
     app.logger.info("Running /api/v1/compute/FAMPLN")
     sspi_clean_api_data.delete_many({"IndicatorCode": "FAMPLN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("FAMPLN")
-    inter = extract_sdg_pivot_data_to_nested_dictionary(raw_data)
+    inter = extract_sdg(raw_data)
     final = flatten_nested_dictionary_fampln(inter)
-    computed_list = score_single_indicator(final, "FAMPLN")
-    filtered_list, incomplete_data = filter_incomplete_data(computed_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(len(incomplete_data))
-    return parse_json(filtered_list)
+    scored_list = score_single_indicator(final, "FAMPLN")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/CSTUNT", methods=['GET'])

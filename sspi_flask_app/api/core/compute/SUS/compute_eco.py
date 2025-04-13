@@ -8,7 +8,6 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 
@@ -44,17 +43,14 @@ def compute_biodiv():
         rename_map,
         drop_list,
     )
-    zipped_document_list = zip_intermediates(
+    clean_list, incomplete_list = zip_intermediates(
         intermediate_list, "BIODIV",
         ScoreFunction=lambda MARINE, TERRST, FRSHWT: (MARINE + TERRST + FRSHWT) / 3,
         ScoreBy="Score"
     )
-    clean_observations, incomplete_observations = filter_incomplete_data(
-        zipped_document_list
-    )
-    sspi_clean_api_data.insert_many(clean_observations)
-    print(incomplete_observations)
-    return parse_json(clean_observations)
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/REDLST", methods=['GET'])
@@ -67,19 +63,9 @@ def compute_rdlst():
     idcode_map = {
         "ER_RSK_LST": "REDLST",
     }
-    rename_map = {
-        "units": "Unit",
-        "seriesDescription": "Description"
-    }
-    drop_list = [
-        "goal", "indicator", "series", "seriesCount", "target",
-        "geoAreaCode", "geoAreaName"
-    ]
     filtered_redlst = filter_sdg(
         extracted_redlst,
         idcode_map,
-        rename_map,
-        drop_list,
     )
     scored_data = score_single_indicator(filtered_redlst, "REDLST")
     sspi_clean_api_data.insert_many(scored_data)

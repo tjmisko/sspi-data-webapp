@@ -8,6 +8,5 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
