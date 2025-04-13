@@ -6,7 +6,6 @@ from sspi_flask_app.api.resources.utilities import (
 )
 import json
 import time
-import math
 import requests
 
 
@@ -109,60 +108,6 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map: dict, dro
                 del obs[k]
         filtered_list.append(obs)
     return filtered_list
-
-
-def flatten_nested_dictionary_intrnt(intermediate_obs_dict):
-    final_data_lst = []
-    for country in intermediate_obs_dict:
-        for year in intermediate_obs_dict[country]:
-            value = [x for x in intermediate_obs_dict[country][year].values()][0]
-            if value == "N":
-                continue
-            new_observation = {
-                "CountryCode": country,
-                "IndicatorCode": "INTRNT",
-                "Unit": "PER_100_POP",
-                "Description": "Fixed broadband subscriptions per 100 inhabitants, by speed (per 100 inhabitants)",
-                "Year": year,
-                "Value": string_to_float(value),
-                "IntermediateCode": "QUINTR"
-            }
-            final_data_lst.append(new_observation)
-    return final_data_lst
-
-
-def flatten_nested_dictionary_watman(intermediate_obs_dict):
-    final_data_list = []
-    for country in intermediate_obs_dict:
-        for year in intermediate_obs_dict[country]:
-            for intermediate in intermediate_obs_dict[country][year]:
-                sdg_sspi_inter_dict = {
-                    "ER_H2O_WUEYST": [
-                        "CWUEFF",
-                        "USD/m3",
-                        "Water Use Efficiency (United States dollars per cubic meter)"
-                    ],
-                    "ER_H2O_STRESS": [
-                        "WTSTRS",
-                        "Percent",
-                        "Freshwater withdrawal as a proportion of available freshwater resources"
-                    ]
-                }
-                inter_value = string_to_float(
-                    intermediate_obs_dict[country][year][intermediate])
-                if not isinstance(inter_value, float) or not isinstance(inter_value, int):
-                    continue
-                observation = {
-                    "CountryCode": country,
-                    "IndicatorCode": "WATMAN",
-                    "Unit": sdg_sspi_inter_dict[intermediate][1],
-                    "Description": sdg_sspi_inter_dict[intermediate][2],
-                    "Year": year,
-                    "Value": inter_value,
-                    "IntermediateCode": sdg_sspi_inter_dict[intermediate][0],
-                }
-                final_data_list.append(observation)
-    return final_data_list
 
 
 def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
