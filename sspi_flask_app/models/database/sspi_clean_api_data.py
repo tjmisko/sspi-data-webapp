@@ -22,11 +22,3 @@ class SSPICleanAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
-        if "Score" not in document.keys():
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'Score' is a required argument (document {document_number})")
-        if not type(document["Score"]) in [int, float]:
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'Score' must be a float or integer (document {document_number})")
