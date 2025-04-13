@@ -115,7 +115,7 @@ def compute_foraid():
         UnitFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT:
             "Donor: ODA Donations (% GDP)" if TOTDON > TOTREC else
             "Recipient: ODA Received per Capita (USD per Capita)",
-        ScoreBy="Values")
+        ScoreBy="Value")
     complete, incomplete = filter_incomplete_data(clean_foraid_data)
     sspi_clean_api_data.insert_many(complete)
     return parse_json(complete)
