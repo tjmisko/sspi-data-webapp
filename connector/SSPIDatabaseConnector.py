@@ -102,7 +102,17 @@ class SSPIDatabaseConnector:
         res = sesh.post(endpoint, data=data)
         msg = f"Delete Request Returned with Status Code {res.status_code}"
         log.info(msg)
-        return str(res.text)
+        return str(msg)
+
+    def clear_database(self, database_name: str, database_confirm: str, remote=False) -> str:
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/delete/clear"
+        data = {"database": database_name, "database_confirm": database_confirm}
+        res = sesh.post(endpoint, data=data)
+        msg = f"Delete Request Returned with Status Code {res.status_code}"
+        log.info(msg)
+        return str(msg)
 
 
 class LocalHttpAdapter(HTTPAdapter):

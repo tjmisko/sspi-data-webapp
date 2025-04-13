@@ -5,7 +5,8 @@ import click
 import json
 from cli.utilities import (
     full_name,
-    echo_pretty
+    echo_pretty,
+    require_confirmation
 )
 from connector import SSPIDatabaseConnector
 
@@ -53,6 +54,27 @@ def duplicates(database, remote=False):
 
 @delete.command()
 @click.argument("database", type=str, required=True)
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def clear(database, remote=False):
+    """Clear contents of database
+    """
+    connector = SSPIDatabaseConnector()
+    prompt_lst = [
+        "Confirm ",
+        click.style("CLEAR", fg="red"),
+        " of all observations from ",
+        click.style("Local", fg="red"),
+        " database ",
+        click.style(database, fg="red"),
+        ".\n\nType {0} to confirm deletion"
+    ]
+    if require_confirmation(phrase=database, prompt="".join(prompt_lst)):
+        msg = connector.clear_database(database, database, remote=remote)
+        echo_pretty(msg)
+
+
+@delete.command()
+@click.argument("database", type=str, required=True)
 @click.argument("indicator_code", type=str, required=True)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 def indicator(database, indicator_code, remote=False):
@@ -70,7 +92,8 @@ def indicator(database, indicator_code, remote=False):
     ]
     if click.confirm("".join(confirm_msg_lst)):
         connector = SSPIDatabaseConnector()
-        msg = connector.delete_indicator_data(database, indicator_code, remote=remote)
+        msg = connector.delete_indicator_data(
+            database, indicator_code, remote=remote)
         echo_pretty(msg)
 
 
@@ -124,10 +147,12 @@ def dynamic():
 def line(remote=False):
     click.echo("Finalizing Dynamic Line Data")
     connector = SSPIDatabaseConnector()
-    res = connector.call("/api/v1/production/finalize/dynamic/line", remote=remote)
+    res = connector.call(
+        "/api/v1/production/finalize/dynamic/line", remote=remote)
     if res.status_code != 200:
         raise click.ClickException(
-            f"Error! Finalize Request Failed with Status Code {res.status_code}"
+            f"Error! Finalize Request Failed with Status Code {
+                res.status_code}"
         )
         echo_pretty(res.header)
         echo_pretty(res.text)
@@ -163,7 +188,8 @@ def pull(database: str, indicator_code: str):
         )
         if res.status_code != 200:
             raise click.ClickException(
-                f"Error! Finalize Request Failed with Status Code {res.status_code}"
+                f"Error! Finalize Request Failed with Status Code {
+                    res.status_code}"
             )
             echo_pretty(res.header)
             echo_pretty(res.text)
@@ -194,7 +220,8 @@ def push(database: str, indicator_code: str):
         )
         if res.status_code != 200:
             raise click.ClickException(
-                f"Error! Finalize Request Failed with Status Code {res.status_code}"
+                f"Error! Finalize Request Failed with Status Code {
+                    res.status_code}"
             )
             echo_pretty(res.header)
             echo_pretty(res.text)
