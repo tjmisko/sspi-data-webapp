@@ -17,12 +17,18 @@ def cli():
 @click.argument("indicator_code", type=str, required=False)
 def query(database, indicator_code=None):
     database = full_name(database)
-    indicator_code = indicator_code.upper()
     session = SSPIDatabaseConnector()
     request_string = f"/api/v1/query/{database}?"
     if indicator_code:
+        indicator_code = indicator_code.upper()
         request_string += f"IndicatorCode={indicator_code}"
     res = session.get_data_local(request_string)
+    if res.status_code != 200:
+        raise click.ClickException(
+            f"Error! Delete Query Failed with Status Code {res.status_code}"
+        )
+        echo_pretty(res.header)
+        echo_pretty(res.text)
     click.echo(json.dumps(res.json()))
     return res.json()
 
@@ -47,7 +53,6 @@ def indicator(database, indicator_code):
         echo_pretty(res.header)
         echo_pretty(res.text)
     echo_pretty(res.text)
-    return res.text
 
 
 cli.add_command(delete)
@@ -69,18 +74,48 @@ def compute(indicator_code):
     indicator_code = indicator_code.upper()
     request_string = f"/api/v1/compute/{indicator_code}"
     res = session.get_data_local(request_string)
+    if res.status_code != 200:
+        raise click.ClickException(
+            f"Error! Compute Request Failed with Status Code {res.status_code}"
+        )
+        echo_pretty(res.header)
+        echo_pretty(res.text)
     click.echo(json.dumps(res.json()))
     return res.json()
 
 
 @cli.group(invoke_without_command=True, help="Finalize clean data for plotting")
-def finalize():
+@click.pass_context
+def finalize(ctx):
+    if ctx.invoked_subcommand is None:
+        session = SSPIDatabaseConnector()
+        for msg in session.finalize_data_local():
+            echo_pretty(msg)
+
+
+@finalize.group(help="Finalize dynamic data")
+def dynamic():
+    pass
+
+
+@finalize.command(help="Finalize indicator dynamic line data")
+def line():
+    click.echo("Finalizing Dynamic Line Data")
     session = SSPIDatabaseConnector()
-    for msg in session.finalize_data_local():
-        echo_pretty(msg)
+    res = session.call_local("/api/v1/production/finalize/dynamic/line")
+    if res.status_code != 200:
+        raise click.ClickException(
+            f"Error! Finalize Request Failed with Status Code {res.status_code}"
+        )
+        echo_pretty(res.header)
+        echo_pretty(res.text)
+    click.secho("Finalization Complete", fg="green")
 
 
+dynamic.add_command(line)
+finalize.add_command(dynamic)
 cli.add_command(finalize)
+
 
 if __name__ == "__main__":
     cli()
