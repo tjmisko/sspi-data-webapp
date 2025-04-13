@@ -12,7 +12,7 @@ import requests
 # Implement API Collection for
 # https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
 def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
-    url_params = f"indicator={SDGIndicatorCode}"
+    url_params = f"indicator={SDGIndicatorCode}&pageSize=500"
     url_source = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
     base_url = url_source + url_params
     response = requests.get(url_source + url_params)
@@ -75,10 +75,9 @@ def extract_sdg(raw_sdg_pivot_data):
     return observations_list
 
 
-def filter_sdg(observations: list[dict], idcode_map: dict, rename_map: dict, drop_keys: list[str], **kwargs):
+def filter_sdg(observations: list[dict], idcode_map: dict, rename_map={}, drop_keys=[], **kwargs):
     """
     observations - the list of observations returned by extract_sdg
-
     Arguments are used in this order:
     idcode_map - a dictionary specifying how to map an SDGSeriesCode to an IntermediateCode
     kwargs - Use keyword arguments to filter based on fields
@@ -87,17 +86,32 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map: dict, dro
     rename_map - a dictionary how to rename fields in the data
     drop_keys - a list specifying keys/fields to drop from the final data
     """
+    if not rename_map:  # default rename map
+        rename_map = {
+            "units": "Unit",
+            "seriesDescription": "Description"
+        }
+    if not drop_keys:  # default drop list
+        drop_keys = [
+            "goal", "indicator", "series", "seriesCount", "target",
+            "geoAreaCode", "geoAreaName"
+        ]
     filtered_list = []
     for obs in observations:
         if obs["SDGSeriesCode"] not in idcode_map.keys():
             continue
         if len(idcode_map.keys()) > 1:
             obs["IntermediateCode"] = idcode_map[obs["SDGSeriesCode"]]
-        keep_obs = True
+        drop_obs = False
         for k, v in kwargs.items():
-            if k in obs.keys() and obs[k] != v:
-                keep_obs = False
-        if not keep_obs:
+            if k not in obs.keys():
+                continue
+            list_test = type(v) is list and obs[k] not in v
+            value_test = type(v) in [str, int, float] and obs[k] != v
+            if list_test or value_test:
+                drop_obs = True
+                break
+        if drop_obs:
             continue
         for k, v in rename_map.items():
             if k in obs.keys():
@@ -108,63 +122,6 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map: dict, dro
                 del obs[k]
         filtered_list.append(obs)
     return filtered_list
-
-
-def flatten_nested_dictionary_stkhlm(intermediate_obs_dict):
-    final_data_lst = []
-    for country in intermediate_obs_dict:
-        for year in intermediate_obs_dict[country]:
-            value = [x for x in intermediate_obs_dict[country][year].values()][0]
-            if value == "N":
-                continue
-            new_observation = {
-                "CountryCode": country,
-                "IndicatorCode": "STKHLM",
-                "Unit": "Percent",
-                "Description": "Parties meeting their commitments and obligations in transmitting information as required by Stockholm Convention on hazardous waste, and other chemicals (%)",
-                "Year": year,
-                "Value": string_to_float(value),
-            }
-            final_data_lst.append(new_observation)
-    return final_data_lst
-
-
-def flatten_nested_dictionary_airpol(intermediate_obs_dict):
-    final_data_lst = []
-    for country in intermediate_obs_dict:
-        for year in intermediate_obs_dict[country]:
-            value = [x for x in intermediate_obs_dict[country][year].values()][0]
-            if value == "NaN":
-                continue
-            new_observation = {
-                "CountryCode": country,
-                "IndicatorCode": "AIRPOL",
-                "Year": int(year),
-                "Value": string_to_float(value),
-                "Description": "Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air",
-                "Unit": "μg/m^3"
-            }
-            final_data_lst.append(new_observation)
-    return final_data_lst
-
-
-def flatten_nested_dictionary_nrgint(intermediate_obs_dict):
-    final_data_lst = []
-    for country in intermediate_obs_dict:
-        for year in intermediate_obs_dict[country]:
-            value = [x for x in intermediate_obs_dict[country][year].values()][0]
-            if value == "NaN":
-                continue
-            new_observation = {
-                "CountryCode": country,
-                "IndicatorCode": "NRGINT",
-                "Unit": "MJ_PER_GDP_CON_PPP_USD",
-                "Description": "Energy intensity level of primary energy (megajoules per constant 2017 purchasing power parity GDP)",
-                "Year": year,
-                "Value": string_to_float(value),
-            }
-            final_data_lst.append(new_observation)
-    return final_data_lst
 
 
 def flatten_nested_dictionary_fampln(intermediate_obs_dict):
@@ -206,8 +163,10 @@ def flatten_nested_dictionary_drkwat(intermediate_obs_dict):
 
 
 def flatten_nested_dictionary_sansrv(intermediate_obs_dict):
-    intermediates = {"SH_SAN_HNDWSH": "Proportion of population with basic handwashing facilities on premises, by urban/rural (%)",
-                     "SH_SAN_SAFE": "Proportion of population using safely managed sanitation services, by urban/rural (%)"}
+    intermediates = {
+        "SH_SAN_HNDWSH": "Proportion of population with basic handwashing facilities on premises, by urban/rural (%)",
+         "SH_SAN_SAFE": "Proportion of population using safely managed sanitation services, by urban/rural (%)"
+    }
     final_data_lst = []
     for country in intermediate_obs_dict:
         for year in intermediate_obs_dict[country]:
