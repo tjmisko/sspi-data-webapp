@@ -21,7 +21,8 @@ import re
 from io import StringIO
 
 from sspi_flask_app.api.datasource.sdg import (
-    extract_sdg_pivot_data_to_nested_dictionary,
+    extract_sdg,
+    filter_sdg,
     flatten_nested_dictionary_watman,
     flatten_nested_dictionary_stkhlm,
 )
@@ -69,12 +70,28 @@ def compute_watman():
     app.logger.info("Running /api/v1/compute/WATMAN")
     sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    final_list = flatten_nested_dictionary_watman(intermediate_list)
-    zipped_document_list = zip_intermediates(final_list, "WATMAN",
-                                             ScoreFunction=lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
-                                             ScoreBy="Score")
+    watman_data = extract_sdg(raw_data)
+    intermediate_map = {
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
+    }
+    rename_map = {
+        "units": "Unit",
+        "seriesDescription": "Description"
+    }
+    drop_list = ["goal", "indicator", "series", "seriesCount", "target", "geoAreaCode", "geoAreaName"]
+    intermediate_list = filter_sdg(
+        watman_data,
+        intermediate_map,
+        rename_map,
+        drop_list,
+        activity="TOTAL"
+    )
+    zipped_document_list = zip_intermediates(
+        intermediate_list, "WATMAN",
+        ScoreFunction=lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
+        ScoreBy="Score"
+    )
     clean_document_list, incomplete_observations = filter_incomplete_data(
         zipped_document_list)
     sspi_clean_api_data.insert_many(clean_document_list)
@@ -89,7 +106,7 @@ def compute_stkhlm():
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
     full_stk_list = [obs for obs in raw_data if obs["Raw"]
                      ["series"] == "SG_HAZ_CMRSTHOLM"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(
+    intermediate_list = extract_sdg(
         full_stk_list)
     flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
     scored_list = score_single_indicator(flattened_lst, "STKHLM")

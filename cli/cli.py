@@ -200,5 +200,3 @@ def push(database: str, indicator_code: str):
 
 if __name__ == "__main__":
     cli()
-
-
