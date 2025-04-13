@@ -104,11 +104,6 @@ def string_to_float(string):
         return "NaN"
     if math.isnan(float(string)):
         return "NaN"
-    return float(string)
-
-
-def string_to_int(string):
-    return int(string)
 
 
 def missing_countries(sspi_country_list, source_country_list):
