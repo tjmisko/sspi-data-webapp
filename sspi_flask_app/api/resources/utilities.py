@@ -269,8 +269,9 @@ def score_single_indicator(document_list, IndicatorCode):
     """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
-    [sspi_clean_api_data.validate_document_format(
-        document) for document in document_list]
+    for doc in document_list:
+        doc["IndicatorCode"] = IndicatorCode
+        sspi_clean_api_data.validate_document_format(doc)
     return final
 
 
