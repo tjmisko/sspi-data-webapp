@@ -170,7 +170,7 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
     Utility function for appending goalpost information to a document
     """
-    if ScoreBy == "Values":
+    if ScoreBy == "Value":
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"]
                              for doc in intermediate_document_list])
@@ -217,14 +217,14 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
     if ValueFunction is None:
         ValueFunction = ScoreFunction
     for i, document in enumerate(indicator_document_list):
-        if ScoreBy == "Values":
+        if ScoreBy == "Value":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Value", None) for intermediate in document["Intermediates"]}
         elif ScoreBy == "Score":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Value' or 'Score'")
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
