@@ -89,7 +89,7 @@ def delete_indicator_data():
         count = database.delete_many({"IndicatorCode": IndicatorCode})
         message_1 = f"Deleted {count} observations of Indicator"
         message_2 = f"{IndicatorCode} from database {database.name}"
-        print(message_1 + message_2)
+        app.logger.info(message_1 + message_2)
         flash(message_1 + message_2)
     return redirect(url_for('.get_delete_page'))
 
@@ -101,8 +101,12 @@ def delete_duplicates():
     database = lookup_database(request.form.get("database"))
     if remove_duplicates_form.validate_on_submit():
         count = database.drop_duplicates()
-        flash("Found and deleted {0} duplicate observations from database {1}".format(
-            count, database.name))
+        msg = (
+            f"Found and deleted {count} duplicate observations "
+            f"from database {database.name}"
+        )
+        app.logger.info(msg)
+        flash(msg)
     return redirect(url_for(".get_delete_page"))
 
 
@@ -111,8 +115,9 @@ def delete_duplicates():
 def remove_loose_data():
     remove_loose_data_form = RemoveLooseDataForm(request.form)
     database = lookup_database(request.form.get("database"))
+    indicator_codes = sspi_metadata.indicator_codes()
     if remove_loose_data_form.validate_on_submit():
-        MongoQuery = {"IndicatorCode": {"$nin": indicator_codes()}}
+        MongoQuery = {"IndicatorCode": {"$nin": indicator_codes}}
         count = database.delete_many(MongoQuery)
         flash(f"Deleted {count} observations from database {database.name}")
     return redirect(url_for(".get_delete_page"))
@@ -126,8 +131,9 @@ def clear_db():
         database = lookup_database(clear_database_form.database.data)
         if clear_database_form.database.data == clear_database_form.database_confirm.data:
             count = database.delete_many({})
-            flash("Deleted {0} observations in clearing database {1}".format(
-                count, database.name))
+            msg = f"Deleted {count} observations clearing database {database}"
+            app.logger.info(msg)
+            flash(msg)
         else:
             flash("Database names do not match")
     return redirect(url_for(".get_delete_page"))

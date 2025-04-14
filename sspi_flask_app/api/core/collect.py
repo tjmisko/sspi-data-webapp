@@ -169,13 +169,13 @@ def gtrans():
 #################################
 
 
-@collect_bp.route("/LFPART")
+@collect_bp.route("/EMPLOY")
 @login_required
 def lfpart():
     def collect_iterator(**kwargs):
         yield from collectILOData(
             "DF_EAP_DWAP_SEX_AGE_RT",
-            "LFPART",
+            "EMPLOY",
             QueryParams=".A...AGE_AGGREGATE_Y25-54",
             **kwargs
         )
@@ -385,7 +385,7 @@ def sansrv():
 def intrnt():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

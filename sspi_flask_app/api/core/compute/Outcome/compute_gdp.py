@@ -12,8 +12,8 @@ from sspi_flask_app.api.resources.utilities import (
 @compute_bp.route("/outcome/GDPMER", methods=['GET'])
 @login_required
 def compute_gdpmer():
-    if not sspi_raw_outcome_data.raw_data_available("GDPMER"):
-        return "No Data for GDPMER found in raw database! Try running collect."
+    app.logger.info("Running /api/v1/compute/outcome/GDPMER")
+    sspi_clean_outcome_data.delete_many({"IndicatorCode": "GDPMER"})
     gdpmer_raw = sspi_raw_outcome_data.fetch_raw_data("GDPMER")
     extracted_data = []
     for obs in gdpmer_raw:
@@ -37,8 +37,8 @@ def compute_gdpmer():
 @compute_bp.route("/outcome/GDPPPP", methods=['GET'])
 @login_required
 def compute_gdpppp():
-    if not sspi_raw_outcome_data.raw_data_available("GDPPPP"):
-        return "No Data for GDPPPP found in raw database! Try running collect."
+    app.logger.info("Running /api/v1/compute/INTRNT")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "INTRNT"})
     gdpppp_raw = sspi_raw_outcome_data.fetch_raw_data("GDPPPP")
     extracted_data = []
     for obs in gdpppp_raw:

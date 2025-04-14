@@ -6,8 +6,11 @@ import flask_bcrypt
 import secrets
 import os
 from sspi_flask_app import db 
-## Run via the command below:
+## Run via the command below for production:
 ## sudo -u www-data bash -c 'source /var/www/sspi.world/env/bin/activate && python /var/www/sspi.world/authload.py'
+
+## Run via the command below for development:
+## USER_AUTH_DIR=/home/tjmisko/auth-info bash -c 'source /home/tjmisko/sspi-data-webapp/env/bin/activate && python /home/tjmisko/sspi-data-webapp/authload.py'
 
 app = init_app(ProdConfig)
 
@@ -26,19 +29,19 @@ for filename in os.listdir(auth_dir):
             print(output_dict)
             user_info.append(output_dict)
 
-# with app.app_context():
-#     for user in user_info:
-#         hashed_password = flask_bcrypt.generate_password_hash(
-#             user["PASSWORD"]
-#         )
-#         new_user = User(
-#             username=user["USERNAME"],
-#             password=hashed_password,
-#             secretkey=secrets.token_hex(32),
-#             apikey=secrets.token_hex(64)
-#         )
-#         db.session.add(new_user)
-#         db.session.commit()
+with app.app_context():
+    for user in user_info:
+        hashed_password = flask_bcrypt.generate_password_hash(
+            user["PASSWORD"]
+        )
+        new_user = User(
+            username=user["USERNAME"],
+            password=hashed_password,
+            secretkey=secrets.token_hex(32),
+            apikey=secrets.token_hex(64)
+        )
+        db.session.add(new_user)
+        db.session.commit()
 
 with app.app_context():
     print(str(db.session.query(User).all()))

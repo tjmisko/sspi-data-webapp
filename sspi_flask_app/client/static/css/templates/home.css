@@ -6,17 +6,21 @@
     align-items: center;
     justify-content: space-around;
     border-radius: 1em;
-    padding: 1em;
+    padding: 1em 1em;
 }
+
 .hero-title {
     font-size: 1.5rem;
     font-weight: 500;
 }
 
 .hero-datalink {
-    color: rgb(0, 221, 255);
-    margin-left: 1rem;
+    color: --green-accent;
     font-weight: 600;
+}
+
+.hero-datalink:visited {
+    color: --green-accent;
 }
 
 .hero-textbox {

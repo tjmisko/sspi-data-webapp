@@ -1,16 +1,13 @@
 from flask_login import login_required
-from flask import redirect, url_for
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    
 )
 import json
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 from sspi_flask_app.api.resources.utilities import goalpost
@@ -18,11 +15,15 @@ from bs4 import BeautifulSoup
 import pycountry
 from sspi_flask_app.api.datasource.worldbank import clean_wb_data
 from sspi_flask_app.api.datasource.sipri import cleanSIPRIData
+from flask import current_app as app
 
 
 @compute_bp.route('/FORAID', methods=['GET'])
 @login_required
 def compute_foraid():
+    app.logger.info("Running /api/v1/compute/FORAID")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "FORAID"})
+
     def parse_observations(xml_string) -> list[dict]:
         soup = BeautifulSoup(xml_string, "lxml-xml")
         observations = soup.find_all("Obs")
@@ -102,7 +103,7 @@ def compute_foraid():
     dug = 1  # 1% of GDP Donated
     rlg = 0  # 0 Dollars per Capita?
     rug = 500  # 500 Dollars per Capita?
-    clean_foraid_data = zip_intermediates(
+    clean_list, incomplete_list = zip_intermediates(
         intermediates_list,
         "FORAID",
         ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
@@ -113,31 +114,40 @@ def compute_foraid():
         UnitFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT:
             "Donor: ODA Donations (% GDP)" if TOTDON > TOTREC else
             "Recipient: ODA Received per Capita (USD per Capita)",
-        ScoreBy="Values")
-    complete, incomplete = filter_incomplete_data(clean_foraid_data)
-    sspi_clean_api_data.insert_many(complete)
-    return parse_json(complete)
+        ScoreBy="Value")
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
+
 
 @compute_bp.route("/MILEXP", methods=['GET'])
 def compute_milexp():
-    if not sspi_raw_api_data.raw_data_available("MILEXP"):
-        return redirect(url_for("collect_bp.MILEXP"))
+    app.logger.info("Running /api/v1/compute/MILEXP")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "MILEXP"})
     milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
     cleaned_list = cleanSIPRIData(milexp_raw, 'MILEXP')
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "MILEXP")
-   # sspi_clean_api_data.insert_many(scored_list)
+    sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
 
 @compute_bp.route("/ARMEXP", methods=['GET'])
 def compute_armexp():
-    if not sspi_raw_api_data.raw_data_available("ARMEXP"):
-        return redirect(url_for("collect_bp.ARMEXP"))
-    armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
-    cleaned_list = cleanSIPRIData('local/armexp.csv', 'ARMEXP', 'Millions of arms', 
-                                  "The supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.")
+    app.logger.info("Running /api/v1/compute/ARMEXP")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "ARMEXP"})
+    # armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
+    description = (
+        "The supply of military weapons through sales, aid, gifts, and those "
+        "made through manufacturing licenses."
+    )
+    cleaned_list = cleanSIPRIData(
+        'local/armexp.csv',
+        'ARMEXP',
+        'Millions of arms',
+        description
+    )
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
-
