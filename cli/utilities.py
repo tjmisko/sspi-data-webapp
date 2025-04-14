@@ -1,3 +1,6 @@
+import subprocess
+from os import environ, path
+from dotenv import load_dotenv
 import re
 import click
 
@@ -36,3 +39,20 @@ def require_confirmation(phrase="CONFIRM", prompt="Type {0} to confirm") -> bool
         return False
     click.secho("Confirmation successful!", fg="green")
     return True
+
+
+def open_browser_subprocess(url):
+    """Opens a subprocess for rendering charts using the browser.
+    Browser and behavior can be customized by setting SSPI_VIEW_COMMAND
+    .env. A suggested configuration is `firefox --kiosk --new-window`
+    """
+    basedir = path.abspath(path.dirname(path.dirname(__file__)))
+    load_dotenv(path.join(basedir, '.env'))
+    view_cmd = environ.get('SSPI_VIEW_COMMAND')
+    subprocess.Popen(
+        view_cmd.split(" ") + [url],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        start_new_session=True
+    )

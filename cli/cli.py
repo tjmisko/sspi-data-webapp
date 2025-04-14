@@ -6,7 +6,8 @@ import json
 from cli.utilities import (
     full_name,
     echo_pretty,
-    require_confirmation
+    require_confirmation,
+    open_browser_subprocess
 )
 from connector import SSPIDatabaseConnector
 
@@ -233,18 +234,9 @@ def push(database: str, indicator_code: str):
 @click.pass_context
 def view(ctx, remote=False):
     if ctx.invoked_subcommand is None:
-        basedir = path.abspath(path.dirname(path.dirname(__file__)))
-        load_dotenv(path.join(basedir, '.env'))
-        view_cmd = environ.get('SSPI_VIEW_COMMAND')
         connector = SSPIDatabaseConnector()
         url = connector.remote_base if remote else connector.local_base
-        subprocess.Popen(
-            view_cmd.split(" ") + [url],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            start_new_session=True
-        )
+        open_browser_subprocess(url)
 
 
 @view.command(help="View line chart")
@@ -252,24 +244,34 @@ def view(ctx, remote=False):
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 def line(idcode, remote=False):
     """
-    Open a LINE chart
+    Open a LINE chart plotting IDCODE by Year
 
     IDCODE is the IndicatorCode, IntermediateCode, PillarCode, CategoryCode,
     PillarCode, or CountryCode for the chart
     """
-    basedir = path.abspath(path.dirname(path.dirname(__file__)))
-    load_dotenv(path.join(basedir, '.env'))
-    view_cmd = environ.get('SSPI_VIEW_COMMAND')
     connector = SSPIDatabaseConnector()
     base_url = connector.remote_base if remote else connector.local_base
     url = base_url + "/api/v1/view/line/" + idcode
-    subprocess.Popen(
-        view_cmd.split(" ") + [url],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        stdin=subprocess.DEVNULL,
-        start_new_session=True
-    )
+    open_browser_subprocess(url)
+
+
+@view.command(help="View line chart")
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def overview(remote=False):
+    """Open DATA OVERVIEW chart
+    """
+    connector = SSPIDatabaseConnector()
+    base_url = connector.remote_base if remote else connector.local_base
+    url = base_url + "/api/v1/view/overview"
+    open_browser_subprocess(url)
+
+
+view.add_command(line)
+cli.add_command(view)
+
+
+if __name__ == "__main__":
+    cli()
 
 
 view.add_command(line)
