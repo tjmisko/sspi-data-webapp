@@ -13,7 +13,7 @@ from sspi_flask_app.api.datasource.who import (
 )
 from sspi_flask_app.api.datasource.sdg import (
     extract_sdg,
-    flatten_nested_dictionary_fampln
+    filter_sdg
 )
 from flask import current_app as app
 import jq
@@ -71,9 +71,12 @@ def compute_fampln():
     app.logger.info("Running /api/v1/compute/FAMPLN")
     sspi_clean_api_data.delete_many({"IndicatorCode": "FAMPLN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("FAMPLN")
-    inter = extract_sdg(raw_data)
-    final = flatten_nested_dictionary_fampln(inter)
-    scored_list = score_single_indicator(final, "FAMPLN")
+    extracted_fampln = extract_sdg(raw_data)
+    return parse_json(extracted_fampln)
+    filtered_fampln = filter_sdg(
+        extracted_fampln, {"SH_FPL_MTMM": "FAMPLN"},
+    )
+    scored_list = score_single_indicator(filtered_fampln, "FAMPLN")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 
@@ -81,6 +84,15 @@ def compute_fampln():
 @compute_bp.route("/CSTUNT", methods=['GET'])
 @login_required
 def compute_cstunt():
+    """
+    GHO Reports Two Different Kinds of Series:
+    1. NUTRITION_ANT_HAZ_NE2 - Survey-based estimates of child stunting
+    2. NUTSTUNTINGPREV       - Model-based estimates of child stunting
+
+    Modeled data has better coverage:
+    NUTRITION_ANT_HAZ_NE2 - 999 observations
+    NUTSTUNTINGPREV       - 3634 observations
+    """
     app.logger.info("Running /api/v1/compute/CSTUNT")
     sspi_clean_api_data.delete_many({"IndicatorCode": "CSTUNT"})
     raw_data = sspi_raw_api_data.fetch_raw_data("CSTUNT")[0]["Raw"]["fact"]
@@ -89,7 +101,10 @@ def compute_cstunt():
     first_slice_filter = jq.compile(first_slice)
     dim_list = first_slice_filter.input(raw_data).all()
     # Reduce/Flatten the Dim array
-    map_reduce = '.[] |  reduce .Dim[] as $d (.; .[$d.category] = $d.code)'
+    map_reduce = (
+        '.[] |  reduce .Dim[] as $d (.; .[$d.category] = $d.code) | '
+        'select(.GHO == "NUTSTUNTINGPREV")'
+    )
     map_reduce_filter = jq.compile(map_reduce)
     reduced_list = map_reduce_filter.input(dim_list).all()
     # Remap the keys to the correct names

@@ -124,25 +124,6 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map={}, drop_k
     return filtered_list
 
 
-def flatten_nested_dictionary_fampln(intermediate_obs_dict):
-    final_data_lst = []
-    for country in intermediate_obs_dict:
-        for year in intermediate_obs_dict[country]:
-            value = [x for x in intermediate_obs_dict[country][year].values()][0]
-            if value == "NaN":
-                continue
-            new_observation = {
-                "CountryCode": country,
-                "IndicatorCode": "FAMPLN",
-                "Unit": "Percent",
-                "Description": "Proportion of women of reproductive age (aged 15-49 years) who have their need for family planning satisfied with modern methods",
-                "Year": year,
-                "Value": 100 - string_to_float(value),
-            }
-            final_data_lst.append(new_observation)
-    return final_data_lst
-
-
 def flatten_nested_dictionary_drkwat(intermediate_obs_dict):
     final_data_lst = []
     for country in intermediate_obs_dict:
