@@ -29,14 +29,26 @@ class SSPI:
     def score_tree(self):
         tree = {"SSPI": {"Score": self.score(), "Pillars": []}}
         for i, pillar in enumerate(self.pillars):
-            tree["SSPI"]["Pillars"].append(
-                {"Pillar": pillar.name, "PillarCode": pillar.code, "Score": pillar.score(), "Categories": []})
+            tree["SSPI"]["Pillars"].append({
+                "Pillar": pillar.name,
+                "PillarCode": pillar.code,
+                "Score": pillar.score(),
+                "Categories": []
+            })
             for j, category in enumerate(pillar.categories):
-                tree["SSPI"]["Pillars"][i]["Categories"].append(
-                    {"Category": category.name, "CategoryCode": category.code, "Score": category.score(), "Indicators": []})
+                tree["SSPI"]["Pillars"][i]["Categories"].append({
+                    "Category": category.name,
+                    "CategoryCode": category.code,
+                    "Score": category.score(),
+                    "Indicators": []
+                })
                 for indicator in category.indicators:
-                    tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append(
-                        {"Indicator": indicator.name, "IndicatorCode": indicator.code, "Score": indicator.score})
+                    tree["SSPI"]["Pillars"][i]["Categories"][j]["Indicators"].append({
+                        "Indicator": indicator.name,
+                        "IndicatorCode": indicator.code,
+                        "Score": indicator.score,
+                        "Year": indicator.year
+                    })
         return tree
 
     def pillar_scores(self):
@@ -60,17 +72,21 @@ class SSPI:
                            for d in indicator_details])
             scores = set([s["IndicatorCode"] for s in indicator_scores])
             print(details.symmetric_difference(scores))
-            raise DataOrderError(f"Length of indicator_details {len(indicator_details)} and indicator_scores {len(indicator_scores)} must match!")
+            error_msg = (
+                f"Length of indicator_details {len(indicator_details)} and "
+                f"indicator_scores {len(indicator_scores)} must match!"
+            )
+            raise DataOrderError(error_msg)
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i
         for detail in indicator_details:
             try:
-                indicator_score = indicator_score_lookup[detail["Metadata"]
-                                                         ["IndicatorCode"]]
+                indicator_code = detail["Metadata"]["IndicatorCode"]
+                indicator_score = indicator_score_lookup[indicator_code]
             except KeyError:
-                indicator = detail["Metadata"]["IndicatorCode"]
-                raise DataOrderError(f"No data for indicator {indicator} found!")
+                error_msg = f"No data for indicator {indicator_code} found!"
+                raise DataOrderError(error_msg)
             matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
@@ -187,16 +203,30 @@ class Indicator:
         try:
             self.name = detail["Metadata"]["Indicator"]
             self.code = detail["Metadata"]["IndicatorCode"]
+            self.lower_goalpost = detail["Metadata"]["LowerGoalpost"]
+            self.upper_goalpost = detail["Metadata"]["UpperGoalpost"]
         except KeyError as ke:
-            raise InvalidDocumentFormatError(
-                f"Indicator Detail Missing Name or Indicator Code {detail} ({ke})")
+            msg = (
+                f"Indicator Detail Missing Name or Indicator "
+                f"Code {detail} ({ke})"
+            )
+            raise InvalidDocumentFormatError(msg)
         try:
             self.score = indicator_score_data["Score"]
+            self.value = indicator_score_data["Value"]
+            self.year = indicator_score_data["Year"]
         except KeyError as ke:
-            raise InvalidDocumentFormatError(
-                f"Indicator Data Missing 'Score' ({indicator_score_data})")
+            msg = (
+                f"Indicator Data Missing 'Score', 'Value', or 'Year'"
+                f"({indicator_score_data}) ({ke})"
+            )
+            raise InvalidDocumentFormatError(msg)
         if self.code != indicator_score_data["IndicatorCode"]:
-            raise DataOrderError(f"Mismatched Data and Indicator Detail {detail}; {indicator_score_data}")
+            msg = (
+                f"Mismatched Data and Indicator Detail {detail}; "
+                f"{indicator_score_data}"
+            )
+            raise DataOrderError(msg)
         if type(self.score) is float:
             if self.score < 0 or self.score > 1:
                 raise InvalidDocumentFormatError(
