@@ -32,7 +32,7 @@ def compute_airpol():
     extracted_airpol = extract_sdg(raw_data)
     filtered_airpol = filter_sdg(
         extracted_airpol, {"EN_ATM_PM25": "AIRPOL"},
-        location="URBAN"
+        location="ALLAREA"
     )
     scored_list = score_single_indicator(filtered_airpol, "AIRPOL")
     sspi_clean_api_data.insert_many(scored_list)
