@@ -24,14 +24,8 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
     """
     url = "https://v-dem.net/media/datasets/V-Dem-CY-FullOthers_csv_v13.zip"
     res = requests.get(url)
-    if res.status_code != 200:
-        err = f"(HTTP Error {res.status_code})"
-        yield "Failed to fetch data from source " + err
-        return "Failed to fetch data from source " + err
-
     collected_count = 0
     num_fragments = 24
-
     with zipfile.ZipFile(BytesIO(res.content)) as z:
         for filename in z.namelist():
             if ".csv" not in filename:
