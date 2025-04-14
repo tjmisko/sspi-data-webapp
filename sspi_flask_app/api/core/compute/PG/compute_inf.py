@@ -127,3 +127,10 @@ def compute_aqelec():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
     return parse_json(filtered_list)
+
+@compute_bp.route("/PUBTRN")
+@login_required
+def compute_pubtrn():
+    raw_data = sspi_raw_api_data.fetch_raw_data("PUBTRN")
+    inter_dict = extract_sdg(raw_data)
+    return parse_json(inter_dict)

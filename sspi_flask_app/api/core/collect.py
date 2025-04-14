@@ -397,6 +397,14 @@ def aqelec():
         yield from collectWEFQUELCT("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+@collect_bp.route("/PUBTRN", methods=['GET'])
+@login_required
+def pubtrn():
+    def collect_iterator(**kwargs):
+        yield from collectSDGIndicatorData("11.2.1", "PUBTRN", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 
 ###########################
 ## Category: RIGHTS ##
