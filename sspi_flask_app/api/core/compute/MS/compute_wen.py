@@ -72,10 +72,10 @@ def compute_colbar():
     app.logger.info("Running /api/v1/compute/COLBAR")
     sspi_clean_api_data.delete_many({"IndicatorCode": "COLBAR"})
     raw_data = sspi_raw_api_data.fetch_raw_data("COLBAR")
-    csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
+    csv_virtual_file = StringIO(raw_data[0]["Raw"])
     colbar_raw = pd.read_csv(csv_virtual_file)
-    colbar_raw = colbar_raw[['REF_AREA',
-                             'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
+    colbar_raw = colbar_raw[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE',
+                             'OBS_VALUE']]
     colbar_raw = colbar_raw.rename(columns={'REF_AREA': 'CountryCode',
                                             'TIME_PERIOD': 'Year',
                                             'OBS_VALUE': 'Value',
