@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -8,7 +8,6 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 
@@ -19,9 +18,8 @@ from sspi_flask_app.api.datasource.iea import (
     cleanIEAData_altnrg,
 )
 from sspi_flask_app.api.datasource.sdg import (
-    extract_sdg_pivot_data_to_nested_dictionary,
-    flatten_nested_dictionary_airpol,
-    flatten_nested_dictionary_nrgint,
+    extract_sdg,
+    filter_sdg,
 )
 
 
@@ -31,14 +29,14 @@ def compute_airpol():
     app.logger.info("Running /api/v1/compute/AIRPOL")
     sspi_clean_api_data.delete_many({"IndicatorCode": "AIRPOL"})
     raw_data = sspi_raw_api_data.fetch_raw_data("AIRPOL")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-        raw_data)
-    flattened = flatten_nested_dictionary_airpol(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened, "AIRPOL")
-    cleaned, filtered = filter_incomplete_data(scored_list)
-    sspi_clean_api_data.insert_many(cleaned)
-    print(filtered)
-    return parse_json(cleaned)
+    extracted_airpol = extract_sdg(raw_data)
+    filtered_airpol = filter_sdg(
+        extracted_airpol, {"EN_ATM_PM25": "AIRPOL"},
+        location="ALLAREA"
+    )
+    scored_list = score_single_indicator(filtered_airpol, "AIRPOL")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/NRGINT", methods=['GET'])
@@ -47,15 +45,13 @@ def compute_nrgint():
     app.logger.info("Running /api/v1/compute/NRGINT")
     sspi_clean_api_data.delete_many({"IndicatorCode": "NRGINT"})
     nrgint_raw = sspi_raw_api_data.fetch_raw_data("NRGINT")
-    intermediate_obs_dict = extract_sdg_pivot_data_to_nested_dictionary(
-        nrgint_raw)
-    flattened_lst = flatten_nested_dictionary_nrgint(intermediate_obs_dict)
-    scored_list = score_single_indicator(flattened_lst, "NRGINT")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+    extracted_nrgint = extract_sdg(nrgint_raw)
+    filtered_nrgint = filter_sdg(
+        extracted_nrgint, {"EG_EGY_PRIM": "NRGINT"},
+    )
+    scored_list = score_single_indicator(filtered_nrgint, "NRGINT")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/ALTNRG", methods=['GET'])
@@ -100,19 +96,18 @@ def compute_altnrg():
     alt_sums = inter_sums.groupby(['Year', 'CountryCode']).agg({
         'Value': 'sum'}).reset_index()
     alt_sums['IntermediateCode'], alt_sums['Unit'], alt_sums['IndicatorCode'] = 'ALTSUM', 'TJ', 'ALTNRG'
-
     intermediate_list = pd.concat(
         [pd.concat([intermediate_data, sums]), alt_sums])
-    zipped_document_list = zip_intermediates(
-        json.loads(str(intermediate_list.to_json(orient="records")),
-                   parse_int=int, parse_float=float),
-        "ALTNRG",
-        ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (
-            ALTSUM - 0.5 * BIOWAS)/(TTLSUM),
-        ScoreBy="Values"
+    intermediate_document_list = json.loads(
+        str(intermediate_list.to_json(orient="records")), parse_int=int, parse_float=float
     )
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        zipped_document_list)
-    print(incomplete_observations)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    clean_list, incomplete_list = zip_intermediates(
+        intermediate_document_list,
+        "ALTNRG",
+        ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
+        ValueFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM * 100,
+        ScoreBy="Value"
+    )
+    print(incomplete_list)
+    sspi_clean_api_data.insert_many(clean_list)
+    return parse_json(clean_list)

@@ -11,7 +11,6 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 
@@ -21,9 +20,8 @@ import re
 from io import StringIO
 
 from sspi_flask_app.api.datasource.sdg import (
-    extract_sdg_pivot_data_to_nested_dictionary,
-    flatten_nested_dictionary_watman,
-    flatten_nested_dictionary_stkhlm,
+    extract_sdg,
+    filter_sdg,
 )
 
 
@@ -69,16 +67,22 @@ def compute_watman():
     app.logger.info("Running /api/v1/compute/WATMAN")
     sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    final_list = flatten_nested_dictionary_watman(intermediate_list)
-    zipped_document_list = zip_intermediates(final_list, "WATMAN",
-                                             ScoreFunction=lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
-                                             ScoreBy="Score")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    watman_data = extract_sdg(raw_data)
+    intermediate_map = {
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
+    }
+    intermediate_list = filter_sdg(
+        watman_data, intermediate_map, activity="TOTAL"
+    )
+    clean_list, incomplete_list = zip_intermediates(
+        intermediate_list, "WATMAN",
+        ScoreFunction=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
+        ScoreBy="Score"
+    )
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/STKHLM", methods=['GET'])
@@ -87,17 +91,13 @@ def compute_stkhlm():
     app.logger.info("Running /api/v1/compute/STKHLM")
     sspi_clean_api_data.delete_many({"IndicatorCode": "STKHLM"})
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
-    full_stk_list = [obs for obs in raw_data if obs["Raw"]
-                     ["series"] == "SG_HAZ_CMRSTHOLM"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(
-        full_stk_list)
-    flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
-    scored_list = score_single_indicator(flattened_lst, "STKHLM")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+    extracted_stkhlm = extract_sdg(raw_data)
+    filtered_stkhlm = filter_sdg(
+        extracted_stkhlm, {"SG_HAZ_CMRSTHOLM": "STKHLM"},
+    )
+    scored_list = score_single_indicator(filtered_stkhlm, "STKHLM")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/DEFRST", methods=['GET'])

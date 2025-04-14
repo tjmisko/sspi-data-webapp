@@ -2,7 +2,6 @@ from os import environ, path
 import ssl
 import json
 from dotenv import load_dotenv
-import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 import urllib3
@@ -22,6 +21,8 @@ class SSPIDatabaseConnector:
         self.remote_session = requests.Session()
         self.login_session_local()
         self.login_session_remote()
+        self.local_base = "http://127.0.0.1:5000"
+        self.remote_base = "https://sspi.world"
 
     def get_token(self, token_name="SSPI_APIKEY"):
         basedir = path.abspath(path.dirname(path.dirname(__file__)))
@@ -41,146 +42,77 @@ class SSPIDatabaseConnector:
         headers = {'Authorization': f'Bearer {self.remote_token}'}
         self.remote_session.headers.update(headers)
 
-    def call_local(self, request_string, request_method="GET"):
+    def call(self, request_string, method="GET", remote=False) -> requests.Response:
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
         if request_string[0] == "/":
             request_string = request_string[1:]
-        if request_method == "POST":
-            return self.local_session.post(f"http://127.0.0.1:5000/{request_string}")
-        if request_method == "DELETE":
-            return self.local_session.delete(f"http://127.0.0.1:5000/{request_string}")
-        return self.local_session.get(f"http://127.0.0.1:5000/{request_string}")
+        if method == "POST":
+            return sesh.post(f"{base_url}/{request_string}")
+        if method == "DELETE":
+            return sesh.delete(f"{base_url}/{request_string}")
+        return sesh.get(f"{base_url}/{request_string}")
 
-    def call_remote(self, request_string, request_method="GET"):
-        if request_string[0] == "/":
-            request_string = request_string[1:]
-        if request_method == "POST":
-            return self.remote_session.post(f"https://sspi.world/{request_string}")
-        if request_method == "DELETE":
-            return self.remote_session.delete(f"https://sspi.world/{request_string}")
-        return self.remote_session.get(f"https://sspi.world/{request_string}")
-
-    def get_data_local(self, request_string):
-        if request_string[0] == "/":
-            request_string = request_string[1:]
-        return self.local_session.get(f"http://127.0.0.1:5000/{request_string}")
-
-    def get_data_remote(self, request_string):
-        if request_string[0] == "/":
-            request_string = request_string[1:]
-        return self.remote_session.get(f"https://sspi.world/{request_string}")
-
-    def collect_data_local(self, indicator_code):
-        endpoint = f"http://127.0.0.1:5000/api/v1/collect/{indicator_code}"
-        with self.local_session.get(endpoint, stream=True) as res:
+    def collect(self, indicator_code: str, remote=False):
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/collect/{indicator_code}"
+        with sesh.get(endpoint, stream=True) as res:
             for line in res.iter_lines(decode_unicode=True):
                 yield line
 
-    def collect_data_remote(self, indicator_code):
-        endpoint = f"https://sspi.world/api/v1/collect/{indicator_code}"
-        with self.remote_session.get(endpoint, stream=True) as res:
+    def finalize(self, remote=False, special=""):
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/production/finalize"
+        if special:
+            endpoint += special
+        with sesh.get(endpoint, stream=True) as res:
             for line in res.iter_lines(decode_unicode=True):
                 yield line
 
-    def finalize_data_local(self, special=""):
-        endpoint = "http://127.0.0.1:5000/api/v1/production/finalize"
-        if special:
-            endpoint += special
-            res = self.local_session.get(endpoint)
-            return res.text
-        else:
-            with self.local_session.get(endpoint, stream=True) as res:
-                for line in res.iter_lines(decode_unicode=True):
-                    yield line
-
-    def finalize_data_remote(self, special=""):
-        endpoint = "https://sspi.world/api/v1/production/finalize"
-        if special:
-            endpoint += special
-            res = self.remote_session.get(endpoint)
-            return res.text
-        else:
-            with self.remote_session.get(endpoint, stream=True) as res:
-                for line in res.iter_lines(decode_unicode=True):
-                    yield line
-
-    # - [ ] Decide what to do with this method
-    def load_dataframe_local(self, dataframe: pd.DataFrame, IndicatorCode):
-        pass
-        # observations_list = dataframe.to_json(orient="records")
-        # print(observations_list)
-        # headers = {'Authorization': f'Bearer {self.token}'}
-        # return self.local_session.post(
-        #     f"http://127.0.0.1:5000/api/v1/load/{IndicatorCode}",
-        #     headers=headers,
-        #     json=observations_list,
-        #     verify=False
-        # )
-
-    # - [ ] Decide what to do with this method
-    def load_dataframe_remote(self, dataframe: pd.DataFrame, IndicatorCode):
-        pass
-        # observations_list = dataframe.to_json(orient="records")
-        # headers = {'Authorization': f'Bearer {self.token}'}
-        # print(f"Sending data: {observations_list}")
-        # response = self.remote_session.post(
-        #     f"https://sspi.world/api/v1/load/{IndicatorCode}",
-        #     headers=headers,
-        #     json=observations_list
-        # )
-        # print(response.text)
-        # print(response.status_code)
-        # return response
-
-    def load_json_local(self, observations_list: list[dict], database_name: str,
-                        IndicatorCode: str):
+    def load(self, obs_lst: list[dict], database_name: str, indicator_code: str, remote=False) -> str:
         """
-        Load a list of observations in JSON format into the local database
+        Load a list of observations in JSON format into the database
         """
-        response = self.local_session.post(
-            f"http://127.0.0.1:5000/api/v1/load/{
-                database_name}/{IndicatorCode}",
-            json=json.dumps(observations_list),
-            verify=False
-        )
-        log.info(f"Remote Load Request Returned with Status Code {
-                 response.status_code}")
-        return response
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/load/{database_name}/{indicator_code}",
+        # - [ ] Check on whether verify=False should be inserted here programatically
+        res = sesh.post(endpoint, json=json.dumps(obs_lst))
+        msg = f"Load Request Returned with Status Code {res.status_code}"
+        log.info(msg)
+        return str(res.text)
 
-    def load_json_remote(self, observations_list: list[dict], database_name: str,
-                         IndicatorCode: str):
-        response = self.remote_session.post(
-            f"https://sspi.world/api/v1/load/{database_name}/{IndicatorCode}",
-            json=json.dumps(observations_list)
-        )
-        log.info(f"Remote Load Request Returned with Status Code {
-                 response.status_code}")
-        return response
+    def delete_indicator_data(self, database_name: str, indicator_code: str, remote=False) -> str:
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/delete/indicator/{database_name}/{indicator_code}"
+        res = sesh.delete(endpoint)
+        msg_1 = f"Delete Request Returned with Status Code {res.status_code}\n"
+        msg_2 = str(res.text)
+        log.info(msg_1)
+        return msg_1 + msg_2
 
-    def delete_indicator_data_local(self, database_name: str, IndicatorCode: str):
-        log.debug("Headers for Local Delete: " +
-                  str(self.local_session.headers))
-        response = self.local_session.delete(
-            f"http://127.0.0.1:5000/api/v1/delete/indicator/{
-                database_name}/{IndicatorCode}",
-        )
-        log.info(f"Local Delete Request Returned with Status Code {
-                 response.status_code}")
-        return response
+    def delete_duplicate_data(self, database_name: str, remote=False) -> str:
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/delete/duplicates"
+        data = {"database": database_name}
+        res = sesh.post(endpoint, data=data)
+        msg = f"Delete Request Returned with Status Code {res.status_code}"
+        log.info(msg)
+        return str(msg)
 
-    def delete_indicator_data_remote(self, database_name: str, IndicatorCode: str):
-        response = self.remote_session.delete(
-            f"https://sspi.world/api/v1/delete/indicator/{
-                database_name}/{IndicatorCode}",
-        )
-        log.info(f"Remote Delete Request Returned with Status Code {
-                 response.status_code}")
-        return response
-
-    def logout_local(self):
-        self.local_session.get("http://127.0.0.1:5000/logout")
-
-    def logout_remote(self):
-        self.remote_session.get("https://sspi.world/logout")
+    def clear_database(self, database_name: str, database_confirm: str, remote=False) -> str:
+        sesh = self.remote_session if remote else self.local_session
+        base_url = self.remote_base if remote else self.local_base
+        endpoint = f"{base_url}/api/v1/delete/clear"
+        data = {"database": database_name, "database_confirm": database_confirm}
+        res = sesh.post(endpoint, data=data)
+        msg = f"Delete Request Returned with Status Code {res.status_code}"
+        log.info(msg)
+        return str(msg)
 
 
 class LocalHttpAdapter(HTTPAdapter):

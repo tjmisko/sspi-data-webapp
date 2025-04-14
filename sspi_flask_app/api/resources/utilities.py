@@ -94,21 +94,19 @@ def lookup_database(database_name):
     raise InvalidDatabaseError(database_name)
 
 
-def string_to_float(string):
+def string_to_float(string) -> str | float:
     """
-    Passes back string 'NaN' instead of float NaN
+    Attempts conversion to float, otherwise returns "NaN" string.
+
+    To filter any non-numeric observations, simply check whether the return
+    value is a string or a float.
     """
-    if string is None:
+    if not string:
         return "NaN"
-    if string == "N":
+    try:
+        return float(string)
+    except ValueError:
         return "NaN"
-    if math.isnan(float(string)):
-        return "NaN"
-    return float(string)
-
-
-def string_to_int(string):
-    return int(string)
 
 
 def missing_countries(sspi_country_list, source_country_list):
@@ -137,12 +135,15 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
         intermediate_document_list)
     print(f"There were {len(noneish_list)} none/na documents found in intermediate_document_list")
     gp_intermediate_list = append_goalpost_info(
-        intermediate_document_list, ScoreBy)
+        intermediate_document_list, ScoreBy
+    )
     indicator_document_list = group_by_indicator(
-        gp_intermediate_list, IndicatorCode)
+        gp_intermediate_list, IndicatorCode
+    )
     scored_indicator_document_list = score_indicator_documents(
-        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy)
-    return scored_indicator_document_list
+        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+    )
+    return filter_incomplete_data(scored_indicator_document_list)
 
 
 def convert_data_types(intermediate_document_list):
@@ -172,7 +173,7 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
     Utility function for appending goalpost information to a document
     """
-    if ScoreBy == "Values":
+    if ScoreBy == "Value":
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"]
                              for doc in intermediate_document_list])
@@ -219,14 +220,14 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
     if ValueFunction is None:
         ValueFunction = ScoreFunction
     for i, document in enumerate(indicator_document_list):
-        if ScoreBy == "Values":
+        if ScoreBy == "Value":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Value", None) for intermediate in document["Intermediates"]}
         elif ScoreBy == "Score":
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Value' or 'Score'")
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
@@ -247,9 +248,6 @@ def filter_incomplete_data(indicator_document_list):
     """
     Utility function for filtering incomplete observations resulting
     from missing data.
-
-    Call on the result of `zip_intermediates` before inserting into the
-    clean database.
     """
     filtered_list = []
     partial_observation_list = []
@@ -271,8 +269,9 @@ def score_single_indicator(document_list, IndicatorCode):
     """
     document_list = convert_data_types(document_list)
     final = append_goalpost_single(document_list, IndicatorCode)
-    [sspi_clean_api_data.validate_document_format(
-        document) for document in document_list]
+    for doc in document_list:
+        doc["IndicatorCode"] = IndicatorCode
+        sspi_clean_api_data.validate_document_format(doc)
     return final
 
 

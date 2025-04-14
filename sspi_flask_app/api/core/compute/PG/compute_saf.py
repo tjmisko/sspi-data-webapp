@@ -9,7 +9,6 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator,
     goalpost
 )
@@ -42,18 +41,16 @@ def compute_prison():
     cleaned_pop = clean_wb_data(pop_data, "PRISON", "Population")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     combined_list = cleaned_pop + clean_data_list
-    final_list = zip_intermediates(
+    clean_list, incomplete_list = zip_intermediates(
         combined_list, "PRISON",
         ScoreFunction=lambda PRIPOP, UNPOPL: goalpost(
             PRIPOP / UNPOPL * 100000, lg, ug),
         ValueFunction=lambda PRIPOP, UNPOPL: PRIPOP / UNPOPL * 100000,
         UnitFunction=lambda PRIPOP, UNPOPL: "Prisoners Per 100,000",
-        ScoreBy="Values")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        final_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+        ScoreBy="Value")
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/CYBSEC", methods=['GET'])
@@ -84,7 +81,6 @@ def compute_secapp():
     cleaned_list = cleanFSIdata(
         raw_data, "SECAPP", "Index", description
     )
-    scored = score_single_indicator(cleaned_list, "SECAPP")
-    clean_document_list, incomplete_observations = filter_incomplete_data(scored)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    scored_list = score_single_indicator(cleaned_list, "SECAPP")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)

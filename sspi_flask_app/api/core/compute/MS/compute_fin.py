@@ -8,7 +8,6 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.worldbank import (
@@ -28,13 +27,14 @@ def compute_fdepth():
         "FDEPTH", IntermediateCode="DPOSIT")
     deposit_clean = clean_wb_data(deposit_raw, "FDEPTH", unit="Percent")
     combined_list = credit_clean + deposit_clean
-    cleaned_list = zip_intermediates(combined_list, "FDEPTH",
-                                     ScoreFunction=lambda CREDIT, DPOSIT: 0.5 * CREDIT + 0.5 * DPOSIT,
-                                     ScoreBy="Score")
-    filtered_list, incomplete_data = filter_incomplete_data(cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_data)
-    return parse_json(filtered_list)
+    clean_list, incomplete_list = zip_intermediates(
+        combined_list, "FDEPTH",
+        ScoreFunction=lambda CREDIT, DPOSIT: (CREDIT + DPOSIT) / 2,
+        ScoreBy="Score"
+    )
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/PUBACC", methods=['GET'])

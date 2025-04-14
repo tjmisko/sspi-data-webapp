@@ -8,7 +8,6 @@ import json
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 from sspi_flask_app.api.resources.utilities import goalpost
@@ -104,7 +103,7 @@ def compute_foraid():
     dug = 1  # 1% of GDP Donated
     rlg = 0  # 0 Dollars per Capita?
     rug = 500  # 500 Dollars per Capita?
-    clean_foraid_data = zip_intermediates(
+    clean_list, incomplete_list = zip_intermediates(
         intermediates_list,
         "FORAID",
         ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
@@ -115,10 +114,10 @@ def compute_foraid():
         UnitFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT:
             "Donor: ODA Donations (% GDP)" if TOTDON > TOTREC else
             "Recipient: ODA Received per Capita (USD per Capita)",
-        ScoreBy="Values")
-    complete, incomplete = filter_incomplete_data(clean_foraid_data)
-    sspi_clean_api_data.insert_many(complete)
-    return parse_json(complete)
+        ScoreBy="Value")
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/MILEXP", methods=['GET'])

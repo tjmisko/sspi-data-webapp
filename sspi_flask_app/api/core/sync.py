@@ -11,7 +11,7 @@ sync_bp = Blueprint(
 )
 
 
-@sync_bp.route("/pull/<database_name>/<IndicatorCode>", methods=["GET"])
+@sync_bp.route("/pull/<database_name>/<IndicatorCode>", methods=["POST"])
 @login_required
 def pull(database_name, IndicatorCode):
     local_database = lookup_database(database_name)
@@ -22,9 +22,11 @@ def pull(database_name, IndicatorCode):
     )
     app.logger.info(message_1)
     connector = SSPIDatabaseConnector()
-    remote_query_url = f"/api/v1/query/{
-        database_name}?IndicatorCode={IndicatorCode}"
-    remote_data = connector.get_data_remote(remote_query_url).json()
+    remote_query_url = (
+        f"/api/v1/query/{database_name}?"
+        f"IndicatorCode={IndicatorCode}"
+    )
+    remote_data = connector.call(remote_query_url, remote=True).json()
     local_database.insert_many(remote_data)
     message_2 = (
         f"Inserted {len(remote_data)} remote observations of Indicator "
@@ -47,8 +49,8 @@ def push(database_name, IndicatorCode):
     )
     app.logger.info(message_1)
     connector = SSPIDatabaseConnector()
-    remote_delete_res = connector.delete_indicator_data_remote(
-        database_name, IndicatorCode
+    remote_delete_res = connector.delete_indicator_data(
+        database_name, IndicatorCode, remote=True
     )
     if remote_delete_res.status_code != 200:
         app.logger.error(f"Failed to delete remote data\n{remote_delete_res.text}")
@@ -56,8 +58,8 @@ def push(database_name, IndicatorCode):
             remote_delete_res.text,
             status=remote_delete_res.status_code, mimetype="text/plain"
         )
-    remote_load_res = connector.load_json_remote(
-        local_data, database_name, IndicatorCode
+    remote_load_res = connector.load(
+        local_data, database_name, IndicatorCode, remote=True
     )
     if remote_load_res.status_code != 200:
         app.logger.error(f"Failed to upload new remote data\n{
