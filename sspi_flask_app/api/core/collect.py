@@ -273,6 +273,7 @@ def pubacc():
 # @collect_bp.route("/FSTABL", methods=['GET'])
 # def fstabl():
 #     def collect_iterator(**kwargs):
+# https://github.com/Promptly-Technologies-LLC/imfp --> imf api package
 
 ##########################
 ## Category: INEQUALITY ##
@@ -415,6 +416,7 @@ def edemoc():
 def rulelw():
     def collect_iterator(**kwargs):
         yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
+    
 
 
 #############################
