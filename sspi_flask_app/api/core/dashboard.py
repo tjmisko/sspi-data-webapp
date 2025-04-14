@@ -6,10 +6,10 @@ from flask import (
     session,
     jsonify,
     request,
-    render_template
+    render_template,
+    current_app as app
 )
 from ...models.sspi import SSPI
-from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
@@ -163,49 +163,51 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         if not preferences.get("pinnedArray"):
             return None
         return preferences
-
+    indicator_description = sspi_metadata.find_one({
+        "DocumentType": "IndicatorDetail",
+        "Metadata.IndicatorCode": IndicatorCode
+    })["Metadata"]["Description"]
+    app.logger.debug(f"Indicator Description: {indicator_description}")
     if request.method == "POST":
         chart_preferences = request.get_json()
         print(type(chart_preferences))
         session["chart_preferences"] = chart_preferences
         return "Preferences saved"
-    else:
-        chart_preferences = session.get("chart_preferences")
-        chart_preferences = validate_preferences(chart_preferences)
-        if chart_preferences is None:
-            chart_preferences = {"pinnedArray": []}
-        country_query = request.args.getlist("CountryCode")
-        query = {"ICode": IndicatorCode}
-        if country_query:
-            query["CCode"] = {"$in": country_query}
-        dynamic_indicator_data = parse_json(
-            sspi_dynamic_line_data.find(query, {"_id": 0})
-        )
-        min_year, max_year = 9999, 0
-        for document in dynamic_indicator_data:
-            min_year = min(min_year, min(document["years"]))
-            max_year = max(max_year, max(document["years"]))
-        year_labels = [str(year) for year in range(min_year, max_year + 1)]
-        if not dynamic_indicator_data:
-            return jsonify({"error": "No data found"})
-        chart_title = f"{dynamic_indicator_data[0]["IName"]} ({
-            IndicatorCode}) Score"
-        group_options = sspi_metadata.country_groups()
-        return jsonify({
-            "data": dynamic_indicator_data,
-            "title": {
-                "display": True,
-                "text": chart_title,
-                "font": {
-                    "size": 18
-                },
-                "color": "#ccc",
-                "align": "start"
+    chart_preferences = session.get("chart_preferences")
+    chart_preferences = validate_preferences(chart_preferences)
+    if chart_preferences is None:
+        chart_preferences = {"pinnedArray": []}
+    country_query = request.args.getlist("CountryCode")
+    query = {"ICode": IndicatorCode}
+    if country_query:
+        query["CCode"] = {"$in": country_query}
+    dynamic_indicator_data = parse_json(
+        sspi_dynamic_line_data.find(query)
+    )
+    min_year = dynamic_indicator_data[0]["minYear"]
+    max_year = dynamic_indicator_data[0]["maxYear"]
+    year_labels = [str(year) for year in range(min_year, max_year + 1)]
+    if not dynamic_indicator_data:
+        return jsonify({"error": "No data found"})
+    name = dynamic_indicator_data[0]["IName"]
+    chart_title = f"{name} ({IndicatorCode}) Score"
+    group_options = sspi_metadata.country_groups()
+    return jsonify({
+        "data": dynamic_indicator_data,
+        "title": {
+            "display": True,
+            "text": chart_title,
+            "font": {
+                "size": 18
             },
-            "labels": year_labels,
-            "groupOptions": group_options,
-            "chartPreferences": chart_preferences
-        })
+            "color": "#ccc",
+            "align": "start"
+        },
+        "labels": year_labels,
+        "description": indicator_description,
+        "groupOptions": group_options,
+        "chartPreferences": chart_preferences
+    })
 
 
 @dashboard_bp.route('/static/radar/<CountryCode>')
@@ -365,6 +367,7 @@ def get_static_pillar_stack(pillar_code):
                 dataset["IName"] = indicator.name
                 dataset["IRank"] = indicator_rank
                 dataset["IScore"] = indicator.score
+                dataset["Year"] = indicator.year
                 dataset["IScoreScaled"] = indicator.score / n_indicators
                 data[j] = indicator.score / n_indicators
                 dataset["data"] = data

@@ -2,7 +2,6 @@ import requests
 import io
 import zipfile
 import pycountry
-import bson
 from sspi_flask_app.models.database import sspi_bulk_data
 
 

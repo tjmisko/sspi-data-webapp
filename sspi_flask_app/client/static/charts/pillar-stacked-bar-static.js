@@ -118,7 +118,7 @@ class StaticPillarStackedBarChart {
 
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
-        this.canvas.id = `pillar-differential-canvas-${this.pillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`
+        this.canvas.id = `pillar-differential-canvas-${this.pillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;
         this.canvas.width = 800
         this.canvas.height = 400
         this.context = this.canvas.getContext('2d')

@@ -1,14 +1,23 @@
 const endLabelPlugin = {
     id: 'endLabelPlugin',
     afterDatasetsDraw(chart) {
-        chart.data.datasets.forEach(function(dataset, i) {
+        chart.data.datasets.forEach((dataset, i) => {
             if (dataset.hidden) {
                 return;
             }
             const meta = chart.getDatasetMeta(i);
-            const lastPoint = meta.data[meta.data.length - 1];
+            let lastNonNullIndex = meta.data.length - 1;
+            for (let j = meta.data.length; j >= 0; j--) {
+                if (meta.data[j] === undefined) {
+                    continue
+                }
+                if (meta.data[j].raw !== null) {
+                    lastNonNullIndex = j
+                    break
+                }
+            }
+            const lastPoint = meta.data[lastNonNullIndex];
             const value = dataset.CCode;
-
             chart.ctx.save();
             chart.ctx.font = 'bold 14px Arial';
             chart.ctx.fillStyle = dataset.borderColor;
@@ -21,26 +30,21 @@ const endLabelPlugin = {
 
 class DynamicLineChart {
     constructor(parentElement, IndicatorCode, CountryList = []) {
-        // ParentElement is the element to attach the canvas to
-        // CountryList is an array of CountryCodes (empty array means all countries)
-        // Initialize the class
-        this.parentElement = parentElement
+        this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.IndicatorCode = IndicatorCode
-        this.CountryList = CountryList
-
-        // pinnedArray contains a list of pinned countries
-        this.pinnedArray = Array()
-
+        this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
+        this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
+        this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
         this.rigCountryGroupSelector()
         this.initChartJSCanvas()
+        this.updateChartOptions()
         this.rigLegend()
-
         // Fetch data and update the chart
         this.fetch().then(data => {
             this.update(data)
         })
-
+        this.rigPinStorageOnUnload()
     }
 
     initRoot() {
@@ -57,7 +61,7 @@ class DynamicLineChart {
                 <button class="hideunpinned-button">Hide Unpinned</button>
             </div>
         </div>
-        `
+        `;
         this.rigTitleBarButtons()
     }
 
@@ -81,17 +85,30 @@ class DynamicLineChart {
         this.canvas = document.createElement('canvas')
         this.canvas.id = 'dynamic-line-chart-canvas'
         this.canvas.width = 400
-        this.canvas.height = 200
+        this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
             type: 'line',
+            plugins: [endLabelPlugin],
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
                         const dataset = this.chart.data.datasets[element.datasetIndex]
                         this.togglePin(dataset)
                     })
+                },
+                datasets: {
+                    line: {
+                        spanGaps: true,
+                        segment: {
+                            borderWidth: 2,
+                            borderDash: ctx => {
+                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
+                                // Dashed when spanning gaps, solid otherwise
+                            }
+                        }
+                    }
                 },
                 plugins: {
                     legend: {
@@ -103,41 +120,44 @@ class DynamicLineChart {
                     padding: {
                         right: 40
                     }
+                }
+            }
+        })
+    }
+
+    updateChartOptions() {
+        this.chart.options.scales = {
+            x: {
+                ticks: {
+                    color: this.tickColor,
                 },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#bbb',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Year',
-                            color: '#bbb',
-                            font: {
-                                size: 16
-                            }
-                        },
-                    },
-                    y: {
-                        ticks: {
-                            color: '#bbb',
-                        },
-                        beginAtZero: true,
-                        min: 0,
-                        max: 1,
-                        title: {
-                            display: true,
-                            text: 'Indicator Score',
-                            color: '#bbb',
-                            font: {
-                                size: 16
-                            }
-                        },
+                type: "category",
+                title: {
+                    display: true,
+                    text: 'Year',
+                    color: this.axisTitleColor,
+                    font: {
+                        size: 16
+                    }
+                },
+            },
+            y: {
+                ticks: {
+                    color: this.tickColor,
+                },
+                beginAtZero: true,
+                min: 0,
+                max: 1,
+                title: {
+                    display: true,
+                    text: 'Indicator Score',
+                    color: this.axisTitleColor,
+                    font: {
+                        size: 16
                     }
                 }
-            },
-            plugins: [endLabelPlugin]
-        })
+            }
+        }
     }
 
     rigCountryGroupSelector() {
@@ -149,24 +169,20 @@ class DynamicLineChart {
     updateCountryGroups() {
         const numOptions = this.groupOptions.length;
         this.countryGroupContainer.style.setProperty('--num-options', numOptions);
-
         this.groupOptions.forEach((option, index) => {
             const id = `option${index + 1}`;
-
             // Create the radio input
             const input = document.createElement('input');
             input.type = 'radio';
             input.id = id;
             input.name = 'options';
             input.value = option;
-
             // Set the first option as checked by default
             if (index === 0) {
                 input.checked = true;
                 // Set the initial selected index
                 this.countryGroupContainer.style.setProperty('--selected-index', index);
             }
-
             // Add event listener to update the selected index
             input.addEventListener('change', () => {
                 const countryGroupOptions = document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);
@@ -177,17 +193,14 @@ class DynamicLineChart {
                     }
                 });
             });
-
             // Create the label
             const label = document.createElement('label');
             label.htmlFor = id;
             label.textContent = option;
-
             // Append input and label to the container
             this.countryGroupContainer.appendChild(input);
             this.countryGroupContainer.appendChild(label);
         });
-
         // Create the sliding indicator
         const slider = document.createElement('div');
         slider.className = 'slider';
@@ -207,8 +220,7 @@ class DynamicLineChart {
             </div>
             <div class="legend-items">
             </div>
-        `
-
+        `;
         this.savePrefsButton = legend.querySelector('.saveprefs-button')
         this.savePrefsButton.addEventListener('click', () => {
             this.sendPrefs()
@@ -219,7 +231,6 @@ class DynamicLineChart {
         })
         this.legend = this.root.appendChild(legend)
         this.legendItems = this.legend.querySelector('.legend-items')
-
     }
 
     updateLegend() {
@@ -236,7 +247,7 @@ class DynamicLineChart {
             <div class="legend-item">
                 <button class="add-country-button">Add Country</button>
             </div>
-        `
+        `;
         this.addCountryButton = this.legend.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
             new SearchDropdown(this.addCountryButton, this.chart.data.datasets, this)
@@ -248,9 +259,26 @@ class DynamicLineChart {
                 this.unpinCountryByCode(CountryCode, true)
             })
         })
-
     }
 
+    updateDescription(description) {
+        const dbox = document.getElementById("dynamic-indicator-description")
+        dbox.innerText = description
+    }
+
+    setTheme(theme) {
+        if (theme !== "light") {
+            this.theme = "dark"
+            this.tickColor = "#bbb"
+            this.axisTitleColor = "#bbb"
+            this.titleColor = "#ccc"
+        } else {
+            this.theme = "light"
+            this.tickColor = "#444"
+            this.axisTitleColor = "#444"
+            this.titleColor = "#444"
+        }
+    }
 
     async fetch() {
         const response = await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
@@ -275,6 +303,7 @@ class DynamicLineChart {
         this.pinnedOnly = data.chartPreferences.pinnedOnly
         this.updatePins()
         this.updateLegend()
+        this.updateDescription(data.description)
         this.updateCountryGroups()
         if (this.pinnedOnly) {
             this.hideUnpinned()
@@ -431,6 +460,64 @@ class DynamicLineChart {
         this.pinnedArray = Array()
         this.updateLegend()
     }
+
+    dumpChartDataJSON(screenVisibility = true) {
+        const observations = this.chart.data.datasets.map(dataset => {
+            if (screenVisibility && dataset.hidden) {
+                return []
+            }
+            return dataset.data.map((_, i) => ({
+                "ItemCode": dataset.ICode,
+                "CountryCode": dataset.CCode,
+                "Score": dataset.scores[i],
+                "Value": dataset.values[i],
+                "Year": dataset.years[i]
+            }));
+        }).flat();
+        const jsonString = JSON.stringify(observations, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.IndicatorCode + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    dumpChartDataCSV(screenVisibility = true) {
+        const observations = this.chart.data.datasets.map(dataset => {
+            if (screenVisibility && dataset.hidden) {
+                return []
+            }
+            return dataset.data.map((_, i) => ({
+                "ItemCode": dataset.ICode,
+                "CountryCode": dataset.CCode,
+                "Score": dataset.scores[i].toString(),
+                "Value": dataset.values[i].toString(),
+                "Year": dataset.years[i].toString()
+            }));
+        }).flat();
+        const csvString = Papa.unparse(observations);
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.IndicatorCode + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    rigPinStorageOnUnload() {
+        window.addEventListener("beforeunload", () => {
+            localStorage.setItem('pins', JSON.stringify(this.chart.data.datasets.map(
+                (dataset) => { dataset.pinned }
+            )));
+        })
+    }
 }
 
 class SearchDropdown {
@@ -455,7 +542,7 @@ class SearchDropdown {
             <form class="add-country-pin-search-form">
                 <input type="text" name="Country" placeholder="Country">
             </form>
-        `
+        `;
         this.textInput = this.parentElement.querySelector("input")
         this.textInput.focus()
         this.textInput.addEventListener("input", () => this.runSearch())
@@ -500,10 +587,10 @@ class SearchDropdown {
             })
             const resultSpan = document.createElement('span')
             resultSpan.classList.add('add-country-pin-button')
-            
+
             resultSpan.innerHTML = `
                 ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
-            `
+            `;
             resultElement.appendChild(resultSpan)
             this.resultsWindow.appendChild(resultElement)
         })

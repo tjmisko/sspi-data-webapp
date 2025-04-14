@@ -8,7 +8,8 @@ from datetime import datetime
 class SSPIRawAPIData(MongoWrapper):
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
-        Raises an InvalidDocumentFormatError if the document is not in the valid
+        Raises an InvalidDocumentFormatError if the document is not in the
+        valid:
 
         Valid Document Format:
             {
@@ -40,21 +41,24 @@ class SSPIRawAPIData(MongoWrapper):
 
     def validate_collected_at(self, document: dict, document_number: int = 0):
         # Validate CollectedAt format
-        if not "CollectedAt" in document.keys():
+        if "CollectedAt" not in document.keys():
             print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' is a required argument (document {document_number})")
-        if not type(document["CollectedAt"]) is datetime:
+                f"'CollectedAt' is a required argument {doc_id}")
+        if not type(document["CollectedAt"]) is str:
             print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' must be a datetime (document {document_number})")
+                f"'CollectedAt' must be a str {(doc_id)}")
 
     def validate_username(self, document: dict, document_number: int = 0):
         # Validate Username format
-        if not "Username" in document.keys():
+        if "Username" not in document.keys():
             print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'Username' is a required argument (document {document_number})")
+                f"'Username' is a required argument {doc_id}")
         if not type(document["Username"]) is str:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
@@ -62,25 +66,28 @@ class SSPIRawAPIData(MongoWrapper):
 
     def validate_raw(self, document: dict, document_number: int = 0):
         # Validate Raw format
-        if not "Raw" in document.keys():
+        if "Raw" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Raw' is a required argument (document {document_number})")
         if not type(document["Raw"]) in [str, dict, int, float, list]:
             print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'Raw' must be a string, dict, int, float, or list (document {document_number})")
+                f"'Raw' must be a string, dict, int, float, or list {doc_id}")
 
     def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
-        - Document to be passed as a well-formed dictionary or string for entry into pymongo
-        - IndicatorCode is the indicator code for the indicator that the observation is for
+        - Document to be passed as a well-formed dictionary or string for entry
+        into pymongo
+        - IndicatorCode is the indicator code for the indicator that the
+        observation is for
         """
         document = {
             "IndicatorCode": IndicatorCode,
             "Raw": document,
-            "CollectedAt": datetime.now()
+            "CollectedAt": datetime.now().strftime("%F %R")
         }
         document.update(kwargs)
         self.insert_one(document)
@@ -88,9 +95,11 @@ class SSPIRawAPIData(MongoWrapper):
 
     def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
         """
-        Utility Function 
-        - Observation to be past as a list of well form observation dictionaries
-        - IndicatorCode is the indicator code for the indicator that the observation is for
+        Utility Function
+        - Observation to be past as a list of well form observation
+        dictionaries
+        - IndicatorCode is the indicator code for the indicator that the
+        observation is for
         """
         for observation in document_list:
             self.raw_insert_one(observation, IndicatorCode, **kwargs)
@@ -109,9 +118,9 @@ class SSPIRawAPIData(MongoWrapper):
 
     def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
         """
-        Returns True if raw data is available for the given indicator code and kwargs
+        Returns True if raw data is available for the given indicator code and
+        kwargs
         """
         MongoQuery = {"IndicatorCode": IndicatorCode}
         MongoQuery.update(kwargs)
         return bool(self.find_one(MongoQuery))
-

@@ -174,7 +174,7 @@ class MongoWrapper:
 
     def validate_year(self, document: dict, document_number: int = 0):
         # Validate Year format
-        if not "Year" in document.keys():
+        if "Year" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Year' is a required argument (document {document_number})")
@@ -189,11 +189,11 @@ class MongoWrapper:
 
     def validate_value(self, document: dict, document_number: int = 0):
         # Validate Value format
-        if not "Value" in document.keys():
+        if "Value" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' is a required argument (document {document_number})")
-        if not type(document["Value"]) in [int, float]:
+        if type(document["Value"]) not in [int, float]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' must be a float or integer (document {document_number})")
@@ -217,8 +217,7 @@ class MongoWrapper:
     def validate_intermediates_list(self, intermediates: list, document_number: int = 0):
         if not type(intermediates) is list:
             print(f"Document Produced an Error: {intermediates}")
-            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {
-                                             document_number}); got type {type(intermediates)}")
+            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(intermediates)}")
         id_set = set()
         for intermediate in intermediates:
             if not type(intermediate) is dict:
@@ -230,10 +229,12 @@ class MongoWrapper:
             self.validate_year(intermediate, document_number)
             self.validate_value(intermediate, document_number)
             self.validate_unit(intermediate, document_number)
-            document_id = f"{intermediate['IntermediateCode']}_{
-                intermediate['CountryCode']}_{intermediate['Year']}"
+            document_id = f"{intermediate['IntermediateCode']}_{intermediate['CountryCode']}_{intermediate['Year']}"
+            print("==========================")
+            print(document_id)
+            print(intermediate)
             if document_id in id_set:
-                print(f"Document Produced an Error: {intermediates}")
+                print(f"Document Produced an Error: {intermediate}")
                 raise InvalidDocumentFormatError(
                     f"Duplicate intermediate document found (document {document_number})")
             id_set.add(document_id)
