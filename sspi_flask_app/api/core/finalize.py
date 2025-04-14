@@ -77,7 +77,6 @@ def finalize_sspi_static_rank_data():
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
         country_data = sspi_main_data_v3.find({"CountryCode": cou})
-        cname = country_code_to_name(cou)
         sspi_scores = SSPI(indicator_details, country_data)
         score_group_dictionary["SSPI"][i]["CCode"] = cou
         score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
