@@ -1,3 +1,4 @@
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -5,13 +6,17 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
+    jsonify_df,
     parse_json,
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.vdem import (
     cleanEDEMOCdata
 )
-from flask import current_app as app
+import pandas as pd
+from io import StringIO
+from datetime import datetime
+import json
 
 
 @compute_bp.route("/RULELW", methods=['GET'])
@@ -22,49 +27,28 @@ def compute_rulelw():
     raw_data = sspi_raw_api_data.fetch_raw_data("RULELW")
     fragments = []
     for obs in raw_data:
-        try:
-            fragment_num = obs.get("FragmentNumber")
-            csv_fragment = obs.get("Raw", {}).get("csv_fragment", "")
-            if fragment_num is not None and csv_fragment:
-                fragments.append((fragment_num, csv_fragment))
-        except Exception as e:
-            continue
-    if not fragments:
-        return "No CSV fragments found for RULELW."
+        fragments.append((obs["FragmentNumber"], obs["Raw"]["csv_fragment"]))
     fragments.sort(key=lambda x: x[0])
     full_csv = "".join(fragment for _, fragment in fragments)
-    try:
-        df = pd.read_csv(StringIO(full_csv))
-    except Exception as e:
-        return f"Error reading CSV data: {e}"
+    df = pd.read_csv(StringIO(full_csv))
     filtered_df = df[['country_text_id', 'year', 'v2x_rule']]
-    filtered_df = df[(df["year"] > 1900) & (df["year"] < 2030)]
-    year_columns = [col for col in filtered_df.columns if col.isdigit()]
-    id_vars = [col for col in filtered_df.columns if col not in year_columns]
-    if year_columns:
-        df_melted = filtered_df.melt(
-            id_vars=id_vars,
-            value_vars=year_columns,
-            var_name="Year",
-            value_name="Value"
-        )
-        df_melted["Year"] = df_melted["Year"].astype(int)
-    else:
-        df_melted = filtered_df.rename(columns={"year": "Year", "v2x_rule": "Value"})
-        df_melted["Year"] = df_melted["Year"].astype(int)
-    df_sorted = df_melted.sort_values(by=["country_text_id", "Year"])
-    df_sorted["CountryCode"] = df_sorted["country_text_id"]
-    df_sorted["Unit"] = ""
-    df_sorted["IndicatorCode"] = "RULELW"
-    df_final = df_sorted[["CountryCode", "Year", "Value", "Unit", "IndicatorCode"]]
-    records = df_final.to_dict(orient="records")
-    scored_list = score_single_indicator(records, "RULELW")
-    filtered_list, incomplete_observations = filter_incomplete_data(
-         scored_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    return parse_json(filtered_list)
-
-
+    current_year = datetime.now().year
+    filtered_df = filtered_df[(filtered_df["year"] > 1990) & (filtered_df["year"] < current_year)]
+    obs_list = json.loads(str(filtered_df.to_json(orient='records')))
+    clean_list = []
+    for obs in obs_list:
+        if obs["v2x_rule"] is None:
+            continue
+        clean_list.append({
+            "IndicatorCode": "RULELW",
+            "CountryCode": obs["country_text_id"],
+            "Year": obs["year"],
+            "Value": obs["v2x_rule"],
+            "Unit": "Index"
+        })
+    scored_list = score_single_indicator(clean_list, "RULELW")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/EDEMOC", methods=['GET'])
