@@ -89,7 +89,7 @@ class SSPIRawAPIData(MongoWrapper):
         byte_max = self.maximum_document_size_bytes
         if isinstance(document, str) and len(document) > byte_max:
             num_fragments = (len(document) + byte_max - 1) // byte_max
-            fragment_group_id = hashlib.blake2b(document.encode('utf-8'))
+            fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
             for i in range(num_fragments):
                 obs = {
                     "IndicatorCode": IndicatorCode,
@@ -130,11 +130,37 @@ class SSPIRawAPIData(MongoWrapper):
         Utility function that handles querying the database
         """
         if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
-            print(f"Document Produced an Error: {IndicatorCode}")
-            raise ValueError("Indicator Code not found in database")
+            msg = (
+                "No Documents with IndicatorCode " f"{IndicatorCode} in "
+                "sspi_raw_api_data. Do you forget to run collect?"
+            )
+            raise ValueError(msg)
         mongoQuery = {"IndicatorCode": IndicatorCode}
         mongoQuery.update(kwargs)
-        return self.find(mongoQuery)
+        raw_data = self.find(mongoQuery)
+        fragment_dict = {}
+        defragged_raw = []
+        for obs in raw_data:
+            frag_gid = obs.get("FragmentGroupID", "")
+            if not frag_gid:
+                defragged_raw.append(obs)
+                continue
+            if not fragment_dict.get(frag_gid, None):
+                fragment_dict[frag_gid] = []
+            fragment_dict[obs["FragmentGroupID"]].append(obs)
+        for k, v in fragment_dict.items():
+            v.sort(key=lambda x: x["FragmentNumber"])
+            if not all([x["FragmentTotal"] == len(v) for x in v]):
+                raise InvalidDocumentFormatError((
+                    "Fragmentation Error! Your data is missing a fragment "
+                    f"in FragmentGroup ({k})"
+                ))
+            raw = "".join([x["Raw"] for x in v])
+            drops = ["FragmentNumber", "FragmentTotal", "Raw"]
+            rebuilt = {f: data for f, data in v[0].items() if f not in drops}
+            rebuilt["Raw"] = raw
+            defragged_raw.append(rebuilt)
+        return defragged_raw
 
     def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
         """
