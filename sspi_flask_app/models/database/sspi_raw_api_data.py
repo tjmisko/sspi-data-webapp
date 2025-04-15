@@ -46,11 +46,11 @@ class SSPIRawAPIData(MongoWrapper):
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
                 f"'CollectedAt' is a required argument {doc_id}")
-        if not type(document["CollectedAt"]) is datetime:
+        if not type(document["CollectedAt"]) is str:
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' must be a datetime {(doc_id)}")
+                f"'CollectedAt' must be a str {(doc_id)}")
 
     def validate_username(self, document: dict, document_number: int = 0):
         # Validate Username format
@@ -87,7 +87,7 @@ class SSPIRawAPIData(MongoWrapper):
         document = {
             "IndicatorCode": IndicatorCode,
             "Raw": document,
-            "CollectedAt": datetime.now()
+            "CollectedAt": datetime.now().strftime("%F %R")
         }
         document.update(kwargs)
         self.insert_one(document)

@@ -2,19 +2,15 @@ class ScoreBarStatic {
     constructor(parentElement, itemCode, backgroundColor = SSPIColors.SSPI, width = 800, height = 1000) {
         this.parentElement = parentElement
         this.itemCode = itemCode
-        this.textColor = "#bbb"
-        this.gridColor = "#cccccc33"
-        this.backgroundColor = backgroundColor + "99"
-        this.highlightColor = "#ff0000ee"
-        this.borderColor = backgroundColor
+        this.backgroundBase = backgroundColor
         this.width = width
         this.height = height
-
+        this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
+        this.updateChartOptions()
         this.initSummaryBox()
-
         this.fetch().then(data => {
             this.update(data)
         })
@@ -35,7 +31,7 @@ class ScoreBarStatic {
     initChartJSCanvas() {
         // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
-        this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`
+        this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`;
         this.canvas.width = this.width
         this.canvas.height = this.height
         this.context = this.canvas.getContext('2d')
@@ -67,75 +63,77 @@ class ScoreBarStatic {
                         }
                     },
                 },
-                scales: {
-                    x2: {
-                        position: 'top',
-                        min: 0,
-                        max: 1,
-                        ticks: {
-                            color: this.textColor
-                        },
-                        label: {
-                            color: this.textColor,
-                        },
-                        grid: {
-                            display: false,
-                        },
-                    },
-                    x: {
-                        position: 'bottom',
-                        min: 0,
-                        max: 1,
-                        ticks: {
-                            color: this.textColor
-                        },
-                        title: {
-                            display: true,
-                            font: {
-                                size: 16,
-                            },
-                            color: this.textColor
-                        },
-                        label: {
-                            color: this.textColor,
-                        },
-                        grid: {
-                            color: this.gridColor,
-                        }
-                    },
-                    y2: {
-                        position: 'left',
-                        ticks: {
-                            color: this.textColor,
-                            font: {
-                                size: 12,
-                                weight: 'bold'
-                            },
-                            callback: function(value, index, values) {
-                                return this.chart.data.datasets[0].info[index].Rank
-                            },
-                            padding: 8
-                        },
-                    },
-                    y: {
-                        position: 'left',
-                        ticks: {
-                            color: this.textColor,
-                        },
-                        grid: {
-                            display: true,
-                            drawBorder: true,
-                            drawOnChartArea: true,
-                            color: function(context) {
-                                // Draw gridline only every 10 indices
-                                return context.index % 10 === 0 ? '#66666666' : 'rgba(0, 0, 0, 0)';
-                            }
-                        },
-                    },
-                },
                 indexAxis: 'y',
             }
         })
+    }
+    updateChartOptions() {
+        this.chart.options.scales = {
+            x2: {
+                position: 'top',
+                min: 0,
+                max: 1,
+                ticks: {
+                    color: this.textColor
+                },
+                label: {
+                    color: this.textColor,
+                },
+                grid: {
+                    display: false,
+                },
+            },
+            x: {
+                position: 'bottom',
+                min: 0,
+                max: 1,
+                ticks: {
+                    color: this.textColor
+                },
+                title: {
+                    display: true,
+                    font: {
+                        size: 16,
+                    },
+                    color: this.textColor
+                },
+                label: {
+                    color: this.textColor,
+                },
+                grid: {
+                    color: this.gridColor,
+                }
+            },
+            y2: {
+                position: 'left',
+                ticks: {
+                    color: this.textColor,
+                    font: {
+                        size: 12,
+                        weight: 'bold'
+                    },
+                    callback: function(value, index, values) {
+                        return this.chart.data.datasets[0].info[index].Rank
+                    },
+                    padding: 8
+                },
+            },
+            y: {
+                position: 'left',
+                ticks: {
+                    color: this.textColor,
+                },
+                grid: {
+                    display: true,
+                    drawBorder: true,
+                    drawOnChartArea: true,
+                    color: function(context) {
+                        // Draw gridline only every 10 indices
+                        return context.index % 10 === 0 ? '#66666666' : 'rgba(0, 0, 0, 0)';
+                    }
+                },
+            },
+        }
     }
 
     initSummaryBox() {
@@ -152,7 +150,7 @@ class ScoreBarStatic {
         const medianScore = scores.sort()[Math.floor(scores.length / 2)]
         const minScore = Math.min(...scores)
         const maxScore = Math.max(...scores)
-        const sdScore = Math.sqrt(scores.reduce((a, b) => a + (b - meanScore) ** 2, 0) / (scores.length -1))
+        const sdScore = Math.sqrt(scores.reduce((a, b) => a + (b - meanScore) ** 2, 0) / (scores.length - 1))
         return {
             Mean: meanScore.toFixed(3),
             Median: medianScore.toFixed(3),
@@ -166,7 +164,7 @@ class ScoreBarStatic {
         for (const key in summaryStats) {
             const stat = document.createElement('div')
             stat.classList.add('score-bar-summary-stat')
-            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`
+            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`;
             this.summaryBox.appendChild(stat)
         }
     }
@@ -174,6 +172,26 @@ class ScoreBarStatic {
     async fetch() {
         const response = await fetch(`/api/v1/static/bar/score/${this.itemCode}`);
         return response.json();
+    }
+
+    setTheme(theme) {
+        if (theme !== "light") {
+            this.theme = "dark"
+            this.textColor = "#bbb"
+            this.gridColor = "#cccccc33"
+            this.backgroundColor = this.backgroundBase + "99"
+            this.highlightColor = "#ff0000ee"
+            this.borderColor = this.backgroundBase
+            this.titleColor = "#ccc"
+        } else {
+            this.theme = "light"
+            this.textColor = "#444"
+            this.gridColor = "#333333cc"
+            this.backgroundColor = this.backgroundBase + "cc"
+            this.highlightColor = "#ff0000ee"
+            this.borderColor = this.backgroundBase
+            this.titleColor = "#333"
+        }
     }
 
     getStoredHighlights() {
@@ -229,13 +247,13 @@ class ScoreBarStatic {
         this.setVisibleHighlights(highlights)
     }
 
-    removeStoredHighlight(countryCode) { 
+    removeStoredHighlight(countryCode) {
         let highlights = this.getStoredHighlights()
         highlights = highlights.filter(highlight => highlight !== countryCode)
         this.setStoredHighlights(highlights)
     }
 
-    addStoredHighlight(countryCode) { 
+    addStoredHighlight(countryCode) {
         let highlights = this.getStoredHighlights()
         if (highlights.includes(countryCode)) {
             return
@@ -244,7 +262,7 @@ class ScoreBarStatic {
         this.setStoredHighlights(highlights)
     }
 
-    toggleHighlight(countryCode) { 
+    toggleHighlight(countryCode) {
         let highlights = this.getStoredHighlights()
         if (highlights.includes(countryCode)) {
             this.removeVisibleHighlight(countryCode)
