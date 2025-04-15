@@ -105,9 +105,7 @@ def compute_stkhlm():
 def compute_defrst():
     app.logger.info("Running /api/v1/compute/DEFRST")
     sspi_clean_api_data.delete_many({"IndicatorCode": "DEFRST"})
-    indicator_detail = sspi_metadata.get_detail("DEFRST")
-    lg = indicator_detail["Metadata"]["LowerGoalpost"]
-    ug = indicator_detail["Metadata"]["UpperGoalpost"]
+    lg, ug = sspi_metadata.get_goalposts("DEFRST")
     raw_data = sspi_raw_api_data.fetch_raw_data("DEFRST")[0]["Raw"]["data"]
     clean_obs_list = format_FAO_data_series(raw_data, "DEFRST")
     average_1990s_dict = {}
@@ -168,9 +166,7 @@ def compute_defrst():
 def compute_carbon():
     app.logger.info("Running /api/v1/compute/CARBON")
     sspi_clean_api_data.delete_many({"IndicatorCode": "CARBON"})
-    indicator_detail = sspi_metadata.get_detail("CARBON")
-    lg = indicator_detail["Metadata"]["LowerGoalpost"]
-    ug = indicator_detail["Metadata"]["UpperGoalpost"]
+    lg, ug = sspi_metadata.get_goalposts("CARBON")
     raw_data = sspi_raw_api_data.fetch_raw_data("CARBON")[0]["Raw"]["data"]
     clean_obs_list = format_FAO_data_series(raw_data, "CARBON")
     average_1990s_dict = {}

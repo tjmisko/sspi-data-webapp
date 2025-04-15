@@ -217,6 +217,15 @@ class SSPIMetadata(MongoWrapper):
         }
         return self.find_one(query)
 
+    def get_goalposts(self, IndicatorCode: str):
+        """
+        Return a list of documents containg indicator details
+        """
+        indicator_detail = self.get_detail(IndicatorCode)
+        lg = indicator_detail["Metadata"]["LowerGoalpost"]
+        ug = indicator_detail["Metadata"]["UpperGoalpost"]
+        return lg, ug
+
     def intermediate_details(self) -> list[dict]:
         """
         Return a list of documents containg intermediate details
