@@ -1,8 +1,12 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from bson import json_util
+import hashlib
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 import json
 from datetime import datetime
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class SSPIRawAPIData(MongoWrapper):
@@ -76,21 +80,40 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'Raw' must be a string, dict, int, float, or list {doc_id}")
 
-    def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
+    def raw_insert_one(self, document: list | str | dict, IndicatorCode, **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
         - Document to be passed as a well-formed dictionary or string for entry
         into pymongo
         - IndicatorCode is the indicator code for the indicator that the
         observation is for
+        - Implements automatic fragmentation to handle strings which are too large
         """
-        document = {
+        byte_max = self.maximum_document_size_bytes
+        if isinstance(document, str) and len(document) > byte_max:
+            num_fragments = (len(document) + byte_max - 1) // byte_max
+            fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
+            for i in range(num_fragments):
+                obs = {
+                    "IndicatorCode": IndicatorCode,
+                    "Raw": document[byte_max * i:byte_max * i + byte_max],
+                    "CollectedAt": datetime.now().strftime("%F %R")
+                }
+                obs.update(kwargs)
+                obs.update({
+                    "FragmentGroupID": f"{IndicatorCode}_{fragment_group_id}",
+                    "FragmentNumber": i,
+                    "FragmentTotal": num_fragments,
+                })
+                self.insert_one(obs)
+            return num_fragments
+        obs = {
             "IndicatorCode": IndicatorCode,
             "Raw": document,
             "CollectedAt": datetime.now().strftime("%F %R")
         }
-        document.update(kwargs)
-        self.insert_one(document)
+        obs.update(kwargs)
+        self.insert_one(obs)
         return 1
 
     def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
@@ -110,11 +133,38 @@ class SSPIRawAPIData(MongoWrapper):
         Utility function that handles querying the database
         """
         if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
-            print(f"Document Produced an Error: {IndicatorCode}")
-            raise ValueError("Indicator Code not found in database")
+            msg = (
+                "No Documents with IndicatorCode " f"{IndicatorCode} in "
+                "sspi_raw_api_data. Do you forget to run collect?"
+            )
+            raise ValueError(msg)
         mongoQuery = {"IndicatorCode": IndicatorCode}
         mongoQuery.update(kwargs)
-        return self.find(mongoQuery)
+        raw_data = self.find(mongoQuery)
+        fragment_dict = {}
+        defragged_raw = []
+        for obs in raw_data:
+            frag_gid = obs.get("FragmentGroupID", "")
+            if not frag_gid:
+                defragged_raw.append(obs)
+                continue
+            if not fragment_dict.get(frag_gid, None):
+                fragment_dict[frag_gid] = []
+            fragment_dict[obs["FragmentGroupID"]].append(obs)
+        for k, v in fragment_dict.items():
+            log.info(f"Reassembling Fragments for Fragment {k}")
+            v.sort(key=lambda x: x["FragmentNumber"])
+            if not all([x["FragmentTotal"] == len(v) for x in v]):
+                raise InvalidDocumentFormatError((
+                    "Fragmentation Error! Your data is missing a fragment "
+                    f"in FragmentGroup ({k})"
+                ))
+            raw = "".join([x["Raw"] for x in v])
+            drops = ["FragmentNumber", "FragmentTotal", "Raw"]
+            rebuilt = {f: data for f, data in v[0].items() if f not in drops}
+            rebuilt["Raw"] = raw
+            defragged_raw.append(rebuilt)
+        return defragged_raw
 
     def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
         """

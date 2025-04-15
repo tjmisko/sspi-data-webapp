@@ -7,6 +7,7 @@ class MongoWrapper:
     def __init__(self, mongo_database):
         self._mongo_database = mongo_database
         self.name = mongo_database.name
+        self.maximum_document_size_bytes = 16777216 * 99 // 100
 
     def is_empty(self):
         doc_count = self._mongo_database.count_documents({})

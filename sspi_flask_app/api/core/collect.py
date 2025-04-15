@@ -2,33 +2,31 @@ from flask import Blueprint, Response, current_app as app
 from flask_login import login_required, current_user
 import requests
 import time
+from sspi_flask_app.models.database import (
+    sspi_raw_outcome_data
+)
 from sspi_flask_app.api.datasource.oecdstat import (
     collectOECDIndicator,
     collectOECDSDMXData,
     collectOECDSDMXFORAID
 )
-from sspi_flask_app.models.database import (
-    sspi_raw_outcome_data
-)
-from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collectOECDSDMXData
 from sspi_flask_app.api.datasource.epi import collectEPIData
-from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
-from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
-from sspi_flask_app.api.datasource.iea import collectIEAData
-from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
-from sspi_flask_app.api.datasource.ilo import collectILOData
-from sspi_flask_app.api.datasource.who import collectWHOdata
-from sspi_flask_app.api.datasource.vdem import collectVDEMData
-from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
-from sspi_flask_app.api.datasource.who import collectCSTUNTData
-from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
+from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.itu import collect_itu_data
+from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
+from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
 from sspi_flask_app.api.datasource.sipri import collectSIPRIdata
 from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
-
-from .countrychar import insert_pop_data
-from ..datasource.itu import collect_itu_data
+from sspi_flask_app.api.datasource.uis import collectUISdata
+from sspi_flask_app.api.datasource.vdem import collectVDEMData
+from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
+from sspi_flask_app.api.datasource.who import collectCSTUNTData, collectWHOdata
+from sspi_flask_app.api.datasource.wid import collectWIDData
+from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
+from sspi_flask_app.api.core.countrychar import insert_pop_data
 
 log = app.logger
 
@@ -278,7 +276,12 @@ def pubacc():
 ##########################
 ## Category: INEQUALITY ##
 ##########################
-
+@collect_bp.route("/ISHRAT", methods=['GET'])
+@login_required
+def ishrat():
+    def collect_iterator(**kwargs):
+        yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @collect_bp.route("/GINIPT", methods=['GET'])
 @login_required
@@ -337,10 +340,20 @@ def dptcov():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+# # PHYSPC for Correlation Analysis with UHC
+# @collect_bp.route("/PHYSPC", methods=['GET'])
+# @login_required
+# def physpc():
+#     def collect_iterator(**kwargs):
+#         yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
 def physpc():
     def collect_iterator(**kwargs):
+        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
