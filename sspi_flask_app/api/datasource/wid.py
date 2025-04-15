@@ -8,6 +8,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 
 
 def collectWIDData(IndicatorCode, **kwargs):
+    byte_max = sspi_raw_api_data.maximum_document_size_bytes
     yield "Requesting WID data from source\n"
     res = requests.get("https://wid.world/bulk_download/wid_all_data.zip")
     res.raise_for_status()
