@@ -1,5 +1,6 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from bson import json_util
+import hashlib
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 import json
 from datetime import datetime
@@ -76,21 +77,40 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'Raw' must be a string, dict, int, float, or list {doc_id}")
 
-    def raw_insert_one(self, document, IndicatorCode, **kwargs) -> int:
+    def raw_insert_one(self, document: list | str | dict, IndicatorCode, **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
         - Document to be passed as a well-formed dictionary or string for entry
         into pymongo
         - IndicatorCode is the indicator code for the indicator that the
         observation is for
+        - Implements automatic fragmentation to handle strings which are too large
         """
-        document = {
+        byte_max = self.maximum_document_size_bytes
+        if isinstance(document, str) and len(document) > byte_max:
+            num_fragments = (len(document) + byte_max - 1) // byte_max
+            fragment_group_id = hashlib.blake2b(document.encode('utf-8'))
+            for i in range(num_fragments):
+                obs = {
+                    "IndicatorCode": IndicatorCode,
+                    "Raw": document[byte_max * i:byte_max * i + byte_max],
+                    "CollectedAt": datetime.now().strftime("%F %R")
+                }
+                obs.update(kwargs)
+                obs.update({
+                    "FragmentGroupID": f"{IndicatorCode}_{fragment_group_id}",
+                    "FragmentNumber": i,
+                    "FragmentTotal": num_fragments,
+                })
+                self.insert_one(obs)
+            return num_fragments
+        obs = {
             "IndicatorCode": IndicatorCode,
             "Raw": document,
             "CollectedAt": datetime.now().strftime("%F %R")
         }
-        document.update(kwargs)
-        self.insert_one(document)
+        obs.update(kwargs)
+        self.insert_one(obs)
         return 1
 
     def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
