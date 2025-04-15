@@ -29,8 +29,8 @@ def collectWIDData(IndicatorCode, **kwargs):
                 num_chunks = (len(raw) + MAXBITESIZE - 1) // MAXBITESIZE
                 len_chunk = len(raw) / num_chunks
                 file_name_fields = file_name.split(".")[0].split("_")
-                if len(file_name_fields) != 3:
-                    # Don't save state-level data
+                if len(file_name_fields) != 3 or 'metadata' in file_name_fields:
+                    # Don't save state-level data or metadata
                     yield f"Skipping {file_name}\n"
                     continue
                 dataset_type = file_name_fields[1]
@@ -45,11 +45,11 @@ def collectWIDData(IndicatorCode, **kwargs):
                 if len(country_code) != 3:
                     # Don't save state-level data
                     continue
-
-                for i in range(num_chunks - 1):
+                
+                for i in range(max(1, num_chunks - 1)):
                     start = int(i * len_chunk)
                     end = int((i + 1) * len_chunk if i < num_chunks - 1 else len(raw))
-                    chunk = raw[start:end]
+                    chunk = "country;variable;percentile;year;value;age;pop\n" + raw[start:end] if i > 0 else raw[start:end]
                     observation = {
                     "SourceOrganization": "WID",
                     "SourceOrganizationName": "World Inequality Database",
@@ -58,60 +58,55 @@ def collectWIDData(IndicatorCode, **kwargs):
                     "DatasetName": file_name,
                     "CountryCode": country_code,
                     "DatasetDescription": f"World Inequality Database All {dataset_type} for {country_code}",
-                    f"Chunk {i}": chunk,
+                    "Raw": chunk,
+                    "Chunk Number": i,
                     "RawPage": doc_index,
                     "RawFormat": "csv"
                     }
                     sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, **kwargs)
-    
-def cleanWIDData(raw_data):
 
-    raw_csv = raw_data[0]['Raw']['Raw']
-
-    virtual_csv = StringIO(raw_csv)
+def processCSV(curr_csv, CountryCode):
+    virtual_csv = StringIO(curr_csv)
     raw_df = pd.read_csv(virtual_csv, delimiter=';')
-    ptinc = raw_df[raw_df['variable'] == 'sptincj992'].reset_index(drop=True)
     target_vars = ['p0p50', 'p90p100']
-    country_code = pycountry.countries.get(alpha_2=ptinc['country'][0]).alpha_3
-    ptinc_vars = ptinc[ptinc['percentile'].isin(target_vars)]
-    ptinc_vars = ptinc_vars.drop(columns='variable')
-    ptinc_pivot = ptinc_vars.pivot(index='year',columns='percentile',values='value')
-    ptinc_pivot['country'] = 'AD'
-    ptinc_pivot['ratio'] = ptinc_pivot['p0p50'] / ptinc_pivot['p90p100']
-    ptinc_pivot = ptinc_pivot.drop(columns=['p0p50', 'p90p100'])
+
+    if not raw_df['percentile'].isin(target_vars).any() or 'sptincj992' not in raw_df['variable'].values:
+        return []
+
+    else: 
+        ptinc = raw_df[raw_df['variable'] == 'sptincj992'].reset_index(drop=True)
+        ptinc = ptinc[ptinc['percentile'].isin(target_vars)]
+        ptinc['country'] = CountryCode
+        ptinc = ptinc[['country','year', 'value', 'percentile']].rename(columns={'country':'CountryCode','year':'Year','percentile':'Percentile'})
+                   
+        return ptinc.to_dict(orient='records')
+
+
+def cleanWIDData(raw_data): 
+
+    cleaned_obs = []
     
-
-    ''' 
-      country    variable percentile  year  value  age pop
-    0      AD  adiincj992      p0p10  1980  550.3  992   j
-    1      AD  adiincj992      p0p10  1981  511.0  992   j
-    2      AD  adiincj992      p0p10  1982  491.5  992   j
-    3      AD  adiincj992      p0p10  1983  495.5  992   j
-    4      AD  adiincj992      p0p10  1984  500.5  992   j
-    5      AD  adiincj992      p0p10  1985  474.9  992   j
-    6      AD  adiincj992      p0p10  1986  471.5  992   j
-    7      AD  adiincj992      p0p10  1987  477.3  992   j
-    8      AD  adiincj992      p0p10  1988  502.8  992   j
-    9      AD  adiincj992      p0p10  1989  505.9  992   j
+    for csv in raw_data:
+        observation_cleaned = processCSV(csv['Raw']['Raw'], csv['Raw']['CountryCode'])
+        cleaned_obs += observation_cleaned
     
+    cleaned_df = pd.DataFrame(cleaned_obs)
+    p0p50 = cleaned_df[cleaned_df['Percentile'] == 'p0p50'].drop(columns=['Percentile'])
+    p90p100 = cleaned_df[cleaned_df['Percentile'] == 'p90p100'].drop(columns=['Percentile'])
+
+    merged_df = pd.merge(p0p50, p90p100, on=['CountryCode', 'Year'], suffixes=('_p0p50', '_p90p100'))
+    merged_df['Value'] = merged_df['value_p0p50'] / merged_df['value_p90p100']
+    merged_df['IndicatorCode'] = 'ISHRAT'
+    merged_df['Description'] = "The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households."
+    merged_df['Unit'] = 'Proportion'
+    merged_df = merged_df.drop(columns=['value_p0p50','value_p90p100'])
+    merged_df = merged_df[merged_df['Year'] >= 1930]
     
-    cleaned_wid_list = []
+    return merged_df.to_dict(orient='records')
 
-    for entry in reader:
-        if entry['percentile'] != 'p0p50': 
-            continue
-        if entry['variable'] != 'sptincj992':
-            continue
 
-        observation = {
-            "CountryCode": entry['country'],
-            "IndicatorCode": "ISHRAT",
-            "Year": entry['year'],
-            "Value":entry['value'],
-            "Unit": "Index",
-            "Description":""
 
-        }
-        cleaned_wid_list.append(observation)
-    '''
-    return [1,2,3]
+        
+
+
+
