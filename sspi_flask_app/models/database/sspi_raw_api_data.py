@@ -4,6 +4,9 @@ import hashlib
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 import json
 from datetime import datetime
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class SSPIRawAPIData(MongoWrapper):
@@ -149,6 +152,7 @@ class SSPIRawAPIData(MongoWrapper):
                 fragment_dict[frag_gid] = []
             fragment_dict[obs["FragmentGroupID"]].append(obs)
         for k, v in fragment_dict.items():
+            log.info(f"Reassembling Fragments for Fragment {k}")
             v.sort(key=lambda x: x["FragmentNumber"])
             if not all([x["FragmentTotal"] == len(v) for x in v]):
                 raise InvalidDocumentFormatError((
