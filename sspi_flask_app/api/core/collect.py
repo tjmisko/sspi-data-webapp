@@ -26,8 +26,7 @@ from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
 from sspi_flask_app.api.datasource.who import collectCSTUNTData, collectWHOdata
 from sspi_flask_app.api.datasource.wid import collectWIDData
 from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
-
-from sspi_flask_app.countrychar import insert_pop_data
+from sspi_flask_app.api.core.countrychar import insert_pop_data
 
 log = app.logger
 
@@ -341,11 +340,20 @@ def dptcov():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+# # PHYSPC for Correlation Analysis with UHC
+# @collect_bp.route("/PHYSPC", methods=['GET'])
+# @login_required
+# def physpc():
+#     def collect_iterator(**kwargs):
+#         yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
 def physpc():
     def collect_iterator(**kwargs):
-        # yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
+        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
