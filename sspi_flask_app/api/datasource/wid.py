@@ -1,7 +1,7 @@
 import requests
+import pycountry
 import io
 import zipfile
-from pycountry import countries
 from io import StringIO
 import pandas as pd
 from sspi_flask_app.models.database import sspi_raw_api_data
@@ -27,42 +27,22 @@ def collectWIDData(IndicatorCode, **kwargs):
                 )
 
 
-def processCSV(curr_csv, CountryCode):
-    virtual_csv = StringIO(curr_csv)
-    raw_df = pd.read_csv(virtual_csv, delimiter=';')
-    target_vars = ['p0p50', 'p90p100']
-
-    if not raw_df['percentile'].isin(target_vars).any() or 'sptincj992' not in raw_df['variable'].values:
+def filterWIDcsv(csv_string: str, csv_filename: str, target_vars: list[str], variable: str, years: list[int]) -> pd.DataFrame:
+    ccode_alpha_2 = csv_filename.split(".")[0].split("_")[2]
+    country = pycountry.countries.get(alpha_2=ccode_alpha_2)
+    if not country:
         return []
-
-    else:
-        ptinc = raw_df[raw_df['variable'] ==
-                       'sptincj992'].reset_index(drop=True)
-        ptinc = ptinc[ptinc['percentile'].isin(target_vars)]
-        ptinc['country'] = CountryCode
-        ptinc = ptinc[['country', 'year', 'value', 'percentile']].rename(
-            columns={'country': 'CountryCode', 'year': 'Year', 'percentile': 'Percentile'})
-
-        return ptinc.to_dict(orient='records')
-
-
-def cleanWIDData(raw_data):
-    cleaned_obs = []
-    for csv in raw_data:
-        observation_cleaned = processCSV(
-            csv['Raw']['Raw'], csv['Raw']['CountryCode'])
-        cleaned_obs += observation_cleaned
-    cleaned_df = pd.DataFrame(cleaned_obs)
-    p0p50 = cleaned_df[cleaned_df['Percentile']
-                       == 'p0p50'].drop(columns=['Percentile'])
-    p90p100 = cleaned_df[cleaned_df['Percentile']
-                         == 'p90p100'].drop(columns=['Percentile'])
-    merged_df = pd.merge(p0p50, p90p100, on=[
-                         'CountryCode', 'Year'], suffixes=('_p0p50', '_p90p100'))
-    merged_df['Value'] = merged_df['value_p0p50'] / merged_df['value_p90p100']
-    merged_df['IndicatorCode'] = 'ISHRAT'
-    merged_df['Description'] = "The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households."
-    merged_df['Unit'] = 'Proportion'
-    merged_df = merged_df.drop(columns=['value_p0p50', 'value_p90p100'])
-    merged_df = merged_df[merged_df['Year'] >= 1930]
-    return merged_df.to_dict(orient='records')
+    CountryCode = country.alpha_3
+    virtual_csv = StringIO(csv_string)
+    raw_df = pd.read_csv(virtual_csv, delimiter=';')
+    has_target = raw_df['percentile'].isin(target_vars).any()
+    var_filter = variable in raw_df['variable'].values
+    if not has_target or not var_filter:
+        return []
+    ptinc = raw_df[raw_df['variable'] == variable].reset_index(drop=True)
+    ptinc = ptinc[ptinc['percentile'].isin(target_vars)]
+    ptinc = ptinc[ptinc['year'].isin(years)]
+    col_map = {'year': 'Year', 'percentile': 'Percentile', 'value': "Value"}
+    ptinc = ptinc[['year', 'value', 'percentile']].rename(columns=col_map)
+    ptinc['CountryCode'] = CountryCode
+    return ptinc.to_dict(orient="records")
