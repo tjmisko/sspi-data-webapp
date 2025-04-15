@@ -14,54 +14,29 @@ def collectWIDData(IndicatorCode, **kwargs):
     res.raise_for_status()
     yield "Received WID data\n"
     zip_file = io.BytesIO(res.content)
-
     with zipfile.ZipFile(zip_file) as z:
-        doc_index = 0
         for file_name in z.namelist():
             yield f"Processing {file_name}\n"
+            file_name_fields = file_name.split(".")[0].split("_")
+            if len(file_name_fields) != 3 or 'metadata' in file_name_fields:
+                yield f"Skipping {file_name}\n"
+                continue  # Don't save state-level data or metadata
             with z.open(file_name) as f:
                 raw = f.read().decode('utf-8')
-                num_fragments = (len(raw) + sspi_raw_api_data.byte_max -
-                              1) // sspi_raw_api_data.byte_max
-                len_fragment = len(raw) / num_fragments
-                file_name_fields = file_name.split(".")[0].split("_")
-                if len(file_name_fields) != 3 or 'metadata' in file_name_fields:
-                    # Don't save state-level data or metadata
-                    yield f"Skipping {file_name}\n"
-                    continue
-                dataset_type = file_name_fields[1]
-                country_code_alpha2 = file_name_fields[2]
-                country_code = ""
-                try:
-                    country = 
-                    country_code = pycountry.countries.get(
-                        alpha_2=country_code_alpha2
-                    ).alpha_3
-                except AttributeError:
-                    country_code = ""
-                if len(country_code) != 3:
-                    # Don't save state-level data
-                    continue
-                for i in range(max(1, num_fragments - 1)):
-                    start = int(i * len_fragment)
-                    end = int((i + 1) * len_fragment if i <
-                              num_fragments - 1 else len(raw))
-                    fragment = "country;variable;percentile;year;value;age;pop\n" + \
-                        raw[start:end] if i > 0 else raw[start:end]
-                    observation = {
-                        "SourceOrganization": "WID",
-                        "SourceOrganizationName": "World Inequality Database",
-                        "SourceOrganizationURL": "https://wid.world/",
-                        "SourceOrganizationDownloadURL": "https://wid.world/bulk_download/wid_all_data.zip",
+                num_fragments = (len(raw) + byte_max - 1) // byte_max
+                for i in range(num_fragments):
+                    obs = {
                         "DatasetName": file_name,
-                        "CountryCode": country_code,
-                        "DatasetDescription": f"{dataset_type} for {country_code}",
-                        "Raw": fragment,
-                        "FragmentNumber": i,
-                        "RawPage": doc_index,
-                        "RawFormat": "csv"
+                        "SourceOrganization": "WID",
+                        "Raw": raw[byte_max * i:byte_max * i + byte_max],
                     }
-                    sspi_raw_api_data.raw_insert_one(observation, IndicatorCode, **kwargs)
+                    if num_fragments > 1:
+                        obs.update({
+                            "FragmentGroupID": file_name,
+                            "FragmentNumber": i,
+                            "FragmentTotal": num_fragments,
+                        })
+                    sspi_raw_api_data.raw_insert_one(obs, IndicatorCode, **kwargs)
 
 
 def processCSV(curr_csv, CountryCode):
