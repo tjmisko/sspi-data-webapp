@@ -8,7 +8,6 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 
 
 def collectWIDData(IndicatorCode, **kwargs):
-    byte_max = sspi_raw_api_data.maximum_document_size_bytes
     yield "Requesting WID data from source\n"
     res = requests.get("https://wid.world/bulk_download/wid_all_data.zip")
     res.raise_for_status()
@@ -23,20 +22,9 @@ def collectWIDData(IndicatorCode, **kwargs):
                 continue  # Don't save state-level data or metadata
             with z.open(file_name) as f:
                 raw = f.read().decode('utf-8')
-                num_fragments = (len(raw) + byte_max - 1) // byte_max
-                for i in range(num_fragments):
-                    obs = {
-                        "DatasetName": file_name,
-                        "SourceOrganization": "WID",
-                        "Raw": raw[byte_max * i:byte_max * i + byte_max],
-                    }
-                    if num_fragments > 1:
-                        obs.update({
-                            "FragmentGroupID": file_name,
-                            "FragmentNumber": i,
-                            "FragmentTotal": num_fragments,
-                        })
-                    sspi_raw_api_data.raw_insert_one(obs, IndicatorCode, **kwargs)
+                sspi_raw_api_data.raw_insert_one(
+                    raw, IndicatorCode, DatasetName=file_name, **kwargs
+                )
 
 
 def processCSV(curr_csv, CountryCode):
