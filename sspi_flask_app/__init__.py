@@ -88,8 +88,6 @@ def init_app(Config):
         # Register database
         db.create_all()
         # Register Blueprints
-        app.register_blueprint(client_bp)
-        app.register_blueprint(auth_bp)
         api_bp.register_blueprint(collect_bp)
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
