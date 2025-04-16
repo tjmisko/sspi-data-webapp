@@ -6,12 +6,8 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
-    jsonify_df,
     parse_json,
     score_single_indicator
-)
-from sspi_flask_app.api.datasource.vdem import (
-    cleanEDEMOCdata
 )
 import pandas as pd
 from io import StringIO
