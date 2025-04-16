@@ -1,23 +1,10 @@
 {% extends 'layout.html' %}
 
-{% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/colorMap.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/overall-stacked-bar-static.js') }}"></script>
-{% endblock %}
-
-{% block stylesheet %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
-{% endblock %}
-
 {% block content %}
     <article class="page-content">
       <section class="hero-box">
         <div class="hero-textbox"> 
-          <h1 class="hero-h2">How well are countries doing at guaranteeing wellbeing for people and the planet?</h1>
+          <h1 class="hero-title">How well are countries doing at guaranteeing wellbeing for people and the planet?</h1>
           <p class="hero-p"> The SSPI assembles data measuring country
                 performance across 57 Policy Indicators, offering a
                 comprehensive and data-driven look at policy around the world.

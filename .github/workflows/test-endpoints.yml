@@ -26,7 +26,8 @@ jobs:
     env:
       SQLALCHEMY_DATABASE_URI: sqlite:///${{ github.workspace }}/instance/database.db
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      API_KEY: ${{ secrets.API_KEY }}
+      SSPI_APIKEY: ${{ secrets.API_KEY }}
+      SSPI_APIKEY_LOCAL: ${{ secrets.API_KEY }}
     
     steps:
       - uses: actions/checkout@v4

@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -11,7 +11,6 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 
@@ -21,17 +20,16 @@ import re
 from io import StringIO
 
 from sspi_flask_app.api.datasource.sdg import (
-    extract_sdg_pivot_data_to_nested_dictionary,
-    flatten_nested_dictionary_watman,
-    flatten_nested_dictionary_stkhlm,
+    extract_sdg,
+    filter_sdg,
 )
 
 
 @compute_bp.route("/NITROG", methods=['GET'])
 @login_required
 def compute_nitrog():
-    if not sspi_raw_api_data.raw_data_available("NITROG"):
-        return redirect(url_for("collect_bp.NITROG"))
+    app.logger.info("Running /api/v1/compute/NITROG")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "NITROG"})
     raw_data = sspi_raw_api_data.fetch_raw_data("NITROG")
     csv_virtual_file = StringIO(raw_data[0]["Raw"]["csv"])
     SNM_raw = pd.read_csv(csv_virtual_file)
@@ -66,48 +64,48 @@ def compute_watman():
         "ER_H2O_STRESS": "WTSTRS"
     }
     """
-    if not sspi_raw_api_data.raw_data_available("WATMAN"):
-        return redirect(url_for("collect_bp.WATMAN"))
+    app.logger.info("Running /api/v1/compute/WATMAN")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    total_list = [obs for obs in raw_data if obs["Raw"]["activity"] == "TOTAL"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(total_list)
-    final_list = flatten_nested_dictionary_watman(intermediate_list)
-    zipped_document_list = zip_intermediates(final_list, "WATMAN",
-                                             ScoreFunction=lambda CWUEFF, WTSTRS: 0.50 * CWUEFF + 0.50 * WTSTRS,
-                                             ScoreBy="Score")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    watman_data = extract_sdg(raw_data)
+    intermediate_map = {
+        "ER_H2O_WUEYST": "CWUEFF",
+        "ER_H2O_STRESS": "WTSTRS"
+    }
+    intermediate_list = filter_sdg(
+        watman_data, intermediate_map, activity="TOTAL"
+    )
+    clean_list, incomplete_list = zip_intermediates(
+        intermediate_list, "WATMAN",
+        ScoreFunction=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
+        ScoreBy="Score"
+    )
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def compute_stkhlm():
-    if not sspi_raw_api_data.raw_data_available("STKHLM"):
-        return redirect(url_for("api_bp.collect_bp.STKHLM"))
+    app.logger.info("Running /api/v1/compute/STKHLM")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "STKHLM"})
     raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
-    full_stk_list = [obs for obs in raw_data if obs["Raw"]
-                     ["series"] == "SG_HAZ_CMRSTHOLM"]
-    intermediate_list = extract_sdg_pivot_data_to_nested_dictionary(
-        full_stk_list)
-    flattened_lst = flatten_nested_dictionary_stkhlm(intermediate_list)
-    scored_list = score_single_indicator(flattened_lst, "STKHLM")
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        scored_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+    extracted_stkhlm = extract_sdg(raw_data)
+    filtered_stkhlm = filter_sdg(
+        extracted_stkhlm, {"SG_HAZ_CMRSTHOLM": "STKHLM"},
+    )
+    scored_list = score_single_indicator(filtered_stkhlm, "STKHLM")
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)
 
 
 @compute_bp.route("/DEFRST", methods=['GET'])
 @login_required
 def compute_defrst():
-    if not sspi_raw_api_data.raw_data_available("DEFRST"):
-        return redirect(url_for("collect_bp.DEFRST"))
-    indicator_detail = sspi_metadata.get_detail("DEFRST")
-    lg = indicator_detail["Metadata"]["LowerGoalpost"]
-    ug = indicator_detail["Metadata"]["UpperGoalpost"]
+    app.logger.info("Running /api/v1/compute/DEFRST")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "DEFRST"})
+    lg, ug = sspi_metadata.get_goalposts("DEFRST")
     raw_data = sspi_raw_api_data.fetch_raw_data("DEFRST")[0]["Raw"]["data"]
     clean_obs_list = format_FAO_data_series(raw_data, "DEFRST")
     average_1990s_dict = {}
@@ -166,11 +164,9 @@ def compute_defrst():
 @compute_bp.route("/CARBON", methods=['GET'])
 @login_required
 def compute_carbon():
-    if not sspi_raw_api_data.raw_data_available("CARBON"):
-        return redirect(url_for("collect_bp.DEFRST"))
-    indicator_detail = sspi_metadata.get_detail("CARBON")
-    lg = indicator_detail["Metadata"]["LowerGoalpost"]
-    ug = indicator_detail["Metadata"]["UpperGoalpost"]
+    app.logger.info("Running /api/v1/compute/CARBON")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "CARBON"})
+    lg, ug = sspi_metadata.get_goalposts("CARBON")
     raw_data = sspi_raw_api_data.fetch_raw_data("CARBON")[0]["Raw"]["data"]
     clean_obs_list = format_FAO_data_series(raw_data, "CARBON")
     average_1990s_dict = {}

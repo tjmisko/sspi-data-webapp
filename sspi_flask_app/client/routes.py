@@ -1,6 +1,9 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, url_for, current_app as app
 from flask_login import login_required
 from ..api.core.download import ClientDownloadForm
+import re
+import pycountry
+from sspi_flask_app.api.resources.utilities import parse_json
 
 
 client_bp = Blueprint(
@@ -14,6 +17,11 @@ client_bp = Blueprint(
 @client_bp.route('/')
 def home():
     return render_template('home.html')
+
+
+@client_bp.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('favicon.ico')
 
 
 @client_bp.route('/about')
@@ -63,23 +71,68 @@ def make_widget(widgettype):
 
 
 @client_bp.route('/compare')
-def comparison_home():
-    return render_template("comparison-home.html")
+def compare_home():
+    return render_template("compare-home.html")
+
+
+@client_bp.route('/compare/custom', methods=['POST'])
+def compare_custom():
+    def bind_country_information(selection, index):
+        if len(selection) == 0 and index < 2:
+            raise LookupError("Please provide a country name.")
+        if len(selection) == 0 and index == 2:
+            return None, None
+        selection_match = re.match(r'([A-Za-z ]+)\(([A-Z]{3})\)$', selection)
+        if selection_match:
+            country_code = selection_match.group(2)
+            country_name = selection_match.group(1)
+            country_name = pycountry.countries.get(alpha_3=country_code).name
+        else:
+            try:
+                country_guess = pycountry.countries.search_fuzzy(selection)
+            except LookupError:
+                raise LookupError(
+                    f"Country not found for query '{selection}'.")
+            country_guess = pycountry.countries.search_fuzzy(selection)
+            country_code = country_guess[0].alpha_3
+            country_name = country_guess[0].name
+        return country_code, country_name
+    country_data = request.get_json()
+    if not len(country_data.keys()) == 3:
+        return "Please select exactly three countries to compare."
+    country_codes = []
+    country_names = []
+    for i, country_string in enumerate(country_data.values()):
+        try:
+            code, name = bind_country_information(country_string, i)
+        except LookupError as e:
+            return str(e)
+        if code is not None:
+            country_codes.append(code)
+        if name is not None:
+            country_names.append(name)
+    comparison_list = [{'code': code, 'name': name}
+                       for code, name in zip(country_codes, country_names)]
+    print(comparison_list)
+    return parse_json({
+        "html": render_template("compare/comparison-result.html", comparison_list=comparison_list),
+        "data": comparison_list
+    })
 
 
 @client_bp.route('/compare/sweden-france-japan')
-def comparison_sweden_france_japan():
-    return render_template("country-comparisons/sweden-france-japan.html")
+def compare_sweden_france_japan():
+    return render_template("compare/sweden-france-japan.html")
 
 
 @client_bp.route('/compare/china-russia-usa')
-def comparison_china_russia_usa():
-    return render_template("country-comparisons/china-russia-usa.html")
+def compare_china_russia_usa():
+    return render_template("compare/china-russia-usa.html")
 
 
 @client_bp.route('/compare/brazil-india-indonesia')
-def comparison_brazil_india_indonesia():
-    return render_template("country-comparisons/brazil-india-indonesia.html")
+def compare_brazil_india_indonesia():
+    return render_template("compare/brazil-india-indonesia.html")
 
 
 @client_bp.route('/structure')
@@ -121,3 +174,13 @@ def overall_scores():
 @login_required
 def paper_resources():
     return render_template("paper-resources.html")
+
+
+@client_bp.route('/api/v1/view/line/<idcode>')
+def view_dynamic_line(idcode):
+    return render_template("headless/dynamic-line.html", idcode=idcode)
+
+
+@client_bp.route('/api/v1/view/overview')
+def view_data_overview():
+    return render_template("headless/data-overview.html")

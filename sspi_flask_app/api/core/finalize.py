@@ -23,6 +23,7 @@ import re
 import os
 import json
 import pycountry
+from datetime import datetime
 
 
 finalize_bp = Blueprint(
@@ -76,7 +77,6 @@ def finalize_sspi_static_rank_data():
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
         country_data = sspi_main_data_v3.find({"CountryCode": cou})
-        cname = country_code_to_name(cou)
         sspi_scores = SSPI(indicator_details, country_data)
         score_group_dictionary["SSPI"][i]["CCode"] = cou
         score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
@@ -144,12 +144,8 @@ def finalize_sspi_dynamic_line_data():
             {"IndicatorCode": IndicatorCode},
             {"_id": 0}
         )
-        year_list = [int(o["Year"]) for o in data]
-        if len(year_list) == 0:
-            continue
-        print(IndicatorCode, len(year_list))
-        min_year = min(year_list)
-        max_year = max(year_list)
+        min_year = 2000
+        max_year = datetime.now().year
         label_list = list(range(min_year, max_year + 1))
         for observation in data:
             CountryCode = observation["CountryCode"]
@@ -164,7 +160,10 @@ def finalize_sspi_dynamic_line_data():
             values = [None] * len(label_list)
             data = [None] * len(label_list)
             for doc in document:
-                year_index = label_list.index(doc["Year"])
+                try:
+                    year_index = label_list.index(doc["Year"])
+                except ValueError:
+                    continue
                 years[year_index] = doc["Year"]
                 scores[year_index] = doc["Score"]
                 values[year_index] = doc["Value"]

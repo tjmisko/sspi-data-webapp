@@ -1,0 +1,29 @@
+.hero-box {
+    background-color: var(--header-color, #000);
+    color: rgb(226, 226, 226);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+    border-radius: 1em;
+    padding: 1em 1em;
+}
+
+.hero-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.hero-datalink {
+    color: --green-accent;
+    font-weight: 600;
+}
+
+.hero-datalink:visited {
+    color: --green-accent;
+}
+
+.hero-textbox {
+    z-index: 1;
+    max-width: 75ch;
+}

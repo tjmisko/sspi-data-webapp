@@ -48,6 +48,7 @@ wsgi.py
 .htaccess
 *.log
 log/*
+logs/*
 .sass-cache/*
 .pytest_cache/*
 .sass-cache
@@ -85,7 +86,5 @@ htmlcov/
 **.ipynb_checkpoints
 snapshots/**/**.json
 profiler/**
-bulk/SUS/LND/NITROG/*
-!bulk/SUS/LND/NITROG/replicate
 
 node_modules

@@ -1,17 +1,7 @@
 {% extends 'layout.html' %}
 
-{% block javascript %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/categoryRadarStatic.js') }}" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <script src="{{ url_for('client_bp.static', filename = 'charts/category-radar-static.js') }}"></script>
-    <script src="{{ url_for('client_bp.static', filename = 'charts/category-differential-static.js') }}"></script>
-    <script src="{{ url_for('client_bp.static', filename = 'charts/pillar-stacked-bar-static.js') }}"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
-{% endblock %}
-
 {% block content %}
-<section class="comparison-article-links">
+<section class="comparison-article-options">
     <h1> Selected Country Comparisons (2018 Data) </h1>
     <article class="comparsion-article">
         <a href="/compare/sweden-france-japan"> Sweden, France, Japan </a>
@@ -23,33 +13,64 @@
         <a href="/compare/brazil-india-indonesia"> Brazil, India, and Indonesia</a>
     </article>
 </section>
-<section class="comparison-article-links">
-    <h1> Compare Countries </h1>
-    <form id="comparison-country-selection-menu">
-        <label for="country1"> Country 1: </label>
-        <input list="country-options" id="compare-country1-selection" name="compare-country-selection-1" required>
-        <label for="country2"> Country 2: </label>
-        <input list="country-options" id="compare-country2-selection" name="compare-country-selection-2" required>
-        <label for="country3"> Country 3: </label>
-        <input list="country-options" id="compare-country3-selection" name="compare-country-selection-3" required>
-        <datalist id="country-options">
-            {% include 'country-namecode-options.html' %}
+<section class="custom-country-comparison-section">
+    <h1> Custom Country Comparisons </h1>
+    <form id="comparison-country-selection-form">
+        <datalist id="countries">
+            {% include "country-selection-options.html" %}
         </datalist>
-        <button id="comparison-selection-submit" type="submit"> Compare </button>
+        <label for="country-selection-1">Country 1:</label>
+        <input list="countries" id="country-selection-1" name="country-selection-1" placeholder="Country Name or Code">
+        <label for="country-selection-2">Country 2:</label>
+        <input list="countries" id="country-selection-2" name="country-selection-2" placeholder="Country Name or Code">
+        <label for="country-selection-3">Country 3:</label>
+        <input list="countries" id="country-selection-3" name="country-selection-3" placeholder="Country Name or Code">
+    <button type="submit"> Generate Comparison </button>
     </form>
     <script>
-        document.getElementById('comparison-country-selection-menu').addEventListener('submit', function(event) {
+        function pillarComparison(pillarCode, comparisonList) {
+            const countryCodes = comparisonList.map(cdata => cdata.code);
+            const colors = ["#FECC02", "#BBBBBB", "#BC002D"]
+            const colorMap = Object.fromEntries(countryCodes.map((code, idx) => [code, colors[idx]]));
+            window.SUSStack = new StaticPillarStackedBarChart(
+                countryCodes,
+                pillarCode,
+                document.getElementById(pillarCode.toLowerCase() + "-stack"),
+                colorMap
+            )
+            if ( comparisonList.length == 2 ) {
+                window.StaticDiffSUS0 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[1].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+            } else if ( comparisonList.length == 3 ) {
+                window.StaticDiffSUS0 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[1].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+                window.StaticDiffSUS1 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[2].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+                window.StaticDiffSUS2 = new StaticPillarDifferentialChart(comparisonList[1].code, comparisonList[2].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+            }
+        }
+        document.getElementById("comparison-country-selection-form").addEventListener("submit", function(event) {
             event.preventDefault();
             const formData = new FormData(this); // Collect form data
             const data = Object.fromEntries(formData.entries());
-            const country1 = data['compare-country-selection-1'];
-            const country2 = data['compare-country-selection-2'];
-            const country3 = data['compare-country-selection-3'];
-            fetch(`/compare/`)
-            window.location.href = `/compare/${country1}-${country2}-${country3}`;
-        });
+            fetch('/compare/custom', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(res => {
+                document.getElementById("comparison-result-section").innerHTML = res.html;
+                window.customComparisonList= res.data;
+                window.customComparisonList.forEach(cdata => {
+                    new CategoryRadarStatic(cdata.code, document.getElementById("radar-chart-flex-container"));
+                });
+                pillarComparison("SUS", window.customComparisonList);
+                pillarComparison("MS", window.customComparisonList);
+                pillarComparison("PG", window.customComparisonList);
+            })
+            .catch(error => console.error("Error:", error));
+            });
     </script>
-    <section id="comparison-results">
-    </section>
-</section>
+    <section id="comparison-result-section"> </section>
+<section>
 {% endblock %}
