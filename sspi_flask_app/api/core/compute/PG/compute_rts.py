@@ -25,12 +25,7 @@ def compute_rulelw():
     app.logger.info("Running /api/v1/compute/RULELW")
     sspi_clean_api_data.delete_many({"IndicatorCode": "RULELW"})
     raw_data = sspi_raw_api_data.fetch_raw_data("RULELW")
-    fragments = []
-    for obs in raw_data:
-        fragments.append((obs["FragmentNumber"], obs["Raw"]["csv_fragment"]))
-    fragments.sort(key=lambda x: x[0])
-    full_csv = "".join(fragment for _, fragment in fragments)
-    df = pd.read_csv(StringIO(full_csv))
+    df = pd.read_csv(StringIO(raw_data[0]["Raw"]))
     filtered_df = df[['country_text_id', 'year', 'v2x_rule']]
     current_year = datetime.now().year
     filtered_df = filtered_df[(filtered_df["year"] > 1990) & (filtered_df["year"] < current_year)]
@@ -57,12 +52,7 @@ def compute_edemoc():
     app.logger.info("Running /api/v1/compute/EDEMOC")
     sspi_clean_api_data.delete_many({"IndicatorCode": "EDEMOC"})
     raw_data = sspi_raw_api_data.fetch_raw_data("EDEMOC")
-    fragments = []
-    for obs in raw_data:
-        fragments.append((obs["FragmentNumber"], obs["Raw"]["csv_fragment"]))
-    fragments.sort(key=lambda x: x[0])
-    full_csv = "".join(fragment for _, fragment in fragments)
-    df = pd.read_csv(StringIO(full_csv))
+    df = pd.read_csv(StringIO(raw_data[0]["Raw"]))
     filtered_df = df[['country_text_id', 'year', 'v2x_polyarchy']]
     current_year = datetime.now().year
     filtered_df = filtered_df[(filtered_df["year"] > 1990) & (filtered_df["year"] < current_year)]
