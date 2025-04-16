@@ -1,9 +1,7 @@
 from sspi_flask_app.models.database import sspi_raw_api_data
-import csv
 import requests
 import zipfile
-from io import BytesIO, StringIO
-import pandas as pd
+from io import BytesIO
 
 
 def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
