@@ -22,7 +22,7 @@ from sspi_flask_app.api.datasource.sipri import collectSIPRIdata
 from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.vdem import collectVDEMData
-from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
+from sspi_flask_app.api.datasource.wef import collectWEFQUELEC
 from sspi_flask_app.api.datasource.who import collectCSTUNTData, collectWHOdata
 from sspi_flask_app.api.datasource.wid import collectWIDData
 from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
@@ -407,7 +407,7 @@ def intrnt():
 def aqelec():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
-        yield from collectWEFQUELCT("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
+        yield from collectWEFQUELEC("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELEC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

@@ -12,6 +12,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_metadata,
+    sspi_static_metadata,
     sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
@@ -58,11 +59,12 @@ def parse_json(data):
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup
-
     Throws an error otherwise
     """
     if database_name == "sspi_metadata":
         return sspi_metadata
+    if database_name == "sspi_static_metadata":
+        return sspi_static_metadata
     elif database_name == "sspi_main_data_v3":
         return sspi_main_data_v3
     elif database_name == "sspi_raw_api_data":
@@ -177,8 +179,10 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"]
                              for doc in intermediate_document_list])
-    intermediate_details = sspi_metadata.find(
-        {"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
+    intermediate_details = sspi_metadata.find({
+        "DocumentType": "IntermediateDetail",
+        "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}
+    })
     print(intermediate_details)
     for document in intermediate_document_list:
         for detail in intermediate_details:
