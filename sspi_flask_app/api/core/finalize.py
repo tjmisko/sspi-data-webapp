@@ -5,6 +5,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     # sspi_imputed_data,
     sspi_metadata,
+    sspi_static_metadata,
     sspi_main_data_v3,
     sspi_static_rank_data,
     sspi_static_radar_data,

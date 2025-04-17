@@ -9,6 +9,14 @@ import pandas as pd
 
 
 class SSPIMetadata(MongoWrapper):
+    def __init__(self, mongo_database, indicator_detail_file=None, intermediate_detail_file=None):
+        super().__init__(mongo_database)
+        if not indicator_detail_file:
+            indicator_detail_file = "IndicatorDetails.csv"
+        if not intermediate_detail_file:
+            intermediate_detail_file = "IntermediateDetails.csv"
+        self.indicator_detail_file = indicator_detail_file
+        self.intermediate_detail_file = intermediate_detail_file
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
@@ -71,9 +79,9 @@ class SSPIMetadata(MongoWrapper):
         """
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
         indicator_details = pd.read_csv(
-            os.path.join(local_path, "IndicatorDetails.csv"))
+            os.path.join(local_path, self.indicator_detail_file))
         intermediate_details = pd.read_csv(
-            os.path.join(local_path, "IntermediateDetails.csv"))
+            os.path.join(local_path, self.intermediate_detail_file))
         with open(os.path.join(local_path, "CountryGroups.json")) as file:
             country_groups = json.load(file)
         metadata = self.build_metadata(
