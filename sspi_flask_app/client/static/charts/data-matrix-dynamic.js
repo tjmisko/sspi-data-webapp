@@ -1,3 +1,37 @@
+const shiftRotatedTicksPlugin = {
+  id: 'shiftRotatedTicks',
+  afterDraw(chart) {
+    const xScale = chart.scales['x'];
+    if (!xScale) return;
+
+    const ctx = chart.ctx;
+    const ticks = xScale.ticks;
+    const options = xScale.options.ticks;
+    const rotation = options.maxRotation || 0;
+    const rad = rotation * Math.PI / 180;
+    const shift = 20; // Adjust as needed
+
+    ctx.save();
+    ctx.font = Chart.helpers.toFont(options.font).string;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    ticks.forEach((tick, i) => {
+      const x = xScale.getPixelForTick(i);
+      const y = xScale.bottom + options.padding;
+      ctx.save();
+      ctx.translate(x, y - shift);
+      ctx.rotate(-rad);
+      ctx.fillStyle = typeof options.color === 'function' ? options.color({ chart, tick, index: i }) : options.color || '#666';
+      ctx.fillText(tick.label, 0, 0);
+      ctx.restore();
+    });
+
+    ctx.restore();
+  }
+};
+
+
 class DynamicMatrixChart {
     constructor(parentElement) {
         this.parentElement = parentElement
@@ -23,11 +57,23 @@ class DynamicMatrixChart {
         this.canvas.id = 'dynamic-line-chart-canvas'
         this.canvas.width = 400
         this.canvas.height = 400
+        this.font = {
+            family: 'Courier New',
+            size: 12,
+            style: "normal",
+            weight: "normal"
+        }
         this.context = this.canvas.getContext('2d')
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
             type: 'matrix',
             options: {
+                layout: {
+                    padding: {
+                        top: 40,
+                        right: 25
+                    }
+                },
                 plugins: {
                     legend: false,
                     tooltip: {
@@ -53,7 +99,8 @@ class DynamicMatrixChart {
                         }
                     }
                 }
-            }
+            },
+            plugins: [shiftRotatedTicksPlugin]
         })
     }
 
@@ -66,7 +113,7 @@ class DynamicMatrixChart {
         this.n_indicators = res.icodes.length;
         this.chart.data = {
             datasets: [{
-                label: 'My Matrix',
+                label: 'SSPI Data Coverage Matrix',
                 data: res.data,
                 backgroundColor(context) {
                     const years = context.dataset.data[context.dataIndex].v;
@@ -106,22 +153,54 @@ class DynamicMatrixChart {
                 labels: res.icodes,
                 position: 'top',
                 ticks: {
-                    display: true
+                    align: "start",
+                    color: "#666666",
+                    font: this.font,
+                    display: true,
+                    padding: 10,
+                    autoSkip: false,
+                    minRotation: 60,
+                    maxRoatation: 60,
+                    display: false
                 },
                 grid: {
-                    display: false
+                    display: true,
+                    color: "#666666",
+                    drawOnChartArea: false,
+                    drawTicks: true
+                }
+            },
+            x2: {
+                position: 'top',
+                ticks: {
+                    font: this.font,
+                    type: 'category',
+                    display: false,
+                    padding: 40,
+                    autoSkip: false,
+                    callback: function(value, index, ticks) {
+                        if (index < 2) { 
+                            return 'ECO' 
+                        } else if (index >= 2 && index <= 5) {
+                            return 'LND'
+                        } else {
+                            return 'GHG'
+                        }
+                    }
                 }
             },
             y: {
                 type: 'category',
                 labels: res.ccodes,
                 offset: true,
-                reverse: true,
+                reverse: false,
                 ticks: {
-                    display: true
+                    font: this.font,
+                    display: true,
+                    autoSkip: false
                 },
                 grid: {
-                    display: false
+                    display: true
                 }
             }
         }
