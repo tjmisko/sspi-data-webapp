@@ -12,6 +12,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_metadata,
+    sspi_static_metadata,
     sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
@@ -58,40 +59,26 @@ def parse_json(data):
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup
-
     Throws an error otherwise
     """
-    if database_name == "sspi_metadata":
-        return sspi_metadata
-    elif database_name == "sspi_main_data_v3":
-        return sspi_main_data_v3
-    elif database_name == "sspi_raw_api_data":
-        return sspi_raw_api_data
-    elif database_name == "sspi_bulk_data":
-        return sspi_bulk_data
-    elif database_name == "sspi_clean_api_data":
-        return sspi_clean_api_data
-    elif database_name == "sspi_imputed_data":
-        return sspi_imputed_data
-    elif database_name == "sspi_analysis":
-        return sspi_analysis
-    elif database_name == "sspi_production_data":
-        return sspi_partial_api_data
-    elif database_name == "sspi_country_characteristics":
-        return sspi_country_characteristics
-    elif database_name == "sspi_static_rank_data":
-        return sspi_static_rank_data
-    elif database_name == "sspi_static_radar_data":
-        return sspi_static_radar_data
-    elif database_name == "sspi_dynamic_line_data":
-        return sspi_dynamic_line_data
-    elif database_name == "sspi_dynamic_matrix_data":
-        return sspi_dynamic_matrix_data
-    elif database_name == "sspi_raw_outcome_data":
-        return sspi_raw_outcome_data
-    elif database_name == "sspi_clean_outcome_data":
-        return sspi_clean_outcome_data
-    raise InvalidDatabaseError(database_name)
+    match database_name:
+        case "sspi_metadata": return sspi_metadata
+        case "sspi_static_metadata": return sspi_static_metadata
+        case "sspi_main_data_v3": return sspi_main_data_v3
+        case "sspi_raw_api_data": return sspi_raw_api_data
+        case "sspi_bulk_data": return sspi_bulk_data
+        case "sspi_clean_api_data": return sspi_clean_api_data
+        case "sspi_imputed_data": return sspi_imputed_data
+        case "sspi_analysis": return sspi_analysis
+        case "sspi_production_data": return sspi_partial_api_data
+        case "sspi_country_characteristics": return sspi_country_characteristics
+        case "sspi_static_rank_data": return sspi_static_rank_data
+        case "sspi_static_radar_data": return sspi_static_radar_data
+        case "sspi_dynamic_line_data": return sspi_dynamic_line_data
+        case "sspi_dynamic_matrix_data": return sspi_dynamic_matrix_data
+        case "sspi_raw_outcome_data": return sspi_raw_outcome_data
+        case "sspi_clean_outcome_data": return sspi_clean_outcome_data
+        case _: raise InvalidDatabaseError(database_name)
 
 
 def string_to_float(string) -> str | float:
@@ -133,7 +120,8 @@ def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, 
     sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
     intermediate_document_list, noneish_list = drop_none_or_na(
         intermediate_document_list)
-    print(f"There were {len(noneish_list)} none/na documents found in intermediate_document_list")
+    print(f"There were {len(noneish_list)
+                        } none/na documents found in intermediate_document_list")
     gp_intermediate_list = append_goalpost_info(
         intermediate_document_list, ScoreBy
     )
@@ -177,8 +165,10 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"]
                              for doc in intermediate_document_list])
-    intermediate_details = sspi_metadata.find(
-        {"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
+    intermediate_details = sspi_metadata.find({
+        "DocumentType": "IntermediateDetail",
+        "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}
+    })
     print(intermediate_details)
     for document in intermediate_document_list:
         for detail in intermediate_details:
@@ -227,7 +217,8 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Score", None) for intermediate in document["Intermediates"]}
         else:
-            raise ValueError(f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Value' or 'Score'")
+            raise ValueError(f"Invalid ScoreBy value: {
+                             ScoreBy}; must be one of 'Value' or 'Score'")
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
@@ -239,7 +230,8 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
         score = ScoreFunction(*arg_value_list)
         value = ValueFunction(*arg_value_list)
         document["Value"] = value
-        document["Unit"] = UnitFunction(*arg_value_list) if UnitFunction else "Aggregate"
+        document["Unit"] = UnitFunction(
+            *arg_value_list) if UnitFunction else "Aggregate"
         document["Score"] = score
     return indicator_document_list
 
@@ -330,7 +322,6 @@ def get_country_code(CountryName):
         return "TLS"
     else:
         return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
-
 
 
 def colormap(PillarCode, alpha: str = "ff"):

@@ -5,11 +5,18 @@ from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data
 )
+
+from collections import OrderedDict
+from flask import current_app
+
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
+    jsonify_df,
     zip_intermediates,
     score_single_indicator
 )
+import pandas as pd
+from io import StringIO
 
 
 from sspi_flask_app.api.datasource.worldbank import (
@@ -84,7 +91,7 @@ def compute_sansrv():
 def compute_aqelec():
     app.logger.info("Running /api/v1/compute/AQELEC")
     sspi_clean_api_data.delete_many({"IndicatorCode": "AQELEC"})
-    quality_data = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELCT")[0]
+    quality_data = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="QUELEC")[0]
     quality_df = pd.read_csv(StringIO(quality_data["Raw"]["csv"]))
     filtered_df = quality_df[
         (quality_df["Indicator ID"] == "WEF.GCIHH.EOSQ064") &
@@ -100,9 +107,11 @@ def compute_aqelec():
     )
     df_melted["Year"] = df_melted["Year"].astype(int)
     df_sorted = df_melted.sort_values(by=["Economy ISO3", "Year"])
-    df_sorted["IntermediateCode"] = "QUELCT"
+    df_sorted["IntermediateCode"] = "QUELEC"
     df_sorted["CountryCode"] = df_sorted["Economy ISO3"]
-    df_sorted["Unit"] = df_sorted["Indicator"].apply(lambda x: x.split(",")[1].strip() if "," in x else "")
+    df_sorted["Unit"] = df_sorted["Indicator"].apply(
+        lambda x: x.split(",")[1].strip() if "," in x else ""
+    )
     df_final = df_sorted[["IntermediateCode", "CountryCode", "Year", "Value", "Unit"]]
     df_final = df_final.to_dict(orient="records")
     wb_raw = sspi_raw_api_data.fetch_raw_data("AQELEC", IntermediateCode="AVELEC")
@@ -111,19 +120,18 @@ def compute_aqelec():
         d.pop("Description", None)
         d.pop("IndicatorCode", None)
     wb_raw = sspi_raw_api_data.fetch_raw_data(
-        "AQELEC", IntermediateCode="AVELEC")
+        "AQELEC", IntermediateCode="AVELEC"
+    )
     wb_clean = clean_wb_data(wb_raw, "AQELEC", unit="Percent")
     for d in wb_clean:
         d.pop("Description", None)
         d.pop("IndicatorCode", None)
     combined_list = wb_clean + df_final
-    for intermediate in combined_list:
-        print(type(intermediate))
-    cleaned_list = zip_intermediates(combined_list, "AQELEC",
-                                     ScoreFunction=lambda AVELEC, QUELCT: 0.5 * AVELEC + 0.5 * QUELCT,
-                                     ScoreBy="Values")
-    filtered_list, incomplete_observations = filter_incomplete_data(
-         cleaned_list)
-    sspi_clean_api_data.insert_many(filtered_list)
-    print(incomplete_observations)
-    return parse_json(filtered_list)
+    clean_list, incomplete_list = zip_intermediates(
+        combined_list, "AQELEC",
+        ScoreFunction=lambda AVELEC, QUELEC: 0.5 * AVELEC + 0.5 * QUELEC,
+        ScoreBy="Score"
+    )
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)

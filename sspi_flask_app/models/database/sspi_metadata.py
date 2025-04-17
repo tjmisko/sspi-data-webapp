@@ -6,9 +6,20 @@ import re
 import json
 from bson import json_util
 import pandas as pd
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class SSPIMetadata(MongoWrapper):
+    def __init__(self, mongo_database, indicator_detail_file=None, intermediate_detail_file=None):
+        super().__init__(mongo_database)
+        if indicator_detail_file is None:
+            indicator_detail_file = "IndicatorDetails.csv"
+        if intermediate_detail_file is None:
+            intermediate_detail_file = "IntermediateDetails.csv"
+        self.indicator_detail_file = indicator_detail_file
+        self.intermediate_detail_file = intermediate_detail_file
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
@@ -70,10 +81,12 @@ class SSPIMetadata(MongoWrapper):
         Loads the metadata into the database
         """
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
-        indicator_details = pd.read_csv(
-            os.path.join(local_path, "IndicatorDetails.csv"))
+        full_path = os.path.join(local_path, self.indicator_detail_file)
+        log.debug(f"Loading data for {self.name} from file {full_path}")
+        print(f"Loading data for {self.name} from file {full_path}")
+        indicator_details = pd.read_csv(full_path)
         intermediate_details = pd.read_csv(
-            os.path.join(local_path, "IntermediateDetails.csv"))
+            os.path.join(local_path, self.intermediate_detail_file))
         with open(os.path.join(local_path, "CountryGroups.json")) as file:
             country_groups = json.load(file)
         metadata = self.build_metadata(
@@ -83,6 +96,7 @@ class SSPIMetadata(MongoWrapper):
         )
         count = self.insert_many(metadata)
         self.drop_duplicates()
+        log.info(f"Successfully loaded {count} documents into {self.name}")
         print(f"Successfully loaded {count} documents into {self.name}")
         return count
 
