@@ -32,11 +32,10 @@ client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 
 sspi_metadata = SSPIMetadata(
-    sspidb.sspi_metadata,
-
+    sspidb.sspi_metadata
 )
 sspi_static_metadata = SSPIMetadata(
-    sspidb.sspi_metadata,
+    sspidb.sspi_static_metadata,
     indicator_detail_file="IndicatorDetailsStatic.csv",
     intermediate_detail_file="IntermediateDetailsStatic.csv"
 )

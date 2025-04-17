@@ -65,11 +65,11 @@ def finalize_sspi_static_rank_data():
     ItemCode is the PillarCode, CategoryCode, or IndicatorCode
     """
     sspi_static_rank_data.delete_many({})
-    country_codes = sspi_metadata.country_group("SSPI49")
-    indicator_details = sspi_metadata.indicator_details()
-    sspi_item_codes = ["SSPI"] + sspi_metadata.pillar_codes() + \
-        sspi_metadata.category_codes() + \
-        sspi_metadata.indicator_codes()
+    country_codes = sspi_static_metadata.country_group("SSPI49")
+    indicator_details = sspi_static_metadata.indicator_details()
+    sspi_item_codes = ["SSPI"] + sspi_static_metadata.pillar_codes() + \
+        sspi_static_metadata.category_codes() + \
+        sspi_static_metadata.indicator_codes()
     score_group_dictionary = {
         item_code: [
             {"CCode": "", "Score": 0, "Rank": 0,
@@ -210,7 +210,7 @@ def finalize_sspi_static_radar_data():
         return country_lookup
 
     main_data = sspi_main_data_v3.find({}, {"_id": 0})
-    indicator_details = sspi_metadata.indicator_details()
+    indicator_details = sspi_static_metadata.indicator_details()
     country_lookup = make_country_lookup(main_data)
     radar_data = []
     for country_code, data_dict in country_lookup.items():
