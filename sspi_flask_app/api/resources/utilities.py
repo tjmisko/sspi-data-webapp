@@ -177,8 +177,10 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
         return intermediate_document_list
     intermediate_codes = set([doc["IntermediateCode"]
                              for doc in intermediate_document_list])
-    intermediate_details = sspi_metadata.find(
-        {"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
+    intermediate_details = sspi_metadata.find({
+        "DocumentType": "IntermediateDetail",
+        "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}
+    })
     print(intermediate_details)
     for document in intermediate_document_list:
         for detail in intermediate_details:
