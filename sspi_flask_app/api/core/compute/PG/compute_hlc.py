@@ -72,7 +72,6 @@ def compute_fampln():
     sspi_clean_api_data.delete_many({"IndicatorCode": "FAMPLN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("FAMPLN")
     extracted_fampln = extract_sdg(raw_data)
-    return parse_json(extracted_fampln)
     filtered_fampln = filter_sdg(
         extracted_fampln, {"SH_FPL_MTMM": "FAMPLN"},
     )
