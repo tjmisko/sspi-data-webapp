@@ -1,6 +1,3 @@
-import subprocess
-from os import environ, path
-from dotenv import load_dotenv
 import click
 import json
 from cli.utilities import (
