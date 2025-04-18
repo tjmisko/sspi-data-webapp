@@ -148,10 +148,10 @@ def line(remote=False):
     res = connector.call(
         "/api/v1/production/finalize/dynamic/line", remote=remote)
     if res.status_code != 200:
-        raise click.ClickException(
-            f"Error! Finalize Request Failed with Status Code {
-                res.status_code}"
-        )
+        raise click.ClickException((
+            "Error! Finalize Request Failed with Status "
+            f"Code {res.status_code}"
+        ))
         echo_pretty(res.header)
         echo_pretty(res.text)
     click.secho("Finalization Complete", fg="green")
