@@ -86,6 +86,21 @@ def watman():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+@collect_bp.route("/BEEFMK", methods=['GET'])
+@login_required
+def beefmk():
+    def collect_iterator(**kwargs):
+        yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        consumption_element = (
+            "2300%2C2910%2C684%2C681%2C2520%2C2141%2C66%2C664%2C645%2C2610%2C2"
+            "120%2C2151%2C2130%2C2510%2C674%2C671%2C5170%2C2525%2C2071%2C511%2"
+            "C5171"
+        )
+        yield from collectUNFAOData(consumption_element, "2731", "FBS", "BEEFMK", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def stkhlm():
@@ -98,7 +113,7 @@ def stkhlm():
 @login_required
 def defrst():
     def collect_iterator(**kwargs):
-        yield from collectUNFAOData("5110", "6717", "DEFRST", **kwargs)
+        yield from collectUNFAOData("5110", "6717", "RL", "DEFRST", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -106,7 +121,7 @@ def defrst():
 @login_required
 def carbon():
     def collect_iterator(**kwargs):
-        yield from collectUNFAOData("7215", "6646", "CARBON", **kwargs)
+        yield from collectUNFAOData("7215", "6646", "RL", "CARBON", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -282,6 +297,7 @@ def ishrat():
     def collect_iterator(**kwargs):
         yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 @collect_bp.route("/GINIPT", methods=['GET'])
 @login_required
