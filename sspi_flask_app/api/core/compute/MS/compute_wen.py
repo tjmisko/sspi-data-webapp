@@ -12,6 +12,9 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 
+from sspi_flask_app.api.datasource.uis import (
+    cleanUISdata
+)
 import pandas as pd
 import json
 from io import StringIO
@@ -63,3 +66,16 @@ def compute_colbar():
     scored_list = score_single_indicator(obs_list, "COLBAR")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+
+@compute_bp.route("/YRSEDU", methods=['GET'])
+@login_required
+def compute_yrsedu():
+    if not sspi_raw_api_data.raw_data_available("YRSEDU"):
+        return redirect(url_for("api_bp.collect_bp.YRSEDU"))
+    raw_data = sspi_raw_api_data.fetch_raw_data("YRSEDU")
+    cleaned_list = cleanUISdata(raw_data, "YRSEDU", "Years", "Number of years of compulsory primary and secondary education guaranteed in legal frameworks")
+    scored_list = score_single_indicator(cleaned_list, "YRSEDU")
+    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
+    #sspi_clean_api_data.insert_many(clean_document_list)
+    return parse_json(clean_document_list)
