@@ -188,11 +188,11 @@ def colbar():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/CHILDW")
+@collect_bp.route("/YRSEDU")
 @login_required
-def childw():
+def yrsedu():
     def collect_iterator(**kwargs):
-        yield from collectUISdata("YEARS.FC.COMP.1T3", "CHILDW", **kwargs)
+        yield from collectUISdata("YEARS.FC.COMP.1T3", "YRSEDU", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -485,7 +485,6 @@ def gdpmek():
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.CD", "GDPMER", **kwargs)
 
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 
 @collect_bp.route("/outcome/GDPPPP", methods=['GET'])
 @login_required
