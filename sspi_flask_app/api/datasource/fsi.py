@@ -5,7 +5,7 @@ import numpy
 from io import BytesIO
 import re
 from sspi_flask_app.models.database import sspi_raw_api_data
-from sspi_flask_app.api.resources.utilities import get_country_code
+from sspi_flask_app.api.resources.utilities import get_country_code, parse_json
 
 
 def collectFSIdata(IndicatorCode, **kwargs):
@@ -51,5 +51,10 @@ def cleanFSIdata(raw_data, IndicatorCode, unit, description):
         filtered = filtered.drop(columns = "Country")
         filtered["Unit"] = unit
         filtered["Description"] = description
+        # some years are reported as datetime object
+        if isinstance(filtered["Year"][0], dict):
+            filtered["Year"] = filtered["Year"].map(lambda entry: entry["$date"].split("-")[0]).astype(int)
+        # filtered["Value"] = filtered["Value"].astype(float)
+        # print(type(filtered["Year"][0]))
         clean_list.extend(filtered.to_dict(orient = "records"))
     return clean_list

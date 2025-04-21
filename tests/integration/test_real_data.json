@@ -1,0 +1,458 @@
+[
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "AIRPOL",
+    "Rank": 8.0,
+    "Score": 0.82,
+    "Value": 7.19,
+    "Year": 2016
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "ALTNRG",
+    "Rank": 37.0,
+    "Score": 0.12,
+    "Value": 7.197,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "AQELEC",
+    "Rank": 33.0,
+    "Score": 0.906,
+    "Value": 0.9061,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "ARMEXP",
+    "Rank": 26.0,
+    "Score": 0.975,
+    "Value": 38.0,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "ATBRTH",
+    "Rank": 43.0,
+    "Score": 0.85,
+    "Value": 97.0,
+    "Year": 2016
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "BEEFMK",
+    "Rank": 45.0,
+    "Score": 0.343,
+    "Value": 0.343,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "BIODIV",
+    "Rank": 26.0,
+    "Score": 0.533,
+    "Value": 53.287,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "CARBON",
+    "Rank": 48.0,
+    "Score": 0.054,
+    "Value": -2.056,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "CHILDW",
+    "Rank": 8.0,
+    "Score": 0.857,
+    "Value": 0.857,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "COALPW",
+    "Rank": 43.0,
+    "Score": 0.333,
+    "Value": 33.352,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "COLBAR",
+    "Rank": 19.0,
+    "Score": 0.47,
+    "Value": 0.47,
+    "Year": 2016
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "CRPTAX",
+    "Rank": 4.0,
+    "Score": 0.75,
+    "Value": 30.0,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "CSTUNT",
+    "Rank": 24.0,
+    "Score": 0.943,
+    "Value": 2.85,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "CYBSEC",
+    "Rank": 8.0,
+    "Score": 0.89,
+    "Value": 0.89,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "DEFRST",
+    "Rank": 32.0,
+    "Score": 0.331,
+    "Value": -0.001,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "DPTCOV",
+    "Rank": 27.0,
+    "Score": 0.8,
+    "Value": 95.0,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "DRKWAT",
+    "Rank": 11.0,
+    "Score": 0.988,
+    "Value": 98.8,
+    "Year": 2015
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "EDEMOC",
+    "Rank": 20.0,
+    "Score": 0.865,
+    "Value": 0.865,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "EMPLOY",
+    "Rank": 36.0,
+    "Score": 0.754,
+    "Value": 83.93,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "ENRPRI",
+    "Rank": 27.0,
+    "Score": 0.834,
+    "Value": 96.68,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "ENRSEC",
+    "Rank": 24.0,
+    "Score": 0.952,
+    "Value": 98.57,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "EWASTE",
+    "Rank": 35.0,
+    "Score": 0.397,
+    "Value": 24.1284562,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "FAMPLN",
+    "Rank": 20.0,
+    "Score": 0.898,
+    "Value": 10.2,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "FATINJ",
+    "Rank": 13.0,
+    "Score": 0.936,
+    "Value": 1.6,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "FDEPTH",
+    "Rank": 9.0,
+    "Score": 0.605,
+    "Value": 0.605,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "FORAID",
+    "Rank": 24.0,
+    "Score": 0.218,
+    "Value": 0.218,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "FSTABL",
+    "Rank": 10.0,
+    "Score": 0.9,
+    "Value": 1.0,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "GENDEQ",
+    "Rank": 21.0,
+    "Score": 0.85,
+    "Value": 3.399,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "GINIPT",
+    "Rank": 23.0,
+    "Score": 0.712,
+    "Value": 34.4,
+    "Year": 2014
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "GTRANS",
+    "Rank": 42.0,
+    "Score": 0.33,
+    "Value": 0.33,
+    "Year": 2016
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "INTRNT",
+    "Rank": 26.0,
+    "Score": 0.493,
+    "Value": 0.49295,
+    "Year": 2016
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "ISHRAT",
+    "Rank": 27.0,
+    "Score": 0.267,
+    "Value": 0.48,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "MATERN",
+    "Rank": 46.0,
+    "Score": 0.148,
+    "Value": 7.7,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "MILEXP",
+    "Rank": 31.0,
+    "Score": 0.81,
+    "Value": 1.9,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "MSWGEN",
+    "Rank": 34.0,
+    "Score": 0.252,
+    "Value": 560.97,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "MURDER",
+    "Rank": 21.0,
+    "Score": 0.953,
+    "Value": 0.94,
+    "Year": 2016
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "NITROG",
+    "Rank": 31.0,
+    "Score": 0.378,
+    "Value": 37.79,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "NRGINT",
+    "Rank": 37.0,
+    "Score": 0.707,
+    "Value": 4.39,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "PHYSPC",
+    "Rank": 20.0,
+    "Score": 0.499,
+    "Value": 34.96,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "PRISON",
+    "Rank": 29.0,
+    "Score": 0.736,
+    "Value": 172.0,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "PUBACC",
+    "Rank": 7.0,
+    "Score": 0.995,
+    "Value": 99.52,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "PUBSRV",
+    "Rank": 14.0,
+    "Score": 0.816,
+    "Value": 1.58,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "PUPTCH",
+    "Rank": 23.0,
+    "Score": 0.81,
+    "Value": 14.9,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "RDFUND",
+    "Rank": 14.0,
+    "Score": 0.728,
+    "Value": 0.728,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "RECYCL",
+    "Rank": 6.0,
+    "Score": 0.601,
+    "Value": 42.1,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "REDLST",
+    "Rank": 37.0,
+    "Score": 0.64,
+    "Value": 0.82,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "RULELW",
+    "Rank": 8.0,
+    "Score": 0.99,
+    "Value": 0.99,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "SANSRV",
+    "Rank": 1.0,
+    "Score": 1.0,
+    "Value": 100.0,
+    "Year": 2015
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "SECAPP",
+    "Rank": 19.0,
+    "Score": 0.73,
+    "Value": 2.7,
+    "Year": 2019
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "SENIOR",
+    "Rank": 35.0,
+    "Score": 0.568,
+    "Value": 0.568,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "STKHLM",
+    "Rank": 1.0,
+    "Score": 1.0,
+    "Value": 100.0,
+    "Year": 2015
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "TAXEVA",
+    "Rank": 28.0,
+    "Score": 0.837,
+    "Value": 244.36,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "TAXREV",
+    "Rank": 19.0,
+    "Score": 0.438,
+    "Value": 21.91586,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "TRNETW",
+    "Rank": 39.0,
+    "Score": 0.471,
+    "Value": 0.471,
+    "Year": 2017
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "UNCONV",
+    "Rank": 24.0,
+    "Score": 0.8,
+    "Value": 8.0,
+    "Year": 2019
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "UNEMPL",
+    "Rank": 13.0,
+    "Score": 0.605,
+    "Value": 60.5,
+    "Year": 2018
+  },
+  {
+    "CountryCode": "AUS",
+    "IndicatorCode": "WATMAN",
+    "Rank": 24.0,
+    "Score": 0.67,
+    "Value": 0.67,
+    "Year": 2018
+  }
+]

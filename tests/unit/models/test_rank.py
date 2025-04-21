@@ -51,7 +51,7 @@ def test_country_score_data():
             "Score": 0.50
         },
         {
-            "IndicatorCode": "LFPART",
+            "IndicatorCode": "EMPLOY",
             "CountryCode": "AUS",
             "Value": 50,
             "LowerGoalpost": 0,

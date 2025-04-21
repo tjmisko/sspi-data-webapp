@@ -1,28 +1,29 @@
 .hero-box {
-    background-color: #1B2A3C;
-    padding: 0em 3em 3em 3em; 
+    background-color: var(--header-color, #000);
     color: rgb(226, 226, 226);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-around;
-    border-bottom-left-radius: 250px;
+    border-radius: 1em;
+    padding: 1em 1em;
 }
 
-/* Convert SCSS -> CSS */
-/* @media (max-width: 1135px) { */
-/*     .hero-box { */
-/*         border-bottom-left-radius: 0px; */
-/*     } */
-/* } */  
+.hero-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
 
 .hero-datalink {
-    color: rgb(0, 221, 255);
-    margin-left: 1rem;
+    color: --green-accent;
     font-weight: 600;
+}
+
+.hero-datalink:visited {
+    color: --green-accent;
 }
 
 .hero-textbox {
     z-index: 1;
-    max-width: clamp(600px,50%,50%);
+    max-width: 75ch;
 }
