@@ -122,9 +122,9 @@ def compute_foraid():
 def compute_milexp():
     if not sspi_raw_api_data.raw_data_available("MILEXP"):
         return redirect(url_for("collect_bp.MILEXP"))
-    # milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
-    # milexp_raw = milexp_raw[0]["Raw"]
-    cleaned_list = cleanSIPRIData("local/MILEXP/MILEXP.csv", 'MILEXP', "Percent", 
+    milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
+    milexp_raw = milexp_raw[0]["Raw"]
+    cleaned_list = cleanSIPRIData(milexp_raw, 'MILEXP', "Percent", 
                                   "Military expenditure (local currency at current prices) according to the calendar year as a percentage of GDP.")
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "MILEXP")
@@ -141,6 +141,6 @@ def compute_armexp():
                                   "The supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.")
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")
-   # sspi_clean_api_data.insert_many(scored_list)
+    sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 
