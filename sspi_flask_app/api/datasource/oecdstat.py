@@ -6,6 +6,7 @@ from ..resources.utilities import string_to_float
 from sspi_flask_app.models.database import sspi_raw_api_data
 import urllib3
 import ssl
+import certifi
 
 
 def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):

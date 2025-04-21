@@ -173,6 +173,18 @@ def gtrans():
         yield from collectWorldBankdata("SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+#####################
+## Category: WASTE ##
+#####################
+@collect_bp.route("/MSWGEN", methods=['GET'])
+@login_required
+def mswgen():
+    def collect_iterator(**kwargs):
+        yield from collectOECDSDMXData("OECD.ENV.EPI,DSD_MUNW@DF_MUNW,/.A.MUNICIPAL.T+KG_PS", "MSWGEN")
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+
 ######################################################
 ### Collection Routes for Pillar: MARKET STRUCTURE ###
 ######################################################
