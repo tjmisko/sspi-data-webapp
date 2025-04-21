@@ -99,3 +99,82 @@ def compute_fatinj():
     return parse_json(scored_list)
 
 
+@compute_bp.route("/MATERN", methods=['GET'])
+@login_required
+def compute_matern():
+    def parse_observations(xml_string) -> list[dict]:
+        soup = BeautifulSoup(xml_string, "lxml-xml")
+        observations = soup.find_all("Obs")
+        formatted_observations = []
+        for obs in observations:
+            formatted_obs = {}
+            value = obs.find("ObsValue")
+            if value:
+                formatted_obs["Value"] = value.attrs.get("value")
+            for value in obs.find_all("Value"):
+                id = value.attrs.get("id")
+                if id == "TIME_PERIOD":
+                    formatted_obs["Year"] = value.attrs.get("value")
+                else:
+                    formatted_obs[id] = value.attrs.get("value")
+            formatted_observations.append(formatted_obs)
+        return formatted_observations
+
+    raw = sspi_raw_api_data.fetch_raw_data("MATERN")
+    raw_data_combined = []
+    for i, r in enumerate(raw):
+        print(f"Extracting Raw Data for XML Object {i} of {len(raw)}")
+        obs = parse_observations(r["Raw"][2:][:-1])  # remove quotes and leading/trailing chars
+        raw_data_combined.extend(obs)
+
+    print("Computing Intermediate Values")
+    indicator_code_map = {
+        "MATERN1": ("MORTAL", "Maternal mortality rate"),
+        "MATERN2": ("SKILLB", "Skilled birth attendance"),
+        "MATERN3": ("PRENAT", "Prenatal care coverage"),
+    }
+
+    intermediates_list = []
+    for obs in raw_data_combined:
+        if "Indicator" not in obs or "Value" not in obs:
+            continue
+        ind = obs["Indicator"]
+        if ind not in indicator_code_map:
+            continue
+        iso3 = obs.get("REF_AREA") or obs.get("CountryCode")
+        if not pycountry.countries.get(alpha_3=iso3):
+            continue
+        try:
+            value = float(obs["Value"])
+        except ValueError:
+            continue
+        intermediates_list.append({
+            "CountryCode": iso3,
+            "IntermediateCode": indicator_code_map[ind][0],
+            "Year": int(obs["Year"]),
+            "Value": value,
+            "Unit": "Rate (%)" if ind != "MATERN1" else "Deaths per 100,000 live births"
+        })
+
+    print("Scoring Maternal Health")
+    # Goalposts (examples — update as needed):
+    mortal_gmin, mortal_gmax = 500, 10     # lower is better
+    skillb_gmin, skillb_gmax = 50, 100     # higher is better
+    prenat_gmin, prenat_gmax = 60, 100     # higher is better
+
+    def matern_score(MORTAL, SKILLB, PRENAT):
+        score_mortal = 1 - goalpost(MORTAL, mortal_gmin, mortal_gmax)  # inverse scale
+        score_skillb = goalpost(SKILLB, skillb_gmin, skillb_gmax)
+        score_prenat = goalpost(PRENAT, prenat_gmin, prenat_gmax)
+        return 0.4 * score_skillb + 0.3 * score_prenat + 0.3 * score_mortal
+
+    clean_matern_data = zip_intermediates(
+        intermediates_list,
+        "MATERN",
+        ScoreFunction=matern_score,
+        ScoreBy="Score"
+    )
+
+    complete, incomplete = filter_incomplete_data(clean_matern_data)
+    sspi_clean_api_data.insert_many(complete)
+    return parse_json(complete)

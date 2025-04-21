@@ -229,9 +229,11 @@ def fatinj():
 @collect_bp.route("/MATERN")
 @login_required
 def matern():
-    def collect_iterator(**kwargs):  # C1_4
-        for chunk in collectOECDIndicator("OECD.WISE.CWB,DSD_CWB@DF_CWB", "MATERN", **kwargs):
-            yield chunk.encode('utf-8') if isinstance(chunk, str) else chunk  # Convert strings to bytes
+    def collect_iterator(**kwargs):
+        metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.WISE.CWB/DSD_CWB@DF_CWB/1.0?references=all"
+        yield from collectOECDSDMXData("OECD.WISE.CWB,DSD_CWB@DF_CWB,", "MATERN",
+                                        metadata_url=metadata_url,
+                                        **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #####################
@@ -562,4 +564,41 @@ def gdpppp():
     def collect_iterator(**kwargs):
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+@collect_bp.route("/outcome/SDG", methods=['GET'])
+@login_required
+def sdg_outcome():
+    """Collect SDG outcome metrics time series from World Bank API"""
+    
+    def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):
+        yield f"Collecting SDG data for World Bank Indicator {WorldBankIndicatorCode}\n"
+        
+        url_source = (
+            "https://api.worldbank.org/v2/country/all/"
+            f"indicator/{WorldBankIndicatorCode}?format=json"
+        )
+        
+        response = requests.get(url_source).json()
+        total_pages = response[0]['pages']
+        
+        for p in range(1, total_pages + 1):
+            new_url = f"{url_source}&page={p}"
+            yield f"Sending Request for page {p} of {total_pages}\n"
+            
+            response = requests.get(new_url).json()
+            document_list = response[1]
+            
+            count = sspi_raw_outcome_data.raw_insert_many(
+                document_list, IndicatorCode, **kwargs
+            )
+            yield f"Inserted {count} new observations into sspi_outcome_data\n"
+            time.sleep(0.5)
+
+        yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
+
+    def collect_iterator(**kwargs):
+        # Example SDG Indicator: SDG 3.8.1 - Coverage of essential health services
+        yield from collectWorldBankOutcomeData("SH.ACS.COVR.ZS", "SDG_Coverage", **kwargs)
+
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
