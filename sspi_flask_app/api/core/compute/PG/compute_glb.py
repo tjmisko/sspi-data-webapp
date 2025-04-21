@@ -146,7 +146,7 @@ def compute_armexp():
         'ARMEXP',
         'Millions of arms',
         description
-    )
+    ) 
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")
     sspi_clean_api_data.insert_many(scored_list)
