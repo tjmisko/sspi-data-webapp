@@ -83,11 +83,13 @@ def collectSIPRIdata(RawData, IndicatorCode, **kwargs):
 
 def cleanSIPRIData(RawData, IndName, Unit, Description):  
     df = pd.read_csv(StringIO(RawData))
+    print(df)
+    df.rename(columns={"Country": "Countries"}, inplace=True)
+    year_columns = [col for col in df.columns if col != 'Countries']
     df_melted = df.melt(id_vars=['Countries'], 
-                     value_vars=df.columns, 
-                     var_name='Year', 
-                     value_name='Value')
-    
+                        value_vars=year_columns, 
+                        var_name='Year', 
+                        value_name='Value')
     df_melted['Unit'] = Unit
     df_melted["Description"] = Description
     df_melted['IndicatorCode'] = IndName
