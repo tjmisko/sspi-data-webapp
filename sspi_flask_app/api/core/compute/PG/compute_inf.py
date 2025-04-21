@@ -72,3 +72,5 @@ def compute_sansrv():
     sspi_clean_api_data.insert_many(filtered_list)
     print(incomplete_observations)
     return parse_json(filtered_list)
+
+

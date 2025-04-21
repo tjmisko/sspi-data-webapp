@@ -357,6 +357,14 @@ def cstunt():
 ##############################
 ## Category: INFRASTRUCTURE ##
 ##############################
+
+@collect_bp.route("/TRNETW", methods=['GET'])
+@login_required
+def trnetw():
+    yield from collectSDGIndicatorData("11.2.1", "TRNETW", **kwargs)
+
+
+
 @collect_bp.route("/DRKWAT", methods=['GET'])
 @login_required
 def drkwat():
@@ -487,6 +495,7 @@ def gdpmek():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+
 @collect_bp.route("/outcome/GDPPPP", methods=['GET'])
 @login_required
 def gdpppp():
@@ -513,3 +522,5 @@ def gdpppp():
         # insert UN population data into sspi_country_characteristics database
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.PP.CD", "GDPPPP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
