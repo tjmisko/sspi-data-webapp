@@ -19,6 +19,7 @@ from sspi_flask_app.api.datasource.iea import (
 )
 import pandas as pd
 import json
+import jq
 
 
 @compute_bp.route("/COALPW", methods=['GET'])
@@ -99,3 +100,19 @@ def compute_gtrans():
     sspi_clean_api_data.insert_many(clean_list)
     print(incomplete_list)
     return parse_json(clean_list)
+
+
+@compute_bp.route("/BEEFMK", methods=['GET'])
+@login_required
+def compute_beefmk():
+    app.logger.info("Running /api/v1/compute/BEEFMK")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "BEEFMK"})
+    raw_data = sspi_raw_api_data.fetch_raw_data("BEEFMK", SourceOrganization="UNFAO")
+    return parse_json(jq.compile('.[].Raw.data.[]').input(raw_data).all())
+    jq_filter = (
+        '.[].Raw.data.[] | select(.Element == "Production" or '
+        '.Element == "Food supply quantity (kg/capita/yr)") | '
+        'select(."Area Code (ISO3)" | length == 3)'
+    )
+    all_observations = jq.compile(jq_filter).input(raw_data).all()
+    return parse_json(all_observations)
