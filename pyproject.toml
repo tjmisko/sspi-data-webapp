@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sspi"
+version = "0.1"
+dependencies = [
+  "click",
+  "flask",
+  "flask_login"
+]
+
+[project.scripts]
+sspi = "cli.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]

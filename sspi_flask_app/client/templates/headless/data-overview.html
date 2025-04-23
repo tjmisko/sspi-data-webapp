@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title> Dynamic Data Overview </title>
+    <script>
+        window.theme = localStorage.getItem("theme")
+        if (window.theme === "light") {
+            document.documentElement.classList.add("light-theme")
+            localStorage.setItem("theme", "light")
+        } else {
+            document.documentElement.classList.add("dark-theme")
+            localStorage.setItem("theme", "dark")
+        }
+    </script>
+    <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+      <main>
+        <h1> Dynamic Data Overview </h1>
+        <div class="matrix-legend">
+            <h2 class="legend-title">Data Coverage Legend</h2>
+            <div class="legend-container">
+                <div class="matrix-legend-element">
+                    <div class="legend-box green-box"> </div>
+                    Data is collected, cleaned, and ready to be used. Opacity indicates years available.
+                </div>
+                <div class="matrix-legend-element">
+                    <div class="legend-box yellow-box"> </div>
+                    Code to collect the data is written, but is not currently in the database.
+                </div>
+                <div class="matrix-legend-element">
+                    <div class="legend-box orange-box"> </div>
+                    Data is collected in files, but not yet cleaned or ready to be used.
+                </div>
+                <div class="matrix-legend-element">
+                    <div class="legend-box green-outline"> </div>
+                    We feel confident that we will be able to collect the data
+                </div>
+                <div class="matrix-legend-element">
+                    <div class="legend-box red-outline"> </div>
+                    A known problem exists with the indicator for dynamic data, and it requires attention
+                </div>
+            </div>
+        </div>
+        <div id="data-matrix-dynamic" width="400" height="400"></div>
+        <script defer>
+            const matrixParent = document.getElementById('data-matrix-dynamic');
+            window.IndicatorOverviewDynamicMatrix = new DynamicMatrixChart(matrixParent);
+        </script>
+      </main>
+  </body>
+</html>

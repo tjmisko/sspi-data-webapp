@@ -4,15 +4,13 @@ import io
 import pandas as pd
 
 
-def collectWEFQUELCT(WorldBankIndicatorCode, IndicatorCode, **kwargs):
+def collectWEFQUELEC(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     """
     Downloads an Excel file from a predefined URL, converts it into CSV format,
     and inserts the CSV data into the database.
-
     Parameters:
       IndName (str): The 6-character indicator code to use in the database (e.g., "AQELEC").
       **kwargs: Additional keyword arguments (e.g., Username) to be passed to the insertion function.
-
     Expected Excel columns include:
       - "Country Name" (or similar; if missing, the code will attempt a lookup using countryiso3code)
       - "countryiso3code"

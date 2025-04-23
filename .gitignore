@@ -48,6 +48,7 @@ wsgi.py
 .htaccess
 *.log
 log/*
+logs/*
 .sass-cache/*
 .pytest_cache/*
 .sass-cache
@@ -87,5 +88,3 @@ snapshots/**/**.json
 profiler/**
 
 node_modules
-sspi_flask_app/client/static/style.css
-sspi_flask_app/client/static/script.js

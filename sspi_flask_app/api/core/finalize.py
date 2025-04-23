@@ -5,6 +5,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     # sspi_imputed_data,
     sspi_metadata,
+    sspi_static_metadata,
     sspi_main_data_v3,
     sspi_static_rank_data,
     sspi_static_radar_data,
@@ -38,12 +39,12 @@ def finalize_iterator():
     finalize_sspi_static_rank_data()
     yield "Finalizing Static Radar Data\n"
     finalize_sspi_static_radar_data()
+    yield "Finalizing Static Stack Data\n"
+    finalize_static_overall_stack_data()
     yield "Finalizing Dynamic Line Data\n"
     finalize_sspi_dynamic_line_data()
     yield "Finalizing Dynamic Matrix Data\n"
     finalize_dynamic_matrix_data()
-    yield "Finalizing Static Stack Data\n"
-    finalize_static_overall_stack_data()
     yield "Finalization Complete\n"
 
 
@@ -64,11 +65,11 @@ def finalize_sspi_static_rank_data():
     ItemCode is the PillarCode, CategoryCode, or IndicatorCode
     """
     sspi_static_rank_data.delete_many({})
-    country_codes = sspi_metadata.country_group("SSPI49")
-    indicator_details = sspi_metadata.indicator_details()
-    sspi_item_codes = ["SSPI"] + sspi_metadata.pillar_codes() + \
-        sspi_metadata.category_codes() + \
-        sspi_metadata.indicator_codes()
+    country_codes = sspi_static_metadata.country_group("SSPI49")
+    indicator_details = sspi_static_metadata.indicator_details()
+    sspi_item_codes = ["SSPI"] + sspi_static_metadata.pillar_codes() + \
+        sspi_static_metadata.category_codes() + \
+        sspi_static_metadata.indicator_codes()
     score_group_dictionary = {
         item_code: [
             {"CCode": "", "Score": 0, "Rank": 0,
@@ -77,30 +78,37 @@ def finalize_sspi_static_rank_data():
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
         country_data = sspi_main_data_v3.find({"CountryCode": cou})
-        cname = country_code_to_name(cou)
         sspi_scores = SSPI(indicator_details, country_data)
-        score_group_dictionary["SSPI"][i]["CCode"] = cou
-        score_group_dictionary["SSPI"][i]["Score"] = sspi_scores.score()
-        score_group_dictionary["SSPI"][i]["IName"] = "SSPI"
-        score_group_dictionary["SSPI"][i]["Year"] = 2018
+        score_group_dictionary["SSPI"][i].update({
+            "CCode": cou,
+            "Score": sspi_scores.score(),
+            "IName": "SSPI",
+            "Year": 2018
+        })
         for pillar in sspi_scores.pillars:
-            score_group_dictionary[pillar.code][i]["CCode"] = cou
-            score_group_dictionary[pillar.code][i]["Score"] = pillar.score()
-            score_group_dictionary[pillar.code][i]["IName"] = pillar.name
-            score_group_dictionary[pillar.code][i]["Year"] = 2018
+            score_group_dictionary[pillar.code][i].update({
+                "CCode": cou,
+                "Score": pillar.score(),
+                "IName": pillar.name,
+                "Year": 2018
+            })
             for category in pillar.categories:
-                score_group_dictionary[category.code][i]["CCode"] = cou
-                score_group_dictionary[category.code][i]["Score"] = category.score()
-                score_group_dictionary[category.code][i]["IName"] = category.name
-                score_group_dictionary[category.code][i]["Year"] = 2018
+                score_group_dictionary[category.code][i].update({
+                    "CCode": cou,
+                    "Score": category.score(),
+                    "IName": category.name,
+                    "Year": 2018
+                })
                 for indicator in category.indicators:
-                    score_group_dictionary[indicator.code][i]["CCode"] = cou
-                    score_group_dictionary[indicator.code][i]["Score"] = indicator.score
-                    score_group_dictionary[indicator.code][i]["IName"] = indicator.name
-                    score_group_dictionary[indicator.code][i]["Year"] = indicator.year
-                    score_group_dictionary[indicator.code][i]["Value"] = indicator.value
-                    score_group_dictionary[indicator.code][i]["LowerGoalpost"] = indicator.lower_goalpost
-                    score_group_dictionary[indicator.code][i]["UpperGoalpost"] = indicator.upper_goalpost
+                    score_group_dictionary[indicator.code][i].update({
+                        "CCode": cou,
+                        "Score": indicator.score,
+                        "IName": indicator.name,
+                        "Year": indicator.year,
+                        "Value": indicator.value,
+                        "LowerGoalpost": indicator.lower_goalpost,
+                        "UpperGoalpost": indicator.upper_goalpost
+                    })
     for item_code in sspi_item_codes:
         # Ranking table modifies each list[dict] in place
         SSPIRankingTable(score_group_dictionary[item_code])
@@ -129,6 +137,126 @@ def finalize_sspi_static_rank_data():
                 doc["UpperGoalpost"] = score["UpperGoalpost"]
             sspi_static_rank_data.insert_one(doc)
     return "Successfully finalized rank data!"
+
+
+@finalize_bp.route("/production/finalize/static/stack")
+def finalize_static_overall_stack_data():
+    sspi_static_stack_data.delete_many({})
+    overall_scores = sspi_static_rank_data.find({"ICode": "SSPI"}, {"_id": 0})
+
+    def fetch_overall(observation, field="Rank"):
+        for score in overall_scores:
+            if score["CCode"] == observation["CCode"]:
+                return score[field]
+        return None
+
+    sus_scores = sspi_static_rank_data.find({"ICode": "SUS"}, {"_id": 0})
+    sus_scores.sort(key=fetch_overall)
+    for score in sus_scores:
+        score["SSPIScore"] = fetch_overall(score, "Score")
+        score["SSPIRank"] = fetch_overall(score)
+    sus_dataset = {
+        "label": "SUS",
+        "data": [c["Score"] / 3 for c in sus_scores],
+        "info": sus_scores,
+        "borderWidth": 2
+    }
+    ms_scores = sspi_static_rank_data.find({"ICode": "MS"}, {"_id": 0})
+    ms_scores.sort(key=fetch_overall)
+    for score in ms_scores:
+        score["SSPIScore"] = fetch_overall(score, "Score")
+        score["SSPIRank"] = fetch_overall(score)
+    ms_dataset = {
+        "label": "MS",
+        "data": [c["Score"] / 3 for c in ms_scores],
+        "info": ms_scores,
+        "borderWidth": 2
+    }
+    pg_scores = sspi_static_rank_data.find({"ICode": "PG"}, {"_id": 0})
+    pg_scores.sort(key=fetch_overall)
+    for score in pg_scores:
+        score["SSPIScore"] = fetch_overall(score, "Score")
+        score["SSPIRank"] = fetch_overall(score)
+    pg_dataset = {
+        "label": "PG",
+        "data": [c["Score"] / 3 for c in pg_scores],
+        "info": pg_scores,
+        "borderWidth": 2
+    }
+    sspi_static_stack_data.insert_one({
+        "data": {
+            "labels": [c["CName"] + " " + c["CFlag"] for c in overall_scores],
+            "datasets": [
+                sus_dataset,
+                ms_dataset,
+                pg_dataset
+            ]
+        }
+    })
+    return "Successfully finalized stack data!"
+
+
+@finalize_bp.route("/production/finalize/static/radar")
+@login_required
+def finalize_sspi_static_radar_data():
+    sspi_static_radar_data.delete_many({})
+
+    def make_country_lookup(main_data):
+        country_lookup = {}
+        for document in main_data:
+            country_code = document["CountryCode"]
+            if country_code not in country_lookup.keys():
+                country_lookup[country_code] = {"Data": []}
+            country_lookup[country_code]["Data"].append(document)
+        return country_lookup
+
+    main_data = sspi_main_data_v3.find({}, {"_id": 0})
+    indicator_details = sspi_static_metadata.indicator_details()
+    country_lookup = make_country_lookup(main_data)
+    radar_data = []
+    for country_code, data_dict in country_lookup.items():
+        output_dict = {
+            "CCode": country_code,
+            "Year": 2018
+        }
+        output_dict["legendItems"] = []
+        output_dict["title"] = country_code_to_name(country_code)
+        sspi = SSPI(indicator_details, country_lookup[country_code]["Data"])
+        output_dict["labels"] = [c.code for c in sspi.categories]
+        output_dict["labelMap"] = {c.code: c.name for c in sspi.categories}
+        output_dict["datasets"] = []
+        output_dict["ranks"] = []
+        category_start_index = 0
+        for pillar in sspi.pillars:
+            data = [None] * len(sspi.categories)
+            output_dict["legendItems"].append({
+                "Code": pillar.code,
+                "Name": pillar.name,
+                "Score": pillar.score()
+            })
+            for i, category in enumerate(pillar.categories):
+                data[category_start_index + i] = category.score()
+                output_dict["ranks"].append(sspi_static_rank_data.find_one(
+                    {"ICode": category.code, "CCode": country_code},
+                    {"_id": 0}
+                ))
+            category_start_index += len(pillar.categories)
+            pillar_color = colormap(pillar.code, alpha="66")
+            output_dict["datasets"].append({
+                "label": pillar.name,
+                "pillarCode": pillar.code,
+                "data": data,
+                "backgroundColor": pillar_color,
+                "borderColor": pillar_color,
+                "pointBackgroundColor": pillar_color,
+                "pointBorderColor": '#fff',
+                "pointHoverBackgroundColor": '#fff',
+                "pointHoverBorderColor": pillar_color,
+                "fill": True
+            })
+        radar_data.append(output_dict)
+    sspi_static_radar_data.insert_many(radar_data)
+    return "Successfully finalized radar data!"
 
 
 @finalize_bp.route("/production/finalize/dynamic/line")
@@ -195,82 +323,6 @@ def finalize_sspi_dynamic_line_data():
     return jsonify(sspi_dynamic_line_data.find({}, {"_id": 0}))
 
 
-@finalize_bp.route("/production/finalize/static/radar")
-@login_required
-def finalize_sspi_static_radar_data():
-    sspi_static_radar_data.delete_many({})
-
-    def make_country_lookup(main_data):
-        country_lookup = {}
-        for document in main_data:
-            country_code = document["CountryCode"]
-            if country_code not in country_lookup.keys():
-                country_lookup[country_code] = {"Data": []}
-            country_lookup[country_code]["Data"].append(document)
-        return country_lookup
-
-    main_data = sspi_main_data_v3.find({}, {"_id": 0})
-    indicator_details = sspi_metadata.indicator_details()
-    country_lookup = make_country_lookup(main_data)
-    radar_data = []
-    for country_code, data_dict in country_lookup.items():
-        output_dict = {
-            "CCode": country_code,
-            "Year": 2018
-        }
-        output_dict["legendItems"] = []
-        output_dict["title"] = country_code_to_name(country_code)
-        sspi = SSPI(indicator_details, country_lookup[country_code]["Data"])
-        output_dict["labels"] = [c.code for c in sspi.categories]
-        output_dict["labelMap"] = {c.code: c.name for c in sspi.categories}
-        output_dict["datasets"] = []
-        output_dict["ranks"] = []
-        category_start_index = 0
-        for pillar in sspi.pillars:
-            data = [None] * len(sspi.categories)
-            output_dict["legendItems"].append({
-                "Code": pillar.code,
-                "Name": pillar.name,
-                "Score": pillar.score()
-            })
-            for i, category in enumerate(pillar.categories):
-                data[category_start_index + i] = category.score()
-                output_dict["ranks"].append(sspi_static_rank_data.find_one(
-                    {"ICode": category.code, "CCode": country_code},
-                    {"_id": 0}
-                ))
-            category_start_index += len(pillar.categories)
-            pillar_color = colormap(pillar.code, alpha="66")
-            output_dict["datasets"].append({
-                "label": pillar.name,
-                "pillarCode": pillar.code,
-                "data": data,
-                "backgroundColor": pillar_color,
-                "borderColor": pillar_color,
-                "pointBackgroundColor": pillar_color,
-                "pointBorderColor": '#fff',
-                "pointHoverBackgroundColor": '#fff',
-                "pointHoverBorderColor": pillar_color,
-                "fill": True
-            })
-        radar_data.append(output_dict)
-    sspi_static_radar_data.insert_many(radar_data)
-    return "Successfully finalized radar data!"
-
-
-def production_data_by_indicator():
-    """
-    Minification is important for production data to minimize response times
-
-    IndicatorCode -> IDCode
-    CountryCode -> CCode
-    CountryName -> CName
-    Intermediates -> Intrmdts
-    IntermediateCode -> IMCode
-    """
-    return "0"
-
-
 @finalize_bp.route("/production/finalize/dynamic/matrix")
 @login_required
 def finalize_dynamic_matrix_data():
@@ -324,60 +376,3 @@ def finalize_dynamic_matrix_data():
     count = sspi_dynamic_matrix_data.insert_many(final_data)
     # sspi_dynamic_matrix_data
     return f"Inserted {count} documents into sspi_dynamic_matrix_data"
-
-
-@finalize_bp.route("/production/finalize/static/stack")
-def finalize_static_overall_stack_data():
-    sspi_static_stack_data.delete_many({})
-    overall_scores = sspi_static_rank_data.find({"ICode": "SSPI"}, {"_id": 0})
-
-    def fetch_overall(observation, field="Rank"):
-        for score in overall_scores:
-            if score["CCode"] == observation["CCode"]:
-                return score[field]
-        return None
-
-    sus_scores = sspi_static_rank_data.find({"ICode": "SUS"}, {"_id": 0})
-    sus_scores.sort(key=fetch_overall)
-    for score in sus_scores:
-        score["SSPIScore"] = fetch_overall(score, "Score")
-        score["SSPIRank"] = fetch_overall(score)
-    sus_dataset = {
-        "label": "SUS",
-        "data": [c["Score"]/3 for c in sus_scores],
-        "info": sus_scores,
-        "borderWidth": 2
-    }
-    ms_scores = sspi_static_rank_data.find({"ICode": "MS"}, {"_id": 0})
-    ms_scores.sort(key=fetch_overall)
-    for score in ms_scores:
-        score["SSPIScore"] = fetch_overall(score, "Score")
-        score["SSPIRank"] = fetch_overall(score)
-    ms_dataset = {
-        "label": "MS",
-        "data": [c["Score"]/3 for c in ms_scores],
-        "info": ms_scores,
-        "borderWidth": 2
-    }
-    pg_scores = sspi_static_rank_data.find({"ICode": "PG"}, {"_id": 0})
-    pg_scores.sort(key=fetch_overall)
-    for score in pg_scores:
-        score["SSPIScore"] = fetch_overall(score, "Score")
-        score["SSPIRank"] = fetch_overall(score)
-    pg_dataset = {
-        "label": "PG",
-        "data": [c["Score"]/3 for c in pg_scores],
-        "info": pg_scores,
-        "borderWidth": 2
-    }
-    sspi_static_stack_data.insert_one({
-        "data": {
-            "labels": [c["CName"] + " " + c["CFlag"] for c in overall_scores],
-            "datasets": [
-                sus_dataset,
-                ms_dataset,
-                pg_dataset
-            ]
-        }
-    })
-    return "Successfully finalized stack data!"

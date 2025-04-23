@@ -261,6 +261,11 @@ class DynamicLineChart {
         })
     }
 
+    updateDescription(description) {
+        const dbox = document.getElementById("dynamic-indicator-description")
+        dbox.innerText = description
+    }
+
     setTheme(theme) {
         if (theme !== "light") {
             this.theme = "dark"
@@ -298,6 +303,7 @@ class DynamicLineChart {
         this.pinnedOnly = data.chartPreferences.pinnedOnly
         this.updatePins()
         this.updateLegend()
+        this.updateDescription(data.description)
         this.updateCountryGroups()
         if (this.pinnedOnly) {
             this.hideUnpinned()

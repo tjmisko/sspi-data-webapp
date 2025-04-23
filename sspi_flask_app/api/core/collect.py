@@ -1,34 +1,34 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, current_app as app
 from flask_login import login_required, current_user
 import requests
 import time
+from sspi_flask_app.models.database import (
+    sspi_raw_outcome_data
+)
 from sspi_flask_app.api.datasource.oecdstat import (
     collectOECDIndicator,
     collectOECDSDMXData,
     collectOECDSDMXFORAID
 )
-from sspi_flask_app.models.database import (
-    sspi_raw_outcome_data
-)
-from sspi_flask_app.api.datasource.oecdstat import collectOECDIndicator, collectOECDSDMXData
 from sspi_flask_app.api.datasource.epi import collectEPIData
-from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
-from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
-from sspi_flask_app.api.datasource.iea import collectIEAData
-from sspi_flask_app.api.datasource.wef import collectWEFQUELCT
-from sspi_flask_app.api.datasource.ilo import collectILOData
-from sspi_flask_app.api.datasource.who import collectWHOdata
-from sspi_flask_app.api.datasource.vdem import collectVDEMData
-from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
-from sspi_flask_app.api.datasource.who import collectCSTUNTData
-from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
 from sspi_flask_app.api.datasource.sipri import collectSIPRIdata, collectSIPRIdataNEW
+from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.itu import collect_itu_data
+from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
+from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
 from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
+from sspi_flask_app.api.datasource.uis import collectUISdata
+from sspi_flask_app.api.datasource.vdem import collectVDEMData
+from sspi_flask_app.api.datasource.wef import collectWEFQUELEC
+from sspi_flask_app.api.datasource.who import collectCSTUNTData, collectWHOdata
+from sspi_flask_app.api.datasource.wid import collectWIDData
+from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata
+from sspi_flask_app.api.core.countrychar import insert_pop_data
 
-from .countrychar import insert_pop_data
-from ..datasource.itu import collect_itu_data
+log = app.logger
 
 
 collect_bp = Blueprint("collect_bp", __name__,
@@ -51,6 +51,7 @@ def biodiv():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("14.5.1", "BIODIV", IntermediateCode="MARINE", **kwargs)
         yield from collectSDGIndicatorData("15.1.2", "BIODIV", Metadata="TERRST,FRSHWT", **kwargs)
+    log.info("Running /api/v1/collect/BIODIV")
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -59,6 +60,7 @@ def biodiv():
 def redlst():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("15.5.1", "REDLST", **kwargs)
+    log.info("Running /api/v1/collect/REDLST")
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -96,7 +98,7 @@ def stkhlm():
 @login_required
 def defrst():
     def collect_iterator(**kwargs):
-        yield from collectUNFAOData("5110", "6717", "DEFRST", **kwargs)
+        yield from collectUNFAOData("5110", "6717", "RL", "DEFRST", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -104,7 +106,7 @@ def defrst():
 @login_required
 def carbon():
     def collect_iterator(**kwargs):
-        yield from collectUNFAOData("7215", "6646", "CARBON", **kwargs)
+        yield from collectUNFAOData("7215", "6646", "RL", "CARBON", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -156,6 +158,21 @@ def gtrans():
         yield from collectWorldBankdata("SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
+@collect_bp.route("/BEEFMK", methods=['GET'])
+@login_required
+def beefmk():
+    def collect_iterator(**kwargs):
+        # yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        # yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        # yield from collectWorldBankdata("SP.POP.TOTL", "BEEFMK", IntermediateCode="POPULN", **kwargs)
+        yield from collectUNFAOData(
+            "2910%2C645%2C2610%2C2510%2C511", "2731%2C2501",
+            "FBS", "BEEFMK", **kwargs
+        )
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 ######################################################
 ### Collection Routes for Pillar: MARKET STRUCTURE ###
 ######################################################
@@ -165,13 +182,13 @@ def gtrans():
 #################################
 
 
-@collect_bp.route("/LFPART")
+@collect_bp.route("/EMPLOY")
 @login_required
 def lfpart():
     def collect_iterator(**kwargs):
         yield from collectILOData(
             "DF_EAP_DWAP_SEX_AGE_RT",
-            "LFPART",
+            "EMPLOY",
             QueryParams=".A...AGE_AGGREGATE_Y25-54",
             **kwargs
         )
@@ -269,10 +286,17 @@ def pubacc():
 # @collect_bp.route("/FSTABL", methods=['GET'])
 # def fstabl():
 #     def collect_iterator(**kwargs):
+# https://github.com/Promptly-Technologies-LLC/imfp --> imf api package
 
 ##########################
 ## Category: INEQUALITY ##
 ##########################
+@collect_bp.route("/ISHRAT", methods=['GET'])
+@login_required
+def ishrat():
+    def collect_iterator(**kwargs):
+        yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @collect_bp.route("/GINIPT", methods=['GET'])
@@ -332,10 +356,20 @@ def dptcov():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
+# # PHYSPC for Correlation Analysis with UHC
+# @collect_bp.route("/PHYSPC", methods=['GET'])
+# @login_required
+# def physpc():
+#     def collect_iterator(**kwargs):
+#         yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/PHYSPC", methods=['GET'])
 @login_required
 def physpc():
     def collect_iterator(**kwargs):
+        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
@@ -380,7 +414,7 @@ def sansrv():
 def intrnt():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QLMBPS", **kwargs)
+        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -389,7 +423,7 @@ def intrnt():
 def aqelec():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
-        yield from collectWEFQUELCT("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELCT", **kwargs)
+        yield from collectWEFQUELEC("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELEC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -398,19 +432,20 @@ def aqelec():
 ###########################
 
 
+@collect_bp.route("/RULELW", methods=['GET'])
+@login_required
+def rulelw():
+    def collect_iterator(**kwargs):
+        yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 @collect_bp.route("/EDEMOC", methods=['GET'])
 @login_required
 def edemoc():
     def collect_iterator(**kwargs):
         yield from collectVDEMData("v2x_polyarchy", "EDEMOC", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
-@collect_bp.route("/RULELW", methods=['GET'])
-@login_required
-def rulelw():
-    def collect_iterator(**kwargs):
-        yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
 
 
 #############################
@@ -478,6 +513,7 @@ def milexp():
         # yield from collectSIPRIdata("local/MILEXP/MILEXP.csv", "MILEXP", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
+
 @collect_bp.route("/ARMEXP", methods=['GET'])
 @login_required
 def armexp():
@@ -489,6 +525,8 @@ def armexp():
 #######################################
 ## Category: Country Characteristics ##
 #######################################
+
+
 @collect_bp.route("/characteristic/UNPOPL", methods=['GET'])
 @login_required
 def unpopl():

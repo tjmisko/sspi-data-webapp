@@ -2,11 +2,9 @@
   "EWASTE": "Data Sourced from What a Waste 2.0. No dynamic data available",
   "STKHLM": "Very low data coverage",
   "RECYCL": "Data Sourced from What a Waste 2.0. No dynamic data available",
-  "GENDEQ": "Potential Indicator Redesign to Reflect Labor Market Outcomes",
-  "CHILDW": "Dynamic Data is not available",
+  "CHILDW": "Dynamic Data is not available. Moving YRSEDU back to Education",
   "FSTABL": "What is the status of this indicator?",
   "PUBSRV": "What is the status of this indicator?",
   "TAXEVA": "Tax Haven Data is not Dynamic.",
-  "TRNETW": "Indicator Redesign Underway",
   "UNCONV": "Drop this indicator? Replacements for Human Rights?"
 }
