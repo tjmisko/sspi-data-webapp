@@ -44,33 +44,54 @@ def collectMILEXP(**kwargs):
 
 
 def collectARMEXP(**kwargs):
-    pass
-
-
-def collectSIPRIdataNEW(IndicatorCode, **kwargs):
     log = logging.getLogger(__name__)
-    headers = {"Content-Type": "application/json"}
-    if IndicatorCode == "ARMEXP":
-        url = "https://atbackend.sipri.org/api/p/trades/import-export-csv-str/"
-        log.info(f"Requesting ARMEXP data from URL: {url}")
-        headers.update({
-            "Origin": "https://armstransfers.sipri.org",
-            "Referer": "https://armstransfers.sipri.org",
-        })
-        query_payload = {
-            "filters": [{"field": "Year range 1", "oldField": "", "condition": "contains", "value1": 1990, "value2": 2025, "listData": []},
-                        {"field": "orderbyseller", "oldField": "", "condition": "",
-                            "value1": "", "value2": "", "listData": []},
-                        {"field": "DeliveryType", "oldField": "", "condition": "",
-                            "value1": "delivered", "value2": "", "listData": []},
-                        {"field": "Status", "oldField": "", "condition": "", "value1": "0", "value2": "", "listData": []}],
-            "logic": "AND"}
-        response = requests.post(url, headers=headers, json=query_payload)
-        json_string = response.content.decode('utf-8')
-        json_parsed = json.loads(json_string)
-        data_string = json_parsed["result"]
-        print(data_string)
-    yield f"Collected {IndicatorCode} data"
+    url = "https://atbackend.sipri.org/api/p/trades/import-export-csv-str/"
+    log.info(f"Requesting ARMEXP data from URL: {url}")
+    headers = {
+        "Content-Type": "application/json",
+        "Origin": "https://armstransfers.sipri.org",
+        "Referer": "https://armstransfers.sipri.org",
+    }
+    query_payload = {
+        "filters": [
+            {
+                "field": "Year range 1",
+                "oldField": "",
+                "condition": "contains",
+                "value1": 1990,
+                "value2": 2025,
+                "listData": []
+            },
+            {
+                "field": "orderbyseller",
+                "oldField": "",
+                "condition": "",
+                "value1": "",
+                "value2": "",
+                "listData": []
+            },
+            {
+                "field": "DeliveryType",
+                "oldField": "",
+                "condition": "",
+                "value1": "delivered",
+                "value2": "",
+                "listData": []
+            },
+            {
+                "field": "Status",
+                "oldField": "",
+                "condition": "",
+                "value1": "0",
+                "value2": "",
+                "listData": []
+            }
+        ],
+        "logic": "AND"
+    }
+    response = requests.post(url, headers=headers, json=query_payload)
+    sspi_raw_api_data.raw_insert_one(response.json(), "ARMEXP", **kwargs)
+    yield "Collected ARMEXP data"
 
 
 def cleanSIPRIData(RawData, IndName, Unit, Description):

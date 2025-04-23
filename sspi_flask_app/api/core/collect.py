@@ -13,7 +13,7 @@ from sspi_flask_app.api.datasource.oecdstat import (
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
-from sspi_flask_app.api.datasource.sipri import collectSIPRIdataNEW, collectMILEXP
+from sspi_flask_app.api.datasource.sipri import collectARMEXP, collectMILEXP
 from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.itu import collect_itu_data
@@ -518,7 +518,7 @@ def milexp():
 def armexp():
     def collect_iterator(**kwargs):
         # yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
-        yield from collectSIPRIdataNEW("ARMEXP", **kwargs)
+        yield from collectARMEXP(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #######################################
