@@ -13,7 +13,7 @@ from sspi_flask_app.api.datasource.oecdstat import (
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
-from sspi_flask_app.api.datasource.sipri import collectSIPRIdata, collectSIPRIdataNEW
+from sspi_flask_app.api.datasource.sipri import collectSIPRIdataNEW
 from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.itu import collect_itu_data
