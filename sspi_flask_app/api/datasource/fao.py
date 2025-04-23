@@ -12,7 +12,7 @@ def collectUNFAOData(UNFAO_element: str, UNFAO_item: str, UNFAO_domain: str, Ind
     print(f"{base_url}{element}{item}{default_options}")
     res = requests.get(f"{base_url}{element}{item}{default_options}")
     raw_data = res.json()
-    sspi_raw_api_data.raw_insert_one(raw_data, IndicatorCode, **kwargs)
+    sspi_raw_api_data.raw_insert_one(raw_data, IndicatorCode, SourceOrganization="UNFAO", **kwargs)
     yield "UNFAO Data Collection Complete\n"
 
 

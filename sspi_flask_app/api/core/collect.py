@@ -86,21 +86,6 @@ def watman():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/BEEFMK", methods=['GET'])
-@login_required
-def beefmk():
-    def collect_iterator(**kwargs):
-        yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
-        yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
-        consumption_element = (
-            "2300%2C2910%2C684%2C681%2C2520%2C2141%2C66%2C664%2C645%2C2610%2C2"
-            "120%2C2151%2C2130%2C2510%2C674%2C671%2C5170%2C2525%2C2071%2C511%2"
-            "C5171"
-        )
-        yield from collectUNFAOData(consumption_element, "2731", "FBS", "BEEFMK", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @collect_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def stkhlm():
@@ -172,6 +157,21 @@ def gtrans():
         yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
         yield from collectWorldBankdata("SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/BEEFMK", methods=['GET'])
+@login_required
+def beefmk():
+    def collect_iterator(**kwargs):
+        # yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        # yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        # yield from collectWorldBankdata("SP.POP.TOTL", "BEEFMK", IntermediateCode="POPULN", **kwargs)
+        yield from collectUNFAOData(
+            "2910%2C645%2C2610%2C2510%2C511", "2731%2C2501",
+            "FBS", "BEEFMK", **kwargs
+        )
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 ######################################################
 ### Collection Routes for Pillar: MARKET STRUCTURE ###

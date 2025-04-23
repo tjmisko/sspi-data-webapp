@@ -49,26 +49,15 @@ def push(database_name, IndicatorCode):
     )
     app.logger.info(message_1)
     connector = SSPIDatabaseConnector()
-    remote_delete_res = connector.delete_indicator_data(
+    remote_delete_msg = connector.delete_indicator_data(
         database_name, IndicatorCode, remote=True
     )
-    if remote_delete_res.status_code != 200:
-        app.logger.error(f"Failed to delete remote data\n{remote_delete_res.text}")
-        return Response(
-            remote_delete_res.text,
-            status=remote_delete_res.status_code, mimetype="text/plain"
-        )
-    remote_load_res = connector.load(
+    app.logger.info(remote_delete_msg)
+    remote_delete_msg = connector.load(
         local_data, database_name, IndicatorCode, remote=True
     )
-    if remote_load_res.status_code != 200:
-        app.logger.error(f"Failed to upload new remote data\n{
-                         remote_load_res.text}")
-        return Response(
-            remote_delete_res.text,
-            status=remote_delete_res.status_code, mimetype="text/plain"
-        )
+    app.logger.info(remote_delete_msg)
     return Response(
-        "Successfully Completed Database Push\n" + remote_load_res.text,
+        "Completed Database Push\n",
         mimetype="text/plain"
     )
