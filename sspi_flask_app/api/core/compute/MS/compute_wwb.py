@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
@@ -7,14 +7,16 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
+    goalpost,
     zip_intermediates,
-    filter_incomplete_data,
     score_single_indicator
 )
 
 import pandas as pd
 import json
+from bs4 import BeautifulSoup
 from io import StringIO
+import pycountry
 
 from sspi_flask_app.api.datasource.oecdstat import (
     # organizeOECDdata,
@@ -28,15 +30,17 @@ from sspi_flask_app.api.datasource.oecdstat import (
 @compute_bp.route("/SENIOR", methods=['GET'])
 @login_required
 def compute_senior():
-    if not sspi_raw_api_data.raw_data_available("SENIOR"):
-        return redirect(url_for("collect_bp.SENIOR"))
+    """
+    metadata = raw_data[0]["Metadata"]
+    metadata_soup = bs.BeautifulSoup(metadata, "lxml")
+    to see the codes and their descriptions, uncomment and
+    return the following two lines
+    jsonify([[tag.get("value"), tag.get_text()]
+             for tag in metadata_soup.find_all("code")])
+    """
+    app.logger.info("Running /api/v1/compute/SENIOR")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "SENIOR"})
     raw_data = sspi_raw_api_data.fetch_raw_data("SENIOR")
-    # metadata = raw_data[0]["Metadata"]
-    # metadata_soup = bs.BeautifulSoup(metadata, "lxml")
-    # to see the codes and their descriptions, uncomment and
-    # return the following two lines
-    # jsonify([[tag.get("value"), tag.get_text()]
-    #          for tag in metadata_soup.find_all("code")])
     metadata_codes = {
         "PEN20A": "Expected years in retirement, men",
         "PEN20B": "Expected years in retirement, women",
@@ -47,6 +51,9 @@ def compute_senior():
         "PEN20B": "YRSRTW",
         "PEN24A": "POVNRT",
     }
+
+    def score_senior(YRSRTM, YRSRTW, POVNRT):
+        return 0.25 * YRSRTM + 0.25 * YRSRTW + 0.50 * POVNRT,
     series = extractAllSeries(raw_data[0]["Raw"])
     document_list = []
     for code in metadata_codes.keys():
@@ -58,26 +65,25 @@ def compute_senior():
     long_senior_data["IntermediateCode"] = long_senior_data["VariableCodeOECD"].map(
         lambda x: metadata_code_map[x])
     long_senior_data.astype({"Year": "int", "Value": "float"})
-    zipped_document_list = zip_intermediates(
-        json.loads(str(long_senior_data.to_json(orient="records")),
-                   parse_int=int, parse_float=float),
-        "SENIOR",
-        ScoreFunction=lambda YRSRTM, YRSRTW, POVNRT: 0.25 *
-        YRSRTM + 0.25*YRSRTW + 0.50*POVNRT,
+    intermediate_list = json.loads(
+        str(long_senior_data.to_json(orient="records")),
+        parse_int=int, parse_float=float
+    )
+    clean_list, incomplete_list = zip_intermediates(
+        intermediate_list, "SENIOR",
+        ScoreFunction=score_senior,
         ScoreBy="Score"
     )
-    clean_document_list, incomplete_observations = filter_incomplete_data(
-        zipped_document_list)
-    sspi_clean_api_data.insert_many(clean_document_list)
-    print(incomplete_observations)
-    return parse_json(clean_document_list)
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/FATINJ", methods=['GET'])
 @login_required
 def compute_fatinj():
-    if not sspi_raw_api_data.raw_data_available("FATINJ"):
-        return redirect(url_for("collect_bp.FATINJ"))
+    app.logger.info("Running /api/v1/compute/FATINJ")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "FATINJ"})
     raw_data = sspi_raw_api_data.fetch_raw_data("FATINJ")
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     fatinj_raw = pd.read_csv(csv_virtual_file)
@@ -155,7 +161,6 @@ def compute_matern():
             "Value": value,
             "Unit": "Rate (%)" if ind != "MATERN1" else "Deaths per 100,000 live births"
         })
-
     print("Scoring Maternal Health")
     # Goalposts (examples — update as needed):
     mortal_gmin, mortal_gmax = 500, 10     # lower is better
@@ -168,13 +173,11 @@ def compute_matern():
         score_prenat = goalpost(PRENAT, prenat_gmin, prenat_gmax)
         return 0.4 * score_skillb + 0.3 * score_prenat + 0.3 * score_mortal
 
-    clean_matern_data = zip_intermediates(
+    clean_list, incomplete_list = zip_intermediates(
         intermediates_list,
         "MATERN",
         ScoreFunction=matern_score,
         ScoreBy="Score"
     )
-
-    complete, incomplete = filter_incomplete_data(clean_matern_data)
-    sspi_clean_api_data.insert_many(complete)
-    return parse_json(complete)
+    sspi_clean_api_data.insert_many(clean_list)
+    return parse_json(incomplete_list)

@@ -34,6 +34,11 @@ sspidb = client.flask_db
 sspi_metadata = SSPIMetadata(
     sspidb.sspi_metadata
 )
+sspi_static_metadata = SSPIMetadata(
+    sspidb.sspi_static_metadata,
+    indicator_detail_file="IndicatorDetailsStatic.csv",
+    intermediate_detail_file="IntermediateDetailsStatic.csv"
+)
 sspi_main_data_v3 = SSPIMainDataV3(
     sspidb.sspi_main_data_v3
 )

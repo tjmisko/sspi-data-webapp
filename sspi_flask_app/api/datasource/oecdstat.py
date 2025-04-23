@@ -2,7 +2,7 @@ import requests
 import time
 import pycountry
 import bs4 as bs
-from ..resources.utilities import string_to_float, string_to_int
+from ..resources.utilities import string_to_float
 from sspi_flask_app.models.database import sspi_raw_api_data
 import urllib3
 import ssl
@@ -135,7 +135,7 @@ def organizeOECDdata(series_list):
                             "CountryCode": cou,
                             "IndicatorCode": "GTRANS",
                             "Source": "OECD",
-                            "YEAR": string_to_int(year_lst[i]),
+                            "YEAR": int(year_lst[i]),
                             "RAW": string_to_float(obs_lst[i])
                         }
                         listofdicts.append(new_observation)
