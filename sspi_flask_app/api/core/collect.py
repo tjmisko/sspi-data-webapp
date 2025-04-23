@@ -13,7 +13,7 @@ from sspi_flask_app.api.datasource.oecdstat import (
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
-from sspi_flask_app.api.datasource.sipri import collectSIPRIdataNEW
+from sspi_flask_app.api.datasource.sipri import collectSIPRIdataNEW, collectMILEXP
 from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.itu import collect_itu_data
@@ -509,8 +509,7 @@ def foraid():
 @login_required
 def milexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdataNEW("MILEXP", **kwargs)
-        # yield from collectSIPRIdata("local/MILEXP/MILEXP.csv", "MILEXP", **kwargs)
+        yield from collectMILEXP(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

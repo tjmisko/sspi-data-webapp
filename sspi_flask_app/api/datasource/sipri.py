@@ -7,6 +7,46 @@ from io import StringIO
 import json
 
 
+def collectMILEXP(**kwargs):
+    log = logging.getLogger(__name__)
+    url = "https://backend.sipri.org/api/p/excel-export/preview"
+    msg = f"Requesting MILEXP data from URL: {url}\n"
+    yield msg
+    log.info(msg)
+    headers = {
+        "Content-Type": "application/json",
+        "Origin": "https://milex.sipri.org",
+        "Referer": "https://milex.sipri.org/",
+    }
+    query_payload = {
+        "regionalTotals": False,
+        "currencyFY": False,
+        "currencyCY": True,
+        "constantUSD": False,
+        "currentUSD": False,
+        "shareOfGDP": True,
+        "perCapita": False,
+        "shareGovt": False,
+        "regionDataDetails": False,
+        "getLiveData": False,
+        "yearFrom": None,
+        "yearTo": None,
+        "yearList": [1990, 2024],
+        "countryList": []
+    }
+    raw = requests.post(
+        url, headers=headers, json=query_payload, verify=False
+    ).json()
+    sspi_raw_api_data.raw_insert_one(
+        raw, "MILEXP", SourceOrganization="SIPRI", **kwargs
+    )
+    yield "Successfully collected MILEXP data"
+
+
+def collectARMEXP(**kwargs):
+    pass
+
+
 def collectSIPRIdataNEW(IndicatorCode, **kwargs):
     log = logging.getLogger(__name__)
     headers = {"Content-Type": "application/json"}
@@ -30,36 +70,6 @@ def collectSIPRIdataNEW(IndicatorCode, **kwargs):
         json_parsed = json.loads(json_string)
         data_string = json_parsed["result"]
         print(data_string)
-    if IndicatorCode == "MILEXP":
-        url = "https://backend.sipri.org/api/p/excel-export/preview"
-        log.info(f"Requesting MILEXP data from URL: {url}")
-        url = "https://backend.sipri.org/api/p/excel-export/preview"
-        headers.update({
-            "Origin": "https://milex.sipri.org",
-            "Referer": "https://milex.sipri.org/",
-        })
-        query_payload = {
-            "regionalTotals": False,
-            "currencyFY": False,
-            "currencyCY": True,
-            "constantUSD": False,
-            "currentUSD": False,
-            "shareOfGDP": True,
-            "perCapita": False,
-            "shareGovt": False,
-            "regionDataDetails": False,
-            "getLiveData": False,
-            "yearFrom": None,
-            "yearTo": None,
-            "yearList": [1990, 2024],
-            "countryList": []
-        }
-        response = requests.post(
-            url, headers=headers, json=query_payload, verify=False
-        )
-        sspi_raw_api_data.raw_insert_one(
-            response.json(), "MILEXP", SourceOrganization="SIPRI", **kwargs
-        )
     yield f"Collected {IndicatorCode} data"
 
 
