@@ -129,7 +129,7 @@ def compute_matern():
     raw = sspi_raw_api_data.fetch_raw_data("MATERN")
     raw_data_combined = []
     for i, r in enumerate(raw):
-        print(f"Extracting Raw Data for XML Object {i} of {len(raw)}")
+        app.logger.info(f"Extracting Raw Data for XML Object {i} of {len(raw)}")
         obs = parse_observations(r["Raw"][2:][:-1])  # remove quotes and leading/trailing chars
         raw_data_combined.extend(obs)
 
