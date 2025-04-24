@@ -154,9 +154,28 @@ class MongoWrapper:
             raise InvalidDocumentFormatError(
                 f"'IntermediateCode' must be uppercase (document {document_number})")
 
+    def validate_item_code(self, document: dict, document_number: int = 0):
+        # Validate IndicatorCode format
+        if "ItemCode" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'ItemCode' is a required argument (document {document_number})")
+        if not len(document["ItemCode"]) == 6:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'ItemCode' must be 6 characters long (document {document_number})")
+        if not type(document["ItemCode"]) is str:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'ItemCode' must be a string (document {document_number})")
+        if not document["ItemCode"].isupper():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'ItemCode' must be uppercase (document {document_number})")
+
     def validate_country_code(self, document: dict, document_number: int = 0):
         # Validate CountryCode format
-        if not "CountryCode" in document.keys():
+        if "CountryCode" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'CountryCode' is a required argument (document {document_number})")
@@ -213,7 +232,37 @@ class MongoWrapper:
     def validate_intermediates(self, document: dict, document_number: int = 0):
         if "Intermediates" in document.keys():
             self.validate_intermediates_list(
-                document["Intermediates"], document_number)
+                document["Intermediates"], document_number
+            )
+
+    def validate_items(self, document: dict, document_number: int = 0):
+        if "Items" in document.keys():
+            self.validate_items_list(document["Items"], document_number)
+
+    def validate_items_list(self, intermediates: list, document_number: int = 0):
+        if not type(intermediates) is list:
+            print(f"Document Produced an Error: {intermediates}")
+            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(intermediates)}")
+        id_set = set()
+        for intermediate in intermediates:
+            if not type(intermediate) is dict:
+                print(f"Document Produced an Error: {intermediates}")
+                raise InvalidDocumentFormatError(
+                    f"'Intermediates' must be a dictionary (document {document_number})")
+            self.validate_item_code(intermediate, document_number)
+            self.validate_country_code(intermediate, document_number)
+            self.validate_year(intermediate, document_number)
+            self.validate_value(intermediate, document_number)
+            self.validate_unit(intermediate, document_number)
+            document_id = f"{intermediate['ItemCode']}_{intermediate['CountryCode']}_{intermediate['Year']}"
+            print("==========================")
+            print(document_id)
+            print(intermediate)
+            if document_id in id_set:
+                print(f"Document Produced an Error: {intermediate}")
+                raise InvalidDocumentFormatError(
+                    f"Duplicate intermediate document found (document {document_number})")
+            id_set.add(document_id)
 
     def validate_intermediates_list(self, intermediates: list, document_number: int = 0):
         if not type(intermediates) is list:

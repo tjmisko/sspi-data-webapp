@@ -112,36 +112,55 @@ def added_countries(sspi_country_list, source_country_list):
     return additional_countries
 
 
-def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ValueFunction=None, UnitFunction=None, ScoreBy="Value"):
+def zip_intermediates(document_list, IndicatorCode, ScoreFunction, ValueFunction=None, UnitFunction=None, ScoreBy="Value"):
     """
     Utility function for zipping together intermediate documents into indicator documents
     """
-    intermediate_document_list = convert_data_types(intermediate_document_list)
-    sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
-    intermediate_document_list, noneish_list = drop_none_or_na(
-        intermediate_document_list)
-    print(f"There were {len(noneish_list)
-                        } none/na documents found in intermediate_document_list")
-    gp_intermediate_list = append_goalpost_info(
-        intermediate_document_list, ScoreBy
+    document_list = convert_data_types(document_list)
+    intermediates_list, items_list = filter_intermediates(document_list)
+    sspi_clean_api_data.validate_intermediates_list(intermediates_list)
+    sspi_clean_api_data.validate_items_list(items_list)
+    intermediates_list, noneish_list = drop_none_or_na(intermediates_list)
+    print((
+        f"There were {len(noneish_list)} none/na documents found"
+        "in intermediates_list"
+    ))
+    gp_intermediates_list = append_goalpost_info(
+        intermediates_list, ScoreBy
     )
-    indicator_document_list = group_by_indicator(
-        gp_intermediate_list, IndicatorCode
+    indicator_list = group_by_indicator(
+        gp_intermediates_list, items_list, IndicatorCode
     )
+    print(indicator_list)
     scored_indicator_document_list = score_indicator_documents(
-        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+        indicator_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
     )
     return filter_incomplete_data(scored_indicator_document_list)
 
 
-def convert_data_types(intermediate_document_list):
+def convert_data_types(document_list):
     """
-    Utility function for converting data types in intermediate documents
+    Utility function for converting data types in clean documents
     """
-    for document in intermediate_document_list:
+    for document in document_list:
         document["Year"] = int(document["Year"])
         document["Value"] = float(document["Value"])
-    return intermediate_document_list
+    return document_list
+
+
+def filter_intermediates(document_list):
+    """
+    Utility function for filtering out intermediate documents from other items
+    to be included inside of Items
+    """
+    filtered_list = []
+    items_list = []
+    for document in document_list:
+        if "IntermediateCode" in document.keys():
+            filtered_list.append(document)
+        elif "ItemCode" in document.keys():
+            items_list.append(document)
+    return filtered_list, items_list
 
 
 def drop_none_or_na(intermediate_document_list):
@@ -169,7 +188,7 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
         "DocumentType": "IntermediateDetail",
         "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}
     })
-    print(intermediate_details)
+    # print(intermediate_details)
     for document in intermediate_document_list:
         for detail in intermediate_details:
             if document["IntermediateCode"] == detail["Metadata"]["IntermediateCode"]:
@@ -183,12 +202,12 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
     return intermediate_document_list
 
 
-def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
+def group_by_indicator(intermediates_list, items_list, IndicatorCode) -> list:
     """
     Utility function for grouping documents by indicator
     """
     indicator_document_hashmap = dict()
-    for document in intermediate_document_list:
+    for document in intermediates_list:
         document_id = f"{document['CountryCode']}_{document['Year']}"
         if document_id not in indicator_document_hashmap.keys():
             indicator_document_hashmap[document_id] = {
@@ -196,9 +215,14 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
                 "CountryCode": document["CountryCode"],
                 "Year": document["Year"],
                 "Intermediates": [],
+                "Items": []
             }
         indicator_document_hashmap[document_id]["Intermediates"].append(
             document)
+    for document in items_list:
+        document_id = f"{document['CountryCode']}_{document['Year']}"
+        if document_id in indicator_document_hashmap.keys():
+            indicator_document_hashmap[document_id]["Items"].append(document)
     return list(indicator_document_hashmap.values())
 
 
@@ -214,16 +238,17 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
             arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
                 "Value", None) for intermediate in document["Intermediates"]}
         elif ScoreBy == "Score":
-            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
-                "Score", None) for intermediate in document["Intermediates"]}
+            arg_value_dict = {
+                intermediate["IntermediateCode"]: intermediate.get(
+                "Score", None) for intermediate in document["Intermediates"]
+            }
         else:
             raise ValueError(f"Invalid ScoreBy value: {
                              ScoreBy}; must be one of 'Value' or 'Score'")
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
-            arg_value_list = [arg_value_dict[arg_name]
-                              for arg_name in arg_name_list]
+            arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
         except KeyError:
             print(f"KeyError: {arg_name_list} for {arg_value_dict}")
             continue
