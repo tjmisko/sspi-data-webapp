@@ -25,6 +25,7 @@ from sspi_flask_app.api.datasource.oecdstat import (
 )
 from bs4 import BeautifulSoup
 import re
+from datetime import datetime
 
 
 @compute_bp.route("/SENIOR", methods=['GET'])
@@ -131,8 +132,15 @@ def compute_senior():
         obs["ItemCode"] = intermediate_map[obs["MEASURE"]][obs["SEX"]]
         if obs["ItemCode"] in ["SENLEF", "SENLEM", "SENCRF", "SENCRM", "SENPVT"]:
             obs["IntermediateCode"] = obs["ItemCode"]
+        if obs["ItemCode"] == "SENPVT" and obs["AGE"] != "Y_GE66":
+            continue
+        if obs["ItemCode"] in ["SENLEM", "SENLEF"] and obs["AGE"] != "BIRTH":
+            continue
         obs["Value"] = float(obs["Value"])
         obs["Year"] = int(obs["Year"])
+        current_year = datetime.now().year
+        if obs["Year"] < 1990 or obs["Year"] > current_year:
+            continue
         filtered_obs_list.append(obs)
     clean_list, incomplete_list = zip_intermediates(
         filtered_obs_list, "SENIOR",
@@ -141,7 +149,7 @@ def compute_senior():
     )
     # sspi_clean_api_data.insert_many(clean_list)
     # print(incomplete_list)
-    # return parse_json(clean_list)
+    return parse_json(incomplete_list)
 
 
 @compute_bp.route("/FATINJ", methods=['GET'])
