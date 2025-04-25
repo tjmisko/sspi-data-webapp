@@ -224,7 +224,12 @@ def childw():
 @login_required
 def senior():
     def collect_iterator(**kwargs):
-        yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
+        oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
+        meta = (
+            "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
+            "latest?references=all&format=sdmx-json"
+        )
+        yield from collectOECDSDMXData(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
