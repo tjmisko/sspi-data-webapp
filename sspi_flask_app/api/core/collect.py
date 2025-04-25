@@ -14,6 +14,7 @@ from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
 from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.imf import collectIMFData
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.itu import collect_itu_data
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
@@ -288,10 +289,11 @@ def pubacc():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-# @collect_bp.route("/FSTABL", methods=['GET'])
-# def fstabl():
-#     def collect_iterator(**kwargs):
-# https://github.com/Promptly-Technologies-LLC/imfp --> imf api package
+@collect_bp.route("/FSTABL", methods=['GET'])
+def fstabl():
+    def collect_iterator(**kwargs):
+        yield from collectIMFData("FSI", "FSDANL_USD", "FSTABL", **kwargs)
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 ##########################
 ## Category: INEQUALITY ##
