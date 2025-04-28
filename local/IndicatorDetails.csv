@@ -31,12 +31,6 @@ Sustainability,SUS,Waste,WST,Municipal Solid Waste Generation,MSWGEN,Wasteful Co
 Sustainability,SUS,Waste,WST,Recycling Rate,RECYCL,Circular End-of-Life Waste Treatment,The quantity of material recycled in the country over total waste generated  (recycling does not include controlled combustion (incineration) or land  application).,,World Bank,,https://datacatalog.worldbank.org/search/dataset/0039597/What-a-Waste-Global-Database ,https://databank.worldbank.org/,2018,"(0,70)",false,1,0,0,NA,NA,,,,
 Market Structure,MS,Worker Engagement,WEN,Participation in Paid Employment,EMPLOY,"Job placement 
 policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,,ILO,DF_EAP_DWAP_SEX_AGE_RT,https://data.oecd.org/emp/labour-force-participation-rate.htm,https://ilostat.ilo.org/,2017,"(50, 95)",false,1,50,95,NA,NA,,,,
-Market Structure,MS,Worker Engagement,WEN,Child Labor Rate,CHILDW,,"Conditional scoring based on two policies: 
-1) If the child labor rate is statistically nonzero, a country scores between 0.00 and 0.50 based on their level of child labor. 
-2) If the child labor rate in a country is statistically indistinguishable from zero, a country scores between 0.50 and 1.00 based on years of compulsory education.*",Combination of Compulsory Education (4.1.1) and Child Labor rate (8.7.1),UN SDG,"[""8.7.1"", ""4.1.1""]",https://www.ilo.org/shinyapps/bulkexplorer29/?lang=en&segment=indicator&id=HOW_2TOT_NOC_NB_A,https://unstats.un.org/sdgapi/swagger/,"2012- 
-2020 
-2018","(0, 10)V 
-(5, 12)",true,2,NA,NA,"[""CHLDLB"", ""YRCEDU""]",Conditional,,,,
 Market Structure,MS,Worker Engagement,WEN,"Collective 
 Bargaining 
 Coverage",COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,,ILO,,,https://ilostat.ilo.org/,2016,"(0, 100)",false,1,0,100,NA,NA,,,,
@@ -77,7 +71,7 @@ Redistribution",GINI Coefficient for post-tax-and-transfer income distribution.,
 2018","(20,70)V",true,1,70,20,NA,NA,,,,
 Public Goods,PG,Education,EDU,Primary School Net Enrollment,ENRPRI,"Accessibility of 
 Primary Education","The ratio of the number of children of official primary school age who are enrolled in primary education to the total population of children of official primary school age, expressed as a percentage.","The ratio of the number of children of official primary school age who are enrolled in primary education to the total population of children of official primary school age, expressed as a percentage.",UIS,"[""NERT.1.CP""]",https://unstats.un.org/sdgapi/swagger/,https://databrowser.uis.unesco.org/,2016,"(80, 100)",false,1,80,100,NA,NA,,,,
-Public Goods,PG,Education,EDU,Compulsory Education,YRSEDU,Years of Compulsory Education,Total years of compulsory education,,UIS,"[""",,https://databrowser.uis.unesco.org/,,"(6, 12)",FALSE,1,6,12,NA,NA,,,,
+Public Goods,PG,Education,EDU,Compulsory Education,YRSEDU,Years of Compulsory Education,Total years of compulsory education,,UIS,,,https://databrowser.uis.unesco.org/,,"(6, 12)",FALSE,1,6,12,NA,NA,,,,
 Public Goods,PG,Education,EDU,Lower Secondary Net Enrollment,ENRSEC,"Accessibility of 
 Lower Secondary Education","The net total of students in the lower secondary school age group who are enrolled in lower secondary or in any lower grade (primary education), as a proportion.","The ratio of the number of children of official secondary school age who are enrolled in secondary education to the total population of children of official secondary school age, expressed as a percentage.",UIS,"[""NERT.2.CP""]",https://unstats.un.org/sdgapi/swagger/,https://databrowser.uis.unesco.org/,2016,"(70, 100)",false,1,70,100,NA,NA,,,,
 Public Goods,PG,Education,EDU,"Primary 
@@ -92,7 +86,7 @@ Public Goods,PG,Healthcare,HLC,"Physicians per
 10,000",PHYSPC,"Investments in 
 Healthcare","Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.",,WHO,"[""HWF_0001""]",,https://www.who.int/data/gho/data/indicators/indicator-details/GHO/medical-doctors-(per-10-000-population),2010,"(0, 70)",false,1,0,70,NA,NA,,,,
 Public Goods,PG,Healthcare,HLC,Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",Proportion of women of reproductive age who have needs met for family planning (using any modern method).,UN SDG,"[""3.7.1""]","https://www.who.int/data/gho/indicator-metadata-registry/imr-details/3414#:~:text=Women%20with%20unmet%20need%20are,to%20delay%20the%20next%20child.",https://unstats.un.org/sdgapi/swagger/,2018,"(20, 100)",FALSE,1,20,100,NA,NA,,,,
-Public Goods,PG,Healthcare,HLC,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,,IHME,,https://ghdx.healthdata.org/record/ihme-data/child-growth-failure-visualization-input-data,https://vizhub.healthdata.org/lbd/cgf,2018,"(0, 50)V",true,1,50,0,NA,NA,Y,You have to go to home → modeled data → files → download input data ,,
+Public Goods,PG,Healthcare,HLC,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,,IHME,,https://ghdx.healthdata.org/record/ihme-data/child-growth-failure-visualization-input-data,https://vizhub.healthdata.org/lbd/cgf,2018,"(0, 50)V",true,1,50,0,NA,NA,,,,
 Public Goods,PG,Infrastructure,INF,"Availability and Quality of 
 Electricity",AQELEC,Electrification,"Arithmetic mean of two measures: 
 1) The percentage of the population with access to electricity 
