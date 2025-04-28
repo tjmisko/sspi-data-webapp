@@ -225,7 +225,7 @@ def finalize(ctx, remote=False):
     if ctx.invoked_subcommand is None:
         connector = SSPIDatabaseConnector()
         url = "/api/v1/production/finalize"
-        stream_response(connector.call(url, remote=remote), stream=True)
+        stream_response(connector.call(url, remote=remote, stream=True))
 
 
 @finalize.group(help="Finalize dynamic data")
