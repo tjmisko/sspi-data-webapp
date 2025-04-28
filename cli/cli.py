@@ -157,6 +157,24 @@ def line(remote=False):
     click.secho("Finalization Complete", fg="green")
 
 
+@finalize.command(help="Finalize indicator dynamic matrix data")
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def overview(remote=False):
+    click.echo("Finalizing Dynamic Line Data")
+    connector = SSPIDatabaseConnector()
+    res = connector.call(
+        "/api/v1/production/finalize/dynamic/matrix", remote=remote)
+    if res.status_code != 200:
+        raise click.ClickException((
+            "Error! Finalize Request Failed with Status "
+            f"Code {res.status_code}"
+        ))
+        echo_pretty(res.header)
+        echo_pretty(res.text)
+    click.secho("Finalization Complete", fg="green")
+
+
+dynamic.add_command(overview)
 dynamic.add_command(line)
 finalize.add_command(dynamic)
 cli.add_command(finalize)
