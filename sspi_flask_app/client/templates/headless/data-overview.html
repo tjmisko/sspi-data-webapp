@@ -47,10 +47,35 @@
                 </div>
             </div>
         </div>
-        <div id="data-matrix-dynamic" width="400" height="400"></div>
+        <h2> SSPI 49 Countries </h2>
+        <div id="data-matrix-dynamic-sspi49" width="400" height="400"></div>
+        <h2> SSPI Extended Countries </h2>
+        <div id="data-matrix-dynamic-sspiextended" width="400" height="400"></div>
+        <h2> Non-SSPI </h2>
+        <div id="data-matrix-dynamic-nonsspi" width="400" height="400"></div>
         <script defer>
-            const matrixParent = document.getElementById('data-matrix-dynamic');
-            window.IndicatorOverviewDynamicMatrix = new DynamicMatrixChart(matrixParent);
+            window.addEventListener("load", (event) => {
+                window.SSPICharts = [
+                    new DynamicMatrixChart(
+                        document.getElementById('data-matrix-dynamic-sspi49'),
+                        "SSPI49",
+                        width=400,
+                        height=380
+                    ),
+                    new DynamicMatrixChart(
+                        document.getElementById('data-matrix-dynamic-sspiextended'),
+                        countryGroup="SSPIExtended",
+                        width=400,
+                        height=150
+                    ),
+                    new DynamicMatrixChart(
+                        document.getElementById('data-matrix-dynamic-nonsspi'),
+                        countryGroup="NonSSPI",
+                        width=400,
+                        height=1200
+                    )
+                ]
+            })
         </script>
       </main>
   </body>

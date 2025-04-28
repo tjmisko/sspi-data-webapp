@@ -46,7 +46,6 @@ def get_database_status(database):
 @login_required
 def compare():
     details = sspi_metadata.indicator_details()
-    print(details)
     option_details = []
     for indicator in details:
         option_details.append({key: indicator[key] for key in [
@@ -216,13 +215,16 @@ def get_static_radar_data(CountryCode):
     return jsonify(radar_data)
 
 
-@dashboard_bp.route('/dynamic/matrix')
-def get_dynamic_matrix_data():
-    data = sspi_dynamic_matrix_data.find({}, {"_id": 0})
+@dashboard_bp.route('/dynamic/matrix/<country_group>')
+def get_dynamic_matrix_data(country_group):
+    countries = sspi_metadata.country_group(country_group)
+    data = sspi_dynamic_matrix_data.find(
+        {"y": {"$in": countries}}, {"_id": 0}
+    )
     return jsonify({
         "data": data,
         "icodes": sspi_metadata.indicator_codes(),
-        "ccodes": sspi_metadata.country_group("SSPI49")
+        "ccodes": countries
     })
 
 
