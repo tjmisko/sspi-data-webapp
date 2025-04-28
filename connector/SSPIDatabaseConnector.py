@@ -48,13 +48,11 @@ class SSPIDatabaseConnector:
         if request_string[0] == "/":
             request_string = request_string[1:]
         endpoint = f"{base_url}/{request_string}"
-        if method == "GET" and stream:
-            return sesh.get(endpoint, stream=True)
         if method == "POST":
-            return sesh.post(endpoint)
+            return sesh.post(endpoint, stream=stream)
         if method == "DELETE":
-            return sesh.delete(endpoint)
-        return sesh.get(endpoint)
+            return sesh.delete(endpoint, stream=stream)
+        return sesh.get(endpoint, stream=stream)
 
     def load(self, obs_lst: list[dict], database_name: str, indicator_code: str, remote=False) -> str:
         """
@@ -63,11 +61,8 @@ class SSPIDatabaseConnector:
         sesh = self.remote_session if remote else self.local_session
         base_url = self.remote_base if remote else self.local_base
         endpoint = f"{base_url}/api/v1/load/{database_name}/{indicator_code}"
-        # - [ ] Check on whether verify=False should be inserted here programatically
         res = sesh.post(endpoint, json=json.dumps(obs_lst))
-        msg = f"Load Request Returned with Status Code {res.status_code}"
-        log.info(msg)
-        return str(res.text)
+        return res
 
 
 class LocalHttpAdapter(HTTPAdapter):
