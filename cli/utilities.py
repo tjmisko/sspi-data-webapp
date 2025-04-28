@@ -56,3 +56,9 @@ def open_browser_subprocess(url):
         stdin=subprocess.DEVNULL,
         start_new_session=True
     )
+
+
+def stream_response(res):
+    with res as event_stream:
+        for line in event_stream.iter_lines(decode_unicode=True):
+            echo_pretty(line)
