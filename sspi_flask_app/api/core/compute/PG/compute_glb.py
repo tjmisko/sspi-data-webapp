@@ -184,6 +184,6 @@ def compute_rdfund():
         ScoreFunction=lambda GVTRDP, NRSRCH: (GVTRDP + NRSRCH) / 2,
         ScoreBy="Score"
     )
-    #sspi_clean_api_data.insert_many(clean_list)
+    sspi_clean_api_data.insert_many(clean_list)
     print(incomplete_list)
     return parse_json(clean_list)
