@@ -73,7 +73,8 @@ class SSPIMetadata(MongoWrapper):
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'Metadata' must be a string, dict, int, float, or list (document {document_number})"
+                f"'Metadata' must be a string, dict, int, float, or list (document {
+                    document_number})"
             )
 
     def load(self) -> int:
@@ -193,16 +194,29 @@ class SSPIMetadata(MongoWrapper):
         """
         Return a list of all countries in the country group
         """
-        return self.find_one(
-            {"DocumentType": "CountryGroup",
-             "Metadata.CountryGroupName": CountryGroupName}
-        )["Metadata"]["Countries"]
+        return self.find_one({
+            "DocumentType": "CountryGroup",
+            "Metadata.CountryGroupName": {
+                "$regex": f"^{CountryGroupName}$",
+                "$options": "i"}
+        })["Metadata"]["Countries"]
 
     def country_groups(self) -> list[str]:
         """
         Return a list of all country groups in the database
         """
         return self.find_one({"DocumentType": "CountryGroups"})["Metadata"]
+
+    def country_groups_tree(self) -> list[str]:
+        """
+        Return a list of all country groups in the database
+        """
+        groups_tree = []
+        for g in self.find({"DocumentType": "CountryGroup"}):
+            groups_tree.append({
+                g["Metadata"]["CountryGroupName"]: g["Metadata"]["Countries"]
+            })
+        return groups_tree
 
     def get_country_groups(self, CountryCode: str) -> list[str]:
         """
@@ -217,32 +231,56 @@ class SSPIMetadata(MongoWrapper):
 
     def indicator_details(self) -> list[dict]:
         """
-        Return a list of documents containing indicator details
+        Return a list of metadata dictionaries containing indicator details
         """
-        return self.find({"DocumentType": "IndicatorDetail"})
+        flat_list = []
+        for detail in self.find({"DocumentType": "IndicatorDetail"}):
+            flat_list.append(detail["Metadata"])
+        return flat_list
 
-    def get_detail(self, IndicatorCode: str) -> dict:
+    def get_indicator_detail(self, IndicatorCode: str) -> dict:
         """
-        Return a list of documents containg indicator details
+        Return the detail for a particular indicator for IndicatorCode
         """
         query = {
             "DocumentType": "IndicatorDetail",
             "Metadata.IndicatorCode": IndicatorCode
         }
-        return self.find_one(query)
+        return self.find_one(query)["Metadata"]
 
     def get_goalposts(self, IndicatorCode: str):
         """
         Return a list of documents containg indicator details
         """
-        indicator_detail = self.get_detail(IndicatorCode)
-        lg = indicator_detail["Metadata"]["LowerGoalpost"]
-        ug = indicator_detail["Metadata"]["UpperGoalpost"]
+        indicator_detail = self.get_indicator_detail(IndicatorCode)
+        lg = indicator_detail["LowerGoalpost"]
+        ug = indicator_detail["UpperGoalpost"]
         return lg, ug
 
     def intermediate_details(self) -> list[dict]:
         """
         Return a list of documents containg intermediate details
         """
-        return self.find({"DocumentType": "IntermediateDetail"})
+        flat_list = []
+        for detail in self.find({"DocumentType": "IntermediateDetail"}):
+            flat_list.append(detail["Metadata"])
+        return flat_list
 
+    def intermediate_codes(self) -> list[str]:
+        """
+        Return a list of documents containg intermediate details
+        """
+        code_list = []
+        for detail in self.find({"DocumentType": "IntermediateDetail"}):
+            code_list.append(detail["Metadata"]["IntermediateCode"])
+        return code_list
+
+    def get_intermediate_detail(self, IntermediateCode: str) -> dict:
+        """
+        Return a document containing indicator details for a specific IndicatorCode
+        """
+        query = {
+            "DocumentType": "IntermediateDetail",
+            "Metadata.IntermediateCode": IntermediateCode
+        }
+        return self.find_one(query)["Metadata"]
