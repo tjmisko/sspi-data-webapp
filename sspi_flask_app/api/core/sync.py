@@ -39,25 +39,30 @@ def pull(database_name, IndicatorCode):
 @sync_bp.route("/push/<database_name>/<IndicatorCode>", methods=["POST"])
 @login_required
 def push(database_name, IndicatorCode):
-    local_database = lookup_database(database_name)
-    local_data = local_database.find(
-        {"IndicatorCode": IndicatorCode}, {"_id": 0}
-    )
-    message_1 = (
-        f"Sourced {len(local_data)} local observations of Indicator "
-        f"{IndicatorCode} from local database {database_name}\n"
-    )
-    app.logger.info(message_1)
-    connector = SSPIDatabaseConnector()
-    remote_delete_msg = connector.delete_indicator_data(
-        database_name, IndicatorCode, remote=True
-    )
-    app.logger.info(remote_delete_msg)
-    remote_delete_msg = connector.load(
-        local_data, database_name, IndicatorCode, remote=True
-    )
-    app.logger.info(remote_delete_msg)
+    def push_iterator():
+        local_database = lookup_database(database_name)
+        local_data = local_database.find(
+            {"IndicatorCode": IndicatorCode}, {"_id": 0}
+        )
+        yield (
+            f"Sourced {len(local_data)} local observations of Indicator "
+            f"{IndicatorCode} from local database {database_name}\n"
+        )
+        if not local_data:
+            yield (
+                f"error: No local observations of Indicator {IndicatorCode} "
+                f"found in local database {database_name}\n"
+            )
+            return
+        connector = SSPIDatabaseConnector()
+        url = f"/api/v1/delete/indicator/{local_database.name}/{IndicatorCode}"
+        res_1 = connector.call(url, remote=True, method="DELETE")
+        yield str(res_1.text) + "\n"
+        res_2 = connector.load(
+            local_data, database_name, IndicatorCode, remote=True
+        )
+        yield str(res_2.text) + "\n"
     return Response(
-        "Completed Database Push\n",
-        mimetype="text/plain"
+        push_iterator(),
+        mimetype="event-stream"
     )

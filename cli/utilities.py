@@ -21,6 +21,8 @@ def is_numeric_string(string):
 
 
 def echo_pretty(msg):
+    if type(msg) is bytes:
+        msg = msg.decode("utf-8")
     tokens = msg.split(" ")
     output = []
     for i, t in enumerate(tokens):
@@ -59,6 +61,12 @@ def open_browser_subprocess(url):
 
 
 def stream_response(res):
+    exit_code = 0
     with res as event_stream:
         for line in event_stream.iter_lines(decode_unicode=True):
+            if type(line) is bytes:
+                line = line.decode("utf-8")
             echo_pretty(line)
+            if "error:" in line:
+                exit_code = 1
+    return exit_code
