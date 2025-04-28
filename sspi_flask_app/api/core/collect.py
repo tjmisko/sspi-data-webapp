@@ -488,6 +488,7 @@ def secapp():
 def rdfund():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+        yield from collectSDGIndicatorData("9.5.2", "RDFUND", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
