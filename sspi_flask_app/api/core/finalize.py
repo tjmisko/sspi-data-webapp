@@ -267,11 +267,11 @@ def finalize_sspi_dynamic_line_data():
     """
     Prepare the data for a Chart.js line plot
     """
-    sspi_dynamic_line_data.delete_many({})
     return Response(finalize_dynamic_line_iterator(), mimetype='text/event-stream')
 
 
 def finalize_dynamic_line_iterator():
+    sspi_dynamic_line_data.delete_many({})
     indicator_codes = sspi_metadata.indicator_codes()
     count = 1
     for IndicatorCode in indicator_codes:
@@ -333,13 +333,13 @@ def finalize_dynamic_line_iterator():
 @finalize_bp.route("/production/finalize/dynamic/matrix")
 @login_required
 def finalize_dynamic_matrix_data():
-    sspi_dynamic_matrix_data.delete_many({})
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     endpoints = [str(r) for r in app.url_map.iter_rules()]
     return Response(finalize_matrix_iterator(local_path, endpoints), mimetype='text/event-stream')
 
 
 def finalize_matrix_iterator(local_path, endpoints):
+    sspi_dynamic_matrix_data.delete_many({})
     with open(os.path.join(local_path, "indicator-problems.json")) as f:
         problems = json.load(f)
     with open(os.path.join(local_path, "indicator-confident.json")) as f:
@@ -348,6 +348,7 @@ def finalize_matrix_iterator(local_path, endpoints):
         r'(?<=api/v1/collect/)(?!static)[\w]*', r)
         for r in endpoints] if r is not None
     ]
+    print(collect_implemented)
     compute_implemented = [r.group(0) for r in [re.search(
         r'(?<=api/v1/compute/)(?!static)[\w]*', r)
         for r in endpoints] if r is not None
@@ -382,8 +383,6 @@ def finalize_matrix_iterator(local_path, endpoints):
         }
     ]
     result = sspi_clean_api_data.aggregate(pipeline)
-    with open(os.path.join(local_path, 'result.json'), 'w') as f:
-        json.dump(result, f, indent=4)
     sspi49_countries = sspi_metadata.country_group("SSPI49")
     sspi_extended_countries = sspi_metadata.country_group("SSPIExtended")
     indicator_details, indicator_map = sspi_metadata.indicator_details(), {}
@@ -420,6 +419,6 @@ def finalize_matrix_iterator(local_path, endpoints):
             "SSPIExtended": country in sspi_extended_countries,
             "CName": country_code_to_name(country)
         })
-        if count // 100 == 0:
+        if count % 100 == 0 or count == len(result):
             yield f"Finalizing Observation {count} / {len(result)}\n"
         count += 1
