@@ -37,9 +37,9 @@ def require_confirmation(phrase="CONFIRM", prompt="Type {0} to confirm") -> bool
     prompt_string = prompt.format(click.style(phrase, fg="red"))
     confirmation = click.prompt(prompt_string, default="", show_default=False)
     if confirmation != phrase:
-        click.secho("Confirmation failed. Exiting.", fg="red")
+        click.secho("\nConfirmation failed. Exiting.", fg="red")
         return False
-    click.secho("Confirmation successful!", fg="green")
+    click.secho("\nConfirmation successful!\n", fg="green")
     return True
 
 
