@@ -33,8 +33,11 @@ const shiftRotatedTicksPlugin = {
 
 
 class DynamicMatrixChart {
-    constructor(parentElement) {
+    constructor(parentElement, countryGroup="SSPI49", width=400, height=400) {
         this.parentElement = parentElement
+        this.countryGroup = countryGroup
+        this.width = width
+        this.height = height
 
         this.initRoot()
         this.initChartJSCanvas()
@@ -55,8 +58,8 @@ class DynamicMatrixChart {
         // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
         this.canvas.id = 'dynamic-line-chart-canvas'
-        this.canvas.width = 400
-        this.canvas.height = 400
+        this.canvas.width = this.width
+        this.canvas.height = this.height
         this.font = {
             family: 'Courier New',
             size: 12,
@@ -105,12 +108,13 @@ class DynamicMatrixChart {
     }
 
     async fetch() {
-        const response = await fetch(`/api/v1/dynamic/matrix`);
+        const response = await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);
         return response.json();
     }
 
     update(res) {
         this.n_indicators = res.icodes.length;
+        this.n_countries = res.ccodes.length;
         this.chart.data = {
             datasets: [{
                 label: 'SSPI Data Coverage Matrix',
@@ -119,12 +123,11 @@ class DynamicMatrixChart {
                     const years = context.dataset.data[context.dataIndex].v;
                     const load = context.dataset.data[context.dataIndex].to_be_loaded;
                     const collect = context.dataset.data[context.dataIndex].collect;
-                    const compute = context.dataset.data[context.dataIndex].collect;
                     if (years != 0) {
                         const alpha = (years + 5) / 40;
                         return `rgba(15, 200, 15, ${alpha})`;
                     }
-                    if (collect && compute) {
+                    if (collect) {
                         return '#FFBF0066';
                     }
                     if (load) {
@@ -143,8 +146,8 @@ class DynamicMatrixChart {
                     }
                 },
                 borderWidth: 1,
-                width: ({ chart }) => (chart.chartArea || {}).width / this.n_indicators - 1,
-                height: ({ chart }) => (chart.chartArea || {}).height / this.n_indicators - 1
+                width: ({ chart }) => (chart.chartArea || {}).width / this.n_indicators - 2,
+                height: ({ chart }) => (chart.chartArea || {}).height / this.n_countries - 2
             }]
         }
         this.chart.options.scales = {

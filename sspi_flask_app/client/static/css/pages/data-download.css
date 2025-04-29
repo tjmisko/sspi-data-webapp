@@ -12,7 +12,7 @@
 .data-download-reveal {
     margin: 0 0.5em;
     padding: 0.4em 0.5em;
-    //flex-grow: 1;
+    /* flex-grow: 1; */
     border: none;
     font-size: 0.6em;
     border-radius: 0.5em;
@@ -25,7 +25,6 @@
 }
 
 .data-download-form {
-    display:none;
-    overflow: hidden;
-    //flex-grow: 0.0001;
+    /* display:none; */
+    /* overflow: hidden; */
 }

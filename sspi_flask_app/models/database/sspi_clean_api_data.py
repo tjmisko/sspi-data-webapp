@@ -1,5 +1,7 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
+import json
+from bson import json_util
 
 
 class SSPICleanAPIData(MongoWrapper):
@@ -53,3 +55,10 @@ class SSPICleanAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
+
+    def aggregate(self, pipeline, options={"_id": 0}):
+        """
+        Aggregates the data in the collection using the provided pipeline.
+        """
+        cursor = self._mongo_database.aggregate(pipeline)
+        return json.loads(json_util.dumps(cursor))

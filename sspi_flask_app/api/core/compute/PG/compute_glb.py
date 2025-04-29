@@ -127,6 +127,7 @@ def compute_foraid():
 
 
 @compute_bp.route("/MILEXP", methods=['GET'])
+@login_required
 def compute_milexp():
     app.logger.info("Running /api/v1/compute/MILEXP")
     sspi_clean_api_data.delete_many({"IndicatorCode": "MILEXP"})
@@ -139,6 +140,7 @@ def compute_milexp():
 
 
 @compute_bp.route("/ARMEXP", methods=['GET'])
+@login_required
 def compute_armexp():
     app.logger.info("Running /api/v1/compute/ARMEXP")
     sspi_clean_api_data.delete_many({"IndicatorCode": "ARMEXP"})
