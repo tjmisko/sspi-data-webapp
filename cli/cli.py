@@ -146,7 +146,8 @@ def duplicates(database, remote=False):
 @delete.command()
 @click.argument("database", type=str, required=True)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
-def clear(database, remote=False):
+@click.option("--force", "-f", is_flag=True, help="DANGER: Override Confirmation")
+def clear(database, remote=False, force=False):
     """Clear contents of database
     """
     connector = SSPIDatabaseConnector()
@@ -159,9 +160,10 @@ def clear(database, remote=False):
         click.style(database, fg="red"),
         ".\n\nType {0} to confirm deletion"
     ]
-    if require_confirmation(phrase=database, prompt="".join(prompt_lst)):
-        msg = connector.clear_database(database, database, remote=remote)
-        echo_pretty(msg)
+    if force or require_confirmation(phrase=database, prompt="".join(prompt_lst)):
+        url = f"/api/v1/delete/clear/{database}"
+        res = connector.call(url, remote=remote, method="DELETE")
+        echo_pretty(res.text)
 
 
 @delete.command()
