@@ -6,6 +6,9 @@ from flask import Blueprint
 from flask_login import login_required
 from ..resources.utilities import lookup_database, parse_json
 from sspi_flask_app.models.database import sspidb
+import logging
+
+log = logging.getLogger(__name__)
 
 save_bp = Blueprint(
     "save_bp",
@@ -66,5 +69,5 @@ def save_database_image(database_name, snapshot_directory):
         f"Dumped {len(database_contents)} records "
         f"from {database_name} to {file}\n"
     )
-    app.logger.info(msg)
+    log.info(msg)
     return msg
