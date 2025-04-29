@@ -15,6 +15,10 @@ from flask_login import login_required
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired
+import tempfile
+from datetime import datetime
+import json
+import os
 
 
 delete_bp = Blueprint(
@@ -150,3 +154,22 @@ def delete_database_indicator(database_name, IndicatorCode):
     )
     app.logger.info(message)
     return message
+
+
+@delete_bp.route("/clear/<database_name>", methods=["DELETE"])
+@login_required
+def delete_clear_database(database_name):
+    database = lookup_database(database_name)
+    # Dump a temporary copy to the system's temporary directory
+    temp_dir = tempfile.gettempdir()
+    timestr = datetime.now().strftime("%s")
+    temp_file_path = os.path.join(temp_dir, f"{timestr}_{database_name}.json")
+    with open(temp_file_path, 'w') as temp_file:
+        json.dump(list(database.find({})), temp_file)
+    count = database.delete_many({})
+    msg = (
+        f"Deleted {count} observations from database {database.name}\n"
+        f"Temporary copy saved to {temp_file_path}"
+    )
+    app.logger.info(msg)
+    return msg
