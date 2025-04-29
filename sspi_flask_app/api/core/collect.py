@@ -132,6 +132,7 @@ def airpol():
 
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
+@login_required
 def altnrg():
     def collect_iterator(**kwargs):
         yield from collectIEAData("TESbySource", "ALTNRG", **kwargs)
@@ -274,6 +275,7 @@ def crptax():
 
 
 @collect_bp.route("/FDEPTH", methods=['GET'])
+@login_required
 def fdepth():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
@@ -282,6 +284,7 @@ def fdepth():
 
 
 @collect_bp.route("/PUBACC", methods=['GET'])
+@login_required
 def pubacc():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
@@ -321,6 +324,7 @@ def ginipt():
 
 
 @collect_bp.route("/ENRPRI", methods=['GET'])
+@login_required
 def enrpri():
     def collect_iterator(**kwargs):
         yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
@@ -328,6 +332,7 @@ def enrpri():
 
 
 @collect_bp.route("/ENRSEC", methods=['GET'])
+@login_required
 def enrsec():
     def collect_iterator(**kwargs):
         yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
@@ -335,6 +340,7 @@ def enrsec():
 
 
 @collect_bp.route("/PUPTCH", methods=['GET'])
+@login_required
 def puptch():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)

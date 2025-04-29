@@ -142,6 +142,7 @@ def finalize_sspi_static_rank_data():
 
 
 @finalize_bp.route("/production/finalize/static/stack")
+@login_required
 def finalize_static_overall_stack_data():
     sspi_static_stack_data.delete_many({})
     overall_scores = sspi_static_rank_data.find({"ICode": "SSPI"}, {"_id": 0})
