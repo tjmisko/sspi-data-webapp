@@ -8,12 +8,15 @@ from wtforms.validators import (
     DataRequired
 )
 from sspi_flask_app.models.database import sspidb, sspi_metadata
+import json
 
 
-download_bp = Blueprint("download_bp", __name__,
-                        template_folder="templates",
-                        static_folder="static",
-                        url_prefix="/download")
+download_bp = Blueprint(
+    "download_bp", __name__,
+    template_folder="templates",
+    static_folder="static",
+    url_prefix="/download"
+)
 
 db_choices = sspidb.list_collection_names()
 ic_choices = sspi_metadata.indicator_codes()
@@ -45,11 +48,6 @@ class ClientDownloadForm(FlaskForm):
     submit = SubmitField('Download Data')
 
 
-@download_bp.route("/client", methods=['POST'])
-def client_download():
-    return "data"
-
-
 def fetch_data_for_download(request_args):
     """
     request_args has type ImmutableMultiDict
@@ -71,13 +69,19 @@ def fetch_data_for_download(request_args):
             "$in": request.args.getlist('timePeriod')
         }
     database_name = request_args.get("database", default="sspi_main_data_v3")
-    dataframe = lookup_database(database_name)
-    data_to_download = parse_json(dataframe.find(mongo_query))
-    print(mongo_query)
+    database = lookup_database(database_name)
+    data_to_download = parse_json(database.find(mongo_query))
     return data_to_download
 
 
 @download_bp.route("/csv")
+def download_csv_endpoint():
+    """
+    Download the data from the database in csv format
+    """
+    return download_csv()
+
+
 def download_csv():
     """
     Download the data from the database in csv format
@@ -96,9 +100,24 @@ def download_csv():
 
 
 @download_bp.route("/json")
-def download_json():
+def download_json_endpoint():
+    """
+    Download the data from the database in json format
+    """
+    return download_json(request.args)
+
+
+def download_json(request_args):
     """
     Download data from the database in json format
     """
-    data_to_download = fetch_data_for_download(request.args)
-    return data_to_download
+    data_to_download = fetch_data_for_download(request_args)
+    mem = BytesIO()
+    mem.write(json.dumps(data_to_download).encode('utf-8'))
+    mem.seek(0)
+    return send_file(
+        mem,
+        mimetype='application/json',
+        download_name='SSPIData.json',
+        as_attachment=True
+    )
