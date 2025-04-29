@@ -278,6 +278,9 @@ def finalize_dynamic_line_iterator():
     for IndicatorCode in indicator_codes:
         yield f"{IndicatorCode} [ {count} of {len(indicator_codes)} ]\n"
         detail = sspi_metadata.get_indicator_detail(IndicatorCode)
+        lg, ug = detail["LowerGoalpost"], detail["UpperGoalpost"]
+        lg = 0 if not lg else lg  # if the indicator doesn't have goalposts, it's an aggregate index
+        ug = 1 if not ug else ug  # if the indicator doesn't have goalposts, it's an aggregate index
         indicator_dict = {}
         data = sspi_clean_api_data.find(
             {"IndicatorCode": IndicatorCode},
@@ -304,6 +307,10 @@ def finalize_dynamic_line_iterator():
                 except ValueError:
                     continue
                 years[year_index] = doc["Year"]
+                data[year_index] = {
+                    "years": doc["Value"],
+                    "scores": doc["Score"]
+                }
                 scores[year_index] = doc["Score"]
                 values[year_index] = doc["Value"]
                 data[year_index] = doc["Score"]
@@ -317,15 +324,21 @@ def finalize_dynamic_line_iterator():
                 "PilCode": detail["PillarCode"],
                 "PilName": detail["Pillar"],
                 "CGroup": group_list,
+                "parsing": {
+                    "xAxisKey": "years",
+                    "yAxisKey": "scores"
+                },
                 "pinned": False,
                 "hidden": "SSPI49" not in group_list,
                 "label": f"{CountryCode} - {country_code_to_name(CountryCode)}",
                 "years": years,
                 "minYear": min_year,
                 "maxYear": max_year,
-                "scores": scores,
                 "data": data,
-                "values": values
+                "scores": scores,
+                "values": values,
+                "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
+                "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
             }
             sspi_dynamic_line_data.insert_one(document)
         count += 1

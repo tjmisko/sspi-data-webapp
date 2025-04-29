@@ -166,7 +166,6 @@ def get_dynamic_indicator_line_data(IndicatorCode):
         "DocumentType": "IndicatorDetail",
         "Metadata.IndicatorCode": IndicatorCode
     })["Metadata"]["Description"]
-    app.logger.debug(f"Indicator Description: {indicator_description}")
     if request.method == "POST":
         chart_preferences = request.get_json()
         print(type(chart_preferences))

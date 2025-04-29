@@ -1,66 +1,73 @@
 const endLabelPlugin = {
     id: 'endLabelPlugin',
     afterDatasetsDraw(chart) {
-        chart.data.datasets.forEach((dataset, i) => {
-            if (dataset.hidden) {
-                return;
-            }
+        const { ctx } = chart;
+        for (let i = 0; i < chart.data.datasets.length; i++) {
+            const dataset = chart.data.datasets[i];
+            if (dataset.hidden) continue;
             const meta = chart.getDatasetMeta(i);
-            let lastNonNullIndex = meta.data.length - 1;
-            for (let j = meta.data.length; j >= 0; j--) {
-                if (meta.data[j] === undefined) {
-                    continue
-                }
-                if (meta.data[j].raw !== null) {
-                    lastNonNullIndex = j
-                    break
+            if (!meta || !meta.data || meta.data.length === 0) continue;
+
+            let lastPoint = null;
+            for (let j = meta.data.length - 1; j >= 0; j--) {
+                const element = meta.data[j];
+                if (element && element.parsed && element.parsed.y !== null) {
+                    lastPoint = element;
+                    break;
                 }
             }
-            const lastPoint = meta.data[lastNonNullIndex];
-            const value = dataset.CCode;
-            chart.ctx.save();
-            chart.ctx.font = 'bold 14px Arial';
-            chart.ctx.fillStyle = dataset.borderColor;
-            chart.ctx.textAlign = 'left';
-            chart.ctx.fillText(value, lastPoint.x + 5, lastPoint.y + 4);
-            chart.ctx.restore();
-        });
+            if (!lastPoint) continue;
+
+            const value = dataset.CCode ?? '';
+            ctx.save();
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = dataset.borderColor ?? '#000';
+            ctx.textAlign = 'left';
+            ctx.fillText(value, lastPoint.parsed.x + 5, lastPoint.parsed.y + 4);
+            ctx.restore();
+        }
     }
 }
 
 const extrapolatePlugin = {
     id: 'extrapolateBackwards',
     hidden: false,
-    toggle(hidden) { this.hidden = hidden !== undefined ? hidden : !this.hidden; },
+    toggle(hidden) {
+        this.hidden = hidden !== undefined ? hidden : !this.hidden;
+    },
     afterDatasetsDraw(chart) {
         if (this.hidden) return;
         const { ctx, chartArea: { left } } = chart;
-        chart.data.datasets.forEach((dataset, i) => {
-            if (dataset.hidden) return;
+        for (let i = 0; i < chart.data.datasets.length; i++) {
+            const dataset = chart.data.datasets[i];
+            if (dataset.hidden) continue;
             const meta = chart.getDatasetMeta(i);
-            let firstNonNullIndex = 0;
+            if (!meta || !meta.data || meta.data.length === 0) continue;
+
+            let firstElement = null;
             for (let j = 0; j < meta.data.length; j++) {
-                if (meta.data[j] === undefined) continue;
-                if (meta.data[j].raw !== null) {
-                    firstNonNullIndex = j;
+                const element = meta.data[j];
+                if (element && element.parsed && element.parsed.y !== null) {
+                    firstElement = element;
                     break;
                 }
             }
-            const firstElement = meta.data[firstNonNullIndex];
-            const firstPixelX = firstElement.x;
-            const firstPixelY = firstElement.y;
+            if (!firstElement) continue;
+
+            const firstPixelX = firstElement.parsed.x;
+            const firstPixelY = firstElement.parsed.y;
             if (firstPixelX > left) {
                 ctx.save();
                 ctx.beginPath();
                 ctx.setLineDash([2, 4]);
                 ctx.moveTo(left, firstPixelY);
                 ctx.lineTo(firstPixelX, firstPixelY);
-                ctx.strokeStyle = dataset.borderColor || 'rgba(0,0,0,0.5)';
+                ctx.strokeStyle = dataset.borderColor ?? 'rgba(0,0,0,0.5)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.restore();
             }
-        });
+        }
     }
 };
 
@@ -71,6 +78,7 @@ class DynamicLineChart {
         this.IndicatorCode = IndicatorCode
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
+        this.yAxisScale = "score"
         this.endLabelPlugin = endLabelPlugin
         this.extrapolatePlugin = extrapolatePlugin
         this.setTheme(localStorage.getItem("theme"))
@@ -95,6 +103,8 @@ class DynamicLineChart {
         <div class="chart-section-title-bar">
             <h2 class="chart-section-title">Dynamic Indicator Data</h2>
             <div class="chart-section-title-bar-buttons">
+                <label>Report Score</label>
+                <input type="checkbox" class="y-axis-scale"/>
                 <label>Backward Extrapolation</label>
                 <input type="checkbox" class="extrapolate-backwards"/>
                 <button class="draw-button">Draw 10 Countries</button>
@@ -107,6 +117,11 @@ class DynamicLineChart {
     }
 
     rigTitleBarButtons() {
+        this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
+        this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
+        this.yAxisScaleCheckbox.addEventListener('change', () => {
+            this.toggleYAxisScale()
+        })
         this.extrapolateCheckbox = this.root.querySelector('.extrapolate-backwards')
         this.extrapolateCheckbox.checked = !this.extrapolatePlugin.hidden
         this.extrapolateCheckbox.addEventListener('change', () => {
@@ -568,6 +583,21 @@ class DynamicLineChart {
     toggleBackwardExtrapolation() {
         this.extrapolatePlugin.toggle()
         this.chart.update();
+    }
+
+    toggleYAxisScale() {
+        this.chart.data.datasets.forEach((dataset) => {
+            if (this.yAxisScale === "score") {
+                dataset.parsing.yAxisKey = "values"
+                this.YAxisScale = "value"
+                this.chart.options.scales.y.title.text = 'Indicator Value'
+            } else {
+                dataset.parsing.yAxisKey = "scores"
+                this.YAxisScale = "score"
+                this.chart.options.scales.y.title.text = 'Indicator Score'
+            }
+            this.chart.update()
+        })
     }
 }
 
