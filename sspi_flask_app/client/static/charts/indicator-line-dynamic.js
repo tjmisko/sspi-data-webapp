@@ -28,6 +28,44 @@ const endLabelPlugin = {
     }
 }
 
+const extrapolatePlugin = {
+    id: 'extrapolateBackwards',
+    afterDatasetsDraw(chart) {
+        const { ctx, chartArea: { left } } = chart;
+        chart.data.datasets.forEach((dataset, i) => {
+            if (dataset.hidden) {
+                return; // skip hidden datasets
+            }
+            const meta = chart.getDatasetMeta(i);
+            // Find first visible element
+            let firstNonNullIndex = 0;
+            for (let j = 0; j < meta.data.length; j++) {
+                if (meta.data[j] === undefined) {
+                    continue
+                }
+                if (meta.data[j].raw !== null) {
+                    firstNonNullIndex = j
+                    break
+                }
+            }
+            const firstElement = meta.data[firstNonNullIndex];
+            const firstPixelX = firstElement.x
+            const firstPixelY = firstElement.y
+            if (firstPixelX > left) {
+                chart.ctx.save();
+                chart.ctx.beginPath();
+                chart.ctx.setLineDash([2, 4]); // dashed
+                chart.ctx.moveTo(left, firstPixelY);
+                chart.ctx.lineTo(firstPixelX, firstPixelY);
+                chart.ctx.strokeStyle = dataset.borderColor || 'rgba(0,0,0,0.5)'; // use dataset color if available
+                chart.ctx.lineWidth = 1;
+                chart.ctx.stroke();
+                chart.ctx.restore();
+            }
+        });
+    }
+};
+
 class DynamicLineChart {
     constructor(parentElement, IndicatorCode, CountryList = []) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
@@ -90,7 +128,7 @@ class DynamicLineChart {
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
             type: 'line',
-            plugins: [endLabelPlugin],
+            plugins: [endLabelPlugin, extrapolatePlugin],
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {

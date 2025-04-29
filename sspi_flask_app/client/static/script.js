@@ -199,7 +199,13 @@ const meta=chart.getDatasetMeta(i);let lastNonNullIndex=meta.data.length-1;for(l
 if(meta.data[j].raw!==null){lastNonNullIndex=j
 break}}
 const lastPoint=meta.data[lastNonNullIndex];const value=dataset.CCode;chart.ctx.save();chart.ctx.font='bold 14px Arial';chart.ctx.fillStyle=dataset.borderColor;chart.ctx.textAlign='left';chart.ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);chart.ctx.restore();});}}
-class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
+const extrapolatePlugin={id:'extrapolateBackwards',afterDatasetsDraw(chart){const{ctx,chartArea:{left}}=chart;chart.data.datasets.forEach((dataset,i)=>{if(dataset.hidden){return;}
+const meta=chart.getDatasetMeta(i);let firstNonNullIndex=0;for(let j=0;j<meta.data.length;j++){if(meta.data[j]===undefined){continue}
+if(meta.data[j].raw!==null){firstNonNullIndex=j
+break}}
+const firstElement=meta.data[firstNonNullIndex];const firstPixelX=firstElement.x
+const firstPixelY=firstElement.y
+if(firstPixelX>left){chart.ctx.save();chart.ctx.beginPath();chart.ctx.setLineDash([2,4]);chart.ctx.moveTo(left,firstPixelY);chart.ctx.lineTo(firstPixelX,firstPixelY);chart.ctx.strokeStyle=dataset.borderColor||'rgba(0,0,0,0.5)';chart.ctx.lineWidth=1;chart.ctx.stroke();chart.ctx.restore();}});}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
 this.pinnedArray=Array()
@@ -227,7 +233,7 @@ this.canvas.width=400
 this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin,extrapolatePlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
 this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){const container=document.createElement('div')
