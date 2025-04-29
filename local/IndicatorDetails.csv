@@ -1,124 +1,108 @@
-Pillar,PillarCode,Category,CategoryCode,Indicator,IndicatorCode,Policy,Description,SourceOrganization,SourceOrganizationIndicatorCode,SourceOrganizationURL,GoalpostString,Inverted,LowerGoalpost,UpperGoalpost,Footnote
+Pillar,PillarCode,Category,CategoryCode,Indicator,IndicatorCode,Policy,Description,SourceOrganization,SourceOrganizationIndicatorCode,SourceOrganizationURL,Inverted,LowerGoalpost,UpperGoalpost,Footnote
 Sustainability,SUS,Ecosystem,ECO,Biodiversity Protection,BIODIV,"Protection of 
-Biodiversity","Percentage of important sites for terrestrial, freshwater, and marine biodiversity that are covered by protected areas, by ecosystem type.",UN SDG,,https://unstats.un.org/sdgapi/swagger/,"(0, 100) 
-(0, 100) 
-(0, 100)",false,NA,NA,
-Sustainability,SUS,Ecosystem,ECO,IUCN Red List Index,REDLST,Endangered Species Protection,"Measures the level of extinction risk across species within a country. Index values of 1 represent all species qualifying as having an extinction risk of “least concern,” while values of 0 represent all species having gone extinct.",UN SDG,"[""15.5.1""]",https://unstats.un.org/sdgapi/swagger/,"(0, 1)",false,0,1,
+Biodiversity","Percentage of important sites for terrestrial, freshwater, and marine biodiversity that are covered by protected areas, by ecosystem type.",UN SDG,,https://unstats.un.org/sdgapi/swagger/,false,NA,NA,
+Sustainability,SUS,Ecosystem,ECO,IUCN Red List Index,REDLST,Endangered Species Protection,"Measures the level of extinction risk across species within a country. Index values of 1 represent all species qualifying as having an extinction risk of “least concern,” while values of 0 represent all species having gone extinct.",UN SDG,"[""15.5.1""]",https://unstats.un.org/sdgapi/swagger/,false,0,1,
 Sustainability,SUS,Land,LND,Sustainable Nitrogen Management,NITROG,"Sustainable 
-Agriculture Practice",An index measuring the sustainability of Nitrogen management based on Nitrogen use efficiency (in agriculture) and land use efficiency (crop yield). The Sustainable Nitrogen Management Index (SNMI) seeks to balance the efficient application of nitrogen fertilizer with maximum crop yields as a measure of the environmental performance of agricultural production. The 2022 EPI uses the SNMI as a proxy for agricultural drivers of environmental damage.,EPI,SNM,https://sedac.ciesin.columbia.edu/data/set/epi-environmental-performance-index-2022/data-download,"(0, 100)",false,0,100,
+Agriculture Practice",An index measuring the sustainability of Nitrogen management based on Nitrogen use efficiency (in agriculture) and land use efficiency (crop yield). The Sustainable Nitrogen Management Index (SNMI) seeks to balance the efficient application of nitrogen fertilizer with maximum crop yields as a measure of the environmental performance of agricultural production. The 2022 EPI uses the SNMI as a proxy for agricultural drivers of environmental damage.,EPI,SNM,https://sedac.ciesin.columbia.edu/data/set/epi-environmental-performance-index-2022/data-download,false,0,100,
 Sustainability,SUS,Land,LND,Water Management,WATMAN,Water Conservation,"Average of the following two metrics: 
 1. Change in Water Use Efficiency (WUE), 2018 compared with 2010-2015 average: WUE is the value added of a given major sector divided by the volume of water used. WUE at the national level is the sum of the efficiencies in the major economic sectors weighted according to the proportion of water withdrawn by each sector over the total withdrawals 
 2. Level of Water Stress: Freshwater withdrawal as a proportion of available freshwater resources is the ratio between total freshwater withdrawal by major economic sectors and total renewable 
-freshwater resources, after taking into account environmental water requirements. This indicator is also known as water withdrawal intensity.",UN SDG,,https://unstats.un.org/sdgapi/swagger/,"(-25,50) 
-(0, 100)V",false,NA,NA,
+freshwater resources, after taking into account environmental water requirements. This indicator is also known as water withdrawal intensity.",UN SDG,,https://unstats.un.org/sdgapi/swagger/,false,NA,NA,
 Sustainability,SUS,Land,LND,Chemical Pollution Convention Compliance,CHMPOL,"Chemical Waste 
-Management",Compliance with three treaties,UN SDG,12.4.1,https://unstats.un.org/sdgapi/swagger/,"(0, 100)",false,0,100,
-Sustainability,SUS,Land,LND,Deforestation,DEFRST,Forest Management,Percentage change in naturally regenerating forests from a 1990’s average to 2018.,UN FAO,,https://www.fao.org/faostat/en/#data/RL,"(-20, 40)",false,-20,40,
-Sustainability,SUS,Land,LND,Carbon Capture,CARBON,Carbon Sequestration,Percentage change in the ratio of carbon stock in living biomass over forestland from a 1990’s average to 2018.,UN FAO,,https://www.fao.org/faostat/en/#data/RL,"(-5, 50)",false,-5,50,
-Sustainability,SUS,Energy,NRG,Alternative Energy Generation,ALTNRG,Renewable Energy Incentives,"Total energy supply (excluding exports) supply from “renewable sources” (RE = nuclear, hydroelectric, geothermal, solar, wind, and biofuels) minus half of total final energy supply from biofuel sources (BIO) to penalize countries for unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.",IEA,TESbySource,[https://www.iea.org/],"(0, 60)",false,0,60,
-Sustainability,SUS,Energy,NRG,Energy Intensity,NRGINT,Energy Efficiency,Energy intensity level of primary energy measured in megajoules per constant 2017 purchasing power parity GDP.,UN SDG,7.3.1,https://unstats.un.org/sdgapi/swagger/,"(0, 15)V",true,15,0,
-Sustainability,SUS,Energy,NRG,Air Pollution,AIRPOL,Pollution Limitation,Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air (μg/m3).,UN SDG,11.6.2,https://unstats.un.org/sdgapi/swagger/,"(0, 40)V",true,40,0,
-Sustainability,SUS,Greenhouse Gases,GHG,Green Transport Index,GTRANS,Emissions from transportation (transport CO2),"CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms. This includes domestic aviation, domestic navigation, road, rail and pipeline transport.",IEA,CO2BySector,https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=CANADA&fuel=CO2%20emissions&indicator=CO2BySector,"(0, 2.5) 
-(0, 7500)V",true,NA,NA,
-Sustainability,SUS,Greenhouse Gases,GHG,Beef Market,BEEFMK,Methane Emissions,"The average of two measures: beef and buffalo meat produced in kilograms per person, and per capita meat (beef) consumption. UN population estimates were used.",UN FAO,,https://www.fao.org/faostat/en/#home,"(0, 120) V 
-(0, 50) V",true,NA,NA,
-Sustainability,SUS,Greenhouse Gases,GHG,Energy From Coal,COALPW,Fossil Fuel and Air Pollution,Percentage of a country's total energy supply generated from coal and coal derived sources.,IEA,TESbySource,https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource,"(0, 40)V",true,40,0,
-Sustainability,SUS,Waste,WST,Municipal Solid Waste Generation,MSWGEN,Wasteful Consumption,"Annual amount of per capita Municipal Solid Waste (kg/capita/year), which is defined as residential, commercial, and institutional waste (Industrial, medical, hazardous, electronic, and construction and demolition waste are not included).",World Bank ,,https://databank.worldbank.org/,"(0,750) V",true,50,0,
-Sustainability,SUS,Waste,WST,Recycling Rate,RECYCL,Circular End-of-Life Waste Treatment,The quantity of material recycled in the country over total waste generated  (recycling does not include controlled combustion (incineration) or land  application).,World Bank,,https://databank.worldbank.org/,"(0,70)",false,0,0,
+Management",Compliance with three treaties,UN SDG,12.4.1,https://unstats.un.org/sdgapi/swagger/,false,0,100,
+Sustainability,SUS,Land,LND,Deforestation,DEFRST,Forest Management,Percentage change in naturally regenerating forests from a 1990’s average to 2018.,UN FAO,,https://www.fao.org/faostat/en/#data/RL,false,-20,40,
+Sustainability,SUS,Land,LND,Carbon Capture,CARBON,Carbon Sequestration,Percentage change in the ratio of carbon stock in living biomass over forestland from a 1990’s average to 2018.,UN FAO,,https://www.fao.org/faostat/en/#data/RL,false,-5,50,
+Sustainability,SUS,Energy,NRG,Alternative Energy Generation,ALTNRG,Renewable Energy Incentives,"Total energy supply (excluding exports) supply from “renewable sources” (RE = nuclear, hydroelectric, geothermal, solar, wind, and biofuels) minus half of total final energy supply from biofuel sources (BIO) to penalize countries for unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.",IEA,TESbySource,[https://www.iea.org/],false,0,60,
+Sustainability,SUS,Energy,NRG,Energy Intensity,NRGINT,Energy Efficiency,Energy intensity level of primary energy measured in megajoules per constant 2017 purchasing power parity GDP.,UN SDG,7.3.1,https://unstats.un.org/sdgapi/swagger/,true,15,0,
+Sustainability,SUS,Energy,NRG,Air Pollution,AIRPOL,Pollution Limitation,Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities (population weighted) measured in micrograms per cubic meter of air (μg/m3).,UN SDG,11.6.2,https://unstats.un.org/sdgapi/swagger/,true,40,0,
+Sustainability,SUS,Greenhouse Gases,GHG,Green Transport Index,GTRANS,Emissions from transportation (transport CO2),"CO2 emissions from transport in tonnes per inhabitant, tonnes referring to thousands of kilograms. This includes domestic aviation, domestic navigation, road, rail and pipeline transport.",IEA,CO2BySector,https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=CANADA&fuel=CO2%20emissions&indicator=CO2BySector,true,NA,NA,
+Sustainability,SUS,Greenhouse Gases,GHG,Beef Market,BEEFMK,Methane Emissions,"The average of two measures: beef and buffalo meat produced in kilograms per person, and per capita meat (beef) consumption. UN population estimates were used.",UN FAO,,https://www.fao.org/faostat/en/#home,true,NA,NA,
+Sustainability,SUS,Greenhouse Gases,GHG,Energy From Coal,COALPW,Fossil Fuel and Air Pollution,Percentage of a country's total energy supply generated from coal and coal derived sources.,IEA,TESbySource,https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource,true,40,0,
+Sustainability,SUS,Waste,WST,Municipal Solid Waste Generation,MSWGEN,Wasteful Consumption,"Annual amount of per capita Municipal Solid Waste (kg/capita/year), which is defined as residential, commercial, and institutional waste (Industrial, medical, hazardous, electronic, and construction and demolition waste are not included).",World Bank ,,https://databank.worldbank.org/,true,50,0,
+Sustainability,SUS,Waste,WST,Recycling Rate,RECYCL,Circular End-of-Life Waste Treatment,The quantity of material recycled in the country over total waste generated  (recycling does not include controlled combustion (incineration) or land  application).,World Bank,,https://databank.worldbank.org/,false,0,0,
 Market Structure,MS,Worker Engagement,WEN,Participation in Paid Employment,EMPLOY,"Job placement 
-policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,ILO,DF_EAP_DWAP_SEX_AGE_RT,https://ilostat.ilo.org/,"(50, 95)",false,50,95,
-Market Structure,MS,Worker Engagement,WEN,Collective Bargaining Coverage,COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,ILO,,https://ilostat.ilo.org/,"(0, 100)",false,0,100,
+policies",Sum of all employed workers ages 25-54 divided by the total number of people in that age group.,ILO,DF_EAP_DWAP_SEX_AGE_RT,https://ilostat.ilo.org/,false,50,95,
+Market Structure,MS,Worker Engagement,WEN,Collective Bargaining Coverage,COLBAR,Labor rights,The proportion of workers whose terms and conditions at work are determined by collective bargaining as opposed to individual contracts.,ILO,,https://ilostat.ilo.org/,false,0,100,
 Market Structure,MS,Worker Wellbeing,WWB,Unemployment Benefits Coverage,UNEMPL,"Unemployment 
-Benefits",Percentage of unemployed receiving unemployment benefits.,ILO,DF_SDG_0131_SEX_SOC_RT,https://ilostat.ilo.org/,"(0, 100)",false,0,100,
-Market Structure,MS,Worker Wellbeing,WWB,Paid Maternity Leave,MATERN,Maternity leave,Paid parental leave available to mothers (full-rate equivalent) in weeks during the first year.,OECD,,https://stats.oecd.org/,"(0, 52)",false,0,52,
-Market Structure,MS,Worker Wellbeing,WWB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",ILO,DF_SDG_F881_SEX_MIG_RT,https://ilostat.ilo.org/,"(0, 25)V",true,25,0,
+Benefits",Percentage of unemployed receiving unemployment benefits.,ILO,DF_SDG_0131_SEX_SOC_RT,https://ilostat.ilo.org/,false,0,100,
+Market Structure,MS,Worker Wellbeing,WWB,Paid Maternity Leave,MATERN,Maternity leave,Paid parental leave available to mothers (full-rate equivalent) in weeks during the first year.,OECD,,https://stats.oecd.org/,false,0,52,
+Market Structure,MS,Worker Wellbeing,WWB,Fatal Workplace Injuries,FATINJ,Health and Safety Regulation,"Number of fatal injuries per 100,000 workers.",ILO,DF_SDG_F881_SEX_MIG_RT,https://ilostat.ilo.org/,true,25,0,
 Market Structure,MS,Worker Wellbeing,WWB,Senior Wellbeing,SENIOR,"1) Old Age Income Poverty 
 2) Retirement 
 Wellbeing","Arithmetic average of the following measures: 
 1) Percentage of individuals over the age of 65 living in relative income poverty 
-2) Expected number of years in retirement",OECD,PAG,https://stats.oecd.org/,"(0, 100)V 
-(0, 1)",true,15,25,
-Market Structure,MS,Taxes,TAX,Corporate Tax Rate,CRPTAX,Corporate Tax,Tax imposed on the net income of the company.,Tax Foundation,,https://taxfoundation.org/data/all/global/corporate-tax-rates-by-country-2023/,"(0, 40)",false,0,40,
+2) Expected number of years in retirement",OECD,PAG,https://stats.oecd.org/,true,15,25,
+Market Structure,MS,Taxes,TAX,Corporate Tax Rate,CRPTAX,Corporate Tax,Tax imposed on the net income of the company.,Tax Foundation,,https://taxfoundation.org/data/all/global/corporate-tax-rates-by-country-2023/,false,0,40,
 Market Structure,MS,Taxes,TAX,Tax Revenue,TAXREV,"Role of Public 
-Sector",Tax revenue as percentage of GDP.,World Bank,GC.TAX.TOTL.GD.ZS,https://databank.worldbank.org/,"(0, 50)",false,0,50,
-Market Structure,MS,Taxes,TAX,Tax Progressivity,TAXPRG,Income Tax Progressivity,TBD,,,,,,NA,NA,
+Sector",Tax revenue as percentage of GDP.,World Bank,GC.TAX.TOTL.GD.ZS,https://databank.worldbank.org/,false,0,50,
+Market Structure,MS,Taxes,TAX,Tax Progressivity,TAXPRG,Income Tax Progressivity,TBD,,,,,NA,NA,
 Market Structure,MS,Financial Sector,FIN,Stability,FSTABL,"Regulation of 
 Nonperforming 
-Loans","The percentage of loans that are nonperforming, meaning that the borrower is default due to not making the scheduled periods.",IMF,,https://data.imf.org/?sk=51b096fa-2cd2-40c2-8d09-0699cc1764da,"(0, 10) V",true,10,0,
+Loans","The percentage of loans that are nonperforming, meaning that the borrower is default due to not making the scheduled periods.",IMF,,https://data.imf.org/?sk=51b096fa-2cd2-40c2-8d09-0699cc1764da,true,10,0,
 Market Structure,MS,Financial Sector,FIN,Depth,FDEPTH,"1) Domestic Credit in 
 Private Sector 
 2) Financial System Deposits","This measure is an aggregation using the simple mean of the following measures: 
 1) The financial resources provided to the private sector by financial corporations as a percentage of GDP. 
-2) Deposited money in banks and other financial institutions as a percentage of GDP.",World Bank,,https://databank.worldbank.org/,"(0, 190) 
-(0, 200)",false,NA,NA,
+2) Deposited money in banks and other financial institutions as a percentage of GDP.",World Bank,,https://databank.worldbank.org/,false,NA,NA,
 Market Structure,MS,Financial Sector,FIN,Public Access,PUBACC,"Bank Account 
-Ownership",Account ownership at a financial institution or with a mobile-money-service provider (% of population ages 15+).,World Bank,FX.OWN.TOTL.ZS,https://databank.worldbank.org/,"(0, 100)",false,0,100,
+Ownership",Account ownership at a financial institution or with a mobile-money-service provider (% of population ages 15+).,World Bank,FX.OWN.TOTL.ZS,https://databank.worldbank.org/,false,0,100,
 Market Structure,MS,Inequality,NEQ,Income Share Ratio,ISHRAT,"Income Inequality and 
-Redistribution",The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households.,WID,,https://databank.worldbank.org/,"(0.2, 1.25)",false,0.2,1.25,
+Redistribution",The pre-tax national income share of the bottom 50% of households divided by the pre-tax national income share of the top 10% of households.,WID,,https://databank.worldbank.org/,false,0.2,1.25,
 Market Structure,MS,Inequality,NEQ,Gini-coefficient After Taxes,GINIPT,"Income Inequality and 
-Redistribution",GINI Coefficient for post-tax-and-transfer income distribution.,World Bank,,https://www.cia.gov/the-world-factbook/,"(20,70)V",true,70,20,
+Redistribution",GINI Coefficient for post-tax-and-transfer income distribution.,World Bank,,https://www.cia.gov/the-world-factbook/,true,70,20,
 Public Goods,PG,Education,EDU,Primary School Net Enrollment,ENRPRI,"Accessibility of 
-Primary Education","The ratio of the number of children of official primary school age who are enrolled in primary education to the total population of children of official primary school age, expressed as a percentage.",UIS,NERT.1.CP,https://databrowser.uis.unesco.org/,"(80, 100)",false,80,100,
+Primary Education","The ratio of the number of children of official primary school age who are enrolled in primary education to the total population of children of official primary school age, expressed as a percentage.",UIS,NERT.1.CP,https://databrowser.uis.unesco.org/,false,80,100,
 Public Goods,PG,Education,EDU,Lower Secondary Net Enrollment,ENRSEC,"Accessibility of 
-Lower Secondary Education","The ratio of the number of children of official secondary school age who are enrolled in secondary education to the total population of children of official secondary school age, expressed as a percentage.",UIS,NERT.2.CP,https://databrowser.uis.unesco.org/,"(70, 100)",false,70,100,
-Public Goods,PG,Education,EDU,Years of Compulsory Education,YRSEDU,Years of Compulsory Education,Total years of compulsory education,UIS,,https://databrowser.uis.unesco.org/,"(6, 12)",FALSE,6,12,
+Lower Secondary Education","The ratio of the number of children of official secondary school age who are enrolled in secondary education to the total population of children of official secondary school age, expressed as a percentage.",UIS,NERT.2.CP,https://databrowser.uis.unesco.org/,false,70,100,
+Public Goods,PG,Education,EDU,Years of Compulsory Education,YRSEDU,Years of Compulsory Education,Total years of compulsory education,UIS,,https://databrowser.uis.unesco.org/,FALSE,6,12,
 Public Goods,PG,Education,EDU,Primary Education Pupil to Teacher Ratio,PUPTCH,"Investment in 
-Teachers","Average number of pupils per teacher in primary school, based on headcounts of both pupils and teachers.",World Bank,SE.PRM.ENRL.TC.ZS,https://databrowser.uis.unesco.org/,"(9, 40)V",true,40,9,
-Public Goods,PG,Healthcare,HLC,Attended Births by Skilled Personnel,ATBRTH,Basic Healthcare,The proportion of births attended by trained and/or skilled health personnel.,WHO,MDG_0000000025,https://apps.who.int/gho/data/node.main.SKILLEDBIRTHATTENDANTS?lang=en,"(80, 100)",false,80,100,
-Public Goods,PG,Healthcare,HLC,Infant DTP Vaccine Coverage,DPTCOV,Preventative Health,"The estimated percentage of children aged 12–23 months who received three doses of the combined diphtheria, tetanus toxoid and pertussis vaccine time before the survey.",WHO,"[""UHCIMMUNIZATION""] OR [""vdvp""]",https://apps.who.int/gho/data/view.main.UHCIMMUNIZATIONv?lang=en,"(75, 100)",false,75,100,
+Teachers","Average number of pupils per teacher in primary school, based on headcounts of both pupils and teachers.",World Bank,SE.PRM.ENRL.TC.ZS,https://databrowser.uis.unesco.org/,true,40,9,
+Public Goods,PG,Healthcare,HLC,Attended Births by Skilled Personnel,ATBRTH,Basic Healthcare,The proportion of births attended by trained and/or skilled health personnel.,WHO,MDG_0000000025,https://apps.who.int/gho/data/node.main.SKILLEDBIRTHATTENDANTS?lang=en,false,80,100,
+Public Goods,PG,Healthcare,HLC,Infant DTP Vaccine Coverage,DPTCOV,Preventative Health,"The estimated percentage of children aged 12–23 months who received three doses of the combined diphtheria, tetanus toxoid and pertussis vaccine time before the survey.",WHO,"[""UHCIMMUNIZATION""] OR [""vdvp""]",https://apps.who.int/gho/data/view.main.UHCIMMUNIZATIONv?lang=en,false,75,100,
 Public Goods,PG,Healthcare,HLC,"Physicians per 10,000",PHYSPC,"Investments in 
-Healthcare","Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.",WHO,HWF_0001,https://www.who.int/data/gho/data/indicators/indicator-details/GHO/medical-doctors-(per-10-000-population),"(0, 70)",false,0,70,
-Public Goods,PG,Healthcare,HLC,Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",UN SDG,3.7.1,https://unstats.un.org/sdgapi/swagger/,"(20, 100)",FALSE,20,100,
-Public Goods,PG,Healthcare,HLC,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,IHME,,https://vizhub.healthdata.org/lbd/cgf,"(0, 50)V",true,50,0,
+Healthcare","Number of medical doctors (physicians), both generalists and specialists, expressed per 10,000 people.",WHO,HWF_0001,https://www.who.int/data/gho/data/indicators/indicator-details/GHO/medical-doctors-(per-10-000-population),false,0,70,
+Public Goods,PG,Healthcare,HLC,Family Planning,FAMPLN,Family Planning,"Modeled data on unmet need for family planning is defined as the percentage of women of reproductive age, either married or in a union, who have an unmet need for family planning (any modern method).",UN SDG,3.7.1,https://unstats.un.org/sdgapi/swagger/,FALSE,20,100,
+Public Goods,PG,Healthcare,HLC,Child Stunting,CSTUNT,Nutrition,Estimated prevalence of stunting in children under 5 (%).,IHME,,https://vizhub.healthdata.org/lbd/cgf,true,50,0,
 Public Goods,PG,Infrastructure,INF,Availability and Quality of Electricity,AQELEC,Electrification,"Arithmetic mean of two measures: 
 1) The percentage of the population with access to electricity 
-2) Executive opinion survey responses to the question: “In your country, how would you assess the reliability of the electricity supply?”",World Bank,"[EG.ELC.ACCS.ZS, WEF+GCIHH+EOSQ064]","[https://databank.worldbank.org/, https://prosperitydata360.worldbank.org/en/indicator/WEF+GCIHH+EOSQ064]","(0, 100) 
-(0, 7)",false,NA,NA,
+2) Executive opinion survey responses to the question: “In your country, how would you assess the reliability of the electricity supply?”",World Bank,,"[https://databank.worldbank.org/, https://prosperitydata360.worldbank.org/en/indicator/WEF+GCIHH+EOSQ064]",false,NA,NA,
 Public Goods,PG,Infrastructure,INF,Basic Sanitation Services,SANSRV,"Sanitation 
-Infrastructure","The percentage of people using at least basic sanitation services, that is, improved sanitation facilities that are not shared with other households.",World Bank (wash report),SH.STA.BASS.ZS,https://databank.worldbank.org/,"(50, 100)",false,50,100,
-Public Goods,PG,Infrastructure,INF,Safely Managed Water,DRKWAT,Water Infrastructure,Percentage of population using safely managed drinking water services.,World Bank (wash report),SH.H2O.SMDW.ZS,https://databank.worldbank.org/,"(0, 100)",false,0,100,
+Infrastructure","The percentage of people using at least basic sanitation services, that is, improved sanitation facilities that are not shared with other households.",World Bank (wash report),SH.STA.BASS.ZS,https://databank.worldbank.org/,false,50,100,
+Public Goods,PG,Infrastructure,INF,Safely Managed Water,DRKWAT,Water Infrastructure,Percentage of population using safely managed drinking water services.,World Bank (wash report),SH.H2O.SMDW.ZS,https://databank.worldbank.org/,false,0,100,
 Public Goods,PG,Infrastructure,INF,Internet Access and Quality,INTRNT,Connectivity Policy,"Arithmetic mean of two measures: 
 1) Percentage of households with internet access 
 2) Fixed broadband download speed in Mbps.","[World 
 Bank, 
-UN SDG]","[""IT.NET.USER.ZS"", ""17.6.1""]","[https://databank.worldbank.org/, https://unstats.un.org/sdgapi/swagger/]","(0, 100) 
-(0,100)",false,NA,NA,
+UN SDG]","[""IT.NET.USER.ZS"", ""17.6.1""]","[https://databank.worldbank.org/, https://unstats.un.org/sdgapi/swagger/]",false,NA,NA,
 Public Goods,PG,Infrastructure,INF,National Transport Network Intensity,TRNETW,"Transport 
 Infrastructure",The average of two measures: the natural log of rail lines per square kilometer (millions) per capita (millions) and the natural log of roadways per square kilometer per capita.,"[World 
 Bank, 
-CIA],",11.2.1,"[https://databank.worldbank.org/, https://www.cia.gov/the-world-factbook/field/roadways/country-comparison/, https://www.cia.gov/the-world-factbook/field/railways/country-comparison/]","(0, 5) 
-(0, 6)",false,NA,NA,
-Public Goods,PG,Rights,RTS,Rule of Law Index,RULELW,Judicial System,"Rule of Law Index measures extent to which laws are transparently, independently, predictably, impartially, equally enforced, and extent to which the actions of government officials comply with the law. Measured from low to high (0-1).",V-Dem,v2x_rule ,https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/,"(0, 1)",false,0,1,"To view the Rule of Law Index data, download the V-Dem data set and view the column “v2x_rule”."
+CIA],",11.2.1,"[https://databank.worldbank.org/, https://www.cia.gov/the-world-factbook/field/roadways/country-comparison/, https://www.cia.gov/the-world-factbook/field/railways/country-comparison/]",false,NA,NA,
+Public Goods,PG,Rights,RTS,Rule of Law Index,RULELW,Judicial System,"Rule of Law Index measures extent to which laws are transparently, independently, predictably, impartially, equally enforced, and extent to which the actions of government officials comply with the law. Measured from low to high (0-1).",V-Dem,v2x_rule ,https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/,false,0,1,"To view the Rule of Law Index data, download the V-Dem data set and view the column “v2x_rule”."
 Public Goods,PG,Rights,RTS,Quality of Public Services & Governance,PUBSRV,Government and Civil Service,"Perceptions of the quality of public services, quality of the civil service and its independence from political pressures, quality of policies and implementation, and credibility of the government's commitment to policies. Measured from -2.5 to 2.5.","World Bank (WGI)
-",,https://info.worldbank.org/governance/wgi/,"(-2.5, 2.5)",false,-2.5,2.5,"To view the Quality of Public Services & Governance data, download the full data set and view the 2018 ""Estimate"" data in ""Government Effectiveness""."
+",,https://info.worldbank.org/governance/wgi/,false,-2.5,2.5,"To view the Quality of Public Services & Governance data, download the full data set and view the 2018 ""Estimate"" data in ""Government Effectiveness""."
 Public Goods,PG,Rights,RTS,Electoral Democracy Index,EDEMOC,"Political 
-Participation and Influence",Electoral Democracy Index seeks to embody the core values that make rulers responsive to citizens through elections and freedom of expression.,V-Dem,,https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/,"(0, 1)",false,0,1,"To view the Electoral Democracy Index data, download the V-Dem data set and view the column “v2x_polyarchy”."
+Participation and Influence",Electoral Democracy Index seeks to embody the core values that make rulers responsive to citizens through elections and freedom of expression.,V-Dem,,https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/,false,0,1,"To view the Electoral Democracy Index data, download the V-Dem data set and view the column “v2x_polyarchy”."
 Public Goods,PG,Rights,RTS,Adoption of Key UN Conventions,UNCONV,Basic Human Rights,"Proportion of 9 core UN conventions (ICERD, ICCPR, ICESCR, CEDAW, CAT, CRC, ICMW, CPED, & CRPD) and 3 optional UN protocols (OP-CRC-AC, OP-CRC-SC, & ICCPR-OP2) that have been ratified, acquired, or succeeded.
-",UN,,Not sure>:(,"(0, 10)",false,0,10,
+",UN,,Not sure>:(,false,0,10,
 Public Goods,PG,Rights,RTS,Gender Equality Index,GENDEQ,Equality in Politics and Before the Law,"Weighted average of proportion of women in parliament from IPU and 3 indices from World Bank Women, Business and Law Index (WB-WBL): 
 1) Percentage of women in the national parliament. [Weight 0.4] 2) Mobility: Women have equal access to passports, foreign travel, domestic travel, and housing (4 Q’s, each worth 0.25 for yes, 0 for no). [Weight: 0.2] 3) Marriage: Women protected by law from domestic violence and subservience; have equal access to divorce and remarriage. (5Qs, worth 0.2 for yes, 0 for no). [Weight: 0.2] 
-4) Assets, Pensions: Women have equal access to credit, inheritance, pensions, and retirement. Combines two measurements made up of 7 questions.3 [Weight: 0.2]","[IPU, WB-WBL]",,"[https://data.ipu.org/women-ranking, https://wbl.worldbank.org/en/wbl-data]","(0, 0.5) 
-(0, 1) 
-(0, 1) 
-(0, 1)",false,NA,NA,
+4) Assets, Pensions: Women have equal access to credit, inheritance, pensions, and retirement. Combines two measurements made up of 7 questions.3 [Weight: 0.2]","[IPU, WB-WBL]",,"[https://data.ipu.org/women-ranking, https://wbl.worldbank.org/en/wbl-data]",false,NA,NA,
 Public Goods,PG,Public Safety,SAF,Intentional Homicide,MURDER,"Gun control. 
-Police Enforcement","Intentional homicides per 100,000 people.",World Bank,,https://databank.worldbank.org/,"(0, 20)V",true,20,0,
+Police Enforcement","Intentional homicides per 100,000 people.",World Bank,,https://databank.worldbank.org/,true,20,0,
 Public Goods,PG,Public Safety,SAF,Global Cybersecurity Index,CYBSEC,"National 
-Cybersecurity","The Global Cybersecurity Index (GCI) is a composite index combining 25 indicators into one benchmark for the laws, institutions, and competence.5",ITU,,https://www.itu.int/en/ITU-D/Cybersecurity/Pages/global-cybersecurity-index.aspx,"(0, 1)",false,0,1,
-Public Goods,PG,Public Safety,SAF,Security Apparatus,SECAPP,Capability of the Security Apparatus,"The Security Apparatus is a component of the Fragile State Index, which considers the security threats to a state such as bombings, attacks/battle-related deaths, rebel movements, mutinies, coups, or terrorism. It is an index scored between 0 and 10.",The Fund for Peace,,https://fragilestatesindex.org/global-data/,"(0, 10)V",true,10,0,
+Cybersecurity","The Global Cybersecurity Index (GCI) is a composite index combining 25 indicators into one benchmark for the laws, institutions, and competence.5",ITU,,https://www.itu.int/en/ITU-D/Cybersecurity/Pages/global-cybersecurity-index.aspx,false,0,1,
+Public Goods,PG,Public Safety,SAF,Security Apparatus,SECAPP,Capability of the Security Apparatus,"The Security Apparatus is a component of the Fragile State Index, which considers the security threats to a state such as bombings, attacks/battle-related deaths, rebel movements, mutinies, coups, or terrorism. It is an index scored between 0 and 10.",The Fund for Peace,,https://fragilestatesindex.org/global-data/,true,10,0,
 Public Goods,PG,Public Safety,SAF,Incarceration Rates,PRISON,"Criminal Justice 
 Policy","Prison population rate per 100,000 of the national population. Population sourced from the WorldBank.","World 
 Prison 
-Brief",,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All,"(40, 540)V",true,540,40,
-Public Goods,PG,Global Role,GLB,Arms Transfers,ARMEXP,Arms Policy,"Arm transfers: the supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.",SIPRI,,https://www.sipri.org/databases,"(0,1500)V",true,500,0,
-Public Goods,PG,Global Role,GLB,Military Expenditure,MILEXP,Defense Policy,Military expenditure (local currency at current prices) according to the calendar year as a percentage of GDP.,SIPRI,,https://www.sipri.org/databases,"(0, 10)V",true,10,0,
+Brief",,https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All,true,540,40,
+Public Goods,PG,Global Role,GLB,Arms Transfers,ARMEXP,Arms Policy,"Arm transfers: the supply of military weapons through sales, aid, gifts, and those made through manufacturing licenses.",SIPRI,,https://www.sipri.org/databases,true,500,0,
+Public Goods,PG,Global Role,GLB,Military Expenditure,MILEXP,Defense Policy,Military expenditure (local currency at current prices) according to the calendar year as a percentage of GDP.,SIPRI,,https://www.sipri.org/databases,true,10,0,
 Public Goods,PG,Global Role,GLB,Research and Development,RDFUND,Public R&D,"Aggregates the following: 
 Proportion of GDP spent on government R&D, data weight of 25%. Proportion of GDP spent on higher education R&D, data weight of 25%. 
-Number of researchers per 1 million people, data weight of 50%.",UN SDG,9.5.1,https://unstats.un.org/sdgapi/swagger/,"(0, 0.5) 
-(0, 0.5) 
-(0, 7500)",false,NA,NA,
+Number of researchers per 1 million people, data weight of 50%.",UN SDG,9.5.1,https://unstats.un.org/sdgapi/swagger/,false,NA,NA,
 Public Goods,PG,Global Role,GLB,Foreign Aid,FORAID,"Quality and 
 Quantity of Foreign Aid","Countries grouped as “Donors” or “Recipients” based on their reported status in the OECD CRS database. Good foreign aid excludes investments in fossil fuel extraction and energy systems, livestock, and military aid. 
 1) Donors: Total Good Foreign Aid as a Percentage of GDP 
-2) Recipients: Total Good Foreign Aid per Capita reflects the extent to which recipient countries solicit foreign aid for their population.",OECD,,https://stats.oecd.org/Index.aspx?DataSetCode=CPA#,"(0, 1) 
-(0,20)",false,NA,NA,
+2) Recipients: Total Good Foreign Aid per Capita reflects the extent to which recipient countries solicit foreign aid for their population.",OECD,,https://stats.oecd.org/Index.aspx?DataSetCode=CPA#,false,NA,NA,
