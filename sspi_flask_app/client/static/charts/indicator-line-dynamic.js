@@ -30,41 +30,40 @@ const endLabelPlugin = {
 
 const extrapolatePlugin = {
     id: 'extrapolateBackwards',
+    hidden: false,
+    toggle(hidden) { this.hidden = hidden !== undefined ? hidden : !this.hidden; },
     afterDatasetsDraw(chart) {
+        if (this.hidden) return;
         const { ctx, chartArea: { left } } = chart;
         chart.data.datasets.forEach((dataset, i) => {
-            if (dataset.hidden) {
-                return; // skip hidden datasets
-            }
+            if (dataset.hidden) return;
             const meta = chart.getDatasetMeta(i);
-            // Find first visible element
             let firstNonNullIndex = 0;
             for (let j = 0; j < meta.data.length; j++) {
-                if (meta.data[j] === undefined) {
-                    continue
-                }
+                if (meta.data[j] === undefined) continue;
                 if (meta.data[j].raw !== null) {
-                    firstNonNullIndex = j
-                    break
+                    firstNonNullIndex = j;
+                    break;
                 }
             }
             const firstElement = meta.data[firstNonNullIndex];
-            const firstPixelX = firstElement.x
-            const firstPixelY = firstElement.y
+            const firstPixelX = firstElement.x;
+            const firstPixelY = firstElement.y;
             if (firstPixelX > left) {
-                chart.ctx.save();
-                chart.ctx.beginPath();
-                chart.ctx.setLineDash([2, 4]); // dashed
-                chart.ctx.moveTo(left, firstPixelY);
-                chart.ctx.lineTo(firstPixelX, firstPixelY);
-                chart.ctx.strokeStyle = dataset.borderColor || 'rgba(0,0,0,0.5)'; // use dataset color if available
-                chart.ctx.lineWidth = 1;
-                chart.ctx.stroke();
-                chart.ctx.restore();
+                ctx.save();
+                ctx.beginPath();
+                ctx.setLineDash([2, 4]);
+                ctx.moveTo(left, firstPixelY);
+                ctx.lineTo(firstPixelX, firstPixelY);
+                ctx.strokeStyle = dataset.borderColor || 'rgba(0,0,0,0.5)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.restore();
             }
         });
     }
 };
+
 
 class DynamicLineChart {
     constructor(parentElement, IndicatorCode, CountryList = []) {
@@ -72,6 +71,8 @@ class DynamicLineChart {
         this.IndicatorCode = IndicatorCode
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
+        this.endLabelPlugin = endLabelPlugin
+        this.extrapolatePlugin = extrapolatePlugin
         this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
         this.rigCountryGroupSelector()
@@ -555,6 +556,11 @@ class DynamicLineChart {
                 (dataset) => { dataset.pinned }
             )));
         })
+    }
+
+    toggleBackwardExtrapolation() {
+        this.extrapolatePlugin.toggle()
+        this.chart.update();
     }
 }
 
