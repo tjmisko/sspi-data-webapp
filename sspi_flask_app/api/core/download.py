@@ -2,11 +2,6 @@ from io import BytesIO
 from flask import Blueprint, request, send_file
 import pandas as pd
 from ..resources.utilities import lookup_database, parse_json
-from flask_wtf import FlaskForm
-from wtforms import SubmitField, SelectField
-from wtforms.validators import (
-    DataRequired
-)
 from sspi_flask_app.models.database import sspidb, sspi_metadata
 import json
 
@@ -21,31 +16,6 @@ download_bp = Blueprint(
 db_choices = sspidb.list_collection_names()
 ic_choices = sspi_metadata.indicator_codes()
 cg_choices = sspi_metadata.country_groups()
-
-
-class ClientDownloadForm(FlaskForm):
-    database = SelectField(
-        choices=[
-            ("sspi_main_data_v3", "SSPI V3 Data (2018 Only)"),
-            ("sspi_final_api_data", "SSPI Dynamic Data (Experimental)")
-        ],
-        validators=[DataRequired()],
-        default="sspi_main_data_v3",
-        label="Database"
-    )
-    indicator_code = SelectField(
-        choices=ic_choices,
-        validators=[DataRequired()],
-        label="Indicator Code",
-        render_kw={"placeholder": "Indicator Code"}
-    )
-    country_group = SelectField(
-        choices=cg_choices,
-        validators=[DataRequired()],
-        default="SSPI49",
-        label="Country Group"
-    )
-    submit = SubmitField('Download Data')
 
 
 def fetch_data_for_download(request_args):
@@ -75,13 +45,6 @@ def fetch_data_for_download(request_args):
 
 
 @download_bp.route("/csv")
-def download_csv_endpoint():
-    """
-    Download the data from the database in csv format
-    """
-    return download_csv()
-
-
 def download_csv():
     """
     Download the data from the database in csv format
@@ -100,18 +63,11 @@ def download_csv():
 
 
 @download_bp.route("/json")
-def download_json_endpoint():
-    """
-    Download the data from the database in json format
-    """
-    return download_json(request.args)
-
-
-def download_json(request_args):
+def download_json():
     """
     Download data from the database in json format
     """
-    data_to_download = fetch_data_for_download(request_args)
+    data_to_download = fetch_data_for_download(request.args)
     mem = BytesIO()
     mem.write(json.dumps(data_to_download).encode('utf-8'))
     mem.seek(0)

@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, url_for, current_app as app
 from flask_login import login_required
-from ..api.core.download import ClientDownloadForm
 import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json
@@ -36,8 +35,7 @@ def contact():
 
 @client_bp.route('/data')
 def data():
-    download_form = ClientDownloadForm()
-    return render_template('data.html', download_form=download_form)
+    return render_template('data.html')
 
 
 @client_bp.route('/data/country/<CountryCode>')
