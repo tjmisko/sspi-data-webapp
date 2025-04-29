@@ -10,6 +10,12 @@ from sspi_flask_app.api.resources.utilities import (
     zip_intermediates,
     score_single_indicator
 )
+from sspi_flask_app.api.datasource.sdg import (
+    extract_sdg,
+    filter_sdg,
+)
+
+
 from sspi_flask_app.api.resources.utilities import goalpost
 from bs4 import BeautifulSoup
 import pycountry
@@ -148,8 +154,38 @@ def compute_armexp():
         'ARMEXP',
         'Millions of arms',
         description
-    )
+    ) 
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+
+@compute_bp.route("/RDFUND", methods=['GET'])
+@login_required
+def compute_rdfund():
+    """
+    metadata_map = {
+        "GB_XPD_RSDV": "GVTRDP",
+        "GB_POP_SCIERD": "NRSRCH"
+    }
+    """
+    app.logger.info("Running /api/v1/compute/RDFUND")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "RDFUND"})
+    raw_data = sspi_raw_api_data.fetch_raw_data("RDFUND")
+    watman_data = extract_sdg(raw_data)
+    intermediate_map = {
+        "GB_XPD_RSDV": "GVTRDP",
+        "GB_POP_SCIERD": "NRSRCH"
+    }
+    intermediate_list = filter_sdg(
+        watman_data, intermediate_map, activity="TOTAL"
+    )
+    clean_list, incomplete_list = zip_intermediates(
+        intermediate_list, "RDFUND",
+        ScoreFunction=lambda GVTRDP, NRSRCH: (GVTRDP + NRSRCH) / 2,
+        ScoreBy="Score"
+    )
+    sspi_clean_api_data.insert_many(clean_list)
+    print(incomplete_list)
+    return parse_json(clean_list)

@@ -208,13 +208,13 @@ def colbar():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/CHILDW")
+@collect_bp.route("/YRSEDU")
 @login_required
-def childw():
+def yrsedu():
     def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("4.1.1", "CHILDW", IntermediateCode="YSCEDU", **kwargs)
-        yield from collectSDGIndicatorData("8.7.1", "CHILDW", IntermediateCode="CHLDLB", **kwargs)
+        yield from collectUISdata("YEARS.FC.COMP.1T3", "YRSEDU", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 #################################
 ## Category: WORKER WELLBEING ##
@@ -499,6 +499,7 @@ def secapp():
 def rdfund():
     def collect_iterator(**kwargs):
         yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+        yield from collectSDGIndicatorData("9.5.2", "RDFUND", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -574,7 +575,6 @@ def gdpmek():
         yield from collectWorldBankOutcomeData("NY.GDP.PCAP.CD", "GDPMER", **kwargs)
 
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 
 @collect_bp.route("/outcome/GDPPPP", methods=['GET'])
 @login_required

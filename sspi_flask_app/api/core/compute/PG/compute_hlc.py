@@ -16,7 +16,7 @@ from sspi_flask_app.api.datasource.sdg import (
     filter_sdg
 )
 from flask import current_app as app
-import jq
+#import jq
 
 
 @compute_bp.route("/ATBRTH")
