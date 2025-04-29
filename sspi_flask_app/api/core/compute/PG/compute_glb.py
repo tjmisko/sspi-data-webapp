@@ -125,7 +125,9 @@ def compute_milexp():
     app.logger.info("Running /api/v1/compute/MILEXP")
     sspi_clean_api_data.delete_many({"IndicatorCode": "MILEXP"})
     milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
-    cleaned_list = cleanSIPRIData(milexp_raw, 'MILEXP')
+    milexp_raw = milexp_raw[0]["Raw"]
+    cleaned_list = cleanSIPRIData(milexp_raw, 'MILEXP', "Percent", 
+                                  "Military expenditure (local currency at current prices) according to the calendar year as a percentage of GDP.")
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "MILEXP")
     sspi_clean_api_data.insert_many(scored_list)
@@ -136,16 +138,14 @@ def compute_milexp():
 def compute_armexp():
     app.logger.info("Running /api/v1/compute/ARMEXP")
     sspi_clean_api_data.delete_many({"IndicatorCode": "ARMEXP"})
-    # armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
+    armexp_raw = sspi_raw_api_data.fetch_raw_data("ARMEXP")
+    armexp_raw = armexp_raw[0]["Raw"]
     description = (
         "The supply of military weapons through sales, aid, gifts, and those "
         "made through manufacturing licenses."
     )
     cleaned_list = cleanSIPRIData(
-        'local/armexp.csv',
-        'ARMEXP',
-        'Millions of arms',
-        description
+        armexp_raw, 'ARMEXP', 'Millions of arms', description
     )
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "ARMEXP")

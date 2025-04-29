@@ -13,12 +13,12 @@ from sspi_flask_app.api.datasource.oecdstat import (
 from sspi_flask_app.api.datasource.epi import collectEPIData
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
 from sspi_flask_app.api.datasource.fsi import collectFSIdata
+from sspi_flask_app.api.datasource.sipri import collectARMEXP, collectMILEXP
 from sspi_flask_app.api.datasource.iea import collectIEAData
 from sspi_flask_app.api.datasource.ilo import collectILOData
 from sspi_flask_app.api.datasource.itu import collect_itu_data
 from sspi_flask_app.api.datasource.prisonstudies import collectPrisonStudiesData
 from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
-from sspi_flask_app.api.datasource.sipri import collectSIPRIdata
 from sspi_flask_app.api.datasource.taxfoundation import collectTaxFoundationData
 from sspi_flask_app.api.datasource.uis import collectUISdata
 from sspi_flask_app.api.datasource.vdem import collectVDEMData
@@ -514,7 +514,7 @@ def foraid():
 @login_required
 def milexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("MILEXP", **kwargs)
+        yield from collectMILEXP(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -522,7 +522,8 @@ def milexp():
 @login_required
 def armexp():
     def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+        # yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+        yield from collectARMEXP(**kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 #######################################
