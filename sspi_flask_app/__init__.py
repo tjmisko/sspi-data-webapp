@@ -81,6 +81,7 @@ def init_app(Config):
         from .api.core.compute import compute_bp
         from .api.core.dashboard import dashboard_bp
         from .api.core.delete import delete_bp
+        from .api.core.download import download_bp
         from sspi_flask_app.api.core.sync import sync_bp
         from .api.core.finalize import finalize_bp
         from .api.core.host import host_bp
@@ -95,6 +96,7 @@ def init_app(Config):
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
         api_bp.register_blueprint(delete_bp)
+        api_bp.register_blueprint(download_bp)
         api_bp.register_blueprint(finalize_bp)
         api_bp.register_blueprint(host_bp)
         api_bp.register_blueprint(impute_bp)

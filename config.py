@@ -18,7 +18,6 @@ class Config:
     RELOAD = False
     STATIC_FOLDER = 'static'
     TEMPLATES_FOLDER = 'templates'
-    SASS_BIN = "/env/usr/bin/pyscss"
     ASSETS_DEBUG = False
     ASSETS_AUTO_BUILD = True
     JSONIFY_PRETTYPRINT_REGULAR = True
@@ -42,7 +41,8 @@ class DevConfig(Config):
 
 class TestConfig(Config):
     DEBUG = True
-    RELOAD = True
+    RELOAD = False
+    TESTING = True
     LOG_LEVEL = logging.DEBUG
-    LOGIN_DISABLED = True
+    LOGIN_DISABLED = False
     SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']

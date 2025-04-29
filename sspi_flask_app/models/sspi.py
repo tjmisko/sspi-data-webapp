@@ -68,7 +68,7 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            details = set([d["Metadata"]["IndicatorCode"]
+            details = set([d["IndicatorCode"]
                            for d in indicator_details])
             scores = set([s["IndicatorCode"] for s in indicator_scores])
             print(details.symmetric_difference(scores))
@@ -82,12 +82,12 @@ class SSPI:
             indicator_score_lookup[i["IndicatorCode"]] = i
         for detail in indicator_details:
             try:
-                indicator_code = detail["Metadata"]["IndicatorCode"]
+                indicator_code = detail["IndicatorCode"]
                 indicator_score = indicator_score_lookup[indicator_code]
             except KeyError:
                 error_msg = f"No data for indicator {indicator_code} found!"
                 raise DataOrderError(error_msg)
-            matched_pillar = self.get_pillar(detail["Metadata"]["PillarCode"])
+            matched_pillar = self.get_pillar(detail["PillarCode"])
             if not matched_pillar:
                 matched_pillar = Pillar(detail, indicator_score)
                 self.pillars.append(matched_pillar)
@@ -119,8 +119,8 @@ class SSPI:
 
 class Pillar:
     def __init__(self, detail: dict, indicator_score: dict):
-        self.name = detail["Metadata"]["Pillar"]
-        self.code = detail["Metadata"]["PillarCode"]
+        self.name = detail["Pillar"]
+        self.code = detail["PillarCode"]
         self.categories = []
         self.load(detail, indicator_score)
 
@@ -139,7 +139,7 @@ class Pillar:
         Successive calls load additional categories or revise existing categories with new data
         """
         matched_category = self.get_category(
-            detail["Metadata"]["CategoryCode"])
+            detail["CategoryCode"])
         if matched_category:
             matched_category.load(detail, indicator_score)
         else:
@@ -155,8 +155,8 @@ class Pillar:
 
 class Category:
     def __init__(self, detail: dict, indicator_score_data: dict):
-        self.name = detail["Metadata"]["Category"]
-        self.code = detail["Metadata"]["CategoryCode"]
+        self.name = detail["Category"]
+        self.code = detail["CategoryCode"]
         self.indicators = []
         self.load(detail, indicator_score_data)
 
@@ -175,7 +175,7 @@ class Category:
         Successive calls load additional indicator
         """
         matched_indicator = self.get_indicator(
-            detail["Metadata"]["IndicatorCode"])
+            detail["IndicatorCode"])
         if matched_indicator:
             matched_indicator.load(detail, indicator_score_data)
         else:
@@ -201,10 +201,10 @@ class Indicator:
 
     def load(self, detail, indicator_score_data):
         try:
-            self.name = detail["Metadata"]["Indicator"]
-            self.code = detail["Metadata"]["IndicatorCode"]
-            self.lower_goalpost = detail["Metadata"]["LowerGoalpost"]
-            self.upper_goalpost = detail["Metadata"]["UpperGoalpost"]
+            self.name = detail["Indicator"]
+            self.code = detail["IndicatorCode"]
+            self.lower_goalpost = detail["LowerGoalpost"]
+            self.upper_goalpost = detail["UpperGoalpost"]
         except KeyError as ke:
             msg = (
                 f"Indicator Detail Missing Name or Indicator "

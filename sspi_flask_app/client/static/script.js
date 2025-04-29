@@ -167,7 +167,10 @@ pillarLegendContext.fillRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)
 pillarLegendContext.strokeStyle=pillarColorsSolid[i]
 pillarLegendContext.linewidth=10
 pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}}
-const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class DynamicMatrixChart{constructor(parentElement){this.parentElement=parentElement
+const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class DynamicMatrixChart{constructor(parentElement,countryGroup="SSPI49",width=400,height=400){this.parentElement=parentElement
+this.countryGroup=countryGroup
+this.width=width
+this.height=height
 this.initRoot()
 this.initChartJSCanvas()
 this.fetch().then(res=>{this.update(res)})}
@@ -176,19 +179,19 @@ this.root.classList.add('chart-section-dynamic-matrix')
 this.parentElement.appendChild(this.root)}
 initChartJSCanvas(){this.canvas=document.createElement('canvas')
 this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=400
-this.canvas.height=400
+this.canvas.width=this.width
+this.canvas.height=this.height
 this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
 this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Dynamic Data Status';},label(context){const v=context.dataset.data[context.dataIndex];if(v.problems){return["Issue:"+v.problems,'Country: '+v.CName,'Indicator: '+v.IName]}
 return['Country: '+v.CName,'Indicator: '+v.IName,'Years: '+v.v];}}}}},plugins:[shiftRotatedTicksPlugin]})}
-async fetch(){const response=await fetch(`/api/v1/dynamic/matrix`);return response.json();}
-update(res){this.n_indicators=res.icodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;const compute=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
-if(collect&&compute){return'#FFBF0066';}
+async fetch(){const response=await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);return response.json();}
+update(res){this.n_indicators=res.icodes.length;this.n_countries=res.ccodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
+if(collect){return'#FFBF0066';}
 if(load){return'#FFBF00';}
 return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.data[context.dataIndex].problems;const confident=context.dataset.data[context.dataIndex].confident;if(problems){return"rgba(255, 99, 132, 1)";}
-if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-1,height:({chart})=>(chart.chartArea||{}).height/this.n_indicators-1}]}
+if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
 this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
 this.chart.update()}}
 const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){chart.data.datasets.forEach((dataset,i)=>{if(dataset.hidden){return;}
@@ -196,10 +199,13 @@ const meta=chart.getDatasetMeta(i);let lastNonNullIndex=meta.data.length-1;for(l
 if(meta.data[j].raw!==null){lastNonNullIndex=j
 break}}
 const lastPoint=meta.data[lastNonNullIndex];const value=dataset.CCode;chart.ctx.save();chart.ctx.font='bold 14px Arial';chart.ctx.fillStyle=dataset.borderColor;chart.ctx.textAlign='left';chart.ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);chart.ctx.restore();});}}
-class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
+const extrapolatePlugin={id:'extrapolateBackwards',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;chart.data.datasets.forEach((dataset,i)=>{if(dataset.hidden)return;const meta=chart.getDatasetMeta(i);let firstNonNullIndex=0;for(let j=0;j<meta.data.length;j++){if(meta.data[j]===undefined)continue;if(meta.data[j].raw!==null){firstNonNullIndex=j;break;}}
+const firstElement=meta.data[firstNonNullIndex];const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor||'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}});}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
 this.pinnedArray=Array()
+this.endLabelPlugin=endLabelPlugin
+this.extrapolatePlugin=extrapolatePlugin
 this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
 this.rigCountryGroupSelector()
@@ -211,8 +217,11 @@ this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
-rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backwards"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
+rigTitleBarButtons(){this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backwards')
+this.extrapolateCheckbox.checked=!this.extrapolatePlugin.hidden
+this.extrapolateCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
+this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
@@ -224,7 +233,7 @@ this.canvas.width=400
 this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin,extrapolatePlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
 this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){const container=document.createElement('div')
@@ -330,7 +339,9 @@ dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.data
 return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
 return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
-rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}}
+rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}
+toggleBackwardExtrapolation(){this.extrapolatePlugin.toggle()
+this.chart.update();}}
 class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
 this.parentChart=parentChart

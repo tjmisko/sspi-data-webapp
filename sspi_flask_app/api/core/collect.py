@@ -86,21 +86,6 @@ def watman():
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/BEEFMK", methods=['GET'])
-@login_required
-def beefmk():
-    def collect_iterator(**kwargs):
-        yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
-        yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
-        consumption_element = (
-            "2300%2C2910%2C684%2C681%2C2520%2C2141%2C66%2C664%2C645%2C2610%2C2"
-            "120%2C2151%2C2130%2C2510%2C674%2C671%2C5170%2C2525%2C2071%2C511%2"
-            "C5171"
-        )
-        yield from collectUNFAOData(consumption_element, "2731", "FBS", "BEEFMK", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @collect_bp.route("/STKHLM", methods=['GET'])
 @login_required
 def stkhlm():
@@ -147,6 +132,7 @@ def airpol():
 
 
 @collect_bp.route("/ALTNRG", methods=['GET'])
+@login_required
 def altnrg():
     def collect_iterator(**kwargs):
         yield from collectIEAData("TESbySource", "ALTNRG", **kwargs)
@@ -172,6 +158,21 @@ def gtrans():
         yield from collectIEAData("CO2BySector", "GTRANS", IntermediateCode="TCO2EQ", SourceOrganization="IEA", **kwargs)
         yield from collectWorldBankdata("SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
+@collect_bp.route("/BEEFMK", methods=['GET'])
+@login_required
+def beefmk():
+    def collect_iterator(**kwargs):
+        # yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        # yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+        # yield from collectWorldBankdata("SP.POP.TOTL", "BEEFMK", IntermediateCode="POPULN", **kwargs)
+        yield from collectUNFAOData(
+            "2910%2C645%2C2610%2C2510%2C511", "2731%2C2501",
+            "FBS", "BEEFMK", **kwargs
+        )
+    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
 
 ######################################################
 ### Collection Routes for Pillar: MARKET STRUCTURE ###
@@ -224,7 +225,12 @@ def yrsedu():
 @login_required
 def senior():
     def collect_iterator(**kwargs):
-        yield from collectOECDIndicator("PAG", "SENIOR", **kwargs)
+        oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
+        meta = (
+            "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
+            "latest?references=all&format=sdmx-json"
+        )
+        yield from collectOECDSDMXData(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -269,6 +275,7 @@ def crptax():
 
 
 @collect_bp.route("/FDEPTH", methods=['GET'])
+@login_required
 def fdepth():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
@@ -277,6 +284,7 @@ def fdepth():
 
 
 @collect_bp.route("/PUBACC", methods=['GET'])
+@login_required
 def pubacc():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
@@ -316,6 +324,7 @@ def ginipt():
 
 
 @collect_bp.route("/ENRPRI", methods=['GET'])
+@login_required
 def enrpri():
     def collect_iterator(**kwargs):
         yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
@@ -323,6 +332,7 @@ def enrpri():
 
 
 @collect_bp.route("/ENRSEC", methods=['GET'])
+@login_required
 def enrsec():
     def collect_iterator(**kwargs):
         yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
@@ -330,6 +340,7 @@ def enrsec():
 
 
 @collect_bp.route("/PUPTCH", methods=['GET'])
+@login_required
 def puptch():
     def collect_iterator(**kwargs):
         yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)

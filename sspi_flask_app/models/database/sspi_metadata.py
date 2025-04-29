@@ -2,7 +2,6 @@ from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from flask import current_app as app
 import os
-import re
 import json
 from bson import json_util
 import pandas as pd
@@ -73,7 +72,8 @@ class SSPIMetadata(MongoWrapper):
         if not type(document["Metadata"]) in [str, dict, int, float, list]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'Metadata' must be a string, dict, int, float, or list (document {document_number})"
+                f"'Metadata' must be a string, dict, int, float, or list (document {
+                    document_number})"
             )
 
     def load(self) -> int:
@@ -81,12 +81,14 @@ class SSPIMetadata(MongoWrapper):
         Loads the metadata into the database
         """
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
-        full_path = os.path.join(local_path, self.indicator_detail_file)
-        log.debug(f"Loading data for {self.name} from file {full_path}")
-        print(f"Loading data for {self.name} from file {full_path}")
-        indicator_details = pd.read_csv(full_path)
-        intermediate_details = pd.read_csv(
-            os.path.join(local_path, self.intermediate_detail_file))
+        ind_detail_path = os.path.join(local_path, self.indicator_detail_file)
+        print(f"Loading data for {self.name} from file {ind_detail_path}")
+        indicator_details = pd.read_csv(ind_detail_path)
+        int_detail_path = os.path.join(
+            local_path, self.intermediate_detail_file
+        )
+        print(f"Loading data for {self.name} from file {int_detail_path}")
+        intermediate_details = pd.read_csv(int_detail_path)
         with open(os.path.join(local_path, "CountryGroups.json")) as file:
             country_groups = json.load(file)
         metadata = self.build_metadata(
@@ -96,7 +98,6 @@ class SSPIMetadata(MongoWrapper):
         )
         count = self.insert_many(metadata)
         self.drop_duplicates()
-        log.info(f"Successfully loaded {count} documents into {self.name}")
         print(f"Successfully loaded {count} documents into {self.name}")
         return count
 
@@ -149,26 +150,34 @@ class SSPIMetadata(MongoWrapper):
         return country_groups_lookup + country_group_list
 
     def build_intermediate_details(self, intermediate_details: pd.DataFrame) -> list[dict]:
-        intermediate_details_list = json.loads(
-            str(intermediate_details.to_json(orient="records")))
-        return [{"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail} for intermediate_detail in intermediate_details_list]
+        json_string = str(intermediate_details.to_json(orient="records"))
+        intermediate_details_list = json.loads(json_string)
+        return [
+            {"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail}
+            for intermediate_detail in intermediate_details_list
+        ]
 
     def build_indicator_details(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame):
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
+        ind_int_map = {}
+        for intermediate_detail in intermediate_details.to_dict(orient="records"):
+            if intermediate_detail["IndicatorCode"] not in ind_int_map.keys():
+                ind_int_map[intermediate_detail["IndicatorCode"]] = []
+            ind_int_map[intermediate_detail["IndicatorCode"]].append(
+                intermediate_detail)
         for indicator_detail in indicator_details_list:
             indicator_detail["DocumentType"] = "IndicatorDetail"
-            # Link intermediate_details to their corresponding indicator_detail
-            if indicator_detail["IntermediateCodes"] is not None:
-                intermediate_codes = re.findall(
-                    r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
-                indicator_detail["IntermediateCodes"] = intermediate_codes
-                filtered_intermediate_details = intermediate_details.loc[
-                    intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]]
-                filtered_intermediate_details_list = json.loads(
-                    str(filtered_intermediate_details.to_json(orient="records")))
-                indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
-        return [{"DocumentType": "IndicatorDetail", "Metadata": indicator_detail} for indicator_detail in indicator_details_list]
+            if indicator_detail["IndicatorCode"] not in ind_int_map.keys():
+                continue
+            intermediate_codes = [
+                x["IntermediateCode"] for x in ind_int_map[indicator_detail["IndicatorCode"]]
+            ]
+            indicator_detail["IntermediateCodes"] = intermediate_codes
+        return [
+            {"DocumentType": "IndicatorDetail", "Metadata": indicator_detail}
+            for indicator_detail in indicator_details_list
+        ]
 
     # Getters
     def pillar_codes(self) -> list[str]:
@@ -193,16 +202,29 @@ class SSPIMetadata(MongoWrapper):
         """
         Return a list of all countries in the country group
         """
-        return self.find_one(
-            {"DocumentType": "CountryGroup",
-             "Metadata.CountryGroupName": CountryGroupName}
-        )["Metadata"]["Countries"]
+        return self.find_one({
+            "DocumentType": "CountryGroup",
+            "Metadata.CountryGroupName": {
+                "$regex": f"^{CountryGroupName}$",
+                "$options": "i"}
+        })["Metadata"]["Countries"]
 
     def country_groups(self) -> list[str]:
         """
         Return a list of all country groups in the database
         """
         return self.find_one({"DocumentType": "CountryGroups"})["Metadata"]
+
+    def country_groups_tree(self) -> list[str]:
+        """
+        Return a list of all country groups in the database
+        """
+        groups_tree = []
+        for g in self.find({"DocumentType": "CountryGroup"}):
+            groups_tree.append({
+                g["Metadata"]["CountryGroupName"]: g["Metadata"]["Countries"]
+            })
+        return groups_tree
 
     def get_country_groups(self, CountryCode: str) -> list[str]:
         """
@@ -217,32 +239,56 @@ class SSPIMetadata(MongoWrapper):
 
     def indicator_details(self) -> list[dict]:
         """
-        Return a list of documents containing indicator details
+        Return a list of metadata dictionaries containing indicator details
         """
-        return self.find({"DocumentType": "IndicatorDetail"})
+        flat_list = []
+        for detail in self.find({"DocumentType": "IndicatorDetail"}):
+            flat_list.append(detail["Metadata"])
+        return flat_list
 
-    def get_detail(self, IndicatorCode: str) -> dict:
+    def get_indicator_detail(self, IndicatorCode: str) -> dict:
         """
-        Return a list of documents containg indicator details
+        Return the detail for a particular indicator for IndicatorCode
         """
         query = {
             "DocumentType": "IndicatorDetail",
             "Metadata.IndicatorCode": IndicatorCode
         }
-        return self.find_one(query)
+        return self.find_one(query)["Metadata"]
 
     def get_goalposts(self, IndicatorCode: str):
         """
         Return a list of documents containg indicator details
         """
-        indicator_detail = self.get_detail(IndicatorCode)
-        lg = indicator_detail["Metadata"]["LowerGoalpost"]
-        ug = indicator_detail["Metadata"]["UpperGoalpost"]
+        indicator_detail = self.get_indicator_detail(IndicatorCode)
+        lg = indicator_detail["LowerGoalpost"]
+        ug = indicator_detail["UpperGoalpost"]
         return lg, ug
 
     def intermediate_details(self) -> list[dict]:
         """
         Return a list of documents containg intermediate details
         """
-        return self.find({"DocumentType": "IntermediateDetail"})
+        flat_list = []
+        for detail in self.find({"DocumentType": "IntermediateDetail"}):
+            flat_list.append(detail["Metadata"])
+        return flat_list
 
+    def intermediate_codes(self) -> list[str]:
+        """
+        Return a list of documents containg intermediate details
+        """
+        code_list = []
+        for detail in self.find({"DocumentType": "IntermediateDetail"}):
+            code_list.append(detail["Metadata"]["IntermediateCode"])
+        return code_list
+
+    def get_intermediate_detail(self, IntermediateCode: str) -> dict:
+        """
+        Return a document containing indicator details for a specific IndicatorCode
+        """
+        query = {
+            "DocumentType": "IntermediateDetail",
+            "Metadata.IntermediateCode": IntermediateCode
+        }
+        return self.find_one(query)["Metadata"]

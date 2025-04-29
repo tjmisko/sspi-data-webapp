@@ -27,7 +27,8 @@ def compute_employ():
     raw_data = sspi_raw_api_data.fetch_raw_data("EMPLOY")
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     employ_raw = pd.read_csv(csv_virtual_file)
-    employ_raw_f = employ_raw[['REF_AREA', 'TIME_PERIOD', 'MEASURE', 'SEX', 'UNIT_MEASURE', 'OBS_VALUE']]
+    employ_raw_f = employ_raw[['REF_AREA', 'TIME_PERIOD', 'MEASURE', 'SEX',
+                               'UNIT_MEASURE', 'OBS_VALUE']]
     colmap_rename = {
         'REF_AREA': 'CountryCode',
         'TIME_PERIOD': 'Year',
@@ -53,7 +54,8 @@ def compute_unempl():
     csv_virtual_file = StringIO(raw_data[0]["Raw"])
     unempl_raw = pd.read_csv(csv_virtual_file)
     unempl_raw_f = unempl_raw[unempl_raw['SOC'] == 'SOC_CONTIG_UNE']
-    unempl_raw_f = unempl_raw_f[['REF_AREA', 'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
+    unempl_raw_f = unempl_raw_f[['REF_AREA',
+                                 'TIME_PERIOD', 'UNIT_MEASURE', 'OBS_VALUE']]
     colmap_rename = {
         'REF_AREA': 'CountryCode',
         'TIME_PERIOD': 'Year',
@@ -95,11 +97,14 @@ def compute_colbar():
 @compute_bp.route("/YRSEDU", methods=['GET'])
 @login_required
 def compute_yrsedu():
-    if not sspi_raw_api_data.raw_data_available("YRSEDU"):
-        return redirect(url_for("api_bp.collect_bp.YRSEDU"))
+    app.logger.info("Running /api/v1/compute/YRSEDU")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "YRSEDU"})
     raw_data = sspi_raw_api_data.fetch_raw_data("YRSEDU")
-    cleaned_list = cleanUISdata(raw_data, "YRSEDU", "Years", "Number of years of compulsory primary and secondary education guaranteed in legal frameworks")
+    description = (
+        "Number of years of compulsory primary and secondary "
+        "education guaranteed in legal frameworks"
+    )
+    cleaned_list = cleanUISdata(raw_data, "YRSEDU", "Years", description)
     scored_list = score_single_indicator(cleaned_list, "YRSEDU")
-    clean_document_list, incomplete_observations = filter_incomplete_data(scored_list)
-    #sspi_clean_api_data.insert_many(clean_document_list)
-    return parse_json(clean_document_list)
+    sspi_clean_api_data.insert_many(scored_list)
+    return parse_json(scored_list)

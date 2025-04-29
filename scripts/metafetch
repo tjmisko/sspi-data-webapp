@@ -1,0 +1,13 @@
+#!/bin/bash
+echo "Fetching Latest IndicatorDetails.csv from Google Sheets"
+curl -sL "https://docs.google.com/spreadsheets/d/1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI/export?format=csv&id=1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI&gid=0" -o local/IndicatorDetails.csv
+echo "Fetching Latest IntermediateDetails.csv from Google Sheets"
+curl -sL "https://docs.google.com/spreadsheets/d/1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI/export?format=csv&id=1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI&gid=1642707065" -o local/IntermediateDetails.csv
+if git diff --quiet local/In*Details.csv; then
+    echo "No changes detected in CSV files."
+else
+    git add local/In*Details.csv && git commit -m "chore: Fetched Updated CSV Metadata Details"
+    sspi delete clear sspi_metadata --force
+    echo "Updated Metadata! Restart the Flask Application to Load"
+fi
+

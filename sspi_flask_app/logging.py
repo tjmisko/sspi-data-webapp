@@ -4,18 +4,19 @@ import os
 
 
 def configure_logging(app):
-    for handler in app.logger.handlers[:]:
-        app.logger.removeHandler(handler)
     log_level = app.config.get('LOG_LEVEL', logging.DEBUG)
-    app.logger.setLevel(log_level)
     formatter = logging.Formatter(
         '%(levelname)s %(pathname)s:%(lineno)d:\n\t%(message)s\t[%(asctime)s]'
     )
+
+    # Set up console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     console_handler.setLevel(log_level)
-    logging.basicConfig(level=log_level, handlers=[console_handler])
+
+    # Set up file handler if specified
     log_dir = app.config.get('LOG_DIR')
+    handlers = [console_handler]
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
         file_handler = RotatingFileHandler(
@@ -25,4 +26,13 @@ def configure_logging(app):
         )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(log_level)
-        logging.getLogger().addHandler(file_handler)
+        handlers.append(file_handler)
+
+    # Set root logger config
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    for handler in handlers:
+        root_logger.addHandler(handler)
+
+    # Optional: silence noisy libraries
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)

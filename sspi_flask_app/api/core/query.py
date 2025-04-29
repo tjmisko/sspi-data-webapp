@@ -72,8 +72,16 @@ def build_mongo_query(raw_query_input):
 
 
 @query_bp.route("/metadata/country_groups", methods=["GET"])
-def query_country_groups():
+def query_country_groups(tree=False):
+    if request.args.get("tree") == "true" or tree:
+        tree = True
+        return jsonify(sspi_metadata.country_groups_tree())
     return sspi_metadata.country_groups()
+
+
+@query_bp.route("/metadata/country_group/<country_group>", methods=["GET"])
+def get_country_group(country_group):
+    return sspi_metadata.country_group(country_group)
 
 
 @query_bp.route("/metadata/indicator_codes", methods=["GET"])
@@ -86,6 +94,21 @@ def query_indicator_details():
     return jsonify(sspi_metadata.indicator_details())
 
 
+@query_bp.route("/metadata/indicator_detail/<indicator_code>", methods=["GET"])
+def query_indicator_detail(indicator_code):
+    return jsonify(sspi_metadata.get_indicator_detail(indicator_code))
+
+
 @query_bp.route("/metadata/intermediate_details")
 def query_intermediate_details():
-    return jsonify(sspi_metadata.intermediate_details())
+    return parse_json(sspi_metadata.intermediate_details())
+
+
+@query_bp.route("/metadata/intermediate_codes", methods=["GET"])
+def query_intermediate_codes():
+    return parse_json(sspi_metadata.intermediate_codes())
+
+
+@query_bp.route("/metadata/intermediate_detail/<intermediate_code>", methods=["GET"])
+def query_intermediate_detail(intermediate_code):
+    return parse_json(sspi_metadata.get_intermediate_detail(intermediate_code))
