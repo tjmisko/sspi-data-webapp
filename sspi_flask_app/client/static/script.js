@@ -217,8 +217,11 @@ this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
-rigTitleBarButtons(){this.drawButton=this.root.querySelector('.draw-button')
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backwards"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
+rigTitleBarButtons(){this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backwards')
+this.extrapolateCheckbox.checked=!this.extrapolatePlugin.hidden
+this.extrapolateCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
+this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})

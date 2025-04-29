@@ -95,6 +95,8 @@ class DynamicLineChart {
         <div class="chart-section-title-bar">
             <h2 class="chart-section-title">Dynamic Indicator Data</h2>
             <div class="chart-section-title-bar-buttons">
+                <label>Backward Extrapolation</label>
+                <input type="checkbox" class="extrapolate-backwards"/>
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
                 <button class="hideunpinned-button">Hide Unpinned</button>
@@ -105,6 +107,11 @@ class DynamicLineChart {
     }
 
     rigTitleBarButtons() {
+        this.extrapolateCheckbox = this.root.querySelector('.extrapolate-backwards')
+        this.extrapolateCheckbox.checked = !this.extrapolatePlugin.hidden
+        this.extrapolateCheckbox.addEventListener('change', () => {
+            this.toggleBackwardExtrapolation()
+        })
         this.drawButton = this.root.querySelector('.draw-button')
         this.drawButton.addEventListener('click', () => {
             this.showRandomN(10)
