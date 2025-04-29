@@ -152,7 +152,11 @@ def remote_login():
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
-    current_username = current_user.username
+    try:
+        current_username = current_user.username
+    except AttributeError:
+        app.logger.warning("Anonymous user attempted to log out")
+        return Response("Error retrieving current user username", status=500)
     app.logger.info(f"Processing logout request for {current_username}")
     logout_user()
     app.logger.info(f"User {current_username} logged out")
@@ -224,7 +228,6 @@ def unauthorized():
 
 @login_manager.request_loader
 def load_user_from_request(request):
-    app.logger.debug(f"request_loader fired for request {request}")
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return None
