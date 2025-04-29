@@ -150,26 +150,34 @@ class SSPIMetadata(MongoWrapper):
         return country_groups_lookup + country_group_list
 
     def build_intermediate_details(self, intermediate_details: pd.DataFrame) -> list[dict]:
-        intermediate_details_list = json.loads(
-            str(intermediate_details.to_json(orient="records")))
-        return [{"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail} for intermediate_detail in intermediate_details_list]
+        json_string = str(intermediate_details.to_json(orient="records"))
+        intermediate_details_list = json.loads(json_string)
+        return [
+            {"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail}
+            for intermediate_detail in intermediate_details_list
+        ]
 
     def build_indicator_details(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame):
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
+        ind_int_map = {}
+        for intermediate_detail in intermediate_details.to_dict(orient="records"):
+            if intermediate_detail["IndicatorCode"] not in ind_int_map.keys():
+                ind_int_map[intermediate_detail["IndicatorCode"]] = []
+            ind_int_map[intermediate_detail["IndicatorCode"]].append(intermediate_detail)
+        print(ind_int_map)
         for indicator_detail in indicator_details_list:
             indicator_detail["DocumentType"] = "IndicatorDetail"
-            # Link intermediate_details to their corresponding indicator_detail
-            if indicator_detail["IntermediateCodes"] is not None:
-                intermediate_codes = re.findall(
-                    r"[A-Z0-9]{6}", indicator_detail["IntermediateCodes"])
-                indicator_detail["IntermediateCodes"] = intermediate_codes
-                filtered_intermediate_details = intermediate_details.loc[
-                    intermediate_details["IndicatorCode"] == indicator_detail["IndicatorCode"]]
-                filtered_intermediate_details_list = json.loads(
-                    str(filtered_intermediate_details.to_json(orient="records")))
-                indicator_detail["IntermediateDetails"] = filtered_intermediate_details_list
-        return [{"DocumentType": "IndicatorDetail", "Metadata": indicator_detail} for indicator_detail in indicator_details_list]
+            if indicator_detail["IndicatorCode"] not in ind_int_map.keys():
+                continue
+            intermediate_codes = [
+                x["IntermediateCode"] for x in ind_int_map[indicator_detail["IndicatorCode"]]
+            ]
+            indicator_detail["IntermediateCodes"] = intermediate_codes
+        return [
+            {"DocumentType": "IndicatorDetail", "Metadata": indicator_detail}
+            for indicator_detail in indicator_details_list
+        ]
 
     # Getters
     def pillar_codes(self) -> list[str]:
