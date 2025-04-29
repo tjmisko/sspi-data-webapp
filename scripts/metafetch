@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "Fetching Latest IndicatorDetails.csv from Google Sheets"
+curl -sL "https://docs.google.com/spreadsheets/d/1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI/export?format=csv&id=1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI&gid=0" -o local/IndicatorDetails.csv
+echo "Fetching Latest IntermediateDetails.csv from Google Sheets"
+curl -sL "https://docs.google.com/spreadsheets/d/1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI/export?format=csv&id=1nL0BwtKFvb7SXjPyMlbYCWyGtzQrRXRl_gM05-9ghGI&gid=1642707065" -o local/IntermediateDetails.csv
+echo "IndicatorDetails.csv and IntermediateDetails.csv are up-to-date."
+sspi delete clear sspi_metadata --force
+echo "Cleared sspi_metadata! Restart the Flask Application to Load Updated Metadata"
