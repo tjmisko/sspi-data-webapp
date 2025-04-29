@@ -2,7 +2,6 @@ from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from flask import current_app as app
 import os
-import re
 import json
 from bson import json_util
 import pandas as pd
@@ -82,12 +81,14 @@ class SSPIMetadata(MongoWrapper):
         Loads the metadata into the database
         """
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
-        full_path = os.path.join(local_path, self.indicator_detail_file)
-        log.debug(f"Loading data for {self.name} from file {full_path}")
-        print(f"Loading data for {self.name} from file {full_path}")
-        indicator_details = pd.read_csv(full_path)
-        intermediate_details = pd.read_csv(
-            os.path.join(local_path, self.intermediate_detail_file))
+        ind_detail_path = os.path.join(local_path, self.indicator_detail_file)
+        print(f"Loading data for {self.name} from file {ind_detail_path}")
+        indicator_details = pd.read_csv(ind_detail_path)
+        int_detail_path = os.path.join(
+            local_path, self.intermediate_detail_file
+        )
+        print(f"Loading data for {self.name} from file {int_detail_path}")
+        intermediate_details = pd.read_csv(int_detail_path)
         with open(os.path.join(local_path, "CountryGroups.json")) as file:
             country_groups = json.load(file)
         metadata = self.build_metadata(
@@ -97,7 +98,6 @@ class SSPIMetadata(MongoWrapper):
         )
         count = self.insert_many(metadata)
         self.drop_duplicates()
-        log.info(f"Successfully loaded {count} documents into {self.name}")
         print(f"Successfully loaded {count} documents into {self.name}")
         return count
 
@@ -164,8 +164,8 @@ class SSPIMetadata(MongoWrapper):
         for intermediate_detail in intermediate_details.to_dict(orient="records"):
             if intermediate_detail["IndicatorCode"] not in ind_int_map.keys():
                 ind_int_map[intermediate_detail["IndicatorCode"]] = []
-            ind_int_map[intermediate_detail["IndicatorCode"]].append(intermediate_detail)
-        print(ind_int_map)
+            ind_int_map[intermediate_detail["IndicatorCode"]].append(
+                intermediate_detail)
         for indicator_detail in indicator_details_list:
             indicator_detail["DocumentType"] = "IndicatorDetail"
             if indicator_detail["IndicatorCode"] not in ind_int_map.keys():
