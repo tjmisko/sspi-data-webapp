@@ -62,7 +62,9 @@ def save_database_image(database_name, snapshot_directory):
     file = f"{snap_time_dir}/{datetime_str} - {database_name}.json"
     with open(file, "w+") as f:
         json.dump(database_contents, f)
-    app.logger.info((
+    msg = (
         f"Dumped {len(database_contents)} records "
         f"from {database_name} to {file}\n"
-    ))
+    )
+    app.logger.info(msg)
+    return msg
