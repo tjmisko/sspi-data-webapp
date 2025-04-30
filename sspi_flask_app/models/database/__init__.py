@@ -4,7 +4,7 @@ from sspi_flask_app.models.database.mongo_wrapper import (
     MongoWrapper
 )
 from sspi_flask_app.models.database.sspi_clean_api_data import (
-    SSPICleanAPIData
+    SSPICleanAPIData, SSPIIncompleteAPIData
 )
 from sspi_flask_app.models.database.sspi_country_characteristics import (
     SSPICountryCharacteristics
@@ -59,6 +59,9 @@ sspi_bulk_data = SSPIBulkData(
 )
 sspi_clean_api_data = SSPICleanAPIData(
     sspidb.sspi_clean_api_data
+)
+sspi_incomplete_api_data = SSPIIncompleteAPIData(
+    sspidb.sspi_incomplete_api_data
 )
 sspi_partial_api_data = SSPIPartialAPIData(
     sspidb.sspi_partial_api_data

@@ -1,9 +1,10 @@
-from flask import current_app as app, jsonify
+from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_incomplete_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
@@ -17,11 +18,7 @@ import json
 from io import StringIO
 
 from sspi_flask_app.api.datasource.oecdstat import (
-    # organizeOECDdata,
-    # OECD_country_list,
-    extractAllSeries,
-    # filterSeriesList,
-    filterSeriesListSeniors
+    parse_oecd_observations
 )
 from bs4 import BeautifulSoup
 import re
@@ -46,6 +43,7 @@ def compute_senior():
     """
     app.logger.info("Running /api/v1/compute/SENIOR")
     sspi_clean_api_data.delete_many({"IndicatorCode": "SENIOR"})
+    sspi_incomplete_api_data.delete_many({"IndicatorCode": "SENIOR"})
 
     def score_senior(SENLEF, SENLEM, SENCRF, SENCRM, SENPVT):
         YRSRTF = SENLEF - SENCRF
@@ -57,24 +55,6 @@ def compute_senior():
         YRSRTM_score = goalpost(YRSRTM, lg_YRSRTM, ug_YRSRTM)
         SENPVT_score = goalpost(SENPVT, lg_SENPVT, ug_SENPVT)
         return 0.25 * YRSRTM_score + 0.25 * YRSRTF_score + 0.50 * SENPVT_score,
-
-    def parse_observations(xml_string) -> list[dict]:
-        soup = BeautifulSoup(xml_string, "lxml-xml")
-        observations = soup.find_all("Obs")
-        formatted_observations = []
-        for obs in observations:
-            formatted_obs = {}
-            value = obs.find("ObsValue")
-            if value:
-                formatted_obs["Value"] = value.attrs.get("value")
-            for value in obs.find_all("Value"):
-                id = value.attrs.get("id")
-                if id == "TIME_PERIOD":
-                    formatted_obs["Year"] = value.attrs.get("value")
-                else:
-                    formatted_obs[id] = value.attrs.get("value")
-            formatted_observations.append(formatted_obs)
-        return formatted_observations
 
     def build_metadata_map(metadata_xml):
         meta_string = metadata_xml.replace("\\r\\n", "\n")
@@ -118,7 +98,7 @@ def compute_senior():
         }
     }
 
-    obs_list = parse_observations(raw[0]["Raw"][2:][:-1])
+    obs_list = parse_oecd_observations(raw[0]["Raw"][2:][:-1])
     filtered_obs_list = []
     for obs in obs_list:
         if not bool(re.match(r'^[A-Z]{3}$', obs["REF_AREA"])):
@@ -147,9 +127,9 @@ def compute_senior():
         ScoreFunction=score_senior,
         ScoreBy="Value"
     )
-    # sspi_clean_api_data.insert_many(clean_list)
-    # print(incomplete_list)
-    return parse_json(incomplete_list)
+    sspi_clean_api_data.insert_many(clean_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
+    return parse_json(clean_list)
 
 
 @compute_bp.route("/FATINJ", methods=['GET'])
