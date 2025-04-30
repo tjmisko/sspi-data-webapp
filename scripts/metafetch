@@ -10,4 +10,3 @@ else
     sspi delete clear sspi_metadata --force
     echo "Updated Metadata! Restart the Flask Application to Load"
 fi
-
