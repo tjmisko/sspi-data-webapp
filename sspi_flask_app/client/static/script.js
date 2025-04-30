@@ -194,10 +194,10 @@ return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.d
 if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
 this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
 this.chart.update()}}
-const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.raw&&element.raw.y!==null){lastPoint=element;break;}}
-if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.raw.x+5,lastPoint.raw.y+4);ctx.restore();}}}
+const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
+if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
 const extrapolatePlugin={id:'extrapolateBackwards',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
-if(!firstElement)continue;const firstPixelX=firstElement.parsed.x;const firstPixelY=firstElement.parsed.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
+if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
 this.pinnedArray=Array()
@@ -215,10 +215,11 @@ this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Report Score</label><input type="checkbox"class="y-axis-scale"/><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backwards"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
-rigTitleBarButtons(){this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Report Score</label><input type="checkbox"id="y-axis-scale"/><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backwards"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
+rigTitleBarButtons(){this.yAxisScaleCheckbox=document.getElementById('y-axis-scale')
 this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
-this.yAxisScaleCheckbox.addEventListener('change',()=>{this.toggleYAxisScale()})
+this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
+this.toggleYAxisScale()})
 this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backwards')
 this.extrapolateCheckbox.checked=!this.extrapolatePlugin.hidden
 this.extrapolateCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
@@ -343,12 +344,16 @@ return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.
 rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}
 toggleBackwardExtrapolation(){this.extrapolatePlugin.toggle()
 this.chart.update();}
-toggleYAxisScale(){this.chart.data.datasets.forEach((dataset)=>{if(this.yAxisScale==="score"){dataset.parsing.yAxisKey="values"
-this.YAxisScale="value"
-this.chart.options.scales.y.title.text='Indicator Value'}else{dataset.parsing.yAxisKey="scores"
-this.YAxisScale="score"
+toggleYAxisScale(){if(this.yAxisScale==="score"){this.yAxisScale="value"
+this.chart.options.scales.y.title.text='Indicator Value'}else{this.yAxisScale="score"
 this.chart.options.scales.y.title.text='Indicator Score'}
-this.chart.update()})}}
+let yMin=0
+let yMax=1
+for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i];if(i==0){yMin=(this.yAxisScale==="value")?dataset.maxYValue:0;yMax=(this.yAxisScale==="value")?dataset.maxYValue:1;}
+dataset.parsing.yAxisKey=this.yAxisScale;for(let j=0;j<dataset.data.length;j++){if(this.yAxisScale==="value"){dataset.data[j]=dataset.value[j]}else{dataset.data[j]=dataset.score[j]}}}
+this.chart.options.scales.y.min=yMin
+this.chart.options.scales.y.max=yMax
+this.chart.update()}}
 class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
 this.parentChart=parentChart

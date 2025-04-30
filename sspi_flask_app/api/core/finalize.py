@@ -307,10 +307,7 @@ def finalize_dynamic_line_iterator():
                 except ValueError:
                     continue
                 years[year_index] = doc["Year"]
-                data[year_index] = {
-                    "years": doc["Value"],
-                    "scores": doc["Score"]
-                }
+                data[year_index] = doc["Score"]
                 scores[year_index] = doc["Score"]
                 values[year_index] = doc["Value"]
                 data[year_index] = doc["Score"]
@@ -335,8 +332,8 @@ def finalize_dynamic_line_iterator():
                 "minYear": min_year,
                 "maxYear": max_year,
                 "data": data,
-                "scores": scores,
-                "values": values,
+                "score": scores,
+                "value": values,
                 "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
                 "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
             }

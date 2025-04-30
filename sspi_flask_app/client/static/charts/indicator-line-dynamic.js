@@ -23,7 +23,7 @@ const endLabelPlugin = {
             ctx.font = 'bold 14px Arial';
             ctx.fillStyle = dataset.borderColor ?? '#000';
             ctx.textAlign = 'left';
-            ctx.fillText(value, lastPoint.parsed.x + 5, lastPoint.parsed.y + 4);
+            ctx.fillText(value, lastPoint.x + 5, lastPoint.y + 4);
             ctx.restore();
         }
     }
@@ -54,8 +54,8 @@ const extrapolatePlugin = {
             }
             if (!firstElement) continue;
 
-            const firstPixelX = firstElement.parsed.x;
-            const firstPixelY = firstElement.parsed.y;
+            const firstPixelX = firstElement.x;
+            const firstPixelY = firstElement.y;
             if (firstPixelX > left) {
                 ctx.save();
                 ctx.beginPath();
@@ -104,7 +104,7 @@ class DynamicLineChart {
             <h2 class="chart-section-title">Dynamic Indicator Data</h2>
             <div class="chart-section-title-bar-buttons">
                 <label>Report Score</label>
-                <input type="checkbox" class="y-axis-scale"/>
+                <input type="checkbox" id="y-axis-scale"/>
                 <label>Backward Extrapolation</label>
                 <input type="checkbox" class="extrapolate-backwards"/>
                 <button class="draw-button">Draw 10 Countries</button>
@@ -117,9 +117,10 @@ class DynamicLineChart {
     }
 
     rigTitleBarButtons() {
-        this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
+        this.yAxisScaleCheckbox = document.getElementById('y-axis-scale')
         this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
         this.yAxisScaleCheckbox.addEventListener('change', () => {
+            console.log("Toggling Y-axis scale")
             this.toggleYAxisScale()
         })
         this.extrapolateCheckbox = this.root.querySelector('.extrapolate-backwards')
@@ -586,18 +587,33 @@ class DynamicLineChart {
     }
 
     toggleYAxisScale() {
-        this.chart.data.datasets.forEach((dataset) => {
-            if (this.yAxisScale === "score") {
-                dataset.parsing.yAxisKey = "values"
-                this.YAxisScale = "value"
-                this.chart.options.scales.y.title.text = 'Indicator Value'
-            } else {
-                dataset.parsing.yAxisKey = "scores"
-                this.YAxisScale = "score"
-                this.chart.options.scales.y.title.text = 'Indicator Score'
+        if (this.yAxisScale === "score") {
+            this.yAxisScale = "value"
+            this.chart.options.scales.y.title.text = 'Indicator Value'
+        } else {
+            this.yAxisScale = "score"
+            this.chart.options.scales.y.title.text = 'Indicator Score'
+        }
+        let yMin = 0
+        let yMax = 1
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            const dataset = this.chart.data.datasets[i];
+            if (i == 0) {
+                yMin = (this.yAxisScale === "value") ? dataset.maxYValue : 0;
+                yMax = (this.yAxisScale === "value") ? dataset.maxYValue : 1;
             }
-            this.chart.update()
-        })
+            dataset.parsing.yAxisKey = this.yAxisScale;
+            for (let j = 0; j < dataset.data.length; j++) {
+                if (this.yAxisScale === "value") {
+                    dataset.data[j] = dataset.value[j]
+                } else {
+                    dataset.data[j] = dataset.score[j]
+                }
+            }
+        }
+        this.chart.options.scales.y.min = yMin
+        this.chart.options.scales.y.max = yMax
+        this.chart.update()
     }
 }
 
