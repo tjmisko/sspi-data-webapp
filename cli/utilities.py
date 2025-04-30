@@ -12,6 +12,8 @@ def full_name(name):
         return "sspi_metadata"
     if name == "clean":
         return "sspi_clean_api_data"
+    if name == "incomplete":
+        return "sspi_incomplete_api_data"
     return name
 
 

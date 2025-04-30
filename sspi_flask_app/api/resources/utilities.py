@@ -369,3 +369,15 @@ def find_population(country_code, year):
     population_data = sspi_country_characteristics.fetch_population_data(
         "UNPOPL", country_code, year)
     return population_data
+
+
+def extrapolate_backwards():
+    pass
+
+
+def extrapolate_forwards():
+    pass
+
+
+def interpolate_linear():
+    pass
