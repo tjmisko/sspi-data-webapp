@@ -3,9 +3,9 @@ from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_incomplete_api_data
 )
-
 from collections import OrderedDict
 from flask import current_app
 
@@ -58,7 +58,7 @@ def compute_intrnt():
         ScoreBy="Score"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -133,5 +133,5 @@ def compute_aqelec():
         ScoreBy="Score"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)

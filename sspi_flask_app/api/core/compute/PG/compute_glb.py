@@ -3,6 +3,7 @@ from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_incomplete_api_data
 )
 import json
 from sspi_flask_app.api.resources.utilities import (
@@ -122,7 +123,7 @@ def compute_foraid():
             "Recipient: ODA Received per Capita (USD per Capita)",
         ScoreBy="Value")
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -187,5 +188,5 @@ def compute_rdfund():
         ScoreBy="Score"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)

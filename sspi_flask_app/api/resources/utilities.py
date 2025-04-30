@@ -10,6 +10,7 @@ from sspi_flask_app.models.database import (
     sspi_bulk_data,
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_incomplete_api_data,
     sspi_imputed_data,
     sspi_metadata,
     sspi_static_metadata,
@@ -68,6 +69,7 @@ def lookup_database(database_name):
         case "sspi_raw_api_data": return sspi_raw_api_data
         case "sspi_bulk_data": return sspi_bulk_data
         case "sspi_clean_api_data": return sspi_clean_api_data
+        case "sspi_incomplete_api_data": return sspi_incomplete_api_data
         case "sspi_imputed_data": return sspi_imputed_data
         case "sspi_analysis": return sspi_analysis
         case "sspi_production_data": return sspi_partial_api_data
@@ -240,7 +242,7 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
         elif ScoreBy == "Score":
             arg_value_dict = {
                 intermediate["IntermediateCode"]: intermediate.get(
-                "Score", None) for intermediate in document["Intermediates"]
+                    "Score", None) for intermediate in document["Intermediates"]
             }
         else:
             raise ValueError(f"Invalid ScoreBy value: {
@@ -367,3 +369,15 @@ def find_population(country_code, year):
     population_data = sspi_country_characteristics.fetch_population_data(
         "UNPOPL", country_code, year)
     return population_data
+
+
+def extrapolate_backwards():
+    pass
+
+
+def extrapolate_forwards():
+    pass
+
+
+def interpolate_linear():
+    pass

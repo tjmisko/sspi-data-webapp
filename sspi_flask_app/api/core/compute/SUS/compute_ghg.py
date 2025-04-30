@@ -3,7 +3,8 @@ from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_incomplete_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
@@ -69,7 +70,7 @@ def compute_coalpw():
         ScoreBy="Value"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -98,7 +99,7 @@ def compute_gtrans():
         ScoreBy="Value"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -158,6 +159,6 @@ def compute_beefmk():
         ScoreFunction=score_beefmk,
         ScoreBy="Value"
     )
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     sspi_clean_api_data.insert_many(clean_list)
     return parse_json(clean_list)

@@ -58,4 +58,5 @@ def compute_ishrat():
         ScoreBy="Value"
     )
     sspi_clean_api_data.insert_many(clean_list)
+    incomplete_list.insert_many(incomplete_list)
     return parse_json(clean_list)

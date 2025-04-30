@@ -62,3 +62,15 @@ class SSPICleanAPIData(MongoWrapper):
         """
         cursor = self._mongo_database.aggregate(pipeline)
         return json.loads(json_util.dumps(cursor))
+
+
+class SSPIIncompleteAPIData(SSPICleanAPIData):
+    """
+    This class is used to handle incomplete data in the MongoDB collection.
+    It inherits from the SSPICleanAPIData class.
+    """
+
+    def validate_document_format(self, document: dict, document_number: int = 0):
+        self.validate_country_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
+        self.validate_year(document, document_number)

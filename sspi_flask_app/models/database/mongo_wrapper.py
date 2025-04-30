@@ -28,6 +28,8 @@ class MongoWrapper:
 
     def insert_many(self, documents: list) -> int:
         self.validate_documents_format(documents)
+        if len(documents) == 0:
+            return 0
         return len(self._mongo_database.insert_many(documents).inserted_ids)
 
     def delete_one(self, query: dict) -> int:

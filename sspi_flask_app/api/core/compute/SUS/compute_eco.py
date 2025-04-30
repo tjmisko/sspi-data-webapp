@@ -3,7 +3,8 @@ from flask_login import login_required
 from sspi_flask_app.api.core.compute import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_incomplete_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
@@ -22,6 +23,7 @@ from sspi_flask_app.api.datasource.sdg import (
 def compute_biodiv():
     app.logger.info("Running /api/v1/compute/BIODIV")
     sspi_clean_api_data.delete_many({"IndicatorCode": "BIODIV"})
+    sspi_incomplete_api_data.delete_many({"IndicatorCode": "BIODIV"})
     raw_data = sspi_raw_api_data.fetch_raw_data("BIODIV")
     extracted_biodiv = extract_sdg(raw_data)
     idcode_map = {
@@ -49,7 +51,7 @@ def compute_biodiv():
         ScoreBy="Score"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    print(incomplete_list)
+    sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
