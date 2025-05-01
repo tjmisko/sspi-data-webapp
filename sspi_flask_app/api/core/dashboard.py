@@ -35,6 +35,7 @@ import pandas as pd
 import re
 import os
 from datetime import datetime
+import hashlib
 
 dashboard_bp = Blueprint(
     'dashboard_bp', __name__,
@@ -510,7 +511,11 @@ def prepare_panel_data():
         return jsonify({"error": "All items in data must be dictionaries"}), 400
 
     def prepare_panel_data_iterator(data, exclude_fields):
+        sspi_panel_data.delete_many({})
         item_group_list = generate_item_groups(data, exclude_fields=exclude_fields)
+        if len(item_group_list) > 30:
+            yield "error: Too many levels (>30) to display! Run `sspi panel levels` to find levels to filter.\n"
+            return jsonify({"error": "Too many items to display"})
         yield "================\n"
         count = 1
         for item in item_group_list:
@@ -518,6 +523,9 @@ def prepare_panel_data():
             max_year = datetime.now().year
             label_list = list(range(min_year, max_year + 1))
             identifiers = item["Identifier"]
+            identifier_string = json.dumps(identifiers).encode('utf-8')
+            id_hash = hashlib.sha1(identifier_string).hexdigest()
+            yield "Identifier Hash: " + id_hash + "\n\n"
             for k, v in identifiers.items():
                 yield f"{k}: {v}\n"
             yield "================\n"
@@ -536,6 +544,7 @@ def prepare_panel_data():
                     value[year_index] = doc["value_id"]
                     data[year_index] = doc["value_id"]
                 document = {
+                    "ItemIdentifier": id_hash,
                     "CCode": cou,
                     "CName": country_code_to_name(cou),
                     "CGroup": group_list,
@@ -552,7 +561,7 @@ def prepare_panel_data():
                     "data": data,
                     "value": value,
                 }
-                document.update(identifiers)
+                document["Identifiers"] = identifiers
                 sspi_panel_data.insert_one(document)
             count += 1
     return Response(prepare_panel_data_iterator(data, exclude_fields), mimetype='text/event-stream')
