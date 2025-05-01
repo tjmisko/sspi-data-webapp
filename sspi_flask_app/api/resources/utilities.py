@@ -22,7 +22,8 @@ from sspi_flask_app.models.database import (
     sspi_analysis,
     sspi_partial_api_data,
     sspi_clean_outcome_data,
-    sspi_raw_outcome_data
+    sspi_raw_outcome_data,
+    sspi_panel_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 from copy import deepcopy
@@ -81,6 +82,7 @@ def lookup_database(database_name):
         case "sspi_dynamic_matrix_data": return sspi_dynamic_matrix_data
         case "sspi_raw_outcome_data": return sspi_raw_outcome_data
         case "sspi_clean_outcome_data": return sspi_clean_outcome_data
+        case "sspi_panel_data": return sspi_panel_data
         case _: raise InvalidDatabaseError(database_name)
 
 
@@ -511,10 +513,14 @@ def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id=""
             else:
                 level_id += f"{str(k)}:{str(v)};"
                 level[k] = v
-        datasets = item_levels.setdefault(level_id, {"Datasets": {}})["Datasets"]
+        structure = {
+            "Datasets": {},
+            "Identifier": level,
+        }
+        datasets = item_levels.setdefault(level_id, structure)["Datasets"]
         datasets.setdefault(obs[entity_id], []).append({
-            entity_id: obs[entity_id],
-            time_id: obs[time_id],
-            value_id: obs[value_id],
+            "entity_id": obs[entity_id],
+            "time_id": obs[time_id],
+            "value_id": obs[value_id],
         })
     return list(item_levels.values())

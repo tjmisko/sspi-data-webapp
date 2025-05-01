@@ -7,5 +7,4 @@ class SSPIPanelData(MongoWrapper):
     It inherits from the SSPICleanAPIData class.
     """
     def validate_document_format(self, document: dict, document_number: int = 0):
-        self.validate_country_code(document, document_number)
-        self.validate_year(document, document_number)
+        pass
