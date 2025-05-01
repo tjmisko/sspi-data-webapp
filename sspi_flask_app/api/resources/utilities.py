@@ -428,5 +428,41 @@ def extrapolate_forward(doc_list: list[dict], year: int, series_id=["CountryCode
     return doc_list
 
 
-def interpolate_linear():
-    pass
+def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "IndicatorCode"]):
+    """
+    Fill missing years in a time series using linear interpolation.
+
+    :param doc_list: list of dicts with keys including 'Year' and series identifiers
+    :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    """
+    grouped_series = {}
+    for document in doc_list:
+        series_key = tuple(document[id_key] for id_key in series_id)
+        grouped_series.setdefault(series_key, []).append(document)
+    for series_key, documents in grouped_series.items():
+        documents.sort(key=lambda x: x["Year"])
+        existing_years = {doc["Year"]: doc for doc in documents}
+        all_years = range(documents[0]["Year"], documents[-1]["Year"] + 1)
+        for y in all_years:
+            if y not in existing_years:
+                # Find surrounding known values for interpolation
+                prev = next((d for d in reversed(documents) if d["Year"] < y), None)
+                next_ = next((d for d in documents if d["Year"] > y), None)
+                if prev is None or next_ is None:
+                    continue  # can't interpolate without both bounds
+                year_span = next_["Year"] - prev["Year"]
+                if "Value" not in prev or "Value" not in next_:
+                    continue  # skip if values are missing
+                value_span = next_["Value"] - prev["Value"]
+                slope = value_span / year_span
+                interpolated_value = prev["Value"] + slope * (y - prev["Year"])
+                new_doc = deepcopy(prev)
+                new_doc.update({
+                    "Year": y,
+                    "Value": interpolated_value,
+                    "Imputed": True,
+                    "ImputationMethod": "Linear Interpolation",
+                    "ImputationDistance": min(y - prev["Year"], next_["Year"] - y)
+                })
+                doc_list.append(new_doc)
+    return doc_list
