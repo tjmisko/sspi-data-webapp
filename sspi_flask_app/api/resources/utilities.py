@@ -372,9 +372,9 @@ def find_population(country_code, year):
     return population_data
 
 
-def extrapolate_backwards(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"]):
+def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"]):
     """
-    Extrapolate backwards from the earliest available data point to a target year.
+    Extrapolate backward from the earliest available data point to a target year.
 
     :param doc_list: list of dicts with keys including 'Year' and series identifiers
     :param year: earliest year to extrapolate to
@@ -398,6 +398,7 @@ def extrapolate_backwards(doc_list: list[dict], year: int, series_id=["CountryCo
                 "ImputationDistance": first_year - missing_year,
             })
             doc_list.append(new_document)
+    return doc_list
 
 
 def extrapolate_forwards():

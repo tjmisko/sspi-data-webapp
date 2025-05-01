@@ -9,7 +9,7 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    extrapolate_backwards,
+    extrapolate_backward,
     extrapolate_forwards,
     interpolate_linear
 )
