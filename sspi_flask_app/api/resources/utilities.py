@@ -384,7 +384,6 @@ def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCod
     for document in doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
-
     for series_key, documents in grouped_series.items():
         documents.sort(key=lambda x: x['Year'])
         ref_doc = documents[0]
@@ -401,8 +400,32 @@ def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCod
     return doc_list
 
 
-def extrapolate_forwards():
-    pass
+def extrapolate_forward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"]):
+    """
+    Extrapolate forward from the latest available data point to a target year.
+
+    :param doc_list: list of dicts with keys including 'Year' and series identifiers
+    :param year: latest year to extrapolate to
+    :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    """
+    grouped_series = {}
+    for document in doc_list:
+        series_key = tuple(document[id_key] for id_key in series_id)
+        grouped_series.setdefault(series_key, []).append(document)
+    for series_key, documents in grouped_series.items():
+        documents.sort(key=lambda x: x['Year'])
+        ref_doc = documents[-1]
+        last_year = ref_doc['Year']
+        for missing_year in range(last_year + 1, year + 1):
+            new_document = deepcopy(ref_doc)
+            new_document.update({
+                "Year": missing_year,
+                "Imputed": True,
+                "ImputationMethod": "Forward Extrapolation",
+                "ImputationDistance": missing_year - last_year,
+            })
+            doc_list.append(new_document)
+    return doc_list
 
 
 def interpolate_linear():
