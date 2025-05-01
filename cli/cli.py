@@ -3,6 +3,7 @@ from cli.commands.collect import collect
 from cli.commands.compute import compute
 from cli.commands.delete import delete
 from cli.commands.extrapolate import extrapolate
+from cli.commands.interpolate import interpolate
 from cli.commands.finalize import finalize
 from cli.commands.impute import impute
 from cli.commands.metadata import metadata
@@ -22,6 +23,7 @@ cli.add_command(collect)
 cli.add_command(compute)
 cli.add_command(delete)
 cli.add_command(extrapolate)
+cli.add_command(interpolate)
 cli.add_command(finalize)
 cli.add_command(impute)
 cli.add_command(metadata)
