@@ -133,3 +133,9 @@
   height: auto;
   border-radius: 5px;
 }
+
+.title-bar-label {
+  font-size: 0.8em;
+  margin: 0;
+  padding: 0.1em 0;
+}
