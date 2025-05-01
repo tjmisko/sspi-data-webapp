@@ -42,14 +42,16 @@ class SSPIDatabaseConnector:
         headers = {'Authorization': f'Bearer {self.remote_token}'}
         self.remote_session.headers.update(headers)
 
-    def call(self, request_string, method="GET", remote=False, stream=False):
+    def call(self, request_string, method="GET", remote=False, stream=False, data=None):
         sesh = self.remote_session if remote else self.local_session
         base_url = self.remote_base if remote else self.local_base
         if request_string[0] == "/":
             request_string = request_string[1:]
         endpoint = f"{base_url}/{request_string}"
         if method == "POST":
-            return sesh.post(endpoint, stream=stream)
+            if data:
+                sesh.headers.update({'Content-Type': 'application/json'})
+            return sesh.post(endpoint, stream=stream, json=data)
         if method == "DELETE":
             return sesh.delete(endpoint, stream=stream)
         return sesh.get(endpoint, stream=stream)

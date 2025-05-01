@@ -3,6 +3,7 @@ from os import environ, path
 from dotenv import load_dotenv
 import re
 import click
+import sys
 
 
 def full_name(name):
@@ -72,3 +73,7 @@ def stream_response(res):
             if "error:" in line:
                 exit_code = 1
     return exit_code
+
+
+def stdin_is_empty():
+    return sys.stdin.isatty()

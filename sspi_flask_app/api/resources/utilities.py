@@ -25,6 +25,7 @@ from sspi_flask_app.models.database import (
     sspi_raw_outcome_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
+from copy import deepcopy
 
 
 def format_m49_as_string(input):
@@ -371,8 +372,33 @@ def find_population(country_code, year):
     return population_data
 
 
-def extrapolate_backwards():
-    pass
+def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"]):
+    """
+    Extrapolate backward from the earliest available data point to a target year.
+
+    :param doc_list: list of dicts with keys including 'Year' and series identifiers
+    :param year: earliest year to extrapolate to
+    :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    """
+    grouped_series = {}
+    for document in doc_list:
+        series_key = tuple(document[id_key] for id_key in series_id)
+        grouped_series.setdefault(series_key, []).append(document)
+
+    for series_key, documents in grouped_series.items():
+        documents.sort(key=lambda x: x['Year'])
+        ref_doc = documents[0]
+        first_year = ref_doc['Year']
+        for missing_year in range(year, first_year):
+            new_document = deepcopy(documents[0])
+            new_document.update({
+                "Year": missing_year,
+                "Imputed": True,
+                "ImputationMethod": "Backward Extrapolation",
+                "ImputationDistance": first_year - missing_year,
+            })
+            doc_list.append(new_document)
+    return doc_list
 
 
 def extrapolate_forwards():

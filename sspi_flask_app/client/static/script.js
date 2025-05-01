@@ -196,7 +196,7 @@ this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',t
 this.chart.update()}}
 const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
 if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
-const extrapolatePlugin={id:'extrapolateBackwards',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
+const extrapolatePlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
 if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
@@ -215,12 +215,12 @@ this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Report Score</label><input type="checkbox"id="y-axis-scale"/><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backwards"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
+this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Report Score</label><input type="checkbox"id="y-axis-scale"/><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
 rigTitleBarButtons(){this.yAxisScaleCheckbox=document.getElementById('y-axis-scale')
 this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
 this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
 this.toggleYAxisScale()})
-this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backwards')
+this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backward')
 this.extrapolateCheckbox.checked=!this.extrapolatePlugin.hidden
 this.extrapolateCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
 this.drawButton=this.root.querySelector('.draw-button')

@@ -30,7 +30,7 @@ const endLabelPlugin = {
 }
 
 const extrapolatePlugin = {
-    id: 'extrapolateBackwards',
+    id: 'extrapolateBackward',
     hidden: false,
     toggle(hidden) {
         this.hidden = hidden !== undefined ? hidden : !this.hidden;
@@ -106,7 +106,7 @@ class DynamicLineChart {
                 <label>Report Score</label>
                 <input type="checkbox" id="y-axis-scale"/>
                 <label>Backward Extrapolation</label>
-                <input type="checkbox" class="extrapolate-backwards"/>
+                <input type="checkbox" class="extrapolate-backward"/>
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
                 <button class="hideunpinned-button">Hide Unpinned</button>
@@ -123,7 +123,7 @@ class DynamicLineChart {
             console.log("Toggling Y-axis scale")
             this.toggleYAxisScale()
         })
-        this.extrapolateCheckbox = this.root.querySelector('.extrapolate-backwards')
+        this.extrapolateCheckbox = this.root.querySelector('.extrapolate-backward')
         this.extrapolateCheckbox.checked = !this.extrapolatePlugin.hidden
         this.extrapolateCheckbox.addEventListener('change', () => {
             this.toggleBackwardExtrapolation()
