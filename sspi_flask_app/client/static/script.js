@@ -215,14 +215,17 @@ this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Report Score</label><input type="checkbox"id="y-axis-scale"/><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
+this.root.innerHTML=`<div class="chart-section-title-bar"><div class="chart-section-title-bar-buttons"><label class="title-bar-label">Report Score</label><input type="checkbox"id="y-axis-scale"/><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"id="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"id="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
 rigTitleBarButtons(){this.yAxisScaleCheckbox=document.getElementById('y-axis-scale')
 this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
 this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
 this.toggleYAxisScale()})
-this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backward')
-this.extrapolateCheckbox.checked=!this.extrapolatePlugin.hidden
-this.extrapolateCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
+this.extrapolateBackwardCheckbox=document.getElementById('extrapolate-backward')
+this.extrapolateBackwardCheckbox.checked=!this.extrapolatePlugin.hidden
+this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
+this.interpolateCheckbox=document.getElementById('interpolate-linear')
+this.interpolateCheckbox.checked=true
+this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpolation()})
 this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showAllButton=this.root.querySelector('.showall-button')
@@ -353,7 +356,9 @@ for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data
 dataset.parsing.yAxisKey=this.yAxisScale;for(let j=0;j<dataset.data.length;j++){if(this.yAxisScale==="value"){dataset.data[j]=dataset.value[j]}else{dataset.data[j]=dataset.score[j]}}}
 this.chart.options.scales.y.min=yMin
 this.chart.options.scales.y.max=yMax
-this.chart.update()}}
+this.chart.update()}
+toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
+this.chart.update();}}
 class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
 this.parentChart=parentChart

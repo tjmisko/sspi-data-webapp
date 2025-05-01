@@ -101,12 +101,13 @@ class DynamicLineChart {
         this.parentElement.appendChild(this.root)
         this.root.innerHTML = `
         <div class="chart-section-title-bar">
-            <h2 class="chart-section-title">Dynamic Indicator Data</h2>
             <div class="chart-section-title-bar-buttons">
-                <label>Report Score</label>
+                <label class="title-bar-label">Report Score</label>
                 <input type="checkbox" id="y-axis-scale"/>
-                <label>Backward Extrapolation</label>
-                <input type="checkbox" class="extrapolate-backward"/>
+                <label class="title-bar-label">Backward Extrapolation</label>
+                <input type="checkbox" id="extrapolate-backward"/>
+                <label class="title-bar-label">Linear Interpolation</label>
+                <input type="checkbox" id="interpolate-linear"/>
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
                 <button class="hideunpinned-button">Hide Unpinned</button>
@@ -123,10 +124,15 @@ class DynamicLineChart {
             console.log("Toggling Y-axis scale")
             this.toggleYAxisScale()
         })
-        this.extrapolateCheckbox = this.root.querySelector('.extrapolate-backward')
-        this.extrapolateCheckbox.checked = !this.extrapolatePlugin.hidden
-        this.extrapolateCheckbox.addEventListener('change', () => {
+        this.extrapolateBackwardCheckbox = document.getElementById('extrapolate-backward')
+        this.extrapolateBackwardCheckbox.checked = !this.extrapolatePlugin.hidden
+        this.extrapolateBackwardCheckbox.addEventListener('change', () => {
             this.toggleBackwardExtrapolation()
+        })
+        this.interpolateCheckbox = document.getElementById('interpolate-linear')
+        this.interpolateCheckbox.checked = true
+        this.interpolateCheckbox.addEventListener('change', () => {
+            this.toggleLinearInterpolation()
         })
         this.drawButton = this.root.querySelector('.draw-button')
         this.drawButton.addEventListener('click', () => {
@@ -614,6 +620,11 @@ class DynamicLineChart {
         this.chart.options.scales.y.min = yMin
         this.chart.options.scales.y.max = yMax
         this.chart.update()
+    }
+
+    toggleLinearInterpolation() {
+        this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
+        this.chart.update();
     }
 }
 
