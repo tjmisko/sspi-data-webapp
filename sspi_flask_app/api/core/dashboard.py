@@ -3,7 +3,9 @@ from sspi_flask_app.api.resources.utilities import (
     lookup_database,
     extrapolate_backward,
     extrapolate_forward,
-    interpolate_linear
+    interpolate_linear,
+    generate_item_levels,
+    generate_item_groups
 )
 import pycountry
 import json
@@ -466,3 +468,41 @@ def do_linear_interpolate():
     if not all(isinstance(item, dict) for item in data):
         return jsonify({"error": "All items in data must be dictionaries"}), 400
     return parse_json(interpolate_linear(data))
+
+
+@dashboard_bp.route("/utilities/panel/levels", methods=["POST"])
+def find_panel_levels():
+    """
+    Prepare panel data for plotting
+    """
+    exclude_fields = request.args.getlist("exclude")
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Malformed or missing JSON data"}), 400
+    if not isinstance(data, list):
+        return jsonify({"error": "Data must be a list"}), 400
+    if not all(isinstance(item, dict) for item in data):
+        return jsonify({"error": "All items in data must be dictionaries"}), 400
+    item_level_dict = generate_item_levels(data, exclude_fields=exclude_fields)
+    return parse_json(item_level_dict)
+
+
+@dashboard_bp.route("/utilities/panel/plot", methods=["POST"])
+def plot_panel_data():
+    """
+    Prepare panel data for plotting
+    """
+    exclude_fields = request.args.getlist("exclude")
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Malformed or missing JSON data"}), 400
+    if not isinstance(data, list):
+        return jsonify({"error": "Data must be a list"}), 400
+    if not all(isinstance(item, dict) for item in data):
+        return jsonify({"error": "All items in data must be dictionaries"}), 400
+    item_level_dict = generate_item_groups(data, exclude_fields=exclude_fields)
+    return parse_json(item_level_dict)

@@ -446,7 +446,8 @@ def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "Indicato
         for y in all_years:
             if y not in existing_years:
                 # Find surrounding known values for interpolation
-                prev = next((d for d in reversed(documents) if d["Year"] < y), None)
+                prev = next((d for d in reversed(
+                    documents) if d["Year"] < y), None)
                 next_ = next((d for d in documents if d["Year"] > y), None)
                 if prev is None or next_ is None:
                     continue  # can't interpolate without both bounds
@@ -466,3 +467,54 @@ def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "Indicato
                 })
                 doc_list.append(new_doc)
     return doc_list
+
+
+def generate_item_levels(data: list[dict], entity_id="", value_id="", time_id="", exclude_fields: list[str] = []):
+    entity_id = entity_id if entity_id else "CountryCode"
+    value_id = value_id if value_id else "Value"
+    time_id = time_id if time_id else "Year"
+    item_levels = {}
+    exclude = [entity_id, value_id, time_id, "_id"]
+    exclude.extend(exclude_fields)
+    for obs in data:
+        level = {}
+        level_id = ""
+        for k, v in sorted(obs.items()):
+            if k in exclude:
+                continue
+            if isinstance(v, list):
+                continue
+            level_id += f"{str(k)}:{str(v)};"
+            level[k] = v
+        if item_levels.get(level_id, None) is not None:
+            continue
+        else:
+            item_levels[level_id] = level
+    return list(item_levels.values())
+
+
+def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id="", exclude_fields: list[str] = []):
+    entity_id = entity_id if entity_id else "CountryCode"
+    value_id = value_id if value_id else "Value"
+    time_id = time_id if time_id else "Year"
+    item_levels = {}
+    exclude = [entity_id, value_id, time_id, "_id"]
+    exclude.extend(exclude_fields)
+    for obs in data:
+        level = {}
+        level_id = ""
+        for k, v in sorted(obs.items()):
+            if k in exclude:
+                continue
+            if isinstance(v, list):
+                continue
+            else:
+                level_id += f"{str(k)}:{str(v)};"
+                level[k] = v
+        datasets = item_levels.setdefault(level_id, {"Datasets": {}})["Datasets"]
+        datasets.setdefault(obs[entity_id], []).append({
+            entity_id: obs[entity_id],
+            time_id: obs[time_id],
+            value_id: obs[value_id],
+        })
+    return list(item_levels.values())

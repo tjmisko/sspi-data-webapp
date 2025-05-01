@@ -7,6 +7,7 @@ from cli.commands.interpolate import interpolate
 from cli.commands.finalize import finalize
 from cli.commands.impute import impute
 from cli.commands.metadata import metadata
+from cli.commands.panel import panel
 from cli.commands.pull import pull
 from cli.commands.push import push
 from cli.commands.query import query
@@ -27,6 +28,7 @@ cli.add_command(interpolate)
 cli.add_command(finalize)
 cli.add_command(impute)
 cli.add_command(metadata)
+cli.add_command(panel)
 cli.add_command(pull)
 cli.add_command(push)
 cli.add_command(query)
