@@ -1,4 +1,8 @@
-from ..resources.utilities import parse_json, lookup_database
+from sspi_flask_app.api.resources.utilities import (
+    parse_json,
+    lookup_database,
+    extrapolate_backward
+)
 import pycountry
 import json
 from flask import (
@@ -409,3 +413,20 @@ def get_static_stacked_sspi():
         "title": "SSPI Overall Scores by Country",
         "data": score_data["data"]
     })
+
+
+@dashboard_bp.route("/utilities/extrapolate/backward/<int:year>", methods=["POST"])
+def do_backward_extrapolate(year: int):
+    """
+    Extrapolate backward missing data for a given indicator
+    """
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Malformed or missing JSON data"}), 400
+    if not isinstance(data, list):
+        return jsonify({"error": "Data must be a list"}), 400
+    if not all(isinstance(item, dict) for item in data):
+        return jsonify({"error": "All items in data must be dictionaries"}), 400
+    return parse_json(extrapolate_backward(data, year))
