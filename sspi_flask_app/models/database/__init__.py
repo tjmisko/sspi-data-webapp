@@ -27,6 +27,9 @@ from sspi_flask_app.models.database.sspi_raw_api_data import (
 from sspi_flask_app.models.database.sspi_bulk_data import (
     SSPIBulkData
 )
+from sspi_flask_app.models.database.sspi_panel_data import (
+    SSPIPanelData
+)
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
@@ -71,6 +74,9 @@ sspi_imputed_data = MongoWrapper(
 )
 sspi_analysis = MongoWrapper(
     sspidb.sspi_analysis
+)
+sspi_panel_data = SSPIPanelData(
+    sspidb.sspi_panel_data
 )
 
 # Production Data

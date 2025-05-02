@@ -41,6 +41,14 @@ class MongoWrapper:
     def count_documents(self, query: dict) -> int:
         return self._mongo_database.count_documents(query)
 
+    def distinct(self, field: str):
+        """
+        Get the distinct values of a field in the collection
+        :param field: The field to get the distinct values for
+        :return: A list of distinct values
+        """
+        return self._mongo_database.distinct(field)
+
     def tabulate_ids(self) -> list:
         """
         Returns a list of documents with counts of the number of

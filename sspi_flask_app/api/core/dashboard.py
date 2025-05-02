@@ -1,14 +1,18 @@
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     lookup_database,
+    country_code_to_name,
     extrapolate_backward,
     extrapolate_forward,
-    interpolate_linear
+    interpolate_linear,
+    generate_item_levels,
+    generate_item_groups
 )
 import pycountry
 import json
 from flask import (
     Blueprint,
+    Response,
     session,
     jsonify,
     request,
@@ -20,6 +24,7 @@ from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_metadata,
+    sspi_panel_data,
     sspi_static_rank_data,
     sspi_static_radar_data,
     sspi_static_stack_data,
@@ -29,6 +34,8 @@ from sspi_flask_app.models.database import (
 import pandas as pd
 import re
 import os
+from datetime import datetime
+import hashlib
 
 dashboard_bp = Blueprint(
     'dashboard_bp', __name__,
@@ -466,3 +473,101 @@ def do_linear_interpolate():
     if not all(isinstance(item, dict) for item in data):
         return jsonify({"error": "All items in data must be dictionaries"}), 400
     return parse_json(interpolate_linear(data))
+
+
+@dashboard_bp.route("/utilities/panel/levels", methods=["POST"])
+def find_panel_levels():
+    """
+    Prepare panel data for plotting
+    """
+    exclude_fields = request.args.getlist("exclude")
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Malformed or missing JSON data"}), 400
+    if not isinstance(data, list):
+        return jsonify({"error": "Data must be a list"}), 400
+    if not all(isinstance(item, dict) for item in data):
+        return jsonify({"error": "All items in data must be dictionaries"}), 400
+    item_level_dict = generate_item_levels(data, exclude_fields=exclude_fields)
+    return parse_json(item_level_dict)
+
+
+@dashboard_bp.route("/utilities/panel/plot", methods=["POST"])
+def prepare_panel_data():
+    """
+    Prepare panel data for plotting
+    """
+    exclude_fields = request.args.getlist("exclude")
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+    data = request.get_json(silent=True)
+    if data is None:
+        return jsonify({"error": "Malformed or missing JSON data"}), 400
+    if not isinstance(data, list):
+        return jsonify({"error": "Data must be a list"}), 400
+    if not all(isinstance(item, dict) for item in data):
+        return jsonify({"error": "All items in data must be dictionaries"}), 400
+
+    def prepare_panel_data_iterator(data, exclude_fields):
+        sspi_panel_data.delete_many({})
+        item_group_list = generate_item_groups(data, exclude_fields=exclude_fields)
+        if len(item_group_list) > 30:
+            yield "error: Too many levels (>30) to display! Run `sspi panel levels` to find levels to filter.\n"
+            return jsonify({"error": "Too many items to display"})
+        yield "================\n"
+        count = 1
+        for item in item_group_list:
+            min_year = 2000
+            max_year = datetime.now().year
+            label_list = list(range(min_year, max_year + 1))
+            identifiers = item["Identifier"]
+            identifier_string = json.dumps(identifiers).encode('utf-8')
+            id_hash = hashlib.sha1(identifier_string).hexdigest()
+            yield "Identifier Hash: " + id_hash + "\n\n"
+            for k, v in identifiers.items():
+                yield f"{k}: {v}\n"
+            yield "================\n"
+            for cou, document in item["Datasets"].items():
+                document = sorted(document, key=lambda x: x["time_id"])
+                group_list = sspi_metadata.get_country_groups(cou)
+                year = [None] * len(label_list)
+                value = [None] * len(label_list)
+                data = [None] * len(label_list)
+                for doc in document:
+                    try:
+                        year_index = label_list.index(doc["time_id"])
+                    except ValueError:
+                        continue
+                    year[year_index] = doc["time_id"]
+                    value[year_index] = doc["value_id"]
+                    data[year_index] = doc["value_id"]
+                document = {
+                    "ItemIdentifier": id_hash,
+                    "ItemOrder": count,
+                    "CCode": cou,
+                    "CName": country_code_to_name(cou),
+                    "CGroup": group_list,
+                    "parsing": {
+                        "xAxisKey": "years",
+                        "yAxisKey": "scores"
+                    },
+                    "pinned": False,
+                    "hidden": "SSPI49" not in group_list,
+                    "label": f"{cou} - {country_code_to_name(cou)}",
+                    "year": year,
+                    "minYear": min_year,
+                    "maxYear": max_year,
+                    "data": data,
+                    "value": value
+                }
+                document["Identifiers"] = identifiers
+                sspi_panel_data.insert_one(document)
+            count += 1
+    return Response(prepare_panel_data_iterator(data, exclude_fields), mimetype='text/event-stream')
+
+@dashboard_bp.route("/view/panel")
+def view_panel_plots():
+    panel_data = sspi_panel_data.distinct("ItemIdentifier")
+    return render_template("panel-plot.html", panel_id_list=panel_data)
