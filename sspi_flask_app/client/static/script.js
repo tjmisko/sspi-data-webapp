@@ -50,6 +50,57 @@ this.MS="#ff851b"
 this.PG="#007bff"}
 }
 const SSPIColors=new ColorMap()
+const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
+if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
+const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
+if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class CountrySelector{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
+this.datasets=datasets
+this.parentChart=parentChart
+this.initResultsWindow()
+this.initSearch()}
+initResultsWindow(){const resultsWindow=document.createElement('div')
+resultsWindow.classList.add('add-country-pin-results-window')
+resultsWindow.classList.add('legend-item')
+resultsWindow.style.display='none'
+this.resultsWindow=this.parentElement.parentNode.parentNode.appendChild(resultsWindow)}
+initSearch(){this.parentElement.innerHTML=`<form class="add-country-pin-search-form"><input type="text"name="Country"placeholder="Country"></form>`;this.textInput=this.parentElement.querySelector("input")
+this.textInput.focus()
+this.textInput.addEventListener("input",()=>this.runSearch())
+this.formElement=this.parentElement.querySelector("form")
+this.formElement.addEventListener("submit",(event)=>{event.preventDefault()
+this.selectResultEnter()})}
+selectResultEnter(){let CountryCode=this.readResults()
+if(!CountryCode){return}
+this.parentChart.pinCountryByCode(CountryCode)
+this.closeResults()}
+readResults(){let result=this.resultsWindow.querySelector('.add-country-pin-result')
+let CountryCode=result.id.split('-')[0]
+return CountryCode}
+async runSearch(){const queryString=this.textInput.value
+const options=await this.getOptions(queryString)
+if(options.length===0){this.resultsWindow.style.display='none'
+return}
+this.resultsWindow.style.display='flex'
+this.resultsWindow.innerHTML=''
+options.forEach(option=>{const resultElement=document.createElement('div')
+resultElement.classList.add('add-country-pin-result')
+resultElement.id=option.CCode+'-add-country-pin-result'
+resultElement.addEventListener('click',()=>{this.selectResultClick(option)
+this.closeResults()})
+const resultSpan=document.createElement('span')
+resultSpan.classList.add('add-country-pin-button')
+resultSpan.innerHTML=`${option.CName}(<b style="color: ${option.borderColor};">${option.CCode}</b>)`;resultElement.appendChild(resultSpan)
+this.resultsWindow.appendChild(resultElement)})}
+selectResultClick(option){this.parentChart.pinCountry(option)}
+async getOptions(queryString,limit=10){queryString=queryString.toLowerCase()
+if(!queryString){return[]}
+let optionArray=Array()
+for(let i=0;i<this.datasets.length;i++){const matched_name=this.datasets[i].CName.toLowerCase().includes(queryString)
+const matched_code=this.datasets[i].CCode.toLowerCase().includes(queryString)
+if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
+if(optionArray.length===limit){break;}}
+return optionArray}
+closeResults(){this.resultsWindow.remove()}}
 const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
 const xLeftMid=(chartArea.left+chartArea.right+offset)/4;const xRightMid=3*(chartArea.left+chartArea.right-offset)/4;const yTop=(chartArea.top+chartArea.bottom)/10+5;ctx.fillText(optionVars.LeftCountry+" Higher",xLeftMid,yTop);ctx.fillStyle='#32CD3299';ctx.fillText(optionVars.RightCountry+" Higher",xRightMid,yTop);ctx.restore();}}
 class StaticPillarDifferentialChart{constructor(BaseCountry,ComparisonCountry,PillarCode,parentElement){this.parentElement=parentElement;this.BaseCountry=BaseCountry;this.ComparisonCountry=ComparisonCountry;this.PillarCode=PillarCode;this.titleString=`Sustainability Score Differences(${ComparisonCountry}-${BaseCountry})`;this.initRoot()
@@ -194,16 +245,13 @@ return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.d
 if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
 this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
 this.chart.update()}}
-const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
-if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
-const extrapolatePlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
-if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
+class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
 this.IndicatorCode=IndicatorCode
 this.CountryList=CountryList
 this.pinnedArray=Array()
 this.yAxisScale="score"
 this.endLabelPlugin=endLabelPlugin
-this.extrapolatePlugin=extrapolatePlugin
+this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
 this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
 this.rigCountryGroupSelector()
@@ -215,15 +263,15 @@ this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-section-dynamic-line')
 this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><div class="chart-section-title-bar-buttons"><label class="title-bar-label">Report Score</label><input type="checkbox"id="y-axis-scale"/><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"id="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"id="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
-rigTitleBarButtons(){this.yAxisScaleCheckbox=document.getElementById('y-axis-scale')
+this.root.innerHTML=`<div class="chart-section-title-bar"><div class="chart-section-title-bar-buttons"><label class="title-bar-label">Report Score</label><input type="checkbox"class="y-axis-scale"/><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"class="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
+rigTitleBarButtons(){this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
 this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
 this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
 this.toggleYAxisScale()})
-this.extrapolateBackwardCheckbox=document.getElementById('extrapolate-backward')
-this.extrapolateBackwardCheckbox.checked=!this.extrapolatePlugin.hidden
+this.extrapolateBackwardCheckbox=this.root.querySelector('.extrapolate-backward')
+this.extrapolateBackwardCheckbox.checked=true
 this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
-this.interpolateCheckbox=document.getElementById('interpolate-linear')
+this.interpolateCheckbox=this.root.querySelector('.interpolate-linear')
 this.interpolateCheckbox.checked=true
 this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpolation()})
 this.drawButton=this.root.querySelector('.draw-button')
@@ -238,7 +286,7 @@ this.canvas.width=400
 this.canvas.height=300
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin,extrapolatePlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this.extrapolateBackwardPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
 this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){const container=document.createElement('div')
@@ -257,7 +305,7 @@ this.legendItems=this.legend.querySelector('.legend-items')}
 updateLegend(){this.legendItems.innerHTML=''
 this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})
 this.legendItems.innerHTML+=`<div class="legend-item"><button class="add-country-button">Add Country</button></div>`;this.addCountryButton=this.legend.querySelector('.add-country-button')
-this.addCountryButton.addEventListener('click',()=>{new SearchDropdown(this.addCountryButton,this.chart.data.datasets,this)})
+this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
@@ -345,7 +393,7 @@ return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.
 dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
 return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}
-toggleBackwardExtrapolation(){this.extrapolatePlugin.toggle()
+toggleBackwardExtrapolation(){this.extrapolateBackwardPlugin.toggle()
 this.chart.update();}
 toggleYAxisScale(){if(this.yAxisScale==="score"){this.yAxisScale="value"
 this.chart.options.scales.y.title.text='Indicator Value'}else{this.yAxisScale="score"
@@ -359,54 +407,6 @@ this.chart.options.scales.y.max=yMax
 this.chart.update()}
 toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
 this.chart.update();}}
-class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
-this.datasets=datasets
-this.parentChart=parentChart
-this.initResultsWindow()
-this.initSearch()}
-initResultsWindow(){const resultsWindow=document.createElement('div')
-resultsWindow.classList.add('add-country-pin-results-window')
-resultsWindow.classList.add('legend-item')
-resultsWindow.style.display='none'
-this.resultsWindow=this.parentElement.parentNode.parentNode.appendChild(resultsWindow)}
-initSearch(){this.parentElement.innerHTML=`<form class="add-country-pin-search-form"><input type="text"name="Country"placeholder="Country"></form>`;this.textInput=this.parentElement.querySelector("input")
-this.textInput.focus()
-this.textInput.addEventListener("input",()=>this.runSearch())
-this.formElement=this.parentElement.querySelector("form")
-this.formElement.addEventListener("submit",(event)=>{event.preventDefault()
-this.selectResultEnter()})}
-selectResultEnter(){let CountryCode=this.readResults()
-if(!CountryCode){return}
-this.parentChart.pinCountryByCode(CountryCode)
-this.closeResults()}
-readResults(){let result=this.resultsWindow.querySelector('.add-country-pin-result')
-let CountryCode=result.id.split('-')[0]
-return CountryCode}
-async runSearch(){const queryString=this.textInput.value
-const options=await this.getOptions(queryString)
-if(options.length===0){this.resultsWindow.style.display='none'
-return}
-this.resultsWindow.style.display='flex'
-this.resultsWindow.innerHTML=''
-options.forEach(option=>{const resultElement=document.createElement('div')
-resultElement.classList.add('add-country-pin-result')
-resultElement.id=option.CCode+'-add-country-pin-result'
-resultElement.addEventListener('click',()=>{this.selectResultClick(option)
-this.closeResults()})
-const resultSpan=document.createElement('span')
-resultSpan.classList.add('add-country-pin-button')
-resultSpan.innerHTML=`${option.CName}(<b style="color: ${option.borderColor};">${option.CCode}</b>)`;resultElement.appendChild(resultSpan)
-this.resultsWindow.appendChild(resultElement)})}
-selectResultClick(option){this.parentChart.pinCountry(option)}
-async getOptions(queryString,limit=10){queryString=queryString.toLowerCase()
-if(!queryString){return[]}
-let optionArray=Array()
-for(let i=0;i<this.datasets.length;i++){const matched_name=this.datasets[i].CName.toLowerCase().includes(queryString)
-const matched_code=this.datasets[i].CCode.toLowerCase().includes(queryString)
-if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
-if(optionArray.length===limit){break;}}
-return optionArray}
-closeResults(){this.resultsWindow.remove()}}
 class StaticOverallStackedBarChart{constructor(parentElement,colormap={}){this.parentElement=parentElement;this.textColor='#bbb';this.gridColor='#cccccc33';this.initRoot()
 this.initTitle()
 if(Object.keys(colormap).length===0){this.initColormap()}else{this.colormap=colormap}

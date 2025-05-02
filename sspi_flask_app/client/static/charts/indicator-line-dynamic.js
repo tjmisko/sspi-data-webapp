@@ -1,77 +1,3 @@
-const endLabelPlugin = {
-    id: 'endLabelPlugin',
-    afterDatasetsDraw(chart) {
-        const { ctx } = chart;
-        for (let i = 0; i < chart.data.datasets.length; i++) {
-            const dataset = chart.data.datasets[i];
-            if (dataset.hidden) continue;
-            const meta = chart.getDatasetMeta(i);
-            if (!meta || !meta.data || meta.data.length === 0) continue;
-
-            let lastPoint = null;
-            for (let j = meta.data.length - 1; j >= 0; j--) {
-                const element = meta.data[j];
-                if (element && element.parsed && element.parsed.y !== null) {
-                    lastPoint = element;
-                    break;
-                }
-            }
-            if (!lastPoint) continue;
-
-            const value = dataset.CCode ?? '';
-            ctx.save();
-            ctx.font = 'bold 14px Arial';
-            ctx.fillStyle = dataset.borderColor ?? '#000';
-            ctx.textAlign = 'left';
-            ctx.fillText(value, lastPoint.x + 5, lastPoint.y + 4);
-            ctx.restore();
-        }
-    }
-}
-
-const extrapolatePlugin = {
-    id: 'extrapolateBackward',
-    hidden: false,
-    toggle(hidden) {
-        this.hidden = hidden !== undefined ? hidden : !this.hidden;
-    },
-    afterDatasetsDraw(chart) {
-        if (this.hidden) return;
-        const { ctx, chartArea: { left } } = chart;
-        for (let i = 0; i < chart.data.datasets.length; i++) {
-            const dataset = chart.data.datasets[i];
-            if (dataset.hidden) continue;
-            const meta = chart.getDatasetMeta(i);
-            if (!meta || !meta.data || meta.data.length === 0) continue;
-
-            let firstElement = null;
-            for (let j = 0; j < meta.data.length; j++) {
-                const element = meta.data[j];
-                if (element && element.parsed && element.parsed.y !== null) {
-                    firstElement = element;
-                    break;
-                }
-            }
-            if (!firstElement) continue;
-
-            const firstPixelX = firstElement.x;
-            const firstPixelY = firstElement.y;
-            if (firstPixelX > left) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.setLineDash([2, 4]);
-                ctx.moveTo(left, firstPixelY);
-                ctx.lineTo(firstPixelX, firstPixelY);
-                ctx.strokeStyle = dataset.borderColor ?? 'rgba(0,0,0,0.5)';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.restore();
-            }
-        }
-    }
-};
-
-
 class DynamicLineChart {
     constructor(parentElement, IndicatorCode, CountryList = []) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
@@ -80,7 +6,7 @@ class DynamicLineChart {
         this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
         this.yAxisScale = "score"
         this.endLabelPlugin = endLabelPlugin
-        this.extrapolatePlugin = extrapolatePlugin
+        this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
         this.rigCountryGroupSelector()
@@ -103,11 +29,11 @@ class DynamicLineChart {
         <div class="chart-section-title-bar">
             <div class="chart-section-title-bar-buttons">
                 <label class="title-bar-label">Report Score</label>
-                <input type="checkbox" id="y-axis-scale"/>
+                <input type="checkbox" class="y-axis-scale"/>
                 <label class="title-bar-label">Backward Extrapolation</label>
-                <input type="checkbox" id="extrapolate-backward"/>
+                <input type="checkbox" class="extrapolate-backward"/>
                 <label class="title-bar-label">Linear Interpolation</label>
-                <input type="checkbox" id="interpolate-linear"/>
+                <input type="checkbox" class="interpolate-linear"/>
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
                 <button class="hideunpinned-button">Hide Unpinned</button>
@@ -118,18 +44,18 @@ class DynamicLineChart {
     }
 
     rigTitleBarButtons() {
-        this.yAxisScaleCheckbox = document.getElementById('y-axis-scale')
+        this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
         this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
         this.yAxisScaleCheckbox.addEventListener('change', () => {
             console.log("Toggling Y-axis scale")
             this.toggleYAxisScale()
         })
-        this.extrapolateBackwardCheckbox = document.getElementById('extrapolate-backward')
-        this.extrapolateBackwardCheckbox.checked = !this.extrapolatePlugin.hidden
+        this.extrapolateBackwardCheckbox = this.root.querySelector('.extrapolate-backward')
+        this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
             this.toggleBackwardExtrapolation()
         })
-        this.interpolateCheckbox = document.getElementById('interpolate-linear')
+        this.interpolateCheckbox = this.root.querySelector('.interpolate-linear')
         this.interpolateCheckbox.checked = true
         this.interpolateCheckbox.addEventListener('change', () => {
             this.toggleLinearInterpolation()
@@ -158,7 +84,7 @@ class DynamicLineChart {
         this.root.appendChild(this.canvas)
         this.chart = new Chart(this.context, {
             type: 'line',
-            plugins: [endLabelPlugin, extrapolatePlugin],
+            plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin],
             options: {
                 onClick: (event, elements) => {
                     elements.forEach(element => {
@@ -318,7 +244,7 @@ class DynamicLineChart {
         `;
         this.addCountryButton = this.legend.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
-            new SearchDropdown(this.addCountryButton, this.chart.data.datasets, this)
+            new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
         })
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
         removeButtons.forEach((button) => {
@@ -588,7 +514,7 @@ class DynamicLineChart {
     }
 
     toggleBackwardExtrapolation() {
-        this.extrapolatePlugin.toggle()
+        this.extrapolateBackwardPlugin.toggle()
         this.chart.update();
     }
 
@@ -625,110 +551,5 @@ class DynamicLineChart {
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
         this.chart.update();
-    }
-}
-
-class SearchDropdown {
-    constructor(parentElement, datasets, parentChart) {
-        this.parentElement = parentElement
-        this.datasets = datasets
-        this.parentChart = parentChart
-        this.initResultsWindow()
-        this.initSearch()
-    }
-
-    initResultsWindow() {
-        const resultsWindow = document.createElement('div')
-        resultsWindow.classList.add('add-country-pin-results-window')
-        resultsWindow.classList.add('legend-item')
-        resultsWindow.style.display = 'none'
-        this.resultsWindow = this.parentElement.parentNode.parentNode.appendChild(resultsWindow)
-    }
-
-    initSearch() {
-        this.parentElement.innerHTML = `
-            <form class="add-country-pin-search-form">
-                <input type="text" name="Country" placeholder="Country">
-            </form>
-        `;
-        this.textInput = this.parentElement.querySelector("input")
-        this.textInput.focus()
-        this.textInput.addEventListener("input", () => this.runSearch())
-        this.formElement = this.parentElement.querySelector("form")
-        this.formElement.addEventListener("submit", (event) => {
-            event.preventDefault()
-            this.selectResultEnter()
-        })
-    }
-
-    selectResultEnter() {
-        let CountryCode = this.readResults()
-        if (!CountryCode) {
-            return
-        }
-        this.parentChart.pinCountryByCode(CountryCode)
-        this.closeResults()
-    }
-
-    readResults() {
-        let result = this.resultsWindow.querySelector('.add-country-pin-result')
-        let CountryCode = result.id.split('-')[0]
-        return CountryCode
-    }
-
-    async runSearch() {
-        const queryString = this.textInput.value
-        const options = await this.getOptions(queryString)
-        if (options.length === 0) {
-            this.resultsWindow.style.display = 'none'
-            return
-        }
-        this.resultsWindow.style.display = 'flex'
-        this.resultsWindow.innerHTML = ''
-        options.forEach(option => {
-            const resultElement = document.createElement('div')
-            resultElement.classList.add('add-country-pin-result')
-            resultElement.id = option.CCode + '-add-country-pin-result'
-            resultElement.addEventListener('click', () => {
-                this.selectResultClick(option)
-                this.closeResults()
-            })
-            const resultSpan = document.createElement('span')
-            resultSpan.classList.add('add-country-pin-button')
-
-            resultSpan.innerHTML = `
-                ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
-            `;
-            resultElement.appendChild(resultSpan)
-            this.resultsWindow.appendChild(resultElement)
-        })
-    }
-
-    selectResultClick(option) {
-        this.parentChart.pinCountry(option)
-    }
-
-    async getOptions(queryString, limit = 10) {
-        queryString = queryString.toLowerCase()
-        if (!queryString) {
-            return []
-        }
-        let optionArray = Array()
-
-        for (let i = 0; i < this.datasets.length; i++) {
-            const matched_name = this.datasets[i].CName.toLowerCase().includes(queryString)
-            const matched_code = this.datasets[i].CCode.toLowerCase().includes(queryString)
-            if (matched_code | matched_name) {  // Condition: only even numbers
-                optionArray.push(this.datasets[i]);
-            }
-            if (optionArray.length === limit) {  // Termination condition
-                break;
-            }
-        }
-        return optionArray
-    }
-
-    closeResults() {
-        this.resultsWindow.remove()
     }
 }
