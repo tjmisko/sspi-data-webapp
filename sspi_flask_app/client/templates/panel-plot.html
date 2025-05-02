@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title> Item Panel Data </title>
+{% endblock title %}
+
+{% block content %}
+
+{% for item_id in panel_id_list %}
+<h3> {{ item_id }} </h3>
+<section class="chart-section" id="{{ item_id }}"></section>
+{% endfor %}
+
+<script>
+    window.addEventListener("load", (event) => {
+        // window.SSPICharts = [
+        //     new DynamicLineChart(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
+        //     new ScoreBarStatic(document.getElementById("static-data-section"), "{{ IndicatorCode | upper }}")
+        // ];
+        const x = localStorage.getItem('windowX');
+        const y = localStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
+    })
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('windowX', window.screenX);
+      localStorage.setItem('windowY', window.screenY);
+    });
+</script>
+{% endblock content %}

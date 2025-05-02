@@ -1,6 +1,11 @@
 import click
 from connector import SSPIDatabaseConnector
-from cli.utilities import echo_pretty, stdin_is_empty, stream_response
+from cli.utilities import (
+    echo_pretty,
+    stdin_is_empty,
+    stream_response,
+    open_browser_subprocess
+)
 import json
 
 
@@ -58,3 +63,6 @@ def plot(exclude: list[str]):
         request_string = request_string[:-1]
     res = connector.call(request_string, method="POST", data=data, stream=True)
     stream_response(res)
+    click.secho("\nPlot data generated, opening in browser...", fg="green")
+    plot_url = "/api/v1/view/panel"
+    open_browser_subprocess(connector.local_base + plot_url)

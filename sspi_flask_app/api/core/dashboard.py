@@ -545,6 +545,7 @@ def prepare_panel_data():
                     data[year_index] = doc["value_id"]
                 document = {
                     "ItemIdentifier": id_hash,
+                    "ItemOrder": count,
                     "CCode": cou,
                     "CName": country_code_to_name(cou),
                     "CGroup": group_list,
@@ -559,9 +560,14 @@ def prepare_panel_data():
                     "minYear": min_year,
                     "maxYear": max_year,
                     "data": data,
-                    "value": value,
+                    "value": value
                 }
                 document["Identifiers"] = identifiers
                 sspi_panel_data.insert_one(document)
             count += 1
     return Response(prepare_panel_data_iterator(data, exclude_fields), mimetype='text/event-stream')
+
+@dashboard_bp.route("/view/panel")
+def view_panel_plots():
+    panel_data = sspi_panel_data.distinct("ItemIdentifier")
+    return render_template("panel-plot.html", panel_id_list=panel_data)
