@@ -101,173 +101,30 @@ if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
 if(optionArray.length===limit){break;}}
 return optionArray}
 closeResults(){this.resultsWindow.remove()}}
-const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
-const xLeftMid=(chartArea.left+chartArea.right+offset)/4;const xRightMid=3*(chartArea.left+chartArea.right-offset)/4;const yTop=(chartArea.top+chartArea.bottom)/10+5;ctx.fillText(optionVars.LeftCountry+" Higher",xLeftMid,yTop);ctx.fillStyle='#32CD3299';ctx.fillText(optionVars.RightCountry+" Higher",xRightMid,yTop);ctx.restore();}}
-class StaticPillarDifferentialChart{constructor(BaseCountry,ComparisonCountry,PillarCode,parentElement){this.parentElement=parentElement;this.BaseCountry=BaseCountry;this.ComparisonCountry=ComparisonCountry;this.PillarCode=PillarCode;this.titleString=`Sustainability Score Differences(${ComparisonCountry}-${BaseCountry})`;this.initRoot()
-this.initTitle()
-this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-colormap(diff){if(diff>0){return"#32CD3299"}else{return"#FF634799"}}
-async fetch(){const response=await fetch(`/api/v1/static/differential/pillar/${this.PillarCode}?BaseCountry=${this.BaseCountry}&ComparisonCountry=${this.ComparisonCountry}`);return response.json();}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-pillar-differential')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h2')
-this.title.classList.add('differential-chart-title')
-this.title.textContent="Test Title"
-this.root.appendChild(this.title)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id=`pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;this.canvas.width=300
-this.canvas.height=300
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',plugins:[chartArrowLabels],options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false,},chartArrowLabels:{LeftCountry:this.BaseCountry,RightCountry:this.ComparisonCountry},tooltip:{callbacks:{title:function(tooltipItems){return`Category:${tooltipItems[0].raw.CategoryName}`;},label:function(tooltipItem){if(tooltipItem.raw.Diff>0){return`Difference:+${tooltipItem.formattedValue}`;}
-return`Difference:${tooltipItem.formattedValue}`;},},backgroundColor:'rgba(0, 0, 0, 0.7)',titleColor:'#ffffff',bodyColor:'#ffcc00',padding:5}},parsing:{xAxisKey:'Diff',yAxisKey:'CategoryCode'},scales:{x:{beginAtZero:true,grid:{drawTicks:false},ticks:{color:'#bbb',stepSize:0.1},title:{display:true,color:'#bbb',},min:-1,max:1,},y:{ticks:{color:'#bbb',minRotation:90,maxRotation:90,align:'center',crossAlign:'center',},title:{padding:10,display:true,text:'Categories',color:'#bbb',},type:'category',reverse:false}}}})}
-update(data){this.baseCCode=data.baseCCode
-this.baseCName=data.baseCName
-this.comparisonCCode=data.comparisonCCode
-this.comparisonCName=data.comparisonCName
-this.title.textContent=data.title
-data.datasets.forEach(dataset=>{dataset.backgroundColor=dataset.data.map(item=>this.colormap(item.Diff))
-dataset.borderColor=dataset.data.map(item=>this.colormap(item.Diff).slice(0,-2))
-dataset.borderWidth=1})
-this.chart.data.datasets=data.datasets
-this.chart.options.scales.x.title.text=data.title
-this.chart.labels=data.labels
-this.chart.options.plugins.tooltip.callbacks.beforeLabel=(tooltipItem)=>{const base=`${this.baseCCode}Score:${tooltipItem.raw.baseScore.toFixed(3)}`;const comparison=`${this.comparisonCCode}Score:${tooltipItem.raw.comparisonScore.toFixed(3)}`;return[base,comparison];}
-this.chart.update()}}
-class CategoryRadarStatic{constructor(countryCode,parentElement,textColor="#bbb",gridColor="#cccccc33"){this.parentElement=parentElement
-this.countryCode=countryCode
-this.textColor=textColor
-this.gridColor=gridColor
-this.initRoot()
-this.legend=this.initLegend()
-this.initRoot()
-this.initTitle()
-this.initLegend()
-this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('radar-chart-box')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h3')
-this.title.classList.add('radar-chart-title')
-this.root.appendChild(this.title)}
-initLegend(){this.legend=document.createElement('div')
-this.legend.classList.add('radar-chart-legend-box')
-this.root.appendChild(this.legend)}
-initChartJSCanvas(){this.canvasContainer=document.createElement('div')
-this.canvasContainer.classList.add('radar-chart-canvas-container')
-this.canvas=document.createElement('canvas')
-this.canvasContainer.appendChild(this.canvas)
-this.canvas.width=300
-this.canvas.height=300
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvasContainer)
-this.chart=new Chart(this.context,{type:'polarArea',options:{responsive:true,elements:{line:{borderWidth:3}},scales:{r:{pointLabels:{display:true,font:{size:10},color:this.textColor,centerPointLabels:true,padding:0},angleLines:{display:true,color:this.gridColor},grid:{color:this.gridColor,circular:true},ticks:{backdropColor:'rgba(0, 0, 0, 0)',clip:true,color:this.textColor,font:{size:8}},suggestedMin:0,suggestedMax:1}},plugins:{legend:{display:false,},tooltip:{backgroundColor:'#1B2A3Ccc',},}}})}
-async fetch(){const response=await fetch(`/api/v1/static/radar/${this.countryCode}`)
-return response.json();}
-update(data){this.labelMap=data.labelMap
-this.chart.data.labels=data.labels
-this.ranks=data.ranks
-this.chart.data.datasets=data.datasets
-this.title.innerText=data.title
-this.updateLegend(data)
-this.chart.options.plugins.tooltip.callbacks.title=(context)=>{const categoryName=this.labelMap[context[0].label]
-return categoryName}
-this.chart.options.plugins.tooltip.callbacks.label=(context)=>{return["Category Score: "+context.raw.toFixed(3),"Category Rank: "+this.ranks[context.dataIndex].Rank,]}
-this.chart.update()}
-updateLegend(data){this.legendItems=data.legendItems
-const pillarColorsAlpha=data.datasets.map(d=>d.backgroundColor)
-const pillarColorsSolid=pillarColorsAlpha.map(c=>c.slice(0,7))
-for(let i=0;i<this.legendItems.length;i++){const pillarLegendItem=document.createElement('div')
-pillarLegendItem.classList.add('radar-chart-legend-item')
-const pillarLegendCanvasContainer=document.createElement('div')
-pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
-const pillarLegendItemCanvas=document.createElement('canvas')
-pillarLegendItemCanvas.width=150
-pillarLegendItemCanvas.height=50
-pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
-this.drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i)
-pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
-pillarLegendItem.appendChild(pillarLegendCanvasContainer)
-const pillarLegendItemText=document.createElement('div')
-pillarLegendItemText.classList.add('radar-chart-legend-item-text')
-pillarLegendItemText.innerText=this.legendItems[i].Name
-pillarLegendItem.appendChild(pillarLegendItemText)
-this.legend.appendChild(pillarLegendItem)}}
-drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i){const pillarLegendContext=pillarLegendItemCanvas.getContext('2d')
-const shadedWidth=(pillarLegendItemCanvas.width*this.legendItems[i].Score).toFixed(0)
-pillarLegendContext.strokeStyle=this.textColor
-pillarLegendContext.linewidth=5
-pillarLegendContext.beginPath()
-pillarLegendContext.moveTo(0,0)
-pillarLegendContext.lineTo(0,pillarLegendItemCanvas.height)
-pillarLegendContext.moveTo(pillarLegendItemCanvas.width,0)
-pillarLegendContext.lineTo(pillarLegendItemCanvas.width,pillarLegendItemCanvas.height)
-pillarLegendContext.stroke()
-pillarLegendContext.strokeStyle=this.gridColor
-pillarLegendContext.linewidth=3
-pillarLegendContext.beginPath()
-const spacing=pillarLegendItemCanvas.width/10
-pillarLegendContext.beginPath();for(let i=0;i<10;i++){const x=(i*spacing)
-pillarLegendContext.moveTo(x,5)
-pillarLegendContext.lineTo(x,pillarLegendItemCanvas.height)}
-pillarLegendContext.stroke();pillarLegendContext.fillStyle=pillarColorsAlpha[i]
-pillarLegendContext.fillRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)
-pillarLegendContext.strokeStyle=pillarColorsSolid[i]
-pillarLegendContext.linewidth=10
-pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}}
-const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class DynamicMatrixChart{constructor(parentElement,countryGroup="SSPI49",width=400,height=400){this.parentElement=parentElement
-this.countryGroup=countryGroup
+class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){this.parentElement=parentElement
+this.CountryList=CountryList
+this.endpointURL=endpointURL
 this.width=width
 this.height=height
-this.initRoot()
-this.initChartJSCanvas()
-this.fetch().then(res=>{this.update(res)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-dynamic-matrix')
-this.parentElement.appendChild(this.root)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=this.width
-this.canvas.height=this.height
-this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Dynamic Data Status';},label(context){const v=context.dataset.data[context.dataIndex];if(v.problems){return["Issue:"+v.problems,'Country: '+v.CName,'Indicator: '+v.IName]}
-return['Country: '+v.CName,'Indicator: '+v.IName,'Years: '+v.v];}}}}},plugins:[shiftRotatedTicksPlugin]})}
-async fetch(){const response=await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);return response.json();}
-update(res){this.n_indicators=res.icodes.length;this.n_countries=res.ccodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
-if(collect){return'#FFBF0066';}
-if(load){return'#FFBF00';}
-return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.data[context.dataIndex].problems;const confident=context.dataset.data[context.dataIndex].confident;if(problems){return"rgba(255, 99, 132, 1)";}
-if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
-this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
-this.chart.update()}}
-class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
-this.IndicatorCode=IndicatorCode
-this.CountryList=CountryList
 this.pinnedArray=Array()
-this.yAxisScale="score"
+this.yAxisScale="value"
 this.endLabelPlugin=endLabelPlugin
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
 this.setTheme(localStorage.getItem("theme"))
 this.initRoot()
+this.rigTitleBarButtons()
 this.rigCountryGroupSelector()
 this.initChartJSCanvas()
 this.updateChartOptions()
 this.rigLegend()
-this.fetch().then(data=>{this.update(data)})
+this.fetch(this.endpointURL).then(data=>{this.update(data)})
 this.rigPinStorageOnUnload()}
 initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-dynamic-line')
-this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><div class="chart-section-title-bar-buttons"><label class="title-bar-label">Report Score</label><input type="checkbox"class="y-axis-scale"/><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"class="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
-rigTitleBarButtons(){this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
-this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
-this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
-this.toggleYAxisScale()})
+this.root.classList.add('panel-chart-root-container')
+this.parentElement.appendChild(this.root)}
+rigTitleBarButtons(){this.titleBar=document.createElement('div')
+this.titleBar.classList.add('chart-section-title-bar')
+this.titleBar.innerHTML=`<div class="chart-section-title-bar-buttons"><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"class="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div>`;this.root.appendChild(this.titleBar)
 this.extrapolateBackwardCheckbox=this.root.querySelector('.extrapolate-backward')
 this.extrapolateBackwardCheckbox.checked=true
 this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
@@ -280,6 +137,204 @@ this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
 this.hideUnpinnedButton=this.root.querySelector('.hideunpinned-button')
 this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
+rigTitleBarScaleToggle(){const buttonBox=this.root.querySelector('.chart-section-title-bar-buttons')
+buttonBox.insertAdjacentHTML('afterbegin',`<label class="title-bar-label">Report Score</label><input type="checkbox"class="y-axis-scale"/>`)
+this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
+this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
+this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
+this.toggleYAxisScale()})}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.classList.add('panel-chart-canvas')
+this.canvas.width=400
+this.canvas.height=300
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this.extrapolateBackwardPlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
+this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
+rigCountryGroupSelector(){const container=document.createElement('div')
+container.id='country-group-selector-container'
+this.countryGroupContainer=this.root.appendChild(container)}
+updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGroupContainer.style.setProperty('--num-options',numOptions);this.groupOptions.forEach((option,index)=>{const id=`option${index+1}`;const input=document.createElement('input');input.type='radio';input.id=id;input.name='options';input.value=option;if(index===0){input.checked=true;this.countryGroupContainer.style.setProperty('--selected-index',index);}
+input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
+rigLegend(){const legend=document.createElement('legend')
+legend.classList.add('dynamic-line-legend')
+legend.innerHTML=`<div class="legend-title-bar"><h4 class="legend-title">Pinned Countries</h4><div class="legend-title-bar-buttons"><button class="saveprefs-button">Save Pins</button><button class="clearpins-button">Clear Pins</button></div></div><div class="legend-items"></div>`;this.savePrefsButton=legend.querySelector('.saveprefs-button')
+this.savePrefsButton.addEventListener('click',()=>{this.sendPrefs()})
+this.clearPinsButton=legend.querySelector('.clearpins-button')
+this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
+this.legend=this.root.appendChild(legend)
+this.legendItems=this.legend.querySelector('.legend-items')}
+updateLegend(){this.legendItems.innerHTML=''
+this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})
+this.legendItems.innerHTML+=`<div class="legend-item"><button class="add-country-button">Add Country</button></div>`;this.addCountryButton=this.legend.querySelector('.add-country-button')
+this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
+let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
+removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
+button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
+updateDescription(description){const dbox=this.root.querySelector('.dynamic-indicator-description')
+dbox.innerText=description}
+setTheme(theme){if(theme!=="light"){this.theme="dark"
+this.tickColor="#bbb"
+this.axisTitleColor="#bbb"
+this.titleColor="#ccc"}else{this.theme="light"
+this.tickColor="#444"
+this.axisTitleColor="#444"
+this.titleColor="#444"}}
+async fetch(url){const response=await fetch(url)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+update(data){this.chart.data=data
+this.chart.data.labels=data.labels
+this.chart.data.datasets=data.data
+this.chart.options.plugins.title=data.title
+if(data.chartPreferences.pinnedArray!==undefined){this.pinnedArray.push(...data.chartPreferences.pinnedArray)}else{this.pinnedArray=[]}
+this.groupOptions=data.groupOptions
+this.pinnedOnly=data.chartPreferences.pinnedOnly
+this.updatePins()
+this.updateLegend()
+this.updateDescription(data.description)
+this.updateCountryGroups()
+if(this.pinnedOnly){this.hideUnpinned()}
+this.chart.update()
+if(data.hasScore){this.toggleYAxisScale()
+this.rigTitleBarScaleToggle()}}
+updatePins(){if(this.pinnedArray.length===0){return}
+this.chart.data.datasets.forEach(dataset=>{if(this.pinnedArray.map(cou=>cou.CCode).includes(dataset.CCode)){dataset.pinned=true
+dataset.hidden=false}})
+this.chart.update()}
+showAll(){this.pinnedOnly=false
+console.log('Showing all countries')
+this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
+this.chart.update({duration:0,lazy:false})}
+showGroup(groupName){this.pinnedOnly=false
+console.log('Showing group:',groupName)
+this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
+this.chart.update({duration:0,lazy:false})}
+hideUnpinned(){this.pinnedOnly=true
+console.log('Hiding unpinned countries')
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
+this.chart.update({duration:0,lazy:false})}
+showRandomN(N=10){this.pinnedOnly=false
+const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+let availableDatasetIndices=[]
+this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
+console.log('Showing',N,'random countries from group',activeGroup)
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
+let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
+shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
+console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
+this.chart.update({duration:0,lazy:false})}
+pinCountry(dataset){if(dataset.pinned){return}
+dataset.pinned=true
+dataset.hidden=false
+this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
+this.updateLegend()
+this.chart.update()}
+pinCountryByCode(CountryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=true
+dataset.hidden=false
+this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}})
+this.updateLegend()
+this.chart.update()}
+unpinCountry(dataset,hide=false){if(this.pinnedOnly){dataset.hidden=true}
+dataset.pinned=false
+this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)
+this.updateLegend()
+this.chart.update()}
+unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=false
+if(hide){dataset.hidden=true}
+this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}})
+this.updateLegend()
+this.chart.update()}
+togglePin(dataset){if(dataset.pinned){this.unpinCountry(dataset,false)}else{this.pinCountry(dataset,false)}
+this.updateLegend()
+this.chart.update()}
+clearPins(){this.pinnedArray.forEach((PinnedCountry)=>{this.unpinCountryByCode(PinnedCountry.CCode,true)})
+this.pinnedArray=Array()
+this.updateLegend()}
+dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}
+toggleBackwardExtrapolation(){this.extrapolateBackwardPlugin.toggle()
+this.chart.update();}
+toggleYAxisScale(){if(this.yAxisScale==="score"){this.yAxisScale="value"
+this.chart.options.scales.y.title.text='Item Value'}else{this.yAxisScale="score"
+this.chart.options.scales.y.title.text='Item Score'}
+let yMin=0
+let yMax=1
+for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i];if(i==0){yMin=(this.yAxisScale==="value")?dataset.maxYValue:0;yMax=(this.yAxisScale==="value")?dataset.maxYValue:1;}
+dataset.parsing.yAxisKey=this.yAxisScale;for(let j=0;j<dataset.data.length;j++){if(this.yAxisScale==="value"){dataset.data[j]=dataset.value[j]}else{dataset.data[j]=dataset.score[j]}}}
+this.chart.options.scales.y.min=yMin
+this.chart.options.scales.y.max=yMax
+this.chart.update()}
+toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
+this.chart.update();}}
+class ItemPanelChart extends PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:endpointURL,width:width,height:height})}
+rigItemInfoBox(){const infoBox=document.createElement('div')
+infoBox.classList.add('item-panel-info-box')
+this.root.appendChild(infoBox)}
+updateDescription(description){const dbox=this.root.querySelector('.item-panel-info-box')
+dbox.innerText=description}
+update(data){this.chart.data=data
+this.chart.data.labels=data.labels
+this.chart.data.datasets=data.data
+this.chart.options.plugins.title=data.title
+let prefs=data.chartPreferences!==undefined?data.chartPreferences:{};if(Object.keys(prefs).length===0){prefs.pinnedArray=[]
+prefs.pinnedOnly=false}
+if(prefs.pinnedArray!==undefined){this.pinnedArray.push(...prefs.pinnedArray)}else{this.pinnedArray=[]}
+this.groupOptions=data.groupOptions
+this.pinnedOnly=prefs.pinnedOnly
+this.updatePins()
+this.updateLegend()
+this.rigItemInfoBox()
+this.updateDescription(data.description)
+this.updateCountryGroups()
+if(this.pinnedOnly){this.hideUnpinned()}
+this.chart.options.scales.y.min=data.yMin
+this.chart.options.scales.y.max=data.yMax
+if(data.hasScore){this.yAxisScale="score"
+this.rigTitleBarScaleToggle()}
+this.chart.update()}}
+class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[],endpointURL=''){this.parentElement=parentElement
+this.IndicatorCode=IndicatorCode
+this.CountryList=CountryList
+if(endpointURL!==''){this.endpointURL=endpointURL}else{this.endpointURL=`/api/v1/dynamic/line/${this.IndicatorCode}`}
+this.pinnedArray=Array()
+this.yAxisScale="value"
+this.endLabelPlugin=endLabelPlugin
+this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
+this.setTheme(localStorage.getItem("theme"))
+this.initRoot()
+this.rigTitleBarButtons()
+this.rigCountryGroupSelector()
+this.initChartJSCanvas()
+this.updateChartOptions()
+this.rigLegend()
+this.fetch().then(data=>{this.update(data)})
+this.rigPinStorageOnUnload()}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('panel-chart-root-container')
+this.parentElement.appendChild(this.root)
+this.root.innerHTML='<div class="chart-section-title-bar"></div>'}
+rigTitleBarButtons(){this.root.querySelector('.chart-section-title-bar').innerHTML=`<div class="chart-section-title-bar-buttons"><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"class="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div>`;this.extrapolateBackwardCheckbox=this.root.querySelector('.extrapolate-backward')
+this.extrapolateBackwardCheckbox.checked=true
+this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
+this.interpolateCheckbox=this.root.querySelector('.interpolate-linear')
+this.interpolateCheckbox.checked=true
+this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpolation()})
+this.drawButton=this.root.querySelector('.draw-button')
+this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
+this.showAllButton=this.root.querySelector('.showall-button')
+this.showAllButton.addEventListener('click',()=>{this.showAll()})
+this.hideUnpinnedButton=this.root.querySelector('.hideunpinned-button')
+this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
+rigTitleBarScaleToggle(){const buttonBox=this.root.querySelector('.chart-section-title-bar-buttons')
+buttonBox.insertAdjacentHTML('afterbegin',`<label class="title-bar-label">Report Score</label><input type="checkbox"class="y-axis-scale"/>`)
+this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
+this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
+this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
+this.toggleYAxisScale()})}
 initChartJSCanvas(){this.canvas=document.createElement('canvas')
 this.canvas.id='dynamic-line-chart-canvas'
 this.canvas.width=400
@@ -332,7 +387,9 @@ this.updateLegend()
 this.updateDescription(data.description)
 this.updateCountryGroups()
 if(this.pinnedOnly){this.hideUnpinned()}
-this.chart.update()}
+this.chart.update()
+if(data.hasScore){this.yAxisScale="score"
+this.rigTitleBarScaleToggle()}}
 updatePins(){if(this.pinnedArray.length===0){return}
 this.chart.data.datasets.forEach(dataset=>{if(this.pinnedArray.map(cou=>cou.CCode).includes(dataset.CCode)){dataset.pinned=true
 dataset.hidden=false}})
@@ -407,223 +464,3 @@ this.chart.options.scales.y.max=yMax
 this.chart.update()}
 toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
 this.chart.update();}}
-class StaticOverallStackedBarChart{constructor(parentElement,colormap={}){this.parentElement=parentElement;this.textColor='#bbb';this.gridColor='#cccccc33';this.initRoot()
-this.initTitle()
-if(Object.keys(colormap).length===0){this.initColormap()}else{this.colormap=colormap}
-this.createLegend()
-this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-async fetch(){const response=await fetch('/api/v1/static/stacked/sspi');return response.json();}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-overall-stack')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h4')
-this.title.classList.add('stack-bar-title')
-this.root.appendChild(this.title)}
-initColormap(){this.colormap={"SUS":"#28a745","MS":"#ff851b","PG":"#007bff"}}
-createLegend(){this.legend=document.createElement('div')
-this.legend.classList.add('overall-stack-bar-legend')
-this.root.appendChild(this.legend)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id=`overall-stacked-bar-canvas`;this.canvas.width=1000
-this.canvas.height=1000
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',options:{plugins:{legend:{display:false,},tooltip:{intersect:false,padding:10,backgroundColor:'rgba(0, 0, 0, 0.7)',yAlign:'center',callbacks:{afterTitle(context){const info=context[0].dataset.info[context[0].dataIndex]
-return[`SSPI Overall Score:${info.SSPIScore.toFixed(3)}`,`SSPI Overall Rank:${info.SSPIRank}`]},label(context){const info=context.dataset.info[context.dataIndex]
-return['Pillar: '+info.IName,'Pillar Score: '+info.IName,'Pillar Rank: '+Number.parseFloat(info.Score).toFixed(3),'Rank: '+info.Rank,];}}}},responsive:true,indexAxis:'y',scales:{x2:{position:'top',display:true,ticks:{color:this.textColor,},grid:{display:false,},min:0,max:1,stacked:true,},x:{title:{display:true,text:'SSPI Score',color:this.textColor,},ticks:{color:this.textColor,},stacked:true,min:0,max:1,},y2:{position:'left',display:true,ticks:{color:this.textColor,callback:function(value,index,values){return index+1},padding:8,font:{size:12,weight:'bold'},},stacked:true,grid:{display:false,}},y:{position:'left',stacked:true,ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}},})}
-update(data){this.chart.data=data.data
-this.chart.data.datasets.forEach((dataset)=>{const color=this.colormap[dataset.label]
-dataset.backgroundColor=color+"99"
-dataset.borderColor=color})
-this.title.innerText=data.title
-this.chart.update()}}
-function createDiagonalPattern(color){let shape=document.createElement('canvas')
-shape.width=5
-shape.height=5
-let c=shape.getContext('2d')
-c.strokeStyle=color
-c.beginPath()
-c.moveTo(1,0)
-c.lineTo(5,4)
-c.stroke()
-c.beginPath()
-c.moveTo(0,4)
-c.lineTo(1,5)
-c.stroke()
-return c.createPattern(shape,'repeat')}
-function createCrossHatch(color='black'){let shape=document.createElement('canvas')
-shape.width=4
-shape.height=4
-let c=shape.getContext('2d')
-c.strokeStyle=color
-c.beginPath()
-c.moveTo(0,2)
-c.lineTo(4,2)
-c.stroke()
-return c.createPattern(shape,'repeat')}
-class StaticPillarStackedBarChart{constructor(countryCodes,pillarCode,parentElement,colormap={}){this.parentElement=parentElement;this.textColor='#bbb';this.countryCodes=countryCodes;this.pillarCode=pillarCode;this.initRoot()
-this.initTitle()
-if(Object.keys(colormap).length===0){this.initColormap()}else{this.colormap=colormap}
-this.createLegend()
-this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-async fetch(){let url_string=`/api/v1/static/stacked/pillar/${this.pillarCode}?`;for(let i=0;i<this.countryCodes.length;i++){url_string+=`CountryCode=${this.countryCodes[i]}&`;}
-url_string=url_string.slice(0,-1);const response=await fetch(url_string);return response.json();}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-pillar-stack')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h4')
-this.title.classList.add('stack-bar-title')
-this.root.appendChild(this.title)}
-initColormap(){const colors=["#f95d6a","#ff7c43","#ffa600","#665191","#a05195","#d45087"]
-this.colormap={}
-this.countryCodes.map((countryCode,index)=>{this.colormap[countryCode]=colors[index]})
-this.patternState=null
-this.patternCount=0}
-createLegend(){this.legend=document.createElement('div')
-this.legend.classList.add('stack-bar-legend')
-this.countryCodes.map((countryCode)=>{const legendElement=document.createElement('div')
-legendElement.classList.add('stack-bar-legend-element')
-const legendBox=document.createElement('div')
-legendBox.classList.add('legend-box')
-legendBox.style.backgroundColor=this.colormap[countryCode]
-legendElement.appendChild(legendBox)
-const legendText=document.createElement('span')
-legendText.id=countryCode+'-'+this.pillarCode+'-stack-bar-legend-text'
-legendText.innerText=countryCode
-legendElement.appendChild(legendText)
-this.legend.appendChild(legendElement)})
-this.root.appendChild(this.legend)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id=`pillar-differential-canvas-${this.pillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;this.canvas.width=800
-this.canvas.height=400
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',options:{plugins:{legend:{display:false,},tooltip:{intersect:false,padding:10,backgroundColor:'rgba(0, 0, 0, 0.7)',yAlign:'center',callbacks:{title(context){if(context.length===0){return}
-const currentCatName=context[0].label
-if(currentCatName!==context[0].dataset.CatName){return null}
-return context[0].dataset.CatCode+" - "+context[0].dataset.ICode;},label(context){const dataset=context.dataset
-const currentCatName=context.label
-if(currentCatName!==dataset.CatName){return null}
-return['Country: '+dataset.CName+" "+dataset.flag,'Indicator: '+dataset.IName,'Score: '+Number.parseFloat(dataset.IScore).toFixed(3),'Rank: '+dataset.IRank,];}}}},responsive:true,barPercentage:3,interaction:{intersect:false,},scales:{x:{stacked:true,ticks:{color:this.textColor,},},y:{title:{display:true,text:'Category Score',color:this.textColor,},ticks:{color:this.textColor,},stacked:true,min:0,max:1,}}},})}
-computePattern(dataset,color){let colorAlpha=color+"AA"
-if(this.patternState===null){this.patternState=dataset.CatCode
-return color}
-if(this.patternState===dataset.CatCode){this.patternCount+=1
-if(this.patternCount%3===1){return createDiagonalPattern(colorAlpha)}else if(this.patternCount%3===2){return createCrossHatch(colorAlpha)}
-return colorAlpha}
-this.patternState=dataset.CatCode
-this.patternCount=0
-return colorAlpha}
-update(data){this.chart.data.datasets=data.datasets
-this.chart.data.labels=data.labels
-this.chart.data.datasets.forEach((dataset)=>{const color=this.colormap[dataset.CCode]
-const pattern=this.computePattern(dataset,color)
-dataset.backgroundColor=pattern
-dataset.borderColor=color
-dataset.borderWidth=1})
-Array.from(this.legend.children).forEach((item)=>{const cou=item.querySelector('span').id.split('-')[0]
-const flag=data.codeMap[cou].flag
-const name=data.codeMap[cou].name
-item.querySelector('span').innerText=name+" ("+cou+")"})
-this.title.innerText=data.title
-this.chart.update()}}
-class ScoreBarStatic{constructor(parentElement,itemCode,backgroundColor=SSPIColors.SSPI,width=800,height=1000){this.parentElement=parentElement
-this.itemCode=itemCode
-this.backgroundBase=backgroundColor
-this.width=width
-this.height=height
-this.setTheme(localStorage.getItem("theme"))
-this.initRoot()
-this.initTitle()
-this.initChartJSCanvas()
-this.updateChartOptions()
-this.initSummaryBox()
-this.fetch().then(data=>{this.update(data)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-container-bar-score-static')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h2')
-this.title.classList.add('score-bar-chart-title')
-this.root.appendChild(this.title)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id=`score-bar-chart-canvas-${this.itemCode}`;this.canvas.width=this.width
-this.canvas.height=this.height
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
-console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)})},plugins:{legend:false,tooltip:{backgroundColor:'#1B2A3Ccc',callbacks:{label:function(context){const info=context.dataset.info[context.dataIndex]
-return[`${info.IName}Score:${info.Score.toFixed(3)}`,`${info.IName}Rank:${info.Rank}`,`Year:${info.Year}`]}}},},indexAxis:'y',}})}
-updateChartOptions(){this.chart.options.scales={x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:12,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}}
-initSummaryBox(){this.summaryBox=document.createElement('div')
-this.summaryBox.classList.add('score-bar-summary-box')
-this.summaryBox.style.color=this.textColor
-this.summaryBox.style.fontSize='16px'
-this.root.appendChild(this.summaryBox)}
-computeSummaryStats(data){const scores=data.datasets[0].info.map(info=>info.Score)
-const meanScore=scores.reduce((a,b)=>a+b,0)/scores.length
-const medianScore=scores.sort()[Math.floor(scores.length/2)]
-const minScore=Math.min(...scores)
-const maxScore=Math.max(...scores)
-const sdScore=Math.sqrt(scores.reduce((a,b)=>a+(b-meanScore)**2,0)/(scores.length-1))
-return{Mean:meanScore.toFixed(3),Median:medianScore.toFixed(3),Min:minScore.toFixed(3),Max:maxScore.toFixed(3),SD:sdScore.toFixed(3),}}
-updateSummaryBox(summaryStats){for(const key in summaryStats){const stat=document.createElement('div')
-stat.classList.add('score-bar-summary-stat')
-stat.innerHTML=`${key}:<b>${summaryStats[key]}</b>`;this.summaryBox.appendChild(stat)}}
-async fetch(){const response=await fetch(`/api/v1/static/bar/score/${this.itemCode}`);return response.json();}
-setTheme(theme){if(theme!=="light"){this.theme="dark"
-this.textColor="#bbb"
-this.gridColor="#cccccc33"
-this.backgroundColor=this.backgroundBase+"99"
-this.highlightColor="#ff0000ee"
-this.borderColor=this.backgroundBase
-this.titleColor="#ccc"}else{this.theme="light"
-this.textColor="#444"
-this.gridColor="#333333cc"
-this.backgroundColor=this.backgroundBase+"cc"
-this.highlightColor="#ff0000ee"
-this.borderColor=this.backgroundBase
-this.titleColor="#333"}}
-getStoredHighlights(){let highlights=[]
-if(localStorage.getItem('scoreBarHighlights')===null){highlights=[]}else{highlights=localStorage.getItem('scoreBarHighlights').split(',')}
-return highlights}
-setStoredHighlights(highlights){localStorage.setItem('scoreBarHighlights',highlights)}
-clearVisibleHighlights(){this.chart.data.datasets[0].backgroundColor=Array(49).fill(this.backgroundColor)}
-setVisibleHighlights(highlights){this.clearVisibleHighlights()
-highlights.forEach(countryCode=>{this.addVisibleHighlight(countryCode)})}
-addVisibleHighlight(countryCode){const index=this.chart.data.datasets[0].info.findIndex(info=>info.CCode===countryCode)
-this.chart.data.datasets[0].backgroundColor[index]=this.highlightColor
-this.chart.update()}
-removeVisibleHighlight(countryCode){const index=this.chart.data.datasets[0].info.findIndex(info=>info.CCode===countryCode)
-this.chart.data.datasets[0].backgroundColor[index]=this.backgroundColor
-this.chart.update()}
-updateHighlights(){const highlights=this.getStoredHighlights()
-this.setVisibleHighlights(highlights)
-this.propagateHighlights()}
-syncHighlights(){const highlights=this.getStoredHighlights()
-this.setVisibleHighlights(highlights)}
-initHighlights(){let highlights=this.getStoredHighlights()
-this.setVisibleHighlights(highlights)}
-removeStoredHighlight(countryCode){let highlights=this.getStoredHighlights()
-highlights=highlights.filter(highlight=>highlight!==countryCode)
-this.setStoredHighlights(highlights)}
-addStoredHighlight(countryCode){let highlights=this.getStoredHighlights()
-if(highlights.includes(countryCode)){return}
-highlights.push(countryCode)
-this.setStoredHighlights(highlights)}
-toggleHighlight(countryCode){let highlights=this.getStoredHighlights()
-if(highlights.includes(countryCode)){this.removeVisibleHighlight(countryCode)
-this.removeStoredHighlight(countryCode)}else{this.addVisibleHighlight(countryCode)
-this.addStoredHighlight(countryCode)}
-this.updateHighlights()}
-propagateHighlights(){window.chartObjectRegistry.forEach(chartObject=>{if(chartObject!==this){chartObject.syncHighlights()}})}
-update(data){this.chart.data=data.data
-this.chart.data.datasets[0].backgroundColor=Array(49).fill(this.backgroundColor)
-this.chart.data.datasets[0].borderColor=Array(49).fill(this.borderColor)
-this.chart.data.datasets[0].borderWidth=2
-this.title.innerText=data.title
-this.chart.options.scales.x.title.text=data.xTitle
-this.initHighlights()
-this.updateSummaryBox(this.computeSummaryStats(data.data))
-this.chart.update()}}

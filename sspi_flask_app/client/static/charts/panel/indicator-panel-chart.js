@@ -1,14 +1,20 @@
 class DynamicLineChart {
-    constructor(parentElement, IndicatorCode, CountryList = []) {
+    constructor(parentElement, IndicatorCode, CountryList = [], endpointURL = '') {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.IndicatorCode = IndicatorCode
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
+        if (endpointURL !== '') {
+            this.endpointURL = endpointURL
+        } else {
+            this.endpointURL = `/api/v1/dynamic/line/${this.IndicatorCode}`
+        }
         this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
-        this.yAxisScale = "score"
+        this.yAxisScale = "value"
         this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
+        this.rigTitleBarButtons()
         this.rigCountryGroupSelector()
         this.initChartJSCanvas()
         this.updateChartOptions()
@@ -23,13 +29,14 @@ class DynamicLineChart {
     initRoot() {
         // Create the root element
         this.root = document.createElement('div')
-        this.root.classList.add('chart-section-dynamic-line')
+        this.root.classList.add('panel-chart-root-container')
         this.parentElement.appendChild(this.root)
-        this.root.innerHTML = `
-        <div class="chart-section-title-bar">
+        this.root.innerHTML = '<div class="chart-section-title-bar"></div>'
+    }
+
+    rigTitleBarButtons() {
+        this.root.querySelector('.chart-section-title-bar').innerHTML = `
             <div class="chart-section-title-bar-buttons">
-                <label class="title-bar-label">Report Score</label>
-                <input type="checkbox" class="y-axis-scale"/>
                 <label class="title-bar-label">Backward Extrapolation</label>
                 <input type="checkbox" class="extrapolate-backward"/>
                 <label class="title-bar-label">Linear Interpolation</label>
@@ -38,18 +45,7 @@ class DynamicLineChart {
                 <button class="showall-button">Show All</button>
                 <button class="hideunpinned-button">Hide Unpinned</button>
             </div>
-        </div>
         `;
-        this.rigTitleBarButtons()
-    }
-
-    rigTitleBarButtons() {
-        this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
-        this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
-        this.yAxisScaleCheckbox.addEventListener('change', () => {
-            console.log("Toggling Y-axis scale")
-            this.toggleYAxisScale()
-        })
         this.extrapolateBackwardCheckbox = this.root.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
@@ -71,6 +67,20 @@ class DynamicLineChart {
         this.hideUnpinnedButton = this.root.querySelector('.hideunpinned-button')
         this.hideUnpinnedButton.addEventListener('click', () => {
             this.hideUnpinned()
+        })
+    }
+
+    rigTitleBarScaleToggle() {
+        const buttonBox = this.root.querySelector('.chart-section-title-bar-buttons')
+        buttonBox.insertAdjacentHTML('afterbegin', `
+            <label class="title-bar-label">Report Score</label>
+            <input type="checkbox" class="y-axis-scale"/>
+        `)
+        this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
+        this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
+        this.yAxisScaleCheckbox.addEventListener('change', () => {
+            console.log("Toggling Y-axis scale")
+            this.toggleYAxisScale()
         })
     }
 
@@ -303,6 +313,10 @@ class DynamicLineChart {
             this.hideUnpinned()
         }
         this.chart.update()
+        if (data.hasScore) {
+            this.yAxisScale = "score"
+            this.rigTitleBarScaleToggle()
+        }
     }
 
     updatePins() {
