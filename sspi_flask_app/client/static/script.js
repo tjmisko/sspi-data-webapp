@@ -275,7 +275,13 @@ rigItemInfoBox(){const infoBox=document.createElement('div')
 infoBox.classList.add('item-panel-info-box')
 this.root.appendChild(infoBox)}
 updateDescription(description){const dbox=this.root.querySelector('.item-panel-info-box')
-dbox.innerText=description}
+let identifiersHTML=''
+let code=''
+let desc=''
+for(const[k,v]of Object.entries(description)){if(k==='Description'){desc=v}
+if(k==='ItemCode'||k==='IntermediateCode'){code=v}
+identifiersHTML+=`<li class="item-panel-info-box-element"><b>${k}</b>:<span class="item-panel-info-box-value">${v}</span></li>`}
+dbox.innerHTML=`<p class="item-panel-info-box-title"></b>${code}</b>:${desc}</p><ul class="item-panel-info-box-list">${identifiersHTML}</ul>`;}
 update(data){this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data

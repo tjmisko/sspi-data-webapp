@@ -571,6 +571,15 @@ def get_panel_plot(panel_id):
     """
     Get the panel plot for a given panel id
     """
+    def make_title(identifiers, panel_id):
+        if "ItemCode" in identifiers.keys():
+            return f"{identifiers['ItemCode']} (Item Hash: {panel_id})"
+        if "IntermediateCode" in identifiers.keys():
+            return f"{identifiers["IntermediateCode"]} (Item Hash: {panel_id})"
+        if "IndicatorCode" in identifiers.keys():
+            return f"{identifiers["IndicatorCode"]} (Item Hash: {panel_id})"
+        return f"Panel Plot (Item Hash: {panel_id})"
+
     panel_data = parse_json(
         sspi_panel_data.find({"ItemIdentifier": panel_id}, {"_id": 0})
     )
@@ -590,7 +599,7 @@ def get_panel_plot(panel_id):
         "data": panel_data,
         "title": {
             "display": True,
-            "text": panel_id,
+            "text": make_title(identifiers, panel_id),
             "font": {
                 "size": 18
             },

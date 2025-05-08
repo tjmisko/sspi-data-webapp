@@ -139,3 +139,23 @@
   margin: 0;
   padding: 0.1em 0;
 }
+
+.item-panel-info-box {
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow-y: scroll;
+  background-color: var(--header-color, #000);
+  padding: 0.5em;
+}
+
+.item-panel-info-box-list {
+  font-size: 0.6em;
+  list-style-type: none;
+}
+
+.item-panel-info-box-value {
+  color: var(--green-accent, #000);
+}
