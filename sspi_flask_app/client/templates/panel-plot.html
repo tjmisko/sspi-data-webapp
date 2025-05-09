@@ -14,7 +14,7 @@
     window.addEventListener("load", (event) => {
         window.SSPICharts = [
             {% for item_id in panel_id_list %}
-                new ItemPanelChart(document.getElementById("{{ item_id }}"), { endpointURL: "/api/v1/panel/{{ item_id }}" }),
+                new ItemPanelChart(document.getElementById("{{ item_id }}"), { endpointURL: "/api/v1/panel/item/{{ item_id }}" }),
             {% endfor %}
         ];
         const x = localStorage.getItem('windowX');
