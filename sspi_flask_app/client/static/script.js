@@ -101,16 +101,25 @@ if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
 if(optionArray.length===limit){break;}}
 return optionArray}
 closeResults(){this.resultsWindow.remove()}}
-class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){this.parentElement=parentElement
+class ObservableStorage{constructor(){this.listeners={};this.store={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);this.store[key]=this._parse(localStorage.getItem(key));}}
+setItem(key,value){const oldValue=this.store[key];const stringValue=JSON.stringify(value);localStorage.setItem(key,stringValue);this.store[key]=value;this._emit(key,oldValue,value);}
+getItem(key){return this.store[key];}
+removeItem(key){const oldValue=this.store[key];localStorage.removeItem(key);delete this.store[key];this._emit(key,oldValue,undefined);}
+clear(){for(const key of Object.keys(this.store)){this.removeItem(key);}}
+onChange(key,callback){if(!this.listeners[key]){this.listeners[key]=[];}
+this.listeners[key].push(callback);}
+_emit(key,oldValue,newValue){if(JSON.stringify(oldValue)===JSON.stringify(newValue))return;const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
+_parse(value){try{return JSON.parse(value);}catch{return value;}}}
+class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}){this.parentElement=parentElement
 this.CountryList=CountryList
 this.endpointURL=endpointURL
 this.width=width
 this.height=height
-this.pinnedArray=Array()
+this.pins=new Set()
 this.yAxisScale="value"
 this.endLabelPlugin=endLabelPlugin
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
-this.setTheme(localStorage.getItem("theme"))
+this.setTheme(window.observableStorage.getItem("theme"))
 this.initRoot()
 this.rigTitleBarButtons()
 this.rigCountryGroupSelector()
@@ -118,7 +127,7 @@ this.initChartJSCanvas()
 this.updateChartOptions()
 this.rigLegend()
 this.fetch(this.endpointURL).then(data=>{this.update(data)})
-this.rigPinStorageOnUnload()}
+this.rigPinChangeListener()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
@@ -159,16 +168,14 @@ updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGrou
 input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
 rigLegend(){const legend=document.createElement('legend')
 legend.classList.add('dynamic-line-legend')
-legend.innerHTML=`<div class="legend-title-bar"><h4 class="legend-title">Pinned Countries</h4><div class="legend-title-bar-buttons"><button class="saveprefs-button">Save Pins</button><button class="clearpins-button">Clear Pins</button></div></div><div class="legend-items"></div>`;this.savePrefsButton=legend.querySelector('.saveprefs-button')
-this.savePrefsButton.addEventListener('click',()=>{this.sendPrefs()})
+legend.innerHTML=`<div class="legend-title-bar"><h4 class="legend-title">Pinned Countries</h4><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="clearpins-button">Clear Pins</button></div></div><div class="legend-items"></div>`;this.addCountryButton=legend.querySelector('.add-country-button')
+this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
 this.clearPinsButton=legend.querySelector('.clearpins-button')
 this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
 this.legend=this.root.appendChild(legend)
 this.legendItems=this.legend.querySelector('.legend-items')}
 updateLegend(){this.legendItems.innerHTML=''
-this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})
-this.legendItems.innerHTML+=`<div class="legend-item"><button class="add-country-button">Add Country</button></div>`;this.addCountryButton=this.legend.querySelector('.add-country-button')
-this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
+if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b class="panel-legend-item-country-code"style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
@@ -189,18 +196,22 @@ this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
 this.groupOptions=data.groupOptions
 this.pinnedOnly=false
-this.updatePins()
+this.getPins()
 this.updateLegend()
 this.updateDescription(data.description)
 this.updateCountryGroups()
-if(this.pinnedOnly){this.hideUnpinned()}
 this.chart.update()
 if(data.hasScore){this.toggleYAxisScale()
 this.rigTitleBarScaleToggle()}}
-updatePins(){if(this.pinnedArray.length===0){return}
-this.chart.data.datasets.forEach(dataset=>{if(this.pinnedArray.map(cou=>cou.CCode).includes(dataset.CCode)){dataset.pinned=true
-dataset.hidden=false}})
+getPins(){const storedPins=window.observableStorage.getItem('pinnedCountries')
+console.log("Stored pins:",storedPins)
+if(storedPins){this.pins=new Set(storedPins)}
+if(this.pins.size===0){return}
+this.chart.data.datasets.forEach(dataset=>{for(const element of this.pins){if(dataset.CCode===element.CCode){dataset.pinned=true
+dataset.hidden=false}}})
+this.updateLegend()
 this.chart.update()}
+pushPinUpdate(){window.observableStorage.setItem("pinnedCountries",Array.from(this.pins))}
 showAll(){this.pinnedOnly=false
 console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
@@ -226,35 +237,31 @@ this.chart.update({duration:0,lazy:false})}
 pinCountry(dataset){if(dataset.pinned){return}
 dataset.pinned=true
 dataset.hidden=false
-this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
-this.updateLegend()
-this.chart.update()}
+this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
+this.pushPinUpdate()
+this.updateLegend()}
 pinCountryByCode(CountryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=true
 dataset.hidden=false
-this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}})
-this.updateLegend()
-this.chart.update()}
-unpinCountry(dataset,hide=false){if(this.pinnedOnly){dataset.hidden=true}
-dataset.pinned=false
-this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)
-this.updateLegend()
-this.chart.update()}
-unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=false
-if(hide){dataset.hidden=true}
-this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}})
-this.updateLegend()
-this.chart.update()}
-togglePin(dataset){if(dataset.pinned){this.unpinCountry(dataset,false)}else{this.pinCountry(dataset,false)}
-this.updateLegend()
-this.chart.update()}
-clearPins(){this.pinnedArray.forEach((PinnedCountry)=>{this.unpinCountryByCode(PinnedCountry.CCode,true)})
-this.pinnedArray=Array()
+this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}})
+this.pushPinUpdate()
 this.updateLegend()}
+unpinCountry(dataset,hide=false){dataset.pinned=false
+if(hide&&this.pinnedOnly){dataset.hidden=true}
+for(const element of this.pins){if(element.CCode===dataset.CCode){this.pins.delete(element)}}
+this.pushPinUpdate()
+this.updateLegend()}
+unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){this.unpinCountry(dataset,hide)}})}
+togglePin(dataset){if(dataset.pinned){this.unpinCountry(dataset,false)}else{this.pinCountry(dataset,false)}}
+clearPins(){this.pins.forEach((PinnedCountry)=>{this.unpinCountryByCode(PinnedCountry.CCode,true)})
+this.pins=new Set()
+this.updateLegend()
+this.pushPinUpdate()}
 dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
 return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
 return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
-rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}
+rigPinChangeListener(){window.observableStorage.onChange("pinnedCountries",()=>{this.getPins()
+console.log("Pin change detected!")})}
 toggleBackwardExtrapolation(){this.extrapolateBackwardPlugin.toggle()
 this.chart.update();}
 toggleYAxisScale(){if(this.yAxisScale==="score"){this.yAxisScale="value"
@@ -285,12 +292,9 @@ update(data){this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
-let prefs=data.chartPreferences!==undefined?data.chartPreferences:{};if(Object.keys(prefs).length===0){prefs.pinnedArray=[]
-prefs.pinnedOnly=false}
-if(prefs.pinnedArray!==undefined){this.pinnedArray.push(...prefs.pinnedArray)}else{this.pinnedArray=[]}
 this.groupOptions=data.groupOptions
-this.pinnedOnly=prefs.pinnedOnly
-this.updatePins()
+this.pinnedOnly=false
+this.getPins()
 this.updateLegend()
 this.rigItemInfoBox()
 this.updateDescription(data.description)
