@@ -44,8 +44,12 @@ def levels(exclude: list[str]):
 
 
 @panel.command(help="Plot country-year panel data given in stdin")
-@click.option('--exclude', "-e", multiple=True, required=False, help="List of strings to exclude")
-def plot(exclude: list[str]):
+@click.option('--exclude', "-e", multiple=True, required=False, help="Keys to exclude (may provide multiple)")
+@click.option('--value', "-v", required=False, help="Key specifying the value to plot")
+@click.option('--score', "-s", required=False, help="Key specifying the score to plot")
+@click.option('--year', "-y", required=False, help="Key specifying the year to plot")
+@click.option('--country', "-c", required=False, help="Key specifying the country to plot")
+def plot(exclude: list[str], value: str, score: str, year: str, country: str):
     """Read data from standard input generate """
     if stdin_is_empty():
         raise click.ClickException("No input provided")
@@ -60,6 +64,14 @@ def plot(exclude: list[str]):
         request_string += "?"
         for e in exclude:
             request_string += f"exclude={e}&"
+        if value:
+            request_string += f"value={value}&"
+        if score:
+            request_string += f"score={score}&"
+        if year:
+            request_string += f"year={year}&"
+        if country:
+            request_string += f"country={country}&"
         request_string = request_string[:-1]
     res = connector.call(request_string, method="POST", data=data, stream=True)
     stream_response(res)

@@ -16,7 +16,12 @@ def compile_static_assets(assets):
     home_js_bundle = Bundle(
         'client_bp/dist/*.js',
         'client_bp/js/*.js',
-        'client_bp/charts/*.js',
+        'client_bp/charts/plugins/*.js',
+        'client_bp/charts/components/*.js',
+        'client_bp/charts/panel/panel-chart.js',
+        'client_bp/charts/panel/item-panel-chart.js',
+        'client_bp/charts/panel/indicator-panel-chart.js',
+        # 'client_bp/charts/*.js',
         filters='jsmin',
         output='client_bp/script.js',
     )

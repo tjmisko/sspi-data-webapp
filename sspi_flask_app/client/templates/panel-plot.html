@@ -7,16 +7,16 @@
 {% block content %}
 
 {% for item_id in panel_id_list %}
-<h3> {{ item_id }} </h3>
 <section class="chart-section" id="{{ item_id }}"></section>
 {% endfor %}
 
 <script>
     window.addEventListener("load", (event) => {
-        // window.SSPICharts = [
-        //     new DynamicLineChart(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
-        //     new ScoreBarStatic(document.getElementById("static-data-section"), "{{ IndicatorCode | upper }}")
-        // ];
+        window.SSPICharts = [
+            {% for item_id in panel_id_list %}
+                new ItemPanelChart(document.getElementById("{{ item_id }}"), { endpointURL: "/api/v1/panel/item/{{ item_id }}" }),
+            {% endfor %}
+        ];
         const x = localStorage.getItem('windowX');
         const y = localStorage.getItem('windowY');
         

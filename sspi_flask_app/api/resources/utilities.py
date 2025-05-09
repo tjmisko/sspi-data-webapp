@@ -471,12 +471,13 @@ def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "Indicato
     return doc_list
 
 
-def generate_item_levels(data: list[dict], entity_id="", value_id="", time_id="", exclude_fields: list[str] = []):
+def generate_item_levels(data: list[dict], entity_id="", value_id="", time_id="", score_id="", exclude_fields: list[str] = []):
     entity_id = entity_id if entity_id else "CountryCode"
     value_id = value_id if value_id else "Value"
     time_id = time_id if time_id else "Year"
+    score_id = score_id if score_id else "Score"
     item_levels = {}
-    exclude = [entity_id, value_id, time_id, "_id"]
+    exclude = [entity_id, value_id, time_id, score_id, "_id"]
     exclude.extend(exclude_fields)
     for obs in data:
         level = {}
@@ -495,12 +496,13 @@ def generate_item_levels(data: list[dict], entity_id="", value_id="", time_id=""
     return list(item_levels.values())
 
 
-def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id="", exclude_fields: list[str] = []):
+def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id="", score_id="", exclude_fields: list[str] = []):
     entity_id = entity_id if entity_id else "CountryCode"
     value_id = value_id if value_id else "Value"
     time_id = time_id if time_id else "Year"
+    score_id = score_id if score_id else "Score"
     item_levels = {}
-    exclude = [entity_id, value_id, time_id, "_id"]
+    exclude = [entity_id, value_id, time_id, score_id, "_id"]
     exclude.extend(exclude_fields)
     for obs in data:
         level = {}
@@ -522,5 +524,6 @@ def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id=""
             "entity_id": obs[entity_id],
             "time_id": obs[time_id],
             "value_id": obs[value_id],
+            "score_id": obs.get(score_id, None),
         })
     return list(item_levels.values())
