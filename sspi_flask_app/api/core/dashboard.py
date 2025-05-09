@@ -164,7 +164,7 @@ def get_static_indicator_data(IndicatorCode):
     return jsonify(chart_data)
 
 
-@dashboard_bp.route('/dynamic/line/<IndicatorCode>', methods=["GET"])
+@dashboard_bp.route('/panel/indicator/<IndicatorCode>', methods=["GET"])
 def get_dynamic_indicator_line_data(IndicatorCode):
     """
     Get the dynamic data for the given indicator code for a line chart
@@ -566,7 +566,7 @@ def view_panel_plots():
     return render_template("panel-plot.html", panel_id_list=panel_data)
 
 
-@dashboard_bp.route("/panel/<panel_id>")
+@dashboard_bp.route("/panel/item/<panel_id>")
 def get_panel_plot(panel_id):
     """
     Get the panel plot for a given panel id
@@ -609,7 +609,6 @@ def get_panel_plot(panel_id):
         "labels": year_labels,
         "description": identifiers,
         "groupOptions": group_options,
-        "chartPreferences": {},
         "hasScore": False,
         "yMin": yMin,
         "yMax": yMax

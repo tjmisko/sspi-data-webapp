@@ -293,13 +293,8 @@ class PanelChart {
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
         this.chart.options.plugins.title = data.title
-        if (data.chartPreferences.pinnedArray !== undefined) {
-            this.pinnedArray.push(...data.chartPreferences.pinnedArray)
-        } else {
-            this.pinnedArray = []
-        }
         this.groupOptions = data.groupOptions
-        this.pinnedOnly = data.chartPreferences.pinnedOnly
+        this.pinnedOnly = false
         this.updatePins()
         this.updateLegend()
         this.updateDescription(data.description)

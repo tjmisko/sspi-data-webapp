@@ -30,7 +30,7 @@
 
 <script>
     window.addEventListener("load", (event) => {
-        // window.CategoryDynamicLine = new DynamicLineChart(parentElement, "{{ CategoryCode | upper }}")
+        // window.CategoryDynamicLine = new CategoryPanelChart(parentElement, "{{ CategoryCode | upper }}")
         window.CategoryStaticBarChart = new ScoreBarStatic(
             document.getElementById("static-data-section"), 
             "{{ CategoryCode | upper }}"
