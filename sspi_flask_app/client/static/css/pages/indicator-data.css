@@ -152,10 +152,12 @@
 }
 
 .item-panel-info-box-list {
-  font-size: 0.6em;
+  font-size: 0.8em;
   list-style-type: none;
+  line-height: 1.5em;
 }
 
 .item-panel-info-box-value {
   color: var(--green-accent, #000);
+  padding-left: 0.3em;
 }
