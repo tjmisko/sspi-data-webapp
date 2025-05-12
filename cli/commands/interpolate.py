@@ -9,7 +9,7 @@ def interpolate():
     pass
 
 
-@interpolate.command(help="Extrapolate backward from first observation for a given indicator")
+@interpolate.command(help="Interpolate linearly to impute missing data within the range of the data")
 def linear():
     """Read data from standard input and linearly interpolate missing data for a given indicator"""
     if stdin_is_empty():

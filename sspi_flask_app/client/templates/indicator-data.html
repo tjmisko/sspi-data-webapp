@@ -25,20 +25,21 @@
 
 <script>
     window.addEventListener("load", (event) => {
+        window.observableStorage = new ObservableStorage();
         window.SSPICharts = [
             new IndicatorPanelChart(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
             new ScoreBarStatic(document.getElementById("static-data-section"), "{{ IndicatorCode | upper }}")
         ];
-        const x = localStorage.getItem('windowX');
-        const y = localStorage.getItem('windowY');
+        const x = window.observableStorage.getItem('windowX');
+        const y = window.observableStorage.getItem('windowY');
         
         if (x !== null && y !== null) {
           window.moveTo(parseInt(x), parseInt(y));
         }
     })
     window.addEventListener('beforeunload', () => {
-      localStorage.setItem('windowX', window.screenX);
-      localStorage.setItem('windowY', window.screenY);
+      window.observableStorage.setItem('windowX', window.screenX);
+      window.observableStorage.setItem('windowY', window.screenY);
     });
 </script>
 {% endblock content %}

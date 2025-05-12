@@ -87,11 +87,15 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1em;
 }
 
 .legend-title-bar-buttons {
   font-size: 0.65em;
+  padding: 0 0.5em;
+}
+
+.panel-legend-item-country-code {
+  padding-left: 0.2em;
 }
 
 .legend-title {
@@ -100,19 +104,24 @@
   padding: 0.1em 0;
 }
 
-.legend-item {
+.legend-items {
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.legend-item {
   font-size: 0.70em;
   background-color: var(--header-color, #000);
-  padding: 0.3em;
-  padding-right: 0.3em;
-  padding-left: 0.5em;
-  border-radius: 5px;
-  justify-content: space-between;
-  margin: 0.5em 0;
+  padding: 0.3em 0.6em;
+  border-radius: 20px;
+  margin: 0.2em;
 }
 
 .add-country-pin-results-window {
+  position: relative;
   display: flex;
   font-size: 0.7em;
   flex-direction: column;
@@ -123,12 +132,7 @@
   align-items: center;
 }
 
-.add-country-pin-result {
-  width: 90%;
-}
-
 .add-country-pin-result:hover {
-  width: 90%;
   background-color: var(--green-accent, #000);
   height: auto;
   border-radius: 5px;

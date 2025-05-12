@@ -1,15 +1,15 @@
 class PanelChart {
-    constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300 } = {}) {
+    constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300 } ) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.width = width// width is the width of the canvas
         this.height = height// height is the height of the canvas
-        this.pinnedArray = Array() // pinnedArray contains a list of pinned countries
+        this.pins = new Set() // pins contains a list of pinned countries
         this.yAxisScale = "value"
         this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
-        this.setTheme(localStorage.getItem("theme"))
+        this.setTheme(window.observableStorage.getItem("theme"))
         this.initRoot()
         this.rigTitleBarButtons()
         this.rigCountryGroupSelector()
@@ -19,7 +19,7 @@ class PanelChart {
         this.fetch(this.endpointURL).then(data => {
             this.update(data)
         })
-        this.rigPinStorageOnUnload()
+        this.rigPinChangeListener()
     }
 
     initRoot() {
@@ -213,16 +213,16 @@ class PanelChart {
             <div class="legend-title-bar">
                 <h4 class="legend-title">Pinned Countries</h4>
                 <div class="legend-title-bar-buttons">
-                    <button class="saveprefs-button">Save Pins</button>
+                    <button class="add-country-button">Search Country</button>
                     <button class="clearpins-button">Clear Pins</button>
                 </div>
             </div>
             <div class="legend-items">
             </div>
         `;
-        this.savePrefsButton = legend.querySelector('.saveprefs-button')
-        this.savePrefsButton.addEventListener('click', () => {
-            this.sendPrefs()
+        this.addCountryButton = legend.querySelector('.add-country-button')
+        this.addCountryButton.addEventListener('click', () => {
+            new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
         })
         this.clearPinsButton = legend.querySelector('.clearpins-button')
         this.clearPinsButton.addEventListener('click', () => {
@@ -234,23 +234,16 @@ class PanelChart {
 
     updateLegend() {
         this.legendItems.innerHTML = ''
-        this.pinnedArray.forEach((PinnedCountry) => {
-            this.legendItems.innerHTML += `
-                <div class="legend-item">
-                    <span> ${PinnedCountry.CName} (<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>) </span>
-                    <button class="remove-button-legend-item" id="${PinnedCountry.CCode}-remove-button-legend">Remove</button>
-                </div>
-            `
-        })
-        this.legendItems.innerHTML += `
-            <div class="legend-item">
-                <button class="add-country-button">Add Country</button>
-            </div>
-        `;
-        this.addCountryButton = this.legend.querySelector('.add-country-button')
-        this.addCountryButton.addEventListener('click', () => {
-            new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
-        })
+        if (this.pins.size > 0) {
+            this.pins.forEach((PinnedCountry) => {
+                this.legendItems.innerHTML += `
+                    <div class="legend-item">
+                        <span> ${PinnedCountry.CName} (<b class="panel-legend-item-country-code" style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>) </span>
+                        <button class="remove-button-legend-item" id="${PinnedCountry.CCode}-remove-button-legend">Remove</button>
+                    </div>
+                `
+            })
+        }
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
         removeButtons.forEach((button) => {
             let CountryCode = button.id.split('-')[0]
@@ -295,13 +288,10 @@ class PanelChart {
         this.chart.options.plugins.title = data.title
         this.groupOptions = data.groupOptions
         this.pinnedOnly = false
-        this.updatePins()
+        this.getPins()
         this.updateLegend()
         this.updateDescription(data.description)
         this.updateCountryGroups()
-        if (this.pinnedOnly) {
-            this.hideUnpinned()
-        }
         this.chart.update()
         if (data.hasScore) {
             this.toggleYAxisScale()
@@ -309,17 +299,30 @@ class PanelChart {
         }
     }
 
-    updatePins() {
-        if (this.pinnedArray.length === 0) {
+
+    getPins() {
+        const storedPins = window.observableStorage.getItem('pinnedCountries')
+        console.log("Stored pins:", storedPins)
+        if (storedPins) {
+            this.pins = new Set(storedPins)
+        }
+        if (this.pins.size === 0) {
             return
         }
         this.chart.data.datasets.forEach(dataset => {
-            if (this.pinnedArray.map(cou => cou.CCode).includes(dataset.CCode)) {
-                dataset.pinned = true
-                dataset.hidden = false
+            for (const element of this.pins) {
+                if (dataset.CCode === element.CCode) {
+                    dataset.pinned = true
+                    dataset.hidden = false
+                }
             }
         })
+        this.updateLegend()
         this.chart.update()
+    }
+
+    pushPinUpdate() {
+        window.observableStorage.setItem("pinnedCountries", Array.from(this.pins))
     }
 
     showAll() {
@@ -385,9 +388,9 @@ class PanelChart {
         }
         dataset.pinned = true
         dataset.hidden = false
-        this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+        this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+        this.pushPinUpdate()
         this.updateLegend()
-        this.chart.update()
     }
 
     pinCountryByCode(CountryCode) {
@@ -395,35 +398,33 @@ class PanelChart {
             if (dataset.CCode === CountryCode) {
                 dataset.pinned = true
                 dataset.hidden = false
-                this.pinnedArray.push({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+                this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
             }
         })
+        this.pushPinUpdate()
         this.updateLegend()
-        this.chart.update()
     }
 
     unpinCountry(dataset, hide = false) {
-        if (this.pinnedOnly) {
+        dataset.pinned = false
+        if (hide && this.pinnedOnly) {
             dataset.hidden = true
         }
-        dataset.pinned = false
-        this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
+        for (const element of this.pins) {
+            if (element.CCode === dataset.CCode) {
+                this.pins.delete(element)
+            }
+        }
+        this.pushPinUpdate()
         this.updateLegend()
-        this.chart.update()
     }
 
     unpinCountryByCode(CountryCode, hide = false) {
         this.chart.data.datasets.forEach(dataset => {
             if (dataset.CCode === CountryCode) {
-                dataset.pinned = false
-                if (hide) {
-                    dataset.hidden = true
-                }
-                this.pinnedArray = this.pinnedArray.filter((item) => item.CCode !== dataset.CCode)
+                this.unpinCountry(dataset, hide)
             }
         })
-        this.updateLegend()
-        this.chart.update()
     }
 
     togglePin(dataset) {
@@ -432,16 +433,15 @@ class PanelChart {
         } else {
             this.pinCountry(dataset, false)
         }
-        this.updateLegend()
-        this.chart.update()
     }
 
     clearPins() {
-        this.pinnedArray.forEach((PinnedCountry) => {
+        this.pins.forEach((PinnedCountry) => {
             this.unpinCountryByCode(PinnedCountry.CCode, true)
         })
-        this.pinnedArray = Array()
+        this.pins = new Set()
         this.updateLegend()
+        this.pushPinUpdate()
     }
 
     dumpChartDataJSON(screenVisibility = true) {
@@ -494,11 +494,10 @@ class PanelChart {
         URL.revokeObjectURL(url);
     }
 
-    rigPinStorageOnUnload() {
-        window.addEventListener("beforeunload", () => {
-            localStorage.setItem('pins', JSON.stringify(this.chart.data.datasets.map(
-                (dataset) => { dataset.pinned }
-            )));
+    rigPinChangeListener() {
+        window.observableStorage.onChange("pinnedCountries", () => {
+            this.getPins()
+            console.log("Pin change detected!")
         })
     }
 

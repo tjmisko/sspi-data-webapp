@@ -24,9 +24,6 @@ from sspi_flask_app.models.database.sspi_production_data import (
 from sspi_flask_app.models.database.sspi_raw_api_data import (
     SSPIRawAPIData
 )
-from sspi_flask_app.models.database.sspi_bulk_data import (
-    SSPIBulkData
-)
 from sspi_flask_app.models.database.sspi_panel_data import (
     SSPIPanelData
 )
@@ -56,9 +53,6 @@ sspi_clean_outcome_data = SSPICleanAPIData(
 )
 sspi_country_characteristics = SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
-)
-sspi_bulk_data = SSPIBulkData(
-    sspidb.sspi_bulk_data
 )
 sspi_clean_api_data = SSPICleanAPIData(
     sspidb.sspi_clean_api_data
