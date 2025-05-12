@@ -109,14 +109,15 @@
   flex-direction: row;
   align-items: flex-start;
   justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .legend-item {
   font-size: 0.70em;
   background-color: var(--header-color, #000);
-  padding: 0.2em;
+  padding: 0.3em 0.6em;
   border-radius: 20px;
-  margin: 0.7em 0.3em;
+  margin: 0.2em;
 }
 
 .add-country-pin-results-window {
