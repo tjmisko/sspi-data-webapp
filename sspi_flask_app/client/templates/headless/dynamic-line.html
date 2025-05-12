@@ -25,11 +25,12 @@
         <section class="headless-chart-section" id="dynamic-data-section"></section>
         <p id="dynamic-indicator-description"></p>
         <script>
-                window.addEventListener("load", (event) => {
-                    window.SSPICharts = [
-                        new IndicatorPanelChart(document.getElementById("dynamic-data-section"), "{{ idcode | upper }}"),
-                    ]
-                })
+            window.observableStorage = new ObservableStorage();
+            window.addEventListener("load", (event) => {
+                window.SSPICharts = [
+                    new IndicatorPanelChart(document.getElementById("dynamic-data-section"), "{{ idcode | upper }}"),
+                ]
+            })
         </script>
       </main>
   </body>

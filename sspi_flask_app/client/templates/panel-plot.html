@@ -11,6 +11,7 @@
 {% endfor %}
 
 <script>
+    window.observableStorage = new ObservableStorage();
     window.addEventListener("load", (event) => {
         window.SSPICharts = [
             {% for item_id in panel_id_list %}

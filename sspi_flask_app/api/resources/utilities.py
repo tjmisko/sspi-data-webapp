@@ -7,7 +7,6 @@ import inspect
 import math
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
-    sspi_bulk_data,
     sspi_raw_api_data,
     sspi_clean_api_data,
     sspi_incomplete_api_data,
@@ -69,7 +68,6 @@ def lookup_database(database_name):
         case "sspi_static_metadata": return sspi_static_metadata
         case "sspi_main_data_v3": return sspi_main_data_v3
         case "sspi_raw_api_data": return sspi_raw_api_data
-        case "sspi_bulk_data": return sspi_bulk_data
         case "sspi_clean_api_data": return sspi_clean_api_data
         case "sspi_incomplete_api_data": return sspi_incomplete_api_data
         case "sspi_imputed_data": return sspi_imputed_data

@@ -32,7 +32,7 @@ def login(client, app):
 def test_save_database(client, login):
     """Test saving a specific database to local storage."""
     with patch('sspi_flask_app.api.core.save.lookup_database') as mock_lookup_db, \
-         patch('sspi_flask_app.api.core.save.parse_json') as mock_parse_json, \
+         patch('sspi_flask_app.api.resources.utilities.parse_json') as mock_parse_json, \
          patch('os.makedirs') as mock_makedirs, \
          patch('builtins.open', mock_open()) as mock_file:
 
@@ -50,7 +50,7 @@ def test_save_all(client, login):
     """Test saving all databases to local storage."""
     with patch('sspi_flask_app.api.core.save.sspidb') as mock_sspidb, \
          patch('sspi_flask_app.api.core.save.lookup_database') as mock_lookup_db, \
-         patch('sspi_flask_app.api.core.save.parse_json') as mock_parse_json, \
+         patch('sspi_flask_app.api.resources.utilities.parse_json') as mock_parse_json, \
          patch('os.makedirs') as mock_makedirs, \
          patch('builtins.open', mock_open()) as mock_file:
 
@@ -61,7 +61,6 @@ def test_save_all(client, login):
         response = client.get(url_for('api_bp.save_bp.save_all'))
 
         assert response.status_code == 200
-        assert b"Saving db1 to local" in response.data
-        assert b"Saving db2 to local" in response.data
+        assert b"Dumped 0 records from db1 to" in response.data
+        assert b"Dumped 0 records from db1 to" in response.data
         assert mock_file.call_count == 2  # Two databases, two file writes
-

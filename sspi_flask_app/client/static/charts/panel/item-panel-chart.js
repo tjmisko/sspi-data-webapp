@@ -34,19 +34,9 @@ class ItemPanelChart extends PanelChart {
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
         this.chart.options.plugins.title = data.title
-        let prefs = data.chartPreferences !== undefined ? data.chartPreferences : {};
-        if (Object.keys(prefs).length === 0) {
-            prefs.pinnedArray = []
-            prefs.pinnedOnly = false
-        }
-        if (prefs.pinnedArray !== undefined) {
-            this.pinnedArray.push(...prefs.pinnedArray)
-        } else {
-            this.pinnedArray = []
-        }
         this.groupOptions = data.groupOptions
-        this.pinnedOnly = prefs.pinnedOnly
-        this.updatePins()
+        this.pinnedOnly = false
+        this.getPins()
         this.updateLegend()
         this.rigItemInfoBox()
         this.updateDescription(data.description)

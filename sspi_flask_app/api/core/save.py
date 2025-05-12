@@ -4,8 +4,8 @@ import os
 from flask import Response, current_app as app
 from flask import Blueprint
 from flask_login import login_required
-from ..resources.utilities import lookup_database, parse_json
-from sspi_flask_app.models.database import sspidb
+from sspi_flask_app.api.resources.utilities import lookup_database
+from sspi_flask_app.models.database import sspidb, sspi_raw_api_data
 import logging
 
 log = logging.getLogger(__name__)
@@ -44,11 +44,8 @@ def save_all():
 
     def save_iterator(snapshot_directory):
         for i, database_name in enumerate(sspidb.list_collection_names()):
-            yield (
-                f"Saving {database_name} to local "
-                f"({i + 1}/{len(sspidb.list_collection_names())})\n"
-            )
-            save_database_image(database_name, snapshot_directory)
+            yield f"Saving {database_name} ( {i + 1} / {len(sspidb.list_collection_names())} )\n"
+            yield from save_database_image(database_name, snapshot_directory)
     return Response(save_iterator(snapshot_directory), mimetype="text/event-stream")
 
 
@@ -57,7 +54,7 @@ def save_database_image(database_name, snapshot_directory):
     Saves a snapshot off all databases in the snapshot folder
     """
     database = lookup_database(database_name)
-    database_contents = parse_json(database.find({}))
+    database_contents = database.find({})
     datetime_str = datetime.now().strftime("%Y-%m-%d")
     snap_time_dir = os.path.join(snapshot_directory, datetime_str)
     if not os.path.exists(snap_time_dir):
@@ -70,4 +67,5 @@ def save_database_image(database_name, snapshot_directory):
         f"from {database_name} to {file}\n"
     )
     log.info(msg)
-    return msg
+    yield msg
+    return
