@@ -49,6 +49,13 @@ class MongoWrapper:
         """
         return self._mongo_database.distinct(field)
 
+    def aggregate(self, pipeline, options={"_id": 0}):
+        """
+        Aggregates the data in the collection using the provided pipeline.
+        """
+        cursor = self._mongo_database.aggregate(pipeline)
+        return json.loads(json_util.dumps(cursor))
+
     def tabulate_ids(self) -> list:
         """
         Returns a list of documents with counts of the number of
