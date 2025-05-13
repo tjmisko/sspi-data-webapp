@@ -21,11 +21,13 @@ class DataCoverage:
         self.indicator_codes = [
             indicator["IndicatorCode"] for indicator in self.indicator_details
         ]
-        self.clean_data_coverage = self.get_clean_coverage()
+        self.clean_data_coverage = self.get_coverage(sspi_clean_api_data)
+        self.imputed_data_coverage = self.get_coverage(sspi_imputed_data)
 
-    def get_clean_coverage(self):
+    def get_coverage(self, database):
         """
-        Get the coverage of the clean data
+        Get the Year Coverage at the Indicator and Year Level
+        :param database: The database to query
         """
         pipeline = [
             {
@@ -35,24 +37,18 @@ class DataCoverage:
                         "CountryCode": "$CountryCode"
                     },
                     "yearList": {
-                        "$push": {
-                            "$cond": [{"$gt": ["$Year", self.min_year]}, "$Year", "$$REMOVE"]
+                        "$addToSet": {
+                            "$cond": [{"$gte": ["$Year", self.min_year]}, "$Year", "$$REMOVE"]
                         }
                     },
                 }
-            },
-            {
-                "$project": {
-                    "_id": 0,
-                    "IndicatorCode": "$_id.IndicatorCode",
-                    "CountryCode": "$_id.CountryCode",
-                    "yearList": {
-                        "$sortArray": {
-                            "input": "$yearList",
-                            "sortBy": 1
-                        }
-                    }
-                }
             }
         ]
-        return sspi_clean_api_data.aggregate(pipeline)
+        result = database.aggregate(pipeline)
+        nested_dict = {}
+        for entry in result:
+            ind = entry["_id"]["IndicatorCode"]
+            ctry = entry["_id"]["CountryCode"]
+            years = sorted(entry["yearList"])
+            nested_dict.setdefault(ind, {})[ctry] = years
+        return nested_dict
