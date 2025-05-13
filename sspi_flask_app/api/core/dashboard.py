@@ -19,7 +19,8 @@ from flask import (
     render_template,
     current_app as app
 )
-from ...models.sspi import SSPI
+from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
@@ -640,3 +641,9 @@ def get_panel_plot(panel_id):
         "yMin": yMin,
         "yMax": yMax
     })
+
+
+@dashboard_bp.route("/utilities/coverage", methods=["GET"])
+def coverage():
+    coverage = DataCoverage(2000, 2023, "SSPI49").clean_data_coverage
+    return parse_json(coverage)
