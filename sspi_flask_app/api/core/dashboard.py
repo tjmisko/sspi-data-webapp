@@ -645,5 +645,41 @@ def get_panel_plot(panel_id):
 
 @dashboard_bp.route("/utilities/coverage", methods=["GET"])
 def coverage():
-    coverage = DataCoverage(2000, 2023, "SSPI49").clean_data_coverage
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).combined_coverage
     return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/complete", methods=["GET"])
+def coverage_complete():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).complete()
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/incomplete", methods=["GET"])
+def coverage_incomplete():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).incomplete()
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/unimplemented", methods=["GET"])
+def coverage_unimplemented():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).unimplemented()
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/report/indicator/<IndicatorCode>", methods=["GET"])
+def coverage_indicator(IndicatorCode):
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).indicator_report(IndicatorCode)
+    return coverage
+
+
+@dashboard_bp.route("/utilities/coverage/report/country/<CountryCode>", methods=["GET"])
+def coverage_country(CountryCode):
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).country_report(CountryCode)
+    return coverage

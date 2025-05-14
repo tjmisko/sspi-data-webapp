@@ -11,9 +11,9 @@ class DataCoverage:
         self.max_year = max_year
         self.country_group = country_group
         if not country_group and countries:
-            self.countries = countries
+            self.country_codes = countries
         else:
-            self.countries = sspi_metadata.country_group(country_group)
+            self.country_codes = sspi_metadata.country_group(country_group)
         if not indicator_details:
             self.indicator_details = sspi_metadata.indicator_details()
         else:
@@ -64,11 +64,11 @@ class DataCoverage:
         :param cov_dict2: The second coverage dictionary (output format of get_coverage)
         """
         merged = {}
-        for ind_code in set(cov_dict1.keys()).union(cov_dict2.keys()):
+        for ind_code in self.indicator_codes:
             merged.setdefault(ind_code, {})
             countries1 = cov_dict1.get(ind_code, {})
             countries2 = cov_dict2.get(ind_code, {})
-            for ctry_code in set(countries1.keys()).union(countries2.keys()):
+            for ctry_code in self.country_codes:
                 years1 = set(countries1.get(ctry_code, []))
                 years2 = set(countries2.get(ctry_code, []))
                 merged[ind_code][ctry_code] = sorted(years1.union(years2))
@@ -81,8 +81,8 @@ class DataCoverage:
         value of the CountryCode key in the coverage dictionary
         """
         return all([
-            year in range(self.min_year, self.max_year + 1)
-            for year in year_list
+            year in year_list
+            for year in range(self.min_year, self.max_year + 1)
         ])
 
     def check_complete_indicator(self, country_year_dict):
@@ -93,8 +93,8 @@ class DataCoverage:
         coverage dictionary
         """
         return all([
-            self.check_complete_country(year_list)
-            for year_list in country_year_dict.values()
+            self.check_complete_country(country_year_dict[cou])
+            for cou in self.country_codes
         ])
 
     def complete(self):
@@ -116,3 +116,61 @@ class DataCoverage:
             if not self.check_complete_indicator(country_year_dict):
                 incomplete_list.append(indicator)
         return incomplete_list
+
+    def unimplemented(self):
+        unimplemented_list = []
+        for indicator in self.indicator_codes:
+            if indicator not in self.combined_coverage.keys():
+                unimplemented_list.append(indicator)
+        return unimplemented_list
+
+    def indicator_report(self, indicator_code: str) -> str:
+        """
+        Return messages about the coverage of a given indicator
+        :param indicator_code: The indicator code to check
+        """
+        if indicator_code not in self.indicator_codes:
+            return f"problem: Indicator code {indicator_code} is not in the metadata."
+        if indicator_code not in self.combined_coverage.keys():
+            return f"problem: Indicator code {indicator_code} is not implemented."
+        country_year_dict = self.combined_coverage[indicator_code]
+        if self.check_complete_indicator(country_year_dict):
+            return (
+                f"Indicator code {indicator_code} has complete coverage "
+                f"over {self.country_group} from {self.min_year} to "
+                f"{self.max_year}."
+            )
+        msg = f"Indicator code {indicator_code} has incomplete coverage:"
+        for country in self.country_codes:
+            if not self.check_complete_country(country_year_dict[country]):
+                if len(country_year_dict[country]) == 0:
+                    msg += f"\nproblem: {country} has no observations."
+                    continue
+                missing = [y for y in range(self.min_year, self.max_year)
+                           if y not in country_year_dict[country]]
+                msg += f"\n{country} missing years {missing}."
+        return msg
+
+    def country_report(self, country_code: str) -> str:
+        """
+        Return messages about the coverage of a given country
+        :param country_code: The country code to check
+        """
+        if country_code not in self.country_codes:
+            return f"Country code {country_code} is not in the metadata."
+        msg = ""
+        for indicator in self.indicator_codes:
+            if indicator not in self.combined_coverage.keys():
+                msg += f"\nIndicator code {indicator} is not implemented."
+                continue
+            country_year_dict = self.combined_coverage[indicator]
+            if country_code not in country_year_dict:
+                msg += f"\nIndicator code {indicator} has no observations for {country_code}."
+                continue
+            if self.check_complete_country(country_year_dict[country_code]):
+                msg += f"\nIndicator code {indicator} has complete coverage from {self.min_year} to {self.max_year}."
+            else:
+                missing = [y for y in range(self.min_year, self.max_year + 1)
+                           if y not in country_year_dict[country_code]]
+                msg += f"\nIndicator code {indicator} missing years {missing}."
+        return msg
