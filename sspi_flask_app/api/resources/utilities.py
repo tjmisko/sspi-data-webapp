@@ -372,15 +372,17 @@ def find_population(country_code, year):
     return population_data
 
 
-def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"]):
+def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"], impute_only=False):
     """
     Extrapolate backward from the earliest available data point to a target year.
 
     :param doc_list: list of dicts with keys including 'Year' and series identifiers
     :param year: earliest year to extrapolate to
     :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    :param impute_only: if True, only return imputed values, excluding original data
     """
     grouped_series = {}
+    imputations = []
     for document in doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
@@ -397,18 +399,23 @@ def extrapolate_backward(doc_list: list[dict], year: int, series_id=["CountryCod
                 "ImputationDistance": first_year - missing_year,
             })
             doc_list.append(new_document)
+            imputations.append(new_document)
+    if impute_only:
+        return imputations
     return doc_list
 
 
-def extrapolate_forward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"]):
+def extrapolate_forward(doc_list: list[dict], year: int, series_id=["CountryCode", "IndicatorCode"], impute_only=False):
     """
     Extrapolate forward from the latest available data point to a target year.
 
     :param doc_list: list of dicts with keys including 'Year' and series identifiers
     :param year: latest year to extrapolate to
     :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    :param impute_only: if True, only return imputed values, excluding original data
     """
     grouped_series = {}
+    imputations = []
     for document in doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
@@ -425,17 +432,22 @@ def extrapolate_forward(doc_list: list[dict], year: int, series_id=["CountryCode
                 "ImputationDistance": missing_year - last_year,
             })
             doc_list.append(new_document)
+            imputations.append(new_document)
+    if impute_only:
+        return imputations
     return doc_list
 
 
-def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "IndicatorCode"]):
+def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "IndicatorCode"], impute_only=False):
     """
     Fill missing years in a time series using linear interpolation.
 
     :param doc_list: list of dicts with keys including 'Year' and series identifiers
     :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    :param impute_only: if True, only return imputed values, excluding original data
     """
     grouped_series = {}
+    imputations = []
     for document in doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
@@ -466,6 +478,9 @@ def interpolate_linear(doc_list: list[dict], series_id=["CountryCode", "Indicato
                     "ImputationDistance": min(y - prev["Year"], next_["Year"] - y)
                 })
                 doc_list.append(new_doc)
+                imputations.append(new_doc)
+    if impute_only:
+        return imputations
     return doc_list
 
 
