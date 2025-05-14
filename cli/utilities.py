@@ -26,14 +26,19 @@ def is_numeric_string(string):
 def echo_pretty(msg):
     if type(msg) is bytes:
         msg = msg.decode("utf-8")
-    tokens = msg.split(" ")
-    output = []
-    for i, t in enumerate(tokens):
-        if is_numeric_string(t):
-            output.append(click.style(t, fg='cyan'))
-        else:
-            output.append(t)
-    click.echo(" ".join(output))
+    lines = msg.splitlines()
+    for line in lines:
+        if "error:" in line[0:8] or "problem:" in line[0:9]:
+            click.secho(line.split(": ", 1)[1], fg='red')
+            continue
+        tokens = re.split(r"([\[\],()\s]+)", line)
+        output = []
+        for i, t in enumerate(tokens):
+            if is_numeric_string(t):
+                output.append(click.style(t, fg='cyan'))
+            else:
+                output.append(t)
+        click.echo("".join(output))
 
 
 def require_confirmation(phrase="CONFIRM", prompt="Type {0} to confirm") -> bool:

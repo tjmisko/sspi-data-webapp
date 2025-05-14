@@ -1,6 +1,7 @@
 import click
 from cli.commands.collect import collect
 from cli.commands.compute import compute
+from cli.commands.coverage import coverage
 from cli.commands.delete import delete
 from cli.commands.extrapolate import extrapolate
 from cli.commands.interpolate import interpolate
@@ -22,6 +23,7 @@ def cli():
 
 cli.add_command(collect)
 cli.add_command(compute)
+cli.add_command(coverage)
 cli.add_command(delete)
 cli.add_command(extrapolate)
 cli.add_command(interpolate)

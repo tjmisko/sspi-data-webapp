@@ -56,13 +56,6 @@ class SSPICleanAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
 
-    def aggregate(self, pipeline, options={"_id": 0}):
-        """
-        Aggregates the data in the collection using the provided pipeline.
-        """
-        cursor = self._mongo_database.aggregate(pipeline)
-        return json.loads(json_util.dumps(cursor))
-
 
 class SSPIIncompleteAPIData(SSPICleanAPIData):
     """
