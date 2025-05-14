@@ -1,4 +1,5 @@
 from sspi_flask_app.api.resources.utilities import extrapolate_forward
+from copy import deepcopy
 
 
 def test_extrapolate_forward_single_series():
@@ -42,3 +43,15 @@ def test_forward_custom_series_key():
     extrapolate_forward(data, 2012, series_id=["Country", "Series"])
     years = sorted([d["Year"] for d in data])
     assert years == [2010, 2011, 2012]
+
+
+def test_extrapolate_forward_impute_only():
+    data = [
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2000, "Value": 10},
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2002, "Value": 30}
+    ]
+    result = extrapolate_forward(deepcopy(data), 2004, impute_only=True)
+    assert all(doc["Imputed"] is True for doc in result)
+    assert sorted(doc["Year"] for doc in result) == [2003, 2004]
+    assert len(result) == 2
+    assert all(doc["ImputationMethod"] == "Forward Extrapolation" for doc in result)

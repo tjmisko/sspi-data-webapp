@@ -1,4 +1,5 @@
 from sspi_flask_app.api.resources.utilities import interpolate_linear
+from copy import deepcopy
 
 
 def test_interpolate_linear_single_gap():
@@ -67,3 +68,17 @@ def test_interpolate_linear_custom_series_key():
     assert years == [1990, 1991, 1992]
     interpolated = [d for d in data if d.get("Imputed")]
     assert interpolated[0]["Value"] == 122
+
+
+def test_interpolate_linear_impute_only():
+    data = [
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2000, "Value": 10},
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2002, "Value": 30}
+    ]
+    result = interpolate_linear(deepcopy(data), impute_only=True)
+    assert len(result) == 1
+    doc = result[0]
+    assert doc["Imputed"] is True
+    assert doc["Year"] == 2001
+    assert doc["Value"] == 20
+    assert doc["ImputationMethod"] == "Linear Interpolation"
