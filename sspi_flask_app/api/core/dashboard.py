@@ -19,7 +19,8 @@ from flask import (
     render_template,
     current_app as app
 )
-from ...models.sspi import SSPI
+from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
@@ -640,3 +641,45 @@ def get_panel_plot(panel_id):
         "yMin": yMin,
         "yMax": yMax
     })
+
+
+@dashboard_bp.route("/utilities/coverage", methods=["GET"])
+def coverage():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).combined_coverage
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/complete", methods=["GET"])
+def coverage_complete():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).complete()
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/incomplete", methods=["GET"])
+def coverage_incomplete():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).incomplete()
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/unimplemented", methods=["GET"])
+def coverage_unimplemented():
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).unimplemented()
+    return parse_json(coverage)
+
+
+@dashboard_bp.route("/utilities/coverage/report/indicator/<IndicatorCode>", methods=["GET"])
+def coverage_indicator(IndicatorCode):
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).indicator_report(IndicatorCode)
+    return coverage
+
+
+@dashboard_bp.route("/utilities/coverage/report/country/<CountryCode>", methods=["GET"])
+def coverage_country(CountryCode):
+    group = request.args.get("CountryGroup", "SSPI67")
+    coverage = DataCoverage(2000, 2023, group).country_report(CountryCode)
+    return coverage
