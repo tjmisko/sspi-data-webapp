@@ -14,11 +14,11 @@ class MongoWrapper:
         doc_count = self._mongo_database.count_documents({})
         return doc_count == 0
 
-    def find_one(self, query: dict, options: dict = {}) -> dict:
+    def find_one(self, query: dict, options: dict = {"_id": 0}) -> dict:
         cursor = self._mongo_database.find_one(query, options)
         return json.loads(json_util.dumps(cursor))
 
-    def find(self, query: dict, options: dict = {}) -> list:
+    def find(self, query: dict, options: dict = {"_id": 0}) -> list:
         cursor = self._mongo_database.find(query, options)
         return json.loads(json_util.dumps(cursor))
 
