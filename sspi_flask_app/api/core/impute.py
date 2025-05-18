@@ -93,3 +93,11 @@ def impute_senior():
     count = sspi_imputed_data.insert_many([])
     return parse_json([])
 
+
+@impute_bp.route("/YRSEDU", methods=["POST"])
+def impute_yrsedu():
+    sspi_imputed_data.delete_many({"IndicatorCode": "YRSEDU"})
+    clean_data = sspi_clean_api_data.find({"IndicatorCode": "YRSEDU"})
+    imputations = extrapolate_backward(clean_data, 2000, impute_only=True)
+    sspi_imputed_data.insert_many(imputations)
+    return parse_json(imputations)
