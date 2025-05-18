@@ -67,6 +67,7 @@ def compute_watman():
     """
     app.logger.info("Running /api/v1/compute/WATMAN")
     sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
+    sspi_incomplete_api_data.delete_many({"IndicatorCode": "WATMAN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
     watman_data = extract_sdg(raw_data)
     intermediate_map = {
