@@ -91,4 +91,5 @@ def impute_senior():
         {"IndicatorCode": "SENIOR"})
     # Do imputation logic here
     count = sspi_imputed_data.insert_many([])
-    return f"{count} documents inserted into sspi_imputed_data."
+    return parse_json([])
+
