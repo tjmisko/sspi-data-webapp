@@ -256,9 +256,11 @@ class SSPIMetadata(MongoWrapper):
         }
         return self.find_one(query)["Metadata"]
 
-    def get_goalposts(self, IndicatorCode: str):
+    def get_goalposts(self, IndicatorCode: str) -> tuple[int | float, int | float]:
         """
-        Return a list of documents containg indicator details
+        Returns a tuple of the lower and upper goalposts for the given indicator
+
+        :param IndicatorCode: The indicator code for which to get the goalposts
         """
         indicator_detail = self.get_indicator_detail(IndicatorCode)
         lg = indicator_detail["LowerGoalpost"]

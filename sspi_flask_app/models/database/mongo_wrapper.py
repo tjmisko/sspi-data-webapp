@@ -1,6 +1,7 @@
 import json
 from bson import ObjectId, json_util
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
+import math
 
 
 class MongoWrapper:
@@ -13,11 +14,11 @@ class MongoWrapper:
         doc_count = self._mongo_database.count_documents({})
         return doc_count == 0
 
-    def find_one(self, query: dict, options: dict = {}) -> dict:
+    def find_one(self, query: dict, options: dict = {"_id": 0}) -> dict:
         cursor = self._mongo_database.find_one(query, options)
         return json.loads(json_util.dumps(cursor))
 
-    def find(self, query: dict, options: dict = {}) -> list:
+    def find(self, query: dict, options: dict = {"_id": 0}) -> list:
         cursor = self._mongo_database.find(query, options)
         return json.loads(json_util.dumps(cursor))
 
@@ -234,6 +235,10 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' must be a float or integer (document {document_number})")
+        if math.isnan(document["Value"]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Value' cannot be NaN (document {document_number})")
 
     def validate_unit(self, document: dict, document_number: int = 0):
         # Validate Unit format

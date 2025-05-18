@@ -74,6 +74,15 @@ def impute_watman():
     return parse_json(imputed_watman)
 
 
+@impute_bp.route("/NRGINT", methods=["POST"])
+def impute_nrgint():
+    sspi_imputed_data.delete_many({"IndicatorCode": "NRGINT"})
+    clean_data = sspi_clean_api_data.find({"IndicatorCode": "NRGINT"})
+    imputations = extrapolate_forward(clean_data, 2023, impute_only=True)
+    sspi_imputed_data.insert_many(imputations)
+    return parse_json(imputations)
+
+
 @impute_bp.route("/SENIOR", methods=["POST"])
 def impute_senior():
     sspi_imputed_data.delete_many({"IndicatorCode": "SENIOR"})
@@ -82,4 +91,5 @@ def impute_senior():
         {"IndicatorCode": "SENIOR"})
     # Do imputation logic here
     count = sspi_imputed_data.insert_many([])
-    return f"{count} documents inserted into sspi_imputed_data."
+    return parse_json([])
+

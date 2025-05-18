@@ -7,6 +7,7 @@ from sspi_flask_app.api.resources.utilities import (
 import json
 import time
 import requests
+import math
 
 
 # Implement API Collection for
@@ -61,7 +62,7 @@ def extract_sdg(raw_sdg_pivot_data):
         CountryCode = country_data.alpha_3
         for year_obs in annual_data_list:
             value = string_to_float(year_obs["value"])
-            if not isinstance(value, float):
+            if not isinstance(value, float) or math.isnan(value):
                 continue
             extracted_obs = {
                 "CountryCode": CountryCode,
