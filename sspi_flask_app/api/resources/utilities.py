@@ -288,24 +288,17 @@ def score_single_indicator(document_list, IndicatorCode):
     contain intermediates; does not require score function
     """
     document_list = convert_data_types(document_list)
-    final = append_goalpost_single(document_list, IndicatorCode)
+    final = goalpost_and_score_indicator(document_list, IndicatorCode)
     for doc in document_list:
         doc["IndicatorCode"] = IndicatorCode
         sspi_clean_api_data.validate_document_format(doc)
     return final
 
 
-def append_goalpost_single(document_list, IndicatorCode):
-    details = sspi_metadata.find(
-        {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})[0]
+def goalpost_and_score_indicator(document_list, IndicatorCode):
+    lg, ug = sspi_metadata.get_goalposts(IndicatorCode)
     for document in document_list:
-        document["LowerGoalpost"] = details["Metadata"]["LowerGoalpost"]
-        document["UpperGoalpost"] = details["Metadata"]["UpperGoalpost"]
-        document["Score"] = goalpost(
-            document["Value"],
-            details["Metadata"]["LowerGoalpost"],
-            details["Metadata"]["UpperGoalpost"]
-        )
+        document["Score"] = goalpost(document["Value"], lg, ug)
     return document_list
 
 
