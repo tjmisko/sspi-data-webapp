@@ -540,3 +540,35 @@ def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id=""
             "score_id": obs.get(score_id, None),
         })
     return list(item_levels.values())
+
+
+def slice_intermediate(doc_list, intermediate_code):
+    """
+    Utility taking for extracting intermediates from the output of
+    zip_intermediates
+
+    :param doc_list: List of documents to extract intermediates from, in the
+    format of the output of zip_intermediates.
+    :param intermediate_code: The code of the intermediate to extract.
+    """
+    intermediates = []
+    for doc in doc_list:
+        for intermediate in doc.get('Intermediates', []):
+            if intermediate.get('IntermediateCode') == intermediate_code:
+                intermediates.append(intermediate)
+    return intermediates
+
+
+def filter_imputations(doc_list):
+    """
+    Utility taking for extracting imputations from the output of
+    zip_intermediates
+
+    :param doc_list: List of documents to extract intermediates from, in the
+    format of the output of zip_intermediates.
+    """
+    imputations = []
+    for doc in doc_list:
+        if any([i.get('Imputed', False) for i in doc.get('Intermediates', [])]):
+            imputations.append(doc)
+    return imputations
