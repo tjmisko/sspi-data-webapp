@@ -421,6 +421,7 @@ def do_backward_extrapolate(year: int):
     """
     Extrapolate backward missing data for a given indicator
     """
+    series_id = request.args.getlist("SeriesID")
     if not request.is_json:
         return jsonify({"error": "Content-Type must be application/json"}), 400
     data = request.get_json(silent=True)
@@ -430,6 +431,8 @@ def do_backward_extrapolate(year: int):
         return jsonify({"error": "Data must be a list"}), 400
     if not all(isinstance(item, dict) for item in data):
         return jsonify({"error": "All items in data must be dictionaries"}), 400
+    if series_id:
+        return parse_json(extrapolate_backward(data, year, series_id=series_id))
     return parse_json(extrapolate_backward(data, year))
 
 
@@ -438,6 +441,7 @@ def do_forward_extrapolate(year: int):
     """
     Extrapolate backward missing data for a given indicator
     """
+    series_id = request.args.getlist("SeriesID")
     if not request.is_json:
         return jsonify({"error": "Content-Type must be application/json"}), 400
     data = request.get_json(silent=True)
@@ -447,6 +451,8 @@ def do_forward_extrapolate(year: int):
         return jsonify({"error": "Data must be a list"}), 400
     if not all(isinstance(item, dict) for item in data):
         return jsonify({"error": "All items in data must be dictionaries"}), 400
+    if series_id:
+        return parse_json(extrapolate_forward(data, year, series_id=series_id))
     return parse_json(extrapolate_forward(data, year))
 
 
