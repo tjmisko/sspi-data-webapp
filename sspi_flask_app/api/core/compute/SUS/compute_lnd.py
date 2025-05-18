@@ -67,6 +67,7 @@ def compute_watman():
     """
     app.logger.info("Running /api/v1/compute/WATMAN")
     sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
+    sspi_incomplete_api_data.delete_many({"IndicatorCode": "WATMAN"})
     raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
     watman_data = extract_sdg(raw_data)
     intermediate_map = {
@@ -86,17 +87,17 @@ def compute_watman():
     return parse_json(clean_list)
 
 
-@compute_bp.route("/STKHLM", methods=['GET'])
+@compute_bp.route("/CHMPOL", methods=['GET'])
 @login_required
-def compute_stkhlm():
-    app.logger.info("Running /api/v1/compute/STKHLM")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "STKHLM"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("STKHLM")
-    extracted_stkhlm = extract_sdg(raw_data)
-    filtered_stkhlm = filter_sdg(
-        extracted_stkhlm, {"SG_HAZ_CMRSTHOLM": "STKHLM"},
+def compute_chmpol():
+    app.logger.info("Running /api/v1/compute/CHMPOL")
+    sspi_clean_api_data.delete_many({"IndicatorCode": "CHMPOL"})
+    raw_data = sspi_raw_api_data.fetch_raw_data("CHMPOL")
+    extracted_chmpol = extract_sdg(raw_data)
+    filtered_chmpol = filter_sdg(
+        extracted_chmpol, {"SG_HAZ_CMRSTHOLM": "CHMPOL"},
     )
-    scored_list = score_single_indicator(filtered_stkhlm, "STKHLM")
+    scored_list = score_single_indicator(filtered_chmpol, "CHMPOL")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

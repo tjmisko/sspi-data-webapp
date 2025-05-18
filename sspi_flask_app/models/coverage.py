@@ -146,8 +146,10 @@ class DataCoverage:
                 if len(country_year_dict[country]) == 0:
                     msg += f"\nproblem: {country} has no observations."
                     continue
-                missing = [y for y in range(self.min_year, self.max_year)
+                missing = [y for y in range(self.min_year, self.max_year + 1)
                            if y not in country_year_dict[country]]
+                if len(missing) == 0:
+                    continue
                 msg += f"\n{country} missing years {missing}."
         return msg
 
@@ -172,5 +174,7 @@ class DataCoverage:
             else:
                 missing = [y for y in range(self.min_year, self.max_year + 1)
                            if y not in country_year_dict[country_code]]
+                if len(missing) == 0:
+                    continue
                 msg += f"\nIndicator code {indicator} missing years {missing}."
         return msg

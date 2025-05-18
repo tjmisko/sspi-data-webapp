@@ -540,3 +540,63 @@ def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id=""
             "score_id": obs.get(score_id, None),
         })
     return list(item_levels.values())
+
+
+def slice_intermediate(doc_list, intermediate_code):
+    """
+    Utility taking for extracting intermediates from the output of
+    zip_intermediates
+
+    :param doc_list: List of documents to extract intermediates from, in the
+    format of the output of zip_intermediates.
+    :param intermediate_code: The code of the intermediate to extract.
+    """
+    intermediates = []
+    for doc in doc_list:
+        for intermediate in doc.get('Intermediates', []):
+            if intermediate.get('IntermediateCode') == intermediate_code:
+                intermediates.append(intermediate)
+    return intermediates
+
+
+def filter_imputations(doc_list):
+    """
+    Utility taking for extracting imputations from the output of
+    zip_intermediates
+
+    :param doc_list: List of documents to extract intermediates from, in the
+    format of the output of zip_intermediates.
+    """
+    imputations = []
+    for doc in doc_list:
+        if any([i.get('Imputed', False) for i in doc.get('Intermediates', [])]):
+            imputations.append(doc)
+    return imputations
+
+
+def impute_global_average(country_code: str, start_year: int, end_year: int, ref_data: list[dict]):
+    """
+    Impute the global average for a given country and year range.
+
+    :param country_code: The country code to impute.
+    :param start_year: The starting year for the imputation.
+    :param end_year: The ending year for the imputation.
+    :param ref_data: The reference data to calculate the global average.
+    """
+    mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
+    mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
+    if not all([x["Unit"] == ref_data[0]["Unit"] for x in ref_data]):
+        raise ValueError("Units are not consistent across reference data.")
+    return [
+        {
+            "CountryCode": "SGP",
+            "IntermediateCode": "CWUEFF",
+            "Value": mean_value,
+            "Score": mean_score,
+            "Year": year,
+            "Unit": ref_data[0]["Unit"],
+            "Imputed": True,
+            "ImputationMethod": "ImputeGlobalAverage",
+        }
+        for year in range(start_year, end_year + 1)
+    ]
