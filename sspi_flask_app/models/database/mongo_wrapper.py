@@ -1,6 +1,7 @@
 import json
 from bson import ObjectId, json_util
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
+import math
 
 
 class MongoWrapper:
@@ -234,6 +235,10 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' must be a float or integer (document {document_number})")
+        if math.isnan(document["Value"]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Value' cannot be NaN (document {document_number})")
 
     def validate_unit(self, document: dict, document_number: int = 0):
         # Validate Unit format
