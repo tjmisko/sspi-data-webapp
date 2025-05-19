@@ -15,8 +15,8 @@ from sspi_flask_app.models.database.sspi_main_data_v3 import (
 from sspi_flask_app.models.database.sspi_metadata import (
     SSPIMetadata
 )
-from sspi_flask_app.models.database.sspi_partial_api_data import (
-    SSPIPartialAPIData
+from sspi_flask_app.models.database.sspi_score_data import (
+    SSPIScoreData
 )
 from sspi_flask_app.models.database.sspi_production_data import (
     SSPIProductionData
@@ -51,6 +51,9 @@ sspi_raw_outcome_data = SSPIRawAPIData(
 sspi_clean_outcome_data = SSPICleanAPIData(
     sspidb.sspi_clean_outcome_data
 )
+sspi_score_data = SSPIScoreData(
+    sspidb.sspi_score_data
+)
 sspi_country_characteristics = SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
 )
@@ -59,9 +62,6 @@ sspi_clean_api_data = SSPICleanAPIData(
 )
 sspi_incomplete_api_data = SSPIIncompleteAPIData(
     sspidb.sspi_incomplete_api_data
-)
-sspi_partial_api_data = SSPIPartialAPIData(
-    sspidb.sspi_partial_api_data
 )
 sspi_imputed_data = MongoWrapper(
     sspidb.sspi_imputed_data
