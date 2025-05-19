@@ -38,6 +38,26 @@ def overview(remote=False):
     click.secho("\nFinalization Complete", fg="green")
 
 
+@finalize.command(help="Finalize dynamic score data")
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+@click.option("--country", "-c", multiple=True, help="Country codes to finalize")
+@click.option("--country-group", "-g", default="SSPI67", help="Country group code to finalize")
+def score(remote=False, country=[], country_group="SSPI67"):
+    click.echo("Finalizing Dynamic Score Data")
+    connector = SSPIDatabaseConnector()
+    url = "/api/v1/production/finalize/dynamic/score"
+    if country or country_group:
+        url += "?"
+    if country_group:
+        url += f"CountryGroup={country_group}&"
+    if country:
+        url += "".join(["CountryCode={c}&".format(c=c) for c in country])
+    url = url.rstrip("&")
+    stream_response(connector.call(url, remote=remote, stream=True))
+    click.secho("\nFinalization Complete", fg="green")
+
+
+dynamic.add_command(score)
 dynamic.add_command(overview)
 dynamic.add_command(line)
 finalize.add_command(dynamic)
