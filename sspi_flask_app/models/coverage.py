@@ -10,10 +10,10 @@ class DataCoverage:
         self.min_year = min_year
         self.max_year = max_year
         self.country_group = country_group
-        if not country_group and countries:
-            self.country_codes = countries
-        else:
-            self.country_codes = sspi_metadata.country_group(country_group)
+        self.country_codes = set(countries)
+        if country_group:
+            self.country_codes.update(sspi_metadata.country_group(country_group))
+        self.country_codes = list(self.country_codes)
         if not indicator_details:
             self.indicator_details = sspi_metadata.indicator_details()
         else:
