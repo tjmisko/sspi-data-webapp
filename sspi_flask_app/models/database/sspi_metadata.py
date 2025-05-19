@@ -198,14 +198,16 @@ class SSPIMetadata(MongoWrapper):
         """
         return self.find_one({"DocumentType": "IndicatorCodes"})["Metadata"]
 
-    def country_group(self, CountryGroupName: str) -> list[str]:
+    def country_group(self, country_group_name: str) -> list[str]:
         """
         Return a list of all countries in the country group
         """
+        if not country_group_name:
+            return []
         return self.find_one({
             "DocumentType": "CountryGroup",
             "Metadata.CountryGroupName": {
-                "$regex": f"^{CountryGroupName}$",
+                "$regex": f"^{country_group_name}$",
                 "$options": "i"}
         })["Metadata"]["Countries"]
 
