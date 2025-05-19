@@ -11,6 +11,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_incomplete_api_data,
     sspi_imputed_data,
+    sspi_score_data,
     sspi_metadata,
     sspi_static_metadata,
     sspi_country_characteristics,
@@ -19,7 +20,6 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_partial_api_data,
     sspi_clean_outcome_data,
     sspi_raw_outcome_data,
     sspi_panel_data
@@ -72,7 +72,7 @@ def lookup_database(database_name):
         case "sspi_incomplete_api_data": return sspi_incomplete_api_data
         case "sspi_imputed_data": return sspi_imputed_data
         case "sspi_analysis": return sspi_analysis
-        case "sspi_production_data": return sspi_partial_api_data
+        case "sspi_score_data": return sspi_score_data
         case "sspi_country_characteristics": return sspi_country_characteristics
         case "sspi_static_rank_data": return sspi_static_rank_data
         case "sspi_static_radar_data": return sspi_static_radar_data
