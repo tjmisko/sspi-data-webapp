@@ -37,7 +37,7 @@ def test_integration_setup(sspi_indicator_details, sspi_aus_main_data):
 
 @pytest.fixture(scope="session")
 def sspi_aus_2018(sspi_indicator_details, sspi_aus_main_data):
-    yield SSPI(sspi_indicator_details, sspi_aus_main_data)
+    yield SSPI(sspi_indicator_details, sspi_aus_main_data, strict_year=False)
 
 
 def test_sspi_structure_real_data(sspi_aus_2018):
