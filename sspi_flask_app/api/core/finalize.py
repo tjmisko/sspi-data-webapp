@@ -455,7 +455,8 @@ def finalize_sspi_dynamic_score():
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] = None):
     mongo_query = {
         "CountryCode": {"$in": country_codes},
-        "IndicatorCode": {"$in": indicator_codes}
+        "IndicatorCode": {"$in": indicator_codes},
+        "Year": {"$gte": 2000, "$lte": 2023}
     }
     sspi_score_data.delete_many(mongo_query)
     details = sspi_metadata.indicator_details(filter=indicator_codes)
@@ -469,7 +470,11 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
         data_map[country_code].setdefault(observation["Year"], {"Data": [], "SSPI": None})
         data_map[country_code][observation["Year"]]["Data"].append(observation)
     yield "Scoring Data\n"
+    documents = []
     for country_code, year_data in data_map.items():
+        print(year_data)
         for year, data in year_data.items():
             data["SSPI"] = SSPI(details, data["Data"])
             yield f"{country_code}: {year}: {data["SSPI"].score()}\n"
+            documents.extend(data["SSPI"].score_documents())
+    sspi_score_data.insert_many(documents)
