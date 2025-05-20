@@ -163,6 +163,11 @@ def data_overview():
     return render_template("data-overview.html")
 
 
+@client_bp.route('/outcome')
+def outcome():
+    return render_template("outcome.html")
+
+
 @client_bp.route('/scores')
 def overall_scores():
     return render_template("scores.html")

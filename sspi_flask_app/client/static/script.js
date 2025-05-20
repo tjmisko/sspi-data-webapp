@@ -426,6 +426,16 @@ pillarLegendContext.fillRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)
 pillarLegendContext.strokeStyle=pillarColorsSolid[i]
 pillarLegendContext.linewidth=10
 pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}}
+class OutcomeScatterStatic{constructor(parentElement,outcomeVariable){this.outcomeVariable=outcomeVariable
+this.parentElement=parentElement;this.initRoot()
+}
+async fetch(){const response=await fetch(`/api/v1/...`);return response.json();}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('outcome-scatter-static')
+this.parentElement.appendChild(this.root)}
+initTitle(){}
+initChartJSCanvas(){}
+update(data){}}
 class StaticOverallStackedBarChart{constructor(parentElement,colormap={}){this.parentElement=parentElement;this.textColor='#bbb';this.gridColor='#cccccc33';this.initRoot()
 this.initTitle()
 if(Object.keys(colormap).length===0){this.initColormap()}else{this.colormap=colormap}
