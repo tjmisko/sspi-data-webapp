@@ -178,14 +178,14 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'ItemCode' is a required argument (document {document_number})")
-        if not len(document["ItemCode"]) == 6:
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'ItemCode' must be 6 characters long (document {document_number})")
         if not type(document["ItemCode"]) is str:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'ItemCode' must be a string (document {document_number})")
+        if len(document["ItemCode"]) not in [2, 3, 4, 6]:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'ItemCode' must be 6 characters long (document {document_number})")
         if not document["ItemCode"].isupper():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
@@ -251,6 +251,25 @@ class MongoWrapper:
             raise InvalidDocumentFormatError(
                 f"'Unit' must be a string (document {document_number})")
 
+    def validate_score(self, document: dict, document_number: int = 0):
+        # Validate Score format
+        if "Score" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Score' is a required argument (document {document_number})")
+        if not type(document["Score"]) in [int, float]:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Score' must be a float or integer (document {document_number})")
+        if "Score" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Score' is a required argument (document {document_number})")
+        if not type(document["Score"]) in [int, float]:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Score' must be a float or integer (document {document_number})")
+
     def validate_intermediates(self, document: dict, document_number: int = 0):
         if "Intermediates" in document.keys():
             self.validate_intermediates_list(
@@ -310,33 +329,3 @@ class MongoWrapper:
                 raise InvalidDocumentFormatError(
                     f"Duplicate intermediate document found (document {document_number})")
             id_set.add(document_id)
-
-
-class SSPICleanAPIData(MongoWrapper):
-
-    def validate_document_format(self, document: dict, document_number: int = 0):
-        self.validate_country_code(document, document_number)
-        self.validate_indicator_code(document, document_number)
-        self.validate_year(document, document_number)
-        self.validate_value(document, document_number)
-        self.validate_score(document, document_number)
-        self.validate_unit(document, document_number)
-
-    def validate_score(self, document: dict, document_number: int = 0):
-        # Validate Score format
-        if "Score" not in document.keys():
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'Score' is a required argument (document {document_number})")
-        if not type(document["Score"]) in [int, float]:
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'Score' must be a float or integer (document {document_number})")
-        if "Score" not in document.keys():
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'Score' is a required argument (document {document_number})")
-        if not type(document["Score"]) in [int, float]:
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'Score' must be a float or integer (document {document_number})")

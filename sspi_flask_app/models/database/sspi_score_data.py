@@ -7,6 +7,6 @@ class SSPIScoreData(MongoWrapper):
         """
         """
         self.validate_country_code(document, document_number)
-        self.validate_indicator_code(document, document_number)
+        self.validate_item_code(document, document_number)
         self.validate_year(document, document_number)
         self.validate_score(document, document_number)
