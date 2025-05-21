@@ -198,14 +198,16 @@ class SSPIMetadata(MongoWrapper):
         """
         return self.find_one({"DocumentType": "IndicatorCodes"})["Metadata"]
 
-    def country_group(self, CountryGroupName: str) -> list[str]:
+    def country_group(self, country_group_name: str) -> list[str]:
         """
         Return a list of all countries in the country group
         """
+        if not country_group_name:
+            return []
         return self.find_one({
             "DocumentType": "CountryGroup",
             "Metadata.CountryGroupName": {
-                "$regex": f"^{CountryGroupName}$",
+                "$regex": f"^{country_group_name}$",
                 "$options": "i"}
         })["Metadata"]["Countries"]
 
@@ -237,12 +239,18 @@ class SSPIMetadata(MongoWrapper):
                 group_list.append(g["Metadata"]["CountryGroupName"])
         return group_list
 
-    def indicator_details(self) -> list[dict]:
+    def indicator_details(self, filter=[]) -> list[dict]:
         """
         Return a list of metadata dictionaries containing indicator details
+
+        :param filter: A list of indicator codes to filter the results. Only
+        details with codes in this list will be returned. If empty, all
+        indicator details will be returned.
         """
         flat_list = []
         for detail in self.find({"DocumentType": "IndicatorDetail"}):
+            if filter and detail["Metadata"]["IndicatorCode"] not in filter:
+                continue
             flat_list.append(detail["Metadata"])
         return flat_list
 

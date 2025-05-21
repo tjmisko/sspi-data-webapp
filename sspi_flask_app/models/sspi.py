@@ -5,15 +5,23 @@ from sspi_flask_app.models.errors import (
 
 
 class SSPI:
-    def __init__(self, indicator_details: list[dict], indicator_scores: list[dict]):
+    def __init__(self, indicator_details: list[dict], indicator_scores: list[dict], strict_year: bool = True):
         """
-        indicator_details - Expects a list of dictionaries in Metadata format (see sspi_metadata)
-        country_scores - Expects a list of dictionaries of scores for a given country
-        - [ ] To-do @tjmisko: set up to handle years, maybe with an SSPIDynamic Object with SSPI objects
-        - [ ] How might it make sense to do this? Keep one object in memory and run different lists of data through it to put in new data based on that instead of building a new object fresh every time
+        Generate SSPI scores for a country and year
+
+        :param indicator_details: Expects a list of dictionaries in Metadata format (see sspi_metadata)
+        :param indicator_scores: Expects a list of dictionaries of scores for a given country
         """
         self._indicator_details = indicator_details
         self._indicator_scores = indicator_scores
+        mismatch = "{} mismatch detected in indicator_scores"
+        assert all([indicator_scores[i]["CountryCode"] == indicator_scores[0]["CountryCode"]
+                    for i in range(len(indicator_scores))]), mismatch.format("CountryCode")
+        if strict_year:
+            assert all([indicator_scores[i]["Year"] == indicator_scores[0]["Year"]
+                        for i in range(len(indicator_scores))]), mismatch.format("Year")
+        self.country_code = indicator_scores[0]["CountryCode"]
+        self.year = indicator_scores[0]["Year"]
         self.pillars = []
         self.load(indicator_details, indicator_scores)
         self.categories = []
@@ -24,7 +32,7 @@ class SSPI:
             self.indicators += c.indicators
 
     def score(self) -> float:
-        return sum([pillar.score() for pillar in self.pillars])/len(self.pillars)
+        return sum([pillar.score() for pillar in self.pillars]) / len(self.pillars)
 
     def score_tree(self):
         tree = {"SSPI": {"Score": self.score(), "Pillars": []}}
@@ -50,6 +58,59 @@ class SSPI:
                         "Year": indicator.year
                     })
         return tree
+
+    def score_documents(self) -> list[dict]:
+        """
+        Returns a list of documents with the scores for at each level.
+
+        Document Structure:
+        {
+            CountryCode: CountryCode
+            ItemCode: SSPI | PillarCode | CategoryCode | IndicatorCode
+            ItemType: SSPI | Pillar | Category | Indicator
+            ItemName: Name of the item
+            Score: Score of the item
+            Year: Year of the score
+            CumulativeImputationDistance: pass
+            AverageImputationDistance: pass
+            EstimatedImputationError: pass
+        }
+        """
+        documents = []
+        identifiers = {
+            "CountryCode": self.country_code,
+            "Year": self.year,
+        }
+        overall = {
+            "ItemCode": "SSPI",
+            "ItemType": "SSPI",
+            "ItemName": "SSPI",
+            "Score": self.score(),
+            "Children": [p.code for p in self.pillars]
+        }
+        overall.update(identifiers)
+        documents.append(overall)
+        for pillar in self.pillars:
+            pillar_doc = {
+                "ItemCode": pillar.code,
+                "ItemType": "Pillar",
+                "ItemName": pillar.name,
+                "Score": pillar.score(),
+                "Children": [c.code for c in pillar.categories]
+            }
+            pillar_doc.update(identifiers)
+            documents.append(pillar_doc)
+            for category in pillar.categories:
+                category_doc = {
+                    "ItemCode": category.code,
+                    "ItemType": "Category",
+                    "ItemName": category.name,
+                    "Score": category.score(),
+                    "Children": [i.code for i in category.indicators]
+                }
+                category_doc.update(identifiers)
+                documents.append(category_doc)
+        return documents
 
     def pillar_scores(self):
         return {pillar.code: pillar.score() for pillar in self.pillars}
@@ -77,6 +138,7 @@ class SSPI:
                 f"indicator_scores {len(indicator_scores)} must match!"
             )
             raise DataOrderError(error_msg)
+
         indicator_score_lookup = {}
         for i in indicator_scores:
             indicator_score_lookup[i["IndicatorCode"]] = i

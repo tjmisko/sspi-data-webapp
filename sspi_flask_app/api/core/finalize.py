@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, Response, stream_with_context
+from flask import Blueprint, Response, stream_with_context, request
 from flask import current_app as app
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
-    # sspi_imputed_data,
+    sspi_imputed_data,
+    sspi_score_data,
     sspi_metadata,
     sspi_static_metadata,
     sspi_main_data_v3,
@@ -18,6 +19,7 @@ from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
     colormap
 )
+from sspi_flask_app.models.coverage import DataCoverage
 from sspi_flask_app.models.sspi import SSPI
 from sspi_flask_app.models.rank import SSPIRankingTable
 import re
@@ -359,7 +361,6 @@ def finalize_matrix_iterator(local_path, endpoints):
         r'(?<=api/v1/collect/)(?!static)[\w]*', r)
         for r in endpoints] if r is not None
     ]
-    print(collect_implemented)
     compute_implemented = [r.group(0) for r in [re.search(
         r'(?<=api/v1/compute/)(?!static)[\w]*', r)
         for r in endpoints] if r is not None
@@ -433,3 +434,47 @@ def finalize_matrix_iterator(local_path, endpoints):
         if count % 100 == 0 or count == len(result):
             yield f"Finalizing Observation {count} / {len(result)}\n"
         count += 1
+
+
+@finalize_bp.route("/production/finalize/dynamic/score")
+@login_required
+def finalize_sspi_dynamic_score():
+    """
+    Prepare the data for a Chart.js line plot
+    """
+    countries = request.args.getlist("CountryCode")
+    country_group = request.args.get("CountryGroup")
+    coverage = DataCoverage(2000, 2023, country_group, countries=countries)
+    indicator_list = coverage.complete()
+    country_list = coverage.country_codes
+    app.logger.info(f"country_list: {country_list}")
+    app.logger.info(f"indicator_list: {indicator_list}")
+    return Response(finalize_sspi_dynamic_score_iterator(indicator_list, country_list), mimetype='text/event-stream')
+
+
+def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] = None):
+    mongo_query = {
+        "CountryCode": {"$in": country_codes},
+        "IndicatorCode": {"$in": indicator_codes},
+        "Year": {"$gte": 2000, "$lte": 2023}
+    }
+    sspi_score_data.delete_many(mongo_query)
+    details = sspi_metadata.indicator_details(filter=indicator_codes)
+    clean_data = sspi_clean_api_data.find(mongo_query)
+    imputed_data = sspi_imputed_data.find(mongo_query)
+    yield "Building Data Map\n"
+    data_map = {}
+    for observation in clean_data + imputed_data:
+        country_code = observation["CountryCode"]
+        data_map.setdefault(country_code, {})
+        data_map[country_code].setdefault(observation["Year"], {"Data": [], "SSPI": None})
+        data_map[country_code][observation["Year"]]["Data"].append(observation)
+    yield "Scoring Data\n"
+    documents = []
+    for country_code, year_data in data_map.items():
+        print(year_data)
+        for year, data in year_data.items():
+            data["SSPI"] = SSPI(details, data["Data"])
+            yield f"{country_code}: {year}: {data["SSPI"].score()}\n"
+            documents.extend(data["SSPI"].score_documents())
+    sspi_score_data.insert_many(documents)
