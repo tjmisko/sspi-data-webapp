@@ -112,3 +112,8 @@ def query_intermediate_codes():
 @query_bp.route("/metadata/intermediate_detail/<intermediate_code>", methods=["GET"])
 def query_intermediate_detail(intermediate_code):
     return parse_json(sspi_metadata.get_intermediate_detail(intermediate_code))
+
+
+@query_bp.route("/metadata/item_detail/<item_code>", methods=["GET"])
+def query_item_detail(item_code):
+    return parse_json(sspi_metadata.get_item_detail(item_code))

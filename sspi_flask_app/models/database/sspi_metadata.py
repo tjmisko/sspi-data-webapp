@@ -112,8 +112,10 @@ class SSPIMetadata(MongoWrapper):
         metadata.append(self.build_intermediate_codes(intermediate_details))
         metadata.extend(self.build_country_groups(country_groups))
         metadata.extend(self.build_intermediate_details(intermediate_details))
-        metadata.extend(self.build_indicator_details(
-            indicator_details, intermediate_details))
+        metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
+        metadata.extend(self.build_category_details(indicator_details))
+        metadata.extend(self.build_pillar_details(indicator_details))
+        metadata.extend(self.build_overall_detail(indicator_details))
         return metadata
 
     def build_pillar_codes(self, indicator_details: pd.DataFrame) -> dict:
@@ -177,6 +179,74 @@ class SSPIMetadata(MongoWrapper):
         return [
             {"DocumentType": "IndicatorDetail", "Metadata": indicator_detail}
             for indicator_detail in indicator_details_list
+        ]
+
+    def build_category_details(self, indicator_details: pd.DataFrame) -> list[dict]:
+        json_string = str(indicator_details.to_json(orient="records"))
+        indicator_details_list = json.loads(json_string)
+        category_detail_map = {}
+        for indicator in indicator_details_list:
+            if not indicator["CategoryCode"] in category_detail_map.keys():
+                category_detail_map[indicator["CategoryCode"]] = {
+                    "CategoryCode": indicator["CategoryCode"],
+                    "CategoryName": indicator["Category"],
+                    "PillarCode": indicator["PillarCode"],
+                    "PillarName": indicator["Pillar"],
+                    "IndicatorCodes": []
+                }
+            category_detail_map[indicator["CategoryCode"]]["IndicatorCodes"].append(
+                indicator["IndicatorCode"]
+            )
+        return [
+            {"DocumentType": "CategoryDetail", "Metadata": category_detail} for
+            category_detail in category_detail_map.values()
+        ]
+
+    def build_pillar_details(self, indicator_details: pd.DataFrame) -> list[dict]:
+        json_string = str(indicator_details.to_json(orient="records"))
+        indicator_details_list = json.loads(json_string)
+        pillar_detail_map = {}
+        for indicator in indicator_details_list:
+            if not indicator["PillarCode"] in pillar_detail_map.keys():
+                pillar_detail_map[indicator["PillarCode"]] = {
+                    "PillarCode": indicator["PillarCode"],
+                    "PillarName": indicator["Pillar"],
+                    "CategoryCodes": set(),
+                    "IndicatorCodes": []
+                }
+            pillar_detail_map[indicator["PillarCode"]]["CategoryCodes"].add(
+                indicator["CategoryCode"]
+            )
+            pillar_detail_map[indicator["PillarCode"]]["IndicatorCodes"].append(
+                indicator["IndicatorCode"]
+            )
+        for pillar_code in pillar_detail_map.keys():
+            pillar_detail_map[pillar_code]["CategoryCodes"] = list(
+                pillar_detail_map[pillar_code]["CategoryCodes"]
+            )
+        return [
+            {"DocumentType": "PillarDetail", "Metadata": pillar_detail} for
+            pillar_detail in pillar_detail_map.values()
+        ]
+
+    def build_overall_detail(self, indicator_details: pd.DataFrame) -> list[dict]:
+        json_string = str(indicator_details.to_json(orient="records"))
+        indicator_details_list = json.loads(json_string)
+        overall_detail = {
+            "Code": "SSPI",
+            "Name": "Sustainable and Shared Prosperity Policy Index",
+            "PillarCodes": set(),
+            "CategoryCodes": set(),
+            "IndicatorCodes": []
+        }
+        for indicator in indicator_details_list:
+            overall_detail["PillarCodes"].add(indicator["PillarCode"])
+            overall_detail["CategoryCodes"].add(indicator["CategoryCode"])
+            overall_detail["IndicatorCodes"].append(indicator["IndicatorCode"])
+        overall_detail["PillarCodes"] = list(overall_detail["PillarCodes"])
+        overall_detail["CategoryCodes"] = list(overall_detail["CategoryCodes"])
+        return [
+            {"DocumentType": "OverallDetail", "Metadata": overall_detail}
         ]
 
     # Getters
@@ -302,3 +372,48 @@ class SSPIMetadata(MongoWrapper):
             "Metadata.IntermediateCode": IntermediateCode
         }
         return self.find_one(query)["Metadata"]
+
+    def get_item_detail(self, ItemCode: str) -> dict:
+        """
+        Return a document containing the item details for a specific ItemCode
+
+        :param ItemCode: The item code for which to get the details (SSPI, PillarCode, CategoryCode, IndicatorCode, IntermediateCode)
+        """
+        result = self.find_one({
+            "$expr": {
+                "$eq": [
+                    {
+                        "$switch": {
+                            "branches": [
+                                {
+                                    "case": {"$eq": ["$DocumentType", "IndicatorDetail"]},
+                                    "then": "$Metadata.IndicatorCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "IntermediateDetail"]},
+                                    "then": "$Metadata.IntermediateCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "CategoryDetail"]},
+                                    "then": "$Metadata.CategoryCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "PillarDetail"]},
+                                    "then": "$Metadata.PillarCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "OverallDetail"]},
+                                    "then": "$Metadata.Code"
+                                }
+                            ],
+                            "default": None
+                        }
+                    },
+                    ItemCode
+                ]
+            }
+        })["Metadata"]
+        if not result:
+            return {"Error": "ItemCode not found"}
+        return result
+
