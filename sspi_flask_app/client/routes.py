@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, url_for, current_app as app
+from flask import Blueprint, render_template, request, current_app as app
 from flask_login import login_required
 import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json
+from sspi_flask_app.models.database import sspi_metadata
 
 
 client_bp = Blueprint(
@@ -45,7 +46,13 @@ def country_data(CountryCode):
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
-    return render_template('indicator-data.html', IndicatorCode=IndicatorCode)
+    indicator_options = sspi_metadata.indicator_options()
+    print(indicator_options)
+    return render_template(
+        'indicator-data.html',
+        IndicatorCode=IndicatorCode,
+        indicator_options=indicator_options
+    )
 
 
 @client_bp.route('/data/category/<CategoryCode>')
