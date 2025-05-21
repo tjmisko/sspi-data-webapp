@@ -44,7 +44,7 @@ def finalize_iterator(local_path, endpoints):
     yield "Finalizing Static Stack Data\n"
     finalize_static_overall_stack_data()
     yield "Finalizing Dynamic Line Data\n"
-    yield from finalize_dynamic_line_iterator()
+    yield from finalize_dynamic_line_data()
     yield "Finalizing Dynamic Matrix Data\n"
     yield from finalize_matrix_iterator(local_path, endpoints)
     yield "Finalization Complete\n"
@@ -266,44 +266,51 @@ def finalize_sspi_static_radar_data():
 
 @finalize_bp.route("/production/finalize/dynamic/line")
 @login_required
-def finalize_sspi_dynamic_line_data():
+def finalize_dynamic_line_data():
     """
     Prepare the data for a Chart.js line plot
     """
-    return Response(finalize_dynamic_line_iterator(), mimetype='text/event-stream')
-
-
-def finalize_dynamic_line_iterator():
+    def combined_iterator():
+        yield from finalize_dynamic_line_indicator_datasets()
+        yield from finalize_dynamic_line_score_datasets()
     sspi_dynamic_line_data.delete_many({})
+    return Response(combined_iterator(), mimetype='text/event-stream')
+
+
+def finalize_dynamic_line_indicator_datasets():
+    min_year = 2000
+    max_year = datetime.now().year
+    label_list = list(range(min_year, max_year + 1))
     indicator_codes = sspi_metadata.indicator_codes()
+    indicator_data = sspi_clean_api_data.find({
+        "IndicatorCode": {"$in": indicator_codes},
+        "Year": {"$gte": min_year, "$lte": max_year}
+    })
+    data_map = {}
+    for obs in indicator_data:
+        indicator_code = obs["IndicatorCode"]
+        country_code = obs["CountryCode"]
+        data_map.setdefault(indicator_code, {})
+        data_map[indicator_code].setdefault(country_code, [])
+        data_map[indicator_code][country_code].append(obs)
     count = 1
-    for IndicatorCode in indicator_codes:
-        yield f"{IndicatorCode} [ {count} of {len(indicator_codes)} ]\n"
-        detail = sspi_metadata.get_indicator_detail(IndicatorCode)
-        lg, ug = detail["LowerGoalpost"], detail["UpperGoalpost"]
-        lg = 0 if not lg else lg  # if the indicator doesn't have goalposts, it's an aggregate index
-        ug = 1 if not ug else ug  # if the indicator doesn't have goalposts, it's an aggregate index
-        indicator_dict = {}
-        data = sspi_clean_api_data.find(
-            {"IndicatorCode": IndicatorCode},
-            {"_id": 0}
-        )
-        min_year = 2000
-        max_year = datetime.now().year
-        label_list = list(range(min_year, max_year + 1))
-        for observation in data:
-            CountryCode = observation["CountryCode"]
-            if CountryCode not in indicator_dict.keys():
-                indicator_dict[CountryCode] = []
-            indicator_dict[CountryCode].append(observation)
-        for CountryCode, document in indicator_dict.items():
-            document = sorted(document, key=lambda x: x["Year"])
-            group_list = sspi_metadata.get_country_groups(CountryCode)
+    for indicator_code in indicator_codes:
+        yield f"{indicator_code} [ {count} of {len(indicator_codes)} ]\n"
+        detail = sspi_metadata.get_indicator_detail(indicator_code)
+        lg, ug = sspi_metadata.get_goalposts(indicator_code)
+        lg = 0 if not lg else lg  # aggregates may not have goalposts
+        ug = 1 if not ug else ug  # aggregates may not have goalposts
+        if not data_map.get(indicator_code, None):
+            count += 1
+            continue
+        for country_code, obs_list in data_map[indicator_code].items():
+            obs_list = sorted(obs_list, key=lambda x: x["Year"])
+            group_list = sspi_metadata.get_country_groups(country_code)
             years = [None] * len(label_list)
             scores = [None] * len(label_list)
             values = [None] * len(label_list)
             data = [None] * len(label_list)
-            for doc in document:
+            for doc in obs_list:
                 try:
                     year_index = label_list.index(doc["Year"])
                 except ValueError:
@@ -313,10 +320,10 @@ def finalize_dynamic_line_iterator():
                 scores[year_index] = doc["Score"]
                 values[year_index] = doc["Value"]
                 data[year_index] = doc["Score"]
-            document = {
-                "CCode": CountryCode,
-                "CName": country_code_to_name(CountryCode),
-                "ICode": IndicatorCode,
+            dataset = {
+                "CCode": country_code,
+                "CName": country_code_to_name(country_code),
+                "ICode": indicator_code,
                 "IName": detail["Indicator"],
                 "CatCode": detail["CategoryCode"],
                 "CatName": detail["Category"],
@@ -329,7 +336,7 @@ def finalize_dynamic_line_iterator():
                 },
                 "pinned": False,
                 "hidden": "SSPI49" not in group_list,
-                "label": f"{CountryCode} - {country_code_to_name(CountryCode)}",
+                "label": f"{country_code} - {country_code_to_name(country_code)}",
                 "years": years,
                 "minYear": min_year,
                 "maxYear": max_year,
@@ -339,7 +346,59 @@ def finalize_dynamic_line_iterator():
                 "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
                 "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
             }
-            sspi_dynamic_line_data.insert_one(document)
+            sspi_dynamic_line_data.insert_one(dataset)
+        count += 1
+
+
+def finalize_dynamic_line_score_datasets():
+    min_year = 2000
+    max_year = datetime.now().year
+    scores = sspi_score_data.find({})
+    score_map = {}
+    for observation in scores:
+        country_code = observation["CountryCode"]
+        item_code = observation["ItemCode"]
+        score_map.setdefault(item_code, {})
+        score_map[item_code].setdefault(country_code, [])
+        score_map[item_code][country_code].append(observation)
+    count = 1
+    for item_code in score_map.keys():
+        yield f"{item_code} [ {count} of {len(score_map.keys())} ]\n"
+        detail = sspi_metadata.get_item_detail(item_code)
+        # find the most specific name in the detail
+        name_spec = ["IntermediateName", "IndicatorName",
+                     "CategoryName", "PillarName", "Name"]
+        item_name = ""
+        for name in name_spec:
+            if name in detail.keys():
+                item_name = name
+                break
+        for country_code, obs_list in score_map[item_code].items():
+            group_list = sspi_metadata.get_country_groups(country_code)
+            obs_list = sorted(obs_list, key=lambda x: x["Year"])
+            dataset = {
+                "CCode": country_code,
+                "CName": country_code_to_name(country_code),
+                "ICode": item_code,
+                "IName": item_name,
+                "CGroup": group_list,
+                "Detail": detail,
+                "parsing": {
+                    "xAxisKey": "years",
+                    "yAxisKey": "scores"
+                },
+                "pinned": False,
+                "hidden": "SSPI67" not in group_list,
+                "label": f"{country_code} - {country_code_to_name(country_code)}",
+                "years": [o["Year"] for o in obs_list],
+                "minYear": min_year,
+                "maxYear": max_year,
+                "data": [o["Score"] for o in obs_list],
+                "score": [o["Score"] for o in obs_list],
+                "yAxisMinValue": 0,
+                "yAxisMaxValue": 1
+            }
+            sspi_dynamic_line_data.insert_one(dataset)
         count += 1
 
 
@@ -442,6 +501,7 @@ def finalize_sspi_dynamic_score():
     """
     Prepare the data for a Chart.js line plot
     """
+    sspi_score_data.delete_many({})
     countries = request.args.getlist("CountryCode")
     country_group = request.args.get("CountryGroup")
     coverage = DataCoverage(2000, 2023, country_group, countries=countries)
@@ -458,7 +518,6 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
         "IndicatorCode": {"$in": indicator_codes},
         "Year": {"$gte": 2000, "$lte": 2023}
     }
-    sspi_score_data.delete_many(mongo_query)
     details = sspi_metadata.indicator_details(filter=indicator_codes)
     clean_data = sspi_clean_api_data.find(mongo_query)
     imputed_data = sspi_imputed_data.find(mongo_query)
@@ -467,7 +526,8 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
     for observation in clean_data + imputed_data:
         country_code = observation["CountryCode"]
         data_map.setdefault(country_code, {})
-        data_map[country_code].setdefault(observation["Year"], {"Data": [], "SSPI": None})
+        data_map[country_code].setdefault(
+            observation["Year"], {"Data": [], "SSPI": None})
         data_map[country_code][observation["Year"]]["Data"].append(observation)
     yield "Scoring Data\n"
     documents = []

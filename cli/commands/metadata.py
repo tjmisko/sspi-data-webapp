@@ -66,6 +66,25 @@ def intermediate(intermediate_code):
         echo_pretty(result.text)
 
 
+@metadata.command(help="Get SSPI Item Metadata")
+@click.argument("item_code", type=str, required=False)
+def item(item_code):
+    """Get SSPI Intermediate Metadata
+    """
+    connector = SSPIDatabaseConnector()
+    item_code = item_code.upper() if item_code else None
+    url = f"/api/v1/query/metadata/item_detail/{item_code}"
+    result = connector.call(url)
+    click.echo(json.dumps(result.json()))
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Intermediate Query Failed with Status Code {
+                result.status_code}"
+        )
+        echo_pretty(result.header)
+        echo_pretty(result.text)
+
+
 @metadata.group(help="Get Country Metadata from the SSPI Database")
 def country():
     pass
