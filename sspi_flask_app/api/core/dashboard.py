@@ -213,6 +213,44 @@ def get_dynamic_indicator_line_data(IndicatorCode):
     })
 
 
+@dashboard_bp.route('/panel/score/<ItemCode>', methods=["GET"])
+def get_dynamic_category_line_data(ItemCode):
+    """
+    Get the dynamic data for the given category code for a line chart
+    """
+    country_query = request.args.getlist("CountryCode")
+    query = {"ICode": ItemCode}
+    if country_query:
+        query["CCode"] = {"$in": country_query}
+    dynamic_category_data = parse_json(
+        sspi_dynamic_line_data.find(query)
+    )
+    min_year = dynamic_category_data[0]["minYear"]
+    max_year = dynamic_category_data[0]["maxYear"]
+    year_labels = [str(year) for year in range(min_year, max_year + 1)]
+    if not dynamic_category_data:
+        return jsonify({"error": "No data found"})
+    name = dynamic_category_data[0]["IName"]
+    chart_title = f"{name} ({ItemCode}) Score"
+    group_options = sspi_metadata.country_groups()
+    return jsonify({
+        "data": dynamic_category_data,
+        "title": {
+            "display": True,
+            "text": chart_title,
+            "font": {
+                "size": 18
+            },
+            "color": "#ccc",
+            "align": "start"
+        },
+        "labels": year_labels,
+        "description": "",
+        "groupOptions": group_options,
+        "hasScore": True
+    })
+
+
 @dashboard_bp.route('/static/radar/<CountryCode>')
 def get_static_radar_data(CountryCode):
     radar_data = sspi_static_radar_data.find_one({"CCode": CountryCode})

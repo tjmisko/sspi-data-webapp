@@ -57,7 +57,24 @@ def indicator_data(IndicatorCode):
 
 @client_bp.route('/data/category/<CategoryCode>')
 def category_data(CategoryCode):
-    return render_template('category-data.html', CategoryCode=CategoryCode)
+    category_options = sspi_metadata.category_options()
+    print(category_options)
+    return render_template(
+        'category-data.html',
+        CategoryCode=CategoryCode,
+        category_options=category_options
+    )
+
+
+@client_bp.route('/data/pillar/<PillarCode>')
+def pillar_data(PillarCode):
+    pillar_options = sspi_metadata.pillar_options()
+    print(pillar_options)
+    return render_template(
+        'pillar-data.html',
+        PillarCode=PillarCode,
+        pillar_options=pillar_options
+    )
 
 
 @client_bp.route('/indicators')
