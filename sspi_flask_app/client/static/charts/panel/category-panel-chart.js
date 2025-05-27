@@ -28,7 +28,7 @@ class CategoryPanelChart extends PanelChart {
                 max: 1,
                 title: {
                     display: true,
-                    text: 'Indicator Score',
+                    text: 'Category Score',
                     color: this.axisTitleColor,
                     font: {
                         size: 16
