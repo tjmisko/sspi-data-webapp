@@ -21,6 +21,8 @@ def compile_static_assets(assets):
         'client_bp/charts/panel/panel-chart.js',
         'client_bp/charts/panel/item-panel-chart.js',
         'client_bp/charts/panel/indicator-panel-chart.js',
+        'client_bp/charts/panel/category-panel-chart.js',
+        'client_bp/charts/panel/pillar-panel-chart.js',
         'client_bp/charts/static/*.js',
         'client_bp/charts/matrix/*.js',
         filters='jsmin',

@@ -13,7 +13,6 @@ import json
 from flask import (
     Blueprint,
     Response,
-    session,
     jsonify,
     request,
     render_template,
@@ -170,12 +169,6 @@ def get_dynamic_indicator_line_data(IndicatorCode):
     """
     Get the dynamic data for the given indicator code for a line chart
     """
-    def validate_preferences(preferences):
-        if not preferences:
-            return None
-        if not preferences.get("pinnedArray"):
-            return None
-        return preferences
     indicator_description = sspi_metadata.find_one({
         "DocumentType": "IndicatorDetail",
         "Metadata.IndicatorCode": IndicatorCode
