@@ -7,7 +7,9 @@
 {% block content %}
 <section class="hero-box">
     <select class="indicator-dropdown">
-        {% include 'indicator-options.html' %}
+        {% for option in indicator_options %}
+            <option value={{ option.Value }}>{{option.Name}} ({{option.Value}})</option>
+        {% endfor %}
     </select>
     <p class="hero-text" id="dynamic-indicator-description"></p>
     <script>
@@ -20,7 +22,6 @@
 </section>
 
 <section class="chart-section" id="dynamic-data-section"></section>
-
 <section class="chart-section" id="static-data-section"></section>
 
 <script>

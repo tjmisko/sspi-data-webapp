@@ -268,6 +268,137 @@ class SSPIMetadata(MongoWrapper):
         """
         return self.find_one({"DocumentType": "IndicatorCodes"})["Metadata"]
 
+    def indicator_options(self) -> list[str]:
+        """
+        Return a list of documents to build indicator options HTML for the dropdown
+        """
+        option_list = []
+        for detail in self.find({"DocumentType": "IndicatorDetail"}):
+            option_list.append({
+                "Name": detail["Metadata"]["Indicator"],
+                "Value": detail["Metadata"]["IndicatorCode"],
+            })
+        return option_list
+
+    def category_options(self) -> list[str]:
+        """
+        Return a list of documents to build category options HTML for the dropdown
+        """
+        option_list = []
+        for detail in self.find({"DocumentType": "CategoryDetail"}):
+            option_list.append({
+                "Name": detail["Metadata"]["CategoryName"],
+                "Value": detail["Metadata"]["CategoryCode"],
+            })
+        return option_list
+
+    def pillar_options(self) -> list[str]:
+        """
+        Return a list of documents to build pillar options HTML for the dropdown
+        """
+        option_list = []
+        for detail in self.find({"DocumentType": "PillarDetail"}):
+            option_list.append({
+                "Name": detail["Metadata"]["Pillar"],
+                "Value": detail["Metadata"]["PillarCode"],
+            })
+        return option_list
+
+    def get_indicator_detail(self, IndicatorCode: str) -> dict:
+        """
+        Return the detail for a particular indicator for IndicatorCode
+        """
+        query = {
+            "DocumentType": "IndicatorDetail",
+            "Metadata.IndicatorCode": IndicatorCode
+        }
+        return self.find_one(query)["Metadata"]
+
+    def get_goalposts(self, IndicatorCode: str) -> tuple[int | float, int | float]:
+        """
+        Returns a tuple of the lower and upper goalposts for the given indicator
+
+        :param IndicatorCode: The indicator code for which to get the goalposts
+        """
+        indicator_detail = self.get_indicator_detail(IndicatorCode)
+        lg = indicator_detail["LowerGoalpost"]
+        ug = indicator_detail["UpperGoalpost"]
+        return lg, ug
+
+    def intermediate_details(self) -> list[dict]:
+        """
+        Return a list of documents containg intermediate details
+        """
+        flat_list = []
+        for detail in self.find({"DocumentType": "IntermediateDetail"}):
+            flat_list.append(detail["Metadata"])
+        return flat_list
+
+    def intermediate_codes(self) -> list[str]:
+        """
+        Return a list of documents containg intermediate details
+        """
+        code_list = []
+        for detail in self.find({"DocumentType": "IntermediateDetail"}):
+            code_list.append(detail["Metadata"]["IntermediateCode"])
+        return code_list
+
+    def get_intermediate_detail(self, IntermediateCode: str) -> dict:
+        """
+        Return a document containing indicator details for a specific IndicatorCode
+        """
+        query = {
+            "DocumentType": "IntermediateDetail",
+            "Metadata.IntermediateCode": IntermediateCode
+        }
+        return self.find_one(query)["Metadata"]
+
+    def get_item_detail(self, ItemCode: str) -> dict:
+        """
+        Return a document containing the item details for a specific ItemCode
+
+        :param ItemCode: The item code for which to get the details (SSPI, PillarCode, CategoryCode, IndicatorCode, IntermediateCode)
+        """
+        result = self.find_one({
+            "$expr": {
+                "$eq": [
+                    {
+                        "$switch": {
+                            "branches": [
+                                {
+                                    "case": {"$eq": ["$DocumentType", "IndicatorDetail"]},
+                                    "then": "$Metadata.IndicatorCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "IntermediateDetail"]},
+                                    "then": "$Metadata.IntermediateCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "CategoryDetail"]},
+                                    "then": "$Metadata.CategoryCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "PillarDetail"]},
+                                    "then": "$Metadata.PillarCode"
+                                },
+                                {
+                                    "case": {"$eq": ["$DocumentType", "OverallDetail"]},
+                                    "then": "$Metadata.Code"
+                                }
+                            ],
+                            "default": None
+                        }
+                    },
+                    ItemCode
+                ]
+            }
+        })["Metadata"]
+        if not result:
+            return {"Error": "ItemCode not found"}
+        return result
+
+
+
     def country_group(self, country_group_name: str) -> list[str]:
         """
         Return a list of all countries in the country group
