@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title> {{ PillarCode | upper }} Pillar Data </title>
+{% endblock title %}
+
+{% block javascript %}{% endblock javascript %}
+
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/score-bar.css') }}"> 
+{% endblock stylesheet %}
+
+{% block content %}
+<section class="hero-box">
+    <select class="pillar-dropdown">
+        {% for option in pillar_options %}
+            <option value={{ option.Value }}>{{option.Name}} ({{option.Value}})</option>
+        {% endfor %}
+    </select>
+    <h1> {{ PillarCode | upper }} </h1>
+    <script>
+        const defaultOption = document.querySelector('select.pillar-dropdown option[value="{{PillarCode | upper}}"]')
+        defaultOption.selected = true;
+        document.querySelector('select.pillar-dropdown').addEventListener('change', function() {
+            window.location.href = '/data/pillar/' + this.value;
+        });
+    </script>
+</section>
+
+<section class="chart-section" id="dynamic-data-section"></section>
+<section class="chart-section" id="static-data-section"></section>
+
+<script>
+    window.addEventListener("load", (event) => {
+        window.observableStorage = new ObservableStorage();
+        window.SSPICharts = [
+            new PillarPanelChart(document.getElementById("dynamic-data-section"), "{{ PillarCode | upper }}"),
+            new ScoreBarStatic(document.getElementById("static-data-section"), "{{ PillarCode | upper }}")
+        ];
+        const x = window.observableStorage.getItem('windowX');
+        const y = window.observableStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
+    })
+    window.addEventListener('beforeunload', () => {
+      window.observableStorage.setItem('windowX', window.screenX);
+      window.observableStorage.setItem('windowY', window.screenY);
+    });
+</script>
+{% endblock content %}

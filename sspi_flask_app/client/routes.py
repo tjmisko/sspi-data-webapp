@@ -192,9 +192,9 @@ def outcome():
     return render_template("outcome.html")
 
 
-@client_bp.route('/scores')
+@client_bp.route('/static/scores')
 def overall_scores():
-    return render_template("scores.html")
+    return render_template("static-scores.html")
 
 
 @client_bp.route('/resources')

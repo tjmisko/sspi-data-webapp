@@ -1,6 +1,6 @@
-class CategoryPanelChart extends PanelChart {
-    constructor(parentElement, categoryCode, { CountryList = [], width = 400, height = 300 } = {} ) {
-        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${categoryCode}`, width: width, height: height })
+class PillarPanelChart extends PanelChart {
+    constructor(parentElement, pillarCode, { CountryList = [], width = 400, height = 300 } = {} ) {
+        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${pillarCode}`, width: width, height: height })
     }
 
     updateChartOptions() {
@@ -28,7 +28,7 @@ class CategoryPanelChart extends PanelChart {
                 max: 1,
                 title: {
                     display: true,
-                    text: 'Category Score',
+                    text: 'Pillar Score',
                     color: this.axisTitleColor,
                     font: {
                         size: 16
@@ -39,7 +39,7 @@ class CategoryPanelChart extends PanelChart {
     }
 
     updateDescription(description) {
-        // const dbox = document.getElementById("dynamic-indicator-description")
+        // const dbox = document.getElementById("dynamic-pillar-description")
         // dbox.innerText = description
     }
 }

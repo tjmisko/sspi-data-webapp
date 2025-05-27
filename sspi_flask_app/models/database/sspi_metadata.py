@@ -299,7 +299,7 @@ class SSPIMetadata(MongoWrapper):
         option_list = []
         for detail in self.find({"DocumentType": "PillarDetail"}):
             option_list.append({
-                "Name": detail["Metadata"]["Pillar"],
+                "Name": detail["Metadata"]["PillarName"],
                 "Value": detail["Metadata"]["PillarCode"],
             })
         return option_list
