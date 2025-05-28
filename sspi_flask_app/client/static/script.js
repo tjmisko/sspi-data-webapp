@@ -44,13 +44,11 @@ chartObject.chart.update()
 sleep(1000).then(()=>{if(alpha){html2canvas(chartObject.parentElement,{backgroundColor:null}).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}else{html2canvas(chartObject.parentElement).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}
 chartObject.textColor=textColorOriginal
 chartObject.gridColor=gridColorOriginal
-chartObject.chart.update()})};class ColorMap{constructor(){this.SSPI="#FFD54F"
-this.SUS="#28a745"
-this.MS="#ff851b"
-this.PG="#007bff"}
-}
-const SSPIColors=new ColorMap()
-const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
+chartObject.chart.update()})};const customCountryColors={"IDN":"#FF671F","USA":"#0A3161","ARE":"#009739"}}
+get(entity){const color=this.colors[entity]
+if(color===undefined){return"#000000"}
+return color}}
+const SSPIColors=new ColorProvider(customCountryColors);const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
 if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
 const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
 if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class CountrySelector{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
@@ -110,12 +108,13 @@ onChange(key,callback){if(!this.listeners[key]){this.listeners[key]=[];}
 this.listeners[key].push(callback);}
 _emit(key,oldValue,newValue){if(JSON.stringify(oldValue)===JSON.stringify(newValue))return;const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
 _parse(value){try{return JSON.parse(value);}catch{return value;}}}
-class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}){this.parentElement=parentElement
+class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300,colorProvider=SSPIColors}){this.parentElement=parentElement
 this.CountryList=CountryList
 this.endpointURL=endpointURL
 this.width=width
 this.height=height
 this.pins=new Set()
+this.colorProvider=colorProvider
 this.yAxisScale="value"
 this.endLabelPlugin=endLabelPlugin
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
@@ -193,6 +192,7 @@ try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
+this.chart.data.datasets.forEach((dataset,index)=>{dataset.borderColor=this.colorProvider.get(dataset.CCode)})
 this.chart.options.plugins.title=data.title
 this.groupOptions=data.groupOptions
 this.pinnedOnly=false

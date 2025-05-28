@@ -1,11 +1,12 @@
 class PanelChart {
-    constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300 } ) {
+    constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300, colorProvider = SSPIColors } ) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.width = width// width is the width of the canvas
         this.height = height// height is the height of the canvas
         this.pins = new Set() // pins contains a list of pinned countries
+        this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
         this.yAxisScale = "value"
         this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
@@ -285,6 +286,9 @@ class PanelChart {
         this.chart.data = data
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
+        this.chart.data.datasets.forEach((dataset, index) => {
+            dataset.borderColor = this.colorProvider.get(dataset.CCode)
+        })
         this.chart.options.plugins.title = data.title
         this.groupOptions = data.groupOptions
         this.pinnedOnly = false
