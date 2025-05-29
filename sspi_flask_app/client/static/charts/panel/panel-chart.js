@@ -103,6 +103,8 @@ class PanelChart {
                 datasets: {
                     line: {
                         spanGaps: true,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
                         segment: {
                             borderWidth: 2,
                             borderDash: ctx => {
@@ -286,9 +288,16 @@ class PanelChart {
         this.chart.data = data
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
-        this.chart.data.datasets.forEach((dataset, index) => {
-            dataset.borderColor = this.colorProvider.get(dataset.CCode)
-        })
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            const dataset = this.chart.data.datasets[i]
+            const color = this.colorProvider.get(dataset.CCode)
+            if (color === "#CCCCCC") {
+
+            } else {
+                dataset.borderColor = color
+                dataset.backgroundColor = color + "44"
+            }
+        }
         this.chart.options.plugins.title = data.title
         this.groupOptions = data.groupOptions
         this.pinnedOnly = false
