@@ -1,0 +1,30 @@
+.item-dropdown {
+  color: --text-color;
+  padding: 0.5em;
+  border: 0px solid #ccc;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.65em;
+}
+
+.item-panel-info-box {
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow-y: scroll;
+  background-color: var(--header-color, #000);
+  padding: 0.5em;
+}
+
+.item-panel-info-box-list {
+  font-size: 0.8em;
+  list-style-type: none;
+  line-height: 1.5em;
+}
+
+.item-panel-info-box-value {
+  color: var(--green-accent, #000);
+  padding-left: 0.3em;
+}
