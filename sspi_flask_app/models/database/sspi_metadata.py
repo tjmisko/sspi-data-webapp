@@ -56,7 +56,7 @@ class SSPIMetadata(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'DocumentType' is required (document {document_number})"
             )
-        if not type(document["DocumentType"]) is str:
+        if type(document["DocumentType"]) is not str:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'DocumentType' must be a string (document {document_number})"
@@ -69,7 +69,7 @@ class SSPIMetadata(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'Metadata' is a required arg (document {document_number})"
             )
-        if not type(document["Metadata"]) in [str, dict, int, float, list]:
+        if type(document["Metadata"]) not in [str, dict, int, float, list]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Metadata' must be a string, dict, int, float, or list (document {
@@ -211,12 +211,12 @@ class SSPIMetadata(MongoWrapper):
         indicator_details_list = json.loads(json_string)
         category_detail_map = {}
         for indicator in indicator_details_list:
-            if not indicator["CategoryCode"] in category_detail_map.keys():
+            if indicator["CategoryCode"] not in category_detail_map.keys():
                 category_detail_map[indicator["CategoryCode"]] = {
                     "CategoryCode": indicator["CategoryCode"],
-                    "CategoryName": indicator["Category"],
+                    "Category": indicator["Category"],
                     "PillarCode": indicator["PillarCode"],
-                    "PillarName": indicator["Pillar"],
+                    "Pillar": indicator["Pillar"],
                     "IndicatorCodes": []
                 }
             category_detail_map[indicator["CategoryCode"]]["IndicatorCodes"].append(
@@ -232,10 +232,10 @@ class SSPIMetadata(MongoWrapper):
         indicator_details_list = json.loads(json_string)
         pillar_detail_map = {}
         for indicator in indicator_details_list:
-            if not indicator["PillarCode"] in pillar_detail_map.keys():
+            if indicator["PillarCode"] not in pillar_detail_map.keys():
                 pillar_detail_map[indicator["PillarCode"]] = {
                     "PillarCode": indicator["PillarCode"],
-                    "PillarName": indicator["Pillar"],
+                    "Pillar": indicator["Pillar"],
                     "CategoryCodes": set(),
                     "IndicatorCodes": []
                 }
@@ -301,7 +301,7 @@ class SSPIMetadata(MongoWrapper):
         for detail in self.find({"DocumentType": "IndicatorDetail"}):
             option_list.append({
                 "Name": detail["Metadata"]["Indicator"],
-                "Value": detail["Metadata"]["IndicatorCode"],
+                "Code": detail["Metadata"]["IndicatorCode"],
             })
         return option_list
 
@@ -312,8 +312,8 @@ class SSPIMetadata(MongoWrapper):
         option_list = []
         for detail in self.find({"DocumentType": "CategoryDetail"}):
             option_list.append({
-                "Name": detail["Metadata"]["CategoryName"],
-                "Value": detail["Metadata"]["CategoryCode"],
+                "Name": detail["Metadata"]["Category"],
+                "Code": detail["Metadata"]["CategoryCode"],
             })
         return option_list
 
@@ -324,8 +324,8 @@ class SSPIMetadata(MongoWrapper):
         option_list = []
         for detail in self.find({"DocumentType": "PillarDetail"}):
             option_list.append({
-                "Name": detail["Metadata"]["PillarName"],
-                "Value": detail["Metadata"]["PillarCode"],
+                "Name": detail["Metadata"]["Pillar"],
+                "Code": detail["Metadata"]["PillarCode"],
             })
         return option_list
 
@@ -417,10 +417,20 @@ class SSPIMetadata(MongoWrapper):
                     ItemCode
                 ]
             }
-        })["Metadata"]
+        })
         if not result:
             return {"Error": "ItemCode not found"}
-        return result
+        result["Metadata"]["DocumentType"] = result["DocumentType"]
+        result["Metadata"]["ItemCode"] = ItemCode
+        if result["DocumentType"] == "IntermediateDetail":
+            result["Metadata"]["ItemName"] = result["Metadata"]["IntermediateName"]
+        elif result["DocumentType"] == "IndicatorDetail":
+            result["Metadata"]["ItemName"] = result["Metadata"]["Indicator"]
+        elif result["DocumentType"] == "CategoryDetail":
+            result["Metadata"]["ItemName"] = result["Metadata"]["Category"]
+        elif result["DocumentType"] == "PillarDetail":
+            result["Metadata"]["ItemName"] = result["Metadata"]["Pillar"]
+        return result["Metadata"]
 
 
 
@@ -479,97 +489,3 @@ class SSPIMetadata(MongoWrapper):
                 continue
             flat_list.append(detail["Metadata"])
         return flat_list
-
-    def get_indicator_detail(self, IndicatorCode: str) -> dict:
-        """
-        Return the detail for a particular indicator for IndicatorCode
-        """
-        query = {
-            "DocumentType": "IndicatorDetail",
-            "Metadata.IndicatorCode": IndicatorCode
-        }
-        return self.find_one(query)["Metadata"]
-
-    def get_goalposts(self, IndicatorCode: str) -> tuple[int | float, int | float]:
-        """
-        Returns a tuple of the lower and upper goalposts for the given indicator
-
-        :param IndicatorCode: The indicator code for which to get the goalposts
-        """
-        indicator_detail = self.get_indicator_detail(IndicatorCode)
-        lg = indicator_detail["LowerGoalpost"]
-        ug = indicator_detail["UpperGoalpost"]
-        return lg, ug
-
-    def intermediate_details(self) -> list[dict]:
-        """
-        Return a list of documents containg intermediate details
-        """
-        flat_list = []
-        for detail in self.find({"DocumentType": "IntermediateDetail"}):
-            flat_list.append(detail["Metadata"])
-        return flat_list
-
-    def intermediate_codes(self) -> list[str]:
-        """
-        Return a list of documents containg intermediate details
-        """
-        code_list = []
-        for detail in self.find({"DocumentType": "IntermediateDetail"}):
-            code_list.append(detail["Metadata"]["IntermediateCode"])
-        return code_list
-
-    def get_intermediate_detail(self, IntermediateCode: str) -> dict:
-        """
-        Return a document containing indicator details for a specific IndicatorCode
-        """
-        query = {
-            "DocumentType": "IntermediateDetail",
-            "Metadata.IntermediateCode": IntermediateCode
-        }
-        return self.find_one(query)["Metadata"]
-
-    def get_item_detail(self, ItemCode: str) -> dict:
-        """
-        Return a document containing the item details for a specific ItemCode
-
-        :param ItemCode: The item code for which to get the details (SSPI, PillarCode, CategoryCode, IndicatorCode, IntermediateCode)
-        """
-        result = self.find_one({
-            "$expr": {
-                "$eq": [
-                    {
-                        "$switch": {
-                            "branches": [
-                                {
-                                    "case": {"$eq": ["$DocumentType", "IndicatorDetail"]},
-                                    "then": "$Metadata.IndicatorCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "IntermediateDetail"]},
-                                    "then": "$Metadata.IntermediateCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "CategoryDetail"]},
-                                    "then": "$Metadata.CategoryCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "PillarDetail"]},
-                                    "then": "$Metadata.PillarCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "OverallDetail"]},
-                                    "then": "$Metadata.Code"
-                                }
-                            ],
-                            "default": None
-                        }
-                    },
-                    ItemCode
-                ]
-            }
-        })["Metadata"]
-        if not result:
-            return {"Error": "ItemCode not found"}
-        return result
-

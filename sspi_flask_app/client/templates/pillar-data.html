@@ -12,16 +12,15 @@
 
 {% block content %}
 <section class="hero-box">
-    <select class="pillar-dropdown">
+    <select class="item-dropdown">
         {% for option in pillar_options %}
             <option value={{ option.Value }}>{{option.Name}} ({{option.Value}})</option>
         {% endfor %}
     </select>
-    <h1> {{ PillarCode | upper }} </h1>
     <script>
-        const defaultOption = document.querySelector('select.pillar-dropdown option[value="{{PillarCode | upper}}"]')
+        const defaultOption = document.querySelector('select.item-dropdown option[value="{{PillarCode | upper}}"]')
         defaultOption.selected = true;
-        document.querySelector('select.pillar-dropdown').addEventListener('change', function() {
+        document.querySelector('select.item-dropdown').addEventListener('change', function() {
             window.location.href = '/data/pillar/' + this.value;
         });
     </script>

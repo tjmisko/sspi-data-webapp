@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if PanelItemType == "Indicator" %}
+        <title> {{ PanelItemCode | upper }} Indicator Data </title>
+    {% elif PanelItemType == "Category" %}
+        <title> {{ PanelItemCode | upper }} Category Data </title>
+    {% elif PanelItemType == "Pillar" %}
+        <title> {{ PanelItemCode | upper }} Pillar Data </title>
+    {% elif PanelItemType == "Overall" %}
+        <title> {{ PanelItemCode | upper }} Overall Data </title>
+    {% endif %}
+{% endblock title %}
+
+{% block content %}
+<section class="chart-section" id="dynamic-data-section"></section>
+<section class="chart-section" id="static-data-section"></section>
+
+<script>
+    window.addEventListener("load", (event) => {
+        window.observableStorage = new ObservableStorage();
+        window.SSPICharts = [
+            new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"),
+            // new ScoreBarStatic(document.getElementById("static-data-section"), "{{ PanelItem | upper }}")
+        ];
+        const x = window.observableStorage.getItem('windowX');
+        const y = window.observableStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
+    })
+    window.addEventListener('beforeunload', () => {
+      window.observableStorage.setItem('windowX', window.screenX);
+      window.observableStorage.setItem('windowY', window.screenY);
+    });
+</script>
+{% endblock content %}
