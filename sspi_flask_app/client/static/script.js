@@ -1373,13 +1373,14 @@ return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.d
 if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
 this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
 this.chart.update()}}
-class ItemCoverageMatrixChart{constructor(parentElement,itemCode,{countryGroup="SSPI67",minYear=2000,maxYear=2023,width=400,height=400}){this.parentElement=parentElement
+class ItemCoverageMatrixChart{constructor(parentElement,itemCode,{countryGroup="SSPI67",minYear=2000,maxYear=2023,width=400,height=400,callbacks=[]}){this.parentElement=parentElement
 this.itemCode=itemCode
 this.countryGroup=countryGroup
 this.minYear=minYear
 this.maxYear=maxYear
 this.width=width
 this.height=height
+this.callbacks=callbacks
 this.initRoot()
 this.rigSummary()
 this.initChartJSCanvas()
@@ -1402,4 +1403,5 @@ async fetch(url){const response=await fetch(url);return response.json();}
 update(res){this.n_years=res.years.length;this.n_countries=res.ccodes.length;this.vComplete=res.vComplete;res.summary.forEach((line,i)=>{const summaryLine=document.createElement('div');summaryLine.classList.add('item-coverage-summary-line');summaryLine.innerHTML=`<span class="item-coverage-summary-color-block"></span><span class="item-coverage-summary-country">${line}</span>`;const color=summaryLine.querySelector('.item-coverage-summary-color-block')
 color.classList.add(`coverage-summary-color-${i}`);this.summary.appendChild(summaryLine);});this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 0.2)";}else if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 0.2)";}else{return"rgba(200, 0, 0, 0.2)";}},borderColor(context){if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 1)";}else if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 1)";}else{return"rgba(200, 0, 0, 1)";}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_years-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
 this.chart.options.scales={x:{type:'category',labels:res.years,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
+this.callbacks.forEach((callback)=>{callback(res)})
 this.chart.update()}}
