@@ -36,7 +36,16 @@
     </script>
     <hr>
     <section class="methodology-section">
-        {{ methodology | safe }}
+        <h2> Methodology </h2>
+        <subsection class="methodology-subsection">
+            {% if not methodology %}
+                <p> No methodology available for this {{ PanelItemType }}. </p>
+            {% else %}
+                <div class="methodology-wrapper">
+                    {{ methodology | safe }}
+                </div>
+            {% endif %}
+        </subsection>
     </section>
 {% endif %}
 {% endblock content %}
