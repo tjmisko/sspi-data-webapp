@@ -1,25 +1,27 @@
 .light-theme {
-    --accent-color-1: rgb(41, 75, 80);
-    --link-color: rgb(0, 221, 255);
-    --header-color: #1B2A3C;
-    --header-text-color: #F5F5F5;
-    --page-background: #D0D0D0;
-    --green-accent: #AECC53;
-    --text-color: #0A0A0A;
-    --low-importance-font-color: rgba(184, 188, 190, 1);
-    --theme-indicator-text-color: #D0D0D0;
-    --mobile-break-width: 1135px;
+  --accent-color-1: rgb(41, 75, 80);
+  --link-color: rgb(0, 221, 255);
+  --header-color: #1B2A3C;
+  --header-text-color: #F5F5F5;
+  --page-background: #D0D0D0;
+  --green-accent: #AECC53;
+  --text-color: #0A0A0A;
+  --low-importance-font-color: rgba(184, 188, 190, 1);
+  --theme-indicator-text-color: #D0D0D0;
+  --mobile-break-width: 1135px;
+  --subtle-line-color: #2A2A2A;
 }
 
 .dark-theme {
-    --accent-color: rgb(41, 75, 80);
-    --link-color: rgb(0, 221, 255);
-    --header-color: #0F1A24;
-    --header-text-color: #F5F5F5;
-    --page-background: #1F354F;
-    --green-accent: #AECC53;
-    --text-color: #E0E0E0;
-    --low-importance-font-color: rgba(184, 188, 190, 1);
-    --theme-indicator-text-color: #D0D0D0;
-    --mobile-break-width: 1135px;
+  --accent-color: rgb(41, 75, 80);
+  --link-color: rgb(0, 221, 255);
+  --header-color: #0F1A24;
+  --header-text-color: #F5F5F5;
+  --page-background: #1F354F;
+  --green-accent: #AECC53;
+  --text-color: #E0E0E0;
+  --low-importance-font-color: rgba(184, 188, 190, 1);
+  --theme-indicator-text-color: #D0D0D0;
+  --mobile-break-width: 1135px;
+  --subtle-line-color: #2A2A2A;
 }
