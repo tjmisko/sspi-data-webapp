@@ -1,10 +1,11 @@
 .item-dropdown {
-  color: --text-color;
+  /* color: var(--text-color); */
+  /* font-weight: bold; */
+  width: 100%;
   padding: 0.5em;
   border: 0px solid #ccc;
   border-radius: 4px;
-  font-weight: bold;
-  font-size: 0.65em;
+  font-size: 0.85em;
 }
 
 .item-panel-info-box {

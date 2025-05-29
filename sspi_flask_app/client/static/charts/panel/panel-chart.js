@@ -3,8 +3,6 @@ class PanelChart {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
-        this.width = width// width is the width of the canvas
-        this.height = height// height is the height of the canvas
         this.pins = new Set() // pins contains a list of pinned countries
         this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
         this.yAxisScale = "value"
@@ -12,9 +10,9 @@ class PanelChart {
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
         this.initRoot()
-        this.rigItemDropdown()
         this.initChartJSCanvas()
         this.rigChartOptions()
+        this.rigItemDropdown()
         this.rigCountryGroupSelector()
         this.updateChartOptions()
         this.rigLegend()
@@ -32,20 +30,27 @@ class PanelChart {
     }
 
     rigChartOptions() {
-        this.titleBar = document.createElement('div')
-        this.titleBar.classList.add('chart-section-title-bar')
-        this.titleBar.innerHTML = `
-            <div class="chart-section-title-bar-buttons">
-                <label class="title-bar-label">Backward Extrapolation</label>
-                <input type="checkbox" class="extrapolate-backward"/>
-                <label class="title-bar-label">Linear Interpolation</label>
-                <input type="checkbox" class="interpolate-linear"/>
+        this.chartOptions = document.createElement('div')
+        this.chartOptions.classList.add('chart-options')
+        this.chartOptions.innerHTML = `
+            <details class="chart-options-details chart-view-options" open=true>
+                <summary class="chart-view-options-summary">View Options</summary>
+                <div class="chart-view-option">
+                    <input type="checkbox" class="extrapolate-backward"/>
+                    <label class="title-bar-label">Backward Extrapolation</label>
+                </div>
+                <div class="chart-view-option">
+                    <input type="checkbox" class="interpolate-linear"/>
+                    <label class="title-bar-label">Linear Interpolation</label>
+                </div>
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
-                <button class="hideunpinned-button">Hide Unpinned</button>
-            </div>
+            </details>
         `;
-        this.root.appendChild(this.titleBar)
+        const wrapper = document.createElement('div')
+        wrapper.classList.add('chart-options-wrapper')
+        wrapper.append(this.chartOptions)
+        this.root.appendChild(wrapper)
         this.extrapolateBackwardCheckbox = this.root.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
@@ -64,23 +69,27 @@ class PanelChart {
         this.showAllButton.addEventListener('click', () => {
             this.showAll()
         })
-        this.hideUnpinnedButton = this.root.querySelector('.hideunpinned-button')
-        this.hideUnpinnedButton.addEventListener('click', () => {
-            this.hideUnpinned()
-        })
     }
 
     rigItemDropdown() {
-        this.itemDropdown = document.createElement('select')
-        this.itemDropdown.classList.add('item-dropdown')
-        this.root.appendChild(this.itemDropdown)
+        const information = document.createElement('details')
+        information.classList.add('item-information', 'chart-options-details')
+        information.open = true
+        information.innerHTML = `
+            <summary class="item-information-summary">Item Information</summary>
+            <select class="item-dropdown"></select>
+            <div class="dynamic-item-description"></div>
+        `;
+        this.chartOptions.prepend(information)
+        this.itemInformation = this.chartOptions.querySelector('.item-information')
+        this.itemDropdown = this.itemInformation.querySelector('.item-dropdown')
     }
 
-    rigTitleBarScaleToggle() {
-        const buttonBox = this.root.querySelector('.chart-section-title-bar-buttons')
+    rigScaleToggle() {
+        const buttonBox = this.chartOptions.querySelector('.chart-view-options')
         buttonBox.insertAdjacentHTML('afterbegin', `
-            <label class="title-bar-label">Report Score</label>
             <input type="checkbox" class="y-axis-scale"/>
+            <label class="title-bar-label">Report Score</label>
         `)
         this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
         this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
@@ -93,14 +102,17 @@ class PanelChart {
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
         this.canvas.classList.add('panel-chart-canvas')
-        this.canvas.width = 400
-        this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvas)
+        this.canvasWrapper = document.createElement('div')
+        this.canvasWrapper.classList.add('panel-canvas-wrapper')
+        this.canvasWrapper.appendChild(this.canvas)
+        this.root.appendChild(this.canvasWrapper)
         this.chart = new Chart(this.context, {
             type: 'line',
             plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin],
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 onClick: (event, elements) => {
                     elements.forEach(element => {
                         const dataset = this.chart.data.datasets[element.datasetIndex]
@@ -170,74 +182,59 @@ class PanelChart {
     }
 
     rigCountryGroupSelector() {
-        const container = document.createElement('div')
-        this.countryGroupContainer = this.root.appendChild(container)
+        this.countryGroupOptions = document.createElement('details')
+        this.countryGroupOptions.open = true
+        this.countryGroupOptions.classList.add('chart-options-details')
+        this.countryGroupOptions.innerHTML = `
+            <summary class="country-group-selector-summary">Country Groups</summary>
+            <select class="country-group-selector"></select>
+            <button class="hideunpinned-button">Hide Unpinned</button>
+        `;
+        this.chartOptions.appendChild(this.countryGroupOptions)
+        this.countryGroupSelector = this.countryGroupOptions.querySelector('.country-group-selector')
+        this.countryGroupSelector.addEventListener('change', (event) => {
+            this.showGroup(event.target.value)
+        })
+        this.hideUnpinnedButton = this.countryGroupOptions.querySelector('.hideunpinned-button')
+        this.hideUnpinnedButton.addEventListener('click', () => {
+            this.hideUnpinned()
+        })
     }
 
     updateCountryGroups() {
-        const numOptions = this.groupOptions.length;
-        this.countryGroupContainer.style.setProperty('--num-options', numOptions);
         this.groupOptions.forEach((option, index) => {
-            const id = `option${index + 1}`;
-            // Create the radio input
-            const input = document.createElement('input');
-            input.type = 'radio';
-            input.id = id;
-            input.name = 'options';
-            input.value = option;
-            // Set the first option as checked by default
-            if (index === 0) {
-                input.checked = true;
-                // Set the initial selected index
-                this.countryGroupContainer.style.setProperty('--selected-index', index);
-            }
-            // Add event listener to update the selected index
-            input.addEventListener('change', () => {
-                const countryGroupOptions = document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);
-                countryGroupOptions.forEach((countryGroup, index) => {
-                    if (countryGroup.checked) {
-                        this.countryGroupContainer.style.setProperty('--selected-index', index);
-                        this.showGroup(countryGroup.value)
-                    }
-                });
-            });
-            // Create the label
-            const label = document.createElement('label');
-            label.htmlFor = id;
-            label.textContent = option;
-            // Append input and label to the container
-            this.countryGroupContainer.appendChild(input);
-            this.countryGroupContainer.appendChild(label);
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option;
+            this.countryGroupSelector.appendChild(opt);
         });
         // Create the sliding indicator
-        const slider = document.createElement('div');
-        slider.className = 'slider';
-        this.countryGroupContainer.appendChild(slider);
     }
 
     rigLegend() {
-        const legend = document.createElement('legend')
-        legend.classList.add('dynamic-line-legend')
-        legend.innerHTML = `
-            <div class="legend-title-bar">
-                <h4 class="legend-title">Pinned Countries</h4>
-                <div class="legend-title-bar-buttons">
-                    <button class="add-country-button">Search Country</button>
-                    <button class="clearpins-button">Clear Pins</button>
-                </div>
+        const pinnedCountryDetails = document.createElement('details')
+        pinnedCountryDetails.classList.add('chart-options-details', 'legend-title-bar')
+        pinnedCountryDetails.open = true
+        pinnedCountryDetails.innerHTML = `
+            <summary>Pinned Countries</summary>
+            <div class="legend-title-bar-buttons">
+                <button class="add-country-button">Search Country</button>
+                <button class="clearpins-button">Clear Pins</button>
             </div>
-            <div class="legend-items">
-            </div>
+            <legend class='dynamic-line-legend'>
+                <div class="legend-items"></div>
+            </legend>
         `;
-        this.addCountryButton = legend.querySelector('.add-country-button')
+        this.addCountryButton = pinnedCountryDetails.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
             new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
         })
-        this.clearPinsButton = legend.querySelector('.clearpins-button')
+        this.clearPinsButton = pinnedCountryDetails.querySelector('.clearpins-button')
         this.clearPinsButton.addEventListener('click', () => {
             this.clearPins()
         })
-        this.legend = this.root.appendChild(legend)
+        this.chartOptions.append(pinnedCountryDetails)
+        this.legend = pinnedCountryDetails.querySelector('.dynamic-line-legend')
         this.legendItems = this.legend.querySelector('.legend-items')
     }
 
@@ -263,7 +260,7 @@ class PanelChart {
     }
 
     updateDescription(description) {
-        const dbox = this.root.querySelector('.dynamic-indicator-description')
+        const dbox = this.chartOptions.querySelector('.dynamic-item-description')
         dbox.innerText = description
     }
 
@@ -325,7 +322,7 @@ class PanelChart {
         this.chart.update()
         if (data.hasScore) {
             this.toggleYAxisScale()
-            this.rigTitleBarScaleToggle()
+            this.rigScaleToggle()
         }
     }
 
@@ -391,7 +388,7 @@ class PanelChart {
     showRandomN(N = 10) {
         // Adjust this to only select from those in the current country group
         this.pinnedOnly = false
-        const activeGroup = this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
+        const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
         let availableDatasetIndices = []
         this.chart.data.datasets.filter((dataset, index) => {
             if (dataset.CGroup.includes(activeGroup)) {

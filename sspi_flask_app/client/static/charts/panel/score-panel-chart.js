@@ -1,5 +1,5 @@
 class ScorePanelChart extends PanelChart {
-    constructor(parentElement, itemCode, { CountryList = [], width = 400, height = 300 } = {} ) {
+    constructor(parentElement, itemCode, { CountryList = [], width = 600, height = 600 } = {} ) {
         super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`, width: width, height: height })
         this.itemCode = itemCode
     }
@@ -52,11 +52,5 @@ class ScorePanelChart extends PanelChart {
         this.itemDropdown.addEventListener('change', (event) => {
             window.location.href = '/data/indicator/' + event.target.value
         })
-    }
-
-
-    updateDescription(description) {
-        const dbox = document.getElementById("dynamic-indicator-description")
-        dbox.innerText = description
     }
 }
