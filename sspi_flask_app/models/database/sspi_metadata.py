@@ -91,17 +91,23 @@ class SSPIMetadata(MongoWrapper):
         intermediate_details = pd.read_csv(int_detail_path)
         with open(os.path.join(local_path, "CountryGroups.json")) as file:
             country_groups = json.load(file)
+        with open(os.path.join(local_path, "country-flag-colors.json")) as file:
+            country_colors = json.load(file)
+        with open(os.path.join(local_path, "sspi-colors.json")) as file:
+            sspi_custom_colors = json.load(file)
         metadata = self.build_metadata(
             indicator_details,
             intermediate_details,
-            country_groups
+            country_groups,
+            country_colors,
+            sspi_custom_colors
         )
         count = self.insert_many(metadata)
         self.drop_duplicates()
         print(f"Successfully loaded {count} documents into {self.name}")
         return count
 
-    def build_metadata(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame, country_groups: dict) -> list:
+    def build_metadata(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame, country_groups: dict, country_colors: list[dict], sspi_custom_colors: dict) -> list:
         """
         Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
         """
@@ -111,6 +117,7 @@ class SSPIMetadata(MongoWrapper):
         metadata.append(self.build_indicator_codes(indicator_details))
         metadata.append(self.build_intermediate_codes(intermediate_details))
         metadata.extend(self.build_country_groups(country_groups))
+        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(self.build_intermediate_details(intermediate_details))
         metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
         metadata.extend(self.build_category_details(indicator_details))
@@ -151,6 +158,24 @@ class SSPIMetadata(MongoWrapper):
             })
         return country_groups_lookup + country_group_list
 
+    def build_country_details(self, country_groups: dict, country_colors: list[dict], sspi_custom_colors: dict) -> list[dict]:
+        """
+        Builds a list of country details from the country groups and colors
+        """
+        details = []
+        for cou in country_colors:
+            if "CountryCode" not in cou.keys():
+                continue
+            details.append({
+                "DocumentType": "CountryDetail",
+                "Metadata": cou
+            })
+            if cou["CountryCode"] in sspi_custom_colors.keys():
+                cou["SSPIColor"] = sspi_custom_colors[cou["CountryCode"]]
+        return details
+
+
+        
     def build_intermediate_details(self, intermediate_details: pd.DataFrame) -> list[dict]:
         json_string = str(intermediate_details.to_json(orient="records"))
         intermediate_details_list = json.loads(json_string)
