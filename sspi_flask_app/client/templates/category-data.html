@@ -12,16 +12,15 @@
 
 {% block content %}
 <section class="hero-box">
-    <select class="category-dropdown">
+    <select class="item-dropdown">
         {% for option in category_options %}
             <option value={{ option.Value }}>{{option.Name}} ({{option.Value}})</option>
         {% endfor %}
     </select>
-    <h1> {{ CategoryCode | upper }} </h1>
     <script>
-        const defaultOption = document.querySelector('select.category-dropdown option[value="{{CategoryCode | upper}}"]')
+        const defaultOption = document.querySelector('select.item-dropdown option[value="{{CategoryCode | upper}}"]')
         defaultOption.selected = true;
-        document.querySelector('select.category-dropdown').addEventListener('change', function() {
+        document.querySelector('select.item-dropdown').addEventListener('change', function() {
             window.location.href = '/data/category/' + this.value;
         });
     </script>

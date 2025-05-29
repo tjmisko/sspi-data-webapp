@@ -126,9 +126,10 @@ this.endLabelPlugin=endLabelPlugin
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
 this.setTheme(window.observableStorage.getItem("theme"))
 this.initRoot()
-this.rigTitleBarButtons()
-this.rigCountryGroupSelector()
+this.rigItemDropdown()
 this.initChartJSCanvas()
+this.rigChartOptions()
+this.rigCountryGroupSelector()
 this.updateChartOptions()
 this.rigLegend()
 this.fetch(this.endpointURL).then(data=>{this.update(data)})
@@ -136,7 +137,7 @@ this.rigPinChangeListener()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
-rigTitleBarButtons(){this.titleBar=document.createElement('div')
+rigChartOptions(){this.titleBar=document.createElement('div')
 this.titleBar.classList.add('chart-section-title-bar')
 this.titleBar.innerHTML=`<div class="chart-section-title-bar-buttons"><label class="title-bar-label">Backward Extrapolation</label><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Linear Interpolation</label><input type="checkbox"class="interpolate-linear"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div>`;this.root.appendChild(this.titleBar)
 this.extrapolateBackwardCheckbox=this.root.querySelector('.extrapolate-backward')
@@ -151,6 +152,9 @@ this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
 this.hideUnpinnedButton=this.root.querySelector('.hideunpinned-button')
 this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
+rigItemDropdown(){this.itemDropdown=document.createElement('select')
+this.itemDropdown.classList.add('item-dropdown')
+this.root.appendChild(this.itemDropdown)}
 rigTitleBarScaleToggle(){const buttonBox=this.root.querySelector('.chart-section-title-bar-buttons')
 buttonBox.insertAdjacentHTML('afterbegin',`<label class="title-bar-label">Report Score</label><input type="checkbox"class="y-axis-scale"/>`)
 this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
@@ -167,7 +171,6 @@ this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this
 this.togglePin(dataset)})},datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){const container=document.createElement('div')
-container.id='country-group-selector-container'
 this.countryGroupContainer=this.root.appendChild(container)}
 updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGroupContainer.style.setProperty('--num-options',numOptions);this.groupOptions.forEach((option,index)=>{const id=`option${index+1}`;const input=document.createElement('input');input.type='radio';input.id=id;input.name='options';input.value=option;if(index===0){input.checked=true;this.countryGroupContainer.style.setProperty('--selected-index',index);}
 input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
@@ -186,6 +189,9 @@ removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
 updateDescription(description){const dbox=this.root.querySelector('.dynamic-indicator-description')
 dbox.innerText=description}
+updateItemDropdown(options){for(const option of options){const opt=document.createElement('option')
+opt.value=option.Code
+opt.textContent=`${option.Name}(${option.Code})`;this.itemDropdown.appendChild(opt)}}
 setTheme(theme){if(theme!=="light"){this.theme="dark"
 this.tickColor="#bbb"
 this.axisTitleColor="#bbb"
@@ -195,7 +201,8 @@ this.axisTitleColor="#444"
 this.titleColor="#444"}}
 async fetch(url){const response=await fetch(url)
 try{return response.json()}catch(error){console.error('Error:',error)}}
-update(data){this.chart.data=data
+update(data){console.log(data)
+this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
 for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
@@ -207,6 +214,7 @@ this.groupOptions=data.groupOptions
 this.pinnedOnly=false
 this.getPins()
 this.updateLegend()
+this.updateItemDropdown(data.itemOptions)
 this.updateDescription(data.description)
 this.updateCountryGroups()
 this.chart.update()
@@ -314,16 +322,18 @@ this.chart.options.scales.y.max=data.yMax
 if(data.hasScore){this.yAxisScale="score"
 this.rigTitleBarScaleToggle()}
 this.chart.update()}}
-class IndicatorPanelChart extends PanelChart{constructor(parentElement,indicatorCode,{CountryList=[],width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/indicator/${indicatorCode}`,width:width,height:height})}
+class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
+this.itemCode=itemCode}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
+updateItemDropdown(options){for(const option of options){const opt=document.createElement('option')
+opt.value=option.Code
+opt.textContent=option.Name+" "+`(${option.Code})`;this.itemDropdown.appendChild(opt)}
+this.itemDropdown.value=this.itemCode
+console.log(this.indicatorCode)
+console.log(this.itemDropdown.value)
+this.itemDropdown.addEventListener('change',(event)=>{window.location.href='/data/indicator/'+event.target.value})}
 updateDescription(description){const dbox=document.getElementById("dynamic-indicator-description")
 dbox.innerText=description}}
-class CategoryPanelChart extends PanelChart{constructor(parentElement,categoryCode,{CountryList=[],width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${categoryCode}`,width:width,height:height})}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Category Score',color:this.axisTitleColor,font:{size:16}}}}}
-updateDescription(description){}}
-class PillarPanelChart extends PanelChart{constructor(parentElement,pillarCode,{CountryList=[],width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${pillarCode}`,width:width,height:height})}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Pillar Score',color:this.axisTitleColor,font:{size:16}}}}}
-updateDescription(description){}}
 const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
 const xLeftMid=(chartArea.left+chartArea.right+offset)/4;const xRightMid=3*(chartArea.left+chartArea.right-offset)/4;const yTop=(chartArea.top+chartArea.bottom)/10+5;ctx.fillText(optionVars.LeftCountry+" Higher",xLeftMid,yTop);ctx.fillStyle='#32CD3299';ctx.fillText(optionVars.RightCountry+" Higher",xRightMid,yTop);ctx.restore();}}
 class StaticPillarDifferentialChart{constructor(BaseCountry,ComparisonCountry,PillarCode,parentElement){this.parentElement=parentElement;this.BaseCountry=BaseCountry;this.ComparisonCountry=ComparisonCountry;this.PillarCode=PillarCode;this.titleString=`Sustainability Score Differences(${ComparisonCountry}-${BaseCountry})`;this.initRoot()

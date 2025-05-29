@@ -12,9 +12,10 @@ class PanelChart {
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
         this.initRoot()
-        this.rigTitleBarButtons()
-        this.rigCountryGroupSelector()
+        this.rigItemDropdown()
         this.initChartJSCanvas()
+        this.rigChartOptions()
+        this.rigCountryGroupSelector()
         this.updateChartOptions()
         this.rigLegend()
         this.fetch(this.endpointURL).then(data => {
@@ -30,7 +31,7 @@ class PanelChart {
         this.parentElement.appendChild(this.root)
     }
 
-    rigTitleBarButtons() {
+    rigChartOptions() {
         this.titleBar = document.createElement('div')
         this.titleBar.classList.add('chart-section-title-bar')
         this.titleBar.innerHTML = `
@@ -67,6 +68,12 @@ class PanelChart {
         this.hideUnpinnedButton.addEventListener('click', () => {
             this.hideUnpinned()
         })
+    }
+
+    rigItemDropdown() {
+        this.itemDropdown = document.createElement('select')
+        this.itemDropdown.classList.add('item-dropdown')
+        this.root.appendChild(this.itemDropdown)
     }
 
     rigTitleBarScaleToggle() {
@@ -164,7 +171,6 @@ class PanelChart {
 
     rigCountryGroupSelector() {
         const container = document.createElement('div')
-        container.id = 'country-group-selector-container'
         this.countryGroupContainer = this.root.appendChild(container)
     }
 
@@ -261,6 +267,15 @@ class PanelChart {
         dbox.innerText = description
     }
 
+    updateItemDropdown(options) {
+        for (const option of options) {
+            const opt = document.createElement('option')
+            opt.value = option.Code
+            opt.textContent = `${option.Name} (${option.Code})`;
+            this.itemDropdown.appendChild(opt)
+        }
+    }
+
     setTheme(theme) {
         if (theme !== "light") {
             this.theme = "dark"
@@ -285,6 +300,7 @@ class PanelChart {
     }
 
     update(data) {
+        console.log(data)
         this.chart.data = data
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
@@ -303,6 +319,7 @@ class PanelChart {
         this.pinnedOnly = false
         this.getPins()
         this.updateLegend()
+        this.updateItemDropdown(data.itemOptions)
         this.updateDescription(data.description)
         this.updateCountryGroups()
         this.chart.update()

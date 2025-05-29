@@ -31,8 +31,6 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
-import pandas as pd
-import re
 import os
 from datetime import datetime
 import hashlib
@@ -66,74 +64,6 @@ def compare():
     return render_template("compare.html", indicators=option_details)
 
 
-@dashboard_bp.route('/compare/<IndicatorCode>')
-def get_compare_data(IndicatorCode):
-    # Prepare the main data
-    main_data = parse_json(sspi_main_data_v3.find(
-        {"IndicatorCode": IndicatorCode}, {"_id": 0}))
-    main_data = pd.DataFrame(main_data)
-    main_data = main_data.rename(columns={"Value": "sspi_static_raw"})
-    # Prepare the dynamic data
-    # dynamic_data = parse_json(sspi_production_data.find({"IndicatorCode": IndicatorCode, "Year": 2018, "CountryGroup": "SSPI49"}, {"_id": 0}))
-    return jsonify(json.loads(str(main_data.to_json(orient="records"))))
-    # dynamic_data = pd.DataFrame(dynamic_data)
-    # dynamic_data["Value"].replace("NaN", np.nan, inplace=True)
-    # dynamic_data["Value"].astype(float)
-    # dynamic_data["Value"] = dynamic_data["Value"].round(3)
-    # dynamic_data = dynamic_data.rename(columns={"Value": "sspi_dynamic_raw"})
-    # # Merge the data
-    # comparison_data = main_data.merge(dynamic_data, on=["CountryCode", "IndicatorCode", "YEAR"], how="left")
-    # comparison_data = json.loads(str(comparison_data.to_json(orient="records")))
-    # return jsonify(comparison_data)
-
-
-@dashboard_bp.route('/api_coverage')
-def api_coverage():
-    """
-    Return a list of all endpoints and whether they are implemented
-    """
-    all_indicators = sspi_metadata.indicator_codes()
-    endpoints = [str(r) for r in app.url_map.iter_rules()]
-    collect_implemented = [r.group(0) for r in [re.search(
-        r'(?<=api/v1/collect/)(?!static)[\w]*', r) for r in endpoints] if r is not None]
-    compute_implemented = [r.group(0) for r in [re.search(
-        r'(?<=api/v1/compute/)(?!static)[\w]*', r) for r in endpoints] if r is not None]
-    coverage_data_object = []
-    for indicator in all_indicators:
-        coverage_data_object.append({
-            "IndicatorCode": indicator,
-            "collect_implemented": indicator in collect_implemented,
-            "compute_implemented": indicator in compute_implemented
-        })
-    return parse_json(coverage_data_object)
-
-
-@dashboard_bp.route("/local")
-@login_required
-def local():
-    return render_template('local-upload-form.html', database_names=check_for_local_data())
-
-
-@dashboard_bp.route("/local/database/list", methods=['GET'])
-@login_required
-def check_for_local_data():
-    app.instance_path
-    try:
-        database_files = os.listdir(os.path.join(os.getcwd(), 'local'))
-    except FileNotFoundError:
-        database_files = os.listdir("/var/www/sspi.world/local")
-    database_names = [db_file.split(".")[0] for db_file in database_files]
-    return parse_json(database_names)
-
-
-@dashboard_bp.route("/fetch-controls")
-@login_required
-def api_internal_buttons():
-    implementation_data = api_coverage()
-    return render_template("dashboard-controls.html",
-                           implementation_data=implementation_data)
-
-
 @dashboard_bp.route("/static/indicator/<IndicatorCode>")
 def get_static_indicator_data(IndicatorCode):
     """
@@ -164,70 +94,40 @@ def get_static_indicator_data(IndicatorCode):
     return jsonify(chart_data)
 
 
-@dashboard_bp.route('/panel/indicator/<IndicatorCode>', methods=["GET"])
-def get_dynamic_indicator_line_data(IndicatorCode):
-    """
-    Get the dynamic data for the given indicator code for a line chart
-    """
-    indicator_description = sspi_metadata.find_one({
-        "DocumentType": "IndicatorDetail",
-        "Metadata.IndicatorCode": IndicatorCode
-    })["Metadata"]["Description"]
-    country_query = request.args.getlist("CountryCode")
-    query = {"ICode": IndicatorCode}
-    if country_query:
-        query["CCode"] = {"$in": country_query}
-    dynamic_indicator_data = parse_json(
-        sspi_dynamic_line_data.find(query)
-    )
-    min_year = dynamic_indicator_data[0]["minYear"]
-    max_year = dynamic_indicator_data[0]["maxYear"]
-    year_labels = [str(year) for year in range(min_year, max_year + 1)]
-    if not dynamic_indicator_data:
-        return jsonify({"error": "No data found"})
-    name = dynamic_indicator_data[0]["IName"]
-    chart_title = f"{name} ({IndicatorCode}) Score"
-    group_options = sspi_metadata.country_groups()
-    return jsonify({
-        "data": dynamic_indicator_data,
-        "title": {
-            "display": True,
-            "text": chart_title,
-            "font": {
-                "size": 18
-            },
-            "color": "#ccc",
-            "align": "start"
-        },
-        "labels": year_labels,
-        "description": indicator_description,
-        "groupOptions": group_options,
-        "hasScore": True
-    })
-
-
 @dashboard_bp.route('/panel/score/<ItemCode>', methods=["GET"])
 def get_dynamic_category_line_data(ItemCode):
     """
     Get the dynamic data for the given category code for a line chart
     """
+    detail = sspi_metadata.get_item_detail(ItemCode)
+    doc_type = detail["DocumentType"]
+    if doc_type == "IndicatorDetail":
+        item_options = sspi_metadata.indicator_options()
+    elif doc_type == "CategoryDetail":
+        item_options = sspi_metadata.category_options()
+    elif doc_type == "PillarDetail":
+        item_options = sspi_metadata.pillar_options()
+    else:
+        item_options = []
+    name = detail["ItemName"]
+    description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
+    
     query = {"ICode": ItemCode}
     if country_query:
         query["CCode"] = {"$in": country_query}
-    dynamic_category_data = parse_json(
+    dynamic_score_data = parse_json(
         sspi_dynamic_line_data.find(query)
     )
-    min_year = dynamic_category_data[0]["minYear"]
-    max_year = dynamic_category_data[0]["maxYear"]
-    year_labels = [str(year) for year in range(min_year, max_year + 1)]
-    if not dynamic_category_data:
-        return jsonify({"error": "No data found"})
-    name = dynamic_category_data[0]["IName"]
+    year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
+    if dynamic_score_data:
+        min_year = dynamic_score_data[0]["minYear"]
+        max_year = dynamic_score_data[0]["maxYear"]
+        year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{name} ({ItemCode}) Score"
     group_options = sspi_metadata.country_groups()
     return jsonify({
-        "data": dynamic_category_data,
+        "data": dynamic_score_data,
         "title": {
             "display": True,
             "text": chart_title,
@@ -238,9 +138,10 @@ def get_dynamic_category_line_data(ItemCode):
             "align": "start"
         },
         "labels": year_labels,
-        "description": "",
+        "description": description,
         "groupOptions": group_options,
-        "hasScore": True
+        "hasScore": True,
+        "itemOptions": item_options
     })
 
 
@@ -510,10 +411,10 @@ def find_panel_levels():
     Prepare panel data for plotting
     """
     exclude_fields = request.args.getlist("exclude")
-    entity_id = request.args.get("country")
-    time_id = request.args.get("year")
-    value_id = request.args.get("value")
-    score_id = request.args.get("score")
+    entity_id = request.args.get("country", "")
+    time_id = request.args.get("year", "")
+    value_id = request.args.get("value", "")
+    score_id = request.args.get("score", "")
     if not request.is_json:
         return jsonify({"error": "Content-Type must be application/json"}), 400
     data = request.get_json(silent=True)
@@ -631,7 +532,7 @@ def prepare_panel_data():
 @dashboard_bp.route("/view/panel")
 def view_panel_plots():
     panel_data = sspi_panel_data.distinct("ItemIdentifier")
-    return render_template("panel-plot.html", panel_id_list=panel_data)
+    return render_template("panel-utility.html", panel_id_list=panel_data)
 
 
 @dashboard_bp.route("/panel/item/<panel_id>")

@@ -46,34 +46,28 @@ def country_data(CountryCode):
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
-    indicator_options = sspi_metadata.indicator_options()
-    print(indicator_options)
     return render_template(
-        'indicator-data.html',
-        IndicatorCode=IndicatorCode,
-        indicator_options=indicator_options
+        'score-panel-data.html',
+        PanelItemCode=IndicatorCode,
+        PanelItemType='Indicator'
     )
 
 
 @client_bp.route('/data/category/<CategoryCode>')
 def category_data(CategoryCode):
-    category_options = sspi_metadata.category_options()
-    print(category_options)
     return render_template(
-        'category-data.html',
-        CategoryCode=CategoryCode,
-        category_options=category_options
+        'score-panel-data.html',
+        PanelItemCode=CategoryCode,
+        PanelItemType='Category'
     )
 
 
 @client_bp.route('/data/pillar/<PillarCode>')
 def pillar_data(PillarCode):
-    pillar_options = sspi_metadata.pillar_options()
-    print(pillar_options)
     return render_template(
-        'pillar-data.html',
-        PillarCode=PillarCode,
-        pillar_options=pillar_options
+        'score-panel-data.html',
+        PanelItemCode=PillarCode,
+        PanelItemType='Pillar'
     )
 
 

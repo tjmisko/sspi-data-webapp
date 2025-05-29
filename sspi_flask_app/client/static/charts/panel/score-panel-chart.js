@@ -1,6 +1,7 @@
-class IndicatorPanelChart extends PanelChart {
-    constructor(parentElement, indicatorCode, { CountryList = [], width = 400, height = 300 } = {} ) {
-        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/indicator/${indicatorCode}`, width: width, height: height })
+class ScorePanelChart extends PanelChart {
+    constructor(parentElement, itemCode, { CountryList = [], width = 400, height = 300 } = {} ) {
+        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`, width: width, height: height })
+        this.itemCode = itemCode
     }
 
     updateChartOptions() {
@@ -37,6 +38,22 @@ class IndicatorPanelChart extends PanelChart {
             }
         }
     }
+
+    updateItemDropdown(options) {
+        for (const option of options) {
+            const opt = document.createElement('option')
+            opt.value = option.Code
+            opt.textContent = option.Name + " "  + `(${option.Code})`;
+            this.itemDropdown.appendChild(opt)
+        }
+        this.itemDropdown.value = this.itemCode
+        console.log(this.indicatorCode)
+        console.log(this.itemDropdown.value)
+        this.itemDropdown.addEventListener('change', (event) => {
+            window.location.href = '/data/indicator/' + event.target.value
+        })
+    }
+
 
     updateDescription(description) {
         const dbox = document.getElementById("dynamic-indicator-description")
