@@ -10,6 +10,14 @@ hr {
   font-size: 1.25em;
 }
 
+.methodology-section h4 {
+  font-size: 1.05em;
+}
+
+.methodology-wrapper p {
+  max-width: 80ch;
+}
+
 .item-coverage-summary-color-block {
   display: inline-block;
   width: 1em;
