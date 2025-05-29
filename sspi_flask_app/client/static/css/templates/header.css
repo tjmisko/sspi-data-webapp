@@ -12,7 +12,7 @@
 
 .site-header {
     display: flex;
-    padding: 1em 2.5em;
+    padding: 0.4em 1.5em;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -32,9 +32,9 @@
 .site-title-line {
     font-family: 'REM', sans-serif;
     font-weight: 300;
-    font-size: 1.4em;
+    font-size: 1.1em;
     font-weight: 300;
-    margin: 3px 0px;
+    margin: -1px 0px;
     white-space: nowrap;
 }
 
@@ -51,7 +51,7 @@
 }
 
 .header-nav-bar-link {
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: var(--header-text-color, #fff);
     font-family: sans-serif;
     text-decoration: none;
@@ -73,37 +73,13 @@
     transition: all 0.25s linear;
 }
 
-/* // Convert this from SCSS to CSS */
-/* // @media screen and (max-width: 600px) { */
-/* //     .site-header { */
-/* //         flex-direction: row; */
-/* //     } */
-/* //     .header-nav-bar-link { */
-/* //         margin: 5px; */
-/* //     } */
-/* //     .header-nav-bar-link-list { */
-/* //         display: block; */
-/* //     } */
-/* //     .title-subdiv { */
-/* //         flex: 0 1 min-content; */
-/* //         transition: all 0.25s linear; */
-/* //     } */
-/* //     .titlebox { */
-/* //         width: 70%; */
-/* //     } */
-/* //     .title-collapse { */
-/* //         opacity: 0.1; */
-/* //         flex: 0.0001; */
-/* //         overflow: hidden; */
-/* //         margin-right: 0; */
-/* //         transition: all 0.25s ease; */
-/* //     } */
-/* // } */
-
 /* theme-toggle.css */
 .theme-toggle-container {
-    max-width: 5em;
+  max-width: 5em;
+  padding-left: 1em;
+  border-left: 1px solid var(--subtle-line-color);
 }
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -133,6 +109,7 @@
 }
 
 .theme-toggle-container .theme-label {
+  font-family: 'REM', sans-serif;
   font-size: 0.6em;
   color: var(--theme-indicator-text-color, #fff);
 }
