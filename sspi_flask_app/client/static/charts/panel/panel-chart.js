@@ -11,6 +11,7 @@ class PanelChart {
         this.setTheme(window.observableStorage.getItem("theme"))
         this.initRoot()
         this.initChartJSCanvas()
+        this.buildChartOptions()
         this.rigChartOptions()
         this.rigItemDropdown()
         this.rigCountryGroupSelector()
@@ -20,6 +21,7 @@ class PanelChart {
             this.update(data)
         })
         this.rigPinChangeListener()
+        this.rigUnloadListener()
     }
 
     initRoot() {
@@ -29,11 +31,17 @@ class PanelChart {
         this.parentElement.appendChild(this.root)
     }
 
-    rigChartOptions() {
+    buildChartOptions() {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options')
         this.chartOptions.innerHTML = `
-            <details class="chart-options-details chart-view-options" open=true>
+            <button class="hide-chart-options">Hide Options</button>
+            <details class="item-information chart-options-details">
+                <summary class="item-information-summary">Item Information</summary>
+                <select class="item-dropdown"></select>
+                <div class="dynamic-item-description"></div>
+            </details>
+            <details class="chart-options-details chart-view-options">
                 <summary class="chart-view-options-summary">View Options</summary>
                 <div class="chart-view-option">
                     <input type="checkbox" class="extrapolate-backward"/>
@@ -46,11 +54,69 @@ class PanelChart {
                 <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
             </details>
+            <details class="country-group-options chart-options-details">
+                <summary class="country-group-selector-summary">Country Groups</summary>
+                <select class="country-group-selector"></select>
+                <button class="hideunpinned-button">Hide Unpinned</button>
+            </details>
+            <details class="pinned-country-details chart-options-details">
+                <summary>Pinned Countries</summary>
+                <div class="legend-title-bar-buttons">
+                    <button class="add-country-button">Search Country</button>
+                    <button class="clearpins-button">Clear Pins</button>
+                </div>
+                <legend class="dynamic-line-legend">
+                    <div class="legend-items"></div>
+                </legend>
+            </details>
+            <details class="download-data-details chart-options-details">
+                <summary>Download Chart Data</summary>
+                <form id="downloadForm">
+                    <fieldset>
+                        <legend>Select data scope:</legend>
+                        <label><input type="radio" name="scope" value="pinned" required>Pinned countries</label>
+                        <label><input type="radio" name="scope" value="visible">Visible countries</label>
+                        <label><input type="radio" name="scope" value="group">Countries in group</label>
+                        <label><input type="radio" name="scope" value="all">All available countries</label>
+                    </fieldset>
+                    <fieldset>
+                        <legend>Choose file format:</legend>
+                        <label><input type="radio" name="format" value="json" required>JSON</label>
+                        <label><input type="radio" name="format" value="csv">CSV</label>
+                    </fieldset>
+                    <button type="submit">Download Data</button>
+                </form>
+            </details>
+            `;
+        this.showChartOptions = document.createElement('button')
+        this.showChartOptions.classList.add('show-chart-options')
+        this.showChartOptions.ariaLabel = "Show Chart Options"
+        this.showChartOptions.innerHTML = `
+            <svg class="show-chart-options-svg" width="24" height="24">
+                <use href="#icon-menu" />
+            </svg>
         `;
+        this.root.appendChild(this.showChartOptions)
+        this.overlay = document.createElement('div')
+        this.overlay.classList.add('chart-options-overlay')
+        this.overlay.addEventListener('click', () => {
+            this.closeChartOptionsSidebar()
+        })
+        this.root.appendChild(this.overlay)
         const wrapper = document.createElement('div')
         wrapper.classList.add('chart-options-wrapper')
-        wrapper.append(this.chartOptions)
+        wrapper.appendChild(this.chartOptions)
         this.root.appendChild(wrapper)
+    }
+
+    rigChartOptions() {
+        this.showChartOptions.addEventListener('click', () => {
+            this.openChartOptionsSidebar()
+        })
+        this.hideChartOptions = this.chartOptions.querySelector('.hide-chart-options')
+        this.hideChartOptions.addEventListener('click', () => {
+            this.closeChartOptionsSidebar()
+        })
         this.extrapolateBackwardCheckbox = this.root.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
@@ -69,18 +135,24 @@ class PanelChart {
         this.showAllButton.addEventListener('click', () => {
             this.showAll()
         })
+        const detailsElements = this.chartOptions.querySelectorAll('.chart-options-details')
+        let openDetails = window.observableStorage.getItem("openPanelChartDetails")
+        detailsElements.forEach((details) => {
+            if (openDetails && openDetails.includes(details.classList[0])) {
+                details.open = true
+            } else {
+                details.open = false
+            }
+        })
+        const sidebarStatus = window.observableStorage.getItem("chartOptionsStatus")
+        if (sidebarStatus === "active") {
+            this.openChartOptionsSidebar()
+        } else {
+            this.closeChartOptionsSidebar()
+        }
     }
 
     rigItemDropdown() {
-        const information = document.createElement('details')
-        information.classList.add('item-information', 'chart-options-details')
-        information.open = true
-        information.innerHTML = `
-            <summary class="item-information-summary">Item Information</summary>
-            <select class="item-dropdown"></select>
-            <div class="dynamic-item-description"></div>
-        `;
-        this.chartOptions.prepend(information)
         this.itemInformation = this.chartOptions.querySelector('.item-information')
         this.itemDropdown = this.itemInformation.querySelector('.item-dropdown')
     }
@@ -182,20 +254,11 @@ class PanelChart {
     }
 
     rigCountryGroupSelector() {
-        this.countryGroupOptions = document.createElement('details')
-        this.countryGroupOptions.open = true
-        this.countryGroupOptions.classList.add('chart-options-details')
-        this.countryGroupOptions.innerHTML = `
-            <summary class="country-group-selector-summary">Country Groups</summary>
-            <select class="country-group-selector"></select>
-            <button class="hideunpinned-button">Hide Unpinned</button>
-        `;
-        this.chartOptions.appendChild(this.countryGroupOptions)
-        this.countryGroupSelector = this.countryGroupOptions.querySelector('.country-group-selector')
+        this.countryGroupSelector = this.chartOptions.querySelector('.country-group-selector')
         this.countryGroupSelector.addEventListener('change', (event) => {
             this.showGroup(event.target.value)
         })
-        this.hideUnpinnedButton = this.countryGroupOptions.querySelector('.hideunpinned-button')
+        this.hideUnpinnedButton = this.chartOptions.querySelector('.hideunpinned-button')
         this.hideUnpinnedButton.addEventListener('click', () => {
             this.hideUnpinned()
         })
@@ -212,29 +275,15 @@ class PanelChart {
     }
 
     rigLegend() {
-        const pinnedCountryDetails = document.createElement('details')
-        pinnedCountryDetails.classList.add('chart-options-details', 'legend-title-bar')
-        pinnedCountryDetails.open = true
-        pinnedCountryDetails.innerHTML = `
-            <summary>Pinned Countries</summary>
-            <div class="legend-title-bar-buttons">
-                <button class="add-country-button">Search Country</button>
-                <button class="clearpins-button">Clear Pins</button>
-            </div>
-            <legend class='dynamic-line-legend'>
-                <div class="legend-items"></div>
-            </legend>
-        `;
-        this.addCountryButton = pinnedCountryDetails.querySelector('.add-country-button')
+        this.addCountryButton = this.chartOptions.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
             new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
         })
-        this.clearPinsButton = pinnedCountryDetails.querySelector('.clearpins-button')
+        this.clearPinsButton = this.chartOptions.querySelector('.clearpins-button')
         this.clearPinsButton.addEventListener('click', () => {
             this.clearPins()
         })
-        this.chartOptions.append(pinnedCountryDetails)
-        this.legend = pinnedCountryDetails.querySelector('.dynamic-line-legend')
+        this.legend = this.chartOptions.querySelector('.dynamic-line-legend')
         this.legendItems = this.legend.querySelector('.legend-items')
     }
 
@@ -471,6 +520,28 @@ class PanelChart {
         this.pushPinUpdate()
     }
 
+    closeChartOptionsSidebar() {
+        this.chartOptions.classList.remove('active')
+        this.chartOptions.classList.add('inactive')
+        this.overlay.classList.remove('active')
+        this.overlay.classList.add('inactive')
+    }
+
+    openChartOptionsSidebar() {
+        this.chartOptions.classList.add('active')
+        this.chartOptions.classList.remove('inactive')
+        this.overlay.classList.remove('inactive')
+        this.overlay.classList.add('active')
+    }
+
+    toggleChartOptionsSidebar() {
+        if (this.chartOptions.classList.contains('active')) {
+            this.closeChartOptionsSidebar()
+        } else {
+            this.openChartOptionsSidebar()
+        }
+    }
+
     dumpChartDataJSON(screenVisibility = true) {
         const observations = this.chart.data.datasets.map(dataset => {
             if (screenVisibility && dataset.hidden) {
@@ -525,6 +596,21 @@ class PanelChart {
         window.observableStorage.onChange("pinnedCountries", () => {
             this.getPins()
             console.log("Pin change detected!")
+        })
+    }
+
+    rigUnloadListener() {
+        window.addEventListener('beforeunload', () => {
+            window.observableStorage.setItem(
+                "openPanelChartDetails",
+                Array.from(this.chartOptions.querySelectorAll('.chart-options-details'))
+                    .filter(details => details.open)
+                    .map(details => details.classList[0])
+            )
+            window.observableStorage.setItem(
+                "chartOptionsStatus",
+                this.chartOptions.classList.contains('active') ? "active" : "inactive"
+            )
         })
     }
 

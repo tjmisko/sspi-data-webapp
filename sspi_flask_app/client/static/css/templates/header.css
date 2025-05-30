@@ -69,10 +69,21 @@
   border-left: var(--theme-border-thin);
 }
 
+.theme-label {
+  width: 100%;
+  text-align: center;
+  line-height: 1.25;
+  padding: 0.5em;
+  margin: 0;
+  font-family: var(--header-font-family, sans-serif);
+  font-size: 0.4em;
+  color: var(--low-importance-font-color, #fff);
+}
+
 .theme-toggle {
-  display: inline-flex;
+  display: flex;
+  position: relative;
   align-items: center;
-  gap: 0.5rem;
   cursor: pointer;
   user-select: none;
 }
@@ -81,71 +92,80 @@
   display: none;
 }
 
-.theme-toggle .icons {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
 .theme-toggle .icon {
   width: 20px;
   height: 20px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.5;
-  opacity: 0.5;
+  stroke-width: 2;
+  opacity: 0.7;
   transition: opacity 0.3s;
 }
 
-.theme-toggle-container .theme-label {
-  font-family: var(--header-font-family, sans-serif);
-  font-size: 0.5em;
-  color: var(--header-text-color, #fff);
+.theme-toggle .sun-svg {
+  position: absolute;
+  left: 39px;
+  display: flex;
+  flex-align: center;
+  justify-content: center;
+  color: var(--sun-color);
+  z-index: 3;
 }
 
 .theme-toggle .sun {
-  color: #f39c12;
+  color: var(--sun-color);
 }
+
+.theme-toggle .moon-svg {
+  position: absolute;
+  display: flex;
+  flex-align: center;
+  justify-content: center;
+  left: 6px;
+  z-index: 3;
+}
+
 .theme-toggle .moon {
-  color: #f1c40f;
+  color: var(--moon-color);
 }
 
 .theme-toggle input:not(:checked) ~ .icons .sun {
   opacity: 0.2;
 }
+
 .theme-toggle input:checked ~ .icons .moon {
-  opacity: 0.2;
+  opacity: 0.6;
 }
 
 .theme-toggle .slider {
   position: relative;
-  width: 48px;
-  height: 24px;
-  background-color: var(--toggle-bg, #ccc);
-  border-radius: 24px;
+  width: 64px;
+  height: 32px;
+  border-radius: 30px;
+  border: var(--theme-border-thin, 1px solid #ccc);
   transition: background-color 0.3s;
 }
 
 .theme-toggle .slider::before {
   content: "";
   position: absolute;
-  height: 20px;
-  width: 20px;
-  left: 2px;
-  top: 2px;
-  background-color: var(--toggle-thumb, white);
+  height: 26px;
+  width: 26px;
+  left: 3px;
+  top: 3px;
+  background-color: var(--toggle-thumb);
   border-radius: 50%;
   transition: transform 0.3s;
 }
 
+.theme-toggle input:checked ~ .slider::before {
+  background-color: var(--toggle-thumb);
+}
+
 .theme-toggle input:checked ~ .slider {
-  background-color: var(--toggle-bg-checked, #666);
+  background-color: none;
 }
 
 .theme-toggle input:checked ~ .slider::before {
-  transform: translateX(24px);
-}
-
-.theme-toggle .label {
-  font-size: 0.875rem;
+  transform: translateX(32px);
 }

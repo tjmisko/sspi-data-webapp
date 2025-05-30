@@ -7,9 +7,10 @@ html {
 }
 
 body {
-    color: var(--text-color, #000);
-    background-color: var(--page-background, #000);
-    line-height: 1.4rem;
+  color: var(--text-color, #000);
+  background-color: var(--page-background, #000);
+  line-height: 1.4rem;
+  overflow-x: hidden;
 }
 
 main {
