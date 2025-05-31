@@ -299,9 +299,10 @@ class SSPIMetadata(MongoWrapper):
         """
         option_list = []
         for detail in self.find({"DocumentType": "IndicatorDetail"}):
+            meta = detail["Metadata"]
             option_list.append({
-                "Name": detail["Metadata"]["Indicator"],
-                "Code": detail["Metadata"]["IndicatorCode"],
+                "Text": f"{meta['Indicator']} ({meta['IndicatorCode']})",
+                "Value": "/data/indicator/" + meta["IndicatorCode"],
             })
         return option_list
 
@@ -311,9 +312,10 @@ class SSPIMetadata(MongoWrapper):
         """
         option_list = []
         for detail in self.find({"DocumentType": "CategoryDetail"}):
+            meta = detail["Metadata"]
             option_list.append({
-                "Name": detail["Metadata"]["Category"],
-                "Code": detail["Metadata"]["CategoryCode"],
+                "Text": f"{meta["Category"]} {meta["CategoryCode"]}",
+                "Value": "/data/category/" + meta["CategoryCode"],
             })
         return option_list
 
@@ -324,8 +326,8 @@ class SSPIMetadata(MongoWrapper):
         option_list = []
         for detail in self.find({"DocumentType": "PillarDetail"}):
             option_list.append({
-                "Name": detail["Metadata"]["Pillar"],
-                "Code": detail["Metadata"]["PillarCode"],
+                "Text": f"{detail['Metadata']['Pillar']} ({detail['Metadata']['PillarCode']})",
+                "Value": "/data/pillar/" + detail["Metadata"]["PillarCode"],
             })
         return option_list
 

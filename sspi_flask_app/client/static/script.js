@@ -367,12 +367,11 @@ class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{Cou
 this.itemCode=itemCode}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 updateItemDropdown(options){for(const option of options){const opt=document.createElement('option')
-opt.value=option.Code
-opt.textContent=option.Name+" "+`(${option.Code})`;this.itemDropdown.appendChild(opt)}
-this.itemDropdown.value=this.itemCode
-console.log(this.indicatorCode)
-console.log(this.itemDropdown.value)
-this.itemDropdown.addEventListener('change',(event)=>{window.location.href='/data/indicator/'+event.target.value})}}
+opt.value=option.Value
+opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
+const defaultValue='/data/'+options[0].Value.split('/')[2]+'/'+this.itemCode
+this.itemDropdown.value=defaultValue
+this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}}
 const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
 const xLeftMid=(chartArea.left+chartArea.right+offset)/4;const xRightMid=3*(chartArea.left+chartArea.right-offset)/4;const yTop=(chartArea.top+chartArea.bottom)/10+5;ctx.fillText(optionVars.LeftCountry+" Higher",xLeftMid,yTop);ctx.fillStyle='#32CD3299';ctx.fillText(optionVars.RightCountry+" Higher",xRightMid,yTop);ctx.restore();}}
 class StaticPillarDifferentialChart{constructor(BaseCountry,ComparisonCountry,PillarCode,parentElement){this.parentElement=parentElement;this.BaseCountry=BaseCountry;this.ComparisonCountry=ComparisonCountry;this.PillarCode=PillarCode;this.titleString=`Sustainability Score Differences(${ComparisonCountry}-${BaseCountry})`;this.initRoot()

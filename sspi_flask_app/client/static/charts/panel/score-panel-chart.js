@@ -42,15 +42,14 @@ class ScorePanelChart extends PanelChart {
     updateItemDropdown(options) {
         for (const option of options) {
             const opt = document.createElement('option')
-            opt.value = option.Code
-            opt.textContent = option.Name + " "  + `(${option.Code})`;
+            opt.value = option.Value
+            opt.textContent = option.Text;
             this.itemDropdown.appendChild(opt)
         }
-        this.itemDropdown.value = this.itemCode
-        console.log(this.indicatorCode)
-        console.log(this.itemDropdown.value)
+        const defaultValue = '/data/' + options[0].Value.split('/')[2] + '/' + this.itemCode
+        this.itemDropdown.value = defaultValue
         this.itemDropdown.addEventListener('change', (event) => {
-            window.location.href = '/data/indicator/' + event.target.value
+            window.location.href = event.target.value
         })
     }
 }
