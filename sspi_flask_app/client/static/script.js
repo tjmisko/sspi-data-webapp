@@ -202,7 +202,18 @@ this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
 this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
 this.legendItems=this.legend.querySelector('.legend-items')}
 updateLegend(){this.legendItems.innerHTML=''
-if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b class="panel-legend-item-country-code"style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})}
+if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{const pinSpan=document.createElement('span')
+pinSpan.innerText=PinnedCountry.CName+" ("+PinnedCountry.CCode+")"
+const removeButton=document.createElement('button')
+removeButton.classList.add('icon-button','remove-button-legend-item')
+removeButton.id=`${PinnedCountry.CCode}-remove-button-legend`;removeButton.ariaLabel=`Remove ${PinnedCountry.CName}from pinned countries`;removeButton.title=`Unpin ${PinnedCountry.CName}`;removeButton.innerHTML=`<svg class="remove-button-legend-item-svg"width="16"height="16"><use href="#icon-close"/></svg>`;const newPin=document.createElement('div')
+newPin.classList.add('legend-item')
+newPin.style.borderColor=PinnedCountry.borderColor
+newPin.style.backgroundColor=PinnedCountry.borderColor+"44"
+newPin.appendChild(pinSpan)
+newPin.appendChild(removeButton)
+this.legendItems.appendChild(newPin)
+})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
