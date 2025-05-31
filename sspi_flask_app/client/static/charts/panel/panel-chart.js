@@ -139,7 +139,8 @@ class PanelChart {
         })
         this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
         this.showInGroupButton.addEventListener('click', () => {
-            this.showInGroup()
+            const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
+            this.showGroup(activeGroup)
         })
 
         this.showAllButton = this.root.querySelector('.showall-button')
@@ -321,12 +322,6 @@ class PanelChart {
                 newPin.appendChild(pinSpan)
                 newPin.appendChild(removeButton)
                 this.legendItems.appendChild(newPin)
-                // this.legendItems.innerHTML += `
-                //     <div class="legend-item">
-                //         <span> ${PinnedCountry.CName} (<b class="panel-legend-item-country-code" style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>) </span>
-                //         <button class="remove-button-legend-item" id="${PinnedCountry.CCode}-remove-button-legend">Remove</button>
-                //     </div>
-                //`;
             })
         }
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
@@ -487,30 +482,6 @@ class PanelChart {
         })
         this.chart.update({ duration: 0, lazy: false })
     }
-
-    showInGroup() {
-        // Adjust this to only select from those in the current country group
-        this.pinnedOnly = false
-        const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
-        let availableDatasetIndices = []
-        this.chart.data.datasets.filter((dataset, index) => {
-            if (dataset.CGroup.includes(activeGroup)) {
-                availableDatasetIndices.push(index)
-            }
-        })
-        console.log('Showing all countries from group', activeGroup)
-        this.chart.data.datasets.forEach((dataset) => {
-            if (!dataset.pinned) {
-                dataset.hidden = true
-            }
-        })
-        availableDatasetIndices.forEach((index) => {
-            this.chart.data.datasets[index].hidden = false
-            console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
-        })
-        this.chart.update({ duration: 0, lazy: false })
-    }
-
 
     pinCountry(dataset) {
         if (dataset.pinned) {

@@ -164,7 +164,8 @@ this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpo
 this.drawButton=this.root.querySelector('.draw-button')
 this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
 this.showInGroupButton=this.chartOptions.querySelector('.show-in-group-button')
-this.showInGroupButton.addEventListener('click',()=>{this.showInGroup()})
+this.showInGroupButton.addEventListener('click',()=>{const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
+this.showGroup(activeGroup)})
 this.showAllButton=this.root.querySelector('.showall-button')
 this.showAllButton.addEventListener('click',()=>{this.showAll()})
 const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
@@ -212,8 +213,7 @@ newPin.style.borderColor=PinnedCountry.borderColor
 newPin.style.backgroundColor=PinnedCountry.borderColor+"44"
 newPin.appendChild(pinSpan)
 newPin.appendChild(removeButton)
-this.legendItems.appendChild(newPin)
-})}
+this.legendItems.appendChild(newPin)})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
@@ -279,15 +279,6 @@ console.log('Showing',N,'random countries from group',activeGroup)
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
 let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
 shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
-console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
-this.chart.update({duration:0,lazy:false})}
-showInGroup(){this.pinnedOnly=false
-const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
-let availableDatasetIndices=[]
-this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
-console.log('Showing all countries from group',activeGroup)
-this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
-availableDatasetIndices.forEach((index)=>{this.chart.data.datasets[index].hidden=false
 console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
 this.chart.update({duration:0,lazy:false})}
 pinCountry(dataset){if(dataset.pinned){return}
