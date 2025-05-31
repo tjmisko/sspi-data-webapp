@@ -430,6 +430,8 @@ class SSPIMetadata(MongoWrapper):
             result["Metadata"]["ItemName"] = result["Metadata"]["Category"]
         elif result["DocumentType"] == "PillarDetail":
             result["Metadata"]["ItemName"] = result["Metadata"]["Pillar"]
+        elif result["DocumentType"] == "OverallDetail":
+            result["Metadata"]["ItemName"] = result["Metadata"]["Name"]
         return result["Metadata"]
 
 
