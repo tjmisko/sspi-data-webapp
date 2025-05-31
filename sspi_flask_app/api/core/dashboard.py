@@ -95,7 +95,7 @@ def get_static_indicator_data(IndicatorCode):
 
 
 @dashboard_bp.route('/panel/score/<ItemCode>', methods=["GET"])
-def get_dynamic_category_line_data(ItemCode):
+def get_dynamic_score_line_data(ItemCode):
     """
     Get the dynamic data for the given category code for a line chart
     """
