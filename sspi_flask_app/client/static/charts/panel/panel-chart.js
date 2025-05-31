@@ -55,18 +55,19 @@ class PanelChart {
                     <input type="checkbox" class="interpolate-linear"/>
                     <label class="title-bar-label">Linear Interpolation</label>
                 </div>
-                <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
             </details>
             <details class="country-group-options chart-options-details">
                 <summary class="country-group-selector-summary">Country Groups</summary>
                 <select class="country-group-selector"></select>
-                <button class="hideunpinned-button">Hide Unpinned</button>
+                <button class="draw-button">Draw 10 Countries</button>
+                <button class="show-in-group-button">Show All in Group</button>
             </details>
             <details class="pinned-country-details chart-options-details">
                 <summary>Pinned Countries</summary>
                 <div class="legend-title-bar-buttons">
                     <button class="add-country-button">Search Country</button>
+                    <button class="hideunpinned-button">Hide Unpinned</button>
                     <button class="clearpins-button">Clear Pins</button>
                 </div>
                 <legend class="dynamic-line-legend">
@@ -122,12 +123,12 @@ class PanelChart {
         this.hideChartOptions.addEventListener('click', () => {
             this.closeChartOptionsSidebar()
         })
-        this.extrapolateBackwardCheckbox = this.root.querySelector('.extrapolate-backward')
+        this.extrapolateBackwardCheckbox = this.chartOptions.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
             this.toggleBackwardExtrapolation()
         })
-        this.interpolateCheckbox = this.root.querySelector('.interpolate-linear')
+        this.interpolateCheckbox = this.chartOptions.querySelector('.interpolate-linear')
         this.interpolateCheckbox.checked = true
         this.interpolateCheckbox.addEventListener('change', () => {
             this.toggleLinearInterpolation()
@@ -136,6 +137,11 @@ class PanelChart {
         this.drawButton.addEventListener('click', () => {
             this.showRandomN(10)
         })
+        this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
+        this.showInGroupButton.addEventListener('click', () => {
+            this.showInGroup()
+        })
+
         this.showAllButton = this.root.querySelector('.showall-button')
         this.showAllButton.addEventListener('click', () => {
             this.showAll()
@@ -462,6 +468,30 @@ class PanelChart {
         })
         this.chart.update({ duration: 0, lazy: false })
     }
+
+    showInGroup() {
+        // Adjust this to only select from those in the current country group
+        this.pinnedOnly = false
+        const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
+        let availableDatasetIndices = []
+        this.chart.data.datasets.filter((dataset, index) => {
+            if (dataset.CGroup.includes(activeGroup)) {
+                availableDatasetIndices.push(index)
+            }
+        })
+        console.log('Showing all countries from group', activeGroup)
+        this.chart.data.datasets.forEach((dataset) => {
+            if (!dataset.pinned) {
+                dataset.hidden = true
+            }
+        })
+        availableDatasetIndices.forEach((index) => {
+            this.chart.data.datasets[index].hidden = false
+            console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
+        })
+        this.chart.update({ duration: 0, lazy: false })
+    }
+
 
     pinCountry(dataset) {
         if (dataset.pinned) {
