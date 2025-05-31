@@ -46,6 +46,7 @@ def country_data(CountryCode):
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
+    IndicatorCode = IndicatorCode.upper()
     if IndicatorCode not in sspi_metadata.indicator_codes():
         return render_template(
             'score-panel-data.html',
@@ -63,6 +64,7 @@ def indicator_data(IndicatorCode):
 
 @client_bp.route('/data/category/<CategoryCode>')
 def category_data(CategoryCode):
+    CategoryCode = CategoryCode.upper()
     if CategoryCode not in sspi_metadata.category_codes():
         return render_template(
             'score-panel-data.html',
@@ -80,6 +82,7 @@ def category_data(CategoryCode):
 
 @client_bp.route('/data/pillar/<PillarCode>')
 def pillar_data(PillarCode):
+    PillarCode = PillarCode.upper()
     if PillarCode not in sspi_metadata.pillar_codes():
         return render_template(
             'score-panel-data.html',
