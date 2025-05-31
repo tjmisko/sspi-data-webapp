@@ -6,7 +6,7 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     interpolate_linear,
     generate_item_levels,
-    generate_item_groups
+    generate_item_groups,
 )
 import pycountry
 import json
@@ -16,7 +16,7 @@ from flask import (
     jsonify,
     request,
     render_template,
-    current_app as app
+    current_app as app,
 )
 from sspi_flask_app.models.sspi import SSPI
 from sspi_flask_app.models.coverage import DataCoverage
@@ -29,16 +29,14 @@ from sspi_flask_app.models.database import (
     sspi_static_radar_data,
     sspi_static_stack_data,
     sspi_dynamic_line_data,
-    sspi_dynamic_matrix_data
+    sspi_dynamic_matrix_data,
 )
 import os
 from datetime import datetime
 import hashlib
 
 dashboard_bp = Blueprint(
-    'dashboard_bp', __name__,
-    template_folder='templates',
-    static_folder='static'
+    "dashboard_bp", __name__, template_folder="templates", static_folder="static"
 )
 
 
@@ -46,11 +44,7 @@ dashboard_bp = Blueprint(
 @login_required
 def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
-    return render_template(
-        "database-status.html",
-        database=database,
-        ndocs=ndocs
-    )
+    return render_template("database-status.html", database=database, ndocs=ndocs)
 
 
 @dashboard_bp.route("/compare")
@@ -59,8 +53,9 @@ def compare():
     details = sspi_metadata.indicator_details()
     option_details = []
     for indicator in details:
-        option_details.append({key: indicator[key] for key in [
-                              "IndicatorCode", "Indicator"]})
+        option_details.append(
+            {key: indicator[key] for key in ["IndicatorCode", "Indicator"]}
+        )
     return render_template("compare.html", indicators=option_details)
 
 
@@ -69,32 +64,34 @@ def get_static_indicator_data(IndicatorCode):
     """
     Get the static data for the given indicator code
     """
-    static_data = parse_json(sspi_main_data_v3.find(
-        {"IndicatorCode": IndicatorCode}, {"_id": 0})
+    static_data = parse_json(
+        sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
     )
-    data_series = [{
-        "Year": document["Year"],
-        "CountryCode": document["CountryCode"],
-        "Rank": document["Rank"],
-        "Score": document["Score"],
-        "Value": document["Value"]
-    } for document in static_data]
+    data_series = [
+        {
+            "Year": document["Year"],
+            "CountryCode": document["CountryCode"],
+            "Rank": document["Rank"],
+            "Score": document["Score"],
+            "Value": document["Value"],
+        }
+        for document in static_data
+    ]
     labels = [document["CountryCode"] for document in static_data]
     chart_data = {
         "labels": labels,
-        "datasets": [{
-            "label": "Score",
-            "data": data_series,
-            "parsing": {
-                "xAxisKey": "Rank",
-                "yAxisKey": "Score"
+        "datasets": [
+            {
+                "label": "Score",
+                "data": data_series,
+                "parsing": {"xAxisKey": "Rank", "yAxisKey": "Score"},
             }
-        }]
+        ],
     }
     return jsonify(chart_data)
 
 
-@dashboard_bp.route('/panel/score/<ItemCode>', methods=["GET"])
+@dashboard_bp.route("/panel/score/<ItemCode>", methods=["GET"])
 def get_dynamic_score_line_data(ItemCode):
     """
     Get the dynamic data for the given category code for a line chart
@@ -112,13 +109,11 @@ def get_dynamic_score_line_data(ItemCode):
     name = detail["ItemName"]
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
-    
+
     query = {"ICode": ItemCode}
     if country_query:
         query["CCode"] = {"$in": country_query}
-    dynamic_score_data = parse_json(
-        sspi_dynamic_line_data.find(query)
-    )
+    dynamic_score_data = parse_json(sspi_dynamic_line_data.find(query))
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
     if dynamic_score_data:
         min_year = dynamic_score_data[0]["minYear"]
@@ -126,45 +121,42 @@ def get_dynamic_score_line_data(ItemCode):
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{name} ({ItemCode}) Score"
     group_options = sspi_metadata.country_groups()
-    return jsonify({
-        "data": dynamic_score_data,
-        "title": {
-            "display": True,
-            "text": chart_title,
-            "font": {
-                "size": 18
+    return jsonify(
+        {
+            "data": dynamic_score_data,
+            "title": {
+                "display": True,
+                "text": chart_title,
+                "font": {"size": 18},
+                "color": "#ccc",
+                "align": "start",
             },
-            "color": "#ccc",
-            "align": "start"
-        },
-        "labels": year_labels,
-        "description": description,
-        "groupOptions": group_options,
-        "hasScore": True,
-        "itemOptions": item_options
-    })
+            "labels": year_labels,
+            "description": description,
+            "groupOptions": group_options,
+            "hasScore": True,
+            "itemOptions": item_options,
+            "itemType": doc_type[0:-6].lower(),
+        }
+    )
 
 
-@dashboard_bp.route('/static/radar/<CountryCode>')
+@dashboard_bp.route("/static/radar/<CountryCode>")
 def get_static_radar_data(CountryCode):
     radar_data = sspi_static_radar_data.find_one({"CCode": CountryCode})
     return jsonify(radar_data)
 
 
-@dashboard_bp.route('/dynamic/matrix/<country_group>')
+@dashboard_bp.route("/dynamic/matrix/<country_group>")
 def get_dynamic_matrix_data(country_group):
     countries = sspi_metadata.country_group(country_group)
-    data = sspi_dynamic_matrix_data.find(
-        {"y": {"$in": countries}}, {"_id": 0}
+    data = sspi_dynamic_matrix_data.find({"y": {"$in": countries}}, {"_id": 0})
+    return jsonify(
+        {"data": data, "icodes": sspi_metadata.indicator_codes(), "ccodes": countries}
     )
-    return jsonify({
-        "data": data,
-        "icodes": sspi_metadata.indicator_codes(),
-        "ccodes": countries
-    })
 
 
-@dashboard_bp.route('/static/differential/pillar/<pillar_code>')
+@dashboard_bp.route("/static/differential/pillar/<pillar_code>")
 def get_static_pillar_differential(pillar_code):
     """
     Get the static category data
@@ -172,27 +164,21 @@ def get_static_pillar_differential(pillar_code):
     base_country = request.args.get("BaseCountry")
     comparison_country = request.args.get("ComparisonCountry")
     if not (base_country and comparison_country):
-        return jsonify({
-            "error": "BaseCountry and ComparisonCountry are required URL parameters."
-        }), 400
+        return jsonify(
+            {"error": "BaseCountry and ComparisonCountry are required URL parameters."}
+        ), 400
     if base_country == "undefined" or comparison_country == "undefined":
-        return jsonify({
-            "error": "BaseCountry and ComparisonCountry must not be undefined"
-        }), 400
+        return jsonify(
+            {"error": "BaseCountry and ComparisonCountry must not be undefined"}
+        ), 400
     indicator_details = sspi_metadata.indicator_details()
     base_country_data = parse_json(
-        sspi_main_data_v3.find(
-            {"CountryCode": base_country},
-            {"_id": 0}
-        )
+        sspi_main_data_v3.find({"CountryCode": base_country}, {"_id": 0})
     )
     base_sspi = SSPI(indicator_details, base_country_data)
     base_pillar = base_sspi.get_pillar(pillar_code)
     comparison_country_data = parse_json(
-        sspi_main_data_v3.find(
-            {"CountryCode": comparison_country},
-            {"_id": 0}
-        )
+        sspi_main_data_v3.find({"CountryCode": comparison_country}, {"_id": 0})
     )
     comparison_sspi = SSPI(indicator_details, comparison_country_data)
     comparison_pillar = comparison_sspi.get_pillar(pillar_code)
@@ -206,72 +192,66 @@ def get_static_pillar_differential(pillar_code):
         for indicator in category.indicators:
             indicator_code = indicator.code
             base_indicator_score = indicator.score
-            comparison_indicator = comparison_category.get_indicator(
-                indicator.code)
+            comparison_indicator = comparison_category.get_indicator(indicator.code)
             comparison_indicator_score = comparison_indicator.score
-            by_indicator.append({
-                "IndicatorCode": indicator_code,
-                "BaseScore": base_indicator_score,
-                "ComparisonScore": comparison_indicator_score,
-                "Diff": comparison_indicator_score - base_indicator_score,
-            })
-        by_category.append({
-            "label": category_code,
-            "CategoryCode": category_code,
-            "CategoryName": category.name,
-            "baseScore": base_score,
-            "comparisonScore": comparison_score,
-            "Diff": comparison_score - base_score,
-        })
+            by_indicator.append(
+                {
+                    "IndicatorCode": indicator_code,
+                    "BaseScore": base_indicator_score,
+                    "ComparisonScore": comparison_indicator_score,
+                    "Diff": comparison_indicator_score - base_indicator_score,
+                }
+            )
+        by_category.append(
+            {
+                "label": category_code,
+                "CategoryCode": category_code,
+                "CategoryName": category.name,
+                "baseScore": base_score,
+                "comparisonScore": comparison_score,
+                "Diff": comparison_score - base_score,
+            }
+        )
     by_category.sort(key=lambda x: x["Diff"])
     by_indicator.sort(key=lambda x: x["Diff"])
     base_country_name = pycountry.countries.get(alpha_3=base_country).name
-    comparison_country_name = pycountry.countries.get(
-        alpha_3=comparison_country).name
-    return jsonify({
-        "labels": [c["CategoryCode"] for c in by_category],
-        "datasets": [
-            {
-                "label": "Category Differential",
-                "data": by_category
-            },
-            {
-                "label": "Indicator Differential",
-                "data": by_indicator,
-                "hidden": True
-            }
-        ],
-        "title": f"Category Score Difference ({comparison_country} - {base_country})",
-        "baseCCode": base_country,
-        "baseCName": base_country_name,
-        "comparisonCCode": comparison_country,
-        "comparisonCName": comparison_country_name,
-    })
+    comparison_country_name = pycountry.countries.get(alpha_3=comparison_country).name
+    return jsonify(
+        {
+            "labels": [c["CategoryCode"] for c in by_category],
+            "datasets": [
+                {"label": "Category Differential", "data": by_category},
+                {
+                    "label": "Indicator Differential",
+                    "data": by_indicator,
+                    "hidden": True,
+                },
+            ],
+            "title": f"Category Score Difference ({comparison_country} - {base_country})",
+            "baseCCode": base_country,
+            "baseCName": base_country_name,
+            "comparisonCCode": comparison_country,
+            "comparisonCName": comparison_country_name,
+        }
+    )
 
 
-@dashboard_bp.route('/static/stacked/pillar/<pillar_code>')
+@dashboard_bp.route("/static/stacked/pillar/<pillar_code>")
 def get_static_pillar_stack(pillar_code):
     country_codes = request.args.getlist("CountryCode")
     if not (country_codes):
-        return jsonify({
-            "error": "CountryCode URL Parameter not provided"
-        }), 400
+        return jsonify({"error": "CountryCode URL Parameter not provided"}), 400
     if "undefined" in country_codes:
-        return jsonify({
-            "error": "CountryCode URL Parameter must not be undefined"
-        }), 400
+        return jsonify(
+            {"error": "CountryCode URL Parameter must not be undefined"}
+        ), 400
     indicator_details = sspi_metadata.indicator_details()
     datasets = []
     labels = []
     code_map = {}
     pillar_name = ""
     for i, cou in enumerate(country_codes):
-        cou_data = parse_json(
-            sspi_main_data_v3.find(
-                {"CountryCode": cou},
-                {"_id": 0}
-            )
-        )
+        cou_data = parse_json(sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0}))
         cou_sspi = SSPI(indicator_details, cou_data)
         cou_pillar = cou_sspi.get_pillar(pillar_code)
         if i == 0:
@@ -286,8 +266,7 @@ def get_static_pillar_stack(pillar_code):
             for indicator in category.indicators:
                 dataset = {}
                 indicator_rank = sspi_static_rank_data.find_one(
-                    {"ICode": indicator.code, "CCode": cou},
-                    {"_id": 0}
+                    {"ICode": indicator.code, "CCode": cou}, {"_id": 0}
                 )["Rank"]
                 data = [None] * len(cou_pillar.categories)
                 n_indicators = len(category.indicators)
@@ -310,12 +289,14 @@ def get_static_pillar_stack(pillar_code):
                 data[j] = indicator.score / n_indicators
                 dataset["data"] = data
                 datasets.append(dataset)
-    return jsonify({
-        "labels": labels,
-        "datasets": datasets,
-        "title": f"{pillar_name} Score Breakdown by Category and Indicator",
-        "codeMap": code_map
-    })
+    return jsonify(
+        {
+            "labels": labels,
+            "datasets": datasets,
+            "title": f"{pillar_name} Score Breakdown by Category and Indicator",
+            "codeMap": code_map,
+        }
+    )
 
 
 @dashboard_bp.route("/static/bar/score/<item_code>")
@@ -327,25 +308,28 @@ def get_static_score_item(item_code):
         "data": [document["Score"] for document in score_data],
         "info": score_data,
     }
-    return jsonify({
-        "itemCode": item_code,
-        "data": {
-            "labels": [document["CName"] + " " + document["CFlag"]
-                       for document in score_data],
-            "datasets": [score_data_formatted]
-        },
-        "title": f"{item_name} Score by Country",
-        "xTitle": f"{item_name} Score"
-    })
+    return jsonify(
+        {
+            "itemCode": item_code,
+            "data": {
+                "labels": [
+                    document["CName"] + " " + document["CFlag"]
+                    for document in score_data
+                ],
+                "datasets": [score_data_formatted],
+            },
+            "title": f"{item_name} Score by Country",
+            "xTitle": f"{item_name} Score",
+        }
+    )
 
 
 @dashboard_bp.route("/static/stacked/sspi")
 def get_static_stacked_sspi():
     score_data = sspi_static_stack_data.find_one({}, {"_id": 0})
-    return jsonify({
-        "title": "SSPI Overall Scores by Country",
-        "data": score_data["data"]
-    })
+    return jsonify(
+        {"title": "SSPI Overall Scores by Country", "data": score_data["data"]}
+    )
 
 
 @dashboard_bp.route("/utilities/extrapolate/backward/<int:year>", methods=["POST"])
@@ -430,7 +414,7 @@ def find_panel_levels():
         entity_id=entity_id,
         time_id=time_id,
         value_id=value_id,
-        score_id=score_id
+        score_id=score_id,
     )
     return parse_json(item_level_dict)
 
@@ -455,7 +439,9 @@ def prepare_panel_data():
     if not all(isinstance(item, dict) for item in data):
         return jsonify({"error": "All items in data must be dictionaries"}), 400
 
-    def prepare_panel_data_iterator(data, exclude_fields, entity_id, time_id, value_id, score_id):
+    def prepare_panel_data_iterator(
+        data, exclude_fields, entity_id, time_id, value_id, score_id
+    ):
         sspi_panel_data.delete_many({})
         item_group_list = generate_item_groups(
             data,
@@ -463,7 +449,7 @@ def prepare_panel_data():
             entity_id=entity_id,
             time_id=time_id,
             value_id=value_id,
-            score_id=score_id
+            score_id=score_id,
         )
         if len(item_group_list) > 30:
             yield "error: Too many levels (>30) to display! Run `sspi panel levels` to find levels to filter.\n"
@@ -475,7 +461,7 @@ def prepare_panel_data():
             max_year = datetime.now().year
             label_list = list(range(min_year, max_year + 1))
             identifiers = item["Identifier"]
-            identifier_string = json.dumps(identifiers).encode('utf-8')
+            identifier_string = json.dumps(identifiers).encode("utf-8")
             id_hash = hashlib.sha1(identifier_string).hexdigest()
             yield "Identifier Hash: " + id_hash + "\n\n"
             for k, v in identifiers.items():
@@ -503,10 +489,7 @@ def prepare_panel_data():
                     "CCode": cou,
                     "CName": country_code_to_name(cou),
                     "CGroup": group_list,
-                    "parsing": {
-                        "xAxisKey": "years",
-                        "yAxisKey": "value"
-                    },
+                    "parsing": {"xAxisKey": "years", "yAxisKey": "value"},
                     "pinned": False,
                     "hidden": "SSPI49" not in group_list,
                     "label": f"{cou} - {country_code_to_name(cou)}",
@@ -521,11 +504,12 @@ def prepare_panel_data():
                 document["Identifiers"] = identifiers
                 sspi_panel_data.insert_one(document)
             count += 1
+
     return Response(
         prepare_panel_data_iterator(
             data, exclude_fields, entity_id, time_id, value_id, score_id
         ),
-        mimetype='text/event-stream'
+        mimetype="text/event-stream",
     )
 
 
@@ -540,13 +524,14 @@ def get_panel_plot(panel_id):
     """
     Get the panel plot for a given panel id
     """
+
     def make_title(identifiers, panel_id):
         if "ItemCode" in identifiers.keys():
             return f"{identifiers['ItemCode']} (Item Hash: {panel_id})"
         if "IntermediateCode" in identifiers.keys():
-            return f"{identifiers["IntermediateCode"]} (Item Hash: {panel_id})"
+            return f"{identifiers['IntermediateCode']} (Item Hash: {panel_id})"
         if "IndicatorCode" in identifiers.keys():
-            return f"{identifiers["IndicatorCode"]} (Item Hash: {panel_id})"
+            return f"{identifiers['IndicatorCode']} (Item Hash: {panel_id})"
         return f"Panel Plot (Item Hash: {panel_id})"
 
     panel_data = sspi_panel_data.find({"ItemIdentifier": panel_id}, {"_id": 0})
@@ -561,24 +546,24 @@ def get_panel_plot(panel_id):
     for doc in panel_data:
         yMin = min(yMin, min([d for d in doc["value"] if d is not None]))
         yMax = max(yMax, max([d for d in doc["value"] if d is not None]))
-    return jsonify({
-        "data": panel_data,
-        "title": {
-            "display": True,
-            "text": make_title(identifiers, panel_id),
-            "font": {
-                "size": 18
+    return jsonify(
+        {
+            "data": panel_data,
+            "title": {
+                "display": True,
+                "text": make_title(identifiers, panel_id),
+                "font": {"size": 18},
+                "color": "#ccc",
+                "align": "start",
             },
-            "color": "#ccc",
-            "align": "start"
-        },
-        "labels": year_labels,
-        "description": identifiers,
-        "groupOptions": group_options,
-        "hasScore": has_score,
-        "yMin": yMin,
-        "yMax": yMax
-    })
+            "labels": year_labels,
+            "description": identifiers,
+            "groupOptions": group_options,
+            "hasScore": has_score,
+            "yMin": yMin,
+            "yMax": yMax,
+        }
+    )
 
 
 @dashboard_bp.route("/utilities/coverage", methods=["GET"])
@@ -609,7 +594,9 @@ def coverage_unimplemented():
     return parse_json(coverage)
 
 
-@dashboard_bp.route("/utilities/coverage/report/indicator/<IndicatorCode>", methods=["GET"])
+@dashboard_bp.route(
+    "/utilities/coverage/report/indicator/<IndicatorCode>", methods=["GET"]
+)
 def coverage_indicator(IndicatorCode):
     group = request.args.get("CountryGroup", "SSPI67")
     coverage = DataCoverage(2000, 2023, group).indicator_report(IndicatorCode)

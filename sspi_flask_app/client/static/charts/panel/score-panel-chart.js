@@ -39,14 +39,17 @@ class ScorePanelChart extends PanelChart {
         }
     }
 
-    updateItemDropdown(options) {
+    updateItemDropdown(options, itemType) {
+        const itemTitle = itemType.charAt(0).toUpperCase() + itemType.slice(1) + ' Information';
+        const itemSummary = this.itemInformation.querySelector('.item-information-summary')
+        itemSummary.textContent = itemTitle;
         for (const option of options) {
             const opt = document.createElement('option')
             opt.value = option.Value
             opt.textContent = option.Text;
             this.itemDropdown.appendChild(opt)
         }
-        const defaultValue = '/data/' + options[0].Value.split('/')[2] + '/' + this.itemCode
+        const defaultValue = '/data/' + itemType + '/' + this.itemCode
         this.itemDropdown.value = defaultValue
         this.itemDropdown.addEventListener('change', (event) => {
             window.location.href = event.target.value

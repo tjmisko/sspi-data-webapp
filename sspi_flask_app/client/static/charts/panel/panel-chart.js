@@ -386,11 +386,12 @@ class PanelChart {
             }
         }
         this.chart.options.plugins.title = data.title
+        this.itemType = data.itemType
         this.groupOptions = data.groupOptions
         this.pinnedOnly = false
         this.getPins()
         this.updateLegend()
-        this.updateItemDropdown(data.itemOptions)
+        this.updateItemDropdown(data.itemOptions, data.itemType)
         this.updateDescription(data.description)
         this.updateCountryGroups()
         this.chart.update()

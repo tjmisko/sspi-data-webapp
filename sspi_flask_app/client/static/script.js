@@ -240,11 +240,12 @@ const color=this.colorProvider.get(dataset.CCode)
 if(color==="#CCCCCC"){}else{dataset.borderColor=color
 dataset.backgroundColor=color+"44"}}
 this.chart.options.plugins.title=data.title
+this.itemType=data.itemType
 this.groupOptions=data.groupOptions
 this.pinnedOnly=false
 this.getPins()
 this.updateLegend()
-this.updateItemDropdown(data.itemOptions)
+this.updateItemDropdown(data.itemOptions,data.itemType)
 this.updateDescription(data.description)
 this.updateCountryGroups()
 this.chart.update()
@@ -366,10 +367,11 @@ this.chart.update()}}
 class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
-updateItemDropdown(options){for(const option of options){const opt=document.createElement('option')
+updateItemDropdown(options,itemType){const itemTitle=itemType.charAt(0).toUpperCase()+itemType.slice(1)+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
+itemSummary.textContent=itemTitle;for(const option of options){const opt=document.createElement('option')
 opt.value=option.Value
 opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
-const defaultValue='/data/'+options[0].Value.split('/')[2]+'/'+this.itemCode
+const defaultValue='/data/'+itemType+'/'+this.itemCode
 this.itemDropdown.value=defaultValue
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}}
 const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
