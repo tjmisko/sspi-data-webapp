@@ -35,7 +35,11 @@ class PanelChart {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options')
         this.chartOptions.innerHTML = `
-            <button class="hide-chart-options">Hide Options</button>
+            <button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
+                <svg class="hide-chart-options-svg" width="24" height="24">
+                    <use href="#icon-close" />
+                </svg>
+            </button>
             <details class="item-information chart-options-details">
                 <summary class="item-information-summary">Item Information</summary>
                 <select class="item-dropdown"></select>
@@ -89,10 +93,11 @@ class PanelChart {
             </details>
             `;
         this.showChartOptions = document.createElement('button')
-        this.showChartOptions.classList.add('show-chart-options')
+        this.showChartOptions.classList.add("icon-button", "show-chart-options")
         this.showChartOptions.ariaLabel = "Show Chart Options"
+        this.showChartOptions.title = "Show Chart Options"
         this.showChartOptions.innerHTML = `
-            <svg class="show-chart-options-svg" width="24" height="24">
+            <svg class="svg-button show-chart-options-svg" width="24" height="24">
                 <use href="#icon-menu" />
             </svg>
         `;
