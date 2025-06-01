@@ -40,7 +40,13 @@ class ScorePanelChart extends PanelChart {
     }
 
     updateItemDropdown(options, itemType) {
-        const itemTitle = itemType.charAt(0).toUpperCase() + itemType.slice(1) + ' Information';
+        let itemTypeCapped = itemType
+        if (itemType === "sspi") {
+            itemTypeCapped = this.itemType.toUpperCase()
+        } else {
+            itemTypeCapped = this.itemType.charAt(0).toUpperCase() + this.itemType.slice(1)
+        }
+        const itemTitle = itemTypeCapped + ' Information';
         const itemSummary = this.itemInformation.querySelector('.item-information-summary')
         itemSummary.textContent = itemTitle;
         for (const option of options) {
@@ -50,6 +56,7 @@ class ScorePanelChart extends PanelChart {
             this.itemDropdown.appendChild(opt)
         }
         const defaultValue = '/data/' + itemType + '/' + this.itemCode
+        console.log(defaultValue)
         this.itemDropdown.value = defaultValue
         this.itemDropdown.addEventListener('change', (event) => {
             window.location.href = event.target.value

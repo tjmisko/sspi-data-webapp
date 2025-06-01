@@ -9,6 +9,8 @@ class PanelChart {
         this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
+        this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
+        this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
         this.initRoot()
         this.initChartJSCanvas()
         this.buildChartOptions()
@@ -282,13 +284,16 @@ class PanelChart {
     }
 
     updateCountryGroups() {
+        const groupOptionDefault = window.observableStorage.getItem("countryGroup") || "SSPI67"
         this.groupOptions.forEach((option, index) => {
             const opt = document.createElement('option');
             opt.value = option;
             opt.textContent = option;
+            if (option === groupOptionDefault) {
+                opt.selected = true;
+            }
             this.countryGroupSelector.appendChild(opt);
         });
-        // Create the sliding indicator
     }
 
     rigLegend() {
@@ -352,6 +357,15 @@ class PanelChart {
         }
     }
 
+    updateChartColors() {
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            const dataset = this.chart.data.datasets[i]
+            const color = this.colorProvider.get(dataset.CCode)
+            dataset.borderColor = color
+            dataset.backgroundColor = color + "44"
+        }
+    }
+
     setTheme(theme) {
         if (theme !== "light") {
             this.theme = "dark"
@@ -378,20 +392,25 @@ class PanelChart {
     update(data) {
         console.log(data)
         this.chart.data = data
-        this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
+        this.chart.data.labels = data.labels
+        if (this.pinnedOnly) {
+            this.hideUnpinned()
+        } else {
+            this.showGroup(this.countryGroup)
+        }
         this.title.innerText = data.title
         this.itemType = data.itemType
         this.groupOptions = data.groupOptions
-        this.pinnedOnly = false
         this.getPins()
         this.updateLegend()
         this.updateItemDropdown(data.itemOptions, data.itemType)
         this.updateDescription(data.description)
+        this.updateChartColors()
         this.updateCountryGroups()
         this.chart.update()
         if (data.hasScore) {
-            this.toggleYAxisScale()
+            this.setYAxisScale("score")
             this.rigScaleToggle()
         }
     }
@@ -424,6 +443,7 @@ class PanelChart {
 
     showAll() {
         this.pinnedOnly = false
+        window.observableStorage.setItem("pinnedOnly", false)
         console.log('Showing all countries')
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
@@ -433,6 +453,9 @@ class PanelChart {
 
     showGroup(groupName) {
         this.pinnedOnly = false
+        window.observableStorage.setItem("pinnedOnly", false)
+        this.countryGroup = groupName
+        window.observableStorage.setItem("countryGroup", groupName)
         console.log('Showing group:', groupName)
         this.chart.data.datasets.forEach((dataset) => {
             if (dataset.CGroup.includes(groupName) | dataset.pinned) {
@@ -446,6 +469,7 @@ class PanelChart {
 
     hideUnpinned() {
         this.pinnedOnly = true
+        window.observableStorage.setItem("pinnedOnly", true)
         console.log('Hiding unpinned countries')
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
@@ -458,6 +482,7 @@ class PanelChart {
     showRandomN(N = 10) {
         // Adjust this to only select from those in the current country group
         this.pinnedOnly = false
+        window.observableStorage.setItem("pinnedOnly", false)
         const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
         let availableDatasetIndices = []
         this.chart.data.datasets.filter((dataset, index) => {
@@ -512,6 +537,7 @@ class PanelChart {
                 this.pins.delete(element)
             }
         }
+        this.chart.update({ duration: 0, lazy: false })
         this.pushPinUpdate()
         this.updateLegend()
     }
@@ -640,14 +666,16 @@ class PanelChart {
         this.chart.update();
     }
 
-    toggleYAxisScale() {
-        if (this.yAxisScale === "score") {
-            this.yAxisScale = "value"
-            this.chart.options.scales.y.title.text = 'Item Value'
+    setYAxisScale(scale) {
+        this.yAxisScale = scale
+        const scaleType = scale.charAt(0).toUpperCase() + scale.slice(1)
+        let itemType = ""
+        if (this.itemType === "sspi") {
+            itemType = this.itemType.toUpperCase()
         } else {
-            this.yAxisScale = "score"
-            this.chart.options.scales.y.title.text = 'Item Score'
+            itemType = this.itemType.charAt(0).toUpperCase() + this.itemType.slice(1)
         }
+        this.chart.options.scales.y.title.text = itemType + " " + scaleType 
         let yMin = 0
         let yMax = 1
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
@@ -670,8 +698,24 @@ class PanelChart {
         this.chart.update()
     }
 
+
+    toggleYAxisScale() {
+        if (this.yAxisScale === "score") {
+            this.setYAxisScale("value")
+        } else {
+            this.setYAxisScale("score")
+        }
+    }
+
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
         this.chart.update();
+    }
+
+    warnHidden() {
+        if(this.pinnedOnly && this.pins.size === 0) {
+            alert("All countries are hidden!")
+            return true
+        }
     }
 }

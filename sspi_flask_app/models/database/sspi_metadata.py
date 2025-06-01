@@ -122,7 +122,7 @@ class SSPIMetadata(MongoWrapper):
         metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
         metadata.extend(self.build_category_details(indicator_details))
         metadata.extend(self.build_pillar_details(indicator_details))
-        metadata.extend(self.build_overall_detail(indicator_details))
+        metadata.extend(self.build_sspi_detail(indicator_details))
         return metadata
 
     def build_pillar_codes(self, indicator_details: pd.DataFrame) -> dict:
@@ -254,7 +254,7 @@ class SSPIMetadata(MongoWrapper):
             pillar_detail in pillar_detail_map.values()
         ]
 
-    def build_overall_detail(self, indicator_details: pd.DataFrame) -> list[dict]:
+    def build_sspi_detail(self, indicator_details: pd.DataFrame) -> list[dict]:
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
         overall_detail = {
@@ -271,7 +271,7 @@ class SSPIMetadata(MongoWrapper):
         overall_detail["PillarCodes"] = list(overall_detail["PillarCodes"])
         overall_detail["CategoryCodes"] = list(overall_detail["CategoryCodes"])
         return [
-            {"DocumentType": "OverallDetail", "Metadata": overall_detail}
+            {"DocumentType": "SSPIDetail", "Metadata": overall_detail}
         ]
 
     # Getters
@@ -410,7 +410,7 @@ class SSPIMetadata(MongoWrapper):
                                     "then": "$Metadata.PillarCode"
                                 },
                                 {
-                                    "case": {"$eq": ["$DocumentType", "OverallDetail"]},
+                                    "case": {"$eq": ["$DocumentType", "SSPIDetail"]},
                                     "then": "$Metadata.Code"
                                 }
                             ],
@@ -433,7 +433,7 @@ class SSPIMetadata(MongoWrapper):
             result["Metadata"]["ItemName"] = result["Metadata"]["Category"]
         elif result["DocumentType"] == "PillarDetail":
             result["Metadata"]["ItemName"] = result["Metadata"]["Pillar"]
-        elif result["DocumentType"] == "OverallDetail":
+        elif result["DocumentType"] == "SSPIDetail":
             result["Metadata"]["ItemName"] = result["Metadata"]["Name"]
         return result["Metadata"]
 

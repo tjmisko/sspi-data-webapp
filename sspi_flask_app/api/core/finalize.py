@@ -335,7 +335,6 @@ def finalize_dynamic_line_indicator_datasets():
                     "yAxisKey": "scores"
                 },
                 "pinned": False,
-                "hidden": "SSPI49" not in group_list,
                 "label": f"{country_code} - {country_code_to_name(country_code)}",
                 "years": years,
                 "minYear": min_year,

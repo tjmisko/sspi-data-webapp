@@ -44,7 +44,7 @@ chartObject.chart.update()
 sleep(1000).then(()=>{if(alpha){html2canvas(chartObject.parentElement,{backgroundColor:null}).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}else{html2canvas(chartObject.parentElement).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}
 chartObject.textColor=textColorOriginal
 chartObject.gridColor=gridColorOriginal
-chartObject.chart.update()})};const customCountryColors={"ARG":"#36A2EB","AUS":"#FF6384","AUT":"#FF9F40","BEL":"#FFCD56","BRA":"#4BC0C0","CAN":"#9966FF","CHL":"#C9CBCF","CHN":"#F4D35E","COL":"#FF6384","CZE":"#FFD8B1","DNK":"#36A2EB","EST":"#FF6384","FIN":"#FF9F40","FRA":"#FFCD56","DEU":"#4BC0C0","GRC":"#9966FF","HUN":"#C9CBCF","ISL":"#F4D35E","IND":"#8FD14F","IDN":"#FFD8B1","IRL":"#36A2EB","ISR":"#FF6384","ITA":"#FF9F40","JPN":"#FFCD56","KOR":"#4BC0C0","KWT":"#9966FF","LVA":"#C9CBCF","LTU":"#F4D35E","LUX":"#8FD14F","MEX":"#FFD8B1","NLD":"#36A2EB","NZL":"#FF6384","NOR":"#FF9F40","POL":"#FFCD56","PRT":"#4BC0C0","RUS":"#9966FF","SAU":"#C9CBCF","SGP":"#F4D35E","SVK":"#8FD14F","SVN":"#FFD8B1","ZAF":"#36A2EB","ESP":"#FF6384","SWE":"#FF9F40","CHE":"#FFCD56","TUR":"#4BC0C0","ARE":"#9966FF","GBR":"#C9CBCF","USA":"#F4D35E","URY":"#8FD14F","DZA":"#FFD8B1","BGD":"#36A2EB","ECU":"#FF9F40","EGY":"#FFCD56","ETH":"#4BC0C0","IRN":"#9966FF","IRQ":"#C9CBCF","KEN":"#F4D35E","MYS":"#8FD14F","NGA":"#FFD8B1","PAK":"#36A2EB","PER":"#FF6384","PHL":"#FF9F40","ROU":"#FFCD56","THA":"#4BC0C0","VEN":"#9966FF","VNM":"#C9CBCF"}
+chartObject.chart.update()})};const customCountryColors={"ARG":"#36A2EB","AUS":"#FF6384","AUT":"#FF9F40","BEL":"#FFCD56","BRA":"#4BC0C0","CAN":"#9966FF","CHL":"#C9CBCF","CHN":"#FFD8B1","COL":"#FF6384","CZE":"#F4D35E","DNK":"#36A2EB","EST":"#FF6384","FIN":"#FF9F40","FRA":"#FFCD56","DEU":"#4BC0C0","GRC":"#9966FF","HUN":"#C9CBCF","ISL":"#F4D35E","IND":"#8FD14F","IDN":"#FFD8B1","IRL":"#36A2EB","ISR":"#FF6384","ITA":"#FF9F40","JPN":"#FFCD56","KOR":"#4BC0C0","KWT":"#9966FF","LVA":"#C9CBCF","LTU":"#F4D35E","LUX":"#8FD14F","MEX":"#FFD8B1","NLD":"#36A2EB","NZL":"#FF6384","NOR":"#FF9F40","POL":"#FFCD56","PRT":"#4BC0C0","RUS":"#9966FF","SAU":"#C9CBCF","SGP":"#F4D35E","SVK":"#8FD14F","SVN":"#FFD8B1","ZAF":"#F4D35E","ESP":"#FF6384","SWE":"#FF9F40","CHE":"#FFCD56","TUR":"#4BC0C0","ARE":"#9966FF","GBR":"#C9CBCF","USA":"#36A2EB","URY":"#8FD14F","DZA":"#FFD8B1","BGD":"#36A2EB","ECU":"#FF9F40","EGY":"#FFCD56","ETH":"#4BC0C0","IRN":"#9966FF","IRQ":"#C9CBCF","KEN":"#F4D35E","MYS":"#8FD14F","NGA":"#FFD8B1","PAK":"#36A2EB","PER":"#FF6384","PHL":"#FF9F40","ROU":"#FFCD56","THA":"#4BC0C0","VEN":"#9966FF","VNM":"#C9CBCF"}
 class ColorMap{constructor(){this.SSPI="#FFD54F"
 this.SUS="#28a745"
 this.MS="#ff851b"
@@ -123,6 +123,8 @@ this.yAxisScale="value"
 this.endLabelPlugin=endLabelPlugin
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
 this.setTheme(window.observableStorage.getItem("theme"))
+this.pinnedOnly=window.observableStorage.getItem("pinnedOnly")||false
+this.countryGroup=window.observableStorage.getItem("countryGroup")||"SSPI67"
 this.initRoot()
 this.initChartJSCanvas()
 this.buildChartOptions()
@@ -181,13 +183,12 @@ this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
 this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
 this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
 this.toggleYAxisScale()})}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.classList.add('panel-chart-canvas')
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.canvasWrapper=document.createElement('div')
-this.canvasWrapper.classList.add('panel-canvas-wrapper')
-this.canvasWrapper.appendChild(this.canvas)
-this.root.appendChild(this.canvasWrapper)
 this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,maintainAspectRatio:false,onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
 this.togglePin(dataset)})},datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
@@ -195,7 +196,9 @@ rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelec
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
 this.hideUnpinnedButton=this.chartOptions.querySelector('.hideunpinned-button')
 this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
-updateCountryGroups(){this.groupOptions.forEach((option,index)=>{const opt=document.createElement('option');opt.value=option;opt.textContent=option;this.countryGroupSelector.appendChild(opt);});}
+updateCountryGroups(){const groupOptionDefault=window.observableStorage.getItem("countryGroup")||"SSPI67"
+this.groupOptions.forEach((option,index)=>{const opt=document.createElement('option');opt.value=option;opt.textContent=option;if(option===groupOptionDefault){opt.selected=true;}
+this.countryGroupSelector.appendChild(opt);});}
 rigLegend(){this.addCountryButton=this.chartOptions.querySelector('.add-country-button')
 this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
 this.clearPinsButton=this.chartOptions.querySelector('.clearpins-button')
@@ -222,6 +225,10 @@ dbox.innerText=description}
 updateItemDropdown(options){for(const option of options){const opt=document.createElement('option')
 opt.value=option.Code
 opt.textContent=`${option.Name}(${option.Code})`;this.itemDropdown.appendChild(opt)}}
+updateChartColors(){for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
+const color=this.colorProvider.get(dataset.CCode)
+dataset.borderColor=color
+dataset.backgroundColor=color+"44"}}
 setTheme(theme){if(theme!=="light"){this.theme="dark"
 this.tickColor="#bbb"
 this.axisTitleColor="#bbb"
@@ -233,23 +240,20 @@ async fetch(url){const response=await fetch(url)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){console.log(data)
 this.chart.data=data
-this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
-for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
-const color=this.colorProvider.get(dataset.CCode)
-if(color==="#CCCCCC"){}else{dataset.borderColor=color
-dataset.backgroundColor=color+"44"}}
-this.chart.options.plugins.title=data.title
+this.chart.data.labels=data.labels
+if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
+this.title.innerText=data.title
 this.itemType=data.itemType
 this.groupOptions=data.groupOptions
-this.pinnedOnly=false
 this.getPins()
 this.updateLegend()
 this.updateItemDropdown(data.itemOptions,data.itemType)
 this.updateDescription(data.description)
+this.updateChartColors()
 this.updateCountryGroups()
 this.chart.update()
-if(data.hasScore){this.toggleYAxisScale()
+if(data.hasScore){this.setYAxisScale("score")
 this.rigScaleToggle()}}
 getPins(){const storedPins=window.observableStorage.getItem('pinnedCountries')
 console.log("Stored pins:",storedPins)
@@ -261,18 +265,24 @@ this.updateLegend()
 this.chart.update()}
 pushPinUpdate(){window.observableStorage.setItem("pinnedCountries",Array.from(this.pins))}
 showAll(){this.pinnedOnly=false
+window.observableStorage.setItem("pinnedOnly",false)
 console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
 this.chart.update({duration:0,lazy:false})}
 showGroup(groupName){this.pinnedOnly=false
+window.observableStorage.setItem("pinnedOnly",false)
+this.countryGroup=groupName
+window.observableStorage.setItem("countryGroup",groupName)
 console.log('Showing group:',groupName)
 this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
 hideUnpinned(){this.pinnedOnly=true
+window.observableStorage.setItem("pinnedOnly",true)
 console.log('Hiding unpinned countries')
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
 this.chart.update({duration:0,lazy:false})}
 showRandomN(N=10){this.pinnedOnly=false
+window.observableStorage.setItem("pinnedOnly",false)
 const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 let availableDatasetIndices=[]
 this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
@@ -296,6 +306,7 @@ this.updateLegend()}
 unpinCountry(dataset,hide=false){dataset.pinned=false
 if(hide&&this.pinnedOnly){dataset.hidden=true}
 for(const element of this.pins){if(element.CCode===dataset.CCode){this.pins.delete(element)}}
+this.chart.update({duration:0,lazy:false})
 this.pushPinUpdate()
 this.updateLegend()}
 unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){this.unpinCountry(dataset,hide)}})}
@@ -323,9 +334,11 @@ rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observabl
 window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
 toggleBackwardExtrapolation(){this.extrapolateBackwardPlugin.toggle()
 this.chart.update();}
-toggleYAxisScale(){if(this.yAxisScale==="score"){this.yAxisScale="value"
-this.chart.options.scales.y.title.text='Item Value'}else{this.yAxisScale="score"
-this.chart.options.scales.y.title.text='Item Score'}
+setYAxisScale(scale){this.yAxisScale=scale
+const scaleType=scale.charAt(0).toUpperCase()+scale.slice(1)
+let itemType=""
+if(this.itemType==="sspi"){itemType=this.itemType.toUpperCase()}else{itemType=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+this.chart.options.scales.y.title.text=itemType+" "+scaleType
 let yMin=0
 let yMax=1
 for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i];if(i==0){yMin=(this.yAxisScale==="value")?dataset.maxYValue:0;yMax=(this.yAxisScale==="value")?dataset.maxYValue:1;}
@@ -333,8 +346,11 @@ dataset.parsing.yAxisKey=this.yAxisScale;for(let j=0;j<dataset.data.length;j++){
 this.chart.options.scales.y.min=yMin
 this.chart.options.scales.y.max=yMax
 this.chart.update()}
+toggleYAxisScale(){if(this.yAxisScale==="score"){this.setYAxisScale("value")}else{this.setYAxisScale("score")}}
 toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
-this.chart.update();}}
+this.chart.update();}
+warnHidden(){if(this.pinnedOnly&&this.pins.size===0){alert("All countries are hidden!")
+return true}}}
 class ItemPanelChart extends PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:endpointURL,width:width,height:height})}
 rigItemInfoBox(){const infoBox=document.createElement('div')
 infoBox.classList.add('item-panel-info-box')
@@ -367,11 +383,14 @@ this.chart.update()}}
 class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
-updateItemDropdown(options,itemType){const itemTitle=itemType.charAt(0).toUpperCase()+itemType.slice(1)+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
+updateItemDropdown(options,itemType){let itemTypeCapped=itemType
+if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+const itemTitle=itemTypeCapped+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
 itemSummary.textContent=itemTitle;for(const option of options){const opt=document.createElement('option')
 opt.value=option.Value
 opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
 const defaultValue='/data/'+itemType+'/'+this.itemCode
+console.log(defaultValue)
 this.itemDropdown.value=defaultValue
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}}
 const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
