@@ -391,7 +391,7 @@ class PanelChart {
 
     update(data) {
         console.log(data)
-        this.chart.data = data
+        // this.chart.data = data
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
         if (this.pinnedOnly) {

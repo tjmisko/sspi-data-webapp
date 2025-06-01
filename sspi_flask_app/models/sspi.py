@@ -84,7 +84,7 @@ class SSPI:
         overall = {
             "ItemCode": "SSPI",
             "ItemType": "SSPI",
-            "ItemName": "SSPI",
+            "ItemName": "Sustainable and Shared-Prosperity Policy Index",
             "Score": self.score(),
             "Children": [p.code for p in self.pillars]
         }

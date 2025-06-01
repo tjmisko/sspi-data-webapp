@@ -18,7 +18,7 @@ class MongoWrapper:
         cursor = self._mongo_database.find_one(query, options)
         return json.loads(json_util.dumps(cursor))
 
-    def find(self, query: dict, options: dict = {"_id": 0}) -> list:
+    def find(self, query: dict, options: dict = {"_id": 0}) -> list[dict]:
         cursor = self._mongo_database.find(query, options)
         return json.loads(json_util.dumps(cursor))
 

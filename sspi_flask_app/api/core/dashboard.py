@@ -23,6 +23,7 @@ from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
+    sspi_score_data,
     sspi_metadata,
     sspi_panel_data,
     sspi_static_rank_data,
@@ -96,6 +97,9 @@ def get_dynamic_score_line_data(ItemCode):
     """
     Get the dynamic data for the given category code for a line chart
     """
+    indicator_details = sspi_metadata.indicator_details()
+    name_map = {detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details}
+    active_schema = sspi_score_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(ItemCode)
     doc_type = detail["DocumentType"]
     if doc_type == "IndicatorDetail":
@@ -109,7 +113,6 @@ def get_dynamic_score_line_data(ItemCode):
     name = detail["ItemName"]
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
-
     query = {"ICode": ItemCode}
     if country_query:
         query["CCode"] = {"$in": country_query}
@@ -131,6 +134,7 @@ def get_dynamic_score_line_data(ItemCode):
             "hasScore": True,
             "itemOptions": item_options,
             "itemType": doc_type[0:-6].lower(),
+            "tree": active_schema
         }
     )
 
@@ -602,3 +606,13 @@ def coverage_country(CountryCode):
     group = request.args.get("CountryGroup", "SSPI67")
     coverage = DataCoverage(2000, 2023, group).country_report(CountryCode)
     return coverage
+
+
+@dashboard_bp.route("/utilities/coverage/schema", methods=["GET"])
+def active_schema():
+    group = request.args.get("CountryGroup", "SSPI67")
+    sample_country = sspi_metadata.country_group(group)[0]
+    indicator_details = sspi_metadata.indicator_details()
+    name_map = {detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details}
+    active_schema = sspi_score_data.active_schema(sample_country=sample_country, name_map=name_map)
+    return jsonify(active_schema)
