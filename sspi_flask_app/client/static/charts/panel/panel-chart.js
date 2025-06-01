@@ -9,6 +9,8 @@ class PanelChart {
         this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
+        this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
+        this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
         this.initRoot()
         this.initChartJSCanvas()
         this.buildChartOptions()
@@ -35,7 +37,11 @@ class PanelChart {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options')
         this.chartOptions.innerHTML = `
-            <button class="hide-chart-options">Hide Options</button>
+            <button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
+                <svg class="hide-chart-options-svg" width="24" height="24">
+                    <use href="#icon-close" />
+                </svg>
+            </button>
             <details class="item-information chart-options-details">
                 <summary class="item-information-summary">Item Information</summary>
                 <select class="item-dropdown"></select>
@@ -51,18 +57,19 @@ class PanelChart {
                     <input type="checkbox" class="interpolate-linear"/>
                     <label class="title-bar-label">Linear Interpolation</label>
                 </div>
-                <button class="draw-button">Draw 10 Countries</button>
                 <button class="showall-button">Show All</button>
             </details>
             <details class="country-group-options chart-options-details">
                 <summary class="country-group-selector-summary">Country Groups</summary>
                 <select class="country-group-selector"></select>
-                <button class="hideunpinned-button">Hide Unpinned</button>
+                <button class="draw-button">Draw 10 Countries</button>
+                <button class="show-in-group-button">Show All in Group</button>
             </details>
             <details class="pinned-country-details chart-options-details">
                 <summary>Pinned Countries</summary>
                 <div class="legend-title-bar-buttons">
                     <button class="add-country-button">Search Country</button>
+                    <button class="hideunpinned-button">Hide Unpinned</button>
                     <button class="clearpins-button">Clear Pins</button>
                 </div>
                 <legend class="dynamic-line-legend">
@@ -89,10 +96,11 @@ class PanelChart {
             </details>
             `;
         this.showChartOptions = document.createElement('button')
-        this.showChartOptions.classList.add('show-chart-options')
+        this.showChartOptions.classList.add("icon-button", "show-chart-options")
         this.showChartOptions.ariaLabel = "Show Chart Options"
+        this.showChartOptions.title = "Show Chart Options"
         this.showChartOptions.innerHTML = `
-            <svg class="show-chart-options-svg" width="24" height="24">
+            <svg class="svg-button show-chart-options-svg" width="24" height="24">
                 <use href="#icon-menu" />
             </svg>
         `;
@@ -117,12 +125,12 @@ class PanelChart {
         this.hideChartOptions.addEventListener('click', () => {
             this.closeChartOptionsSidebar()
         })
-        this.extrapolateBackwardCheckbox = this.root.querySelector('.extrapolate-backward')
+        this.extrapolateBackwardCheckbox = this.chartOptions.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
             this.toggleBackwardExtrapolation()
         })
-        this.interpolateCheckbox = this.root.querySelector('.interpolate-linear')
+        this.interpolateCheckbox = this.chartOptions.querySelector('.interpolate-linear')
         this.interpolateCheckbox.checked = true
         this.interpolateCheckbox.addEventListener('change', () => {
             this.toggleLinearInterpolation()
@@ -131,6 +139,12 @@ class PanelChart {
         this.drawButton.addEventListener('click', () => {
             this.showRandomN(10)
         })
+        this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
+        this.showInGroupButton.addEventListener('click', () => {
+            const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
+            this.showGroup(activeGroup)
+        })
+
         this.showAllButton = this.root.querySelector('.showall-button')
         this.showAllButton.addEventListener('click', () => {
             this.showAll()
@@ -172,13 +186,18 @@ class PanelChart {
     }
 
     initChartJSCanvas() {
-        this.canvas = document.createElement('canvas')
-        this.canvas.classList.add('panel-chart-canvas')
+        this.chartContainer = document.createElement('div')
+        this.chartContainer.classList.add('panel-chart-container')
+        this.chartContainer.innerHTML = `
+            <h2 class="panel-chart-title"></h2>
+            <div class="panel-canvas-wrapper">
+                <canvas class="panel-chart-canvas"></canvas>
+            </div>
+        `;
+        this.root.appendChild(this.chartContainer)
+        this.title = this.chartContainer.querySelector('.panel-chart-title')
+        this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
         this.context = this.canvas.getContext('2d')
-        this.canvasWrapper = document.createElement('div')
-        this.canvasWrapper.classList.add('panel-canvas-wrapper')
-        this.canvasWrapper.appendChild(this.canvas)
-        this.root.appendChild(this.canvasWrapper)
         this.chart = new Chart(this.context, {
             type: 'line',
             plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin],
@@ -265,13 +284,16 @@ class PanelChart {
     }
 
     updateCountryGroups() {
+        const groupOptionDefault = window.observableStorage.getItem("countryGroup") || "SSPI67"
         this.groupOptions.forEach((option, index) => {
             const opt = document.createElement('option');
             opt.value = option;
             opt.textContent = option;
+            if (option === groupOptionDefault) {
+                opt.selected = true;
+            }
             this.countryGroupSelector.appendChild(opt);
         });
-        // Create the sliding indicator
     }
 
     rigLegend() {
@@ -291,12 +313,25 @@ class PanelChart {
         this.legendItems.innerHTML = ''
         if (this.pins.size > 0) {
             this.pins.forEach((PinnedCountry) => {
-                this.legendItems.innerHTML += `
-                    <div class="legend-item">
-                        <span> ${PinnedCountry.CName} (<b class="panel-legend-item-country-code" style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>) </span>
-                        <button class="remove-button-legend-item" id="${PinnedCountry.CCode}-remove-button-legend">Remove</button>
-                    </div>
-                `
+                const pinSpan = document.createElement('span')
+                pinSpan.innerText = PinnedCountry.CName + " (" + PinnedCountry.CCode + ")"
+                const removeButton = document.createElement('button')
+                removeButton.classList.add('icon-button', 'remove-button-legend-item')
+                removeButton.id = `${PinnedCountry.CCode}-remove-button-legend`;
+                removeButton.ariaLabel = `Remove ${PinnedCountry.CName} from pinned countries`;
+                removeButton.title = `Unpin ${PinnedCountry.CName}`;
+                removeButton.innerHTML = `
+                    <svg class="remove-button-legend-item-svg" width="16" height="16">
+                        <use href="#icon-close" />
+                    </svg>
+                `;
+                const newPin = document.createElement('div')
+                newPin.classList.add('legend-item')
+                newPin.style.borderColor = PinnedCountry.borderColor
+                newPin.style.backgroundColor = PinnedCountry.borderColor + "44"
+                newPin.appendChild(pinSpan)
+                newPin.appendChild(removeButton)
+                this.legendItems.appendChild(newPin)
             })
         }
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
@@ -319,6 +354,15 @@ class PanelChart {
             opt.value = option.Code
             opt.textContent = `${option.Name} (${option.Code})`;
             this.itemDropdown.appendChild(opt)
+        }
+    }
+
+    updateChartColors() {
+        for (let i = 0; i < this.chart.data.datasets.length; i++) {
+            const dataset = this.chart.data.datasets[i]
+            const color = this.colorProvider.get(dataset.CCode)
+            dataset.borderColor = color
+            dataset.backgroundColor = color + "44"
         }
     }
 
@@ -347,30 +391,26 @@ class PanelChart {
 
     update(data) {
         console.log(data)
-        this.chart.data = data
-        this.chart.data.labels = data.labels
+        // this.chart.data = data
         this.chart.data.datasets = data.data
-        for (let i = 0; i < this.chart.data.datasets.length; i++) {
-            const dataset = this.chart.data.datasets[i]
-            const color = this.colorProvider.get(dataset.CCode)
-            if (color === "#CCCCCC") {
-
-            } else {
-                dataset.borderColor = color
-                dataset.backgroundColor = color + "44"
-            }
+        this.chart.data.labels = data.labels
+        if (this.pinnedOnly) {
+            this.hideUnpinned()
+        } else {
+            this.showGroup(this.countryGroup)
         }
-        this.chart.options.plugins.title = data.title
+        this.title.innerText = data.title
+        this.itemType = data.itemType
         this.groupOptions = data.groupOptions
-        this.pinnedOnly = false
         this.getPins()
         this.updateLegend()
-        this.updateItemDropdown(data.itemOptions)
+        this.updateItemDropdown(data.itemOptions, data.itemType)
         this.updateDescription(data.description)
+        this.updateChartColors()
         this.updateCountryGroups()
         this.chart.update()
         if (data.hasScore) {
-            this.toggleYAxisScale()
+            this.setYAxisScale("score")
             this.rigScaleToggle()
         }
     }
@@ -403,6 +443,7 @@ class PanelChart {
 
     showAll() {
         this.pinnedOnly = false
+        window.observableStorage.setItem("pinnedOnly", false)
         console.log('Showing all countries')
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
@@ -412,6 +453,9 @@ class PanelChart {
 
     showGroup(groupName) {
         this.pinnedOnly = false
+        window.observableStorage.setItem("pinnedOnly", false)
+        this.countryGroup = groupName
+        window.observableStorage.setItem("countryGroup", groupName)
         console.log('Showing group:', groupName)
         this.chart.data.datasets.forEach((dataset) => {
             if (dataset.CGroup.includes(groupName) | dataset.pinned) {
@@ -425,6 +469,7 @@ class PanelChart {
 
     hideUnpinned() {
         this.pinnedOnly = true
+        window.observableStorage.setItem("pinnedOnly", true)
         console.log('Hiding unpinned countries')
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
@@ -437,6 +482,7 @@ class PanelChart {
     showRandomN(N = 10) {
         // Adjust this to only select from those in the current country group
         this.pinnedOnly = false
+        window.observableStorage.setItem("pinnedOnly", false)
         const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
         let availableDatasetIndices = []
         this.chart.data.datasets.filter((dataset, index) => {
@@ -491,6 +537,7 @@ class PanelChart {
                 this.pins.delete(element)
             }
         }
+        this.chart.update({ duration: 0, lazy: false })
         this.pushPinUpdate()
         this.updateLegend()
     }
@@ -619,14 +666,16 @@ class PanelChart {
         this.chart.update();
     }
 
-    toggleYAxisScale() {
-        if (this.yAxisScale === "score") {
-            this.yAxisScale = "value"
-            this.chart.options.scales.y.title.text = 'Item Value'
+    setYAxisScale(scale) {
+        this.yAxisScale = scale
+        const scaleType = scale.charAt(0).toUpperCase() + scale.slice(1)
+        let itemType = ""
+        if (this.itemType === "sspi") {
+            itemType = this.itemType.toUpperCase()
         } else {
-            this.yAxisScale = "score"
-            this.chart.options.scales.y.title.text = 'Item Score'
+            itemType = this.itemType.charAt(0).toUpperCase() + this.itemType.slice(1)
         }
+        this.chart.options.scales.y.title.text = itemType + " " + scaleType 
         let yMin = 0
         let yMax = 1
         for (let i = 0; i < this.chart.data.datasets.length; i++) {
@@ -649,8 +698,24 @@ class PanelChart {
         this.chart.update()
     }
 
+
+    toggleYAxisScale() {
+        if (this.yAxisScale === "score") {
+            this.setYAxisScale("value")
+        } else {
+            this.setYAxisScale("score")
+        }
+    }
+
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
         this.chart.update();
+    }
+
+    warnHidden() {
+        if(this.pinnedOnly && this.pins.size === 0) {
+            alert("All countries are hidden!")
+            return true
+        }
     }
 }

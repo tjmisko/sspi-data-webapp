@@ -335,7 +335,6 @@ def finalize_dynamic_line_indicator_datasets():
                     "yAxisKey": "scores"
                 },
                 "pinned": False,
-                "hidden": "SSPI49" not in group_list,
                 "label": f"{country_code} - {country_code_to_name(country_code)}",
                 "years": years,
                 "minYear": min_year,
@@ -512,7 +511,7 @@ def finalize_sspi_dynamic_score():
     return Response(finalize_sspi_dynamic_score_iterator(indicator_list, country_list), mimetype='text/event-stream')
 
 
-def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] = None):
+def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
     mongo_query = {
         "CountryCode": {"$in": country_codes},
         "IndicatorCode": {"$in": indicator_codes},

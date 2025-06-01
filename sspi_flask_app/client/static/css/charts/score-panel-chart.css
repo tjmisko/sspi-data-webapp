@@ -6,39 +6,78 @@
   min-height: clamp(600px, 80vh, 80vh);
 }
 
-.panel-canvas-wrapper {
-  padding: 0.5em;
+.panel-chart-container { /* Contains title and chart canvas */
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
   position: relative;
   width: 100%;
-  flex: 2 1 0;
+  min-width: 300px;
+  max-width: 100%;
+  height: clamp(600px, 80vh, 80vh);
+}
+
+.panel-chart-title {
+  font-size: 1em;
+  margin: 0.5em 0;
+}
+
+.panel-canvas-wrapper { /* Wraps the chart canvas */
+  padding: 0.5em;
+  position: relative;
+  flex: 1 1 0;
 }
 
 .chart-options-wrapper {
   position: relative;
 }
 
-.show-chart-options {
+.icon-button {
   all: unset;
   border-radius: 5px;
   cursor: pointer;
-  position: absolute;
   display: flex;
   flex-align: center;
   justify-content: center;
   padding: 0.5em;
-  top: 0.5em;
-  right: 0.5em;
+}
+
+.show-chart-options {
+  position: absolute;
+  top: 0.2em;
+  right: 0;
   z-index: 2;
 }
 
-.show-chart-options-svg {
+.hide-chart-options {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.remove-button-legend-item {
+  padding: 0;
+  margin-left: 0.2em;
+  z-index: 2;
+}
+
+.icon-button:hover .hide-chart-options-svg {
+  stroke: var(--green-accent, #FFFFFF);
+}
+
+.icon-button:hover .show-chart-options-svg {
+  stroke: var(--green-accent, #FFFFFF);
+}
+
+.icon-button:hover .remove-button-legend-item {
+  stroke: var(--green-accent, #FFFFFF);
+}
+
+.show-chart-options-svg, .hide-chart-options-svg, .remove-button-legend-item-svg {
   margin: auto;
   stroke: var(--text-color, #CCCCCC);
   fill: none;
-}
-
-.show-chart-options:hover {
-  background-color: var(--green-accent, #8BA342);
 }
 
 .chart-options {
@@ -160,11 +199,20 @@
 }
 
 .legend-item {
-  font-size: 0.70em;
-  background-color: var(--header-color, #000);
-  padding: 0.3em 0.6em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 0.75em;
+  font-weight: 500;
+  padding: 0.1em 1em;
   border-radius: 20px;
+  border-width: 1.5px;
+  border-style: solid;
   margin: 0.2em;
+}
+
+.legend-item span {
+  line-height: 2;
 }
 
 .add-country-pin-results-window {
