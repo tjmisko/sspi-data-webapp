@@ -184,13 +184,18 @@ class PanelChart {
     }
 
     initChartJSCanvas() {
-        this.canvas = document.createElement('canvas')
-        this.canvas.classList.add('panel-chart-canvas')
+        this.chartContainer = document.createElement('div')
+        this.chartContainer.classList.add('panel-chart-container')
+        this.chartContainer.innerHTML = `
+            <h2 class="panel-chart-title"></h2>
+            <div class="panel-canvas-wrapper">
+                <canvas class="panel-chart-canvas"></canvas>
+            </div>
+        `;
+        this.root.appendChild(this.chartContainer)
+        this.title = this.chartContainer.querySelector('.panel-chart-title')
+        this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
         this.context = this.canvas.getContext('2d')
-        this.canvasWrapper = document.createElement('div')
-        this.canvasWrapper.classList.add('panel-canvas-wrapper')
-        this.canvasWrapper.appendChild(this.canvas)
-        this.root.appendChild(this.canvasWrapper)
         this.chart = new Chart(this.context, {
             type: 'line',
             plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin],
@@ -375,17 +380,7 @@ class PanelChart {
         this.chart.data = data
         this.chart.data.labels = data.labels
         this.chart.data.datasets = data.data
-        for (let i = 0; i < this.chart.data.datasets.length; i++) {
-            const dataset = this.chart.data.datasets[i]
-            const color = this.colorProvider.get(dataset.CCode)
-            if (color === "#CCCCCC") {
-
-            } else {
-                dataset.borderColor = color
-                dataset.backgroundColor = color + "44"
-            }
-        }
-        this.chart.options.plugins.title = data.title
+        this.title.innerText = data.title
         this.itemType = data.itemType
         this.groupOptions = data.groupOptions
         this.pinnedOnly = false

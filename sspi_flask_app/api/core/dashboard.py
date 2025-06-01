@@ -124,13 +124,7 @@ def get_dynamic_score_line_data(ItemCode):
     return jsonify(
         {
             "data": dynamic_score_data,
-            "title": {
-                "display": True,
-                "text": chart_title,
-                "font": {"size": 18},
-                "color": "#ccc",
-                "align": "start",
-            },
+            "title": chart_title,
             "labels": year_labels,
             "description": description,
             "groupOptions": group_options,
