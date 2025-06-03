@@ -535,19 +535,23 @@ def generate_item_groups(data: list[dict], entity_id="", value_id="", time_id=""
     return list(item_levels.values())
 
 
-def slice_intermediate(doc_list, intermediate_code):
+def slice_intermediate(doc_list, intermediate_codes: list[str] | str):
     """
     Utility taking for extracting intermediates from the output of
     zip_intermediates
 
     :param doc_list: List of documents to extract intermediates from, in the
     format of the output of zip_intermediates.
-    :param intermediate_code: The code of the intermediate to extract.
+    :param intermediate_codes: List of intermediate codes to filter by, or a single
+    intermediate code as a string.
     """
     intermediates = []
+    if not isinstance(intermediate_codes, list):
+        intermediate_codes = [intermediate_codes]
     for doc in doc_list:
+        print(doc)
         for intermediate in doc.get('Intermediates', []):
-            if intermediate.get('IntermediateCode') == intermediate_code:
+            if intermediate.get('IntermediateCode') in intermediate_codes:
                 intermediates.append(intermediate)
     return intermediates
 
