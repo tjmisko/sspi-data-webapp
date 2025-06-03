@@ -82,7 +82,7 @@ def finalize_sspi_static_rank_data():
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
         country_data = sspi_main_data_v3.find({"CountryCode": cou})
-        sspi_scores = SSPI(indicator_details, country_data)
+        sspi_scores = SSPI(indicator_details, country_data, strict_year=False)
         score_group_dictionary["SSPI"][i].update({
             "CCode": cou,
             "Score": sspi_scores.score(),
@@ -226,7 +226,7 @@ def finalize_sspi_static_radar_data():
         }
         output_dict["legendItems"] = []
         output_dict["title"] = country_code_to_name(country_code)
-        sspi = SSPI(indicator_details, country_lookup[country_code]["Data"])
+        sspi = SSPI(indicator_details, country_lookup[country_code]["Data"], strict_year=False)
         output_dict["labels"] = [c.code for c in sspi.categories]
         output_dict["labelMap"] = {c.code: c.name for c in sspi.categories}
         output_dict["datasets"] = []
