@@ -15,6 +15,8 @@ def full_name(name):
         return "sspi_clean_api_data"
     if name == "incomplete":
         return "sspi_incomplete_api_data"
+    if name == "imputed":
+        return "sspi_imputed_data"
     return name
 
 
