@@ -43,10 +43,14 @@ def finalize_iterator(local_path, endpoints):
     finalize_sspi_static_radar_data()
     yield "Finalizing Static Stack Data\n"
     finalize_static_overall_stack_data()
-    yield "Finalizing Dynamic Line Data\n"
-    yield from finalize_dynamic_line_data()
     yield "Finalizing Dynamic Matrix Data\n"
     yield from finalize_matrix_iterator(local_path, endpoints)
+    yield "Scoring Dynamic Data\n"
+    finalize_sspi_dynamic_score()
+    yield "Finalizing Dynamic Line Data\n"
+    sspi_dynamic_line_data.delete_many({})
+    yield from finalize_dynamic_line_indicator_datasets()
+    yield from finalize_dynamic_line_score_datasets()
     yield "Finalization Complete\n"
 
 
@@ -505,7 +509,7 @@ def finalize_sspi_dynamic_score():
     country_group = request.args.get("CountryGroup")
     coverage = DataCoverage(2000, 2023, country_group, countries=countries)
     indicator_list = coverage.complete()
-    country_list = coverage.country_codes
+    country_list = list(coverage.country_codes)
     app.logger.info(f"country_list: {country_list}")
     app.logger.info(f"indicator_list: {indicator_list}")
     return Response(finalize_sspi_dynamic_score_iterator(indicator_list, country_list), mimetype='text/event-stream')
@@ -531,7 +535,6 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
     yield "Scoring Data\n"
     documents = []
     for country_code, year_data in data_map.items():
-        print(year_data)
         for year, data in year_data.items():
             data["SSPI"] = SSPI(details, data["Data"])
             yield f"{country_code}: {year}: {data["SSPI"].score()}\n"
