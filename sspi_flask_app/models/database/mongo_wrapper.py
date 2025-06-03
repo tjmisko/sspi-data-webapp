@@ -306,12 +306,9 @@ class MongoWrapper:
             id_set.add(document_id)
 
     def validate_intermediates_list(self, intermediates: list, document_number: int = 0):
-        if not type(intermediates) is list:
-            print(f"Document Produced an Error: {intermediates}")
-            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(intermediates)}")
         id_set = set()
         for intermediate in intermediates:
-            if not type(intermediate) is dict:
+            if not isinstance(intermediate, dict):
                 print(f"Document Produced an Error: {intermediates}")
                 raise InvalidDocumentFormatError(
                     f"'Intermediates' must be a dictionary (document {document_number})")
