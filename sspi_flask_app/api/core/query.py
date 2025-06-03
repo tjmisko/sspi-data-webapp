@@ -1,8 +1,7 @@
-import re
 from flask import Blueprint, jsonify, request
 from sspi_flask_app.models.errors import InvalidQueryError
-from ..resources.validators import validate_data_query
-from ..resources.utilities import parse_json, lookup_database
+from sspi_flask_app.api.resources.validators import validate_data_query
+from sspi_flask_app.api.resources.utilities import parse_json, lookup_database
 from sspi_flask_app.models.database import sspi_metadata
 
 query_bp = Blueprint("query_bp", __name__,
@@ -14,8 +13,8 @@ query_bp = Blueprint("query_bp", __name__,
 @query_bp.route("/<database_string>")
 def query_database(database_string):
     query_params = get_query_params(request)
-    print(query_params)
     database = lookup_database(database_string)
+    print(query_params)
     return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
 
 
@@ -37,12 +36,11 @@ def get_query_params(request, requires_database=False):
     """
     raw_query_input = {
         "IndicatorCode": request.args.getlist("IndicatorCode"),
-        "IndicatorGroup": request.args.get("IndicatorGroup"),
         "CountryCode": request.args.getlist("CountryCode"),
         "CountryGroup": request.args.get("CountryGroup"),
         "Year": request.args.getlist("Year"),
         "YearRangeStart": request.args.get("YearRangeStart"),
-        "YearRangeEnd": request.args.get("YearRangeEnd")
+        "YearRangeEnd": request.args.get("YearRangeEnd"),
     }
     if requires_database:
         raw_query_input["Database"] = request.args.get("database"),
@@ -57,17 +55,26 @@ def build_mongo_query(raw_query_input):
     mongo_query = {}
     if raw_query_input["IndicatorCode"]:
         mongo_query["IndicatorCode"] = {
-            "$in": raw_query_input["IndicatorCode"]}
-    if raw_query_input["IndicatorGroup"]:
-        mongo_query["IndicatorGroup"] = {
-            "$in": indicator_group(raw_query_input["IndicatorGroup"])}
-    if raw_query_input["CountryCode"]:
-        mongo_query["CountryCode"] = {"$in": raw_query_input["CountryCode"]}
+            "$in": raw_query_input["IndicatorCode"]
+        }
+    country_codes = set()
     if raw_query_input["CountryGroup"]:
-        mongo_query["CountryCode"] = {
-            "$in": country_group(raw_query_input["CountryGroup"])}
+        country_codes.update(
+            sspi_metadata.country_group(raw_query_input["CountryGroup"])
+        )
+    if raw_query_input["CountryCode"]:
+        country_codes.update(raw_query_input["CountryCode"])
+    if country_codes:
+        mongo_query["CountryCode"] = {"$in": list(country_codes)}
+    years = set()
     if raw_query_input["Year"]:
-        mongo_query["YEAR"] = {"$in": raw_query_input["Year"]}
+        years.update([int(y) for y in raw_query_input["Year"]])
+    if raw_query_input["YearRangeStart"] and raw_query_input["YearRangeEnd"]:
+        start_year = int(raw_query_input["YearRangeStart"])
+        end_year = int(raw_query_input["YearRangeEnd"])
+        years.update(range(start_year, end_year + 1))
+    if years:
+        mongo_query["Year"] = {"$in": list(years)}
     return mongo_query
 
 
