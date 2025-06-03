@@ -150,14 +150,10 @@ def zip_intermediates(
     sspi_clean_api_data.validate_intermediates_list(intermediates_list)
     sspi_clean_api_data.validate_items_list(items_list)
     intermediates_list, noneish_list = drop_none_or_na(intermediates_list)
-    print(
-        (f"There were {len(noneish_list)} none/na documents foundin intermediates_list")
-    )
     gp_intermediates_list = append_goalpost_info(intermediates_list, ScoreBy)
     indicator_list = group_by_indicator(
         gp_intermediates_list, items_list, IndicatorCode
     )
-    print(indicator_list)
     scored_indicator_document_list = score_indicator_documents(
         indicator_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
     )
