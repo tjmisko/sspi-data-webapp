@@ -43,7 +43,7 @@ def line(idcode, remote=False):
     """
     connector = SSPIDatabaseConnector()
     base_url = connector.remote_base if remote else connector.local_base
-    url = base_url + "/api/v1/view/line/" + idcode
+    url = base_url + "/data/indicator/" + idcode
     open_browser_subprocess(url)
 
 

@@ -44,4 +44,3 @@ def compute_rdlst():
     scored_data = score_single_indicator(filtered_redlst, "REDLST")
     sspi_clean_api_data.insert_many(scored_data)
     return parse_json(scored_data)
-

@@ -129,13 +129,14 @@ class SSPI:
 
     def load(self, indicator_details, indicator_scores):
         if len(indicator_details) != len(indicator_scores):
-            details = set([d["IndicatorCode"]
+            details = sorted([d["IndicatorCode"]
                            for d in indicator_details])
-            scores = set([s["IndicatorCode"] for s in indicator_scores])
-            print(details.symmetric_difference(scores))
+            scores = sorted([s["IndicatorCode"] for s in indicator_scores])
             error_msg = (
                 f"Length of indicator_details {len(indicator_details)} and "
                 f"indicator_scores {len(indicator_scores)} must match!"
+                f"\nDetail Codes: {details}\nScore Codes: {scores}\n\n"
+                f"Score Data: {indicator_scores}"
             )
             raise DataOrderError(error_msg)
 

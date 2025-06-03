@@ -361,7 +361,7 @@ return true}}}
 class ItemPanelChart extends PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:endpointURL,width:width,height:height})}
 rigItemInfoBox(){const infoBox=document.createElement('div')
 infoBox.classList.add('item-panel-info-box')
-this.root.appendChild(infoBox)}
+this.root.prepend(infoBox)}
 updateDescription(description){const dbox=this.root.querySelector('.item-panel-info-box')
 let identifiersHTML=''
 let code=''

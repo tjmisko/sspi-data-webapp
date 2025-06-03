@@ -124,7 +124,7 @@ def impute_altnrg():
     app.logger.info("Running /api/v1/impute/ALTNRG")
     sspi_imputed_data.delete_many({"IndicatorCode": "ALTNRG"})
     # Forward Extrapolate from 2022 to 2023
-    clean_data = sspi_clean_api_data.find({"IndicatorCode": "ALTNRG"})
+    clean_data = sspi_clean_api_data.find({"IndicatorCode": "ALTNRG", "CountryCode": {"$ne": "KWT"}})
     forward_extrap = extrapolate_forward(clean_data, 2023, impute_only=True)
     # Handle KWT: All sources confirm that almost all energy is from fossil fuels
     kwt_incomplete = sspi_incomplete_api_data.find(
@@ -157,18 +157,13 @@ def impute_altnrg():
             },
         ]
     }
-    kwt_incomplete_filtered = []
     for i, obs in enumerate(kwt_incomplete):
         obs["Imputed"] = True
         obs["ImputationMethod"] = True
         obs["ImputationDistance"] = 0
         year = obs["Year"]
         country_code = obs["CountryCode"]
-        if not obs.get("Intermediates"):
-            continue
         int_codes = [inter["IntermediateCode"] for inter in obs["Intermediates"]]
-        if "TTLSUM" not in int_codes:
-            continue
         if "BIOWAS" not in int_codes:
             imputed_intermediate = {
                 "IntermediateCode": "BIOWAS",
@@ -189,14 +184,13 @@ def impute_altnrg():
             }
             imputed_intermediate.update(impute_info)
             obs["Intermediates"].append(imputed_intermediate)
-        kwt_incomplete_filtered.append(obs)
     kwt_clean, kwt_still_missing = zip_intermediates(
-        slice_intermediate(kwt_incomplete_filtered, ["TTLSUM", "ALTSUM", "BIOWAS"]),
+        slice_intermediate(kwt_incomplete, ["TTLSUM", "ALTSUM", "BIOWAS"]),
         "ALTNRG", 
         ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
         ValueFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM * 100,
         ScoreBy="Value",
     )
-    imputations = kwt_clean + forward_extrap
+    imputations = extrapolate_forward(kwt_clean, 2023) + forward_extrap
     sspi_imputed_data.insert_many(imputations)
     return parse_json(imputations)

@@ -173,12 +173,12 @@ def get_static_pillar_differential(pillar_code):
     base_country_data = parse_json(
         sspi_main_data_v3.find({"CountryCode": base_country}, {"_id": 0})
     )
-    base_sspi = SSPI(indicator_details, base_country_data)
+    base_sspi = SSPI(indicator_details, base_country_data, strict_year=False)
     base_pillar = base_sspi.get_pillar(pillar_code)
     comparison_country_data = parse_json(
         sspi_main_data_v3.find({"CountryCode": comparison_country}, {"_id": 0})
     )
-    comparison_sspi = SSPI(indicator_details, comparison_country_data)
+    comparison_sspi = SSPI(indicator_details, comparison_country_data, strict_year=False)
     comparison_pillar = comparison_sspi.get_pillar(pillar_code)
     by_category = []
     by_indicator = []
@@ -250,7 +250,7 @@ def get_static_pillar_stack(pillar_code):
     pillar_name = ""
     for i, cou in enumerate(country_codes):
         cou_data = parse_json(sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0}))
-        cou_sspi = SSPI(indicator_details, cou_data)
+        cou_sspi = SSPI(indicator_details, cou_data, strict_year=False)
         cou_pillar = cou_sspi.get_pillar(pillar_code)
         if i == 0:
             pillar_name = cou_pillar.name
