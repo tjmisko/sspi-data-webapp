@@ -6,7 +6,7 @@ class ItemPanelChart extends PanelChart {
     rigItemInfoBox() {
         const infoBox = document.createElement('div')
         infoBox.classList.add('item-panel-info-box')
-        this.root.appendChild(infoBox)
+        this.root.prepend(infoBox)
     }
 
     updateDescription(description) {
