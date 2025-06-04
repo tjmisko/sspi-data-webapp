@@ -167,30 +167,8 @@ def apikey_web():
         return render_template('apikey.html',
                                form=form,
                                error="Invalid username or password",
-                               title="Retrieve API Key")
+                               title="Retrieve API Key"), 405
     return Response(user.apikey, 200, mimetype='text/plain')
-
-
-@auth_bp.route("/remote/session/login", methods=["POST"])
-def remote_login():
-    auth_header = request.headers.get("Authorization", None)
-    if not auth_header or not auth_header.startswith("Bearer "):
-        app.logger.warning("No API key provided or incorrect format!")
-        return jsonify({"message": "No API key provided or incorrect format"}), 401
-    parts = auth_header.split(" ")
-    if len(parts) != 2 or parts[0] != "Bearer":
-        return jsonify({"message": "Invalid Authorization header format"}), 401
-    api_token = parts[1]
-    if not api_token:
-        app.logger.warning("No API key provided!")
-        return jsonify({"message": "No API key provided"}), 401
-    user = User.query.filter_by(apikey=api_token).first()
-    if user is not None:
-        login_user(user, remember=True, duration=app.config["REMEMBER_COOKIE_DURATION"])
-        app.logger.info(f"User {user.username} successful login")
-        return "Remote Login Successful"
-    app.logger.warning("Login attempt failed!")
-    return jsonify({"message": "Invalid API key"}), 401
 
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
