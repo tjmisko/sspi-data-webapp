@@ -54,8 +54,8 @@ get(entity){if(this.colors[entity]===undefined){return this.random();}
 return this.colors[entity]}
 random(){const keys=Object.keys(this.colors);const randomKey=keys[Math.floor(Math.random()*keys.length)];return this.colors[randomKey];}}
 const SSPIColors=new ColorMap(customCountryColors)
-const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
-if(!lastPoint)continue;const value=dataset.CCode??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
+const endLabelPlugin={id:'endLabelPlugin',defaults:{labelField:'CCode',},afterDatasetsDraw(chart,_args,opts){const{ctx}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let lastPoint=null;for(let j=meta.data.length-1;j>=0;j--){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){lastPoint=element;break;}}
+if(!lastPoint)continue;const value=dataset[opts.labelField]??'';ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=dataset.borderColor??'#000';ctx.textAlign='left';ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);ctx.restore();}}}
 const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
 if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};class CountrySelector{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
@@ -122,6 +122,108 @@ ul.appendChild(li);return ul;}
 #onActivate(e){e.stopPropagation();this.reload?.(e.currentTarget.dataset.itemCode);}#onKey(e){const key=e.key;const ti=e.currentTarget;const vis=this.items.filter(n=>!this.#parent(n)||this.#parent(n).ariaExpanded==='true');const i=vis.indexOf(ti);let target=null;const move=(idx)=>{target=vis[idx];};const next=()=>move((i+1)%vis.length);const prev=()=>move((i-1+vis.length)%vis.length);const home=()=>move(0);const end=()=>move(vis.length-1);const expand=()=>{if(ti.hasAttribute('aria-expanded')){if(ti.ariaExpanded==='false')ti.ariaExpanded='true';else next();}};const collapse=()=>{if(ti.hasAttribute('aria-expanded')&&ti.ariaExpanded==='true')
 ti.ariaExpanded='false';else target=this.#parent(ti);};const printable=key.length===1&&/\S/.test(key);switch(key){case'ArrowDown':next();break;case'ArrowUp':prev();break;case'ArrowRight':expand();break;case'ArrowLeft':collapse();break;case'Home':home();break;case'End':end();break;case' ':ti.click();break;default:if(printable){target=vis.find((n,idx)=>idx>i&&n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()))||vis.find(n=>n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()));}}
 if(target){target.focus();this.items.forEach(n=>n.tabIndex=-1);target.tabIndex=0;e.preventDefault();}}#focusShell(e){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}#parent(ti){return ti.parentElement?.parentElement?.previousElementSibling?.role==='treeitem'?ti.parentElement.parentElement.previousElementSibling:null;}}
+class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
+this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
+this.pins=new Set()
+this.colorProvider=colorProvider
+this.yAxisScale="value"
+this.endLabelPlugin=endLabelPlugin
+this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
+this.setTheme(window.observableStorage.getItem("theme"))
+this.initRoot()
+this.initChartJSCanvas()
+this.buildChartOptions()
+this.rigChartOptions()
+this.rigItemDropdown()
+this.updateChartOptions()
+this.fetch(this.endpointURL).then(data=>{this.update(data)})
+this.rigUnloadListener()}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('panel-chart-root-container')
+this.parentElement.appendChild(this.root)}
+buildChartOptions(){this.chartOptions=document.createElement('div')
+this.chartOptions.classList.add('chart-options')
+this.chartOptions.innerHTML=`<button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description"></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form id="downloadForm"><fieldset><legend>Select data scope:</legend><label><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label><input type="radio"name="scope"value="visible">Visible countries</label><label><input type="radio"name="scope"value="group">Countries in group</label><label><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset><legend>Choose file format:</legend><label><input type="radio"name="format"value="json"required>JSON</label><label><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.showChartOptions.classList.add("icon-button","show-chart-options")
+this.showChartOptions.ariaLabel="Show Chart Options"
+this.showChartOptions.title="Show Chart Options"
+this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-menu"/></svg>`;this.root.appendChild(this.showChartOptions)
+this.overlay=document.createElement('div')
+this.overlay.classList.add('chart-options-overlay')
+this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
+this.root.appendChild(this.overlay)
+const wrapper=document.createElement('div')
+wrapper.classList.add('chart-options-wrapper')
+wrapper.appendChild(this.chartOptions)
+this.root.appendChild(wrapper)}
+rigChartOptions(){this.showChartOptions.addEventListener('click',()=>{this.openChartOptionsSidebar()})
+this.hideChartOptions=this.chartOptions.querySelector('.hide-chart-options')
+this.hideChartOptions.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
+let openDetails=window.observableStorage.getItem("openCountryChartDetails")
+const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
+detailsElements.forEach((details)=>{if(openDetails&&openDetails.includes(details.classList[0])){details.open=true}else{details.open=false}})
+const sidebarStatus=window.observableStorage.getItem("chartOptionsStatus")
+if(sidebarStatus==="active"){this.openChartOptionsSidebar()}else{this.closeChartOptionsSidebar()}}
+rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-information')
+this.itemDropdown=this.itemInformation.querySelector('.item-dropdown')}
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
+this.context=this.canvas.getContext('2d')
+this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,maintainAspectRatio:false,datasets:{fill:true,line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{labelField:'ICode'},tooltip:{mode:'index',}},layout:{padding:{right:40}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{stacked:true,ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
+updateChartColors(){for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
+const color=this.colorProvider.get(dataset.ICode)
+dataset.borderColor=color
+dataset.backgroundColor=color+"44"}}
+setTheme(theme){if(theme!=="light"){this.theme="dark"
+this.tickColor="#bbb"
+this.axisTitleColor="#bbb"
+this.titleColor="#ccc"}else{this.theme="light"
+this.tickColor="#444"
+this.axisTitleColor="#444"
+this.titleColor="#444"}}
+async fetch(url){const response=await fetch(url)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+update(data){console.log(data)
+this.chart.data.datasets=data.data
+this.chart.data.labels=data.labels
+this.title.innerText=data.title
+this.itemType=data.itemType
+this.updateChartColors()
+this.chart.options.scales.y.min=0
+this.chart.options.scales.y.max=1
+this.chart.update()}
+closeChartOptionsSidebar(){this.chartOptions.classList.remove('active')
+this.chartOptions.classList.add('inactive')
+this.overlay.classList.remove('active')
+this.overlay.classList.add('inactive')}
+openChartOptionsSidebar(){this.chartOptions.classList.add('active')
+this.chartOptions.classList.remove('inactive')
+this.overlay.classList.remove('inactive')
+this.overlay.classList.add('active')}
+toggleChartOptionsSidebar(){if(this.chartOptions.classList.contains('active')){this.closeChartOptionsSidebar()}else{this.openChartOptionsSidebar()}}
+dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openCountryChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
+window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
+setYAxisScale(scale){this.yAxisScale=scale
+const scaleType=scale.charAt(0).toUpperCase()+scale.slice(1)
+let itemType=""
+if(this.itemType==="sspi"){itemType=this.itemType.toUpperCase()}else{itemType=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+this.chart.options.scales.y.title.text=itemType+" "+scaleType
+let yMin=0
+let yMax=1
+for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i];if(i==0){yMin=(this.yAxisScale==="value")?dataset.maxYValue:0;yMax=(this.yAxisScale==="value")?dataset.maxYValue:1;}
+dataset.parsing.yAxisKey=this.yAxisScale;for(let j=0;j<dataset.data.length;j++){if(this.yAxisScale==="value"){dataset.data[j]=dataset.value[j]}else{dataset.data[j]=dataset.score[j]}}}
+this.chart.options.scales.y.min=yMin
+this.chart.options.scales.y.max=yMax
+this.chart.update()}
+toggleYAxisScale(){if(this.yAxisScale==="score"){this.setYAxisScale("value")}else{this.setYAxisScale("score")}}}
 class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300,colorProvider=SSPIColors}){this.parentElement=parentElement
 this.CountryList=CountryList
 this.endpointURL=endpointURL
