@@ -98,7 +98,9 @@ def get_dynamic_score_line_data(ItemCode):
     Get the dynamic data for the given category code for a line chart
     """
     indicator_details = sspi_metadata.indicator_details()
-    name_map = {detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details}
+    name_map = {
+        detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details
+    }
     active_schema = sspi_score_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(ItemCode)
     doc_type = detail["DocumentType"]
@@ -134,7 +136,7 @@ def get_dynamic_score_line_data(ItemCode):
             "hasScore": True,
             "itemOptions": item_options,
             "itemType": doc_type[0:-6].lower(),
-            "tree": active_schema
+            "tree": active_schema,
         }
     )
 
@@ -178,7 +180,9 @@ def get_static_pillar_differential(pillar_code):
     comparison_country_data = parse_json(
         sspi_main_data_v3.find({"CountryCode": comparison_country}, {"_id": 0})
     )
-    comparison_sspi = SSPI(indicator_details, comparison_country_data, strict_year=False)
+    comparison_sspi = SSPI(
+        indicator_details, comparison_country_data, strict_year=False
+    )
     comparison_pillar = comparison_sspi.get_pillar(pillar_code)
     by_category = []
     by_indicator = []
@@ -613,6 +617,45 @@ def active_schema():
     group = request.args.get("CountryGroup", "SSPI67")
     sample_country = sspi_metadata.country_group(group)[0]
     indicator_details = sspi_metadata.indicator_details()
-    name_map = {detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details}
-    active_schema = sspi_score_data.active_schema(sample_country=sample_country, name_map=name_map)
+    name_map = {
+        detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details
+    }
+    active_schema = sspi_score_data.active_schema(
+        sample_country=sample_country, name_map=name_map
+    )
     return jsonify(active_schema)
+
+
+@dashboard_bp.route("/country/dynamic/stack/<CountryCode>/<RootItemCode>")
+def dynamic_stack_data(CountryCode, RootItemCode):
+    """
+    Get the dynamic data for the given country code and root item code
+    """
+    root_item_detail = sspi_metadata.get_item_detail(RootItemCode)
+    child_items = sspi_metadata.get_child_details(RootItemCode)
+    child_codes = [child["Metadata"]["ItemCode"] for child in child_items]
+    stack_div = len(child_codes)
+    mongo_query = {
+        "CCode": CountryCode,
+        "ICode": {"$in": child_codes + [RootItemCode]},
+    }
+    data = sspi_dynamic_line_data.find(mongo_query)
+    year_labels = list(range(2000, datetime.now().year + 1))
+    for document in data:
+        if document["ICode"] == RootItemCode:
+            document["hidden"] = True
+        else:
+            document["divisor"] = stack_div
+            document["data"] = [s / stack_div for s in document["score"]]
+            document["fill"] = "stack"
+    return parse_json(
+        {
+            "data": data,
+            "title": f"{root_item_detail['ItemName']} ({RootItemCode}) for Country {CountryCode}",
+            "labels": year_labels,
+            "itemType": root_item_detail["DocumentType"][0:-6].lower(),
+            "hasScore": True,
+            "yMin": 0,
+            "yMax": 1,
+        }
+    )

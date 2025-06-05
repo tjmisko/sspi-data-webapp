@@ -21,7 +21,7 @@ class DefaultGroup(click.Group):
             raise click.UsageError("Invalid command or IDCODE")
 
 
-@click.group(cls=DefaultGroup, invoke_without_command=True, help="View data visualizations")
+@click.group(cls=DefaultGroup, invoke_without_command=True, help="View webpages")
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 @click.pass_context
 def view(ctx, remote=False):
@@ -88,6 +88,16 @@ def repo():
     """
     url = "https://github.com/tjmisko/sspi-data-webapp"
     open_browser_subprocess(url)
+
+
+@view.command(help="View GitHub Repo")
+def wiki():
+    """Open GitHub Project in browser
+    """
+    url = "https://github.com/tjmisko/sspi-data-webapp/wiki"
+    open_browser_subprocess(url)
+
+
 
 
 view.add_command(line)
