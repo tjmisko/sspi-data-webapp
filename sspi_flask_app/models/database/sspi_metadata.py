@@ -179,10 +179,17 @@ class SSPIMetadata(MongoWrapper):
     def build_intermediate_details(self, intermediate_details: pd.DataFrame) -> list[dict]:
         json_string = str(intermediate_details.to_json(orient="records"))
         intermediate_details_list = json.loads(json_string)
-        return [
-            {"DocumentType": "IntermediateDetail", "Metadata": intermediate_detail}
-            for intermediate_detail in intermediate_details_list
-        ]
+        final_list = []
+        for inter in intermediate_details_list:
+            inter["ItemCode"] = inter["IntermediateCode"]
+            inter["ItemName"] = inter["Intermediate"]
+            inter["ItemType"] = "Intermediate"
+            inter["DocumentType"] = "IntermediateDetail"
+            final_list.append({
+                "DocumentType": "IntermediateDetail",
+                "Metadata": inter
+            })
+        return final_list
 
     def build_indicator_details(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame):
         json_string = str(indicator_details.to_json(orient="records"))
@@ -213,6 +220,8 @@ class SSPIMetadata(MongoWrapper):
         for indicator in indicator_details_list:
             if indicator["CategoryCode"] not in category_detail_map.keys():
                 category_detail_map[indicator["CategoryCode"]] = {
+                    "ItemCode": indicator["CategoryCode"],
+                    "ItemName": indicator["Category"],
                     "CategoryCode": indicator["CategoryCode"],
                     "Category": indicator["Category"],
                     "PillarCode": indicator["PillarCode"],
@@ -234,6 +243,8 @@ class SSPIMetadata(MongoWrapper):
         for indicator in indicator_details_list:
             if indicator["PillarCode"] not in pillar_detail_map.keys():
                 pillar_detail_map[indicator["PillarCode"]] = {
+                    "ItemCode": indicator["PillarCode"],
+                    "ItemName": indicator["Pillar"],
                     "PillarCode": indicator["PillarCode"],
                     "Pillar": indicator["Pillar"],
                     "CategoryCodes": set(),
@@ -258,6 +269,8 @@ class SSPIMetadata(MongoWrapper):
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
         overall_detail = {
+            "ItemCode": "SSPI",
+            "ItemName": "Sustainable and Shared Prosperity Policy Index",
             "Code": "SSPI",
             "Name": "Sustainable and Shared Prosperity Policy Index",
             "PillarCodes": set(),
@@ -436,7 +449,26 @@ class SSPIMetadata(MongoWrapper):
         elif result["DocumentType"] == "SSPIDetail":
             result["Metadata"]["ItemName"] = result["Metadata"]["Name"]
         return result["Metadata"]
+    
 
+    def get_child_details(self, ItemCode: str) -> list[dict]:
+        """
+        Return a list of documents containing the details of the children of the given ItemCode
+
+        :param ItemCode: The item code for which to get the children (SSPI, PillarCode, CategoryCode, IndicatorCode, IntermediateCode)
+        """
+        if ItemCode == "SSPI":
+            return self.find({"DocumentType": "PillarDetail"})
+        elif ItemCode in self.pillar_codes():
+            return self.find({"DocumentType": "CategoryDetail", "Metadata.PillarCode": ItemCode})
+        elif ItemCode in self.category_codes():
+            return self.find({"DocumentType": "IndicatorDetail", "Metadata.CategoryCode": ItemCode})
+        elif ItemCode in self.indicator_codes():
+            return self.find({"DocumentType": "IntermediateDetail", "Metadata.IndicatorCode": ItemCode})
+        elif ItemCode in self.intermediate_codes():
+            return []
+        else:
+            return []
 
 
     def country_group(self, country_group_name: str) -> list[str]:
