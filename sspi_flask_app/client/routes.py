@@ -41,7 +41,7 @@ def data():
 
 @client_bp.route('/data/country/<CountryCode>')
 def country_data(CountryCode):
-    return render_template('country-template.html', CountryCode=CountryCode)
+    return render_template('country-data.html', CountryCode=CountryCode)
 
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
