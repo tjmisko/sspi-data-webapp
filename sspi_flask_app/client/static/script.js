@@ -114,14 +114,15 @@ onChange(key,callback){if(!this.listeners[key]){this.listeners[key]=[];}
 this.listeners[key].push(callback);}
 _emit(key,oldValue,newValue){if(JSON.stringify(oldValue)===JSON.stringify(newValue))return;const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
 _parse(value){try{return JSON.parse(value);}catch{return value;}}}
-class SSPIItemTree{constructor(container,json,reloadCallback=null){if(!(container instanceof HTMLElement)||!json)return;this.container=container;this.reload=reloadCallback;container.innerHTML='';container.appendChild(this.#build(json,1));this.tree=container.querySelector('[role="tree"]');this.items=[...this.tree.querySelectorAll('[role="treeitem"]')];this.navShell=this.tree.parentElement;this.items.forEach((ti,i)=>{ti.tabIndex=i?-1:0;ti.addEventListener('keydown',this.#onKey.bind(this));ti.addEventListener('click',this.#onActivate.bind(this));});document.body.addEventListener('focusin',this.#focusShell.bind(this));document.body.addEventListener('mousedown',this.#focusShell.bind(this));}
+class SSPIItemTree{constructor(container,json,reloadCallback=null,activeItemCode=null){if(!(container instanceof HTMLElement)||!json)return;this.container=container;this.reload=reloadCallback;this.activeItemCode=activeItemCode||null;container.innerHTML='';container.appendChild(this.#build(json,1));this.tree=container.querySelector('[role="tree"]');this.items=[...this.tree.querySelectorAll('[role="treeitem"]')];this.navShell=this.tree.parentElement;this.highlightTreeItem(this.activeItemCode);this.items.forEach((ti,i)=>{ti.tabIndex=i?-1:0;ti.addEventListener('keydown',this.#onKey.bind(this));ti.addEventListener('click',this.#onActivate.bind(this));});document.body.addEventListener('focusin',this.#focusShell.bind(this));document.body.addEventListener('mousedown',this.#focusShell.bind(this));}
 #build(node,level){const ul=Object.assign(document.createElement('ul'),{role:level===1?'tree':'group',className:'treeview-navigation'});const li=Object.assign(document.createElement('li'),{role:'none'});const a=Object.assign(document.createElement('a'),{role:'treeitem',ariaOwns:`id-${node.ItemCode.toLowerCase()}-subtree`,ariaExpanded:node.Children?.length&&level<3?'true':'false',tabIndex:-1,});a.dataset.itemCode=node.ItemCode
 const label=document.createElement('span');label.className='label';if(node.Children?.length){const icon=document.createElement('span');icon.className='icon';icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"width="13"height="10"viewBox="0 0 13 10"><polygon points="2 1, 12 1, 7 9"></polygon></svg>`;icon.addEventListener('click',(e)=>{e.stopPropagation();const ti=e.currentTarget.parentElement.parentElement;ti.ariaExpanded=ti.ariaExpanded==='true'?'false':'true';});label.appendChild(icon);}
 label.append(node.ItemName);a.appendChild(label);li.appendChild(a);if(node.Children?.length){const group=document.createElement('ul');group.role='group';group.id=`id-${node.ItemCode.toLowerCase()}-subtree`;node.Children.flat().forEach(child=>group.appendChild(this.#build(child,level+1)));li.appendChild(group);}
 ul.appendChild(li);return ul;}
-#onActivate(e){e.stopPropagation();this.reload?.(e.currentTarget.dataset.itemCode);}#onKey(e){const key=e.key;const ti=e.currentTarget;const vis=this.items.filter(n=>!this.#parent(n)||this.#parent(n).ariaExpanded==='true');const i=vis.indexOf(ti);let target=null;const move=(idx)=>{target=vis[idx];};const next=()=>move((i+1)%vis.length);const prev=()=>move((i-1+vis.length)%vis.length);const home=()=>move(0);const end=()=>move(vis.length-1);const expand=()=>{if(ti.hasAttribute('aria-expanded')){if(ti.ariaExpanded==='false')ti.ariaExpanded='true';else next();}};const collapse=()=>{if(ti.hasAttribute('aria-expanded')&&ti.ariaExpanded==='true')
+#onActivate(e){const itemCode=e.currentTarget.dataset.itemCode;this.highlightTreeItem(itemCode);e.stopPropagation();this.reload?.(itemCode);}#onKey(e){const key=e.key;const ti=e.currentTarget;const vis=this.items.filter(n=>!this.#parent(n)||this.#parent(n).ariaExpanded==='true');const i=vis.indexOf(ti);let target=null;const move=(idx)=>{target=vis[idx];};const next=()=>move((i+1)%vis.length);const prev=()=>move((i-1+vis.length)%vis.length);const home=()=>move(0);const end=()=>move(vis.length-1);const expand=()=>{if(ti.hasAttribute('aria-expanded')){if(ti.ariaExpanded==='false')ti.ariaExpanded='true';else next();}};const collapse=()=>{if(ti.hasAttribute('aria-expanded')&&ti.ariaExpanded==='true')
 ti.ariaExpanded='false';else target=this.#parent(ti);};const printable=key.length===1&&/\S/.test(key);switch(key){case'ArrowDown':next();break;case'ArrowUp':prev();break;case'ArrowRight':expand();break;case'ArrowLeft':collapse();break;case'Home':home();break;case'End':end();break;case' ':ti.click();break;default:if(printable){target=vis.find((n,idx)=>idx>i&&n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()))||vis.find(n=>n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()));}}
-if(target){target.focus();this.items.forEach(n=>n.tabIndex=-1);target.tabIndex=0;e.preventDefault();}}#focusShell(e){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}#parent(ti){return ti.parentElement?.parentElement?.previousElementSibling?.role==='treeitem'?ti.parentElement.parentElement.previousElementSibling:null;}}
+if(target){target.focus();this.items.forEach(n=>n.tabIndex=-1);target.tabIndex=0;e.preventDefault();}}#focusShell(e){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}#parent(ti){return ti.parentElement?.parentElement?.previousElementSibling?.role==='treeitem'?ti.parentElement.parentElement.previousElementSibling:null;}
+highlightTreeItem(ItemCode){this.items.forEach(ti=>{ti.classList.remove('active-view-element');});const item=this.items.find(ti=>ti.dataset.itemCode===ItemCode);if(item){item.classList.add('active-view-element')}}}
 class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
 this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
 this.pins=new Set()
@@ -543,10 +544,10 @@ this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree
 
     update(data) {
         super.update(data);
-        this.buildItemTree(data.tree);
+        this.buildItemTree(data.tree, data.itemCode);
     }
 
-    buildItemTree(tree) {
+    buildItemTree(tree, selectedItemCode) {
       this.itemTreeObject = new SSPIItemTree(
         this.itemTree.querySelector('.item-tree-content'),   // only the content box
         tree,
@@ -554,7 +555,8 @@ this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree
           // fetch new data, then re-run the usual update pipeline
           this.fetch(`/api/v1/panel/score/${itemCode}`)
               .then(d => this.update(d));
-        }
+        },
+        selectedItemCode
       );
     }
 }

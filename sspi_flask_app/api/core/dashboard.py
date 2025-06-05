@@ -136,6 +136,7 @@ def get_dynamic_score_line_data(ItemCode):
             "hasScore": True,
             "itemOptions": item_options,
             "itemType": doc_type[0:-6].lower(),
+            "itemCode": ItemCode,
             "tree": active_schema,
         }
     )

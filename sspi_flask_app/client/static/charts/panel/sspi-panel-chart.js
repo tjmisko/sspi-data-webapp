@@ -48,10 +48,10 @@ class SSPIPanelChart extends PanelChart {
 
     update(data) {
         super.update(data);
-        this.buildItemTree(data.tree);
+        this.buildItemTree(data.tree, data.itemCode);
     }
 
-    buildItemTree(tree) {
+    buildItemTree(tree, selectedItemCode) {
       this.itemTreeObject = new SSPIItemTree(
         this.itemTree.querySelector('.item-tree-content'),   // only the content box
         tree,
@@ -59,7 +59,8 @@ class SSPIPanelChart extends PanelChart {
           // fetch new data, then re-run the usual update pipeline
           this.fetch(`/api/v1/panel/score/${itemCode}`)
               .then(d => this.update(d));
-        }
+        },
+        selectedItemCode
       );
     }
 }

@@ -150,3 +150,6 @@
   stroke: currentcolor;
 }
 
+.active-view-element {
+  font-weight: bold;
+}

@@ -4,11 +4,12 @@
 
 class SSPIItemTree {
 
-    constructor(container, json, reloadCallback = null) {
+    constructor(container, json, reloadCallback = null, activeItemCode = null) {
         if (!(container instanceof HTMLElement) || !json) return;
 
         this.container  = container;
         this.reload     = reloadCallback;
+        this.activeItemCode = activeItemCode || null;         // item to highlight
         container.innerHTML = '';                             // clear old content
         container.appendChild(this.#build(json, 1));
 
@@ -16,6 +17,7 @@ class SSPIItemTree {
         this.tree     = container.querySelector('[role="tree"]');
         this.items    = [...this.tree.querySelectorAll('[role="treeitem"]')];
         this.navShell = this.tree.parentElement;
+        this.highlightTreeItem(this.activeItemCode);           // highlight active item
 
         this.items.forEach((ti, i) => {
             ti.tabIndex = i ? -1 : 0;                           // only first in tab-order
@@ -40,7 +42,6 @@ class SSPIItemTree {
 
         const a  = Object.assign(document.createElement('a'), {
             role         : 'treeitem',
-            // href         : `#${node.ItemCode.toLowerCase()}`,
             ariaOwns     : `id-${node.ItemCode.toLowerCase()}-subtree`,
             ariaExpanded : node.Children?.length && level < 3 ? 'true' : 'false',
             tabIndex     : -1,
@@ -84,8 +85,10 @@ class SSPIItemTree {
     /* ---------- keyboard & click handling ----------------------------- */
 
     #onActivate(e) {
+        const itemCode = e.currentTarget.dataset.itemCode;
+        this.highlightTreeItem(itemCode);
         e.stopPropagation();
-        this.reload?.(e.currentTarget.dataset.itemCode);
+        this.reload?.(itemCode);
     }
 
     #onKey(e) {
@@ -144,5 +147,15 @@ class SSPIItemTree {
     #parent(ti) {
         return ti.parentElement?.parentElement?.previousElementSibling?.role === 'treeitem'
             ? ti.parentElement.parentElement.previousElementSibling : null;
+    }
+
+    highlightTreeItem(ItemCode) {
+        this.items.forEach(ti => {
+            ti.classList.remove('active-view-element');
+        });
+        const item = this.items.find(ti => ti.dataset.itemCode === ItemCode);
+        if (item) {
+            item.classList.add('active-view-element')
+        }
     }
 }
