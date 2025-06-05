@@ -1,6 +1,9 @@
 const endLabelPlugin = {
     id: 'endLabelPlugin',
-    afterDatasetsDraw(chart) {
+    defaults: {
+        labelField: 'CCode',   // dataset[field] to show
+    },
+    afterDatasetsDraw(chart, _args, opts) {
         const { ctx } = chart;
         for (let i = 0; i < chart.data.datasets.length; i++) {
             const dataset = chart.data.datasets[i];
@@ -16,7 +19,7 @@ const endLabelPlugin = {
                 }
             }
             if (!lastPoint) continue;
-            const value = dataset.CCode ?? '';
+            const value = dataset[opts.labelField] ?? '';
             ctx.save();
             ctx.font = 'bold 14px Arial';
             ctx.fillStyle = dataset.borderColor ?? '#000';
