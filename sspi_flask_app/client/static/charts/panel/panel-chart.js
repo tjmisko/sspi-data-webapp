@@ -8,6 +8,7 @@ class PanelChart {
         this.yAxisScale = "value"
         this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
+        this.proximityPlugin = proximityPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
         this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
         this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
@@ -37,73 +38,73 @@ class PanelChart {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options')
         this.chartOptions.innerHTML = `
-            <button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
-                <svg class="hide-chart-options-svg" width="24" height="24">
-                    <use href="#icon-close" />
-                </svg>
-            </button>
-            <details class="item-information chart-options-details">
-                <summary class="item-information-summary">Item Information</summary>
-                <select class="item-dropdown"></select>
-                <div class="dynamic-item-description"></div>
-            </details>
-            <details class="chart-options-details chart-view-options">
-                <summary class="chart-view-options-summary">View Options</summary>
-                <div class="chart-view-option">
-                    <input type="checkbox" class="extrapolate-backward"/>
-                    <label class="title-bar-label">Backward Extrapolation</label>
-                </div>
-                <div class="chart-view-option">
-                    <input type="checkbox" class="interpolate-linear"/>
-                    <label class="title-bar-label">Linear Interpolation</label>
-                </div>
-                <button class="showall-button">Show All</button>
-            </details>
-            <details class="country-group-options chart-options-details">
-                <summary class="country-group-selector-summary">Country Groups</summary>
-                <select class="country-group-selector"></select>
-                <button class="draw-button">Draw 10 Countries</button>
-                <button class="show-in-group-button">Show All in Group</button>
-            </details>
-            <details class="pinned-country-details chart-options-details">
-                <summary>Pinned Countries</summary>
-                <div class="legend-title-bar-buttons">
-                    <button class="add-country-button">Search Country</button>
-                    <button class="hideunpinned-button">Hide Unpinned</button>
-                    <button class="clearpins-button">Clear Pins</button>
-                </div>
-                <legend class="dynamic-line-legend">
-                    <div class="legend-items"></div>
-                </legend>
-            </details>
-            <details class="download-data-details chart-options-details">
-                <summary>Download Chart Data</summary>
-                <form id="downloadForm">
-                    <fieldset>
-                        <legend>Select data scope:</legend>
-                        <label><input type="radio" name="scope" value="pinned" required>Pinned countries</label>
-                        <label><input type="radio" name="scope" value="visible">Visible countries</label>
-                        <label><input type="radio" name="scope" value="group">Countries in group</label>
-                        <label><input type="radio" name="scope" value="all">All available countries</label>
-                    </fieldset>
-                    <fieldset>
-                        <legend>Choose file format:</legend>
-                        <label><input type="radio" name="format" value="json" required>JSON</label>
-                        <label><input type="radio" name="format" value="csv">CSV</label>
-                    </fieldset>
-                    <button type="submit">Download Data</button>
-                </form>
-            </details>
-            `;
+<button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
+    <svg class="hide-chart-options-svg" width="24" height="24">
+        <use href="#icon-close" />
+    </svg>
+</button>
+<details class="item-information chart-options-details">
+    <summary class="item-information-summary">Item Information</summary>
+    <select class="item-dropdown"></select>
+    <div class="dynamic-item-description"></div>
+</details>
+<details class="chart-options-details chart-view-options">
+    <summary class="chart-view-options-summary">View Options</summary>
+    <div class="chart-view-option">
+        <input type="checkbox" class="extrapolate-backward"/>
+        <label class="title-bar-label">Backward Extrapolation</label>
+    </div>
+    <div class="chart-view-option">
+        <input type="checkbox" class="interpolate-linear"/>
+        <label class="title-bar-label">Linear Interpolation</label>
+    </div>
+    <button class="showall-button">Show All</button>
+</details>
+<details class="country-group-options chart-options-details">
+    <summary class="country-group-selector-summary">Country Groups</summary>
+    <select class="country-group-selector"></select>
+    <button class="draw-button">Draw 10 Countries</button>
+    <button class="show-in-group-button">Show All in Group</button>
+</details>
+<details class="pinned-country-details chart-options-details">
+    <summary>Pinned Countries</summary>
+    <div class="legend-title-bar-buttons">
+        <button class="add-country-button">Search Country</button>
+        <button class="hideunpinned-button">Hide Unpinned</button>
+        <button class="clearpins-button">Clear Pins</button>
+    </div>
+    <legend class="dynamic-line-legend">
+        <div class="legend-items"></div>
+    </legend>
+</details>
+<details class="download-data-details chart-options-details">
+    <summary>Download Chart Data</summary>
+    <form id="downloadForm">
+        <fieldset>
+            <legend>Select data scope:</legend>
+            <label><input type="radio" name="scope" value="pinned" required>Pinned countries</label>
+            <label><input type="radio" name="scope" value="visible">Visible countries</label>
+            <label><input type="radio" name="scope" value="group">Countries in group</label>
+            <label><input type="radio" name="scope" value="all">All available countries</label>
+        </fieldset>
+        <fieldset>
+            <legend>Choose file format:</legend>
+            <label><input type="radio" name="format" value="json" required>JSON</label>
+            <label><input type="radio" name="format" value="csv">CSV</label>
+        </fieldset>
+        <button type="submit">Download Data</button>
+    </form>
+</details>
+`;
         this.showChartOptions = document.createElement('button')
         this.showChartOptions.classList.add("icon-button", "show-chart-options")
         this.showChartOptions.ariaLabel = "Show Chart Options"
         this.showChartOptions.title = "Show Chart Options"
         this.showChartOptions.innerHTML = `
-            <svg class="svg-button show-chart-options-svg" width="24" height="24">
-                <use href="#icon-menu" />
-            </svg>
-        `;
+<svg class="svg-button show-chart-options-svg" width="24" height="24">
+    <use href="#icon-menu" />
+</svg>
+`;
         this.root.appendChild(this.showChartOptions)
         this.overlay = document.createElement('div')
         this.overlay.classList.add('chart-options-overlay')
@@ -174,9 +175,9 @@ class PanelChart {
     rigScaleToggle() {
         const buttonBox = this.chartOptions.querySelector('.chart-view-options')
         buttonBox.insertAdjacentHTML('afterbegin', `
-            <input type="checkbox" class="y-axis-scale"/>
-            <label class="title-bar-label">Report Score</label>
-        `)
+<input type="checkbox" class="y-axis-scale"/>
+<label class="title-bar-label">Report Score</label>
+`)
         this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
         this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
         this.yAxisScaleCheckbox.addEventListener('change', () => {
@@ -189,20 +190,24 @@ class PanelChart {
         this.chartContainer = document.createElement('div')
         this.chartContainer.classList.add('panel-chart-container')
         this.chartContainer.innerHTML = `
-            <h2 class="panel-chart-title"></h2>
-            <div class="panel-canvas-wrapper">
-                <canvas class="panel-chart-canvas"></canvas>
-            </div>
-        `;
+<h2 class="panel-chart-title"></h2>
+<div class="panel-canvas-wrapper">
+    <canvas class="panel-chart-canvas"></canvas>
+</div>
+`;
         this.root.appendChild(this.chartContainer)
         this.title = this.chartContainer.querySelector('.panel-chart-title')
         this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
         this.context = this.canvas.getContext('2d')
         this.chart = new Chart(this.context, {
             type: 'line',
-            plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin],
+            plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin, this.proximityPlugin],
             options: {
+                // animation: false,
                 responsive: true,
+                hover: {
+                    mode: null
+                },
                 maintainAspectRatio: false,
                 onClick: (event, elements) => {
                     elements.forEach(element => {
@@ -228,7 +233,14 @@ class PanelChart {
                     legend: {
                         display: false,
                     },
-                    endLabelPlugin: {}
+                    endLabelPlugin: {},
+                    tooltip: {
+                        enabled: false,
+                    },
+                    proximityHighlight: {
+                        radius: 20, // px
+                        enabled: true,
+                    },
                 },
                 layout: {
                     padding: {
@@ -321,10 +333,10 @@ class PanelChart {
                 removeButton.ariaLabel = `Remove ${PinnedCountry.CName} from pinned countries`;
                 removeButton.title = `Unpin ${PinnedCountry.CName}`;
                 removeButton.innerHTML = `
-                    <svg class="remove-button-legend-item-svg" width="16" height="16">
-                        <use href="#icon-close" />
-                    </svg>
-                `;
+<svg class="remove-button-legend-item-svg" width="16" height="16">
+    <use href="#icon-close" />
+</svg>
+`;
                 const newPin = document.createElement('div')
                 newPin.classList.add('legend-item')
                 newPin.style.borderColor = PinnedCountry.borderColor
