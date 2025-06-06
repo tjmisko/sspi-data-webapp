@@ -209,12 +209,6 @@ class PanelChart {
                     mode: null
                 },
                 maintainAspectRatio: false,
-                onClick: (event, elements) => {
-                    elements.forEach(element => {
-                        const dataset = this.chart.data.datasets[element.datasetIndex]
-                        this.togglePin(dataset)
-                    })
-                },
                 datasets: {
                     line: {
                         spanGaps: true,
@@ -240,6 +234,14 @@ class PanelChart {
                     proximityHighlight: {
                         radius: 20, // px
                         enabled: true,
+                        tooltipBg: this.headerBackgroundColor,
+                        tooltipFg: this.titleColor,
+                        clickRadius: 2,
+                        onDatasetClick: (datasets, event, chart) => {
+                            datasets.forEach((dataset) => {
+                                this.togglePin(dataset)
+                            });
+                        }
                     },
                 },
                 layout: {
@@ -379,6 +381,7 @@ class PanelChart {
     }
 
     setTheme(theme) {
+        const root = document.documentElement
         if (theme !== "light") {
             this.theme = "dark"
             this.tickColor = "#bbb"
@@ -389,7 +392,10 @@ class PanelChart {
             this.tickColor = "#444"
             this.axisTitleColor = "#444"
             this.titleColor = "#444"
+            this.headerBackgroundColor = "#f0f0f0"
         }
+        const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
+        this.headerBackgroundColor = bg
     }
 
     async fetch(url) {
