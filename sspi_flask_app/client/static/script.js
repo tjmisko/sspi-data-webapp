@@ -303,8 +303,10 @@ if(sidebarStatus==="active"){this.openChartOptionsSidebar()}else{this.closeChart
 rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-information')
 this.itemDropdown=this.itemInformation.querySelector('.item-dropdown')}
 rigScaleToggle(){const buttonBox=this.chartOptions.querySelector('.chart-view-options')
-buttonBox.insertAdjacentHTML('afterbegin',`<input type="checkbox"class="y-axis-scale"/><label class="title-bar-label">Report Score</label>`)
-this.yAxisScaleCheckbox=this.root.querySelector('.y-axis-scale')
+const oldButtons=buttonBox.querySelectorAll('.y-axis-scale, .y-axis-scale-label')
+if(oldButtons.length>0){oldButtons.forEach(button=>{button.remove()})}
+buttonBox.insertAdjacentHTML('afterbegin',`<input type="checkbox"class="y-axis-scale"/><label class="y-axis-scale-label title-bar-label">Report Score</label>`)
+this.yAxisScaleCheckbox=this.chartOptions.querySelector('.y-axis-scale')
 this.yAxisScaleCheckbox.checked=this.yAxisScale==="score"
 this.yAxisScaleCheckbox.addEventListener('change',()=>{console.log("Toggling Y-axis scale")
 this.toggleYAxisScale()})}
@@ -321,6 +323,7 @@ this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(eve
 this.hideUnpinnedButton=this.chartOptions.querySelector('.hideunpinned-button')
 this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
 updateCountryGroups(){const groupOptionDefault=window.observableStorage.getItem("countryGroup")||"SSPI67"
+this.countryGroupSelector.innerHTML=''
 this.groupOptions.forEach((option,index)=>{const opt=document.createElement('option');opt.value=option;opt.textContent=option;if(option===groupOptionDefault){opt.selected=true;}
 this.countryGroupSelector.appendChild(opt);});}
 rigLegend(){this.addCountryButton=this.chartOptions.querySelector('.add-country-button')

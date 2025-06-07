@@ -174,11 +174,15 @@ class PanelChart {
 
     rigScaleToggle() {
         const buttonBox = this.chartOptions.querySelector('.chart-view-options')
+        const oldButtons = buttonBox.querySelectorAll('.y-axis-scale, .y-axis-scale-label')
+        if (oldButtons.length > 0) {
+            oldButtons.forEach(button => { button.remove() })
+        }
         buttonBox.insertAdjacentHTML('afterbegin', `
-<input type="checkbox" class="y-axis-scale"/>
-<label class="title-bar-label">Report Score</label>
-`)
-        this.yAxisScaleCheckbox = this.root.querySelector('.y-axis-scale')
+            <input type="checkbox" class="y-axis-scale"/>
+            <label class="y-axis-scale-label title-bar-label">Report Score</label>
+        `)
+        this.yAxisScaleCheckbox = this.chartOptions.querySelector('.y-axis-scale')
         this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
         this.yAxisScaleCheckbox.addEventListener('change', () => {
             console.log("Toggling Y-axis scale")
@@ -299,6 +303,7 @@ class PanelChart {
 
     updateCountryGroups() {
         const groupOptionDefault = window.observableStorage.getItem("countryGroup") || "SSPI67"
+        this.countryGroupSelector.innerHTML = ''
         this.groupOptions.forEach((option, index) => {
             const opt = document.createElement('option');
             opt.value = option;
