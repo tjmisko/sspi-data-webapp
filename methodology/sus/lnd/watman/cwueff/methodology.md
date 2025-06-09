@@ -1,4 +1,7 @@
 ---
+ItemType: Intermediate
+ItemName: Change in Water Use Efficiency
+ItemCode: CWUEFF
 Description: 'Change in Water Use Efficiency (WUE), 2018 compared with 2010-2015 average:
   WUE is the value added of a given major sector divided by the volume of water used.
   WUE at the national level is the sum of the efficiencies in the major economic sectors
@@ -10,9 +13,6 @@ IndicatorCode: WATMAN
 Intermediate: Change in Water Use Efficiency
 IntermediateCode: CWUEFF
 Inverted: true
-ItemCode: CWUEFF
-ItemName: Change in Water Use Efficiency
-ItemType: Intermediate
 LowerGoalpost: -25.0
 SourceOrganization: UN SDG
 SourceOrganizationIndicatorCode: 6.4.1

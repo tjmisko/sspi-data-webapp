@@ -1,4 +1,7 @@
 ---
+ItemName: Corporate Tax Rate
+ItemCode: CRPTAX
+ItemType: Indicator
 Category: Taxes
 CategoryCode: TAX
 Description: Tax imposed on the net income of the company.
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Corporate Tax Rate
 IndicatorCode: CRPTAX
 Inverted: false
-ItemCode: CRPTAX
-ItemName: Corporate Tax Rate
 LowerGoalpost: 0.0
 Pillar: Market Structure
 PillarCode: MS

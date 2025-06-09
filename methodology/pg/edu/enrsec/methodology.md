@@ -1,4 +1,7 @@
 ---
+ItemName: Lower Secondary Net Enrollment
+ItemCode: ENRSEC
+ItemType: Indicator
 Category: Education
 CategoryCode: EDU
 Description: The ratio of the number of children of official secondary school age
@@ -9,8 +12,6 @@ Footnote: null
 Indicator: Lower Secondary Net Enrollment
 IndicatorCode: ENRSEC
 Inverted: false
-ItemCode: ENRSEC
-ItemName: Lower Secondary Net Enrollment
 LowerGoalpost: 70.0
 Pillar: Public Goods
 PillarCode: PG

@@ -1,4 +1,7 @@
 ---
+ItemName: Stability
+ItemCode: FSTABL
+ItemType: Indicator
 Category: Financial Sector
 CategoryCode: FIN
 Description: The percentage of loans that are nonperforming, meaning that the borrower
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Stability
 IndicatorCode: FSTABL
 Inverted: true
-ItemCode: FSTABL
-ItemName: Stability
 LowerGoalpost: 10.0
 Pillar: Market Structure
 PillarCode: MS

@@ -1,4 +1,7 @@
 ---
+ItemName: Sustainable Nitrogen Management
+ItemCode: NITROG
+ItemType: Indicator
 Category: Land
 CategoryCode: LND
 Description: An index measuring the sustainability of Nitrogen management based on
@@ -12,8 +15,6 @@ Footnote: null
 Indicator: Sustainable Nitrogen Management
 IndicatorCode: NITROG
 Inverted: false
-ItemCode: NITROG
-ItemName: Sustainable Nitrogen Management
 LowerGoalpost: 0.0
 Pillar: Sustainability
 PillarCode: SUS

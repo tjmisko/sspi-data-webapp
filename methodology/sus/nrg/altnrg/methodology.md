@@ -1,4 +1,7 @@
 ---
+ItemName: Alternative Energy Generation
+ItemCode: ALTNRG
+ItemType: Indicator
 Category: Energy
 CategoryCode: NRG
 Description: Total energy supply (excluding exports) supply from “renewable sources”
@@ -18,8 +21,6 @@ IntermediateCodes:
   - BIOWAS
   - FSLOIL
 Inverted: false
-ItemCode: ALTNRG
-ItemName: Alternative Energy Generation
 LowerGoalpost: 0.0
 Pillar: Sustainability
 PillarCode: SUS

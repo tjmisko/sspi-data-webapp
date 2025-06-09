@@ -1,4 +1,7 @@
 ---
+ItemType: Category
+ItemName: Worker Wellbeing
+ItemCode: WWB
 Category: Worker Wellbeing
 CategoryCode: WWB
 DocumentType: CategoryDetail
@@ -7,8 +10,6 @@ IndicatorCodes:
   - MATERN
   - FATINJ
   - SENIOR
-ItemCode: WWB
-ItemName: Worker Wellbeing
 Pillar: Market Structure
 PillarCode: MS
 ---

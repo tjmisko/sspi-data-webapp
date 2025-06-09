@@ -1,4 +1,7 @@
 ---
+ItemName: Chemical Pollution Convention Compliance
+ItemCode: CHMPOL
+ItemType: Indicator
 Category: Land
 CategoryCode: LND
 Description: Compliance with three treaties
@@ -11,8 +14,6 @@ IntermediateCodes:
   - BASELA
   - MONTRL
 Inverted: false
-ItemCode: CHMPOL
-ItemName: Chemical Pollution Convention Compliance
 LowerGoalpost: 0.0
 Pillar: Sustainability
 PillarCode: SUS

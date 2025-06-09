@@ -1,4 +1,7 @@
 ---
+ItemName: Water Management
+ItemCode: WATMAN
+ItemType: Indicator
 Category: Land
 CategoryCode: LND
 Description: "Average of the following two metrics: \n1. Change in Water Use Efficiency\
@@ -18,8 +21,6 @@ IntermediateCodes:
   - CWUEFF
   - WTSTRS
 Inverted: false
-ItemCode: WATMAN
-ItemName: Water Management
 LowerGoalpost: null
 Pillar: Sustainability
 PillarCode: SUS

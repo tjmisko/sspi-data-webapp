@@ -1,4 +1,7 @@
 ---
+ItemName: Security Apparatus
+ItemCode: SECAPP
+ItemType: Indicator
 Category: Public Safety
 CategoryCode: SAF
 Description: The Security Apparatus is a component of the Fragile State Index, which
@@ -10,8 +13,6 @@ Footnote: null
 Indicator: Security Apparatus
 IndicatorCode: SECAPP
 Inverted: true
-ItemCode: SECAPP
-ItemName: Security Apparatus
 LowerGoalpost: 10.0
 Pillar: Public Goods
 PillarCode: PG

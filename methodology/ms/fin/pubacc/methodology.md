@@ -1,4 +1,7 @@
 ---
+ItemName: Public Access
+ItemCode: PUBACC
+ItemType: Indicator
 Category: Financial Sector
 CategoryCode: FIN
 Description: Account ownership at a financial institution or with a mobile-money-service
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Public Access
 IndicatorCode: PUBACC
 Inverted: false
-ItemCode: PUBACC
-ItemName: Public Access
 LowerGoalpost: 0.0
 Pillar: Market Structure
 PillarCode: MS

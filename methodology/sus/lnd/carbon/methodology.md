@@ -1,4 +1,7 @@
 ---
+ItemName: Carbon Capture
+ItemCode: CARBON
+ItemType: Indicator
 Category: Land
 CategoryCode: LND
 Description: Percentage change in the ratio of carbon stock in living biomass over
@@ -11,8 +14,6 @@ IntermediateCodes:
   - CRBNLV
   - CRBNAV
 Inverted: false
-ItemCode: CARBON
-ItemName: Carbon Capture
 LowerGoalpost: -5.0
 Pillar: Sustainability
 PillarCode: SUS

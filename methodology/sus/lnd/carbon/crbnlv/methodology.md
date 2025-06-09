@@ -1,4 +1,7 @@
 ---
+ItemType: Intermediate
+ItemName: Level of Carbon Stock
+ItemCode: CRBNLV
 Description: Level of Carbon Stock in Living Biomass (in millions of kg)
 DocumentType: IntermediateDetail
 Indicator: Natural Carbon Capture
@@ -6,9 +9,6 @@ IndicatorCode: CARBON
 Intermediate: Level of Carbon Stock
 IntermediateCode: CRBNLV
 Inverted: false
-ItemCode: CRBNLV
-ItemName: Level of Carbon Stock
-ItemType: Intermediate
 LowerGoalpost: null
 SourceOrganization: UN FAO
 SourceOrganizationIndicatorCode: Element=7215, Item=6646

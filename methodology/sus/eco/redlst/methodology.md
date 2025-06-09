@@ -1,4 +1,7 @@
 ---
+ItemName: IUCN Red List Index
+ItemCode: REDLST
+ItemType: Indicator
 Category: Ecosystem
 CategoryCode: ECO
 Description: Measures the level of extinction risk across species within a country.
@@ -9,8 +12,6 @@ Footnote: null
 Indicator: IUCN Red List Index
 IndicatorCode: REDLST
 Inverted: false
-ItemCode: REDLST
-ItemName: IUCN Red List Index
 LowerGoalpost: 0.0
 Pillar: Sustainability
 PillarCode: SUS

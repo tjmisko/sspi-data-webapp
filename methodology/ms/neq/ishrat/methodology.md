@@ -1,4 +1,7 @@
 ---
+ItemName: Income Share Ratio
+ItemCode: ISHRAT
+ItemType: Indicator
 Category: Inequality
 CategoryCode: NEQ
 Description: The pre-tax national income share of the bottom 50% of households divided
@@ -11,8 +14,6 @@ IntermediateCodes:
   - TOPTEN
   - BFIFTY
 Inverted: false
-ItemCode: ISHRAT
-ItemName: Income Share Ratio
 LowerGoalpost: 0.2
 Pillar: Market Structure
 PillarCode: MS

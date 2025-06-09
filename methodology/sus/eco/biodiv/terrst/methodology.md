@@ -1,4 +1,7 @@
 ---
+ItemType: Intermediate
+ItemName: Marine Areas Protected
+ItemCode: TERRST
 Description: Percentage of important sites covered by protected areas, terrestrial
 DocumentType: IntermediateDetail
 Indicator: Biodiversity
@@ -6,9 +9,6 @@ IndicatorCode: BIODIV
 Intermediate: Marine Areas Protected
 IntermediateCode: TERRST
 Inverted: false
-ItemCode: TERRST
-ItemName: Marine Areas Protected
-ItemType: Intermediate
 LowerGoalpost: 0.0
 SourceOrganization: UN SDG
 SourceOrganizationIndicatorCode: 14.5.1

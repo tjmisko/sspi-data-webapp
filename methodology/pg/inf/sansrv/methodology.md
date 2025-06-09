@@ -1,4 +1,7 @@
 ---
+ItemName: Basic Sanitation Services
+ItemCode: SANSRV
+ItemType: Indicator
 Category: Infrastructure
 CategoryCode: INF
 Description: The percentage of people using at least basic sanitation services, that
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Basic Sanitation Services
 IndicatorCode: SANSRV
 Inverted: false
-ItemCode: SANSRV
-ItemName: Basic Sanitation Services
 LowerGoalpost: 50.0
 Pillar: Public Goods
 PillarCode: PG

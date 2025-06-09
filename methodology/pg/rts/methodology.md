@@ -1,4 +1,7 @@
 ---
+ItemType: Category
+ItemName: Rights
+ItemCode: RTS
 Category: Rights
 CategoryCode: RTS
 DocumentType: CategoryDetail
@@ -8,8 +11,6 @@ IndicatorCodes:
   - EDEMOC
   - UNCONV
   - GENDEQ
-ItemCode: RTS
-ItemName: Rights
 Pillar: Public Goods
 PillarCode: PG
 ---

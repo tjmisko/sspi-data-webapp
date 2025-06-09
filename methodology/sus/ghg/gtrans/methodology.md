@@ -1,4 +1,7 @@
 ---
+ItemName: Green Transport Index
+ItemCode: GTRANS
+ItemType: Indicator
 Category: Greenhouse Gases
 CategoryCode: GHG
 Description: CO2 emissions from transport in tonnes per inhabitant, tonnes referring
@@ -12,8 +15,6 @@ IntermediateCodes:
   - TCO2EM
   - POPULN
 Inverted: true
-ItemCode: GTRANS
-ItemName: Green Transport Index
 LowerGoalpost: null
 Pillar: Sustainability
 PillarCode: SUS

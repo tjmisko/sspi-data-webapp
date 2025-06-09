@@ -1,4 +1,7 @@
 ---
+ItemName: Tax Progressivity
+ItemCode: TAXPRG
+ItemType: Indicator
 Category: Taxes
 CategoryCode: TAX
 Description: TBD
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Tax Progressivity
 IndicatorCode: TAXPRG
 Inverted: null
-ItemCode: TAXPRG
-ItemName: Tax Progressivity
 LowerGoalpost: null
 Pillar: Market Structure
 PillarCode: MS

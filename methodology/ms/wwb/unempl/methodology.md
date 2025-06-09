@@ -1,4 +1,7 @@
 ---
+ItemName: Unemployment Benefits Coverage
+ItemCode: UNEMPL
+ItemType: Indicator
 Category: Worker Wellbeing
 CategoryCode: WWB
 Description: Percentage of unemployed receiving unemployment benefits.
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Unemployment Benefits Coverage
 IndicatorCode: UNEMPL
 Inverted: false
-ItemCode: UNEMPL
-ItemName: Unemployment Benefits Coverage
 LowerGoalpost: 0.0
 Pillar: Market Structure
 PillarCode: MS

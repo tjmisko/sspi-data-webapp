@@ -1,4 +1,7 @@
 ---
+ItemType: Intermediate
+ItemName: Wellbeing
+ItemCode: YRSRTM
 Description: Expected years in retirement, men
 DocumentType: IntermediateDetail
 Indicator: Senior Wellbeing
@@ -6,9 +9,6 @@ IndicatorCode: SENIOR
 Intermediate: Wellbeing
 IntermediateCode: YRSRTM
 Inverted: false
-ItemCode: YRSRTM
-ItemName: Wellbeing
-ItemType: Intermediate
 LowerGoalpost: 0.0
 SourceOrganization: OECD
 SourceOrganizationIndicatorCode: PAG_PEN20A

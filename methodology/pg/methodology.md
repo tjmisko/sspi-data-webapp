@@ -1,4 +1,7 @@
 ---
+ItemType: Pillar
+ItemName: Public Goods
+ItemCode: PG
 CategoryCodes:
   - GLB
   - HLC
@@ -35,8 +38,6 @@ IndicatorCodes:
   - MILEXP
   - RDFUND
   - FORAID
-ItemCode: PG
-ItemName: Public Goods
 Pillar: Public Goods
 PillarCode: PG
 ---

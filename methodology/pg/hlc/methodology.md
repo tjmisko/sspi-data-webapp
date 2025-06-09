@@ -1,4 +1,7 @@
 ---
+ItemType: Category
+ItemName: Healthcare
+ItemCode: HLC
 Category: Healthcare
 CategoryCode: HLC
 DocumentType: CategoryDetail
@@ -8,8 +11,6 @@ IndicatorCodes:
   - PHYSPC
   - FAMPLN
   - CSTUNT
-ItemCode: HLC
-ItemName: Healthcare
 Pillar: Public Goods
 PillarCode: PG
 ---

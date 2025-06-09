@@ -1,4 +1,7 @@
 ---
+ItemName: National Transport Network Intensity
+ItemCode: TRNETW
+ItemType: Indicator
 Category: Infrastructure
 CategoryCode: INF
 Description: 'The average of two measures: the natural log of rail lines per square
@@ -12,8 +15,6 @@ IntermediateCodes:
   - RAILNT
   - ROADNT
 Inverted: false
-ItemCode: TRNETW
-ItemName: National Transport Network Intensity
 LowerGoalpost: null
 Pillar: Public Goods
 PillarCode: PG

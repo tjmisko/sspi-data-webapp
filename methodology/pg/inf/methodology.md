@@ -1,4 +1,7 @@
 ---
+ItemType: Category
+ItemName: Infrastructure
+ItemCode: INF
 Category: Infrastructure
 CategoryCode: INF
 DocumentType: CategoryDetail
@@ -8,8 +11,6 @@ IndicatorCodes:
   - DRKWAT
   - INTRNT
   - TRNETW
-ItemCode: INF
-ItemName: Infrastructure
 Pillar: Public Goods
 PillarCode: PG
 ---

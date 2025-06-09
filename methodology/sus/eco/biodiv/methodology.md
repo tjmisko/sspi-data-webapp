@@ -1,4 +1,7 @@
 ---
+ItemName: Biodiversity Protection
+ItemCode: BIODIV
+ItemType: Indicator
 Category: Ecosystem
 CategoryCode: ECO
 Description: Percentage of important sites for terrestrial, freshwater, and marine
@@ -12,12 +15,10 @@ IntermediateCodes:
   - TERRST
   - FRSHWT
 Inverted: false
-ItemCode: BIODIV
-ItemName: Biodiversity Protection
 LowerGoalpost: null
 Pillar: Sustainability
 PillarCode: SUS
-Policy: "Protection of \nBiodiversity"
+Policy: "Protection of Biodiversity"
 SourceOrganization: UN SDG
 SourceOrganizationIndicatorCode: null
 SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/

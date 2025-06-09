@@ -1,4 +1,7 @@
 ---
+ItemType: Pillar
+ItemName: Sustainability
+ItemCode: SUS
 CategoryCodes:
   - LND
   - GHG
@@ -22,8 +25,6 @@ IndicatorCodes:
   - COALPW
   - MSWGEN
   - RECYCL
-ItemCode: SUS
-ItemName: Sustainability
 Pillar: Sustainability
 PillarCode: SUS
 ---

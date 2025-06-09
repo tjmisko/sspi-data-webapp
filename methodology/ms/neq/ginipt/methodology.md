@@ -1,4 +1,7 @@
 ---
+ItemName: Gini-coefficient After Taxes
+ItemCode: GINIPT
+ItemType: Indicator
 Category: Inequality
 CategoryCode: NEQ
 Description: GINI Coefficient for post-tax-and-transfer income distribution.
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Gini-coefficient After Taxes
 IndicatorCode: GINIPT
 Inverted: true
-ItemCode: GINIPT
-ItemName: Gini-coefficient After Taxes
 LowerGoalpost: 70.0
 Pillar: Market Structure
 PillarCode: MS

@@ -1,4 +1,7 @@
 ---
+ItemType: Intermediate
+ItemName: Level of Water Stress
+ItemCode: WTSTRS
 Description: 'Level of Water Stress: Freshwater withdrawal as a proportion of available
   freshwater resources is the ratio between total freshwater withdrawal by major economic
   sectors and total renewable freshwater resources, after taking into account environmental
@@ -9,9 +12,6 @@ IndicatorCode: WATMAN
 Intermediate: Level of Water Stress
 IntermediateCode: WTSTRS
 Inverted: false
-ItemCode: WTSTRS
-ItemName: Level of Water Stress
-ItemType: Intermediate
 LowerGoalpost: 100.0
 SourceOrganization: UN SDG
 SourceOrganizationIndicatorCode: 6.4.2

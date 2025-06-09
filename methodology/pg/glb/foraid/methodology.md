@@ -1,4 +1,7 @@
 ---
+ItemName: Foreign Aid
+ItemCode: FORAID
+ItemType: Indicator
 Category: Global Role
 CategoryCode: GLB
 Description: "Countries grouped as “Donors” or “Recipients” based on their reported\
@@ -17,8 +20,6 @@ IntermediateCodes:
   - POPULN
   - GDPMKT
 Inverted: false
-ItemCode: FORAID
-ItemName: Foreign Aid
 LowerGoalpost: null
 Pillar: Public Goods
 PillarCode: PG

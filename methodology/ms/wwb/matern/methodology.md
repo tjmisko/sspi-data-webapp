@@ -1,4 +1,7 @@
 ---
+ItemName: Paid Maternity Leave
+ItemCode: MATERN
+ItemType: Indicator
 Category: Worker Wellbeing
 CategoryCode: WWB
 Description: Paid parental leave available to mothers (full-rate equivalent) in weeks
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Paid Maternity Leave
 IndicatorCode: MATERN
 Inverted: false
-ItemCode: MATERN
-ItemName: Paid Maternity Leave
 LowerGoalpost: 0.0
 Pillar: Market Structure
 PillarCode: MS

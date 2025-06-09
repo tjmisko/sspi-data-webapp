@@ -1,4 +1,7 @@
 ---
+ItemName: Deforestation
+ItemCode: DEFRST
+ItemType: Indicator
 Category: Land
 CategoryCode: LND
 Description: Percentage change in naturally regenerating forests from a 1990’s average
@@ -11,8 +14,6 @@ IntermediateCodes:
   - FRSTLV
   - FRSTAV
 Inverted: false
-ItemCode: DEFRST
-ItemName: Deforestation
 LowerGoalpost: -20.0
 Pillar: Sustainability
 PillarCode: SUS

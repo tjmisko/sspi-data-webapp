@@ -1,4 +1,7 @@
 ---
+ItemName: Energy Intensity
+ItemCode: NRGINT
+ItemType: Indicator
 Category: Energy
 CategoryCode: NRG
 Description: Energy intensity level of primary energy measured in megajoules per constant
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Energy Intensity
 IndicatorCode: NRGINT
 Inverted: true
-ItemCode: NRGINT
-ItemName: Energy Intensity
 LowerGoalpost: 15.0
 Pillar: Sustainability
 PillarCode: SUS

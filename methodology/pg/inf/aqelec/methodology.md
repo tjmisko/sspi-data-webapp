@@ -1,4 +1,7 @@
 ---
+ItemName: Availability and Quality of Electricity
+ItemCode: AQELEC
+ItemType: Indicator
 Category: Infrastructure
 CategoryCode: INF
 Description: "Arithmetic mean of two measures: \n1) The percentage of the population\
@@ -12,8 +15,6 @@ IntermediateCodes:
   - AVELEC
   - QUELEC
 Inverted: false
-ItemCode: AQELEC
-ItemName: Availability and Quality of Electricity
 LowerGoalpost: null
 Pillar: Public Goods
 PillarCode: PG

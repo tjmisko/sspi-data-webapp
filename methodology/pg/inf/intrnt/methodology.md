@@ -1,4 +1,7 @@
 ---
+ItemName: Internet Access and Quality
+ItemCode: INTRNT
+ItemType: Indicator
 Category: Infrastructure
 CategoryCode: INF
 Description: "Arithmetic mean of two measures: \n1) Percentage of households with\
@@ -11,8 +14,6 @@ IntermediateCodes:
   - AVINTR
   - QUINTR
 Inverted: false
-ItemCode: INTRNT
-ItemName: Internet Access and Quality
 LowerGoalpost: null
 Pillar: Public Goods
 PillarCode: PG

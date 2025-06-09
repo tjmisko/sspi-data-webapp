@@ -1,4 +1,7 @@
 ---
+ItemName: Municipal Solid Waste Generation
+ItemCode: MSWGEN
+ItemType: Indicator
 Category: Waste
 CategoryCode: WST
 Description: Annual amount of per capita Municipal Solid Waste (kg/capita/year), which
@@ -9,8 +12,6 @@ Footnote: null
 Indicator: Municipal Solid Waste Generation
 IndicatorCode: MSWGEN
 Inverted: true
-ItemCode: MSWGEN
-ItemName: Municipal Solid Waste Generation
 LowerGoalpost: 50.0
 Pillar: Sustainability
 PillarCode: SUS

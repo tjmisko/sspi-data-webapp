@@ -1,4 +1,7 @@
 ---
+ItemName: Safely Managed Water
+ItemCode: DRKWAT
+ItemType: Indicator
 Category: Infrastructure
 CategoryCode: INF
 Description: Percentage of population using safely managed drinking water services.
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Safely Managed Water
 IndicatorCode: DRKWAT
 Inverted: false
-ItemCode: DRKWAT
-ItemName: Safely Managed Water
 LowerGoalpost: 0.0
 Pillar: Public Goods
 PillarCode: PG

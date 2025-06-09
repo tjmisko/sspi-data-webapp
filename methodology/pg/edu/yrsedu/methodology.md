@@ -1,4 +1,7 @@
 ---
+ItemName: Years of Compulsory Education
+ItemCode: YRSEDU
+ItemType: Indicator
 Category: Education
 CategoryCode: EDU
 Description: Total years of compulsory education
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Years of Compulsory Education
 IndicatorCode: YRSEDU
 Inverted: false
-ItemCode: YRSEDU
-ItemName: Years of Compulsory Education
 LowerGoalpost: 6.0
 Pillar: Public Goods
 PillarCode: PG

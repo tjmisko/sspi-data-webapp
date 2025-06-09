@@ -1,83 +1,13 @@
 ---
-CategoryCodes:
-  - FIN
-  - LND
-  - NEQ
-  - GLB
-  - HLC
-  - GHG
-  - SAF
-  - TAX
-  - ECO
-  - WWB
-  - WEN
-  - NRG
-  - RTS
-  - INF
-  - EDU
-  - WST
+ItemType: SSPI
+ItemName: Sustainable and Shared Prosperity Policy Index
+ItemCode: SSPI
 Code: SSPI
 DocumentType: SSPIDetail
-IndicatorCodes:
-  - BIODIV
-  - REDLST
-  - NITROG
-  - WATMAN
-  - CHMPOL
-  - DEFRST
-  - CARBON
-  - ALTNRG
-  - NRGINT
-  - AIRPOL
-  - GTRANS
-  - BEEFMK
-  - COALPW
-  - MSWGEN
-  - RECYCL
-  - EMPLOY
-  - COLBAR
-  - UNEMPL
-  - MATERN
-  - FATINJ
-  - SENIOR
-  - CRPTAX
-  - TAXREV
-  - TAXPRG
-  - FSTABL
-  - FDEPTH
-  - PUBACC
-  - ISHRAT
-  - GINIPT
-  - ENRPRI
-  - ENRSEC
-  - YRSEDU
-  - PUPTCH
-  - ATBRTH
-  - DPTCOV
-  - PHYSPC
-  - FAMPLN
-  - CSTUNT
-  - AQELEC
-  - SANSRV
-  - DRKWAT
-  - INTRNT
-  - TRNETW
-  - RULELW
-  - PUBSRV
-  - EDEMOC
-  - UNCONV
-  - GENDEQ
-  - MURDER
-  - CYBSEC
-  - SECAPP
-  - PRISON
-  - ARMEXP
-  - MILEXP
-  - RDFUND
-  - FORAID
-ItemCode: SSPI
-ItemName: Sustainable and Shared Prosperity Policy Index
 Name: Sustainable and Shared Prosperity Policy Index
+Description: >
+    The Sustainable and Shared Proseperity Index scores national policies
+    across three pillars: Sustainability, Market Structure, and Public Goods
 PillarCodes:
   - MS
   - PG

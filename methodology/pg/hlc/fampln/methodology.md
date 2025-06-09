@@ -1,4 +1,7 @@
 ---
+ItemName: Family Planning
+ItemCode: FAMPLN
+ItemType: Indicator
 Category: Healthcare
 CategoryCode: HLC
 Description: Modeled data on unmet need for family planning is defined as the percentage
@@ -9,8 +12,6 @@ Footnote: null
 Indicator: Family Planning
 IndicatorCode: FAMPLN
 Inverted: false
-ItemCode: FAMPLN
-ItemName: Family Planning
 LowerGoalpost: 20.0
 Pillar: Public Goods
 PillarCode: PG

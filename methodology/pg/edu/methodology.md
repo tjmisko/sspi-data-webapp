@@ -1,4 +1,7 @@
 ---
+ItemType: Category
+ItemName: Education
+ItemCode: EDU
 Category: Education
 CategoryCode: EDU
 DocumentType: CategoryDetail
@@ -7,8 +10,6 @@ IndicatorCodes:
   - ENRSEC
   - YRSEDU
   - PUPTCH
-ItemCode: EDU
-ItemName: Education
 Pillar: Public Goods
 PillarCode: PG
 ---

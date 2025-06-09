@@ -1,4 +1,7 @@
 ---
+ItemName: Tax Revenue
+ItemCode: TAXREV
+ItemType: Indicator
 Category: Taxes
 CategoryCode: TAX
 Description: Tax revenue as percentage of GDP.
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Tax Revenue
 IndicatorCode: TAXREV
 Inverted: false
-ItemCode: TAXREV
-ItemName: Tax Revenue
 LowerGoalpost: 0.0
 Pillar: Market Structure
 PillarCode: MS

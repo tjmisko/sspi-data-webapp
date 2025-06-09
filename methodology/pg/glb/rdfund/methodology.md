@@ -1,4 +1,7 @@
 ---
+ItemName: Research and Development
+ItemCode: RDFUND
+ItemType: Indicator
 Category: Global Role
 CategoryCode: GLB
 Description: "Aggregates the following: \nProportion of GDP spent on government R&D,\
@@ -13,8 +16,6 @@ IntermediateCodes:
   - EDURDP
   - NRSRCH
 Inverted: false
-ItemCode: RDFUND
-ItemName: Research and Development
 LowerGoalpost: null
 Pillar: Public Goods
 PillarCode: PG

@@ -1,4 +1,7 @@
 ---
+ItemName: Incarceration Rates
+ItemCode: PRISON
+ItemType: Indicator
 Category: Public Safety
 CategoryCode: SAF
 Description: Prison population rate per 100,000 of the national population. Population
@@ -11,8 +14,6 @@ IntermediateCodes:
   - PRIPOP
   - POPULN
 Inverted: true
-ItemCode: PRISON
-ItemName: Incarceration Rates
 LowerGoalpost: 540.0
 Pillar: Public Goods
 PillarCode: PG

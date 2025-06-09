@@ -1,4 +1,7 @@
 ---
+ItemName: Quality of Public Services & Governance
+ItemCode: PUBSRV
+ItemType: Indicator
 Category: Rights
 CategoryCode: RTS
 Description: Perceptions of the quality of public services, quality of the civil service
@@ -11,15 +14,11 @@ Footnote: To view the Quality of Public Services & Governance data, download the
 Indicator: Quality of Public Services & Governance
 IndicatorCode: PUBSRV
 Inverted: false
-ItemCode: PUBSRV
-ItemName: Quality of Public Services & Governance
 LowerGoalpost: -2.5
 Pillar: Public Goods
 PillarCode: PG
 Policy: Government and Civil Service
-SourceOrganization: 'World Bank (WGI)
-
-  '
+SourceOrganization: World Bank (WGI)
 SourceOrganizationIndicatorCode: null
 SourceOrganizationURL: https://info.worldbank.org/governance/wgi/
 UpperGoalpost: 2.5

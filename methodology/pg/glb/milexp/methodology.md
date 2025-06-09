@@ -1,4 +1,7 @@
 ---
+ItemName: Military Expenditure
+ItemCode: MILEXP
+ItemType: Indicator
 Category: Global Role
 CategoryCode: GLB
 Description: Military expenditure (local currency at current prices) according to
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Military Expenditure
 IndicatorCode: MILEXP
 Inverted: true
-ItemCode: MILEXP
-ItemName: Military Expenditure
 LowerGoalpost: 10.0
 Pillar: Public Goods
 PillarCode: PG

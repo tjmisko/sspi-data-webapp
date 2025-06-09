@@ -1,4 +1,7 @@
 ---
+ItemType: Category
+ItemName: Land
+ItemCode: LND
 Category: Land
 CategoryCode: LND
 DocumentType: CategoryDetail
@@ -8,8 +11,6 @@ IndicatorCodes:
   - CHMPOL
   - DEFRST
   - CARBON
-ItemCode: LND
-ItemName: Land
 Pillar: Sustainability
 PillarCode: SUS
 ---

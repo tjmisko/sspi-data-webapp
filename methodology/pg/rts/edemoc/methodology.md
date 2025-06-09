@@ -1,4 +1,7 @@
 ---
+ItemName: Electoral Democracy Index
+ItemCode: EDEMOC
+ItemType: Indicator
 Category: Rights
 CategoryCode: RTS
 Description: Electoral Democracy Index seeks to embody the core values that make rulers
@@ -9,8 +12,6 @@ Footnote: To view the Electoral Democracy Index data, download the V-Dem data se
 Indicator: Electoral Democracy Index
 IndicatorCode: EDEMOC
 Inverted: false
-ItemCode: EDEMOC
-ItemName: Electoral Democracy Index
 LowerGoalpost: 0.0
 Pillar: Public Goods
 PillarCode: PG

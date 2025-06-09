@@ -1,4 +1,7 @@
 ---
+ItemName: Senior Wellbeing
+ItemCode: SENIOR
+ItemType: Indicator
 Category: Worker Wellbeing
 CategoryCode: WWB
 Description: "Arithmetic average of the following measures: \n1) Percentage of individuals\
@@ -13,8 +16,6 @@ IntermediateCodes:
   - YRSRTM
   - YRSRTW
 Inverted: true
-ItemCode: SENIOR
-ItemName: Senior Wellbeing
 LowerGoalpost: 15.0
 Pillar: Market Structure
 PillarCode: MS

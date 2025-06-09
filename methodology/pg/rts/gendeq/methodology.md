@@ -1,4 +1,7 @@
 ---
+ItemName: Gender Equality Index
+ItemCode: GENDEQ
+ItemType: Indicator
 Category: Rights
 CategoryCode: RTS
 Description: "Weighted average of proportion of women in parliament from IPU and 3\
@@ -20,8 +23,6 @@ IntermediateCodes:
   - WMMARR
   - WMFNMN
 Inverted: false
-ItemCode: GENDEQ
-ItemName: Gender Equality Index
 LowerGoalpost: null
 Pillar: Public Goods
 PillarCode: PG

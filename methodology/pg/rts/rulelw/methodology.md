@@ -1,4 +1,7 @@
 ---
+ItemName: Rule of Law Index
+ItemCode: RULELW
+ItemType: Indicator
 Category: Rights
 CategoryCode: RTS
 Description: Rule of Law Index measures extent to which laws are transparently, independently,
@@ -10,8 +13,6 @@ Footnote: To view the Rule of Law Index data, download the V-Dem data set and vi
 Indicator: Rule of Law Index
 IndicatorCode: RULELW
 Inverted: false
-ItemCode: RULELW
-ItemName: Rule of Law Index
 LowerGoalpost: 0.0
 Pillar: Public Goods
 PillarCode: PG

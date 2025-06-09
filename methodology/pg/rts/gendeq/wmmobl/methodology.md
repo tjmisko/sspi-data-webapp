@@ -1,4 +1,7 @@
 ---
+ItemType: Intermediate
+ItemName: Mobility
+ItemCode: WMMOBL
 Description: Women have equal access to passports, foreign travel, domestic travel,
   and housing (4 Q’s, each worth 0.25 for yes, 0 for no).
 DocumentType: IntermediateDetail
@@ -7,9 +10,6 @@ IndicatorCode: GENDEQ
 Intermediate: Mobility
 IntermediateCode: WMMOBL
 Inverted: false
-ItemCode: WMMOBL
-ItemName: Mobility
-ItemType: Intermediate
 LowerGoalpost: 0.0
 SourceOrganization: WB-WBL
 SourceOrganizationIndicatorCode: null

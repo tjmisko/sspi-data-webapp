@@ -1,4 +1,7 @@
 ---
+ItemName: Arms Transfers
+ItemCode: ARMEXP
+ItemType: Indicator
 Category: Global Role
 CategoryCode: GLB
 Description: 'Arm transfers: the supply of military weapons through sales, aid, gifts,
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Arms Transfers
 IndicatorCode: ARMEXP
 Inverted: true
-ItemCode: ARMEXP
-ItemName: Arms Transfers
 LowerGoalpost: 500.0
 Pillar: Public Goods
 PillarCode: PG

@@ -1,4 +1,7 @@
 ---
+ItemName: Child Stunting
+ItemCode: CSTUNT
+ItemType: Indicator
 Category: Healthcare
 CategoryCode: HLC
 Description: Estimated prevalence of stunting in children under 5 (%).
@@ -7,8 +10,6 @@ Footnote: null
 Indicator: Child Stunting
 IndicatorCode: CSTUNT
 Inverted: true
-ItemCode: CSTUNT
-ItemName: Child Stunting
 LowerGoalpost: 50.0
 Pillar: Public Goods
 PillarCode: PG

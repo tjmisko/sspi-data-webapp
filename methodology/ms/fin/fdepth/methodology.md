@@ -1,4 +1,7 @@
 ---
+ItemName: Depth
+ItemCode: FDEPTH
+ItemType: Indicator
 Category: Financial Sector
 CategoryCode: FIN
 Description: "This measure is an aggregation using the simple mean of the following\
@@ -13,8 +16,6 @@ IntermediateCodes:
   - CREDIT
   - DPOSIT
 Inverted: false
-ItemCode: FDEPTH
-ItemName: Depth
 LowerGoalpost: null
 Pillar: Market Structure
 PillarCode: MS

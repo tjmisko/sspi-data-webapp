@@ -1,4 +1,7 @@
 ---
+ItemName: Air Pollution
+ItemCode: AIRPOL
+ItemType: Indicator
 Category: Energy
 CategoryCode: NRG
 Description: Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities
@@ -8,8 +11,6 @@ Footnote: null
 Indicator: Air Pollution
 IndicatorCode: AIRPOL
 Inverted: true
-ItemCode: AIRPOL
-ItemName: Air Pollution
 LowerGoalpost: 40.0
 Pillar: Sustainability
 PillarCode: SUS

@@ -1,4 +1,7 @@
 ---
+ItemName: Infant DTP Vaccine Coverage
+ItemCode: DPTCOV
+ItemType: Indicator
 Category: Healthcare
 CategoryCode: HLC
 Description: The estimated percentage of children aged 12–23 months who received three
@@ -9,8 +12,6 @@ Footnote: null
 Indicator: Infant DTP Vaccine Coverage
 IndicatorCode: DPTCOV
 Inverted: false
-ItemCode: DPTCOV
-ItemName: Infant DTP Vaccine Coverage
 LowerGoalpost: 75.0
 Pillar: Public Goods
 PillarCode: PG

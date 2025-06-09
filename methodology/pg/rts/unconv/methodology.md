@@ -1,4 +1,7 @@
 ---
+ItemName: Adoption of Key UN Conventions
+ItemCode: UNCONV
+ItemType: Indicator
 Category: Rights
 CategoryCode: RTS
 Description: 'Proportion of 9 core UN conventions (ICERD, ICCPR, ICESCR, CEDAW, CAT,
@@ -11,8 +14,6 @@ Footnote: null
 Indicator: Adoption of Key UN Conventions
 IndicatorCode: UNCONV
 Inverted: false
-ItemCode: UNCONV
-ItemName: Adoption of Key UN Conventions
 LowerGoalpost: 0.0
 Pillar: Public Goods
 PillarCode: PG

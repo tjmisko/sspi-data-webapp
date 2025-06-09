@@ -1,4 +1,7 @@
 ---
+ItemName: Beef Market
+ItemCode: BEEFMK
+ItemType: Indicator
 Category: Greenhouse Gases
 CategoryCode: GHG
 Description: 'The average of two measures: beef and buffalo meat produced in kilograms
@@ -12,8 +15,6 @@ IntermediateCodes:
   - BFPROD
   - BFCONS
 Inverted: true
-ItemCode: BEEFMK
-ItemName: Beef Market
 LowerGoalpost: null
 Pillar: Sustainability
 PillarCode: SUS

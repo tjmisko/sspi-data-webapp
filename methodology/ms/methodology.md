@@ -1,4 +1,7 @@
 ---
+ItemType: Pillar
+ItemName: Market Structure
+ItemCode: MS
 CategoryCodes:
   - FIN
   - NEQ
@@ -21,8 +24,6 @@ IndicatorCodes:
   - PUBACC
   - ISHRAT
   - GINIPT
-ItemCode: MS
-ItemName: Market Structure
 Pillar: Market Structure
 PillarCode: MS
 ---
