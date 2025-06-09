@@ -16,7 +16,8 @@ client_bp = Blueprint(
 
 @client_bp.route('/')
 def home():
-    return render_template('home.html')
+    pillar_category_tree = sspi_metadata.pillar_category_summary_tree()
+    return render_template('home.html', pillar_category_tree=pillar_category_tree)
 
 
 @client_bp.route('/favicon.ico')

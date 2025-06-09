@@ -526,3 +526,9 @@ class SSPIMetadata(MongoWrapper):
                 continue
             flat_list.append(detail["Metadata"])
         return flat_list
+
+    def pillar_category_summary_tree(self) -> list[dict]:
+        """
+        Returns a tree structure of pillars and categories
+        """
+        return [{}]
