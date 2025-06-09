@@ -439,7 +439,7 @@ class SSPIMetadata(MongoWrapper):
         result["Metadata"]["DocumentType"] = result["DocumentType"]
         result["Metadata"]["ItemCode"] = ItemCode
         if result["DocumentType"] == "IntermediateDetail":
-            result["Metadata"]["ItemName"] = result["Metadata"]["IntermediateName"]
+            result["Metadata"]["ItemName"] = result["Metadata"]["Intermediate"]
         elif result["DocumentType"] == "IndicatorDetail":
             result["Metadata"]["ItemName"] = result["Metadata"]["Indicator"]
         elif result["DocumentType"] == "CategoryDetail":
