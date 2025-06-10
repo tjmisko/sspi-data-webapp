@@ -21,3 +21,9 @@ class DataOrderError(Exception):
     Raised when there is a mismatch between metadata and data order in SSPI class
     """
     pass
+
+class MethodologyFileError(Exception):
+    """
+    Raised when there is an error with the methodology file
+    """
+    pass

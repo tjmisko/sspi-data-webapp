@@ -86,7 +86,7 @@
   right: 0;
   padding: 0.5em;
   border-radius: 5px;
-  background-color: var(--header-color, #000);
+  background-color: var(--box-background-color, #000);
   border: var(--theme-border-thick, none);
   color: var(--header-text-color, #fff);
   overflow-y: scroll;

@@ -1,9 +1,9 @@
 html, body, canvas, div {
-    margin: 0;
+  margin: 0;
 }
 
 html {
-    font-size: 16pt;
+  font-size: 16pt;
 }
 
 body {
@@ -17,61 +17,49 @@ main {
   padding: 1em 3vw;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  margin: 0.15em 0;
+}
+
 h1 {
-    font-family: 'REM', sans-serif;
-    font-weight: 300;
-    font-size: 3rem;
-    line-height: 1.2rem;
+  font-family: var(--title-font-family, 'REM', sans-serif);
+  font-weight: 300;
+  font-size: 2rem;
+  line-height: 2.2rem;
 }
 
 h2 {
-    font-family: 'Libra Baskerville', serif;
-    font-weight: 400;
-    font-size: 2.25rem;
-    line-height: 1.25rem;
+  font-family: var(--header-font-family, 'Helvetica', sans-serif);
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 2.25rem;
 }
 
 h3 {
-    font-family: 'Libra Baskerville', serif;
-    font-weight: 500;
-    font-size: 1.875rem;
-    line-height: 1.3rem;
+  font-family: var(--header-font-family, 'Helvetica', sans-serif);
+  font-weight: 500;
+  font-size: 1.375rem;
+  line-height: 2.3rem;
+
 }
 
 h4 {
-    font-family: 'Libra Baskerville', serif;
-    font-weight: 600;
-    font-size: 1.5rem;
-    line-height: 1.35rem;
+  font-family: var(--body-font-family, 'Libra Baskerville', serif);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 2.35rem;
 }
 
 h5 {
-    font-family: 'Libra Baskerville', serif;
-    font-weight: 700;
-    font-size: 1.25rem;
-    line-height: 1.4rem;
+  font-family: var(--body-font-family, 'Libra Baskerville', serif);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.4rem;
 }
 
 h6 {
-    font-family: 'Libra Baskerville', serif;
-    font-weight: 900;
-    font-size: 1.125rem;
-    line-height: 1.4rem;
-}
-
-
-.hero-section {
-    padding: 2em 2em;
-    max-width: 800px;
-    display: flex;
-    justify-content: space-between;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.hero-text-content {
-    min-width: 250px;
-    max-width: 500px;
-    flex: 2 1 0;
+  font-family: var(--body-font-family, 'Libra Baskerville', serif);
+  font-weight: 900;
+  font-size: 1.125rem;
+  line-height: 1.4rem;
 }
