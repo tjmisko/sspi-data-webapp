@@ -1,11 +1,10 @@
 ---
-ItemName: Tax Progressivity
-ItemCode: TAXPRG
 ItemType: Indicator
+ItemCode: TAXPRG
+ItemName: Tax Progressivity
 Category: Taxes
 CategoryCode: TAX
 Description: TBD
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Tax Progressivity
 IndicatorCode: TAXPRG

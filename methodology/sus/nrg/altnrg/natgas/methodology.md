@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Energy from Natural Gas
 ItemCode: NATGAS
 Description: Percentage of total final energy consumption generated from Natural Gas
-DocumentType: IntermediateDetail
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
 Intermediate: Energy from Natural Gas

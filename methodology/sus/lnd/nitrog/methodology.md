@@ -1,7 +1,7 @@
 ---
-ItemName: Sustainable Nitrogen Management
-ItemCode: NITROG
 ItemType: Indicator
+ItemCode: NITROG
+ItemName: Sustainable Nitrogen Management
 Category: Land
 CategoryCode: LND
 Description: An index measuring the sustainability of Nitrogen management based on
@@ -10,7 +10,6 @@ Description: An index measuring the sustainability of Nitrogen management based 
   of nitrogen fertilizer with maximum crop yields as a measure of the environmental
   performance of agricultural production. The 2022 EPI uses the SNMI as a proxy for
   agricultural drivers of environmental damage.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Sustainable Nitrogen Management
 IndicatorCode: NITROG

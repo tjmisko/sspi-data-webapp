@@ -1,11 +1,10 @@
 ---
-ItemName: Tax Revenue
-ItemCode: TAXREV
 ItemType: Indicator
+ItemCode: TAXREV
+ItemName: Tax Revenue
 Category: Taxes
 CategoryCode: TAX
 Description: Tax revenue as percentage of GDP.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Tax Revenue
 IndicatorCode: TAXREV

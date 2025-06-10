@@ -1,12 +1,11 @@
 ---
-ItemName: Deforestation
-ItemCode: DEFRST
 ItemType: Indicator
+ItemCode: DEFRST
+ItemName: Deforestation
 Category: Land
 CategoryCode: LND
 Description: Percentage change in naturally regenerating forests from a 1990’s average
   to 2018.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Deforestation
 IndicatorCode: DEFRST

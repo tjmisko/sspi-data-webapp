@@ -3,12 +3,11 @@ ItemType: Pillar
 ItemName: Market Structure
 ItemCode: MS
 CategoryCodes:
+  - WEN
+  - WWB
+  - TAX
   - FIN
   - NEQ
-  - TAX
-  - WWB
-  - WEN
-DocumentType: PillarDetail
 IndicatorCodes:
   - EMPLOY
   - COLBAR

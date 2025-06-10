@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Women in Parliament
 ItemCode: WMPLMT
 Description: Percentage of women in the national parliament.
-DocumentType: IntermediateDetail
 Indicator: Gender Equality Index
 IndicatorCode: GENDEQ
 Intermediate: Women in Parliament

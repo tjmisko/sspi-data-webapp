@@ -4,7 +4,6 @@ ItemName: Infrastructure
 ItemCode: INF
 Category: Infrastructure
 CategoryCode: INF
-DocumentType: CategoryDetail
 IndicatorCodes:
   - AQELEC
   - SANSRV

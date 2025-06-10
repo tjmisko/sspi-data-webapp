@@ -6,7 +6,6 @@ Description: 'Level of Water Stress: Freshwater withdrawal as a proportion of av
   freshwater resources is the ratio between total freshwater withdrawal by major economic
   sectors and total renewable freshwater resources, after taking into account environmental
   water requirements. This indicator is also known as water withdrawal intensity'
-DocumentType: IntermediateDetail
 Indicator: Water Management
 IndicatorCode: WATMAN
 Intermediate: Level of Water Stress

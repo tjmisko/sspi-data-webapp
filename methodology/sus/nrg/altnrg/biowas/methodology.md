@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Energy from Biowaste
 ItemCode: BIOWAS
 Description: Percentage of total final energy consumption generated from Biowaste(?)
-DocumentType: IntermediateDetail
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
 Intermediate: Energy from Biowaste

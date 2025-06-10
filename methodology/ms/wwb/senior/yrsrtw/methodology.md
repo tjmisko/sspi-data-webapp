@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Welleing
 ItemCode: YRSRTW
 Description: Expected years in retirement, women
-DocumentType: IntermediateDetail
 Indicator: Senior Wellbeing
 IndicatorCode: SENIOR
 Intermediate: Welleing

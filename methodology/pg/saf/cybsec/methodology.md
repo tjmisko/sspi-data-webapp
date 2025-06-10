@@ -1,12 +1,11 @@
 ---
-ItemName: Global Cybersecurity Index
-ItemCode: CYBSEC
 ItemType: Indicator
+ItemCode: CYBSEC
+ItemName: Global Cybersecurity Index
 Category: Public Safety
 CategoryCode: SAF
 Description: The Global Cybersecurity Index (GCI) is a composite index combining 25
   indicators into one benchmark for the laws, institutions, and competence.5
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Global Cybersecurity Index
 IndicatorCode: CYBSEC

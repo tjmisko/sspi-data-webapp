@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Population
 ItemCode: POPULN
 Description: Population
-DocumentType: IntermediateDetail
 Indicator: Green Transport Index
 IndicatorCode: GTRANS
 Intermediate: Population

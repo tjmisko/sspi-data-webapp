@@ -1,12 +1,11 @@
 ---
-ItemName: Internet Access and Quality
-ItemCode: INTRNT
 ItemType: Indicator
+ItemCode: INTRNT
+ItemName: Internet Access and Quality
 Category: Infrastructure
 CategoryCode: INF
 Description: "Arithmetic mean of two measures: \n1) Percentage of households with\
   \ internet access \n2) Fixed broadband download speed in Mbps."
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Internet Access and Quality
 IndicatorCode: INTRNT

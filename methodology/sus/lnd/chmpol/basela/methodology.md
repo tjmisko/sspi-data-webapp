@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Basel Accord Compliance
 ItemCode: BASELA
 Description: null
-DocumentType: IntermediateDetail
 Indicator: Chemical Pollution Convention Compliance
 IndicatorCode: CHMPOL
 Intermediate: Basel Accord Compliance

@@ -1,12 +1,11 @@
 ---
-ItemName: Military Expenditure
-ItemCode: MILEXP
 ItemType: Indicator
+ItemCode: MILEXP
+ItemName: Military Expenditure
 Category: Global Role
 CategoryCode: GLB
 Description: Military expenditure (local currency at current prices) according to
   the calendar year as a percentage of GDP.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Military Expenditure
 IndicatorCode: MILEXP

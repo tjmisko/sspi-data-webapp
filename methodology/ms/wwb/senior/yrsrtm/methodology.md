@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Wellbeing
 ItemCode: YRSRTM
 Description: Expected years in retirement, men
-DocumentType: IntermediateDetail
 Indicator: Senior Wellbeing
 IndicatorCode: SENIOR
 Intermediate: Wellbeing

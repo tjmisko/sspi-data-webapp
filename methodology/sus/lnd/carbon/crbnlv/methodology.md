@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Level of Carbon Stock
 ItemCode: CRBNLV
 Description: Level of Carbon Stock in Living Biomass (in millions of kg)
-DocumentType: IntermediateDetail
 Indicator: Natural Carbon Capture
 IndicatorCode: CARBON
 Intermediate: Level of Carbon Stock

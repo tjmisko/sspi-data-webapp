@@ -1,11 +1,10 @@
 ---
-ItemName: Chemical Pollution Convention Compliance
-ItemCode: CHMPOL
 ItemType: Indicator
+ItemCode: CHMPOL
+ItemName: Chemical Pollution Convention Compliance
 Category: Land
 CategoryCode: LND
 Description: Compliance with three treaties
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Chemical Pollution Convention Compliance
 IndicatorCode: CHMPOL

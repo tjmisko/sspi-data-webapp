@@ -1,13 +1,12 @@
 ---
-ItemName: Green Transport Index
-ItemCode: GTRANS
 ItemType: Indicator
+ItemCode: GTRANS
+ItemName: Green Transport Index
 Category: Greenhouse Gases
 CategoryCode: GHG
 Description: CO2 emissions from transport in tonnes per inhabitant, tonnes referring
   to thousands of kilograms. This includes domestic aviation, domestic navigation,
   road, rail and pipeline transport.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Green Transport Index
 IndicatorCode: GTRANS

@@ -1,13 +1,12 @@
 ---
-ItemName: Infant DTP Vaccine Coverage
-ItemCode: DPTCOV
 ItemType: Indicator
+ItemCode: DPTCOV
+ItemName: Infant DTP Vaccine Coverage
 Category: Healthcare
 CategoryCode: HLC
 Description: The estimated percentage of children aged 12–23 months who received three
   doses of the combined diphtheria, tetanus toxoid and pertussis vaccine time before
   the survey.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Infant DTP Vaccine Coverage
 IndicatorCode: DPTCOV

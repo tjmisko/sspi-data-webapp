@@ -1,12 +1,11 @@
 ---
-ItemName: Recycling Rate
-ItemCode: RECYCL
 ItemType: Indicator
+ItemCode: RECYCL
+ItemName: Recycling Rate
 Category: Waste
 CategoryCode: WST
 Description: The quantity of material recycled in the country over total waste generated  (recycling
   does not include controlled combustion (incineration) or land  application).
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Recycling Rate
 IndicatorCode: RECYCL

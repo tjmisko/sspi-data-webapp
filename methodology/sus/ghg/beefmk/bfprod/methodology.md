@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Beef Production
 ItemCode: BFPROD
 Description: Beef and buffalo meat produced annually, in kilograms per person
-DocumentType: IntermediateDetail
 Indicator: Beef Market
 IndicatorCode: BEEFMK
 Intermediate: Beef Production

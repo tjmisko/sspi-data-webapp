@@ -4,7 +4,6 @@ ItemName: Rights
 ItemCode: RTS
 Category: Rights
 CategoryCode: RTS
-DocumentType: CategoryDetail
 IndicatorCodes:
   - RULELW
   - PUBSRV

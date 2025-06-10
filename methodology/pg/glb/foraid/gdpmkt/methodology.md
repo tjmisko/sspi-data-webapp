@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: GDP at Market Prices
 ItemCode: GDPMKT
 Description: GDP at Market Prices
-DocumentType: IntermediateDetail
 Indicator: Foreign Aid
 IndicatorCode: FORAID
 Intermediate: GDP at Market Prices

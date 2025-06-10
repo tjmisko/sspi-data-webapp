@@ -1,14 +1,13 @@
 ---
-ItemName: Alternative Energy Generation
-ItemCode: ALTNRG
 ItemType: Indicator
+ItemCode: ALTNRG
+ItemName: Alternative Energy Generation
 Category: Energy
 CategoryCode: NRG
 Description: Total energy supply (excluding exports) supply from “renewable sources”
   (RE = nuclear, hydroelectric, geothermal, solar, wind, and biofuels) minus half
   of total final energy supply from biofuel sources (BIO) to penalize countries for
   unsustainable overreliance on biofuels. AE = RE – 0.5 *BIO.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG

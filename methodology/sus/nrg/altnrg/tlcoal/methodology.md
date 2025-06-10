@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Energy from Coal
 ItemCode: TLCOAL
 Description: Percentage of total final energy consumption generated from Coal
-DocumentType: IntermediateDetail
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
 Intermediate: Energy from Coal

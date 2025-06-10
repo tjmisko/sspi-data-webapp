@@ -1,11 +1,10 @@
 ---
-ItemName: Attended Births by Skilled Personnel
-ItemCode: ATBRTH
 ItemType: Indicator
+ItemCode: ATBRTH
+ItemName: Attended Births by Skilled Personnel
 Category: Healthcare
 CategoryCode: HLC
 Description: The proportion of births attended by trained and/or skilled health personnel.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Attended Births by Skilled Personnel
 IndicatorCode: ATBRTH

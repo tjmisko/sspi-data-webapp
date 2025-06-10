@@ -4,7 +4,6 @@ ItemName: Energy
 ItemCode: NRG
 Category: Energy
 CategoryCode: NRG
-DocumentType: CategoryDetail
 IndicatorCodes:
   - ALTNRG
   - NRGINT

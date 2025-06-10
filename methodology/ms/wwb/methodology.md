@@ -4,7 +4,6 @@ ItemName: Worker Wellbeing
 ItemCode: WWB
 Category: Worker Wellbeing
 CategoryCode: WWB
-DocumentType: CategoryDetail
 IndicatorCodes:
   - UNEMPL
   - MATERN

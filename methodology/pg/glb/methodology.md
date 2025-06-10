@@ -4,7 +4,6 @@ ItemName: Global Role
 ItemCode: GLB
 Category: Global Role
 CategoryCode: GLB
-DocumentType: CategoryDetail
 IndicatorCodes:
   - ARMEXP
   - MILEXP

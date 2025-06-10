@@ -4,7 +4,6 @@ ItemName: Old Age Income Poverty
 ItemCode: POVNRT
 Description: Percentage of individuals over the age of 66+ living in relative income
   poverty
-DocumentType: IntermediateDetail
 Indicator: Senior Wellbeing
 IndicatorCode: SENIOR
 Intermediate: Old Age Income Poverty

@@ -1,7 +1,7 @@
 ---
-ItemName: Gender Equality Index
-ItemCode: GENDEQ
 ItemType: Indicator
+ItemCode: GENDEQ
+ItemName: Gender Equality Index
 Category: Rights
 CategoryCode: RTS
 Description: "Weighted average of proportion of women in parliament from IPU and 3\
@@ -13,7 +13,6 @@ Description: "Weighted average of proportion of women in parliament from IPU and
   \ (5Qs, worth 0.2 for yes, 0 for no). [Weight: 0.2] \n4) Assets, Pensions: Women\
   \ have equal access to credit, inheritance, pensions, and retirement. Combines two\
   \ measurements made up of 7 questions.3 [Weight: 0.2]"
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Gender Equality Index
 IndicatorCode: GENDEQ

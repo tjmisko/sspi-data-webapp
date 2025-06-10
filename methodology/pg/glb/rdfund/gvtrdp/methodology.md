@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Government R&D
 ItemCode: GVTRDP
 Description: Proportion of GDP spent on government R&D
-DocumentType: IntermediateDetail
 Indicator: Research and Development
 IndicatorCode: RDFUND
 Intermediate: Government R&D

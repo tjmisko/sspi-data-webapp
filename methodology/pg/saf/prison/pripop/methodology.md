@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Prison Population
 ItemCode: PRIPOP
 Description: Prison population
-DocumentType: IntermediateDetail
 Indicator: Incarceration Rate
 IndicatorCode: PRISON
 Intermediate: Prison Population

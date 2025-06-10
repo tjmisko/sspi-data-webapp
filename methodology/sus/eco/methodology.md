@@ -4,7 +4,6 @@ ItemName: Ecosystem
 ItemCode: ECO
 Category: Ecosystem
 CategoryCode: ECO
-DocumentType: CategoryDetail
 IndicatorCodes:
   - BIODIV
   - REDLST

@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Donor Foreign Aid
 ItemCode: TOTDON
 Description: Total ODA Flows from Donor
-DocumentType: IntermediateDetail
 Indicator: Foreign Aid
 IndicatorCode: FORAID
 Intermediate: Donor Foreign Aid

@@ -1,12 +1,11 @@
 ---
-ItemName: Biodiversity Protection
-ItemCode: BIODIV
 ItemType: Indicator
+ItemCode: BIODIV
+ItemName: Biodiversity Protection
 Category: Ecosystem
 CategoryCode: ECO
 Description: Percentage of important sites for terrestrial, freshwater, and marine
   biodiversity that are covered by protected areas, by ecosystem type.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Biodiversity Protection
 IndicatorCode: BIODIV

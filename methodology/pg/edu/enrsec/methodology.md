@@ -1,13 +1,12 @@
 ---
-ItemName: Lower Secondary Net Enrollment
-ItemCode: ENRSEC
 ItemType: Indicator
+ItemCode: ENRSEC
+ItemName: Lower Secondary Net Enrollment
 Category: Education
 CategoryCode: EDU
 Description: The ratio of the number of children of official secondary school age
   who are enrolled in secondary education to the total population of children of official
   secondary school age, expressed as a percentage.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Lower Secondary Net Enrollment
 IndicatorCode: ENRSEC

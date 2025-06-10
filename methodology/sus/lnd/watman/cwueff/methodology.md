@@ -7,7 +7,6 @@ Description: 'Change in Water Use Efficiency (WUE), 2018 compared with 2010-2015
   WUE at the national level is the sum of the efficiencies in the major economic sectors
   weighted according to the proportion of water withdrawn by each sector over the
   total withdrawals'
-DocumentType: IntermediateDetail
 Indicator: Water Management
 IndicatorCode: WATMAN
 Intermediate: Change in Water Use Efficiency

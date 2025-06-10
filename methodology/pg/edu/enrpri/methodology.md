@@ -1,13 +1,12 @@
 ---
-ItemName: Primary School Net Enrollment
-ItemCode: ENRPRI
 ItemType: Indicator
+ItemCode: ENRPRI
+ItemName: Primary School Net Enrollment
 Category: Education
 CategoryCode: EDU
 Description: The ratio of the number of children of official primary school age who
   are enrolled in primary education to the total population of children of official
   primary school age, expressed as a percentage.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Primary School Net Enrollment
 IndicatorCode: ENRPRI

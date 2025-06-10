@@ -4,7 +4,6 @@ ItemName: Quality of Electricity
 ItemCode: QUELEC
 Description: 'Executive opinion survey responses to the question: “In your country,
   how would you assess the reliability of the electricity supply?'
-DocumentType: IntermediateDetail
 Indicator: Availability and Quality of Electricity
 IndicatorCode: AQELEC
 Intermediate: Quality of Electricity

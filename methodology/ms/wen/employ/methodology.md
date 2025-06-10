@@ -1,12 +1,11 @@
 ---
-ItemName: Participation in Paid Employment
-ItemCode: EMPLOY
 ItemType: Indicator
+ItemCode: EMPLOY
+ItemName: Participation in Paid Employment
 Category: Worker Engagement
 CategoryCode: WEN
 Description: Sum of all employed workers ages 25-54 divided by the total number of
   people in that age group.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Participation in Paid Employment
 IndicatorCode: EMPLOY

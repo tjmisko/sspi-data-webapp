@@ -1,12 +1,11 @@
 ---
-ItemName: Primary Education Pupil to Teacher Ratio
-ItemCode: PUPTCH
 ItemType: Indicator
+ItemCode: PUPTCH
+ItemName: Primary Education Pupil to Teacher Ratio
 Category: Education
 CategoryCode: EDU
 Description: Average number of pupils per teacher in primary school, based on headcounts
   of both pupils and teachers.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Primary Education Pupil to Teacher Ratio
 IndicatorCode: PUPTCH

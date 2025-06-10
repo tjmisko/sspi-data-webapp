@@ -1,12 +1,11 @@
 ---
-ItemName: Energy Intensity
-ItemCode: NRGINT
 ItemType: Indicator
+ItemCode: NRGINT
+ItemName: Energy Intensity
 Category: Energy
 CategoryCode: NRG
 Description: Energy intensity level of primary energy measured in megajoules per constant
   2017 purchasing power parity GDP.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Energy Intensity
 IndicatorCode: NRGINT

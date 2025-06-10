@@ -4,7 +4,6 @@ ItemName: Taxes
 ItemCode: TAX
 Category: Taxes
 CategoryCode: TAX
-DocumentType: CategoryDetail
 IndicatorCodes:
   - CRPTAX
   - TAXREV

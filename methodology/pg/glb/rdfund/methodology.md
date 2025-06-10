@@ -1,13 +1,12 @@
 ---
-ItemName: Research and Development
-ItemCode: RDFUND
 ItemType: Indicator
+ItemCode: RDFUND
+ItemName: Research and Development
 Category: Global Role
 CategoryCode: GLB
 Description: "Aggregates the following: \nProportion of GDP spent on government R&D,\
   \ data weight of 25%. Proportion of GDP spent on higher education R&D, data weight\
   \ of 25%. \nNumber of researchers per 1 million people, data weight of 50%."
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Research and Development
 IndicatorCode: RDFUND

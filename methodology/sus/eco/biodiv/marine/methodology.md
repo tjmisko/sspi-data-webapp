@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Marine Areas Protected
 ItemCode: MARINE
 Description: Percentage of important sites covered by protected areas, marine
-DocumentType: IntermediateDetail
 Indicator: Biodiversity
 IndicatorCode: BIODIV
 Intermediate: Marine Areas Protected

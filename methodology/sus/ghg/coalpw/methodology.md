@@ -1,12 +1,11 @@
 ---
-ItemName: Energy From Coal
-ItemCode: COALPW
 ItemType: Indicator
+ItemCode: COALPW
+ItemName: Energy From Coal
 Category: Greenhouse Gases
 CategoryCode: GHG
 Description: Percentage of a country's total energy supply generated from coal and
   coal derived sources.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Energy From Coal
 IndicatorCode: COALPW

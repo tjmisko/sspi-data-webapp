@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Income Share of Top 10% of Earners
 ItemCode: TOPTEN
 Description: Income Share of Top 10% of Earners
-DocumentType: IntermediateDetail
 Indicator: Income Share Ratio
 IndicatorCode: ISHRAT
 Intermediate: Income Share of Top 10% of Earners

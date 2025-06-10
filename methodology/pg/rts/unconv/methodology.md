@@ -1,7 +1,7 @@
 ---
-ItemName: Adoption of Key UN Conventions
-ItemCode: UNCONV
 ItemType: Indicator
+ItemCode: UNCONV
+ItemName: Adoption of Key UN Conventions
 Category: Rights
 CategoryCode: RTS
 Description: 'Proportion of 9 core UN conventions (ICERD, ICCPR, ICESCR, CEDAW, CAT,
@@ -9,7 +9,6 @@ Description: 'Proportion of 9 core UN conventions (ICERD, ICCPR, ICESCR, CEDAW, 
   that have been ratified, acquired, or succeeded.
 
   '
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Adoption of Key UN Conventions
 IndicatorCode: UNCONV

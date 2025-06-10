@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Recipient Foreign Aid
 ItemCode: TONREC
 Description: Totall ODA Flows to Recipient
-DocumentType: IntermediateDetail
 Indicator: Foreign Aid
 IndicatorCode: FORAID
 Intermediate: Recipient Foreign Aid

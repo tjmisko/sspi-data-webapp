@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Level of Forest Cover
 ItemCode: FRSTLV
 Description: Level of Natually Regenerating Forest Cover (in 1000ha)
-DocumentType: IntermediateDetail
 Indicator: Deforestation
 IndicatorCode: DEFRST
 Intermediate: Level of Forest Cover

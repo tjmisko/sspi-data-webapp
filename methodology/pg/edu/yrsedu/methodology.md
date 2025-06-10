@@ -1,11 +1,10 @@
 ---
-ItemName: Years of Compulsory Education
-ItemCode: YRSEDU
 ItemType: Indicator
+ItemCode: YRSEDU
+ItemName: Years of Compulsory Education
 Category: Education
 CategoryCode: EDU
 Description: Total years of compulsory education
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Years of Compulsory Education
 IndicatorCode: YRSEDU

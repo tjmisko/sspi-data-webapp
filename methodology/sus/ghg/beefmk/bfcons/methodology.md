@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Beef Consumption
 ItemCode: BFCONS
 Description: Beef and buffalo meat consumed annually, in kilograms per person.
-DocumentType: IntermediateDetail
 Indicator: Beef Market
 IndicatorCode: BEEFMK
 Intermediate: Beef Consumption

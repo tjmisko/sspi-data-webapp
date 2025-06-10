@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Educational R&D
 ItemCode: EDURDP
 Description: Proportion of GDP spent on higher education R&D
-DocumentType: IntermediateDetail
 Indicator: Research and Development
 IndicatorCode: RDFUND
 Intermediate: Educational R&D

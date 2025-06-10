@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Availability of Electricity
 ItemCode: AVELEC
 Description: The percentage of the population with access to electricity
-DocumentType: IntermediateDetail
 Indicator: Availability and Quality of Electricity
 IndicatorCode: AQELEC
 Intermediate: Availability of Electricity

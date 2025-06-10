@@ -4,7 +4,6 @@ ItemName: Domestic Credit in the Private Sector
 ItemCode: CREDIT
 Description: The financial resources provided to the private sector by financial corporations
   as a percentage of GDP.
-DocumentType: IntermediateDetail
 Indicator: Financial Depth
 IndicatorCode: FDEPTH
 Intermediate: Domestic Credit in the Private Sector

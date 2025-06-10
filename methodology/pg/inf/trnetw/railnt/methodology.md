@@ -4,7 +4,6 @@ ItemName: Rail Network Intensity
 ItemCode: RAILNT
 Description: The natural log of rail lines per square kilometer (millions) per capita
   (millions)
-DocumentType: IntermediateDetail
 Indicator: National Transport Network Intensity
 IndicatorCode: TRNETW
 Intermediate: Rail Network Intensity

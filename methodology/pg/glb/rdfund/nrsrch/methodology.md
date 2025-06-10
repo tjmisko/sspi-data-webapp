@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Number of Researchers
 ItemCode: NRSRCH
 Description: Number of researchers per 1 million people, data weight of 50%.
-DocumentType: IntermediateDetail
 Indicator: Research and Development
 IndicatorCode: RDFUND
 Intermediate: Number of Researchers

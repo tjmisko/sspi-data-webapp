@@ -1,12 +1,11 @@
 ---
-ItemName: Public Access
-ItemCode: PUBACC
 ItemType: Indicator
+ItemCode: PUBACC
+ItemName: Public Access
 Category: Financial Sector
 CategoryCode: FIN
 Description: Account ownership at a financial institution or with a mobile-money-service
   provider (% of population ages 15+).
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Public Access
 IndicatorCode: PUBACC

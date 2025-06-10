@@ -4,7 +4,6 @@ ItemName: Financial System Deposits
 ItemCode: DPOSIT
 Description: Deposited money in banks and other financial institutions as a percentage
   of GDP.
-DocumentType: IntermediateDetail
 Indicator: Financial Depth
 IndicatorCode: FDEPTH
 Intermediate: Financial System Deposits

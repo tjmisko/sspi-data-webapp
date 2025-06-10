@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Montreal Convention Compliance
 ItemCode: MONTRL
 Description: null
-DocumentType: IntermediateDetail
 Indicator: Chemical Pollution Convention Compliance
 IndicatorCode: CHMPOL
 Intermediate: Montreal Convention Compliance

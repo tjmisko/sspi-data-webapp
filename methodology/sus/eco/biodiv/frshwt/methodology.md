@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Marine Areas Protected
 ItemCode: FRSHWT
 Description: Percentage of important sites covered by protected areas, freshwater
-DocumentType: IntermediateDetail
 Indicator: Biodiversity
 IndicatorCode: BIODIV
 Intermediate: Marine Areas Protected

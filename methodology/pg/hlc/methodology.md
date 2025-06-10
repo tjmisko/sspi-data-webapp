@@ -4,7 +4,6 @@ ItemName: Healthcare
 ItemCode: HLC
 Category: Healthcare
 CategoryCode: HLC
-DocumentType: CategoryDetail
 IndicatorCodes:
   - ATBRTH
   - DPTCOV

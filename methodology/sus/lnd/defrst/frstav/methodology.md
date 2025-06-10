@@ -4,7 +4,6 @@ ItemName: Average of Forest Cover (1990s)
 ItemCode: FRSTAV
 Description: Average Level of Natually Regenerating Forest Cover (in 1000ha) from
   1990 to 1999
-DocumentType: IntermediateDetail
 Indicator: Deforestation
 IndicatorCode: DEFRST
 Intermediate: Average of Forest Cover (1990s)

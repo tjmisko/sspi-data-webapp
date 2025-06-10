@@ -1,7 +1,7 @@
 ---
-ItemName: Foreign Aid
-ItemCode: FORAID
 ItemType: Indicator
+ItemCode: FORAID
+ItemName: Foreign Aid
 Category: Global Role
 CategoryCode: GLB
 Description: "Countries grouped as “Donors” or “Recipients” based on their reported\
@@ -10,7 +10,6 @@ Description: "Countries grouped as “Donors” or “Recipients” based on the
   \ Total Good Foreign Aid as a Percentage of GDP \n2) Recipients: Total Good Foreign\
   \ Aid per Capita reflects the extent to which recipient countries solicit foreign\
   \ aid for their population."
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Foreign Aid
 IndicatorCode: FORAID

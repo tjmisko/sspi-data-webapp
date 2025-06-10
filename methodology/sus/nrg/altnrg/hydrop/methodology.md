@@ -4,7 +4,6 @@ ItemName: Energy from Hydropower
 ItemCode: HYDROP
 Description: Percentage of total final energy consumption generated from Hydroelectric
   sources
-DocumentType: IntermediateDetail
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
 Intermediate: Energy from Hydropower

@@ -1,12 +1,11 @@
 ---
-ItemName: Incarceration Rates
-ItemCode: PRISON
 ItemType: Indicator
+ItemCode: PRISON
+ItemName: Incarceration Rates
 Category: Public Safety
 CategoryCode: SAF
 Description: Prison population rate per 100,000 of the national population. Population
   sourced from the WorldBank.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Incarceration Rates
 IndicatorCode: PRISON

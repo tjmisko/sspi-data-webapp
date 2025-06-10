@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Quality of Internet
 ItemCode: QUINTR
 Description: Fixed broadband download speed in Mbps.
-DocumentType: IntermediateDetail
 Indicator: Internet Access and Quality
 IndicatorCode: INTRNT
 Intermediate: Quality of Internet

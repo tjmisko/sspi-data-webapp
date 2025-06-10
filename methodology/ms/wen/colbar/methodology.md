@@ -1,12 +1,11 @@
 ---
-ItemName: Collective Bargaining Coverage
-ItemCode: COLBAR
 ItemType: Indicator
+ItemCode: COLBAR
+ItemName: Collective Bargaining Coverage
 Category: Worker Engagement
 CategoryCode: WEN
 Description: The proportion of workers whose terms and conditions at work are determined
   by collective bargaining as opposed to individual contracts.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Collective Bargaining Coverage
 IndicatorCode: COLBAR

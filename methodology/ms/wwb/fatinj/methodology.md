@@ -1,11 +1,10 @@
 ---
-ItemName: Fatal Workplace Injuries
-ItemCode: FATINJ
 ItemType: Indicator
+ItemCode: FATINJ
+ItemName: Fatal Workplace Injuries
 Category: Worker Wellbeing
 CategoryCode: WWB
 Description: Number of fatal injuries per 100,000 workers.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Fatal Workplace Injuries
 IndicatorCode: FATINJ

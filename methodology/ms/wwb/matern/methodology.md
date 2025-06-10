@@ -1,12 +1,11 @@
 ---
-ItemName: Paid Maternity Leave
-ItemCode: MATERN
 ItemType: Indicator
+ItemCode: MATERN
+ItemName: Paid Maternity Leave
 Category: Worker Wellbeing
 CategoryCode: WWB
 Description: Paid parental leave available to mothers (full-rate equivalent) in weeks
   during the first year.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Paid Maternity Leave
 IndicatorCode: MATERN

@@ -1,12 +1,11 @@
 ---
-ItemName: Physicians per 10,000
-ItemCode: PHYSPC
 ItemType: Indicator
+ItemCode: PHYSPC
+ItemName: Physicians per 10,000
 Category: Healthcare
 CategoryCode: HLC
 Description: Number of medical doctors (physicians), both generalists and specialists,
   expressed per 10,000 people.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Physicians per 10,000
 IndicatorCode: PHYSPC

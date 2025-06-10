@@ -1,7 +1,7 @@
 ---
-ItemName: Water Management
-ItemCode: WATMAN
 ItemType: Indicator
+ItemCode: WATMAN
+ItemName: Water Management
 Category: Land
 CategoryCode: LND
 Description: "Average of the following two metrics: \n1. Change in Water Use Efficiency\
@@ -13,7 +13,6 @@ Description: "Average of the following two metrics: \n1. Change in Water Use Eff
   \ resources is the ratio between total freshwater withdrawal by major economic sectors\
   \ and total renewable \nfreshwater resources, after taking into account environmental\
   \ water requirements. This indicator is also known as water withdrawal intensity."
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Water Management
 IndicatorCode: WATMAN

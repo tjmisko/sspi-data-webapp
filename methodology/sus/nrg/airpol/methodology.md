@@ -1,12 +1,11 @@
 ---
-ItemName: Air Pollution
-ItemCode: AIRPOL
 ItemType: Indicator
+ItemCode: AIRPOL
+ItemName: Air Pollution
 Category: Energy
 CategoryCode: NRG
 Description: Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities
   (population weighted) measured in micrograms per cubic meter of air (μg/m3).
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Air Pollution
 IndicatorCode: AIRPOL

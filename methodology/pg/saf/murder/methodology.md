@@ -1,11 +1,10 @@
 ---
-ItemName: Intentional Homicide
-ItemCode: MURDER
 ItemType: Indicator
+ItemCode: MURDER
+ItemName: Intentional Homicide
 Category: Public Safety
 CategoryCode: SAF
 Description: Intentional homicides per 100,000 people.
-DocumentType: IndicatorDetail
 Footnote: null
 Indicator: Intentional Homicide
 IndicatorCode: MURDER

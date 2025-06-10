@@ -4,7 +4,6 @@ ItemName: Greenhouse Gases
 ItemCode: GHG
 Category: Greenhouse Gases
 CategoryCode: GHG
-DocumentType: CategoryDetail
 IndicatorCodes:
   - GTRANS
   - BEEFMK

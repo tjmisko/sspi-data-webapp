@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Availability of Internet
 ItemCode: AVINTR
 Description: Percentage of households with internet access
-DocumentType: IntermediateDetail
 Indicator: Internet Access and Quality
 IndicatorCode: INTRNT
 Intermediate: Availability of Internet

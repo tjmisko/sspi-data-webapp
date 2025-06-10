@@ -3,7 +3,6 @@ ItemType: Intermediate
 ItemName: Energy from Geothermal
 ItemCode: GEOPWR
 Description: Percentage of total final energy consumption generated from Geothermal
-DocumentType: IntermediateDetail
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
 Intermediate: Energy from Geothermal

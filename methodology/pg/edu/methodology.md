@@ -4,7 +4,6 @@ ItemName: Education
 ItemCode: EDU
 Category: Education
 CategoryCode: EDU
-DocumentType: CategoryDetail
 IndicatorCodes:
   - ENRPRI
   - ENRSEC
