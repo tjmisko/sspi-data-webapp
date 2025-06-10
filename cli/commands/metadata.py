@@ -9,14 +9,48 @@ def metadata():
     pass
 
 
-@metadata.group(help="Get Pillar Metadata from the SSPI Database")
-def pillar():
-    pass
+@metadata.command(help="Get Pillar Metadata from the SSPI Database")
+@click.argument("pillar_code", type=str, required=False)
+def pillar(pillar_code):
+    """Get SSPI Pillar Metadata
+    """
+    connector = SSPIDatabaseConnector()
+    intermediate_code = pillar_code.upper() if pillar_code else None
+    if not intermediate_code:
+        url = "/api/v1/query/metadata/pillar_details"
+    elif intermediate_code in ["CODES", "CODE"]:
+        url = "/api/v1/query/metadata/pillar_codes"
+    else:
+        url = f"/api/v1/query/metadata/pillar_detail/{intermediate_code}"
+    result = connector.call(url)
+    click.echo(json.dumps(result.json()))
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Intermediate Query Failed with Status Code {
+                result.status_code}"
+        )
 
 
-@metadata.group(help="Get Category Metadata from the SSPI Database")
-def category():
-    pass
+@metadata.command(help="Get Category Metadata from the SSPI Database")
+@click.argument("category_code", type=str, required=False)
+def category(category_code):
+    """Get SSPI Category Metadata
+    """
+    connector = SSPIDatabaseConnector()
+    category_code = category_code.upper() if category_code else None
+    if not category_code:
+        url = "/api/v1/query/metadata/category_details"
+    elif category_code in ["CODES", "CODE"]:
+        url = "/api/v1/query/metadata/category_codes"
+    else:
+        url = f"/api/v1/query/metadata/category_detail/{category_code}"
+    result = connector.call(url)
+    click.echo(json.dumps(result.json()))
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Category Query Failed with Status Code {result.status_code}"
+        )
+    
 
 
 @metadata.command(help="Get SSPI Indicator Metadata")

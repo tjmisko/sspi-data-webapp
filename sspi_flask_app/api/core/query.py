@@ -121,6 +121,36 @@ def query_intermediate_detail(intermediate_code):
     return parse_json(sspi_metadata.get_intermediate_detail(intermediate_code))
 
 
+@query_bp.route("/metadata/category_details")
+def query_category_details():
+    return parse_json(sspi_metadata.category_details())
+
+
+@query_bp.route("/metadata/category_codes", methods=["GET"])
+def query_category_codes():
+    return parse_json(sspi_metadata.category_codes())
+
+
+@query_bp.route("/metadata/category_detail/<intermediate_code>", methods=["GET"])
+def query_category_detail(intermediate_code):
+    return parse_json(sspi_metadata.get_category_detail(intermediate_code))
+
+
+@query_bp.route("/metadata/pillar_details")
+def query_pillar_details():
+    return parse_json(sspi_metadata.pillar_details())
+
+
+@query_bp.route("/metadata/pillar_codes", methods=["GET"])
+def query_pillar_codes():
+    return parse_json(sspi_metadata.pillar_codes())
+
+
+@query_bp.route("/metadata/pillar_detail/<intermediate_code>", methods=["GET"])
+def query_pillar_detail(intermediate_code):
+    return parse_json(sspi_metadata.get_pillar_detail(intermediate_code))
+
+
 @query_bp.route("/metadata/item_detail/<item_code>", methods=["GET"])
 def query_item_detail(item_code):
     return parse_json(sspi_metadata.get_item_detail(item_code))
