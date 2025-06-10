@@ -1,5 +1,6 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
-from sspi_flask_app.models.errors import InvalidDocumentFormatError
+import frontmatter
+from sspi_flask_app.models.errors import InvalidDocumentFormatError, MethodologyFileError
 from flask import current_app as app
 import os
 import json
@@ -13,10 +14,6 @@ log = logging.getLogger(__name__)
 class SSPIMetadata(MongoWrapper):
     def __init__(self, mongo_database, indicator_detail_file=None, intermediate_detail_file=None):
         super().__init__(mongo_database)
-        if indicator_detail_file is None:
-            indicator_detail_file = "IndicatorDetails.csv"
-        if intermediate_detail_file is None:
-            intermediate_detail_file = "IntermediateDetails.csv"
         self.indicator_detail_file = indicator_detail_file
         self.intermediate_detail_file = intermediate_detail_file
 
@@ -33,8 +30,7 @@ class SSPIMetadata(MongoWrapper):
             }
         Additional fields are allowed but not required
         """
-        self.validate_document_type(document, document_number)
-        self.validate_metadata(document, document_number)
+        pass
 
     def tabulate_ids(self):
         tab_ids = self._mongo_database.aggregate([
@@ -75,72 +71,255 @@ class SSPIMetadata(MongoWrapper):
                 f"'Metadata' must be a string, dict, int, float, or list (document {
                     document_number})"
             )
+    
+    def validate_detail_format(self, detail: dict):
+        assert "ItemName" in detail.keys(), "ItemName is required in detail"
+        assert "ItemCode" in detail.keys(), "ItemCode is required in detail"
+        assert "ItemType" in detail.keys(), "ItemType is required in detail"
+        if "LowerGoalpost" in detail.keys() and detail["LowerGoalpost"] is not None:
+            assert type(detail["LowerGoalpost"]) in [int, float], "LowerGoalpost must be an int or float"
+        if "UpperGoalpost" in detail.keys() and detail["UpperGoalpost"] is not None:
+            assert type(detail["UpperGoalpost"]) in [int, float], "UpperGoalpost must be an int or float"
+        if detail["ItemType"] not in ["SSPI", "Pillar", "Category", "Indicator", "Intermediate"]:
+            raise InvalidDocumentFormatError(
+                f"Invalid ItemType {detail['ItemType']} in detail {detail}"
+            )
+        if detail["ItemType"] == "SSPI":
+            assert "PillarCodes" in detail.keys(), "PillarCodes is required for SSPI"
+            assert type(detail["PillarCodes"]) is list, "PillarCodes must be a list"
+            assert all(isinstance(code, str) for code in detail["PillarCodes"]), "All PillarCodes must be strings"
+            pillar_codes = set([p.upper() for p in detail["PillarCodes"]])
+            children = set([c.upper() for c in detail["Children"]])
+            if pillar_codes != children:
+                msg = (
+                    f"SSPIFile {detail['ItemCode']} specifies PillarCodes: {pillar_codes}\n"
+                    f"Methodology File Tree specifies Children: {children}\n"
+                )
+                raise MethodologyFileError(msg)
+        elif detail["ItemType"] == "Pillar":
+            assert "CategoryCodes" in detail.keys(), "CategoryCodes is required for Pillar"
+            assert type(detail["CategoryCodes"]) is list, "CategoryCodes must be a list"
+            assert all(isinstance(code, str) for code in detail["CategoryCodes"]), "All CategoryCodes must be strings"
+            category_codes = set([c.upper() for c in detail["CategoryCodes"]])
+            children = set([c.upper() for c in detail["Children"]])
+            if category_codes != children:
+                msg = (
+                    f"PillarFile {detail['ItemCode']} specifies CategoryCodes: {category_codes}\n"
+                    f"Methodology File Tree specifies Children: {children}\n"
+                )
+                raise MethodologyFileError(msg)
+        elif detail["ItemType"] == "Category":
+            assert "IndicatorCodes" in detail.keys(), "IndicatorCodes is required for Category"
+            assert type(detail["IndicatorCodes"]) is list, "IndicatorCodes must be a list"
+            assert all(isinstance(code, str) for code in detail["IndicatorCodes"]), "All IndicatorCodes must be strings"
+            indicator_codes = set([i.upper() for i in detail["IndicatorCodes"]])
+            children = set([c.upper() for c in detail["Children"]])
+            if indicator_codes != children:
+                msg = (
+                    f"CategoryFile {detail['ItemCode']} specifies IndicatorCodes: {indicator_codes}\n"
+                    f"Methodology File Tree specifies Children: {children}\n"
+                )
+                raise MethodologyFileError(msg)
+        elif detail["ItemType"] == "Indicator" and detail.get("IntermediateCodes") is not None:
+            assert type(detail["IntermediateCodes"]) is list, "IntermediateCodes must be a list"
+            assert all(isinstance(code, str) for code in detail["IntermediateCodes"]), "All IntermediateCodes must be strings"
+            intermediate_codes = set([i.upper() for i in detail["IntermediateCodes"]])
+            children = set([c.upper() for c in detail["Children"]])
+            if intermediate_codes != children:
+                msg = (
+                    f"IndicatorFile {detail['ItemCode']} specifies IntermediateCodes: {intermediate_codes}\n"
+                    f"Methodogoly File Tree specifies Children: {children}\n"
+                )
+                raise MethodologyFileError(msg)
+
 
     def load(self) -> int:
-        """
-        Loads the metadata into the database
-        """
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
-        ind_detail_path = os.path.join(local_path, self.indicator_detail_file)
-        print(f"Loading data for {self.name} from file {ind_detail_path}")
-        indicator_details = pd.read_csv(ind_detail_path)
-        int_detail_path = os.path.join(
-            local_path, self.intermediate_detail_file
-        )
-        print(f"Loading data for {self.name} from file {int_detail_path}")
-        intermediate_details = pd.read_csv(int_detail_path)
-        with open(os.path.join(local_path, "CountryGroups.json")) as file:
+        with open(os.path.join(local_path, "country-groups.json")) as file:
             country_groups = json.load(file)
         with open(os.path.join(local_path, "country-flag-colors.json")) as file:
             country_colors = json.load(file)
         with open(os.path.join(local_path, "sspi-colors.json")) as file:
             sspi_custom_colors = json.load(file)
-        metadata = self.build_metadata(
-            indicator_details,
-            intermediate_details,
-            country_groups,
-            country_colors,
-            sspi_custom_colors
-        )
+        if self.indicator_detail_file is not None and self.intermediate_detail_file is not None:
+            count = self.load_static(
+                self.indicator_detail_file,
+                self.intermediate_detail_file,
+                country_groups,
+                country_colors,
+                sspi_custom_colors
+            )
+        else:
+            count = self.load_dynamic(
+                country_groups,
+                country_colors,
+                sspi_custom_colors
+            )
+        return count
+
+    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors) -> int:
+        """
+        Load metadata specified in methodology files into the database
+
+        Canonical order of indicators is specified by the order given in the
+        parent list.
+        """
+        details = self.load_methodology_files()
+        for detail in details:
+            self.validate_detail_format(detail)
+            detail["DocumentType"] = detail["ItemType"] + "Detail"
+        item_codes = {
+            "SSPI": [],
+            "Pillar": [],
+            "Category": [],
+            "Indicator": [],
+            "Intermediate": []
+        }
+        sorted_details = self.sort_item_details(details)
+        for detail in sorted_details:
+            item_codes[detail["Metadata"]["ItemType"]].append(detail["Metadata"]["ItemCode"])
+        metadata = []
+        metadata.extend([
+            {"DocumentType": "PillarCodes", "Metadata": item_codes["Pillar"]},
+            {"DocumentType": "CategoryCodes", "Metadata": item_codes["Category"]},
+            {"DocumentType": "IndicatorCodes", "Metadata": item_codes["Indicator"]},
+            {"DocumentType": "IntermediateCodes", "Metadata": item_codes["Intermediate"]}
+        ])
+        metadata.extend(self.build_country_groups(country_groups))
+        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
+        metadata.extend(sorted_details)
         count = self.insert_many(metadata)
         self.drop_duplicates()
         print(f"Successfully loaded {count} documents into {self.name}")
         return count
 
-    def build_metadata(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame, country_groups: dict, country_colors: list[dict], sspi_custom_colors: dict) -> list:
+    def sort_item_details(self, details: list[dict]) -> list[dict]:
         """
-        Utility function that builds the metadata JSON list from the IndicatorDetails.csv and IntermediateDetails.csv files
+        Sorts the item details based on the order specified for the appropriate
+        children in the methodology files, grouped by ItemType and ItemCode
         """
-        metadata = []
-        metadata.append(self.build_pillar_codes(indicator_details))
-        metadata.append(self.build_category_codes(indicator_details))
-        metadata.append(self.build_indicator_codes(indicator_details))
-        metadata.append(self.build_intermediate_codes(intermediate_details))
-        metadata.extend(self.build_country_groups(country_groups))
-        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
-        metadata.extend(self.build_intermediate_details(intermediate_details))
-        metadata.extend(self.build_indicator_details(indicator_details, intermediate_details))
-        metadata.extend(self.build_category_details(indicator_details))
-        metadata.extend(self.build_pillar_details(indicator_details))
-        metadata.extend(self.build_sspi_detail(indicator_details))
-        return metadata
+        def get_intermediate_insert_index(intermediate_code: str, start: int) -> int:
+            """
+            Returns the index to insert the detail in the sorted list of intermediates
+            Necessary because IntermediateCodes are not guaranteed to be unique
+            """
+            intermediate_index = intermediates_sorted.index(intermediate_code, start)
+            insert_index = 1 + len(pillars_sorted) + len(categories_sorted) + len(indicators_sorted) + intermediate_index
+            if not sorted_details[insert_index]:
+                return insert_index
+            return get_intermediate_insert_index(intermediate_code, intermediate_index + 1)
 
-    def build_pillar_codes(self, indicator_details: pd.DataFrame) -> dict:
-        pillar_codes = indicator_details["PillarCode"].unique().tolist()
-        return {"DocumentType": "PillarCodes", "Metadata": pillar_codes}
+        intermediates = []
+        indicators = []
+        categories = []
+        pillars_sorted = []
+        for detail in details:
+            if detail["ItemType"] == "SSPI":
+                pillars_sorted = detail["PillarCodes"]
+                print(pillars_sorted)
+            elif detail["ItemType"] == "Pillar":
+                categories.append({
+                    "PillarCode": detail["ItemCode"],
+                    "List": detail["CategoryCodes"]
+                })
+            elif detail["ItemType"] == "Category":
+                indicators.append({
+                    "CategoryCode": detail["ItemCode"],
+                    "List": detail["IndicatorCodes"]
+                })
+            elif detail["ItemType"] == "Indicator":
+                intermediates.append({
+                    "IndicatorCode": detail["ItemCode"],
+                    "List": detail.get("IntermediateCodes", [])
+                })
+        categories.sort(key=lambda x: pillars_sorted.index(x["PillarCode"]))
+        categories_sorted = [cat for p_list in categories for cat in p_list["List"]]
+        indicators.sort(key=lambda x: categories_sorted.index(x["CategoryCode"]))
+        indicators_sorted = [ind for c_list in indicators for ind in c_list["List"]]
+        intermediates.sort(key=lambda x: indicators_sorted.index(x["IndicatorCode"]))
+        intermediates_sorted = [inter for i_list in intermediates for inter in i_list["List"]]
+        n_details = 1 + len(pillars_sorted) + len(categories_sorted) + \
+            len(indicators_sorted) + len(intermediates_sorted)
+        sorted_details = [dict()] * n_details
+        for detail in details: 
+            if detail["ItemType"] == "SSPI": #First Element
+                insert_index = 0
+                detail["ItemOrder"] = 0
+            elif detail["ItemType"] == "Pillar": #
+                pillar_index = pillars_sorted.index(detail["ItemCode"]) 
+                insert_index = 1 + pillar_index
+                detail["ItemOrder"] = pillar_index
+            elif detail["ItemType"] == "Category":
+                category_index = categories_sorted.index(detail["ItemCode"])
+                insert_index = 1 + len(pillars_sorted) + category_index
+                detail["ItemOrder"] = category_index
+            elif detail["ItemType"] == "Indicator":
+                indicator_index = indicators_sorted.index(detail["ItemCode"])
+                insert_index = 1 + len(pillars_sorted) + len(categories_sorted) + indicator_index
+                detail["ItemOrder"] = indicator_index
+            elif detail["ItemType"] == "Intermediate":  # Intermediate Codes (e.g. POPULN) are not necessarily unique!
+                insert_index = get_intermediate_insert_index(detail["ItemCode"], 0)
+            else:
+                raise MethodologyFileError(
+                    f"Invalid ItemType {detail['ItemType']} in detail {detail}"
+                )
+            sorted_details[insert_index] = detail
+        assert all([isinstance(d, dict) for d in sorted_details]), "All details must be dictionaries"
+        expected_details = ["SSPI"] + pillars_sorted + categories_sorted + indicators_sorted + intermediates_sorted
+        if any([len(d) == 0 for d in sorted_details]):
+            missing_code = expected_details[sorted_details.index({})]
+            raise MethodologyFileError(
+                f"Expected detail for {missing_code} but found empty dictionary in sorted details"
+            )
+        packaged_details = []
+        for detail in sorted_details:
+            packaged_details.append({
+                "DocumentType": detail["DocumentType"],
+                "Metadata": detail
+            })
+        return packaged_details
+        
 
-    def build_category_codes(self, indicator_details: pd.DataFrame) -> dict:
-        category_codes = indicator_details["CategoryCode"].unique().tolist()
-        return {"DocumentType": "CategoryCodes", "Metadata": category_codes}
-
-    def build_indicator_codes(self, indicator_details: pd.DataFrame) -> dict:
-        indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
-        return {"DocumentType": "IndicatorCodes", "Metadata": indicator_codes}
-
-    def build_intermediate_codes(self, intermediate_details: pd.DataFrame) -> dict:
-        intermediate_codes = intermediate_details["IntermediateCode"].unique(
-        ).tolist()
-        return {"DocumentType": "IntermediateCodes", "Metadata": intermediate_codes}
+    def load_methodology_files(self) -> list:
+        """
+        Walks through the methodology directory and loads the frontmatter
+        of all methodology files
+        :return: A list of dictionaries containing the metadata from the methodology files
+        """
+        method_dir = os.path.join(os.path.dirname(app.instance_path), "methodology")
+        details = []
+        for dirpath, dirnames, filenames in os.walk(method_dir):
+            if not filenames:
+                raise MethodologyFileError(
+                    f"No methodology.md files found in directory {dirpath}. "
+                    "Please ensure that all directories in methodology are appropriately named "
+                    "and contain a methodology.md file with YAML Frontmatter defining the "
+                    "metadata for the item corresponding to the directory name."
+                )
+            for methodology_file in filenames:
+                if not methodology_file == "methodology.md":
+                    raise MethodologyFileError(
+                        f"Methodology file {methodology_file} is not named 'methodology.md'. "
+                        "Please ensure all methodology files are named 'methodology.md'"
+                        "and that they are located in the correct directory."
+                    )
+                full_methodology_path = os.path.join(dirpath, methodology_file)
+                try:
+                    detail = frontmatter.load(full_methodology_path)
+                except Exception as e:
+                    raise MethodologyFileError(
+                        f"Error loading methodology file {full_methodology_path}: {e};\n"
+                        "It is likely that there is an error in the YAML frontmatter format."
+                    )
+                detail = detail.metadata
+                if dirpath.endswith("sspi-data-webapp/methodology"):
+                    tree_path = "sspi"
+                else:
+                    tree_path = "sspi" + dirpath.split("sspi-data-webapp/methodology")[1]
+                detail["TreePath"] = tree_path
+                detail["Children"] = list([d.upper() for d in dirnames])
+                details.append(detail)
+        return details
 
     def build_country_groups(self, country_groups: dict) -> list[dict]:
         country_groups_lookup = [{
@@ -175,8 +354,58 @@ class SSPIMetadata(MongoWrapper):
         return details
 
 
-        
-    def build_intermediate_details(self, intermediate_details: pd.DataFrame) -> list[dict]:
+    def load_static(self, indicator_detail_file, intermediate_detail_file, country_groups, country_colors, sspi_custom_colors) -> int:
+        """
+        Loads the metadata from local metadata CSV files into the database
+        """
+        local_path = os.path.join(os.path.dirname(app.instance_path), "local")
+        ind_detail_path = os.path.join(local_path, indicator_detail_file)
+        print(f"Loading data for {self.name} from file {ind_detail_path}")
+        indicator_details = pd.read_csv(ind_detail_path)
+        int_detail_path = os.path.join(
+            local_path, intermediate_detail_file
+        )
+        print(f"Loading data for {self.name} from file {int_detail_path}")
+        intermediate_details = pd.read_csv(int_detail_path)
+        metadata = []
+        metadata.extend(self.build_item_codes_static(indicator_details, intermediate_details))
+        metadata.extend(self.build_country_groups(country_groups))
+        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
+        metadata.extend(self.build_intermediate_details_static(intermediate_details))
+        metadata.extend(self.build_indicator_details_static(indicator_details, intermediate_details))
+        metadata.extend(self.build_category_details(indicator_details))
+        metadata.extend(self.build_pillar_details_static(indicator_details))
+        metadata.extend(self.build_sspi_detail_static(indicator_details))
+        count = self.insert_many(metadata)
+        self.drop_duplicates()
+        print(f"Successfully loaded {count} documents into {self.name}")
+        return count
+
+    def build_item_codes_static(self, indicator_details: pd.DataFrame, intermediate_details) -> list[dict]:
+        item_codes_metadata = []
+        pillar_codes = indicator_details["PillarCode"].unique().tolist()
+        item_codes_metadata.append({
+            "DocumentType": "PillarCodes",
+            "Metadata": pillar_codes
+        })
+        category_codes = indicator_details["CategoryCode"].unique().tolist()
+        item_codes_metadata.append({
+            "DocumentType": "CategoryCodes",
+            "Metadata": category_codes
+        })
+        indicator_codes = indicator_details["IndicatorCode"].unique().tolist()
+        item_codes_metadata.append({
+            "DocumentType": "IndicatorCodes",
+            "Metadata": indicator_codes
+        })
+        intermediate_codes = intermediate_details["IntermediateCode"].unique().tolist()
+        item_codes_metadata.append({
+            "DocumentType": "IntermediateCodes",
+            "Metadata": intermediate_codes
+        })
+        return item_codes_metadata
+
+    def build_intermediate_details_static(self, intermediate_details: pd.DataFrame) -> list[dict]:
         json_string = str(intermediate_details.to_json(orient="records"))
         intermediate_details_list = json.loads(json_string)
         final_list = []
@@ -191,7 +420,7 @@ class SSPIMetadata(MongoWrapper):
             })
         return final_list
 
-    def build_indicator_details(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame):
+    def build_indicator_details_static(self, indicator_details: pd.DataFrame, intermediate_details: pd.DataFrame):
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
         ind_int_map = {}
@@ -236,7 +465,7 @@ class SSPIMetadata(MongoWrapper):
             category_detail in category_detail_map.values()
         ]
 
-    def build_pillar_details(self, indicator_details: pd.DataFrame) -> list[dict]:
+    def build_pillar_details_static(self, indicator_details: pd.DataFrame) -> list[dict]:
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
         pillar_detail_map = {}
@@ -265,7 +494,7 @@ class SSPIMetadata(MongoWrapper):
             pillar_detail in pillar_detail_map.values()
         ]
 
-    def build_sspi_detail(self, indicator_details: pd.DataFrame) -> list[dict]:
+    def build_sspi_detail_static(self, indicator_details: pd.DataFrame) -> list[dict]:
         json_string = str(indicator_details.to_json(orient="records"))
         indicator_details_list = json.loads(json_string)
         overall_detail = {
@@ -352,6 +581,26 @@ class SSPIMetadata(MongoWrapper):
         query = {
             "DocumentType": "IndicatorDetail",
             "Metadata.IndicatorCode": IndicatorCode
+        }
+        return self.find_one(query)["Metadata"]
+
+    def get_category_detail(self, CategoryCode: str) -> dict:
+        """
+        Return the detail for a particular category for CategoryCode
+        """
+        query = {
+            "DocumentType": "CategoryDetail",
+            "Metadata.CategoryCode": CategoryCode
+        }
+        return self.find_one(query)["Metadata"]
+
+    def get_pillar_detail(self, PillarCode: str) -> dict:
+        """
+        Return the detail for a particular pillar for PillarCode
+        """
+        query = {
+            "DocumentType": "PillarDetail",
+            "Metadata.PillarCode": PillarCode
         }
         return self.find_one(query)["Metadata"]
 
@@ -523,6 +772,28 @@ class SSPIMetadata(MongoWrapper):
         flat_list = []
         for detail in self.find({"DocumentType": "IndicatorDetail"}):
             if filter and detail["Metadata"]["IndicatorCode"] not in filter:
+                continue
+            flat_list.append(detail["Metadata"])
+        return flat_list
+
+    def category_details(self, filter=[]) -> list[dict]:
+        """
+        Return a list of metadata dictionaries containing category details
+        """
+        flat_list = []
+        for detail in self.find({"DocumentType": "CategoryDetail"}):
+            if filter and detail["Metadata"]["CategoryCode"] not in filter:
+                continue
+            flat_list.append(detail["Metadata"])
+        return flat_list
+
+    def pillar_details(self, filter=[]) -> list[dict]:
+        """
+        Return a list of metadata dictionaries containing pillar details
+        """
+        flat_list = []
+        for detail in self.find({"DocumentType": "PillarDetail"}):
+            if filter and detail["Metadata"]["PillarCode"] not in filter:
                 continue
             flat_list.append(detail["Metadata"])
         return flat_list
