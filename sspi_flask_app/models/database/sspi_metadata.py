@@ -4,6 +4,7 @@ from sspi_flask_app.models.errors import InvalidDocumentFormatError, Methodology
 from flask import current_app as app
 import os
 import json
+import yaml
 from bson import json_util
 import pandas as pd
 import logging
@@ -166,7 +167,6 @@ class SSPIMetadata(MongoWrapper):
         """
         details = self.load_methodology_files()
         for detail in details:
-            self.validate_detail_format(detail)
             detail["DocumentType"] = detail["ItemType"] + "Detail"
         item_codes = {
             "SSPI": [],
@@ -306,7 +306,7 @@ class SSPIMetadata(MongoWrapper):
                 full_methodology_path = os.path.join(dirpath, methodology_file)
                 try:
                     detail = frontmatter.load(full_methodology_path)
-                except Exception as e:
+                except (ValueError, yaml.YAMLError) as e:
                     raise MethodologyFileError(
                         f"Error loading methodology file {full_methodology_path}: {e};\n"
                         "It is likely that there is an error in the YAML frontmatter format."
@@ -318,6 +318,7 @@ class SSPIMetadata(MongoWrapper):
                     tree_path = "sspi" + dirpath.split("sspi-data-webapp/methodology")[1]
                 detail["TreePath"] = tree_path
                 detail["Children"] = list([d.upper() for d in dirnames])
+                self.validate_detail_format(detail)
                 details.append(detail)
         return details
 
