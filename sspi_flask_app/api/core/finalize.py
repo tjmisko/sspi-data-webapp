@@ -37,6 +37,10 @@ finalize_bp = Blueprint(
 
 
 def finalize_iterator(local_path, endpoints):
+    # Defaulst for country_list and indicator_list
+    coverage = DataCoverage(2000, 2023, "SSPI67")
+    indicator_list = coverage.complete()
+    country_list = list(coverage.country_codes)
     yield "Finalizing Static Rank Data\n"
     finalize_sspi_static_rank_data()
     yield "Finalizing Static Radar Data\n"
@@ -46,7 +50,7 @@ def finalize_iterator(local_path, endpoints):
     yield "Finalizing Dynamic Matrix Data\n"
     yield from finalize_matrix_iterator(local_path, endpoints)
     yield "Scoring Dynamic Data\n"
-    finalize_sspi_dynamic_score()
+    yield from finalize_sspi_dynamic_score_iterator(indicator_list, country_list)
     yield "Finalizing Dynamic Line Data\n"
     sspi_dynamic_line_data.delete_many({})
     yield from finalize_dynamic_line_indicator_datasets()
@@ -504,9 +508,10 @@ def finalize_sspi_dynamic_score():
     """
     Prepare the data for a Chart.js line plot
     """
-    sspi_score_data.delete_many({})
     countries = request.args.getlist("CountryCode")
     country_group = request.args.get("CountryGroup")
+    if country_group is None:
+        country_group = "SSPI67"
     coverage = DataCoverage(2000, 2023, country_group, countries=countries)
     indicator_list = coverage.complete()
     country_list = list(coverage.country_codes)
@@ -516,6 +521,7 @@ def finalize_sspi_dynamic_score():
 
 
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
+    sspi_score_data.delete_many({})
     mongo_query = {
         "CountryCode": {"$in": country_codes},
         "IndicatorCode": {"$in": indicator_codes},
