@@ -30,11 +30,12 @@ def clear(database, remote=False, force=False):
     """Clear contents of database
     """
     connector = SSPIDatabaseConnector()
+    is_remote = "Remote" if remote else "Local"
     prompt_lst = [
         "Confirm ",
         click.style("CLEAR", fg="red"),
         " of all observations from ",
-        click.style("Local", fg="red"),
+        click.style(is_remote, fg="red"),
         " database ",
         click.style(database, fg="red"),
         ".\n\nType {0} to confirm deletion"
