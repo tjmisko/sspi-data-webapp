@@ -314,10 +314,10 @@ class SSPIMetadata(MongoWrapper):
                         "It is likely that there is an error in the YAML frontmatter format."
                     )
                 detail = detail.metadata
-                if dirpath.endswith("sspi-data-webapp/methodology"):
+                if dirpath.endswith("methodology"):
                     tree_path = "sspi"
                 else:
-                    tree_path = "sspi" + dirpath.split("sspi-data-webapp/methodology")[1]
+                    tree_path = "sspi" + dirpath.split("methodology")[1]
                 detail["TreePath"] = tree_path
                 detail["Children"] = list([d.upper() for d in dirnames])
                 self.validate_detail_format(detail)
