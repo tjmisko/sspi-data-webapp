@@ -14,104 +14,45 @@
                 The SSPI organizes indicators into categories, each
                 of measures the performance of a package of related
                 policies in a specific sector. Categories are grouped into
-                three Pillars corresponding to the three core purposes of
-                governments in the twenty-first century: 
+                pillars corresponding to the three core tasks of
+                government in the twenty-first century.
             </p>
             <div class="pillar-navigation">
-                <div class="pillar-navigation-wrapper">
-                    <a href="/data/pillar/sus" class="pillar-link sus">
-                        <h3 class="pillar-link-title">Sustainability</h3>
-                        <p class="pillar-description">
-                            Protecting the natural environment from degradation
-                        </p>
-                    </a>
-                    <ul class="category-list">
-                        <li class="category-item">
-                            <a href="/data/category/eco" class="category-link">Ecosystem</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/lnd" class="category-link">Land</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/ghg" class="category-link">Greenhouse Gases</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/nrg" class="category-link">Energy</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/wst" class="category-link">Waste</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="pillar-navigation-wrapper">
-                    <a href="/data/pillar/ms" class="pillar-link ms">
-                        <h3 class="pillar-link-title">Market Structure</h3>
-                        <p class="pillar-description">
-                            Structuring markets that promote general prosperity 
-                            and equality
-                        </p>
-                    </a>
-                    <ul class="category-list">
-                        <li class="category-item">
-                            <a href="/data/category/hlc" class="category-link">Healthcare</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/edu" class="category-link">Education</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/inf" class="category-link">Infrastructure</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/rts" class="category-link">Rights</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/saf" class="category-link">Public Safety</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/glb" class="category-link">Global Role</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="pillar-navigation-wrapper">
-                    <a href="/data/pillar/pg" class="pillar-link pg">
-                        <h3 class="pillar-link-title">Public Goods</h3>
-                        <p class="pillar-description">
-                            Providing public goods undersupplied by the market
-                        </p>
-                    </a>
-                    <ul class="category-list">
-                        <li class="category-item">
-                            <a href="/data/category/hlc" class="category-link">Healthcare</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/edu" class="category-link">Education</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/inf" class="category-link">Infrastructure</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/rts" class="category-link">Rights</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/saf" class="category-link">Public Safety</a>
-                        </li>
-                        <li class="category-item">
-                            <a href="/data/category/glb" class="category-link">Global Role</a>
-                        </li>
-                    </ul>
-                </div>
+                {% for pillar in pillar_category_tree %}
+                    <div class="pillar-navigation-wrapper {{ pillar.ItemCode | lower }}">
+                        <a href="/data/pillar/{{ pillar.ItemCode | upper }}" class="home-link pillar-link">
+                            <h3 class="pillar-link-title">{{ pillar.ItemName }}</h3>
+                            <p class="pillar-description">
+                                {{ pillar.ShortDescription }}
+                            </p>
+                        </a>
+                        <div class="category-navigation-wrapper">
+                            <h4 class="category-header"> Categories </h4>
+                            <ul class="category-list">
+                            {% for category in pillar.Categories %}
+                                <li class="category-item">
+                                    <a href="/data/category/{{ category.ItemCode | upper }}" class="home-link category-link" title="{{ category.ShortDescription }}">{{ category.ItemName }}</a>
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        </div> 
+                    </div>
+                {% endfor %}
             </div>
         </div>
         <div class="hero-aside-wrapper"> 
             <div class="aside-box">
                 <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
                 <p class="hero-p">
-                    Ouo IRLE Working Paper conducts an in-depth cross-sectional
-                    analysis of country polcies from 2018 working paper.
+                    Our working paper conducts an in-depth cross-sectional
+                    analysis of country polcies from 2018 working paper using the SSPI.
                 </p>
-                <div class="paper-navigation">
-                    <a class="aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/">
+                <div class="aside-navigation">
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
                         IRLE Working Paper
+                    </a>
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
+                        IRLE Climate and Society Center
                     </a>
                 </div>
             </div>
@@ -121,13 +62,10 @@
                     Explore the latest SSPI data, with scores spanning from 2000 to 2023 across 67 countries.
                 </p>
                 <div class="aside-navigation">
-                    <a href="/data/category" class="aside-link">
-                        Explore Data by Category
-                    </a>
-                    <a href="/data/indicator" class="aside-link">
+                    <a href="/data/indicator/biodiv" class="home-link aside-link">
                         Explore Data by Indicator
                     </div>
-                    <a href="/data/country" class="aside-link">
+                    <a href="/data/country/aus" class="home-link aside-link">
                         Explore Data by Country
                     </a>
                 </div>
