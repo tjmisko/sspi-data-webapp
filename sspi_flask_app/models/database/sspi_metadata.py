@@ -176,6 +176,7 @@ class SSPIMetadata(MongoWrapper):
             "Intermediate": []
         }
         sorted_details = self.sort_item_details(details)
+        pc_sum_tree = self.build_pillar_category_summary_tree(sorted_details)
         for detail in sorted_details:
             item_codes[detail["Metadata"]["ItemType"]].append(detail["Metadata"]["ItemCode"])
         metadata = []
@@ -188,6 +189,7 @@ class SSPIMetadata(MongoWrapper):
         metadata.extend(self.build_country_groups(country_groups))
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_details)
+        metadata.append(pc_sum_tree)
         count = self.insert_many(metadata)
         self.drop_duplicates()
         print(f"Successfully loaded {count} documents into {self.name}")
@@ -353,6 +355,24 @@ class SSPIMetadata(MongoWrapper):
             if cou["CountryCode"] in sspi_custom_colors.keys():
                 cou["SSPIColor"] = sspi_custom_colors[cou["CountryCode"]]
         return details
+
+    def build_pillar_category_summary_tree(self, details) -> dict:
+        pc_summary_tree = []
+        categories = []
+        for detail in details:
+            detail = detail["Metadata"]
+            if detail["ItemType"] == "Pillar":
+                pc_summary_tree.append(detail)
+            elif detail["ItemType"] == "Category":
+                categories.append(detail)
+        pc_summary_tree.sort(key=lambda p: p["ItemOrder"])
+        for p in pc_summary_tree:
+            p["Categories"] = []
+            for c in categories:
+                if c["ItemCode"] in p["CategoryCodes"]:
+                    p["Categories"].append(c)
+            p["Categories"].sort(key=lambda c: c["ItemOrder"])
+        return {"DocumentType": "PillarCategorySummaryTree", "Metadata": pc_summary_tree}
 
 
     def load_static(self, indicator_detail_file, intermediate_detail_file, country_groups, country_colors, sspi_custom_colors) -> int:
@@ -803,4 +823,6 @@ class SSPIMetadata(MongoWrapper):
         """
         Returns a tree structure of pillars and categories
         """
-        return [{}]
+        return self.find_one(
+            {"DocumentType": "PillarCategorySummaryTree"}
+        )["Metadata"] 
