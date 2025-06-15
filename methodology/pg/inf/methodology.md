@@ -4,6 +4,8 @@ ItemName: Infrastructure
 ItemCode: INF
 Category: Infrastructure
 CategoryCode: INF
+Description: Placeholder
+ShortDescription: Policies providing basic infrastructure for human wellbeing and commerce
 IndicatorCodes:
   - AQELEC
   - SANSRV

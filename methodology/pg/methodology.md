@@ -9,6 +9,8 @@ CategoryCodes:
   - RTS
   - SAF
   - GLB
+Description: Placeholder
+ShortDescription: Measures the availability and quality of key government-provided public goods.
 Pillar: Public Goods
 PillarCode: PG
 ---

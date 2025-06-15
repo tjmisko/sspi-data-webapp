@@ -4,6 +4,8 @@ ItemName: Education
 ItemCode: EDU
 Category: Education
 CategoryCode: EDU
+Description: Placeholder
+ShortDescription: Policies access to high-quality education
 IndicatorCodes:
   - ENRPRI
   - ENRSEC
@@ -12,4 +14,3 @@ IndicatorCodes:
 Pillar: Public Goods
 PillarCode: PG
 ---
-
