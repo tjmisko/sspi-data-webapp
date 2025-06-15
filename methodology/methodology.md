@@ -7,6 +7,9 @@ Name: Sustainable and Shared Prosperity Policy Index
 Description: >
     The Sustainable and Shared Proseperity Index scores national policies
     across three pillars: Sustainability, Market Structure, and Public Goods
+ShortDescription: >
+    The Sustainable and Shared Proseperity Index scores national policies
+    across three pillars: Sustainability, Market Structure, and Public Goods
 PillarCodes:
   - SUS
   - MS

@@ -12,6 +12,7 @@
   --sus-color: #28A745;
   --ms-color: #FF851B;
   --pg-color: #007BFF;
+  --link-color: #2895AE
 }
 
 @media (min-width: 600px) {
@@ -33,7 +34,6 @@
 
 .light-theme {
   --accent-color-1: rgb(41, 75, 80);
-  --link-color: rgb(0, 221, 255);
   --title-weight: 400;
   --header-color: #D6D6D6;
   --box-background-color: #D6D6D6;
@@ -52,7 +52,6 @@
 
 .dark-theme {
   --accent-color: rgb(41, 75, 80);
-  --link-color: rgb(0, 221, 255);
   --title-weight: 300;
   --header-color: #0F1A24;
   --box-background-color: #0F1A24aa;
