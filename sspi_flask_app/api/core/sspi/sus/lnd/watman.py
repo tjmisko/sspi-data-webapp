@@ -84,7 +84,7 @@ def impute_watman():
         imputed_cwueff, 2023, series_id=["CountryCode", "IntermediateCode"]
     )
     # Impute CWUEFF Data for SGP
-    sgp_cwueff = impute_global_average("SGP", 2000, 2023, clean_cwueff)
+    sgp_cwueff = impute_global_average("SGP", 2000, 2023, "Intermediate", "CWUEFF", clean_cwueff)
     # Extract matched WTSTRS Data
     clean_wtstrs = slice_intermediate(clean_list, "WTSTRS") + \
         slice_intermediate(incomplete_list, "WTSTRS")
