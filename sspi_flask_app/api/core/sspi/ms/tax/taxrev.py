@@ -1,18 +1,21 @@
-from sspi_flask_app.api.core.sspi import collect_bp
-from sspi_flask_app.api.core.sspi import compute_bp
-from flask_login import login_required, current_user
-from flask import current_app as app, Response
-from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
-    clean_wb_data
+from flask import Response
+from flask import current_app as app
+from flask_login import current_user, login_required
+
+from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collectWorldBankdata
+from sspi_flask_app.api.resources.utilities import (
+    extrapolate_backward,
+    extrapolate_forward,
+    interpolate_linear,
+    impute_global_average,
+    parse_json,
+    score_single_indicator,
 )
 from sspi_flask_app.models.database import (
+    sspi_clean_api_data,
+    sspi_imputed_data,
     sspi_raw_api_data,
-    sspi_clean_api_data
-)
-from sspi_flask_app.api.resources.utilities import (
-    parse_json,
-    score_single_indicator
 )
 
 
@@ -34,3 +37,22 @@ def compute_taxrev():
     scored_list = score_single_indicator(taxrev_clean, "TAXREV")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+
+@impute_bp.route("/TAXREV", methods=['POST'])
+@login_required
+def impute_taxrev():
+    app.logger.info("Running /api/v1/impute/TAXREV")
+    sspi_imputed_data.delete_many({"IndicatorCode": "TAXREV"})
+    clean_taxrev = sspi_clean_api_data.find({"IndicatorCode": "TAXREV"})
+    forward = extrapolate_forward(clean_taxrev, 2023, impute_only=True)
+    backward = extrapolate_backward(clean_taxrev, 2000, impute_only=True)
+    interpolated = interpolate_linear(clean_taxrev, impute_only=True)
+    imputed_taxrev = forward + backward + interpolated
+    # Handle VNM, NGA, VEN, DZA : each is missing all observations
+    vnm_taxrev = impute_global_average("VNM", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    nga_taxrev = impute_global_average("NGA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    ven_taxrev = impute_global_average("VEN", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    dza_taxrev = impute_global_average("DZA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    sspi_imputed_data.insert_many(imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev)
+    return parse_json(imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev)
