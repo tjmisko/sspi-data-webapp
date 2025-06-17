@@ -644,7 +644,7 @@ def filter_imputations(doc_list):
 
 
 def impute_global_average(
-    country_code: str, start_year: int, end_year: int, ref_data: list[dict]
+    country_code: str, start_year: int, end_year: int, item_type: str, item_code: str, ref_data: list[dict]
 ):
     """
     Impute the global average for a given country and year range.
@@ -652,16 +652,20 @@ def impute_global_average(
     :param country_code: The country code to impute.
     :param start_year: The starting year for the imputation.
     :param end_year: The ending year for the imputation.
+    :param item_type: The type of item being imputed. Valid values are "Intermediate" or "Indicator".
+    :param item_code: The code of the item being imputed (e.g., "GINIPT").
     :param ref_data: The reference data to calculate the global average.
     """
-    mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
-    mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
     if not all([x["Unit"] == ref_data[0]["Unit"] for x in ref_data]):
         raise ValueError("Units are not consistent across reference data.")
-    return [
-        {
+    if item_type not in ["Intermediate", "Indicator"]:
+        raise ValueError("item_type must be either 'Intermediate' or 'Indicator'.")
+    mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
+    mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
+    imputation_list = []
+    for year in range(start_year, end_year + 1):
+        imputed_document = {
             "CountryCode": country_code,
-            "IntermediateCode": "CWUEFF",
             "Value": mean_value,
             "Score": mean_score,
             "Year": year,
@@ -669,8 +673,12 @@ def impute_global_average(
             "Imputed": True,
             "ImputationMethod": "ImputeGlobalAverage",
         }
-        for year in range(start_year, end_year + 1)
-    ]
+        if item_type == "Intermediate":
+            imputed_document["IntermediateCode"] = item_code
+        elif item_type == "Indicator":
+            imputed_document["IndicatorCode"] = item_code
+        imputation_list.append(imputed_document)
+    return imputation_list
 
 
 def regression_imputation(
