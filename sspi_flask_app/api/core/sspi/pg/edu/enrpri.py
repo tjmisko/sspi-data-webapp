@@ -55,6 +55,9 @@ def impute_enrpri():
     interpolated = interpolate_linear(clean_enrpri, impute_only=True)
     imputed_enrpri = forward + backward + interpolated
     # Handle China, which is missing all observations
-    chn_enrpri = impute_global_average("CHN", 2000, 2023, "Indicator", "ENRPRI", clean_enrpri)
-    sspi_imputed_data.insert_many(imputed_enrpri + chn_enrpri)
-    return parse_json(imputed_enrpri + chn_enrpri)
+    # chn_enrpri = impute_global_average("CHN", 2000, 2023, "Indicator", "ENRPRI", clean_enrpri)
+    # Actually: China has observations from the 1990s. Would it be better to extrapolate these forward for twenty five years? Or to rely on the global average?
+    # sspi_imputed_data.insert_many(imputed_enrpri + chn_enrpri)
+    sspi_imputed_data.insert_many(imputed_enrpri)
+    # return parse_json(imputed_enrpri + chn_enrpri)
+    return parse_json(imputed_enrpri)
