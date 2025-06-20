@@ -31,11 +31,9 @@
 
 <script>
     window.addEventListener("load", (event) => {
-        window.observableStorage = new ObservableStorage();
-        window.SSPICharts = [
-            new PillarPanelChart(document.getElementById("dynamic-data-section"), "{{ PillarCode | upper }}"),
-            new ScoreBarStatic(document.getElementById("static-data-section"), "{{ PillarCode | upper }}")
-        ];
+        window.SSPICharts.push(
+            new PillarPanelChart(document.getElementById("dynamic-data-section"), "{{ PillarCode | upper }}")
+        );
         const x = window.observableStorage.getItem('windowX');
         const y = window.observableStorage.getItem('windowY');
         

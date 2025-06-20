@@ -13,10 +13,9 @@
     <section class="chart-section" id="dynamic-data-section"></section>
     <script>
         window.addEventListener("load", (event) => {
-            window.observableStorage = new ObservableStorage();
-            window.SSPICharts = [
-                new CountryScoreChart(document.getElementById("dynamic-data-section"), "{{ CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors }),
-            ];
+            window.SSPICharts.push(
+                new CountryScoreChart(document.getElementById("dynamic-data-section"), "{{ CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors })
+            );
             const x = window.observableStorage.getItem('windowX');
             const y = window.observableStorage.getItem('windowY');
             

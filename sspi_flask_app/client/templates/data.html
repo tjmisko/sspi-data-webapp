@@ -15,11 +15,9 @@
 
 <script>
     window.addEventListener("load", (event) => {
-        window.observableStorage = new ObservableStorage();
-        window.SSPICharts = [
+        window.SSPICharts.push(
             new SSPIPanelChart(document.getElementById("dynamic-data-section"), "SSPI"),
-            // new ScoreBarStatic(document.getElementById("static-data-section"), "SSPI")
-        ];
+        );
         const x = window.observableStorage.getItem('windowX');
         const y = window.observableStorage.getItem('windowY');
         
