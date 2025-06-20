@@ -31,11 +31,10 @@
 
 <script>
     window.addEventListener("load", (event) => {
-        window.observableStorage = new ObservableStorage();
-        window.SSPICharts = [
-            new CategoryPanelChart(document.getElementById("dynamic-data-section"), "{{ CategoryCode | upper }}"),
-            new ScoreBarStatic(document.getElementById("static-data-section"), "{{ CategoryCode | upper }}")
-        ];
+        window.SSPICharts.push(
+            new CategoryPanelChart(document.getElementById("dynamic-data-section"), "{{ CategoryCode | upper }}")
+        );
+        <!-- new ScoreBarStatic(document.getElementById("static-data-section"), "{{ CategoryCode | upper }}") -->
         const x = window.observableStorage.getItem('windowX');
         const y = window.observableStorage.getItem('windowY');
         

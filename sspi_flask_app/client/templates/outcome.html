@@ -10,10 +10,9 @@ Hello this is the scatter page
 
 <script>
     window.addEventListener("load", (event) => {
-        window.observableStorage = new ObservableStorage();
-        window.SSPICharts = [
+        window.SSPICharts.push(
             new OutcomeScatterStatic(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
-        ];
+        );
         const x = window.observableStorage.getItem('windowX');
         const y = window.observableStorage.getItem('windowY');
         

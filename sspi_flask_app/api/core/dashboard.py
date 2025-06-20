@@ -103,12 +103,14 @@ def get_dynamic_score_line_data(ItemCode):
     }
     active_schema = sspi_score_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(ItemCode)
-    doc_type = detail["DocumentType"]
-    if doc_type == "IndicatorDetail":
+    print(detail)
+    doc_type = detail.get("ItemType", "No Item Type")
+    print("Document Type:", doc_type)
+    if doc_type == "Indicator":
         item_options = sspi_metadata.indicator_options()
-    elif doc_type == "CategoryDetail":
+    elif doc_type == "Category":
         item_options = sspi_metadata.category_options()
-    elif doc_type == "PillarDetail":
+    elif doc_type == "Pillar":
         item_options = sspi_metadata.pillar_options()
     else:
         item_options = []
@@ -504,6 +506,9 @@ def prepare_panel_data():
                 }
                 if any([s is not None for s in score]):
                     document["score"] = score
+                if all([v is None for v in value]):
+                    yield f"Skipping {cou} as no data available.\n"
+                    continue
                 document["Identifiers"] = identifiers
                 sspi_panel_data.insert_one(document)
             count += 1
@@ -546,6 +551,7 @@ def get_panel_plot(panel_id):
     group_options = sspi_metadata.country_groups()
     yMin = 0
     yMax = 1
+    print("Panel Data:", panel_data)
     for doc in panel_data:
         yMin = min(yMin, min([d for d in doc["value"] if d is not None]))
         yMax = max(yMax, max([d for d in doc["value"] if d is not None]))

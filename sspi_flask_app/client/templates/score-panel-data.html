@@ -20,22 +20,23 @@
 {% else %}
     <section class="chart-section" id="dynamic-data-section"></section>
     <script>
-        window.addEventListener("load", (event) => {
-            window.observableStorage = new ObservableStorage();
-            window.SSPICharts = [
-                new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"),
-            ];
-            const x = window.observableStorage.getItem('windowX');
-            const y = window.observableStorage.getItem('windowY');
-            
-            if (x !== null && y !== null) {
-              window.moveTo(parseInt(x), parseInt(y));
-            }
-        })
-        window.addEventListener('beforeunload', () => {
-          window.observableStorage.setItem('windowX', window.screenX);
-          window.observableStorage.setItem('windowY', window.screenY);
-        });
+    window.addEventListener("load", (event) => {
+        window.SSPICharts.push(new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"))
+        const x = window.observableStorage.getItem('windowX');
+        const y = window.observableStorage.getItem('windowY');
+
+        if (x !== null && y !== null) {
+            window.moveTo(parseInt(x), parseInt(y));
+        }
+    })
+    window.addEventListener('beforeunload', () => {
+        window.observableStorage.setItem('windowX', window.screenX);
+        window.observableStorage.setItem('windowY', window.screenY);
+    });
     </script>
+    <hr>
+    <section class="methodology-section">
+        {{ methodology | safe }}
+    </section>
 {% endif %}
 {% endblock content %}
