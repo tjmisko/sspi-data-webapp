@@ -1,5 +1,6 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 import frontmatter
+from markdown import markdown
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, MethodologyFileError
 from flask import current_app as app
 import os
@@ -826,3 +827,27 @@ class SSPIMetadata(MongoWrapper):
         return self.find_one(
             {"DocumentType": "PillarCategorySummaryTree"}
         )["Metadata"] 
+
+    def get_item_methodology_html(self, ItemCode: str) -> str:
+        """
+        Returns the HTML for the methodology of the given ItemCode
+        """
+        detail = self.get_item_detail(ItemCode)
+        if "TreePath" not in detail.keys():
+            return ""
+        tree_path = detail["TreePath"].replace("sspi", "methodology")
+        methodology_dirlst = ['..'] + tree_path.split('/') + ['methodology.md']
+        methdology_fp = os.path.join(app.root_path, *methodology_dirlst)
+        with open(methdology_fp, 'r', encoding='utf-8') as f:
+            methodology = f.read()
+        if not methodology:
+            methodology_html = "<p>No methodology available for this item.</p>"
+        try:
+            post = frontmatter.loads(methodology)
+            methodology_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+        except (ValueError, yaml.YAMLError) as e:
+            raise MethodologyFileError(
+                f"Error loading methodology file {methdology_fp}: {e};\n"
+                "It is likely that there is an error in the YAML frontmatter format."
+            )
+        return methodology_html

@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, request, current_app as app
+import os
+from markdown import markdown
 from flask_login import login_required
 import re
 import pycountry
@@ -59,6 +61,7 @@ def indicator_data(IndicatorCode):
         'score-panel-data.html',
         PanelItemCode=IndicatorCode,
         PanelItemType='Indicator',
+        methodology=sspi_metadata.get_item_methodology_html(IndicatorCode),
         error=False
     )
 
@@ -77,6 +80,7 @@ def category_data(CategoryCode):
         'score-panel-data.html',
         PanelItemCode=CategoryCode,
         PanelItemType='Category',
+        methodology=sspi_metadata.get_item_methodology_html(CategoryCode),
         error=False
     )
 
@@ -89,6 +93,7 @@ def pillar_data(PillarCode):
             'score-panel-data.html',
             PanelItemCode=PillarCode,
             PanelItemType='Pillar',
+            medhodology=sspi_metadata.get_item_methodology_html(PillarCode),
             error=True
         )
     return render_template(
