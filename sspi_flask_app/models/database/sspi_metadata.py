@@ -672,53 +672,10 @@ class SSPIMetadata(MongoWrapper):
         :param ItemCode: The item code for which to get the details (SSPI, PillarCode, CategoryCode, IndicatorCode, IntermediateCode)
         """
         result = self.find_one({
-            "$expr": {
-                "$eq": [
-                    {
-                        "$switch": {
-                            "branches": [
-                                {
-                                    "case": {"$eq": ["$DocumentType", "IndicatorDetail"]},
-                                    "then": "$Metadata.IndicatorCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "IntermediateDetail"]},
-                                    "then": "$Metadata.IntermediateCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "CategoryDetail"]},
-                                    "then": "$Metadata.CategoryCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "PillarDetail"]},
-                                    "then": "$Metadata.PillarCode"
-                                },
-                                {
-                                    "case": {"$eq": ["$DocumentType", "SSPIDetail"]},
-                                    "then": "$Metadata.Code"
-                                }
-                            ],
-                            "default": None
-                        }
-                    },
-                    ItemCode
-                ]
-            }
+            "Metadata.ItemCode": ItemCode.upper(),
         })
         if not result:
             return {"Error": "ItemCode not found"}
-        result["Metadata"]["DocumentType"] = result["DocumentType"]
-        result["Metadata"]["ItemCode"] = ItemCode
-        if result["DocumentType"] == "IntermediateDetail":
-            result["Metadata"]["ItemName"] = result["Metadata"]["Intermediate"]
-        elif result["DocumentType"] == "IndicatorDetail":
-            result["Metadata"]["ItemName"] = result["Metadata"]["Indicator"]
-        elif result["DocumentType"] == "CategoryDetail":
-            result["Metadata"]["ItemName"] = result["Metadata"]["Category"]
-        elif result["DocumentType"] == "PillarDetail":
-            result["Metadata"]["ItemName"] = result["Metadata"]["Pillar"]
-        elif result["DocumentType"] == "SSPIDetail":
-            result["Metadata"]["ItemName"] = result["Metadata"]["Name"]
         return result["Metadata"]
     
 

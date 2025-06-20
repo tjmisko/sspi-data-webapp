@@ -103,12 +103,14 @@ def get_dynamic_score_line_data(ItemCode):
     }
     active_schema = sspi_score_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(ItemCode)
-    doc_type = detail["DocumentType"]
-    if doc_type == "IndicatorDetail":
+    print(detail)
+    doc_type = detail.get("ItemType", "No Item Type")
+    print("Document Type:", doc_type)
+    if doc_type == "Indicator":
         item_options = sspi_metadata.indicator_options()
-    elif doc_type == "CategoryDetail":
+    elif doc_type == "Category":
         item_options = sspi_metadata.category_options()
-    elif doc_type == "PillarDetail":
+    elif doc_type == "Pillar":
         item_options = sspi_metadata.pillar_options()
     else:
         item_options = []
