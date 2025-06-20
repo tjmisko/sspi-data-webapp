@@ -81,6 +81,7 @@ jupyterlab_server==2.25.0
 libsass==0.22.0
 limits==3.6.0
 lxml==4.9.3
+Markdown==3.8.2
 markdown-it-py==3.0.0
 MarkupSafe==2.1.2
 matplotlib-inline==0.1.6
