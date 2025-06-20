@@ -158,6 +158,7 @@ soupsieve==2.5
 SQLAlchemy==2.0.5.post1
 SQLAlchemy-serializer==1.4.1
 sse-starlette==2.3.5
+-e git+https://github.com/tjmisko/sspi-data-webapp@5fc07f8af2961545176ae1f64449839219a0976c#egg=sspi&subdirectory=../../sspi-data-webapp
 stack-data==0.6.3
 starlette==0.46.2
 terminado==0.17.1
