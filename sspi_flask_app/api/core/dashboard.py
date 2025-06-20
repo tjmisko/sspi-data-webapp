@@ -504,6 +504,9 @@ def prepare_panel_data():
                 }
                 if any([s is not None for s in score]):
                     document["score"] = score
+                if all([v is None for v in value]):
+                    yield f"Skipping {cou} as no data available.\n"
+                    continue
                 document["Identifiers"] = identifiers
                 sspi_panel_data.insert_one(document)
             count += 1
@@ -546,6 +549,7 @@ def get_panel_plot(panel_id):
     group_options = sspi_metadata.country_groups()
     yMin = 0
     yMax = 1
+    print("Panel Data:", panel_data)
     for doc in panel_data:
         yMin = min(yMin, min([d for d in doc["value"] if d is not None]))
         yMax = max(yMax, max([d for d in doc["value"] if d is not None]))
