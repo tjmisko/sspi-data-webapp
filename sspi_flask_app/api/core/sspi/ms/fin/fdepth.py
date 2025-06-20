@@ -1,5 +1,6 @@
 from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
+from sspi_flask_app.api.core.sspi import impute_bp
 from flask_login import login_required, current_user
 from flask import current_app as app, Response
 from sspi_flask_app.api.datasource.worldbank import (
@@ -9,7 +10,8 @@ from sspi_flask_app.api.datasource.worldbank import (
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data
+    sspi_incomplete_api_data,
+    sspi_imputed_data
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
@@ -47,3 +49,18 @@ def compute_fdepth():
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)
     return parse_json(clean_list)
+
+
+@impute_bp.route("/FDEPTH", methods=['POST'])
+@login_required
+def impute_fdepth():
+    app.logger.info("Running /api/v1/impute/FDEPTH")
+    sspi_imputed_data.delete_many({"IndicatorCode": "FDEPTH"})
+    clean_fdepth = sspi_clean_api_data.find({"IndicatorCode": "FDEPTH"})
+    incomplete_fdepth = sspi_incomplete_api_data.find({"IndicatorCode": "FDEPTH"})
+    # forward = extrapolate_forward(clean_fdepth, 2023, impute_only=True)
+    # backward = extrapolate_backward(clean_fdepth, 2000, impute_only=True)
+    # interpolated = interpolate_linear(clean_fdepth, impute_only=True)
+    # imputed_fdepth = forward + backward + interpolated
+    # sspi_imputed_data.insert_many(imputed_fdepth) 
+    return parse_json(incomplete_fdepth)
