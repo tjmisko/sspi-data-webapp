@@ -21,8 +21,7 @@
     <section class="chart-section" id="dynamic-data-section"></section>
     <script>
     window.addEventListener("load", (event) => {
-        window.observableStorage = new ObservableStorage();
-        window.SSPICharts.append(new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"))
+        window.SSPICharts.push(new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"))
         const x = window.observableStorage.getItem('windowX');
         const y = window.observableStorage.getItem('windowY');
 
