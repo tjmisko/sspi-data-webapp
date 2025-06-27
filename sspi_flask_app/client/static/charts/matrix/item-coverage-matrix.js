@@ -8,6 +8,7 @@ class ItemCoverageMatrixChart {
         this.width = width
         this.height = height
         this.initRoot()
+        this.rigSummary()
         this.initChartJSCanvas()
         this.fetch(`/api/v1/item/coverage/matrix/${this.itemCode}/${this.countryGroup}`).then(res => {
             this.update(res)
@@ -16,9 +17,17 @@ class ItemCoverageMatrixChart {
 
     initRoot() {
         this.root = document.createElement('div')
-        this.root.classList.add('chart-section-dynamic-matrix')
+        this.root.classList.add('coverage-section-dynamic-matrix')
         this.parentElement.appendChild(this.root)
     }
+
+    rigSummary() {
+        // Create a summary section
+        this.summary = document.createElement('div')
+        this.summary.classList.add('item-coverage-summary')
+        this.root.appendChild(this.summary)
+    }
+
 
     initChartJSCanvas() {
         // Initialize the chart canvas
@@ -48,21 +57,15 @@ class ItemCoverageMatrixChart {
                     tooltip: {
                         callbacks: {
                             title() {
-                                return 'Dynamic Data Status';
+                                return 'Data Coverage';
                             },
                             label(context) {
                                 const v = context.dataset.data[context.dataIndex];
-                                if (v.problems) {
-                                    return [
-                                        "Issue:" + v.problems,
-                                        'Country: ' + v.CName, 
-                                        'Indicator: ' + v.IName
-                                    ]
-                                }
                                 return [
-                                    'Country: ' + v.CName, 
-                                    'Indicator: ' + v.IName, 
-                                    'Years: ' + v.v
+                                    'Country Code: ' + v.x, 
+                                    'Year: ' + v.y, 
+                                    'Coverage Level: ' + v.v + ' / ' + v.vComplete,
+                                    'Data Available: ' + (v.intermediateCodes ? v.intermediateCodes.join(', ') : 'None')
                                 ];
                             }
                         }
@@ -81,38 +84,36 @@ class ItemCoverageMatrixChart {
     update(res) {
         this.n_years = res.years.length;
         this.n_countries = res.ccodes.length;
-        console.log(res.data)
+        this.vComplete = res.vComplete;
+        res.summary.forEach((line, i) => {
+            const summaryLine = document.createElement('div');
+            summaryLine.classList.add('item-coverage-summary-line');
+            summaryLine.innerHTML = `<span class="item-coverage-summary-color-block"></span><span class="item-coverage-summary-country">${line}</span>`;
+            const color = summaryLine.querySelector('.item-coverage-summary-color-block')
+            color.classList.add(`coverage-summary-color-${i}`);
+            this.summary.appendChild(summaryLine);
+        });
         this.chart.data = {
             datasets: [{
                 label: 'SSPI Data Coverage Matrix',
                 data: res.data,
                 backgroundColor(context) {
-                    // const years = context.dataset.data[context.dataIndex].v;
-                    // const load = context.dataset.data[context.dataIndex].to_be_loaded;
-                    // const collect = context.dataset.data[context.dataIndex].collect;
-                    // if (years != 0) {
-                    //     const alpha = (years + 5) / 40;
-                    //     return `rgba(15, 200, 15, ${alpha})`;
-                    // }
-                    // if (collect) {
-                    //     return '#FFBF0066';
-                    // }
-                    // if (load) {
-                    //     return '#FFBF00';
-                    // }
-                    // return "rgba(0, 0, 0, 0)";
-                    return "rgba(2000, 0, 0, 0.2)";
+                    if (context.dataset.data[context.dataIndex].v === context.dataset.data[context.dataIndex].vComplete) {
+                        return "rgba(0, 200, 0, 0.2)";
+                    } else if (context.dataset.data[context.dataIndex].v ===  context.dataset.data[context.dataIndex].vComplete - 1) {
+                        return "rgba(200, 200, 0, 0.2)";
+                    } else {
+                        return "rgba(200, 0, 0, 0.2)";
+                    }
                 },
                 borderColor(context) {
-                    return "rgba(200, 0, 0, 1)";
-                    // const problems = context.dataset.data[context.dataIndex].problems;
-                    // const confident = context.dataset.data[context.dataIndex].confident;
-                    // if (problems) {
-                    //     return "rgba(255, 99, 132, 1)";
-                    // }
-                    // if (confident) {
-                    //     return `rgba(15, 200, 15, 0.5)`;
-                    // }
+                    if (context.dataset.data[context.dataIndex].v == context.dataset.data[context.dataIndex].vComplete) {
+                        return "rgba(0, 200, 0, 1)";
+                    } else if (context.dataset.data[context.dataIndex].v ==  context.dataset.data[context.dataIndex].vComplete - 1) {
+                        return "rgba(200, 200, 0, 1)";
+                    } else {
+                        return "rgba(200, 0, 0, 1)";
+                    }
                 },
                 borderWidth: 1,
                 width: ({ chart }) => (chart.chartArea || {}).width / this.n_years - 2,
