@@ -666,3 +666,17 @@ def dynamic_stack_data(CountryCode, RootItemCode):
             "yMax": 1,
         }
     )
+
+@dashboard_bp.route("/item/coverage/matrix/<ItemCode>/<CountryGroup>")
+def item_coverage_data(ItemCode, CountryGroup):
+    coverage = DataCoverage(2000, 2023, CountryGroup)
+    data = coverage.item_coverage_data(ItemCode)
+    print(data)
+    return {
+        "data": data,
+        "title": f"Coverage for {ItemCode}",
+        "labels": sorted(list(set(d["CCode"] for d in data))),
+        "itemCode": ItemCode,
+        "years": list(range(2000, 2024)),
+        "ccodes": sorted(list(set(d["CCode"] for d in data))),
+    }
