@@ -1,12 +1,21 @@
 from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_clean_api_data,
-    sspi_imputed_data
+    sspi_imputed_data,
+    sspi_score_data,
+    sspi_incomplete_api_data
 )
 
 
 class DataCoverage:
-    def __init__(self, min_year: int, max_year: int, country_group: str, countries: list[str] = [], indicator_details: list[str] = []):
+    def __init__(
+        self,
+        min_year: int,
+        max_year: int,
+        country_group: str,
+        countries: list[str] = [],
+        indicator_details: list[dict] = [],
+    ):
         self.min_year = min_year
         self.max_year = max_year
         self.country_group = country_group
@@ -19,7 +28,7 @@ class DataCoverage:
         else:
             self.indicator_details = indicator_details
         self.indicator_codes = [
-            indicator["IndicatorCode"] for indicator in self.indicator_details
+            indicator["ItemCode"] for indicator in self.indicator_details
         ]
         self.clean_data_coverage = self.get_coverage(sspi_clean_api_data)
         self.imputed_data_coverage = self.get_coverage(sspi_imputed_data)
@@ -37,11 +46,15 @@ class DataCoverage:
                 "$group": {
                     "_id": {
                         "IndicatorCode": "$IndicatorCode",
-                        "CountryCode": "$CountryCode"
+                        "CountryCode": "$CountryCode",
                     },
                     "yearList": {
                         "$addToSet": {
-                            "$cond": [{"$gte": ["$Year", self.min_year]}, "$Year", "$$REMOVE"]
+                            "$cond": [
+                                {"$gte": ["$Year", self.min_year]},
+                                "$Year",
+                                "$$REMOVE",
+                            ]
                         }
                     },
                 }
@@ -80,10 +93,9 @@ class DataCoverage:
         :param year_list: The list of years for a given country, given as the
         value of the CountryCode key in the coverage dictionary
         """
-        return all([
-            year in year_list
-            for year in range(self.min_year, self.max_year + 1)
-        ])
+        return all(
+            [year in year_list for year in range(self.min_year, self.max_year + 1)]
+        )
 
     def check_complete_indicator(self, country_year_dict):
         """
@@ -92,10 +104,12 @@ class DataCoverage:
         given indicator, given as the value of the IndicatorCode key in the
         coverage dictionary
         """
-        return all([
-            self.check_complete_country(country_year_dict[cou])
-            for cou in self.country_codes
-        ])
+        return all(
+            [
+                self.check_complete_country(country_year_dict[cou])
+                for cou in self.country_codes
+            ]
+        )
 
     def complete(self):
         complete_list = []
@@ -146,8 +160,11 @@ class DataCoverage:
                 if len(country_year_dict[country]) == 0:
                     msg += f"\nproblem: {country} has no observations."
                     continue
-                missing = [y for y in range(self.min_year, self.max_year + 1)
-                           if y not in country_year_dict[country]]
+                missing = [
+                    y
+                    for y in range(self.min_year, self.max_year + 1)
+                    if y not in country_year_dict[country]
+                ]
                 if len(missing) == 0:
                     continue
                 msg += f"\n{country} missing years {missing}."
@@ -172,9 +189,135 @@ class DataCoverage:
             if self.check_complete_country(country_year_dict[country_code]):
                 msg += f"\nIndicator code {indicator} has complete coverage from {self.min_year} to {self.max_year}."
             else:
-                missing = [y for y in range(self.min_year, self.max_year + 1)
-                           if y not in country_year_dict[country_code]]
+                missing = [
+                    y
+                    for y in range(self.min_year, self.max_year + 1)
+                    if y not in country_year_dict[country_code]
+                ]
                 if len(missing) == 0:
                     continue
                 msg += f"\nIndicator code {indicator} missing years {missing}."
         return msg
+
+    def item_coverage_data(self, item_code: str) -> list[dict]:
+        """
+        Return data for plotting in the ItemCoverageMatrix chart.
+
+        There are three cases to consider:
+        1. If the ItemCode has no children, then the coverage is based on the
+           data coverage of the ItemCode itself.
+        2. If the ItemCode has children, but not Intermediates, then the coverage is based on the
+              data coverage of the children.
+        3. If the ItemCode has children that are Intermediates, then the coverage is based on the
+              data coverage of the children, but the Intermediates are not stored as separate documents,
+                but are nested inside of the indicators. In this case, we need to handle the coverage differently.
+        :param item_code: The item code to check
+        """
+        detail = sspi_metadata.get_item_detail(item_code)
+        # Coverage always depends on children, if there are any children.
+        # If no children, then coverage only depends on the data coverage of the current ItemCode
+        item_field = detail.get("ItemType", "") + "Code"
+        children = detail.get("Children", [])
+        if not children:
+            item_field = (
+                detail.get("ItemType", "") + "Code"
+            )  # e.g. IndicatorCode or IntermediateCode
+            pipeline = [
+                { 
+                    "$match": {
+                        item_field: item_code,
+                        "Year": {"$gte": self.min_year },
+                        "CountryCode": {"$in": self.country_codes},
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": {
+                            "CountryCode": "$CountryCode",
+                            "Year": "$Year"
+                        },
+                        "itemSet": {
+                            "$addToSet": "$" + item_field
+                        },
+                        "scoreList": {"$push": "$Score"}
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "y": "$_id.CountryCode",
+                        "x": "$_id.Year",
+                        "v": {"$size": "$itemSet"},
+                        "averageScore": {"$avg": "$scoreList"},
+                        "minScore": {"$min": "$scoreList"},
+                        "maxScore": {"$max": "$scoreList"},
+                        "vComplete": {"$literal": 1},
+                    }
+                }
+            ]
+            result_clean = sspi_clean_api_data.aggregate(pipeline)
+            return result_clean
+        child_icodes = [child for child in children]
+        child_details = [sspi_metadata.get_item_detail(child) for child in child_icodes]
+        child_item_field = child_details[0].get("ItemType", "") + "Code"
+        if item_field == "IndicatorCode":
+            pipeline = [
+                {
+                    "$match": {
+                        item_field: item_code,
+                        "Year": {"$gte": self.min_year},
+                        "Intermediates.0": {"$exists": True},
+                        "CountryCode": {"$in": self.country_codes},
+                    }
+                },
+                {"$unwind": "$Intermediates"},
+                {
+                    "$group": {
+                        "_id": {"CountryCode": "$CountryCode", "Year": "$Year"},
+                        "interCodes": {"$addToSet": "$Intermediates.IntermediateCode"},
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "y": "$_id.CountryCode",
+                        "x": "$_id.Year",
+                        "v": {"$size": "$interCodes"},
+                        "intermediateCodes": "$interCodes",
+                        "intermediateCount": {"$size": "$interCodes"},
+                        "vComplete": {"$literal": len(child_icodes)},
+                    }
+                },
+            ]
+            result_clean = sspi_clean_api_data.aggregate(pipeline)
+            result_incomplete = sspi_incomplete_api_data.aggregate(pipeline)
+            return list(result_clean) + list(result_incomplete)
+        else:
+            pipeline = [
+                {
+                    "$match": {
+                        "ItemCode": {"$in": child_icodes},
+                        "Year": {"$gte": self.min_year},
+                        "CountryCode": {"$in": self.country_codes},
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": {"CountryCode": "$CountryCode", "Year": "$Year"},
+                        "itemSet": {"$addToSet": "$ItemCode"},
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "y": "$_id.CountryCode",
+                        "x": "$_id.Year",
+                        "v": {"$size": "$itemSet"},
+                        "children": "$itemSet",
+                        "vComplete": {"$literal": len(child_icodes)},
+                    }
+                },
+            ]
+            print(pipeline)
+            result = sspi_score_data.aggregate(pipeline)
+        return result

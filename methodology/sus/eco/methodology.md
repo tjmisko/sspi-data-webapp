@@ -31,7 +31,7 @@ The **Biodiverisity** is a direct quantification of country policy, while **Red 
 <div id="imputation-chart-eco"></div>
 <script>
 window.addEventListener("load", (event) => {
-    window.SSPICharts.push(new ScorePanelChart(document.getElementById("imputation-chart-eco"), "sus"))
+    window.SSPICharts.push(new ScorePanelChart(document.getElementById("imputation-chart-eco"), "SUS"))
 })
 </script>
 

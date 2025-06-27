@@ -18,10 +18,17 @@ Inverted: false
 LowerGoalpost: null
 Pillar: Market Structure
 PillarCode: MS
-Policy: "1) Domestic Credit in \nPrivate Sector \n2) Financial System Deposits"
+Policy: "1) Domestic Credit in Private Sector 2) Financial System Deposits"
 SourceOrganization: World Bank
 SourceOrganizationIndicatorCode: null
 SourceOrganizationURL: https://databank.worldbank.org/
 UpperGoalpost: null
 ---
 
+## Data Coverage and Imputations
+<div id="imputation-chart-fdepth"></div>
+<script>
+window.addEventListener("load", (event) => {
+    window.SSPICharts.push(new ItemCoverageMatrixChart(document.getElementById("imputation-chart-fdepth"), "FDEPTH", {}))
+})
+</script>

@@ -1,4 +1,5 @@
 from flask_pymongo import MongoClient
+import logging
 
 from sspi_flask_app.models.database.mongo_wrapper import (
     MongoWrapper
@@ -27,6 +28,8 @@ from sspi_flask_app.models.database.sspi_raw_api_data import (
 from sspi_flask_app.models.database.sspi_panel_data import (
     SSPIPanelData
 )
+
+logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db

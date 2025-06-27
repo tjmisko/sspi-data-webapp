@@ -666,3 +666,27 @@ def dynamic_stack_data(CountryCode, RootItemCode):
             "yMax": 1,
         }
     )
+
+@dashboard_bp.route("/item/coverage/matrix/<ItemCode>/<CountryGroup>")
+def item_coverage_data(ItemCode, CountryGroup):
+    coverage = DataCoverage(2000, 2023, CountryGroup)
+    n_squares = (coverage.max_year - coverage.min_year) * len(coverage.country_codes)
+    data = coverage.item_coverage_data(ItemCode)
+    complete_coverage = len([d for d in data if d["v"] == d["vComplete"]])
+    one_missing = len([d for d in data if d["v"] == d["vComplete"] - 1])
+    two_or_more_missing = len([d for d in data if d["v"] < d["vComplete"] - 1])
+    no_observations = n_squares - complete_coverage - one_missing - two_or_more_missing
+    return {
+        "summary": [
+            f"Complete Coverage: {complete_coverage} / {n_squares} observations ({complete_coverage / n_squares:.2%})",
+            f"1+ Observation Missing: {one_missing} / {n_squares} observations ({one_missing / n_squares:.2%})",
+            f"2+ Observations Missing: {two_or_more_missing} observations ({two_or_more_missing / n_squares:.2%})",
+            f"No Observations: {no_observations} observations ({no_observations / n_squares:.2%})",
+        ],
+        "data": data,
+        "title": f"Coverage for {ItemCode}",
+        "labels": sorted(list(set(d["y"] for d in data))),
+        "itemCode": ItemCode,
+        "years": list(range(2000, 2024)),
+        "ccodes": sorted(list(set(d["y"] for d in data))),
+    }

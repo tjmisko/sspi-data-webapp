@@ -125,7 +125,7 @@ class MongoWrapper:
         self.validate_value(document, document_number)
         self.validate_unit(document, document_number)
 
-    def validate_documents_format(self, documents: list):
+    def validate_documents_format(self, documents: list) -> bool:
         dtype = type(documents)
         if dtype is not list:
             print(f"Document Produced an Error: {documents}")

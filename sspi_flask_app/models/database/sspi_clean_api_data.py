@@ -6,7 +6,7 @@ from bson import json_util
 
 class SSPICleanAPIData(MongoWrapper):
 
-    def validate_documents_format(self, documents: list):
+    def validate_documents_format(self, documents: list) -> bool:
         dtype = type(documents)
         if dtype is not list:
             print(f"Document Produced an Error: {documents}")
@@ -36,6 +36,7 @@ class SSPICleanAPIData(MongoWrapper):
                 )
                 raise InvalidDocumentFormatError(warning_msg)
             id_set.add(document_id)
+        return True
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         self.validate_country_code(document, document_number)

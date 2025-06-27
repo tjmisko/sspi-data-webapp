@@ -80,10 +80,10 @@ def compute_biodiv():
 
 @impute_bp.route("/BIODIV", methods=["POST"])
 def impute_biodiv():
-        sspi_imputed_data.delete_many({"IndicatorCode": "SENIOR"})
-        clean_list = sspi_clean_api_data.find({"IndicatorCode": "BIODIV"})
-        incomplete_list = sspi_incomplete_api_data.find({"IndicatorCode": "BIODIV"})
-        # Do imputation logic here
-        documents = []
-        count = sspi_imputed_data.insert_many(documents)
-        return parse_json(documents)
+    sspi_imputed_data.delete_many({"IndicatorCode": "BIODIV"})
+    clean_list = sspi_clean_api_data.find({"IndicatorCode": "BIODIV"})
+    incomplete_list = sspi_incomplete_api_data.find({"IndicatorCode": "BIODIV"})
+    # Do imputation logic here
+    documents = []
+    count = sspi_imputed_data.insert_many(documents)
+    return parse_json(documents)
