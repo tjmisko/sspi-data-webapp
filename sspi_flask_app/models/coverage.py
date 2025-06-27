@@ -6,7 +6,7 @@ from sspi_flask_app.models.database import (
 
 
 class DataCoverage:
-    def __init__(self, min_year: int, max_year: int, country_group: str, countries: list[str] = [], indicator_details: list[str] = []):
+    def __init__(self, min_year: int, max_year: int, country_group: str, countries: list[str] = [], indicator_details: list[dict] = []):
         self.min_year = min_year
         self.max_year = max_year
         self.country_group = country_group
@@ -19,7 +19,7 @@ class DataCoverage:
         else:
             self.indicator_details = indicator_details
         self.indicator_codes = [
-            indicator["IndicatorCode"] for indicator in self.indicator_details
+            indicator["ItemCode"] for indicator in self.indicator_details
         ]
         self.clean_data_coverage = self.get_coverage(sspi_clean_api_data)
         self.imputed_data_coverage = self.get_coverage(sspi_imputed_data)
@@ -178,3 +178,95 @@ class DataCoverage:
                     continue
                 msg += f"\nIndicator code {indicator} missing years {missing}."
         return msg
+
+    def item_coverage_data(self, item_code: str) -> list[dict]:
+        """
+        Return data for plotting in the ItemCoverageMatrix chart
+        :param item_code: The item code to check
+        """
+        detail = sspi_metadata.get_item_detail(item_code)
+        # Coverage always depends on children, if there are any children.
+        # If no children, then coverage only depends on the data coverage of the current ItemCode
+        children = detail.get("Children", [])
+        if not children:
+            item_field = detail.get("ItemType", "") + "Code"  # e.g. IndicatorCode or IntermediateCode
+            pipeline = [
+                { 
+                    "$match": {
+                        item_field: item_code,
+                        "Year": {"$gte": self.min_year }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": {
+                            "CountryCode": "$CountryCode",
+                            "Year": "$Year"
+                        },
+                        "itemSet": {
+                            "$addToSet": "$" + item_field
+                        },
+                        "scoreList": {"$push": "$Score"}
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "y": "$_id.CountryCode",
+                        "x": "$_id.Year",
+                        "v": {"$size": "$itemSet"},
+                        "averageScore": {"$avg": "$scoreList"},
+                        "minScore": {"$min": "$scoreList"},
+                        "maxScore": {"$max": "$scoreList"}
+                    }
+                }
+            ]
+            result = sspi_clean_api_data.aggregate(pipeline)
+            return result
+        child_icodes = [child for child in children]
+        child_details = [sspi_metadata.get_item_detail(child) for child in child_icodes]
+        child_item_field = child_details[0].get("ItemType", "") + "Code"
+        if child_item_field == "IntermediateCode": 
+        #IntermediateCode needs to be handled differently because 
+        #Intermediates are not stored as separate documents, but 
+        # are nested inside of the indicators.
+            pass
+
+        print(child_details)
+        print(child_item_field)
+
+        pipeline = [
+            { 
+                "$match": {
+                    child_item_field: { "$in": child_icodes},
+                    "Year": {"$gte": self.min_year }
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "CountryCode": "$CountryCode",
+                        "Year": "$Year"
+                    },
+                    "itemSet": {
+                        "$addToSet": "$" + child_item_field
+                    },
+                    "scoreList": {"$push": "$Score"}
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "y": "$_id.CountryCode",
+                    "x": "$_id.Year",
+                    "v": {"$size": "$itemSet"},
+                    "children": "itemSet",
+                    "averageScore": {"$avg": "$scoreList"},
+                    "minScore": {"$min": "$scoreList"},
+                    "maxScore": {"$max": "$scoreList"}
+                }
+            }
+        ]
+        print(pipeline)
+        result = sspi_clean_api_data.aggregate(pipeline)
+        return result
