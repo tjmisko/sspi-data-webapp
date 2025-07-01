@@ -1,0 +1,11 @@
+Purpose: My client-side bundled JS
+Path: sspi_flask_app/api/static/script.js
+---
+Purpose: Files used to build the bundle
+Path: sspi_flask_app/client/static/js/
+---
+Purpose: User Facing Routes (client blueprint)
+Path: sspi_flask_app/client/routes.py
+---
+Purpose: Location of my HTML template files
+Path: sspi_flask_app/client/templates/
