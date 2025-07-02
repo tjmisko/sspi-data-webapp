@@ -1,5 +1,5 @@
 class ItemCoverageMatrixChart {
-    constructor(parentElement, itemCode, { countryGroup = "SSPI67", minYear = 2000, maxYear = 2023, width = 400, height = 400 } ) {
+    constructor(parentElement, itemCode, { countryGroup = "SSPI67", minYear = 2000, maxYear = 2023, width = 400, height = 400, callbacks = [] } ) {
         this.parentElement = parentElement
         this.itemCode = itemCode
         this.countryGroup = countryGroup
@@ -7,6 +7,7 @@ class ItemCoverageMatrixChart {
         this.maxYear = maxYear
         this.width = width
         this.height = height
+        this.callbacks = callbacks
         this.initRoot()
         this.rigSummary()
         this.initChartJSCanvas()
@@ -158,6 +159,9 @@ class ItemCoverageMatrixChart {
                 }
             }
         }
+        this.callbacks.forEach((callback) => {
+            callback(res)
+        })
         this.chart.update()
     }
 }

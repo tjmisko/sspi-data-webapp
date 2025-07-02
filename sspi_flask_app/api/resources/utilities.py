@@ -420,7 +420,8 @@ def extrapolate_backward(
     """
     grouped_series = {}
     imputations = []
-    for document in doc_list:
+    copied_doc_list = deepcopy(doc_list)
+    for document in copied_doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
     for series_key, documents in grouped_series.items():
@@ -437,11 +438,11 @@ def extrapolate_backward(
                     "ImputationDistance": first_year - missing_year,
                 }
             )
-            doc_list.append(new_document)
+            copied_doc_list.append(new_document)
             imputations.append(new_document)
     if impute_only:
         return imputations
-    return doc_list
+    return copied_doc_list
 
 
 def extrapolate_forward(
@@ -458,9 +459,10 @@ def extrapolate_forward(
     :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
     :param impute_only: if True, only return imputed values, excluding original data
     """
+    copied_doc_list = deepcopy(doc_list)
     grouped_series = {}
     imputations = []
-    for document in doc_list:
+    for document in copied_doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
     for series_key, documents in grouped_series.items():
@@ -477,11 +479,11 @@ def extrapolate_forward(
                     "ImputationDistance": missing_year - last_year,
                 }
             )
-            doc_list.append(new_document)
+            copied_doc_list.append(new_document)
             imputations.append(new_document)
     if impute_only:
         return imputations
-    return doc_list
+    return copied_doc_list
 
 
 def interpolate_linear(
@@ -496,7 +498,8 @@ def interpolate_linear(
     """
     grouped_series = {}
     imputations = []
-    for document in doc_list:
+    copied_doc_list = deepcopy(doc_list)
+    for document in copied_doc_list:
         series_key = tuple(document[id_key] for id_key in series_id)
         grouped_series.setdefault(series_key, []).append(document)
     for series_key, documents in grouped_series.items():
@@ -526,11 +529,11 @@ def interpolate_linear(
                         "ImputationDistance": min(y - prev["Year"], next_["Year"] - y),
                     }
                 )
-                doc_list.append(new_doc)
+                copied_doc_list.append(new_doc)
                 imputations.append(new_doc)
     if impute_only:
         return imputations
-    return doc_list
+    return copied_doc_list
 
 
 def generate_item_levels(

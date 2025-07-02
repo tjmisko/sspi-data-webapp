@@ -55,3 +55,12 @@ def test_extrapolate_forward_impute_only():
     assert sorted(doc["Year"] for doc in result) == [2003, 2004]
     assert len(result) == 2
     assert all(doc["ImputationMethod"] == "Forward Extrapolation" for doc in result)
+
+def test_extrapolate_forward_full_series():
+    data = [
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2000, "Value": 10},
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2001, "Value": 10},
+        {"CountryCode": "USA", "IndicatorCode": "GDP", "Year": 2002, "Value": 30}
+    ]
+    result = extrapolate_forward(deepcopy(data), 2002, impute_only=True)
+    assert len(result) == 0
