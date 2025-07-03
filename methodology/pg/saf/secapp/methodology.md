@@ -1,9 +1,9 @@
 ---
 ItemType: Indicator
 ItemCode: SECAPP
+DatasetCodes:
+  - SECAPP
 ItemName: Security Apparatus
-Category: Public Safety
-CategoryCode: SAF
 Description: The Security Apparatus is a component of the Fragile State Index, which
   considers the security threats to a state such as bombings, attacks/battle-related
   deaths, rebel movements, mutinies, coups, or terrorism. It is an index scored between
@@ -13,8 +13,6 @@ Indicator: Security Apparatus
 IndicatorCode: SECAPP
 Inverted: true
 LowerGoalpost: 10.0
-Pillar: Public Goods
-PillarCode: PG
 Policy: Capability of the Security Apparatus
 SourceOrganization: The Fund for Peace
 SourceOrganizationIndicatorCode: null

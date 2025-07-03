@@ -41,6 +41,10 @@ def contact():
 def data():
     return render_template('data.html')
 
+@client_bp.route('/customize')
+def customize():
+    return render_template('customize.html')
+
 
 @client_bp.route('/data/country/<CountryCode>')
 def country_data(CountryCode):

@@ -2,8 +2,6 @@
 ItemType: Indicator
 ItemCode: WATMAN
 ItemName: Water Management
-Category: Land
-CategoryCode: LND
 Description: "Average of the following two metrics: \n1. Change in Water Use Efficiency\
   \ (WUE), 2018 compared with 2010-2015 average: WUE is the value added of a given\
   \ major sector divided by the volume of water used. WUE at the national level is\
@@ -16,13 +14,11 @@ Description: "Average of the following two metrics: \n1. Change in Water Use Eff
 Footnote: null
 Indicator: Water Management
 IndicatorCode: WATMAN
-IntermediateCodes:
+DatasetCodes:
   - CWUEFF
   - WTSTRS
 Inverted: false
 LowerGoalpost: null
-Pillar: Sustainability
-PillarCode: SUS
 Policy: Water Conservation
 SourceOrganization: UN SDG
 SourceOrganizationIndicatorCode: null

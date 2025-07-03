@@ -1,9 +1,9 @@
 ---
 ItemType: Indicator
 ItemCode: PUBSRV
+DatasetCodes:
+  - PUBSRV
 ItemName: Quality of Public Services & Governance
-Category: Rights
-CategoryCode: RTS
 Description: Perceptions of the quality of public services, quality of the civil service
   and its independence from political pressures, quality of policies and implementation,
   and credibility of the government's commitment to policies. Measured from -2.5 to
@@ -14,8 +14,6 @@ Indicator: Quality of Public Services & Governance
 IndicatorCode: PUBSRV
 Inverted: false
 LowerGoalpost: -2.5
-Pillar: Public Goods
-PillarCode: PG
 Policy: Government and Civil Service
 SourceOrganization: World Bank (WGI)
 SourceOrganizationIndicatorCode: null

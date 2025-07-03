@@ -13,6 +13,7 @@
   --ms-color: #FF851B;
   --pg-color: #007BFF;
   --link-color: #2895AE
+  --theme-gap: 1rem;
 }
 
 @media (min-width: 600px) {
@@ -37,6 +38,7 @@
   --title-weight: 400;
   --header-color: #D6D6D6;
   --box-background-color: #D6D6D6;
+  --region-background-color: #D6D6D6;
   --header-text-color: #3A3A3A;
   --page-background: #D6D6D6;
   --green-accent: #8BA342;
@@ -55,6 +57,7 @@
   --title-weight: 300;
   --header-color: #0F1A24;
   --box-background-color: #0F1A24aa;
+  --region-background-color: #0F1A2444;
   --header-text-color: #F5F5F5;
   --page-background: #1F354F;
   --green-accent: #AECC53;

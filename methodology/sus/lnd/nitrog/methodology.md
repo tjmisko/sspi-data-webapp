@@ -1,9 +1,9 @@
 ---
 ItemType: Indicator
 ItemCode: NITROG
+DatasetCodes:
+  - NITROG
 ItemName: Sustainable Nitrogen Management
-Category: Land
-CategoryCode: LND
 Description: An index measuring the sustainability of Nitrogen management based on
   Nitrogen use efficiency (in agriculture) and land use efficiency (crop yield). The
   Sustainable Nitrogen Management Index (SNMI) seeks to balance the efficient application
@@ -15,8 +15,6 @@ Indicator: Sustainable Nitrogen Management
 IndicatorCode: NITROG
 Inverted: false
 LowerGoalpost: 0.0
-Pillar: Sustainability
-PillarCode: SUS
 Policy: "Sustainable \nAgriculture Practice"
 SourceOrganization: EPI
 SourceOrganizationIndicatorCode: SNM

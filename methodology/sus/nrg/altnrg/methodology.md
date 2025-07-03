@@ -2,8 +2,6 @@
 ItemType: Indicator
 ItemCode: ALTNRG
 ItemName: Alternative Energy Generation
-Category: Energy
-CategoryCode: NRG
 Description: Total energy supply (excluding exports) supply from “renewable sources”
   (RE = nuclear, hydroelectric, geothermal, solar, wind, and biofuels) minus half
   of total final energy supply from biofuel sources (BIO) to penalize countries for
@@ -11,7 +9,7 @@ Description: Total energy supply (excluding exports) supply from “renewable so
 Footnote: null
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
-IntermediateCodes:
+DatasetCodes:
   - TLCOAL
   - NATGAS
   - NCLEAR
@@ -21,8 +19,6 @@ IntermediateCodes:
   - FSLOIL
 Inverted: false
 LowerGoalpost: 0.0
-Pillar: Sustainability
-PillarCode: SUS
 Policy: Renewable Energy Incentives
 SourceOrganization: IEA
 SourceOrganizationIndicatorCode: TESbySource
