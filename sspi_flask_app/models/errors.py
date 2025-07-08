@@ -27,3 +27,9 @@ class MethodologyFileError(Exception):
     Raised when there is an error with the methodology file
     """
     pass
+
+class DatasetFileError(Exception):
+    """
+    Raised when there is an error with the methodology file
+    """
+    pass

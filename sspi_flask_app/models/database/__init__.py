@@ -13,6 +13,9 @@ from sspi_flask_app.models.database.sspi_country_characteristics import (
 from sspi_flask_app.models.database.sspi_main_data_v3 import (
     SSPIMainDataV3
 )
+from sspi_flask_app.models.database.sspi_metadata_deprecated import (
+    SSPIMetadataDeprecated
+)
 from sspi_flask_app.models.database.sspi_metadata import (
     SSPIMetadata
 )
@@ -37,7 +40,7 @@ sspidb = client.flask_db
 sspi_metadata = SSPIMetadata(
     sspidb.sspi_metadata
 )
-sspi_static_metadata = SSPIMetadata(
+sspi_static_metadata = SSPIMetadataDeprecated(
     sspidb.sspi_static_metadata,
     indicator_detail_file="IndicatorDetailsStatic.csv",
     intermediate_detail_file="IntermediateDetailsStatic.csv"

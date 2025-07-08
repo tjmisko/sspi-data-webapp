@@ -4,7 +4,7 @@ from datetime import timedelta
 import logging
 
 basedir = path.abspath(path.dirname(__file__))
-print("basedir: " + basedir)
+print("App Directory: " + basedir)
 load_dotenv(path.join(basedir, '.env'))
 
 
