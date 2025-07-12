@@ -22,9 +22,7 @@ def cleanSIPRIData(RawData, IndName, Unit):
     
     df_melted['Unit'] = Unit
     df_melted['IndicatorCode'] = IndName
-    # df_melted.to_csv('transformed_data.csv', index=False)
     df_final = df_melted.dropna()
-   # df_final['CountryCode'] = df_final['Country'].apply(get_country_code)
     df_final['CountryCode'] = df_final['Country'].apply(
     lambda country: get_country_code(country) if country.lower() not in ['czechoslovakia', 'german democratic republic', 'yemen north'] else None)
 
@@ -32,7 +30,6 @@ def cleanSIPRIData(RawData, IndName, Unit):
     df_final.loc[df_final['Country'] == 'Czechoslovakia', 'CountryCode'] = 'CSK'
     df_final.loc[df_final['Country'] == 'German Democratic Republic', 'CountryCode'] = 'DDR'
     df_final.loc[df_final['Country'] == 'Yemen North', 'CountryCode'] = 'YMD'
-   # df_final['CountryCode'] = df_final['Country'].astype(str) 
     df_final['Year'] = df_final['Year'].astype(int)
     df_f = df_final.drop('Country', axis = 1)
     return df_f

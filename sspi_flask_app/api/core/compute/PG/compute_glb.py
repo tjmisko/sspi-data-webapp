@@ -121,7 +121,7 @@ def compute_foraid():
 
 @compute_bp.route("/MILEXP", methods=['GET'])
 def compute_milexp():
-    cleaned_list = cleanSIPRIData('local/share.csv', 'MILEXP', 'Percentage')
+    cleaned_list = cleanSIPRIData('local/milexp.csv', 'MILEXP', 'Percentage')
     obs_list = json.loads(cleaned_list.to_json(orient="records"))
     scored_list = score_single_indicator(obs_list, "MILEXP")
     sspi_clean_api_data.insert_many(scored_list)
