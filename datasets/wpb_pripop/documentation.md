@@ -3,8 +3,10 @@ DatasetType: Intermediate
 DatasetName: Prison Population
 DatasetCode: WPB_PRIPOP
 Description: Prison population
-SourceOrganizationName: World Prison Brief
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://prisonstudies.org/world-prison-brief-data
+Source:
+  OrganizationName: World Prison Brief
+  OrganizationCode: WPB
+  OrganizationSeriesCode: null
+  BaseURL: https://prisonstudies.org/world-prison-brief-data
 ---
 

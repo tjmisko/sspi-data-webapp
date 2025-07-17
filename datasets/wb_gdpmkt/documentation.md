@@ -3,8 +3,10 @@ DatasetType: Intermediate
 DatasetName: GDP at Market Prices
 DatasetCode: WB_GDPMKT
 Description: GDP at Market Prices
-SourceOrganizationName: World Bank
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://stats.oecd.org/
+Source:
+  OrganizationName: World Bank
+  OrganizationCode: WB
+  OrganizationSeriesCode: null
+  BaseURL: https://stats.oecd.org/
 ---
 

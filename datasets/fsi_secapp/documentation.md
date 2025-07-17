@@ -6,8 +6,10 @@ Description: The Security Apparatus is a component of the Fragile State Index, w
   considers the security threats to a state such as bombings, attacks/battle-related
   deaths, rebel movements, mutinies, coups, or terrorism. It is an index scored between
   0 and 10.
-SourceOrganizationName: The Fund for Peace
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://fragilestatesindex.org/global-data/
+Source:
+  OrganizationName: The Fund for Peace
+  OrganizationCode: FSI
+  OrganizationSeriesCode: null
+  BaseURL: https://fragilestatesindex.org/global-data/
 ---
 

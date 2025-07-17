@@ -7,8 +7,10 @@ Description: 'Proportion of 9 core UN conventions (ICERD, ICCPR, ICESCR, CEDAW, 
   that have been ratified, acquired, or succeeded.
 
   '
-SourceOrganizationName: UN
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: Not sure>:(
+Source:
+  OrganizationName: UN
+  OrganizationCode: UNSDG
+  OrganizationSeriesCode: null
+  BaseURL: Not sure>:(
 ---
 

@@ -7,8 +7,10 @@ Description: 'Change in Water Use Efficiency (WUE), 2018 compared with 2010-2015
   WUE at the national level is the sum of the efficiencies in the major economic sectors
   weighted according to the proportion of water withdrawn by each sector over the
   total withdrawals'
-SourceOrganizationName: UN SDG
-SourceOrganizationIndicatorCode: 6.4.1
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
+Source:
+  OrganizationName: UN SDG
+  OrganizationCode: UNSDG
+  OrganizationSeriesCode: 6.4.1
+  BaseURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

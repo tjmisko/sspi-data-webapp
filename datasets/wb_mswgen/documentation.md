@@ -5,8 +5,10 @@ DatasetName: Municipal Solid Waste Generation
 Description: Annual amount of per capita Municipal Solid Waste (kg/capita/year), which
   is defined as residential, commercial, and institutional waste (Industrial, medical,
   hazardous, electronic, and construction and demolition waste are not included).
-SourceOrganizationName: 'World Bank '
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://databank.worldbank.org/
+Source:
+  OrganizationName: World Bank
+  OrganizationCode: WB
+  OrganizationSeriesCode: null
+  BaseURL: https://databank.worldbank.org/
 ---
 

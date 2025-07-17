@@ -3,8 +3,10 @@ DatasetType: Intermediate
 DatasetName: Expected years in retirement, women 
 DatasetCode: OECD_YRSRTW
 Description: Expected years in retirement, women
-SourceOrganizationName: OECD
-SourceOrganizationIndicatorCode: PAG_PEN20B
-SourceOrganizationURL: https://stats.oecd.org/
+Source:
+  OrganizationName: OECD
+  OrganizationCode: OECD
+  OrganizationSeriesCode: PAG_PEN20B
+  BaseURL: https://stats.oecd.org/
 ---
 
