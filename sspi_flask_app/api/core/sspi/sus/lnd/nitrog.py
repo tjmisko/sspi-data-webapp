@@ -17,12 +17,12 @@ from io import StringIO
 import json
 
 
-@collect_bp.route("/NITROG", methods=['GET'])
-@login_required
-def nitrog():
-    def collect_iterator(**kwargs):
-        yield from collectEPIData("SNM_ind_na.csv", "NITROG", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/NITROG", methods=['GET'])
+# @login_required
+# def nitrog():
+#     def collect_iterator(**kwargs):
+#         yield from collectEPIData("SNM_ind_na.csv", "NITROG", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/NITROG", methods=['GET'])

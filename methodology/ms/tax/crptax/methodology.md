@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: CRPTAX
 DatasetCodes:
-  - CRPTAX
+  - TF_CRPTAX
 ItemName: Corporate Tax Rate
 Description: Tax imposed on the net income of the company.
 Footnote: null

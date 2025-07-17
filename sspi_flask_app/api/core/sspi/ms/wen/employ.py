@@ -16,20 +16,20 @@ import pandas as pd
 from io import StringIO
 
 
-@collect_bp.route("/EMPLOY")
-@login_required
-def lfpart():
-    def collect_iterator(**kwargs):
-        yield from collectILOData(
-            "DF_EAP_DWAP_SEX_AGE_RT",
-            "EMPLOY",
-            QueryParams=".A...AGE_AGGREGATE_Y25-54",
-            **kwargs
-        )
-    return Response(
-        collect_iterator(Username=current_user.username),
-        mimetype='text/event-stream'
-    )
+# @collect_bp.route("/EMPLOY")
+# @login_required
+# def lfpart():
+#     def collect_iterator(**kwargs):
+#         yield from collectILOData(
+#             "DF_EAP_DWAP_SEX_AGE_RT",
+#             "EMPLOY",
+#             QueryParams=".A...AGE_AGGREGATE_Y25-54",
+#             **kwargs
+#         )
+#     return Response(
+#         collect_iterator(Username=current_user.username),
+#         mimetype='text/event-stream'
+#     )
 
 
 @compute_bp.route("/EMPLOY", methods=['GET'])

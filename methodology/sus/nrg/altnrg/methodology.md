@@ -10,13 +10,13 @@ Footnote: null
 Indicator: Alternative Energy Generation
 IndicatorCode: ALTNRG
 DatasetCodes:
-  - TLCOAL
-  - NATGAS
-  - NCLEAR
-  - HYDROP
-  - GEOPWR
-  - BIOWAS
-  - FSLOIL
+  - IEA_TLCOAL
+  - IEA_NATGAS
+  - IEA_NCLEAR
+  - IEA_HYDROP
+  - IEA_GEOPWR
+  - IEA_BIOWAS
+  - IEA_FSLOIL
 Inverted: false
 LowerGoalpost: 0.0
 Policy: Renewable Energy Incentives

@@ -22,13 +22,13 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/FDEPTH", methods=['GET'])
-@login_required
-def fdepth():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
-        yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/FDEPTH", methods=['GET'])
+# @login_required
+# def fdepth():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
+#         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/FDEPTH", methods=['GET'])

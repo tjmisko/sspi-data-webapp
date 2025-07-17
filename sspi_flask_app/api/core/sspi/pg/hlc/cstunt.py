@@ -16,12 +16,12 @@ from sspi_flask_app.api.datasource.who import (
 import jq
 
 
-@collect_bp.route("/CSTUNT", methods=['GET'])
-@login_required
-def cstunt():
-    def collect_iterator(**kwargs):
-        yield from collectCSTUNTData(**kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/CSTUNT", methods=['GET'])
+# @login_required
+# def cstunt():
+#     def collect_iterator(**kwargs):
+#         yield from collectCSTUNTData(**kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/CSTUNT", methods=['GET'])

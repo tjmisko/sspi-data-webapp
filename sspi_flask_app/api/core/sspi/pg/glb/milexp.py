@@ -16,12 +16,12 @@ from sspi_flask_app.models.database import (
 )
 import json
 
-@collect_bp.route("/MILEXP", methods=['GET'])
-@login_required
-def milexp():
-    def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("MILEXP", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/MILEXP", methods=['GET'])
+# @login_required
+# def milexp():
+#     def collect_iterator(**kwargs):
+#         yield from collectSIPRIdata("MILEXP", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/MILEXP", methods=['GET'])

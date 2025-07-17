@@ -9,8 +9,8 @@ Footnote: null
 Indicator: Beef Market
 IndicatorCode: BEEFMK
 DatasetCodes:
-  - BFPROD
-  - BFCONS
+  - UNFAO_BFPROD
+  - UNFAO_BFCONS
 Inverted: true
 LowerGoalpost: null
 Policy: Methane Emissions

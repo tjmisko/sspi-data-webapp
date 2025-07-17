@@ -8,8 +8,8 @@ Footnote: null
 Indicator: Incarceration Rates
 IndicatorCode: PRISON
 DatasetCodes:
-  - PRIPOP
-  - POPULN
+  - WPB_PRIPOP
+  - WB_POPULN
 Inverted: true
 LowerGoalpost: 540.0
 Policy: "Criminal Justice \nPolicy"

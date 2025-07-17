@@ -16,12 +16,12 @@ from sspi_flask_app.api.datasource.who import (
 )
 
 
-@collect_bp.route("/ATBRTH", methods=['GET'])
-@login_required
-def atbrth():
-    def collect_iterator(**kwargs):
-        yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/ATBRTH", methods=['GET'])
+# @login_required
+# def atbrth():
+#     def collect_iterator(**kwargs):
+#         yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/ATBRTH")

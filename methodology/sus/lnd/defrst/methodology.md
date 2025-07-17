@@ -8,8 +8,8 @@ Footnote: null
 Indicator: Deforestation
 IndicatorCode: DEFRST
 DatasetCodes:
-  - FRSTLV
-  - FRSTAV
+  - UNFAO_FRSTLV
+  - UNFAO_FRSTAV
 Inverted: false
 LowerGoalpost: -20.0
 Policy: Forest Management

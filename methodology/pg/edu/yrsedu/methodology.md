@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: YRSEDU
 DatasetCodes:
-  - YRSEDU
+  - UIS_YRSEDU
 ItemName: Years of Compulsory Education
 Description: Total years of compulsory education
 Footnote: null

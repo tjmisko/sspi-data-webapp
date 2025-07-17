@@ -18,13 +18,13 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/RDFUND", methods=['GET'])
-@login_required
-def rdfund():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
-        yield from collectSDGIndicatorData("9.5.2", "RDFUND", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/RDFUND", methods=['GET'])
+# @login_required
+# def rdfund():
+#     def collect_iterator(**kwargs):
+#         yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
+#         yield from collectSDGIndicatorData("9.5.2", "RDFUND", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/RDFUND", methods=['GET'])

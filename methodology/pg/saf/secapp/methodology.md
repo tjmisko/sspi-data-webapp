@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: SECAPP
 DatasetCodes:
-  - SECAPP
+  - FSI_SECAPP
 ItemName: Security Apparatus
 Description: The Security Apparatus is a component of the Fragile State Index, which
   considers the security threats to a state such as bombings, attacks/battle-related

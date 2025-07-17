@@ -14,12 +14,12 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/CARBON", methods=['GET'])
-@login_required
-def carbon():
-    def collect_iterator(**kwargs):
-        yield from collectUNFAOData("7215", "6646", "RL", "CARBON", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/CARBON", methods=['GET'])
+# @login_required
+# def carbon():
+#     def collect_iterator(**kwargs):
+#         yield from collectUNFAOData("7215", "6646", "RL", "CARBON", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/CARBON", methods=['GET'])

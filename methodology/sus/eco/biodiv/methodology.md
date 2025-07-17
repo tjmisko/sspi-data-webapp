@@ -8,9 +8,9 @@ Footnote: null
 Indicator: Biodiversity Protection
 IndicatorCode: BIODIV
 DatasetCodes:
-  - MARINE
-  - TERRST
-  - FRSHWT
+  - UNSDG_MARINE
+  - UNSDG_TERRST
+  - UNSDG_FRSHWT
 Inverted: false
 LowerGoalpost: null
 Policy: "Protection of Biodiversity"

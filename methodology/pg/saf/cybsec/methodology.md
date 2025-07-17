@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: CYBSEC
 DatasetCodes:
-  - CYBSEC
+  - ITU_CYBSEC
 ItemName: Global Cybersecurity Index
 Description: The Global Cybersecurity Index (GCI) is a composite index combining 25
   indicators into one benchmark for the laws, institutions, and competence.5

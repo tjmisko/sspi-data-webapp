@@ -17,15 +17,14 @@ from sspi_flask_app.api.datasource.iea import cleanIEAData_altnrg
 import json
 
 
-@collect_bp.route("/COALPW", methods=["GET"])
-@login_required
-def coalpw():
-    def collect_iterator(**kwargs):
-        yield from collectIEAData("TESbySource", "COALPW", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/COALPW", methods=["GET"])
+# @login_required
+# def coalpw():
+#     def collect_iterator(**kwargs):
+#         yield from collectIEAData("TESbySource", "COALPW", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/COALPW", methods=["GET"])

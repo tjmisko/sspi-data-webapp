@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: FATINJ
 DatasetCodes:
-  - FATINJ
+  - ILO_FATINJ
 ItemName: Fatal Workplace Injuries
 Description: Number of fatal injuries per 100,000 workers.
 Footnote: null

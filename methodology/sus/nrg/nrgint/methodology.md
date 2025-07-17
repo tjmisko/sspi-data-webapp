@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: NRGINT
 DatasetCodes:
-  - NRGINT
+  - UNSDG_NRGINT
 ItemName: Energy Intensity
 Description: Energy intensity level of primary energy measured in megajoules per constant
   2017 purchasing power parity GDP.

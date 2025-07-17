@@ -24,17 +24,17 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/SENIOR")
-@login_required
-def senior():
-    def collect_iterator(**kwargs):
-        oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
-        meta = (
-            "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
-            "latest?references=all&format=sdmx-json"
-        )
-        yield from collectOECDSDMXData(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/SENIOR")
+# @login_required
+# def senior():
+#     def collect_iterator(**kwargs):
+#         oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
+#         meta = (
+#             "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
+#             "latest?references=all&format=sdmx-json"
+#         )
+#         yield from collectOECDSDMXData(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/SENIOR", methods=['GET'])

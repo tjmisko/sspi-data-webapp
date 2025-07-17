@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: MATERN
 DatasetCodes:
-  - MATERN
+  - OECD_MATERN
 ItemName: Paid Maternity Leave
 Description: Paid parental leave available to mothers (full-rate equivalent) in weeks
   during the first year.

@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: DRKWAT
 DatasetCodes:
-  - DRKWAT
+  - WB_DRKWAT
 ItemName: Safely Managed Water
 Description: Percentage of population using safely managed drinking water services.
 Footnote: null

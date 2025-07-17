@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: NITROG
 DatasetCodes:
-  - NITROG
+  - EPI_NITROG
 ItemName: Sustainable Nitrogen Management
 Description: An index measuring the sustainability of Nitrogen management based on
   Nitrogen use efficiency (in agriculture) and land use efficiency (crop yield). The

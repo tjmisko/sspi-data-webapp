@@ -16,15 +16,14 @@ from io import StringIO
 import json
 
 
-@collect_bp.route("/FATINJ")
-@login_required
-def fatinj():
-    def collect_iterator(**kwargs):
-        yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/FATINJ")
+# @login_required
+# def fatinj():
+#     def collect_iterator(**kwargs):
+#         yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/FATINJ", methods=["GET"])

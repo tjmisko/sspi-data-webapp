@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: ENRSEC
 DatasetCodes:
-  - ENRSEC
+  - UIS_ENRSEC
 ItemName: Lower Secondary Net Enrollment
 Description: The ratio of the number of children of official secondary school age
   who are enrolled in secondary education to the total population of children of official

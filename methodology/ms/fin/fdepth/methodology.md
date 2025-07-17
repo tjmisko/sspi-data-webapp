@@ -14,8 +14,8 @@ Footnote: null
 Indicator: Depth
 IndicatorCode: FDEPTH
 DatasetCodes:
-  - CREDIT
-  - DPOSIT
+  - WB_CREDIT
+  - WB_DPOSIT
 Inverted: false
 LowerGoalpost: null
 Policy: >
@@ -38,8 +38,8 @@ sector.
 
 The indicator is computed as arithmetic mean of two series:
 
-1. Domestic Credit in the Private Sector (CREDIT):
-2. Financial System Deposits (DPOSIT): 
+1. Domestic Credit in the Private Sector (WB_CREDIT):
+2. Financial System Deposits (WB_DPOSIT): 
 
 #### Proxy
 Governments with a high levels of **Domenstic Credit in the Private
@@ -56,12 +56,12 @@ policy packages which encourage these outcomes.
 ### Data Coverage and Imputations
 
 Comprehensive data is available for <span id="good-percent"></span> of
-country-year pairs. When either CREDIT or DPOSIT data is missing (<span
+country-year pairs. When either WB_CREDIT or WB_DPOSIT data is missing (<span
     id="warning-percent"></span> of pairs), we impute the missing data for the
 particular intermediate, then compute the overall indicator by averaging the
 imputed value with the available value for the other series.
 
-When neither CREDIT nor DEPOSIT data is available for a given year (<span
+When neither WB_CREDIT nor DEPOSIT data is available for a given year (<span
     id="bad-percent"></span> of country-year pairs), we impute the value for
 the FDEPTH directly using the most proximate value(s) of FDEPTH.
 
@@ -70,7 +70,7 @@ the FDEPTH directly using the most proximate value(s) of FDEPTH.
 For all countries except United Kingdom (**GBR**), all SSPI countries have an
 observation in at least one year for both series, so all imputations are
 anchored to a valid observation in the dataset. The United Kingdom has no 
-observations for DPOSIT
+observations for WB_DPOSIT
 
 - *Backward Extrapolation*: We use backward extrapolation when there exist no
 observation prior to the year imputed. The imputed value is equal to the first

@@ -16,12 +16,12 @@ from sspi_flask_app.api.datasource.worldbank import (
 )
 
 
-@collect_bp.route("/SANSRV", methods=['GET'])
-@login_required
-def sansrv():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SH.STA.BASS.ZS", "SANSRV", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/SANSRV", methods=['GET'])
+# @login_required
+# def sansrv():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("SH.STA.BASS.ZS", "SANSRV", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/SANSRV")

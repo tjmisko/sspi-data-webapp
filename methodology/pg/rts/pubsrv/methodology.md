@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: PUBSRV
 DatasetCodes:
-  - PUBSRV
+  - WGI_PUBSRV
 ItemName: Quality of Public Services & Governance
 Description: Perceptions of the quality of public services, quality of the civil service
   and its independence from political pressures, quality of policies and implementation,

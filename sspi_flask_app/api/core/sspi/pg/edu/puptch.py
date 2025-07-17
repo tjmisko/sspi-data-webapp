@@ -16,12 +16,12 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/PUPTCH", methods=['GET'])
-@login_required
-def puptch():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/PUPTCH", methods=['GET'])
+# @login_required
+# def puptch():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 

@@ -17,12 +17,12 @@ from sspi_flask_app.models.database import (
 import json
 
 
-@collect_bp.route("/ARMEXP", methods=['GET'])
-@login_required
-def armexp():
-    def collect_iterator(**kwargs):
-        yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/ARMEXP", methods=['GET'])
+# @login_required
+# def armexp():
+#     def collect_iterator(**kwargs):
+#         yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/ARMEXP", methods=['GET'])

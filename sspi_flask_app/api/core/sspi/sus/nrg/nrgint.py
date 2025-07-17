@@ -20,12 +20,12 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/NRGINT", methods=['GET'])
-@login_required
-def nrgint():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("7.3.1", "NRGINT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/NRGINT", methods=['GET'])
+# @login_required
+# def nrgint():
+#     def collect_iterator(**kwargs):
+#         yield from collectSDGIndicatorData("7.3.1", "NRGINT", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/NRGINT", methods=['GET'])

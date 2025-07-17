@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: GINIPT
 DatasetCodes:
-  - GINIPT
+  - WB_GINIPT
 ItemName: Gini-coefficient After Taxes
 Description: GINI Coefficient for post-tax-and-transfer income distribution.
 Footnote: null

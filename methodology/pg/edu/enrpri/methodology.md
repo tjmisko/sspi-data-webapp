@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: ENRPRI
 DatasetCodes:
-  - ENRPRI
+  - UIS_ENRPRI
 ItemName: Primary School Net Enrollment
 Description: The ratio of the number of children of official primary school age who
   are enrolled in primary education to the total population of children of official

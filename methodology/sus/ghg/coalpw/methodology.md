@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: COALPW
 DatasetCodes:
-  - COALPW
+  - IEA_COALPW
 ItemName: Energy From Coal
 Description: Percentage of a country's total energy supply generated from coal and
   coal derived sources.

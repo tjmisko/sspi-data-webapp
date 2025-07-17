@@ -19,12 +19,12 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/TAXREV", methods=['GET'])
-@login_required
-def taxrev():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/TAXREV", methods=['GET'])
+# @login_required
+# def taxrev():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/TAXREV")

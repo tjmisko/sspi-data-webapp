@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: AIRPOL
 DatasetCodes:
-  - AIRPOL
+  - UNSDG_AIRPOL
 ItemName: Air Pollution
 Description: Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities
   (population weighted) measured in micrograms per cubic meter of air (μg/m3).

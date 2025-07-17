@@ -23,12 +23,12 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/ENRPRI", methods=['GET'])
-@login_required
-def enrpri():
-    def collect_iterator(**kwargs):
-        yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/ENRPRI", methods=['GET'])
+# @login_required
+# def enrpri():
+#     def collect_iterator(**kwargs):
+#         yield from collectUISdata("NERT.1.CP", "ENRPRI", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/ENRPRI", methods=['GET'])

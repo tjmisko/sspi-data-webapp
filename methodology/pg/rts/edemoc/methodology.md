@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: EDEMOC
 DatasetCodes:
-  - EDEMOC
+  - VDEM_EDEMOC
 ItemName: Electoral Democracy Index
 Description: Electoral Democracy Index seeks to embody the core values that make rulers
   responsive to citizens through elections and freedom of expression.

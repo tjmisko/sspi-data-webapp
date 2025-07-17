@@ -13,12 +13,12 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/AIRPOL", methods=['GET'])
-@login_required
-def airpol():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("11.6.2", "AIRPOL", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/AIRPOL", methods=['GET'])
+# @login_required
+# def airpol():
+#     def collect_iterator(**kwargs):
+#         yield from collectSDGIndicatorData("11.6.2", "AIRPOL", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/AIRPOL")

@@ -16,12 +16,12 @@ from sspi_flask_app.models.database import (
 )
 
 
-@collect_bp.route("/YRSEDU")
-@login_required
-def yrsedu():
-    def collect_iterator(**kwargs):
-        yield from collectUISdata("YEARS.FC.COMP.1T3", "YRSEDU", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/YRSEDU")
+# @login_required
+# def yrsedu():
+#     def collect_iterator(**kwargs):
+#         yield from collectUISdata("YEARS.FC.COMP.1T3", "YRSEDU", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/YRSEDU", methods=['GET'])

@@ -18,13 +18,13 @@ from sspi_flask_app.api.datasource.worldbank import (
 from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData, extract_sdg, filter_sdg
 
 
-@collect_bp.route("/INTRNT", methods=['GET'])
-@login_required
-def intrnt():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/INTRNT", methods=['GET'])
+# @login_required
+# def intrnt():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
+#         yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])

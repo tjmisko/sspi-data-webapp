@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: REDLST
 DatasetCodes:
-  - REDLST
+  - UNSDG_REDLST
 ItemName: IUCN Red List Index
 Description: Measures the level of extinction risk across species within a country.
   Index values of 1 represent all species qualifying as having an extinction risk

@@ -12,12 +12,12 @@ from sspi_flask_app.models.database import (
 from datetime import datetime
 
 
-@collect_bp.route("/ISHRAT", methods=['GET'])
-@login_required
-def ishrat():
-    def collect_iterator(**kwargs):
-        yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/ISHRAT", methods=['GET'])
+# @login_required
+# def ishrat():
+#     def collect_iterator(**kwargs):
+#         yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/ISHRAT")

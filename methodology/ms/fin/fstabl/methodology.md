@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: FSTABL
 DatasetCodes:
-  - FSTABL
+  - IMF_FSTABL
 ItemName: Stability
 Description: The percentage of loans that are nonperforming, meaning that the borrower
   is default due to not making the scheduled periods.

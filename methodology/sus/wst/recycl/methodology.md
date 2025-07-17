@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: RECYCL
 DatasetCodes:
-  - RECYCL
+  - WB_RECYCL
 ItemName: Recycling Rate
 Description: >
     The quantity of material recycled in the country over total waste generated 

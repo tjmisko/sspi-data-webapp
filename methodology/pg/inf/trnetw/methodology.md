@@ -9,8 +9,8 @@ Footnote: null
 Indicator: National Transport Network Intensity
 IndicatorCode: TRNETW
 DatasetCodes:
-  - RAILNT
-  - ROADNT
+  - WB_RAILNT
+  - CIA_ROADNT
 Inverted: false
 LowerGoalpost: null
 Policy: "Transport \nInfrastructure"

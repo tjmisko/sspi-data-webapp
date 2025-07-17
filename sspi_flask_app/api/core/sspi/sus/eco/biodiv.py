@@ -1,9 +1,7 @@
 import logging
-
 from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
-
 from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
 from sspi_flask_app.api.datasource.sdg import (
     collectSDGIndicatorData,
@@ -21,21 +19,13 @@ from sspi_flask_app.models.database import (
 log = logging.getLogger(__name__)
 
 
-@collect_bp.route("/BIODIV", methods=["GET"])
-@login_required
-def biodiv():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData(
-            "14.5.1", "BIODIV", IntermediateCode="MARINE", **kwargs
-        )
-        yield from collectSDGIndicatorData(
-            "15.1.2", "BIODIV", Metadata="TERRST,FRSHWT", **kwargs
-        )
-
-    log.info("Running /api/v1/collect/BIODIV")
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/BIODIV", methods=["GET"])
+# @login_required
+# def biodiv():
+#     # return Response(
+#     #     collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     # )
+#     return "Not implemented"
 
 
 @compute_bp.route("/BIODIV", methods=["GET"])

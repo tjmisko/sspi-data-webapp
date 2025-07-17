@@ -17,15 +17,14 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/CHMPOL", methods=["GET"])
-@login_required
-def chmpol():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("12.4.1", "CHMPOL", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/CHMPOL", methods=["GET"])
+# @login_required
+# def chmpol():
+#     def collect_iterator(**kwargs):
+#         yield from collectSDGIndicatorData("12.4.1", "CHMPOL", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/CHMPOL", methods=["GET"])

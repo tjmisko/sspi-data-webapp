@@ -18,24 +18,23 @@ from sspi_flask_app.api.datasource.worldbank import clean_wb_data
 from sspi_flask_app.api.datasource.iea import clean_IEA_data_GTRANS
 
 
-@collect_bp.route("/GTRANS", methods=["GET"])
-@login_required
-def gtrans():
-    def collect_iterator(**kwargs):
-        yield from collectIEAData(
-            "CO2BySector",
-            "GTRANS",
-            IntermediateCode="TCO2EQ",
-            SourceOrganization="IEA",
-            **kwargs,
-        )
-        yield from collectWorldBankdata(
-            "SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs
-        )
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/GTRANS", methods=["GET"])
+# @login_required
+# def gtrans():
+#     def collect_iterator(**kwargs):
+#         yield from collectIEAData(
+#             "CO2BySector",
+#             "GTRANS",
+#             IntermediateCode="TCO2EQ",
+#             SourceOrganization="IEA",
+#             **kwargs,
+#         )
+#         yield from collectWorldBankdata(
+#             "SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs
+#         )
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/GTRANS", methods=["GET"])

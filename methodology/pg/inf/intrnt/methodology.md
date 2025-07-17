@@ -8,8 +8,8 @@ Footnote: null
 Indicator: Internet Access and Quality
 IndicatorCode: INTRNT
 DatasetCodes:
-  - AVINTR
-  - QUINTR
+  - UNSDG_AVINTR
+  - CABLE_CABLE_QUINTR
 Inverted: false
 LowerGoalpost: null
 Policy: Connectivity Policy

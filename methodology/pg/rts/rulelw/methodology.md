@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: RULELW
 DatasetCodes:
-  - RULELW
+  - VDEM_RULELW
 ItemName: Rule of Law Index
 Description: Rule of Law Index measures extent to which laws are transparently, independently,
   predictably, impartially, equally enforced, and extent to which the actions of government

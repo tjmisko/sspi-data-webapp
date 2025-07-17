@@ -21,13 +21,13 @@ import pandas as pd
 
 
 
-@collect_bp.route("/AQELEC", methods=['GET'])
-@login_required
-def aqelec():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
-        yield from collectWEFQUELEC("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELEC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/AQELEC", methods=['GET'])
+# @login_required
+# def aqelec():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+#         yield from collectWEFQUELEC("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELEC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 

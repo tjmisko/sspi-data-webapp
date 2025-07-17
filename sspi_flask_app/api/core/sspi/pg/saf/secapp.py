@@ -16,12 +16,12 @@ from sspi_flask_app.api.datasource.fsi import (
 )
 
 
-@collect_bp.route("/SECAPP", methods=['GET'])
-@login_required
-def secapp():
-    def collect_iterator(**kwargs):
-        yield from collectFSIdata("SECAPP", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/SECAPP", methods=['GET'])
+# @login_required
+# def secapp():
+#     def collect_iterator(**kwargs):
+#         yield from collectFSIdata("SECAPP", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/SECAPP")

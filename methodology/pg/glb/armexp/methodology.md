@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: ARMEXP
 DatasetCodes:
-  - ARMEXP
+  - SIPRI_ARMEXP
 ItemName: Arms Transfers
 Description: 'Arm transfers: the supply of military weapons through sales, aid, gifts,
   and those made through manufacturing licenses.'

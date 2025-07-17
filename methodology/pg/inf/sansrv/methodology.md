@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: SANSRV
 DatasetCodes:
-  - SANSRV
+  - WB_SANSRV
 ItemName: Basic Sanitation Services
 Description: The percentage of people using at least basic sanitation services, that
   is, improved sanitation facilities that are not shared with other households.

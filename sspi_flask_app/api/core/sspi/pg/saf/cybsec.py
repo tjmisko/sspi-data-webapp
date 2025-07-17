@@ -16,12 +16,12 @@ from sspi_flask_app.api.datasource.itu import (
 )
 import json
 
-@collect_bp.route("/CYBSEC", methods=['GET'])
-@login_required
-def cybsec():
-    def collect_iterator(**kwargs):
-        yield from collect_itu_data("CYBSEC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/CYBSEC", methods=['GET'])
+# @login_required
+# def cybsec():
+#     def collect_iterator(**kwargs):
+#         yield from collect_itu_data("CYBSEC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/CYBSEC", methods=['GET'])

@@ -9,8 +9,8 @@ Footnote: null
 Indicator: Availability and Quality of Electricity
 IndicatorCode: AQELEC
 DatasetCodes:
-  - AVELEC
-  - QUELEC
+  - WB_AVELEC
+  - WB_QUELEC
 Inverted: false
 LowerGoalpost: null
 Policy: Electrification

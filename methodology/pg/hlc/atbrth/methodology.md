@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: ATBRTH
 DatasetCodes:
-  - ATBRTH
+  - WHO_ATBRTH
 ItemName: Attended Births by Skilled Personnel
 Description: The proportion of births attended by trained and/or skilled health personnel.
 Footnote: null

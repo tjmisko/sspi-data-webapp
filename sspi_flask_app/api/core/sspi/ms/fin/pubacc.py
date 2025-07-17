@@ -16,12 +16,12 @@ from sspi_flask_app.api.datasource.worldbank import (
 )
 
 
-@collect_bp.route("/PUBACC", methods=['GET'])
-@login_required
-def pubacc():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/PUBACC", methods=['GET'])
+# @login_required
+# def pubacc():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/PUBACC", methods=['GET'])

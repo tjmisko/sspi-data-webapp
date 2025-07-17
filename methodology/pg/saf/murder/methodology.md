@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: MURDER
 DatasetCodes:
-  - MURDER
+  - WB_MURDER
 ItemName: Intentional Homicide
 Description: Intentional homicides per 100,000 people.
 Footnote: null

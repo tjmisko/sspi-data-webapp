@@ -8,8 +8,8 @@ Footnote: null
 Indicator: Income Share Ratio
 IndicatorCode: ISHRAT
 DatasetCodes:
-  - TOPTEN
-  - BFIFTY
+  - WID_TOPTEN
+  - WID_BFIFTY
 Inverted: false
 LowerGoalpost: 0.2
 Policy: "Income Inequality and \nRedistribution"

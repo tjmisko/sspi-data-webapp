@@ -13,12 +13,12 @@ from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collectWorldB
 from flask_login import login_required, current_user
 
 
-@collect_bp.route("/DRKWAT", methods=['GET'])
-@login_required
-def drkwat():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/DRKWAT", methods=['GET'])
+# @login_required
+# def drkwat():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/DRKWAT")

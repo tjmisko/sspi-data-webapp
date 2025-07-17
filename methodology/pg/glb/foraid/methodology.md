@@ -12,10 +12,10 @@ Footnote: null
 Indicator: Foreign Aid
 IndicatorCode: FORAID
 DatasetCodes:
-  - TOTDON
-  - TONREC
-  - POPULN
-  - GDPMKT
+  - OECD_TOTDON
+  - OECD_TONREC
+  - WB_POPULN
+  - WB_GDPMKT
 Inverted: false
 LowerGoalpost: null
 Policy: "Quality and \nQuantity of Foreign Aid"

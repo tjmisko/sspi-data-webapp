@@ -14,12 +14,12 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/DEFRST", methods=['GET'])
-@login_required
-def defrst():
-    def collect_iterator(**kwargs):
-        yield from collectUNFAOData("5110", "6717", "RL", "DEFRST", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/DEFRST", methods=['GET'])
+# @login_required
+# def defrst():
+#     def collect_iterator(**kwargs):
+#         yield from collectUNFAOData("5110", "6717", "RL", "DEFRST", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/DEFRST", methods=['GET'])

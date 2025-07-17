@@ -9,9 +9,9 @@ Footnote: null
 Indicator: Research and Development
 IndicatorCode: RDFUND
 DatasetCodes:
-  - GVTRDP
-  - EDURDP
-  - NRSRCH
+  - UIS_GVTRDP
+  - UIS_EDURDP
+  - UIS_NRSRCH
 Inverted: false
 LowerGoalpost: null
 Policy: Public R&D

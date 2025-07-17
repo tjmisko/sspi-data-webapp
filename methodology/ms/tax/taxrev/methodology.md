@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: TAXREV
 DatasetCodes:
-  - TAXREV
+  - WB_TAXREV
 ItemName: Tax Revenue
 Description: Tax revenue as percentage of GDP.
 Footnote: null

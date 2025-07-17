@@ -19,13 +19,13 @@ from sspi_flask_app.models.database import (
 
 log = logging.getLogger(__name__)
 
-@collect_bp.route("/REDLST", methods=['GET'])
-@login_required
-def redlst():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("15.5.1", "REDLST", **kwargs)
-    log.info("Running /api/v1/collect/REDLST")
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/REDLST", methods=['GET'])
+# @login_required
+# def redlst():
+#     def collect_iterator(**kwargs):
+#         yield from collectSDGIndicatorData("15.5.1", "REDLST", **kwargs)
+#     log.info("Running /api/v1/collect/REDLST")
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 @compute_bp.route("/REDLST", methods=['GET'])
 @login_required

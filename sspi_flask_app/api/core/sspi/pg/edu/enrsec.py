@@ -16,12 +16,12 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/ENRSEC", methods=['GET'])
-@login_required
-def enrsec():
-    def collect_iterator(**kwargs):
-        yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/ENRSEC", methods=['GET'])
+# @login_required
+# def enrsec():
+#     def collect_iterator(**kwargs):
+#         yield from collectUISdata("NERT.2.CP", "ENRSEC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/ENRSEC", methods=['GET'])

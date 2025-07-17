@@ -15,10 +15,10 @@ Footnote: null
 Indicator: Gender Equality Index
 IndicatorCode: GENDEQ
 DatasetCodes:
-  - WMPLMT
-  - WMMOBL
-  - WMMARR
-  - WMFNMN
+  - IPU_WMPLMT
+  - WBL_WMMOBL
+  - WBL_WMMARR
+  - WBL_WMFNMN
 Inverted: false
 LowerGoalpost: null
 Policy: Equality in Politics and Before the Law

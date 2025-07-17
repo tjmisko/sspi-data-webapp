@@ -20,18 +20,17 @@ from sspi_flask_app.api.datasource.prisonstudies import (
 from sspi_flask_app.api.datasource.worldbank import collectWorldBankdata, clean_wb_data
 
 
-@collect_bp.route("/PRISON", methods=["GET"])
-@login_required
-def prison():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata(
-            "SP.POP.TOTL", "PRISON", IntermediateCode="POPULN", **kwargs
-        )
-        yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/PRISON", methods=["GET"])
+# @login_required
+# def prison():
+#     def collect_iterator(**kwargs):
+#         yield from collectWorldBankdata(
+#             "SP.POP.TOTL", "PRISON", IntermediateCode="POPULN", **kwargs
+#         )
+#         yield from collectPrisonStudiesData(IntermediateCode="PRIPOP", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/PRISON", methods=["GET"])

@@ -17,12 +17,12 @@ from sspi_flask_app.api.datasource.sdg import (
 )
 
 
-@collect_bp.route("/FAMPLN", methods=['GET'])
-@login_required
-def fampln():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/FAMPLN", methods=['GET'])
+# @login_required
+# def fampln():
+#     def collect_iterator(**kwargs):
+#         yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/FAMPLN")

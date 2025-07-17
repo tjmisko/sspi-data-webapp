@@ -9,9 +9,9 @@ Footnote: null
 Indicator: Senior Wellbeing
 IndicatorCode: SENIOR
 DatasetCodes:
-  - POVNRT
-  - YRSRTM
-  - YRSRTW
+  - OECD_POVNRT
+  - OECD_YRSRTM
+  - OECD_YRSRTW
 Inverted: true
 LowerGoalpost: 15.0
 Policy: "1) Old Age Income Poverty \n2) Retirement \nWellbeing"

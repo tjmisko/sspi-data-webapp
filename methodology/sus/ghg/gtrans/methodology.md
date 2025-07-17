@@ -9,8 +9,8 @@ Footnote: null
 Indicator: Green Transport Index
 IndicatorCode: GTRANS
 DatasetCodes:
-  - TCO2EM
-  - POPULN
+  - IEA_TCO2EM
+  - WB_POPULN
 Inverted: true
 LowerGoalpost: null
 Policy: Emissions from transportation (transport CO2)

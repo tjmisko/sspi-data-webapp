@@ -7,9 +7,9 @@ Footnote: null
 Indicator: Chemical Pollution Convention Compliance
 IndicatorCode: CHMPOL
 DatasetCodes:
-  - STKHLM
-  - BASELA
-  - MONTRL
+  - UNSDG_STKHLM
+  - UNSDG_BASELA
+  - UNSDG_MONTRL
 Inverted: false
 LowerGoalpost: 0.0
 Policy: "Chemical Waste \nManagement"

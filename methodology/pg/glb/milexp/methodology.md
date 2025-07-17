@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: MILEXP
 DatasetCodes:
-  - MILEXP
+  - SIPRI_MILEXP
 ItemName: Military Expenditure
 Description: Military expenditure (local currency at current prices) according to
   the calendar year as a percentage of GDP.
