@@ -1,4 +1,4 @@
-from flask_pymongo import MongoClient
+from flask_pymongo.wrappers import MongoClient
 import logging
 
 from sspi_flask_app.models.database.mongo_wrapper import (
@@ -19,8 +19,8 @@ from sspi_flask_app.models.database.sspi_metadata_deprecated import (
 from sspi_flask_app.models.database.sspi_metadata import (
     SSPIMetadata
 )
-from sspi_flask_app.models.database.sspi_score_data import (
-    SSPIScoreData
+from sspi_flask_app.models.database.sspi_item_data import (
+    SSPIItemData
 )
 from sspi_flask_app.models.database.sspi_production_data import (
     SSPIProductionData
@@ -57,8 +57,8 @@ sspi_raw_outcome_data = SSPIRawAPIData(
 sspi_clean_outcome_data = SSPICleanAPIData(
     sspidb.sspi_clean_outcome_data
 )
-sspi_score_data = SSPIScoreData(
-    sspidb.sspi_score_data
+sspi_score_data = SSPIItemData(
+    sspidb.sspi_item_data
 )
 sspi_country_characteristics = SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
@@ -82,6 +82,9 @@ sspi_panel_data = SSPIPanelData(
 # Production Data
 sspi_static_rank_data = SSPIProductionData(
     sspidb.sspi_static_rank_data
+)
+sspi_static_corr_data = SSPIProductionData(
+    sspidb.sspi_static_corr_data
 )
 sspi_static_radar_data = SSPIProductionData(
     sspidb.sspi_static_radar_data

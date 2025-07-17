@@ -12,14 +12,17 @@ log = logging.getLogger(__name__)
 class SSPIRawAPIData(MongoWrapper):
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
-        Raises an InvalidDocumentFormatError if the document is not in the
-        valid:
+        Raises an InvalidDocumentFormatError if the document is not in valid
+        RawDocument format
 
         Valid Document Format:
             {
-                "IndicatorCode": str,
+                "RawDocumentSetID": str,
+                "Collected": datetime,
+                "Username": str,
+                "SourceOrganizationName": str,
+                "SourceOrganizationCode": str,
                 "Raw": str or dict or int or float,
-                "CollectedAt": datetime,
                 ...
             }
         The fields IndicatorCode, Raw, and CollectedAt are required.
@@ -34,7 +37,7 @@ class SSPIRawAPIData(MongoWrapper):
         tab_ids = self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
-                    "IndicatorCode": "$IndicatorCode",
+                    "RawDocumentSetID": "$RawDocumentSetID",
                     "Raw": "$Raw"
                 },
                 "count": {"$sum": 1},
@@ -50,7 +53,7 @@ class SSPIRawAPIData(MongoWrapper):
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
                 f"'CollectedAt' is a required argument {doc_id}")
-        if not type(document["CollectedAt"]) is str:
+        if not isinstance(document["CollectedAt"], str):
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
@@ -63,7 +66,7 @@ class SSPIRawAPIData(MongoWrapper):
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
                 f"'Username' is a required argument {doc_id}")
-        if not type(document["Username"]) is str:
+        if not isinstance(document["Username"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Username' must be a str (document {document_number})")
@@ -74,19 +77,29 @@ class SSPIRawAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Raw' is a required argument (document {document_number})")
-        if not type(document["Raw"]) in [str, dict, int, float, list]:
+        if type(document["Raw"]) not in [str, dict, int, float, list]:
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
                 f"'Raw' must be a string, dict, int, float, or list {doc_id}")
 
-    def raw_insert_one(self, document: list | str | dict, IndicatorCode, **kwargs) -> int:
+    def validate_raw_document_set_id(self, document: dict, document_number: int = 0):
+        if "RawDocumentSetID" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'IndicatorCode' is a required argument (document {document_number})")
+        if not isinstance(document["IndicatorCode"], str):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'IndicatorCode' must be a string (document {document_number})")
+
+
+    def raw_insert_one(self, document: list | str | dict, raw_document_set_id, **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
         - Document to be passed as a well-formed dictionary or string for entry
         into pymongo
-        - IndicatorCode is the indicator code for the indicator that the
-        observation is for
+        - raw_document_set_id specifies the RawDocumentSet to which the RawDocument belongs
         - Implements automatic fragmentation to handle strings which are too large
         """
         byte_max = self.maximum_document_size_bytes
@@ -95,20 +108,20 @@ class SSPIRawAPIData(MongoWrapper):
             fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
             for i in range(num_fragments):
                 obs = {
-                    "IndicatorCode": IndicatorCode,
+                    "RawDocumentSetID": raw_document_set_id,
                     "Raw": document[byte_max * i:byte_max * i + byte_max],
                     "CollectedAt": datetime.now().strftime("%F %R")
                 }
                 obs.update(kwargs)
                 obs.update({
-                    "FragmentGroupID": f"{IndicatorCode}_{fragment_group_id}",
+                    "FragmentGroupID": f"{raw_document_set_id}_{fragment_group_id}",
                     "FragmentNumber": i,
                     "FragmentTotal": num_fragments,
                 })
                 self.insert_one(obs)
             return num_fragments
         obs = {
-            "IndicatorCode": IndicatorCode,
+            "RawDocumentSetID": raw_document_set_id,
             "Raw": document,
             "CollectedAt": datetime.now().strftime("%F %R")
         }
@@ -116,29 +129,29 @@ class SSPIRawAPIData(MongoWrapper):
         self.insert_one(obs)
         return 1
 
-    def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
+    def raw_insert_many(self, document_list, raw_document_set_id, **kwargs) -> int:
         """
         Utility Function
         - Observation to be past as a list of well form observation
         dictionaries
-        - IndicatorCode is the indicator code for the indicator that the
-        observation is for
+        - raw_document_set_id specifies the RawDocumentSet to which the RawDocument belongs
         """
         for observation in document_list:
-            self.raw_insert_one(observation, IndicatorCode, **kwargs)
+            self.raw_insert_one(observation, raw_document_set_id, **kwargs)
         return len(document_list)
 
-    def fetch_raw_data(self, IndicatorCode, **kwargs) -> list:
+    def fetch_raw_data(self, raw_document_set_id, **kwargs) -> list:
         """
-        Utility function that handles querying the database
+        Utility function that handles querying the database.
+
+        Kwargs passed to this function are used to update the pymongo query
         """
-        if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
-            msg = (
-                "No Documents with IndicatorCode " f"{IndicatorCode} in "
+        if not bool(self.find_one({"RawDocumentSetID": raw_document_set_id})):
+            raise ValueError(
+                "No Documents with RawDocumentSetID " f"{raw_document_set_id} in "
                 "sspi_raw_api_data. Do you forget to run collect?"
             )
-            raise ValueError(msg)
-        mongoQuery = {"IndicatorCode": IndicatorCode}
+        mongoQuery = {"RawDocumentSetID": raw_document_set_id}
         mongoQuery.update(kwargs)
         raw_data = self.find(mongoQuery)
         fragment_dict = {}
@@ -166,11 +179,11 @@ class SSPIRawAPIData(MongoWrapper):
             defragged_raw.append(rebuilt)
         return defragged_raw
 
-    def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
+    def raw_data_available(self, raw_document_set_id, **kwargs) -> bool:
         """
         Returns True if raw data is available for the given indicator code and
         kwargs
         """
-        MongoQuery = {"IndicatorCode": IndicatorCode}
-        MongoQuery.update(kwargs)
-        return bool(self.find_one(MongoQuery))
+        mongo_query = {"RawDocumentSetID": raw_document_set_id}
+        mongo_query.update(kwargs)
+        return bool(self.find_one(mongo_query))
