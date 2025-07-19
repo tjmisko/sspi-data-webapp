@@ -1,4 +1,3 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
@@ -27,13 +26,13 @@ from sspi_flask_app.api.datasource.sdg import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@collect_bp.route("/PHYSPC", methods=['GET'])
-@login_required
-def physpc():
-    def collect_iterator(**kwargs):
-        yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
-        yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/PHYSPC", methods=['GET'])
+# @login_required
+# def physpc():
+#     def collect_iterator(**kwargs):
+#         yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
+#         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/PHYSPC")

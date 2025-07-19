@@ -1,5 +1,5 @@
 from flask_login import login_required
-from sspi_flask_app.api.core.compute import compute_bp
+from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_outcome_data,
     sspi_clean_outcome_data

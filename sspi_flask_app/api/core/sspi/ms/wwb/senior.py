@@ -6,7 +6,7 @@ from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
 
-from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.datasource.oecdstat import (
     collectOECDSDMXData,
     parse_oecd_observations,

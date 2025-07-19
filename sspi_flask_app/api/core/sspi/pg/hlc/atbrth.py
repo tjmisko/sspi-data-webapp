@@ -1,4 +1,3 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (

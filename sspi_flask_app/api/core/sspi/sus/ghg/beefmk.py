@@ -11,7 +11,6 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     zip_intermediates,
 )
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.datasource.fao import collectUNFAOData
 import jq
 
