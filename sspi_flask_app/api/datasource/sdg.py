@@ -12,24 +12,33 @@ import math
 
 # Implement API Collection for
 # https://unstats.un.org/sdgapi/v1/sdg/Indicator/PivotData?indicator=14.5.1
-def collectSDGIndicatorData(SDGIndicatorCode, IndicatorCode, **kwargs):
-    url_params = f"indicator={SDGIndicatorCode}&pageSize=500"
+def collect_sdg_indicator_data(sdg_indicator_code, **kwargs):
+    url_params = f"indicator={sdg_indicator_code}"
+    url_options = "&pageSize=500"
     url_source = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/PivotData?"
-    base_url = url_source + url_params
-    response = requests.get(url_source + url_params)
+    sdg_series_url = url_source + url_params # This URL identifies RawDocumentSets for SDG
+    sdg_series_url_w_options = sdg_series_url + url_options
+    response = requests.get(sdg_series_url_w_options)
     nPages = response.json().get('totalPages')
-    yield f"Iterating through {nPages} pages of source data for SDG {SDGIndicatorCode}\n"
+    yield f"Iterating through {nPages} pages of source data for SDG {sdg_indicator_code}\n"
     for p in range(1, nPages + 1):
-        new_url = f"{base_url}&page={p}"
+        new_url = f"{sdg_series_url_w_options}&page={p}"
         yield "Fetching data for page {0} of {1}\n".format(p, nPages)
         response = requests.get(new_url)
         data_list = response.json().get('data')
+        source_info = {
+            "OrganizationName": "United Nations Sustainable Development Goals",
+            "OrganizationCode": "UNSDG",
+            "OrganizationSeriesCode": sdg_indicator_code,
+            "BaseURL": sdg_series_url,
+            "URL": new_url
+        }
         count = sspi_raw_api_data.raw_insert_many(
-            data_list, IndicatorCode, **kwargs
+            data_list, source_info, **kwargs
         )
         yield f"Inserted {count} new observations into SSPI Raw Data\n"
         time.sleep(1)
-    yield f"Collection complete for SDG {SDGIndicatorCode}"
+    yield f"Collection complete for SDG {sdg_indicator_code}"
 
 
 def extract_sdg(raw_sdg_pivot_data):

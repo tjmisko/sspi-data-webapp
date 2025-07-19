@@ -7,7 +7,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 import urllib3
 import ssl
 
-def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
+def collect_oecd_indicator(oecd_indicator_code, **kwargs):
     """
     The CustomHTTPAdapter class and the legacy session are necessary to connect to the OECD SDMX API
     because OECD does not support RFC 5746 secure renegotiation, which is the default for OpenSSL 3
@@ -34,32 +34,40 @@ def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
         session.mount('https://', CustomHttpAdapter(ctx))
         return session
 
-    SDMX_URL_OECD_METADATA = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{
-        OECDIndicatorCode}"
-    SDMX_URL_OECD = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{
-        OECDIndicatorCode}"
+    sdmx_url_oecd_metadata = f"https://stats.oecd.org/RestSDMX/sdmx.ashx/GetKeyFamily/{
+        oecd_indicator_code}"
+    sdmx_url_oecd = f"https://stats.oecd.org/restsdmx/sdmx.ashx/GetData/{
+        oecd_indicator_code}"
     yield "Sending Metadata Request to OECD SDMX API\n"
-    metadata_obj = get_legacy_session().get(SDMX_URL_OECD_METADATA)
+    metadata_obj = get_legacy_session().get(sdmx_url_oecd_metadata)
     metadata = str(metadata_obj.content)
     yield "Metadata Received from OECD SDMX API.  Sending Data Request to OECD SDMX API\n"
     yield "Sending Data Request to OECD SDMX API\n"
-    response_obj = get_legacy_session().get(SDMX_URL_OECD)
+    response_obj = get_legacy_session().get(sdmx_url_oecd)
     observation = str(response_obj.content)
     yield "Data Received from OECD SDMX API.  Storing Data in SSPI Raw Data\n"
+    source_info = {
+        "OrganizationName": "Organisation for Economic Development and Coorperation",
+        "OrganizationCode": "OECD",
+        "OrganizationSeriesCode": oecd_indicator_code,
+        "MetadataURL": sdmx_url_oecd_metadata,
+        "URL": sdmx_url_oecd,
+    }
     sspi_raw_api_data.raw_insert_one(
-        observation, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
+        observation, source_info, Metadata=metadata, **kwargs
+    )
     yield "Data Stored in SSPI Raw Data.  Collection Complete\n"
 
 # ghg (total), ghg (index1990), ghg (ghg cap), co2 (total)
 
 
-def extractAllSeries(oecd_XML):
+def extract_all_oecd_series(oecd_XML):
     xml_soup = bs.BeautifulSoup(oecd_XML, "lxml")
     series_list = xml_soup.find_all("series")
     return series_list
 
 
-def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
+def filter_oecd_series_list(series_list, filterVAR, oecd_indicator_code, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
     document_list = []
     for i, series in enumerate(series_list):
@@ -71,7 +79,7 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
         id_info = {
             "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
             "VariableCodeOECD": VAR,
-            "IndicatorCodeOECD": OECDIndicatorCode,
+            "IndicatorCodeOECD": oecd_indicator_code,
             "Source": "OECD",
             "IndicatorCode": IndicatorCode,
             "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
@@ -85,7 +93,7 @@ def filterSeriesList(series_list, filterVAR, OECDIndicatorCode, IndicatorCode):
     return document_list
 
 
-def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, IndicatorCode):
+def filterSeriesListSeniors(series_list, filterIND, oecd_indicator_code, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
     document_list = []
     for i, series in enumerate(series_list):
@@ -99,7 +107,7 @@ def filterSeriesListSeniors(series_list, filterIND, OECDIndicatorCode, Indicator
             "CountryCode": series_key.find("value", attrs={"concept": "COU"}).get("value"),
             "Unit": series_attributes.find("value", attrs={"concept": "UNIT"}).get("value"),
             "VariableCodeOECD": IND,
-            "IndicatorCodeOECD": OECDIndicatorCode,
+            "IndicatorCodeOECD": oecd_indicator_code,
             "Source": "OECD",
         }
         new_documents = [{"Year": obs.find("time").text, "Value": obs.find(
@@ -163,7 +171,7 @@ def OECD_country_list(series_list):
     return country_lst
 
 
-def collectOECDSDMXData(oecd_series_code, IndicatorCode, query_parameters="", metadata_url="", **kwargs):
+def collect_oecd_sdmx_data(oecd_series_code, query_parameters="", metadata_url="", **kwargs):
     metadata = None
     if metadata_url:
         yield f"Sending Metadata Request to OECD SDMX API ({metadata_url})\n"
@@ -176,12 +184,20 @@ def collectOECDSDMXData(oecd_series_code, IndicatorCode, query_parameters="", me
     url = f"{base_url}{oecd_series_code}?{query_parameters}"
     res = requests.get(url)
     raw_data = str(res.content)
+    source_info = {
+        "OrganizationName": "Organisation for Economic Development and Coorperation",
+        "OrganizationCode": "OECD",
+        "OrganizationSeriesCode": oecd_series_code,
+        "MetadataURL": metadata_url,
+        "URL": url,
+    }
     sspi_raw_api_data.raw_insert_one(
-        raw_data, IndicatorCode, Source="OECD", Metadata=metadata, **kwargs)
-    yield f"Data collection complete for indicator {IndicatorCode}\n"
+        raw_data, source_info, Metadata=metadata, **kwargs
+    )
+    yield f"Data collection complete for OECD series {oecd_series_code}\n"
 
 
-def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="....", query_parameters="", metadata_url="", **kwargs):
+def collect_oecd_sdmx_data_foraid(oecd_series_code, IndicatorCode, filter_parameters="....", query_parameters="", metadata_url="", **kwargs):
     """
     Code had to be specially adapted to foreign aid data to iterate through countries one by one
     """
@@ -206,12 +222,21 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
         url = f"{base_url}{
             oecd_series_code}/{cou_filter_parameters}?{query_parameters}"
         res = requests.get(url)
+        source_info = {
+            "OrganizationName": "Organisation for Economic Development and Coorperation",
+            "OrganizationCode": "OECD",
+            "OrganizationSeriesCode": oecd_series_code,
+            "MetadataURL": metadata_url,
+            "URL": url,
+            "BaseURL": f"{base_url}/{oecd_series_code}",
+        }
         raw_data = str(res.content)
         if raw_data == "NoRecordsFound":
             print(f"No records found for {cou_g}! Skipping Insertion")
             continue
-        sspi_raw_api_data.raw_insert_one(raw_data, IndicatorCode,
-                                         Source="OECD", Metadata=metadata, **kwargs)
+        sspi_raw_api_data.raw_insert_one(
+            raw_data, source_info, Metadata=metadata, **kwargs
+        )
         time.sleep(15)
     yield f"Data collection complete for indicator {IndicatorCode}\n"
 

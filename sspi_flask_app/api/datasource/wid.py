@@ -7,9 +7,10 @@ import pandas as pd
 from sspi_flask_app.models.database import sspi_raw_api_data
 
 
-def collectWIDData(IndicatorCode, **kwargs):
+def collect_wid_data(**kwargs):
     yield "Requesting WID data from source\n"
-    res = requests.get("https://wid.world/bulk_download/wid_all_data.zip")
+    url = "https://wid.world/bulk_download/wid_all_data.zip"
+    res = requests.get(url)
     res.raise_for_status()
     yield "Received WID data\n"
     zip_file = io.BytesIO(res.content)
@@ -22,12 +23,18 @@ def collectWIDData(IndicatorCode, **kwargs):
                 continue  # Don't save state-level data or metadata
             with z.open(file_name) as f:
                 raw = f.read().decode('utf-8')
+                source_info = {
+                    "OrganizationName": "World Inequality Database",
+                    "OrganizationCode": "WID",
+                    "OrganizationSeriesCode": file_name,
+                    "URL": url,
+                }
                 sspi_raw_api_data.raw_insert_one(
-                    raw, IndicatorCode, DatasetName=file_name, **kwargs
+                    raw, source_info, **kwargs
                 )
 
 
-def filterWIDcsv(csv_string: str, csv_filename: str, target_vars: list[str], variable: str, years: list[int]) -> pd.DataFrame:
+def filter_wid_csv(csv_string: str, csv_filename: str, target_vars: list[str], variable: str, years: list[int]) -> list:
     ccode_alpha_2 = csv_filename.split(".")[0].split("_")[2]
     country = pycountry.countries.get(alpha_2=ccode_alpha_2)
     if not country:

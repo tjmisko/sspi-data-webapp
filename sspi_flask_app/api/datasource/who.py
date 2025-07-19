@@ -1,20 +1,25 @@
 import requests
 import json
 from sspi_flask_app.models.database import sspi_raw_api_data
-from ..resources.utilities import parse_json
+from sspi_flask_app.api.resources.utilities import parse_json
 
 
-def collectWHOdata(WHOIndicatorCode, IndicatorCode, **kwargs):
-    response = requests.get(
-        f"https://ghoapi.azureedge.net/api/{WHOIndicatorCode}")
-    observation = json.loads(response.text)
+def collect_who_data(who_indicator_code, source_info, **kwargs):
+    url = f"https://ghoapi.azureedge.net/api/{who_indicator_code}"
+    response = requests.get(url)
+    source_info = {
+        "OrganizationName": "World Health Organization",
+        "OrganizationCode": "WHO",
+        "OrganizationSeriesCode": who_indicator_code,
+        "URL": url,
+    }
+    obs_list = json.loads(response.text)
     yield "Data Received from WHO API.  Storing Data in SSPI Raw Data\n"
-    count = sspi_raw_api_data.raw_insert_one(
-        observation, IndicatorCode, **kwargs)
+    count = sspi_raw_api_data.raw_insert_one(obs_list, source_info, **kwargs)
     yield f"Inserted {count} observations into the database."
 
 
-def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
+def clean_who_data(raw_data, IndicatorCode, Unit, Description):
     cleaned_data_list = []
     for entry in raw_data[0]["Raw"]["value"]:
         if IndicatorCode == "DPTCOV":
@@ -30,7 +35,7 @@ def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
                 "Description": Description,
                 "Unit": Unit,
                 "Year": entry["TimeDim"],
-                "Value": entry["Value"].split(" ")[0]
+                "Value": entry["Value"].split(" ")[0],
             }
         else:
             if entry["SpatialDimType"] != "COUNTRY":
@@ -41,7 +46,7 @@ def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
                 "Description": Description,
                 "Unit": Unit,
                 "Year": entry["TimeDim"],
-                "Value": entry["Value"]
+                "Value": entry["Value"],
             }
         cleaned_data_list.append(observation)
     return parse_json(cleaned_data_list)
@@ -49,16 +54,16 @@ def cleanWHOdata(raw_data, IndicatorCode, Unit, Description):
 
 def cleanWHOdata_UHC(raw_data, IndicatorCode, Unit, Description):
     cleaned_data_list = []
-    
+
     for entry in raw_data[0]["Raw"]["value"]:
         observation = {
-        "CountryCode": entry["SpatialDim"],
-        "IndicatorCode": IndicatorCode,
-        "Description": Description,
-        "Unit": Unit,
-        "Year": entry["TimeDim"],
-        "Value": entry["NumericValue"]
-    }
+            "CountryCode": entry["SpatialDim"],
+            "IndicatorCode": IndicatorCode,
+            "Description": Description,
+            "Unit": Unit,
+            "Year": entry["TimeDim"],
+            "Value": entry["NumericValue"],
+        }
     cleaned_data_list.append(observation)
 
     return parse_json(cleaned_data_list)

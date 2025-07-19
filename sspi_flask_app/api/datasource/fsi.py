@@ -8,15 +8,14 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 from sspi_flask_app.api.resources.utilities import get_country_code, parse_json
 
 
-def collectFSIdata(IndicatorCode, **kwargs):
-    url = "https://fragilestatesindex.org/excel/"
+def collect_fsi_data(**kwargs):
+    base_url = "https://fragilestatesindex.org/excel/"
     # need to specify user agent otherwise requests are blocked
-    header = {"User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"} 
-    response = requests.get(url, headers = header)
+    header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"} 
+    response = requests.get(base_url, headers = header)
     if response.status_code != 200:
         return "Add header with user agent so request is not blocked"
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(base_url, "html.parser")
     excel_a_tags = soup.find_all('a')
     links = {}
     for a_tag in excel_a_tags:
@@ -28,15 +27,22 @@ def collectFSIdata(IndicatorCode, **kwargs):
         if year not in links.keys():
             links[year] = link
     for year in links.keys():
-        data = links[year]
-        excel = requests.get(data, headers = header)
+        data_url = links[year]
+        excel = requests.get(data_url, headers = header)
+        source_info = {
+            "OrganizationName": "Fragile States Index",
+            "OrganizationCode": "FSI",
+            "OrganizationSeriesCode": "FSI",
+            "BaseURL": base_url,
+            "URL": data_url
+        }
+        yield f"Collection complete for FSI Data"
         excel_readable = BytesIO(excel.content)
         df = pd.read_excel(excel_readable)
         obs = len(df.index)
         json = df.to_dict(orient = "records")
-        sspi_raw_api_data.raw_insert_one({"json": json}, IndicatorCode, **kwargs)
-        yield f"Insered {obs} observations for {year} into raw database\n"
-    yield f"Collection complete for {IndicatorCode}"
+        sspi_raw_api_data.raw_insert_one(json, source_info, **kwargs)
+        yield f"Insered {obs} observations for FSI for {year} into raw database\n"
 
 
 def cleanFSIdata(raw_data, IndicatorCode, unit, description):
