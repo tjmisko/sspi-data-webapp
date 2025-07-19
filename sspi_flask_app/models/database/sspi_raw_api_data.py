@@ -15,23 +15,24 @@ class SSPIRawAPIData(MongoWrapper):
         Raises an InvalidDocumentFormatError if the document is not in valid
         RawDocument format
 
-        Valid Document Format:
+        Valid Raw Document Format:
             {
-                "RawDocumentSetID": str,
-                "Collected": datetime,
-                "Username": str,
-                "SourceOrganizationName": str,
-                "SourceOrganizationCode": str,
+                "CollectionInfo": {
+                    "Username": str,
+                    "Date": str
+                }
+                "Source": {
+                    "OrganizationCode": str,
+                    "OrganizationSeriesCode": str
+                },
                 "Raw": str or dict or int or float,
                 ...
             }
         The fields IndicatorCode, Raw, and CollectedAt are required.
         Additional fields are allowed, but not required.
         """
-        self.validate_indicator_code(document, document_number)
         self.validate_raw(document, document_number)
-        self.validate_collected_at(document, document_number)
-        self.validate_username(document, document_number)
+        self.validate_collection_info(document, document_number)
 
     def tabulate_ids(self):
         tab_ids = self._mongo_database.aggregate([
@@ -46,30 +47,60 @@ class SSPIRawAPIData(MongoWrapper):
         ])
         return json.loads(json_util.dumps(tab_ids))
 
-    def validate_collected_at(self, document: dict, document_number: int = 0):
-        # Validate CollectedAt format
-        if "CollectedAt" not in document.keys():
+    def validate_collection_info(self, document: dict, document_number: int = 0):
+        # Validate Date format
+        if "CollectionInfo" not in document["CollectionInfo"].keys():
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' is a required argument {doc_id}")
-        if not isinstance(document["CollectedAt"], str):
+                f"'Date' is a required argument {doc_id}")
+        if "Date" not in document["CollectionInfo"].keys():
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' must be a str {(doc_id)}")
-
-    def validate_username(self, document: dict, document_number: int = 0):
-        # Validate Username format
-        if "Username" not in document.keys():
+                f"'Date' is a required argument {doc_id}")
+        if not isinstance(document["CollectionInfo"]["Date"], str):
+            print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
+            raise InvalidDocumentFormatError(
+                f"'Date' must be a str {(doc_id)}")
+        if "Username" not in document["CollectionInfo"].keys():
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
                 f"'Username' is a required argument {doc_id}")
-        if not isinstance(document["Username"], str):
+        if not isinstance(document["CollectionInfo"]["Username"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Username' must be a str (document {document_number})")
+
+    def validate_source(self, document: dict, document_number: int = 0):
+        # Validate Source format
+        if "Source" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
+            raise InvalidDocumentFormatError(
+                f"'Source' is a required field {doc_id}")
+        if not isinstance(document["Source"], dict):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Source' must be a dict (document {document_number})")
+        if not all([isinstance(k, str) for k in document["Source"].keys()]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"All Source keys must be strings (document {document_number})")
+        if not all([isinstance(v, str) for v in document["Source"].values()]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"All Source Values must be strings (document {document_number})")
+        if not "OraganizationCode" in document["Source"].keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"Source dict must contain an OrganizationCode (document {document_number})")
+        if not "OrganizationSeriesCode" in document["Source"].keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"Source dict must contain an OrganizationSeriesCode (document {document_number})")
 
     def validate_raw(self, document: dict, document_number: int = 0):
         # Validate Raw format
@@ -83,35 +114,29 @@ class SSPIRawAPIData(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'Raw' must be a string, dict, int, float, or list {doc_id}")
 
-    def validate_raw_document_set_id(self, document: dict, document_number: int = 0):
-        if "RawDocumentSetID" not in document.keys():
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'IndicatorCode' is a required argument (document {document_number})")
-        if not isinstance(document["IndicatorCode"], str):
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'IndicatorCode' must be a string (document {document_number})")
-
-
-    def raw_insert_one(self, document: list | str | dict, raw_document_set_id, **kwargs) -> int:
+    def raw_insert_one(self, document: list | str | dict, source_id: dict[str, str], **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
         - Document to be passed as a well-formed dictionary or string for entry
         into pymongo
-        - raw_document_set_id specifies the RawDocumentSet to which the RawDocument belongs
         - Implements automatic fragmentation to handle strings which are too large
+        :param source_id: Dictionary uniquely identifying raw document sets
         """
+        username = kwargs.get("username", None)
+        assert username is not None, "username must be provided as a key word argument to raw_insert_one"
+        obs = {
+            "CollectionInfo": {
+                "Date": datetime.now().strftime("%F %R"),
+                "Username": username,
+            },
+            "Source": source_id
+        }
         byte_max = self.maximum_document_size_bytes
         if isinstance(document, str) and len(document) > byte_max:
             num_fragments = (len(document) + byte_max - 1) // byte_max
             fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
             for i in range(num_fragments):
-                obs = {
-                    "RawDocumentSetID": raw_document_set_id,
-                    "Raw": document[byte_max * i:byte_max * i + byte_max],
-                    "CollectedAt": datetime.now().strftime("%F %R")
-                }
+                obs["Raw"] = document[byte_max * i:byte_max * i + byte_max],
                 obs.update(kwargs)
                 obs.update({
                     "FragmentGroupID": f"{raw_document_set_id}_{fragment_group_id}",
@@ -120,16 +145,12 @@ class SSPIRawAPIData(MongoWrapper):
                 })
                 self.insert_one(obs)
             return num_fragments
-        obs = {
-            "RawDocumentSetID": raw_document_set_id,
-            "Raw": document,
-            "CollectedAt": datetime.now().strftime("%F %R")
-        }
+        obs["Raw"] = document
         obs.update(kwargs)
         self.insert_one(obs)
         return 1
 
-    def raw_insert_many(self, document_list, raw_document_set_id, **kwargs) -> int:
+    def raw_insert_many(self, document_list: list,  source_info: dict[str, str], **kwargs) -> int:
         """
         Utility Function
         - Observation to be past as a list of well form observation
@@ -137,7 +158,7 @@ class SSPIRawAPIData(MongoWrapper):
         - raw_document_set_id specifies the RawDocumentSet to which the RawDocument belongs
         """
         for observation in document_list:
-            self.raw_insert_one(observation, raw_document_set_id, **kwargs)
+            self.raw_insert_one(observation, source_info, **kwargs)
         return len(document_list)
 
     def fetch_raw_data(self, raw_document_set_id, **kwargs) -> list:
@@ -187,3 +208,22 @@ class SSPIRawAPIData(MongoWrapper):
         mongo_query = {"RawDocumentSetID": raw_document_set_id}
         mongo_query.update(kwargs)
         return bool(self.find_one(mongo_query))
+
+    def get_collection_info(self, series_code):
+
+
+    def get_source_info(self, series_code):
+
+
+    def check_coverage(self, dataset_list) -> tuple[list[str], list[str]]:
+        """
+        Checks the coverage of the raw API data for the given dataset list.
+        Returns a tuple of uncollected datasets and collected datasets.
+        """
+        uncollected_datasets = []
+        collected_datasets = []
+        for ds_code in dataset_list:
+            source_info = sspi_metadata.get_source_info(ds_code)
+            # check whether that source has been collected 
+        return uncollected_datasets, collected_datasets
+
