@@ -5,7 +5,7 @@ from io import BytesIO
 
 
 
-def collectVDEMData(**kwargs):
+def collect_vdem_data(**kwargs):
     """
     Collect V-Dem data for the given indicator.
     Updated to fragment large CSV files into 24 slices to avoid exceeding BSON document size limits.

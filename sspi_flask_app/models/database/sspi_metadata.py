@@ -151,6 +151,8 @@ class SSPIMetadata(MongoWrapper):
         """
         dataset_details = self.load_dataset_files()
         dataset_details.sort(key=lambda x: x["DatasetCode"])
+        source_details = self.generate_source_details(dataset_details)
+        source_details.sort(key=lambda x: x["Metadata"]["DatasetCodes"][0])
         item_details = self.load_methodology_files()
         for detail in item_details:
             detail["DocumentType"] = detail["ItemType"] + "Detail"
@@ -169,11 +171,12 @@ class SSPIMetadata(MongoWrapper):
             {"DocumentType": "PillarCodes", "Metadata": item_codes["Pillar"]},
             {"DocumentType": "CategoryCodes", "Metadata": item_codes["Category"]},
             {"DocumentType": "IndicatorCodes", "Metadata": item_codes["Indicator"]},
-            {"DocumentType": "DatasetCodes", "Metadata": [d["DatasetCode"] for d in dataset_details]}
+            {"DocumentType": "DatasetCodes", "Metadata": [d["DatasetCode"] for d in dataset_details]},
         ])
         metadata.extend(self.build_country_groups(country_groups))
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_item_details)
+        metadata.extend(source_details)
         metadata.extend([{
             "DocumentType": "DatasetDetail",
             "Metadata": d
@@ -355,6 +358,37 @@ class SSPIMetadata(MongoWrapper):
                 cou["SSPIColor"] = sspi_custom_colors[cou["CountryCode"]]
         return details
 
+    def generate_source_details(self, dataset_details: list[dict]) -> list[dict]:
+        """
+        Generates source details from dataset details. Used to lookup 
+        the list of datasets that depend on a given source name.
+        """
+        source_to_ds_map = {}
+        for detail in dataset_details:
+            if "Source" not in detail.keys():
+                raise DatasetFileError(
+                    f"Dataset {detail['DatasetCode']} does not have a 'Source' field. "
+                    "Please ensure that all dataset files have a 'Source' field in the YAML frontmatter."
+                )
+            if not isinstance(detail["Source"], dict):
+                raise DatasetFileError(
+                    f"Dataset {detail['DatasetCode']} has an invalid 'Source' field. "
+                    "The 'Source' field YAML must evaluate to a 'dict' in python."
+                )
+            hashable_source = tuple(sorted(detail["Source"].items()))
+            if hashable_source not in source_to_ds_map:
+                source_to_ds_map[hashable_source] = []
+            source_to_ds_map[hashable_source].append(detail["DatasetCode"])
+        return [
+            {
+                "DocumentType": "SourceDetail",
+                "Metadata": {
+                    "Source": dict(source),
+                    "DatasetCodes": dataset_codes
+                }
+            } for source, dataset_codes in source_to_ds_map.items()
+        ]
+
     def build_pillar_category_summary_tree(self, details) -> dict:
         pc_summary_tree = []
         categories = []
@@ -405,6 +439,13 @@ class SSPIMetadata(MongoWrapper):
                 "Value": "/data/indicator/" + meta["IndicatorCode"],
             })
         return option_list
+
+    def item_codes(self) -> list[str]:
+        item_code_list = ["SSPI"]
+        item_code_list.extend(self.indicator_codes())
+        item_code_list.extend(self.category_codes())
+        item_code_list.extend(self.pillar_codes())
+        return item_code_list
 
     def category_options(self) -> list[str]:
         """
@@ -486,10 +527,10 @@ class SSPIMetadata(MongoWrapper):
         """
         Return a list of documents containg dataset details
         """
-        code_list = []
-        for detail in self.find({"DocumentType": "DatasetDetail"}):
-            code_list.append(detail["Metadata"]["DatasetCode"])
-        return code_list
+        result = self.find_one({"DocumentType": "DatasetCodes"})
+        if not result:
+            return []
+        return result.get("Metadata", [])
 
     def get_dataset_detail(self, DatasetCode: str) -> dict:
         """
@@ -500,6 +541,16 @@ class SSPIMetadata(MongoWrapper):
             "Metadata.DatasetCode": DatasetCode
         }
         return self.find_one(query)["Metadata"]
+
+    def get_series_type(self, series_code: str) -> str|None:
+        """
+        """
+        if series_code in self.dataset_codes():
+            return "Dataset"
+        elif series_code in self.item_codes():
+            return "Item"
+        else:
+            return None
 
     def get_item_detail(self, ItemCode: str) -> dict:
         """
@@ -524,9 +575,11 @@ class SSPIMetadata(MongoWrapper):
         if ItemCode == "SSPI":
             return self.find({"DocumentType": "PillarDetail"})
         elif ItemCode in self.pillar_codes():
-            return self.find({"DocumentType": "CategoryDetail", "Metadata.PillarCode": ItemCode})
+            category_codes = self.get_pillar_detail(ItemCode)["Children"]
+            return self.find({"DocumentType": "CategoryDetail", "Metadata.ItemCode": {"$in": category_codes}})
         elif ItemCode in self.category_codes():
-            return self.find({"DocumentType": "IndicatorDetail", "Metadata.CategoryCode": ItemCode})
+            indicator_codes = self.get_category_detail(ItemCode)["Children"]
+            return self.find({"DocumentType": "IndicatorDetail", "Metadata.ItemCode": {"$in": indicator_codes}})
         elif ItemCode in self.indicator_codes():
             detail = self.get_indicator_detail(ItemCode)  # Ensure the indicator exists
             child_codes = detail.get("DatasetCodes", [])
@@ -644,3 +697,44 @@ class SSPIMetadata(MongoWrapper):
                 "It is likely that there is an error in the YAML frontmatter format."
             )
         return methodology_html
+
+    def get_dataset_dependencies(self, series_code: str) -> list:
+        """
+        Returns the list of datasets on which the provided series_code depends
+        """
+        series_type = self.get_series_type(series_code)
+        if series_type == "Dataset":
+            return [ series_code ]
+        elif series_type == "Item":
+            children = self.get_item_detail(series_code).get("Children", [])
+            if not children and series_code in self.indicator_codes():
+                children = self.get_indicator_detail(series_code).get("DatasetCodes", [])
+            assert not any([c is None for c in children])
+            dataset_dependencies = []
+            for c in children:
+                dataset_dependencies = dataset_dependencies + self.get_dataset_dependencies(c)
+            return dataset_dependencies   
+        else:
+            return []
+
+    def get_source_info(self, dataset_code: str) -> dict:
+        """
+        Returns the source information for the given dataset code
+        """
+        detail = self.get_dataset_detail(dataset_code)
+        if not detail:
+            raise ValueError(f"Dataset code {dataset_code} not found in metadata.")
+        return detail["Source"]
+
+    def get_downstream_datasets(self, source_info: dict) -> list[str]:
+        """
+        Returns a list of dataset codes that depend on the given source information
+        """
+        source_query = {}
+        for k,v in source_info.items():
+            source_query["Metadata.Source." + k] = v
+        source_query["DocumentType"] = "SourceDetail"
+        source_detail = self.find_one(source_query)
+        if not source_detail:
+            return []
+        return source_detail["Metadata"]["DatasetCodes"]

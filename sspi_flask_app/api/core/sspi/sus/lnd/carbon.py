@@ -1,7 +1,7 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.fao import collectUNFAOData, format_FAO_data_series
+from sspi_flask_app.api.datasource.unfao import collect_unfao_data, format_fao_data_series
 from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_raw_api_data,
@@ -17,7 +17,7 @@ from sspi_flask_app.api.resources.utilities import (
 # @login_required
 # def carbon():
 #     def collect_iterator(**kwargs):
-#         yield from collectUNFAOData("7215", "6646", "RL", "CARBON", **kwargs)
+#         yield from collect_unfao_data("7215", "6646", "RL", "CARBON", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -28,7 +28,7 @@ def compute_carbon():
     sspi_clean_api_data.delete_many({"IndicatorCode": "CARBON"})
     lg, ug = sspi_metadata.get_goalposts("CARBON")
     raw_data = sspi_raw_api_data.fetch_raw_data("CARBON")[0]["Raw"]["data"]
-    clean_obs_list = format_FAO_data_series(raw_data, "CARBON")
+    clean_obs_list = format_fao_data_series(raw_data, "CARBON")
     average_1990s_dict = {}
     for obs in clean_obs_list:
         if obs["Year"] not in list(range(1990, 2000)):

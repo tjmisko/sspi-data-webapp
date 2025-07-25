@@ -52,28 +52,33 @@ def clean_who_data(raw_data, IndicatorCode, Unit, Description):
     return parse_json(cleaned_data_list)
 
 
-def cleanWHOdata_UHC(raw_data, IndicatorCode, Unit, Description):
-    cleaned_data_list = []
-
-    for entry in raw_data[0]["Raw"]["value"]:
-        observation = {
-            "CountryCode": entry["SpatialDim"],
-            "IndicatorCode": IndicatorCode,
-            "Description": Description,
-            "Unit": Unit,
-            "Year": entry["TimeDim"],
-            "Value": entry["NumericValue"],
-        }
-    cleaned_data_list.append(observation)
-
+# def cleanWHOdata_UHC(raw_data, IndicatorCode, Unit, Description):
+#     cleaned_data_list = []
+    # for entry in raw_data[0]["Raw"]["value"]:
+    #     observation = {
+    #         "CountryCode": entry["SpatialDim"],
+    #         "IndicatorCode": IndicatorCode,
+    #         "Description": Description,
+    #         "Unit": Unit,
+    #         "Year": entry["TimeDim"],
+    #         "Value": entry["NumericValue"],
+    #     }
+    # cleaned_data_list.append(observation)
     return parse_json(cleaned_data_list)
 
 
-def collectCSTUNTData(**kwargs):
+def collect_gho_cstunt_data(**kwargs):
     yield "Collecting data from WHO API\n"
     base_url = "https://apps.who.int/gho/athena/data/GHO/"
     stub = "NUTSTUNTINGPREV,NUTRITION_ANT_HAZ_NE2.json?filter=COUNTRY:*&ead="
     yield "Fetching from {}\n".format(base_url + stub)
     raw = requests.get(base_url + stub).json()
-    sspi_raw_api_data.raw_insert_one(raw, "CSTUNT", **kwargs)
+    source_info = {
+        "OrganizationName": "Global Health Observatory",
+        "OrganizationCode": "GHO",
+        "OrganizationSeriesCode": "NUTSTUNTINGPREV,NUTRITION_ANT_HAZ_NE2",
+        "URL": base_url + stub,
+        "BaseURL": base_url,
+    }
+    sspi_raw_api_data.raw_insert_one(raw, source_info, **kwargs)
     yield "Succesfully stored raw CSTUNT data in sspi_raw_api_database!\n"

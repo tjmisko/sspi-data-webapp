@@ -2,10 +2,10 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.oecdstat import (
-    collectOECDSDMXFORAID,
+    collect_oecd_sdmx_data_foraid
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
+    collect_world_bank_data,
     clean_wb_data,
 )
 from sspi_flask_app.api.resources.utilities import (
@@ -27,7 +27,7 @@ from sspi_flask_app.models.database import (
 # def foraid():
 #     def collect_iterator(**kwargs):
 #         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
-#         yield from collectOECDSDMXFORAID(
+#         yield from collect_oecd_sdmx_data_foraid(
 #             "OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,",
 #             "FORAID",
 #             filter_parameters="..206.USD.Q",

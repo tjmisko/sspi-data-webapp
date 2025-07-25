@@ -2,8 +2,8 @@ import logging
 from flask import Response, current_app as app
 from flask_login import login_required, current_user
 from sspi_flask_app.api.core.sspi import compute_bp
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )

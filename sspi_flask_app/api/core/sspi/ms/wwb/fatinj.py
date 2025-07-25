@@ -1,7 +1,7 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.ilo import collect_ilo_data 
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data
@@ -19,7 +19,7 @@ import json
 # @login_required
 # def fatinj():
 #     def collect_iterator(**kwargs):
-#         yield from collectILOData("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
+#         yield from collect_ilo_data("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
 #     return Response(
 #         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
 #     )

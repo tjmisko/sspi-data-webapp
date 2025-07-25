@@ -10,8 +10,8 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.fsi import (
-    collectFSIdata,
-    cleanFSIdata
+    collect_fsi_data,
+    clean_fsi_data
 )
 
 
@@ -35,7 +35,7 @@ def compute_secapp():
         "attacks/battle-related deaths, rebel movements, mutinies, coups, or "
         "terrorism. It is an index scored between 0 and 10."
     )
-    cleaned_list = cleanFSIdata(
+    cleaned_list = clean_fsi_data(
         raw_data, "SECAPP", "Index", description
     )
     scored_list = score_single_indicator(cleaned_list, "SECAPP")

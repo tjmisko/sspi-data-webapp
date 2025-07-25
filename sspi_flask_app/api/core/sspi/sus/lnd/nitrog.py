@@ -1,6 +1,6 @@
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.epi import collectEPIData
+from sspi_flask_app.api.datasource.epi import collect_epi_data
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
@@ -20,7 +20,7 @@ import json
 # @login_required
 # def nitrog():
 #     def collect_iterator(**kwargs):
-#         yield from collectEPIData("SNM_ind_na.csv", "NITROG", **kwargs)
+#         yield from collect_epi_data("SNM_ind_na.csv", "NITROG", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

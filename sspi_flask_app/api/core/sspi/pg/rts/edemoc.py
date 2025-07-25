@@ -9,7 +9,7 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_single_indicator
 )
-from sspi_flask_app.api.datasource.vdem import collectVDEMData
+from sspi_flask_app.api.datasource.vdem import collect_vdem_data
 from io import StringIO
 import pandas as pd
 from datetime import datetime

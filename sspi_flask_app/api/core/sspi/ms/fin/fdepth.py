@@ -3,7 +3,7 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collectWorldBankdata
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_world_bank_data
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     slice_intermediate,
@@ -26,8 +26,8 @@ from sspi_flask_app.models.database import (
 # @login_required
 # def fdepth():
 #     def collect_iterator(**kwargs):
-#         yield from collectWorldBankdata("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
-#         yield from collectWorldBankdata("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
+#         yield from collect_world_bank_data("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
+#         yield from collect_world_bank_data("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

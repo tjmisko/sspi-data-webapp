@@ -1,7 +1,7 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import current_app as app, Response
-from sspi_flask_app.api.datasource.wid import collectWIDData, filterWIDcsv
+from sspi_flask_app.api.datasource.wid import collect_wid_data, filter_wid_csv
 from sspi_flask_app.api.resources.utilities import parse_json, zip_intermediates, goalpost
 from sspi_flask_app.models.database import (
     sspi_metadata,
@@ -15,7 +15,7 @@ from datetime import datetime
 # @login_required
 # def ishrat():
 #     def collect_iterator(**kwargs):
-#         yield from collectWIDData(IndicatorCode="ISHRAT", **kwargs)
+#         yield from collect_wid_data(IndicatorCode="ISHRAT", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -29,7 +29,7 @@ def compute_ishrat():
     intermediates_list = []
     current_year = datetime.now().year
     for obs in raw_data:
-        filtered_list = filterWIDcsv(
+        filtered_list = filter_wid_csv(
             obs['Raw'], obs["DatasetName"],
             ['p0p50', 'p90p100'], 'sptincj992',
             list(range(1990, current_year))

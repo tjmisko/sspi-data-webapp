@@ -2,8 +2,8 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.sipri import (
-    collectSIPRIdata,
-    cleanSIPRIData,
+    collect_sipri_data,
+    clean_sipri_data,
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
@@ -20,7 +20,7 @@ import json
 # @login_required
 # def armexp():
 #     def collect_iterator(**kwargs):
-#         yield from collectSIPRIdata("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
+#         yield from collect_sipri_data("local/ARMEXP/armexp.csv", "ARMEXP", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -34,7 +34,7 @@ def compute_armexp():
         "The supply of military weapons through sales, aid, gifts, and those "
         "made through manufacturing licenses."
     )
-    cleaned_list = cleanSIPRIData(
+    cleaned_list = clean_sipri_data(
         'local/armexp.csv',
         'ARMEXP',
         'Millions of arms',

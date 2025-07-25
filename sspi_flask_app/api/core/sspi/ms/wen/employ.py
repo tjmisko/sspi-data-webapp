@@ -1,7 +1,7 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.ilo import collect_ilo_data
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data
@@ -19,7 +19,7 @@ from io import StringIO
 # @login_required
 # def lfpart():
 #     def collect_iterator(**kwargs):
-#         yield from collectILOData(
+#         yield from collect_ilo_data(
 #             "DF_EAP_DWAP_SEX_AGE_RT",
 #             "EMPLOY",
 #             QueryParams=".A...AGE_AGGREGATE_Y25-54",

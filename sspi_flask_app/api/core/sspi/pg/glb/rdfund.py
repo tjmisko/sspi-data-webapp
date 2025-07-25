@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )
@@ -21,8 +21,8 @@ from sspi_flask_app.api.resources.utilities import (
 # @login_required
 # def rdfund():
 #     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData("9.5.1", "RDFUND", **kwargs)
-#         yield from collectSDGIndicatorData("9.5.2", "RDFUND", **kwargs)
+#         yield from collect_sdg_indicator_data("9.5.1", "RDFUND", **kwargs)
+#         yield from collect_sdg_indicator_data("9.5.2", "RDFUND", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

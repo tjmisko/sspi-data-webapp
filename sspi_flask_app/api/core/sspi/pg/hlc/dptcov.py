@@ -10,8 +10,8 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.who import (
-    collectWHOdata,
-    cleanWHOdata
+    collect_who_data,
+    clean_who_data
 )
 
 
@@ -19,7 +19,7 @@ from sspi_flask_app.api.datasource.who import (
 # @login_required
 # def dptcov():
 #     def collect_iterator(**kwargs):
-#         yield from collectWHOdata("vdpt", "DPTCOV", **kwargs)
+#         yield from collect_who_data("vdpt", "DPTCOV", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -30,7 +30,7 @@ def compute_dptcov():
     sspi_clean_api_data.delete_many({"IndicatorCode": "DPTCOV"})
     raw_data = sspi_raw_api_data.fetch_raw_data("DPTCOV")
     description = "DTP3 immunization coverage among one-year-olds (%)"
-    cleaned = cleanWHOdata(raw_data, "DPTCOV", "Percent", description)
+    cleaned = clean_who_data(raw_data, "DPTCOV", "Percent", description)
     scored_list = score_single_indicator(cleaned, "DPTCOV")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

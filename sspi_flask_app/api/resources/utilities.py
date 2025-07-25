@@ -761,3 +761,59 @@ def regression_imputation(
         doc["Unit"] = unit
         doc["Value"] = (ug - lg) * doc["Score"] + lg
     return document_list
+
+
+def check_raw_document_set_coverage(dataset_list: list[str]) -> tuple[list[str], list[str]]:
+    """
+    Checks the coverage of the raw API data for the given dataset list.
+    Returns a tuple of lists: uncollected datasets and collected datasets.
+    If a dataset is not collected, it is added to the uncollected list.
+    If a dataset is collected, it is added to the collected list.
+    :param dataset_list: List of dataset codes to check.
+    :return: Tuple of lists (uncollected_datasets, collected_datasets)
+    """
+
+    collected_datasets = []
+    uncollected_datasets = []
+    for ds_code in dataset_list:
+        source_info = sspi_metadata.get_source_info(ds_code)
+        if sspi_raw_api_data.raw_data_available(source_info):
+            collected_datasets.append(ds_code)
+        else:
+            uncollected_datasets.append(ds_code)
+    return uncollected_datasets, collected_datasets
+
+
+def deduplicate_dictionary_list(dicts: list[dict]) -> list:
+    seen = set()
+    unique = []
+    for d in dicts:
+        key = tuple(sorted(d.items()))
+        if key not in seen:
+            seen.add(key)
+            unique.append(d)
+    return unique
+
+def reduce_dataset_list(dataset_list: list[str]) -> list[str]:
+    """
+    Reduce the dataset list by removing datasets with duplicate
+    source information. Each RawDocumentSet/Source may contain 
+    the information for multiple datasets. This function takes 
+    a list of dataset codes which may not be an injective mapping
+    onto RawDocumentSets and returns sublist of dataset codes
+    which is bijective onto RawDocumentSets.
+    :param dataset_list: List of dataset codes to reduce.
+    :return: List of dataset codes with unique source information.
+    """
+    source_info = [sspi_metadata.get_source_info(ds) for ds in dataset_list]
+    source_info_dedup = deduplicate_dictionary_list(source_info)
+    dataset_list_reduced = []
+    for uniq_source in source_info_dedup:
+        i = 0
+        found = False
+        while i < len(dataset_list) and not found:
+            if uniq_source == source_info[i]:
+                dataset_list_reduced.append(dataset_list[i])
+                found = True
+            i += 1
+    return dataset_list_reduced

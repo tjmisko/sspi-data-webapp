@@ -2,7 +2,7 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.api.core.sspi import impute_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData
+from sspi_flask_app.api.datasource.unsdg import collect_sdg_indicator_data
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
@@ -18,17 +18,17 @@ from sspi_flask_app.api.resources.utilities import (
     filter_imputations,
     impute_global_average
 )
-from sspi_flask_app.api.datasource.sdg import extract_sdg, filter_sdg
+from sspi_flask_app.api.datasource.unsdg import extract_sdg, filter_sdg
 
 
 # @collect_bp.route("/WATMAN", methods=["GET"])
 # @login_required
 # def watman():
 #     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData(
+#         yield from collect_sdg_indicator_data(
 #             "6.4.1", "WATMAN", IntermediateCode="CWUEFF", **kwargs
 #         )
-#         yield from collectSDGIndicatorData(
+#         yield from collect_sdg_indicator_data(
 #             "6.4.2", "WATMAN", IntermediateCode="WTSTRS", **kwargs
 #         )
 #     return Response(

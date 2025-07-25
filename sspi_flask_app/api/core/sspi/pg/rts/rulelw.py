@@ -9,7 +9,7 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_single_indicator
 )
-from sspi_flask_app.api.datasource.vdem import collectVDEMData
+from sspi_flask_app.api.datasource.vdem import collect_vdem_data
 from datetime import datetime
 from io import StringIO
 import pandas as pd
@@ -20,7 +20,7 @@ import json
 # @login_required
 # def rulelw():
 #     def collect_iterator(**kwargs):
-#         yield from collectVDEMData("v2x_rule", "RULELW", **kwargs)
+#         yield from collect_vdem_data("v2x_rule", "RULELW", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

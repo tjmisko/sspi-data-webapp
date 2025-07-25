@@ -37,7 +37,7 @@ def filter_series_list_iea(series_list, filterVAR, IndicatorCode):
         document_list.extend(new_documents)
     return document_list
 
-def cleanIEAData_altnrg(RawData, IndName):
+def clean_iea_data_altnrg(RawData, IndName):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
     and returns a list of dictionaries with only relevant data from wanted countries

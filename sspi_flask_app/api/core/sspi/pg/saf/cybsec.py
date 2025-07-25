@@ -10,8 +10,8 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.itu import (
-    collect_itu_data,
-    cleanITUData_cybsec
+    load_itu_data_from_local_transcription,
+    clean_itu_data
 )
 import json
 
@@ -19,7 +19,7 @@ import json
 # @login_required
 # def cybsec():
 #     def collect_iterator(**kwargs):
-#         yield from collect_itu_data("CYBSEC", **kwargs)
+#         yield from load_itu_data_from_local_transcription(**kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -29,7 +29,7 @@ def compute_cybsec():
     app.logger.info("Running /api/v1/compute/CYBSEC")
     sspi_clean_api_data.delete_many({"IndicatorCode": "CYBSEC"})
     cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
-    cleaned_list = cleanITUData_cybsec(cybsec_raw, 'CYBSEC')
+    cleaned_list = clean_itu_data(cybsec_raw)
     obs_list = json.loads(str(cleaned_list.to_json(orient="records")))
     scored_list = score_single_indicator(obs_list, "CYBSEC")
     sspi_clean_api_data.insert_many(scored_list)

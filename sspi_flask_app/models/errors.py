@@ -33,3 +33,9 @@ class DatasetFileError(Exception):
     Raised when there is an error with the methodology file
     """
     pass
+
+class InvalidSeriesTypeError(Exception):
+    """
+    Raised when a series_code has no valid series type associated with it
+    """
+    pass

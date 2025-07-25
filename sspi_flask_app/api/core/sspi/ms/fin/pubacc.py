@@ -10,7 +10,7 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
+    collect_world_bank_data,
     clean_wb_data
 )
 
@@ -19,7 +19,7 @@ from sspi_flask_app.api.datasource.worldbank import (
 # @login_required
 # def pubacc():
 #     def collect_iterator(**kwargs):
-#         yield from collectWorldBankdata("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
+#         yield from collect_world_bank_data("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

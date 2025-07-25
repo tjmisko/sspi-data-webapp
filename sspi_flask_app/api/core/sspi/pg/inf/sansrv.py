@@ -10,7 +10,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
+    collect_world_bank_data,
     clean_wb_data
 )
 
@@ -19,7 +19,7 @@ from sspi_flask_app.api.datasource.worldbank import (
 # @login_required
 # def sansrv():
 #     def collect_iterator(**kwargs):
-#         yield from collectWorldBankdata("SH.STA.BASS.ZS", "SANSRV", **kwargs)
+#         yield from collect_world_bank_data("SH.STA.BASS.ZS", "SANSRV", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

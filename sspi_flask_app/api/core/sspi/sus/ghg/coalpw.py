@@ -1,6 +1,6 @@
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.iea import collect_iea_data
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
@@ -12,7 +12,7 @@ from sspi_flask_app.api.resources.utilities import (
     zip_intermediates,
 )
 import pandas as pd
-from sspi_flask_app.api.datasource.iea import cleanIEAData_altnrg
+from sspi_flask_app.api.datasource.iea import clean_iea_data_altnrg
 import json
 
 
@@ -20,7 +20,7 @@ import json
 # @login_required
 # def coalpw():
 #     def collect_iterator(**kwargs):
-#         yield from collectIEAData("TESbySource", "COALPW", **kwargs)
+#         yield from collect_iea_data("TESbySource", "COALPW", **kwargs)
 #     return Response(
 #         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
 #     )
@@ -52,7 +52,7 @@ def compute_coalpw():
         "COMRENEW": "BIOWAS",
         "MTOTOIL": "FSLOIL",
     }
-    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "COALPW"))
+    intermediate_data = pd.DataFrame(clean_iea_data_altnrg(raw_data, "COALPW"))
     intermediate_data.drop(
         intermediate_data[
             intermediate_data["CountryCode"].map(lambda s: len(s) != 3)

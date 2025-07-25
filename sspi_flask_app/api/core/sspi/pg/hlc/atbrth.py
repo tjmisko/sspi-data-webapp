@@ -10,8 +10,8 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.who import (
-    collectWHOdata,
-    cleanWHOdata
+    collect_who_data,
+    clean_who_data
 )
 
 
@@ -19,7 +19,7 @@ from sspi_flask_app.api.datasource.who import (
 # @login_required
 # def atbrth():
 #     def collect_iterator(**kwargs):
-#         yield from collectWHOdata("MDG_0000000025", "ATBRTH", **kwargs)
+#         yield from collect_who_data("MDG_0000000025", "ATBRTH", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -33,7 +33,7 @@ def compute_atbrth():
     The proportion of births attended by trained and/or skilled
     health personnel
     """
-    cleaned = cleanWHOdata(raw_data, "ATBRTH", "Percent", description)
+    cleaned = clean_who_data(raw_data, "ATBRTH", "Percent", description)
     scored_list = score_single_indicator(cleaned, "ATBRTH")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

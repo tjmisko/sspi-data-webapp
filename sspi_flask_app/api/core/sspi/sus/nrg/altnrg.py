@@ -6,7 +6,7 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.iea import cleanIEAData_altnrg, collectIEAData
+from sspi_flask_app.api.datasource.iea import clean_iea_data_altnrg, collect_iea_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     parse_json,
@@ -25,7 +25,7 @@ from sspi_flask_app.models.database import (
 # @login_required
 # def altnrg():
 #     def collect_iterator(**kwargs):
-#         yield from collectIEAData("TESbySource", "ALTNRG", **kwargs)
+#         yield from collect_iea_data("TESbySource", "ALTNRG", **kwargs)
 #     return Response(
 #         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
 #     )
@@ -58,7 +58,7 @@ def compute_altnrg():
         "COMRENEW": "BIOWAS",
         "MTOTOIL": "FSLOIL",
     }
-    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "ALTNRG"))
+    intermediate_data = pd.DataFrame(clean_iea_data_altnrg(raw_data, "ALTNRG"))
     intermediate_data.drop(
         intermediate_data[
             intermediate_data["CountryCode"].map(lambda s: len(s) != 3)

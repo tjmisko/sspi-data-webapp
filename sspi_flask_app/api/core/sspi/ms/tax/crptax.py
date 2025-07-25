@@ -4,8 +4,8 @@ from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.datasource.taxfoundation import (
-    cleanTaxFoundation,
-    collectTaxFoundationData,
+    clean_tax_foundation,
+    collect_tax_foundation_data,
 )
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
@@ -24,7 +24,7 @@ from sspi_flask_app.models.database import (
 # @login_required
 # def crptax():
 #     def collect_iterator(**kwargs):
-#         yield from collectTaxFoundationData('CRPTAX', **kwargs)
+#         yield from collect_tax_foundation_data('CRPTAX', **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -34,7 +34,7 @@ def compute_crptax():
     app.logger.info("Running /api/v1/compute/CRPTAX")
     sspi_clean_api_data.delete_many({"IndicatorCode": "CRPTAX"})
     crptax_raw = sspi_raw_api_data.fetch_raw_data("CRPTAX")
-    crptax_clean = cleanTaxFoundation(crptax_raw, "CRPTAX", "Tax Rate", "Corporate Taxes")
+    crptax_clean = clean_tax_foundation(crptax_raw, "CRPTAX", "Tax Rate", "Corporate Taxes")
     scored_list = score_single_indicator(crptax_clean, "CRPTAX")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

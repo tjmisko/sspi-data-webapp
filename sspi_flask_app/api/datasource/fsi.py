@@ -45,7 +45,7 @@ def collect_fsi_data(**kwargs):
         yield f"Insered {obs} observations for FSI for {year} into raw database\n"
 
 
-def cleanFSIdata(raw_data, IndicatorCode, unit, description):
+def clean_fsi_data(raw_data, IndicatorCode, unit, description):
     clean_list = []
     for obs in raw_data:
         data = obs["Raw"]["json"]

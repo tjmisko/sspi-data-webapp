@@ -1,7 +1,7 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.ilo import collectILOData
+from sspi_flask_app.api.datasource.ilo import collect_ilo_data
 from sspi_flask_app.models.database import sspi_raw_api_data, sspi_clean_api_data
 from sspi_flask_app.api.resources.utilities import parse_json, score_single_indicator
 import pandas as pd
@@ -13,7 +13,7 @@ import json
 # def colbar():
 #     def collect_iterator(**kwargs):
 #         url_params = ["startPeriod=1990-01-01", "endPeriod=2024-12-31"]
-#         yield from collectILOData(
+#         yield from collect_ilo_data(
 #             "DF_ILR_CBCT_NOC_RT", "COLBAR", URLParams=url_params, **kwargs
 #         )
 #     return Response(

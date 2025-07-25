@@ -10,11 +10,11 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.who import (
-    collectWHOdata,
-    cleanWHOdata
+    collect_who_data,
+    clean_who_data
 )
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
 )
 
 # # PHYSPC for Correlation Analysis with UHC
@@ -22,7 +22,7 @@ from sspi_flask_app.api.datasource.sdg import (
 # @login_required
 # def physpc():
 #     def collect_iterator(**kwargs):
-#         yield from collectWHOdata("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
+#         yield from collect_who_data("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -30,8 +30,8 @@ from sspi_flask_app.api.datasource.sdg import (
 # @login_required
 # def physpc():
 #     def collect_iterator(**kwargs):
-#         yield from collectWHOdata("HWF_0001", "PHYSPC", **kwargs)
-#         yield from collectSDGIndicatorData("3.8.1", "PHYSPC", **kwargs)
+#         yield from collect_who_data("HWF_0001", "PHYSPC", **kwargs)
+#         yield from collect_sdg_indicator_data("3.8.1", "PHYSPC", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
@@ -46,7 +46,7 @@ def compute_physpc():
         "Number of medical doctors (physicians), both generalists and "
         "specialists, expressed per 10,000 people."
     )
-    cleaned = cleanWHOdata(raw_data, "PHYSPC", unit, description)
+    cleaned = clean_who_data(raw_data, "PHYSPC", unit, description)
     scored_list = score_single_indicator(cleaned, "PHYSPC")
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

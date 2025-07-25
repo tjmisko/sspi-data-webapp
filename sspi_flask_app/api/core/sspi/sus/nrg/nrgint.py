@@ -3,8 +3,8 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )
@@ -24,7 +24,7 @@ from sspi_flask_app.models.database import (
 # @login_required
 # def nrgint():
 #     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData("7.3.1", "NRGINT", **kwargs)
+#         yield from collect_sdg_indicator_data("7.3.1", "NRGINT", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

@@ -8,7 +8,7 @@ from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.datasource.oecdstat import (
-    collectOECDSDMXData,
+    collect_oecd_sdmx_data,
     parse_oecd_observations,
 )
 from sspi_flask_app.api.resources.utilities import (
@@ -33,7 +33,7 @@ from sspi_flask_app.models.database import (
 #             "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
 #             "latest?references=all&format=sdmx-json"
 #         )
-#         yield from collectOECDSDMXData(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
+#         yield from collect_oecd_sdmx_data(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )
@@ -20,7 +20,7 @@ from sspi_flask_app.api.resources.utilities import (
 # @login_required
 # def chmpol():
 #     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData("12.4.1", "CHMPOL", **kwargs)
+#         yield from collect_sdg_indicator_data("12.4.1", "CHMPOL", **kwargs)
 #     return Response(
 #         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
 #     )

@@ -8,7 +8,7 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_single_indicator
 )
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collectWorldBankdata
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_world_bank_data
 from flask_login import login_required, current_user
 
 
@@ -16,7 +16,7 @@ from flask_login import login_required, current_user
 # @login_required
 # def drkwat():
 #     def collect_iterator(**kwargs):
-#         yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
+#         yield from collect_world_bank_data("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

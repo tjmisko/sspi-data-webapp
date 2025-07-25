@@ -10,7 +10,7 @@ from sspi_flask_app.api.resources.utilities import (
     score_single_indicator
 )
 from sspi_flask_app.api.datasource.who import (
-    collectCSTUNTData
+    collect_gho_cstunt_data
 )
 import jq
 
@@ -19,7 +19,7 @@ import jq
 # @login_required
 # def cstunt():
 #     def collect_iterator(**kwargs):
-#         yield from collectCSTUNTData(**kwargs)
+#         yield from collect_gho_cstunt_data(**kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 

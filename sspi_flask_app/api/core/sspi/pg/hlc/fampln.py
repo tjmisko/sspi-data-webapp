@@ -9,8 +9,8 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_single_indicator
 )
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )
@@ -20,7 +20,7 @@ from sspi_flask_app.api.datasource.sdg import (
 # @login_required
 # def fampln():
 #     def collect_iterator(**kwargs):
-#         yield from collectSDGIndicatorData("3.7.1", "FAMPLN", **kwargs)
+#         yield from collect_sdg_indicator_data("3.7.1", "FAMPLN", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
