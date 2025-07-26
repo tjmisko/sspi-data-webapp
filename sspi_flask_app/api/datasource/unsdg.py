@@ -89,7 +89,7 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map={}, drop_k
     """
     observations - the list of observations returned by extract_sdg
     Arguments are used in this order:
-    idcode_map - a dictionary specifying how to map an SDGSeriesCode to an IntermediateCode
+    idcode_map - a dictionary specifying how to map an SDGSeriesCode to an DatasetCode
     kwargs - Use keyword arguments to filter based on fields
         - Pass a string, float, or int to retain only observations with the field
         - Pass a list of strings, floats, or ints
@@ -110,8 +110,7 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map={}, drop_k
     for obs in observations:
         if obs["SDGSeriesCode"] not in idcode_map.keys():
             continue
-        if len(idcode_map.keys()) > 1:
-            obs["IntermediateCode"] = idcode_map[obs["SDGSeriesCode"]]
+        obs["DatasetCode"] = idcode_map[obs["SDGSeriesCode"]]
         drop_obs = False
         for k, v in kwargs.items():
             if k not in obs.keys():

@@ -8,7 +8,7 @@ from sspi_flask_app.models.database import (
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import (
     collect_world_bank_data,
@@ -71,10 +71,10 @@ def compute_aqelec():
         d.pop("Description", None)
         d.pop("IndicatorCode", None)
     combined_list = wb_clean + df_final
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         combined_list, "AQELEC",
-        ScoreFunction=lambda AVELEC, QUELEC: 0.5 * AVELEC + 0.5 * QUELEC,
-        ScoreBy="Score"
+        score_function=lambda AVELEC, QUELEC: 0.5 * AVELEC + 0.5 * QUELEC,
+        unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

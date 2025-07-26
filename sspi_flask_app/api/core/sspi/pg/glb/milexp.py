@@ -7,11 +7,13 @@ from sspi_flask_app.api.datasource.sipri import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 import json
 
@@ -33,6 +35,11 @@ def compute_milexp():
     description = "Military expenditure (current prices, million USD)"
     cleaned_list = clean_sipri_data(milexp_raw, 'MILEXP', unit, description)
     obs_list = json.loads(str(cleaned_list.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "MILEXP")
+    lg, ug = sspi_metadata.get_goalposts("MILEXP")
+    scored_list, _ = score_indicator(
+        obs_list, "MILEXP",
+        score_function=lambda SIPRI_MILEXP: goalpost(SIPRI_MILEXP, lg, ug),
+        unit="Expenditure"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

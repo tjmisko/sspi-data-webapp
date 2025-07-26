@@ -3,11 +3,13 @@ from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.api.datasource.vdem import collect_vdem_data
 from io import StringIO
@@ -46,6 +48,10 @@ def compute_edemoc():
             "Value": obs["v2x_polyarchy"],
             "Unit": "Index"
         })
-    scored_list = score_single_indicator(clean_list, "EDEMOC")
+    scored_list, _ = score_indicator(
+        clean_list, "EDEMOC",
+        score_function=lambda VDEM_EDEMOC: goalpost(VDEM_EDEMOC, lg, ug),
+        unit="Index"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

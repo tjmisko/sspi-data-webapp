@@ -4,11 +4,13 @@ from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.unsdg import collect_sdg_indicator_data, extract_sdg, filter_sdg
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 
 
@@ -31,6 +33,11 @@ def compute_airpol():
         extracted_airpol, {"EN_ATM_PM25": "AIRPOL"},
         location="ALLAREA"
     )
-    scored_list = score_single_indicator(filtered_airpol, "AIRPOL")
+    lg, ug = sspi_metadata.get_goalposts("AIRPOL")
+    scored_list, _ = score_indicator(
+        filtered_airpol, "AIRPOL",
+        score_function=lambda UNSDG_AIRPOL: goalpost(UNSDG_AIRPOL, lg, ug),
+        unit="Pollution Level"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

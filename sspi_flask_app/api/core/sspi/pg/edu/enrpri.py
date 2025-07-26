@@ -13,7 +13,8 @@ from sspi_flask_app.api.resources.utilities import (
     impute_global_average,
     interpolate_linear,
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -39,7 +40,12 @@ def compute_enrpri():
     raw_data = sspi_raw_api_data.fetch_raw_data("ENRPRI")
     description = "Net enrollment in primary school (%)"
     cleaned_list = clean_uis_data(raw_data, "ENRPRI", "Percent", description)
-    scored_list = score_single_indicator(cleaned_list, "ENRPRI")
+    lg, ug = sspi_metadata.get_goalposts("ENRPRI")
+    scored_list = score_indicator(
+        cleaned_list, "ENRPRI",
+        score_function=lambda UIS_ENRPRI: goalpost(UIS_ENRPRI, lg, ug),
+        unit="%"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

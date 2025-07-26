@@ -9,7 +9,7 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.api.datasource.unfao import collect_unfao_data
 import jq
@@ -80,8 +80,8 @@ def compute_beefmk():
         elif obs["IntermediateCode"] == "POPULN":
             obs["Value"] = obs["Value"] * 1e3
             obs["Unit"] = "Persons"
-    clean_list, incomplete_list = zip_intermediates(
-        intermediates_list, "BEEFMK", ScoreFunction=score_beefmk, ScoreBy="Value"
+    clean_list, incomplete_list = score_indicator(
+        intermediates_list, "BEEFMK", score_function=score_beefmk, unit="Index"
     )
     sspi_incomplete_api_data.insert_many(incomplete_list)
     sspi_clean_api_data.insert_many(clean_list)

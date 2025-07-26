@@ -11,12 +11,14 @@ from sspi_flask_app.api.datasource.unsdg import (
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_raw_api_data,
+    sspi_metadata
 )
 
 
@@ -38,7 +40,12 @@ def compute_nrgint():
     filtered_nrgint = filter_sdg(
         extracted_nrgint, {"EG_EGY_PRIM": "NRGINT"},
     )
-    scored_list = score_single_indicator(filtered_nrgint, "NRGINT")
+    lg, ug = sspi_metadata.get_goalposts("NRGINT")
+    scored_list, _ = score_indicator(
+        filtered_nrgint, "NRGINT",
+        score_function=lambda EPI_NRGINT: goalpost(EPI_NRGINT, lg, ug),
+        unit="Index"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

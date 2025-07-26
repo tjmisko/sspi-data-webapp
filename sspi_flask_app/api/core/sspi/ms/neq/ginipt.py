@@ -9,14 +9,15 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     interpolate_linear,
     parse_json,
-    score_single_indicator,
+    score_indicator,
     regression_imputation,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_raw_api_data,
-    sspi_metadata,
+    sspi_metadata
 )
 
 
@@ -37,7 +38,12 @@ def compute_ginipt():
     sspi_clean_api_data.delete_many({"IndicatorCode": "GINIPT"})
     raw_data = sspi_raw_api_data.fetch_raw_data("GINIPT")
     clean_ginipt = clean_wb_data(raw_data, "GINIPT", "GINI Coeffecient")
-    scored_list = score_single_indicator(clean_ginipt, "GINIPT")
+    lg, ug = sspi_metadata.get_goalposts("GINIPT")
+    scored_list, _ = score_indicator(
+        clean_ginipt, "GINIPT",
+        score_function=lambda WB_GINIPT: goalpost(WB_GINIPT, lg, ug),
+        unit="Coefficient"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

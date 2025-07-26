@@ -1,4 +1,5 @@
 import json
+from typing import Callable
 import pycountry
 from bson import json_util
 from flask import jsonify
@@ -134,28 +135,21 @@ def added_countries(sspi_country_list, source_country_list):
     return additional_countries
 
 
-def zip_intermediates(
-    document_list,
-    IndicatorCode,
-    ScoreFunction,
-    ValueFunction=None,
-    UnitFunction=None,
-    ScoreBy="Value",
+def score_indicator(
+    dataset_document_list: list[dict],
+    indicator_code: str,
+    score_function: Callable,
+    unit: str | Callable,
 ):
     """
-    Utility function for zipping together intermediate documents into indicator documents
+    Utility function for computing indicator scores documents into indicator documents
     """
-    document_list = convert_data_types(document_list)
-    intermediates_list, items_list = filter_intermediates(document_list)
-    sspi_clean_api_data.validate_intermediates_list(intermediates_list)
-    sspi_clean_api_data.validate_items_list(items_list)
-    intermediates_list, noneish_list = drop_none_or_na(intermediates_list)
-    gp_intermediates_list = append_goalpost_info(intermediates_list, ScoreBy)
-    indicator_list = group_by_indicator(
-        gp_intermediates_list, items_list, IndicatorCode
-    )
+    dataset_document_list = convert_data_types(dataset_document_list)
+    sspi_clean_api_data.validate_dataset_list(dataset_document_list)
+    dataset_document_list, noneish_list = drop_none_or_na(dataset_document_list)
+    indicator_list = group_by_indicator(dataset_document_list, indicator_code)
     scored_indicator_document_list = score_indicator_documents(
-        indicator_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+        indicator_list, score_function, unit
     )
     return filter_incomplete_data(scored_indicator_document_list)
 
@@ -168,21 +162,6 @@ def convert_data_types(document_list):
         document["Year"] = int(document["Year"])
         document["Value"] = float(document["Value"])
     return document_list
-
-
-def filter_intermediates(document_list):
-    """
-    Utility function for filtering out intermediate documents from other items
-    to be included inside of Items
-    """
-    filtered_list = []
-    items_list = []
-    for document in document_list:
-        if "IntermediateCode" in document.keys():
-            filtered_list.append(document)
-        elif "ItemCode" in document.keys():
-            items_list.append(document)
-    return filtered_list, items_list
 
 
 def drop_none_or_na(intermediate_document_list):
@@ -201,82 +180,45 @@ def drop_none_or_na(intermediate_document_list):
     return intermediate_document_list, noneish_list
 
 
-def append_goalpost_info(intermediate_document_list, ScoreBy):
-    """
-    Utility function for appending goalpost information to a document
-    """
-    if ScoreBy == "Value":
-        return intermediate_document_list
-    intermediate_codes = set(
-        [doc["IntermediateCode"] for doc in intermediate_document_list]
-    )
-    intermediate_details = sspi_metadata.find(
-        {
-            "DocumentType": "IntermediateDetail",
-            "Metadata.IntermediateCode": {"$in": list(intermediate_codes)},
-        }
-    )
-    # print(intermediate_details)
-    for document in intermediate_document_list:
-        for detail in intermediate_details:
-            if document["IntermediateCode"] == detail["Metadata"]["IntermediateCode"]:
-                document["LowerGoalpost"] = detail["Metadata"]["LowerGoalpost"]
-                document["UpperGoalpost"] = detail["Metadata"]["UpperGoalpost"]
-                document["Score"] = goalpost(
-                    document["Value"],
-                    detail["Metadata"]["LowerGoalpost"],
-                    detail["Metadata"]["UpperGoalpost"],
-                )
-    return intermediate_document_list
-
-
-def group_by_indicator(intermediates_list, items_list, IndicatorCode) -> list:
+def group_by_indicator(dataset_document_list, indicator_code) -> list:
     """
     Utility function for grouping documents by indicator
     """
     indicator_document_hashmap = dict()
-    for document in intermediates_list:
+    for document in dataset_document_list:
         document_id = f"{document['CountryCode']}_{document['Year']}"
         if document_id not in indicator_document_hashmap.keys():
             indicator_document_hashmap[document_id] = {
-                "IndicatorCode": IndicatorCode,
+                "IndicatorCode": indicator_code,
                 "CountryCode": document["CountryCode"],
                 "Year": document["Year"],
-                "Intermediates": [],
-                "Items": [],
+                "Datasets": [],
             }
-        indicator_document_hashmap[document_id]["Intermediates"].append(document)
-    for document in items_list:
-        document_id = f"{document['CountryCode']}_{document['Year']}"
-        if document_id in indicator_document_hashmap.keys():
-            indicator_document_hashmap[document_id]["Items"].append(document)
+        indicator_document_hashmap[document_id]["Datasets"].append(document)
     return list(indicator_document_hashmap.values())
 
 
 def score_indicator_documents(
-    indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+    indicator_document_list: list[dict], 
+    score_function: Callable,
+    unit: str | Callable
 ):
     """
     Utility function for scoring indicator documents
+
+    :param indicator_document_list: List of indicator documents to score.
+    :param score_function: Function to compute the score for each document. The
+        function must take DatasetCodes as arguments and return a float.
+    :param unit: Function to compute the unit for each document, or a string
+        representing the unit. If a function is provided, it must take the same
+        arguments as the score_function and return a string.
     """
-    arg_name_list = list(inspect.signature(ScoreFunction).parameters.keys())
-    if ValueFunction is None:
-        ValueFunction = ScoreFunction
+    arg_name_list = list(inspect.signature(score_function).parameters.keys())
     for i, document in enumerate(indicator_document_list):
-        if ScoreBy == "Value":
-            arg_value_dict = {
-                intermediate["IntermediateCode"]: intermediate.get("Value", None)
-                for intermediate in document["Intermediates"]
-            }
-        elif ScoreBy == "Score":
-            arg_value_dict = {
-                intermediate["IntermediateCode"]: intermediate.get("Score", None)
-                for intermediate in document["Intermediates"]
-            }
-        else:
-            raise ValueError(
-                f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Value' or 'Score'"
-            )
+        arg_value_dict = {
+            dataset["DatasetCode"]: dataset.get("Value", None)
+            for dataset in document["Datasets"]
+        }
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
@@ -284,12 +226,11 @@ def score_indicator_documents(
         except KeyError:
             print(f"KeyError: {arg_name_list} for {arg_value_dict}")
             continue
-        score = ScoreFunction(*arg_value_list)
-        value = ValueFunction(*arg_value_list)
-        document["Value"] = value
-        document["Unit"] = (
-            UnitFunction(*arg_value_list) if UnitFunction else "Aggregate"
-        )
+        score = score_function(*arg_value_list)
+        if isinstance(unit, str):
+            document["Unit"] = unit
+        elif isinstance(unit, Callable):
+            document["Unit"] = unit(*arg_value_list)
         document["Score"] = score
     return indicator_document_list
 
@@ -307,7 +248,6 @@ def filter_incomplete_data(indicator_document_list):
             "IndicatorCode",
             "CountryCode",
             "Year",
-            "Value",
             "Unit",
             "Score",
         ]
@@ -318,29 +258,12 @@ def filter_incomplete_data(indicator_document_list):
     return filtered_list, partial_observation_list
 
 
-def score_single_indicator(document_list, IndicatorCode):
-    """
-    Utility function for scoring an indicator which does not
-    contain intermediates; does not require score function
-    """
-    document_list = convert_data_types(document_list)
-    final = goalpost_and_score_indicator(document_list, IndicatorCode)
-    for doc in document_list:
-        doc["IndicatorCode"] = IndicatorCode
-        sspi_clean_api_data.validate_document_format(doc)
-    return final
-
-
-def goalpost_and_score_indicator(document_list, IndicatorCode):
-    lg, ug = sspi_metadata.get_goalposts(IndicatorCode)
-    for document in document_list:
-        document["Score"] = goalpost(document["Value"], lg, ug)
-    return document_list
-
-
 def country_code_to_name(CountryCode):
     try:
-        return pycountry.countries.get(alpha_3=CountryCode).name
+        guess = pycountry.countries.get(alpha_3=CountryCode)
+        if not guess:
+            raise AttributeError
+        return guess.name
     except AttributeError:
         return CountryCode
 
@@ -380,7 +303,12 @@ def get_country_code(CountryName):
     if "timor leste" in str.lower(CountryName):
         return "TLS"
     else:
-        return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
+        try:
+            guess = pycountry.countries.lookup(CountryName)
+            return guess.alpha_3
+        except LookupError:
+            # If the country name is not found, return the name as is
+            return CountryName
 
 
 def colormap(PillarCode, alpha: str = "ff"):
@@ -610,34 +538,34 @@ def generate_item_groups(
     return list(item_levels.values())
 
 
-def slice_intermediate(doc_list, intermediate_codes: list[str] | str):
+def slice_dataset(doc_list, dataset_codes: list[str] | str):
     """
-    Utility taking for extracting intermediates from the output of
-    zip_intermediates
+    Utility taking for extracting datasets from the output of
+    score_indicator
 
-    :param doc_list: List of documents to extract intermediates from, in the
-    format of the output of zip_intermediates.
-    :param intermediate_codes: List of intermediate codes to filter by, or a single
-    intermediate code as a string.
+    :param doc_list: List of documents to extract datasets from, in the
+    format of the output of score_indicator.
+    :param dataset_codes: List of dataset codes to filter by, or a single
+    dataset code as a string.
     """
-    intermediates = []
-    if not isinstance(intermediate_codes, list):
-        intermediate_codes = [intermediate_codes]
+    datasets = []
+    if not isinstance(dataset_codes, list):
+        dataset_codes = [dataset_codes]
     for doc in doc_list:
         print(doc)
-        for intermediate in doc.get("Intermediates", []):
-            if intermediate.get("IntermediateCode") in intermediate_codes:
-                intermediates.append(intermediate)
-    return intermediates
+        for dataset in doc.get("Datasets", []):
+            if dataset.get("DatasetCode") in dataset_codes:
+                datasets.append(dataset)
+    return datasets
 
 
 def filter_imputations(doc_list):
     """
     Utility taking for extracting imputations from the output of
-    zip_intermediates
+    score_indicator
 
     :param doc_list: List of documents to extract intermediates from, in the
-    format of the output of zip_intermediates.
+    format of the output of score_indicator.
     """
     imputations = []
     for doc in doc_list:

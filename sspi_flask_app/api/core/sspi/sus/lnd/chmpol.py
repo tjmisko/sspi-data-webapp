@@ -11,7 +11,7 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
 )
 from sspi_flask_app.api.resources.utilities import (
-    score_single_indicator,
+    score_indicator,
     parse_json,
 )
 
@@ -35,8 +35,12 @@ def compute_chmpol():
     extracted_chmpol = extract_sdg(raw_data)
     filtered_chmpol = filter_sdg(
         extracted_chmpol,
-        {"SG_HAZ_CMRSTHOLM": "CHMPOL"},
+        {"SG_HAZ_CMRSTHOLM": "STKHLM"},
     )
-    scored_list = score_single_indicator(filtered_chmpol, "CHMPOL")
+    scored_list, _ = score_indicator(
+        filtered_chmpol, "CHMPOL",
+        score_function=lambda UNSDG_STKHLM, UNSDG_MONTRL, UNSDG_BASELA: 0,
+        unit="Index" 
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

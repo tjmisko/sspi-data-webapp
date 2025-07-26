@@ -3,11 +3,13 @@ from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.api.datasource.who import (
     collect_gho_cstunt_data
@@ -57,6 +59,11 @@ def compute_cstunt():
     rename_keys_filter = jq.compile(rename_keys)
     value_list = rename_keys_filter.input(reduced_list).all()
     # Score the indicator data
-    scored_list = score_single_indicator(value_list, "CSTUNT")
+    lg, ug = sspi_metadata.get_goalposts("CSTUNT")
+    scored_list, _ = score_indicator(
+        value_list, "CSTUNT",
+        score_function=lambda GHO_CSTUNT: goalpost(GHO_CSTUNT, lg, ug),
+        unit = "%"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

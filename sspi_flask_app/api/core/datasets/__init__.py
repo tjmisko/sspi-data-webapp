@@ -2,9 +2,9 @@ from functools import wraps
 import importlib
 import pkgutil
 from typing import Callable
-dataset_registry = {}
+dataset_collector_registry = {}
 
-def dataset(name: str):
+def dataset_collector(name: str):
     """
     Parameterized decorator: registers the function in the `datasets` dict.
     Usage:
@@ -16,7 +16,24 @@ def dataset(name: str):
         @wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
-        dataset_registry[name] = wrapper
+        dataset_collector_registry[name] = wrapper
+        return wrapper
+    return decorator
+
+dataset_cleaner_registry = {}
+def dataset_cleaner(name: str):
+    """
+    Parameterized decorator: registers the function in the `datasets` dict.
+    Usage:
+        @dataset("foo")
+        def clean_foo(): ...
+    Then: datasets["foo"] -> clean_foo
+    """
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        dataset_cleaner_registry[name] = wrapper
         return wrapper
     return decorator
 

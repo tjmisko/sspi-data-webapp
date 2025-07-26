@@ -4,11 +4,13 @@ from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.ilo import collect_ilo_data 
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 import pandas as pd
 from io import StringIO
@@ -47,6 +49,11 @@ def compute_fatinj():
     fatinj_raw["Unit"] = "Rate per 100,000"
     fatinj_raw.dropna(subset=["Value"], inplace=True)
     obs_list = json.loads(str(fatinj_raw.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "FATINJ")
+    lg, ug = sspi_metadata.get_goalposts("FATINJ")
+    scored_list, _ = score_indicator(
+        obs_list, "FATINJ",
+        score_function=lambda WWB_FATINJ: goalpost(WWB_FATINJ, lg, ug),
+        unit="Rate"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

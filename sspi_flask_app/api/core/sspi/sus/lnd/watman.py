@@ -11,10 +11,10 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
     extrapolate_backward,
     extrapolate_forward,
-    slice_intermediate,
+    slice_dataset,
     filter_imputations,
     impute_global_average
 )
@@ -57,10 +57,10 @@ def compute_watman():
     intermediate_list = filter_sdg(
         watman_data, intermediate_map, activity="TOTAL"
     )
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediate_list, "WATMAN",
-        ScoreFunction=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
-        ScoreBy="Score"
+        score_function=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
+        unit="Index",
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)
@@ -73,8 +73,8 @@ def impute_watman():
     clean_list = sspi_clean_api_data.find(mongo_query)
     incomplete_list = sspi_incomplete_api_data.find(mongo_query)
     # Extract clean CWUEFF Data and Extrapolate Backwards
-    clean_cwueff = slice_intermediate(clean_list, "CWUEFF") + \
-        slice_intermediate(incomplete_list, "CWUEFF")
+    clean_cwueff = slice_dataset(clean_list, "CWUEFF") + \
+        slice_dataset(incomplete_list, "CWUEFF")
     imputed_cwueff = extrapolate_backward(
         clean_cwueff, 2000, series_id=["CountryCode", "IntermediateCode"]
     )
@@ -84,18 +84,18 @@ def impute_watman():
     # Impute CWUEFF Data for SGP
     sgp_cwueff = impute_global_average("SGP", 2000, 2023, "Intermediate", "CWUEFF", clean_cwueff)
     # Extract matched WTSTRS Data
-    clean_wtstrs = slice_intermediate(clean_list, "WTSTRS") + \
-        slice_intermediate(incomplete_list, "WTSTRS")
+    clean_wtstrs = slice_dataset(clean_list, "WTSTRS") + \
+        slice_dataset(incomplete_list, "WTSTRS")
     imputed_wtstrs = extrapolate_backward(
         clean_wtstrs, 2000, series_id=["CountryCode", "IntermediateCode"]
     )
     imputed_wtstrs = extrapolate_forward(
         imputed_wtstrs, 2023, series_id=["CountryCode", "IntermediateCode"]
     )
-    overall_watman, missing_imputations = zip_intermediates(
+    overall_watman, missing_imputations = score_indicator(
         imputed_wtstrs + imputed_cwueff + sgp_cwueff, "WATMAN",
-        ScoreFunction=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
-        ScoreBy="Score"
+        score_function=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
+        unit="Index",
     )
     imputed_watman = filter_imputations(overall_watman)
     sspi_imputed_data.insert_many(imputed_watman)

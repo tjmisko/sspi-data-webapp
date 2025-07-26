@@ -11,7 +11,7 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import clean_wb_data
 from sspi_flask_app.api.datasource.iea import clean_IEA_data_GTRANS
@@ -48,12 +48,11 @@ def compute_gtrans():
     gtrans = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
     cleaned_co2 = clean_IEA_data_GTRANS(gtrans, "GTRANS", "CO2 from transport sources")
     document_list = cleaned_pop + cleaned_co2
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         document_list,
         "GTRANS",
-        ScoreFunction=lambda TCO2EQ, POPULN: goalpost(TCO2EQ / POPULN, lg, ug),
-        ValueFunction=lambda TCO2EQ, POPULN: TCO2EQ / POPULN,
-        ScoreBy="Value",
+        score_function=lambda TCO2EQ, POPULN: goalpost(TCO2EQ / POPULN, lg, ug),
+        unit="TCO2eq per capita",
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

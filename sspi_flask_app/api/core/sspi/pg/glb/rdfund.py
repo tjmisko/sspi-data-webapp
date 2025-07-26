@@ -13,7 +13,7 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 
 
@@ -46,10 +46,10 @@ def compute_rdfund():
     intermediate_list = filter_sdg(
         watman_data, intermediate_map, activity="TOTAL"
     )
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediate_list, "RDFUND",
-        ScoreFunction=lambda GVTRDP, NRSRCH: (GVTRDP + NRSRCH) / 2,
-        ScoreBy="Score"
+        score_function=lambda GVTRDP, NRSRCH: (GVTRDP + NRSRCH) / 2,
+        unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

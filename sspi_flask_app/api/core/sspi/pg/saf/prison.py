@@ -14,7 +14,7 @@ from sspi_flask_app.api.datasource.worldbank import (
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -50,13 +50,11 @@ def compute_prison():
     cleaned_pop = clean_wb_data(pop_data, "PRISON", "Population")
     clean_data_list, missing_data_list = scrape_stored_pages_for_data()
     combined_list = cleaned_pop + clean_data_list
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         combined_list,
         "PRISON",
-        ScoreFunction=lambda PRIPOP, POPULN: goalpost(PRIPOP / POPULN * 100000, lg, ug),
-        ValueFunction=lambda PRIPOP, POPULN: PRIPOP / POPULN * 100000,
-        UnitFunction=lambda PRIPOP, POPULN: "Prisoners Per 100,000",
-        ScoreBy="Value",
+        score_function=lambda PRIPOP, POPULN: goalpost(PRIPOP / POPULN * 100000, lg, ug),
+        unit=lambda PRIPOP, POPULN: "Prisoners Per 100,000"
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

@@ -3,11 +3,13 @@ from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.api.datasource.who import (
     collect_who_data,
@@ -47,6 +49,11 @@ def compute_physpc():
         "specialists, expressed per 10,000 people."
     )
     cleaned = clean_who_data(raw_data, "PHYSPC", unit, description)
-    scored_list = score_single_indicator(cleaned, "PHYSPC")
+    lg, ug = sspi_metadata.get_goalposts("PHYSPC")
+    scored_list, _ = score_indicator(
+        cleaned, "PHYSPC", 
+        score_function=lambda WHO_PHYSPC: goalpost(WHO_PHYSPC, lg, ug),
+        unit="Rate"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

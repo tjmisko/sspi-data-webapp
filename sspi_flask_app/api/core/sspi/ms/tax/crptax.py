@@ -11,12 +11,14 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     interpolate_linear,
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_raw_api_data,
+    sspi_metadata
 )
 
 
@@ -35,7 +37,12 @@ def compute_crptax():
     sspi_clean_api_data.delete_many({"IndicatorCode": "CRPTAX"})
     crptax_raw = sspi_raw_api_data.fetch_raw_data("CRPTAX")
     crptax_clean = clean_tax_foundation(crptax_raw, "CRPTAX", "Tax Rate", "Corporate Taxes")
-    scored_list = score_single_indicator(crptax_clean, "CRPTAX")
+    lg, ug = sspi_metadata.get_goalposts("CRPTAX")
+    scored_list, _ = score_indicator(
+        crptax_clean, "CRPTAX",
+        score_function=lambda TF_CRPTAX: goalpost(TF_CRPTAX, lg, ug),
+        unit="Tax Rate"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

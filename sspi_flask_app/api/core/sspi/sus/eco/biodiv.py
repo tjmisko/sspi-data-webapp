@@ -8,7 +8,7 @@ from sspi_flask_app.api.datasource.unsdg import (
     extract_sdg,
     filter_sdg,
 )
-from sspi_flask_app.api.resources.utilities import parse_json, zip_intermediates
+from sspi_flask_app.api.resources.utilities import parse_json, score_indicator
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
@@ -19,18 +19,7 @@ from sspi_flask_app.models.database import (
 log = logging.getLogger(__name__)
 
 
-# @collect_bp.route("/BIODIV", methods=["GET"])
-# @login_required
-# def biodiv():
-#     # return Response(
-#     #     collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-#     # )
-#     return "Not implemented"
-
-
-@compute_bp.route("/BIODIV", methods=["GET"])
-@login_required
-def compute_biodiv():
+def compute_biodiv_old():
     app.logger.info("Running /api/v1/compute/BIODIV")
     sspi_clean_api_data.delete_many({"IndicatorCode": "BIODIV"})
     sspi_incomplete_api_data.delete_many({"IndicatorCode": "BIODIV"})
@@ -57,11 +46,21 @@ def compute_biodiv():
         rename_map,
         drop_list,
     )
-    clean_list, incomplete_list = zip_intermediates(
-        intermediate_list,
+
+@compute_bp.route("/BIODIV", methods=["POST"])
+@login_required
+def compute_biodiv():
+    def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
+        return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3
+
+    dataset_list = sspi_clean_api_data.find(
+        {"DatasetCode": {"$in": ["UNSDG_MARINE", "UNSDG_TERRST", "UNSDG_FRSHWT"]}}
+    )
+    clean_list, incomplete_list = score_indicator(
+        dataset_list,
         "BIODIV",
-        ScoreFunction=lambda MARINE, TERRST, FRSHWT: (MARINE + TERRST + FRSHWT) / 3,
-        ScoreBy="Score",
+        score_function=score_biodiv,
+        unit="Index",
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

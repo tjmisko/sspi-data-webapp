@@ -1,19 +1,25 @@
-from sspi_flask_app.models.database import sspi_metadata
-from sspi_flask_app.models.database import sspi_raw_api_data
-from flask import request, render_template, Blueprint, Response, jsonify
-from flask_login import login_required, current_user
-import sspi_flask_app.api.core.datasets as datasets
-from sspi_flask_app.api.resources.utilities import check_raw_document_set_coverage, reduce_dataset_list
+from flask import Blueprint, Response, jsonify, render_template, request
+from flask_login import current_user, login_required
 
-collect_bp = Blueprint(
-    "collect_bp",
+from sspi_flask_app.api.core.datasets import (
+    dataset_cleaner_registry,
+    dataset_collector_registry,
+)
+from sspi_flask_app.api.resources.utilities import (
+    check_raw_document_set_coverage,
+    parse_json,
+    reduce_dataset_list,
+)
+from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
+
+datasource_bp = Blueprint(
+    "datasource_bp",
     __name__,
     template_folder="templates",
     static_folder="static",
-    url_prefix="/collect",
 )
 
-@collect_bp.route("/<series_code>", methods=["GET", "POST"])
+@datasource_bp.route("/collect/<series_code>", methods=["GET", "POST"])
 @login_required
 def collect(series_code: str):
     """
@@ -87,9 +93,29 @@ def collect_iterator(dataset_list, **kwargs):
                 sspi_raw_api_data.build_source_query(source_info)
             )
     for ds in reduced_dataset_list:
-        collector = datasets.dataset_registry.get(ds)
+        collector = dataset_collector_registry.get(ds)
         if not collector:
             yield f"error: No collector implemented for dataset {ds}!\n"
         else:
             yield from collector(**kwargs)
 
+
+@datasource_bp.route("/clean/<series_code>", methods=["GET"])        
+def clean_series_code(series_code: str):
+    dataset_list = sspi_metadata.get_dataset_dependencies(series_code)
+    if len(dataset_list) == 1:
+        cleaner = dataset_cleaner_registry.get(dataset_list[0])
+        if not cleaner:
+            return jsonify({"error": f"No cleaner implemented for dataset {dataset_list[0]}!"}), 400
+        else:
+            return parse_json(cleaner())
+    return Response(clean_iterator(dataset_list), mimetype="text/event-stream")
+
+def clean_iterator(dataset_list):
+    for i, ds in enumerate(dataset_list):
+        cleaner = dataset_cleaner_registry.get(ds, None)
+        if not cleaner:
+            yield f"error: No cleaner implemented for dataset {ds}!\n"
+        else:
+            yield f"Cleaning dataset {ds} ( {i +1} of {len(dataset_list)} )\n"
+            cleaner()

@@ -2,7 +2,8 @@ from flask import Response, current_app as app
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.datasource.uis import (
     collect_uis_data,
@@ -11,7 +12,8 @@ from sspi_flask_app.api.datasource.uis import (
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 
 
@@ -31,6 +33,11 @@ def compute_enrsec():
     raw_data = sspi_raw_api_data.fetch_raw_data("ENRSEC")
     description = "Net enrollment in lower secondary school (%)"
     cleaned_list = clean_uis_data(raw_data, "ENRSEC", "Percent", description)
-    scored_list = score_single_indicator(cleaned_list, "ENRSEC")
+    lg, ug = sspi_metadata.get_goalposts("ENRSEC")
+    scored_list, _ = score_indicator(
+        cleaned_list, "ENRSEC",
+        score_function=lambda UIS_ENRSEC: goalpost(UIS_ENRSEC, lg, ug),
+        unit="Percent"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

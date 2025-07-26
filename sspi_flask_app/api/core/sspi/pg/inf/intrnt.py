@@ -8,7 +8,7 @@ from sspi_flask_app.models.database import (
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import (
     collect_world_bank_data,
@@ -48,10 +48,10 @@ def compute_intrnt():
     )
     for obs in filtered_quintr:
         obs["IntermediateCode"] = "QUINTR"
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         clean_avintr + filtered_quintr, "INTRNT",
-        ScoreFunction=lambda AVINTR, QUINTR: (AVINTR + QUINTR) / 2,
-        ScoreBy="Score"
+        score_function=lambda AVINTR, QUINTR: (AVINTR + QUINTR) / 2,
+        unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

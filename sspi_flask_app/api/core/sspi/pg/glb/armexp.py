@@ -7,11 +7,13 @@ from sspi_flask_app.api.datasource.sipri import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 import json
 
@@ -41,6 +43,11 @@ def compute_armexp():
         description
     ) 
     obs_list = json.loads(str(cleaned_list.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "ARMEXP")
+    lg, ug = sspi_metadata.get_goalposts("ARMEXP")
+    scored_list, _ = score_indicator(
+        obs_list, "ARMEXP",
+        score_function=lambda SIPRI_ARMEXP: goalpost(SIPRI_ARMEXP, lg, ug),
+        unit="Expenditure"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

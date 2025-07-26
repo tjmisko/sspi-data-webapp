@@ -1,12 +1,15 @@
-from sspi_flask_app.api.core.sspi import compute_bp
-from flask import current_app as app, Response
-from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.ilo import collect_ilo_data
-from sspi_flask_app.models.database import sspi_raw_api_data, sspi_clean_api_data
-from sspi_flask_app.api.resources.utilities import parse_json, score_single_indicator
-import pandas as pd
-from io import StringIO
 import json
+from io import StringIO
+
+import pandas as pd
+from flask import Response
+from flask import current_app as app
+from flask_login import current_user, login_required
+
+from sspi_flask_app.api.core.sspi import compute_bp
+from sspi_flask_app.api.datasource.ilo import collect_ilo_data
+from sspi_flask_app.api.resources.utilities import parse_json, score_indicator, goalpost
+from sspi_flask_app.models.database import sspi_clean_api_data, sspi_raw_api_data, sspi_metadata
 
 # @collect_bp.route("/COLBAR")
 # @login_required
@@ -42,6 +45,11 @@ import json
     # colbar_raw["Unit"] = "Proportion"
     # colbar_raw["Value"] = colbar_raw["Value"]
     # obs_list = json.loads(str(colbar_raw.to_json(orient="records")))
-    # scored_list = score_single_indicator(obs_list, "COLBAR")
+    # lg, ug = sspi_metadata.get_goalposts("COLBAR")
+    # scored_list, _ = score_indicator(
+    #    obs_list, "COLBAR",
+    #    score_function=lambda ILO_COLBAR: goalpost(ILO_COLBAR, lg, ug),
+    #    unit = "%"
+    # )
     # sspi_clean_api_data.insert_many(scored_list)
     # return parse_json(scored_list)

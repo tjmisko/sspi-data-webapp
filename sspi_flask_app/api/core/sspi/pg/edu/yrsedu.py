@@ -7,12 +7,14 @@ from sspi_flask_app.api.datasource.uis import clean_uis_data, collect_uis_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_raw_api_data,
+    sspi_metadata
 )
 
 
@@ -35,7 +37,12 @@ def compute_yrsedu():
         "education guaranteed in legal frameworks"
     )
     cleaned_list = clean_uis_data(raw_data, "YRSEDU", "Years", description)
-    scored_list = score_single_indicator(cleaned_list, "YRSEDU")
+    lg, ug = sspi_metadata.get_goalposts("YRSEDU")
+    scored_list, _ = score_indicator(
+        cleaned_list, "YRSEDU",
+        score_function=lambda UIS_YRSEDU: goalpost(UIS_YRSEDU, lg, ug),
+        unit="Years"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

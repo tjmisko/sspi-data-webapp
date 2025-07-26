@@ -11,7 +11,7 @@ from sspi_flask_app.api.datasource.worldbank import (
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from bs4 import BeautifulSoup
 import pycountry
@@ -158,24 +158,20 @@ def compute_foraid():
     dug = 1  # 1% of GDP Donated
     rlg = 0  # 0 Dollars per Capita?
     rug = 500  # 500 Dollars per Capita?
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediates_list,
         "FORAID",
-        ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
+        score_function=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
             TOTDON * 10**8 / GDPMKT, dlg, dug
         )
         if TOTDON > TOTREC
         else goalpost(TOTREC * 10**6 / POPULN, rlg, rug),
-        ValueFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: TOTDON * 10**8 / GDPMKT
-        if TOTDON > TOTREC
-        else TOTREC * 10**6 / POPULN,
-        UnitFunction=lambda TOTDON,
+        unit=lambda TOTDON,
         TOTREC,
         POPULN,
         GDPMKT: "Donor: ODA Donations (% GDP)"
         if TOTDON > TOTREC
         else "Recipient: ODA Received per Capita (USD per Capita)",
-        ScoreBy="Value",
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

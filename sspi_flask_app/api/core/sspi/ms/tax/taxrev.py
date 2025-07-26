@@ -10,12 +10,14 @@ from sspi_flask_app.api.resources.utilities import (
     interpolate_linear,
     impute_global_average,
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_raw_api_data,
+    sspi_metadata
 )
 
 
@@ -34,7 +36,12 @@ def compute_taxrev():
     sspi_clean_api_data.delete_many({"IndicatorCode": "TAXREV"})
     taxrev_raw = sspi_raw_api_data.fetch_raw_data("TAXREV")
     taxrev_clean = clean_wb_data(taxrev_raw, "TAXREV", "% of GDP")
-    scored_list = score_single_indicator(taxrev_clean, "TAXREV")
+    lg, ug = sspi_metadata.get_goalposts("TAXREV")
+    scored_list, _ = score_indicator(
+        taxrev_clean, "TAXREV",
+        score_function = lambda WB_TAXREV: goalpost(WB_TAXREV, lg, ug),
+        unit="Percentage"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

@@ -4,11 +4,13 @@ from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.ilo import collect_ilo_data
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 import json
 import pandas as pd
@@ -52,6 +54,11 @@ def compute_employ():
     employ_raw_f['IndicatorCode'] = 'EMPLOY'
     employ_raw_f['Unit'] = 'Rate'
     obs_list = json.loads(str(employ_raw_f.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "EMPLOY")
+    lg, ug = sspi_metadata.get_goalposts("EMPLOY")
+    scored_list, _ = score_indicator(
+        obs_list, "EMPLOY",
+        score_function=lambda ILO_EMPLOY: goalpost(ILO_EMPLOY, lg, ug),
+        unit="Percentage"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

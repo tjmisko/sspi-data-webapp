@@ -3,11 +3,13 @@ from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.api.datasource.fsi import (
     collect_fsi_data,
@@ -38,6 +40,11 @@ def compute_secapp():
     cleaned_list = clean_fsi_data(
         raw_data, "SECAPP", "Index", description
     )
-    scored_list = score_single_indicator(cleaned_list, "SECAPP")
+    lg, ug = sspi_metadata.get_goalposts("SECAPP")
+    scored_list, _ = score_indicator(
+        cleaned_list, "SECAPP",
+        score_function=lambda FSI_SECAPP: goalpost(FSI_SECAPP, lg, ug),
+        unit="Index"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

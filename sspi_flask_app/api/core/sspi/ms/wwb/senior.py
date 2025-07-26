@@ -14,7 +14,7 @@ from sspi_flask_app.api.datasource.oecdstat import (
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -134,10 +134,10 @@ def compute_senior():
         if obs["Year"] < 1990 or obs["Year"] > current_year:
             continue
         filtered_obs_list.append(obs)
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         filtered_obs_list, "SENIOR",
-        ScoreFunction=score_senior,
-        ScoreBy="Value"
+        score_function=score_senior,
+        unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

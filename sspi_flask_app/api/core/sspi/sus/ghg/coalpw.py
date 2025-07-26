@@ -9,7 +9,7 @@ from sspi_flask_app.models.database import (
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 import pandas as pd
 from sspi_flask_app.api.datasource.iea import clean_iea_data_altnrg
@@ -80,11 +80,11 @@ def compute_coalpw():
         parse_int=int,
         parse_float=float,
     )
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediate_document_list,
         "COALPW",
-        ScoreFunction=lambda TLCOAL, TTLSUM: (TLCOAL) / (TTLSUM),
-        ScoreBy="Value",
+        score_function=lambda TLCOAL, TTLSUM: (TLCOAL) / (TTLSUM),
+        unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
     sspi_incomplete_api_data.insert_many(incomplete_list)

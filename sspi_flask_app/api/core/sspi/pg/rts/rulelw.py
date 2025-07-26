@@ -3,11 +3,13 @@ from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.api.datasource.vdem import collect_vdem_data
 from datetime import datetime
@@ -46,6 +48,11 @@ def compute_rulelw():
             "Value": obs["v2x_rule"],
             "Unit": "Index"
         })
-    scored_list = score_single_indicator(clean_list, "RULELW")
+    lg, ug = sspi_metadata.get_goalposts("RULELW")
+    scored_list, _ = score_indicator(
+        clean_list, "RULELW",
+        score_function=lambda VDEM_RULELW: goalpost(VDEM_RULELW, lg, ug),
+        unit="Index"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
