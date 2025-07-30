@@ -5,9 +5,7 @@ DatasetName: Military Expenditure
 Description: Military expenditure (local currency at current prices) according to
   the calendar year as a percentage of GDP.
 Source:
-  OrganizationName: SIPRI
   OrganizationCode: SIPRI
-  OrganizationSeriesCode: null
-  BaseURL: https://www.sipri.org/databases
+  OrganizationSeriesCode: milex
 ---
 
