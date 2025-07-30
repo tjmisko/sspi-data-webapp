@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div id="sspi-root"></div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const root = document.getElementById('sspi-root');
+    window.SSPICharts.push(
+        new CustomizableSSPIStructure(root)
+    )
+});
+</script>
+
+{% endblock %}

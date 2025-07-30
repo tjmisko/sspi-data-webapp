@@ -17,7 +17,7 @@
                     "children": [
                         { "name": "NITROG" },
                         { "name": "WATMAN" },
-                        { "name": "STKHLM" },
+                        { "name": "CHMPOL" },
                         { "name": "DEFRST" },
                         { "name": "CARBON" }
                     ]
@@ -54,7 +54,7 @@
                 {
                     "name": "Worker Engagement",
                     "children": [
-                        { "name": "LFPART" },
+                        { "name": "EMPLOY" },
                         { "name": "CHILDW" },
                         { "name": "COLBAR" }
                     ]

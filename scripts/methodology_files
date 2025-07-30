@@ -1,0 +1,6 @@
+#!/bin/bash
+# Return all methodology files in order for an ItemType/level of the SSPI
+sspi metadata $1 codes | \
+    jq '.[] | ascii_downcase' | sed 's/"//g' | \
+    awk '{ print "/"$0"/methodology.md" }' | \
+    xargs -I{} fd -p {} methodology

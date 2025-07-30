@@ -1,0 +1,5 @@
+#!/bin/bash
+pip freeze | sed -e '/^\-e/d' >| requirements.txt
+git reset
+git add requirements.txt
+git commit -m "chore: Updated requirements.txt"
