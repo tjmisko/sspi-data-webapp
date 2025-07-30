@@ -56,3 +56,13 @@ def collect_sipri_armexp(**kwargs):
     yield "Collected ARMEXP data"
 
 
+@dataset_cleaner("SIPRI_ARMEXP")
+def clean_sipri_armexp():
+    source_info = sspi_metadata.get_source_info("SIPRI_ARMEXP")
+    raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
+    return raw_data # You can look at the data as you go by returning it here
+    # Simply call `sspi clean sipri_armexp | jq` to see the raw data in your terminal
+    # Clean the raw data here
+    # ...
+    # sspi_clean_api_data.insert_many(cleaned_data)
+    # return cleaned data

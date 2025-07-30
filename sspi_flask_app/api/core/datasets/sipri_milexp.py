@@ -41,3 +41,8 @@ def collect_sipri_milexp(**kwargs):
     yield "Successfully collected MILEXP data"
 
 
+@dataset_cleaner("SIPRI_MILEXP")
+def clean_sipri_milexp():
+    source_info = sspi_metadata.get_source_info("SIPRI_MILEXP")
+    raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
+    return raw_data
