@@ -167,7 +167,7 @@ class SSPIRawAPIData(MongoWrapper):
             self.raw_insert_one(observation, source_info, **kwargs)
         return len(document_list)
 
-    def fetch_raw_data(self, source_info, **kwargs) -> list:
+    def fetch_raw_data(self, source_info: dict[str, str], **kwargs) -> list:
         """
         Utility function that handles querying the database.
 

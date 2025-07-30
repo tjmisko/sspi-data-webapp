@@ -101,6 +101,7 @@ def collect_iterator(dataset_list, **kwargs):
 
 
 @dataset_bp.route("/clean/<series_code>", methods=["GET"])        
+@login_required
 def clean_series_code(series_code: str):
     dataset_list = sspi_metadata.get_dataset_dependencies(series_code)
     if len(dataset_list) == 1:

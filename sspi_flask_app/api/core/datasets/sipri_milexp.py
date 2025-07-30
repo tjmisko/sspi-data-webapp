@@ -45,11 +45,11 @@ def collect_sipri_milexp(**kwargs):
 
 @dataset_cleaner("SIPRI_MILEXP")
 def clean_sipri_milexp():
+    sspi_clean_api_data.delete_many({"IndicatorCode": "MILEXP"})
     source_info = sspi_metadata.get_source_info("SIPRI_MILEXP")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
-    sspi_clean_api_data.delete_many({"IndicatorCode": "MILEXP"})
-    milexp_raw = sspi_raw_api_data.fetch_raw_data("MILEXP")
-    milexp_raw = milexp_raw[0]["Raw"]
+    milexp_raw = raw_data[0]["Raw"]
+    return milexp_raw
     unit = (
         "Military expenditure (local currency at current prices) "
         "according to the calendar year as a percentage of GDP."
