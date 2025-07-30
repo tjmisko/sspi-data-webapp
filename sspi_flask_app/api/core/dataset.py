@@ -12,14 +12,14 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
 
-datasource_bp = Blueprint(
-    "datasource_bp",
+dataset_bp = Blueprint(
+    "dataset_bp",
     __name__,
     template_folder="templates",
     static_folder="static",
 )
 
-@datasource_bp.route("/collect/<series_code>", methods=["GET", "POST"])
+@dataset_bp.route("/collect/<series_code>", methods=["GET", "POST"])
 @login_required
 def collect(series_code: str):
     """
@@ -100,7 +100,7 @@ def collect_iterator(dataset_list, **kwargs):
             yield from collector(**kwargs)
 
 
-@datasource_bp.route("/clean/<series_code>", methods=["GET"])        
+@dataset_bp.route("/clean/<series_code>", methods=["GET"])        
 def clean_series_code(series_code: str):
     dataset_list = sspi_metadata.get_dataset_dependencies(series_code)
     if len(dataset_list) == 1:

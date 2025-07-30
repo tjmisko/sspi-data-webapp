@@ -5,6 +5,6 @@ DatasetCode: UNSDG_TERRST
 Description: Percentage of important sites covered by protected areas, terrestrial
 Source:
   OrganizationCode: UNSDG
-  OrganizationSeriesCode: 14.5.1
+  OrganizationSeriesCode: 15.1.2
 ---
 

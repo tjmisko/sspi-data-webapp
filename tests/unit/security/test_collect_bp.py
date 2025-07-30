@@ -1,7 +1,7 @@
 from security import get_route_rules
 
 EXEMPT_PREFIXES_GET = (
-    'api_bp.datasource_bp.static',
+    'api_bp.dataset_bp.static',
 )
 
 

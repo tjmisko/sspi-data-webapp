@@ -1,9 +1,9 @@
 from sspi_flask_app.models.database import (
     sspi_metadata,
-    sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_imputed_data,
     sspi_score_data,
-    sspi_incomplete_api_data
+    sspi_incomplete_indicator_data
 )
 
 
@@ -30,7 +30,7 @@ class DataCoverage:
         self.indicator_codes = [
             indicator["ItemCode"] for indicator in self.indicator_details
         ]
-        self.clean_data_coverage = self.get_coverage(sspi_clean_api_data)
+        self.clean_data_coverage = self.get_coverage(sspi_indicator_data)
         self.imputed_data_coverage = self.get_coverage(sspi_imputed_data)
         self.combined_coverage = self.union(
             self.clean_data_coverage, self.imputed_data_coverage
@@ -290,7 +290,7 @@ class DataCoverage:
                 },
             ]
             result_clean = sspi_clean_api_data.aggregate(pipeline)
-            result_incomplete = sspi_incomplete_api_data.aggregate(pipeline)
+            result_incomplete = sspi_incomplete_indicator_data.aggregate(pipeline)
             return list(result_clean) + list(result_incomplete)
         else:
             pipeline = [

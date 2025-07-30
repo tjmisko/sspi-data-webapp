@@ -10,7 +10,8 @@ from sspi_flask_app.models.database import (
     sspi_main_data_v3,
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data,
+    sspi_indicator_data,
+    sspi_incomplete_indicator_data,
     sspi_imputed_data,
     sspi_score_data,
     sspi_metadata,
@@ -21,8 +22,6 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_clean_outcome_data,
-    sspi_raw_outcome_data,
     sspi_panel_data,
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
@@ -76,8 +75,10 @@ def lookup_database(database_name):
             return sspi_raw_api_data
         case "sspi_clean_api_data":
             return sspi_clean_api_data
-        case "sspi_incomplete_api_data":
-            return sspi_incomplete_api_data
+        case "sspi_indicator_data":
+            return sspi_indicator_data
+        case "sspi_incomplete_indicator_data":
+            return sspi_incomplete_indicator_data
         case "sspi_imputed_data":
             return sspi_imputed_data
         case "sspi_analysis":
@@ -94,10 +95,6 @@ def lookup_database(database_name):
             return sspi_dynamic_line_data
         case "sspi_dynamic_matrix_data":
             return sspi_dynamic_matrix_data
-        case "sspi_raw_outcome_data":
-            return sspi_raw_outcome_data
-        case "sspi_clean_outcome_data":
-            return sspi_clean_outcome_data
         case "sspi_panel_data":
             return sspi_panel_data
         case _:

@@ -18,7 +18,7 @@ import pycountry
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
 )
 
 
@@ -174,5 +174,5 @@ def compute_foraid():
         else "Recipient: ODA Received per Capita (USD per Capita)",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

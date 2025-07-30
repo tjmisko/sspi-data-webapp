@@ -35,7 +35,7 @@ def get_query_params(request, requires_database=False):
     requires_database determines whether the query
     """
     raw_query_input = {
-        "IndicatorCode": request.args.getlist("IndicatorCode"),
+        "SeriesCodes": request.args.getlist("SeriesCode"),
         "CountryCode": request.args.getlist("CountryCode"),
         "CountryGroup": request.args.get("CountryGroup"),
         "Year": request.args.getlist("Year"),
@@ -53,9 +53,20 @@ def build_mongo_query(raw_query_input):
     Given a safe and logically valid query input, build a mongo query
     """
     mongo_query = {}
-    if raw_query_input["IndicatorCode"]:
-        mongo_query["IndicatorCode"] = {
-            "$in": raw_query_input["IndicatorCode"]
+    if raw_query_input["SeriesCodes"]:
+        item_codes = raw_query_input["SeriesCodes"]
+        dataset_codes = []
+        for sc in raw_query_input["SeriesCodes"]:
+            dataset_codes += sspi_metadata.get_dataset_dependencies(sc)
+        dataset_codes = list(set(dataset_codes))
+        mongo_query = {
+            "$or": [
+                {"ItemCode": {"$in": item_codes}},
+                {"DatasetCode": {"$in": dataset_codes}},
+                {"IndicatorCode": {"$in": item_codes}},
+                {"CategoryCode": {"$in": item_codes}},
+                {"PillarCode": {"$in": item_codes}},
+            ]
         }
     country_codes = set()
     if raw_query_input["CountryGroup"]:

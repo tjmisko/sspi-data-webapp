@@ -5,7 +5,6 @@ from bson import json_util
 
 
 class SSPICleanAPIData(MongoWrapper):
-
     def validate_documents_format(self, documents: list) -> bool:
         dtype = type(documents)
         if dtype is not list:

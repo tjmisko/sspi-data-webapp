@@ -18,7 +18,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
     sspi_metadata,
     sspi_raw_api_data,
 )
@@ -57,5 +57,5 @@ def compute_prison():
         unit=lambda PRIPOP, POPULN: "Prisoners Per 100,000"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

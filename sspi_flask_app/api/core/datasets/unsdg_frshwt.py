@@ -9,7 +9,7 @@ def collect_unsdg_frshwt(**kwargs):
 
 @dataset_cleaner("UNSDG_FRSHWT")
 def clean_unsdg_frshwt():
-    sspi_clean_api_data.delete_many({"DataestCode": "UNSDG_FRSHWT"})
+    sspi_clean_api_data.delete_many({"DatasetCode": "UNSDG_FRSHWT"})
     source_info = sspi_metadata.get_source_info("UNSDG_FRSHWT")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     extracted_unsdg_frshwt = extract_sdg(raw_data)

@@ -144,7 +144,7 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'IndicatorCode' must be 6 characters long (document {document_number})")
-        if not type(document["IndicatorCode"]) is str:
+        if not isinstance(document["IndicatorCode"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'IndicatorCode' must be a string (document {document_number})")

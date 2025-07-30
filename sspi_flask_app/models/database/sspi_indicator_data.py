@@ -4,8 +4,7 @@ import json
 from bson import json_util
 
 
-class SSPICleanAPIData(MongoWrapper):
-
+class SSPIIndicatorData(MongoWrapper):
     def validate_documents_format(self, documents: list) -> bool:
         dtype = type(documents)
         if dtype is not list:
@@ -17,7 +16,7 @@ class SSPICleanAPIData(MongoWrapper):
         for i, document in enumerate(documents):
             self.validate_document_format(document, document_number=i)
             document_id = (
-                f"{document['DatasetCode']}_"
+                f"{document['IndicatorCode']}_"
                 f"{document['CountryCode']}_"
                 f"{document['Year']}"
             )
@@ -25,7 +24,7 @@ class SSPICleanAPIData(MongoWrapper):
                 lgth = len(documents)
                 warning_msg = (
                     f"Document {i} of {lgth} Produced an Error: {document}\n"
-                    "DatasetCode, CountryCode, Year is not an ID!\n\t"
+                    "IndicatorCode, CountryCode, Year is not an ID!\n\t"
                     "- Typically, this means that you've forgotten to filter "
                     "on field in the raw data.\n\t- For example, your "
                     "indicator or intermediate data may be disaggregated for "
@@ -41,9 +40,10 @@ class SSPICleanAPIData(MongoWrapper):
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         self.validate_country_code(document, document_number)
-        self.validate_dataset_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
+        # self.validata_datasets(document, document_number)
         self.validate_year(document, document_number)
-        self.validate_value(document, document_number)
+        self.validate_score(document, document_number)
         self.validate_unit(document, document_number)
 
 
@@ -71,13 +71,13 @@ class SSPICleanAPIData(MongoWrapper):
                 f"'Score' must be a float or integer (document {document_number})")
 
 
-class SSPIIncompleteAPIData(SSPICleanAPIData):
+class SSPIIncompleteIndicatorData(SSPIIndicatorData):
     """
     This class is used to handle incomplete data in the MongoDB collection.
-    It inherits from the SSPICleanAPIData class.
+    It inherits from the SSPIIndicatorData class.
     """
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         self.validate_country_code(document, document_number)
-        self.validate_dataset_code(document, document_number)
+        self.validate_indicator_code(document, document_number)
         self.validate_year(document, document_number)

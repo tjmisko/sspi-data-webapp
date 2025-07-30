@@ -16,7 +16,7 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
     sspi_raw_api_data,
     sspi_metadata
 )
@@ -36,7 +36,7 @@ from sspi_flask_app.models.database import (
 def compute_fdepth():
     app.logger.info("Running /api/v1/compute/FDEPTH")
     sspi_clean_api_data.delete_many({"IndicatorCode": "FDEPTH"})
-    sspi_incomplete_api_data.delete_many({"IndicatorCode": "FDEPTH"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "FDEPTH"})
     credit_raw = sspi_raw_api_data.fetch_raw_data(
         "FDEPTH", IntermediateCode="CREDIT")
     credit_clean = clean_wb_data(credit_raw, "FDEPTH", unit="Percent")
@@ -50,7 +50,7 @@ def compute_fdepth():
         unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -72,7 +72,7 @@ def impute_fdepth():
     clean_fdepth = sspi_clean_api_data.find({"IndicatorCode": "FDEPTH", "CountryCode": {"$in": sspi_67}, "Year": {"$gte": 2000}})
     clean_credit = slice_dataset(clean_fdepth, "CREDIT")
     clean_dposit = slice_dataset(clean_fdepth, "DPOSIT")
-    incomplete_fdepth = sspi_incomplete_api_data.find({"IndicatorCode": "FDEPTH", "CountryCode": {"$in": sspi_67}})
+    incomplete_fdepth = sspi_incomplete_indicator_data.find({"IndicatorCode": "FDEPTH", "CountryCode": {"$in": sspi_67}})
     incomplete_credit = slice_dataset(incomplete_fdepth, "CREDIT")
     incomplete_dposit = slice_dataset(incomplete_fdepth, "DPOSIT")
     obs_credit = clean_credit + incomplete_credit

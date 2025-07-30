@@ -16,7 +16,7 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
     sspi_raw_api_data,
 )
 
@@ -47,7 +47,7 @@ def compute_altnrg():
     """
     app.logger.info("Running /api/v1/compute/ALTNRG")
     sspi_clean_api_data.delete_many({"IndicatorCode": "ALTNRG"})
-    sspi_incomplete_api_data.delete_many({"IndicatorCode": "ALTNRG"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "ALTNRG"})
     raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
     metadata_code_map = {
         "COAL": "TLCOAL",
@@ -107,7 +107,7 @@ def compute_altnrg():
         unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -123,7 +123,7 @@ def impute_altnrg():
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "ALTNRG", "CountryCode": {"$ne": "KWT"}})
     forward_extrap = extrapolate_forward(clean_data, 2023, impute_only=True)
     # Handle KWT: All sources confirm that almost all energy is from fossil fuels
-    kwt_incomplete = sspi_incomplete_api_data.find(
+    kwt_incomplete = sspi_incomplete_indicator_data.find(
         {"IndicatorCode": "ALTNRG", "CountryCode": "KWT"}
     )
     impute_info = {

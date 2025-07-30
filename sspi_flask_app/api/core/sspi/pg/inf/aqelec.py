@@ -3,7 +3,7 @@ from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data
+    sspi_incomplete_indicator_data
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
@@ -77,5 +77,5 @@ def compute_aqelec():
         unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

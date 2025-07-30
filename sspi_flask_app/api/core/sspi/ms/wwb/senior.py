@@ -19,7 +19,7 @@ from sspi_flask_app.api.resources.utilities import (
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
     sspi_raw_api_data,
 )
 
@@ -55,7 +55,7 @@ def compute_senior():
     """
     app.logger.info("Running /api/v1/compute/SENIOR")
     sspi_clean_api_data.delete_many({"IndicatorCode": "SENIOR"})
-    sspi_incomplete_api_data.delete_many({"IndicatorCode": "SENIOR"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "SENIOR"})
 
     def score_senior(SENLEF, SENLEM, SENCRF, SENCRM, SENPVT):
         YRSRTF = SENLEF - SENCRF
@@ -140,7 +140,7 @@ def compute_senior():
         unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -148,7 +148,7 @@ def compute_senior():
 def impute_senior():
     sspi_imputed_data.delete_many({"IndicatorCode": "SENIOR"})
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "SENIOR"})
-    incomplete_list = sspi_incomplete_api_data.find(
+    incomplete_list = sspi_incomplete_indicator_data.find(
         {"IndicatorCode": "SENIOR"})
     # Do imputation logic here
     count = sspi_imputed_data.insert_many([])
