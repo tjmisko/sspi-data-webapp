@@ -7,9 +7,6 @@ from sspi_flask_app.models.database.mongo_wrapper import (
 from sspi_flask_app.models.database.sspi_clean_api_data import (
     SSPICleanAPIData, SSPIIncompleteAPIData
 )
-from sspi_flask_app.models.database.sspi_country_characteristics import (
-    SSPICountryCharacteristics
-)
 from sspi_flask_app.models.database.sspi_main_data_v3 import (
     SSPIMainDataV3
 )
@@ -62,9 +59,6 @@ sspi_raw_outcome_data = SSPIRawAPIData(
 )
 sspi_score_data = SSPIItemData(
     sspidb.sspi_item_data
-)
-sspi_country_characteristics = SSPICountryCharacteristics(
-    sspidb.sspi_country_characteristics
 )
 sspi_clean_api_data = SSPICleanAPIData(
     sspidb.sspi_clean_api_data
