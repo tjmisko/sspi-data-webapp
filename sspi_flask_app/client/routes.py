@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, url_for, current_app as app
+from flask import Blueprint, render_template, request, current_app as app
+import os
+from markdown import markdown
 from flask_login import login_required
-from ..api.core.download import ClientDownloadForm
 import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json
+from sspi_flask_app.models.database import sspi_metadata
 
 
 client_bp = Blueprint(
@@ -16,7 +18,8 @@ client_bp = Blueprint(
 
 @client_bp.route('/')
 def home():
-    return render_template('home.html')
+    pillar_category_tree = sspi_metadata.pillar_category_summary_tree()
+    return render_template('home.html', pillar_category_tree=pillar_category_tree)
 
 
 @client_bp.route('/favicon.ico')
@@ -36,23 +39,73 @@ def contact():
 
 @client_bp.route('/data')
 def data():
-    download_form = ClientDownloadForm()
-    return render_template('data.html', download_form=download_form)
+    return render_template('data.html')
+
+@client_bp.route('/customize')
+def customize():
+    return render_template('customize.html')
 
 
 @client_bp.route('/data/country/<CountryCode>')
 def country_data(CountryCode):
-    return render_template('country-template.html', CountryCode=CountryCode)
+    return render_template('country-data.html', CountryCode=CountryCode)
 
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
-    return render_template('indicator-data.html', IndicatorCode=IndicatorCode)
+    IndicatorCode = IndicatorCode.upper()
+    if IndicatorCode not in sspi_metadata.indicator_codes():
+        return render_template(
+            'score-panel-data.html',
+            PanelItemCode=IndicatorCode,
+            PanelItemType='Indicator',
+            error=True
+        )
+    return render_template(
+        'score-panel-data.html',
+        PanelItemCode=IndicatorCode,
+        PanelItemType='Indicator',
+        methodology=sspi_metadata.get_item_methodology_html(IndicatorCode),
+        error=False
+    )
 
 
 @client_bp.route('/data/category/<CategoryCode>')
 def category_data(CategoryCode):
-    return render_template('category-data.html', CategoryCode=CategoryCode)
+    CategoryCode = CategoryCode.upper()
+    if CategoryCode not in sspi_metadata.category_codes():
+        return render_template(
+            'score-panel-data.html',
+            PanelItemCode=CategoryCode,
+            PanelItemType='Category',
+            error=True
+        )
+    return render_template(
+        'score-panel-data.html',
+        PanelItemCode=CategoryCode,
+        PanelItemType='Category',
+        methodology=sspi_metadata.get_item_methodology_html(CategoryCode),
+        error=False
+    )
+
+
+@client_bp.route('/data/pillar/<PillarCode>')
+def pillar_data(PillarCode):
+    PillarCode = PillarCode.upper()
+    if PillarCode not in sspi_metadata.pillar_codes():
+        return render_template(
+            'score-panel-data.html',
+            PanelItemCode=PillarCode,
+            PanelItemType='Pillar',
+            medhodology=sspi_metadata.get_item_methodology_html(PillarCode),
+            error=True
+        )
+    return render_template(
+        'score-panel-data.html',
+        PanelItemCode=PillarCode,
+        PanelItemType='Pillar',
+        error=False
+    )
 
 
 @client_bp.route('/indicators')
@@ -165,20 +218,20 @@ def data_overview():
     return render_template("data-overview.html")
 
 
-@client_bp.route('/scores')
+@client_bp.route('/outcome')
+def outcome():
+    return render_template("outcome.html")
+
+
+@client_bp.route('/static/scores')
 def overall_scores():
-    return render_template("scores.html")
+    return render_template("static-scores.html")
 
 
 @client_bp.route('/resources')
 @login_required
 def paper_resources():
     return render_template("paper-resources.html")
-
-
-@client_bp.route('/api/v1/view/line/<idcode>')
-def view_dynamic_line(idcode):
-    return render_template("headless/dynamic-line.html", idcode=idcode)
 
 
 @client_bp.route('/api/v1/view/overview')

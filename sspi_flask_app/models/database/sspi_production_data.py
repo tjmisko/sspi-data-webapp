@@ -11,13 +11,5 @@ class SSPIProductionData(MongoWrapper):
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
-        Raises an InvalidDocumentFormatError if the document is not in the valid
-
-        Valid Document Format:
-            {
-                "Endpoint": str,
-                ...
-            }
-        Additional fields are allowed but not required
         """
         pass

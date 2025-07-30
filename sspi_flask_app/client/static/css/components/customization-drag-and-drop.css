@@ -1,0 +1,116 @@
+:root {
+  --theme-gap: 1rem;
+}
+
+.pillars-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--theme-gap);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.pillar-column {
+  display: flex;
+  flex-direction: column;
+  /* background-color: var(--region-background-color); */
+  border: var(--theme-border-thick);
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+.pillar-header {
+  background-color: var(--sspi-color);
+  font-family: var(--title-font-family);
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: var(--mobile-break-width)) {
+  .pillars-container {
+    grid-template-columns: 1fr;
+  }
+}
+.sspi-toolbar {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sspi-toolbar button {
+  cursor: pointer;
+}
+
+.pillars-container.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.pillar-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.pillar-header {
+  background-color: var(--green-accent);
+  font-family: var(--title-font-family);
+  border-radius: 0.75em;
+  padding: 0.5em;
+  color: white;
+}
+
+.categories-container {
+  background-color: var(--region-background-color);
+  border: var(--theme-border-thin);
+  border-radius: 0.5em;
+  padding: 1em;
+  min-height: 4rem;
+  margin: 0.5em 0;
+}
+
+.category-box {
+  border-radius: 0.5em;
+  padding: 1em;
+  font-size: 0.9em;
+  margin-bottom: 0.5em;
+  background-color: var(--region-background-color);
+}
+
+.indicators-container {
+  border: var(--theme-border-thin);
+  border-radius: 0.5em;
+  padding: 0.5em;
+  min-height: 1rem;
+  margin: 0.5em 0;
+}
+
+.indicator-card {
+  border-radius: 0.5em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.5em;
+  padding: 0.5em;
+  background-color: var(--box-background-color);
+}
+
+.draggable-item {
+  cursor: grab;
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+.drop-zone {
+  /* background-color: red; */
+}
+
+.drop-zone.drag-over {
+  background-color: green;
+}
+
+.unsaved-changes {
+  background-color: red;
+}

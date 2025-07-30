@@ -12,13 +12,16 @@
         </ol>
     </div>
     <div class="theme-toggle-container">
-        <span id="theme-label-header-span" class="theme-label"></span>
+        <div id="theme-label-header-span" class="theme-label"></div>
         <label class="theme-toggle">
             <input type="checkbox" id="darkModeToggle" />
-            <span class="icons">
+            <span class="icons moon-svg">
                 <svg class="icon moon" viewBox="0 0 24 24">
                     <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
                 </svg>
+            </span>
+            <span class="slider"></span>
+            <span class="icons sun-svg">
                 <svg class="icon sun" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="5" />
                     <g stroke-width="2">
@@ -33,7 +36,6 @@
                     </g>
                 </svg>
             </span>
-            <span class="slider"></span>
         </label>
     </div>
     <script>
@@ -64,5 +66,7 @@
                 chartObj.chart.update()
             })
         })
+        window.observableStorage = new ObservableStorage();
+        window.SSPICharts = [];
     </script>
 </header>

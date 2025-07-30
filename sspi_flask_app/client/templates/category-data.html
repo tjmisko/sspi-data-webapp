@@ -12,14 +12,15 @@
 
 {% block content %}
 <section class="hero-box">
-    <select class="category-dropdown">
-        {% include 'category-options.html' %}
+    <select class="item-dropdown">
+        {% for option in category_options %}
+            <option value={{ option.Value }}>{{option.Name}} ({{option.Value}})</option>
+        {% endfor %}
     </select>
-    <h1> {{ CategoryCode | upper }} </h1>
     <script>
-        const defaultOption = document.querySelector('select.category-dropdown option[value="{{CategoryCode | upper}}"]')
+        const defaultOption = document.querySelector('select.item-dropdown option[value="{{CategoryCode | upper}}"]')
         defaultOption.selected = true;
-        document.querySelector('select.category-dropdown').addEventListener('change', function() {
+        document.querySelector('select.item-dropdown').addEventListener('change', function() {
             window.location.href = '/data/category/' + this.value;
         });
     </script>
@@ -30,26 +31,20 @@
 
 <script>
     window.addEventListener("load", (event) => {
-        // window.CategoryDynamicLine = new DynamicLineChart(parentElement, "{{ CategoryCode | upper }}")
-        window.CategoryStaticBarChart = new ScoreBarStatic(
-            document.getElementById("static-data-section"), 
-            "{{ CategoryCode | upper }}"
-        )
-
-        const x = localStorage.getItem('windowX');
-        const y = localStorage.getItem('windowY');
+        window.SSPICharts.push(
+            new CategoryPanelChart(document.getElementById("dynamic-data-section"), "{{ CategoryCode | upper }}")
+        );
+        <!-- new ScoreBarStatic(document.getElementById("static-data-section"), "{{ CategoryCode | upper }}") -->
+        const x = window.observableStorage.getItem('windowX');
+        const y = window.observableStorage.getItem('windowY');
         
         if (x !== null && y !== null) {
           window.moveTo(parseInt(x), parseInt(y));
         }
     })
     window.addEventListener('beforeunload', () => {
-      localStorage.setItem('windowX', window.screenX);
-      localStorage.setItem('windowY', window.screenY);
-      // localStorage.setItem('pins', 
-      //       JSON.stringify(CategoryDynamicLine.chart.data.datasets.map(
-      //       (dataset) => { dataset.pinned }
-      // )));
+      window.observableStorage.setItem('windowX', window.screenX);
+      window.observableStorage.setItem('windowY', window.screenY);
     });
 </script>
 {% endblock content %}

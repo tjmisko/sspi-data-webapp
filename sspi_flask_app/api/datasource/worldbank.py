@@ -5,20 +5,28 @@ from pycountry import countries
 from ..resources.utilities import string_to_float
 
 
-def collectWorldBankdata(WorldBankIndicatorCode, IndicatorCode, **kwargs):
-    yield f"Collecting data for World Bank Indicator {WorldBankIndicatorCode}\n"
-    url_source = f"https://api.worldbank.org/v2/country/all/indicator/{WorldBankIndicatorCode}?per_page=1000&format=json"
-    response = requests.get(url_source).json()
+def collect_world_bank_data(world_bank_indicator_code, IndicatorCode, **kwargs):
+    yield f"Collecting data for World Bank Indicator {world_bank_indicator_code}\n"
+    base_url = f"https://api.worldbank.org/v2/country/all/indicator/{world_bank_indicator_code}"
+    url_w_options = base_url + "?per_page=1000&format=json"
+    response = requests.get(url_w_options).json()
     total_pages = response[0]['pages']
     for p in range(1, total_pages+1):
-        new_url = f"{url_source}&page={p}"
+        new_url = f"{url_w_options}&page={p}"
         yield f"Sending Request for page {p} of {total_pages}\n"
         response = requests.get(new_url).json()
         document_list = response[1]
-        count = sspi_raw_api_data.raw_insert_many(document_list, IndicatorCode, **kwargs)
+        source_info = {
+            "OrganizationName": "World Bank",
+            "OrganizationCode": "WB",
+            "OrganizationSeriesCode": world_bank_indicator_code,
+            "URL": new_url,
+            "BaseURL": base_url
+        }
+        count = sspi_raw_api_data.raw_insert_many(document_list, source_info, **kwargs)
         yield f"Inserted {count} new observations into sspi_raw_api_data\n"
         time.sleep(0.5)
-    yield f"Collection complete for World Bank Indicator {WorldBankIndicatorCode}"
+    yield f"Collection complete for World Bank Indicator {world_bank_indicator_code}"
 
 
 def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:

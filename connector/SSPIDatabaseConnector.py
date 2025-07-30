@@ -42,34 +42,19 @@ class SSPIDatabaseConnector:
         headers = {'Authorization': f'Bearer {self.remote_token}'}
         self.remote_session.headers.update(headers)
 
-    def call(self, request_string, method="GET", remote=False) -> requests.Response:
+    def call(self, request_string, method="GET", remote=False, stream=False, data=None):
         sesh = self.remote_session if remote else self.local_session
         base_url = self.remote_base if remote else self.local_base
         if request_string[0] == "/":
             request_string = request_string[1:]
+        endpoint = f"{base_url}/{request_string}"
         if method == "POST":
-            return sesh.post(f"{base_url}/{request_string}")
+            if data:
+                sesh.headers.update({'Content-Type': 'application/json'})
+            return sesh.post(endpoint, stream=stream, json=data)
         if method == "DELETE":
-            return sesh.delete(f"{base_url}/{request_string}")
-        return sesh.get(f"{base_url}/{request_string}")
-
-    def collect(self, indicator_code: str, remote=False):
-        sesh = self.remote_session if remote else self.local_session
-        base_url = self.remote_base if remote else self.local_base
-        endpoint = f"{base_url}/api/v1/collect/{indicator_code}"
-        with sesh.get(endpoint, stream=True) as res:
-            for line in res.iter_lines(decode_unicode=True):
-                yield line
-
-    def finalize(self, remote=False, special=""):
-        sesh = self.remote_session if remote else self.local_session
-        base_url = self.remote_base if remote else self.local_base
-        endpoint = f"{base_url}/api/v1/production/finalize"
-        if special:
-            endpoint += special
-        with sesh.get(endpoint, stream=True) as res:
-            for line in res.iter_lines(decode_unicode=True):
-                yield line
+            return sesh.delete(endpoint, stream=stream)
+        return sesh.get(endpoint, stream=stream)
 
     def load(self, obs_lst: list[dict], database_name: str, indicator_code: str, remote=False) -> str:
         """
@@ -78,41 +63,8 @@ class SSPIDatabaseConnector:
         sesh = self.remote_session if remote else self.local_session
         base_url = self.remote_base if remote else self.local_base
         endpoint = f"{base_url}/api/v1/load/{database_name}/{indicator_code}"
-        # - [ ] Check on whether verify=False should be inserted here programatically
         res = sesh.post(endpoint, json=json.dumps(obs_lst))
-        msg = f"Load Request Returned with Status Code {res.status_code}"
-        log.info(msg)
-        return str(res.text)
-
-    def delete_indicator_data(self, database_name: str, indicator_code: str, remote=False) -> str:
-        sesh = self.remote_session if remote else self.local_session
-        base_url = self.remote_base if remote else self.local_base
-        endpoint = f"{base_url}/api/v1/delete/indicator/{database_name}/{indicator_code}"
-        res = sesh.delete(endpoint)
-        msg_1 = f"Delete Request Returned with Status Code {res.status_code}\n"
-        msg_2 = str(res.text)
-        log.info(msg_1)
-        return msg_1 + msg_2
-
-    def delete_duplicate_data(self, database_name: str, remote=False) -> str:
-        sesh = self.remote_session if remote else self.local_session
-        base_url = self.remote_base if remote else self.local_base
-        endpoint = f"{base_url}/api/v1/delete/duplicates"
-        data = {"database": database_name}
-        res = sesh.post(endpoint, data=data)
-        msg = f"Delete Request Returned with Status Code {res.status_code}"
-        log.info(msg)
-        return str(msg)
-
-    def clear_database(self, database_name: str, database_confirm: str, remote=False) -> str:
-        sesh = self.remote_session if remote else self.local_session
-        base_url = self.remote_base if remote else self.local_base
-        endpoint = f"{base_url}/api/v1/delete/clear"
-        data = {"database": database_name, "database_confirm": database_confirm}
-        res = sesh.post(endpoint, data=data)
-        msg = f"Delete Request Returned with Status Code {res.status_code}"
-        log.info(msg)
-        return str(msg)
+        return res
 
 
 class LocalHttpAdapter(HTTPAdapter):

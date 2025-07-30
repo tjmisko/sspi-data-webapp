@@ -1,0 +1,450 @@
+[
+    {
+        "Category": "Ecosystem",
+        "Indicator": "Biodiversity Protection",
+        "Code": "BIODIV",
+        "Link": "https://sspi.world/data/indicator/BIODIV",
+        "Status": "Finalization in Progress",
+        "Notes": "Source data on landlocked countries. Run imputations based on landlocked countries"
+    },
+    {
+        "Category": "Ecosystem",
+        "Indicator": "IUCN Red List Index",
+        "Code": "REDLST",
+        "Link": "https://sspi.world/data/indicator/REDLST",
+        "Status": "Completely finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Land",
+        "Indicator": "Sustainable Nitrogen Management",
+        "Code": "NITROG",
+        "Link": "https://sspi.world/data/indicator/NITROG",
+        "Status": "Completely finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Land",
+        "Indicator": "Water Management",
+        "Code": "WATMAN",
+        "Link": "https://sspi.world/data/indicator/WATMAN",
+        "Status": "Temporarily finalized",
+        "Notes": "Come back around when there's time to determine whether we want to use 5 or 10 year lags to compute change in Water Use Efficiency instead of level of Water Use Efficiency"
+    },
+    {
+        "Category": "Land",
+        "Indicator": "Chemical Pollution Convention Compliance",
+        "Code": "CHMPOL",
+        "Link": "https://sspi.world/data/indicator/CHMPOL",
+        "Status": "Poor Data Coverage**, *Potential to Redesign*",
+        "Notes": "Successor to Stockholm Convention Compliance (STKHLM) but adding Montreal Convention and others, available from the same dataset. Data is fully collected from SDG, but the coverage is poor: only three years of data (2015, 2020, 2025)."
+    },
+    {
+        "Category": "Land",
+        "Indicator": "Deforestation",
+        "Code": "DEFRST",
+        "Link": "https://sspi.world/data/indicator/DEFRST",
+        "Status": "Finalization in Progress",
+        "Notes": "Data coverage is good just working through minor imputations to fill holes. . Come back around when there's time to determine whether we want to use 5 or 10 year lags to compute changes versus 1990s average."
+    },
+    {
+        "Category": "Land",
+        "Indicator": "Carbon Capture",
+        "Code": "CARBON",
+        "Link": "https://sspi.world/data/indicator/CARBON",
+        "Status": "Finalization in Progress",
+        "Notes": "Data coverage is good just working through minor imputations to fill holes. Come back around when there's time to determine whether we want to use 5 or 10 year lags to compute changes versus 1990s average."
+    },
+    {
+        "Category": "GHG",
+        "Indicator": "Green Transport Index",
+        "Code": "GTRANS",
+        "Link": "https://sspi.world/data/indicator/GTRANS",
+        "Status": "Potential to Redesign",
+        "Notes": "Right now we're using the very crude measure of Tons of CO2 from Transport. Unable to source carbon price (e.g. fuel tax, or even pump price, data)"
+    },
+    {
+        "Category": "GHG",
+        "Indicator": "Beef Market",
+        "Code": "BEEFMK",
+        "Link": "https://sspi.world/data/indicator/BEEFMK",
+        "Status": "Some Data Work Required",
+        "Notes": "Data coverage back to 2010 only for current UNFAO series but UNFAO has more series to explore which may be able to substitute."
+    },
+    {
+        "Category": "GHG",
+        "Indicator": "Energy From Coal",
+        "Code": "COALPW",
+        "Link": "https://sspi.world/data/indicator/COALPW",
+        "Status": "Finalization in Progress",
+        "Notes": "Almost complete coverage just a few imputations to do"
+    },
+    {
+        "Category": "Energy",
+        "Indicator": "Alternative Energy Generation",
+        "Code": "ALTNRG",
+        "Link": "https://sspi.world/data/indicator/ALTNRG",
+        "Status": "Finalization in Progress",
+        "Notes": "Computations are done but nicer data housekeeping needs to be done on the backend."
+    },
+    {
+        "Category": "Energy",
+        "Indicator": "Energy Intensity",
+        "Code": "NRGINT",
+        "Link": "https://sspi.world/data/indicator/NRGINT",
+        "Status": "Completely finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Energy",
+        "Indicator": "Air Pollution",
+        "Code": "AIRPOL",
+        "Link": "https://sspi.world/data/indicator/AIRPOL",
+        "Status": "Attention Required, New Data Source Needed**",
+        "Notes": "The current SDG data source only goes back to 2010. Should be straightforward"
+    },
+    {
+        "Category": "Waste",
+        "Indicator": "Municipal Solid Waste Generation",
+        "Code": "MSWGEN",
+        "Link": "https://sspi.world/data/indicator/MSWGEN",
+        "Status": "Attention Required, New Data Source Needed**",
+        "Notes": "Not much hope."
+    },
+    {
+        "Category": "Waste",
+        "Indicator": "Recycling Rate",
+        "Code": "RECYCL",
+        "Link": "https://sspi.world/data/indicator/RECYCL",
+        "Status": "Attention Required, New Data Source Needed**",
+        "Notes": "Not much hope."
+    },
+    {
+        "Category": "Worker Wellbeing",
+        "Indicator": "Participation in Paid Employment",
+        "Code": "EMPLOY",
+        "Link": "https://sspi.world/data/indicator/EMPLOY",
+        "Status": "Finalization in Progress",
+        "Notes": "Just need to run stock imputations and clean up a little bit. This is a biannual dataset for many countries which linear interpolation will be done to bridge between missing years"
+    },
+    {
+        "Category": "Worker Wellbeing",
+        "Indicator": "Collective Bargaining Coverage",
+        "Code": "COLBAR",
+        "Link": "https://sspi.world/data/indicator/COLBAR",
+        "Status": "Moderate Data Issues, Attention Required",
+        "Notes": "Coverage seems to stop between 2015 and 2020 not sure why Will need to examine the ILO documentation to see why this is no longer reported"
+    },
+    {
+        "Category": "Worker Wellbeing",
+        "Indicator": "Unemployment Benefits Coverage",
+        "Code": "UNEMPL",
+        "Link": "https://sspi.world/data/indicator/UNEMPL",
+        "Status": "Finalization in Progress",
+        "Notes": "Just need to run stock imputations and clean up a little bit. This is a biannual dataset for many countries which linear interpolation will be done to bridge between missing years."
+    },
+    {
+        "Category": "Worker Wellbeing",
+        "Indicator": "Paid Maternity Leave",
+        "Code": "MATERN",
+        "Link": "https://sspi.world/data/indicator/MATERN",
+        "Status": "Data Collection Problems",
+        "Notes": "Need to look into this one probably not a problem, but needs attention"
+    },
+    {
+        "Category": "Worker Wellbeing",
+        "Indicator": "Fatal Workplace Injuries",
+        "Code": "FATINJ",
+        "Link": "https://sspi.world/data/indicator/FATINJ",
+        "Status": "Finalization in Progress",
+        "Notes": "Just need to run stock imputations and clean up a little bit. This is a biannual dataset for many countries which linear interpolation will be done to bridge between missing years"
+    },
+    {
+        "Category": "Worker Wellbeing",
+        "Indicator": "Senior Wellbeing",
+        "Code": "SENIOR",
+        "Link": "https://sspi.world/data/indicator/SENIOR",
+        "Status": "Moderate Data Issues, Attention Required",
+        "Notes": "Senior as designed in 2023 has some issues with data coverage and none of the different components have aligning time series (intersection is nearly empty). Will need to examine what's available."
+    },
+    {
+        "Category": "Tax",
+        "Indicator": "Corporate Tax Rate",
+        "Code": "CRPTAX",
+        "Link": "https://sspi.world/data/indicator/CRPTAX",
+        "Status": "Completely Finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Tax",
+        "Indicator": "Tax Revenue",
+        "Code": "TAXREV",
+        "Link": "https://sspi.world/data/indicator/TAXREV",
+        "Status": "Completely Finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Tax",
+        "Indicator": "Tax Progressivity",
+        "Code": "TAXPRG",
+        "Link": "https://sspi.world/data/indicator/TAXPRG",
+        "Status": "Novel Idea, Work in Progress, Needs Attention",
+        "Notes": "We want something to understand the idea of fairness in the tax code. We were previously using evasion but there was little data. We looked into this with little success yet, but we haven't fully resolved it either way."
+    },
+    {
+        "Category": "Financial Sector",
+        "Indicator": "Stability",
+        "Code": "FSTABL",
+        "Link": "https://sspi.world/data/indicator/FSTABL",
+        "Status": "Minor Data Issues",
+        "Notes": "Data is available but there's some kink to work out in sourcing it. Some attention required, but should not pose a serious problem."
+    },
+    {
+        "Category": "Financial Sector",
+        "Indicator": "Depth",
+        "Code": "FDEPTH",
+        "Link": "https://sspi.world/data/indicator/FDEPTH",
+        "Status": "Finalization in Progress",
+        "Notes": "Just need to run stock imputations and clean up a little bit. Reasonable coverage across most countries with some imputations required"
+    },
+    {
+        "Category": "Financial Sector",
+        "Indicator": "Public Access",
+        "Code": "PUBACC",
+        "Link": "https://sspi.world/data/indicator/PUBACC",
+        "Status": "Moderate Data Issues, Attention Required",
+        "Notes": "Coverage seems to start in 2011 and is only biannual. Will need to examine the documentation."
+    },
+    {
+        "Category": "Inequality",
+        "Indicator": "Income Share Ratio",
+        "Code": "ISHRAT",
+        "Link": "https://sspi.world/data/indicator/ISHRAT",
+        "Status": "Completely Finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Inequality",
+        "Indicator": "Gini-coefficient After Taxes",
+        "Code": "GINIPT",
+        "Link": "https://sspi.world/data/indicator/GINIPT",
+        "Status": "Completely Finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Education",
+        "Indicator": "Primary School Net Enrollment",
+        "Code": "ENRPRI",
+        "Link": "https://sspi.world/data/indicator/ENRPRI",
+        "Status": "Completely Finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Education",
+        "Indicator": "Lower Secondary Net Enrollment",
+        "Code": "ENRSEC",
+        "Link": "https://sspi.world/data/indicator/ENRSEC",
+        "Status": "Finalization in Progress",
+        "Notes": "Just need to run stock imputations and clean up a little bit. Reasonable coverage across most countries with some imputations required."
+    },
+    {
+        "Category": "Education",
+        "Indicator": "Years of Compulsory Education",
+        "Code": "YRSEDU",
+        "Link": "https://sspi.world/data/indicator/YRSEDU",
+        "Status": "Completely Finalized",
+        "Notes": ""
+    },
+    {
+        "Category": "Education",
+        "Indicator": "Primary Education Pupil to Teacher Ratio",
+        "Code": "PUPTCH",
+        "Link": "https://sspi.world/data/indicator/PUPTCH",
+        "Status": "Moderate Data Issues, Attention Required",
+        "Notes": "Coverage seems to stop between 2015 and 2020 not sure why. Will need to examine the UNESCO documentation to see why this is no longer reported."
+    },
+    {
+        "Category": "Healthcare",
+        "Indicator": "Attended Births by Skilled Personnel",
+        "Code": "ATBRTH",
+        "Link": "https://sspi.world/data/indicator/ATBRTH",
+        "Status": "Finalization in Progress Despite Data Coverage Issues",
+        "Notes": "A good example of an edge case for data coverage and availability. Finalization won't be hard but there will be more uncertainty in the estimates for these series."
+    },
+    {
+        "Category": "Healthcare",
+        "Indicator": "Infant DTP Vaccine Coverage",
+        "Code": "DPTCOV",
+        "Link": "https://sspi.world/data/indicator/DPTCOV",
+        "Status": "Minor Data Issues",
+        "Notes": "Data is available but there's some kink to work out in sourcing it. Some attention required, but should not pose a serious problem."
+    },
+    {
+        "Category": "Healthcare",
+        "Indicator": "Physicians per 10,000",
+        "Code": "PHYSPC",
+        "Link": "https://sspi.world/data/indicator/PHYSPC",
+        "Status": "Finalization in Progress, Minor/Moderate Data Coverage Issues",
+        "Notes": ""
+    },
+    {
+        "Category": "Healthcare",
+        "Indicator": "Family Planning",
+        "Code": "FAMPLN",
+        "Link": "https://sspi.world/data/indicator/FAMPLN",
+        "Status": "Data Coverage Issues",
+        "Notes": "Investigate the differences between the sample and modeled data."
+    },
+    {
+        "Category": "Healthcare",
+        "Indicator": "Child Stunting",
+        "Code": "CSTUNT",
+        "Link": "https://sspi.world/data/indicator/CSTUNT",
+        "Status": "Finalization in Progress",
+        "Notes": "Coverage good just need several imputations"
+    },
+    {
+        "Category": "Infrastructure",
+        "Indicator": "Availability and Quality of Electricity",
+        "Code": "AQELEC",
+        "Link": "https://sspi.world/data/indicator/AQELEC",
+        "Status": "Moderate Data Coverage Issues",
+        "Notes": "Complete coverage from 2007 to 2017 but issues outside of that period. Investigate imputation strategies and alternate sources."
+    },
+    {
+        "Category": "Infrastructure",
+        "Indicator": "Basic Sanitation Services",
+        "Code": "SANSRV",
+        "Link": "https://sspi.world/data/indicator/SANSRV",
+        "Status": "Finalization in Progress",
+        "Notes": "Coverage good just need several imputations."
+    },
+    {
+        "Category": "Infrastructure",
+        "Indicator": "Safely Managed Water",
+        "Code": "DRKWAT",
+        "Link": "https://sspi.world/data/indicator/DRKWAT",
+        "Status": "Finalization in Progress",
+        "Notes": "Coverage good just need several imputations"
+    },
+    {
+        "Category": "Infrastructure",
+        "Indicator": "Internet Access and Quality",
+        "Code": "INTRNT",
+        "Link": "https://sspi.world/data/indicator/INTRNT",
+        "Status": "Finalization in Progress",
+        "Notes": "Coverage good reasonably just need several imputations. Most countries don't have coverage before 2007, but that also makes sense because internet was not a policy priority before then. How to handle that in the scoring?"
+    },
+    {
+        "Category": "Infrastructure",
+        "Indicator": "National Transport Network Intensity",
+        "Code": "TRNETW",
+        "Link": "https://sspi.world/data/indicator/TRNETW",
+        "Status": "Redesign Required",
+        "Notes": ""
+    },
+    {
+        "Category": "Rights",
+        "Indicator": "Rule of Law Index",
+        "Code": "RULELW",
+        "Link": "https://sspi.world/data/indicator/RULELW",
+        "Status": "Finalization in Progress",
+        "Notes": "Coverage good just need several imputations"
+    },
+    {
+        "Category": "Rights",
+        "Indicator": "Quality of Public Services & Governance",
+        "Code": "PUBSRV",
+        "Link": "https://sspi.world/data/indicator/PUBSRV",
+        "Status": "Attention Required, Need to Investigate Sources",
+        "Notes": ""
+    },
+    {
+        "Category": "Rights",
+        "Indicator": "Electoral Democracy Index",
+        "Code": "EDEMOC",
+        "Link": "https://sspi.world/data/indicator/EDEMOC",
+        "Status": "Finalization in Progress",
+        "Notes": "Coverage good just need several imputations"
+    },
+    {
+        "Category": "Rights",
+        "Indicator": "Adoption of Key UN Conventions",
+        "Code": "UNCONV",
+        "Link": "https://sspi.world/data/indicator/UNCONV",
+        "Status": "Redesign Required",
+        "Notes": "Attention Required Need to Investigate Sources and Think About How We Want to Think About Human Rights"
+    },
+    {
+        "Category": "Rights",
+        "Indicator": "Gender Equality Index",
+        "Code": "GENDEQ",
+        "Link": "https://sspi.world/data/indicator/GENDEQ",
+        "Status": "Attention Required, Data is Available But Needs to Be Collected",
+        "Notes": ""
+    },
+    {
+        "Category": "Public Safety",
+        "Indicator": "Intentional Homicide",
+        "Code": "MURDER",
+        "Link": "https://sspi.world/data/indicator/MURDER",
+        "Status": "Attention Required, Data is Available But Needs to Be Collected",
+        "Notes": ""
+    },
+    {
+        "Category": "Public Safety",
+        "Indicator": "Global Cybersecurity Index",
+        "Code": "CYBSEC",
+        "Link": "https://sspi.world/data/indicator/CYBSEC",
+        "Status": "Moderate Data Issues",
+        "Notes": "Perhaps not an issue with the data but only begins collection in 2014 (cf. INTRNT), which makes sense given the salience of the policy"
+    },
+    {
+        "Category": "Public Safety",
+        "Indicator": "Security Apparatus",
+        "Code": "SECAPP",
+        "Link": "https://sspi.world/data/indicator/SECAPP",
+        "Status": "Finalization In Progress, Minor Data Issues",
+        "Notes": "Data is available after 2006. Using backward extrapolation for 2000 to 2006."
+    },
+    {
+        "Category": "Public Safety",
+        "Indicator": "Incarceration Rates",
+        "Code": "PRISON",
+        "Link": "https://sspi.world/data/indicator/PRISON",
+        "Status": "Moderate Data Problems",
+        "Notes": "Data available only through 2018"
+    },
+    {
+        "Category": "Global Role",
+        "Indicator": "Arms Transfers",
+        "Code": "ARMEXP",
+        "Link": "https://sspi.world/data/indicator/ARMEXP",
+        "Status": "Finalization In Progress",
+        "Notes": ""
+    },
+    {
+        "Category": "Global Role",
+        "Indicator": "Military Expenditure",
+        "Code": "MILEXP",
+        "Link": "https://sspi.world/data/indicator/MILEXP",
+        "Status": "Finalization In Progress",
+        "Notes": "Ruotong is working on this"
+    },
+    {
+        "Category": "Global Role",
+        "Indicator": "Research and Development",
+        "Code": "RDFUND",
+        "Link": "https://sspi.world/data/indicator/RDFUND",
+        "Status": "Attention Required, Data Collection in Progress",
+        "Notes": "Ruotong is working on this"
+    },
+    {
+        "Category": "Global Role",
+        "Indicator": "Foreign Aid",
+        "Code": "FORAID",
+        "Link": "https://sspi.world/data/indicator/FORAID",
+        "Status": "Finalization In Progress",
+        "Notes": "Circle back and double check on whether we like the methodology here"
+    }
+]

@@ -22,21 +22,21 @@ def sspi_characteristics_db():
 def test_data():
     yield [
         {
-            "IntermediateCode": "UNPOPL",
+            "IntermediateCode": "POPULN",
             "CountryCode": "USA",
             "Year": 2015,
             "Unit": "Millions of people",
             "Value": 320,
         },
         {
-            "IntermediateCode": "UNPOPL",
+            "IntermediateCode": "POPULN",
             "CountryCode": "USA",
             "Year": 2016,
             "Unit": "Millions of people",
             "Value": 325
         },
         {
-            "IntermediateCode": "UNPOPL",
+            "IntermediateCode": "POPULN",
             "CountryCode": "USA",
             "Year": 2017,
             "Unit": "Millions of people",
@@ -44,14 +44,14 @@ def test_data():
         },
         {
             "ExtraInfo": "IsOK",
-            "IntermediateCode": "UNPOPL",
+            "IntermediateCode": "POPULN",
             "CountryCode": "USA",
             "Year": 2017,
             "Unit": "Millions of people",
             "Value": 330
         },
         {
-            "IndicatorCode": "UNPOPL",
+            "IndicatorCode": "POPULN",
             "CountryCode": "USA",
             "Year": 2017,
             "Unit": "Millions of people",
