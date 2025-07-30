@@ -1,24 +1,25 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collectWorldBankdata
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_world_bank_data
 from flask_login import login_required, current_user
 
 
-@collect_bp.route("/DRKWAT", methods=['GET'])
-@login_required
-def drkwat():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/DRKWAT", methods=['GET'])
+# @login_required
+# def drkwat():
+#     def collect_iterator(**kwargs):
+#         yield from collect_world_bank_data("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/DRKWAT")
@@ -28,6 +29,11 @@ def compute_drkwat():
     sspi_clean_api_data.delete_many({"IndicatorCode": "DRKWAT"})
     raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
     cleaned = clean_wb_data(raw_data, "DRKWAT", "Percent")
-    scored_list = score_single_indicator(cleaned, "DRKWAT")
+    lg, ug = sspi_metadata.get_goalposts("DRKWAT")
+    scored_list, _ = score_indicator(
+        cleaned, "DRKWAT",
+        score_function=lambda WB_DRKWAT: goalpost(WB_DRKWAT, lg, ug),
+        unit="%"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

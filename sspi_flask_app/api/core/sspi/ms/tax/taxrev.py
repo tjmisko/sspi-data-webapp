@@ -2,29 +2,31 @@ from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
 
-from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collectWorldBankdata
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_world_bank_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
     impute_global_average,
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
     sspi_raw_api_data,
+    sspi_metadata
 )
 
 
-@collect_bp.route("/TAXREV", methods=['GET'])
-@login_required
-def taxrev():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/TAXREV", methods=['GET'])
+# @login_required
+# def taxrev():
+#     def collect_iterator(**kwargs):
+#         yield from collect_world_bank_data("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/TAXREV")
@@ -34,7 +36,12 @@ def compute_taxrev():
     sspi_clean_api_data.delete_many({"IndicatorCode": "TAXREV"})
     taxrev_raw = sspi_raw_api_data.fetch_raw_data("TAXREV")
     taxrev_clean = clean_wb_data(taxrev_raw, "TAXREV", "% of GDP")
-    scored_list = score_single_indicator(taxrev_clean, "TAXREV")
+    lg, ug = sspi_metadata.get_goalposts("TAXREV")
+    scored_list, _ = score_indicator(
+        taxrev_clean, "TAXREV",
+        score_function = lambda WB_TAXREV: goalpost(WB_TAXREV, lg, ug),
+        unit="Percentage"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

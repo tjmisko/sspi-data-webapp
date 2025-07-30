@@ -5,7 +5,7 @@ from io import BytesIO
 
 
 
-def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
+def collect_vdem_data(**kwargs):
     """
     Collect V-Dem data for the given indicator.
     Updated to fragment large CSV files into 24 slices to avoid exceeding BSON document size limits.
@@ -30,9 +30,15 @@ def collectVDEMData(SourceIndicatorCode, IndicatorCode, **kwargs):
             yield f"Processing file: {filename}\n"
             with z.open(filename) as data:
                 csv_string = data.read().decode("utf-8")
+                source_info = {
+                    "OrganizationName": "Varieties of Democracy",
+                    "OrganizationCode": "VDEM",
+                    "OrganizationSeriesCode": filename,
+                    "URL": url,
+                }
                 sspi_raw_api_data.raw_insert_one(
                     csv_string,
-                    IndicatorCode,
+                    source_info,
                     **kwargs
                 )
-    yield f"Collection complete for {IndicatorCode} (VDEM {SourceIndicatorCode})."
+    yield f"V-Dem Data Collection Complete"

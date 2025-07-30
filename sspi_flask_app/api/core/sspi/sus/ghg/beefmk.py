@@ -4,32 +4,30 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
-from sspi_flask_app.api.core.sspi import collect_bp
-from sspi_flask_app.api.datasource.fao import collectUNFAOData
+from sspi_flask_app.api.datasource.unfao import collect_unfao_data
 import jq
 
 
-@collect_bp.route("/BEEFMK", methods=["GET"])
-@login_required
-def beefmk():
-    def collect_iterator(**kwargs):
-        # yield from collectUNFAOData("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
-        # yield from collectUNFAOData("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
-        # yield from collectWorldBankdata("SP.POP.TOTL", "BEEFMK", IntermediateCode="POPULN", **kwargs)
-        yield from collectUNFAOData(
-            "2910%2C645%2C2610%2C2510%2C511", "2731%2C2501", "FBS", "BEEFMK", **kwargs
-        )
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/BEEFMK", methods=["GET"])
+# @login_required
+# def beefmk():
+#     def collect_iterator(**kwargs):
+#         # yield from collect_unfao_data("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+#         # yield from collect_unfao_data("C2510%2C2111%2C2413", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
+#         # yield from collect_world_bank_data("SP.POP.TOTL", "BEEFMK", IntermediateCode="POPULN", **kwargs)
+#         yield from collectUNFAOData(
+#             "2910%2C645%2C2610%2C2510%2C511", "2731%2C2501", "FBS", "BEEFMK", **kwargs
+#         )
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/BEEFMK", methods=["GET"])
@@ -82,9 +80,9 @@ def compute_beefmk():
         elif obs["IntermediateCode"] == "POPULN":
             obs["Value"] = obs["Value"] * 1e3
             obs["Unit"] = "Persons"
-    clean_list, incomplete_list = zip_intermediates(
-        intermediates_list, "BEEFMK", ScoreFunction=score_beefmk, ScoreBy="Value"
+    clean_list, incomplete_list = score_indicator(
+        intermediates_list, "BEEFMK", score_function=score_beefmk, unit="Index"
     )
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     sspi_clean_api_data.insert_many(clean_list)
     return parse_json(clean_list)

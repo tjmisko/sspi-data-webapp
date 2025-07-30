@@ -1,27 +1,28 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_metadata
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from sspi_flask_app.api.datasource.who import (
-    collectCSTUNTData
+    collect_gho_cstunt_data
 )
 import jq
 
 
-@collect_bp.route("/CSTUNT", methods=['GET'])
-@login_required
-def cstunt():
-    def collect_iterator(**kwargs):
-        yield from collectCSTUNTData(**kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/CSTUNT", methods=['GET'])
+# @login_required
+# def cstunt():
+#     def collect_iterator(**kwargs):
+#         yield from collect_gho_cstunt_data(**kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/CSTUNT", methods=['GET'])
@@ -58,6 +59,11 @@ def compute_cstunt():
     rename_keys_filter = jq.compile(rename_keys)
     value_list = rename_keys_filter.input(reduced_list).all()
     # Score the indicator data
-    scored_list = score_single_indicator(value_list, "CSTUNT")
+    lg, ug = sspi_metadata.get_goalposts("CSTUNT")
+    scored_list, _ = score_indicator(
+        value_list, "CSTUNT",
+        score_function=lambda GHO_CSTUNT: goalpost(GHO_CSTUNT, lg, ug),
+        unit = "%"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

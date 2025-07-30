@@ -1,51 +1,49 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.oecdstat import (
-    collectOECDSDMXFORAID,
+    collect_oecd_sdmx_data_foraid
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
+    collect_world_bank_data,
     clean_wb_data,
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from bs4 import BeautifulSoup
 import pycountry
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
 )
 
 
-@collect_bp.route("/FORAID", methods=["GET"])
-@login_required
-def foraid():
-    def collect_iterator(**kwargs):
-        metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
-        yield from collectOECDSDMXFORAID(
-            "OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,",
-            "FORAID",
-            filter_parameters="..206.USD.Q",
-            metadata_url=metadata_url,
-            IntermediateCode="ODAFLW",
-            **kwargs,
-        )
-        yield from collectWorldBankdata(
-            "SP.POP.TOTL", "FORAID", IntermediateCode="POPULN", **kwargs
-        )
-        yield from collectWorldBankdata(
-            "NY.GDP.MKTP.KD", "FORAID", IntermediateCode="GDPMKT", **kwargs
-        )
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/FORAID", methods=["GET"])
+# @login_required
+# def foraid():
+#     def collect_iterator(**kwargs):
+#         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
+#         yield from collect_oecd_sdmx_data_foraid(
+#             "OECD.DCD.FSD,DSD_DAC2@DF_DAC2A,",
+#             "FORAID",
+#             filter_parameters="..206.USD.Q",
+#             metadata_url=metadata_url,
+#             IntermediateCode="ODAFLW",
+#             **kwargs,
+#         )
+#         yield from collectWorldBankdata(
+#             "SP.POP.TOTL", "FORAID", IntermediateCode="POPULN", **kwargs
+#         )
+#         yield from collectWorldBankdata(
+#             "NY.GDP.MKTP.KD", "FORAID", IntermediateCode="GDPMKT", **kwargs
+#         )
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/FORAID", methods=["GET"])
@@ -160,25 +158,21 @@ def compute_foraid():
     dug = 1  # 1% of GDP Donated
     rlg = 0  # 0 Dollars per Capita?
     rug = 500  # 500 Dollars per Capita?
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediates_list,
         "FORAID",
-        ScoreFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
+        score_function=lambda TOTDON, TOTREC, POPULN, GDPMKT: goalpost(
             TOTDON * 10**8 / GDPMKT, dlg, dug
         )
         if TOTDON > TOTREC
         else goalpost(TOTREC * 10**6 / POPULN, rlg, rug),
-        ValueFunction=lambda TOTDON, TOTREC, POPULN, GDPMKT: TOTDON * 10**8 / GDPMKT
-        if TOTDON > TOTREC
-        else TOTREC * 10**6 / POPULN,
-        UnitFunction=lambda TOTDON,
+        unit=lambda TOTDON,
         TOTREC,
         POPULN,
         GDPMKT: "Donor: ODA Donations (% GDP)"
         if TOTDON > TOTREC
         else "Recipient: ODA Received per Capita (USD per Capita)",
-        ScoreBy="Value",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

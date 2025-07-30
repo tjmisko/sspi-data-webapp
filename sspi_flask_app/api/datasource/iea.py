@@ -2,12 +2,20 @@ import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 import pycountry
 
-def collectIEAData(IEAIndicatorCode, IndicatorCode, **kwargs):
-    raw_data = requests.get(f"https://api.iea.org/stats/indicator/{IEAIndicatorCode}").json()
-    count = sspi_raw_api_data.raw_insert_many(raw_data, IndicatorCode, **kwargs)
-    yield f"Successfully inserted {count} observations into the database"
+def collect_iea_data(iea_indicator_code, **kwargs):
+    url = f"https://api.iea.org/stats/indicator/{iea_indicator_code}"
+    raw_data = requests.get(url).json()
+    source_info = {
+        "OrganizationName": "International Energy Organization",
+        "OrganizationCode": "IEA",
+        "OrganizationSeriesCode": iea_indicator_code,
+        "BaseURL": url,
+        "URL": url
+    }
+    count = sspi_raw_api_data.raw_insert_many(raw_data, source_info, **kwargs)
+    yield f"Successfully inserted {count} observations of IEA Indicator {iea_indicator_code}"
 
-def filterSeriesListiea(series_list, filterVAR, IndicatorCode):
+def filter_series_list_iea(series_list, filterVAR, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
     document_list = []
     for i, series in enumerate(series_list):
@@ -29,7 +37,7 @@ def filterSeriesListiea(series_list, filterVAR, IndicatorCode):
         document_list.extend(new_documents)
     return document_list
 
-def cleanIEAData_altnrg(RawData, IndName):
+def clean_iea_data_altnrg(RawData, IndName):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
     and returns a list of dictionaries with only relevant data from wanted countries

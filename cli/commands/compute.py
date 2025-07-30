@@ -11,7 +11,7 @@ def compute(indicator_code, remote=False):
     connector = SSPIDatabaseConnector()
     indicator_code = indicator_code.upper()
     request_string = f"/api/v1/compute/{indicator_code}"
-    res = connector.call(request_string, remote=remote)
+    res = connector.call(request_string, method="POST", remote=remote)
     if res.status_code != 200:
         raise click.ClickException(
             f"Error! Compute Request Failed with Status Code {res.status_code}"

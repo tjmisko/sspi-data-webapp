@@ -109,9 +109,9 @@ def init_app(Config):
         from sspi_flask_app.client.routes import client_bp
         from sspi_flask_app.auth.routes import auth_bp
         from sspi_flask_app.api.api import api_bp
-        from sspi_flask_app.api.core.sspi import collect_bp
         from sspi_flask_app.api.core.sspi import compute_bp
         from sspi_flask_app.api.core.sspi import impute_bp
+        from sspi_flask_app.api.core.dataset import dataset_bp
         from sspi_flask_app.api.core.dashboard import dashboard_bp
         from sspi_flask_app.api.core.delete import delete_bp
         from sspi_flask_app.api.core.download import download_bp
@@ -124,7 +124,7 @@ def init_app(Config):
         # Register database
         db.create_all()
         # Register Blueprints
-        api_bp.register_blueprint(collect_bp)
+        api_bp.register_blueprint(dataset_bp)
         api_bp.register_blueprint(compute_bp)
         api_bp.register_blueprint(dashboard_bp)
         api_bp.register_blueprint(delete_bp)

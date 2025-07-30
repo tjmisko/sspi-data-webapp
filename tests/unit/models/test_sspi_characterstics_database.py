@@ -58,7 +58,7 @@ def test_data():
             "Value": 330
         },
         {
-            "IntermediateCode": "POPULN",
+            "IntermediateCode": "UNPOPL",
             "CountryCode": "USA",
             "Year": 2017,
             "Value": 330

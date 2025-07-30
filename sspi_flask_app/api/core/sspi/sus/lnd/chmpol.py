@@ -1,9 +1,8 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )
@@ -12,20 +11,19 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
 )
 from sspi_flask_app.api.resources.utilities import (
-    score_single_indicator,
+    score_indicator,
     parse_json,
 )
 
 
-@collect_bp.route("/CHMPOL", methods=["GET"])
-@login_required
-def chmpol():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData("12.4.1", "CHMPOL", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/CHMPOL", methods=["GET"])
+# @login_required
+# def chmpol():
+#     def collect_iterator(**kwargs):
+#         yield from collect_sdg_indicator_data("12.4.1", "CHMPOL", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/CHMPOL", methods=["GET"])
@@ -37,8 +35,12 @@ def compute_chmpol():
     extracted_chmpol = extract_sdg(raw_data)
     filtered_chmpol = filter_sdg(
         extracted_chmpol,
-        {"SG_HAZ_CMRSTHOLM": "CHMPOL"},
+        {"SG_HAZ_CMRSTHOLM": "STKHLM"},
     )
-    scored_list = score_single_indicator(filtered_chmpol, "CHMPOL")
+    scored_list, _ = score_indicator(
+        filtered_chmpol, "CHMPOL",
+        score_function=lambda UNSDG_STKHLM, UNSDG_MONTRL, UNSDG_BASELA: 0,
+        unit="Index" 
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

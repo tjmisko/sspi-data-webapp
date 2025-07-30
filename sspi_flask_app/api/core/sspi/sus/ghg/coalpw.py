@@ -1,31 +1,29 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.iea import collectIEAData
+from sspi_flask_app.api.datasource.iea import collect_iea_data
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 import pandas as pd
-from sspi_flask_app.api.datasource.iea import cleanIEAData_altnrg
+from sspi_flask_app.api.datasource.iea import clean_iea_data_altnrg
 import json
 
 
-@collect_bp.route("/COALPW", methods=["GET"])
-@login_required
-def coalpw():
-    def collect_iterator(**kwargs):
-        yield from collectIEAData("TESbySource", "COALPW", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/COALPW", methods=["GET"])
+# @login_required
+# def coalpw():
+#     def collect_iterator(**kwargs):
+#         yield from collect_iea_data("TESbySource", "COALPW", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/COALPW", methods=["GET"])
@@ -54,7 +52,7 @@ def compute_coalpw():
         "COMRENEW": "BIOWAS",
         "MTOTOIL": "FSLOIL",
     }
-    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "COALPW"))
+    intermediate_data = pd.DataFrame(clean_iea_data_altnrg(raw_data, "COALPW"))
     intermediate_data.drop(
         intermediate_data[
             intermediate_data["CountryCode"].map(lambda s: len(s) != 3)
@@ -82,12 +80,12 @@ def compute_coalpw():
         parse_int=int,
         parse_float=float,
     )
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediate_document_list,
         "COALPW",
-        ScoreFunction=lambda TLCOAL, TTLSUM: (TLCOAL) / (TTLSUM),
-        ScoreBy="Value",
+        score_function=lambda TLCOAL, TTLSUM: (TLCOAL) / (TTLSUM),
+        unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

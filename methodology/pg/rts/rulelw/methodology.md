@@ -1,9 +1,9 @@
 ---
 ItemType: Indicator
 ItemCode: RULELW
+DatasetCodes:
+  - VDEM_RULELW
 ItemName: Rule of Law Index
-Category: Rights
-CategoryCode: RTS
 Description: Rule of Law Index measures extent to which laws are transparently, independently,
   predictably, impartially, equally enforced, and extent to which the actions of government
   officials comply with the law. Measured from low to high (0-1).
@@ -13,8 +13,6 @@ Indicator: Rule of Law Index
 IndicatorCode: RULELW
 Inverted: false
 LowerGoalpost: 0.0
-Pillar: Public Goods
-PillarCode: PG
 Policy: Judicial System
 SourceOrganization: V-Dem
 SourceOrganizationIndicatorCode: 'v2x_rule '

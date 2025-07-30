@@ -1,6 +1,6 @@
 import pytest
 from sspi_flask_app.api.resources.utilities import (
-    zip_intermediates,
+    score_indicator,
     append_goalpost_info,
     group_by_indicator
     # score_indicator_documents
@@ -177,19 +177,19 @@ def test_group_by_indicator_with_items(test_data, test_items):
     assert len(indicator_document_list[1]["Items"]) == 1
 
 
-def test_zip_intermediates(test_data):
+def test_score_indicator(test_data):
     with pytest.raises(InvalidDocumentFormatError) as e_info:
-        zipped_list, incomplete_list = zip_intermediates(
+        zipped_list, incomplete_list = score_indicator(
             test_data, "BIODIV",
-            ScoreFunction=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
-            ScoreBy="Score"
+            score_function=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
+            unit="Index",
         )
         assert "Unit" in str(e_info.value)
         assert "InvalidDocumentFormatError" in str(e_info.value)
-    zipped_list, incomplete_list = zip_intermediates(
+    zipped_list, incomplete_list = score_indicator(
         [*test_data[0:3], *test_data[6:9]], "BIODIV",
-        ScoreFunction=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
-        ScoreBy="Score"
+        score_function=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
+        unit="Index"
     )
     assert len(zipped_list) == 2
     assert zipped_list[0]["CountryCode"] == "AUS"
@@ -200,11 +200,11 @@ def test_zip_intermediates(test_data):
     assert zipped_list[1]["IndicatorCode"] == "BIODIV"
 
 
-def test_zip_intermediates_with_items(test_data, test_items):
-    zipped_list, incomplete_list = zip_intermediates(
+def test_score_indicator_with_items(test_data, test_items):
+    zipped_list, incomplete_list = score_indicator(
         [*test_data[0:3], *test_data[6:9], *test_items], "BIODIV",
-        ScoreFunction=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
-        ScoreBy="Score"
+        score_function=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
+        unit="Index",
     )
     assert len(zipped_list) == 2
     assert zipped_list[0]["CountryCode"] == "AUS"
@@ -220,11 +220,11 @@ def test_zip_intermediates_with_items(test_data, test_items):
     assert len(zipped_list[1]["Items"]) == 0
 
 
-def test_zip_intermediates_with_items_and_junk(test_data, test_items, test_junk):
-    zipped_list, incomplete_list = zip_intermediates(
+def test_score_indicator_with_items_and_junk(test_data, test_items, test_junk):
+    zipped_list, incomplete_list = score_indicator(
         [*test_data[0:3], *test_data[6:9], *test_items, *test_junk], "BIODIV",
-        ScoreFunction=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
-        ScoreBy="Score"
+        score_function=lambda TERRST, FRSHWT, MARINE: (TERRST + FRSHWT + MARINE) / 3,
+        unit="Index",
     )
     assert len(zipped_list) == 2
     assert zipped_list[0]["CountryCode"] == "AUS"

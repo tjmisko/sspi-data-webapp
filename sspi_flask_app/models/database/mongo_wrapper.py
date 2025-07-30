@@ -110,7 +110,7 @@ class MongoWrapper:
                 "Year": 2015, (type: int, length: 4, gt: 1900, lt: 2030)
                 "Value": 42.3005 (float or int)
                 "Unit": "MILLION_HA", (type: str)
-                "Intermediates": {
+                "Datasets": {
                     "TERRST": dict (see below for format)
                     "FRSHWT": dict (see below for format)
                     ...
@@ -144,7 +144,7 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'IndicatorCode' must be 6 characters long (document {document_number})")
-        if not type(document["IndicatorCode"]) is str:
+        if not isinstance(document["IndicatorCode"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'IndicatorCode' must be a string (document {document_number})")
@@ -153,24 +153,20 @@ class MongoWrapper:
             raise InvalidDocumentFormatError(
                 f"'IndicatorCode' must be uppercase (document {document_number})")
 
-    def validate_intermediate_code(self, document: dict, document_number: int = 0):
-        # Validate IndicatorCode format
-        if "IntermediateCode" not in document.keys():
+    def validate_dataset_code(self, document: dict, document_number: int = 0):
+        # Validate DatasetCode format
+        if "DatasetCode" not in document.keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'IntermediateCode' is a required argument (document {document_number})")
-        if not len(document["IntermediateCode"]) == 6:
+                f"'DatasetCode' is a required argument (document {document_number})")
+        if not isinstance(document["DatasetCode"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'IntermediateCode' must be 6 characters long (document {document_number})")
-        if not type(document["IntermediateCode"]) is str:
+                f"'DatasetCode' must be a string (document {document_number})")
+        if not document["DatasetCode"].isupper():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'IntermediateCode' must be a string (document {document_number})")
-        if not document["IntermediateCode"].isupper():
-            print(f"Document Produced an Error: {document}")
-            raise InvalidDocumentFormatError(
-                f"'IntermediateCode' must be uppercase (document {document_number})")
+                f"'DatasetCode' must be uppercase (document {document_number})")
 
     def validate_item_code(self, document: dict, document_number: int = 0):
         # Validate IndicatorCode format
@@ -178,14 +174,16 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'ItemCode' is a required argument (document {document_number})")
-        if not type(document["ItemCode"]) is str:
+        if not isinstance(document["ItemCode"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'ItemCode' must be a string (document {document_number})")
+                f"'ItemCode' must be a string (document {document_number})"
+            )
         if len(document["ItemCode"]) not in [2, 3, 4, 6]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"'ItemCode' must be 6 characters long (document {document_number})")
+                f"'ItemCode' must be 6 characters long (document {document_number})"
+            )
         if not document["ItemCode"].isupper():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
@@ -201,7 +199,7 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'CountryCode' must be 3 characters long (document {document_number})")
-        if not type(document["CountryCode"]) is str:
+        if not isinstance(document["CountryCode"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'CountryCode' must be a string (document {document_number})")
@@ -216,7 +214,7 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Year' is a required argument (document {document_number})")
-        if not type(document["Year"]) is int:
+        if not isinstance(document["Year"], int):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Year' must be an integer (document {document_number})")
@@ -246,7 +244,7 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Unit' is a required argument (document {document_number})")
-        if not type(document["Unit"]) is str:
+        if not isinstance(document["Unit"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Unit' must be a string (document {document_number})")
@@ -257,7 +255,7 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' is a required argument (document {document_number})")
-        if not type(document["Score"]) in [int, float]:
+        if type(document["Score"]) not in [int, float]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
@@ -265,15 +263,15 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' is a required argument (document {document_number})")
-        if not type(document["Score"]) in [int, float]:
+        if type(document["Score"]) not in [int, float]:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
 
-    def validate_intermediates(self, document: dict, document_number: int = 0):
-        if "Intermediates" in document.keys():
-            self.validate_intermediates_list(
-                document["Intermediates"], document_number
+    def validate_datasets(self, document: dict, document_number: int = 0):
+        if "Datasets" in document.keys():
+            self.validate_dataset_list(
+                document["Datasets"], document_number
             )
 
     def validate_items(self, document: dict, document_number: int = 0):
@@ -281,15 +279,13 @@ class MongoWrapper:
             self.validate_items_list(document["Items"], document_number)
 
     def validate_items_list(self, items: list, document_number: int = 0):
-        if not type(items) is list:
-            print(f"Document Produced an Error: {items}")
-            raise InvalidDocumentFormatError(f"'Intermediates' must be a list (document {document_number}); got type {type(items)}")
         id_set = set()
         for item in items:
-            if not type(item) is dict:
+            if not isinstance(item, dict):
                 print(f"Document Produced an Error: {items}")
                 raise InvalidDocumentFormatError(
-                    f"'Intermediates' must be a dictionary (document {document_number})")
+                    f"'Datasets' must be a dictionary (document {document_number})"
+                )
             self.validate_item_code(item, document_number)
             self.validate_country_code(item, document_number)
             self.validate_year(item, document_number)
@@ -305,24 +301,24 @@ class MongoWrapper:
                     f"Duplicate Item found (document {document_number})")
             id_set.add(document_id)
 
-    def validate_intermediates_list(self, intermediates: list, document_number: int = 0):
+    def validate_dataset_list(self, dataset_documents: list, document_number: int = 0):
         id_set = set()
-        for intermediate in intermediates:
-            if not isinstance(intermediate, dict):
-                print(f"Document Produced an Error: {intermediates}")
+        for dataset in dataset_documents:
+            if not isinstance(dataset, dict):
+                print(f"Document Produced an Error: {dataset}")
                 raise InvalidDocumentFormatError(
-                    f"'Intermediates' must be a dictionary (document {document_number})")
-            self.validate_intermediate_code(intermediate, document_number)
-            self.validate_country_code(intermediate, document_number)
-            self.validate_year(intermediate, document_number)
-            self.validate_value(intermediate, document_number)
-            self.validate_unit(intermediate, document_number)
-            document_id = f"{intermediate['IntermediateCode']}_{intermediate['CountryCode']}_{intermediate['Year']}"
+                    f"'Datasets' must be a dictionary (document {document_number})")
+            self.validate_dataset_code(dataset, document_number)
+            self.validate_country_code(dataset, document_number)
+            self.validate_year(dataset, document_number)
+            self.validate_value(dataset, document_number)
+            self.validate_unit(dataset, document_number)
+            document_id = f"{dataset['DatasetCode']}_{dataset['CountryCode']}_{dataset['Year']}"
             print("==========================")
             print(document_id)
-            print(intermediate)
+            print(dataset)
             if document_id in id_set:
-                print(f"Document Produced an Error: {intermediate}")
+                print(f"Document Produced an Error: {dataset}")
                 raise InvalidDocumentFormatError(
-                    f"Duplicate intermediate document found (document {document_number})")
+                    f"Duplicate dataset document found (document {document_number})")
             id_set.add(document_id)

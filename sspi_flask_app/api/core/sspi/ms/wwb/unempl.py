@@ -1,27 +1,28 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import current_app as app, Response
-from sspi_flask_app.api.datasource.ilo  import collectILOData
+from sspi_flask_app.api.datasource.ilo  import collect_ilo_data
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator
+    score_indicator,
+    goalpost
 )
 from io import StringIO
 import pandas as pd
 import json
 
 
-@collect_bp.route("/UNEMPL")
-@login_required
-def unempl():
-    def collect_iterator(**kwargs):
-        yield from collectILOData("DF_SDG_0131_SEX_SOC_RT", "UNEMPL", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/UNEMPL")
+# @login_required
+# def unempl():
+#     def collect_iterator(**kwargs):
+#         yield from collect_ilo_data("DF_SDG_0131_SEX_SOC_RT", "UNEMPL", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/UNEMPL", methods=['GET'])
@@ -45,6 +46,11 @@ def compute_unempl():
     unempl_raw_f['IndicatorCode'] = 'UNEMPL'
     unempl_raw_f['Unit'] = 'Rate'
     obs_list = json.loads(str(unempl_raw_f.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "UNEMPL")
+    lg, ug = sspi_metadata.get_goalposts("UNEMPL")
+    scored_list, _ = score_indicator(
+        obs_list, "UNEMPL",
+        score_function=lambda ILO_UNEMPL: goalpost(ILO_UNEMPL, lg, ug),
+        unit="Rate"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)

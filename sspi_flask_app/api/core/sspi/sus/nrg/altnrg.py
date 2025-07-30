@@ -5,31 +5,30 @@ from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
 
-from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
-from sspi_flask_app.api.datasource.iea import cleanIEAData_altnrg, collectIEAData
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
+from sspi_flask_app.api.datasource.iea import clean_iea_data_altnrg, collect_iea_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     parse_json,
-    zip_intermediates,
-    slice_intermediate
+    score_indicator,
+    slice_dataset
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
     sspi_raw_api_data,
 )
 
 
-@collect_bp.route("/ALTNRG", methods=["GET"])
-@login_required
-def altnrg():
-    def collect_iterator(**kwargs):
-        yield from collectIEAData("TESbySource", "ALTNRG", **kwargs)
-
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
+# @collect_bp.route("/ALTNRG", methods=["GET"])
+# @login_required
+# def altnrg():
+#     def collect_iterator(**kwargs):
+#         yield from collect_iea_data("TESbySource", "ALTNRG", **kwargs)
+#     return Response(
+#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
+#     )
 
 
 @compute_bp.route("/ALTNRG", methods=["GET"])
@@ -48,7 +47,7 @@ def compute_altnrg():
     """
     app.logger.info("Running /api/v1/compute/ALTNRG")
     sspi_clean_api_data.delete_many({"IndicatorCode": "ALTNRG"})
-    sspi_incomplete_api_data.delete_many({"IndicatorCode": "ALTNRG"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "ALTNRG"})
     raw_data = sspi_raw_api_data.fetch_raw_data("ALTNRG")
     metadata_code_map = {
         "COAL": "TLCOAL",
@@ -59,7 +58,7 @@ def compute_altnrg():
         "COMRENEW": "BIOWAS",
         "MTOTOIL": "FSLOIL",
     }
-    intermediate_data = pd.DataFrame(cleanIEAData_altnrg(raw_data, "ALTNRG"))
+    intermediate_data = pd.DataFrame(clean_iea_data_altnrg(raw_data, "ALTNRG"))
     intermediate_data.drop(
         intermediate_data[
             intermediate_data["CountryCode"].map(lambda s: len(s) != 3)
@@ -101,17 +100,14 @@ def compute_altnrg():
         parse_int=int,
         parse_float=float,
     )
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         intermediate_document_list,
         "ALTNRG",
-        ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
-        ValueFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS)
-        / TTLSUM
-        * 100,
-        ScoreBy="Value",
+        score_function=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
+        unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -127,7 +123,7 @@ def impute_altnrg():
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "ALTNRG", "CountryCode": {"$ne": "KWT"}})
     forward_extrap = extrapolate_forward(clean_data, 2023, impute_only=True)
     # Handle KWT: All sources confirm that almost all energy is from fossil fuels
-    kwt_incomplete = sspi_incomplete_api_data.find(
+    kwt_incomplete = sspi_incomplete_indicator_data.find(
         {"IndicatorCode": "ALTNRG", "CountryCode": "KWT"}
     )
     impute_info = {
@@ -184,12 +180,11 @@ def impute_altnrg():
             }
             imputed_intermediate.update(impute_info)
             obs["Intermediates"].append(imputed_intermediate)
-    kwt_clean, kwt_still_missing = zip_intermediates(
-        slice_intermediate(kwt_incomplete, ["TTLSUM", "ALTSUM", "BIOWAS"]),
+    kwt_clean, kwt_still_missing = score_indicator(
+        slice_dataset(kwt_incomplete, ["IEA_TTLSUM", "IEA_ALTSUM", "IEA_BIOWAS"]),
         "ALTNRG", 
-        ScoreFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
-        ValueFunction=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM * 100,
-        ScoreBy="Value",
+        score_function=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
+        unit="%",
     )
     imputations = extrapolate_forward(kwt_clean, 2023) + forward_extrap
     sspi_imputed_data.insert_many(imputations)

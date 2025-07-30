@@ -1,30 +1,29 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data
+    sspi_incomplete_indicator_data
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
+    collect_world_bank_data,
     clean_wb_data
 )
-from sspi_flask_app.api.datasource.sdg import collectSDGIndicatorData, extract_sdg, filter_sdg
+from sspi_flask_app.api.datasource.unsdg import collect_sdg_indicator_data, extract_sdg, filter_sdg
 
 
-@collect_bp.route("/INTRNT", methods=['GET'])
-@login_required
-def intrnt():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
-        yield from collectSDGIndicatorData("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/INTRNT", methods=['GET'])
+# @login_required
+# def intrnt():
+#     def collect_iterator(**kwargs):
+#         yield from collect_world_bank_data("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
+#         yield from collect_sdg_indicator_data("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/INTRNT", methods=['GET'])
@@ -49,13 +48,13 @@ def compute_intrnt():
     )
     for obs in filtered_quintr:
         obs["IntermediateCode"] = "QUINTR"
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         clean_avintr + filtered_quintr, "INTRNT",
-        ScoreFunction=lambda AVINTR, QUINTR: (AVINTR + QUINTR) / 2,
-        ScoreBy="Score"
+        score_function=lambda AVINTR, QUINTR: (AVINTR + QUINTR) / 2,
+        unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 

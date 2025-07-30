@@ -8,7 +8,7 @@ import pandas as pd
 ## Note: Tax Foundation doesn't offer any APIs for dynamic data retrieval, 
 ## so I was stuck using their latest data.
 
-def collectTaxFoundationData(IndicatorCode, **kwargs):
+def collect_tax_foundation_data(IndicatorCode, **kwargs):
     url = "https://taxfoundation.org/wp-content/uploads/2025/01/rates_final.csv"
     res = requests.get(url)
     if res.status_code != 200:
@@ -16,12 +16,18 @@ def collectTaxFoundationData(IndicatorCode, **kwargs):
         yield "Failed to fetch data from source" + err
         return
     csv_string = res.text
+    source_info = {
+        "OrganizationName": "Tax Foundation",
+        "OrganizationCode": "TF",
+        "OrganizationSeriesCode": "Rates",
+        "URL": url
+    }
     sspi_raw_api_data.raw_insert_one(
-                            {"csv": csv_string}, IndicatorCode, **kwargs
-                        )
+        csv_string, source_info, **kwargs
+    )
     yield f"Collection complete for {IndicatorCode}"
 
-def cleanTaxFoundation(RawData, IndName, Unit, Description):
+def clean_tax_foundation(RawData, IndName, Unit, Description):
     csv_file = StringIO(RawData[0]['Raw']['csv'])
     csv_file.seek(0)
 

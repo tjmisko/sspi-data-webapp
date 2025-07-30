@@ -2,8 +2,6 @@
 ItemType: Indicator
 ItemCode: GENDEQ
 ItemName: Gender Equality Index
-Category: Rights
-CategoryCode: RTS
 Description: "Weighted average of proportion of women in parliament from IPU and 3\
   \ indices from World Bank Women, Business and Law Index (WB-WBL): \n1) Percentage\
   \ of women in the national parliament. [Weight 0.4] 2) Mobility: Women have equal\
@@ -16,15 +14,13 @@ Description: "Weighted average of proportion of women in parliament from IPU and
 Footnote: null
 Indicator: Gender Equality Index
 IndicatorCode: GENDEQ
-IntermediateCodes:
-  - WMPLMT
-  - WMMOBL
-  - WMMARR
-  - WMFNMN
+DatasetCodes:
+  - IPU_WMPLMT
+  - WBL_WMMOBL
+  - WBL_WMMARR
+  - WBL_WMFNMN
 Inverted: false
 LowerGoalpost: null
-Pillar: Public Goods
-PillarCode: PG
 Policy: Equality in Politics and Before the Law
 SourceOrganization: '[IPU, WB-WBL]'
 SourceOrganizationIndicatorCode: null

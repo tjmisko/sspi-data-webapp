@@ -1,80 +1,71 @@
 import logging
-
 from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
-
-from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
-from sspi_flask_app.api.datasource.sdg import (
-    collectSDGIndicatorData,
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
+from sspi_flask_app.api.datasource.unsdg import (
+    collect_sdg_indicator_data,
     extract_sdg,
     filter_sdg,
 )
-from sspi_flask_app.api.resources.utilities import parse_json, zip_intermediates
+from sspi_flask_app.api.resources.utilities import parse_json, score_indicator
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
+    sspi_incomplete_indicator_data,
     sspi_imputed_data,
-    sspi_incomplete_api_data,
-    sspi_raw_api_data,
 )
 
 log = logging.getLogger(__name__)
 
 
-@collect_bp.route("/BIODIV", methods=["GET"])
-@login_required
-def biodiv():
-    def collect_iterator(**kwargs):
-        yield from collectSDGIndicatorData(
-            "14.5.1", "BIODIV", IntermediateCode="MARINE", **kwargs
-        )
-        yield from collectSDGIndicatorData(
-            "15.1.2", "BIODIV", Metadata="TERRST,FRSHWT", **kwargs
-        )
+# def compute_biodiv_old():
+#     app.logger.info("Running /api/v1/compute/BIODIV")
+#     sspi_clean_api_data.delete_many({"IndicatorCode": "BIODIV"})
+#     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "BIODIV"})
+#     raw_data = sspi_raw_api_data.fetch_raw_data("BIODIV")
+#     extracted_biodiv = extract_sdg(raw_data)
+#     idcode_map = {
+#         "ER_MRN_MPA": "MARINE",
+#         "ER_PTD_TERR": "TERRST",
+#         "ER_PTD_FRHWTR": "FRSHWT",
+#     }
+#     rename_map = {"units": "Unit", "seriesDescription": "Description"}
+#     drop_list = [
+#         "goal",
+#         "indicator",
+#         "series",
+#         "seriesCount",
+#         "target",
+#         "geoAreaCode",
+#         "geoAreaName",
+#     ]
+#     intermediate_list = filter_sdg(
+#         extracted_biodiv,
+#         idcode_map,
+#         rename_map,
+#         drop_list,
+#     )
 
-    log.info("Running /api/v1/collect/BIODIV")
-    return Response(
-        collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-    )
-
-
-@compute_bp.route("/BIODIV", methods=["GET"])
+@compute_bp.route("/BIODIV", methods=["POST"])
 @login_required
 def compute_biodiv():
-    app.logger.info("Running /api/v1/compute/BIODIV")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "BIODIV"})
-    sspi_incomplete_api_data.delete_many({"IndicatorCode": "BIODIV"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("BIODIV")
-    extracted_biodiv = extract_sdg(raw_data)
-    idcode_map = {
-        "ER_MRN_MPA": "MARINE",
-        "ER_PTD_TERR": "TERRST",
-        "ER_PTD_FRHWTR": "FRSHWT",
-    }
-    rename_map = {"units": "Unit", "seriesDescription": "Description"}
-    drop_list = [
-        "goal",
-        "indicator",
-        "series",
-        "seriesCount",
-        "target",
-        "geoAreaCode",
-        "geoAreaName",
-    ]
-    intermediate_list = filter_sdg(
-        extracted_biodiv,
-        idcode_map,
-        rename_map,
-        drop_list,
+    def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
+        return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3
+
+    sspi_indicator_data.delete_many({"IndicatorCode": "BIODIV"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "BIODIV"})
+    dataset_list = sspi_clean_api_data.find(
+        {"DatasetCode": {"$in": ["UNSDG_MARINE", "UNSDG_TERRST", "UNSDG_FRSHWT"]}}
     )
-    clean_list, incomplete_list = zip_intermediates(
-        intermediate_list,
+    clean_list, incomplete_list = score_indicator(
+        dataset_list,
         "BIODIV",
-        ScoreFunction=lambda MARINE, TERRST, FRSHWT: (MARINE + TERRST + FRSHWT) / 3,
-        ScoreBy="Score",
+        score_function=score_biodiv,
+        unit="Index",
     )
-    sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_indicator_data.insert_many(clean_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -82,7 +73,7 @@ def compute_biodiv():
 def impute_biodiv():
     sspi_imputed_data.delete_many({"IndicatorCode": "BIODIV"})
     clean_list = sspi_clean_api_data.find({"IndicatorCode": "BIODIV"})
-    incomplete_list = sspi_incomplete_api_data.find({"IndicatorCode": "BIODIV"})
+    incomplete_list = sspi_incomplete_indicator_data.find({"IndicatorCode": "BIODIV"})
     # Do imputation logic here
     documents = []
     count = sspi_imputed_data.insert_many(documents)

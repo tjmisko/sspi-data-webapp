@@ -1,15 +1,16 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.epi import collectEPIData
+from sspi_flask_app.api.datasource.epi import collect_epi_data
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_single_indicator,
+    score_indicator,
+    goalpost
 )
 import pandas as pd
 import re
@@ -17,12 +18,12 @@ from io import StringIO
 import json
 
 
-@collect_bp.route("/NITROG", methods=['GET'])
-@login_required
-def nitrog():
-    def collect_iterator(**kwargs):
-        yield from collectEPIData("SNM_ind_na.csv", "NITROG", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/NITROG", methods=['GET'])
+# @login_required
+# def nitrog():
+#     def collect_iterator(**kwargs):
+#         yield from collect_epi_data("SNM_ind_na.csv", "NITROG", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/NITROG", methods=['GET'])
@@ -50,7 +51,11 @@ def compute_nitrog():
     SNM_long['IndicatorCode'] = 'NITROG'
     SNM_long['Unit'] = 'Index'
     obs_list = json.loads(str(SNM_long.to_json(orient="records")))
-    scored_list = score_single_indicator(obs_list, "NITROG")
+    scored_list, _ = score_indicator(
+        obs_list, "NITROG",
+        score_function=lambda EPI_NITROG: goalpost(EPI_NITROG, lg, ug),
+        unit="Index"
+    )
     sspi_clean_api_data.insert_many(scored_list)
     return parse_json(scored_list)
 

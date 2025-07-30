@@ -1,5 +1,6 @@
 import click
 from cli.commands.collect import collect
+from cli.commands.clean import clean
 from cli.commands.compute import compute
 from cli.commands.country import country
 from cli.commands.coverage import coverage
@@ -24,6 +25,7 @@ def cli():
 
 
 cli.add_command(collect)
+cli.add_command(clean)
 cli.add_command(compute)
 cli.add_command(country)
 cli.add_command(coverage)

@@ -6,35 +6,35 @@ from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
 
-from sspi_flask_app.api.core.sspi import collect_bp, compute_bp, impute_bp
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.datasource.oecdstat import (
-    collectOECDSDMXData,
+    collect_oecd_sdmx_data,
     parse_oecd_observations,
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
-    sspi_incomplete_api_data,
+    sspi_incomplete_indicator_data,
     sspi_raw_api_data,
 )
 
 
-@collect_bp.route("/SENIOR")
-@login_required
-def senior():
-    def collect_iterator(**kwargs):
-        oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
-        meta = (
-            "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
-            "latest?references=all&format=sdmx-json"
-        )
-        yield from collectOECDSDMXData(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/SENIOR")
+# @login_required
+# def senior():
+#     def collect_iterator(**kwargs):
+#         oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
+#         meta = (
+#             "https://sdmx.oecd.org/public/rest/datastructure/ALL/DSD_PAG/"
+#             "latest?references=all&format=sdmx-json"
+#         )
+#         yield from collect_oecd_sdmx_data(oecd_code, "SENIOR", metadata_url=meta, **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/SENIOR", methods=['GET'])
@@ -55,7 +55,7 @@ def compute_senior():
     """
     app.logger.info("Running /api/v1/compute/SENIOR")
     sspi_clean_api_data.delete_many({"IndicatorCode": "SENIOR"})
-    sspi_incomplete_api_data.delete_many({"IndicatorCode": "SENIOR"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "SENIOR"})
 
     def score_senior(SENLEF, SENLEM, SENCRF, SENCRM, SENPVT):
         YRSRTF = SENLEF - SENCRF
@@ -134,13 +134,13 @@ def compute_senior():
         if obs["Year"] < 1990 or obs["Year"] > current_year:
             continue
         filtered_obs_list.append(obs)
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         filtered_obs_list, "SENIOR",
-        ScoreFunction=score_senior,
-        ScoreBy="Value"
+        score_function=score_senior,
+        unit="%",
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 
 
@@ -148,7 +148,7 @@ def compute_senior():
 def impute_senior():
     sspi_imputed_data.delete_many({"IndicatorCode": "SENIOR"})
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "SENIOR"})
-    incomplete_list = sspi_incomplete_api_data.find(
+    incomplete_list = sspi_incomplete_indicator_data.find(
         {"IndicatorCode": "SENIOR"})
     # Do imputation logic here
     count = sspi_imputed_data.insert_many([])

@@ -1,8 +1,7 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import current_app as app, Response
-from sspi_flask_app.api.datasource.fao import collectUNFAOData, format_FAO_data_series
+from sspi_flask_app.api.datasource.unfao import collect_unfao_data, format_fao_data_series
 from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_raw_api_data,
@@ -14,12 +13,12 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@collect_bp.route("/DEFRST", methods=['GET'])
-@login_required
-def defrst():
-    def collect_iterator(**kwargs):
-        yield from collectUNFAOData("5110", "6717", "RL", "DEFRST", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/DEFRST", methods=['GET'])
+# @login_required
+# def defrst():
+#     def collect_iterator(**kwargs):
+#         yield from collect_unfao_data("5110", "6717", "RL", "DEFRST", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 @compute_bp.route("/DEFRST", methods=['GET'])
@@ -29,7 +28,7 @@ def compute_defrst():
     sspi_clean_api_data.delete_many({"IndicatorCode": "DEFRST"})
     lg, ug = sspi_metadata.get_goalposts("DEFRST")
     raw_data = sspi_raw_api_data.fetch_raw_data("DEFRST")[0]["Raw"]["data"]
-    clean_obs_list = format_FAO_data_series(raw_data, "DEFRST")
+    clean_obs_list = format_fao_data_series(raw_data, "DEFRST")
     average_1990s_dict = {}
     for obs in clean_obs_list:
         if obs["Year"] not in list(range(1990, 2000)):

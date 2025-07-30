@@ -1,9 +1,9 @@
 ---
 ItemType: Indicator
 ItemCode: AIRPOL
+DatasetCodes:
+  - UNSDG_AIRPOL
 ItemName: Air Pollution
-Category: Energy
-CategoryCode: NRG
 Description: Annual mean levels of fine particulate matter (PM2.5 and PM10) in cities
   (population weighted) measured in micrograms per cubic meter of air (μg/m3).
 Footnote: null
@@ -11,8 +11,6 @@ Indicator: Air Pollution
 IndicatorCode: AIRPOL
 Inverted: true
 LowerGoalpost: 40.0
-Pillar: Sustainability
-PillarCode: SUS
 Policy: Pollution Limitation
 SourceOrganization: UN SDG
 SourceOrganizationIndicatorCode: 11.6.2

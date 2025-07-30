@@ -2,21 +2,17 @@
 ItemType: Indicator
 ItemCode: TRNETW
 ItemName: National Transport Network Intensity
-Category: Infrastructure
-CategoryCode: INF
 Description: 'The average of two measures: the natural log of rail lines per square
   kilometer (millions) per capita (millions) and the natural log of roadways per square
   kilometer per capita.'
 Footnote: null
 Indicator: National Transport Network Intensity
 IndicatorCode: TRNETW
-IntermediateCodes:
-  - RAILNT
-  - ROADNT
+DatasetCodes:
+  - WB_RAILNT
+  - CIA_ROADNT
 Inverted: false
 LowerGoalpost: null
-Pillar: Public Goods
-PillarCode: PG
 Policy: "Transport \nInfrastructure"
 SourceOrganization: "[World \nBank, \nCIA],"
 SourceOrganizationIndicatorCode: 11.2.1

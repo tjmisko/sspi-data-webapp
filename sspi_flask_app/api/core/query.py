@@ -35,7 +35,7 @@ def get_query_params(request, requires_database=False):
     requires_database determines whether the query
     """
     raw_query_input = {
-        "IndicatorCode": request.args.getlist("IndicatorCode"),
+        "SeriesCodes": request.args.getlist("SeriesCode"),
         "CountryCode": request.args.getlist("CountryCode"),
         "CountryGroup": request.args.get("CountryGroup"),
         "Year": request.args.getlist("Year"),
@@ -53,9 +53,20 @@ def build_mongo_query(raw_query_input):
     Given a safe and logically valid query input, build a mongo query
     """
     mongo_query = {}
-    if raw_query_input["IndicatorCode"]:
-        mongo_query["IndicatorCode"] = {
-            "$in": raw_query_input["IndicatorCode"]
+    if raw_query_input["SeriesCodes"]:
+        item_codes = raw_query_input["SeriesCodes"]
+        dataset_codes = []
+        for sc in raw_query_input["SeriesCodes"]:
+            dataset_codes += sspi_metadata.get_dataset_dependencies(sc)
+        dataset_codes = list(set(dataset_codes))
+        mongo_query = {
+            "$or": [
+                {"ItemCode": {"$in": item_codes}},
+                {"DatasetCode": {"$in": dataset_codes}},
+                {"IndicatorCode": {"$in": item_codes}},
+                {"CategoryCode": {"$in": item_codes}},
+                {"PillarCode": {"$in": item_codes}},
+            ]
         }
     country_codes = set()
     if raw_query_input["CountryGroup"]:
@@ -106,19 +117,19 @@ def query_indicator_detail(indicator_code):
     return jsonify(sspi_metadata.get_indicator_detail(indicator_code))
 
 
-@query_bp.route("/metadata/intermediate_details")
-def query_intermediate_details():
-    return parse_json(sspi_metadata.intermediate_details())
+@query_bp.route("/metadata/dataset_details")
+def query_dataset_details():
+    return parse_json(sspi_metadata.dataset_details())
 
 
-@query_bp.route("/metadata/intermediate_codes", methods=["GET"])
-def query_intermediate_codes():
-    return parse_json(sspi_metadata.intermediate_codes())
+@query_bp.route("/metadata/dataset_codes", methods=["GET"])
+def query_dataset_codes():
+    return parse_json(sspi_metadata.dataset_codes())
 
 
-@query_bp.route("/metadata/intermediate_detail/<intermediate_code>", methods=["GET"])
-def query_intermediate_detail(intermediate_code):
-    return parse_json(sspi_metadata.get_intermediate_detail(intermediate_code))
+@query_bp.route("/metadata/dataset_detail/<dataset_code>", methods=["GET"])
+def query_dataset_detail(dataset_code):
+    return parse_json(sspi_metadata.get_dataset_detail(dataset_code))
 
 
 @query_bp.route("/metadata/category_details")
@@ -131,9 +142,9 @@ def query_category_codes():
     return parse_json(sspi_metadata.category_codes())
 
 
-@query_bp.route("/metadata/category_detail/<intermediate_code>", methods=["GET"])
-def query_category_detail(intermediate_code):
-    return parse_json(sspi_metadata.get_category_detail(intermediate_code))
+@query_bp.route("/metadata/category_detail/<dataset_code>", methods=["GET"])
+def query_category_detail(dataset_code):
+    return parse_json(sspi_metadata.get_category_detail(dataset_code))
 
 
 @query_bp.route("/metadata/pillar_details")
@@ -146,9 +157,9 @@ def query_pillar_codes():
     return parse_json(sspi_metadata.pillar_codes())
 
 
-@query_bp.route("/metadata/pillar_detail/<intermediate_code>", methods=["GET"])
-def query_pillar_detail(intermediate_code):
-    return parse_json(sspi_metadata.get_pillar_detail(intermediate_code))
+@query_bp.route("/metadata/pillar_detail/<pillar_code>", methods=["GET"])
+def query_pillar_detail(pillar_code):
+    return parse_json(sspi_metadata.get_pillar_detail(pillar_code))
 
 
 @query_bp.route("/metadata/item_detail/<item_code>", methods=["GET"])

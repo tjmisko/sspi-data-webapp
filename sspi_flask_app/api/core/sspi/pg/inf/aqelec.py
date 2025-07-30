@@ -1,33 +1,32 @@
-from sspi_flask_app.api.core.sspi import collect_bp
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
-    sspi_incomplete_api_data
+    sspi_incomplete_indicator_data
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    zip_intermediates,
+    score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collectWorldBankdata,
+    collect_world_bank_data,
     clean_wb_data
 )
-from sspi_flask_app.api.datasource.wef import collectWEFQUELEC
+from sspi_flask_app.api.datasource.wef import collect_wef_data
 from io import StringIO
 import pandas as pd
 
 
 
-@collect_bp.route("/AQELEC", methods=['GET'])
-@login_required
-def aqelec():
-    def collect_iterator(**kwargs):
-        yield from collectWorldBankdata("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
-        yield from collectWEFQUELEC("WEF.GCIHH.EOSQ064", "AQELEC", IntermediateCode="QUELEC", **kwargs)
-    return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+# @collect_bp.route("/AQELEC", methods=['GET'])
+# @login_required
+# def aqelec():
+#     def collect_iterator(**kwargs):
+#         yield from collect_world_bank_data("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+#         yield from collect_wef_data("WEF.GCIHH.EOSQ064", **kwargs)
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 
@@ -72,11 +71,11 @@ def compute_aqelec():
         d.pop("Description", None)
         d.pop("IndicatorCode", None)
     combined_list = wb_clean + df_final
-    clean_list, incomplete_list = zip_intermediates(
+    clean_list, incomplete_list = score_indicator(
         combined_list, "AQELEC",
-        ScoreFunction=lambda AVELEC, QUELEC: 0.5 * AVELEC + 0.5 * QUELEC,
-        ScoreBy="Score"
+        score_function=lambda AVELEC, QUELEC: 0.5 * AVELEC + 0.5 * QUELEC,
+        unit="Index"
     )
     sspi_clean_api_data.insert_many(clean_list)
-    sspi_incomplete_api_data.insert_many(incomplete_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

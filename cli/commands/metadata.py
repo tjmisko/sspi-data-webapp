@@ -9,24 +9,48 @@ def metadata():
     pass
 
 
+@metadata.command(help="Refresh all metadata in sspi_metadata by reloading from local json")
+def refresh():
+    """
+    Get SSPI Pillar Metadata
+    """
+    connector = SSPIDatabaseConnector()
+    url = "/api/v1/delete/clear/sspi_metadata"
+    result = connector.call(url, method="DELETE")
+    click.echo(result.text)
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Delete Request Failed with Status Code {
+                result.status_code}"
+        )
+    url = "/api/v1/load/sspi_metadata"
+    result = connector.call(url, method="GET")
+    click.echo(result.text)
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Load Request Failed with Status Code {
+                result.status_code}"
+        )
+
+
 @metadata.command(help="Get Pillar Metadata from the SSPI Database")
 @click.argument("pillar_code", type=str, required=False)
 def pillar(pillar_code):
     """Get SSPI Pillar Metadata
     """
     connector = SSPIDatabaseConnector()
-    intermediate_code = pillar_code.upper() if pillar_code else None
-    if not intermediate_code:
+    pillar_code = pillar_code.upper() if pillar_code else None
+    if not pillar_code:
         url = "/api/v1/query/metadata/pillar_details"
-    elif intermediate_code in ["CODES", "CODE"]:
+    elif pillar_code in ["CODES", "CODE"]:
         url = "/api/v1/query/metadata/pillar_codes"
     else:
-        url = f"/api/v1/query/metadata/pillar_detail/{intermediate_code}"
+        url = f"/api/v1/query/metadata/pillar_detail/{pillar_code}"
     result = connector.call(url)
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Intermediate Query Failed with Status Code {
+            f"Error! Pillar Query Failed with Status Code {
                 result.status_code}"
         )
 
@@ -76,24 +100,24 @@ def indicator(indicator_code):
         echo_pretty(result.text)
 
 
-@metadata.command(help="Get SSPI Intermediate Metadata")
-@click.argument("intermediate_code", type=str, required=False)
-def intermediate(intermediate_code):
-    """Get SSPI Intermediate Metadata
+@metadata.command(help="Get SSPI Dataset Metadata")
+@click.argument("dataset_code", type=str, required=False)
+def dataset(dataset_code):
+    """Get SSPI Dataset Metadata
     """
     connector = SSPIDatabaseConnector()
-    intermediate_code = intermediate_code.upper() if intermediate_code else None
-    if not intermediate_code:
-        url = "/api/v1/query/metadata/intermediate_details"
-    elif intermediate_code in ["CODES", "CODE"]:
-        url = "/api/v1/query/metadata/intermediate_codes"
+    dataset_code = dataset_code.upper() if dataset_code else None
+    if not dataset_code:
+        url = "/api/v1/query/metadata/dataset_details"
+    elif dataset_code in ["CODES", "CODE"]:
+        url = "/api/v1/query/metadata/dataset_codes"
     else:
-        url = f"/api/v1/query/metadata/intermediate_detail/{intermediate_code}"
+        url = f"/api/v1/query/metadata/dataset_detail/{dataset_code}"
     result = connector.call(url)
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Intermediate Query Failed with Status Code {
+            f"Error! Dataset Query Failed with Status Code {
                 result.status_code}"
         )
         echo_pretty(result.header)
@@ -103,7 +127,7 @@ def intermediate(intermediate_code):
 @metadata.command(help="Get SSPI Item Metadata")
 @click.argument("item_code", type=str, required=False)
 def item(item_code):
-    """Get SSPI Intermediate Metadata
+    """Get SSPI Item Metadata
     """
     connector = SSPIDatabaseConnector()
     item_code = item_code.upper() if item_code else None
@@ -112,7 +136,7 @@ def item(item_code):
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Intermediate Query Failed with Status Code {
+            f"Error! Item Query Failed with Status Code {
                 result.status_code}"
         )
         echo_pretty(result.header)
@@ -150,5 +174,5 @@ def group(group_code=None, remote=False):
 metadata.add_command(pillar)
 metadata.add_command(category)
 metadata.add_command(indicator)
-metadata.add_command(intermediate)
+metadata.add_command(dataset)
 metadata.add_command(country)
