@@ -1,0 +1,115 @@
+#!/bin/bash
+# sspi push raw BIODIV -y
+# sspi push raw REDLST -y
+# sspi push raw NITROG -y
+# sspi push raw WATMAN -y
+# sspi push raw STKHLM -y
+# sspi push raw DEFRST -y
+# sspi push raw CARBON -y
+# sspi push raw ALTNRG -y
+# sspi push raw NRGINT -y
+# sspi push raw AIRPOL -y
+# sspi push raw GTRANS -y
+# sspi push raw BEEFMK -y
+# sspi push raw COALPW -y
+# sspi push raw MSWGEN -y
+# sspi push raw RECYCL -y
+# sspi push raw EMPLOY -y
+# sspi push raw COLBAR -y
+# sspi push raw UNEMPL -y
+# sspi push raw MATERN -y
+# sspi push raw FATINJ -y
+# sspi push raw SENIOR -y
+# sspi push raw CRPTAX -y
+# sspi push raw TAXREV -y
+# sspi push raw TAXPRG -y
+# sspi push raw FSTABL -y
+# sspi push raw FDEPTH -y
+# sspi push raw PUBACC -y
+# sspi push raw ISHRAT -y
+# sspi push raw GINIPT -y
+# sspi push raw ENRPRI -y
+# sspi push raw YRSEDU -y
+# sspi push raw ENRSEC -y
+# sspi push raw PUPTCH -y
+# sspi push raw ATBRTH -y
+# sspi push raw DPTCOV -y
+# sspi push raw PHYSPC -y
+# sspi push raw FAMPLN -y
+# sspi push raw CSTUNT -y
+# sspi push raw AQELEC -y
+# sspi push raw SANSRV -y
+# sspi push raw DRKWAT -y
+# sspi push raw INTRNT -y
+# sspi push raw TRNETW -y
+# sspi push raw RULELW -y
+# sspi push raw PUBSRV -y
+# sspi push raw EDEMOC -y
+# sspi push raw UNCONV -y
+# sspi push raw GENDEQ -y
+# sspi push raw MURDER -y
+# sspi push raw CYBSEC -y
+# sspi push raw SECAPP -y
+# sspi push raw PRISON -y
+# sspi push raw ARMEXP -y
+# sspi push raw MILEXP -y
+# sspi push raw RDFUND -y
+# sspi push raw FORAID -y
+
+
+sspi push clean BIODIV -y
+sspi push clean REDLST -y
+sspi push clean NITROG -y
+sspi push clean WATMAN -y
+sspi push clean STKHLM -y
+sspi push clean DEFRST -y
+sspi push clean CARBON -y
+sspi push clean ALTNRG -y
+sspi push clean NRGINT -y
+sspi push clean AIRPOL -y
+sspi push clean GTRANS -y
+sspi push clean BEEFMK -y
+sspi push clean COALPW -y
+sspi push clean MSWGEN -y
+sspi push clean RECYCL -y
+sspi push clean EMPLOY -y
+sspi push clean COLBAR -y
+sspi push clean UNEMPL -y
+sspi push clean MATERN -y
+sspi push clean FATINJ -y
+sspi push clean SENIOR -y
+sspi push clean CRPTAX -y
+sspi push clean TAXREV -y
+sspi push clean TAXPRG -y
+sspi push clean FSTABL -y
+sspi push clean FDEPTH -y
+sspi push clean PUBACC -y
+sspi push clean ISHRAT -y
+sspi push clean GINIPT -y
+sspi push clean ENRPRI -y
+sspi push clean YRSEDU -y
+sspi push clean ENRSEC -y
+sspi push clean PUPTCH -y
+sspi push clean ATBRTH -y
+sspi push clean DPTCOV -y
+sspi push clean PHYSPC -y
+sspi push clean FAMPLN -y
+sspi push clean CSTUNT -y
+sspi push clean AQELEC -y
+sspi push clean SANSRV -y
+sspi push clean DRKWAT -y
+sspi push clean INTRNT -y
+sspi push clean TRNETW -y
+sspi push clean RULELW -y
+sspi push clean PUBSRV -y
+sspi push clean EDEMOC -y
+sspi push clean UNCONV -y
+sspi push clean GENDEQ -y
+sspi push clean MURDER -y
+sspi push clean CYBSEC -y
+sspi push clean SECAPP -y
+sspi push clean PRISON -y
+sspi push clean ARMEXP -y
+sspi push clean MILEXP -y
+sspi push clean RDFUND -y
+sspi push clean FORAID -y

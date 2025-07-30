@@ -1,10 +1,11 @@
 from flask_pymongo import MongoClient
+import logging
 
 from sspi_flask_app.models.database.mongo_wrapper import (
     MongoWrapper
 )
 from sspi_flask_app.models.database.sspi_clean_api_data import (
-    SSPICleanAPIData
+    SSPICleanAPIData, SSPIIncompleteAPIData
 )
 from sspi_flask_app.models.database.sspi_country_characteristics import (
     SSPICountryCharacteristics
@@ -15,8 +16,8 @@ from sspi_flask_app.models.database.sspi_main_data_v3 import (
 from sspi_flask_app.models.database.sspi_metadata import (
     SSPIMetadata
 )
-from sspi_flask_app.models.database.sspi_partial_api_data import (
-    SSPIPartialAPIData
+from sspi_flask_app.models.database.sspi_score_data import (
+    SSPIScoreData
 )
 from sspi_flask_app.models.database.sspi_production_data import (
     SSPIProductionData
@@ -24,15 +25,22 @@ from sspi_flask_app.models.database.sspi_production_data import (
 from sspi_flask_app.models.database.sspi_raw_api_data import (
     SSPIRawAPIData
 )
-from sspi_flask_app.models.database.sspi_bulk_data import (
-    SSPIBulkData
+from sspi_flask_app.models.database.sspi_panel_data import (
+    SSPIPanelData
 )
+
+logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 client = MongoClient('localhost', 27017)
 sspidb = client.flask_db
 
 sspi_metadata = SSPIMetadata(
     sspidb.sspi_metadata
+)
+sspi_static_metadata = SSPIMetadata(
+    sspidb.sspi_static_metadata,
+    indicator_detail_file="IndicatorDetailsStatic.csv",
+    intermediate_detail_file="IntermediateDetailsStatic.csv"
 )
 sspi_main_data_v3 = SSPIMainDataV3(
     sspidb.sspi_main_data_v3
@@ -46,23 +54,26 @@ sspi_raw_outcome_data = SSPIRawAPIData(
 sspi_clean_outcome_data = SSPICleanAPIData(
     sspidb.sspi_clean_outcome_data
 )
+sspi_score_data = SSPIScoreData(
+    sspidb.sspi_score_data
+)
 sspi_country_characteristics = SSPICountryCharacteristics(
     sspidb.sspi_country_characteristics
-)
-sspi_bulk_data = SSPIBulkData(
-    sspidb.sspi_bulk_data
 )
 sspi_clean_api_data = SSPICleanAPIData(
     sspidb.sspi_clean_api_data
 )
-sspi_partial_api_data = SSPIPartialAPIData(
-    sspidb.sspi_partial_api_data
+sspi_incomplete_api_data = SSPIIncompleteAPIData(
+    sspidb.sspi_incomplete_api_data
 )
 sspi_imputed_data = MongoWrapper(
     sspidb.sspi_imputed_data
 )
 sspi_analysis = MongoWrapper(
     sspidb.sspi_analysis
+)
+sspi_panel_data = SSPIPanelData(
+    sspidb.sspi_panel_data
 )
 
 # Production Data

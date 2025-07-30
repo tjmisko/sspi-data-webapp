@@ -7,22 +7,26 @@ import inspect
 import math
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
-    sspi_bulk_data,
     sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_incomplete_api_data,
     sspi_imputed_data,
+    sspi_score_data,
     sspi_metadata,
+    sspi_static_metadata,
     sspi_country_characteristics,
     sspi_static_radar_data,
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
-    sspi_partial_api_data,
     sspi_clean_outcome_data,
-    sspi_raw_outcome_data
+    sspi_raw_outcome_data,
+    sspi_panel_data,
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
+from copy import deepcopy
+from sklearn.linear_model import LinearRegression
 
 
 def format_m49_as_string(input):
@@ -34,21 +38,21 @@ def format_m49_as_string(input):
     if input >= 100:
         return str(input)
     elif input >= 10:
-        return '0' + str(input)
+        return "0" + str(input)
     else:
-        return '00' + str(input)
+        return "00" + str(input)
 
 
 def jsonify_df(df: pd.DataFrame):
     """
     Utility function for converting a dataframe to a JSON object
     """
-    return jsonify(json.loads(str(df.to_json(orient='records'))))
+    return jsonify(json.loads(str(df.to_json(orient="records"))))
 
 
 def goalpost(value, lower, upper):
-    """ Implement the goalposting formula"""
-    return max(0, min(1, (value - lower)/(upper - lower)))
+    """Implement the goalposting formula"""
+    return max(0, min(1, (value - lower) / (upper - lower)))
 
 
 def parse_json(data):
@@ -58,57 +62,60 @@ def parse_json(data):
 def lookup_database(database_name):
     """
     Utility function used for safe database lookup
-
     Throws an error otherwise
     """
-    if database_name == "sspi_metadata":
-        return sspi_metadata
-    elif database_name == "sspi_main_data_v3":
-        return sspi_main_data_v3
-    elif database_name == "sspi_raw_api_data":
-        return sspi_raw_api_data
-    elif database_name == "sspi_bulk_data":
-        return sspi_bulk_data
-    elif database_name == "sspi_clean_api_data":
-        return sspi_clean_api_data
-    elif database_name == "sspi_imputed_data":
-        return sspi_imputed_data
-    elif database_name == "sspi_analysis":
-        return sspi_analysis
-    elif database_name == "sspi_production_data":
-        return sspi_partial_api_data
-    elif database_name == "sspi_country_characteristics":
-        return sspi_country_characteristics
-    elif database_name == "sspi_static_rank_data":
-        return sspi_static_rank_data
-    elif database_name == "sspi_static_radar_data":
-        return sspi_static_radar_data
-    elif database_name == "sspi_dynamic_line_data":
-        return sspi_dynamic_line_data
-    elif database_name == "sspi_dynamic_matrix_data":
-        return sspi_dynamic_matrix_data
-    elif database_name == "sspi_raw_outcome_data":
-        return sspi_raw_outcome_data
-    elif database_name == "sspi_clean_outcome_data":
-        return sspi_clean_outcome_data
-    raise InvalidDatabaseError(database_name)
+    match database_name:
+        case "sspi_metadata":
+            return sspi_metadata
+        case "sspi_static_metadata":
+            return sspi_static_metadata
+        case "sspi_main_data_v3":
+            return sspi_main_data_v3
+        case "sspi_raw_api_data":
+            return sspi_raw_api_data
+        case "sspi_clean_api_data":
+            return sspi_clean_api_data
+        case "sspi_incomplete_api_data":
+            return sspi_incomplete_api_data
+        case "sspi_imputed_data":
+            return sspi_imputed_data
+        case "sspi_analysis":
+            return sspi_analysis
+        case "sspi_score_data":
+            return sspi_score_data
+        case "sspi_country_characteristics":
+            return sspi_country_characteristics
+        case "sspi_static_rank_data":
+            return sspi_static_rank_data
+        case "sspi_static_radar_data":
+            return sspi_static_radar_data
+        case "sspi_dynamic_line_data":
+            return sspi_dynamic_line_data
+        case "sspi_dynamic_matrix_data":
+            return sspi_dynamic_matrix_data
+        case "sspi_raw_outcome_data":
+            return sspi_raw_outcome_data
+        case "sspi_clean_outcome_data":
+            return sspi_clean_outcome_data
+        case "sspi_panel_data":
+            return sspi_panel_data
+        case _:
+            raise InvalidDatabaseError(database_name)
 
 
-def string_to_float(string):
+def string_to_float(string) -> str | float:
     """
-    Passes back string 'NaN' instead of float NaN
+    Attempts conversion to float, otherwise returns "NaN" string.
+
+    To filter any non-numeric observations, simply check whether the return
+    value is a string or a float.
     """
-    if string is None:
+    if not string:
         return "NaN"
-    if string == "N":
+    try:
+        return float(string)
+    except ValueError:
         return "NaN"
-    if math.isnan(float(string)):
-        return "NaN"
-    return float(string)
-
-
-def string_to_int(string):
-    return int(string)
 
 
 def missing_countries(sspi_country_list, source_country_list):
@@ -127,33 +134,55 @@ def added_countries(sspi_country_list, source_country_list):
     return additional_countries
 
 
-def zip_intermediates(intermediate_document_list, IndicatorCode, ScoreFunction, ValueFunction=None, UnitFunction=None, ScoreBy="Value"):
+def zip_intermediates(
+    document_list,
+    IndicatorCode,
+    ScoreFunction,
+    ValueFunction=None,
+    UnitFunction=None,
+    ScoreBy="Value",
+):
     """
     Utility function for zipping together intermediate documents into indicator documents
     """
-    intermediate_document_list = convert_data_types(intermediate_document_list)
-    sspi_clean_api_data.validate_intermediates_list(intermediate_document_list)
-    intermediate_document_list, noneish_list = drop_none_or_na(
-        intermediate_document_list)
-    print(f"There were {len(noneish_list)
-                        } none/na documents found in intermediate_document_list")
-    gp_intermediate_list = append_goalpost_info(
-        intermediate_document_list, ScoreBy)
-    indicator_document_list = group_by_indicator(
-        gp_intermediate_list, IndicatorCode)
+    document_list = convert_data_types(document_list)
+    intermediates_list, items_list = filter_intermediates(document_list)
+    sspi_clean_api_data.validate_intermediates_list(intermediates_list)
+    sspi_clean_api_data.validate_items_list(items_list)
+    intermediates_list, noneish_list = drop_none_or_na(intermediates_list)
+    gp_intermediates_list = append_goalpost_info(intermediates_list, ScoreBy)
+    indicator_list = group_by_indicator(
+        gp_intermediates_list, items_list, IndicatorCode
+    )
     scored_indicator_document_list = score_indicator_documents(
-        indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy)
-    return scored_indicator_document_list
+        indicator_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+    )
+    return filter_incomplete_data(scored_indicator_document_list)
 
 
-def convert_data_types(intermediate_document_list):
+def convert_data_types(document_list):
     """
-    Utility function for converting data types in intermediate documents
+    Utility function for converting data types in clean documents
     """
-    for document in intermediate_document_list:
+    for document in document_list:
         document["Year"] = int(document["Year"])
         document["Value"] = float(document["Value"])
-    return intermediate_document_list
+    return document_list
+
+
+def filter_intermediates(document_list):
+    """
+    Utility function for filtering out intermediate documents from other items
+    to be included inside of Items
+    """
+    filtered_list = []
+    items_list = []
+    for document in document_list:
+        if "IntermediateCode" in document.keys():
+            filtered_list.append(document)
+        elif "ItemCode" in document.keys():
+            items_list.append(document)
+    return filtered_list, items_list
 
 
 def drop_none_or_na(intermediate_document_list):
@@ -165,7 +194,10 @@ def drop_none_or_na(intermediate_document_list):
         if document["Value"] is None or math.isnan(document["Value"]):
             noneish_list.append(document)
     intermediate_document_list = [
-        document for document in intermediate_document_list if document not in noneish_list]
+        document
+        for document in intermediate_document_list
+        if document not in noneish_list
+    ]
     return intermediate_document_list, noneish_list
 
 
@@ -173,13 +205,18 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
     """
     Utility function for appending goalpost information to a document
     """
-    if ScoreBy == "Values":
+    if ScoreBy == "Value":
         return intermediate_document_list
-    intermediate_codes = set([doc["IntermediateCode"]
-                             for doc in intermediate_document_list])
+    intermediate_codes = set(
+        [doc["IntermediateCode"] for doc in intermediate_document_list]
+    )
     intermediate_details = sspi_metadata.find(
-        {"DocumentType": "IntermediateDetail", "Metadata.IntermediateCode": {"$in": list(intermediate_codes)}})
-    print(intermediate_details)
+        {
+            "DocumentType": "IntermediateDetail",
+            "Metadata.IntermediateCode": {"$in": list(intermediate_codes)},
+        }
+    )
+    # print(intermediate_details)
     for document in intermediate_document_list:
         for detail in intermediate_details:
             if document["IntermediateCode"] == detail["Metadata"]["IntermediateCode"]:
@@ -188,17 +225,17 @@ def append_goalpost_info(intermediate_document_list, ScoreBy):
                 document["Score"] = goalpost(
                     document["Value"],
                     detail["Metadata"]["LowerGoalpost"],
-                    detail["Metadata"]["UpperGoalpost"]
+                    detail["Metadata"]["UpperGoalpost"],
                 )
     return intermediate_document_list
 
 
-def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
+def group_by_indicator(intermediates_list, items_list, IndicatorCode) -> list:
     """
     Utility function for grouping documents by indicator
     """
     indicator_document_hashmap = dict()
-    for document in intermediate_document_list:
+    for document in intermediates_list:
         document_id = f"{document['CountryCode']}_{document['Year']}"
         if document_id not in indicator_document_hashmap.keys():
             indicator_document_hashmap[document_id] = {
@@ -206,13 +243,19 @@ def group_by_indicator(intermediate_document_list, IndicatorCode) -> list:
                 "CountryCode": document["CountryCode"],
                 "Year": document["Year"],
                 "Intermediates": [],
+                "Items": [],
             }
-        indicator_document_hashmap[document_id]["Intermediates"].append(
-            document)
+        indicator_document_hashmap[document_id]["Intermediates"].append(document)
+    for document in items_list:
+        document_id = f"{document['CountryCode']}_{document['Year']}"
+        if document_id in indicator_document_hashmap.keys():
+            indicator_document_hashmap[document_id]["Items"].append(document)
     return list(indicator_document_hashmap.values())
 
 
-def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy):
+def score_indicator_documents(
+    indicator_document_list, ScoreFunction, ValueFunction, UnitFunction, ScoreBy
+):
     """
     Utility function for scoring indicator documents
     """
@@ -220,27 +263,33 @@ def score_indicator_documents(indicator_document_list, ScoreFunction, ValueFunct
     if ValueFunction is None:
         ValueFunction = ScoreFunction
     for i, document in enumerate(indicator_document_list):
-        if ScoreBy == "Values":
-            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
-                "Value", None) for intermediate in document["Intermediates"]}
+        if ScoreBy == "Value":
+            arg_value_dict = {
+                intermediate["IntermediateCode"]: intermediate.get("Value", None)
+                for intermediate in document["Intermediates"]
+            }
         elif ScoreBy == "Score":
-            arg_value_dict = {intermediate["IntermediateCode"]: intermediate.get(
-                "Score", None) for intermediate in document["Intermediates"]}
+            arg_value_dict = {
+                intermediate["IntermediateCode"]: intermediate.get("Score", None)
+                for intermediate in document["Intermediates"]
+            }
         else:
-            raise ValueError(f"Invalid ScoreBy value: {
-                             ScoreBy}; must be one of 'Values' or 'Score'")
+            raise ValueError(
+                f"Invalid ScoreBy value: {ScoreBy}; must be one of 'Value' or 'Score'"
+            )
         if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
             continue
         try:
-            arg_value_list = [arg_value_dict[arg_name]
-                              for arg_name in arg_name_list]
+            arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
         except KeyError:
             print(f"KeyError: {arg_name_list} for {arg_value_dict}")
             continue
         score = ScoreFunction(*arg_value_list)
         value = ValueFunction(*arg_value_list)
         document["Value"] = value
-        document["Unit"] = UnitFunction(*arg_value_list) if UnitFunction else "Aggregate"
+        document["Unit"] = (
+            UnitFunction(*arg_value_list) if UnitFunction else "Aggregate"
+        )
         document["Score"] = score
     return indicator_document_list
 
@@ -249,16 +298,19 @@ def filter_incomplete_data(indicator_document_list):
     """
     Utility function for filtering incomplete observations resulting
     from missing data.
-
-    Call on the result of `zip_intermediates` before inserting into the
-    clean database.
     """
     filtered_list = []
     partial_observation_list = []
     for document in indicator_document_list:
         key_list = list(document.keys())
-        required_keys = ["IndicatorCode", "CountryCode",
-                         "Year", "Value", "Unit", "Score"]
+        required_keys = [
+            "IndicatorCode",
+            "CountryCode",
+            "Year",
+            "Value",
+            "Unit",
+            "Score",
+        ]
         if all([key in key_list for key in required_keys]):
             filtered_list.append(document)
         else:
@@ -272,20 +324,17 @@ def score_single_indicator(document_list, IndicatorCode):
     contain intermediates; does not require score function
     """
     document_list = convert_data_types(document_list)
-    final = append_goalpost_single(document_list, IndicatorCode)
-    [sspi_clean_api_data.validate_document_format(
-        document) for document in document_list]
+    final = goalpost_and_score_indicator(document_list, IndicatorCode)
+    for doc in document_list:
+        doc["IndicatorCode"] = IndicatorCode
+        sspi_clean_api_data.validate_document_format(doc)
     return final
 
 
-def append_goalpost_single(document_list, IndicatorCode):
-    details = sspi_metadata.find(
-        {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": IndicatorCode})[0]
+def goalpost_and_score_indicator(document_list, IndicatorCode):
+    lg, ug = sspi_metadata.get_goalposts(IndicatorCode)
     for document in document_list:
-        document["LowerGoalpost"] = details["Metadata"]["LowerGoalpost"]
-        document["UpperGoalpost"] = details["Metadata"]["UpperGoalpost"]
-        document["Score"] = goalpost(
-            document["Value"], details["Metadata"]["LowerGoalpost"], details["Metadata"]["UpperGoalpost"])
+        document["Score"] = goalpost(document["Value"], lg, ug)
     return document_list
 
 
@@ -297,9 +346,9 @@ def country_code_to_name(CountryCode):
 
 
 def get_country_code(CountryName):
-    '''
+    """
     Handles edge cases of country fuzzy matching
-    '''
+    """
     if "kosovo" in str.lower(CountryName):
         return "XKX"
     if "korea" in str.lower(CountryName) and "democratic" not in str.lower(CountryName):
@@ -308,7 +357,9 @@ def get_country_code(CountryName):
         return "PRK"
     if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
         return "NER"
-    if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(CountryName):
+    if "democratic republic" in str.lower(CountryName) and "congo" in str.lower(
+        CountryName
+    ):
         return "COD"
     if "congo republic" in str.lower(CountryName):
         return "COG"
@@ -332,7 +383,6 @@ def get_country_code(CountryName):
         return pycountry.countries.search_fuzzy(CountryName)[0].alpha_3
 
 
-
 def colormap(PillarCode, alpha: str = "ff"):
     if PillarCode == "SUS":
         return f"#28a745{alpha}"
@@ -343,11 +393,371 @@ def colormap(PillarCode, alpha: str = "ff"):
 
 
 def find_population(country_code, year):
-    '''
+    """
     Fetches population data from sspi_country_characteristics for a country in a given year
     country_code: str of alpha-3 code
     year: int of year
-    '''
+    """
     population_data = sspi_country_characteristics.fetch_population_data(
-        "UNPOPL", country_code, year)
+        "POPULN", country_code, year
+    )
     return population_data
+
+
+def extrapolate_backward(
+    doc_list: list[dict],
+    year: int,
+    series_id=["CountryCode", "IndicatorCode"],
+    impute_only=False,
+):
+    """
+    Extrapolate backward from the earliest available data point to a target year.
+
+    :param doc_list: list of dicts with keys including 'Year' and series identifiers
+    :param year: earliest year to extrapolate to
+    :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    :param impute_only: if True, only return imputed values, excluding original data
+    """
+    grouped_series = {}
+    imputations = []
+    copied_doc_list = deepcopy(doc_list)
+    for document in copied_doc_list:
+        series_key = tuple(document[id_key] for id_key in series_id)
+        grouped_series.setdefault(series_key, []).append(document)
+    for series_key, documents in grouped_series.items():
+        documents.sort(key=lambda x: x["Year"])
+        ref_doc = documents[0]
+        first_year = ref_doc["Year"]
+        for missing_year in range(year, first_year):
+            new_document = deepcopy(documents[0])
+            new_document.update(
+                {
+                    "Year": missing_year,
+                    "Imputed": True,
+                    "ImputationMethod": "Backward Extrapolation",
+                    "ImputationDistance": first_year - missing_year,
+                }
+            )
+            copied_doc_list.append(new_document)
+            imputations.append(new_document)
+    if impute_only:
+        return imputations
+    return copied_doc_list
+
+
+def extrapolate_forward(
+    doc_list: list[dict],
+    year: int,
+    series_id=["CountryCode", "IndicatorCode"],
+    impute_only=False,
+):
+    """
+    Extrapolate forward from the latest available data point to a target year.
+
+    :param doc_list: list of dicts with keys including 'Year' and series identifiers
+    :param year: latest year to extrapolate to
+    :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    :param impute_only: if True, only return imputed values, excluding original data
+    """
+    copied_doc_list = deepcopy(doc_list)
+    grouped_series = {}
+    imputations = []
+    for document in copied_doc_list:
+        series_key = tuple(document[id_key] for id_key in series_id)
+        grouped_series.setdefault(series_key, []).append(document)
+    for series_key, documents in grouped_series.items():
+        documents.sort(key=lambda x: x["Year"])
+        ref_doc = documents[-1]
+        last_year = ref_doc["Year"]
+        for missing_year in range(last_year + 1, year + 1):
+            new_document = deepcopy(ref_doc)
+            new_document.update(
+                {
+                    "Year": missing_year,
+                    "Imputed": True,
+                    "ImputationMethod": "Forward Extrapolation",
+                    "ImputationDistance": missing_year - last_year,
+                }
+            )
+            copied_doc_list.append(new_document)
+            imputations.append(new_document)
+    if impute_only:
+        return imputations
+    return copied_doc_list
+
+
+def interpolate_linear(
+    doc_list: list[dict], series_id=["CountryCode", "IndicatorCode"], impute_only=False
+):
+    """
+    Fill missing years in a time series using linear interpolation.
+
+    :param doc_list: list of dicts with keys including 'Year' and series identifiers
+    :param series_id: keys identifying a unique series (default: CountryCode, IndicatorCode)
+    :param impute_only: if True, only return imputed values, excluding original data
+    """
+    grouped_series = {}
+    imputations = []
+    copied_doc_list = deepcopy(doc_list)
+    for document in copied_doc_list:
+        series_key = tuple(document[id_key] for id_key in series_id)
+        grouped_series.setdefault(series_key, []).append(document)
+    for series_key, documents in grouped_series.items():
+        documents.sort(key=lambda x: x["Year"])
+        existing_years = {doc["Year"]: doc for doc in documents}
+        all_years = range(documents[0]["Year"], documents[-1]["Year"] + 1)
+        for y in all_years:
+            if y not in existing_years:
+                # Find surrounding known values for interpolation
+                prev = next((d for d in reversed(documents) if d["Year"] < y), None)
+                next_ = next((d for d in documents if d["Year"] > y), None)
+                if prev is None or next_ is None:
+                    continue  # can't interpolate without both bounds
+                year_span = next_["Year"] - prev["Year"]
+                if "Value" not in prev or "Value" not in next_:
+                    continue  # skip if values are missing
+                value_span = next_["Value"] - prev["Value"]
+                slope = value_span / year_span
+                interpolated_value = prev["Value"] + slope * (y - prev["Year"])
+                new_doc = deepcopy(prev)
+                new_doc.update(
+                    {
+                        "Year": y,
+                        "Value": interpolated_value,
+                        "Imputed": True,
+                        "ImputationMethod": "Linear Interpolation",
+                        "ImputationDistance": min(y - prev["Year"], next_["Year"] - y),
+                    }
+                )
+                copied_doc_list.append(new_doc)
+                imputations.append(new_doc)
+    if impute_only:
+        return imputations
+    return copied_doc_list
+
+
+def generate_item_levels(
+    data: list[dict],
+    entity_id="",
+    value_id="",
+    time_id="",
+    score_id="",
+    exclude_fields: list[str] = [],
+):
+    entity_id = entity_id if entity_id else "CountryCode"
+    value_id = value_id if value_id else "Value"
+    time_id = time_id if time_id else "Year"
+    score_id = score_id if score_id else "Score"
+    item_levels = {}
+    exclude = [entity_id, value_id, time_id, score_id, "_id"]
+    exclude.extend(exclude_fields)
+    for obs in data:
+        level = {}
+        level_id = ""
+        for k, v in sorted(obs.items()):
+            if k in exclude:
+                continue
+            if isinstance(v, list):
+                continue
+            level_id += f"{str(k)}:{str(v)};"
+            level[k] = v
+        if item_levels.get(level_id, None) is not None:
+            continue
+        else:
+            item_levels[level_id] = level
+    return list(item_levels.values())
+
+
+def generate_item_groups(
+    data: list[dict],
+    entity_id="",
+    value_id="",
+    time_id="",
+    score_id="",
+    exclude_fields: list[str] = [],
+):
+    entity_id = entity_id if entity_id else "CountryCode"
+    value_id = value_id if value_id else "Value"
+    time_id = time_id if time_id else "Year"
+    score_id = score_id if score_id else "Score"
+    item_levels = {}
+    exclude = [entity_id, value_id, time_id, score_id, "_id"]
+    exclude.extend(exclude_fields)
+    for obs in data:
+        level = {}
+        level_id = ""
+        for k, v in sorted(obs.items()):
+            if k in exclude:
+                continue
+            if isinstance(v, list):
+                continue
+            else:
+                level_id += f"{str(k)}:{str(v)};"
+                level[k] = v
+        structure = {
+            "Datasets": {},
+            "Identifier": level,
+        }
+        datasets = item_levels.setdefault(level_id, structure)["Datasets"]
+        datasets.setdefault(obs[entity_id], []).append(
+            {
+                "entity_id": obs[entity_id],
+                "time_id": obs[time_id],
+                "value_id": obs[value_id],
+                "score_id": obs.get(score_id, None),
+            }
+        )
+    return list(item_levels.values())
+
+
+def slice_intermediate(doc_list, intermediate_codes: list[str] | str):
+    """
+    Utility taking for extracting intermediates from the output of
+    zip_intermediates
+
+    :param doc_list: List of documents to extract intermediates from, in the
+    format of the output of zip_intermediates.
+    :param intermediate_codes: List of intermediate codes to filter by, or a single
+    intermediate code as a string.
+    """
+    intermediates = []
+    if not isinstance(intermediate_codes, list):
+        intermediate_codes = [intermediate_codes]
+    for doc in doc_list:
+        print(doc)
+        for intermediate in doc.get("Intermediates", []):
+            if intermediate.get("IntermediateCode") in intermediate_codes:
+                intermediates.append(intermediate)
+    return intermediates
+
+
+def filter_imputations(doc_list):
+    """
+    Utility taking for extracting imputations from the output of
+    zip_intermediates
+
+    :param doc_list: List of documents to extract intermediates from, in the
+    format of the output of zip_intermediates.
+    """
+    imputations = []
+    for doc in doc_list:
+        if any([i.get("Imputed", False) for i in doc.get("Intermediates", [])]):
+            imputations.append(doc)
+    return imputations
+
+
+def impute_global_average(
+    country_code: str, start_year: int, end_year: int, item_type: str, item_code: str, ref_data: list[dict]
+):
+    """
+    Impute the global average for a given country and year range.
+
+    :param country_code: The country code to impute.
+    :param start_year: The starting year for the imputation.
+    :param end_year: The ending year for the imputation.
+    :param item_type: The type of item being imputed. Valid values are "Intermediate" or "Indicator".
+    :param item_code: The code of the item being imputed (e.g., "GINIPT").
+    :param ref_data: The reference data to calculate the global average.
+    """
+    if not all([x["Unit"] == ref_data[0]["Unit"] for x in ref_data]):
+        raise ValueError("Units are not consistent across reference data.")
+    if item_type not in ["Intermediate", "Indicator"]:
+        raise ValueError("item_type must be either 'Intermediate' or 'Indicator'.")
+    mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
+    mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
+    imputation_list = []
+    for year in range(start_year, end_year + 1):
+        imputed_document = {
+            "CountryCode": country_code,
+            "Value": mean_value,
+            "Score": mean_score,
+            "Year": year,
+            "Unit": ref_data[0]["Unit"],
+            "Imputed": True,
+            "ImputationMethod": "ImputeGlobalAverage",
+        }
+        if item_type == "Intermediate":
+            imputed_document["IntermediateCode"] = item_code
+        elif item_type == "Indicator":
+            imputed_document["IndicatorCode"] = item_code
+        imputation_list.append(imputed_document)
+    return imputation_list
+
+
+def regression_imputation(
+    feature_list: list[dict],
+    outcome_list: list[dict],
+    predictor_list: list[dict],
+    target_indicator: str,
+    unit: str,
+    model_string: str,
+    details: str,
+    lg: float | int = 0,
+    ug: float | int = 1,
+) -> list[dict]:
+    """
+    Perform regression imputation for a target indicator using features.
+
+    :param feature_list: List of feature documents with 'FeatureCode', 'CountryCode', 'Year', and 'Score'
+    used to train the model. Must have the same dimension as the predictor_list.
+    :param outcome_list: List of outcome documents with 'IndicatorCode', 'CountryCode', 'Year', and 'Score' used to train the model.
+    :param predictor_list: List of prediction documents with 'FeatureCode', 'CountryCode', 'Year', and 'Score'
+    to as the predictors for missing documents. Must have the same dimensions as the feature_list.
+    :param target_indicator: The indicator code for the target variable to be imputed.
+    :param model_string: A string representation of the regression model, e.g., "GINIPT ~ ISHRAT + y_0 + e".
+    :param details: a short paragraph describing the imputation method and its rationale.
+    :return: List of imputed documents with imputed values for the target indicator.
+    """
+    # ---------- 1. reshape features ----------
+    X = (
+        pd.DataFrame.from_records(feature_list)
+        .pivot_table(
+            index=["CountryCode", "Year"], columns="FeatureCode", values="Score"
+        )
+        .sort_index()
+    )
+    # ---------- 2. reshape outcomes ----------
+    y = (
+        pd.DataFrame.from_records(outcome_list)
+        .pivot_table(
+            index=["CountryCode", "Year"], columns="IndicatorCode", values="Score"
+        )
+        .sort_index()
+        .rename(columns={target_indicator: "target"})
+    )
+    # ---------- 3. reshape predictions ----------
+    P = (
+        pd.DataFrame.from_records(predictor_list)
+        .pivot_table(
+            index=["CountryCode", "Year"], columns="FeatureCode", values="Score"
+        )
+        .sort_index()
+    )
+    # ---------- 5. train ----------
+    train = X.join(y, how="inner").dropna()
+    X_train, y_train = train.drop(columns="target"), train["target"]
+    model = LinearRegression(fit_intercept=True).fit(X_train, y_train)
+    # ---------- 4. predict ----------
+    P_aligned = P.reindex(columns=X_train.columns)
+    panel = P_aligned.join(y, how="left")          # attach any known targets
+    missing = panel["target"].isna()
+    panel.loc[missing, "target"] = model.predict(P_aligned.loc[missing])
+    panel["target"] = panel["target"].clip(0, 1)
+    # ---------- 6. tidy & return ----------
+    document_list = (
+        panel.reset_index()
+        .rename(columns={"target": "Score"})[["CountryCode", "Year", "Score"]]
+        .to_dict(orient="records")
+    )
+    for doc in document_list:
+        doc["IndicatorCode"] = target_indicator
+        doc["Imputed"] = True
+        doc["ImputationMethod"] = "RegressionImputation"
+        doc["ImputationRegessionModel"] = model_string
+        doc["ImputationDetails"] = details
+        doc["ImputationDistance"] = 0
+        doc["LowerGoalpost"] = lg
+        doc["UpperGoalpost"] = ug
+        doc["Unit"] = unit
+        doc["Value"] = (ug - lg) * doc["Score"] + lg
+    return document_list

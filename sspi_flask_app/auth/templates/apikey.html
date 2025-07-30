@@ -1,0 +1,15 @@
+{% extends 'auth-layout.html' %}
+
+{% block content %}
+
+{% if form.error %}
+  <p class="error"><strong>Error:</strong> {{ form.error }}</p>
+{% endif %}
+<form action="" method="POST">
+  {{ form.hidden_tag() }}
+  <div class="form-item">{{ form.username }} </div>
+  <div class="form-item">{{ form.password }} </div>
+  <div class="form-item">{{ form.submit }}</div>
+</form>
+
+{% endblock %}

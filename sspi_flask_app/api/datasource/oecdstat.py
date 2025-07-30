@@ -1,12 +1,11 @@
 import requests
 import time
 import pycountry
-import bs4 as bs
-from ..resources.utilities import string_to_float, string_to_int
+from bs4 import BeautifulSoup
+from ..resources.utilities import string_to_float
 from sspi_flask_app.models.database import sspi_raw_api_data
 import urllib3
 import ssl
-
 
 def collectOECDIndicator(OECDIndicatorCode, IndicatorCode, **kwargs):
     """
@@ -137,7 +136,7 @@ def organizeOECDdata(series_list):
                             "CountryCode": cou,
                             "IndicatorCode": "GTRANS",
                             "Source": "OECD",
-                            "YEAR": string_to_int(year_lst[i]),
+                            "YEAR": int(year_lst[i]),
                             "RAW": string_to_float(obs_lst[i])
                         }
                         listofdicts.append(new_observation)
@@ -191,7 +190,6 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
     all_country_codes = [cou.alpha_3 for cou in pycountry.countries]
     country_groups = ["+".join(all_country_codes[i:i + g_size])
                       for i in range(0, len(all_country_codes), g_size)]
-    print(country_groups)
     for g in country_groups:
         yield f"Processing group of countries: {g}\n"
     if metadata_url:
@@ -209,7 +207,6 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
             oecd_series_code}/{cou_filter_parameters}?{query_parameters}"
         res = requests.get(url)
         raw_data = str(res.content)
-        print(raw_data)
         if raw_data == "NoRecordsFound":
             print(f"No records found for {cou_g}! Skipping Insertion")
             continue
@@ -217,3 +214,22 @@ def collectOECDSDMXFORAID(oecd_series_code, IndicatorCode, filter_parameters="..
                                          Source="OECD", Metadata=metadata, **kwargs)
         time.sleep(15)
     yield f"Data collection complete for indicator {IndicatorCode}\n"
+
+
+def parse_oecd_observations(xml_string) -> list[dict]:
+    soup = BeautifulSoup(xml_string, "lxml-xml")
+    observations = soup.find_all("Obs")
+    formatted_observations = []
+    for obs in observations:
+        formatted_obs = {}
+        value = obs.find("ObsValue")
+        if value:
+            formatted_obs["Value"] = value.attrs.get("value")
+        for value in obs.find_all("Value"):
+            id = value.attrs.get("id")
+            if id == "TIME_PERIOD":
+                formatted_obs["Year"] = value.attrs.get("value")
+            else:
+                formatted_obs[id] = value.attrs.get("value")
+        formatted_observations.append(formatted_obs)
+    return formatted_observations

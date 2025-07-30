@@ -1,142 +1,171 @@
-:root {
-  --toggle-bg: #ccc;
-  --toggle-thumb: #fff;
-  --toggle-bg-checked: #333;
-}
-
-.dark-mode {
-  --toggle-bg: #666;
-  --toggle-thumb: #121212;
-  --toggle-bg-checked: #fff;
-}
-
 .site-header {
-    display: flex;
-    padding: 20px 50px 20px;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--dark-blue, #000);
+  display: flex;
+  padding: 0.4em 1.5em;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--header-color, #000);
+  border-bottom: var(--theme-border-thick, none);
 }
 
-.titlebox {
-    flex-basis: 0;
-    display: flex;
-    flex-direction: column;
-    color: var(--green-accent, #000);
-    text-decoration: none;
-    align-items: flex-start;
+.header-titlebox {
+  flex-basis: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--green-accent, #000);
+  text-decoration: none;
+  align-items: flex-start;
 }
 
 
-.title {
-    font-size: 1.7em;
-    font-weight: 300;
-    margin: 10px 0px;
-    white-space: nowrap;
+.site-title-line {
+  font-family: var(--title-font-family);
+  font-weight: var(--title-weight, 300);
+  font-size: 1.1em;
+  margin: -1px 0px;
+  white-space: nowrap;
 }
 
 .header-nav-bar {
-    position: relative;
-    width: 70%;
+  position: relative;
+  width: 70%;
 }
 
 .header-nav-bar-link-list {
-    list-style: none;
-    display: flex;
-    justify-content: space-around;
-    padding: 0;
+  list-style: none;
+  display: flex;
+  justify-content: right;
+  padding: 0 0.5em;
 }
 
 .header-nav-bar-link {
-    font-size: 1.2em;
-    color: var(--white, #000);
-    text-decoration: none;
+  font-family: var(--header-font-family, sans-serif);
+  font-size: 0.8em;
+  color: var(--header-text-color, #fff);
+  font-family: sans-serif;
+  text-decoration: none;
+  padding: 0 1em;
 }
 
 .title-subdiv {
-    flex: 0 1 min-content;
-    transition: all 0.25s linear;
-    align-self: flex-start;
-    white-space: nowrap;
+  flex: 0 1 min-content;
+  transition: all 0.25s linear;
+  align-self: flex-start;
+  white-space: nowrap;
 }
 
 .title-collapse {
-    flex: 0 1 auto;
-    opacity: 1;
-    width: min-content;
-    margin-right: 5px;
-    transition: all 0.25s linear;
+  flex: 0 1 auto;
+  opacity: 1;
+  width: min-content;
+  margin-right: 5px;
+  transition: all 0.25s linear;
 }
 
-// Convert this from SCSS to CSS
-// @media screen and (max-width: 600px) {
-//     .site-header {
-//         flex-direction: row;
-//     }
-//     .header-nav-bar-link {
-//         margin: 5px;
-//     }
-//     .header-nav-bar-link-list {
-//         display: block;
-//     }
-//     .title-subdiv {
-//         flex: 0 1 min-content;
-//         transition: all 0.25s linear;
-//     }
-//     .titlebox {
-//         width: 70%;
-//     }
-//     .title-collapse {
-//         opacity: 0.1;
-//         flex: 0.0001;
-//         overflow: hidden;
-//         margin-right: 0;
-//         transition: all 0.25s ease;
-//     }
-// }
-
 /* theme-toggle.css */
+.theme-toggle-container {
+  max-width: 5em;
+  padding-left: 1em;
+  border-left: var(--theme-border-thin);
+}
+
+.theme-label {
+  width: 100%;
+  text-align: center;
+  line-height: 1.25;
+  padding: 0.5em;
+  margin: 0;
+  font-family: var(--header-font-family, sans-serif);
+  font-size: 0.4em;
+  color: var(--low-importance-font-color, #fff);
+}
+
 .theme-toggle {
-    position: relative;
-      display: inline-block;
-      width: 48px;
-      height: 24px;
+  display: flex;
+  position: relative;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
 }
 
 .theme-toggle input {
-    opacity: 0;
-      width: 0;
-      height: 0;
+  display: none;
 }
 
-.slider {
-    position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background-color: var(--toggle-bg, #ccc);
-      border-radius: 24px;
-      transition: background-color 0.3s;
+.theme-toggle .icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.7;
+  transition: opacity 0.3s;
 }
 
-.slider::before {
-    content: "";
-      position: absolute;
-      height: 20px;
-      width: 20px;
-      left: 2px;
-      bottom: 2px;
-      background-color: var(--toggle-thumb, white);
-      border-radius: 50%;
-      transition: transform 0.3s;
+.theme-toggle .sun-svg {
+  position: absolute;
+  left: 39px;
+  display: flex;
+  flex-align: center;
+  justify-content: center;
+  color: var(--sun-color);
+  z-index: 3;
 }
 
-/* When checked, move the thumb and change bg */
-.theme-toggle input:checked + .slider {
-    background-color: var(--toggle-bg-checked, #666);
+.theme-toggle .sun {
+  color: var(--sun-color);
 }
 
-.theme-toggle input:checked + .slider::before {
-    transform: translateX(24px);
+.theme-toggle .moon-svg {
+  position: absolute;
+  display: flex;
+  flex-align: center;
+  justify-content: center;
+  left: 6px;
+  z-index: 3;
 }
 
+.theme-toggle .moon {
+  color: var(--moon-color);
+}
+
+.theme-toggle input:not(:checked) ~ .icons .sun {
+  opacity: 0.2;
+}
+
+.theme-toggle input:checked ~ .icons .moon {
+  opacity: 0.6;
+}
+
+.theme-toggle .slider {
+  position: relative;
+  width: 64px;
+  height: 32px;
+  border-radius: 30px;
+  border: var(--theme-border-thin, 1px solid #ccc);
+  transition: background-color 0.3s;
+}
+
+.theme-toggle .slider::before {
+  content: "";
+  position: absolute;
+  height: 26px;
+  width: 26px;
+  left: 3px;
+  top: 3px;
+  background-color: var(--toggle-thumb);
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.theme-toggle input:checked ~ .slider::before {
+  background-color: var(--toggle-thumb);
+}
+
+.theme-toggle input:checked ~ .slider {
+  background-color: none;
+}
+
+.theme-toggle input:checked ~ .slider::before {
+  transform: translateX(32px);
+}

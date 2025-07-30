@@ -1,9 +1,9 @@
 {"Category":"Ecosystem","Pillar":"Sustainability","Indicators":["BIODIV","REDLST"]}
-{"Category":"Land","Pillar":"Sustainability","Indicators":["NITROG","WATMAN","STKHLM","DEFRST","CARBON"]}
+{"Category":"Land","Pillar":"Sustainability","Indicators":["NITROG","WATMAN","CHMPOL","DEFRST","CARBON"]}
 {"Category":"Energy","Pillar":"Sustainability","Indicators":["ALTNRG","NRGINT","AIRPOL"]}
 {"Category":"Greenhouse Gases","Pillar":"Sustainability","Indicators":["BEEFMK","COALPW","GTRANS"]}
 {"Category":"Waste","Pillar":"Sustainability","Indicators":["MSWGEN","EWASTE","RECYCL"]}
-{"Category":"Worker Engagement","Pillar":"Market Structure","Indicators":["LFPART","CHILDW","COLBAR"]}
+{"Category":"Worker Engagement","Pillar":"Market Structure","Indicators":["EMPLOY","CHILDW","COLBAR"]}
 {"Category":"Worker Wellbeing","Pillar":"Market Structure","Indicators":["UNEMPL","MATERN","FATINJ","SENIOR"]}
 {"Category":"Taxes","Pillar":"Market Structure","Indicators":["CRPTAX","TAXREV","TAXEVA"]}
 {"Category":"Financial Sector","Pillar":"Market Structure","Indicators":["FSTABL","FDEPTH","PUBACC"]}
