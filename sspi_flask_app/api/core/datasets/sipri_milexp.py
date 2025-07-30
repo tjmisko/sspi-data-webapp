@@ -49,12 +49,15 @@ def clean_sipri_milexp():
     source_info = sspi_metadata.get_source_info("SIPRI_MILEXP")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     milexp_raw = raw_data[0]["Raw"]
-    return milexp_raw
+    return milexp_raw # This is the format of the raw data
     unit = (
         "Military expenditure (local currency at current prices) "
         "according to the calendar year as a percentage of GDP."
     )
-    cleaned_list = clean_sipri_data(milexp_raw, 'MILEXP', "Percent", unit)
+    cleaned_list = clean_sipri_data(milexp_raw, 'MILEXP', "Percent", unit) # this function call is broken
+    # Instead of calling whatever was written in clean_sipri_data, 
+    # Write new logic here to clean the data (use what we learned from the
+    # previous function clean_sipri_data if relevant)
     obs_list = json.loads(str(cleaned_list.to_json(orient="records")))
     sspi_clean_api_data.insert_many(obs_list)
     return raw_data
