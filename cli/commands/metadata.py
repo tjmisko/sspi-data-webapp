@@ -9,6 +9,30 @@ def metadata():
     pass
 
 
+@metadata.command(help="Refresh all metadata in sspi_metadata by reloading from local json")
+def refresh():
+    """
+    Get SSPI Pillar Metadata
+    """
+    connector = SSPIDatabaseConnector()
+    url = "/api/v1/delete/clear/sspi_metadata"
+    result = connector.call(url, method="DELETE")
+    click.echo(result.text)
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Delete Request Failed with Status Code {
+                result.status_code}"
+        )
+    url = "/api/v1/load/sspi_metadata"
+    result = connector.call(url, method="GET")
+    click.echo(result.text)
+    if result.status_code != 200:
+        raise click.ClickException(
+            f"Error! Load Request Failed with Status Code {
+                result.status_code}"
+        )
+
+
 @metadata.command(help="Get Pillar Metadata from the SSPI Database")
 @click.argument("pillar_code", type=str, required=False)
 def pillar(pillar_code):
