@@ -9,9 +9,7 @@ Description: An index measuring the sustainability of Nitrogen management based 
   performance of agricultural production. The 2022 EPI uses the SNMI as a proxy for
   agricultural drivers of environmental damage.
 Source:
-  OrganizationName: EPI
   OrganizationCode: EPI
   OrganizationSeriesCode: SNM
-  BaseURL: https://sedac.ciesin.columbia.edu/data/set/epi-environmental-performance-index-2022/data-download
 ---
 

@@ -1,9 +1,0 @@
----
-DatasetType: Intermediate
-DatasetName: Wastewater collected
-DatasetCode: EPI_WWC
-Description: Percentage of wastewater collected for treatment. Sometimes measured as the percentage of the population connected to urban or independent wastewater treatment facilities.
-Source:
-  OrganizationCode: EPI
-  OrganizationSeriesCode: WWC
----
