@@ -5,7 +5,7 @@ from pycountry import countries
 from ..resources.utilities import string_to_float
 
 
-def collect_world_bank_data(world_bank_indicator_code, IndicatorCode, **kwargs):
+def collect_wb_data(world_bank_indicator_code, **kwargs):
     yield f"Collecting data for World Bank Indicator {world_bank_indicator_code}\n"
     base_url = f"https://api.worldbank.org/v2/country/all/indicator/{world_bank_indicator_code}"
     url_w_options = base_url + "?per_page=1000&format=json"
@@ -29,7 +29,7 @@ def collect_world_bank_data(world_bank_indicator_code, IndicatorCode, **kwargs):
     yield f"Collection complete for World Bank Indicator {world_bank_indicator_code}"
 
 
-def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
+def clean_wb_data(raw_data, dataset_code, unit) -> list[dict]:
     clean_data_list = []
     for entry in raw_data:
         iso3 = entry["Raw"]["countryiso3code"]
@@ -41,13 +41,11 @@ def clean_wb_data(raw_data, IndicatorCode, unit) -> list[dict]:
             continue
         clean_obs = {
             "CountryCode": iso3,
-            "IndicatorCode": IndicatorCode,
+            "DatasetCode": dataset_code,
             "Description": entry["Raw"]["indicator"]["value"],
             "Year": int(str(entry["Raw"]["date"])),
             "Unit": unit,
             "Value": string_to_float(value)
         }
-        if "IntermediateCode" in entry.keys():
-            clean_obs["IntermediateCode"] = entry["IntermediateCode"]
         clean_data_list.append(clean_obs)
     return clean_data_list

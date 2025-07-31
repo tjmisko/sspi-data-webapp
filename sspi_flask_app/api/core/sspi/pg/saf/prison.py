@@ -9,7 +9,7 @@ from sspi_flask_app.api.datasource.prisonstudies import (
 )
 from sspi_flask_app.api.datasource.worldbank import (
     clean_wb_data,
-    collect_world_bank_data,
+    collect_wb_data,
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
@@ -27,7 +27,7 @@ from sspi_flask_app.models.database import (
 # @login_required
 # def prison():
 #     def collect_iterator(**kwargs):
-#         yield from collect_world_bank_data(
+#         yield from collect_wb_data(
 #             "SP.POP.TOTL", "PRISON", IntermediateCode="POPULN", **kwargs
 #         )
 #         yield from collect_prison_studies_data(IntermediateCode="PRIPOP", **kwargs)

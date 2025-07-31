@@ -2,7 +2,7 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
 from sspi_flask_app.api.datasource.iea import collect_iea_data
-from sspi_flask_app.api.datasource.worldbank import collect_world_bank_data
+from sspi_flask_app.api.datasource.worldbank import collect_wb_data
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
@@ -28,7 +28,7 @@ from sspi_flask_app.api.datasource.iea import clean_IEA_data_GTRANS
 #             SourceOrganization="IEA",
 #             **kwargs,
 #         )
-#         yield from collect_world_bank_data(
+#         yield from collect_wb_data(
 #             "SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs
 #         )
 #     return Response(

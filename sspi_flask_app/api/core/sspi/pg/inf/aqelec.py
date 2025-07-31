@@ -11,7 +11,7 @@ from sspi_flask_app.api.resources.utilities import (
     score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collect_world_bank_data,
+    collect_wb_data,
     clean_wb_data
 )
 from sspi_flask_app.api.datasource.wef import collect_wef_data
@@ -24,7 +24,7 @@ import pandas as pd
 # @login_required
 # def aqelec():
 #     def collect_iterator(**kwargs):
-#         yield from collect_world_bank_data("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
+#         yield from collect_wb_data("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
 #         yield from collect_wef_data("WEF.GCIHH.EOSQ064", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
