@@ -1,14 +1,9 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask_login import login_required, current_user
 from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.unsdg import (
-    collect_sdg_indicator_data,
-    extract_sdg,
-    filter_sdg,
-)
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
-    sspi_clean_api_data,
+    sspi_indicator_data,
+    sspi_clean_api_data
 )
 from sspi_flask_app.api.resources.utilities import (
     score_indicator,
@@ -16,31 +11,28 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/CHMPOL", methods=["GET"])
-# @login_required
-# def chmpol():
-#     def collect_iterator(**kwargs):
-#         yield from collect_sdg_indicator_data("12.4.1", "CHMPOL", **kwargs)
-#     return Response(
-#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-#     )
-
-
-@compute_bp.route("/CHMPOL", methods=["GET"])
+@compute_bp.route("/CHMPOL", methods=["POST"])
 @login_required
 def compute_chmpol():
-    app.logger.info("Running /api/v1/compute/CHMPOL")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "CHMPOL"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("CHMPOL")
-    extracted_chmpol = extract_sdg(raw_data)
-    filtered_chmpol = filter_sdg(
-        extracted_chmpol,
-        {"SG_HAZ_CMRSTHOLM": "STKHLM"},
-    )
+    def score_chmpol(UNSDG_STKHLM, UNSDG_MINMAT, UNSDG_MONTRL, UNSDG_BASELA, UNSDG_ROTDAM):
+        return (UNSDG_STKHLM + UNSDG_MINMAT + UNSDG_MONTRL + UNSDG_BASELA + UNSDG_ROTDAM) / 5 / 100
+
+    sspi_indicator_data.delete_many({"IndicatorCode": "CHMPOL"})
+    filtered_chmpol = sspi_clean_api_data.find({
+        "DatasetCode": {
+            "$in": [
+                "UNSDG_STKHLM",
+                "UNSDG_MINMAT",
+                "UNSDG_MONTRL",
+                "UNSDG_BASELA",
+                "UNSDG_ROTDAM"
+            ]
+        }
+    })
     scored_list, _ = score_indicator(
         filtered_chmpol, "CHMPOL",
-        score_function=lambda UNSDG_STKHLM, UNSDG_MONTRL, UNSDG_BASELA: 0,
+        score_function=score_chmpol,
         unit="Index" 
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
