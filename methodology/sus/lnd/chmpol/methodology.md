@@ -10,12 +10,13 @@ DatasetCodes:
   - UNSDG_STKHLM
   - UNSDG_BASELA
   - UNSDG_MONTRL
-Inverted: false
+  - UNSDG_MINMAT
+  - UNSDG_ROTDAM
+Policy: Chemical Waste Management
 LowerGoalpost: 0.0
-Policy: "Chemical Waste \nManagement"
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: 12.4.1
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 UpperGoalpost: 100.0
 ---
+This policy indicator measures compliance with the core UN treaties regarding hazardous waste. 
 
+## Issues
+- "The Country Score depends on the amount of information that is sent to the Convention's Secretariat"
