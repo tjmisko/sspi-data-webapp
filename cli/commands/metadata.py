@@ -9,8 +9,8 @@ def metadata():
     pass
 
 
-@metadata.command(help="Refresh all metadata in sspi_metadata by reloading from local json")
-def refresh():
+@metadata.command(help="Reload all metadata in sspi_metadata from local json")
+def reload():
     """
     Get SSPI Pillar Metadata
     """
