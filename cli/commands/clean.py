@@ -4,7 +4,7 @@ from connector import SSPIDatabaseConnector
 from cli.utilities import stream_response
 
 
-@click.command(help="Collect raw data from source APIs")
+@click.command(help="Clean raw data to prepare datasets")
 @click.argument("series_code", type=str)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 def clean(series_code, remote: bool):
