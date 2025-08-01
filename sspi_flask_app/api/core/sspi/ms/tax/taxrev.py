@@ -3,7 +3,6 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_wb_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
@@ -15,8 +14,8 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_imputed_data,
-    sspi_raw_api_data,
     sspi_metadata
 )
 
@@ -33,16 +32,16 @@ from sspi_flask_app.models.database import (
 @login_required
 def compute_taxrev():
     app.logger.info("Running /api/v1/compute/TAXREV")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "TAXREV"})
-    taxrev_raw = sspi_raw_api_data.fetch_raw_data("TAXREV")
-    taxrev_clean = clean_wb_data(taxrev_raw, "TAXREV", "% of GDP")
+    sspi_indicator_data.delete_many({"IndicatorCode": "TAXREV"})
+    # Fetch clean dataset
+    taxrev_clean = sspi_clean_api_data.find({"DatasetCode": "WB_TAXREV"})
     lg, ug = sspi_metadata.get_goalposts("TAXREV")
     scored_list, _ = score_indicator(
         taxrev_clean, "TAXREV",
         score_function = lambda WB_TAXREV: goalpost(WB_TAXREV, lg, ug),
         unit="Percentage"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
 
 

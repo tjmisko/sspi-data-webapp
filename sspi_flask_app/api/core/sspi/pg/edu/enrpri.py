@@ -3,10 +3,6 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.uis import (
-    clean_uis_data,
-    collect_uis_data,
-)
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
@@ -18,9 +14,9 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_imputed_data,
     sspi_metadata,
-    sspi_raw_api_data,
 )
 
 
@@ -36,17 +32,15 @@ from sspi_flask_app.models.database import (
 @login_required
 def compute_enrpri():
     app.logger.info("Running /api/v1/compute/ENRPRI")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "ENRPRI"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("ENRPRI")
-    description = "Net enrollment in primary school (%)"
-    cleaned_list = clean_uis_data(raw_data, "ENRPRI", "Percent", description)
+    sspi_indicator_data.delete_many({"IndicatorCode": "ENRPRI"})
+    enrpri_clean = sspi_clean_api_data.find({"DatasetCode": "UIS_ENRPRI"})
     lg, ug = sspi_metadata.get_goalposts("ENRPRI")
-    scored_list = score_indicator(
-        cleaned_list, "ENRPRI",
+    scored_list, _ = score_indicator(
+        enrpri_clean, "ENRPRI",
         score_function=lambda UIS_ENRPRI: goalpost(UIS_ENRPRI, lg, ug),
         unit="%"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
 
 

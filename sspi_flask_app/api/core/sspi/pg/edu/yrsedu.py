@@ -3,7 +3,6 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.uis import clean_uis_data, collect_uis_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     parse_json,
@@ -12,8 +11,8 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_imputed_data,
-    sspi_raw_api_data,
     sspi_metadata
 )
 
@@ -30,20 +29,15 @@ from sspi_flask_app.models.database import (
 @login_required
 def compute_yrsedu():
     app.logger.info("Running /api/v1/compute/YRSEDU")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "YRSEDU"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("YRSEDU")
-    description = (
-        "Number of years of compulsory primary and secondary "
-        "education guaranteed in legal frameworks"
-    )
-    cleaned_list = clean_uis_data(raw_data, "YRSEDU", "Years", description)
+    sspi_indicator_data.delete_many({"IndicatorCode": "YRSEDU"})
+    yrsedu_clean = sspi_clean_api_data.find({"DatasetCode": "UIS_YRSEDU"})
     lg, ug = sspi_metadata.get_goalposts("YRSEDU")
     scored_list, _ = score_indicator(
-        cleaned_list, "YRSEDU",
+        yrsedu_clean, "YRSEDU",
         score_function=lambda UIS_YRSEDU: goalpost(UIS_YRSEDU, lg, ug),
         unit="Years"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
 
 

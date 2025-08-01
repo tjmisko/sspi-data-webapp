@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_metadata
 )
 from flask_login import login_required, current_user
@@ -10,10 +10,6 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
     goalpost
-)
-from sspi_flask_app.api.datasource.fsi import (
-    collect_fsi_data,
-    clean_fsi_data
 )
 
 
@@ -29,22 +25,13 @@ from sspi_flask_app.api.datasource.fsi import (
 @login_required
 def compute_secapp():
     app.logger.info("Running /api/v1/compute/SECAPP")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "SECAPP"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("SECAPP")
-    description = (
-        "The Security Apparatus is a component of the Fragile State Index, "
-        "which considers the security threats to a state such as bombings, "
-        "attacks/battle-related deaths, rebel movements, mutinies, coups, or "
-        "terrorism. It is an index scored between 0 and 10."
-    )
-    cleaned_list = clean_fsi_data(
-        raw_data, "SECAPP", "Index", description
-    )
+    sspi_indicator_data.delete_many({"IndicatorCode": "SECAPP"})
+    secapp_clean = sspi_clean_api_data.find({"DatasetCode": "FSI_SECAPP"})
     lg, ug = sspi_metadata.get_goalposts("SECAPP")
     scored_list, _ = score_indicator(
-        cleaned_list, "SECAPP",
+        secapp_clean, "SECAPP",
         score_function=lambda FSI_SECAPP: goalpost(FSI_SECAPP, lg, ug),
         unit="Index"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)

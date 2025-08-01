@@ -3,7 +3,6 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_wb_data
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     slice_dataset,
@@ -15,9 +14,9 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_imputed_data,
     sspi_incomplete_indicator_data,
-    sspi_raw_api_data,
     sspi_metadata
 )
 
@@ -35,21 +34,18 @@ from sspi_flask_app.models.database import (
 @login_required
 def compute_fdepth():
     app.logger.info("Running /api/v1/compute/FDEPTH")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "FDEPTH"})
+    sspi_indicator_data.delete_many({"IndicatorCode": "FDEPTH"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "FDEPTH"})
-    credit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="CREDIT")
-    credit_clean = clean_wb_data(credit_raw, "FDEPTH", unit="Percent")
-    deposit_raw = sspi_raw_api_data.fetch_raw_data(
-        "FDEPTH", IntermediateCode="DPOSIT")
-    deposit_clean = clean_wb_data(deposit_raw, "FDEPTH", unit="Percent")
+    # Fetch clean datasets
+    credit_clean = sspi_clean_api_data.find({"DatasetCode": "WB_CREDIT"})
+    deposit_clean = sspi_clean_api_data.find({"DatasetCode": "WB_DPOSIT"})
     combined_list = credit_clean + deposit_clean
     clean_list, incomplete_list = score_indicator(
         combined_list, "FDEPTH",
         score_function=lambda CREDIT, DPOSIT: (CREDIT + DPOSIT) / 2,
         unit="Index"
     )
-    sspi_clean_api_data.insert_many(clean_list)
+    sspi_indicator_data.insert_many(clean_list)
     sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 

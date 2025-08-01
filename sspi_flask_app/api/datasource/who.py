@@ -4,7 +4,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 from sspi_flask_app.api.resources.utilities import parse_json
 
 
-def collect_who_data(who_indicator_code, source_info, **kwargs):
+def collect_who_data(who_indicator_code, **kwargs):
     url = f"https://ghoapi.azureedge.net/api/{who_indicator_code}"
     response = requests.get(url)
     source_info = {

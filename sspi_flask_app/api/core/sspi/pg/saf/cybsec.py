@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_metadata
 )
 from flask_login import login_required, current_user
@@ -11,11 +11,6 @@ from sspi_flask_app.api.resources.utilities import (
     score_indicator,
     goalpost
 )
-from sspi_flask_app.api.datasource.itu import (
-    load_itu_data_from_local_transcription,
-    clean_itu_data
-)
-import json
 
 # @collect_bp.route("/CYBSEC", methods=['GET'])
 # @login_required
@@ -29,15 +24,13 @@ import json
 @login_required
 def compute_cybsec():
     app.logger.info("Running /api/v1/compute/CYBSEC")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "CYBSEC"})
-    cybsec_raw = sspi_raw_api_data.fetch_raw_data("CYBSEC")
-    cleaned_list = clean_itu_data(cybsec_raw)
-    obs_list = json.loads(str(cleaned_list.to_json(orient="records")))
+    sspi_indicator_data.delete_many({"IndicatorCode": "CYBSEC"})
+    cybsec_clean = sspi_clean_api_data.find({"DatasetCode": "ITU_CYBSEC"})
     lg, ug = sspi_metadata.get_goalposts("CYBSEC")
     scored_list, _ = score_indicator(
-        obs_list, "CYBSEC",
+        cybsec_clean, "CYBSEC",
         score_function=lambda ITU_CYBSEC: goalpost(ITU_CYBSEC, lg, ug),
         unit="Index"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)

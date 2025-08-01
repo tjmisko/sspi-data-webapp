@@ -3,14 +3,6 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp
-from sspi_flask_app.api.datasource.prisonstudies import (
-    collect_prison_studies_data,
-    scrape_stored_pages_for_data,
-)
-from sspi_flask_app.api.datasource.worldbank import (
-    clean_wb_data,
-    collect_wb_data,
-)
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
@@ -18,9 +10,9 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_metadata,
-    sspi_raw_api_data,
 )
 
 # @collect_bp.route("/PRISON", methods=["GET"])
@@ -40,22 +32,19 @@ from sspi_flask_app.models.database import (
 @login_required
 def compute_prison():
     app.logger.info("Running /api/v1/compute/PRISON")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "PRISON"})
-    details = sspi_metadata.find(
-        {"DocumentType": "IndicatorDetail", "Metadata.IndicatorCode": "PRISON"}
-    )[0]
-    lg = details["Metadata"]["LowerGoalpost"]
-    ug = details["Metadata"]["UpperGoalpost"]
-    pop_data = sspi_raw_api_data.fetch_raw_data("PRISON", IntermediateCode="POPULN")
-    cleaned_pop = clean_wb_data(pop_data, "PRISON", "Population")
-    clean_data_list, missing_data_list = scrape_stored_pages_for_data()
-    combined_list = cleaned_pop + clean_data_list
+    sspi_indicator_data.delete_many({"IndicatorCode": "PRISON"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "PRISON"})
+    # Fetch clean datasets
+    wb_populn = sspi_clean_api_data.find({"DatasetCode": "WB_POPULN"})
+    ps_pripop = sspi_clean_api_data.find({"DatasetCode": "PS_PRIPOP"})
+    combined_list = wb_populn + ps_pripop
+    lg, ug = sspi_metadata.get_goalposts("PRISON")
     clean_list, incomplete_list = score_indicator(
         combined_list,
         "PRISON",
-        score_function=lambda PRIPOP, POPULN: goalpost(PRIPOP / POPULN * 100000, lg, ug),
-        unit=lambda PRIPOP, POPULN: "Prisoners Per 100,000"
+        score_function=lambda WB_POPULN, PS_PRIPOP: goalpost(PS_PRIPOP / WB_POPULN * 100000, lg, ug),
+        unit=lambda WB_POPULN, PS_PRIPOP: "Prisoners Per 100,000"
     )
-    sspi_clean_api_data.insert_many(clean_list)
+    sspi_indicator_data.insert_many(clean_list)
     sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

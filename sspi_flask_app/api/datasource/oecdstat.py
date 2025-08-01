@@ -197,7 +197,7 @@ def collect_oecd_sdmx_data(oecd_series_code, query_parameters="", metadata_url="
     yield f"Data collection complete for OECD series {oecd_series_code}\n"
 
 
-def collect_oecd_sdmx_data_foraid(oecd_series_code, IndicatorCode, filter_parameters="....", query_parameters="", metadata_url="", **kwargs):
+def collect_oecd_sdmx_data_foraid(oecd_series_code, filter_parameters="....", query_parameters="", metadata_url="", **kwargs):
     """
     Code had to be specially adapted to foreign aid data to iterate through countries one by one
     """
@@ -238,7 +238,7 @@ def collect_oecd_sdmx_data_foraid(oecd_series_code, IndicatorCode, filter_parame
             raw_data, source_info, Metadata=metadata, **kwargs
         )
         time.sleep(15)
-    yield f"Data collection complete for indicator {IndicatorCode}\n"
+    yield f"Data collection complete for OECD series {oecd_series_code}\n"
 
 
 def parse_oecd_observations(xml_string) -> list[dict]:

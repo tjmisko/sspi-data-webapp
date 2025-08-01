@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
@@ -10,7 +10,6 @@ from sspi_flask_app.api.resources.utilities import (
     score_indicator,
     goalpost
 )
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_wb_data
 from flask_login import login_required, current_user
 
 
@@ -26,14 +25,13 @@ from flask_login import login_required, current_user
 @login_required
 def compute_drkwat():
     app.logger.info("Running /api/v1/compute/DRKWAT")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "DRKWAT"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("DRKWAT")
-    cleaned = clean_wb_data(raw_data, "DRKWAT", "Percent")
+    sspi_indicator_data.delete_many({"IndicatorCode": "DRKWAT"})
+    drkwat_clean = sspi_clean_api_data.find({"DatasetCode": "WB_DRKWAT"})
     lg, ug = sspi_metadata.get_goalposts("DRKWAT")
     scored_list, _ = score_indicator(
-        cleaned, "DRKWAT",
+        drkwat_clean, "DRKWAT",
         score_function=lambda WB_DRKWAT: goalpost(WB_DRKWAT, lg, ug),
         unit="%"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)

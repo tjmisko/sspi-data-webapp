@@ -1,15 +1,16 @@
 from sspi_flask_app.api.core.sspi import compute_bp
-from flask import current_app as app, Response
-from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.unfao import collect_unfao_data, format_fao_data_series
+from flask import current_app as app
+from flask_login import login_required
 from sspi_flask_app.models.database import (
-    sspi_metadata,
-    sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_indicator_data,
+    sspi_incomplete_indicator_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    goalpost
+    goalpost,
+    score_indicator
 )
 
 
@@ -25,58 +26,30 @@ from sspi_flask_app.api.resources.utilities import (
 @login_required
 def compute_carbon():
     app.logger.info("Running /api/v1/compute/CARBON")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "CARBON"})
+    sspi_indicator_data.delete_many({"IndicatorCode": "CARBON"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "CARBON"})
+    
+    # Fetch clean datasets
+    crbnlv_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_CRBNLV"})
+    crbnav_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_CRBNAV"})
+    combined_list = crbnlv_clean + crbnav_clean
+    
+    # Filter to post-2000 data for CRBNLV
+    filtered_combined = []
+    for obs in combined_list:
+        if obs.get("DatasetCode") == "UNFAO_CRBNLV" and obs.get("Year", 0) >= 2000:
+            filtered_combined.append(obs)
+        elif obs.get("DatasetCode") == "UNFAO_CRBNAV":
+            filtered_combined.append(obs)
+    
     lg, ug = sspi_metadata.get_goalposts("CARBON")
-    raw_data = sspi_raw_api_data.fetch_raw_data("CARBON")[0]["Raw"]["data"]
-    clean_obs_list = format_fao_data_series(raw_data, "CARBON")
-    average_1990s_dict = {}
-    for obs in clean_obs_list:
-        if obs["Year"] not in list(range(1990, 2000)):
-            continue
-        if obs["CountryCode"] not in average_1990s_dict.keys():
-            average_1990s_dict[obs["CountryCode"]] = {"Values": []}
-        average_1990s_dict[obs["CountryCode"]]["Values"].append(obs["Value"])
-    for country in average_1990s_dict.keys():
-        sum_1990s = sum(average_1990s_dict[country]["Values"])
-        len_1990s = len(average_1990s_dict[country]["Values"])
-        average_1990s_dict[country]["Average"] = sum_1990s / len_1990s
-    final_data_list = []
-    for obs in clean_obs_list:
-        if obs["Year"] in list(range(1900, 2000)):
-            continue
-        if obs["CountryCode"] not in average_1990s_dict.keys():
-            continue
-        if obs["Value"] == 0:
-            obs["Score"] = 0
-        if average_1990s_dict[obs["CountryCode"]]["Average"] == 0:
-            continue
-        lv = obs["Value"]
-        av = average_1990s_dict[obs["CountryCode"]]["Average"]
-        final_data_list.append({
-            "IndicatorCode": "CARBON",
-            "CountryCode": obs["CountryCode"],
-            "Year": obs["Year"],
-            "Value": (lv - av) / av * 100,
-            "Score": goalpost((lv - av) / av * 100, lg, ug),
-            "LowerGoalpost": lg,
-            "UpperGoalpost": ug,
-            "Unit": "Percentage Change in Carbon Stock in Living Biomass from 1990s Average",
-            "Intermediates": [
-                {
-                    "IntermediateCode": "CRBNLV",
-                    "CountryCode": obs["CountryCode"],
-                    "Year": obs["Year"],
-                    "Value": lv,
-                    "Unit": obs["Unit"]
-                },
-                {
-                    "IntermediateCode": "CRBNAV",
-                    "CountryCode": obs["CountryCode"],
-                    "Year": obs["Year"],
-                    "Value": average_1990s_dict[obs["CountryCode"]]["Average"],
-                    "Unit": obs["Unit"] + " (1990s Average)"
-                }
-            ]
-        })
-    sspi_clean_api_data.insert_many(final_data_list)
-    return parse_json(final_data_list)
+    
+    clean_list, incomplete_list = score_indicator(
+        filtered_combined,
+        "CARBON",
+        score_function=lambda UNFAO_CRBNLV, UNFAO_CRBNAV: goalpost((UNFAO_CRBNLV - UNFAO_CRBNAV) / UNFAO_CRBNAV * 100, lg, ug),
+        unit="Index",
+    )
+    sspi_indicator_data.insert_many(clean_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
+    return parse_json(clean_list)

@@ -2,7 +2,7 @@ import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 
 
-def collect_ilo_data(ilo_indicator_code, IndicatorCode, QueryParams="", URLParams=[], **kwargs):
+def collect_ilo_data(ilo_indicator_code, QueryParams="", URLParams=[], **kwargs):
     yield "Sending Data Request to ILO API\n"
     base_url = f"https://sdmx.ilo.org/rest/data/ILO,{ilo_indicator_code}"
     if QueryParams:
@@ -29,4 +29,4 @@ def collect_ilo_data(ilo_indicator_code, IndicatorCode, QueryParams="", URLParam
     csv_string = response_obj.content.decode("utf-8")
     count = sspi_raw_api_data.raw_insert_one(csv_string, source_info, **kwargs)
     yield f"\nInserted {count} observations into the database.\n"
-    yield f"Collection complete for {IndicatorCode} (ILO {ilo_indicator_code})\n"
+    yield f"Collection complete for ILO {ilo_indicator_code}\n"
