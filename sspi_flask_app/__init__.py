@@ -7,11 +7,11 @@ from flask_bcrypt import Bcrypt
 from flask_assets import Environment
 from sspi_flask_app.assets import compile_static_assets
 from sspi_flask_app.logging import configure_logging
-from sspi_flask_app.models.usermodel import db
 from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_static_metadata,
-    sspi_main_data_v3
+    sspi_main_data_v3,
+    sspi_user_data
 )
 
 import sspi_flask_app.api.core.sspi.sus.eco.biodiv
@@ -92,7 +92,6 @@ def init_app(Config):
     #     restrictions=[5],
     #     profile_dir="profiler"
     # )
-    db.init_app(app)
     flask_bcrypt.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
@@ -121,8 +120,8 @@ def init_app(Config):
         from sspi_flask_app.api.core.load import load_bp
         from sspi_flask_app.api.core.query import query_bp
         from sspi_flask_app.api.core.save import save_bp
-        # Register database
-        db.create_all()
+        # Initialize MongoDB indexes for user data
+        sspi_user_data.create_indexes()
         # Register Blueprints
         api_bp.register_blueprint(dataset_bp)
         api_bp.register_blueprint(compute_bp)
