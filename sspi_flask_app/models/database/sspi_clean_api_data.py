@@ -20,6 +20,11 @@ class SSPICleanAPIData(MongoWrapper):
                 f"{document['CountryCode']}_"
                 f"{document['Year']}"
             )
+            additional_ids = document.get("AdditionalIdentifiers", {})
+            if additional_ids:
+                assert isinstance(additional_ids, dict), "AdditionalIdentifiers must be a dict"
+                for _, value in additional_ids.items():
+                    document_id += f"_{value}"
             if document_id in id_set:
                 lgth = len(documents)
                 warning_msg = (
