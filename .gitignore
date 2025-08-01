@@ -87,3 +87,4 @@ snapshots/**/**.json
 profiler/**
 
 node_modules
+CLAUDE.md
