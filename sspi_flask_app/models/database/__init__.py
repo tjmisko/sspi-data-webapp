@@ -34,6 +34,9 @@ from sspi_flask_app.models.database.sspi_indicator_data import (
 from sspi_flask_app.models.database.sspi_panel_data import (
     SSPIPanelData
 )
+from sspi_flask_app.models.database.sspi_user_data import (
+    SSPIUserData
+)
 
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
@@ -97,4 +100,9 @@ sspi_dynamic_matrix_data = SSPIProductionData(
 )
 sspi_static_stack_data = SSPIProductionData(
     sspidb.sspi_static_stack_data
+)
+
+# User Authentication Data
+sspi_user_data = SSPIUserData(
+    sspidb.users
 )

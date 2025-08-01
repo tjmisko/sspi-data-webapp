@@ -10,7 +10,9 @@ from flask import (
     redirect,
     flash,
 )
-from sspi_flask_app.models.usermodel import User, db
+from sspi_flask_app.models.usermodel import User
+from sspi_flask_app.models.errors import InvalidDocumentFormatError
+from sspi_flask_app.models.database import sspi_user_data
 from sspi_flask_app import login_manager, flask_bcrypt
 
 # from sqlalchemy_serializer import SerializerMixin
@@ -42,7 +44,7 @@ login_manager.login_view = "auth_bp.login"
 @login_manager.user_loader
 def load_user(user_id):
     app.logger.debug(f"User Loader: Loading user {user_id} from session")
-    user = User.query.get(user_id)
+    user = User.find_by_id(user_id)
     if not user:
         app.logger.warning(f"User Loader: User {user_id} not found in session")
         return None
@@ -86,8 +88,8 @@ class RegisterForm(FlaskForm):
             Regexp(
                 r"^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[\-!@#$%^&*()_+])[A-Za-z\d!\-@#$%^&*()_+]+$",
                 message=(
-                    "Password must contain at least one lowercase letter, ",
-                    "one uppercase letter, one digit, and one special character.",
+                    "Password must contain at least one lowercase letter, "
+                    "one uppercase letter, one digit, and one special character."
                 ),
             ),
         ],
@@ -96,10 +98,8 @@ class RegisterForm(FlaskForm):
     submit = SubmitField("Register")
 
     def validate_username(self, username):
-        # query the database to check whether the submitted new username is taken
-        username_taken = User.query.filter_by(username=username.data).first()
-        # if the username is taken, raise a validation ValidationError
-        if username_taken:
+        # Check if username is already taken using MongoDB
+        if User.username_exists(username.data):
             raise ValidationError("That username is already taken!")
 
 
@@ -126,7 +126,7 @@ def login():
     login_form = LoginForm()
     if not login_form.validate_on_submit():
         return render_template("login.html", form=login_form, title="Login")
-    user = User.query.filter_by(username=login_form.username.data).first()
+    user = User.find_by_username(login_form.username.data)
     if user is None or not flask_bcrypt.check_password_hash(
         user.password, login_form.password.data
     ):
@@ -139,7 +139,7 @@ def login():
         )
     login_user(
         user,
-        remember=login_form.remember_me,
+        remember=bool(login_form.remember_me),
         duration=app.config["REMEMBER_COOKIE_DURATION"],
     )
     if not next_url:
@@ -160,7 +160,7 @@ def apikey_web():
         return render_template('apikey.html',
                                form=form,
                                title="Retrieve API Key")
-    user = User.query.filter_by(username=form.username.data).first()
+    user = User.find_by_username(form.username.data)
     if user is None or not flask_bcrypt.check_password_hash(
             user.password, form.password.data):
         flash("Invalid username or password")
@@ -190,18 +190,19 @@ def logout():
 def register():
     register_form = RegisterForm()
     if register_form.validate_on_submit():
-        hashed_password = flask_bcrypt.generate_password_hash(
-            register_form.password.data
-        )
-        new_user = User(
-            username=register_form.username.data,
-            password=hashed_password,
-            secretkey=secrets.token_hex(32),
-            apikey=secrets.token_hex(64),
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for("auth_bp.login"))
+        try:
+            hashed_password = flask_bcrypt.generate_password_hash(
+                register_form.password.data
+            ).decode('utf-8')
+            User.create_user(
+                username=register_form.username.data,
+                password_hash=hashed_password,
+                api_key=secrets.token_hex(64),
+                secret_key=secrets.token_hex(32)
+            )
+            return redirect(url_for("auth_bp.login"))
+        except InvalidDocumentFormatError as e:
+            flash(f"Registration failed: {str(e)}")
     return render_template("register.html", form=register_form, title="Register")
 
 
@@ -210,20 +211,48 @@ def register():
 def clear():
     if not app.config["DEBUG"]:
         return Response("This route is only available in DEBUG mode", status=403)
-    db.drop_all()
+    sspi_user_data.delete_many({})  # Clear all users
     return redirect(url_for("auth_bp.login"))
 
 
 @auth_bp.route("/auth/query", methods=["GET"])
 @fresh_login_required
 def query():
-    return str(db.session.query(User).all())
+    users = User.get_all_users()
+    user_info = []
+    for user in users:
+        user_info.append({
+            'username': user.username,
+            'apikey': user.apikey,
+            'id': user.id
+        })
+    return str(user_info)
 
 
 @auth_bp.route("/auth/token", methods=["GET"])
-@fresh_login_required
 def token():
-    return str(current_user.apikey)
+    # Check if user is authenticated via session
+    if current_user.is_authenticated:
+        return str(current_user.apikey)
+    
+    # Check for API token authentication
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return Response("Unauthorized", status=401)
+    
+    parts = auth_header.split(" ")
+    if len(parts) != 2 or parts[0] != "Bearer":
+        return Response("Invalid Authorization header format", status=401)
+    
+    api_token = parts[1]
+    app.logger.debug(f"Looking up API token: {api_token[:10]}...")
+    user = User.find_by_api_key(api_token)
+    if not user:
+        app.logger.warning(f"No user found for API token: {api_token[:10]}...")
+        return Response("Invalid API key", status=401)
+    
+    app.logger.info(f"Found user {user.username} for API token")
+    return str(user.apikey)
 
 
 def is_safe_url(target):
@@ -251,7 +280,7 @@ def load_user_from_request(request):
     if not api_token:
         app.logger.warning("No API key provided!")
         return None
-    user = User.query.filter_by(apikey=api_token).first()
+    user = User.find_by_api_key(api_token)
     if not user:
         app.logger.warning("No user associated with provided API key")
         return None
