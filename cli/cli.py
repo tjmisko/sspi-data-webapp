@@ -1,4 +1,5 @@
 import click
+from cli.commands.auth import auth
 from cli.commands.collect import collect
 from cli.commands.clean import clean
 from cli.commands.compute import compute
@@ -24,6 +25,7 @@ def cli():
     pass
 
 
+cli.add_command(auth)
 cli.add_command(collect)
 cli.add_command(clean)
 cli.add_command(compute)
