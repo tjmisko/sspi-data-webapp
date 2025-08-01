@@ -3,7 +3,6 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_wb_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
@@ -15,8 +14,8 @@ from sspi_flask_app.api.resources.utilities import (
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_imputed_data,
-    sspi_raw_api_data,
     sspi_metadata
 )
 
@@ -35,16 +34,16 @@ from sspi_flask_app.models.database import (
 @login_required
 def compute_ginipt():
     app.logger.info("Running /api/v1/compute/GINIPT")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "GINIPT"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("GINIPT")
-    clean_ginipt = clean_wb_data(raw_data, "GINIPT", "GINI Coeffecient")
+    sspi_indicator_data.delete_many({"IndicatorCode": "GINIPT"})
+    # Fetch clean dataset
+    clean_ginipt = sspi_clean_api_data.find({"DatasetCode": "WB_GINIPT"})
     lg, ug = sspi_metadata.get_goalposts("GINIPT")
     scored_list, _ = score_indicator(
         clean_ginipt, "GINIPT",
         score_function=lambda WB_GINIPT: goalpost(WB_GINIPT, lg, ug),
         unit="Coefficient"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
 
 

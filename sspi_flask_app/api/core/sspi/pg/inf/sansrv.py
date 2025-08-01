@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
@@ -11,10 +11,6 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost
 )
 from flask_login import login_required, current_user
-from sspi_flask_app.api.datasource.worldbank import (
-    collect_wb_data,
-    clean_wb_data
-)
 
 
 # @collect_bp.route("/SANSRV", methods=['GET'])
@@ -29,14 +25,13 @@ from sspi_flask_app.api.datasource.worldbank import (
 @login_required
 def compute_sansrv():
     app.logger.info("Running /api/v1/compute/SANSRV")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "SANSRV"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("SANSRV")
-    sansrv_cleaned = clean_wb_data(raw_data, "SANSRV", "Percent")
+    sspi_indicator_data.delete_many({"IndicatorCode": "SANSRV"})
+    sansrv_clean = sspi_clean_api_data.find({"DatasetCode": "WB_SANSRV"})
     lg, ug = sspi_metadata.get_goalposts("SANSRV")
     scored_list, _ = score_indicator(
-        sansrv_cleaned, "SANSRV",
+        sansrv_clean, "SANSRV",
         score_function=lambda WB_SANSRV: goalpost(WB_SANSRV, lg, ug),
         unit="Percent"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)

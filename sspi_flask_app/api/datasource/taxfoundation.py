@@ -8,7 +8,7 @@ import pandas as pd
 ## Note: Tax Foundation doesn't offer any APIs for dynamic data retrieval, 
 ## so I was stuck using their latest data.
 
-def collect_tax_foundation_data(IndicatorCode, **kwargs):
+def collect_tax_foundation_data(**kwargs):
     url = "https://taxfoundation.org/wp-content/uploads/2025/01/rates_final.csv"
     res = requests.get(url)
     if res.status_code != 200:
@@ -25,10 +25,10 @@ def collect_tax_foundation_data(IndicatorCode, **kwargs):
     sspi_raw_api_data.raw_insert_one(
         csv_string, source_info, **kwargs
     )
-    yield f"Collection complete for {IndicatorCode}"
+    yield "Collection complete for Tax Foundation data"
 
-def clean_tax_foundation(RawData, IndName, Unit, Description):
-    csv_file = StringIO(RawData[0]['Raw']['csv'])
+def clean_tax_foundation(raw_csv_data, dataset_code, unit, description):
+    csv_file = StringIO(raw_csv_data)
     csv_file.seek(0)
 
     crptax = pd.read_csv(csv_file)
@@ -37,10 +37,10 @@ def clean_tax_foundation(RawData, IndName, Unit, Description):
     crptax_melted = crptax_melted.rename(columns={'iso_3':'CountryCode'})
     crptax_melted = crptax_melted.dropna()
     crptax_melted = crptax_melted.sort_values(['CountryCode','Year'],ascending=[True,False]).reset_index(drop=True)
-    #crptax_melted["Year"] = crptax_melted["Year"].map(lambda x: int(x))
-    crptax_melted['IndicatorCode'] = IndName
-    crptax_melted['Unit'] = Unit
-    crptax_melted['Description'] = Description
+    crptax_melted["Year"] = crptax_melted["Year"].map(lambda x: int(x))
+    crptax_melted['DatasetCode'] = dataset_code
+    crptax_melted['Unit'] = unit
+    crptax_melted['Description'] = description
     crptax_str = crptax_melted.to_json(orient='records',lines=False)
     crptax = json.loads(crptax_str)
     return crptax

@@ -1,20 +1,17 @@
 from sspi_flask_app.api.core.sspi import compute_bp
-from flask_login import login_required, current_user
-from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.iea import collect_iea_data
-from sspi_flask_app.api.datasource.worldbank import collect_wb_data
+from flask_login import login_required
+from flask import current_app as app
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_incomplete_indicator_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
     score_indicator,
 )
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data
-from sspi_flask_app.api.datasource.iea import clean_IEA_data_GTRANS
 
 
 # @collect_bp.route("/GTRANS", methods=["GET"])
@@ -40,20 +37,22 @@ from sspi_flask_app.api.datasource.iea import clean_IEA_data_GTRANS
 @login_required
 def compute_gtrans():
     app.logger.info("Running /api/v1/compute/GTRANS")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "GTRANS"})
-    lg = 7500
-    ug = 0
-    pop_data = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="POPULN")
-    cleaned_pop = clean_wb_data(pop_data, "GTRANS", "Population")
-    gtrans = sspi_raw_api_data.fetch_raw_data("GTRANS", IntermediateCode="TCO2EQ")
-    cleaned_co2 = clean_IEA_data_GTRANS(gtrans, "GTRANS", "CO2 from transport sources")
-    document_list = cleaned_pop + cleaned_co2
+    sspi_indicator_data.delete_many({"IndicatorCode": "GTRANS"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "GTRANS"})
+    
+    # Fetch clean datasets
+    tco2em_clean = sspi_clean_api_data.find({"DatasetCode": "IEA_TCO2EM"})
+    populn_clean = sspi_clean_api_data.find({"DatasetCode": "WB_POPULN"})
+    combined_list = tco2em_clean + populn_clean
+    
+    lg, ug = sspi_metadata.get_goalposts("GTRANS")
+    
     clean_list, incomplete_list = score_indicator(
-        document_list,
+        combined_list,
         "GTRANS",
-        score_function=lambda TCO2EQ, POPULN: goalpost(TCO2EQ / POPULN, lg, ug),
-        unit="TCO2eq per capita",
+        score_function=lambda IEA_TCO2EM, WB_POPULN: goalpost(IEA_TCO2EM / WB_POPULN, lg, ug),
+        unit="Index",
     )
-    sspi_clean_api_data.insert_many(clean_list)
+    sspi_indicator_data.insert_many(clean_list)
     sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)

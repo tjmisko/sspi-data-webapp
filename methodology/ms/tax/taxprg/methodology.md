@@ -1,10 +1,9 @@
 ---
 ItemType: Indicator
 ItemCode: TAXPRG
-DatasetCodes:
-  - TAXPRG
+DatasetCodes: []
 ItemName: Tax Progressivity
-Description: TBD
+Description: TBD - Not yet implemented
 Footnote: null
 Indicator: Tax Progressivity
 IndicatorCode: TAXPRG

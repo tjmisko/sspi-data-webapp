@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_metadata
 )
 from flask_login import login_required, current_user
@@ -10,11 +10,6 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
     goalpost
-)
-from sspi_flask_app.api.datasource.unsdg import (
-    collect_sdg_indicator_data,
-    extract_sdg,
-    filter_sdg,
 )
 
 
@@ -30,17 +25,13 @@ from sspi_flask_app.api.datasource.unsdg import (
 @login_required
 def compute_fampln():
     app.logger.info("Running /api/v1/compute/FAMPLN")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "FAMPLN"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("FAMPLN")
-    extracted_fampln = extract_sdg(raw_data)
-    filtered_fampln = filter_sdg(
-        extracted_fampln, {"SH_FPL_MTMM": "FAMPLN"},
-    )
+    sspi_indicator_data.delete_many({"IndicatorCode": "FAMPLN"})
+    fampln_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_FAMPLN"})
     lg, ug = sspi_metadata.get_goalposts("FAMPLN")
     scored_list, _ = score_indicator(
-        filtered_fampln, "FAMPLN",
+        fampln_clean, "FAMPLN",
         score_function=lambda UNSDG_FAMPLN: goalpost(UNSDG_FAMPLN, lg, ug),
         unit="%"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)

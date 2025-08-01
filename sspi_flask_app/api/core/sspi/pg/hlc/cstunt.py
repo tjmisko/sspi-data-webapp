@@ -1,8 +1,8 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_metadata
 )
 from flask_login import login_required, current_user
@@ -11,10 +11,6 @@ from sspi_flask_app.api.resources.utilities import (
     score_indicator,
     goalpost
 )
-from sspi_flask_app.api.datasource.who import (
-    collect_gho_cstunt_data
-)
-import jq
 
 
 # @collect_bp.route("/CSTUNT", methods=['GET'])
@@ -38,32 +34,13 @@ def compute_cstunt():
     NUTSTUNTINGPREV       - 3634 observations
     """
     app.logger.info("Running /api/v1/compute/CSTUNT")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "CSTUNT"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("CSTUNT")[0]["Raw"]["fact"]
-    # Slice out the relevant data and identifiers (in Dim array)
-    first_slice = '.[] | {IndicatorCode: "CSTUNT", Value: .value.numeric, Dim }'
-    first_slice_filter = jq.compile(first_slice)
-    dim_list = first_slice_filter.input(raw_data).all()
-    # Reduce/Flatten the Dim array
-    map_reduce = (
-        '.[] |  reduce .Dim[] as $d (.; .[$d.category] = $d.code) | '
-        'select(.GHO == "NUTSTUNTINGPREV")'
-    )
-    map_reduce_filter = jq.compile(map_reduce)
-    reduced_list = map_reduce_filter.input(dim_list).all()
-    # Remap the keys to the correct names
-    rename_keys = (
-        '.[] | { IndicatorCode, CountryCode: .COUNTRY,'
-        'Year: .YEAR, Value, Unit: "Percentage" }'
-    )
-    rename_keys_filter = jq.compile(rename_keys)
-    value_list = rename_keys_filter.input(reduced_list).all()
-    # Score the indicator data
+    sspi_indicator_data.delete_many({"IndicatorCode": "CSTUNT"})
+    cstunt_clean = sspi_clean_api_data.find({"DatasetCode": "GHO_CSTUNT"})
     lg, ug = sspi_metadata.get_goalposts("CSTUNT")
     scored_list, _ = score_indicator(
-        value_list, "CSTUNT",
+        cstunt_clean, "CSTUNT",
         score_function=lambda GHO_CSTUNT: goalpost(GHO_CSTUNT, lg, ug),
         unit = "%"
     )
-    sspi_clean_api_data.insert_many(scored_list)
+    sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)

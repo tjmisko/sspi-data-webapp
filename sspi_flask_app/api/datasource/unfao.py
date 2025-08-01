@@ -2,7 +2,7 @@ import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 
 
-def collect_unfao_data(UNFAO_element: str, UNFAO_item: str, UNFAO_domain: str, IndicatorCode: str, **kwargs):
+def collect_unfao_data(UNFAO_element: str, UNFAO_item: str, UNFAO_domain: str, **kwargs):
     yield "Collecting UNFAO data\n"
     base_url = f"https://faostatservices.fao.org/api/v1/en/data/{UNFAO_domain}?"
     element = f"&element={UNFAO_element}"
@@ -14,8 +14,8 @@ def collect_unfao_data(UNFAO_element: str, UNFAO_item: str, UNFAO_domain: str, I
     res = requests.get(url)
     raw_data = res.json()
     source_info = {
-        "OrganizationName": "Environmental Performance Index",
-        "OrganizationCode": "EPI",
+        "OrganizationName": "Food and Agriculture Organization",
+        "OrganizationCode": "UNFAO",
         "OrganizationSeriesCode": org_series_code,
         "BaseURL": url,
         "URL": url

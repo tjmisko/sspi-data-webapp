@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from sspi_flask_app.models.errors import InvalidQueryError
 from sspi_flask_app.api.resources.validators import validate_data_query
 from sspi_flask_app.api.resources.utilities import parse_json, lookup_database
-from sspi_flask_app.models.database import sspi_metadata
+from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
 
 query_bp = Blueprint("query_bp", __name__,
                      template_folder="templates",
@@ -12,13 +12,13 @@ query_bp = Blueprint("query_bp", __name__,
 
 @query_bp.route("/<database_string>")
 def query_database(database_string):
-    query_params = get_query_params(request)
     database = lookup_database(database_string)
+    query_params = get_query_params(request, database)
     print(query_params)
     return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
 
 
-def get_query_params(request, requires_database=False):
+def get_query_params(request, database=None):
     """
     Implements the logic of query parameters and raises an
     InvalidQueryError for invalid queries.
@@ -42,13 +42,11 @@ def get_query_params(request, requires_database=False):
         "YearRangeStart": request.args.get("YearRangeStart"),
         "YearRangeEnd": request.args.get("YearRangeEnd"),
     }
-    if requires_database:
-        raw_query_input["Database"] = request.args.get("database"),
     validated_query_input = validate_data_query(raw_query_input)
-    return build_mongo_query(validated_query_input)
+    return build_mongo_query(validated_query_input, database)
 
 
-def build_mongo_query(raw_query_input):
+def build_mongo_query(raw_query_input, database=None):
     """
     Given a safe and logically valid query input, build a mongo query
     """
@@ -59,15 +57,32 @@ def build_mongo_query(raw_query_input):
         for sc in raw_query_input["SeriesCodes"]:
             dataset_codes += sspi_metadata.get_dataset_dependencies(sc)
         dataset_codes = list(set(dataset_codes))
-        mongo_query = {
-            "$or": [
-                {"ItemCode": {"$in": item_codes}},
-                {"DatasetCode": {"$in": dataset_codes}},
-                {"IndicatorCode": {"$in": item_codes}},
-                {"CategoryCode": {"$in": item_codes}},
-                {"PillarCode": {"$in": item_codes}},
-            ]
-        }
+        
+        # Special handling for raw data queries - use Source fields
+        if database is sspi_raw_api_data:
+            source_queries = []
+            for dataset_code in dataset_codes:
+                try:
+                    source_info = sspi_metadata.get_source_info(dataset_code)
+                    source_queries.append({
+                        "Source.OrganizationCode": source_info["OrganizationCode"],
+                        "Source.OrganizationSeriesCode": source_info["OrganizationSeriesCode"]
+                    })
+                except (KeyError, ValueError):
+                    # Skip datasets that don't have source info
+                    continue
+            if source_queries:
+                mongo_query = {"$or": source_queries}
+        else:
+            mongo_query = {
+                "$or": [
+                    {"ItemCode": {"$in": item_codes}},
+                    {"DatasetCode": {"$in": dataset_codes}},
+                    {"IndicatorCode": {"$in": item_codes}},
+                    {"CategoryCode": {"$in": item_codes}},
+                    {"PillarCode": {"$in": item_codes}},
+                ]
+            }
     country_codes = set()
     if raw_query_input["CountryGroup"]:
         country_codes.update(

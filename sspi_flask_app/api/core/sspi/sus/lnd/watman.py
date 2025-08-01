@@ -1,11 +1,10 @@
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.api.core.sspi import impute_bp
-from flask_login import login_required, current_user
-from flask import Response, current_app as app
-from sspi_flask_app.api.datasource.unsdg import collect_sdg_indicator_data
+from flask_login import login_required
+from flask import current_app as app
 from sspi_flask_app.models.database import (
-    sspi_raw_api_data,
     sspi_clean_api_data,
+    sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data
 )
@@ -18,7 +17,6 @@ from sspi_flask_app.api.resources.utilities import (
     filter_imputations,
     impute_global_average
 )
-from sspi_flask_app.api.datasource.unsdg import extract_sdg, filter_sdg
 
 
 # @collect_bp.route("/WATMAN", methods=["GET"])
@@ -39,30 +37,21 @@ from sspi_flask_app.api.datasource.unsdg import extract_sdg, filter_sdg
 @compute_bp.route("/WATMAN", methods=['GET'])
 @login_required
 def compute_watman():
-    """
-    metadata_map = {
-        "ER_H2O_WUEYST": "CWUEFF",
-        "ER_H2O_STRESS": "WTSTRS"
-    }
-    """
     app.logger.info("Running /api/v1/compute/WATMAN")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "WATMAN"})
+    sspi_indicator_data.delete_many({"IndicatorCode": "WATMAN"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "WATMAN"})
-    raw_data = sspi_raw_api_data.fetch_raw_data("WATMAN")
-    watman_data = extract_sdg(raw_data)
-    intermediate_map = {
-        "ER_H2O_WUEYST": "CWUEFF",
-        "ER_H2O_STRESS": "WTSTRS"
-    }
-    intermediate_list = filter_sdg(
-        watman_data, intermediate_map, activity="TOTAL"
-    )
+    
+    # Fetch clean datasets
+    cwueff_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_CWUEFF"})
+    wtstrs_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_WTSTRS"})
+    combined_list = cwueff_clean + wtstrs_clean
+    
     clean_list, incomplete_list = score_indicator(
-        intermediate_list, "WATMAN",
-        score_function=lambda CWUEFF, WTSTRS: (CWUEFF + WTSTRS) / 2,
+        combined_list, "WATMAN",
+        score_function=lambda UNSDG_CWUEFF, UNSDG_WTSTRS: (UNSDG_CWUEFF + UNSDG_WTSTRS) / 2,
         unit="Index",
     )
-    sspi_clean_api_data.insert_many(clean_list)
+    sspi_indicator_data.insert_many(clean_list)
     sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
 

@@ -1,15 +1,16 @@
 from sspi_flask_app.api.core.sspi import compute_bp
-from flask_login import login_required, current_user
-from flask import current_app as app, Response
-from sspi_flask_app.api.datasource.unfao import collect_unfao_data, format_fao_data_series
+from flask_login import login_required
+from flask import current_app as app
 from sspi_flask_app.models.database import (
-    sspi_metadata,
-    sspi_raw_api_data,
-    sspi_clean_api_data
+    sspi_clean_api_data,
+    sspi_indicator_data,
+    sspi_incomplete_indicator_data,
+    sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    goalpost
+    goalpost,
+    score_indicator
 )
 
 
@@ -25,60 +26,32 @@ from sspi_flask_app.api.resources.utilities import (
 @login_required
 def compute_defrst():
     app.logger.info("Running /api/v1/compute/DEFRST")
-    sspi_clean_api_data.delete_many({"IndicatorCode": "DEFRST"})
+    sspi_indicator_data.delete_many({"IndicatorCode": "DEFRST"})
+    sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "DEFRST"})
+    
+    # Fetch clean datasets
+    frstlv_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_FRSTLV"})
+    frstav_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_FRSTAV"})
+    combined_list = frstlv_clean + frstav_clean
+    
+    # Filter to post-2000 data for FRSTLV
+    filtered_combined = []
+    for obs in combined_list:
+        if obs.get("DatasetCode") == "UNFAO_FRSTLV" and obs.get("Year", 0) >= 2000:
+            filtered_combined.append(obs)
+        elif obs.get("DatasetCode") == "UNFAO_FRSTAV":
+            filtered_combined.append(obs)
+    
     lg, ug = sspi_metadata.get_goalposts("DEFRST")
-    raw_data = sspi_raw_api_data.fetch_raw_data("DEFRST")[0]["Raw"]["data"]
-    clean_obs_list = format_fao_data_series(raw_data, "DEFRST")
-    average_1990s_dict = {}
-    for obs in clean_obs_list:
-        if obs["Year"] not in list(range(1990, 2000)):
-            continue
-        if obs["CountryCode"] not in average_1990s_dict.keys():
-            average_1990s_dict[obs["CountryCode"]] = {"Values": []}
-        average_1990s_dict[obs["CountryCode"]]["Values"].append(obs["Value"])
-    for country in average_1990s_dict.keys():
-        sum_1990s = sum(average_1990s_dict[country]["Values"])
-        len_1990s = len(average_1990s_dict[country]["Values"])
-        average_1990s_dict[country]["Average"] = sum_1990s / len_1990s
-    final_data_list = []
-    for obs in clean_obs_list:
-        if obs["Year"] in list(range(1900, 2000)):
-            continue
-        if obs["CountryCode"] not in average_1990s_dict.keys():
-            continue
-        if obs["Value"] == 0:
-            obs["Score"] = 0
-        if average_1990s_dict[obs["CountryCode"]]["Average"] == 0:
-            continue
-        lv = obs["Value"]
-        av = average_1990s_dict[obs["CountryCode"]]["Average"]
-        final_data_list.append({
-            "IndicatorCode": "DEFRST",
-            "CountryCode": obs["CountryCode"],
-            "Year": obs["Year"],
-            "Value": (lv - av) / av * 100,
-            "Score": goalpost((lv - av) / av * 100, lg, ug),
-            "LowerGoalpost": lg,
-            "UpperGoalpost": ug,
-            "Unit": "Percentage Change in Forest Cover from 1990s Average",
-            "Intermediates": [
-                {
-                    "IntermediateCode": "FRSTLV",
-                    "CountryCode": obs["CountryCode"],
-                    "Year": obs["Year"],
-                    "Value": lv,
-                    "Unit": obs["Unit"]
-                },
-                {
-                    "IntermediateCode": "FRSTAV",
-                    "CountryCode": obs["CountryCode"],
-                    "Year": obs["Year"],
-                    "Value": average_1990s_dict[obs["CountryCode"]]["Average"],
-                    "Unit": obs["Unit"] + " (1990s Average)"
-                }
-            ]
-        })
-    sspi_clean_api_data.insert_many(final_data_list)
-    return parse_json(final_data_list)
+    
+    clean_list, incomplete_list = score_indicator(
+        filtered_combined,
+        "DEFRST",
+        score_function=lambda UNFAO_FRSTLV, UNFAO_FRSTAV: goalpost((UNFAO_FRSTLV - UNFAO_FRSTAV) / UNFAO_FRSTAV * 100, lg, ug),
+        unit="Index",
+    )
+    sspi_indicator_data.insert_many(clean_list)
+    sspi_incomplete_indicator_data.insert_many(incomplete_list)
+    return parse_json(clean_list)
 
 
