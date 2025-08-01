@@ -5,7 +5,7 @@ from sspi_flask_app.api.datasource.oecdstat import (
     collect_oecd_sdmx_data_foraid
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collect_world_bank_data,
+    collect_wb_data,
     clean_wb_data,
 )
 from sspi_flask_app.api.resources.utilities import (

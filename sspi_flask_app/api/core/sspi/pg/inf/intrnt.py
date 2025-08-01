@@ -11,7 +11,7 @@ from sspi_flask_app.api.resources.utilities import (
     score_indicator,
 )
 from sspi_flask_app.api.datasource.worldbank import (
-    collect_world_bank_data,
+    collect_wb_data,
     clean_wb_data
 )
 from sspi_flask_app.api.datasource.unsdg import collect_sdg_indicator_data, extract_sdg, filter_sdg
@@ -21,7 +21,7 @@ from sspi_flask_app.api.datasource.unsdg import collect_sdg_indicator_data, extr
 # @login_required
 # def intrnt():
 #     def collect_iterator(**kwargs):
-#         yield from collect_world_bank_data("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
+#         yield from collect_wb_data("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
 #         yield from collect_sdg_indicator_data("17.6.1", "INTRNT", IntermediateCode="QUINTR", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 

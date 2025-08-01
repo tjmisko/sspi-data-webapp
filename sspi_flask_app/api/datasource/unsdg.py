@@ -131,3 +131,8 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map={}, drop_k
                 del obs[k]
         filtered_list.append(obs)
     return filtered_list
+
+def sdg_indicator_list():
+    url = "https://unstats.un.org/SDGAPI/v1/sdg/Indicator/List"
+    return requests.get(url).json()
+

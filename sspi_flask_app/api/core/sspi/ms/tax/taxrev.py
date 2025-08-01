@@ -3,7 +3,7 @@ from flask import current_app as app
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_world_bank_data
+from sspi_flask_app.api.datasource.worldbank import clean_wb_data, collect_wb_data
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
@@ -25,7 +25,7 @@ from sspi_flask_app.models.database import (
 # @login_required
 # def taxrev():
 #     def collect_iterator(**kwargs):
-#         yield from collect_world_bank_data("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
+#         yield from collect_wb_data("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
