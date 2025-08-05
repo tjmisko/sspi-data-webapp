@@ -12,11 +12,11 @@ DatasetCodes:
   - IEA_TCO2EM
   - WB_POPULN
 Inverted: true
-LowerGoalpost: null
+LowerGoalpost: 7000
 Policy: Emissions from transportation (transport CO2)
 SourceOrganization: IEA
 SourceOrganizationIndicatorCode: CO2BySector
 SourceOrganizationURL: https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=CANADA&fuel=CO2%20emissions&indicator=CO2BySector
-UpperGoalpost: null
+UpperGoalpost: 0
 ---
 

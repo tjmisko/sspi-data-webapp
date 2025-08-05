@@ -42,6 +42,7 @@ def compute_yrsedu():
 
 
 @impute_bp.route("/YRSEDU", methods=["POST"])
+@login_required
 def impute_yrsedu():
     sspi_imputed_data.delete_many({"IndicatorCode": "YRSEDU"})
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "YRSEDU"})

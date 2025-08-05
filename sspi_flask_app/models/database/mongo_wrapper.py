@@ -237,6 +237,14 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Value' cannot be NaN (document {document_number})")
+        if math.isinf(document["Value"]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Value' cannot be infinite (document {document_number})")
+        if document["Value"] is None:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Value' cannot be None (document {document_number})")
 
     def validate_unit(self, document: dict, document_number: int = 0):
         # Validate Unit format

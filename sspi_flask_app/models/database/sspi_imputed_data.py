@@ -4,7 +4,7 @@ import json
 from bson import json_util
 
 
-class SSPIIndicatorData(MongoWrapper):
+class SSPIImputedData(MongoWrapper):
     def validate_documents_format(self, documents: list) -> bool:
         dtype = type(documents)
         if dtype is not list:
@@ -77,15 +77,3 @@ class SSPIIndicatorData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be less than or equal to 1 (document {document_number})")
-
-
-class SSPIIncompleteIndicatorData(SSPIIndicatorData):
-    """
-    This class is used to handle incomplete data in the MongoDB collection.
-    It inherits from the SSPIIndicatorData class.
-    """
-
-    def validate_document_format(self, document: dict, document_number: int = 0):
-        self.validate_country_code(document, document_number)
-        self.validate_indicator_code(document, document_number)
-        self.validate_year(document, document_number)

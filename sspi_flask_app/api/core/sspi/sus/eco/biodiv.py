@@ -70,6 +70,7 @@ def compute_biodiv():
 
 
 @impute_bp.route("/BIODIV", methods=["POST"])
+@login_required
 def impute_biodiv():
     sspi_imputed_data.delete_many({"IndicatorCode": "BIODIV"})
     clean_list = sspi_clean_api_data.find({"IndicatorCode": "BIODIV"})
