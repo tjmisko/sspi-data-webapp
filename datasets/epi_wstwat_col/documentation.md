@@ -6,4 +6,5 @@ Description: Percentage of wastewater collected for treatment. Sometimes measure
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: WWC
+  QueryCode: epi2024indicators
 ---

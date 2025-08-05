@@ -6,4 +6,5 @@ Description: Fish stock status is the percentage of a country’s total catch t
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: FSS
+  QueryCode: epi2024indicators
 ---

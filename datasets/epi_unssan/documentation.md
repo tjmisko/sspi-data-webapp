@@ -6,4 +6,5 @@ Description: We measure unsafe sanitation using the number of age-standardized d
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: USD
+  QueryCode: epi2024indicators
 ---

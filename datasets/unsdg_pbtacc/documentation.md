@@ -6,6 +6,7 @@ Description: Proportion of population that has convenient access to public trans
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 11.2.1
+  QueryCode: 11.2.1
 ---
 Unfortunately, this dataset is not useable. It is identified at the city level, and has only one year of data (2020) for almost all countries. Certainly not for dynamic data.
 

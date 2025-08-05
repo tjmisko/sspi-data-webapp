@@ -6,4 +6,5 @@ Description: The projected emissions levels in 2050 indicator captures whether c
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: GHN
+  QueryCode: epi2024indicators
 ---

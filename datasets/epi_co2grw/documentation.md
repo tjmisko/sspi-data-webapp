@@ -6,4 +6,5 @@ Description: This pilot indicator measures the average annual growth rate of CO2
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: CDF
+  QueryCode: epi2024indicators
 ---

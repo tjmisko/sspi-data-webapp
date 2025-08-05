@@ -6,4 +6,5 @@ Description: This pilot indicator of projected cumulative emissions to 2050 indi
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: CBP
+  QueryCode: epi2024indicators
 ---

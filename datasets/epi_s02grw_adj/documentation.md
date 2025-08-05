@@ -6,4 +6,5 @@ Description: We measure the average annual rate of sulfur dioxide emissions over
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SDA
+  QueryCode: epi2024indicators
 ---

@@ -7,6 +7,7 @@ Source:
   OrganizationName: World Bank
   OrganizationCode: WB
   OrganizationSeriesCode: SP.POP.TOTL
+  QueryCode: SP.POP.TOTL
   BaseURL: https://data.worldbank.org/indicator/SP.POP.TOTL
 ---
 

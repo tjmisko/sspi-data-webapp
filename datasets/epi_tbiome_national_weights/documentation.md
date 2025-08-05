@@ -6,4 +6,5 @@ Description: We derive the terrestrial biome protection indicator by first cal
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: TBN
+  QueryCode: epi2024indicators
 ---

@@ -9,6 +9,7 @@ Source:
   OrganizationName: World Bank  
   OrganizationCode: WB
   OrganizationSeriesCode: WEF+GCIHH+EOSQ064
+  QueryCode: WEF+GCIHH+EOSQ064
   BaseURL: https://databank.worldbank.org/
 ---
 

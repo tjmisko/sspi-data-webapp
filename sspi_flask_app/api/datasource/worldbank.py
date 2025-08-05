@@ -20,6 +20,7 @@ def collect_wb_data(world_bank_indicator_code, **kwargs):
             "OrganizationName": "World Bank",
             "OrganizationCode": "WB",
             "OrganizationSeriesCode": world_bank_indicator_code,
+            "QueryCode": world_bank_indicator_code,
             "URL": new_url,
             "BaseURL": base_url
         }

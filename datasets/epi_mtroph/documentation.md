@@ -6,4 +6,5 @@ Description: A measurement of how fast the trophic level of fish stocks changed 
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: RMS
+  QueryCode: epi2024indicators
 ---

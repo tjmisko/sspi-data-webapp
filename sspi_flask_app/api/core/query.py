@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from sspi_flask_app.models.errors import InvalidQueryError
+from sspi_flask_app.models.errors import InvalidQueryError, InvalidDatabaseError
+from pymongo.errors import OperationFailure
 from sspi_flask_app.api.resources.validators import validate_data_query
 from sspi_flask_app.api.resources.utilities import parse_json, lookup_database
 from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
@@ -12,10 +13,16 @@ query_bp = Blueprint("query_bp", __name__,
 
 @query_bp.route("/<database_string>")
 def query_database(database_string):
-    database = lookup_database(database_string)
-    query_params = get_query_params(request, database)
-    print(query_params)
-    return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
+    try: 
+        database = lookup_database(database_string)
+        query_params = get_query_params(request, database)
+        return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
+    except InvalidDatabaseError as e:
+        return jsonify({"error": "Invalid Database Provided: " + str(e)}), 400
+    except InvalidQueryError as e:
+        return jsonify({"error": str(e)}), 400
+    except OperationFailure as e:
+        return jsonify({"error": "Database Operation Failed: " + str(e)}), 400
 
 
 def get_query_params(request, database=None):
@@ -49,30 +56,37 @@ def get_query_params(request, database=None):
 def build_mongo_query(raw_query_input, database=None):
     """
     Given a safe and logically valid query input, build a mongo query
+
+    The MongoQuery takes in raw_query_input, which is a dictionary
+    with keys:
+    - SeriesCodes: List of series codes to query
+    - CountryCode: List of country codes to filter by
+    - CountryGroup: A single country group to filter by
+    - Year: List of years to filter by
+    - YearRangeStart: Start of a year range to filter by
     """
-    mongo_query = {}
+    mongo_query = {}  # Empty query returns all documents
     if raw_query_input["SeriesCodes"]:
         item_codes = raw_query_input["SeriesCodes"]
         dataset_codes = []
         for sc in raw_query_input["SeriesCodes"]:
             dataset_codes += sspi_metadata.get_dataset_dependencies(sc)
         dataset_codes = list(set(dataset_codes))
-        
         # Special handling for raw data queries - use Source fields
         if database is sspi_raw_api_data:
             source_queries = []
             for dataset_code in dataset_codes:
-                try:
-                    source_info = sspi_metadata.get_source_info(dataset_code)
-                    source_queries.append({
-                        "Source.OrganizationCode": source_info["OrganizationCode"],
-                        "Source.QueryCode": source_info["QueryCode"]
-                    })
-                except (KeyError, ValueError):
-                    # Skip datasets that don't have source info
-                    continue
-            if source_queries:
-                mongo_query = {"$or": source_queries}
+                source_info = sspi_metadata.get_source_info(dataset_code)
+                source_queries.append({
+                    "Source.OrganizationCode": source_info["OrganizationCode"],
+                    "Source.QueryCode": source_info["QueryCode"]
+                })
+            mongo_query = {"$or": source_queries}
+            if not source_queries:
+                raise InvalidQueryError(
+                    "Invalid Query: No valid source queries found for raw data."
+                    "The provided SeriesCodes did not resolve to valid datasets."
+                )
         else:
             mongo_query = {
                 "$or": [
@@ -83,24 +97,26 @@ def build_mongo_query(raw_query_input, database=None):
                     {"PillarCode": {"$in": item_codes}},
                 ]
             }
-    country_codes = set()
-    if raw_query_input["CountryGroup"]:
-        country_codes.update(
-            sspi_metadata.country_group(raw_query_input["CountryGroup"])
-        )
-    if raw_query_input["CountryCode"]:
-        country_codes.update(raw_query_input["CountryCode"])
-    if country_codes:
-        mongo_query["CountryCode"] = {"$in": list(country_codes)}
-    years = set()
-    if raw_query_input["Year"]:
-        years.update([int(y) for y in raw_query_input["Year"]])
-    if raw_query_input["YearRangeStart"] and raw_query_input["YearRangeEnd"]:
-        start_year = int(raw_query_input["YearRangeStart"])
-        end_year = int(raw_query_input["YearRangeEnd"])
-        years.update(range(start_year, end_year + 1))
-    if years:
-        mongo_query["Year"] = {"$in": list(years)}
+    # Don't apply CountryCode and Year filters to raw data - it doesn't have these fields
+    if database is not sspi_raw_api_data:
+        country_codes = set()
+        if raw_query_input["CountryGroup"]:
+            country_codes.update(
+                sspi_metadata.country_group(raw_query_input["CountryGroup"])
+            )
+        if raw_query_input["CountryCode"]:
+            country_codes.update(raw_query_input["CountryCode"])
+        if country_codes:
+            mongo_query["CountryCode"] = {"$in": list(country_codes)}
+        years = set()
+        if raw_query_input["Year"]:
+            years.update([int(y) for y in raw_query_input["Year"]])
+        if raw_query_input["YearRangeStart"] and raw_query_input["YearRangeEnd"]:
+            start_year = int(raw_query_input["YearRangeStart"])
+            end_year = int(raw_query_input["YearRangeEnd"])
+            years.update(range(start_year, end_year + 1))
+        if years:
+            mongo_query["Year"] = {"$in": list(years)}
     return mongo_query
 
 

@@ -6,4 +6,5 @@ Description: This pilot indicator measures the percentage of a country's terrest
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: PAE
+  QueryCode: epi2024indicators
 ---

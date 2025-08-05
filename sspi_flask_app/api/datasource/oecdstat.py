@@ -50,6 +50,7 @@ def collect_oecd_indicator(oecd_indicator_code, **kwargs):
         "OrganizationName": "Organisation for Economic Development and Coorperation",
         "OrganizationCode": "OECD",
         "OrganizationSeriesCode": oecd_indicator_code,
+        "QueryCode": oecd_indicator_code,
         "MetadataURL": sdmx_url_oecd_metadata,
         "URL": sdmx_url_oecd,
     }
@@ -188,6 +189,7 @@ def collect_oecd_sdmx_data(oecd_series_code, query_parameters="", metadata_url="
         "OrganizationName": "Organisation for Economic Development and Coorperation",
         "OrganizationCode": "OECD",
         "OrganizationSeriesCode": oecd_series_code,
+        "QueryCode": oecd_series_code,
         "MetadataURL": metadata_url,
         "URL": url,
     }
@@ -226,6 +228,7 @@ def collect_oecd_sdmx_data_foraid(oecd_series_code, filter_parameters="....", qu
             "OrganizationName": "Organisation for Economic Development and Coorperation",
             "OrganizationCode": "OECD",
             "OrganizationSeriesCode": oecd_series_code,
+            "QueryCode": oecd_series_code,
             "MetadataURL": metadata_url,
             "URL": url,
             "BaseURL": f"{base_url}/{oecd_series_code}",

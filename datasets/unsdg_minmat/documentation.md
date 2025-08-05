@@ -6,6 +6,7 @@ Description: "Minamata Convention on Mercury (Minamata Convention) Minamata Conv
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
+  QueryCode: 12.4.1
 ---
 
 The Minamata Convention requires, under its article 17, paragraph 4, that each Party designates a National 

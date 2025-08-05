@@ -6,4 +6,5 @@ Description: As a proxy of ozone pollution effects on biodiversity
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: OEB
+  QueryCode: epi2024indicators
 ---

@@ -6,4 +6,5 @@ Description: The proportion of a country’s total catch in the global ocean tha
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: FCD
+  QueryCode: epi2024indicators
 ---

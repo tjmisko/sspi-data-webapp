@@ -6,4 +6,5 @@ Description: Percentage of area designated as Key Biodiversity Areas (KBA) withi
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: MKP
+  QueryCode: epi2024indicators
 ---

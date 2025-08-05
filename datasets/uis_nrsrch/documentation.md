@@ -7,6 +7,7 @@ Source:
   OrganizationName: UIS
   OrganizationCode: UIS
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: http://data.uis.unesco.org/
 ---
 

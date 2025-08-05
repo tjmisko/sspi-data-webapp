@@ -8,6 +8,7 @@ Source:
   OrganizationName: UN FAO
   OrganizationCode: UNFAO
   OrganizationSeriesCode: Element=7215, Item=6646
+  QueryCode: Element=7215, Item=6646
   BaseURL: https://www.fao.org/faostat/en/#data/RL
 ---
 

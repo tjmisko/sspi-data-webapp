@@ -9,6 +9,7 @@ Source:
   OrganizationName: WHO
   OrganizationCode: WHO
   OrganizationSeriesCode: '["UHCIMMUNIZATION"] OR ["vdvp"]'
+  QueryCode: '["UHCIMMUNIZATION"] OR ["vdvp"]'
   BaseURL: https://apps.who.int/gho/data/view.main.UHCIMMUNIZATIONv?lang=en
 ---
 

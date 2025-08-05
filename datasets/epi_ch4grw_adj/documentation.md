@@ -6,4 +6,5 @@ Description: We calculate the CH4 growth rate indicator as the average annual ra
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: CHA
+  QueryCode: epi2024indicators
 ---

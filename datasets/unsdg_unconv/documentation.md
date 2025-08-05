@@ -11,6 +11,7 @@ Source:
   OrganizationName: UN
   OrganizationCode: UNSDG
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: Not sure>:(
 ---
 

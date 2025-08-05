@@ -6,4 +6,5 @@ Description: The proportion of a country’s total catch across the global ocean
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: BTO
+  QueryCode: epi2024indicators
 ---

@@ -5,7 +5,7 @@ from sspi_flask_app.api.resources.utilities import parse_json
 
 @dataset_collector("EPI_PHOSPH")
 def collect_epi_nitrog(**kwargs):
-    yield from collect_epi_data("PSU", **kwargs)
+    yield from collect_epi_data(**kwargs)
 
 
 @dataset_cleaner("EPI_PHOSPH")

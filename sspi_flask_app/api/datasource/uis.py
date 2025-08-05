@@ -12,7 +12,8 @@ def collect_uis_data(uis_indicator_code, **kwargs):
     source_info = {
         "OrganizationName": "UNESCO Institute for Statistics",
         "OrganizationCode": "UIS",
-        "OrganizationSeriesCode": "Rates",
+        "OrganizationSeriesCode": uis_indicator_code,
+        "QueryCode": uis_indicator_code,
         "URL": url_source
     }
     count = sspi_raw_api_data.raw_insert_many(requests.get(url_source).json(), source_info, **kwargs)

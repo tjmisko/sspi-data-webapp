@@ -11,5 +11,6 @@ Description: An index measuring the sustainability of Nitrogen management based 
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SNM
+  QueryCode: epi2024indicators
 ---
 

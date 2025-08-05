@@ -6,6 +6,7 @@ Description: "The Montreal Protocol on Substances that Deplete the Ozone Layer. 
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
+  QueryCode: 12.4.1
 ---
 
 Montreal Protocol: 

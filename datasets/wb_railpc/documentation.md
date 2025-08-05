@@ -6,6 +6,7 @@ Description: Passengers carried by railway are the number of passengers transpor
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.PASG.KM
+  QueryCode: IS.RRS.PASG.KM
 ---
 Unit of Measure: Passenger-kilometers
 Aggregation Method: Median

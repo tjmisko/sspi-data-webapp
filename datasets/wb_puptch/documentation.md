@@ -8,6 +8,7 @@ Source:
   OrganizationName: World Bank
   OrganizationCode: WB
   OrganizationSeriesCode: SE.PRM.ENRL.TC.ZS
+  QueryCode: SE.PRM.ENRL.TC.ZS
   BaseURL: https://databrowser.uis.unesco.org/
 ---
 

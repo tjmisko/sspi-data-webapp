@@ -6,6 +6,7 @@ Description: Goods transported by railway are the volume of goods transported by
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.GOOD.MT.K6
+  QueryCode: IS.RRS.GOOD.MT.K6
 ---
 Unit of Measure: Ton-km
 Periodicity: Annual

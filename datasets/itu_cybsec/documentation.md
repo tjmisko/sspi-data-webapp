@@ -8,6 +8,7 @@ Source:
   OrganizationName: ITU
   OrganizationCode: ITU
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://www.itu.int/en/ITU-D/Cybersecurity/Pages/global-cybersecurity-index.aspx
 ---
 

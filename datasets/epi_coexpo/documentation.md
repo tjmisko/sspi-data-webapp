@@ -6,4 +6,5 @@ Description: We measure exposure to ground-level carbon monoxide using a country
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: COE
+  QueryCode: epi2024indicators
 ---

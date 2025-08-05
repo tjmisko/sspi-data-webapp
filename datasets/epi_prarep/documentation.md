@@ -6,4 +6,5 @@ Description: The Protected Areas Representativeness Index (PARI) indicator mea
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: PAR
+  QueryCode: epi2024indicators
 ---

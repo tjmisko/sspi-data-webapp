@@ -8,6 +8,7 @@ Source:
   OrganizationName: WB-WBL
   OrganizationCode: WBL
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://wbl.worldbank.org/en/wbl-data
 ---
 

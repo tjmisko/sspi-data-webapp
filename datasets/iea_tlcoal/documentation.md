@@ -7,6 +7,7 @@ Source:
   OrganizationName: IEA
   OrganizationCode: IEA
   OrganizationSeriesCode: COAL
+  QueryCode: COAL
   BaseURL: null
 ---
 

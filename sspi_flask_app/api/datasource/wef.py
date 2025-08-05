@@ -30,8 +30,10 @@ def collect_wef_data(world_bank_indicator_code, **kwargs):
     yield f"Excel file opened successfully. Found {len(df)} rows.\n"
     csv_string = df.to_csv(index=False)
     source_info = {
+        "OrganizationName": "World Economic Forum",
         "OrganizationCode": "WEF",
         "OrganizationSeriesCode": world_bank_indicator_code,
+        "QueryCode": "WEF-GCIHH",
         "URL": url,
     }
     sspi_raw_api_data.raw_insert_one(

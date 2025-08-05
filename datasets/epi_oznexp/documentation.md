@@ -6,4 +6,5 @@ Description: We measure ozone exposure using the number of age-standardized disa
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: OZD
+  QueryCode: epi2024indicators
 ---

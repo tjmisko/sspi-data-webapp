@@ -6,4 +6,5 @@ Description: The Bioclimatic Ecosystem Resilience Index (BERI) measures the capa
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: BER
+  QueryCode: epi2024indicators
 ---

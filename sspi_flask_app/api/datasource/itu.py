@@ -9,11 +9,10 @@ def load_itu_data_from_local_transcription(**kwargs):
         "OrganizationName": "ITU",
         "OrganizationCode": "ITU",
         "OrganizationSeriesCode": "GCI",
-        "URL": "",
+        "QueryCode": "gci-local-indicator-summary",
         "Flag": (
-            "ITU data was transcribed by hand from the website "
-            "then loaded by the CSV file specified in the collect "
-            "route"
+            "ITU data was transcribed by hand from the website then "
+            "loaded by the CSV file specified in the @dataset_collector"
         )
     }
     count = sspi_raw_api_data.raw_insert_one(csv_string, source_info, **kwargs)

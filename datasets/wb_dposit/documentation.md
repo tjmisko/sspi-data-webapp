@@ -7,5 +7,6 @@ Description: Deposited money in banks and other financial institutions as a perc
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: GFDD.OI.02
+  QueryCode: GFDD.OI.02
 ---
 

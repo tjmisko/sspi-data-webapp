@@ -6,5 +6,6 @@ Description: Percentage of important sites covered by protected areas, freshwate
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 15.1.2
+  QueryCode: 15.1.2
 ---
 

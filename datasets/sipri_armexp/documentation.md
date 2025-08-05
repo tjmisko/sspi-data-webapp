@@ -7,5 +7,6 @@ Description: 'Arm transfers: the supply of military weapons through sales, aid, 
 Source:
   OrganizationCode: SIPRI
   OrganizationSeriesCode: armstransfers
+  QueryCode: armstransfers
 ---
 

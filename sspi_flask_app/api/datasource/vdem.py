@@ -33,7 +33,8 @@ def collect_vdem_data(**kwargs):
                 source_info = {
                     "OrganizationName": "Varieties of Democracy",
                     "OrganizationCode": "VDEM",
-                    "OrganizationSeriesCode": filename,
+                    "OrganizationSeriesCode": filename.split(".")[0],
+                    "QueryCode": "V-Dem-CY-FullOthers_csv_v13",
                     "URL": url,
                 }
                 sspi_raw_api_data.raw_insert_one(
@@ -41,4 +42,4 @@ def collect_vdem_data(**kwargs):
                     source_info,
                     **kwargs
                 )
-    yield f"V-Dem Data Collection Complete"
+    yield "V-Dem Data Collection Complete"

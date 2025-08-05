@@ -62,13 +62,8 @@ def collect_all_pages(url_slugs, **kwargs):
         source_info = {
             "OrganizationName": "World Prison Brief",
             "OrganizationCode": "WPB",
-            "OrganizationSeriesCode": "PrisonPopulation",
+            "QueryCode": "WPB",
             "BaseURL": base_url,
-            "Note": (
-                "World Prison Brief does not use the Series Code Prison "
-                "Population Formally. We have imputed it for consitency in "
-                "the SSPI."
-            ),
             "URL": request_url,
         }        
         sspi_raw_api_data.raw_insert_one(obs, source_info, **kwargs)

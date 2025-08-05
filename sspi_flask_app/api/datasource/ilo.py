@@ -18,7 +18,10 @@ def collect_ilo_data(ilo_indicator_code, QueryParams="", URLParams=[], **kwargs)
     source_info = {
         "OrganizationName": "International Labor Organization",
         "OrganizationCode": "ILO",
-        "OrganizationSeriesCode": org_series_code,
+        "OrganizationSeriesCode": ilo_indicator_code,
+        "QueryCode": org_series_code.format(
+            ilo_indicator_code=ilo_indicator_code, QueryParams=QueryParams
+        ),
         "BaseURL": base_url,
         "URL": api_url
     }

@@ -11,6 +11,7 @@ Source:
   OrganizationName: World Bank (WGI)
   OrganizationCode: WGI
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://info.worldbank.org/governance/wgi/
 ---
 

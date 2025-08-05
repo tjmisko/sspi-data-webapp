@@ -9,6 +9,7 @@ Source:
   OrganizationName: World Bank
   OrganizationCode: WB
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://databank.worldbank.org/
 ---
 

@@ -6,4 +6,5 @@ Description: The difference between phosphorus inputs (as fertilizer) and output
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: PSU
+  QueryCode: epi2024indicators
 ---

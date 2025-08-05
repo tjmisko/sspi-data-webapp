@@ -6,4 +6,5 @@ Description: We measure household solid fuels using the number of age-standardiz
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: HFD
+  QueryCode: epi2024indicators
 ---

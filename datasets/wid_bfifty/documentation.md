@@ -5,6 +5,6 @@ DatasetCode: WID_BFIFTY
 Description: Income Share of Bottom 50% of Earners
 Source:
   OrganizationCode: WID
-  OrganizationSeriesCode: p0p50
+  QueryCode: wid_all_data
 ---
 

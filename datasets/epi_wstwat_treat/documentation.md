@@ -6,4 +6,5 @@ Description: Percentage of wastewater that undergoes at least primary treatment.
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: WWT
+  QueryCode: epi2024indicators
 ---

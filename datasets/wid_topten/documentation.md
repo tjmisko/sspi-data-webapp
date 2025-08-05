@@ -5,6 +5,6 @@ DatasetCode: WID_TOPTEN
 Description: Income Share of Top 10% of Earners
 Source:
   OrganizationCode: WID
-  OrganizationSeriesCode: p90p100
+  QueryCode: wid_all_data
 ---
 

@@ -7,6 +7,7 @@ Source:
   OrganizationName: IEA
   OrganizationCode: IEA
   OrganizationSeriesCode: NATGAS
+  QueryCode: NATGAS
   BaseURL: null
 ---
 
