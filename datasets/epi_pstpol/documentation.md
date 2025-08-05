@@ -6,4 +6,5 @@ Description: The risk agricultural pesticide pollution to biodiversity. A score 
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: PRS
+  QueryCode: epi2024indicators
 ---

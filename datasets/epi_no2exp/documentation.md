@@ -6,4 +6,5 @@ Description: We measure nitrogen dioxide exposure using the number of age-standa
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: NOD
+  QueryCode: epi2024indicators
 ---

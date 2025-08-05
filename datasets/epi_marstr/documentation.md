@@ -6,4 +6,5 @@ Description: This pilot indicator estimates the stringency of marine protected a
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: MPE
+  QueryCode: epi2024indicators
 ---

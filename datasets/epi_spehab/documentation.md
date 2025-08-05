@@ -6,4 +6,5 @@ Description: The Species Habitat Index (SHI) measures the proportion of suitab
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SHI
+  QueryCode: epi2024indicators
 ---

@@ -6,4 +6,5 @@ Description: Total amount of municipal wastewater generated per person each year
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: WWG
+  QueryCode: epi2024indicators
 ---

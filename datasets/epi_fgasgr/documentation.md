@@ -6,4 +6,5 @@ Description: We calculate the F-gases growth rate indicator as the average annua
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: FGA
+  QueryCode: epi2024indicators
 ---

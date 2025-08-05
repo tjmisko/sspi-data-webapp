@@ -6,4 +6,5 @@ Description: We calculate the CO2 growth rate indicator as the average annual ra
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: CDA
+  QueryCode: epi2024indicators
 ---

@@ -6,4 +6,5 @@ Description: The proportion of the total catch in a country’s exclusive econom
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: BTZ
+  QueryCode: epi2024indicators
 ---

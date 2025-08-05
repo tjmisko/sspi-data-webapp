@@ -6,4 +6,5 @@ Description: This pilot indicator measures the percentage of the total terrestri
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: PHL
+  QueryCode: epi2024indicators
 ---

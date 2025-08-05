@@ -6,4 +6,5 @@ Description: We measure lead exposure using the number of age-standardized disab
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: LED
+  QueryCode: epi2024indicators
 ---

@@ -6,4 +6,5 @@ Description: We calculate the nitrous oxide growth rate indicator as the average
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: NDA
+  QueryCode: epi2024indicators
 ---

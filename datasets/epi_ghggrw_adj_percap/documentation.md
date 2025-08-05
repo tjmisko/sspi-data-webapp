@@ -6,4 +6,5 @@ Description: Average annual growth rate in greenhouse gas emissions over the las
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: GTP
+  QueryCode: epi2024indicators
 ---

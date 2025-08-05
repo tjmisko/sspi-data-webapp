@@ -6,4 +6,5 @@ Description: The sum of carbon fluxes (both emissions and sinks) from land use
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: LUF
+  QueryCode: epi2024indicators
 ---

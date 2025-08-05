@@ -6,4 +6,5 @@ Description: Controlled solid waste refers to the percentage of household and c
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SMW
+  QueryCode: epi2024indicators
 ---

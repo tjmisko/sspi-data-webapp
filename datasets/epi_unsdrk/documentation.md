@@ -6,4 +6,5 @@ Description: We measure unsafe drinking water using the number of age-standardiz
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: UWD
+  QueryCode: epi2024indicators
 ---

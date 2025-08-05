@@ -6,4 +6,5 @@ Description: We assess the quality of municipal solid waste management by reward
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: WRR
+  QueryCode: epi2024indicators
 ---

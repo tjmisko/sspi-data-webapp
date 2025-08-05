@@ -6,4 +6,5 @@ Description: We measure the average annual rate of nitrogen oxides emissions ove
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: NXA
+  QueryCode: epi2024indicators
 ---

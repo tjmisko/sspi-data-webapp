@@ -6,4 +6,5 @@ Description: We measure exposure to ground-level sulfur dioxide using a countryâ
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SOE
+  QueryCode: epi2024indicators
 ---

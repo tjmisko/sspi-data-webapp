@@ -6,4 +6,5 @@ Description: Not all tree cover loss is the same. Depending on what drives tree 
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: FCL
+  QueryCode: epi2024indicators
 ---

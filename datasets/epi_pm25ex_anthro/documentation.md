@@ -6,4 +6,5 @@ Description: We measure the exposure to fine particulate matter (PM2.5) from sat
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: HPE
+  QueryCode: epi2024indicators
 ---

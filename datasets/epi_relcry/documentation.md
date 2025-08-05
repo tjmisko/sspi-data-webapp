@@ -6,4 +6,5 @@ Description: The average yield of 17 major crops
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: RCY
+  QueryCode: epi2024indicators
 ---
