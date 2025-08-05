@@ -738,3 +738,46 @@ class SSPIMetadata(MongoWrapper):
         if not source_detail:
             return []
         return source_detail["Metadata"]["DatasetCodes"]
+
+    def sspi_detail(self) -> dict:
+        """
+        Returns the detail for the SSPI item
+        """
+        sspi_detail = self.find_one({"DocumentType": "SSPIDetail"})
+        if not sspi_detail:
+            raise ValueError("SSPI detail not found in metadata.")
+        return sspi_detail["Metadata"]
+
+    def item_details(self, indicator_filter: list[str]=[]) -> list[dict]:
+        """
+        Returns a list of all item details, including SSPI, Pillars, Categories, and Indicators.
+        If a filter is provided, only items with codes in the filter will be returned.
+        
+        :param filter: A list of item codes to filter the results. If empty, all item details will be returned.
+        """
+        sspi = self.sspi_detail()
+        pillars = self.pillar_details()
+        categories = self.category_details()
+        indicators = self.indicator_details()
+        if indicator_filter:
+            indicators_filtered = [i for i in indicators if i["IndicatorCode"] in indicator_filter]
+            categories_filtered = []
+            for c in categories:
+                contained_indicators = [i for i in c["IndicatorCodes"] if i in indicator_filter]
+                if len(contained_indicators) > 0:
+                    c["IndicatorCodes"] = contained_indicators
+                    categories_filtered.append(c)
+            pillars_filtered = []
+            for p in pillars:
+                implied_category_filter = [c["CategoryCode"] for c in categories_filtered]
+                contained_categories = [c for c in p["CategoryCodes"] if c in implied_category_filter]
+                if len(contained_categories) > 0:
+                    p["CategoryCodes"] = contained_categories
+                    pillars_filtered.append(p)
+            implied_pillar_filter = [p["PillarCode"] for p in pillars_filtered]
+            sspi["PillarCodes"] = implied_pillar_filter
+            return [ sspi ] + pillars_filtered + categories_filtered + indicators_filtered
+        return [ sspi ] + pillars + categories + indicators
+
+
+

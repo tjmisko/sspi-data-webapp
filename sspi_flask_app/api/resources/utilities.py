@@ -13,7 +13,7 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
-    sspi_score_data,
+    sspi_item_data,
     sspi_metadata,
     sspi_static_metadata,
     sspi_country_characteristics,
@@ -83,10 +83,8 @@ def lookup_database(database_name):
             return sspi_imputed_data
         case "sspi_analysis":
             return sspi_analysis
-        case "sspi_score_data":
-            return sspi_score_data
-        case "sspi_country_characteristics":
-            return sspi_country_characteristics
+        case "sspi_item_data":
+            return sspi_item_data 
         case "sspi_static_rank_data":
             return sspi_static_rank_data
         case "sspi_static_radar_data":
@@ -528,7 +526,7 @@ def generate_item_groups(
             {
                 "entity_id": obs[entity_id],
                 "time_id": obs[time_id],
-                "value_id": obs[value_id],
+                "value_id": obs.get(value_id, None),
                 "score_id": obs.get(score_id, None),
             }
         )

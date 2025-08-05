@@ -23,7 +23,7 @@ from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_main_data_v3,
-    sspi_score_data,
+    sspi_item_data,
     sspi_metadata,
     sspi_panel_data,
     sspi_static_rank_data,
@@ -32,7 +32,6 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_line_data,
     sspi_dynamic_matrix_data,
 )
-import os
 from datetime import datetime
 import hashlib
 
@@ -101,7 +100,7 @@ def get_dynamic_score_line_data(ItemCode):
     name_map = {
         detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details
     }
-    active_schema = sspi_score_data.active_schema(name_map=name_map)
+    active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(ItemCode)
     print(detail)
     doc_type = detail.get("ItemType", "No Item Type")
@@ -189,6 +188,8 @@ def get_static_pillar_differential(pillar_code):
     comparison_pillar = comparison_sspi.get_pillar(pillar_code)
     by_category = []
     by_indicator = []
+    assert base_pillar is not None
+    assert comparison_pillar is not None
     for category in base_pillar.categories:
         category_code = category.code
         comparison_category = comparison_pillar.get_category(category_code)
@@ -219,8 +220,10 @@ def get_static_pillar_differential(pillar_code):
         )
     by_category.sort(key=lambda x: x["Diff"])
     by_indicator.sort(key=lambda x: x["Diff"])
-    base_country_name = pycountry.countries.get(alpha_3=base_country).name
-    comparison_country_name = pycountry.countries.get(alpha_3=comparison_country).name
+    base_country_obj = pycountry.countries.get(alpha_3=base_country)
+    comparison_country_obj = pycountry.countries.get(alpha_3=comparison_country)
+    assert base_country_obj is not None, "Base country not found"
+    assert comparison_country_obj is not None, "Comparison country not found"
     return jsonify(
         {
             "labels": [c["CategoryCode"] for c in by_category],
@@ -234,9 +237,9 @@ def get_static_pillar_differential(pillar_code):
             ],
             "title": f"Category Score Difference ({comparison_country} - {base_country})",
             "baseCCode": base_country,
-            "baseCName": base_country_name,
+            "baseCName": base_country_obj.name,
             "comparisonCCode": comparison_country,
-            "comparisonCName": comparison_country_name,
+            "comparisonCName": comparison_country_obj.name,
         }
     )
 
@@ -259,10 +262,13 @@ def get_static_pillar_stack(pillar_code):
         cou_data = parse_json(sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0}))
         cou_sspi = SSPI(indicator_details, cou_data, strict_year=False)
         cou_pillar = cou_sspi.get_pillar(pillar_code)
+        assert cou_pillar is not None, f"Pillar {pillar_code} not found for country {cou}"
         if i == 0:
             pillar_name = cou_pillar.name
-        country_name = pycountry.countries.get(alpha_3=cou).name
-        country_flag = pycountry.countries.get(alpha_3=cou).flag
+        country_lookup = pycountry.countries.get(alpha_3=cou) 
+        assert country_lookup is not None, "Country not found"
+        country_name = country_lookup.name
+        country_flag = country_lookup.flag
         code_map[cou] = {"name": country_name, "flag": country_flag}
         for j, category in enumerate(cou_pillar.categories):
             # Only add the category label once
@@ -485,9 +491,9 @@ def prepare_panel_data():
                     except ValueError:
                         continue
                     year[year_index] = doc["time_id"]
-                    value[year_index] = doc["value_id"]
-                    data[year_index] = doc["value_id"]
+                    value[year_index] = doc.get("value_id", None) 
                     score[year_index] = doc.get("score_id", None)
+                    data[year_index] = score[year_index] if doc.get("score_id") else value[year_index]
                 document = {
                     "ItemIdentifier": id_hash,
                     "ItemOrder": count,
@@ -627,7 +633,7 @@ def active_schema():
     name_map = {
         detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details
     }
-    active_schema = sspi_score_data.active_schema(
+    active_schema = sspi_item_data.active_schema(
         sample_country=sample_country, name_map=name_map
     )
     return jsonify(active_schema)
