@@ -8,6 +8,7 @@ Source:
   OrganizationName: OECD
   OrganizationCode: OECD
   OrganizationSeriesCode: PAG_PEN24A
+  QueryCode: PAG_PEN24A
   BaseURL: https://stats.oecd.org/
 ---
 

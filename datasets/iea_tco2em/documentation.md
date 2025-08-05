@@ -7,5 +7,6 @@ Source:
   OrganizationName: IEA
   OrganizationCode: IEA
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://www.iea.org/
 ---

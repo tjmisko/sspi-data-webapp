@@ -6,5 +6,6 @@ Description: Tax imposed on the net income of the company.
 Source:
   OrganizationCode: TF
   OrganizationSeriesCode: Rates
+  QueryCode: Rates
 ---
 

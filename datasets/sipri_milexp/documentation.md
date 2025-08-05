@@ -7,5 +7,6 @@ Description: Military expenditure (local currency at current prices) according t
 Source:
   OrganizationCode: SIPRI
   OrganizationSeriesCode: milex
+  QueryCode: milex
 ---
 

@@ -8,6 +8,7 @@ Source:
   OrganizationName: IEA
   OrganizationCode: IEA
   OrganizationSeriesCode: HYDRO
+  QueryCode: HYDRO
   BaseURL: null
 ---
 

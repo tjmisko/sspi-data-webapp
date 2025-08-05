@@ -6,9 +6,8 @@ Description: Electoral Democracy Index seeks to embody the core values that make
   responsive to citizens through elections and freedom of expression.
   and view the column “v2x_polyarchy”.
 Source:
-  OrganizationName: V-Dem
   OrganizationCode: VDEM
-  OrganizationSeriesCode: null
-  BaseURL: https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/
+  OrganizationSeriesCode: V-Dem-CY-FullOthers_csv_v13 
+  QueryCode: V-Dem-CY-FullOthers_csv_v13 
 ---
 

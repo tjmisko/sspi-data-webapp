@@ -7,6 +7,7 @@ Source:
   OrganizationName: World Bank (wash report)
   OrganizationCode: WB
   OrganizationSeriesCode: SH.H2O.SMDW.ZS
+  QueryCode: SH.H2O.SMDW.ZS
   BaseURL: https://databank.worldbank.org/
 ---
 

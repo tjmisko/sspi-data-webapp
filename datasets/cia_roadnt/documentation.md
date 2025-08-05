@@ -7,6 +7,7 @@ Source:
   OrganizationName: CIA
   OrganizationCode: CIA
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://www.cia.gov/the-world-factbook/
 ---
 

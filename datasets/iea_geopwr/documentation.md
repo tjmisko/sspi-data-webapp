@@ -7,6 +7,7 @@ Source:
   OrganizationName: IEA
   OrganizationCode: IEA
   OrganizationSeriesCode: GEOTHERM
+  QueryCode: GEOTHERM
   BaseURL: null
 ---
 

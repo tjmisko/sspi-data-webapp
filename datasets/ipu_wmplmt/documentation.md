@@ -7,6 +7,7 @@ Source:
   OrganizationName: IPU
   OrganizationCode: IPU
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://data.ipu.org/women-ranking
 ---
 

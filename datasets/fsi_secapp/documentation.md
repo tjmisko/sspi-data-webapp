@@ -10,6 +10,7 @@ Source:
   OrganizationName: The Fund for Peace
   OrganizationCode: FSI
   OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://fragilestatesindex.org/global-data/
 ---
 

@@ -6,6 +6,7 @@ Description: "The Stockholm Convention on Persistent Organic Pollutants. Stockho
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
+  QueryCode: 12.4.1
 ---
 
 Stockholm Convention: 

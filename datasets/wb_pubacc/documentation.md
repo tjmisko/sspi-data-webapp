@@ -7,5 +7,6 @@ Description: Account ownership at a financial institution or with a mobile-money
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: FX.OWN.TOTL.ZS
+  QueryCode: FX.OWN.TOTL.ZS
 ---
 

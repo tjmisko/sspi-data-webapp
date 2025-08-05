@@ -6,5 +6,6 @@ Description: GINI Coefficient for post-tax-and-transfer income distribution.
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: SI.POV.GINI
+  QueryCode: SI.POV.GINI
 ---
 

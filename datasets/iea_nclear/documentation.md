@@ -7,6 +7,7 @@ Source:
   OrganizationName: IEA
   OrganizationCode: IEA
   OrganizationSeriesCode: NUCLEAR
+  QueryCode: NUCLEAR
   BaseURL: null
 ---
 

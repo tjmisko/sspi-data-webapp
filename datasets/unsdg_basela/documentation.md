@@ -6,6 +6,7 @@ Description: The Basel Convention on the Control of Transboundary Movements of H
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
+  QueryCode: 12.4.1
 ---
 
 Basel Convention:

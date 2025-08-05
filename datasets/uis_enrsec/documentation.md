@@ -9,6 +9,7 @@ Source:
   OrganizationName: UIS
   OrganizationCode: UIS
   OrganizationSeriesCode: NERT.2.CP
+  QueryCode: NERT.2.CP
   BaseURL: https://databrowser.uis.unesco.org/
 ---
 

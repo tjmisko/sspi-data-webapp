@@ -9,6 +9,7 @@ Source:
   OrganizationName: UN SDG
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 3.7.1
+  QueryCode: 3.7.1
   BaseURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

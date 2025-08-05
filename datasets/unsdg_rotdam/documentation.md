@@ -6,6 +6,7 @@ Description: The Rotterdam Convention on the prior informed consent procedure fo
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
+  QueryCode: 12.4.1
 ---
 
 Rotterdam Convention: Pursuant to Article 4 of the Rotterdam Convention, each

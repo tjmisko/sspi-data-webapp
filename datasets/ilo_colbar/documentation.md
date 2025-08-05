@@ -7,5 +7,6 @@ Description: The proportion of workers whose terms and conditions at work are de
 Source:
   OrganizationCode: ILO
   OrganizationSeriesCode: null
+  QueryCode: null
 ---
 
