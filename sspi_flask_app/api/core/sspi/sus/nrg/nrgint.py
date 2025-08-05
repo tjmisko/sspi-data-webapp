@@ -44,6 +44,7 @@ def compute_nrgint():
 
 
 @impute_bp.route("/NRGINT", methods=["POST"])
+@login_required
 def impute_nrgint():
     sspi_imputed_data.delete_many({"IndicatorCode": "NRGINT"})
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "NRGINT"})

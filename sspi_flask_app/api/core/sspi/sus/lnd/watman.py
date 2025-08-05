@@ -56,6 +56,7 @@ def compute_watman():
     return parse_json(clean_list)
 
 @impute_bp.route("/WATMAN", methods=["POST"])
+@login_required
 def impute_watman():
     mongo_query = {"IndicatorCode": "WATMAN"}
     sspi_imputed_data.delete_many(mongo_query)

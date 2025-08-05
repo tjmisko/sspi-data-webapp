@@ -145,6 +145,7 @@ def compute_senior():
 
 
 @impute_bp.route("/SENIOR", methods=["POST"])
+@login_required
 def impute_senior():
     sspi_imputed_data.delete_many({"IndicatorCode": "SENIOR"})
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "SENIOR"})
