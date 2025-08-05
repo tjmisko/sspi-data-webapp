@@ -60,7 +60,7 @@ sspi_raw_api_data = SSPIRawAPIData(
 sspi_raw_outcome_data = SSPIRawAPIData(
     sspidb.sspi_raw_outcome_data
 )
-sspi_score_data = SSPIItemData(
+sspi_item_data = SSPIItemData(
     sspidb.sspi_item_data
 )
 sspi_clean_api_data = SSPICleanAPIData(

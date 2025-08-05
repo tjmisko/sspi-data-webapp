@@ -66,7 +66,7 @@ def build_mongo_query(raw_query_input, database=None):
                     source_info = sspi_metadata.get_source_info(dataset_code)
                     source_queries.append({
                         "Source.OrganizationCode": source_info["OrganizationCode"],
-                        "Source.OrganizationSeriesCode": source_info["OrganizationSeriesCode"]
+                        "Source.QueryCode": source_info["QueryCode"]
                     })
                 except (KeyError, ValueError):
                     # Skip datasets that don't have source info

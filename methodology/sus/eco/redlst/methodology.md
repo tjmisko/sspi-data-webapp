@@ -13,9 +13,6 @@ IndicatorCode: REDLST
 Inverted: false
 LowerGoalpost: 0.0
 Policy: Endangered Species Protection
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: '["15.5.1"]'
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 UpperGoalpost: 1.0
 ---
 

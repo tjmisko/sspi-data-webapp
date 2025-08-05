@@ -16,7 +16,7 @@ class InvalidDatabaseError(Exception):
     """
     pass
 
-class DataOrderError(Exception):
+class DataMetadataMismatchError(Exception):
     """
     Raised when there is a mismatch between metadata and data order in SSPI class
     """

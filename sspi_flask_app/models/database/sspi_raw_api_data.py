@@ -24,7 +24,8 @@ class SSPIRawAPIData(MongoWrapper):
                 }
                 "Source": {
                     "OrganizationCode": str,
-                    "OrganizationSeriesCode": str
+                    "OrganizationQueryCode": str
+                    "QueryCode": str
                 },
                 "Raw": str or dict or int or float,
                 ...
@@ -99,10 +100,10 @@ class SSPIRawAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"Source dict must contain an OrganizationCode (document {document_number})")
-        if "OrganizationSeriesCode" not in document["Source"].keys():
+        if "QueryCode" not in document["Source"].keys():
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
-                f"Source dict must contain an OrganizationSeriesCode (document {document_number})")
+                f"Source dict must contain an QueryCode (document {document_number})")
 
     def validate_raw(self, document: dict, document_number: int = 0):
         # Validate Raw format
@@ -138,7 +139,7 @@ class SSPIRawAPIData(MongoWrapper):
         if isinstance(document, str) and len(document) > byte_max:
             print(f"Document too large, fragmenting: {len(document)} bytes")
             num_fragments = (len(document) + byte_max - 1) // byte_max
-            source_info_id = f"{source_info['OrganizationCode']}_{source_info['OrganizationSeriesCode']}"
+            source_info_id = f"{source_info['OrganizationCode']}_{source_info['QueryCode']}"
             fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
             for i in range(num_fragments):
                 obs["Raw"] = document[byte_max * i:byte_max * i + byte_max]

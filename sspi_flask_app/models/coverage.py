@@ -2,7 +2,7 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_indicator_data,
     sspi_imputed_data,
-    sspi_score_data,
+    sspi_item_data,
     sspi_incomplete_indicator_data
 )
 
@@ -255,7 +255,7 @@ class DataCoverage:
                     }
                 }
             ]
-            result_clean = sspi_clean_api_data.aggregate(pipeline)
+            result_clean = sspi_indicator_data.aggregate(pipeline)
             return result_clean
         child_icodes = [child for child in children]
         child_details = [sspi_metadata.get_item_detail(child) for child in child_icodes]
@@ -319,5 +319,5 @@ class DataCoverage:
                 },
             ]
             print(pipeline)
-            result = sspi_score_data.aggregate(pipeline)
+            result = sspi_item_data.aggregate(pipeline)
         return result

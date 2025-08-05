@@ -453,6 +453,9 @@ class SSPIMetadataDeprecated(MongoWrapper):
                 intermediate_detail)
         for indicator_detail in indicator_details_list:
             indicator_detail["DocumentType"] = "IndicatorDetail"
+            indicator_detail["ItemCode"] = indicator_detail["IndicatorCode"]
+            indicator_detail["ItemName"] = indicator_detail["Indicator"]
+            indicator_detail["ItemType"] = "Indicator"
             if indicator_detail["IndicatorCode"] not in ind_int_map.keys():
                 continue
             intermediate_codes = [
@@ -473,6 +476,7 @@ class SSPIMetadataDeprecated(MongoWrapper):
                 category_detail_map[indicator["CategoryCode"]] = {
                     "ItemCode": indicator["CategoryCode"],
                     "ItemName": indicator["Category"],
+                    "ItemType": "Category",
                     "CategoryCode": indicator["CategoryCode"],
                     "Category": indicator["Category"],
                     "PillarCode": indicator["PillarCode"],
@@ -496,6 +500,7 @@ class SSPIMetadataDeprecated(MongoWrapper):
                 pillar_detail_map[indicator["PillarCode"]] = {
                     "ItemCode": indicator["PillarCode"],
                     "ItemName": indicator["Pillar"],
+                    "ItemType": "Pillar",
                     "PillarCode": indicator["PillarCode"],
                     "Pillar": indicator["Pillar"],
                     "CategoryCodes": set(),
@@ -521,6 +526,7 @@ class SSPIMetadataDeprecated(MongoWrapper):
         indicator_details_list = json.loads(json_string)
         overall_detail = {
             "ItemCode": "SSPI",
+            "ItemType": "SSPI",
             "ItemName": "Sustainable and Shared Prosperity Policy Index",
             "Code": "SSPI",
             "Name": "Sustainable and Shared Prosperity Policy Index",
@@ -777,6 +783,12 @@ class SSPIMetadataDeprecated(MongoWrapper):
             flat_list.append(detail["Metadata"])
         return flat_list
 
+    def sspi_detail(self) -> dict:
+        """
+        Returns the metadata for the SSPI root item
+        """
+        return self.find_one({"DocumentType": "SSPIDetail"})["Metadata"]
+
     def pillar_category_summary_tree(self) -> list[dict]:
         """
         Returns a tree structure of pillars and categories
@@ -808,3 +820,12 @@ class SSPIMetadataDeprecated(MongoWrapper):
                 "It is likely that there is an error in the YAML frontmatter format."
             )
         return methodology_html
+
+    def item_details(self) -> list[dict]:
+        sspi = self.sspi_detail()
+        pillars = self.pillar_details()
+        categories = self.category_details()
+        indicators = self.indicator_details()
+        return [ sspi ] + pillars + categories + indicators
+
+
