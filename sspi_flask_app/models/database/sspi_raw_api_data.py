@@ -239,3 +239,4 @@ class SSPIRawAPIData(MongoWrapper):
         if not doc:
             return {}
         return doc["CollectionInfo"]
+

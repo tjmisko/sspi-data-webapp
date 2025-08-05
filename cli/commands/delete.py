@@ -18,8 +18,8 @@ def delete():
 def duplicates(database, remote=False):
     database = full_name(database)
     connector = SSPIDatabaseConnector()
-    msg = connector.delete_duplicate_data(database, remote=remote)
-    echo_pretty(msg)
+    endpoint = f"/api/v1/delete/duplicates/{database}"
+    connector.call(endpoint, remote=remote, method="DELETE")
 
 
 @delete.command()
@@ -68,3 +68,28 @@ def indicator(database, indicator_code, remote=False):
         endpoint = f"/api/v1/delete/indicator/{database}/{indicator_code}"
         res = connector.call(endpoint, remote=remote, method="DELETE")
         echo_pretty(res.text)
+
+@delete.command()
+@click.argument("database", type=str, required=True)
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def loose(database, remote=False):
+    """Delete loose documents from the database"""
+    database = full_name(database)
+    connector = SSPIDatabaseConnector()
+    endpoint = f"/api/v1/delete/loose/{database}"
+    res = connector.call(endpoint, remote=remote, method="DELETE")
+    echo_pretty(res.text)
+
+@delete.command()
+@click.argument("raw_delete_code", type=str, required=True, )
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def raw(raw_delete_code, remote=False):
+    """
+    Delete raw API data based on a query code
+    :param raw_delete_code: The DatasetCode or OrganizationCode:QueryCode of the observations to delete
+    """
+    connector = SSPIDatabaseConnector()
+    endpoint = f"/api/v1/delete/raw/{raw_delete_code}"
+    res = connector.call(endpoint, remote=remote, method="DELETE")
+    echo_pretty(res.text)
+
