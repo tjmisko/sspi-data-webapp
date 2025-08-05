@@ -18,6 +18,7 @@ def source_info():
         "OrganizationName": "Sustainable and Shared-Prosperity Policy Index",
         "OrganizationCode": "SSPI",
         "OrganizationSeriesCode": "TESTDB",
+        "QueryCode": "TESTDB",
         "URL": "https://sspi.world",
     }
 
@@ -27,6 +28,7 @@ def test_build_source_query(sspi_raw_api_data, source_info):
         "Source.OrganizationName": "Sustainable and Shared-Prosperity Policy Index",
         "Source.OrganizationCode": "SSPI",
         "Source.OrganizationSeriesCode": "TESTDB",
+        "Source.QueryCode": "TESTDB",
         "Source.URL": "https://sspi.world",
     }
 
