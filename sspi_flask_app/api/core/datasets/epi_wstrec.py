@@ -5,7 +5,7 @@ from sspi_flask_app.api.resources.utilities import parse_json
 
 @dataset_collector("EPI_WSTREC")
 def collect_epi_nitrog(**kwargs):
-    yield from collect_epi_data("WRR", **kwargs)
+    yield from collect_epi_data(**kwargs)
 
 
 @dataset_cleaner("EPI_WSTREC")

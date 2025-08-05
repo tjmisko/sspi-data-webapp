@@ -5,6 +5,5 @@ DatasetCode: WID_NINCAV_POSTTAX
 Description: Average post-tax national income by population percentile. Shows the mean income within different income groups after taxes and transfers.
 Source:
   OrganizationCode: WID
-  OrganizationSeriesCode: adiincj992
   QueryCode: wid_all_data
 ---

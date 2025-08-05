@@ -10,15 +10,7 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/ISHRAT", methods=['GET'])
-# @login_required
-# def ishrat():
-#     def collect_iterator(**kwargs):
-#         yield from collect_wid_data(IndicatorCode="ISHRAT", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
-@compute_bp.route("/ISHRAT")
+@compute_bp.route("/ISHRAT", methods=["POST"])
 @login_required
 def compute_ishrat():
     app.logger.info("Running /api/v1/compute/ISHRAT")
@@ -32,7 +24,7 @@ def compute_ishrat():
     unit = "Ratio of Bottom 50% Income Share to to Top 10% Income Share"
     clean_list, incomplete_list = score_indicator(
         combined_list, "ISHRAT",
-        score_function=lambda TOPTEN, BFIFTY: goalpost(BFIFTY / TOPTEN, lg, ug),
+        score_function=lambda WID_TOPTEN, WID_BFIFTY: goalpost(WID_BFIFTY / WID_TOPTEN, lg, ug),
         unit=unit
     )
     sspi_indicator_data.insert_many(clean_list)

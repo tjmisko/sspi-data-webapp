@@ -179,7 +179,7 @@ class SSPIRawAPIData(MongoWrapper):
         if not raw_data:
             raise ValueError(
                 "No Documents found with provided source_info in "
-                "sspi_raw_api_data. Try running collect!"
+                f"sspi_raw_api_data. {source_info}"
             )
         fragment_dict = {}
         defragged_raw = []

@@ -5,6 +5,5 @@ DatasetCode: WID_NINCSH_PRETAX
 Description: Distribution of pre-tax national income across population percentiles. Shows the share of total pre-tax national income received by different income groups.
 Source:
   OrganizationCode: WID
-  OrganizationSeriesCode: sptincj992
   QueryCode: wid_all_data
 ---

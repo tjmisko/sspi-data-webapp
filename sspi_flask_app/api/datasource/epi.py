@@ -7,7 +7,7 @@ from io import BytesIO, StringIO
 from sspi_flask_app.models.database import sspi_raw_api_data
 
 
-def collect_epi_data(epi_indicator_code, **kwargs):
+def collect_epi_data(**kwargs):
     url = "https://epi.yale.edu/downloads/epi2024indicators.zip"
     res = requests.get(url)
     if res.status_code != 200:
@@ -19,18 +19,19 @@ def collect_epi_data(epi_indicator_code, **kwargs):
             if "__MACOSX" in f:
                 continue
             with z.open(f) as data:
+                yield f"Processing file: {f}\n"
                 csv_string = data.read().decode("utf-8")
                 source_info = {
                     "OrganizationName": "Environmental Performance Index",
                     "OrganizationCode": "EPI",
-                    "OrganizationSeriesCode": epi_indicator_code,
+                    "OrganizationSeriesCode": f.split("/")[1].split(".")[0].split("_")[0],
                     "QueryCode": "epi2024indicators",
                     "URL": url
                 }
                 sspi_raw_api_data.raw_insert_one(
                     csv_string, source_info, **kwargs
                 )
-    yield f"Collection complete for EPI Indicator {epi_indicator_code}\n"
+    yield "Collection complete for EPI Indicators\n"
 
 def parse_epi_csv(raw_csv_string: str, dataset_code: str) -> list[dict]:
     csv_virtual_file = StringIO(raw_csv_string)

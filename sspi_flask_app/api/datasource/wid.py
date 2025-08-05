@@ -8,7 +8,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data
 
 
 def collect_wid_data(**kwargs):
-    yield "Requesting WID data from source\n"
+    yield "Requesting WID data\n"
     url = "https://wid.world/bulk_download/wid_all_data.zip"
     res = requests.get(url)
     res.raise_for_status()
@@ -17,21 +17,19 @@ def collect_wid_data(**kwargs):
     with zipfile.ZipFile(zip_file) as z:
         for file_name in z.namelist():
             yield f"Processing {file_name}\n"
-            file_name_fields = file_name.split(".")[0].split("_")
-            if len(file_name_fields) != 3 or 'metadata' in file_name_fields:
-                yield f"Skipping {file_name}\n"
-                continue  # Don't save state-level data or metadata
             with z.open(file_name) as f:
                 raw = f.read().decode('utf-8')
                 source_info = {
                     "OrganizationName": "World Inequality Database",
                     "OrganizationCode": "WID",
                     "QueryCode": "wid_all_data",
+                    "Filename": file_name,
                     "URL": url,
                 }
                 sspi_raw_api_data.raw_insert_one(
                     raw, source_info, **kwargs
                 )
+    yield "WID data collection completed\n"
 
 
 def filter_wid_csv(csv_string: str, csv_filename: str, target_vars: list[str], variable: str, years: list[int]) -> list:
