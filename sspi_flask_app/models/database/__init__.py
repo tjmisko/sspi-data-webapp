@@ -28,6 +28,9 @@ from sspi_flask_app.models.database.sspi_raw_api_data import (
 from sspi_flask_app.models.database.sspi_indicator_data import (
     SSPIIndicatorData
 )
+from sspi_flask_app.models.database.sspi_imputed_data import (
+    SSPIImputedData
+)
 from sspi_flask_app.models.database.sspi_indicator_data import (
     SSPIIncompleteIndicatorData
 )
@@ -72,7 +75,7 @@ sspi_indicator_data = SSPIIndicatorData(
 sspi_incomplete_indicator_data = SSPIIncompleteIndicatorData(
     sspidb.sspi_incomplete_indicator_data
 )
-sspi_imputed_data = MongoWrapper(
+sspi_imputed_data = SSPIImputedData(
     sspidb.sspi_imputed_data
 )
 sspi_analysis = MongoWrapper(
