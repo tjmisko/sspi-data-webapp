@@ -69,6 +69,14 @@ class SSPIIndicatorData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Score' must be a float or integer (document {document_number})")
+        if document["Score"] < 0:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Score' must be non-negative (document {document_number})")
+        if document["Score"] > 1:
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Score' must be less than or equal to 1 (document {document_number})")
 
 
 class SSPIIncompleteIndicatorData(SSPIIndicatorData):

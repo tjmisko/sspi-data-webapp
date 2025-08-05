@@ -14,39 +14,16 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/GTRANS", methods=["GET"])
-# @login_required
-# def gtrans():
-#     def collect_iterator(**kwargs):
-#         yield from collect_iea_data(
-#             "CO2BySector",
-#             "GTRANS",
-#             IntermediateCode="TCO2EQ",
-#             SourceOrganization="IEA",
-#             **kwargs,
-#         )
-#         yield from collect_wb_data(
-#             "SP.POP.TOTL", "GTRANS", IntermediateCode="POPULN", **kwargs
-#         )
-#     return Response(
-#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-#     )
-
-
-@compute_bp.route("/GTRANS", methods=["GET"])
+@compute_bp.route("/GTRANS", methods=["POST"])
 @login_required
 def compute_gtrans():
     app.logger.info("Running /api/v1/compute/GTRANS")
     sspi_indicator_data.delete_many({"IndicatorCode": "GTRANS"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "GTRANS"})
-    
-    # Fetch clean datasets
     tco2em_clean = sspi_clean_api_data.find({"DatasetCode": "IEA_TCO2EM"})
     populn_clean = sspi_clean_api_data.find({"DatasetCode": "WB_POPULN"})
     combined_list = tco2em_clean + populn_clean
-    
     lg, ug = sspi_metadata.get_goalposts("GTRANS")
-    
     clean_list, incomplete_list = score_indicator(
         combined_list,
         "GTRANS",
