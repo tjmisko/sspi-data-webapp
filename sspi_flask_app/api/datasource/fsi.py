@@ -32,11 +32,11 @@ def collect_fsi_data(**kwargs):
         source_info = {
             "OrganizationName": "Fragile States Index",
             "OrganizationCode": "FSI",
-            "OrganizationSeriesCode": "FSI",
+            "QueryCode": "FSI",
             "BaseURL": base_url,
             "URL": data_url
         }
-        yield f"Collection complete for FSI Data"
+        yield "Collection complete for FSI Data"
         excel_readable = BytesIO(excel.content)
         df = pd.read_excel(excel_readable)
         obs = len(df.index)

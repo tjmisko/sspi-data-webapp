@@ -51,7 +51,7 @@ log = logging.getLogger(__name__)
 @login_required
 def compute_biodiv():
     def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
-        return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3
+        return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3 / 100
 
     sspi_indicator_data.delete_many({"IndicatorCode": "BIODIV"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "BIODIV"})

@@ -18,19 +18,18 @@ def collect_epi_data(epi_indicator_code, **kwargs):
         for f in z.namelist():
             if "__MACOSX" in f:
                 continue
-            if epi_indicator_code in f:
-                with z.open(f) as data:
-                    csv_string = data.read().decode("utf-8")
-                    source_info = {
-                        "OrganizationName": "Environmental Performance Index",
-                        "OrganizationCode": "EPI",
-                        "OrganizationSeriesCode": epi_indicator_code,
-                        "BaseURL": url,
-                        "URL": url
-                    }
-                    sspi_raw_api_data.raw_insert_one(
-                        csv_string, source_info, **kwargs
-                    )
+            with z.open(f) as data:
+                csv_string = data.read().decode("utf-8")
+                source_info = {
+                    "OrganizationName": "Environmental Performance Index",
+                    "OrganizationCode": "EPI",
+                    "OrganizationSeriesCode": epi_indicator_code,
+                    "QueryCode": "epi2024indicators",
+                    "URL": url
+                }
+                sspi_raw_api_data.raw_insert_one(
+                    csv_string, source_info, **kwargs
+                )
     yield f"Collection complete for EPI Indicator {epi_indicator_code}\n"
 
 def parse_epi_csv(raw_csv_string: str, dataset_code: str) -> list[dict]:

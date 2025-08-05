@@ -30,6 +30,7 @@ def collect_sdg_indicator_data(sdg_indicator_code: str, **kwargs):
             "OrganizationName": "United Nations Sustainable Development Goals",
             "OrganizationCode": "UNSDG",
             "OrganizationSeriesCode": sdg_indicator_code,
+            "QueryCode": sdg_indicator_code,
             "BaseURL": sdg_series_url,
             "URL": new_url
         }

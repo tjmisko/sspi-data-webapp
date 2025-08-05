@@ -19,7 +19,7 @@ def collect_tax_foundation_data(**kwargs):
     source_info = {
         "OrganizationName": "Tax Foundation",
         "OrganizationCode": "TF",
-        "OrganizationSeriesCode": "Rates",
+        "QueryCode": "rates_final",
         "URL": url
     }
     sspi_raw_api_data.raw_insert_one(

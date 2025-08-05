@@ -11,6 +11,7 @@ def collect_who_data(who_indicator_code, **kwargs):
         "OrganizationName": "World Health Organization",
         "OrganizationCode": "WHO",
         "OrganizationSeriesCode": who_indicator_code,
+        "QueryCode": who_indicator_code,
         "URL": url,
     }
     obs_list = json.loads(response.text)
@@ -77,6 +78,7 @@ def collect_gho_cstunt_data(**kwargs):
         "OrganizationName": "Global Health Observatory",
         "OrganizationCode": "GHO",
         "OrganizationSeriesCode": "NUTSTUNTINGPREV,NUTRITION_ANT_HAZ_NE2",
+        "QueryCode": "NUTSTUNTINGPREV,NUTRITION_ANT_HAZ_NE2",
         "URL": base_url + stub,
         "BaseURL": base_url,
     }

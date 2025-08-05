@@ -17,6 +17,7 @@ def collect_unfao_data(UNFAO_element: str, UNFAO_item: str, UNFAO_domain: str, *
         "OrganizationName": "Food and Agriculture Organization",
         "OrganizationCode": "UNFAO",
         "OrganizationSeriesCode": org_series_code,
+        "QueryCode": org_series_code,
         "BaseURL": url,
         "URL": url
     }

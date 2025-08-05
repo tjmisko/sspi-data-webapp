@@ -26,7 +26,7 @@ def collect_wid_data(**kwargs):
                 source_info = {
                     "OrganizationName": "World Inequality Database",
                     "OrganizationCode": "WID",
-                    "OrganizationSeriesCode": file_name,
+                    "QueryCode": "wid_all_data",
                     "URL": url,
                 }
                 sspi_raw_api_data.raw_insert_one(
