@@ -454,6 +454,43 @@ def prepare_panel_data():
         data, exclude_fields, entity_id, time_id, value_id, score_id
     ):
         sspi_panel_data.delete_many({})
+        
+        # First, validate data consistency
+        # Determine which field we're using based on actual data presence
+        field_type = None  # Will be 'score', 'value', or None
+        
+        # Use the actual field names (with defaults if not specified)
+        actual_value_id = value_id if value_id else "Value"
+        actual_score_id = score_id if score_id else "Score"
+        
+        for obs in data:
+            obs_has_score = actual_score_id in obs and obs[actual_score_id] is not None
+            obs_has_value = actual_value_id in obs and obs[actual_value_id] is not None
+            
+            if obs_has_score and obs_has_value:
+                # Single observation has both - this is definitely mixed
+                yield "error: Mixed data detected! Some observations have both score and value fields.\n"
+                yield "Panel plots require consistent data: use either scores OR values, not both.\n"
+                yield "Consider filtering your data to include only one type of measurement.\n"
+                return
+            
+            if obs_has_score:
+                if field_type == 'value':
+                    # We previously saw values, now seeing scores - mixed data
+                    yield "error: Inconsistent data detected! Some observations have scores while others have values.\n"
+                    yield "Panel plots require all observations to use the same field type.\n"
+                    yield "Filter your data to include only scores or only values.\n"
+                    return
+                field_type = 'score'
+            elif obs_has_value:
+                if field_type == 'score':
+                    # We previously saw scores, now seeing values - mixed data
+                    yield "error: Inconsistent data detected! Some observations have scores while others have values.\n"
+                    yield "Panel plots require all observations to use the same field type.\n"
+                    yield "Filter your data to include only scores or only values.\n"
+                    return
+                field_type = 'value'
+        
         item_group_list = generate_item_groups(
             data,
             exclude_fields=exclude_fields,
@@ -491,9 +528,15 @@ def prepare_panel_data():
                     except ValueError:
                         continue
                     year[year_index] = doc["time_id"]
-                    value[year_index] = doc.get("value_id", None) 
-                    score[year_index] = doc.get("score_id", None)
-                    data[year_index] = score[year_index] if doc.get("score_id") else value[year_index]
+                    value[year_index] = doc.get("value_id", None) if "value_id" in doc else None
+                    score[year_index] = doc.get("score_id", None) if "score_id" in doc else None
+                    # Use score if available, otherwise use value
+                    if "score_id" in doc and doc.get("score_id") is not None:
+                        data[year_index] = doc.get("score_id")
+                    elif "value_id" in doc and doc.get("value_id") is not None:
+                        data[year_index] = doc.get("value_id")
+                    else:
+                        data[year_index] = None
                 document = {
                     "ItemIdentifier": id_hash,
                     "ItemOrder": count,
@@ -512,7 +555,8 @@ def prepare_panel_data():
                 }
                 if any([s is not None for s in score]):
                     document["score"] = score
-                if all([v is None for v in value]):
+                # Skip if both value and score arrays are all None
+                if all([v is None for v in value]) and all([s is None for s in score]):
                     yield f"Skipping {cou} as no data available.\n"
                     continue
                 document["Identifiers"] = identifiers
@@ -559,8 +603,10 @@ def get_panel_plot(panel_id):
     yMax = 1
     print("Panel Data:", panel_data)
     for doc in panel_data:
-        yMin = min(yMin, min([d for d in doc["value"] if d is not None]))
-        yMax = max(yMax, max([d for d in doc["value"] if d is not None]))
+        values = [d for d in doc.get("value", []) if d is not None]
+        if values:
+            yMin = min(yMin, min(values))
+            yMax = max(yMax, max(values))
     return jsonify(
         {
             "data": panel_data,

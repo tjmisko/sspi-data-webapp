@@ -526,8 +526,8 @@ def generate_item_groups(
             {
                 "entity_id": obs[entity_id],
                 "time_id": obs[time_id],
-                "value_id": obs.get(value_id, None),
-                "score_id": obs.get(score_id, None),
+                "value_id": obs.get(value_id, None) if value_id in obs else None,
+                "score_id": obs.get(score_id, None) if score_id in obs else None,
             }
         )
     return list(item_levels.values())
