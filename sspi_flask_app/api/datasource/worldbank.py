@@ -34,6 +34,11 @@ def clean_wb_data(raw_data, dataset_code, unit) -> list[dict]:
     clean_data_list = []
     for entry in raw_data:
         iso3 = entry["Raw"]["countryiso3code"]
+        if not iso3:
+            try:
+                iso3 = entry["Raw"]["country"]["id"]
+            except KeyError:
+                continue
         country_data = countries.get(alpha_3=iso3)
         if not country_data:
             continue
