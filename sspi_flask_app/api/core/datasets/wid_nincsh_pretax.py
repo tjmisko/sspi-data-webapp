@@ -6,17 +6,17 @@ import pycountry
 from io import StringIO
 import pandas as pd
 
-@dataset_collector("WID_NINCS_PRETAX")
+@dataset_collector("WID_NINCSH_PRETAX")
 def collect_wid_nincs_pretax(**kwargs):
     yield from collect_wid_data(**kwargs)
 
 
-@dataset_cleaner("WID_NINCS_PRETAX")
+@dataset_cleaner("WID_NINCSH_PRETAX")
 def clean_wid_nincs_pretax():
-    sspi_clean_api_data.delete_many({"DatasetCode": "WID_NINCS_PRETAX"})
-    source_info = sspi_metadata.get_source_info("WID_NINCS_PRETAX")
+    sspi_clean_api_data.delete_many({"DatasetCode": "WID_NINCSH_PRETAX"})
+    source_info = sspi_metadata.get_source_info("WID_NINCSH_PRETAX")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
-    
+    return parse_json(raw_data)
     # Target WID variables for pre-tax national income shares
     target_variables = ["sptincj992", "sptincj999"]  # equal-split adults (adults, all ages)
     target_percentiles = ["p0p100", "p0p50", "p50p90", "p90p100", "p99p100"]
@@ -70,7 +70,7 @@ def clean_wid_nincs_pretax():
                     continue
                     
                 record = {
-                    "DatasetCode": "WID_NINCS_PRETAX",
+                    "DatasetCode": "WID_NINCSH_PRETAX",
                     "CountryCode": country_code,
                     "Year": int(row['year']),
                     "Value": float(row['value']),
