@@ -42,4 +42,5 @@ def clean_unfao_bfprod():
     cleaned_data = jq.compile(jq_transform).input(all_observations).all()
     
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "UNFAO_BFPROD")
     return parse_json(cleaned_data)

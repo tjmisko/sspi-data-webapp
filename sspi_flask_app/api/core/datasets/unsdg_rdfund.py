@@ -30,4 +30,5 @@ def clean_unsdg_rdfund():
     for obs in cleaned_data:
         obs["DatasetCode"] = "UNSDG_RDFUND"
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "UNSDG_RDFUND")
     return parse_json(cleaned_data)

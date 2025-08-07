@@ -30,4 +30,5 @@ def clean_unsdg_montrl():
         drop_list,
     )
     count = sspi_clean_api_data.insert_many(unsdg_montrl)
+    sspi_metadata.record_dataset_range(unsdg_montrl, "UNSDG_MONTRL")
     return unsdg_montrl

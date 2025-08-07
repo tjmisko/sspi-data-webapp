@@ -15,4 +15,5 @@ def clean_tf_crptax():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     cleaned_data = clean_tax_foundation(raw_data[0]["Raw"], "TF_CRPTAX", "Tax Rate", "Corporate Taxes")
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "TF_CRPTAX")
     return parse_json(cleaned_data)

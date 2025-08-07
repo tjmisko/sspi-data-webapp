@@ -25,4 +25,5 @@ def clean_who_physpc():
     )
     cleaned_data = clean_who_data(raw_data, "WHO_PHYSPC", unit, description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WHO_PHYSPC")
     return parse_json(cleaned_data)

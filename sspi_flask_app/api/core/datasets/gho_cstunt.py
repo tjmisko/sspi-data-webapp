@@ -38,4 +38,5 @@ def clean_gho_cstunt():
     rename_keys_filter = jq.compile(rename_keys)
     cleaned_data = rename_keys_filter.input(reduced_list).all()
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "GHO_CSTUNT")
     return parse_json(cleaned_data)

@@ -21,4 +21,5 @@ def clean_uis_enrpri():
     description = "Net enrollment in primary school (%)"
     cleaned_data = clean_uis_data(raw_data, "UIS_ENRPRI", "Percent", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "UIS_ENRPRI")
     return parse_json(cleaned_data)
