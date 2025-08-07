@@ -5,8 +5,8 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    generate_item_levels,
-    generate_item_groups,
+    generate_series_levels,
+    generate_series_groups,
 )
 import pycountry
 import json
@@ -29,7 +29,8 @@ from sspi_flask_app.models.database import (
     sspi_static_rank_data,
     sspi_static_radar_data,
     sspi_static_stack_data,
-    sspi_dynamic_line_data,
+    sspi_indicator_dynamic_line_data,
+    sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
 )
 from datetime import datetime
@@ -91,8 +92,8 @@ def get_static_indicator_data(IndicatorCode):
     return jsonify(chart_data)
 
 
-@dashboard_bp.route("/panel/score/<ItemCode>", methods=["GET"])
-def get_dynamic_score_line_data(ItemCode):
+@dashboard_bp.route("/panel/score/<item_code>", methods=["GET"])
+def get_dynamic_score_line_data(item_code):
     """
     Get the dynamic data for the given category code for a line chart
     """
@@ -101,7 +102,7 @@ def get_dynamic_score_line_data(ItemCode):
         detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details
     }
     active_schema = sspi_item_data.active_schema(name_map=name_map)
-    detail = sspi_metadata.get_item_detail(ItemCode)
+    detail = sspi_metadata.get_item_detail(item_code)
     print(detail)
     doc_type = detail.get("ItemType", "No Item Type")
     print("Document Type:", doc_type)
@@ -116,16 +117,16 @@ def get_dynamic_score_line_data(ItemCode):
     name = detail["ItemName"]
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
-    query = {"ICode": ItemCode}
+    query = {"ICode": item_code}
     if country_query:
         query["CCode"] = {"$in": country_query}
-    dynamic_score_data = parse_json(sspi_dynamic_line_data.find(query))
+    dynamic_score_data = parse_json(sspi_item_dynamic_line_data.find(query))
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
     if dynamic_score_data:
         min_year = dynamic_score_data[0]["minYear"]
         max_year = dynamic_score_data[0]["maxYear"]
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
-    chart_title = f"{name} ({ItemCode}) Score"
+    chart_title = f"{name} ({item_code}) Score"
     group_options = sspi_metadata.country_groups()
     return jsonify(
         {
@@ -134,10 +135,9 @@ def get_dynamic_score_line_data(ItemCode):
             "labels": year_labels,
             "description": description,
             "groupOptions": group_options,
-            "hasScore": True,
             "itemOptions": item_options,
-            "itemType": doc_type[0:-6].lower(),
-            "itemCode": ItemCode,
+            "itemType": doc_type,
+            "itemCode": item_code,
             "tree": active_schema,
         }
     )
@@ -419,7 +419,7 @@ def find_panel_levels():
         return jsonify({"error": "Data must be a list"}), 400
     if not all(isinstance(item, dict) for item in data):
         return jsonify({"error": "All items in data must be dictionaries"}), 400
-    item_level_dict = generate_item_levels(
+    item_level_dict = generate_series_levels(
         data,
         exclude_fields=exclude_fields,
         entity_id=entity_id,
@@ -447,18 +447,16 @@ def prepare_panel_data():
         return jsonify({"error": "Malformed or missing JSON data"}), 400
     if not isinstance(data, list):
         return jsonify({"error": "Data must be a list"}), 400
-    if not all(isinstance(item, dict) for item in data):
-        return jsonify({"error": "All items in data must be dictionaries"}), 400
+    if not all(isinstance(series, dict) for series in data):
+        return jsonify({"error": "All series in data must be dictionaries"}), 400
 
     def prepare_panel_data_iterator(
         data, exclude_fields, entity_id, time_id, value_id, score_id
     ):
         sspi_panel_data.delete_many({})
-        
         # First, validate data consistency
         # Determine which field we're using based on actual data presence
         field_type = None  # Will be 'score', 'value', or None
-        
         # Use the actual field names (with defaults if not specified)
         actual_value_id = value_id if value_id else "Value"
         actual_score_id = score_id if score_id else "Score"
@@ -491,7 +489,7 @@ def prepare_panel_data():
                     return
                 field_type = 'value'
         
-        item_group_list = generate_item_groups(
+        series_group_list = generate_series_groups(
             data,
             exclude_fields=exclude_fields,
             entity_id=entity_id,
@@ -499,23 +497,23 @@ def prepare_panel_data():
             value_id=value_id,
             score_id=score_id,
         )
-        if len(item_group_list) > 30:
+        if len(series_group_list) > 30:
             yield "error: Too many levels (>30) to display! Run `sspi panel levels` to find levels to filter.\n"
-            return jsonify({"error": "Too many items to display"})
+            return jsonify({"error": "Too many series levels to display"})
         yield "================\n"
         count = 1
-        for item in item_group_list:
+        for series in series_group_list:
             min_year = 2000
             max_year = datetime.now().year
             label_list = list(range(min_year, max_year + 1))
-            identifiers = item["Identifier"]
+            identifiers = series["Identifier"]
             identifier_string = json.dumps(identifiers).encode("utf-8")
             id_hash = hashlib.sha1(identifier_string).hexdigest()
             yield "Identifier Hash: " + id_hash + "\n\n"
             for k, v in identifiers.items():
                 yield f"{k}: {v}\n"
             yield "================\n"
-            for cou, document in item["Datasets"].items():
+            for cou, document in series["Datasets"].items():
                 document = sorted(document, key=lambda x: x["time_id"])
                 group_list = sspi_metadata.get_country_groups(cou)
                 year = [None] * len(label_list)
@@ -538,12 +536,11 @@ def prepare_panel_data():
                     else:
                         data[year_index] = None
                 document = {
-                    "ItemIdentifier": id_hash,
-                    "ItemOrder": count,
+                    "SeriesIdentifier": id_hash,
+                    "SeriesOrder": count,
                     "CCode": cou,
                     "CName": country_code_to_name(cou),
                     "CGroup": group_list,
-                    "parsing": {"xAxisKey": "years", "yAxisKey": "value"},
                     "pinned": False,
                     "hidden": "SSPI49" not in group_list,
                     "label": f"{cou} - {country_code_to_name(cou)}",
@@ -573,26 +570,26 @@ def prepare_panel_data():
 
 @dashboard_bp.route("/view/panel")
 def view_panel_plots():
-    panel_data = sspi_panel_data.distinct("ItemIdentifier")
-    return render_template("panel-utility.html", panel_id_list=panel_data)
+    panel_data = sspi_panel_data.distinct("SeriesIdentifier")
+    return render_template("panel-utility.html", series_id_list=panel_data)
 
 
-@dashboard_bp.route("/panel/item/<panel_id>")
-def get_panel_plot(panel_id):
+@dashboard_bp.route("/panel/series/<series_id>")
+def get_series_panel_plot(series_id):
     """
     Get the panel plot for a given panel id
     """
 
-    def make_title(identifiers, panel_id):
-        if "ItemCode" in identifiers.keys():
-            return f"{identifiers['ItemCode']} (Item Hash: {panel_id})"
-        if "IntermediateCode" in identifiers.keys():
-            return f"{identifiers['IntermediateCode']} (Item Hash: {panel_id})"
+    def make_title(identifiers, series_id):
+        if "SeriesCode" in identifiers.keys():
+            return f"{identifiers['ItemCode']} (Series Hash: {series_id})"
+        if "DatasetCode" in identifiers.keys():
+            return f"{identifiers['DatasetCode']} (Series Hash: {series_id})"
         if "IndicatorCode" in identifiers.keys():
-            return f"{identifiers['IndicatorCode']} (Item Hash: {panel_id})"
-        return f"Panel Plot (Item Hash: {panel_id})"
+            return f"{identifiers['IndicatorCode']} (Series Hash: {series_id})"
+        return f"Panel Plot (Series Hash: {series_id})"
 
-    panel_data = sspi_panel_data.find({"ItemIdentifier": panel_id}, {"_id": 0})
+    panel_data = sspi_panel_data.find({"SeriesIdentifier": series_id}, {"_id": 0})
     min_year = panel_data[0]["minYear"]
     max_year = panel_data[0]["maxYear"]
     has_score = panel_data[0].get("score", None) is not None
@@ -612,7 +609,7 @@ def get_panel_plot(panel_id):
             "data": panel_data,
             "title": {
                 "display": True,
-                "text": make_title(identifiers, panel_id),
+                "text": make_title(identifiers, series_id),
                 "font": {"size": 18},
                 "color": "#ccc",
                 "align": "start",
@@ -698,7 +695,7 @@ def dynamic_stack_data(CountryCode, RootItemCode):
         "CCode": CountryCode,
         "ICode": {"$in": child_codes + [RootItemCode]},
     }
-    data = sspi_dynamic_line_data.find(mongo_query)
+    data = sspi_item_dynamic_line_data.find(mongo_query)
     year_labels = list(range(2000, datetime.now().year + 1))
     for document in data:
         if document["ICode"] == RootItemCode:

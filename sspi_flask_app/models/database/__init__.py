@@ -95,8 +95,11 @@ sspi_static_corr_data = SSPIProductionData(
 sspi_static_radar_data = SSPIProductionData(
     sspidb.sspi_static_radar_data
 )
-sspi_dynamic_line_data = SSPIProductionData(
-    sspidb.sspi_dynamic_line_data
+sspi_item_dynamic_line_data = SSPIProductionData(
+    sspidb.sspi_item_dynamic_line_data
+)
+sspi_indicator_dynamic_line_data = SSPIProductionData(
+    sspidb.sspi_indicator_dynamic_line_data
 )
 sspi_dynamic_matrix_data = SSPIProductionData(
     sspidb.sspi_dynamic_matrix_data

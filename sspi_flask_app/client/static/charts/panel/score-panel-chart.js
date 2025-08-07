@@ -49,15 +49,17 @@ class ScorePanelChart extends PanelChart {
         const itemTitle = itemTypeCapped + ' Information';
         const itemSummary = this.itemInformation.querySelector('.item-information-summary')
         itemSummary.textContent = itemTitle;
+        const defaultValue = '/data/' + itemType.toLowerCase() + '/' + this.itemCode
+        console.log('Default value for item dropdown:', defaultValue)
         for (const option of options) {
             const opt = document.createElement('option')
             opt.value = option.Value
+            if (option.Value === defaultValue) {
+                opt.selected = true;
+            }
             opt.textContent = option.Text;
             this.itemDropdown.appendChild(opt)
         }
-        const defaultValue = '/data/' + itemType + '/' + this.itemCode
-        console.log(defaultValue)
-        this.itemDropdown.value = defaultValue
         this.itemDropdown.addEventListener('change', (event) => {
             window.location.href = event.target.value
         })

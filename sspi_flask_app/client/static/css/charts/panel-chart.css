@@ -1,0 +1,53 @@
+/* Download form styling */
+.panel-download-form fieldset {
+  border: 1px solid var(--subtle-line-color, #ccc);
+  border-radius: 4px;
+  padding: 0.5em;
+  margin: 0.3em 0;
+}
+
+.panel-download-form legend {
+  font-weight: bold;
+  font-size: 0.9em;
+  padding: 0 0.3em;
+}
+
+/* Data scope options - each on separate line with tighter spacing */
+.download-scope-option {
+  display: block;
+  padding: 0.15em 0;
+  cursor: pointer;
+}
+
+/* File format options - side by side */
+.download-format-option {
+  display: inline-block;
+  margin-right: 1em;
+  padding: 0.2em 0;
+  cursor: pointer;
+}
+
+.panel-download-form label:hover {
+  color: var(--green-accent, #8BA342);
+}
+
+.panel-download-form input[type="radio"] {
+  margin-right: 0.5em;
+  cursor: pointer;
+}
+
+.download-submit-button {
+  margin-top: 0.5em;
+  padding: 0.5em 1em;
+  background-color: var(--green-accent, #8BA342);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.download-submit-button:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
