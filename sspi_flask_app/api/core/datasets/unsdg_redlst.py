@@ -27,11 +27,12 @@ def clean_unsdg_redlst():
         "geoAreaCode",
         "geoAreaName",
     ]
-    unsdg_freshwt = filter_sdg(
+    unsdg_redlst = filter_sdg(
         extracted_unsdg_redlst,
         idcode_map,
         rename_map,
         drop_list,
     )
-    count = sspi_clean_api_data.insert_many(unsdg_freshwt)
-    return unsdg_freshwt
+    count = sspi_clean_api_data.insert_many(unsdg_redlst)
+    sspi_metadata.record_dataset_range(unsdg_redlst, "UNSDG_REDLST")
+    return unsdg_redlst

@@ -26,11 +26,12 @@ def clean_unsdg_marine():
         "geoAreaCode",
         "geoAreaName",
     ]
-    unsdg_freshwt = filter_sdg(
+    unsdg_marine = filter_sdg(
         extracted_unsdg_marine,
         idcode_map,
         rename_map,
         drop_list,
     )
-    count = sspi_clean_api_data.insert_many(unsdg_freshwt)
-    return unsdg_freshwt
+    count = sspi_clean_api_data.insert_many(unsdg_marine)
+    sspi_metadata.record_dataset_range(unsdg_marine, "UNSDG_MARINE")
+    return unsdg_marine
