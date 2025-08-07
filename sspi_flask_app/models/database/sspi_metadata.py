@@ -779,5 +779,34 @@ class SSPIMetadata(MongoWrapper):
             return [ sspi ] + pillars_filtered + categories_filtered + indicators_filtered
         return [ sspi ] + pillars + categories + indicators
 
+    def record_dataset_range(self, clean_dataset: list[dict], dataset_code: str):
+        """
+        Records the range of values for a dataset in the metadata collection.
+        This is used to track the temporal coverage of datasets.
 
+        :param clean_dataset: The cleaned dataset to record the range for.
+        :param dataset_code: The code of the dataset to record the range for.
+        """
+        min_val, max_val = 0, 0
+        for d in clean_dataset:
+            new_val = d.get("Value")
+            assert isinstance(new_val, (int, float)), (
+                f"Value for dataset {dataset_code} must be an int or float, "
+                f"but found {type(new_val)}: {new_val}"
+            )
+            if new_val > max_val:
+                max_val = new_val
+            elif new_val < min_val:
+                min_val = new_val
+        query = {
+            "DocumentType": "DatasetDetail",
+            "Metadata.DatasetCode": dataset_code
+        }
+        self._mongo_database.update_one(
+            query,
+            {"$set": {
+                "Metadata.Range.yMin": min_val,
+                "Metadata.Range.yMax": max_val
+            }}
+        )
 
