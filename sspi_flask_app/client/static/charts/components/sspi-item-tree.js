@@ -92,6 +92,16 @@ class SSPIItemTree {
     }
 
     #onKey(e) {
+        // Don't intercept keys when user is typing in input fields
+        const activeElement = document.activeElement;
+        if (activeElement && (
+            activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'TEXTAREA' ||
+            activeElement.contentEditable === 'true'
+        )) {
+            return; // Let the input handle the keystroke
+        }
+
         const key   = e.key;
         const ti    = e.currentTarget;
         const vis   = this.items.filter(n => !this.#parent(n) || this.#parent(n).ariaExpanded === 'true');

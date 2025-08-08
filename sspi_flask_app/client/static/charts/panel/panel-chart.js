@@ -50,20 +50,32 @@ class PanelChart {
 </details>
 <details class="chart-options-details chart-view-options">
     <summary class="chart-view-options-summary">View Options</summary>
-    <div class="chart-view-option">
-        <input type="checkbox" class="extrapolate-backward"/>
-        <label class="title-bar-label">Backward Extrapolation</label>
-    </div>
-    <div class="chart-view-option">
-        <input type="checkbox" class="interpolate-linear"/>
-        <label class="title-bar-label">Linear Interpolation</label>
+    <div class="view-options-suboption-container">
+        <div class="chart-view-subheader">Imputation Options</div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="extrapolate-backward"/>
+            <label class="title-bar-label">Backward Extrapolation</label>
+        </div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="interpolate-linear"/>
+            <label class="title-bar-label">Linear Interpolation</label>
+        </div>
     </div>
 </details>
 <details class="country-group-options chart-options-details">
     <summary class="country-group-selector-summary">Country Groups</summary>
-    <select class="country-group-selector"></select>
-    <button class="draw-button">Draw 10 Countries</button>
-    <button class="show-in-group-button">Show All in Group</button>
+    <div class="view-options-suboption-container">
+        <div class="chart-view-subheader">Country Group</div>
+        <div class="chart-view-option">
+            <select class="country-group-selector"></select>
+        </div>
+        <div class="chart-view-option country-group-buttons">
+            <div class="country-group-button-group">
+                <button class="draw-button">Draw 10 Countries</button>
+                <button class="show-in-group-button">Show All in Group</button>
+            </div>
+        </div>
+    </div> 
 </details>
 <details class="pinned-country-details chart-options-details">
     <summary>Pinned Countries</summary>
