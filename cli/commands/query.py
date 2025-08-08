@@ -19,5 +19,7 @@ def query(database, series_codes: list[str]=[], remote=False):
                 request_string += new_series[1:]
             else:
                 request_string += new_series
-    res = connector.call(request_string, remote=remote)
+    # Use longer timeout for raw data queries which contain large documents
+    timeout = 300 if database == "sspi_raw_api_data" else 120
+    res = connector.call(request_string, remote=remote, timeout=timeout)
     click.echo(json.dumps(res.json()))
