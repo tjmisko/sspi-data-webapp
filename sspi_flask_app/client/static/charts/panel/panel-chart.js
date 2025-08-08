@@ -5,9 +5,8 @@ class PanelChart {
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.pins = new Set() // pins contains a list of pinned countries
         this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
-        this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
-        this.proximityPlugin = proximityPlugin
+        this.chartInteractionPlugin = chartInteractionPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
         this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
         this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
@@ -185,7 +184,7 @@ class PanelChart {
         this.context = this.canvas.getContext('2d')
         this.chart = new Chart(this.context, {
             type: 'line',
-            plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin, this.proximityPlugin],
+            plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
             options: {
                 // animation: false,
                 responsive: true,
@@ -211,16 +210,18 @@ class PanelChart {
                     legend: {
                         display: false,
                     },
-                    endLabelPlugin: {},
                     tooltip: {
                         enabled: false,
                     },
-                    proximityHighlight: {
-                        radius: 20, // px
+                    chartInteractionPlugin: {
                         enabled: true,
+                        radius: 20,
+                        clickRadius: 2,
                         tooltipBg: this.headerBackgroundColor,
                         tooltipFg: this.titleColor,
-                        clickRadius: 2,
+                        labelField: 'CCode',
+                        showDefaultLabels: true,
+                        defaultLabelSpacing: 5,
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.togglePin(dataset)
@@ -395,6 +396,12 @@ class PanelChart {
 
     update(data) {
         console.log(data)
+        
+        // Force refresh of chart interaction plugin labels when data changes
+        if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
+            this.chartInteractionPlugin._forceRefreshLabels(this.chart)
+        }
+        
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
         if (this.pinnedOnly) {
@@ -447,7 +454,7 @@ class PanelChart {
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     showGroup(groupName) {
@@ -463,7 +470,7 @@ class PanelChart {
                 dataset.hidden = true
             }
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     hideUnpinned() {
@@ -475,7 +482,7 @@ class PanelChart {
                 dataset.hidden = true
             }
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     showRandomN(N = 10) {
@@ -500,7 +507,7 @@ class PanelChart {
             this.chart.data.datasets[index].hidden = false
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     pinCountry(dataset) {
@@ -536,7 +543,7 @@ class PanelChart {
                 this.pins.delete(element)
             }
         }
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
         this.pushPinUpdate()
         this.updateLegend()
     }
@@ -795,5 +802,34 @@ class PanelChart {
                 break
         }
         return result
+    }
+
+    // Helper method to update chart while preserving any set y-axis limits
+    // Chart.js automatically recalculates y-axis min/max during chart.update() based on visible data,
+    // which overrides any bounds that have been set (programmatically or by users). 
+    // This method preserves those bounds to respect the configured limits.
+    updateChartPreservingYAxis(updateOptions = { duration: 0, lazy: false }) {
+        // Get the actual current scale values from the chart's scales object
+        const yScale = this.chart.scales?.y
+        const currentMin = yScale?.min
+        const currentMax = yScale?.max
+        
+        // Also check if there are explicitly set bounds in options
+        const yAxis = this.chart.options.scales?.y
+        const configuredMin = yAxis?.min
+        const configuredMax = yAxis?.max
+        
+        // Prefer configured bounds, but fall back to current scale if not explicitly configured
+        const minToPreserve = configuredMin !== undefined ? configuredMin : currentMin
+        const maxToPreserve = configuredMax !== undefined ? configuredMax : currentMax
+        
+        this.chart.update(updateOptions)
+        
+        // Restore the y-axis limits
+        if (minToPreserve !== undefined || maxToPreserve !== undefined) {
+            this.chart.options.scales.y.min = minToPreserve
+            this.chart.options.scales.y.max = maxToPreserve
+            this.chart.update({ duration: 0, lazy: false })
+        }
     }
 }
