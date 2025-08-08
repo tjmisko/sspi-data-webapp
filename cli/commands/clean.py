@@ -11,4 +11,4 @@ def clean(series_code, remote: bool):
     connector = SSPIDatabaseConnector()
     series_code = series_code.upper()
     request_string = f"/api/v1/clean/{series_code}"
-    stream_response(connector.call(request_string, remote=remote, stream=True))
+    stream_response(connector.call(request_string, remote=remote, stream=True, timeout=300))
