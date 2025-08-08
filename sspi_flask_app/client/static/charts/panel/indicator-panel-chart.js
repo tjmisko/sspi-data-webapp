@@ -116,19 +116,20 @@ class IndicatorPanelChart extends PanelChart {
     }
 
     setYAxisMinMax(min, max, update = true) {
-        this.currentYMin = min
-        this.currentYMax = max
-        this.chart.options.scales.y.min = min
-        this.chart.options.scales.y.max = max
+        // Round to 2 decimal places for display consistency
+        this.currentYMin = Math.round(min * 100) / 100
+        this.currentYMax = Math.round(max * 100) / 100
+        this.chart.options.scales.y.min = this.currentYMin
+        this.chart.options.scales.y.max = this.currentYMax
         if (update) {
             this.chart.update()
         }
         // Update input field values if they exist
         if (this.yMinInput) {
-            this.yMinInput.value = min
+            this.yMinInput.value = this.currentYMin
         }
         if (this.yMaxInput) {
-            this.yMaxInput.value = max
+            this.yMaxInput.value = this.currentYMax
         }
     }
 
@@ -169,34 +170,39 @@ class IndicatorPanelChart extends PanelChart {
         // Call parent method first
         super.buildChartOptions()
         
-        // Find the View Options details element and add our custom controls
+        // Find the View Options details element and modify its content
         const viewOptions = this.chartOptions.querySelector('.chart-view-options')
         if (viewOptions) {
-            // Create series selector HTML
-            const seriesControlsHTML = `
-                <div class="chart-view-option series-selector-container">
-                    <label class="title-bar-label" for="series-selector">Active Series:</label>
-                    <select class="series-selector" id="series-selector">
-                        <option value="` + this.itemCode + `" selected>` + this.itemCode + ` Indicator Score</option>
-                    </select>
-                </div>
-                <div class="chart-view-option active-series-description" style="display: none;">
-                    <div class="active-series-description-content"></div>
-                </div>
-                <div class="chart-view-option y-axis-controls">
-                    <div class="y-axis-input-group">
-                        <label class="title-bar-label" for="y-min-input">Y Min:</label>
-                        <input type="number" class="y-min-input" id="y-min-input" step="any" value="0"/>
+            // Find the existing container with Imputation Options
+            const existingContainer = viewOptions.querySelector('.view-options-suboption-container')
+            if (existingContainer) {
+                // Add our new content to the existing container
+                const seriesControlsHTML = `
+                    <div class="chart-view-subheader">Active Series</div>
+                    <div class="chart-view-option series-selector-container">
+                        <select class="series-selector" id="series-selector">
+                            <option value="` + this.itemCode + `" selected>` + this.itemCode + ` Indicator Score</option>
+                        </select>
                     </div>
-                    <div class="y-axis-input-group">
-                        <label class="title-bar-label" for="y-max-input">Y Max:</label>
-                        <input type="number" class="y-max-input" id="y-max-input" step="any" value="1"/>
+                    <div class="chart-view-option active-series-description" style="display: none;">
+                        <div class="active-series-description-content"></div>
                     </div>
-                    <button class="restore-y-axis-button" style="display: none;">Restore Default Range</button>
-                </div>
-            `;
-            // Insert at the beginning of View Options
-            viewOptions.insertAdjacentHTML('afterbegin', seriesControlsHTML)
+                    <div class="chart-view-subheader">Y-Axis Range</div>
+                    <div class="chart-view-option y-axis-controls">
+                        <div class="y-axis-input-group">
+                            <label class="title-bar-label" for="y-min-input">Y Min:</label>
+                            <input type="number" class="y-min-input" id="y-min-input" step="0.01" value="0"/>
+                        </div>
+                        <div class="y-axis-input-group">
+                            <label class="title-bar-label" for="y-max-input">Y Max:</label>
+                            <input type="number" class="y-max-input" id="y-max-input" step="0.01" value="1"/>
+                        </div>
+                        <button class="restore-y-axis-button" style="display: none;">Restore Default Range</button>
+                    </div>
+                `;
+                // Insert at the beginning so Imputation Options stay at the bottom
+                existingContainer.insertAdjacentHTML('afterbegin', seriesControlsHTML)
+            }
         }
     }
 
@@ -223,9 +229,17 @@ class IndicatorPanelChart extends PanelChart {
         }
         
         // Wire up Y-axis input change listeners
-        const handleYAxisChange = () => {
-            const yMin = parseFloat(this.yMinInput.value)
-            const yMax = parseFloat(this.yMaxInput.value)
+        const handleYAxisChange = (event) => {
+            const yMinValue = this.yMinInput.value
+            const yMaxValue = this.yMaxInput.value
+            
+            // Allow temporary invalid states during typing (like "0." or "-")
+            if (event.type === 'input' && (yMinValue.endsWith('.') || yMinValue === '-' || yMaxValue.endsWith('.') || yMaxValue === '-')) {
+                return // Don't validate incomplete decimal inputs
+            }
+            
+            const yMin = parseFloat(yMinValue)
+            const yMax = parseFloat(yMaxValue)
             
             if (isNaN(yMin) || isNaN(yMax)) {
                 return // Wait for valid input
@@ -239,7 +253,7 @@ class IndicatorPanelChart extends PanelChart {
             this.updateRestoreButton()
         }
         
-        // Listen for input changes (on input event for immediate feedback)
+        // Listen for input changes with enhanced validation
         if (this.yMinInput) {
             this.yMinInput.addEventListener('input', handleYAxisChange)
             this.yMinInput.addEventListener('blur', handleYAxisChange)
