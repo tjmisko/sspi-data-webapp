@@ -17,4 +17,5 @@ def clean_wid_topten():
     # This will be implemented in the next task
     cleaned_data = []
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WID_TOPTEN")
     return parse_json(cleaned_data)

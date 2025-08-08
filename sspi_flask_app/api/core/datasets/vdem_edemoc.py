@@ -39,4 +39,5 @@ def clean_vdem_edemoc():
             "Unit": "Index"
         })
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "VDEM_EDEMOC")
     return parse_json(cleaned_data)

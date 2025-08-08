@@ -11,7 +11,8 @@ from sspi_flask_app.models.database import (
     sspi_static_rank_data,
     sspi_static_radar_data,
     sspi_static_stack_data,
-    sspi_dynamic_line_data,
+    sspi_item_dynamic_line_data,
+    sspi_indicator_dynamic_line_data,
     sspi_dynamic_matrix_data
 )
 from sspi_flask_app.api.resources.utilities import (
@@ -51,8 +52,9 @@ def finalize_iterator(local_path, endpoints):
     yield "Scoring Dynamic Data\n"
     yield from finalize_sspi_dynamic_score_iterator(indicator_list, country_list)
     yield "Finalizing Dynamic Line Data\n"
-    sspi_dynamic_line_data.delete_many({})
+    sspi_indicator_dynamic_line_data.delete_many({})
     yield from finalize_dynamic_line_indicator_datasets()
+    sspi_item_dynamic_line_data.delete_many({})
     yield from finalize_dynamic_line_score_datasets()
     yield "Finalization Complete\n"
 
@@ -257,7 +259,8 @@ def finalize_dynamic_line_data():
     def combined_iterator():
         yield from finalize_dynamic_line_indicator_datasets()
         yield from finalize_dynamic_line_score_datasets()
-    sspi_dynamic_line_data.delete_many({})
+    sspi_indicator_dynamic_line_data.delete_many({})
+    sspi_item_dynamic_line_data.delete_many({})
     return Response(combined_iterator(), mimetype='text/event-stream')
 
 
@@ -293,6 +296,11 @@ def finalize_dynamic_line_indicator_datasets():
             years = [None] * len(label_list)
             scores = [None] * len(label_list)
             data = [None] * len(label_list)
+            sspi_dataset_map = {}
+            for dataset in obs_list[0].get("Datasets", []):
+                sspi_dataset_map[dataset["DatasetCode"]] = {
+                    "data": [None] * len(label_list)
+                }
             for doc in obs_list:
                 try:
                     year_index = label_list.index(doc["Year"])
@@ -301,19 +309,20 @@ def finalize_dynamic_line_indicator_datasets():
                 years[year_index] = doc["Year"]
                 data[year_index] = doc["Score"]
                 scores[year_index] = doc["Score"]
+                sspi_datasets = doc["Datasets"]
+                for dataset in sspi_datasets:
+                    if dataset["DatasetCode"] in sspi_dataset_map:
+                        sspi_dataset_map[dataset["DatasetCode"]]["data"][year_index] = dataset["Value"]
             dataset = {
                 "CCode": country_code,
                 "CName": country_code_to_name(country_code),
                 "ICode": indicator_code,
                 "IName": detail["Indicator"],
                 "CGroup": group_list,
-                "parsing": {
-                    "xAxisKey": "years",
-                    "yAxisKey": "scores"
-                },
                 "pinned": False,
                 "label": f"{country_code} - {country_code_to_name(country_code)}",
                 "years": years,
+                "Datasets": sspi_dataset_map,
                 "minYear": min_year,
                 "maxYear": max_year,
                 "data": data,
@@ -321,7 +330,7 @@ def finalize_dynamic_line_indicator_datasets():
                 "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
                 "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
             }
-            sspi_dynamic_line_data.insert_one(dataset)
+            sspi_indicator_dynamic_line_data.insert_one(dataset)
         count += 1
 
 
@@ -373,7 +382,7 @@ def finalize_dynamic_line_score_datasets():
                 "yAxisMinValue": 0,
                 "yAxisMaxValue": 1
             }
-            sspi_dynamic_line_data.insert_one(dataset)
+            sspi_item_dynamic_line_data.insert_one(dataset)
         count += 1
 
 

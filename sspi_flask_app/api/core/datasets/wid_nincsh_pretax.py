@@ -80,4 +80,5 @@ def clean_wid_nincs_pretax():
                 cleaned_data.append(record)
     
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WID_NINCSH_PRETAX")
     return parse_json(cleaned_data)

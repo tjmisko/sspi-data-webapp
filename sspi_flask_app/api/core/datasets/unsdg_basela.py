@@ -30,4 +30,5 @@ def clean_unsdg_basela():
         drop_list,
     )
     count = sspi_clean_api_data.insert_many(unsdg_stkhlm)
+    sspi_metadata.record_dataset_range(unsdg_stkhlm, "UNSDG_BASELA")
     return unsdg_stkhlm

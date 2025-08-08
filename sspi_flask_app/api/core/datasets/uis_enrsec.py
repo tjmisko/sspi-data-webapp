@@ -21,4 +21,5 @@ def clean_uis_enrsec():
     description = "Net enrollment in lower secondary school (%)"
     cleaned_data = clean_uis_data(raw_data, "UIS_ENRSEC", "Percent", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "UIS_ENRSEC")
     return parse_json(cleaned_data)

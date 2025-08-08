@@ -19,4 +19,5 @@ def clean_uis_yrsedu():
     )
     cleaned_data = clean_uis_data(raw_data, "UIS_YRSEDU", "Years", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "UIS_YRSEDU")
     return parse_json(cleaned_data)

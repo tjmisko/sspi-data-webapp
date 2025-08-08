@@ -32,4 +32,5 @@ def clean_unsdg_terrst():
         drop_list,
     )
     count = sspi_clean_api_data.insert_many(unsdg_terrst)
+    sspi_metadata.record_dataset_range(unsdg_terrst, "UNSDG_TERRST")
     return unsdg_terrst

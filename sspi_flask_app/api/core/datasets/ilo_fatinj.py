@@ -38,4 +38,5 @@ def clean_ilo_fatinj():
     fatinj_raw.dropna(subset=["Value"], inplace=True)
     cleaned_data = json.loads(str(fatinj_raw.to_json(orient="records")))
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "ILO_FATINJ")
     return parse_json(cleaned_data)

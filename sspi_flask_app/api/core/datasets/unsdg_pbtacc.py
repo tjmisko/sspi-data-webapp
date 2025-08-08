@@ -39,4 +39,5 @@ def clean_unsdg_pbtacc():
             "CityCode": document.get("cities")
         }
     count = sspi_clean_api_data.insert_many(unsdg_pbtacc)
+    sspi_metadata.record_dataset_range(unsdg_pbtacc, "UNSDG_PBTACC")
     return unsdg_pbtacc

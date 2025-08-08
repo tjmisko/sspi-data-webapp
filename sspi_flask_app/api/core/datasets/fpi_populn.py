@@ -17,4 +17,5 @@ def clean_fpi_populn():
     description = "Population"
     cleaned_data = clean_fpi_data(raw_data, "FPI_POPULN", "People", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FPI_POPULN")
     return parse_json(cleaned_data)

@@ -66,4 +66,5 @@ def clean_iea_coalpw():
     )
     
     sspi_clean_api_data.insert_many(intermediate_document_list)
+    sspi_metadata.record_dataset_range(intermediate_document_list, "IEA_COALPW")
     return parse_json(intermediate_document_list)

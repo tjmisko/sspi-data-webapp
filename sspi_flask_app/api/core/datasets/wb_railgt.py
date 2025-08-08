@@ -14,4 +14,5 @@ def clean_wb_railgt():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     wb_railgt = clean_wb_data(raw_data, "WB_RAILGT", "Ton-Kilometers (million)")
     count = sspi_clean_api_data.insert_many(wb_railgt)
+    sspi_metadata.record_dataset_range(wb_railgt, "WB_RAILGT")
     return wb_railgt

@@ -20,4 +20,5 @@ def clean_wb_intrnt():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     cleaned_data = clean_wb_data(raw_data, "WB_INTRNT", "Percent")
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WB_INTRNT")
     return parse_json(cleaned_data)

@@ -5,10 +5,8 @@ class PanelChart {
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.pins = new Set() // pins contains a list of pinned countries
         this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
-        this.yAxisScale = "value"
-        this.endLabelPlugin = endLabelPlugin
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
-        this.proximityPlugin = proximityPlugin
+        this.chartInteractionPlugin = chartInteractionPlugin
         this.setTheme(window.observableStorage.getItem("theme"))
         this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
         this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
@@ -46,7 +44,9 @@ class PanelChart {
 <details class="item-information chart-options-details">
     <summary class="item-information-summary">Item Information</summary>
     <select class="item-dropdown"></select>
-    <div class="dynamic-item-description"></div>
+    <div class="dynamic-item-description-container">
+        <div class="dynamic-item-description"></div>
+    </div>
 </details>
 <details class="chart-options-details chart-view-options">
     <summary class="chart-view-options-summary">View Options</summary>
@@ -58,7 +58,6 @@ class PanelChart {
         <input type="checkbox" class="interpolate-linear"/>
         <label class="title-bar-label">Linear Interpolation</label>
     </div>
-    <button class="showall-button">Show All</button>
 </details>
 <details class="country-group-options chart-options-details">
     <summary class="country-group-selector-summary">Country Groups</summary>
@@ -79,20 +78,20 @@ class PanelChart {
 </details>
 <details class="download-data-details chart-options-details">
     <summary>Download Chart Data</summary>
-    <form id="downloadForm">
-        <fieldset>
+    <form class="panel-download-form">
+        <fieldset class="download-scope-fieldset">
             <legend>Select data scope:</legend>
-            <label><input type="radio" name="scope" value="pinned" required>Pinned countries</label>
-            <label><input type="radio" name="scope" value="visible">Visible countries</label>
-            <label><input type="radio" name="scope" value="group">Countries in group</label>
-            <label><input type="radio" name="scope" value="all">All available countries</label>
+            <label class="download-scope-option"><input type="radio" name="scope" value="pinned" required>Pinned countries</label>
+            <label class="download-scope-option"><input type="radio" name="scope" value="visible">Visible countries</label>
+            <label class="download-scope-option"><input type="radio" name="scope" value="group">Countries in group</label>
+            <label class="download-scope-option"><input type="radio" name="scope" value="all">All available countries</label>
         </fieldset>
-        <fieldset>
+        <fieldset class="download-format-fieldset">
             <legend>Choose file format:</legend>
-            <label><input type="radio" name="format" value="json" required>JSON</label>
-            <label><input type="radio" name="format" value="csv">CSV</label>
+            <label class="download-format-option"><input type="radio" name="format" value="json" required>JSON</label>
+            <label class="download-format-option"><input type="radio" name="format" value="csv">CSV</label>
         </fieldset>
-        <button type="submit">Download Data</button>
+        <button type="submit" class="download-submit-button">Download Data</button>
     </form>
 </details>
 `;
@@ -146,10 +145,6 @@ class PanelChart {
             this.showGroup(activeGroup)
         })
 
-        this.showAllButton = this.root.querySelector('.showall-button')
-        this.showAllButton.addEventListener('click', () => {
-            this.showAll()
-        })
         const detailsElements = this.chartOptions.querySelectorAll('.chart-options-details')
         let openDetails = window.observableStorage.getItem("openPanelChartDetails")
         detailsElements.forEach((details) => {
@@ -165,29 +160,13 @@ class PanelChart {
         } else {
             this.closeChartOptionsSidebar()
         }
+        
+        this.rigDownloadForm()
     }
 
     rigItemDropdown() {
         this.itemInformation = this.chartOptions.querySelector('.item-information')
         this.itemDropdown = this.itemInformation.querySelector('.item-dropdown')
-    }
-
-    rigScaleToggle() {
-        const buttonBox = this.chartOptions.querySelector('.chart-view-options')
-        const oldButtons = buttonBox.querySelectorAll('.y-axis-scale, .y-axis-scale-label')
-        if (oldButtons.length > 0) {
-            oldButtons.forEach(button => { button.remove() })
-        }
-        buttonBox.insertAdjacentHTML('afterbegin', `
-            <input type="checkbox" class="y-axis-scale"/>
-            <label class="y-axis-scale-label title-bar-label">Report Score</label>
-        `)
-        this.yAxisScaleCheckbox = this.chartOptions.querySelector('.y-axis-scale')
-        this.yAxisScaleCheckbox.checked = this.yAxisScale === "score"
-        this.yAxisScaleCheckbox.addEventListener('change', () => {
-            console.log("Toggling Y-axis scale")
-            this.toggleYAxisScale()
-        })
     }
 
     initChartJSCanvas() {
@@ -205,7 +184,7 @@ class PanelChart {
         this.context = this.canvas.getContext('2d')
         this.chart = new Chart(this.context, {
             type: 'line',
-            plugins: [this.endLabelPlugin, this.extrapolateBackwardPlugin, this.proximityPlugin],
+            plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
             options: {
                 // animation: false,
                 responsive: true,
@@ -231,16 +210,18 @@ class PanelChart {
                     legend: {
                         display: false,
                     },
-                    endLabelPlugin: {},
                     tooltip: {
                         enabled: false,
                     },
-                    proximityHighlight: {
-                        radius: 20, // px
+                    chartInteractionPlugin: {
                         enabled: true,
+                        radius: 20,
+                        clickRadius: 2,
                         tooltipBg: this.headerBackgroundColor,
                         tooltipFg: this.titleColor,
-                        clickRadius: 2,
+                        labelField: 'CCode',
+                        showDefaultLabels: true,
+                        defaultLabelSpacing: 5,
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.togglePin(dataset)
@@ -364,10 +345,11 @@ class PanelChart {
 
     updateDescription(description) {
         const dbox = this.chartOptions.querySelector('.dynamic-item-description')
-        dbox.innerText = description
+        dbox.innerHTML = '<p><b>Description: </b> ' + description + '</p>'
     }
 
     updateItemDropdown(options) {
+        const default_item = this.window.location.href.split('/')[-1]
         for (const option of options) {
             const opt = document.createElement('option')
             opt.value = option.Code
@@ -414,7 +396,12 @@ class PanelChart {
 
     update(data) {
         console.log(data)
-        // this.chart.data = data
+        
+        // Force refresh of chart interaction plugin labels when data changes
+        if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
+            this.chartInteractionPlugin._forceRefreshLabels(this.chart)
+        }
+        
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
         if (this.pinnedOnly) {
@@ -432,10 +419,6 @@ class PanelChart {
         this.updateChartColors()
         this.updateCountryGroups()
         this.chart.update()
-        if (data.hasScore) {
-            this.setYAxisScale("score")
-            this.rigScaleToggle()
-        }
     }
 
 
@@ -471,7 +454,7 @@ class PanelChart {
         this.chart.data.datasets.forEach((dataset) => {
             dataset.hidden = false
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     showGroup(groupName) {
@@ -487,7 +470,7 @@ class PanelChart {
                 dataset.hidden = true
             }
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     hideUnpinned() {
@@ -499,7 +482,7 @@ class PanelChart {
                 dataset.hidden = true
             }
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     showRandomN(N = 10) {
@@ -524,7 +507,7 @@ class PanelChart {
             this.chart.data.datasets[index].hidden = false
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
         })
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
     }
 
     pinCountry(dataset) {
@@ -560,7 +543,7 @@ class PanelChart {
                 this.pins.delete(element)
             }
         }
-        this.chart.update({ duration: 0, lazy: false })
+        this.updateChartPreservingYAxis()
         this.pushPinUpdate()
         this.updateLegend()
     }
@@ -612,19 +595,51 @@ class PanelChart {
         }
     }
 
-    dumpChartDataJSON(screenVisibility = true) {
+    dumpChartDataJSON(scope = 'visible') {
+        console.log('dumpChartDataJSON called with scope:', scope)
+        console.log('Available datasets:', this.chart.data.datasets.length)
+        
+        // Debug: log the structure of the first dataset
+        if (this.chart.data.datasets.length > 0) {
+            console.log('First dataset structure:', Object.keys(this.chart.data.datasets[0]))
+            console.log('First dataset sample:', this.chart.data.datasets[0])
+        }
+        
         const observations = this.chart.data.datasets.map(dataset => {
-            if (screenVisibility && dataset.hidden) {
+            const shouldInclude = this.shouldIncludeDataset(dataset, scope)
+            console.log(`Dataset ${dataset.CCode} (${dataset.CName}) - include: ${shouldInclude}`)
+            
+            if (!shouldInclude) {
                 return []
             }
+            
+            // Handle different possible data structures
+            const scores = dataset.scores || dataset.score || []
+            const values = dataset.values || dataset.value || []
+            const years = dataset.years || dataset.year || this.chart.data.labels || []
+            
+            if (!dataset.data || !Array.isArray(dataset.data)) {
+                console.warn(`Dataset ${dataset.CCode} has no data array`)
+                return []
+            }
+            
             return dataset.data.map((_, i) => ({
-                "ItemCode": dataset.ICode,
-                "CountryCode": dataset.CCode,
-                "Score": dataset.scores[i],
-                "Value": dataset.values[i],
-                "Year": dataset.years[i]
+                "ItemCode": dataset.ICode || '',
+                "CountryCode": dataset.CCode || '',
+                "CountryName": dataset.CName || '',
+                "Score": scores[i] ?? null,
+                "Value": values[i] ?? null,
+                "Year": years[i] ?? null
             }));
         }).flat();
+        
+        console.log('Total observations to download:', observations.length)
+        
+        if (observations.length === 0) {
+            alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
+            return
+        }
+        
         const jsonString = JSON.stringify(observations, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -635,21 +650,45 @@ class PanelChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        
+        console.log('JSON download initiated')
     }
 
-    dumpChartDataCSV(screenVisibility = true) {
+    dumpChartDataCSV(scope = 'visible') {
+        console.log('dumpChartDataCSV called with scope:', scope)
+        
         const observations = this.chart.data.datasets.map(dataset => {
-            if (screenVisibility && dataset.hidden) {
+            if (!this.shouldIncludeDataset(dataset, scope)) {
                 return []
             }
+            
+            // Handle different possible data structures
+            const scores = dataset.scores || dataset.score || []
+            const values = dataset.values || dataset.value || []
+            const years = dataset.years || dataset.year || this.chart.data.labels || []
+            
+            if (!dataset.data || !Array.isArray(dataset.data)) {
+                console.warn(`Dataset ${dataset.CCode} has no data array`)
+                return []
+            }
+            
             return dataset.data.map((_, i) => ({
-                "ItemCode": dataset.ICode,
-                "CountryCode": dataset.CCode,
-                "Score": dataset.scores[i].toString(),
-                "Value": dataset.values[i].toString(),
-                "Year": dataset.years[i].toString()
+                "ItemCode": dataset.ICode || '',
+                "CountryCode": dataset.CCode || '',
+                "CountryName": dataset.CName || '',
+                "Score": scores[i]?.toString() || '',
+                "Value": values[i]?.toString() || '',
+                "Year": years[i]?.toString() || ''
             }));
         }).flat();
+        
+        console.log('Total observations for CSV:', observations.length)
+        
+        if (observations.length === 0) {
+            alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
+            return
+        }
+        
         const csvString = Papa.unparse(observations);
         const blob = new Blob([csvString], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -660,6 +699,8 @@ class PanelChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        
+        console.log('CSV download initiated')
     }
 
     rigPinChangeListener() {
@@ -689,47 +730,6 @@ class PanelChart {
         this.chart.update();
     }
 
-    setYAxisScale(scale) {
-        this.yAxisScale = scale
-        const scaleType = scale.charAt(0).toUpperCase() + scale.slice(1)
-        let itemType = ""
-        if (this.itemType === "sspi") {
-            itemType = this.itemType.toUpperCase()
-        } else {
-            itemType = this.itemType.charAt(0).toUpperCase() + this.itemType.slice(1)
-        }
-        this.chart.options.scales.y.title.text = itemType + " " + scaleType 
-        let yMin = 0
-        let yMax = 1
-        for (let i = 0; i < this.chart.data.datasets.length; i++) {
-            const dataset = this.chart.data.datasets[i];
-            if (i == 0) {
-                yMin = (this.yAxisScale === "value") ? dataset.maxYValue : 0;
-                yMax = (this.yAxisScale === "value") ? dataset.maxYValue : 1;
-            }
-            dataset.parsing.yAxisKey = this.yAxisScale;
-            for (let j = 0; j < dataset.data.length; j++) {
-                if (this.yAxisScale === "value") {
-                    dataset.data[j] = dataset.value[j]
-                } else {
-                    dataset.data[j] = dataset.score[j]
-                }
-            }
-        }
-        this.chart.options.scales.y.min = yMin
-        this.chart.options.scales.y.max = yMax
-        this.chart.update()
-    }
-
-
-    toggleYAxisScale() {
-        if (this.yAxisScale === "score") {
-            this.setYAxisScale("value")
-        } else {
-            this.setYAxisScale("score")
-        }
-    }
-
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
         this.chart.update();
@@ -739,6 +739,97 @@ class PanelChart {
         if(this.pinnedOnly && this.pins.size === 0) {
             alert("All countries are hidden!")
             return true
+        }
+    }
+
+    rigDownloadForm() {
+        this.downloadForm = this.chartOptions.querySelector('.panel-download-form')
+        if (this.downloadForm) {
+            this.downloadForm.addEventListener('submit', (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                this.handleDownloadRequest()
+                return false
+            })
+        }
+    }
+
+    handleDownloadRequest() {
+        console.log('Download request initiated')
+        const formData = new FormData(this.downloadForm)
+        const scope = formData.get('scope')
+        const format = formData.get('format')
+        
+        console.log('Download scope:', scope)
+        console.log('Download format:', format)
+        
+        if (!scope || !format) {
+            console.error('Missing scope or format in form data')
+            alert('Please select both scope and format options')
+            return
+        }
+        
+        if (format === 'json') {
+            console.log('Calling dumpChartDataJSON with scope:', scope)
+            this.dumpChartDataJSON(scope)
+        } else if (format === 'csv') {
+            console.log('Calling dumpChartDataCSV with scope:', scope)
+            this.dumpChartDataCSV(scope)
+        } else {
+            console.error('Unknown format:', format)
+            alert('Unknown format selected')
+        }
+    }
+
+    shouldIncludeDataset(dataset, scope) {
+        let result
+        switch(scope) {
+            case 'pinned':
+                result = !!dataset.pinned
+                break
+            case 'visible':
+                result = !dataset.hidden
+                break
+            case 'group':
+                const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
+                result = dataset.CGroup && dataset.CGroup.includes(activeGroup)
+                break
+            case 'all':
+                result = true
+                break
+            default:
+                result = !dataset.hidden
+                break
+        }
+        return result
+    }
+
+    // Helper method to update chart while preserving any set y-axis limits
+    // Chart.js automatically recalculates y-axis min/max during chart.update() based on visible data,
+    // which overrides any bounds that have been set (programmatically or by users). 
+    // This method preserves those bounds to respect the configured limits.
+    updateChartPreservingYAxis(updateOptions = { duration: 0, lazy: false }) {
+        // Get the actual current scale values from the chart's scales object
+        const yScale = this.chart.scales?.y
+        const currentMin = yScale?.min
+        const currentMax = yScale?.max
+        
+        // Also check if there are explicitly set bounds in options
+        const yAxis = this.chart.options.scales?.y
+        const configuredMin = yAxis?.min
+        const configuredMax = yAxis?.max
+        
+        // Prefer configured bounds, but fall back to current scale if not explicitly configured
+        const minToPreserve = configuredMin !== undefined ? configuredMin : currentMin
+        const maxToPreserve = configuredMax !== undefined ? configuredMax : currentMax
+        
+        this.chart.update(updateOptions)
+        
+        // Restore the y-axis limits
+        if (minToPreserve !== undefined || maxToPreserve !== undefined) {
+            this.chart.options.scales.y.min = minToPreserve
+            this.chart.options.scales.y.max = maxToPreserve
+            this.chart.update({ duration: 0, lazy: false })
         }
     }
 }

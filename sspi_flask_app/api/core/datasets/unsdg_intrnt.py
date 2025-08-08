@@ -27,4 +27,5 @@ def clean_unsdg_intrnt():
     for obs in filtered_data:
         obs["DatasetCode"] = "UNSDG_INTRNT"
     sspi_clean_api_data.insert_many(filtered_data)
+    sspi_metadata.record_dataset_range(filtered_data, "UNSDG_INTRNT")
     return parse_json(filtered_data)

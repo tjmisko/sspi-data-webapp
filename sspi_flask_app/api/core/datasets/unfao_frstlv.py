@@ -26,4 +26,5 @@ def clean_unfao_frstlv():
         obs["DatasetCode"] = "UNFAO_FRSTLV"
     
     sspi_clean_api_data.insert_many(clean_obs_list)
+    sspi_metadata.record_dataset_range(clean_obs_list, "UNFAO_FRSTLV")
     return parse_json(clean_obs_list)

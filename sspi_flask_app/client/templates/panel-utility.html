@@ -1,20 +1,20 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-<title> Item Panel Data </title>
+<title> Series Panel Data </title>
 {% endblock title %}
 
 {% block content %}
 
-{% for item_id in panel_id_list %}
-<section class="chart-section" id="{{ item_id }}"></section>
+{% for series_id in series_id_list %}
+<section class="chart-section" id="{{ series_id }}"></section>
 {% endfor %}
 
 <script>
     window.addEventListener("load", (event) => {
         window.SSPICharts.push(...[
-        {% for item_id in panel_id_list %}
-            new ItemPanelChart(document.getElementById("{{ item_id }}"), { endpointURL: "/api/v1/panel/item/{{ item_id }}" }),
+        {% for series_id in series_id_list %}
+            new SeriesPanelChart(document.getElementById("{{ series_id }}"), { endpointURL: "/api/v1/panel/series/{{ series_id }}" }),
         {% endfor %}
         ]);
         const x = localStorage.getItem('windowX');

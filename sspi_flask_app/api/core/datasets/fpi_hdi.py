@@ -17,4 +17,5 @@ def clean_fpi_hdi():
     description = "Human Development Index; Source: Trends in the Human Development Index, 19915, downloaded 01/15/2018 from https://hdr.undp.org/en/composite/trends"
     cleaned_data = clean_fpi_data(raw_data, "FPI_HDI", "Index", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FPI_HDI")
     return parse_json(cleaned_data)

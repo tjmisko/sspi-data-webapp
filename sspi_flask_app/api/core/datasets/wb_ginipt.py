@@ -15,4 +15,5 @@ def clean_wb_ginipt():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     cleaned_data = clean_wb_data(raw_data, "WB_GINIPT", "GINI Coeffecient")
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WB_GINIPT")
     return parse_json(cleaned_data)

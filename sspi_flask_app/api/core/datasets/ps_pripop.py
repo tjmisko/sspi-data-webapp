@@ -23,4 +23,5 @@ def clean_ps_pripop():
     for obs in cleaned_data:
         obs["DatasetCode"] = "PS_PRIPOP"
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "PS_PRIPOP")
     return parse_json(cleaned_data)
