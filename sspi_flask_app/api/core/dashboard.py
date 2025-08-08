@@ -92,6 +92,77 @@ def get_static_indicator_data(IndicatorCode):
     return jsonify(chart_data)
 
 
+@dashboard_bp.route("/panel/indicator/<indicator_code>", methods=["GET"])
+def get_dynamic_indicator_line_data(indicator_code):
+    """
+    Get the dynamic indicator data for a given indicator code for a line chart
+    This is distinguished from retrieving item data, which also returns the
+    indicator data, in that this endpoint handles passing the underlying datasets
+    to IndicatorPanelChart, which can render them in addition to the indicator score 
+    data.
+    """
+    indicator_details = sspi_metadata.indicator_details()
+    name_map = {
+        detail["ItemCode"]: detail["ItemName"] for detail in indicator_details
+    }
+    active_schema = sspi_item_data.active_schema(name_map=name_map)
+    detail = sspi_metadata.get_item_detail(indicator_code)
+    doc_type = detail.get("ItemType", "No Item Type")
+    print("Document Type:", doc_type)
+    if not doc_type == "Indicator":
+        return jsonify({"error": "Invalid Item Type for dynamic indicator data"}), 400
+    item_options = sspi_metadata.indicator_options()
+    name = detail.get("ItemName")
+    description = detail.get("Description", "")
+    country_query = request.args.getlist("CountryCode")
+    query = {"ICode": indicator_code}
+    if country_query:
+        query["CCode"] = {"$in": country_query}
+    dynamic_score_data = sspi_indicator_dynamic_line_data.find(query)
+    available_datasets = list(dynamic_score_data[0].get("Datasets", []))
+    dataset_options = []
+    for dscode in available_datasets:
+        detail = sspi_metadata.get_dataset_detail(dscode)
+        ds_range = detail.get("Range", {})
+        if ds_range:
+            dataset_options.append({
+                "datasetCode": dscode,
+                "datasetDescription": detail.get("Description", ""),
+                "unit": detail.get("Unit", ""),
+                "yMin": ds_range.get("yMin", 0),
+                "yMax": ds_range.get("yMax", 1),
+            })
+        else:
+            dataset_options.append({
+                "datasetCode": dscode,
+                "datasetDescription": detail.get("Description", ""),
+                "unit": detail.get("Unit", ""),
+                "yMin": 0,
+                "yMax": 1,
+            })
+    year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
+    if dynamic_score_data:
+        min_year = dynamic_score_data[0]["minYear"]
+        max_year = dynamic_score_data[0]["maxYear"]
+        year_labels = [str(year) for year in range(min_year, max_year + 1)]
+    chart_title = f"{name} ({indicator_code}) Score"
+    group_options = sspi_metadata.country_groups()
+    return jsonify(
+        {
+            "data": dynamic_score_data,
+            "title": chart_title,
+            "labels": year_labels,
+            "description": description,
+            "groupOptions": group_options,
+            "itemOptions": item_options,
+            "itemType": doc_type,
+            "itemCode": indicator_code,
+            "datasetOptions": dataset_options,
+            "tree": active_schema,
+        }
+    )
+
+
 @dashboard_bp.route("/panel/score/<item_code>", methods=["GET"])
 def get_dynamic_score_line_data(item_code):
     """
@@ -99,7 +170,7 @@ def get_dynamic_score_line_data(item_code):
     """
     indicator_details = sspi_metadata.indicator_details()
     name_map = {
-        detail["IndicatorCode"]: detail["Indicator"] for detail in indicator_details
+        detail["ItemCode"]: detail["ItemName"] for detail in indicator_details
     }
     active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(item_code)

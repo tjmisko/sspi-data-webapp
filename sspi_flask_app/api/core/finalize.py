@@ -299,9 +299,7 @@ def finalize_dynamic_line_indicator_datasets():
             sspi_dataset_map = {}
             for dataset in obs_list[0].get("Datasets", []):
                 sspi_dataset_map[dataset["DatasetCode"]] = {
-                    "data": [None] * len(label_list),
-                    "unit": dataset.get("Unit", ""),
-                    "description": sspi_metadata.get_dataset_detail(dataset["DatasetCode"]).get("Description", "")
+                    "data": [None] * len(label_list)
                 }
             for doc in obs_list:
                 try:
