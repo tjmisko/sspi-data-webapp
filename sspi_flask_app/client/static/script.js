@@ -76,14 +76,40 @@ editGoalposts(t){const l=prompt('Lower Goalpost:','0');const u=prompt('Upper Goa
 validate(z){const selector=z.dataset.accept==='indicator'?'.indicator-card':'.category-box';const items=z.querySelectorAll(selector);const ok=items.length>=1&&items.length<=10;z.classList.toggle('invalid',!ok);if(!ok){z.title='Must have 1–10 items';}else{z.removeAttribute('title');}}
 exportData(){const res=[];this.container.querySelectorAll('.indicator-card').forEach((ind,idx)=>{const cat=ind.closest('.category-box').querySelector('.category-header').textContent;const p=ind.closest('.pillar-column').dataset.pillar;const slider=ind.querySelector('.goal-slider');res.push({Category:cat,CategoryCode:'',Children:[],Description:ind.title||'',DocumentType:'',Indicator:ind.querySelector('.indicator-label').textContent,IndicatorCode:ind.dataset.indicatorCode||'',Inverted:ind.dataset.inverted==='true',ItemCode:'',ItemName:'',ItemOrder:idx+1,ItemType:'',LowerGoalpost:parseFloat(slider.min),Pillar:p,PillarCode:'',Policy:'',UpperGoalpost:parseFloat(slider.max)});});return res;}
 importData(data){console.log('Importing data:',data);this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const grouping={};data.forEach(item=>{const{Pillar,Category,CategoryCode,ItemOrder}=item;grouping[Pillar]=grouping[Pillar]||{};grouping[Pillar][Category]=grouping[Pillar][Category]||{CategoryCode,items:[]};grouping[Pillar][Category].items.push(item);});this.pillars.forEach(p=>{const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===p);if(!col||!grouping[p])return;const zone=col.querySelector('.categories-container');Object.entries(grouping[p]).forEach(([catName,info])=>{const catEl=this.createCategoryElement();catEl.querySelector('.category-header').textContent=catName;catEl.dataset.categoryCode=info.CategoryCode;zone.appendChild(catEl);info.items.sort((a,b)=>a.ItemOrder-b.ItemOrder).forEach(item=>{const indEl=this.createIndicatorElement();indEl.querySelector('.indicator-label').textContent=item.Indicator;indEl.dataset.indicatorCode=item.IndicatorCode;indEl.dataset.inverted=item.Inverted;indEl.title=item.Description||'';const slider=indEl.querySelector('.goal-slider');if(item.LowerGoalpost!=null)slider.min=item.LowerGoalpost;if(item.UpperGoalpost!=null)slider.max=item.UpperGoalpost;if(item.LowerGoalpost!=null)slider.value=item.LowerGoalpost;catEl.querySelector('.indicators-container').appendChild(indEl);});this.validate(catEl.querySelector('.indicators-container'));});});}}
-const endLabelPlugin={id:'endLabelPlugin',defaults:{labelField:'CCode',occludedAlpha:0.15,animAlpha:0.50},afterEvent(chart,args){const e=args.event;if(e&&typeof e.x==='number'&&typeof e.y==='number'){chart._endLabelMouse={x:e.x,y:e.y};}},afterDatasetsDraw(chart,_args,opts){const{ctx}=chart;const labels=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;let last=null;for(let j=meta.data.length-1;j>=0;--j){const el=meta.data[j];if(el?.parsed?.y!==null){last=el;break;}}
+const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"rgba(0,0,0,.5)",circleWidth:1,guideColor:"rgba(0,0,0,.35)",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#000",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
+catch(e){console.error("chartInteractionPlugin onDatasetClick:",e);}}}
+chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled){this._resetProximity(chart);return;}
+const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
+const R=opts.radius;const CR=opts.clickRadius;const cr2=CR*CR;const ctx=chart.ctx;const area=chart.chartArea;let nearest={d2:Infinity,x:null,idx:null,valX:null};let closestDatasetMinD2=Infinity;let anyNear=false;this._interaction.closestDatasetIdx=null;chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(ds.hidden||!meta?.data?.length){ds._isNear=ds._isHover=false;return;}
+ds._full=ds._full||{border:ds.borderColor,bg:ds.backgroundColor};ds._faded=ds._faded||this._fade(ds._full.border,opts.fadeAlpha);let datasetClosestD2=Infinity;meta.data.forEach((pt,colIdx)=>{if(!pt)return;const dx=pt.x-pos.x,dy=pt.y-pos.y,d2=dx*dx+dy*dy;if(d2<nearest.d2)nearest={d2,x:pt.x,idx:colIdx,valX:pt.parsed?.x??colIdx};if(d2<datasetClosestD2)datasetClosestD2=d2;});if(datasetClosestD2<closestDatasetMinD2-1e-3){closestDatasetMinD2=datasetClosestD2;this._interaction.closestDatasetIdx=i;}else if(Math.abs(datasetClosestD2-closestDatasetMinD2)<1e-3){if(Math.random()<0.5)this._interaction.closestDatasetIdx=i;}
+const pt=meta.data[nearest.idx];const d2pt=pt?(pt.x-pos.x)**2+(pt.y-pos.y)**2:Infinity;const near=d2pt<=R*R;const hover=d2pt<=cr2;ds._isNear=near;ds._isHover=hover;if(near)anyNear=true;ds.borderColor=near?ds._full.border:ds._faded;ds.backgroundColor=near?ds._full.bg:ds._faded;if(meta.dataset)meta.dataset.options.borderColor=ds.borderColor;meta.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;const clickNear=(p.x-pos.x)**2+(p.y-pos.y)**2<=cr2;if(clickNear){if(p.__origR===undefined)
+p.__origR=p.options.radius??p.radius??3;p.options.radius=p.__origR*this._POINT_SCALE;}else if(p.__origR!==undefined){p.options.radius=p.__origR;}});});if(!anyNear){this._resetProximity(chart);return;}
+this._interaction.nearest=nearest;ctx.save();ctx.beginPath();ctx.arc(pos.x,pos.y,R,0,2*Math.PI);ctx.strokeStyle=opts.circleColor;ctx.lineWidth=opts.circleWidth;ctx.setLineDash([3,3]);ctx.stroke();ctx.beginPath();ctx.moveTo(nearest.x,area.top);ctx.lineTo(nearest.x,area.bottom);ctx.strokeStyle=opts.guideColor;ctx.lineWidth=opts.guideWidth;ctx.setLineDash(opts.guideDash);ctx.stroke();ctx.restore();const vis=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const el=chart.getDatasetMeta(i).data[nearest.idx];const v=el?.parsed?.y??el?.raw;if(v==null||isNaN(v))return;vis.push({i,v});});vis.sort((a,b)=>b.v-a.v);const tot=vis.length,rankMap={};vis.forEach((o,r)=>rankMap[o.i]="#"+(r+1)+" / "+tot);const items=[];chart.data.datasets.forEach((ds,i)=>{if(!ds._isNear)return;const el=chart.getDatasetMeta(i).data[nearest.idx];let val=el?.parsed?.y??el?.raw;if(typeof val==="number")val=val.toFixed(3);const prefix=ds.CName?ds.CName+" ("+ds.CCode+")":(ds.CCode?ds.CCode+":":`Series ${i+1}:`);items.push({prefix,value:val,rank:rankMap[i]||"",colour:ds._full?ds._full.border:ds.borderColor,y:el.y,hover:ds._isHover});});items.sort((a,b)=>a.y-b.y);this._interaction.tooltipItems=items;},afterDraw(chart,_a,opts){if(!opts?.enabled)return;this._drawTooltip(chart,opts);this._drawLabels(chart,opts);},_drawTooltip(chart,opts){const rows=this._interaction.tooltipItems;if(!rows?.length)return;const ctx=chart.ctx;const pad=opts.tooltipPad,gap=opts.colGap,lh=14;const baseFont=opts.tooltipFont;const boldFont="bold "+baseFont;const boldItal="italic bold "+baseFont;let prefixW=0,valW=0,rankW=0;rows.forEach(r=>{ctx.font=r.hover?boldItal:baseFont;prefixW=Math.max(prefixW,ctx.measureText(r.prefix).width);});ctx.font=baseFont;rows.forEach(r=>{rankW=Math.max(rankW,ctx.measureText(" "+r.rank).width);});ctx.font=boldFont;rows.forEach(r=>{valW=Math.max(valW,ctx.measureText(r.value).width);});const header=this._headerText(chart,this._interaction.nearest.valX);const width=pad+12+prefixW+gap+valW+rankW+pad;const height=(rows.length+1)*lh+pad*2;const area=chart.chartArea;const nearestX=this._interaction.nearest.x;const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+opts.tooltipGap:nearestX-opts.tooltipGap-width;if(x+width>area.right)x=nearestX-opts.tooltipGap-width;if(x<area.left)x=nearestX+opts.tooltipGap;if(x+width>area.right)x=area.right-width-2;const above=this._interaction.mouse.y>(area.top+area.bottom)/2;let y=above?this._interaction.mouse.y-opts.radius-height-2:this._interaction.mouse.y+opts.radius+2;if(y<area.top)y=area.top+2;if(y+height>area.bottom)y=area.bottom-height-2;ctx.save();ctx.fillStyle=opts.tooltipBg;ctx.strokeStyle="rgba(0,0,0,0.25)";ctx.beginPath();ctx.rect(x,y,width,height);ctx.fill();ctx.stroke();ctx.font=boldFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(header,x+pad,y+pad+0.75*lh);rows.forEach((r,i)=>{const rowY=y+pad+lh+(i+0.75)*lh;ctx.fillStyle=r.colour;ctx.fillRect(x+pad,rowY-8,8,8);const preX=x+pad+12;const valX=preX+prefixW+gap;const rankX=valX+valW;ctx.font=r.hover?boldItal:baseFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(r.prefix,preX,rowY);ctx.font=boldFont;ctx.fillText(r.value,valX,rowY);ctx.font=baseFont;ctx.fillText(" "+r.rank,rankX,rowY);});ctx.restore();},_drawLabels(chart,opts){const ctx=chart.ctx;const labels=[];console.log('=== LABEL DEBUG START ===');console.log('Total datasets:',chart.data.datasets.length);const visibleDatasets=chart.data.datasets.filter((ds,i)=>!ds.hidden);console.log('Visible datasets:',visibleDatasets.map((ds,i)=>`${ds.CCode||ds.label||`Dataset${i}`}(hidden:${ds.hidden})`));console.log('Chart state - _lastDatasetCount:',chart._lastDatasetCount);console.log('Chart state - _needsLabelRebuild:',chart._needsLabelRebuild);console.log('Chart state - _labelRandDone:',chart._labelRandDone);console.log('Chart state - _defaultVisibleLabels exists:',!!chart._defaultVisibleLabels);if(chart._defaultVisibleLabels){console.log('Chart state - _defaultVisibleLabels size:',chart._defaultVisibleLabels.size);console.log('Chart state - _defaultVisibleLabels contents:',Array.from(chart._defaultVisibleLabels));}
+chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;let last=null;for(let j=meta.data.length-1;j>=0;--j){const el=meta.data[j];if(el?.parsed?.y!==null){last=el;break;}}
+if(!last)return;const text=ds[opts.labelField]??'';this._setupCanvas(ctx,this._LABEL_FONT,'#000');const w=ctx.measureText(text).width;ctx.restore();const x=last.x+5;const y=last.y+4;labels.push({idx:i,text,colour:ds.borderColor??'#000',x,y,box:{left:x,right:x+w,top:y-14,bottom:y},order:0,isPinned:!!ds.pinned});});const animating=chart.animating||(chart._animations&&chart._animations.size)||(chart.animations&&chart.animations.size);if(animating){console.log('*** CHART IS ANIMATING - DEFERRING COLLISION DETECTION ***');chart._labelRandDone=false;chart._defaultVisibleLabels=null;labels.forEach(l=>{this._setupCanvas(ctx,this._LABEL_FONT,l.colour,opts.animAlpha);ctx.fillText(l.text,l.x,l.y);ctx.restore();});console.log('Waiting for animation to complete before building collision detection...');return;}
+console.log('*** ANIMATION COMPLETE - PROCEEDING WITH COLLISION DETECTION ***');if(!chart._labelRandDone){const pinnedIndices=labels.filter(l=>l.isPinned).map(l=>l.idx);const unpinnedIndices=labels.filter(l=>!l.isPinned).map(l=>l.idx);for(let i=unpinnedIndices.length-1;i>0;--i){const k=Math.floor(Math.random()*(i+1));[unpinnedIndices[i],unpinnedIndices[k]]=[unpinnedIndices[k],unpinnedIndices[i]];}
+const orderSeq=[...pinnedIndices,...unpinnedIndices];chart._labelOrder=Object.fromEntries(orderSeq.map((d,pos)=>[d,pos]));chart._labelRandDone=true;console.log('Label priority order - Pinned:',pinnedIndices,'Unpinned (shuffled):',unpinnedIndices);}
+labels.forEach(l=>{l.order=chart._labelOrder[l.idx]??0;});labels.sort((a,b)=>a.order-b.order);console.log('=== CACHE VALIDATION DEBUG ===');const currentDatasetCount=labels.length;console.log(`Current dataset count:${currentDatasetCount},Last known:${chart._lastDatasetCount||'unknown'}`);if(chart._lastDatasetCount!==currentDatasetCount){console.log(`***DATASET COUNT CHANGED:${chart._lastDatasetCount||'unknown'}->${currentDatasetCount}***`);chart._defaultVisibleLabels=null;chart._lastDatasetCount=currentDatasetCount;console.log('Cleared cached visible set due to dataset count change');}
+if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.size>0){const cachedIndices=Array.from(chart._defaultVisibleLabels);const maxCachedIndex=Math.max(...cachedIndices);console.log(`Cached indices:[${cachedIndices.join(', ')}],max:${maxCachedIndex},labels.length:${labels.length}`);if(maxCachedIndex>=labels.length){console.log(`***INVALID CACHED INDEX:${maxCachedIndex}>=${labels.length}***`);chart._defaultVisibleLabels=null;}else{console.log('Cached indices are within valid range');console.log('Cached indices map to countries:',cachedIndices.map(idx=>labels[idx]?`${idx}:${labels[idx].text}`:`${idx}:INVALID`));}}
+const shouldRebuild=!chart._defaultVisibleLabels||chart._defaultVisibleLabels.size===0||chart._needsLabelRebuild;console.log('Should rebuild cache?',shouldRebuild);console.log('Rebuild reasons:',{noCachedSet:!chart._defaultVisibleLabels,emptySet:chart._defaultVisibleLabels?.size===0,forceRebuild:!!chart._needsLabelRebuild});if(shouldRebuild){console.log('*** REBUILDING DEFAULT VISIBLE SET ***');chart._defaultVisibleLabels=null;chart._needsLabelRebuild=false;}else{console.log('Using existing cached visible set');}
+if(opts.showDefaultLabels&&!chart._defaultVisibleLabels){const spacing=opts.defaultLabelSpacing;const defaultVisible=new Set();console.log('Building default visible set with spacing:',spacing);labels.forEach(label=>{label.occluded=false;});labels.forEach((label,labelIndex)=>{let hasCollision=false;let collisionWith=[];if(label.isPinned){defaultVisible.add(labelIndex);console.log(`Label ${label.text}(order ${label.order},idx ${labelIndex}):ADDED-PINNED(overrides collisions)`);return;}
+for(const higherPriorityIdx of defaultVisible){const higherPriority=labels[higherPriorityIdx];const horizontalOverlap=label.box.right+spacing>=higherPriority.box.left-spacing&&label.box.left-spacing<=higherPriority.box.right+spacing;const verticalOverlap=label.box.bottom+spacing>=higherPriority.box.top-spacing&&label.box.top-spacing<=higherPriority.box.bottom+spacing;if(horizontalOverlap&&verticalOverlap){hasCollision=true;collisionWith.push(`${higherPriority.text}${higherPriority.isPinned?' (pinned)':''}`);break;}}
+if(!hasCollision){defaultVisible.add(labelIndex);console.log(`Label ${label.text}(order ${label.order},idx ${labelIndex}):ADDED to visible set`);}else{label.occluded=true;console.log(`Label ${label.text}(order ${label.order},idx ${labelIndex}):OCCLUDED by ${collisionWith.join(', ')}`);}});chart._defaultVisibleLabels=defaultVisible;console.log('Default visible set built:',Array.from(defaultVisible),'out of',labels.length,'labels');console.log('Occluded labels:',labels.filter(l=>l.occluded).map(l=>l.text));this._reorderDatasetsForVisibility(chart,labels,defaultVisible);}else{console.log('*** SKIPPING REBUILD - USING EXISTING CACHE ***');console.log('Existing cached visible set:',chart._defaultVisibleLabels?Array.from(chart._defaultVisibleLabels):'null');}
+console.log('Drawing',labels.length,'labels');const occludedLabels=[];const visibleLabels=[];labels.forEach((l,i)=>{let alpha,reason;if(this._interaction.closestDatasetIdx!==null&&this._interaction.mouse){alpha=l.idx===this._interaction.closestDatasetIdx?1:opts.occludedAlpha;reason=`mouse interaction:${l.idx===this._interaction.closestDatasetIdx?'closest':'not closest'}`;}else if(opts.showDefaultLabels&&chart._defaultVisibleLabels){alpha=chart._defaultVisibleLabels.has(i)?1:opts.occludedAlpha;reason=`default visible:${chart._defaultVisibleLabels.has(i)?'in set':'not in set'}`;}else{alpha=opts.occludedAlpha;reason=`fallback:${opts.showDefaultLabels?'no default set':'default labels disabled'}`;}
+const labelInfo={label:l,alpha,reason,arrayIdx:i};if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.has(i)){visibleLabels.push(labelInfo);}else{occludedLabels.push(labelInfo);}
+console.log(`Label ${l.text}(idx=${l.idx},arrayIdx=${i}):alpha=${alpha},reason=${reason}`);});occludedLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});visibleLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});console.log('=== END LABEL DEBUG ===');console.log('');},_resetProximity(chart){chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(!ds._full)return;ds.borderColor=ds._full.border;ds.backgroundColor=ds._full.bg;ds._isNear=ds._isHover=false;if(meta?.dataset)meta.dataset.options.borderColor=ds.borderColor;meta?.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;if(p.__origR!==undefined){p.options.radius=p.__origR;delete p.__origR;}});});this._interaction.tooltipItems=null;this._interaction.closestDatasetIdx=null;},_clearLabelState(chart){console.log('*** _clearLabelState() called - clearing all label state ***');console.log('Before clear - _defaultVisibleLabels:',chart._defaultVisibleLabels?Array.from(chart._defaultVisibleLabels):'null');console.log('Before clear - _lastDatasetCount:',chart._lastDatasetCount);chart._defaultVisibleLabels=null;chart._labelRandDone=false;chart._labelOrder=null;chart._lastDatasetCount=null;console.log('After clear - all state cleared');},_forceRefreshLabels(chart){console.log('*** _forceRefreshLabels() called ***');this._clearLabelState(chart);chart._needsLabelRebuild=true;console.log('Set _needsLabelRebuild flag to true');},_reorderDatasetsForVisibility(chart,labels,visibleLabelIndices){if(!chart.data?.datasets)return;const visibleLabelDatasetIndices=new Set();labels.forEach((label,labelIndex)=>{if(visibleLabelIndices.has(labelIndex)){visibleLabelDatasetIndices.add(label.idx);}});const datasets=chart.data.datasets;const datasetsWithHiddenLabels=[];const datasetsWithVisibleLabels=[];datasets.forEach((ds,index)=>{if(visibleLabelDatasetIndices.has(index)){datasetsWithVisibleLabels.push({dataset:ds,originalIndex:index});}else{datasetsWithHiddenLabels.push({dataset:ds,originalIndex:index});}});datasetsWithVisibleLabels.sort((a,b)=>{const aPinned=!!a.dataset.pinned;const bPinned=!!b.dataset.pinned;if(aPinned&&!bPinned)return 1;if(!aPinned&&bPinned)return-1;return 0;});const reorderedDatasets=[...datasetsWithHiddenLabels.map(item=>item.dataset),...datasetsWithVisibleLabels.map(item=>item.dataset)];const orderChanged=reorderedDatasets.some((ds,i)=>ds!==datasets[i]);if(orderChanged){chart.data.datasets=reorderedDatasets;console.log('Reordered datasets - visible label datasets moved to top:',datasetsWithVisibleLabels.map(item=>item.dataset.CCode||`Dataset${item.originalIndex}`));}},_setupCanvas(ctx,font,color,alpha=1){ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.textAlign='left';},_fade(col,a){if(col.startsWith("rgba"))return col.replace(/, *[^,]+\)$/,`,${a})`);if(col.startsWith("rgb"))return col.replace("rgb","rgba").replace(")",`,${a})`);if(col[0]==="#"&&col.length===7)
+return col+Math.round(a*255).toString(16).padStart(2,"0");return col;},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const endLabelPlugin={id:'endLabelPlugin',defaults:{labelField:'CCode',occludedAlpha:0.15,animAlpha:0.50,showDefaultLabels:true,defaultLabelSpacing:5},afterEvent(chart,args){const e=args.event;if(e&&typeof e.x==='number'&&typeof e.y==='number'){chart._unifiedMouse={x:e.x,y:e.y};}else if(e&&e.type==="mouseout"){chart._unifiedMouse=null;}},afterDatasetsDraw(chart,_args,opts){const{ctx}=chart;const labels=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;let last=null;for(let j=meta.data.length-1;j>=0;--j){const el=meta.data[j];if(el?.parsed?.y!==null){last=el;break;}}
 if(!last)return;const text=ds[opts.labelField]??'';ctx.save();ctx.font='bold 14px Arial';const w=ctx.measureText(text).width;ctx.restore();const x=last.x+5;const y=last.y+4;labels.push({idx:i,text,colour:ds.borderColor??'#000',x,y,box:{left:x,right:x+w,top:y-14,bottom:y},occluded:false,order:0});});const animating=chart.animating||(chart._animations&&chart._animations.size)||(chart.animations&&chart.animations.size);if(animating){chart._endLabelRandDone=false;ctx.save();ctx.font='bold 14px Arial';ctx.globalAlpha=opts.animAlpha;labels.forEach(l=>{ctx.fillStyle=l.colour;ctx.textAlign='left';ctx.fillText(l.text,l.x,l.y);});ctx.restore();return;}
 if(!chart._endLabelRandDone){const orderSeq=labels.map(l=>l.idx);for(let i=orderSeq.length-1;i>0;--i){const k=Math.floor(Math.random()*(i+1));[orderSeq[i],orderSeq[k]]=[orderSeq[k],orderSeq[i]];}
 chart._endLabelOrder=Object.fromEntries(orderSeq.map((d,pos)=>[d,pos]));chart._endLabelRandDone=true;}
-labels.forEach(l=>{l.order=chart._endLabelOrder[l.idx]??0;});labels.sort((a,b)=>a.order-b.order);for(let i=0;i<labels.length;++i){const a=labels[i];for(let j=i+1;j<labels.length;++j){const b=labels[j];if(a.box.right>=b.box.left&&a.box.left<=b.box.right&&a.box.bottom>=b.box.top&&a.box.top<=b.box.bottom){a.occluded=true;break;}}}
-let closestDatasetIdx=null;if(chart._endLabelMouse){const{x:mx,y:my}=chart._endLabelMouse;let minD2=Infinity;chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;meta.data.forEach(el=>{if(!el)return;const dx=el.x-mx;const dy=el.y-my;const d2=dx*dx+dy*dy;if(d2<minD2-1e-3){minD2=d2;closestDatasetIdx=i;}else if(Math.abs(d2-minD2)<1e-3){if(Math.random()<0.5)closestDatasetIdx=i;}});});}
+labels.forEach(l=>{l.order=chart._endLabelOrder[l.idx]??0;});labels.sort((a,b)=>a.order-b.order);if(opts.showDefaultLabels&&!chart._defaultVisibleLabels){const spacing=opts.defaultLabelSpacing;const defaultVisible=new Set();for(const label of labels){let overlaps=false;for(const visibleIdx of defaultVisible){const visible=labels[visibleIdx];if(label.box.right+spacing>=visible.box.left-spacing&&label.box.left-spacing<=visible.box.right+spacing&&label.box.bottom+spacing>=visible.box.top-spacing&&label.box.top-spacing<=visible.box.bottom+spacing){overlaps=true;break;}}
+if(!overlaps){defaultVisible.add(labels.indexOf(label));}}
+chart._defaultVisibleLabels=defaultVisible;}
+for(let i=0;i<labels.length;++i){const a=labels[i];for(let j=i+1;j<labels.length;++j){const b=labels[j];if(a.box.right>=b.box.left&&a.box.left<=b.box.right&&a.box.bottom>=b.box.top&&a.box.top<=b.box.bottom){a.occluded=true;break;}}}
+let closestDatasetIdx=null;if(chart._unifiedMouse){const{x:mx,y:my}=chart._unifiedMouse;let minD2=Infinity;chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;meta.data.forEach(el=>{if(!el)return;const dx=el.x-mx;const dy=el.y-my;const d2=dx*dx+dy*dy;if(d2<minD2-1e-3){minD2=d2;closestDatasetIdx=i;}else if(Math.abs(d2-minD2)<1e-3){if(Math.random()<0.5)closestDatasetIdx=i;}});});}
 const closest=labels.find(l=>l.idx===closestDatasetIdx)??null;if(closest){const k=labels.indexOf(closest);if(k>-1)labels.splice(k,1);labels.push(closest);}
-labels.forEach(l=>{ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=l.colour;ctx.globalAlpha=l===closest?1:opts.occludedAlpha;ctx.textAlign='left';ctx.fillText(l.text,l.x,l.y);ctx.restore();});}};const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
+labels.forEach((l,i)=>{ctx.save();ctx.font='bold 14px Arial';ctx.fillStyle=l.colour;let alpha;if(closest){alpha=l===closest?1:opts.occludedAlpha;}else if(opts.showDefaultLabels&&chart._defaultVisibleLabels){alpha=chart._defaultVisibleLabels.has(i)?1:opts.occludedAlpha;}else{alpha=opts.occludedAlpha;}
+ctx.globalAlpha=alpha;ctx.textAlign='left';ctx.fillText(l.text,l.x,l.y);ctx.restore();});}};const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
 if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const proximityPlugin={id:"proximityHighlight",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"rgba(0,0,0,.5)",circleWidth:1,guideColor:"rgba(0,0,0,.35)",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#000",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,onDatasetClick:null},_mouse:null,_tooltipItems:null,_nearestX:null,_nearestValue:null,afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.proximityHighlight;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
 catch(e){console.error("proximityHighlight onDatasetClick:",e);}}}
 chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled||!this._mouse){resetAll();return;}
@@ -266,9 +292,8 @@ this.CountryList=CountryList
 this.endpointURL=endpointURL
 this.pins=new Set()
 this.colorProvider=colorProvider
-this.endLabelPlugin=endLabelPlugin
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
-this.proximityPlugin=proximityPlugin
+this.chartInteractionPlugin=chartInteractionPlugin
 this.setTheme(window.observableStorage.getItem("theme"))
 this.pinnedOnly=window.observableStorage.getItem("pinnedOnly")||false
 this.countryGroup=window.observableStorage.getItem("countryGroup")||"SSPI67"
@@ -329,7 +354,7 @@ this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="pa
 this.title=this.chartContainer.querySelector('.panel-chart-title')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this.extrapolateBackwardPlugin,this.proximityPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{},tooltip:{enabled:false,},proximityHighlight:{radius:20,enabled:true,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,clickRadius:2,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
@@ -384,6 +409,7 @@ this.headerBackgroundColor=bg}
 async fetch(url){const response=await fetch(url)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){console.log(data)
+if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
 if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
@@ -410,19 +436,19 @@ showAll(){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
 console.log('Showing all countries')
 this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
-this.chart.update({duration:0,lazy:false})}
+this.updateChartPreservingYAxis()}
 showGroup(groupName){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
 this.countryGroup=groupName
 window.observableStorage.setItem("countryGroup",groupName)
 console.log('Showing group:',groupName)
 this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
-this.chart.update({duration:0,lazy:false})}
+this.updateChartPreservingYAxis()}
 hideUnpinned(){this.pinnedOnly=true
 window.observableStorage.setItem("pinnedOnly",true)
 console.log('Hiding unpinned countries')
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
-this.chart.update({duration:0,lazy:false})}
+this.updateChartPreservingYAxis()}
 showRandomN(N=10){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
 const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
@@ -433,7 +459,7 @@ this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=
 let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
 shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
 console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
-this.chart.update({duration:0,lazy:false})}
+this.updateChartPreservingYAxis()}
 pinCountry(dataset){if(dataset.pinned){return}
 dataset.pinned=true
 dataset.hidden=false
@@ -448,7 +474,7 @@ this.updateLegend()}
 unpinCountry(dataset,hide=false){dataset.pinned=false
 if(hide&&this.pinnedOnly){dataset.hidden=true}
 for(const element of this.pins){if(element.CCode===dataset.CCode){this.pins.delete(element)}}
-this.chart.update({duration:0,lazy:false})
+this.updateChartPreservingYAxis()
 this.pushPinUpdate()
 this.updateLegend()}
 unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){this.unpinCountry(dataset,hide)}})}
@@ -533,7 +559,19 @@ case'all':result=true
 break
 default:result=!dataset.hidden
 break}
-return result}}
+return result}
+updateChartPreservingYAxis(updateOptions={duration:0,lazy:false}){const yScale=this.chart.scales?.y
+const currentMin=yScale?.min
+const currentMax=yScale?.max
+const yAxis=this.chart.options.scales?.y
+const configuredMin=yAxis?.min
+const configuredMax=yAxis?.max
+const minToPreserve=configuredMin!==undefined?configuredMin:currentMin
+const maxToPreserve=configuredMax!==undefined?configuredMax:currentMax
+this.chart.update(updateOptions)
+if(minToPreserve!==undefined||maxToPreserve!==undefined){this.chart.options.scales.y.min=minToPreserve
+this.chart.options.scales.y.max=maxToPreserve
+this.chart.update({duration:0,lazy:false})}}}
 class SeriesPanelChart extends PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:endpointURL,width:width,height:height})}
 rigItemInfoBox(){const infoBox=document.createElement('div')
 infoBox.classList.add('item-panel-info-box')
@@ -576,6 +614,129 @@ opt.value=option.Value
 if(option.Value===defaultValue){opt.selected=true;}
 opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}}
+class IndicatorPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/indicator/${itemCode}`,width:width,height:height})
+this.itemCode=itemCode
+this.activeSeries=itemCode
+this.currentYMin=0
+this.currentYMax=1
+this.defaultYMin=0
+this.defaultYMax=1}
+updateChartOptions(){let yAxisTitle='Item Value'
+if(this.activeSeries===this.itemCode){yAxisTitle='Indicator Score'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+if(dataset){const baseName=dataset.datasetName||dataset.datasetCode
+const unit=dataset.unit||dataset.Unit
+yAxisTitle=unit?`${baseName}(${unit})`:baseName}}
+this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:this.currentYMin,max:this.currentYMax,title:{display:true,text:yAxisTitle,color:this.axisTitleColor,font:{size:16}}}}}
+updateItemDropdown(options,itemType){let itemTypeCapped=itemType
+if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+const itemTitle=itemTypeCapped+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
+itemSummary.textContent=itemTitle;const defaultValue='/data/'+itemType.toLowerCase()+'/'+this.itemCode
+console.log('Default value for item dropdown:',defaultValue)
+for(const option of options){const opt=document.createElement('option')
+opt.value=option.Value
+if(option.Value===defaultValue){opt.selected=true;}
+opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
+this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
+setActiveSeries(series){this.activeSeries=series
+this.updateDefaultsForActiveSeries()
+if(this.activeSeries===this.itemCode){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.score});this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else if(this.datasetOptions&&this.datasetOptions.map(o=>o.datasetCode).includes(this.activeSeries)){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.Datasets[this.activeSeries].data});console.log(`Setting active series to ${this.activeSeries}with yMin:${this.defaultYMin},yMax:${this.defaultYMax}`);this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else{console.warn(`Active series"${this.activeSeries}"not found in dataset options.`);}
+this.updateChartTitle()
+this.updateChartOptions()
+this.updateActiveSeriesDescription()
+this.updateYAxisInputs()
+this.updateRestoreButton()
+this.chart.update()}
+setYAxisMinMax(min,max,update=true){this.currentYMin=min
+this.currentYMax=max
+this.chart.options.scales.y.min=min
+this.chart.options.scales.y.max=max
+if(update){this.chart.update()}
+if(this.yMinInput){this.yMinInput.value=min}
+if(this.yMaxInput){this.yMaxInput.value=max}}
+update(data){console.log(data)
+if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
+this.chart.data.datasets=data.data
+this.chart.data.labels=data.labels
+if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
+this.datasetOptions=data.datasetOptions
+this.originalTitle=data.title
+this.title.innerText=data.title
+this.itemType=data.itemType
+this.groupOptions=data.groupOptions
+this.getPins()
+this.updateLegend()
+this.updateItemDropdown(data.itemOptions,data.itemType)
+this.updateDescription(data.description)
+this.updateChartColors()
+this.updateCountryGroups()
+this.initializeDefaultRanges()
+this.updateSeriesDropdown()
+this.updateChartTitle()
+this.updateActiveSeriesDescription()
+this.chart.update()}
+buildChartOptions(){super.buildChartOptions()
+const viewOptions=this.chartOptions.querySelector('.chart-view-options')
+if(viewOptions){const seriesControlsHTML=`<div class="chart-view-option series-selector-container"><label class="title-bar-label"for="series-selector">Active Series:</label><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-option active-series-description"style="display: none;"><div class="active-series-description-content"></div></div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="any"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="any"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;viewOptions.insertAdjacentHTML('afterbegin',seriesControlsHTML)}}
+rigChartOptions(){super.rigChartOptions()
+this.rigViewOptionsControls()}
+rigViewOptionsControls(){this.seriesSelector=this.chartOptions.querySelector('.series-selector')
+this.yMinInput=this.chartOptions.querySelector('.y-min-input')
+this.yMaxInput=this.chartOptions.querySelector('.y-max-input')
+this.restoreYAxisButton=this.chartOptions.querySelector('.restore-y-axis-button')
+if(this.seriesSelector){this.seriesSelector.addEventListener('change',(event)=>{this.setActiveSeries(event.target.value)})}
+const handleYAxisChange=()=>{const yMin=parseFloat(this.yMinInput.value)
+const yMax=parseFloat(this.yMaxInput.value)
+if(isNaN(yMin)||isNaN(yMax)){return }
+if(yMin>=yMax){return }
+this.setYAxisMinMax(yMin,yMax)
+this.updateRestoreButton()}
+if(this.yMinInput){this.yMinInput.addEventListener('input',handleYAxisChange)
+this.yMinInput.addEventListener('blur',handleYAxisChange)}
+if(this.yMaxInput){this.yMaxInput.addEventListener('input',handleYAxisChange)
+this.yMaxInput.addEventListener('blur',handleYAxisChange)}
+if(this.restoreYAxisButton){this.restoreYAxisButton.addEventListener('click',()=>{this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)
+this.updateRestoreButton()})}}
+updateRestoreButton(){if(!this.restoreYAxisButton)return
+const hasChanged=(this.currentYMin!==this.defaultYMin||this.currentYMax!==this.defaultYMax)
+this.restoreYAxisButton.style.display=hasChanged?'block':'none'}
+updateYAxisInputs(){if(this.yMinInput){this.yMinInput.value=this.currentYMin}
+if(this.yMaxInput){this.yMaxInput.value=this.currentYMax}}
+initializeDefaultRanges(){this.seriesDefaults={[this.itemCode]:{yMin:0,yMax:1}}
+if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{this.seriesDefaults[dataset.datasetCode]={yMin:dataset.yMin||0,yMax:dataset.yMax||100}})}
+this.updateDefaultsForActiveSeries()}
+updateDefaultsForActiveSeries(){if(this.seriesDefaults&&this.seriesDefaults[this.activeSeries]){this.defaultYMin=this.seriesDefaults[this.activeSeries].yMin
+this.defaultYMax=this.seriesDefaults[this.activeSeries].yMax}else{this.defaultYMin=this.activeSeries===this.itemCode?0:0
+this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
+updateChartTitle(){if(!this.title)return
+if(this.activeSeries===this.itemCode){this.title.innerText=this.originalTitle||'Indicator Chart'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
+this.title.innerText=`${dataset.datasetCode}-${datasetName}`}else{this.title.innerText=this.activeSeries}}}
+updateSeriesDropdown(){if(!this.seriesSelector){return}
+this.seriesSelector.innerHTML=''
+const indicatorOption=document.createElement('option')
+indicatorOption.value=this.itemCode
+indicatorOption.textContent=this.itemCode+' Indicator Score'
+this.seriesSelector.appendChild(indicatorOption)
+if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const option=document.createElement('option')
+option.value=dataset.datasetCode
+option.textContent=dataset.datasetName||dataset.datasetCode
+this.seriesSelector.appendChild(option)})}
+this.seriesSelector.value=this.activeSeries
+this.updateYAxisInputs()}
+updateActiveSeriesDescription(){const activeSeriesDescription=this.chartOptions.querySelector('.active-series-description')
+if(!activeSeriesDescription){console.warn('Active series description element not found')
+return}
+const contentDiv=activeSeriesDescription.querySelector('.active-series-description-content')
+if(!contentDiv){console.warn('Active series description content element not found')
+return}
+console.log('Updating active series description for:',this.activeSeries)
+if(this.activeSeries===this.itemCode){activeSeriesDescription.style.display='none'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+console.log('Found dataset:',dataset)
+if(dataset&&dataset.description){contentDiv.innerHTML='<strong>Dataset:</strong> '+dataset.description
+activeSeriesDescription.style.display='block'}else if(dataset){contentDiv.innerHTML='<strong>Dataset:</strong> '+(dataset.datasetName||dataset.datasetCode)+' (no description available)'
+activeSeriesDescription.style.display='block'}else{contentDiv.innerHTML='<em>Dataset not found</em>'
+activeSeriesDescription.style.display='block'}}else{contentDiv.innerHTML='<em>No dataset options available</em>'
+activeSeriesDescription.style.display='block'}}}
 class SSPIPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode}
 initItemTree(){this.itemTree=document.createElement('div')

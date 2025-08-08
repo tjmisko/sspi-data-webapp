@@ -12,8 +12,14 @@
   --sus-color: #28A745;
   --ms-color: #FF851B;
   --pg-color: #007BFF;
-  --link-color: #2895AE
+  --link-color: #2895AE;
   --theme-gap: 1rem;
+  --primary-color: #3b82f6;
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --shadow-sm: 0 2px 4px -1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 }
 
 @media (min-width: 600px) {
@@ -36,16 +42,19 @@
 .light-theme {
   --accent-color-1: rgb(41, 75, 80);
   --title-weight: 400;
-  --header-color: #D6D6D6;
-  --box-background-color: #D6D6D6;
+  --header-color: #f9fafb;
+  --box-background-color: #ffffff;
   --region-background-color: #D6D6D6;
-  --header-text-color: #3A3A3A;
-  --page-background: #D6D6D6;
+  --header-text-color: #1f2937;
+  --header-font-color: #1f2937;
+  --body-text-color: #4b5563;
+  --page-background: #f9fafb;
   --green-accent: #8BA342;
-  --text-color: #0A0A0A;
-  --low-importance-font-color: #888888;
+  --text-color: #111827;
+  --low-importance-font-color: #6b7280;
   --mobile-break-width: 1135px;
-  --subtle-line-color: #CCCCCC;
+  --subtle-line-color: #e5e7eb;
+  --border-color: #e5e7eb;
   --theme-border-thick: 2px solid var(--subtle-line-color);
   --theme-border-thin: 1px solid var(--subtle-line-color);
   --toggle-bg: #F5F5F5;
@@ -55,18 +64,21 @@
 .dark-theme {
   --accent-color: rgb(41, 75, 80);
   --title-weight: 300;
-  --header-color: #0F1A24;
-  --box-background-color: #0F1A24aa;
-  --region-background-color: #0F1A2444;
-  --header-text-color: #F5F5F5;
-  --page-background: #1F354F;
+  --header-color: #1e293b;
+  --box-background-color: #1f2937;
+  --region-background-color: #1e293b44;
+  --header-text-color: #f1f5f9;
+  --header-font-color: #f1f5f9;
+  --body-text-color: #e2e8f0;
+  --page-background: #1a202c;
   --green-accent: #AECC53;
-  --text-color: #E0E0E0;
-  --low-importance-font-color: rgba(184, 188, 190, 1);
+  --text-color: #f7fafc;
+  --low-importance-font-color: #a0aec0;
   --mobile-break-width: 1135px;
-  --subtle-line-color: #2A2A2A;
+  --subtle-line-color: #4a5568;
+  --border-color: #4a5568;
   --theme-border-thick: none;
   --theme-border-thin: 1px solid var(--subtle-line-color);
-  --toggle-bg: #242531;
-  --toggle-thumb: rgb(255, 255, 255, 0.075);
+  --toggle-bg: #2d3748;
+  --toggle-thumb: rgb(255, 255, 255, 0.1);
 }
