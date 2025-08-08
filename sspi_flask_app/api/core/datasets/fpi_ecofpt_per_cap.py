@@ -17,4 +17,5 @@ def clean_fpi_ecofpt_per_cap():
     description = "Ecological Footprint of consumption in global hectares (gha) divided by population"
     cleaned_data = clean_fpi_data(raw_data, "FPI_ECOFPT_PER_CAP", "gha per capita", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FPI_ECOFPT_PER_CAP")
     return parse_json(cleaned_data)

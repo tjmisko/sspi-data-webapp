@@ -36,4 +36,5 @@ def clean_ilo_employ():
     employ_raw_f['Unit'] = 'Rate'
     obs_list = json.loads(str(employ_raw_f.to_json(orient="records")))
     sspi_clean_api_data.insert_many(obs_list)
+    sspi_metadata.record_dataset_range(obs_list, "ILO_EMPLOY")
     return parse_json(obs_list)

@@ -17,4 +17,5 @@ def clean_fpi_earths():
     description = "EFConsPerCap of Country / EFConsPerCap of World"
     cleaned_data = clean_fpi_data(raw_data, "FPI_EARTHS", "Earths", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FPI_EARTHS")
     return parse_json(cleaned_data)

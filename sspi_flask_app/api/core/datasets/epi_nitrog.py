@@ -15,4 +15,5 @@ def clean_epi_nitrog():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     parsed_epi_data = parse_epi_csv(raw_data[0]["Raw"], "EPI_NITROG")
     sspi_clean_api_data.insert_many(parsed_epi_data)
+    sspi_metadata.record_dataset_range(parsed_epi_data, "EPI_NITROG")
     return parse_json(parsed_epi_data)

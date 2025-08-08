@@ -17,4 +17,5 @@ def clean_fpi_biocap():
     description = "Total biocapacity in global hectares (gha)"
     cleaned_data = clean_fpi_data(raw_data, "FPI_BIOCAP", "gha", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FPI_BIOCAP")
     return parse_json(cleaned_data)

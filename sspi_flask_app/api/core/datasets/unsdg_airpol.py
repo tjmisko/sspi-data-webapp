@@ -19,4 +19,5 @@ def clean_unsdg_airpol():
         location="ALLAREA"
     )
     sspi_clean_api_data.insert_many(filtered_airpol)
+    sspi_metadata.record_dataset_range(filtered_airpol, "UNSDG_AIRPOL")
     return parse_json(filtered_airpol)

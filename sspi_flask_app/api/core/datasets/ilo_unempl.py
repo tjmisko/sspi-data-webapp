@@ -36,4 +36,5 @@ def clean_ilo_unempl():
     unempl_raw_f['Unit'] = 'Rate'
     cleaned_data = json.loads(str(unempl_raw_f.to_json(orient="records")))
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "ILO_UNEMPL")
     return parse_json(cleaned_data)

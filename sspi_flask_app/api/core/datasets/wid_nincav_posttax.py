@@ -80,4 +80,5 @@ def clean_wid_ninca_posttax():
                 cleaned_data.append(record)
     
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WID_NINCAV_POSTTAX")
     return parse_json(cleaned_data)

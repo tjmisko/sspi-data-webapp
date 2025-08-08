@@ -14,4 +14,5 @@ def clean_wb_railpc():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     wb_railpc = clean_wb_data(raw_data, "WB_RAILPC", "Passenger-Kilometers (million)")
     count = sspi_clean_api_data.insert_many(wb_railpc)
+    sspi_metadata.record_dataset_range(wb_railpc, "WB_RAILPC")
     return wb_railpc

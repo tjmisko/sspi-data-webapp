@@ -26,4 +26,5 @@ def clean_fsi_secapp():
     )
     cleaned_data = clean_fsi_data(raw_data, "FSI_SECAPP", "Index", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FSI_SECAPP")
     return parse_json(cleaned_data)

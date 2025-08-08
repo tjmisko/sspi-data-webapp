@@ -44,4 +44,5 @@ def clean_wef_quelec():
     df_final = df_sorted[["DatasetCode", "CountryCode", "Year", "Value", "Unit"]]
     cleaned_data = df_final.to_dict(orient="records")
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "WEF_QUELEC")
     return parse_json(cleaned_data)

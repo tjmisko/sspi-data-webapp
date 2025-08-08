@@ -25,4 +25,5 @@ def clean_itu_cybsec():
     for obs in cleaned_data:
         obs["DatasetCode"] = "ITU_CYBSEC"
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "ITU_CYBSEC")
     return parse_json(cleaned_data)

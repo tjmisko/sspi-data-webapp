@@ -40,4 +40,5 @@ def clean_iea_tco2em():
         }
         clean_list.append(clean_obs)
     sspi_clean_api_data.insert_many(clean_list)
+    sspi_metadata.record_dataset_range(clean_list, "IEA_TCO2EM")
     return parse_json(clean_list)

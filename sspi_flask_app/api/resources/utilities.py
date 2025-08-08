@@ -18,7 +18,8 @@ from sspi_flask_app.models.database import (
     sspi_static_metadata,
     sspi_country_characteristics,
     sspi_static_radar_data,
-    sspi_dynamic_line_data,
+    sspi_item_dynamic_line_data,
+    sspi_indicator_dynamic_line_data,
     sspi_dynamic_matrix_data,
     sspi_static_rank_data,
     sspi_analysis,
@@ -89,8 +90,10 @@ def lookup_database(database_name):
             return sspi_static_rank_data
         case "sspi_static_radar_data":
             return sspi_static_radar_data
-        case "sspi_dynamic_line_data":
-            return sspi_dynamic_line_data
+        case "sspi_item_dynamic_line_data":
+            return sspi_item_dynamic_line_data 
+        case "sspi_indicator_dynamic_line_data":
+            return sspi_indicator_dynamic_line_data
         case "sspi_dynamic_matrix_data":
             return sspi_dynamic_matrix_data
         case "sspi_panel_data":
@@ -459,7 +462,7 @@ def interpolate_linear(
     return copied_doc_list
 
 
-def generate_item_levels(
+def generate_series_levels(
     data: list[dict],
     entity_id="",
     value_id="",
@@ -471,7 +474,7 @@ def generate_item_levels(
     value_id = value_id if value_id else "Value"
     time_id = time_id if time_id else "Year"
     score_id = score_id if score_id else "Score"
-    item_levels = {}
+    series_levels = {}
     exclude = [entity_id, value_id, time_id, score_id, "_id"]
     exclude.extend(exclude_fields)
     for obs in data:
@@ -484,14 +487,14 @@ def generate_item_levels(
                 continue
             level_id += f"{str(k)}:{str(v)};"
             level[k] = v
-        if item_levels.get(level_id, None) is not None:
+        if series_levels.get(level_id, None) is not None:
             continue
         else:
-            item_levels[level_id] = level
-    return list(item_levels.values())
+            series_levels[level_id] = level
+    return list(series_levels.values())
 
 
-def generate_item_groups(
+def generate_series_groups(
     data: list[dict],
     entity_id="",
     value_id="",
@@ -503,7 +506,7 @@ def generate_item_groups(
     value_id = value_id if value_id else "Value"
     time_id = time_id if time_id else "Year"
     score_id = score_id if score_id else "Score"
-    item_levels = {}
+    series_levels = {}
     exclude = [entity_id, value_id, time_id, score_id, "_id"]
     exclude.extend(exclude_fields)
     for obs in data:
@@ -521,7 +524,7 @@ def generate_item_groups(
             "Datasets": {},
             "Identifier": level,
         }
-        datasets = item_levels.setdefault(level_id, structure)["Datasets"]
+        datasets = series_levels.setdefault(level_id, structure)["Datasets"]
         datasets.setdefault(obs[entity_id], []).append(
             {
                 "entity_id": obs[entity_id],
@@ -530,7 +533,7 @@ def generate_item_groups(
                 "score_id": obs.get(score_id, None) if score_id in obs else None,
             }
         )
-    return list(item_levels.values())
+    return list(series_levels.values())
 
 
 def slice_dataset(doc_list, dataset_codes: list[str] | str):
@@ -578,14 +581,14 @@ def impute_global_average(
     :param country_code: The country code to impute.
     :param start_year: The starting year for the imputation.
     :param end_year: The ending year for the imputation.
-    :param item_type: The type of item being imputed. Valid values are "Intermediate" or "Indicator".
+    :param item_type: The type of item being imputed. Valid values are "Dataset" or "Indicator".
     :param item_code: The code of the item being imputed (e.g., "GINIPT").
     :param ref_data: The reference data to calculate the global average.
     """
     if not all([x["Unit"] == ref_data[0]["Unit"] for x in ref_data]):
         raise ValueError("Units are not consistent across reference data.")
-    if item_type not in ["Intermediate", "Indicator"]:
-        raise ValueError("item_type must be either 'Intermediate' or 'Indicator'.")
+    if item_type not in ["Dataset", "Indicator"]:
+        raise ValueError("item_type must be either 'Dataset' or 'Indicator'.")
     mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
     mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
     imputation_list = []
@@ -599,8 +602,8 @@ def impute_global_average(
             "Imputed": True,
             "ImputationMethod": "ImputeGlobalAverage",
         }
-        if item_type == "Intermediate":
-            imputed_document["IntermediateCode"] = item_code
+        if item_type == "Dataset":
+            imputed_document["DatasetCode"] = item_code
         elif item_type == "Indicator":
             imputed_document["IndicatorCode"] = item_code
         imputation_list.append(imputed_document)

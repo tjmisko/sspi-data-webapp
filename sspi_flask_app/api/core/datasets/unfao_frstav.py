@@ -44,4 +44,5 @@ def clean_unfao_frstav():
             })
     
     sspi_clean_api_data.insert_many(avg_data_list)
+    sspi_metadata.record_dataset_range(avg_data_list, "UNFAO_FRSTAV")
     return parse_json(avg_data_list)

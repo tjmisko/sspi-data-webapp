@@ -1,4 +1,4 @@
-class ItemPanelChart extends PanelChart {
+class SeriesPanelChart extends PanelChart {
     constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300 } = {} ) {
         super(parentElement, { CountryList: CountryList, endpointURL: endpointURL, width: width, height: height })
     }
@@ -18,7 +18,7 @@ class ItemPanelChart extends PanelChart {
             if (k === 'Description') {
                 desc = v
             } 
-            if (k === 'ItemCode' || k === 'IntermediateCode') {
+            if (k === 'ItemCode' || k === 'DatasetCode') {
                 code = v
             }
             identifiersHTML += `<li class="item-panel-info-box-element"><b>${k}</b>:<span class="item-panel-info-box-value">${v}</span></li>`

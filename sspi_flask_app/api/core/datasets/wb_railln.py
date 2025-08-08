@@ -14,4 +14,5 @@ def clean_wb_railln():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     wb_railln = clean_wb_data(raw_data, "WB_RAILLN", "Kilometers")
     count = sspi_clean_api_data.insert_many(wb_railln)
+    sspi_metadata.record_dataset_range(wb_railln, "WB_RAILLN")
     return wb_railln

@@ -26,11 +26,12 @@ def clean_unsdg_frshwt():
         "geoAreaCode",
         "geoAreaName",
     ]
-    unsdg_freshwt = filter_sdg(
+    unsdg_frshwt = filter_sdg(
         extracted_unsdg_frshwt,
         idcode_map,
         rename_map,
         drop_list,
     )
-    count = sspi_clean_api_data.insert_many(unsdg_freshwt)
-    return unsdg_freshwt
+    count = sspi_clean_api_data.insert_many(unsdg_frshwt)
+    sspi_metadata.record_dataset_range(unsdg_frshwt, "UNSDG_FRSHWT")
+    return unsdg_frshwt

@@ -17,4 +17,5 @@ def clean_fpi_gdp_per_cap():
     description = "GDP per capita (constant 2010 US$); Source: World Bank, downloaded 01/15/2018 from https://data.worldbank.org/indicator/NY.GDP.PCAP.KD"
     cleaned_data = clean_fpi_data(raw_data, "FPI_GDP_PER_CAP", "USD per capita", description)
     sspi_clean_api_data.insert_many(cleaned_data)
+    sspi_metadata.record_dataset_range(cleaned_data, "FPI_GDP_PER_CAP")
     return parse_json(cleaned_data)

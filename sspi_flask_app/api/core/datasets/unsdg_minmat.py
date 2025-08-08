@@ -30,4 +30,5 @@ def clean_unsdg_terrst():
         drop_list,
     )
     count = sspi_clean_api_data.insert_many(unsdg_minmat)
+    sspi_metadata.record_dataset_range(unsdg_minmat, "UNSDG_MINMAT")
     return unsdg_minmat

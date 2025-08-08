@@ -34,4 +34,5 @@ def clean_ilo_colbar():
     colbar_raw["Unit"] = "Proportion"
     obs_list = json.loads(str(colbar_raw.to_json(orient="records")))
     sspi_clean_api_data.insert_many(obs_list)
+    sspi_metadata.record_dataset_range(obs_list, "ILO_COLBAR")
     return parse_json(obs_list)

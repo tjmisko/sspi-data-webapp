@@ -2,16 +2,20 @@ const endLabelPlugin = {
     id: 'endLabelPlugin',
 
     defaults: {
-        labelField    : 'CCode', // dataset[field] to show
-        occludedAlpha : 0.15,    // opacity for non-selected labels
-        animAlpha     : 0.50     // opacity while chart is animating
+        labelField         : 'CCode', // dataset[field] to show
+        occludedAlpha      : 0.15,   // opacity for non-selected labels
+        animAlpha          : 0.50,   // opacity while chart is animating
+        showDefaultLabels  : true,   // show random non-overlapping subset by default
+        defaultLabelSpacing: 5       // minimum spacing between default visible labels (px)
     },
 
-    /* track mouse position */
+    /* track mouse position - unified with proximity plugin */
     afterEvent(chart, args) {
         const e = args.event;
         if (e && typeof e.x === 'number' && typeof e.y === 'number') {
-            chart._endLabelMouse = { x: e.x, y: e.y };
+            chart._unifiedMouse = { x: e.x, y: e.y };
+        } else if (e && e.type === "mouseout") {
+            chart._unifiedMouse = null;
         }
     },
 
@@ -90,9 +94,37 @@ const endLabelPlugin = {
             l.order = chart._endLabelOrder[l.idx] ?? 0;
         });
 
-        /* ----------- 4. Sort for occlusion tests ------------------------ */
+        /* ----------- 4. Build default visible set ------------------------ */
         labels.sort((a, b) => a.order - b.order); // bottom -> top
+        
+        // Build default visible set of non-overlapping labels
+        if (opts.showDefaultLabels && !chart._defaultVisibleLabels) {
+            const spacing = opts.defaultLabelSpacing;
+            const defaultVisible = new Set();
+            
+            for (const label of labels) {
+                let overlaps = false;
+                for (const visibleIdx of defaultVisible) {
+                    const visible = labels[visibleIdx];
+                    // Check overlap with spacing buffer
+                    if (
+                        label.box.right + spacing >= visible.box.left - spacing &&
+                        label.box.left - spacing <= visible.box.right + spacing &&
+                        label.box.bottom + spacing >= visible.box.top - spacing &&
+                        label.box.top - spacing <= visible.box.bottom + spacing
+                    ) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+                if (!overlaps) {
+                    defaultVisible.add(labels.indexOf(label));
+                }
+            }
+            chart._defaultVisibleLabels = defaultVisible;
+        }
 
+        // Traditional occlusion detection for cursor interactions
         for (let i = 0; i < labels.length; ++i) {
             const a = labels[i];
             for (let j = i + 1; j < labels.length; ++j) {
@@ -111,8 +143,8 @@ const endLabelPlugin = {
 
         /* ----------- 5. Pick dataset closest to cursor ------------------ */
         let closestDatasetIdx = null;
-        if (chart._endLabelMouse) {
-            const { x: mx, y: my } = chart._endLabelMouse;
+        if (chart._unifiedMouse) {
+            const { x: mx, y: my } = chart._unifiedMouse;
             let minD2 = Infinity;
             chart.data.datasets.forEach((ds, i) => {
                 if (ds.hidden) return;
@@ -144,11 +176,25 @@ const endLabelPlugin = {
             labels.push(closest); // ensure selected label drawn last (top)
         }
 
-        labels.forEach(l => {
+        labels.forEach((l, i) => {
             ctx.save();
             ctx.font = 'bold 14px Arial';
             ctx.fillStyle = l.colour;
-            ctx.globalAlpha = l === closest ? 1 : opts.occludedAlpha;
+            
+            // Determine opacity based on interaction state
+            let alpha;
+            if (closest) {
+                // Mouse interaction: highlight closest, fade others
+                alpha = l === closest ? 1 : opts.occludedAlpha;
+            } else if (opts.showDefaultLabels && chart._defaultVisibleLabels) {
+                // No mouse interaction: show default visible set
+                alpha = chart._defaultVisibleLabels.has(i) ? 1 : opts.occludedAlpha;
+            } else {
+                // Fallback: use original behavior
+                alpha = opts.occludedAlpha;
+            }
+            
+            ctx.globalAlpha = alpha;
             ctx.textAlign = 'left';
             ctx.fillText(l.text, l.x, l.y);
             ctx.restore();
