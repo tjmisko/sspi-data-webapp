@@ -16,7 +16,7 @@ def clean_wid_nincs_pretax():
     sspi_clean_api_data.delete_many({"DatasetCode": "WID_NINCSH_PRETAX"})
     source_info = sspi_metadata.get_source_info("WID_NINCSH_PRETAX")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
-    
+    return parse_json(raw_data)
     # Target WID variables for pre-tax national income shares
     target_variables = ["sptincj992", "sptincj999"]  # equal-split adults (adults, all ages)
     target_percentiles = ["p0p100", "p0p50", "p50p90", "p90p100", "p99p100"]
