@@ -13,9 +13,10 @@ find_free_port() {
 # Simple worktree detection - check if .git is a file (worktree) vs directory (main)
 if [[ -f .git ]]; then
     IS_WORKTREE=true
-    # Extract main repo path from .git file
-    GIT_DIR=$(grep gitdir: .git | cut -d' ' -f2)
-    MAIN_REPO=$(dirname $(dirname $(dirname "$GIT_DIR")))/sspi-data-webapp
+    # Get the main repository's .git directory using git command
+    GIT_COMMON_DIR=$(git rev-parse --git-common-dir)
+    # Main repo is the parent of .git
+    MAIN_REPO=$(dirname "$GIT_COMMON_DIR")
     PARENT_DIR=$(dirname "$MAIN_REPO")
     
     # Port management with registry
