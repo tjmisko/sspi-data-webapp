@@ -88,3 +88,4 @@ profiler/**
 
 node_modules
 CLAUDE.md
+.worktree-ports
