@@ -1,16 +1,67 @@
 #!/bin/bash
-cat << EOF >| wsgi.py
+set -euo pipefail
+
+# Function to find free port
+find_free_port() {
+    local port=$1
+    while lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; do
+        ((port++))
+    done
+    echo $port
+}
+
+# Simple worktree detection - check if .git is a file (worktree) vs directory (main)
+if [[ -f .git ]]; then
+    IS_WORKTREE=true
+    # Extract main repo path from .git file
+    GIT_DIR=$(grep gitdir: .git | cut -d' ' -f2)
+    MAIN_REPO=$(dirname $(dirname $(dirname "$GIT_DIR")))/sspi-data-webapp
+    PARENT_DIR=$(dirname "$MAIN_REPO")
+    
+    # Port management with registry
+    PORT_REGISTRY="$MAIN_REPO/.worktree-ports"
+    WORKTREE_NAME=$(basename "$PWD")
+    
+    # Check for existing port assignment
+    if [[ -f "$PORT_REGISTRY" ]] && grep -q "^$WORKTREE_NAME=" "$PORT_REGISTRY"; then
+        PORT=$(grep "^$WORKTREE_NAME=" "$PORT_REGISTRY" | cut -d= -f2)
+        echo "Worktree '$WORKTREE_NAME' reusing assigned port $PORT"
+    else
+        PORT=$(find_free_port 5001)
+        echo "$WORKTREE_NAME=$PORT" >> "$PORT_REGISTRY"
+        echo "Worktree '$WORKTREE_NAME' assigned new port $PORT"
+    fi
+    
+    # Symlink configs instead of copying
+    echo "Symlinking configs from main repository..."
+    ln -sfn "$MAIN_REPO/.env" .env
+    ln -sfn "$MAIN_REPO/CLAUDE.md" CLAUDE.md
+else
+    # Main repository
+    IS_WORKTREE=false
+    PARENT_DIR=$(dirname "$PWD")
+    PORT=5000
+    echo "Main repository using port $PORT"
+    
+    # Create .env only if it doesn't exist
+    [[ ! -f .env ]] && echo "SECRET_KEY='thiscanbewhateveryouwantfordevelopment'" > .env
+fi
+
+# Generate wsgi.py with assigned port
+cat > wsgi.py <<EOF
 from sspi_flask_app import init_app
 from config import DevConfig
 
 app = init_app(DevConfig)
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='127.0.0.1', port=$PORT)
 EOF
-echo SECRET_KEY='thiscanbewhateveryouwantfordevelopment' > .env 
-mkdir -p instance && touch instance/database.db
-echo SQLALCHEMY_DATABASE_URI=\"sqlite:///$(pwd)/instance/database.db\" >> .env 
+
+# Create local venv and install packages
 type python && SSPI_PYTHON=python || SSPI_PYTHON=python3
-$SSPI_PYTHON -m venv env
+"$SSPI_PYTHON" -m venv env
 source env/bin/activate && pip install -r requirements.txt
 pip install -e .
+
+echo "✓ Setup complete! Run with:"
+echo "  source env/bin/activate && flask run --debug --port $PORT"
