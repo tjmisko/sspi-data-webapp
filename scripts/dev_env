@@ -1,0 +1,36 @@
+#!/bin/bash
+# Parse command line arguments
+RUN_FLASK=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --run)
+            RUN_FLASK=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--run]"
+            exit 1
+            ;;
+    esac
+done
+
+echo "Current Directory: $(pwd)"
+IS_GIT_WORKTREE=$([[ "$(file .git | cut -d: -f2)" = *"directory"* ]] && echo "false" || echo "true")
+echo "Is Git Worktree?: $IS_GIT_WORKTREE"
+[[ "$IS_GIT_WORKTREE" = "true" ]] && echo "Worktree Directory: $(git rev-parse --show-toplevel)"
+echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
+echo "Issue Number: $(gh issue view 716 --json number -q '.number')"
+echo "Issue Title: $(gh issue view 716 --json title -q '.title')"
+FLASK_RUN_PORT=$(cat wsgi.py | grep 'app.run(' | sed 's/.*port=//;s/).*//')
+echo "FLASK_RUN_PORT: $FLASK_RUN_PORT"
+FLASK_RUN_COMMAND="flask run --debug --port $FLASK_RUN_PORT"
+echo "FLASK_RUN_COMMAND: $FLASK_RUN_COMMAND"
+wezterm cli set-tab-title "$(gh issue view 716 --json number,title -q '(.number | tostring)+": " +.title') - Port $FLASK_RUN_PORT"
+
+# Run flask if --run flag was provided
+if [ "$RUN_FLASK" = true ]; then
+    echo ""
+    echo "Starting Flask development server..."
+    $FLASK_RUN_COMMAND
+fi
