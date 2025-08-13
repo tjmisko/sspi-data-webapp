@@ -1,4 +1,5 @@
 from os import environ, path
+import re
 import ssl
 import json
 from dotenv import load_dotenv
@@ -21,7 +22,16 @@ class SSPIDatabaseConnector:
         self.remote_session = requests.Session()
         self.login_session_local()
         self.login_session_remote()
-        self.local_base = "http://127.0.0.1:5000"
+        with open(path.join(path.dirname(__file__), 'wsgi.py'), 'r') as f:
+            contents = f.read().strip()
+            result = re.search(r"port=(\d)+", contents)
+            if result:
+                self.local_port_number = result.group(1)
+            else: 
+                log.error("Could not find port number in wsgi.py!")
+                self.local_port_number = "5000"
+        self.local_port_number = "wsgi.py"
+        self.local_base = f"http://127.0.0.1:{self.local_port_number}"
         self.remote_base = "https://sspi.world"
 
     def get_token(self, token_name="SSPI_APIKEY"):
