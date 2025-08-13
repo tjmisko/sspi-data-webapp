@@ -22,14 +22,18 @@ class SSPIDatabaseConnector:
         self.remote_session = requests.Session()
         self.login_session_local()
         self.login_session_remote()
-        with open(path.join(path.dirname(path.dirname(__file__)), 'wsgi.py'), 'r') as f:
-            contents = f.read().strip()
-            result = re.search(r"port=(\d+)", contents)
-            if result:
-                self.local_port_number = str(result.group(1))
-            else: 
-                log.error("Could not find port number in wsgi.py!")
-                self.local_port_number = "5000"
+        wsgi_path = path.join(path.dirname(path.dirname(__file__)), 'wsgi.py')
+        if not path.exists(wsgi_path):
+            self.local_port_number = "5000"
+        else:
+            with open(wsgi_path, 'r') as f:
+                contents = f.read().strip()
+                result = re.search(r"port=(\d+)", contents)
+                if result:
+                    self.local_port_number = str(result.group(1))
+                else: 
+                    log.error("Could not find port number in wsgi.py!")
+                    self.local_port_number = "5000"
         self.local_base = f"http://127.0.0.1:{self.local_port_number}"
         self.remote_base = "https://sspi.world"
 
