@@ -51,7 +51,6 @@ if [[ -f .git ]]; then
         done < "$PORT_REGISTRY"
         mv "$TEMP_REGISTRY" "$PORT_REGISTRY"
     fi
-    
     # Check for existing port assignment
     if grep -q "^$WORKTREE_NAME=" "$PORT_REGISTRY"; then
         PORT=$(grep "^$WORKTREE_NAME=" "$PORT_REGISTRY" | cut -d= -f2)
