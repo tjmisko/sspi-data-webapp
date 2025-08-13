@@ -30,7 +30,6 @@ class SSPIDatabaseConnector:
             else: 
                 log.error("Could not find port number in wsgi.py!")
                 self.local_port_number = "5000"
-        self.local_port_number = "wsgi.py"
         self.local_base = f"http://127.0.0.1:{self.local_port_number}"
         self.remote_base = "https://sspi.world"
 
