@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "Current Directory: $(pwd)"
+echo "Worktree Directory: $(git rev-parse --show-toplevel)"
+echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
+echo "FLASK_RUN_PORT: $(cat wsgi.py | grep 'port=' | sed 's/.*port=\([0-9]*\).*/\1/' | head -n 1)"
