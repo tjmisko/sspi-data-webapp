@@ -22,7 +22,7 @@ class SSPIDatabaseConnector:
         self.remote_session = requests.Session()
         self.login_session_local()
         self.login_session_remote()
-        with open(path.join(path.dirname(__file__), 'wsgi.py'), 'r') as f:
+        with open(path.join(path.dirname(path.dirname(__file__)), 'wsgi.py'), 'r') as f:
             contents = f.read().strip()
             result = re.search(r"port=(\d)+", contents)
             if result:
