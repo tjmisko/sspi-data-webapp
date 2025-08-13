@@ -1,7 +1,10 @@
 from sspi_flask_app import init_app
+import pathlib
 from config import TestConfig
 import pytest
 
+def pytest_ignore_collect(path, config):
+    return any(".git/worktrees" in part for part in pathlib.Path(path).parts)
 
 @pytest.fixture(scope="session")
 def app():
@@ -18,3 +21,5 @@ def client(app):
 @pytest.fixture()
 def runner(app):
     return app.test_cli_runner()
+
+
