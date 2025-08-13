@@ -24,9 +24,9 @@ class SSPIDatabaseConnector:
         self.login_session_remote()
         with open(path.join(path.dirname(path.dirname(__file__)), 'wsgi.py'), 'r') as f:
             contents = f.read().strip()
-            result = re.search(r"port=(\d)+", contents)
+            result = re.search(r"port=(\d+)", contents)
             if result:
-                self.local_port_number = result.group(1)
+                self.local_port_number = str(result.group(1))
             else: 
                 log.error("Could not find port number in wsgi.py!")
                 self.local_port_number = "5000"
