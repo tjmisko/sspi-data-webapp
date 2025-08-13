@@ -69,7 +69,7 @@ if [[ -f .git ]]; then
     # Recursively symlink .claude directory if it exists in main repo
     if [[ -d "$MAIN_REPO/.claude" ]]; then
         echo "Symlinking .claude directory from main repository..."
-        ln -sfn "$MAIN_REPO/.claude" .claude
+        ln -sfn "$MAIN_REPO/.claude" .
     fi
 else
     # Main repository - always uses port 5000
