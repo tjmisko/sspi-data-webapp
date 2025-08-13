@@ -64,13 +64,6 @@ if [[ -f .git ]]; then
     # Symlink configs instead of copying
     echo "Symlinking configs from main repository..."
     ln -sfn "$MAIN_REPO/.env" .env
-    ln -sfn "$MAIN_REPO/CLAUDE.md" CLAUDE.md
-    
-    # Recursively symlink .claude directory if it exists in main repo
-    if [[ -d "$MAIN_REPO/.claude" ]]; then
-        echo "Symlinking .claude directory from main repository..."
-        ln -sfn "$MAIN_REPO/.claude" .
-    fi
 else
     # Main repository - always uses port 5000
     IS_WORKTREE=false
