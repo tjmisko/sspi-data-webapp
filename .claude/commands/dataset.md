@@ -2,7 +2,7 @@
 allowed-tools: Bash(sspi metadata:*), Bash(sspi clean:*), Bash(sspi query:*)
 description: Conduct data processing and cleaning on a raw dataset to prepare a dataset for use in the SSPI
 ---
-You will be provided a **Dataset Code**, which will help you identify relevant files. For example, if the **Dataset Code**
+You may be provided a **Dataset Code**, which will help you identify relevant files. For example, if the **Dataset Code**
 is `UNSDG_MARINE`, then the two most important files to understand will be:
 1. @datasets/unsdg_marine/documentation.md: Contains the documentation and the key-value pairs as YAML frontmatter which are used to load the metadata. This must be kept in sync with the Python files.
 2. @sspi_flask_app/api/core/datasets/unsdg_marine.py: contains the code used to clean the datasets. In particular, it contains two indicators marked and registerd via two decorators `@dataset_collector` and `@dataset_cleaner`. These work to implement the functionality exposed by the routes defined in @sspi_flask_app/api/core/dataset.py by creating a registry of valid cleaner functions.
