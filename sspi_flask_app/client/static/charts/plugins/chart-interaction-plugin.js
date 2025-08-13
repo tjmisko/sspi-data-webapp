@@ -351,19 +351,6 @@ const chartInteractionPlugin = {
     const ctx = chart.ctx;
     const labels = [];
 
-    // Debug: Log dataset visibility and state
-    console.log('=== LABEL DEBUG START ===');
-    console.log('Total datasets:', chart.data.datasets.length);
-    const visibleDatasets = chart.data.datasets.filter((ds, i) => !ds.hidden);
-    console.log('Visible datasets:', visibleDatasets.map((ds, i) => `${ds.CCode || ds.label || `Dataset${i}`} (hidden: ${ds.hidden})`));
-    console.log('Chart state - _lastDatasetCount:', chart._lastDatasetCount);
-    console.log('Chart state - _needsLabelRebuild:', chart._needsLabelRebuild);
-    console.log('Chart state - _labelRandDone:', chart._labelRandDone);
-    console.log('Chart state - _defaultVisibleLabels exists:', !!chart._defaultVisibleLabels);
-    if (chart._defaultVisibleLabels) {
-      console.log('Chart state - _defaultVisibleLabels size:', chart._defaultVisibleLabels.size);
-      console.log('Chart state - _defaultVisibleLabels contents:', Array.from(chart._defaultVisibleLabels));
-    }
 
     /* Build label list */
     chart.data.datasets.forEach((ds, i) => {
@@ -406,7 +393,6 @@ const chartInteractionPlugin = {
       (chart.animations && chart.animations.size);
 
     if (animating) {
-      console.log('*** CHART IS ANIMATING - DEFERRING COLLISION DETECTION ***');
       chart._labelRandDone = false;
       // Clear any cached visible set built during animation - it's invalid
       chart._defaultVisibleLabels = null;
@@ -415,11 +401,8 @@ const chartInteractionPlugin = {
         ctx.fillText(l.text, l.x, l.y);
         ctx.restore();
       });
-      console.log('Waiting for animation to complete before building collision detection...');
       return;
     }
-    
-    console.log('*** ANIMATION COMPLETE - PROCEEDING WITH COLLISION DETECTION ***');
 
     /* Randomise order once - but give pinned countries top priority */
     if (!chart._labelRandDone) {
@@ -439,8 +422,6 @@ const chartInteractionPlugin = {
         orderSeq.map((d, pos) => [d, pos])
       );
       chart._labelRandDone = true;
-      
-      console.log('Label priority order - Pinned:', pinnedIndices, 'Unpinned (shuffled):', unpinnedIndices);
     }
     labels.forEach(l => {
       l.order = chart._labelOrder[l.idx] ?? 0;
@@ -449,34 +430,21 @@ const chartInteractionPlugin = {
     /* Build default visible set with priority-based collision handling */
     labels.sort((a, b) => a.order - b.order); // Sort by random order (priority)
     
-    console.log('=== CACHE VALIDATION DEBUG ===');
-    
     // Track dataset count to detect data structure changes
     const currentDatasetCount = labels.length;
-    console.log(`Current dataset count: ${currentDatasetCount}, Last known: ${chart._lastDatasetCount || 'unknown'}`);
     
     if (chart._lastDatasetCount !== currentDatasetCount) {
-      console.log(`*** DATASET COUNT CHANGED: ${chart._lastDatasetCount || 'unknown'} -> ${currentDatasetCount} ***`);
       chart._defaultVisibleLabels = null; // Clear stale cache
       chart._lastDatasetCount = currentDatasetCount;
-      console.log('Cleared cached visible set due to dataset count change');
     }
     
     // Additional safety check: validate cached indices are still valid
     if (chart._defaultVisibleLabels && chart._defaultVisibleLabels.size > 0) {
       const cachedIndices = Array.from(chart._defaultVisibleLabels);
       const maxCachedIndex = Math.max(...cachedIndices);
-      console.log(`Cached indices: [${cachedIndices.join(', ')}], max: ${maxCachedIndex}, labels.length: ${labels.length}`);
       
       if (maxCachedIndex >= labels.length) {
-        console.log(`*** INVALID CACHED INDEX: ${maxCachedIndex} >= ${labels.length} ***`);
         chart._defaultVisibleLabels = null;
-      } else {
-        console.log('Cached indices are within valid range');
-        // Show what countries these cached indices point to now
-        console.log('Cached indices map to countries:', cachedIndices.map(idx => 
-          labels[idx] ? `${idx}:${labels[idx].text}` : `${idx}:INVALID`
-        ));
       }
     }
     
@@ -485,26 +453,14 @@ const chartInteractionPlugin = {
                          chart._defaultVisibleLabels.size === 0 ||
                          chart._needsLabelRebuild;
     
-    console.log('Should rebuild cache?', shouldRebuild);
-    console.log('Rebuild reasons:', {
-      noCachedSet: !chart._defaultVisibleLabels,
-      emptySet: chart._defaultVisibleLabels?.size === 0,
-      forceRebuild: !!chart._needsLabelRebuild
-    });
-    
     if (shouldRebuild) {
-      console.log('*** REBUILDING DEFAULT VISIBLE SET ***');
       chart._defaultVisibleLabels = null;
       chart._needsLabelRebuild = false;
-    } else {
-      console.log('Using existing cached visible set');
     }
     
     if (opts.showDefaultLabels && !chart._defaultVisibleLabels) {
       const spacing = opts.defaultLabelSpacing;
       const defaultVisible = new Set();
-      
-      console.log('Building default visible set with spacing:', spacing);
       
       // Reset occlusion flags
       labels.forEach(label => { label.occluded = false; });
@@ -517,7 +473,6 @@ const chartInteractionPlugin = {
         // Pinned countries always get added regardless of collision
         if (label.isPinned) {
           defaultVisible.add(labelIndex);
-          console.log(`Label ${label.text} (order ${label.order}, idx ${labelIndex}): ADDED - PINNED (overrides collisions)`);
           return; // Skip collision detection for pinned labels
         }
         
@@ -539,27 +494,19 @@ const chartInteractionPlugin = {
         if (!hasCollision) {
           // No collision with higher priority labels, add to visible set
           defaultVisible.add(labelIndex);
-          console.log(`Label ${label.text} (order ${label.order}, idx ${labelIndex}): ADDED to visible set`);
         } else {
           // Mark as occluded by higher priority label
           label.occluded = true;
-          console.log(`Label ${label.text} (order ${label.order}, idx ${labelIndex}): OCCLUDED by ${collisionWith.join(', ')}`);
         }
       });
       
       chart._defaultVisibleLabels = defaultVisible;
-      console.log('Default visible set built:', Array.from(defaultVisible), 'out of', labels.length, 'labels');
-      console.log('Occluded labels:', labels.filter(l => l.occluded).map(l => l.text));
       
       // Reorder datasets so those with visible labels are drawn on top
       this._reorderDatasetsForVisibility(chart, labels, defaultVisible);
-    } else {
-      console.log('*** SKIPPING REBUILD - USING EXISTING CACHE ***');
-      console.log('Existing cached visible set:', chart._defaultVisibleLabels ? Array.from(chart._defaultVisibleLabels) : 'null');
     }
 
     /* Draw labels - draw winners last so they appear on top */
-    console.log('Drawing', labels.length, 'labels');
     
     // Separate winners and losers for proper layering
     const occludedLabels = [];
@@ -590,7 +537,6 @@ const chartInteractionPlugin = {
         occludedLabels.push(labelInfo);
       }
       
-      console.log(`Label ${l.text} (idx=${l.idx}, arrayIdx=${i}): alpha=${alpha}, reason=${reason}`);
     });
     
     // Draw occluded labels first (background)
@@ -607,8 +553,6 @@ const chartInteractionPlugin = {
       ctx.restore();
     });
     
-    console.log('=== END LABEL DEBUG ===');
-    console.log('');
   },
 
   /* ---------- helper methods ---------------------------------------- */
@@ -635,23 +579,17 @@ const chartInteractionPlugin = {
 
   // New method to clear all plugin state when data changes
   _clearLabelState(chart) {
-    console.log('*** _clearLabelState() called - clearing all label state ***');
-    console.log('Before clear - _defaultVisibleLabels:', chart._defaultVisibleLabels ? Array.from(chart._defaultVisibleLabels) : 'null');
-    console.log('Before clear - _lastDatasetCount:', chart._lastDatasetCount);
     chart._defaultVisibleLabels = null;
     chart._labelRandDone = false;
     chart._labelOrder = null;
     chart._lastDatasetCount = null; // Clear dataset count tracking
-    console.log('After clear - all state cleared');
   },
 
   // Method to force refresh of label state - called when data structure changes
   _forceRefreshLabels(chart) {
-    console.log('*** _forceRefreshLabels() called ***');
     this._clearLabelState(chart);
     // Force immediate rebuild on next draw
     chart._needsLabelRebuild = true;
-    console.log('Set _needsLabelRebuild flag to true');
   },
 
   // Reorder datasets so those with visible labels are drawn on top
@@ -697,8 +635,6 @@ const chartInteractionPlugin = {
     const orderChanged = reorderedDatasets.some((ds, i) => ds !== datasets[i]);
     if (orderChanged) {
       chart.data.datasets = reorderedDatasets;
-      console.log('Reordered datasets - visible label datasets moved to top:', 
-        datasetsWithVisibleLabels.map(item => item.dataset.CCode || `Dataset${item.originalIndex}`));
     }
   },
 
