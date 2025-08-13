@@ -1,11 +1,25 @@
 #!/bin/bash
 set -euo pipefail
 
-# Function to find free port
+# Function to find free port (checks both system and registry)
 find_free_port() {
     local port=$1
-    while lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; do
-        ((port++))
+    local registry_file="$2"
+    
+    while true; do
+        # Check if port is in use by system
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            ((port++))
+            continue
+        fi
+        
+        # Check if port is already assigned in registry
+        if [[ -f "$registry_file" ]] && grep -q "=$port$" "$registry_file"; then
+            ((port++))
+            continue
+        fi
+        
+        break
     done
     echo $port
 }
@@ -19,16 +33,31 @@ if [[ -f .git ]]; then
     MAIN_REPO=$(dirname "$GIT_COMMON_DIR")
     PARENT_DIR=$(dirname "$MAIN_REPO")
     
-    # Port management with registry
+    # Single source of truth: port registry in main repo
     PORT_REGISTRY="$MAIN_REPO/.worktree-ports"
     WORKTREE_NAME=$(basename "$PWD")
     
+    # Create port registry if it doesn't exist
+    [[ ! -f "$PORT_REGISTRY" ]] && touch "$PORT_REGISTRY"
+    
+    # Clean up stale entries for non-existent worktrees
+    if [[ -f "$PORT_REGISTRY" ]]; then
+        # Create temp file with only active worktrees
+        TEMP_REGISTRY=$(mktemp)
+        while IFS='=' read -r worktree_name port; do
+            if [[ -n "$worktree_name" ]] && git worktree list --porcelain | grep -q "^worktree.*/$worktree_name$"; then
+                echo "$worktree_name=$port" >> "$TEMP_REGISTRY"
+            fi
+        done < "$PORT_REGISTRY"
+        mv "$TEMP_REGISTRY" "$PORT_REGISTRY"
+    fi
+    
     # Check for existing port assignment
-    if [[ -f "$PORT_REGISTRY" ]] && grep -q "^$WORKTREE_NAME=" "$PORT_REGISTRY"; then
+    if grep -q "^$WORKTREE_NAME=" "$PORT_REGISTRY"; then
         PORT=$(grep "^$WORKTREE_NAME=" "$PORT_REGISTRY" | cut -d= -f2)
         echo "Worktree '$WORKTREE_NAME' reusing assigned port $PORT"
     else
-        PORT=$(find_free_port 5001)
+        PORT=$(find_free_port 5001 "$PORT_REGISTRY")
         echo "$WORKTREE_NAME=$PORT" >> "$PORT_REGISTRY"
         echo "Worktree '$WORKTREE_NAME' assigned new port $PORT"
     fi
@@ -38,11 +67,14 @@ if [[ -f .git ]]; then
     ln -sfn "$MAIN_REPO/.env" .env
     ln -sfn "$MAIN_REPO/CLAUDE.md" CLAUDE.md
 else
-    # Main repository
+    # Main repository - always uses port 5000
     IS_WORKTREE=false
     PARENT_DIR=$(dirname "$PWD")
     PORT=5000
     echo "Main repository using port $PORT"
+    
+    # Create port registry file if it doesn't exist (single source of truth)
+    [[ ! -f .worktree-ports ]] && touch .worktree-ports
     
     # Create .env only if it doesn't exist
     [[ ! -f .env ]] && echo "SECRET_KEY='thiscanbewhateveryouwantfordevelopment'" > .env
