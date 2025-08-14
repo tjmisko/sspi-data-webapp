@@ -1,0 +1,65 @@
+#!/bin/bash
+set -euo pipefail
+
+# WezTerm Tab Setup for Git Worktrees
+# Creates a new WezTerm tab for each git worktree with proper environment setup
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${GREEN}Setting up WezTerm tabs for git worktrees...${NC}"
+
+# Check if we're in a git repository
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    echo -e "${RED}Error: Not in a git repository${NC}"
+    exit 1
+fi
+
+# Get worktree list in porcelain format for easier parsing
+worktree_data=$(git worktree list --porcelain)
+
+# Parse worktree paths (include all worktrees including main repository)
+worktree_paths=()
+while IFS= read -r line; do
+    if [[ $line == worktree* ]]; then
+        path="${line#worktree }"
+        worktree_paths+=("$path")
+    fi
+done <<< "$worktree_data"
+
+if [ ${#worktree_paths[@]} -eq 0 ]; then
+    echo -e "${YELLOW}No worktrees found${NC}"
+    exit 0
+fi
+
+echo -e "${GREEN}Found ${#worktree_paths[@]} worktrees:${NC}"
+for path in "${worktree_paths[@]}"; do
+    echo "  - $path"
+done
+echo
+
+
+# Build a single command string with all spawn commands
+spawn_commands=""
+total_count=${#worktree_paths[@]}
+
+echo -e "${YELLOW}Building command string for $total_count worktrees...${NC}"
+
+for path in "${worktree_paths[@]}"; do
+    worktree_name=$(basename "$path")
+    echo "  - Adding command for: $worktree_name"
+    spawn_commands+="wezterm cli spawn --cwd \"$path\" -- bash -c 'deactivate 2>/dev/null || true; source env/bin/activate; bash scripts/wtdev; exec bash'\n"
+done
+
+echo -e "${YELLOW}Executing all spawn commands...${NC}"
+
+# Execute all commands at once
+if echo -e "$spawn_commands" | bash; then
+    echo -e "${GREEN}✓ Successfully created tabs for all worktrees${NC}"
+else
+    echo -e "${RED}✗ Some tab creation commands failed${NC}"
+    exit 1
+fi
