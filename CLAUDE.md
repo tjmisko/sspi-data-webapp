@@ -233,3 +233,5 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 - Don't guess at metadata like seriescodes, itemcodes, or indicator codes. Look them up using `sspi metadata item` or `sspi metadata dataset`. See their implementation and subcommands at @cli/commands/metadata.py
 - You must always kill only the server running on the current port for the worktree. Other servers are running in parallel.
 - You don't need to restart the flask server every time. Just touch wsgi.py. Only for major changes or module/import time changes do you need to restart
+
+- You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances
