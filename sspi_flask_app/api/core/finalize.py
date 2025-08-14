@@ -498,6 +498,10 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
     for country_code, year_data in data_map.items():
         for year, data in year_data.items():
             data["SSPI"] = SSPI(details, data["Data"])
-            yield f"{country_code}: {year}: {data["SSPI"].root.score}\n"
-            documents.extend(data["SSPI"].to_score_documents(country_code))
+            scores = data["SSPI"].to_score_documents(country_code)
+            for doc in scores:
+                detail = sspi_metadata.get_item_detail(doc["ItemCode"])
+                doc["Children"] = detail.get("Children", [])
+                yield f"{country_code}: {year}: {str(doc.keys())}\n"
+                documents.append(doc)
     sspi_item_data.insert_many(documents)
