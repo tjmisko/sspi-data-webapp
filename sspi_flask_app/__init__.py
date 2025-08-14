@@ -29,6 +29,7 @@ import sspi_flask_app.api.core.sspi.sus.nrg.altnrg
 import sspi_flask_app.api.core.sspi.sus.nrg.nrgint
 import sspi_flask_app.api.core.sspi.sus.wst.mswgen
 import sspi_flask_app.api.core.sspi.sus.wst.recycl
+import sspi_flask_app.api.core.sspi.sus.wst.stcons
 import sspi_flask_app.api.core.sspi.ms.fin.fdepth
 import sspi_flask_app.api.core.sspi.ms.fin.fstabl
 import sspi_flask_app.api.core.sspi.ms.fin.pubacc
