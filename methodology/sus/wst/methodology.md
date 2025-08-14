@@ -9,6 +9,7 @@ ShortDescription: Policies reducing wasteful overconsumption and promoting minim
 IndicatorCodes:
   - MSWGEN
   - RECYCL
+  - STCONS
 Pillar: Sustainability
 PillarCode: SUS
 ---
