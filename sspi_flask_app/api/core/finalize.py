@@ -502,6 +502,14 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
             for doc in scores:
                 detail = sspi_metadata.get_item_detail(doc["ItemCode"])
                 doc["Children"] = detail.get("Children", [])
+                # Add ItemName from metadata - use most specific name available
+                name_priority = ["Indicator", "Category", "Pillar", "Name", "ItemName"]
+                item_name = ""
+                for name_key in name_priority:
+                    if name_key in detail and detail[name_key]:
+                        item_name = detail[name_key]
+                        break
+                doc["ItemName"] = item_name
                 yield f"{country_code}: {year}: {str(doc.keys())}\n"
                 documents.append(doc)
     sspi_item_data.insert_many(documents)
