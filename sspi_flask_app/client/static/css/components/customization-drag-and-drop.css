@@ -8,6 +8,8 @@
   gap: var(--theme-gap);
   width: 100%;
   margin: 0 auto;
+  align-items: start;
+  min-width: 0; /* Allow grid items to shrink below content size */
 }
 
 .pillar-column {
@@ -17,6 +19,10 @@
   border: var(--theme-border-thick);
   padding: 1rem;
   border-radius: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow column to shrink below content size */
+  overflow-wrap: break-word; /* Break long words to prevent overflow */
 }
 
 .pillar-header {
@@ -28,9 +34,19 @@
   margin-bottom: 0.5rem;
 }
 
-@media (max-width: var(--mobile-break-width)) {
-  .pillars-container {
-    grid-template-columns: 1fr;
+/* Mobile: Single column layout */
+@media (max-width: 1000px) {
+  .pillars-container,
+  .pillars-container.pillars-grid {
+    grid-template-columns: 1fr !important;
+    align-items: start;
+    gap: 1rem;
+  }
+  
+  .pillar-column {
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: none;
   }
 }
 .sspi-toolbar {
@@ -47,11 +63,17 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  align-items: start;
+  min-width: 0; /* Allow grid items to shrink below content size */
 }
 
 .pillar-column {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow column to shrink below content size */
+  overflow-wrap: break-word; /* Break long words to prevent overflow */
 }
 
 .pillar-header {

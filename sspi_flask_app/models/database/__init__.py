@@ -40,6 +40,9 @@ from sspi_flask_app.models.database.sspi_panel_data import (
 from sspi_flask_app.models.database.sspi_user_data import (
     SSPIUserData
 )
+from sspi_flask_app.models.database.sspi_custom_user_structure import (
+    SSPICustomUserStructure
+)
 
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
@@ -111,4 +114,9 @@ sspi_static_stack_data = SSPIProductionData(
 # User Authentication Data
 sspi_user_data = SSPIUserData(
     sspidb.users
+)
+
+# Custom User Structure Data
+sspi_custom_user_structure = SSPICustomUserStructure(
+    sspidb.sspi_custom_user_structure
 )

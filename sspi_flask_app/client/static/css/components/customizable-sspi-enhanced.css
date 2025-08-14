@@ -1,0 +1,480 @@
+/* Enhanced Customizable SSPI Styles */
+
+/* Contenteditable focus styling to prevent details toggle confusion */
+[contenteditable="true"]:focus {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+    background-color: var(--input-background-color);
+    border-radius: 3px;
+    position: relative;
+    z-index: 10;
+}
+
+[contenteditable="true"]:hover {
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--link-color) 20%);
+    border-radius: 3px;
+    cursor: text;
+}
+
+/* Global width constraints for form elements to prevent grid expansion */
+.pillar-column input,
+.pillar-column select, 
+.pillar-column button,
+.pillar-column textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+}
+
+/* Code input styles */
+/* Header content containers - main flexbox layout */
+.pillar-header-content, .category-header-content, .indicator-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    flex-wrap: wrap;
+}
+
+/* Collapse icons */
+.category-collapse-icon, .indicator-collapse-icon {
+    font-size: 0.8em;
+    color: var(--low-importance-font-color);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    width: 1em;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    pointer-events: auto; /* Ensure icons are clickable */
+}
+
+.category-details:not([open]) .category-collapse-icon,
+.indicator-details:not([open]) .indicator-collapse-icon {
+    transform: rotate(-90deg);
+}
+
+/* Code sections within the flexbox */
+.pillar-code-section, .category-code-section, .indicator-code-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    flex-shrink: 0;
+}
+
+.code-label {
+    font-size: 0.75em;
+    font-weight: normal;
+    color: var(--low-importance-font-color);
+    white-space: nowrap;
+    margin: 0;
+    font-family: var(--body-font-family);
+}
+
+.pillar-code-input, .category-code-input {
+    width: 45px;
+    padding: 0.2em 0.3em;
+    border: 1px solid var(--subtle-line-color, #ccc);
+    border-radius: var(--border-radius);
+    font-family: monospace;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    text-align: center;
+}
+
+.indicator-code-input {
+    width: 65px;
+    padding: 0.2em 0.3em;
+    border: 1px solid var(--subtle-line-color, #ccc);
+    border-radius: var(--border-radius);
+    font-family: monospace;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    text-align: center;
+}
+
+.pillar-code-input:focus, .category-code-input:focus, .indicator-code-input:focus {
+    outline: none;
+    border-color: var(--green-accent, #8BA342);
+    box-shadow: 0 0 0 1px var(--green-accent, #8BA342);
+}
+
+.code-validation-message {
+    font-size: 0.65em;
+    margin-left: 0.3em;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.code-validation-message.error {
+    color: #dc3545;
+}
+
+.code-validation-message.success {
+    color: var(--sus-color);
+}
+
+/* Indicator configuration styles */
+/* Enhanced indicator styles */
+.indicator-details {
+    border: var(--theme-border-thin);
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5em;
+    background: var(--box-background-color);
+}
+
+.indicator-summary {
+    padding: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+    background: var(--box-background-color);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    user-select: none;
+    pointer-events: none; /* Disable default click behavior */
+}
+
+.indicator-summary > * {
+    pointer-events: auto; /* Re-enable for child elements */
+}
+
+.indicator-details[open] .indicator-summary {
+    border-bottom: var(--theme-border-thin);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.indicator-details:not([open]) .indicator-summary {
+    border-radius: var(--border-radius);
+}
+
+.indicator-summary::-webkit-details-marker {
+    display: none;
+}
+
+.indicator-name {
+    margin: 0;
+    flex: 1;
+    min-width: 120px;
+}
+
+.indicator-config {
+    padding: var(--theme-gap);
+    background: var(--region-background-color);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    max-width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.dataset-selection, .scoring-function, .goalposts-section {
+    margin-bottom: var(--theme-gap);
+}
+
+.dataset-selection legend, .scoring-function legend {
+    font-weight: bold;
+    font-size: 0.9em;
+    padding: 0 0.3em;
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+}
+
+.dataset-selection label, .scoring-function label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+    cursor: pointer;
+}
+
+.dataset-selection label:hover, .scoring-function label:hover {
+    color: var(--green-accent, #8BA342);
+}
+
+.selected-datasets {
+    min-height: 60px;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--theme-gap);
+    margin-bottom: 0.5rem;
+    background: var(--box-background-color);
+    box-shadow: var(--shadow-sm);
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+.selected-datasets:empty::before {
+    content: "No datasets selected. Click 'Add Dataset' to begin.";
+    color: var(--low-importance-font-color);
+    font-style: italic;
+    display: block;
+    text-align: center;
+    padding: var(--theme-gap);
+    font-family: var(--body-font-family);
+}
+
+.dataset-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5em;
+    margin-bottom: 0.3em;
+    background: color-mix(in srgb, var(--pg-color) 10%, var(--box-background-color) 90%);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--subtle-line-color, #ccc);
+}
+
+.dataset-code {
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--pg-color);
+    flex: 1;
+}
+
+.dataset-weight {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+}
+
+.dataset-weight label {
+    font-size: 0.8rem;
+    margin: 0;
+    font-weight: normal;
+    color: var(--body-text-color);
+}
+
+.weight-input {
+    width: 60px;
+    padding: 0.25em;
+    border: 1px solid var(--subtle-line-color, #ccc);
+    border-radius: var(--border-radius);
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+.remove-dataset {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    flex: 0 0 auto;
+    transition: background-color 0.2s;
+}
+
+.remove-dataset:hover {
+    background: #c82333;
+}
+
+.add-dataset-btn {
+    background-color: var(--green-accent, #8BA342);
+    color: white;
+    border: none;
+    padding: 0.5em 1em;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.9em;
+    width: 100%;
+    font-family: var(--header-font-family);
+    margin-top: 0.5em;
+}
+
+.add-dataset-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+.add-dataset-btn:disabled {
+    background: var(--low-importance-font-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+}
+
+.scoring-function-select {
+    width: 100%;
+    padding: 0.5em;
+    border: 1px solid var(--subtle-line-color, #ccc);
+    border-radius: var(--border-radius);
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    font-family: var(--body-font-family);
+    cursor: pointer;
+}
+
+.goalposts-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--theme-gap);
+}
+
+.goalpost-input {
+    display: flex;
+    flex-direction: column;
+}
+
+.goalpost-input label {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: var(--body-text-color);
+    font-weight: normal;
+    font-family: var(--header-font-family);
+}
+
+.lower-goalpost, .upper-goalpost {
+    padding: 0.5em;
+    border: 1px solid var(--subtle-line-color, #ccc);
+    border-radius: var(--border-radius);
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    font-family: var(--body-font-family);
+}
+
+.indicator-options {
+    grid-column: span 2;
+    margin-top: 0.5rem;
+}
+
+.indicator-options label {
+    display: flex;
+    align-items: center;
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+    font-weight: normal;
+}
+
+.inverted-checkbox {
+    margin-right: 0.5rem;
+}
+
+/* Enhanced pillar header styles */
+.pillar-header {
+    padding: var(--theme-gap);
+    background: var(--box-background-color);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    border: var(--theme-border-thick);
+    border-bottom: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.pillar-name {
+    font-size: 1.2rem;
+    font-weight: var(--title-weight);
+    color: var(--header-text-color);
+    font-family: var(--title-font-family);
+    flex: 1;
+    min-width: 150px;
+}
+
+/* Enhanced category styles */
+.category-details {
+    border: var(--theme-border-thin);
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5em;
+    background: var(--box-background-color);
+}
+
+.category-summary {
+    padding: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+    background: var(--box-background-color);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    user-select: none;
+    pointer-events: none; /* Disable default click behavior */
+}
+
+.category-summary > * {
+    pointer-events: auto; /* Re-enable for child elements */
+}
+
+.category-details[open] .category-summary {
+    border-bottom: var(--theme-border-thin);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.category-details:not([open]) .category-summary {
+    border-radius: var(--border-radius);
+}
+
+.category-summary::-webkit-details-marker {
+    display: none;
+}
+
+.category-content {
+    padding: 0.5em;
+}
+
+.category-header {
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+    margin: 0;
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Responsive adjustments */
+@media (max-width: var(--small-tablet-break-width)) {
+    .goalposts-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .indicator-options {
+        grid-column: span 1;
+    }
+    
+    .dataset-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .dataset-weight {
+        align-self: flex-end;
+    }
+    
+    /* Stack name and code vertically on smaller screens */
+    .pillar-header-content, .category-header-content, .indicator-header-content {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5em;
+    }
+    
+    .pillar-name, .category-header, .indicator-name {
+        min-width: 100px;
+        flex: 1 1 auto;
+    }
+    
+    /* Ensure collapse icons stay properly positioned */
+    .category-collapse-icon, .indicator-collapse-icon {
+        order: -1;
+    }
+    
+    /* Force all form elements to respect container width on mobile */
+    .pillar-column input,
+    .pillar-column select,
+    .pillar-column button {
+        max-width: 100%;
+        width: auto;
+        min-width: 0;
+    }
+    
+    /* Make dataset items stack better on mobile */
+    .dataset-item {
+        flex-wrap: wrap;
+    }
+    
+    /* Adjust goalposts for mobile */
+    .goalposts-section {
+        gap: 0.5rem;
+    }
+}
