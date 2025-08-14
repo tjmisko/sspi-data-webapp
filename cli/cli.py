@@ -16,6 +16,7 @@ from cli.commands.pull import pull
 from cli.commands.push import push
 from cli.commands.query import query
 from cli.commands.save import save
+from cli.commands.status import status
 from cli.commands.url import url
 from cli.commands.view import view
 
@@ -42,5 +43,6 @@ cli.add_command(pull)
 cli.add_command(push)
 cli.add_command(query)
 cli.add_command(save)
+cli.add_command(status)
 cli.add_command(url)
 cli.add_command(view)
