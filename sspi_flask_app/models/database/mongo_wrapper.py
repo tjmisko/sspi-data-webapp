@@ -207,6 +207,10 @@ class MongoWrapper:
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'CountryCode' must be uppercase (document {document_number})")
+        if any(char.isdigit() for char in document["CountryCode"]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'CountryCode' must not contain numbers (document {document_number})")
 
     def validate_year(self, document: dict, document_number: int = 0):
         # Validate Year format
