@@ -256,3 +256,5 @@ sspi metadata reload
 ```
 
 **Remember**: `touch wsgi.py` only reloads for code changes within already-imported modules. New modules require full restart.
+
+- You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances

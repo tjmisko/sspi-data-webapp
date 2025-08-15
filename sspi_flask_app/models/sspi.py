@@ -54,6 +54,19 @@ class SSPI:
             assert [s['Year'] for s in self.indicator_scores], \
                 "Year must be specified in indicator_scores"
         assert self.root, "SSPI root item not found in item details."
+        
+        if self.strict_year:
+            # Fragile design: enforce year consistency when strict_year=True
+            years = [ind.get('Year') for ind in self.indicator_scores]
+            assert all(y is not None for y in years), "All indicator scores must have Year specified"
+            unique_years = set(years)
+            assert len(unique_years) == 1, f"All indicators must have same year, got: {unique_years}"
+            self.year = years[0]
+        else:
+            # For non-strict mode (e.g., static rank data), handle mixed years gracefully
+            years = [ind.get('Year') for ind in self.indicator_scores if ind.get('Year') is not None]
+            self.year = years[0] if years else 2018  # Fallback for non-strict mode only
+        
         for ind in self.indicator_scores:
             ind_item = self._item_detail_table.get(ind['IndicatorCode'], None)
             if not ind_item:
@@ -62,10 +75,21 @@ class SSPI:
                 )
             ind_item.score = ind.get('Score', None)
             ind_item.year = ind.get('Year', None)
-            assert ind_item.year is not None, \
-                f"Year for indicator {ind['IndicatorCode']} is missing in indicator_scores."
+            if self.strict_year:
+                assert ind_item.year is not None, \
+                    f"Year for indicator {ind['IndicatorCode']} is missing in indicator_scores."
+            else:
+                # For non-strict mode, set default year if missing
+                if ind_item.year is None:
+                    ind_item.year = self.year
             assert ind_item.score is not None, \
                 f"Score for indicator {ind['IndicatorCode']} is missing in indicator_scores."
+        
+        # Set year on ALL items (categories, pillars, root) - fragile design requires consistency
+        for item in self._item_detail_table.values():
+            if not hasattr(item, 'year') or item.year is None:
+                item.year = self.year
+        
         if len(self.indicators) != len(self.indicator_scores):
             raise DataMetadataMismatchError(
                 "Number of indicator codes does not match number of indicator scores:"
@@ -105,27 +129,38 @@ class SSPI:
             raise KeyError(f"ItemCode {item_code} not found in item details.")
         return item
 
-    def to_rank_dict(self, country_code: str, year: int = None) -> dict:
+    def to_rank_dict(self, country_code: str, year: int) -> dict:
         """Export all items as dictionaries suitable for ranking"""
+        # Fragile design: require valid year parameter, no defaults
+        assert year is not None, "Year parameter is required - no fallback allowed"
+        
         results = {}
         
         # Root SSPI
+        assert hasattr(self.root, 'year') and self.root.year is not None, \
+            "Root SSPI item missing year - invalid state"
+        assert self.root.year == year, \
+            f"Root SSPI year {self.root.year} doesn't match expected year {year}"
         results["SSPI"] = {
             "CCode": country_code,
             "Score": self.root.score,
             "IName": "SSPI",
             "ICode": "SSPI",
-            "Year": year or 2018
+            "Year": self.root.year
         }
         
         # Pillars, Categories, Indicators
         for item in self._item_detail_table.values():
+            assert hasattr(item, 'year') and item.year is not None, \
+                f"Item {item.code} missing year - invalid state"
+            assert item.year == year, \
+                f"Item {item.code} year {item.year} doesn't match expected year {year}"
             results[item.code] = {
                 "CCode": country_code,
                 "Score": item.score,
                 "IName": item.name,
                 "ICode": item.code,
-                "Year": item.year if hasattr(item, 'year') else (year or 2018)
+                "Year": item.year
             }
         
         return results
@@ -139,12 +174,15 @@ class SSPI:
         docs = []
         for item in self._item_detail_table.values():
             if item.score is not None:
+                # Fragile design: crash if any item lacks year instead of defaulting
+                assert hasattr(item, 'year') and item.year is not None, \
+                    f"Item {item.code} missing year - invalid state"
                 docs.append({
                     "CountryCode": country_code,
                     "ItemCode": item.code,
                     "ItemType": item.type,
                     "Score": item.score,
-                    "Year": getattr(item, 'year', 2018)
+                    "Year": item.year
                 })
         return docs
 
