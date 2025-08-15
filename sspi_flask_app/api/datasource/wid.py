@@ -107,10 +107,17 @@ def filter_wid_csv(dataset_code:str, csv_string: str, country_code: str, percent
         log.info(metadata_csv_string[0:1000])
         metadata_df = pd.read_csv(StringIO(metadata_csv_string), delimiter=';')
         filtered_meta = metadata_df.query('variable == @variable').to_dict(orient='records')
-        assert len(filtered_meta) == 1, "Expected a single metadata record for the variable"
-        log.info(filtered_meta[0].get('simpledes', 'No description available'))
-        unit = filtered_meta[0].get('unit', 'No unit available')
-        filtered['Unit'] = f"{unit}; percentile {percentile}; {variable}"
+        if len(filtered_meta) == 1:
+            log.info(filtered_meta[0].get('simpledes', 'No description available'))
+            unit = filtered_meta[0].get('unit', 'No unit available')
+            filtered['Unit'] = f"{unit}; percentile {percentile}; {variable}"
+        elif len(filtered_meta) == 0:
+            log.warning(f"No metadata found for variable {variable}")
+            filtered['Unit'] = f"No unit available; percentile {percentile}; {variable}"
+        else:
+            log.warning(f"Multiple metadata records found for variable {variable}, using first one")
+            unit = filtered_meta[0].get('unit', 'No unit available')
+            filtered['Unit'] = f"{unit}; percentile {percentile}; {variable}"
         # Drop variable and percentile columns when metadata has been processed
         filtered = filtered.drop(columns=['variable', 'percentile'], errors='ignore')
     return json.loads(str(filtered.to_json(orient='records')))  # Convert to JSON string
