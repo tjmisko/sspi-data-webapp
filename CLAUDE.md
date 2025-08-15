@@ -189,6 +189,35 @@ sspi metadata country group [CODE] # Get country group metadata
 ## Development Tips
 - When making changes to any non-python files, you must run `touch wsgi.py` to get the development server to reload
 
+## Finalize Process and Active Schema
+
+### Role of finalize.py in Data Pipeline
+The `finalize.py` module (`sspi_flask_app/api/core/finalize.py`) is the final stage in the SSPI data processing pipeline. Its key responsibilities:
+
+1. **Score Generation**: Creates score documents for all items (SSPI, Pillars, Categories, Indicators) using the SSPI hierarchical scoring system
+2. **Metadata Enrichment**: Adds metadata from `sspi_metadata` to each score document, including:
+   - `Children` field: List of child ItemCodes from the hierarchy 
+   - `ItemName` field: The most specific name available (Indicator > Category > Pillar > Name)
+3. **Data Storage**: Inserts the finalized score documents into `sspi_item_data` collection
+
+### Active Schema Method
+The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/sspi_item_data.py`):
+
+1. **Purpose**: Returns a hierarchical tree structure showing only items with actual score data
+2. **Filtering Logic**:
+   - Queries only documents with non-null `Score` values
+   - Builds tree bottom-up from indicators with scores
+   - Excludes empty branches (pillars/categories with no child indicators having data)
+   - Uses `ItemName` from documents, falling back to `name_map` parameter if needed
+3. **Result**: A pruned tree containing only the active data structure
+
+### Data Coverage and Empty Items
+- Items may exist in metadata but lack actual score data
+- The schema endpoint (`/api/v1/utilities/coverage/schema`) shows only the active data structure
+- Empty pillars and categories (those without any child indicators with data) are automatically excluded
+- This ensures charts and visualizations only show meaningful data, not empty metadata structures
+- For example, if a pillar has three categories but only one has indicators with data, only that category will appear in the active schema
+
 ## Memories
 
 ### CLI and API Interactions
