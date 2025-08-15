@@ -2,17 +2,19 @@
 ItemType: Indicator
 ItemCode: STCONS
 DatasetCodes:
-  - FPI_ECOFPT_PER_CAP
+  - WID_CARBON_TOT_P0P100
+  - WID_CARBON_TOT_P90P100
 ItemName: Status Consumption
 Description: >
-    Ecological Footprint of Consumption, measured in Global Hectares.
+    Proportion of CO2 Emissions (Consumption and Investment) attributable to the Top 10% of earners.
 Footnote: null
 Indicator: Status Consumption
 IndicatorCode: STCONS
 Inverted: false
-LowerGoalpost: 10
-Policy: Unsustainable Consumption Among Elites
+LowerGoalpost: 5
+Policy: Reduction of Unsustainable Consumption Among Elites
 SourceOrganization: Footprint Index
-UpperGoalpost: 0
+UpperGoalpost: 1
 ---
-
+This indicator measures the extent to which country policies effectively limit overconsumption among elites.
+- Inequality in the generation of waste and harmful byproducts like CO2 is a major problem
