@@ -273,11 +273,7 @@ class SSPIMetadata(MongoWrapper):
                 )
             for methodology_file in filenames:
                 if not methodology_file == "methodology.md":
-                    raise MethodologyFileError(
-                        f"Methodology file {methodology_file} is not named 'methodology.md'. "
-                        "Please ensure all methodology files are named 'methodology.md'"
-                        "and that they are located in the correct directory."
-                    )
+                    continue
                 full_methodology_path = os.path.join(dirpath, methodology_file)
                 try:
                     detail = frontmatter.load(full_methodology_path)
@@ -351,11 +347,7 @@ class SSPIMetadata(MongoWrapper):
         for dirpath, dirnames, filenames in os.walk(dataset_dir):
             for dataset_file in filenames:
                 if dataset_file and not dataset_file == "documentation.md":
-                    raise DatasetFileError(
-                        f"Dataset file {dataset_file} is not named 'documentation.md'. "
-                        "Please ensure all dataset files are named 'documentation.md'"
-                        "and that they are located in the correct directory."
-                    )
+                    continue
                 full_dataset_path = os.path.join(dirpath, dataset_file)
                 try:
                     detail = frontmatter.load(full_dataset_path)

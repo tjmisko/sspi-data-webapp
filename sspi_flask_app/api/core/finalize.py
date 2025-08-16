@@ -38,25 +38,31 @@ finalize_bp = Blueprint(
 
 def finalize_iterator(local_path, endpoints):
     # Defaulst for country_list and indicator_list
-    coverage = DataCoverage(2000, 2023, "SSPI67")
-    indicator_list = coverage.complete()
-    country_list = list(coverage.country_codes)
-    yield "Finalizing Static Rank Data\n"
-    finalize_sspi_static_rank_data()
-    yield "Finalizing Static Radar Data\n"
-    finalize_sspi_static_radar_data()
-    yield "Finalizing Static Stack Data\n"
-    finalize_static_overall_stack_data()
-    yield "Finalizing Dynamic Matrix Data\n"
-    yield from finalize_matrix_iterator(local_path, endpoints)
-    yield "Scoring Dynamic Data\n"
-    yield from finalize_sspi_dynamic_score_iterator(indicator_list, country_list)
-    yield "Finalizing Dynamic Line Data\n"
-    sspi_indicator_dynamic_line_data.delete_many({})
-    yield from finalize_dynamic_line_indicator_datasets()
-    sspi_item_dynamic_line_data.delete_many({})
-    yield from finalize_dynamic_line_score_datasets()
-    yield "Finalization Complete\n"
+    try:
+        coverage = DataCoverage(2000, 2023, "SSPI67")
+        indicator_list = coverage.complete()
+        country_list = list(coverage.country_codes)
+        yield "Finalizing Static Rank Data\n"
+        finalize_sspi_static_rank_data()
+        yield "Finalizing Static Radar Data\n"
+        finalize_sspi_static_radar_data()
+        yield "Finalizing Static Stack Data\n"
+        finalize_static_overall_stack_data()
+        yield "Finalizing Dynamic Matrix Data\n"
+        yield from finalize_matrix_iterator(local_path, endpoints)
+        yield "Scoring Dynamic Data\n"
+        yield from finalize_sspi_dynamic_score_iterator(indicator_list, country_list)
+        yield "Finalizing Dynamic Line Data\n"
+        sspi_indicator_dynamic_line_data.delete_many({})
+        yield from finalize_dynamic_line_indicator_datasets()
+        sspi_item_dynamic_line_data.delete_many({})
+        yield from finalize_dynamic_line_score_datasets()
+        yield "Finalization Complete\n"
+    except Exception as e:
+        yield f"error: Finalization failed with exception: {str(e)}\n"
+        yield f"error: Exception type: {type(e).__name__}\n"
+        import traceback
+        yield f"error: Traceback: {traceback.format_exc()}\n"
 
 
 @finalize_bp.route("/production/finalize")
@@ -77,27 +83,30 @@ def finalize_sspi_static_rank_data():
     Computes the SSPI scores at all levels and stores them in a database
     ItemCode is the PillarCode, CategoryCode, or IndicatorCode
     """
-    sspi_static_rank_data.delete_many({})
-    country_codes = sspi_static_metadata.country_group("SSPI49")
-    item_details = sspi_static_metadata.item_details()
-    sspi_item_codes = ["SSPI"] + sspi_static_metadata.pillar_codes() + \
-        sspi_static_metadata.category_codes() + \
-        sspi_static_metadata.indicator_codes()
-    score_group_dictionary = {
-        item_code: [
-            {"CCode": "", "Score": 0, "Rank": 0,
-                "IName": "", "ICode": "", "Year": 0}
-            for _ in country_codes]
-        for item_code in sspi_item_codes}
-    for i, cou in enumerate(country_codes):
-        country_data = sspi_main_data_v3.find({"CountryCode": cou})
-        sspi_scores = SSPI(item_details, country_data, strict_year=False)
-        
-        # Use the new helper method to get all rank dictionaries
-        rank_dicts = sspi_scores.to_rank_dict(cou, year=2018)
-        for item_code, rank_dict in rank_dicts.items():
-            if item_code in score_group_dictionary:
-                score_group_dictionary[item_code][i].update(rank_dict)
+    try:
+        sspi_static_rank_data.delete_many({})
+        country_codes = sspi_static_metadata.country_group("SSPI49")
+        item_details = sspi_static_metadata.item_details()
+        sspi_item_codes = ["SSPI"] + sspi_static_metadata.pillar_codes() + \
+            sspi_static_metadata.category_codes() + \
+            sspi_static_metadata.indicator_codes()
+        score_group_dictionary = {
+            item_code: [
+                {"CCode": "", "Score": 0, "Rank": 0,
+                    "IName": "", "ICode": "", "Year": 0}
+                for _ in country_codes]
+            for item_code in sspi_item_codes}
+        for i, cou in enumerate(country_codes):
+            country_data = sspi_main_data_v3.find({"CountryCode": cou})
+            sspi_scores = SSPI(item_details, country_data, strict_year=False)
+            
+            # Use the new helper method to get all rank dictionaries
+            rank_dicts = sspi_scores.to_rank_dict(cou, year=2018)
+            for item_code, rank_dict in rank_dicts.items():
+                if item_code in score_group_dictionary:
+                    score_group_dictionary[item_code][i].update(rank_dict)
+    except Exception as e:
+        return f"error: Static rank finalization failed for country {cou if 'cou' in locals() else 'unknown'}: {str(e)}"
     for item_code in sspi_item_codes:
         # Ranking table modifies each list[dict] in place
         SSPIRankingTable(score_group_dictionary[item_code])
@@ -441,6 +450,11 @@ def finalize_matrix_iterator(local_path, endpoints):
     for obs in result:
         indicator_code = obs["IndicatorCode"]
         country = obs["CountryCode"]
+        
+        # Skip indicators not in metadata (safety check)
+        if indicator_code not in indicator_map:
+            continue
+            
         sspi_dynamic_matrix_data.insert_one({
             "x": indicator_code,
             "y": country,
@@ -475,12 +489,15 @@ def finalize_sspi_dynamic_score():
 
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
     sspi_item_data.delete_many({})
+    # Filter to only complete indicators to avoid scoring incomplete categories
+    coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
+    complete_indicators = coverage.complete()
     mongo_query = {
         "CountryCode": {"$in": country_codes},
-        "IndicatorCode": {"$in": indicator_codes},
+        "IndicatorCode": {"$in": complete_indicators},
         "Year": {"$gte": 2000, "$lte": 2023}
     }
-    details = sspi_metadata.item_details(indicator_filter=indicator_codes)
+    details = sspi_metadata.item_details(indicator_filter=complete_indicators)
     clean_data = sspi_indicator_data.find(mongo_query)
     imputed_data = sspi_imputed_data.find(mongo_query)
     yield "Building Data Map\n"

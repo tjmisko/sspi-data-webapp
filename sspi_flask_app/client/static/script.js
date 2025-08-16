@@ -1506,7 +1506,29 @@ for(const option of options){const opt=document.createElement('option')
 opt.value=option.Value
 if(option.Value===defaultValue){opt.selected=true;}
 opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
-this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}}
+this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
+initChartJSCanvas(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('panel-chart-container');this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.title=this.chartContainer.querySelector('.panel-chart-title');this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb');this.canvas=this.chartContainer.querySelector('.panel-chart-canvas');this.context=this.canvas.getContext('2d');this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset);});}},},layout:{padding:{right:40}}}});}
+renderBreadcrumb(treePath,title,itemCode,itemType){if(!treePath||treePath.length===0){this.title.style.display='block';this.breadcrumb.style.display='none';return;}
+this.title.style.display='none';this.breadcrumb.style.display='block';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
+if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<a href="'+url+'" class="breadcrumb-item" title="'+itemName+'">'+displayName+'</a>';}
+if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span>';this.breadcrumb.innerHTML=breadcrumbHTML;}
+generateTooltipText(parentItemName,parentItemType,childTypeTitle,childrenCount){const pluralToSingular={'Pillars':'Pillar','Categories':'Category','Indicators':'Indicator'};const childTypeSingular=pluralToSingular[childTypeTitle]||childTypeTitle;const childTypeDisplay=childrenCount===1?childTypeSingular:childTypeTitle;const parentTypeDisplay=parentItemType==='SSPI'?'SSPI':parentItemName+' '+parentItemType;return parentTypeDisplay+' scores are the arithmetic average of the '+childTypeSingular.toLowerCase()+' scores of the '+childrenCount+' '+childTypeDisplay.toLowerCase()+' below';}
+updateChildren(children,childTypeTitle,parentItemName,parentItemType){const descriptionContainer=this.chartOptions.querySelector('.dynamic-item-description-container');const existingChildrenSection=descriptionContainer.querySelector('.item-children-section');if(existingChildrenSection){existingChildrenSection.remove();}
+if(children&&children.length>0&&childTypeTitle){const tooltipText=this.generateTooltipText(parentItemName,parentItemType,childTypeTitle,children.length);console.log('Generated tooltip text:',tooltipText);const childrenHTML='<div class="item-children-section">'+
+'<div class="children-title-wrapper">'+
+'<h4>'+childTypeTitle+'</h4>'+
+'<span class="children-info-icon" title="'+tooltipText+'" aria-label="Information about scoring">i</span>'+
+'</div>'+
+'<ul class="children-list">'+
+children.map(child=>{const url=child.itemType==='Category'?'/data/category/'+child.itemCode:'/data/indicator/'+child.itemCode;return'<li><a href="'+url+'" class="child-link">'+child.itemName+' ('+child.itemCode+')</a></li>';}).join('')+
+'</ul>'+
+'</div>';descriptionContainer.insertAdjacentHTML('beforeend',childrenHTML);}}
+update(data){console.log(data);if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart);}
+this.chart.data.datasets=data.data;this.chart.data.labels=data.labels;if(this.pinnedOnly){this.hideUnpinned();}else{this.showGroup(this.countryGroup);}
+this.treepath=data.treepath;if(data.treepath&&data.treepath.length>0){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
+this.itemType=data.itemType;this.groupOptions=data.groupOptions;this.getPins();this.updateLegend();this.updateItemDropdown(data.itemOptions,data.itemType);this.updateDescription(data.description);this.updateChildren(data.children,data.childTypeTitle,data.itemName,data.itemType);this.updateChartColors();this.updateCountryGroups();this.chart.update();}}
 class IndicatorPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/indicator/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode
 this.activeSeries=itemCode
@@ -1553,7 +1575,8 @@ this.chart.data.labels=data.labels
 if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.datasetOptions=data.datasetOptions
 this.originalTitle=data.title
-this.title.innerText=data.title
+this.treepath=data.treepath
+if(data.itemType==="Indicator"&&data.treepath){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
 this.itemType=data.itemType
 this.groupOptions=data.groupOptions
 this.getPins()
@@ -1567,6 +1590,20 @@ this.updateSeriesDropdown()
 this.updateChartTitle()
 this.updateActiveSeriesDescription()
 this.chart.update()}
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
+this.context=this.canvas.getContext('2d')
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+renderBreadcrumb(treePath,title,itemCode,itemType){if(itemType!=="Indicator"||!treePath||treePath.length===0){this.title.style.display='block';this.breadcrumb.style.display='none';return;}
+this.title.style.display='none';this.breadcrumb.style.display='block';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url,tooltip;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
+if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<a href="'+url+'" class="breadcrumb-item" title="'+itemName+'">'+displayName+'</a>';}
+if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span>';this.breadcrumb.innerHTML=breadcrumbHTML;}
 buildChartOptions(){super.buildChartOptions()
 const viewOptions=this.chartOptions.querySelector('.chart-view-options')
 if(viewOptions){const existingContainer=viewOptions.querySelector('.view-options-suboption-container')
@@ -1605,9 +1642,10 @@ updateDefaultsForActiveSeries(){if(this.seriesDefaults&&this.seriesDefaults[this
 this.defaultYMax=this.seriesDefaults[this.activeSeries].yMax}else{this.defaultYMin=this.activeSeries===this.itemCode?0:0
 this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
 updateChartTitle(){if(!this.title)return
-if(this.activeSeries===this.itemCode){this.title.innerText=this.originalTitle||'Indicator Chart'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
 if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
-this.title.innerText=`${dataset.datasetCode}-${datasetName}`}else{this.title.innerText=this.activeSeries}}}
+this.title.innerText=`${dataset.datasetCode}-${datasetName}`;}else{this.title.innerText=this.activeSeries;}
+this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}}
 updateSeriesDropdown(){if(!this.seriesSelector){return}
 this.seriesSelector.innerHTML=''
 const indicatorOption=document.createElement('option')

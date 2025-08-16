@@ -113,6 +113,36 @@ def get_dynamic_indicator_line_data(indicator_code):
         return jsonify({"error": "Invalid Item Type for dynamic indicator data"}), 400
     item_options = sspi_metadata.indicator_options()
     name = detail.get("ItemName")
+    tree_path = detail.get("TreePath", "")
+    tree_path_parts = tree_path.split("/")
+    
+    # Build enriched treepath with itemCodes and itemNames
+    enriched_treepath = []
+    for itemCode in tree_path_parts:
+        if itemCode:  # Skip empty strings from split
+            if itemCode.lower() == "sspi":
+                # Handle SSPI root case specially
+                enriched_treepath.append({
+                    "itemCode": itemCode.lower(),
+                    "itemName": "Social Policy and Progress Index"
+                })
+            else:
+                # Query metadata for other items
+                try:
+                    item_detail = sspi_metadata.get_item_detail(itemCode)
+                    item_name = item_detail.get("ItemName", itemCode.upper())
+                    enriched_treepath.append({
+                        "itemCode": itemCode.lower(),
+                        "itemName": item_name
+                    })
+                except Exception as e:
+                    # Fallback to itemCode if metadata lookup fails
+                    print(f"Warning: Could not get metadata for itemCode {itemCode}: {e}")
+                    enriched_treepath.append({
+                        "itemCode": itemCode.lower(),
+                        "itemName": itemCode.upper()
+                    })
+    
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
     query = {"ICode": indicator_code}
@@ -145,7 +175,7 @@ def get_dynamic_indicator_line_data(indicator_code):
         min_year = dynamic_score_data[0]["minYear"]
         max_year = dynamic_score_data[0]["maxYear"]
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
-    chart_title = f"{name} ({indicator_code}) Score"
+    chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
     return jsonify(
         {
@@ -159,6 +189,7 @@ def get_dynamic_indicator_line_data(indicator_code):
             "itemCode": indicator_code,
             "datasetOptions": dataset_options,
             "tree": active_schema,
+            "treepath": enriched_treepath,
         }
     )
 
@@ -186,7 +217,68 @@ def get_dynamic_score_line_data(item_code):
     else:
         item_options = []
     name = detail["ItemName"]
+    tree_path = detail.get("TreePath", "")
+    tree_path_parts = tree_path.split("/")
+    
+    # Build enriched treepath with itemCodes and itemNames for pillars and categories
+    enriched_treepath = []
+    for itemCode in tree_path_parts:
+        if itemCode:  # Skip empty strings from split
+            if itemCode.lower() == "sspi":
+                # Handle SSPI root case specially
+                enriched_treepath.append({
+                    "itemCode": itemCode.lower(),
+                    "itemName": "Social Policy and Progress Index"
+                })
+            else:
+                # Query metadata for other items
+                try:
+                    item_detail = sspi_metadata.get_item_detail(itemCode)
+                    item_name = item_detail.get("ItemName", itemCode.upper())
+                    enriched_treepath.append({
+                        "itemCode": itemCode.lower(),
+                        "itemName": item_name
+                    })
+                except Exception as e:
+                    # Fallback to itemCode if metadata lookup fails
+                    print(f"Warning: Could not get metadata for itemCode {itemCode}: {e}")
+                    enriched_treepath.append({
+                        "itemCode": itemCode.lower(),
+                        "itemName": itemCode.upper()
+                    })
+    
     description = detail.get("Description", "")
+    
+    # Get children information for pillars and categories
+    children_info = []
+    child_type_title = None
+    if detail.get("Children"):
+        # Determine formal child type title based on parent item type
+        if doc_type == "Pillar":
+            child_type_title = "Categories"
+        elif doc_type == "Category": 
+            child_type_title = "Indicators"
+        elif doc_type.lower() == "sspi":
+            child_type_title = "Pillars"
+        else:
+            child_type_title = "Child Elements"
+            
+        for child_code in detail["Children"]:
+            try:
+                child_detail = sspi_metadata.get_item_detail(child_code)
+                children_info.append({
+                    "itemCode": child_code,
+                    "itemName": child_detail.get("ItemName", child_code),
+                    "itemType": child_detail.get("ItemType", "Unknown")
+                })
+            except Exception as e:
+                print(f"Warning: Could not get child metadata for {child_code}: {e}")
+                children_info.append({
+                    "itemCode": child_code,
+                    "itemName": child_code,
+                    "itemType": "Unknown"
+                })
+    
     country_query = request.args.getlist("CountryCode")
     query = {"ICode": item_code}
     if country_query:
@@ -197,7 +289,7 @@ def get_dynamic_score_line_data(item_code):
         min_year = dynamic_score_data[0]["minYear"]
         max_year = dynamic_score_data[0]["maxYear"]
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
-    chart_title = f"{name} ({item_code}) Score"
+    chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
     return jsonify(
         {
@@ -209,7 +301,11 @@ def get_dynamic_score_line_data(item_code):
             "itemOptions": item_options,
             "itemType": doc_type,
             "itemCode": item_code,
+            "itemName": name,
             "tree": active_schema,
+            "treepath": enriched_treepath,
+            "children": children_info,
+            "childTypeTitle": child_type_title,
         }
     )
 

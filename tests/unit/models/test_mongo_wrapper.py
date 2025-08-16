@@ -38,6 +38,7 @@ def test_documents():
         6: {"IndicatorCode": "BIODIv", "CountryCode": "USA", "Unit": "m/s", "Year": 215, "Value": 25.1, "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         7: {"IndicatorCode": "BIODI", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 2, "CollectedAt": datetime(2020, 1, 1), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         8: {"IndicatorCode": "BIODIR", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": "25", "CollectedAt": "2020-1-1", "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
+        9: {"IndicatorCode": "BIODIV", "CountryCode": "US1", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "a": {"IndicatorCode": "BIODIV", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "b": {"IndicatorCode": "REDLST", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25.2, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
         "c": {"IndicatorCode": "NITROG", "CountryCode": "USA", "Unit": "m/s", "Year": 2015, "Value": 25, "CollectedAt": datetime(2020, 1, 6), "Intermediates": {"FRHWTR": 1, "TERRST": 2}},
@@ -47,12 +48,14 @@ def test_documents():
 
 
 def test_validate_country_code(test_documents, mongo_wrapper):
-    for i in range(9):
-        if i == 0 or i == 4 or i == 5:
+    for i in range(10):
+        if i == 0 or i == 4 or i == 5 or i == 9:
             with pytest.raises(InvalidDocumentFormatError) as exception_info:
                 mongo_wrapper.validate_country_code(test_documents[i], i)
             assert "CountryCode" in str(exception_info.value)
             assert f"document {i}" in str(exception_info.value)
+            if i == 9:
+                assert "must not contain numbers" in str(exception_info.value)
         else:
             mongo_wrapper.validate_country_code(test_documents[i], i)
 

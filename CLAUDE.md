@@ -233,3 +233,30 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 - Don't guess at metadata like seriescodes, itemcodes, or indicator codes. Look them up using `sspi metadata item` or `sspi metadata dataset`. See their implementation and subcommands at @cli/commands/metadata.py
 - You must always kill only the server running on the current port for the worktree. Other servers are running in parallel.
 - You don't need to restart the flask server every time. Just touch wsgi.py. Only for major changes or module/import time changes do you need to restart
+
+### Dataset Registry and Server Restart
+
+**Critical**: When adding new dataset collectors/cleaners, you MUST fully restart the Flask server.
+
+**Problem**: New datasets won't appear in metadata after `sspi metadata reload` even though documentation files exist.
+
+**Root Cause**: Dataset registries are built at Python module import time via decorators (`@dataset_collector`, `@dataset_cleaner`). Without a server restart, new Python modules in `sspi_flask_app/api/core/datasets/` aren't imported, so cleaners aren't registered.
+
+**Solution** after creating new dataset files:
+```bash
+# 1. Check current worktree port
+bash scripts/wtdev  # e.g., shows port 5002
+
+# 2. Kill and restart Flask server (NOT just touch wsgi.py)
+kill $(ps aux | grep "flask.*5002" | grep -v grep | awk '{print $2}')
+flask run --debug --port 5002 &
+
+# 3. Reload metadata
+sspi metadata reload
+```
+
+**Remember**: `touch wsgi.py` only reloads for code changes within already-imported modules. New modules require full restart.
+
+- You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances
+
+- Check `sspi status` before running sspi commands to ensure that the correct port is being called by sspi cli. If the port does not match the one you expect (from scripts/wtdev, say) then you may have to deactivate the virtual environment and reactivate it in the correct working directory. This is usually caused because we're using the old venv's version of sspi, which is calling port 5000 instead of the correct port.
