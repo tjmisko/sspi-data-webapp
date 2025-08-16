@@ -527,6 +527,5 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
                         item_name = detail[name_key]
                         break
                 doc["ItemName"] = item_name
-                yield f"{country_code}: {year}: {str(doc.keys())}\n"
                 documents.append(doc)
     sspi_item_data.insert_many(documents)
