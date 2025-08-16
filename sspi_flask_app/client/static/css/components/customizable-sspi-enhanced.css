@@ -1,5 +1,29 @@
 /* Enhanced Customizable SSPI Styles */
 
+/* Toolbar and general button styling - following chart options pattern */
+.sspi-toolbar button, .add-category, .add-indicator {
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: 1px solid var(--subtle-line-color);
+    padding: 0.3em 0.6em;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--header-font-family);
+    font-size: 0.8em;
+    margin: 0.2em;
+}
+
+.sspi-toolbar button:hover, .add-category:hover, .add-indicator:hover {
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--green-accent) 20%);
+}
+
+/* Save button gets accent color when there are unsaved changes */
+.sspi-toolbar button.unsaved-changes {
+    background-color: var(--ms-color);
+    color: white;
+    border-color: var(--ms-color);
+}
+
 /* Contenteditable focus styling to prevent details toggle confusion */
 [contenteditable="true"]:focus {
     outline: 2px solid var(--link-color);
@@ -8,6 +32,8 @@
     border-radius: 3px;
     position: relative;
     z-index: 10;
+    white-space: nowrap;
+    overflow: visible;
 }
 
 [contenteditable="true"]:hover {
@@ -28,28 +54,44 @@
 
 /* Code input styles */
 /* Header content containers - main flexbox layout */
-.pillar-header-content, .category-header-content, .indicator-header-content {
+.pillar-header-content {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1em;
     flex-wrap: wrap;
 }
 
-/* Collapse icons */
-.category-collapse-icon, .indicator-collapse-icon {
+/* Collapse toggle buttons */
+.collapse-toggle-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.collapse-toggle-btn:hover {
+    background-color: color-mix(in srgb, var(--low-importance-font-color) 20%, transparent);
+}
+
+.collapse-icon {
     font-size: 0.8em;
     color: var(--low-importance-font-color);
     transition: transform 0.2s ease;
-    flex-shrink: 0;
-    width: 1em;
-    text-align: center;
     user-select: none;
-    cursor: pointer;
-    pointer-events: auto; /* Ensure icons are clickable */
+    pointer-events: none;
 }
 
-.category-details:not([open]) .category-collapse-icon,
-.indicator-details:not([open]) .indicator-collapse-icon {
+.category-collapsible[data-expanded="false"] .collapse-icon,
+.indicator-collapsible[data-expanded="false"] .collapse-icon {
     transform: rotate(-90deg);
 }
 
@@ -119,44 +161,56 @@
 
 /* Indicator configuration styles */
 /* Enhanced indicator styles */
-.indicator-details {
+.indicator-collapsible {
     border: var(--theme-border-thin);
     border-radius: var(--border-radius);
-    margin-bottom: 0.5em;
+    margin-bottom: 0.375em;
     background: var(--box-background-color);
 }
 
-.indicator-summary {
-    padding: 0.75rem;
-    cursor: pointer;
+.indicator-header {
+    padding: 0.56rem;
+    cursor: default;
     list-style: none;
     background: var(--box-background-color);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     user-select: none;
-    pointer-events: none; /* Disable default click behavior */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.indicator-summary > * {
-    pointer-events: auto; /* Re-enable for child elements */
-}
-
-.indicator-details[open] .indicator-summary {
+.indicator-collapsible[data-expanded="true"] .indicator-header {
     border-bottom: var(--theme-border-thin);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.indicator-details:not([open]) .indicator-summary {
+.indicator-collapsible[data-expanded="false"] .indicator-header {
     border-radius: var(--border-radius);
 }
 
-.indicator-summary::-webkit-details-marker {
-    display: none;
-}
+/* Removed obsolete webkit details marker styles */
 
 .indicator-name {
     margin: 0;
     flex: 1;
-    min-width: 120px;
+    min-width: 0;
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+    font-size: 0.8rem;
+    font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.3;
+}
+
+.indicator-code-section {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    margin-left: auto;
 }
 
 .indicator-config {
@@ -276,39 +330,43 @@
 }
 
 .add-dataset-btn {
-    background-color: var(--green-accent, #8BA342);
-    color: white;
-    border: none;
-    padding: 0.5em 1em;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: 1px solid var(--subtle-line-color);
+    padding: 0.4em 0.8em;
     border-radius: var(--border-radius);
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 0.8em;
     width: 100%;
     font-family: var(--header-font-family);
     margin-top: 0.5em;
 }
 
 .add-dataset-btn:hover {
-    opacity: 0.9;
-    transform: scale(1.02);
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--green-accent) 20%);
 }
 
 .add-dataset-btn:disabled {
     background: var(--low-importance-font-color);
     cursor: not-allowed;
     opacity: 0.6;
-    transform: none;
 }
 
 .scoring-function-select {
     width: 100%;
     padding: 0.5em;
-    border: 1px solid var(--subtle-line-color, #ccc);
+    border: 1px solid var(--subtle-line-color);
     border-radius: var(--border-radius);
-    background: var(--input-background-color);
+    background-color: var(--input-background-color);
     color: var(--input-text-color);
     font-family: var(--body-font-family);
     cursor: pointer;
+}
+
+.scoring-function-select:focus {
+    outline: none;
+    border-color: var(--green-accent);
+    box-shadow: 0 0 0 1px var(--green-accent);
 }
 
 .goalposts-section {
@@ -358,12 +416,28 @@
 
 /* Enhanced pillar header styles */
 .pillar-header {
-    padding: var(--theme-gap);
+    padding: 0.75rem;
     background: var(--box-background-color);
     border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
     border: var(--theme-border-thick);
     border-bottom: none;
     box-shadow: var(--shadow-sm);
+}
+
+/* Individual pillar colors based on order - with reduced opacity for softer look */
+.pillar-column:nth-child(1) .pillar-header {
+    background-color: color-mix(in srgb, var(--sus-color) 15%, var(--box-background-color));
+    border: 1px solid var(--sus-color);
+}
+
+.pillar-column:nth-child(2) .pillar-header {
+    background-color: color-mix(in srgb, var(--ms-color) 15%, var(--box-background-color));
+    border: 1px solid var(--ms-color);
+}
+
+.pillar-column:nth-child(3) .pillar-header {
+    background-color: color-mix(in srgb, var(--pg-color) 15%, var(--box-background-color));
+    border: 1px solid var(--pg-color);
 }
 
 .pillar-name {
@@ -375,55 +449,683 @@
     min-width: 150px;
 }
 
+/* Use standard header text color for pillar names */
+.pillar-column .pillar-name {
+    color: var(--header-text-color);
+}
+
 /* Enhanced category styles */
-.category-details {
+.category-collapsible {
     border: var(--theme-border-thin);
     border-radius: var(--border-radius);
-    margin-bottom: 0.5em;
+    margin-bottom: 0.375em;
     background: var(--box-background-color);
 }
 
-.category-summary {
-    padding: 0.75rem;
-    cursor: pointer;
+.category-header {
+    padding: 0.56rem;
+    cursor: default;
     list-style: none;
     background: var(--box-background-color);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     user-select: none;
-    pointer-events: none; /* Disable default click behavior */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.category-summary > * {
-    pointer-events: auto; /* Re-enable for child elements */
-}
-
-.category-details[open] .category-summary {
+.category-collapsible[data-expanded="true"] .category-header {
     border-bottom: var(--theme-border-thin);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.category-details:not([open]) .category-summary {
+.category-collapsible[data-expanded="false"] .category-header {
     border-radius: var(--border-radius);
 }
 
-.category-summary::-webkit-details-marker {
-    display: none;
-}
+/* Removed obsolete webkit details marker styles */
 
 .category-content {
     padding: 0.5em;
 }
 
-.category-header {
+/* Content visibility based on expanded state */
+.category-collapsible[data-expanded="false"] .category-content {
+    display: none;
+}
+
+.indicator-collapsible[data-expanded="false"] .indicator-config {
+    display: none;
+}
+
+.category-header-title {
     color: var(--header-text-color);
     font-family: var(--header-font-family);
     margin: 0;
     flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.category-code-section {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+/* Dataset Selection Modal */
+.dataset-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.dataset-modal-content {
+    background: var(--box-background-color);
+    color: var(--text-color);
+    padding: 2rem;
+    border-radius: var(--border-radius-lg);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.dataset-modal-title {
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.dataset-search-container {
+    margin-bottom: 1rem;
+}
+
+.dataset-search-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    font-family: var(--body-font-family);
+}
+
+.dataset-search-input:focus {
+    outline: none;
+    border-color: var(--green-accent);
+    box-shadow: 0 0 0 1px var(--green-accent);
+}
+
+.dataset-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    background: var(--region-background-color);
+}
+
+.dataset-option {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--subtle-line-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.dataset-option:last-child {
+    border-bottom: none;
+}
+
+.dataset-option:hover {
+    background: color-mix(in srgb, var(--green-accent) 10%, var(--box-background-color));
+}
+
+.dataset-option-code {
+    font-weight: bold;
+    color: var(--pg-color);
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.dataset-option-name {
+    font-size: 0.9rem;
+    margin: 0.25rem 0;
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+}
+
+.dataset-option-description {
+    font-size: 0.8rem;
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+}
+
+.dataset-option-organization {
+    font-size: 0.8rem;
+    color: var(--low-importance-font-color);
+    margin-top: 0.25rem;
+    font-family: var(--body-font-family);
+}
+
+.dataset-loading-message, .dataset-no-results {
+    padding: 2rem;
+    text-align: center;
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
+}
+
+.dataset-modal-actions {
+    margin-top: 1rem;
+    text-align: right;
+}
+
+.dataset-modal-cancel {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--subtle-line-color);
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--body-font-family);
+}
+
+.dataset-modal-cancel:hover {
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--green-accent) 20%);
+}
+
+/* Enhanced Dataset Selector Styles */
+.dataset-modal-content.enhanced {
+    max-width: 800px;
+    width: 95%;
+}
+
+.dataset-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--subtle-line-color);
+}
+
+.dataset-selection-counter {
+    font-size: 0.9rem;
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+}
+
+.dataset-selection-counter .selected-count {
+    font-weight: bold;
+    color: var(--green-accent);
+}
+
+/* Search Container */
+.dataset-search-container {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.search-results-count {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
+}
+
+/* Filters Container */
+.dataset-filters-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--region-background-color);
+    border-radius: var(--border-radius);
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
     min-width: 120px;
+}
+
+.filter-group label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+}
+
+.filter-select {
+    padding: 0.4rem;
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    font-family: var(--body-font-family);
+    font-size: 0.85rem;
+}
+
+.clear-filters-btn {
+    padding: 0.4rem 0.8rem;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    font-size: 0.8rem;
+    height: fit-content;
+}
+
+.clear-filters-btn:hover {
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--green-accent) 20%);
+}
+
+/* Enhanced Dataset List */
+.dataset-list-container {
+    margin-bottom: 1rem;
+}
+
+.dataset-list.enhanced {
+    max-height: 400px;
+}
+
+.dataset-option.enhanced {
+    padding: 1rem;
+    border-bottom: 1px solid var(--subtle-line-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.dataset-option.enhanced:last-child {
+    border-bottom: none;
+}
+
+.dataset-option.enhanced:hover:not(.disabled) {
+    background: color-mix(in srgb, var(--green-accent) 5%, var(--box-background-color));
+}
+
+.dataset-option.enhanced.selected {
+    background: color-mix(in srgb, var(--green-accent) 15%, var(--box-background-color));
+    border-left: 4px solid var(--green-accent);
+}
+
+.dataset-option.enhanced.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dataset-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.dataset-option-badges {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Organization Badges */
+.dataset-organization-badge {
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    font-size: 0.7em;
+    font-weight: bold;
+    font-family: monospace;
+    text-transform: uppercase;
+}
+
+.dataset-organization-badge.epi {
+    background: color-mix(in srgb, var(--sus-color) 20%, transparent);
+    color: var(--sus-color);
+    border: 1px solid var(--sus-color);
+}
+
+.dataset-organization-badge.iea {
+    background: color-mix(in srgb, var(--ms-color) 20%, transparent);
+    color: var(--ms-color);
+    border: 1px solid var(--ms-color);
+}
+
+.dataset-organization-badge.wb, .dataset-organization-badge.worldbank {
+    background: color-mix(in srgb, var(--pg-color) 20%, transparent);
+    color: var(--pg-color);
+    border: 1px solid var(--pg-color);
+}
+
+.dataset-organization-badge.ilo {
+    background: color-mix(in srgb, var(--link-color) 20%, transparent);
+    color: var(--link-color);
+    border: 1px solid var(--link-color);
+}
+
+.dataset-organization-badge.fsi, .dataset-organization-badge.unsdg, .dataset-organization-badge.who, .dataset-organization-badge.unfao {
+    background: color-mix(in srgb, var(--text-color) 20%, transparent);
+    color: var(--text-color);
+    border: 1px solid var(--subtle-line-color);
+}
+
+/* Type Badges */
+.dataset-type-badge {
+    padding: 0.15em 0.4em;
+    border-radius: 2px;
+    font-size: 0.65em;
+    font-weight: normal;
+    text-transform: capitalize;
+    font-family: var(--body-font-family);
+}
+
+.dataset-type-badge.primary {
+    background: color-mix(in srgb, var(--green-accent) 20%, transparent);
+    color: var(--green-accent);
+}
+
+.dataset-type-badge.intermediate {
+    background: color-mix(in srgb, var(--ms-color) 20%, transparent);
+    color: var(--ms-color);
+}
+
+.dataset-type-badge.indicator {
+    background: color-mix(in srgb, var(--pg-color) 20%, transparent);
+    color: var(--pg-color);
+}
+
+/* Category Badges */
+.dataset-category-badge {
+    padding: 0.15em 0.4em;
+    border-radius: 2px;
+    font-size: 0.65em;
+    font-weight: normal;
+    text-transform: uppercase;
+    font-family: var(--body-font-family);
+}
+
+.dataset-category-badge.sus {
+    background: color-mix(in srgb, var(--sus-color) 15%, transparent);
+    color: var(--sus-color);
+}
+
+.dataset-category-badge.ms {
+    background: color-mix(in srgb, var(--ms-color) 15%, transparent);
+    color: var(--ms-color);
+}
+
+.dataset-category-badge.pg {
+    background: color-mix(in srgb, var(--pg-color) 15%, transparent);
+    color: var(--pg-color);
+}
+
+.dataset-category-badge.general {
+    background: color-mix(in srgb, var(--text-color) 15%, transparent);
+    color: var(--text-color);
+}
+
+/* Dataset Option Actions */
+.dataset-option-actions {
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+.dataset-add-btn, .dataset-remove-btn {
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.dataset-add-btn {
+    background-color: var(--green-accent);
+    color: white;
+    border-color: var(--green-accent);
+}
+
+.dataset-add-btn:hover {
+    background-color: color-mix(in srgb, var(--green-accent) 80%, black);
+}
+
+.dataset-remove-btn {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.dataset-remove-btn:hover {
+    background-color: #c82333;
+}
+
+.dataset-limit-note {
+    font-size: 0.75rem;
+    color: var(--low-importance-font-color);
+    font-style: italic;
+}
+
+/* Modal Actions Enhanced */
+.dataset-modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--subtle-line-color);
+}
+
+.dataset-modal-clear {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--subtle-line-color);
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    margin-right: auto;
+}
+
+.dataset-modal-clear:hover {
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, #dc3545 20%);
+}
+
+.dataset-modal-confirm {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--green-accent);
+    background-color: var(--green-accent);
+    color: white;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    font-weight: bold;
+}
+
+.dataset-modal-confirm:hover {
+    background-color: color-mix(in srgb, var(--green-accent) 80%, black);
+}
+
+/* Compact dataset option styling */
+.dataset-option.compact {
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    background: var(--box-background-color);
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.dataset-option.compact:hover {
+    background: color-mix(in srgb, var(--green-accent) 5%, var(--box-background-color));
+    border-color: var(--green-accent);
+}
+
+.dataset-option.compact.selected {
+    background: color-mix(in srgb, var(--green-accent) 15%, var(--box-background-color));
+    border-color: var(--green-accent);
+    border-width: 2px;
+}
+
+.dataset-option.compact.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dataset-compact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.dataset-compact-code {
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--pg-color);
+    font-size: 0.8rem;
+}
+
+.dataset-compact-badges {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.dataset-compact-badges .dataset-organization-badge,
+.dataset-compact-badges .dataset-type-badge,
+.dataset-compact-badges .dataset-category-badge {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.3rem;
+}
+
+.dataset-compact-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+    margin-bottom: 0.25rem;
+    line-height: 1.1;
+}
+
+.dataset-compact-description {
+    font-size: 0.7rem;
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 /* Responsive adjustments */
 @media (max-width: var(--small-tablet-break-width)) {
+    /* Dataset modal mobile adjustments */
+    .dataset-modal-content {
+        width: 95%;
+        max-height: 90%;
+        padding: 1.5rem;
+    }
+    
+    .dataset-modal-title {
+        font-size: 1.3rem;
+    }
+    
+    .dataset-list {
+        max-height: 250px;
+    }
+    
+    .dataset-option {
+        padding: 0.5rem;
+    }
+    
+    .dataset-option-code {
+        font-size: 0.8rem;
+    }
+    
+    .dataset-option-name {
+        font-size: 0.85rem;
+    }
+    
+    .dataset-option-description {
+        font-size: 0.75rem;
+    }
+    
+    .dataset-option-organization {
+        font-size: 0.7rem;
+    }
+    
+    /* Enhanced dataset selector mobile adjustments */
+    .dataset-modal-content.enhanced {
+        width: 98%;
+        max-height: 95%;
+        padding: 1rem;
+    }
+    
+    .dataset-modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .dataset-filters-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .filter-group {
+        min-width: 100%;
+    }
+    
+    .dataset-option-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .dataset-option-badges {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .dataset-organization-badge, .dataset-type-badge, .dataset-category-badge {
+        font-size: 0.6em;
+        padding: 0.15em 0.3em;
+    }
+    
+    .dataset-modal-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .dataset-modal-clear {
+        margin-right: 0;
+        order: 3;
+    }
     .goalposts-section {
         grid-template-columns: 1fr;
     }
@@ -443,20 +1145,31 @@
     }
     
     /* Stack name and code vertically on smaller screens */
-    .pillar-header-content, .category-header-content, .indicator-header-content {
+    .pillar-header-content {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 0.5em;
     }
     
-    .pillar-name, .category-header, .indicator-name {
-        min-width: 100px;
+    .category-header, .indicator-header {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .category-header-title, .indicator-name {
+        min-width: 80px;
         flex: 1 1 auto;
     }
     
-    /* Ensure collapse icons stay properly positioned */
-    .category-collapse-icon, .indicator-collapse-icon {
+    .category-code-section, .indicator-code-section {
+        flex: 0 0 auto;
+        margin-left: 0;
+    }
+    
+    /* Ensure collapse toggle buttons stay properly positioned */
+    .collapse-toggle-btn {
         order: -1;
+        flex-shrink: 0;
     }
     
     /* Force all form elements to respect container width on mobile */
@@ -476,5 +1189,164 @@
     /* Adjust goalposts for mobile */
     .goalposts-section {
         gap: 0.5rem;
+    }
+}
+
+/* Indicator Selection Menu Styles */
+.indicator-selection-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.indicator-selection-content {
+    background: var(--box-background-color);
+    color: var(--text-color);
+    padding: 2rem;
+    border-radius: var(--border-radius-lg);
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+}
+
+.indicator-selection-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.indicator-selection-header h3 {
+    color: var(--header-text-color);
+    font-family: var(--header-font-family);
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.indicator-selection-header p {
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.indicator-selection-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.indicator-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border: 2px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    background: var(--region-background-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+    font-family: var(--body-font-family);
+}
+
+.indicator-option-btn:hover {
+    border-color: var(--green-accent);
+    background: color-mix(in srgb, var(--green-accent) 5%, var(--region-background-color));
+}
+
+.indicator-option-btn.create-new:hover {
+    border-color: var(--sus-color);
+    background: color-mix(in srgb, var(--sus-color) 5%, var(--region-background-color));
+}
+
+.indicator-option-btn.add-existing:hover {
+    border-color: var(--pg-color);
+    background: color-mix(in srgb, var(--pg-color) 5%, var(--region-background-color));
+}
+
+.option-icon {
+    font-size: 2rem;
+    min-width: 3rem;
+    text-align: center;
+    color: var(--green-accent);
+}
+
+.create-new .option-icon {
+    color: var(--sus-color);
+    font-weight: bold;
+}
+
+.add-existing .option-icon {
+    color: var(--pg-color);
+}
+
+.option-text {
+    flex: 1;
+}
+
+.option-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--header-text-color);
+    margin-bottom: 0.25rem;
+}
+
+.option-description {
+    font-size: 0.9rem;
+    color: var(--body-text-color);
+    line-height: 1.3;
+}
+
+.indicator-selection-actions {
+    text-align: center;
+}
+
+.cancel-btn {
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    border: 1px solid var(--subtle-line-color);
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+    background: color-mix(in srgb, var(--input-background-color) 80%, var(--low-importance-font-color) 20%);
+}
+
+/* Mobile adjustments for indicator selection menu */
+@media (max-width: var(--small-tablet-break-width)) {
+    .indicator-selection-content {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .indicator-option-btn {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    
+    .option-icon {
+        font-size: 1.5rem;
+        min-width: 2rem;
+    }
+    
+    .option-title {
+        font-size: 1rem;
+    }
+    
+    .option-description {
+        font-size: 0.8rem;
     }
 }

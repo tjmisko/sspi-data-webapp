@@ -5,7 +5,7 @@
 .pillars-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--theme-gap);
+  gap: 0.75rem;
   width: 100%;
   margin: 0 auto;
   align-items: start;
@@ -17,7 +17,7 @@
   flex-direction: column;
   /* background-color: var(--region-background-color); */
   border: var(--theme-border-thick);
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 0.75rem;
   width: 100%;
   box-sizing: border-box;
@@ -62,7 +62,7 @@
 .pillars-container.pillars-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: start;
   min-width: 0; /* Allow grid items to shrink below content size */
 }
@@ -88,32 +88,32 @@
   background-color: var(--region-background-color);
   border: var(--theme-border-thin);
   border-radius: 0.5em;
-  padding: 1em;
+  padding: 0.375em;
   min-height: 4rem;
-  margin: 0.5em 0;
+  margin: 0.25em 0;
 }
 
 .category-box {
   border-radius: 0.5em;
-  padding: 1em;
+  padding: 0.5em;
   font-size: 0.9em;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.25em;
   background-color: var(--region-background-color);
 }
 
 .indicators-container {
   border: var(--theme-border-thin);
   border-radius: 0.5em;
-  padding: 0.5em;
+  padding: 0.25em;
   min-height: 1rem;
-  margin: 0.5em 0;
+  margin: 0.25em 0;
 }
 
 .indicator-card {
   border-radius: 0.5em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 0.5em;
-  padding: 0.5em;
+  margin-bottom: 0.25em;
+  padding: 0.25em;
   background-color: var(--box-background-color);
 }
 
@@ -135,4 +135,14 @@
 
 .unsaved-changes {
   background-color: red;
+}
+
+/* Reduced margins for draggable category boxes */
+.category-box.draggable-item {
+  margin-bottom: 0.125em !important;
+}
+
+/* Reduced margins for drop zone categories containers */
+.categories-container.drop-zone {
+  margin: 0.125em 0 !important;
 }

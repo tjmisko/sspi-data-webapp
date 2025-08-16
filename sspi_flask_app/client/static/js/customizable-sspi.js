@@ -2,18 +2,36 @@
 // SSPI Tree UI implementing full specification (three-column layout)
 
 class CustomizableSSPIStructure {
-    constructor(parentElement, { pillars = ['Sustainability', 'Market Structure', 'Public Goods'] } = {}) {
+    constructor(parentElement, options = {}) {
+        const {
+            pillars = ['Sustainability', 'Market Structure', 'Public Goods'],
+            autoLoad = true,
+            loadingDelay = 100
+        } = options;
+        
         this.parentElement = parentElement;
         this.pillars = pillars;
+        this.autoLoad = autoLoad;
+        this.loadingDelay = loadingDelay;
         this.unsavedChanges = false;
         this.draggedEl = null;
         this.origin = null;
         this.dropped = false;
+        this.isLoading = false;
+        
         this.injectStyles();
         this.initToolbar();
         this.initRoot();
         this.addEventListeners();
         this.loadConfigurationsList();
+        
+        // Auto-load default metadata if enabled
+        if (this.autoLoad) {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                this.loadDefaultMetadata();
+            }, this.loadingDelay);
+        }
     }
 
     injectStyles() {
@@ -37,6 +55,37 @@ class CustomizableSSPIStructure {
 .draggable-item.dragging {
     visibility: hidden;
 }
+.sspi-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+.sspi-loading::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 2px solid var(--subtle-line-color);
+    border-top-color: var(--green-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.sspi-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--sus-color);
+    font-size: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+}
 `;
         document.head.appendChild(style);
     }
@@ -46,23 +95,37 @@ class CustomizableSSPIStructure {
         toolbar.classList.add('sspi-toolbar');
 
         const importBtn = document.createElement('button');
-        importBtn.textContent = 'Default SSPI';
+        importBtn.textContent = 'Load Default SSPI';
         importBtn.addEventListener('click', async () => {
             try {
-                const data = await this.fetch('/api/v1/metadata/indicator_details');
-                this.importData(data);
-                this.flagUnsaved();
+                this.showLoadingState('Loading default SSPI metadata...');
+                
+                const response = await this.fetch('/api/v1/customize/default-structure');
+                if (response.success) {
+                    console.log('Loading default SSPI metadata with', response.stats);
+                    
+                    // Use async import for better performance with large metadata
+                    await this.importDataAsync(response.metadata);
+                    
+                    this.hideLoadingState();
+                    this.flagUnsaved();
+                } else {
+                    this.hideLoadingState();
+                    alert('Error loading default metadata: ' + response.error);
+                }
             } catch (err) {
-                console.error(err);
+                this.hideLoadingState();
+                console.error('Error loading default metadata:', err);
+                alert('Error loading default metadata. Please try again.');
             }
         });
 
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = 'Export';
+        exportBtn.textContent = 'Export Metadata';
         exportBtn.addEventListener('click', () => {
             const json = JSON.stringify(this.exportData(), null, 2);
-            console.log(json);
-            alert('Exported JSON copied to console.');
+            console.log('SSPI Metadata Format:', json);
+            alert('Metadata JSON copied to console.');
         });
 
         this.saveButton = document.createElement('button');
@@ -83,7 +146,13 @@ class CustomizableSSPIStructure {
             this.collapseAll();
         });
 
-        toolbar.append(importBtn, exportBtn, this.saveButton, expandAllBtn, collapseAllBtn);
+        const validateBtn = document.createElement('button');
+        validateBtn.textContent = 'Validate';
+        validateBtn.addEventListener('click', () => {
+            this.showHierarchyStatus();
+        });
+
+        toolbar.append(importBtn, exportBtn, this.saveButton, validateBtn, expandAllBtn, collapseAllBtn);
         this.parentElement.appendChild(toolbar);
     }
 
@@ -97,11 +166,15 @@ class CustomizableSSPIStructure {
         this.container = document.createElement('div');
         this.container.classList.add('pillars-container', 'pillars-grid');
         this.container.setAttribute('role', 'tree');
-        this.pillars.forEach(name => {
+        this.pillars.forEach((name, index) => {
             const col = document.createElement('div');
             col.classList.add('pillar-column');
             col.dataset.pillar = name;
             col.setAttribute('aria-label', name + ' pillar');
+
+            // Set default pillar codes
+            const defaultCodes = ['SUS', 'MS', 'PG'];
+            const defaultCode = defaultCodes[index] || 'PIL';
 
             const header = document.createElement('div');
             header.classList.add('pillar-header');
@@ -111,8 +184,8 @@ class CustomizableSSPIStructure {
                     <div class="pillar-name" contenteditable="true" spellcheck="false" tabindex="0">${name}</div>
                     <div class="pillar-code-section">
                         <label class="code-label">Code:</label>
-                        <input type="text" class="pillar-code-input" maxlength="3" placeholder="SUS" 
-                               pattern="[A-Z]{2,3}" title="2-3 uppercase letters required">
+                        <input type="text" class="pillar-code-input" maxlength="3" placeholder="${defaultCode}" 
+                               pattern="[A-Z]{2,3}" title="2-3 uppercase letters required" value="${defaultCode}">
                         <span class="code-validation-message"></span>
                     </div>
                 </div>
@@ -151,7 +224,7 @@ class CustomizableSSPIStructure {
                 const cat = this.createCategoryElement();
                 zone.appendChild(cat);
                 this.validate(zone);
-                this.flagUnsaved();
+                this.updateHierarchyOnAdd(cat, 'category');
             }
             if (e.target.classList.contains('add-indicator')) {
                 // Find the indicators container (either directly previous sibling or within category-content)
@@ -160,10 +233,7 @@ class CustomizableSSPIStructure {
                     list = e.target.parentElement.querySelector('.indicators-container');
                 }
                 if (list) {
-                    const ind = this.createIndicatorElement();
-                    list.appendChild(ind);
-                    this.validate(list);
-                    this.flagUnsaved();
+                    this.showIndicatorSelectionMenu(list);
                 }
             }
         });
@@ -253,6 +323,39 @@ class CustomizableSSPIStructure {
                 this.showContextMenu(r.right, r.bottom, e.target);
             }
         });
+
+        // Indicator name placeholder clearing
+        this.container.addEventListener('focus', e => {
+            if (e.target.classList.contains('indicator-name')) {
+                const indicatorName = e.target;
+                if (indicatorName.textContent.trim() === 'New Indicator') {
+                    indicatorName.textContent = '';
+                }
+            }
+        }, true);
+
+        this.container.addEventListener('blur', e => {
+            if (e.target.classList.contains('indicator-name')) {
+                const indicatorName = e.target;
+                if (indicatorName.textContent.trim() === '') {
+                    indicatorName.textContent = 'New Indicator';
+                }
+            }
+        }, true);
+
+        // Custom collapse button handling
+        this.container.addEventListener('click', e => {
+            // Handle collapse toggle button clicks
+            if (e.target.closest('.collapse-toggle-btn')) {
+                const toggleBtn = e.target.closest('.collapse-toggle-btn');
+                const collapsible = toggleBtn.closest('[data-expanded]');
+                if (collapsible) {
+                    const isExpanded = collapsible.dataset.expanded === 'true';
+                    collapsible.dataset.expanded = (!isExpanded).toString();
+                    console.log('Toggled collapsible:', collapsible, 'new state:', collapsible.dataset.expanded);
+                }
+            }
+        });
     }
 
     flagUnsaved() {
@@ -272,24 +375,24 @@ class CustomizableSSPIStructure {
         cat.setAttribute('role','group');
         cat.dataset.type='category';
         cat.innerHTML = `
-<details class="category-details" open>
-    <summary class="category-summary" role="treeitem">
-        <div class="category-header-content">
-            <div class="category-collapse-icon">▼</div>
-            <h4 class="category-header" contenteditable="true">New Category</h4>
-            <div class="category-code-section">
-                <label class="code-label">Code:</label>
-                <input type="text" class="category-code-input" maxlength="3" placeholder="CAT" 
-                       pattern="[A-Z]{3}" title="Exactly 3 uppercase letters required">
-                <span class="code-validation-message"></span>
-            </div>
+<div class="category-collapsible" data-expanded="true">
+    <div class="category-header">
+        <button class="collapse-toggle-btn category-toggle" type="button">
+            <span class="collapse-icon">▼</span>
+        </button>
+        <h4 class="category-header-title" contenteditable="true">New Category</h4>
+        <div class="category-code-section">
+            <label class="code-label">Code:</label>
+            <input type="text" class="category-code-input" maxlength="3" placeholder="CAT" 
+                   pattern="[A-Z]{3}" title="Exactly 3 uppercase letters required">
+            <span class="code-validation-message"></span>
         </div>
-    </summary>
+    </div>
     <div class="category-content">
         <div class="indicators-container drop-zone" data-accept="indicator" role="group"></div>
         <button class="add-indicator" aria-label="Add Indicator">+ Add Indicator</button>
     </div>
-</details>
+</div>
 `;
         this.setupCodeValidation(cat.querySelector('.category-code-input'), 'category');
         this.setupCollapsibleHandlers(cat);
@@ -303,19 +406,19 @@ class CustomizableSSPIStructure {
         ind.setAttribute('role','treeitem');
         ind.dataset.type='indicator';
         ind.innerHTML = `
-<details class="indicator-details">
-    <summary class="indicator-summary">
-        <div class="indicator-header-content">
-            <div class="indicator-collapse-icon">▼</div>
-            <h5 class="indicator-name" contenteditable="true">New Indicator</h5>
-            <div class="indicator-code-section">
-                <label class="code-label">Code:</label>
-                <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1" 
-                       pattern="[A-Z0-9]{6}" title="Exactly 6 uppercase letters/numbers required">
-                <span class="code-validation-message"></span>
-            </div>
+<div class="indicator-collapsible" data-expanded="false">
+    <div class="indicator-header">
+        <button class="collapse-toggle-btn indicator-toggle" type="button">
+            <span class="collapse-icon">▼</span>
+        </button>
+        <h5 class="indicator-name" contenteditable="true">New Indicator</h5>
+        <div class="indicator-code-section">
+            <label class="code-label">Code:</label>
+            <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1" 
+                   pattern="[A-Z0-9]{6}" title="Exactly 6 uppercase letters/numbers required">
+            <span class="code-validation-message"></span>
         </div>
-    </summary>
+    </div>
     <div class="indicator-config">
     <div class="dataset-selection">
         <label>Datasets (max 5):</label>
@@ -348,7 +451,7 @@ class CustomizableSSPIStructure {
         </div>
     </div>
 </div>
-</details>
+</div>
 `;
         this.setupCodeValidation(ind.querySelector('.indicator-code-input'), 'indicator');
         this.setupDatasetSelection(ind);
@@ -386,22 +489,80 @@ class CustomizableSSPIStructure {
     }
 
     expandAll() {
-        const allDetails = this.container.querySelectorAll('details');
-        allDetails.forEach(details => {
-            details.open = true;
+        const allCollapsibles = this.container.querySelectorAll('[data-expanded]');
+        allCollapsibles.forEach(collapsible => {
+            collapsible.dataset.expanded = 'true';
         });
     }
 
     collapseAll() {
-        const allDetails = this.container.querySelectorAll('details');
-        allDetails.forEach(details => {
-            details.open = false;
+        const allCollapsibles = this.container.querySelectorAll('[data-expanded]');
+        allCollapsibles.forEach(collapsible => {
+            collapsible.dataset.expanded = 'false';
         });
     }
 
     flagUnsaved() {
         this.unsavedChanges = true;
         this.saveButton.classList.add('unsaved-changes');
+    }
+
+    showIndicatorSelectionMenu(indicatorsContainer) {
+        const menu = new IndicatorSelectionMenu({
+            onCreateNew: (container) => {
+                this.createNewIndicator(container);
+            },
+            onAddExisting: (container) => {
+                this.showIndicatorSelector(container);
+            }
+        });
+        menu.show(indicatorsContainer);
+    }
+
+    createNewIndicator(indicatorsContainer) {
+        const ind = this.createIndicatorElement();
+        indicatorsContainer.appendChild(ind);
+        this.validate(indicatorsContainer);
+        this.updateHierarchyOnAdd(ind, 'indicator');
+    }
+
+    showIndicatorSelector(indicatorsContainer) {
+        const selector = new IndicatorSelector({
+            onSelectionChange: (indicator) => {
+                this.addExistingIndicator(indicatorsContainer, indicator);
+            }
+        });
+        selector.show();
+    }
+
+    addExistingIndicator(indicatorsContainer, indicator) {
+        // Create indicator element with pre-filled data
+        const ind = this.createIndicatorElement();
+        
+        // Fill in the indicator data
+        const indicatorName = ind.querySelector('.indicator-name');
+        const indicatorCodeInput = ind.querySelector('.indicator-code-input');
+        const lowerGoalpost = ind.querySelector('.lower-goalpost');
+        const upperGoalpost = ind.querySelector('.upper-goalpost');
+        const invertedCheckbox = ind.querySelector('.inverted-checkbox');
+        
+        if (indicatorName) indicatorName.textContent = indicator.indicator_name || '';
+        if (indicatorCodeInput) indicatorCodeInput.value = indicator.indicator_code || '';
+        if (lowerGoalpost) lowerGoalpost.value = indicator.lower_goalpost || 0;
+        if (upperGoalpost) upperGoalpost.value = indicator.upper_goalpost || 100;
+        if (invertedCheckbox) invertedCheckbox.checked = indicator.inverted || false;
+        
+        // Add datasets if present
+        if (indicator.dataset_codes && indicator.dataset_codes.length > 0) {
+            const selectedDatasetsDiv = ind.querySelector('.selected-datasets');
+            indicator.dataset_codes.forEach(datasetCode => {
+                this.addDatasetToIndicator(selectedDatasetsDiv, datasetCode, 1.0);
+            });
+        }
+        
+        indicatorsContainer.appendChild(ind);
+        this.validate(indicatorsContainer);
+        this.updateHierarchyOnAdd(ind, 'indicator');
     }
 
     showContextMenu(x,y,target) {
@@ -472,66 +633,570 @@ class CustomizableSSPIStructure {
     }
 
     exportData() {
-        const res = [];
-        this.container.querySelectorAll('.indicator-card').forEach((ind, idx) => {
-            const catBox = ind.closest('.category-box');
-            const pillarCol = ind.closest('.pillar-column');
-            
-            // Get names
-            const categoryName = catBox.querySelector('.category-header').textContent.trim();
+        return this.exportMetadataFormat();
+    }
+
+
+    exportMetadataFormat() {
+        const metadataItems = [];
+        
+        // Get all pillars
+        const pillars = {};
+        const categories = {};
+        const indicators = {};
+        
+        // Collect all items from the DOM
+        this.container.querySelectorAll('.pillar-column').forEach(pillarCol => {
             const pillarName = pillarCol.querySelector('.pillar-name').textContent.trim();
-            const indicatorName = ind.querySelector('.indicator-name').textContent.trim();
+            const pillarCode = pillarCol.querySelector('.pillar-code-input').value.trim();
             
-            // Get codes
-            const categoryCode = catBox.querySelector('.category-code-input').value || '';
-            const pillarCode = pillarCol.querySelector('.pillar-code-input').value || '';
-            const indicatorCode = ind.querySelector('.indicator-code-input').value || '';
-            
-            // Get datasets
-            const datasets = [];
-            ind.querySelectorAll('.dataset-item').forEach(item => {
-                const datasetCode = item.dataset.datasetCode;
-                const weight = parseFloat(item.querySelector('.weight-input').value) || 1.0;
-                datasets.push({ dataset_code: datasetCode, weight: weight });
+            if (pillarCode) {
+                pillars[pillarCode] = {
+                    code: pillarCode,
+                    name: pillarName,
+                    categories: []
+                };
+                
+                // Get categories in this pillar
+                pillarCol.querySelectorAll('.category-box').forEach(catBox => {
+                    const categoryName = catBox.querySelector('.category-header-title').textContent.trim();
+                    const categoryCode = catBox.querySelector('.category-code-input').value.trim();
+                    
+                    if (categoryCode) {
+                        pillars[pillarCode].categories.push(categoryCode);
+                        categories[categoryCode] = {
+                            code: categoryCode,
+                            name: categoryName,
+                            pillarCode: pillarCode,
+                            indicators: []
+                        };
+                        
+                        // Get indicators in this category
+                        catBox.querySelectorAll('.indicator-card').forEach((indCard, idx) => {
+                            const indicatorName = indCard.querySelector('.indicator-name').textContent.trim();
+                            const indicatorCode = indCard.querySelector('.indicator-code-input').value.trim();
+                            
+                            if (indicatorCode) {
+                                categories[categoryCode].indicators.push(indicatorCode);
+                                
+                                // Get datasets
+                                const datasetCodes = [];
+                                indCard.querySelectorAll('.dataset-item').forEach(item => {
+                                    const datasetCode = item.dataset.datasetCode;
+                                    if (datasetCode) {
+                                        datasetCodes.push(datasetCode);
+                                    }
+                                });
+                                
+                                // Get other indicator properties
+                                const lowerGoalpost = parseFloat(indCard.querySelector('.lower-goalpost').value) || null;
+                                const upperGoalpost = parseFloat(indCard.querySelector('.upper-goalpost').value) || null;
+                                const inverted = indCard.querySelector('.inverted-checkbox').checked;
+                                
+                                indicators[indicatorCode] = {
+                                    code: indicatorCode,
+                                    name: indicatorName,
+                                    categoryCode: categoryCode,
+                                    pillarCode: pillarCode,
+                                    datasetCodes: datasetCodes,
+                                    lowerGoalpost: lowerGoalpost,
+                                    upperGoalpost: upperGoalpost,
+                                    inverted: inverted,
+                                    itemOrder: idx
+                                };
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        
+        // Create root SSPI item
+        const pillarCodes = Object.keys(pillars).sort();
+        if (pillarCodes.length > 0) {
+            metadataItems.push({
+                ItemType: "SSPI",
+                ItemCode: "SSPI",
+                ItemName: "Custom SSPI",
+                Children: pillarCodes,
+                Description: "Custom SSPI metadata created through the customization interface"
             });
-            
-            // Get scoring function
-            const scoringFunction = ind.querySelector('.scoring-function-select').value;
-            
-            // Get goalposts
-            const lowerGoalpost = parseFloat(ind.querySelector('.lower-goalpost').value) || 0;
-            const upperGoalpost = parseFloat(ind.querySelector('.upper-goalpost').value) || 100;
-            
-            // Get inverted flag
-            const inverted = ind.querySelector('.inverted-checkbox').checked;
-            
-            res.push({
-                Category: categoryName,
-                CategoryCode: categoryCode,
-                Children: [],
-                Description: ind.title || '',
-                DocumentType: '',
-                Indicator: indicatorName,
-                IndicatorCode: indicatorCode,
-                Inverted: inverted,
-                ItemCode: indicatorCode,
-                ItemName: indicatorName,
-                ItemOrder: idx + 1,
-                ItemType: 'Indicator',
-                LowerGoalpost: lowerGoalpost,
-                Pillar: pillarName,
-                PillarCode: pillarCode,
-                Policy: '',
-                UpperGoalpost: upperGoalpost,
-                // New fields for custom indicators
-                datasets: datasets,
-                scoring_function: {
-                    type: scoringFunction,
-                    parameters: {}
-                }
+        }
+        
+        // Create pillar items
+        Object.values(pillars).forEach(pillar => {
+            metadataItems.push({
+                ItemType: "Pillar",
+                ItemCode: pillar.code,
+                ItemName: pillar.name,
+                Children: pillar.categories,
+                Pillar: pillar.name,
+                PillarCode: pillar.code
             });
         });
-        return res;
+        
+        // Create category items
+        Object.values(categories).forEach(category => {
+            metadataItems.push({
+                ItemType: "Category",
+                ItemCode: category.code,
+                ItemName: category.name,
+                Children: category.indicators,
+                Category: category.name,
+                CategoryCode: category.code,
+                Pillar: pillars[category.pillarCode].name,
+                PillarCode: category.pillarCode
+            });
+        });
+        
+        // Create indicator items
+        Object.values(indicators).forEach(indicator => {
+            metadataItems.push({
+                ItemType: "Indicator",
+                ItemCode: indicator.code,
+                ItemName: indicator.name,
+                Children: [],
+                DatasetCodes: indicator.datasetCodes,
+                Indicator: indicator.name,
+                IndicatorCode: indicator.code,
+                Category: categories[indicator.categoryCode].name,
+                CategoryCode: indicator.categoryCode,
+                Pillar: pillars[indicator.pillarCode].name,
+                PillarCode: indicator.pillarCode,
+                LowerGoalpost: indicator.lowerGoalpost,
+                UpperGoalpost: indicator.upperGoalpost,
+                Inverted: indicator.inverted,
+                ItemOrder: indicator.itemOrder
+            });
+        });
+        
+        return metadataItems;
+    }
+
+    // Hierarchy management methods
+    updateHierarchyOnAdd(element, elementType) {
+        this.flagUnsaved();
+        console.log(`Added ${elementType}:`, element);
+        
+        // Validate hierarchy after addition
+        const errors = this.validateHierarchy();
+        if (errors.length > 0) {
+            console.warn('Hierarchy validation errors after add:', errors);
+        }
+    }
+
+    updateHierarchyOnRemove(element, elementType) {
+        this.flagUnsaved();
+        console.log(`Removed ${elementType}:`, element);
+        
+        // Validate hierarchy after removal
+        const errors = this.validateHierarchy();
+        if (errors.length > 0) {
+            console.warn('Hierarchy validation errors after remove:', errors);
+        }
+    }
+
+    validateHierarchy() {
+        const errors = [];
+        const warnings = [];
+        
+        // Check that all pillars have at least one category
+        this.container.querySelectorAll('.pillar-column').forEach(pillar => {
+            const pillarName = pillar.querySelector('.pillar-name').textContent.trim();
+            const pillarCode = pillar.querySelector('.pillar-code-input').value.trim();
+            const categories = pillar.querySelectorAll('.category-box');
+            
+            if (categories.length === 0) {
+                warnings.push(`Pillar "${pillarName}" (${pillarCode}) has no categories`);
+            }
+        });
+        
+        // Check that all categories have at least one indicator
+        this.container.querySelectorAll('.category-box').forEach(category => {
+            const categoryName = category.querySelector('.category-header-title').textContent.trim();
+            const categoryCode = category.querySelector('.category-code-input').value.trim();
+            const indicators = category.querySelectorAll('.indicator-card');
+            
+            if (indicators.length === 0) {
+                warnings.push(`Category "${categoryName}" (${categoryCode}) has no indicators`);
+            }
+        });
+        
+        // Check that all indicators have at least one dataset
+        this.container.querySelectorAll('.indicator-card').forEach(indicator => {
+            const indicatorName = indicator.querySelector('.indicator-name').textContent.trim();
+            const indicatorCode = indicator.querySelector('.indicator-code-input').value.trim();
+            const datasets = indicator.querySelectorAll('.dataset-item');
+            
+            if (datasets.length === 0) {
+                warnings.push(`Indicator "${indicatorName}" (${indicatorCode}) has no datasets`);
+            }
+        });
+        
+        // Check for duplicate codes
+        const pillarCodes = new Set();
+        const categoryCodes = new Set();
+        const indicatorCodes = new Set();
+        
+        this.container.querySelectorAll('.pillar-code-input').forEach(input => {
+            const code = input.value.trim().toUpperCase();
+            if (code) {
+                if (pillarCodes.has(code)) {
+                    errors.push(`Duplicate pillar code: ${code}`);
+                } else {
+                    pillarCodes.add(code);
+                }
+            }
+        });
+        
+        this.container.querySelectorAll('.category-code-input').forEach(input => {
+            const code = input.value.trim().toUpperCase();
+            if (code) {
+                if (categoryCodes.has(code)) {
+                    errors.push(`Duplicate category code: ${code}`);
+                } else {
+                    categoryCodes.add(code);
+                }
+            }
+        });
+        
+        this.container.querySelectorAll('.indicator-code-input').forEach(input => {
+            const code = input.value.trim().toUpperCase();
+            if (code) {
+                if (indicatorCodes.has(code)) {
+                    errors.push(`Duplicate indicator code: ${code}`);
+                } else {
+                    indicatorCodes.add(code);
+                }
+            }
+        });
+        
+        // Log results
+        if (warnings.length > 0) {
+            console.warn('Hierarchy warnings:', warnings);
+        }
+        
+        return { errors, warnings };
+    }
+
+    showHierarchyStatus() {
+        const result = this.validateHierarchy();
+        const stats = this.getMetadataStats();
+        
+        let message = `Metadata Stats:\n`;
+        message += `- Pillars: ${stats.pillars}\n`;
+        message += `- Categories: ${stats.categories}\n`;
+        message += `- Indicators: ${stats.indicators}\n`;
+        message += `- Total Datasets: ${stats.datasets}\n\n`;
+        
+        if (result.errors.length > 0) {
+            message += `Errors (${result.errors.length}):\n`;
+            result.errors.forEach(error => message += `- ${error}\n`);
+            message += '\n';
+        }
+        
+        if (result.warnings.length > 0) {
+            message += `Warnings (${result.warnings.length}):\n`;
+            result.warnings.forEach(warning => message += `- ${warning}\n`);
+        }
+        
+        if (result.errors.length === 0 && result.warnings.length === 0) {
+            message += 'Metadata is valid! ✓';
+        }
+        
+        alert(message);
+    }
+
+    getMetadataStats() {
+        return {
+            pillars: this.container.querySelectorAll('.pillar-column').length,
+            categories: this.container.querySelectorAll('.category-box').length,
+            indicators: this.container.querySelectorAll('.indicator-card').length,
+            datasets: this.container.querySelectorAll('.dataset-item').length
+        };
+    }
+
+    // Auto-loading functionality
+    async loadDefaultMetadata() {
+        if (this.isLoading) {
+            console.log('Already loading metadata, skipping...');
+            return;
+        }
+        
+        try {
+            this.showLoadingState('Loading default SSPI metadata...');
+            
+            const response = await this.fetch('/api/v1/customize/default-structure');
+            
+            if (response.success) {
+                console.log('Auto-loading default SSPI metadata:', response.stats);
+                
+                // Import the metadata efficiently
+                await this.importDataAsync(response.metadata);
+                
+                this.hideLoadingState();
+                
+                // Don't flag as unsaved for auto-loaded default metadata
+                this.unsavedChanges = false;
+                this.saveButton.classList.remove('unsaved-changes');
+                
+                console.log('Default SSPI metadata loaded successfully');
+            } else {
+                this.handleLoadError('Failed to load default metadata: ' + response.error);
+            }
+        } catch (error) {
+            console.error('Error auto-loading default metadata:', error);
+            this.handleLoadError('Network error loading default metadata');
+        }
+    }
+
+    showLoadingState(message = 'Loading...') {
+        this.isLoading = true;
+        
+        // Create loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.classList.add('sspi-loading');
+        loadingDiv.textContent = message;
+        loadingDiv.id = 'sspi-loading-indicator';
+        
+        // Hide the main container and show loading
+        this.container.style.display = 'none';
+        this.parentElement.appendChild(loadingDiv);
+        
+        // Disable toolbar buttons
+        this.setToolbarDisabled(true);
+    }
+
+    hideLoadingState() {
+        this.isLoading = false;
+        
+        // Remove loading indicator
+        const loadingDiv = this.parentElement.querySelector('#sspi-loading-indicator');
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+        
+        // Show the main container
+        this.container.style.display = '';
+        
+        // Enable toolbar buttons
+        this.setToolbarDisabled(false);
+    }
+
+    handleLoadError(errorMessage) {
+        this.isLoading = false;
+        
+        // Remove loading indicator
+        const loadingDiv = this.parentElement.querySelector('#sspi-loading-indicator');
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+        
+        // Show error state
+        const errorDiv = document.createElement('div');
+        errorDiv.classList.add('sspi-error');
+        errorDiv.id = 'sspi-error-indicator';
+        
+        const errorText = document.createElement('div');
+        errorText.textContent = errorMessage;
+        
+        const retryBtn = document.createElement('button');
+        retryBtn.textContent = 'Load Default Metadata';
+        retryBtn.addEventListener('click', () => {
+            errorDiv.remove();
+            this.loadDefaultMetadata();
+        });
+        
+        errorDiv.appendChild(errorText);
+        errorDiv.appendChild(retryBtn);
+        this.parentElement.appendChild(errorDiv);
+        
+        // Show the main container in case user wants to build manually
+        this.container.style.display = '';
+        this.setToolbarDisabled(false);
+        
+        console.error('SSPI metadata loading failed:', errorMessage);
+    }
+
+    setToolbarDisabled(disabled) {
+        const toolbar = this.parentElement.querySelector('.sspi-toolbar');
+        if (toolbar) {
+            const buttons = toolbar.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = disabled;
+                if (disabled) {
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.style.opacity = '';
+                    btn.style.cursor = '';
+                }
+            });
+        }
+    }
+
+    // Build hierarchy tree from metadata items
+    buildHierarchyTree(metadataItems) {
+        const itemsById = {};
+        const hierarchy = {
+            sspi: null,
+            pillars: {},
+            categories: {},
+            indicators: {}
+        };
+        
+        // Index all items by their ItemCode
+        metadataItems.forEach(item => {
+            itemsById[item.ItemCode] = item;
+        });
+        
+        // Build hierarchy structure
+        metadataItems.forEach(item => {
+            switch (item.ItemType) {
+                case 'SSPI':
+                    hierarchy.sspi = item;
+                    break;
+                case 'Pillar':
+                    hierarchy.pillars[item.ItemCode] = item;
+                    break;
+                case 'Category':
+                    hierarchy.categories[item.ItemCode] = item;
+                    break;
+                case 'Indicator':
+                    hierarchy.indicators[item.ItemCode] = item;
+                    break;
+            }
+        });
+        
+        return { hierarchy, itemsById };
+    }
+    
+    // Optimized async import method for metadata
+    async importDataAsync(metadataItems) {
+        console.log('Importing', metadataItems.length, 'metadata items asynchronously');
+        
+        // Clear existing content
+        this.container.querySelectorAll('.category-box, .indicator-card').forEach(e => e.remove());
+        
+        // Build hierarchy tree
+        const { hierarchy, itemsById } = this.buildHierarchyTree(metadataItems);
+        
+        if (!hierarchy.sspi) {
+            console.error('No SSPI root item found in metadata');
+            return;
+        }
+        
+        // Process each pillar from the SSPI's Children list
+        const pillarCodes = hierarchy.sspi.Children || [];
+        
+        for (let i = 0; i < pillarCodes.length; i++) {
+            const pillarCode = pillarCodes[i];
+            const pillarItem = hierarchy.pillars[pillarCode];
+            
+            if (pillarItem) {
+                await this.processPillarFromMetadata(pillarItem, hierarchy);
+            }
+            
+            // Yield control to browser between pillars
+            if (i < pillarCodes.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+        }
+        
+        console.log('Async metadata import completed');
+    }
+
+    async processPillarFromMetadata(pillarItem, hierarchy) {
+        // Find the corresponding pillar column in the UI
+        const col = Array.from(this.container.querySelectorAll('.pillar-column'))
+            .find(c => c.dataset.pillar === pillarItem.ItemName);
+        
+        if (!col) {
+            console.warn(`No UI column found for pillar: ${pillarItem.ItemName}`);
+            return;
+        }
+        
+        // Update pillar code
+        const pillarCodeInput = col.querySelector('.pillar-code-input');
+        if (pillarCodeInput) {
+            pillarCodeInput.value = pillarItem.ItemCode;
+        }
+        
+        // Update pillar name
+        const pillarNameEl = col.querySelector('.pillar-name');
+        if (pillarNameEl) {
+            pillarNameEl.textContent = pillarItem.ItemName;
+        }
+        
+        const categoriesContainer = col.querySelector('.categories-container');
+        if (!categoriesContainer) return;
+        
+        // Create document fragment for efficient DOM building
+        const fragment = document.createDocumentFragment();
+        
+        // Process categories from pillar's Children list
+        const categoryCodes = pillarItem.Children || [];
+        
+        for (const categoryCode of categoryCodes) {
+            const categoryItem = hierarchy.categories[categoryCode];
+            
+            if (categoryItem) {
+                const catEl = this.createCategoryElement();
+                
+                // Set category details
+                const categoryHeader = catEl.querySelector('.category-header-title');
+                const categoryCodeInput = catEl.querySelector('.category-code-input');
+                
+                if (categoryHeader) categoryHeader.textContent = categoryItem.ItemName;
+                if (categoryCodeInput) categoryCodeInput.value = categoryItem.ItemCode;
+                
+                // Add indicators to this category
+                const indicatorsContainer = catEl.querySelector('.indicators-container');
+                const indicatorCodes = categoryItem.Children || [];
+                
+                indicatorCodes.forEach(indicatorCode => {
+                    const indicatorItem = hierarchy.indicators[indicatorCode];
+                    
+                    if (indicatorItem) {
+                        const indEl = this.createIndicatorElement();
+                        
+                        // Populate indicator fields
+                        const indicatorName = indEl.querySelector('.indicator-name');
+                        const indicatorCodeInput = indEl.querySelector('.indicator-code-input');
+                        const lowerGoalpost = indEl.querySelector('.lower-goalpost');
+                        const upperGoalpost = indEl.querySelector('.upper-goalpost');
+                        const invertedCheckbox = indEl.querySelector('.inverted-checkbox');
+                        
+                        if (indicatorName) indicatorName.textContent = indicatorItem.ItemName || '';
+                        if (indicatorCodeInput) indicatorCodeInput.value = indicatorItem.ItemCode || '';
+                        if (lowerGoalpost) lowerGoalpost.value = indicatorItem.LowerGoalpost || 0;
+                        if (upperGoalpost) upperGoalpost.value = indicatorItem.UpperGoalpost || 100;
+                        if (invertedCheckbox) invertedCheckbox.checked = indicatorItem.Inverted || false;
+                        
+                        // Add datasets if present
+                        const datasetCodes = indicatorItem.DatasetCodes || [];
+                        if (datasetCodes.length > 0) {
+                            const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
+                            datasetCodes.forEach(datasetCode => {
+                                this.addDatasetToIndicator(
+                                    selectedDatasetsDiv, 
+                                    datasetCode, 
+                                    1.0  // Default weight
+                                );
+                            });
+                        }
+                        
+                        indicatorsContainer.appendChild(indEl);
+                    }
+                });
+                
+                fragment.appendChild(catEl);
+            }
+        }
+        
+        // Single DOM append for all categories in this pillar
+        categoriesContainer.appendChild(fragment);
+        this.validate(categoriesContainer);
     }
 
     importData(data) {
@@ -573,7 +1238,7 @@ class CustomizableSSPIStructure {
             const zone = col.querySelector('.categories-container');
             Object.entries(grouping[p]).forEach(([catName, info]) => {
                 const catEl = this.createCategoryElement();
-                catEl.querySelector('.category-header').textContent = catName;
+                catEl.querySelector('.category-header-title').textContent = catName;
                 
                 // Set category code
                 const categoryCodeInput = catEl.querySelector('.category-code-input');
@@ -642,7 +1307,7 @@ class CustomizableSSPIStructure {
             const name = prompt('Enter a name for this configuration:');
             if (!name) return;
 
-            const structure = this.exportData();
+            const metadata = this.exportData();
             
             const response = await this.fetch('/api/v1/customize/save', {
                 method: 'POST',
@@ -651,7 +1316,7 @@ class CustomizableSSPIStructure {
                 },
                 body: JSON.stringify({
                     name: name,
-                    structure: structure
+                    metadata: metadata
                 })
             });
 
@@ -747,7 +1412,7 @@ class CustomizableSSPIStructure {
             const response = await this.fetch(`/api/v1/customize/load/${configId}`);
             
             if (response.success && response.configuration) {
-                this.importData(response.configuration.structure);
+                this.importData(response.configuration.metadata);
                 this.unsavedChanges = false;
                 this.saveButton.classList.remove('unsaved-changes');
                 alert(`Configuration "${response.configuration.name}" loaded successfully!`);
@@ -874,7 +1539,7 @@ class CustomizableSSPIStructure {
         if (type === 'pillar') {
             return container.querySelector('.pillar-name').textContent.trim();
         } else if (type === 'category') {
-            return container.querySelector('.category-header').textContent.trim();
+            return container.querySelector('.category-header-title').textContent.trim();
         } else if (type === 'indicator') {
             return container.querySelector('.indicator-name').textContent.trim();
         }
@@ -955,126 +1620,37 @@ class CustomizableSSPIStructure {
     }
 
     async showDatasetSelectionModal(selectedDatasetsDiv) {
-        // Create modal overlay
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        `;
-
-        const modalContent = document.createElement('div');
-        modalContent.style.cssText = `
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-        `;
-
-        modalContent.innerHTML = `
-            <h3>Select Dataset</h3>
-            <div style="margin-bottom: 1rem;">
-                <input type="text" id="dataset-search" placeholder="Search datasets..." 
-                       style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
-            </div>
-            <div id="dataset-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
-                <div style="padding: 2rem; text-align: center; color: #666;">Loading datasets...</div>
-            </div>
-            <div style="margin-top: 1rem; text-align: right;">
-                <button id="modal-cancel" style="margin-right: 0.5rem; padding: 0.5rem 1rem; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;">Cancel</button>
-            </div>
-        `;
-
-        modal.appendChild(modalContent);
-        document.body.appendChild(modal);
-
-        // Event listeners
-        modal.querySelector('#modal-cancel').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
+        // Get currently selected datasets
+        const currentSelections = Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'))
+            .map(item => item.dataset.datasetCode);
+        
+        // Create and configure enhanced dataset selector
+        const selector = new DatasetSelector({
+            maxSelections: 5,
+            multiSelect: true,
+            enableSearch: true,
+            enableFilters: true,
+            showOrganizations: true,
+            showTypes: true,
+            onSelectionChange: (selectedCodes) => {
+                this.updateDatasetSelection(selectedDatasetsDiv, selectedCodes);
             }
         });
-
-        // Load and display datasets
-        this.loadDatasetsIntoModal(modal, selectedDatasetsDiv);
+        
+        // Show the enhanced selector
+        await selector.show(currentSelections);
+    }
+    
+    updateDatasetSelection(selectedDatasetsDiv, selectedCodes) {
+        // Clear existing selections
+        selectedDatasetsDiv.innerHTML = '';
+        
+        // Add new selections
+        selectedCodes.forEach(datasetCode => {
+            this.addDatasetToIndicator(selectedDatasetsDiv, datasetCode, 1.0);
+        });
     }
 
-    async loadDatasetsIntoModal(modal, selectedDatasetsDiv) {
-        try {
-            const response = await this.fetch('/api/v1/customize/datasets?limit=200');
-            const datasets = response.datasets || [];
-
-            const datasetList = modal.querySelector('#dataset-list');
-            const searchInput = modal.querySelector('#dataset-search');
-
-            const renderDatasets = (datasetsToShow) => {
-                if (datasetsToShow.length === 0) {
-                    datasetList.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">No datasets found</div>';
-                    return;
-                }
-
-                datasetList.innerHTML = datasetsToShow.map(dataset => `
-                    <div class="dataset-option" data-dataset-code="${dataset.dataset_code}" 
-                         style="padding: 0.75rem; border-bottom: 1px solid #eee; cursor: pointer; hover:background: #f5f5f5;">
-                        <div style="font-weight: bold; color: #1565c0; font-family: monospace;">${dataset.dataset_code}</div>
-                        <div style="font-size: 0.9rem; margin: 0.25rem 0;">${dataset.dataset_name}</div>
-                        <div style="font-size: 0.8rem; color: #666;">${dataset.description}</div>
-                        <div style="font-size: 0.8rem; color: #999; margin-top: 0.25rem;">Organization: ${dataset.organization}</div>
-                    </div>
-                `).join('');
-
-                // Add click handlers
-                datasetList.querySelectorAll('.dataset-option').forEach(option => {
-                    option.addEventListener('click', () => {
-                        const datasetCode = option.dataset.datasetCode;
-                        this.addDatasetToIndicator(selectedDatasetsDiv, datasetCode);
-                        document.body.removeChild(modal);
-                    });
-
-                    option.addEventListener('mouseenter', () => {
-                        option.style.background = '#f5f5f5';
-                    });
-
-                    option.addEventListener('mouseleave', () => {
-                        option.style.background = '';
-                    });
-                });
-            };
-
-            // Initial render
-            renderDatasets(datasets);
-
-            // Search functionality
-            searchInput.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const filtered = datasets.filter(dataset => 
-                    dataset.dataset_code.toLowerCase().includes(searchTerm) ||
-                    dataset.dataset_name.toLowerCase().includes(searchTerm) ||
-                    dataset.description.toLowerCase().includes(searchTerm)
-                );
-                renderDatasets(filtered);
-            });
-
-        } catch (error) {
-            console.error('Error loading datasets:', error);
-            const datasetList = modal.querySelector('#dataset-list');
-            datasetList.innerHTML = '<div style="padding: 2rem; text-align: center; color: #d32f2f;">Error loading datasets</div>';
-        }
-    }
 
     findSelectedDatasetsDiv(modal) {
         // This is a bit hacky but works for finding the selected datasets div
@@ -1094,27 +1670,111 @@ class CustomizableSSPIStructure {
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
+        datasetItem.dataset.weight = weight;
         
         datasetItem.innerHTML = `
             <span class="dataset-code">${datasetCode}</span>
-            <div class="dataset-weight">
-                <label>Weight:</label>
-                <input type="number" class="weight-input" value="${weight}" min="0" max="10" step="0.1">
+            <div class="dataset-actions">
+                <button class="dataset-menu-btn" type="button" title="Dataset options">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <circle cx="8" cy="2" r="1.5"/>
+                        <circle cx="8" cy="8" r="1.5"/>
+                        <circle cx="8" cy="14" r="1.5"/>
+                    </svg>
+                </button>
+                <button class="remove-dataset" type="button" title="Remove dataset">×</button>
             </div>
-            <button class="remove-dataset" type="button">×</button>
         `;
+
+        const menuBtn = datasetItem.querySelector('.dataset-menu-btn');
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showDatasetOptionsMenu(menuBtn, datasetCode);
+        });
 
         datasetItem.querySelector('.remove-dataset').addEventListener('click', () => {
             datasetItem.remove();
-            this.flagUnsaved();
-        });
-
-        datasetItem.querySelector('.weight-input').addEventListener('change', () => {
-            this.flagUnsaved();
+            this.updateHierarchyOnRemove(datasetItem, 'dataset');
         });
 
         selectedDatasetsDiv.appendChild(datasetItem);
-        this.flagUnsaved();
+        this.updateHierarchyOnAdd(datasetItem, 'dataset');
+    }
+
+    showDatasetOptionsMenu(buttonElement, datasetCode) {
+        // Remove any existing menu
+        const existingMenu = document.querySelector('.dataset-options-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // Create menu
+        const menu = document.createElement('div');
+        menu.className = 'dataset-options-menu';
+        menu.innerHTML = `
+            <div class="menu-item" data-action="weight">
+                <span>Set Weight</span>
+            </div>
+            <div class="menu-item" data-action="rename">
+                <span>Rename</span>
+            </div>
+            <div class="menu-item" data-action="duplicate">
+                <span>Duplicate</span>
+            </div>
+            <div class="menu-item" data-action="info">
+                <span>View Info</span>
+            </div>
+        `;
+
+        // Position menu
+        const rect = buttonElement.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.top = rect.bottom + 5 + 'px';
+        menu.style.left = rect.left + 'px';
+        menu.style.zIndex = '1000';
+
+        // Add menu to document
+        document.body.appendChild(menu);
+
+        // Handle menu clicks
+        menu.addEventListener('click', (e) => {
+            const action = e.target.closest('.menu-item')?.dataset.action;
+            if (action) {
+                this.handleDatasetMenuAction(action, datasetCode);
+                menu.remove();
+            }
+        });
+
+        // Close menu when clicking outside
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target) && e.target !== buttonElement) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closeMenu), 0);
+    }
+
+    handleDatasetMenuAction(action, datasetCode) {
+        switch (action) {
+            case 'weight':
+                const currentWeight = document.querySelector(`[data-dataset-code="${datasetCode}"]`)?.dataset.weight || '1.0';
+                const newWeight = prompt('Enter weight (0-10):', currentWeight);
+                if (newWeight !== null && !isNaN(newWeight) && newWeight >= 0 && newWeight <= 10) {
+                    document.querySelector(`[data-dataset-code="${datasetCode}"]`).dataset.weight = newWeight;
+                    this.flagUnsaved();
+                }
+                break;
+            case 'rename':
+                alert('Rename functionality - placeholder');
+                break;
+            case 'duplicate':
+                alert('Duplicate functionality - placeholder');
+                break;
+            case 'info':
+                alert('Dataset info functionality - placeholder');
+                break;
+        }
     }
 
     async fetch(url, options = {}) {
