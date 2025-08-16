@@ -20,10 +20,13 @@ log = logging.getLogger(__name__)
 @login_required
 def compute_stcons():
     lg, ug = sspi_metadata.get_goalposts("STCONS")
-    def stcons_score_function(WID_CARBON_TOT_P90P100, WID_CARBON_TOT_P0P100):
-        return goalpost(WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, lg, ug)
+    def stcons_score_function(WID_CARBON_TOT_P90P100, WID_CARBON_TOT_P0P100, FPI_ECOFPT_PER_CAP):
+        return goalpost(FPI_ECOFPT_PER_CAP*WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, lg, ug)
     sspi_indicator_data.delete_many({"IndicatorCode": "STCONS"})
-    dataset_list = sspi_clean_api_data.find({"DatasetCode": {"$in": ["WID_CARBON_TOT_P0P100", "WID_CARBON_TOT_P90P100"]}})
+    dataset_list = sspi_clean_api_data.find(
+        {"DatasetCode": {"$in": [
+            "WID_CARBON_TOT_P0P100", "WID_CARBON_TOT_P90P100", "FPI_ECOFPT_PER_CAP"]
+    }})
     scored_data, _ = score_indicator(
         dataset_list, "STCONS",
         score_function=stcons_score_function,
