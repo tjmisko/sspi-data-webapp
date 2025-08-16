@@ -256,6 +256,10 @@
   padding: 0.5em 0;
 }
 
+.dynamic-item-description p {
+  margin: 0;
+}
+
 .legend-title-bar {
   display: flex;
   flex-direction: row;
@@ -370,7 +374,8 @@
   background-color: var(--input-background-color);
   color: var(--input-text-color);
   border: 1px solid var(--subtle-line-color);
-  border-radius: var(--border-radius);
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 /* Button styling for chart options */
