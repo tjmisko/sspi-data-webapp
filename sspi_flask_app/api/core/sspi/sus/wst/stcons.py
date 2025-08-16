@@ -19,12 +19,17 @@ log = logging.getLogger(__name__)
 @compute_bp.route("/STCONS", methods=['POST'])
 @login_required
 def compute_stcons():
+    lg, ug = sspi_metadata.get_goalposts("STCONS")
+    def stcons_score_function(WID_CARBON_TOT_P90P100, WID_CARBON_TOT_P0P100, FPI_ECOFPT_PER_CAP):
+        return goalpost(FPI_ECOFPT_PER_CAP*WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, lg, ug)
     sspi_indicator_data.delete_many({"IndicatorCode": "STCONS"})
-    dataset_list = sspi_clean_api_data.find({"DatasetCode": "FPI_ECOFPT_PER_CAP"})
-    lg, ug = sspi_metadata.get_goalposts("STCONS") 
+    dataset_list = sspi_clean_api_data.find(
+        {"DatasetCode": {"$in": [
+            "WID_CARBON_TOT_P0P100", "WID_CARBON_TOT_P90P100", "FPI_ECOFPT_PER_CAP"]
+    }})
     scored_data, _ = score_indicator(
         dataset_list, "STCONS",
-        score_function=lambda FPI_ECOFPT_PER_CAP: goalpost(FPI_ECOFPT_PER_CAP, lg, ug),
+        score_function=stcons_score_function,
         unit="Index"
     )
     sspi_indicator_data.insert_many(scored_data)
