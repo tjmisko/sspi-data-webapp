@@ -18,18 +18,24 @@ class CustomizableSSPIStructure {
         this.origin = null;
         this.dropped = false;
         this.isLoading = false;
+        this.cacheTimeout = null;
+        
+        // Initialize changelog system
+        this.baselineMetadata = null;
+        this.diffCache = null;
         
         this.injectStyles();
         this.initToolbar();
         this.initRoot();
         this.addEventListeners();
         this.loadConfigurationsList();
+        this.setupCacheSync();
         
-        // Auto-load default metadata if enabled
+        // Auto-load cached modifications or default metadata if enabled
         if (this.autoLoad) {
             // Small delay to ensure DOM is ready
             setTimeout(() => {
-                this.loadDefaultMetadata();
+                this.loadInitialData();
             }, this.loadingDelay);
         }
     }
@@ -76,6 +82,14 @@ class CustomizableSSPIStructure {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
 .sspi-error {
     display: flex;
     align-items: center;
@@ -99,6 +113,9 @@ class CustomizableSSPIStructure {
         importBtn.addEventListener('click', async () => {
             try {
                 this.showLoadingState('Loading default SSPI metadata...');
+                
+                // Clear cache when explicitly loading default metadata
+                this.clearCache();
                 
                 const response = await this.fetch('/api/v1/customize/default-structure');
                 if (response.success) {
@@ -152,7 +169,18 @@ class CustomizableSSPIStructure {
             this.showHierarchyStatus();
         });
 
-        toolbar.append(importBtn, exportBtn, this.saveButton, validateBtn, expandAllBtn, collapseAllBtn);
+        this.discardButton = document.createElement('button');
+        this.discardButton.textContent = 'Discard Changes';
+        this.discardButton.style.opacity = '0.5';
+        this.discardButton.style.cursor = 'not-allowed';
+        this.discardButton.disabled = true;
+        this.discardButton.addEventListener('click', async () => {
+            if (this.unsavedChanges && confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')) {
+                await this.discardChanges();
+            }
+        });
+
+        toolbar.append(importBtn, exportBtn, this.saveButton, validateBtn, this.discardButton, expandAllBtn, collapseAllBtn);
         this.parentElement.appendChild(toolbar);
     }
 
@@ -361,6 +389,36 @@ class CustomizableSSPIStructure {
     flagUnsaved() {
         this.saveButton.classList.add('unsaved-changes');
         this.unsavedChanges = true;
+        
+        // Enable the discard button
+        this.discardButton.disabled = false;
+        this.discardButton.style.opacity = '1';
+        this.discardButton.style.cursor = 'pointer';
+        
+        // Cache the current state with debouncing
+        this.debouncedCacheState();
+    }
+    
+    clearUnsavedState() {
+        this.unsavedChanges = false;
+        this.saveButton.classList.remove('unsaved-changes');
+        
+        // Disable the discard button
+        this.discardButton.disabled = true;
+        this.discardButton.style.opacity = '0.5';
+        this.discardButton.style.cursor = 'not-allowed';
+    }
+    
+    setUnsavedState(hasChanges) {
+        this.unsavedChanges = hasChanges;
+        if (hasChanges) {
+            this.saveButton.classList.add('unsaved-changes');
+            this.discardButton.disabled = false;
+            this.discardButton.style.opacity = '1';
+            this.discardButton.style.cursor = 'pointer';
+        } else {
+            this.clearUnsavedState();
+        }
     }
 
     clearIndicators(scope) {
@@ -505,6 +563,14 @@ class CustomizableSSPIStructure {
     flagUnsaved() {
         this.unsavedChanges = true;
         this.saveButton.classList.add('unsaved-changes');
+        
+        // Enable the discard button
+        this.discardButton.disabled = false;
+        this.discardButton.style.opacity = '1';
+        this.discardButton.style.cursor = 'pointer';
+        
+        // Cache the current state with debouncing
+        this.debouncedCacheState();
     }
 
     showIndicatorSelectionMenu(indicatorsContainer) {
@@ -917,6 +983,83 @@ class CustomizableSSPIStructure {
     }
 
     // Auto-loading functionality
+    async loadInitialData() {
+        // First, check if we have cached modifications
+        if (this.hasCachedModifications()) {
+            try {
+                const loaded = await this.loadCachedState();
+                if (loaded) {
+                    this.showCacheRestoredIndicator();
+                    return;
+                }
+            } catch (error) {
+                console.warn('Failed to load cached modifications, falling back to default:', error);
+            }
+        }
+        
+        // Fall back to loading default metadata
+        await this.loadDefaultMetadata();
+    }
+    
+    showCacheRestoredIndicator() {
+        // Create a temporary indicator showing cached data was restored
+        const indicator = document.createElement('div');
+        indicator.className = 'cache-restored-indicator';
+        indicator.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--green-accent);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        indicator.textContent = '✓ Restored from previous session';
+        
+        document.body.appendChild(indicator);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
+    
+    async discardChanges() {
+        try {
+            // Clear the cache first
+            this.clearCache();
+            
+            // Show loading state briefly
+            this.showLoadingState('Discarding changes...');
+            
+            // Clear unsaved state
+            this.clearUnsavedState();
+            
+            // Brief delay to show the loading state, then hide it and reload
+            setTimeout(() => {
+                this.hideLoadingState();
+                // Small additional delay to ensure UI updates are processed
+                setTimeout(() => {
+                    window.location.reload();
+                }, 100);
+            }, 400);
+            
+        } catch (error) {
+            this.hideLoadingState();
+            console.error('Error discarding changes:', error);
+            alert('Error discarding changes. Please try again.');
+        }
+    }
+
     async loadDefaultMetadata() {
         if (this.isLoading) {
             console.log('Already loading metadata, skipping...');
@@ -937,8 +1080,7 @@ class CustomizableSSPIStructure {
                 this.hideLoadingState();
                 
                 // Don't flag as unsaved for auto-loaded default metadata
-                this.unsavedChanges = false;
-                this.saveButton.classList.remove('unsaved-changes');
+                this.clearUnsavedState();
                 
                 console.log('Default SSPI metadata loaded successfully');
             } else {
@@ -1321,8 +1463,11 @@ class CustomizableSSPIStructure {
             });
 
             if (response.success) {
-                this.unsavedChanges = false;
-                this.saveButton.classList.remove('unsaved-changes');
+                this.clearUnsavedState();
+                
+                // Clear cache since the configuration is now saved
+                this.clearCache();
+                
                 alert(`Configuration "${name}" saved successfully!`);
                 this.loadConfigurationsList(); // Refresh the list
             } else {
@@ -1412,9 +1557,11 @@ class CustomizableSSPIStructure {
             const response = await this.fetch(`/api/v1/customize/load/${configId}`);
             
             if (response.success && response.configuration) {
+                // Clear cache before loading saved configuration
+                this.clearCache();
+                
                 this.importData(response.configuration.metadata);
-                this.unsavedChanges = false;
-                this.saveButton.classList.remove('unsaved-changes');
+                this.clearUnsavedState();
                 alert(`Configuration "${response.configuration.name}" loaded successfully!`);
             } else {
                 alert(`Error loading configuration: ${response.error}`);
@@ -1775,6 +1922,480 @@ class CustomizableSSPIStructure {
                 alert('Dataset info functionality - placeholder');
                 break;
         }
+    }
+
+    // Cache management methods
+    
+    cacheCurrentState() {
+        try {
+            const cacheData = {
+                hasModifications: this.unsavedChanges,
+                lastModified: Date.now(),
+                metadata: this.exportData(),
+                version: "1.0"
+            };
+            
+            // Check cache size (rough estimate)
+            const cacheSize = JSON.stringify(cacheData).length;
+            if (cacheSize > 5 * 1024 * 1024) { // 5MB limit
+                console.warn('Cache data is too large (>5MB), skipping cache');
+                return;
+            }
+            
+            window.observableStorage.setItem("sspi-custom-modifications", cacheData);
+            console.log('SSPI modifications cached successfully');
+        } catch (error) {
+            console.warn('Failed to cache SSPI modifications:', error);
+            
+            // Handle specific localStorage errors
+            if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                this.handleStorageQuotaExceeded();
+            }
+        }
+    }
+    
+    handleStorageQuotaExceeded() {
+        console.warn('localStorage quota exceeded, attempting to free space');
+        
+        try {
+            // Clear any old cache data
+            const allKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                allKeys.push(localStorage.key(i));
+            }
+            
+            // Remove old SSPI cache entries if any exist
+            allKeys.forEach(key => {
+                if (key && key.startsWith('sspi-') && key !== 'sspi-custom-modifications') {
+                    try {
+                        localStorage.removeItem(key);
+                        console.log('Removed old cache entry:', key);
+                    } catch (e) {
+                        // Ignore errors when removing individual items
+                    }
+                }
+            });
+            
+            // Show user notification
+            const indicator = document.createElement('div');
+            indicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #ff9500;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 1000;
+                max-width: 300px;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            indicator.textContent = '⚠ Storage limit reached. Changes may not be cached across sessions.';
+            
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => {
+                        if (indicator.parentNode) {
+                            indicator.parentNode.removeChild(indicator);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+            
+        } catch (e) {
+            console.error('Error handling storage quota exceeded:', e);
+        }
+    }
+    
+    async loadCachedState() {
+        try {
+            const cacheData = window.observableStorage.getItem("sspi-custom-modifications");
+            
+            if (!cacheData || !this.isValidCacheData(cacheData)) {
+                return false;
+            }
+            
+            console.log('Loading cached SSPI modifications from:', new Date(cacheData.lastModified));
+            
+            // Import the cached metadata using async method
+            await this.importDataAsync(cacheData.metadata);
+            
+            // Set unsaved state based on cache
+            this.setUnsavedState(cacheData.hasModifications);
+            
+            return true;
+        } catch (error) {
+            console.warn('Failed to load cached SSPI modifications:', error);
+            this.clearCache(); // Clear corrupted cache
+            return false;
+        }
+    }
+    
+    clearCache() {
+        try {
+            window.observableStorage.removeItem("sspi-custom-modifications");
+            console.log('SSPI modifications cache cleared');
+        } catch (error) {
+            console.warn('Failed to clear SSPI modifications cache:', error);
+        }
+    }
+    
+    hasCachedModifications() {
+        try {
+            const cacheData = window.observableStorage.getItem("sspi-custom-modifications");
+            return cacheData && this.isValidCacheData(cacheData) && cacheData.hasModifications;
+        } catch (error) {
+            console.warn('Error checking for cached modifications:', error);
+            return false;
+        }
+    }
+    
+    isValidCacheData(cacheData) {
+        if (!cacheData || typeof cacheData !== 'object') {
+            return false;
+        }
+        
+        // Check required fields
+        const requiredFields = ['hasModifications', 'lastModified', 'metadata', 'version'];
+        for (const field of requiredFields) {
+            if (!(field in cacheData)) {
+                console.warn(`Invalid cache data: missing field '${field}'`);
+                return false;
+            }
+        }
+        
+        // Validate field types
+        if (typeof cacheData.hasModifications !== 'boolean') {
+            console.warn('Invalid cache data: hasModifications must be boolean');
+            return false;
+        }
+        
+        if (typeof cacheData.lastModified !== 'number' || cacheData.lastModified <= 0) {
+            console.warn('Invalid cache data: lastModified must be a positive number');
+            return false;
+        }
+        
+        if (!Array.isArray(cacheData.metadata)) {
+            console.warn('Invalid cache data: metadata must be an array');
+            return false;
+        }
+        
+        if (typeof cacheData.version !== 'string') {
+            console.warn('Invalid cache data: version must be a string');
+            return false;
+        }
+        
+        // Check if cache is not too old (7 days max)
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+        const age = Date.now() - cacheData.lastModified;
+        if (age > maxAge) {
+            console.warn('Cache data is too old (>7 days), discarding');
+            return false;
+        }
+        
+        // Basic metadata validation
+        if (cacheData.metadata.length > 0) {
+            const firstItem = cacheData.metadata[0];
+            if (!firstItem || typeof firstItem !== 'object' || !firstItem.ItemType) {
+                console.warn('Invalid cache data: metadata items have invalid structure');
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    debouncedCacheState() {
+        // Clear existing timeout
+        if (this.cacheTimeout) {
+            clearTimeout(this.cacheTimeout);
+        }
+        
+        // Set new timeout for debounced caching
+        this.cacheTimeout = setTimeout(() => {
+            this.cacheCurrentState();
+        }, 500); // 500ms debounce
+    }
+    
+    setupCacheSync() {
+        // Listen for cache changes from other tabs
+        window.observableStorage.onChange("sspi-custom-modifications", async (oldValue, newValue) => {
+            console.log('Cache change detected from another tab');
+            
+            // Only sync if we don't have unsaved changes in current tab
+            if (!this.unsavedChanges) {
+                if (newValue && this.isValidCacheData(newValue) && newValue.hasModifications) {
+                    console.log('Syncing modifications from another tab');
+                    await this.importDataAsync(newValue.metadata);
+                    this.setUnsavedState(newValue.hasModifications);
+                    
+                    // Show indicator
+                    this.showSyncIndicator();
+                } else if (!newValue) {
+                    // Cache was cleared in another tab, reload default if no local changes
+                    console.log('Cache cleared in another tab, reloading default');
+                    await this.loadDefaultMetadata();
+                }
+            }
+        });
+    }
+    
+    showSyncIndicator() {
+        const indicator = document.createElement('div');
+        indicator.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--ms-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        indicator.textContent = '⟲ Synced from another tab';
+        
+        document.body.appendChild(indicator);
+        
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                }, 300);
+            }
+        }, 2000);
+    }
+    
+    // Changelog and Diff System
+    
+    captureBaseline() {
+        try {
+            this.baselineMetadata = this.exportData();
+            this.diffCache = null; // Clear diff cache
+            console.log('Baseline captured with', this.baselineMetadata.length, 'items');
+        } catch (error) {
+            console.warn('Failed to capture baseline:', error);
+        }
+    }
+    
+    generateDiff() {
+        if (!this.baselineMetadata) {
+            return { error: 'No baseline available for comparison' };
+        }
+        
+        try {
+            const currentMetadata = this.exportData();
+            
+            // Use cached diff if current state hasn't changed
+            if (this.diffCache && this.areMetadataEqual(this.diffCache.currentSnapshot, currentMetadata)) {
+                return this.diffCache.diff;
+            }
+            
+            const diff = this.compareMetadata(this.baselineMetadata, currentMetadata);
+            
+            // Cache the diff result
+            this.diffCache = {
+                currentSnapshot: JSON.parse(JSON.stringify(currentMetadata)),
+                diff: diff
+            };
+            
+            return diff;
+        } catch (error) {
+            console.error('Error generating diff:', error);
+            return { error: 'Failed to generate diff: ' + error.message };
+        }
+    }
+    
+    compareMetadata(baseline, current) {
+        const baselineMap = this.createItemMap(baseline);
+        const currentMap = this.createItemMap(current);
+        
+        const changes = {
+            summary: {
+                totalChanges: 0,
+                pillarsAffected: 0,
+                categoriesAffected: 0,
+                indicatorsAffected: 0
+            },
+            added: [],
+            removed: [],
+            modified: [],
+            moved: [],
+            unchanged: []
+        };
+        
+        // Find removed items (in baseline but not in current)
+        for (const [code, baselineItem] of baselineMap) {
+            if (!currentMap.has(code)) {
+                changes.removed.push({
+                    type: baselineItem.ItemType,
+                    code: code,
+                    name: baselineItem.ItemName,
+                    item: baselineItem
+                });
+            }
+        }
+        
+        // Find added and modified items
+        for (const [code, currentItem] of currentMap) {
+            if (!baselineMap.has(code)) {
+                // Item was added
+                changes.added.push({
+                    type: currentItem.ItemType,
+                    code: code,
+                    name: currentItem.ItemName,
+                    item: currentItem
+                });
+            } else {
+                // Item exists in both, check for modifications
+                const baselineItem = baselineMap.get(code);
+                const itemChanges = this.compareItems(baselineItem, currentItem);
+                
+                if (itemChanges) {
+                    changes.modified.push({
+                        type: currentItem.ItemType,
+                        code: code,
+                        name: currentItem.ItemName,
+                        changes: itemChanges,
+                        before: baselineItem,
+                        after: currentItem
+                    });
+                } else {
+                    changes.unchanged.push({
+                        type: currentItem.ItemType,
+                        code: code,
+                        name: currentItem.ItemName
+                    });
+                }
+            }
+        }
+        
+        // Calculate summary statistics
+        changes.summary.totalChanges = changes.added.length + changes.removed.length + changes.modified.length + changes.moved.length;
+        
+        // Count affected items by type
+        const affectedTypes = new Set();
+        [...changes.added, ...changes.removed, ...changes.modified, ...changes.moved].forEach(change => {
+            affectedTypes.add(change.type);
+            switch (change.type) {
+                case 'Pillar':
+                    changes.summary.pillarsAffected++;
+                    break;
+                case 'Category':
+                    changes.summary.categoriesAffected++;
+                    break;
+                case 'Indicator':
+                    changes.summary.indicatorsAffected++;
+                    break;
+            }
+        });
+        
+        return changes;
+    }
+    
+    createItemMap(metadata) {
+        const map = new Map();
+        metadata.forEach(item => {
+            map.set(item.ItemCode, item);
+        });
+        return map;
+    }
+    
+    compareItems(baselineItem, currentItem) {
+        const changes = {};
+        
+        // Compare basic properties
+        if (baselineItem.ItemName !== currentItem.ItemName) {
+            changes.name = { from: baselineItem.ItemName, to: currentItem.ItemName };
+        }
+        
+        // Compare children arrays
+        if (!this.arraysEqual(baselineItem.Children || [], currentItem.Children || [])) {
+            changes.children = { 
+                from: baselineItem.Children || [], 
+                to: currentItem.Children || [] 
+            };
+        }
+        
+        // Compare indicator-specific properties
+        if (baselineItem.ItemType === 'Indicator') {
+            if (!this.arraysEqual(baselineItem.DatasetCodes || [], currentItem.DatasetCodes || [])) {
+                changes.datasets = {
+                    from: baselineItem.DatasetCodes || [],
+                    to: currentItem.DatasetCodes || []
+                };
+            }
+            
+            if (baselineItem.LowerGoalpost !== currentItem.LowerGoalpost) {
+                changes.lowerGoalpost = { 
+                    from: baselineItem.LowerGoalpost, 
+                    to: currentItem.LowerGoalpost 
+                };
+            }
+            
+            if (baselineItem.UpperGoalpost !== currentItem.UpperGoalpost) {
+                changes.upperGoalpost = { 
+                    from: baselineItem.UpperGoalpost, 
+                    to: currentItem.UpperGoalpost 
+                };
+            }
+            
+            if (baselineItem.Inverted !== currentItem.Inverted) {
+                changes.inverted = { 
+                    from: baselineItem.Inverted, 
+                    to: currentItem.Inverted 
+                };
+            }
+        }
+        
+        // Compare hierarchy relationships
+        if (baselineItem.PillarCode !== currentItem.PillarCode) {
+            changes.pillar = { 
+                from: baselineItem.PillarCode, 
+                to: currentItem.PillarCode 
+            };
+        }
+        
+        if (baselineItem.CategoryCode !== currentItem.CategoryCode) {
+            changes.category = { 
+                from: baselineItem.CategoryCode, 
+                to: currentItem.CategoryCode 
+            };
+        }
+        
+        return Object.keys(changes).length > 0 ? changes : null;
+    }
+    
+    arraysEqual(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false;
+        return arr1.every((item, index) => item === arr2[index]);
+    }
+    
+    areMetadataEqual(metadata1, metadata2) {
+        if (!metadata1 || !metadata2) return false;
+        if (metadata1.length !== metadata2.length) return false;
+        
+        return JSON.stringify(metadata1) === JSON.stringify(metadata2);
+    }
+    
+    hasChangesFromBaseline() {
+        if (!this.baselineMetadata) return false;
+        
+        const diff = this.generateDiff();
+        return diff.summary && diff.summary.totalChanges > 0;
+    }
+    
+    getChangeCount() {
+        if (!this.baselineMetadata) return 0;
+        
+        const diff = this.generateDiff();
+        return diff.summary ? diff.summary.totalChanges : 0;
     }
 
     async fetch(url, options = {}) {
