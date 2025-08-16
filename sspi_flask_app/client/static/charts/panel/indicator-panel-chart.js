@@ -150,7 +150,20 @@ class IndicatorPanelChart extends PanelChart {
         }
         this.datasetOptions = data.datasetOptions
         this.originalTitle = data.title  // Store original title for indicator score
-        this.title.innerText = data.title
+        this.treepath = data.treepath  // Store treepath for later use
+        
+        // Use breadcrumb navigation for indicators, simple title for others
+        if (data.itemType === "Indicator" && data.treepath) {
+            this.renderBreadcrumb(data.treepath, data.title, data.itemCode, data.itemType);
+        } else {
+            // Fallback to simple title for non-indicators
+            this.title.innerText = data.title;
+            this.title.style.display = 'block';
+            if (this.breadcrumb) {
+                this.breadcrumb.style.display = 'none';
+            }
+        }
+        
         this.itemType = data.itemType
         this.groupOptions = data.groupOptions
         this.getPins()
@@ -164,6 +177,160 @@ class IndicatorPanelChart extends PanelChart {
         this.updateChartTitle()  // Set initial title based on active series
         this.updateActiveSeriesDescription()  // Set initial active series description
         this.chart.update()
+    }
+
+    initChartJSCanvas() {
+        this.chartContainer = document.createElement('div')
+        this.chartContainer.classList.add('panel-chart-container')
+        this.chartContainer.innerHTML = `
+<nav class="panel-chart-breadcrumb" aria-label="Hierarchy navigation" style="display: none;"></nav>
+<h2 class="panel-chart-title"></h2>
+<div class="panel-canvas-wrapper">
+    <canvas class="panel-chart-canvas"></canvas>
+</div>
+`;
+        this.root.appendChild(this.chartContainer)
+        this.title = this.chartContainer.querySelector('.panel-chart-title')
+        this.breadcrumb = this.chartContainer.querySelector('.panel-chart-breadcrumb')
+        this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
+        this.context = this.canvas.getContext('2d')
+        this.chart = new Chart(this.context, {
+            type: 'line',
+            plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
+            options: {
+                // animation: false,
+                responsive: true,
+                hover: {
+                    mode: null
+                },
+                maintainAspectRatio: false,
+                datasets: {
+                    line: {
+                        spanGaps: true,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        segment: {
+                            borderWidth: 2,
+                            borderDash: ctx => {
+                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
+                                // Dashed when spanning gaps, solid otherwise
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                    chartInteractionPlugin: {
+                        enabled: true,
+                        radius: 20,
+                        clickRadius: 2,
+                        tooltipBg: this.headerBackgroundColor,
+                        tooltipFg: this.titleColor,
+                        labelField: 'CCode',
+                        showDefaultLabels: true,
+                        defaultLabelSpacing: 5,
+                        onDatasetClick: (datasets, event, chart) => {
+                            datasets.forEach((dataset) => {
+                                this.togglePin(dataset)
+                            });
+                        }
+                    },
+                },
+                layout: {
+                    padding: {
+                        right: 40
+                    }
+                }
+            }
+        })
+    }
+
+    renderBreadcrumb(treePath, title, itemCode, itemType) {
+        if (itemType !== "Indicator" || !treePath || treePath.length === 0) {
+            // Show simple title for non-indicators or invalid treepath
+            this.title.style.display = 'block';
+            this.breadcrumb.style.display = 'none';
+            return;
+        }
+
+        // Hide simple title and show breadcrumb for indicators
+        this.title.style.display = 'none';
+        this.breadcrumb.style.display = 'block';
+
+        // Build breadcrumb HTML
+        let breadcrumbHTML = '';
+        
+        // Process each level in the tree path (except the last one)
+        for (let i = 0; i < treePath.length - 1; i++) {
+            const item = treePath[i];
+            let code, itemName, displayName, url, tooltip;
+            
+            // Handle both old format (strings) and new format (objects) for backwards compatibility
+            if (typeof item === 'string') {
+                code = item.toLowerCase();
+                // Fallback to old logic for backwards compatibility
+                if (code === 'sspi') {
+                    displayName = 'SSPI';
+                    itemName = 'Social Policy and Progress Index';
+                    url = '/data';
+                } else if (i === 1) {
+                    displayName = code.toUpperCase();
+                    itemName = code.toUpperCase();
+                    url = '/data/pillar/' + code.toUpperCase();
+                } else if (i === 2) {
+                    displayName = code.toUpperCase();
+                    itemName = code.toUpperCase();
+                    url = '/data/category/' + code.toUpperCase();
+                } else {
+                    displayName = code.toUpperCase();
+                    itemName = code.toUpperCase();
+                    url = null;
+                }
+            } else {
+                // New object format with itemCode and itemName
+                code = item.itemCode;
+                itemName = item.itemName;
+                
+                // Map codes to display names and URLs
+                if (code === 'sspi') {
+                    displayName = 'SSPI';
+                    url = '/data';
+                } else if (i === 1) {
+                    // Second level is pillar
+                    displayName = code.toUpperCase();
+                    url = '/data/pillar/' + code.toUpperCase();
+                } else if (i === 2) {
+                    // Third level is category
+                    displayName = code.toUpperCase();
+                    url = '/data/category/' + code.toUpperCase();
+                } else {
+                    // Fallback for other levels
+                    displayName = code.toUpperCase();
+                    url = null;
+                }
+            }
+
+            // Add separator if not first item
+            if (i > 0) {
+                breadcrumbHTML += '<span class="breadcrumb-separator">></span>';
+            }
+
+            // Add breadcrumb item with link and tooltip
+            breadcrumbHTML += '<a href="' + url + '" class="breadcrumb-item" title="' + itemName + '">' + displayName + '</a>';
+        }
+
+        // Add final separator and current page title with itemCode (no link)
+        if (treePath.length > 0) {
+            breadcrumbHTML += '<span class="breadcrumb-separator">></span>';
+        }
+        breadcrumbHTML += '<span class="breadcrumb-current">' + title + ' (' + itemCode + ')</span>';
+
+        this.breadcrumb.innerHTML = breadcrumbHTML;
     }
 
     buildChartOptions() {
@@ -326,16 +493,29 @@ class IndicatorPanelChart extends PanelChart {
         if (!this.title) return
         
         if (this.activeSeries === this.itemCode) {
-            // Use original title for indicator score
-            this.title.innerText = this.originalTitle || 'Indicator Chart'
+            // For indicator score, show breadcrumb if we have treepath data
+            if (this.treepath && this.itemType === "Indicator") {
+                this.renderBreadcrumb(this.treepath, this.originalTitle || 'Indicator Chart', this.itemCode, this.itemType);
+            } else {
+                // Use original title for indicator score
+                this.title.innerText = this.originalTitle || 'Indicator Chart';
+                this.title.style.display = 'block';
+                if (this.breadcrumb) {
+                    this.breadcrumb.style.display = 'none';
+                }
+            }
         } else if (this.datasetOptions) {
-            // Find the dataset and use its name
+            // For datasets, use simple title (no breadcrumb)
             const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries)
             if (dataset) {
                 const datasetName = dataset.datasetName || dataset.datasetCode
-                this.title.innerText = `${dataset.datasetCode} - ${datasetName}`
+                this.title.innerText = `${dataset.datasetCode} - ${datasetName}`;
             } else {
-                this.title.innerText = this.activeSeries
+                this.title.innerText = this.activeSeries;
+            }
+            this.title.style.display = 'block';
+            if (this.breadcrumb) {
+                this.breadcrumb.style.display = 'none';
             }
         }
     }

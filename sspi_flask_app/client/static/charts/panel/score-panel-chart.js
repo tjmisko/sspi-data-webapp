@@ -64,4 +64,248 @@ class ScorePanelChart extends PanelChart {
             window.location.href = event.target.value
         })
     }
+
+    initChartJSCanvas() {
+        this.chartContainer = document.createElement('div');
+        this.chartContainer.classList.add('panel-chart-container');
+        this.chartContainer.innerHTML = `
+<nav class="panel-chart-breadcrumb" aria-label="Hierarchy navigation" style="display: none;"></nav>
+<h2 class="panel-chart-title"></h2>
+<div class="panel-canvas-wrapper">
+    <canvas class="panel-chart-canvas"></canvas>
+</div>
+`;
+        this.root.appendChild(this.chartContainer);
+        this.title = this.chartContainer.querySelector('.panel-chart-title');
+        this.breadcrumb = this.chartContainer.querySelector('.panel-chart-breadcrumb');
+        this.canvas = this.chartContainer.querySelector('.panel-chart-canvas');
+        this.context = this.canvas.getContext('2d');
+        this.chart = new Chart(this.context, {
+            type: 'line',
+            plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
+            options: {
+                // animation: false,
+                responsive: true,
+                hover: {
+                    mode: null
+                },
+                maintainAspectRatio: false,
+                datasets: {
+                    line: {
+                        spanGaps: true,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        segment: {
+                            borderWidth: 2,
+                            borderDash: ctx => {
+                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
+                                // Dashed when spanning gaps, solid otherwise
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                    chartInteractionPlugin: {
+                        enabled: true,
+                        radius: 20,
+                        clickRadius: 2,
+                        tooltipBg: this.headerBackgroundColor,
+                        tooltipFg: this.titleColor,
+                        labelField: 'CCode',
+                        showDefaultLabels: true,
+                        defaultLabelSpacing: 5,
+                        onDatasetClick: (datasets, event, chart) => {
+                            datasets.forEach((dataset) => {
+                                this.togglePin(dataset);
+                            });
+                        }
+                    },
+                },
+                layout: {
+                    padding: {
+                        right: 40
+                    }
+                }
+            }
+        });
+    }
+
+    renderBreadcrumb(treePath, title, itemCode, itemType) {
+        if (!treePath || treePath.length === 0) {
+            // Show simple title if no treepath
+            this.title.style.display = 'block';
+            this.breadcrumb.style.display = 'none';
+            return;
+        }
+
+        // Hide simple title and show breadcrumb for items with treepath
+        this.title.style.display = 'none';
+        this.breadcrumb.style.display = 'block';
+
+        // Build breadcrumb HTML
+        let breadcrumbHTML = '';
+        
+        // Process each level in the tree path (except the last one)
+        for (let i = 0; i < treePath.length - 1; i++) {
+            const item = treePath[i];
+            let code, itemName, displayName, url;
+            
+            // Handle both old format (strings) and new format (objects) for backwards compatibility
+            if (typeof item === 'string') {
+                code = item.toLowerCase();
+                // Fallback to old logic for backwards compatibility
+                if (code === 'sspi') {
+                    displayName = 'SSPI';
+                    itemName = 'Social Policy and Progress Index';
+                    url = '/data';
+                } else if (i === 1) {
+                    displayName = code.toUpperCase();
+                    itemName = code.toUpperCase();
+                    url = '/data/pillar/' + code.toUpperCase();
+                } else if (i === 2) {
+                    displayName = code.toUpperCase();
+                    itemName = code.toUpperCase();
+                    url = '/data/category/' + code.toUpperCase();
+                } else {
+                    displayName = code.toUpperCase();
+                    itemName = code.toUpperCase();
+                    url = null;
+                }
+            } else {
+                // New object format with itemCode and itemName
+                code = item.itemCode;
+                itemName = item.itemName;
+                
+                // Map codes to display names and URLs
+                if (code === 'sspi') {
+                    displayName = 'SSPI';
+                    url = '/data';
+                } else if (i === 1) {
+                    // Second level is pillar
+                    displayName = code.toUpperCase();
+                    url = '/data/pillar/' + code.toUpperCase();
+                } else if (i === 2) {
+                    // Third level is category
+                    displayName = code.toUpperCase();
+                    url = '/data/category/' + code.toUpperCase();
+                } else {
+                    // Fallback for other levels
+                    displayName = code.toUpperCase();
+                    url = null;
+                }
+            }
+
+            // Add separator if not first item
+            if (i > 0) {
+                breadcrumbHTML += '<span class="breadcrumb-separator">></span>';
+            }
+
+            // Add breadcrumb item with link and tooltip
+            breadcrumbHTML += '<a href="' + url + '" class="breadcrumb-item" title="' + itemName + '">' + displayName + '</a>';
+        }
+
+        // Add final separator and current page title with itemCode (no link)
+        if (treePath.length > 0) {
+            breadcrumbHTML += '<span class="breadcrumb-separator">></span>';
+        }
+        breadcrumbHTML += '<span class="breadcrumb-current">' + title + ' (' + itemCode + ')</span>';
+
+        this.breadcrumb.innerHTML = breadcrumbHTML;
+    }
+
+    generateTooltipText(parentItemName, parentItemType, childTypeTitle, childrenCount) {
+        // Proper plural to singular mapping
+        const pluralToSingular = {
+            'Pillars': 'Pillar',
+            'Categories': 'Category', 
+            'Indicators': 'Indicator'
+        };
+        
+        const childTypeSingular = pluralToSingular[childTypeTitle] || childTypeTitle;
+        const childTypeDisplay = childrenCount === 1 ? childTypeSingular : childTypeTitle;
+        const parentTypeDisplay = parentItemType === 'SSPI' ? 'SSPI' : parentItemName + ' ' + parentItemType;
+        
+        return parentTypeDisplay + ' scores are the arithmetic average of the ' + childTypeSingular.toLowerCase() + ' scores of the ' + childrenCount + ' ' + childTypeDisplay.toLowerCase() + ' below';
+    }
+
+    updateChildren(children, childTypeTitle, parentItemName, parentItemType) {
+        const descriptionContainer = this.chartOptions.querySelector('.dynamic-item-description-container');
+        
+        // Remove existing children section if it exists
+        const existingChildrenSection = descriptionContainer.querySelector('.item-children-section');
+        if (existingChildrenSection) {
+            existingChildrenSection.remove();
+        }
+        
+        // Add children section if children exist
+        if (children && children.length > 0 && childTypeTitle) {
+            const tooltipText = this.generateTooltipText(parentItemName, parentItemType, childTypeTitle, children.length);
+            console.log('Generated tooltip text:', tooltipText);
+            
+            const childrenHTML = '<div class="item-children-section">' +
+                '<div class="children-title-wrapper">' +
+                '<h4>' + childTypeTitle + '</h4>' +
+                '<span class="children-info-icon" title="' + tooltipText + '" aria-label="Information about scoring">i</span>' +
+                '</div>' +
+                '<ul class="children-list">' +
+                children.map(child => {
+                    const url = child.itemType === 'Category' ? 
+                        '/data/category/' + child.itemCode : 
+                        '/data/indicator/' + child.itemCode;
+                    return '<li><a href="' + url + '" class="child-link">' + child.itemName + ' (' + child.itemCode + ')</a></li>';
+                }).join('') +
+                '</ul>' +
+                '</div>';
+            descriptionContainer.insertAdjacentHTML('beforeend', childrenHTML);
+        }
+    }
+
+    update(data) {
+        console.log(data);
+        
+        // Force refresh of chart interaction plugin labels when data changes
+        if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
+            this.chartInteractionPlugin._forceRefreshLabels(this.chart);
+        }
+        
+        this.chart.data.datasets = data.data;
+        this.chart.data.labels = data.labels;
+        if (this.pinnedOnly) {
+            this.hideUnpinned();
+        } else {
+            this.showGroup(this.countryGroup);
+        }
+        
+        // Store treepath for breadcrumb rendering
+        this.treepath = data.treepath;
+        
+        // Use breadcrumb navigation if treepath is available
+        if (data.treepath && data.treepath.length > 0) {
+            this.renderBreadcrumb(data.treepath, data.title, data.itemCode, data.itemType);
+        } else {
+            // Fallback to simple title if no treepath
+            this.title.innerText = data.title;
+            this.title.style.display = 'block';
+            if (this.breadcrumb) {
+                this.breadcrumb.style.display = 'none';
+            }
+        }
+        
+        this.itemType = data.itemType;
+        this.groupOptions = data.groupOptions;
+        this.getPins();
+        this.updateLegend();
+        this.updateItemDropdown(data.itemOptions, data.itemType);
+        this.updateDescription(data.description);
+        this.updateChildren(data.children, data.childTypeTitle, data.itemName, data.itemType);
+        this.updateChartColors();
+        this.updateCountryGroups();
+        this.chart.update();
+    }
 }
