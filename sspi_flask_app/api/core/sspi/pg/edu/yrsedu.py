@@ -25,7 +25,7 @@ from sspi_flask_app.models.database import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/YRSEDU", methods=['GET'])
+@compute_bp.route("/YRSEDU", methods=['POST'])
 @login_required
 def compute_yrsedu():
     app.logger.info("Running /api/v1/compute/YRSEDU")

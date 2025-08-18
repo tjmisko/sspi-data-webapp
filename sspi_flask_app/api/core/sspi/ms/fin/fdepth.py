@@ -21,7 +21,7 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/FDEPTH", methods=['GET'])
+# @collect_bp.route("/FDEPTH", methods=['POST'])
 # @login_required
 # def fdepth():
 #     def collect_iterator(**kwargs):
@@ -30,7 +30,7 @@ from sspi_flask_app.models.database import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/FDEPTH", methods=['GET'])
+@compute_bp.route("/FDEPTH", methods=['POST'])
 @login_required
 def compute_fdepth():
     app.logger.info("Running /api/v1/compute/FDEPTH")

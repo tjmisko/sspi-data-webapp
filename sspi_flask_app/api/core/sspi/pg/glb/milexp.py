@@ -13,7 +13,7 @@ from sspi_flask_app.models.database import (
 )
 import json
 
-@compute_bp.route("/MILEXP", methods=['GET'])
+@compute_bp.route("/MILEXP", methods=['POST'])
 @login_required
 def compute_milexp():
     sspi_indicator_data.delete_many({"IndicatorCode": "MILEXP"})

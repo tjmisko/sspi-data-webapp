@@ -14,7 +14,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/COALPW", methods=["GET"])
+# @collect_bp.route("/COALPW", methods=["POST"])
 # @login_required
 # def coalpw():
 #     def collect_iterator(**kwargs):
@@ -24,7 +24,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     )
 
 
-@compute_bp.route("/COALPW", methods=["GET"])
+@compute_bp.route("/COALPW", methods=["POST"])
 @login_required
 def compute_coalpw():
     app.logger.info("Running /api/v1/compute/COALPW")

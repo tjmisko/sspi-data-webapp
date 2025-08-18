@@ -15,7 +15,7 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
 )
 
-# @collect_bp.route("/PRISON", methods=["GET"])
+# @collect_bp.route("/PRISON", methods=["POST"])
 # @login_required
 # def prison():
 #     def collect_iterator(**kwargs):
@@ -28,7 +28,7 @@ from sspi_flask_app.models.database import (
 #     )
 
 
-@compute_bp.route("/PRISON", methods=["GET"])
+@compute_bp.route("/PRISON", methods=["POST"])
 @login_required
 def compute_prison():
     app.logger.info("Running /api/v1/compute/PRISON")

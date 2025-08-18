@@ -28,7 +28,7 @@ from sspi_flask_app.models.database import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/TAXREV")
+@compute_bp.route("/TAXREV", methods=["POST"])
 @login_required
 def compute_taxrev():
     app.logger.info("Running /api/v1/compute/TAXREV")

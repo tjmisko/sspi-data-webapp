@@ -30,7 +30,7 @@ from sspi_flask_app.models.database import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/CRPTAX")
+@compute_bp.route("/CRPTAX", methods=["POST"])
 @login_required
 def compute_crptax():
     app.logger.info("Running /api/v1/compute/CRPTAX")

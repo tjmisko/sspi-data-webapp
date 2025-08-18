@@ -8,7 +8,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @compute_bp.route("/outcome/GDPMER", methods=['GET'])
+# @compute_bp.route("/outcome/GDPMER", methods=['POST'])
 # @login_required
 # def compute_gdpmer():
 #     app.logger.info("Running /api/v1/compute/outcome/GDPMER")
@@ -33,7 +33,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return parse_json(extracted_data)
 
 
-# @compute_bp.route("/outcome/GDPPPP", methods=['GET'])
+# @compute_bp.route("/outcome/GDPPPP", methods=['POST'])
 # @login_required
 # def compute_gdpppp():
 #     app.logger.info("Running /api/v1/compute/INTRNT")

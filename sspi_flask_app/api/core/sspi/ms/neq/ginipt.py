@@ -30,7 +30,7 @@ from sspi_flask_app.models.database import (
 #     )
 
 
-@compute_bp.route("/GINIPT")
+@compute_bp.route("/GINIPT", methods=["POST"])
 @login_required
 def compute_ginipt():
     app.logger.info("Running /api/v1/compute/GINIPT")

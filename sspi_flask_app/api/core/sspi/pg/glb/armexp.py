@@ -18,7 +18,7 @@ from sspi_flask_app.models.database import (
 import json
 
 
-# @collect_bp.route("/ARMEXP", methods=['GET'])
+# @collect_bp.route("/ARMEXP", methods=['POST'])
 # @login_required
 # def armexp():
 #     def collect_iterator(**kwargs):
@@ -26,7 +26,7 @@ import json
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-# @compute_bp.route("/ARMEXP", methods=['GET'])
+# @compute_bp.route("/ARMEXP", methods=['POST'])
 # @login_required
 # def compute_armexp():
 #     app.logger.info("Running /api/v1/compute/ARMEXP")

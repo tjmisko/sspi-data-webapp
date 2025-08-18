@@ -14,7 +14,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/CARBON", methods=['GET'])
+# @collect_bp.route("/CARBON", methods=['POST'])
 # @login_required
 # def carbon():
 #     def collect_iterator(**kwargs):
@@ -22,7 +22,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/CARBON", methods=['GET'])
+@compute_bp.route("/CARBON", methods=['POST'])
 @login_required
 def compute_carbon():
     app.logger.info("Running /api/v1/compute/CARBON")

@@ -12,7 +12,7 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost
 )
 
-# @collect_bp.route("/CYBSEC", methods=['GET'])
+# @collect_bp.route("/CYBSEC", methods=['POST'])
 # @login_required
 # def cybsec():
 #     def collect_iterator(**kwargs):
@@ -20,7 +20,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/CYBSEC", methods=['GET'])
+@compute_bp.route("/CYBSEC", methods=['POST'])
 @login_required
 def compute_cybsec():
     app.logger.info("Running /api/v1/compute/CYBSEC")

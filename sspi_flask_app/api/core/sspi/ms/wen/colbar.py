@@ -18,7 +18,7 @@ from sspi_flask_app.models.database import sspi_clean_api_data, sspi_indicator_d
 #     )
 
 
-@compute_bp.route("/COLBAR", methods=["GET"])
+@compute_bp.route("/COLBAR", methods=["POST"])
 @login_required
 def compute_colbar():
     app.logger.info("Running /api/v1/compute/COLBAR")

@@ -14,7 +14,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/BEEFMK", methods=["GET"])
+# @collect_bp.route("/BEEFMK", methods=["POST"])
 # @login_required
 # def beefmk():
 #     def collect_iterator(**kwargs):
@@ -29,7 +29,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     )
 
 
-@compute_bp.route("/BEEFMK", methods=["GET"])
+@compute_bp.route("/BEEFMK", methods=["POST"])
 @login_required
 def compute_beefmk():
     app.logger.info("Running /api/v1/compute/BEEFMK")

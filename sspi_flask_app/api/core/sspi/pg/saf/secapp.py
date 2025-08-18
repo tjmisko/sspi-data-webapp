@@ -21,7 +21,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/SECAPP")
+@compute_bp.route("/SECAPP", methods=["POST"])
 @login_required
 def compute_secapp():
     app.logger.info("Running /api/v1/compute/SECAPP")
