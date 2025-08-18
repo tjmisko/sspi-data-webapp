@@ -6,6 +6,7 @@ import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json
 from sspi_flask_app.models.database import sspi_metadata
+from sspi_flask_app.api.core.dashboard import build_indicators_data
 
 
 client_bp = Blueprint(
@@ -110,7 +111,11 @@ def pillar_data(PillarCode):
 
 @client_bp.route('/indicators')
 def indicators():
-    return render_template('indicators.html')
+    # Get structured data using the new backend function
+    indicators_data = build_indicators_data()
+    
+    return render_template('indicators.html', 
+                         indicators_data=indicators_data)
 
 
 @client_bp.route('/methodology')
