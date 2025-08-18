@@ -8,8 +8,7 @@ def collect_iea_data(iea_indicator_code, **kwargs):
     source_info = {
         "OrganizationName": "International Energy Organization",
         "OrganizationCode": "IEA",
-        "OrganizationSeriesCode": iea_indicator_code,
-        "QueryCode": "TESbySource",
+        "QueryCode": iea_indicator_code,
         "URL": url
     }
     count = sspi_raw_api_data.raw_insert_many(raw_data, source_info, **kwargs)
