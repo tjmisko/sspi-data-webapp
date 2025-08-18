@@ -13,7 +13,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/CSTUNT", methods=['GET'])
+# @collect_bp.route("/CSTUNT", methods=['POST'])
 # @login_required
 # def cstunt():
 #     def collect_iterator(**kwargs):
@@ -21,7 +21,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/CSTUNT", methods=['GET'])
+@compute_bp.route("/CSTUNT", methods=['POST'])
 @login_required
 def compute_cstunt():
     """

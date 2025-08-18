@@ -13,7 +13,7 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/PUPTCH", methods=['GET'])
+# @collect_bp.route("/PUPTCH", methods=['POST'])
 # @login_required
 # def puptch():
 #     def collect_iterator(**kwargs):
@@ -22,7 +22,7 @@ from sspi_flask_app.models.database import (
 
 
 
-@compute_bp.route("/PUPTCH", methods=['GET'])
+@compute_bp.route("/PUPTCH", methods=['POST'])
 @login_required
 def compute_puptch():
     app.logger.info("Running /api/v1/compute/PUPTCH")

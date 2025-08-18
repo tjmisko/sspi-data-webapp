@@ -29,7 +29,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     )
 
 
-@compute_bp.route("/EMPLOY", methods=['GET'])
+@compute_bp.route("/EMPLOY", methods=['POST'])
 @login_required
 def compute_employ():
     app.logger.info("Running /api/v1/compute/EMPLOY")

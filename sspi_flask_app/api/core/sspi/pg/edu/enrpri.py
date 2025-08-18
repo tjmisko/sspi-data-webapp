@@ -20,7 +20,7 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/ENRPRI", methods=['GET'])
+# @collect_bp.route("/ENRPRI", methods=['POST'])
 # @login_required
 # def enrpri():
 #     def collect_iterator(**kwargs):
@@ -28,7 +28,7 @@ from sspi_flask_app.models.database import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/ENRPRI", methods=['GET'])
+@compute_bp.route("/ENRPRI", methods=['POST'])
 @login_required
 def compute_enrpri():
     app.logger.info("Running /api/v1/compute/ENRPRI")

@@ -37,7 +37,7 @@ from sspi_flask_app.models.database import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/SENIOR", methods=['GET'])
+@compute_bp.route("/SENIOR", methods=['POST'])
 @login_required
 def compute_senior():
     """

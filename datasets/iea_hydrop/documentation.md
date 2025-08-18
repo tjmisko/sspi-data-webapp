@@ -5,10 +5,7 @@ DatasetCode: IEA_HYDROP
 Description: Percentage of total final energy consumption generated from Hydroelectric
   sources
 Source:
-  OrganizationName: IEA
   OrganizationCode: IEA
-  OrganizationSeriesCode: HYDRO
-  QueryCode: HYDRO
-  BaseURL: null
+  QueryCode: TESbySource
 ---
 

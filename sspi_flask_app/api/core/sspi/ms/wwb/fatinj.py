@@ -23,7 +23,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     )
 
 
-@compute_bp.route("/FATINJ", methods=["GET"])
+@compute_bp.route("/FATINJ", methods=["POST"])
 @login_required
 def compute_fatinj():
     app.logger.info("Running /api/v1/compute/FATINJ")

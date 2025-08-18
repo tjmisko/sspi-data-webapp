@@ -21,7 +21,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/ATBRTH")
+@compute_bp.route("/ATBRTH", methods=["POST"])
 @login_required
 def compute_atbrth():
     app.logger.info("Running /api/v1/compute/ATBRTH")

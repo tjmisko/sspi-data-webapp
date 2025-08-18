@@ -12,7 +12,7 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/INTRNT", methods=['GET'])
+# @collect_bp.route("/INTRNT", methods=['POST'])
 # @login_required
 # def intrnt():
 #     def collect_iterator(**kwargs):
@@ -21,7 +21,7 @@ from sspi_flask_app.api.resources.utilities import (
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/INTRNT", methods=['GET'])
+@compute_bp.route("/INTRNT", methods=['POST'])
 @login_required
 def compute_intrnt():
     app.logger.info("Running /api/v1/compute/INTRNT")

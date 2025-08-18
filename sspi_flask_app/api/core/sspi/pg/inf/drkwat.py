@@ -21,7 +21,7 @@ from flask_login import login_required, current_user
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/DRKWAT")
+@compute_bp.route("/DRKWAT", methods=["POST"])
 @login_required
 def compute_drkwat():
     app.logger.info("Running /api/v1/compute/DRKWAT")
