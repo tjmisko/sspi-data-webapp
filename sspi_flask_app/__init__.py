@@ -121,8 +121,12 @@ def init_app(Config):
         from sspi_flask_app.api.core.load import load_bp
         from sspi_flask_app.api.core.query import query_bp
         from sspi_flask_app.api.core.save import save_bp
+        from sspi_flask_app.api.core.customize import customize_bp
         # Initialize MongoDB indexes for user data
         sspi_user_data.create_indexes()
+        # Initialize MongoDB indexes for custom structure data
+        from sspi_flask_app.models.database import sspi_custom_user_structure
+        sspi_custom_user_structure.create_indexes()
         # Register Blueprints
         api_bp.register_blueprint(dataset_bp)
         api_bp.register_blueprint(compute_bp)
@@ -136,6 +140,7 @@ def init_app(Config):
         api_bp.register_blueprint(sync_bp)
         api_bp.register_blueprint(query_bp)
         api_bp.register_blueprint(save_bp)
+        api_bp.register_blueprint(customize_bp)
         app.register_blueprint(api_bp)
         app.register_blueprint(client_bp)
         app.register_blueprint(auth_bp)

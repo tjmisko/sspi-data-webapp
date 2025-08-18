@@ -193,6 +193,11 @@ def query_pillar_detail(pillar_code):
     return parse_json(sspi_metadata.get_pillar_detail(pillar_code))
 
 
+@query_bp.route("/metadata/item_details")
+def query_item_details():
+    return jsonify(sspi_metadata.item_details())
+
+
 @query_bp.route("/metadata/item_detail/<item_code>", methods=["GET"])
 def query_item_detail(item_code):
     return parse_json(sspi_metadata.get_item_detail(item_code))

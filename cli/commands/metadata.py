@@ -131,7 +131,12 @@ def item(item_code):
     """
     connector = SSPIDatabaseConnector()
     item_code = item_code.upper() if item_code else None
-    url = f"/api/v1/query/metadata/item_detail/{item_code}"
+    if not item_code:
+        url = "/api/v1/query/metadata/item_details"
+    elif item_code in ["CODES", "CODE"]:
+        url = "/api/v1/query/metadata/item_codes"
+    else:
+        url = f"/api/v1/query/metadata/item_detail/{item_code}"
     result = connector.call(url)
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:

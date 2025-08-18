@@ -154,6 +154,8 @@ class SSPIMetadata(MongoWrapper):
         source_details = self.generate_source_details(dataset_details)
         source_details.sort(key=lambda x: x["Metadata"]["DatasetCodes"][0])
         item_details = self.load_methodology_files()
+        # Build proper Children fields from ordering fields before processing
+        item_details = self.build_children_fields(item_details)
         for detail in item_details:
             detail["DocumentType"] = detail["ItemType"] + "Detail"
         item_codes = {
@@ -286,10 +288,52 @@ class SSPIMetadata(MongoWrapper):
                 else:
                     tree_path = "sspi" + dirpath.split("methodology")[1]
                 detail["TreePath"] = tree_path
-                detail["Children"] = list([d.upper() for d in dirnames])
-                self.validate_item_detail_format(detail)
+                # Children field will be built later from proper ordering fields
+                detail["_temp_dirnames"] = list([d.upper() for d in dirnames])
+                # Validation will happen after Children fields are properly built
                 details.append(detail)
         return details
+
+    def build_children_fields(self, item_details: list[dict]) -> list[dict]:
+        """
+        Build proper Children fields from the ordering fields specified in documentation files.
+        
+        The canonical order is specified by:
+        - SSPI: PillarCodes field
+        - Pillar: CategoryCodes field  
+        - Category: IndicatorCodes field
+        - Indicator: [] (no children)
+        
+        :param item_details: List of item details to process
+        :return: List of item details with properly ordered Children fields
+        """
+        for detail in item_details:
+            item_type = detail.get("ItemType")
+            
+            if item_type == "SSPI":
+                # Children should be PillarCodes in the specified order
+                detail["Children"] = detail.get("PillarCodes", [])
+            elif item_type == "Pillar":
+                # Children should be CategoryCodes in the specified order
+                detail["Children"] = detail.get("CategoryCodes", [])
+            elif item_type == "Category":
+                # Children should be IndicatorCodes in the specified order
+                detail["Children"] = detail.get("IndicatorCodes", [])
+            elif item_type == "Indicator":
+                # Indicators have no children
+                detail["Children"] = []
+            else:
+                # For other types, keep empty children
+                detail["Children"] = []
+            
+            # Remove temporary directory names field
+            if "_temp_dirnames" in detail:
+                del detail["_temp_dirnames"]
+            
+            # Validate the detail format now that Children is properly set
+            self.validate_item_detail_format(detail)
+        
+        return item_details
 
     def load_dataset_files(self) -> list:
         """
