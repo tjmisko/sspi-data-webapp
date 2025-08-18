@@ -1,13 +1,121 @@
 {% extends 'layout.html' %}
 
+{% block stylesheet %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename='css/components/customizable-sspi-enhanced.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename='css/components/indicator-table.css') }}">
+{% endblock %}
+
 {% block content %}
-<h2> Data Visualizations</h2>
-<div class="datawindow"> 
-    <nav class="datanav">
-        <a class="datanavlink" href="/"> Map </a>
-        <a class="datanavlink" href="/"> Plot </a>
-        <a class="datanavlink" href="/"> Table </a>
-    </nav>
+<div class="indicators-page">
+    <h2>SSPI Indicators Overview</h2>
+    <p class="page-description">Explore the complete structure of SSPI indicators, grouped by pillar and category. Click on indicators to view their constituent datasets and methodological details.</p>
+    
+    <div class="indicators-container">
+        {% if indicators_data.error %}
+        <div class="error-message">
+            <p>Error loading indicators: {{ indicators_data.error }}</p>
+        </div>
+        {% else %}
+            {% for pillar in indicators_data.pillars %}
+            <div class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
+                <div class="pillar-header">
+                    <div class="pillar-header-content">
+                        <button class="collapse-toggle-btn" aria-label="Toggle pillar">
+                            <span class="collapse-icon">▼</span>
+                        </button>
+                        <div class="pillar-info">
+                            <h3 class="pillar-name">{{ pillar.pillar_name }}</h3>
+                            <span class="pillar-code">{{ pillar.pillar_code }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pillar-content" data-expanded="true">
+                    {% for category in pillar.categories %}
+                    <div class="category-section" data-category-code="{{ category.category_code }}">
+                        <div class="category-header">
+                            <div class="category-header-content">
+                                <button class="collapse-toggle-btn" aria-label="Toggle category">
+                                    <span class="collapse-icon">▼</span>
+                                </button>
+                                <div class="category-info">
+                                    <h4 class="category-name">{{ category.category_name }}</h4>
+                                    <span class="category-code">{{ category.category_code }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="category-content" data-expanded="true">
+                            <div class="indicators-list">
+                                {% if category.indicators %}
+                                    {% for indicator in category.indicators %}
+                                    <div class="indicator-item" data-indicator-code="{{ indicator.indicator_code }}">
+                                        <div class="indicator-header">
+                                            <div class="indicator-info">
+                                                <button class="collapse-toggle-btn" aria-label="Toggle datasets">
+                                                    <span class="collapse-icon">▼</span>
+                                                </button>
+                                                <div class="indicator-main-info">
+                                                    <h5 class="indicator-name">{{ indicator.indicator_name }}</h5>
+                                                    <span class="indicator-code">{{ indicator.indicator_code }}</span>
+                                                </div>
+                                                <a href="/data/indicator/{{ indicator.indicator_code }}" class="view-data-btn">
+                                                    View Indicator Data
+                                                </a>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="indicator-details" data-expanded="false">
+                                            {% if indicator.description %}
+                                            <div class="indicator-description">
+                                                <p>{{ indicator.description }}</p>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if indicator.datasets %}
+                                            <div class="datasets-section">
+                                                <h6>Datasets</h6>
+                                                <div class="datasets-list">
+                                                    {% for dataset in indicator.datasets %}
+                                                    <div class="dataset-item">
+                                                        <div class="dataset-info">
+                                                            <div class="dataset-name">{{ dataset.dataset_name }}</div>
+                                                            <div class="dataset-code">{{ dataset.dataset_code }}</div>
+                                                        </div>
+                                                        {% if dataset.organization_code %}
+                                                        <div class="dataset-source">
+                                                            <span class="source-label">Source:</span>
+                                                            <span class="source-org">{{ dataset.organization_code }}</span>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="no-indicators">
+                                        <em>No indicators available for this category</em>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
 </div>
 
+<script src="{{ url_for('client_bp.static', filename='js/indicator-table.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    new IndicatorTable();
+});
+</script>
 {% endblock %}
