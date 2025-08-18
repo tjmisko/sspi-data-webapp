@@ -1,0 +1,16 @@
+{
+  "security": {
+    "bash": {
+      "allowlist": [
+        "touch wsgi.py",
+        "sspi metadata:*",
+        "sspi query:*",
+        "sspi clean:*",
+        "sspi compute:*",
+        "scripts/wtdev",
+        "source env/bin/activate",
+        "deactivate"
+      ]
+    }
+  }
+}
