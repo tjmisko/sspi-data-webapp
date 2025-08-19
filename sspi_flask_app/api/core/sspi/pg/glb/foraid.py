@@ -22,7 +22,7 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/FORAID", methods=["GET"])
+# @collect_bp.route("/FORAID", methods=["POST"])
 # @login_required
 # def foraid():
 #     def collect_iterator(**kwargs):
@@ -46,7 +46,7 @@ from sspi_flask_app.models.database import (
 #     )
 
 
-@compute_bp.route("/FORAID", methods=["GET"])
+@compute_bp.route("/FORAID", methods=["POST"])
 @login_required
 def compute_foraid():
     app.logger.info("Running /api/v1/compute/FORAID")

@@ -23,7 +23,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 
-@compute_bp.route("/AQELEC")
+@compute_bp.route("/AQELEC", methods=["POST"])
 @login_required
 def compute_aqelec():
     app.logger.info("Running /api/v1/compute/AQELEC")

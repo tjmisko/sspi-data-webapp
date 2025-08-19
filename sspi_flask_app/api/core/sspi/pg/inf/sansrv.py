@@ -21,7 +21,7 @@ from flask_login import login_required, current_user
 #     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
-@compute_bp.route("/SANSRV")
+@compute_bp.route("/SANSRV", methods=["POST"])
 @login_required
 def compute_sansrv():
     app.logger.info("Running /api/v1/compute/SANSRV")

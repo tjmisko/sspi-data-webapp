@@ -883,6 +883,148 @@ def dynamic_stack_data(CountryCode, RootItemCode):
         }
     )
 
+def build_indicators_data():
+    """
+    Build a complete hierarchical data structure for the indicators table page.
+    
+    Returns a structured representation of pillars -> categories -> indicators -> datasets
+    suitable for frontend display.
+    
+    Returns:
+        dict: Organized data structure with pillars, categories, indicators, and datasets
+    """
+    try:
+        # Get all item details (following customize.py pattern)
+        all_items = sspi_metadata.item_details()
+        
+        if not all_items:
+            return {
+                "pillars": [],
+                "error": "No metadata items found"
+            }
+        
+        # Get all dataset details
+        all_datasets = sspi_metadata.dataset_details()
+        datasets_by_code = {dataset['DatasetCode']: dataset for dataset in all_datasets}
+        
+        # Organize items by type and code
+        items_by_type = {
+            'SSPI': [],
+            'Pillar': [],
+            'Category': [],
+            'Indicator': []
+        }
+        
+        items_by_code = {}
+        
+        for item in all_items:
+            item_type = item.get('ItemType', 'Unknown')
+            item_code = item.get('ItemCode', '')
+            
+            if item_type in items_by_type:
+                items_by_type[item_type].append(item)
+            
+            if item_code:
+                items_by_code[item_code] = item
+        
+        # Build the hierarchical structure
+        pillars = []
+        
+        # Sort pillars by ItemOrder if available
+        sorted_pillars = sorted(items_by_type['Pillar'], 
+                               key=lambda x: (x.get('ItemOrder', 999), x.get('ItemCode', '')))
+        
+        for pillar_item in sorted_pillars:
+            pillar_code = pillar_item.get('ItemCode', '')
+            pillar_data = {
+                'pillar_code': pillar_code,
+                'pillar_name': pillar_item.get('ItemName', pillar_code),
+                'pillar_description': pillar_item.get('Description', ''),
+                'categories': []
+            }
+            
+            # Get categories for this pillar
+            category_codes = pillar_item.get('Children', [])
+            
+            for category_code in category_codes:
+                category_item = items_by_code.get(category_code)
+                if not category_item:
+                    continue
+                
+                category_data = {
+                    'category_code': category_code,
+                    'category_name': category_item.get('ItemName', category_code),
+                    'category_description': category_item.get('Description', ''),
+                    'indicators': []
+                }
+                
+                # Get indicators for this category
+                indicator_codes = category_item.get('Children', [])
+                
+                for indicator_code in indicator_codes:
+                    indicator_item = items_by_code.get(indicator_code)
+                    if not indicator_item:
+                        continue
+                    
+                    # Get dataset information for this indicator
+                    dataset_codes = indicator_item.get('DatasetCodes', [])
+                    datasets = []
+                    
+                    for dataset_code in dataset_codes:
+                        dataset = datasets_by_code.get(dataset_code)
+                        if dataset:
+                            datasets.append({
+                                'dataset_code': dataset_code,
+                                'dataset_name': dataset.get('DatasetName', dataset_code),
+                                'description': dataset.get('Description', ''),
+                                'source': dataset.get('Source', {}),
+                                'organization_code': dataset.get('Source', {}).get('OrganizationCode', ''),
+                                'organization_name': dataset.get('Source', {}).get('OrganizationName', '')
+                            })
+                    
+                    indicator_data = {
+                        'indicator_code': indicator_code,
+                        'indicator_name': indicator_item.get('ItemName', indicator_code),
+                        'description': indicator_item.get('Description', ''),
+                        'datasets': datasets,
+                        'dataset_codes': dataset_codes,
+                        'lower_goalpost': indicator_item.get('LowerGoalpost'),
+                        'upper_goalpost': indicator_item.get('UpperGoalpost'),
+                        'inverted': indicator_item.get('Inverted', False)
+                    }
+                    
+                    category_data['indicators'].append(indicator_data)
+                
+                # Sort indicators by name for consistent display
+                category_data['indicators'].sort(key=lambda x: x['indicator_name'])
+                
+                pillar_data['categories'].append(category_data)
+            
+            # Sort categories by name for consistent display
+            pillar_data['categories'].sort(key=lambda x: x['category_name'])
+            
+            pillars.append(pillar_data)
+        
+        return {
+            'pillars': pillars,
+            'stats': {
+                'total_pillars': len(pillars),
+                'total_categories': sum(len(p['categories']) for p in pillars),
+                'total_indicators': sum(len(c['indicators']) for p in pillars for c in p['categories']),
+                'total_datasets': len(datasets_by_code)
+            }
+        }
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error building indicators data: {str(e)}")
+        return {
+            'pillars': [],
+            'error': f"Error building indicators data: {str(e)}"
+        }
+
+
 @dashboard_bp.route("/item/coverage/matrix/<ItemCode>/<CountryGroup>")
 def item_coverage_data(ItemCode, CountryGroup):
     coverage = DataCoverage(2000, 2023, CountryGroup)

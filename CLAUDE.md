@@ -14,7 +14,7 @@ Before making any changes, always:
 
 1. Get Environment Context Information:
 ```bash
-bash scripts/wtdev
+scripts/wtdev
 ```
 2. Determine whether you are in a work tree. Remember to do all your work inside the tree, and to check whether you are in the worktree or inside of the main repository. Inside worktrees, you must start the development server with the correct port number. Each worktree has a different port number to ensure parallelism. To find the correct number, consult wsgi.py inside the current worktree. It should never be 5000: that is reserved for the main branch. Every worktree should be a number greater than 5000.
 3. Don't be too anxious to restart the development server: it is running in debug mode and need only be refreshed for most changes.
@@ -245,7 +245,7 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 **Solution** after creating new dataset files:
 ```bash
 # 1. Check current worktree port
-bash scripts/wtdev  # e.g., shows port 5002
+scripts/wtdev  # e.g., shows port 5002
 
 # 2. Kill and restart Flask server (NOT just touch wsgi.py)
 kill $(ps aux | grep "flask.*5002" | grep -v grep | awk '{print $2}')

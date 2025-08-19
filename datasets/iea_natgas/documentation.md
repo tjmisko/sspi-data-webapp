@@ -4,10 +4,7 @@ DatasetName: Energy from Natural Gas
 DatasetCode: IEA_NATGAS
 Description: Percentage of total final energy consumption generated from Natural Gas
 Source:
-  OrganizationName: IEA
   OrganizationCode: IEA
-  OrganizationSeriesCode: NATGAS
-  QueryCode: NATGAS
-  BaseURL: null
+  QueryCode: TESbySource
 ---
 

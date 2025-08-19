@@ -18,13 +18,13 @@ def compute_ishrat():
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "ISHRAT"})
     lg, ug = sspi_metadata.get_goalposts("ISHRAT")
     # Fetch clean datasets
-    topten_clean = sspi_clean_api_data.find({"DatasetCode": "WID_TOPTEN"})
-    bfifty_clean = sspi_clean_api_data.find({"DatasetCode": "WID_BFIFTY"})
+    topten_clean = sspi_clean_api_data.find({"DatasetCode": "WID_NINCSH_PRETAX_P90P100"})
+    bfifty_clean = sspi_clean_api_data.find({"DatasetCode": "WID_NINCSH_PRETAX_P0P50"})
     combined_list = topten_clean + bfifty_clean
     unit = "Ratio of Bottom 50% Income Share to to Top 10% Income Share"
     clean_list, incomplete_list = score_indicator(
         combined_list, "ISHRAT",
-        score_function=lambda WID_TOPTEN, WID_BFIFTY: goalpost(WID_BFIFTY / WID_TOPTEN, lg, ug),
+        score_function=lambda WID_NINCSH_PRETAX_P90P100, WID_NINCSH_PRETAX_P0P50: goalpost(WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100, lg, ug),
         unit=unit
     )
     sspi_indicator_data.insert_many(clean_list)

@@ -18,38 +18,27 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/ALTNRG", methods=["GET"])
-# @login_required
-# def altnrg():
-#     def collect_iterator(**kwargs):
-#         yield from collect_iea_data("TESbySource", "ALTNRG", **kwargs)
-#     return Response(
-#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-#     )
-
-
-@compute_bp.route("/ALTNRG", methods=["GET"])
+@compute_bp.route("/ALTNRG", methods=["POST"])
 @login_required
 def compute_altnrg():
+    def score_altnrg(IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL):
+        lg, ug = sspi_metadata.get_goalposts("ALTNRG")
+        return goalpost(
+            ((IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS) - 0.5 * IEA_BIOWAS) / 
+            (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL) * 100, lg, ug)
+
     app.logger.info("Running /api/v1/compute/ALTNRG")
     sspi_indicator_data.delete_many({"IndicatorCode": "ALTNRG"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "ALTNRG"})
     
     # Fetch clean datasets - these already exist from the metadata
     dataset_codes = ["IEA_TLCOAL", "IEA_NATGAS", "IEA_NCLEAR", "IEA_HYDROP", "IEA_GEOPWR", "IEA_BIOWAS", "IEA_FSLOIL"]
-    combined_list = []
-    for dataset_code in dataset_codes:
-        dataset_clean = sspi_clean_api_data.find({"DatasetCode": dataset_code})
-        combined_list.extend(dataset_clean)
-    
-    lg, ug = sspi_metadata.get_goalposts("ALTNRG")
+    datasets_clean = sspi_clean_api_data.find({"DatasetCode": {"$in": dataset_codes}})
     
     clean_list, incomplete_list = score_indicator(
-        combined_list,
+        datasets_clean,
         "ALTNRG",
-        score_function=lambda IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL: goalpost(
-            ((IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS) - 0.5 * IEA_BIOWAS) / 
-            (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL) * 100, lg, ug),
+        score_function=score_altnrg,
         unit="Index",
     )
     sspi_indicator_data.insert_many(clean_list)
