@@ -65,13 +65,13 @@ class IndicatorTable {
         const categorySection = toggleBtn.closest('.category-section');
         const indicatorItem = toggleBtn.closest('.indicator-item');
         
-        if (indicatorItem && toggleBtn.closest('.indicator-header')) {
+        if (indicatorItem && toggleBtn.closest('.indicators-indicator-header')) {
             // This is an indicator details toggle
             return indicatorItem.querySelector('.indicator-details');
-        } else if (categorySection && toggleBtn.closest('.category-header')) {
+        } else if (categorySection && toggleBtn.closest('.indicators-category-header')) {
             // This is a category content toggle
             return categorySection.querySelector('.category-content');
-        } else if (pillarSection && toggleBtn.closest('.pillar-header')) {
+        } else if (pillarSection && toggleBtn.closest('.indicators-pillar-header')) {
             // This is a pillar content toggle
             return pillarSection.querySelector('.pillar-content');
         }
@@ -137,7 +137,7 @@ class IndicatorTable {
                 pillarContent.dataset.expanded = 'true';
                 this.updateSectionVisibility(pillarContent, true);
                 
-                const toggleBtn = pillarSection.querySelector('.pillar-header .collapse-toggle-btn');
+                const toggleBtn = pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');
                 if (toggleBtn) {
                     this.updateToggleIcon(toggleBtn, true);
                 }
@@ -153,7 +153,7 @@ class IndicatorTable {
                 pillarContent.dataset.expanded = 'false';
                 this.updateSectionVisibility(pillarContent, false);
                 
-                const toggleBtn = pillarSection.querySelector('.pillar-header .collapse-toggle-btn');
+                const toggleBtn = pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');
                 if (toggleBtn) {
                     this.updateToggleIcon(toggleBtn, false);
                 }
@@ -166,9 +166,9 @@ class IndicatorTable {
         if (!parent) return null;
         
         if (section.classList.contains('pillar-content')) {
-            return parent.querySelector('.pillar-header .collapse-toggle-btn');
+            return parent.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');
         } else if (section.classList.contains('category-content')) {
-            return parent.querySelector('.category-header .collapse-toggle-btn');
+            return parent.querySelector('.indicator-table-category-header .collapse-toggle-btn');
         } else if (section.classList.contains('indicator-details')) {
             return parent.querySelector('.indicator-header .collapse-toggle-btn');
         }
