@@ -19,21 +19,6 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/WATMAN", methods=["POST"])
-# @login_required
-# def watman():
-#     def collect_iterator(**kwargs):
-#         yield from collect_sdg_indicator_data(
-#             "6.4.1", "WATMAN", IntermediateCode="CWUEFF", **kwargs
-#         )
-#         yield from collect_sdg_indicator_data(
-#             "6.4.2", "WATMAN", IntermediateCode="WTSTRS", **kwargs
-#         )
-#     return Response(
-#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-#     )
-
-
 @compute_bp.route("/WATMAN", methods=['POST'])
 @login_required
 def compute_watman():
