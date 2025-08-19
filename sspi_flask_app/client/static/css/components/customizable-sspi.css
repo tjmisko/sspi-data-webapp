@@ -1,6 +1,16 @@
-/* Enhanced Customizable SSPI Styles */
+/* Enhanced Customizable SSPI Styles - Merged with drag-and-drop functionality */
+
+:root {
+  --theme-gap: 1rem;
+}
 
 /* Toolbar and general button styling - following chart options pattern */
+.sspi-toolbar {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
 .sspi-toolbar button, .add-category, .add-indicator {
     background-color: var(--input-background-color);
     color: var(--input-text-color);
@@ -54,7 +64,7 @@
 
 /* Code input styles */
 /* Header content containers - main flexbox layout */
-.pillar-header-content {
+.customization-pillar-header-content {
     display: flex;
     align-items: flex-start;
     gap: 1em;
@@ -168,7 +178,7 @@
     background: var(--box-background-color);
 }
 
-.indicator-header {
+.customization-indicator-header {
     padding: 0.56rem;
     cursor: default;
     list-style: none;
@@ -180,12 +190,12 @@
     gap: 0.5rem;
 }
 
-.indicator-collapsible[data-expanded="true"] .indicator-header {
+.indicator-collapsible[data-expanded="true"] .customization-indicator-header {
     border-bottom: var(--theme-border-thin);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.indicator-collapsible[data-expanded="false"] .indicator-header {
+.indicator-collapsible[data-expanded="false"] .customization-indicator-header {
     border-radius: var(--border-radius);
 }
 
@@ -415,7 +425,7 @@
 }
 
 /* Enhanced pillar header styles */
-.pillar-header {
+.customization-pillar-header {
     padding: 0.75rem;
     background: var(--box-background-color);
     border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
@@ -425,17 +435,17 @@
 }
 
 /* Individual pillar colors based on order - with reduced opacity for softer look */
-.pillar-column:nth-child(1) .pillar-header {
+.pillar-column:nth-child(1) .customization-pillar-header {
     background-color: color-mix(in srgb, var(--sus-color) 15%, var(--box-background-color));
     border: 1px solid var(--sus-color);
 }
 
-.pillar-column:nth-child(2) .pillar-header {
+.pillar-column:nth-child(2) .customization-pillar-header {
     background-color: color-mix(in srgb, var(--ms-color) 15%, var(--box-background-color));
     border: 1px solid var(--ms-color);
 }
 
-.pillar-column:nth-child(3) .pillar-header {
+.pillar-column:nth-child(3) .customization-pillar-header {
     background-color: color-mix(in srgb, var(--pg-color) 15%, var(--box-background-color));
     border: 1px solid var(--pg-color);
 }
@@ -454,6 +464,91 @@
     color: var(--header-text-color);
 }
 
+/* Drag and Drop Layout Styles */
+.pillars-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0 auto;
+  align-items: start;
+  min-width: 0; /* Allow grid items to shrink below content size */
+}
+
+.pillars-container.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-width: 0; /* Allow grid items to shrink below content size */
+}
+
+.pillar-column {
+  display: flex;
+  flex-direction: column;
+  border: var(--theme-border-thick);
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* Allow column to shrink below content size */
+  overflow-wrap: break-word; /* Break long words to prevent overflow */
+}
+
+.pillar-header {
+  background-color: var(--green-accent);
+  font-family: var(--title-font-family);
+  border-radius: 0.75em;
+  padding: 0.5em;
+  color: white;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.categories-container {
+  background-color: var(--region-background-color);
+  border: var(--theme-border-thin);
+  border-radius: 0.5em;
+  padding: 0.375em;
+  min-height: 4rem;
+  margin: 0.25em 0;
+}
+
+.indicators-container {
+  border: var(--theme-border-thin);
+  border-radius: 0.5em;
+  padding: 0.25em;
+  min-height: 1rem;
+  margin: 0.25em 0;
+}
+
+/* Drag and Drop Functionality */
+.draggable-item {
+  cursor: grab;
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+.drop-zone.drag-over {
+  background-color: green;
+}
+
+.unsaved-changes {
+  background-color: red;
+}
+
+/* Reduced margins for draggable category boxes */
+.category-box.draggable-item {
+  margin-bottom: 0.125em !important;
+}
+
+/* Reduced margins for drop zone categories containers */
+.categories-container.drop-zone {
+  margin: 0.125em 0 !important;
+}
+
 /* Enhanced category styles */
 .category-collapsible {
     border: var(--theme-border-thin);
@@ -462,7 +557,7 @@
     background: var(--box-background-color);
 }
 
-.category-header {
+.customization-category-header {
     padding: 0.56rem;
     cursor: default;
     list-style: none;
@@ -474,12 +569,12 @@
     gap: 0.5rem;
 }
 
-.category-collapsible[data-expanded="true"] .category-header {
+.category-collapsible[data-expanded="true"] .customization-category-header {
     border-bottom: var(--theme-border-thin);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.category-collapsible[data-expanded="false"] .category-header {
+.category-collapsible[data-expanded="false"] .customization-category-header {
     border-radius: var(--border-radius);
 }
 
@@ -487,6 +582,9 @@
 
 .category-content {
     padding: 0.5em;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Content visibility based on expanded state */
@@ -498,9 +596,37 @@
     display: none;
 }
 
-.category-header-title {
+/* Container styles for draggable items */
+.category-box {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin-bottom: 0.375em;
+    background: var(--box-background-color);
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    contain: layout style;
+}
+
+.indicator-card {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin-bottom: 0.375em;
+    background: var(--box-background-color);
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    contain: layout style;
+}
+
+.customization-category-header h4 {
+    line-height: 1.2;
+}
+
+.customization-category-header-title {
     color: var(--header-text-color);
     font-family: var(--header-font-family);
+    line-height: 0.8;
     margin: 0;
     flex: 1;
     min-width: 0;
@@ -1145,18 +1271,18 @@
     }
     
     /* Stack name and code vertically on smaller screens */
-    .pillar-header-content {
+    .customization-pillar-header-content {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 0.5em;
     }
     
-    .category-header, .indicator-header {
+    .customization-category-header, .customization-indicator-header {
         flex-wrap: wrap;
         gap: 0.25rem;
     }
     
-    .category-header-title, .indicator-name {
+    .customization-category-header-title, .indicator-name {
         min-width: 80px;
         flex: 1 1 auto;
     }
@@ -1172,6 +1298,20 @@
         flex-shrink: 0;
     }
     
+    /* Mobile: Single column layout for drag-and-drop */
+    .pillars-container,
+    .pillars-container.pillars-grid {
+        grid-template-columns: 1fr !important;
+        align-items: start;
+        gap: 1rem;
+    }
+    
+    .pillar-column {
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: none;
+    }
+
     /* Force all form elements to respect container width on mobile */
     .pillar-column input,
     .pillar-column select,

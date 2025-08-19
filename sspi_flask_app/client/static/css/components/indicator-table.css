@@ -49,7 +49,7 @@
     border-bottom: 1px solid var(--subtle-line-color);
 }
 
-.pillar-header {
+.indicators-pillar-header {
     border-bottom: 1px solid var(--subtle-line-color);
     padding: 1rem;
     width: 100%;
@@ -57,22 +57,22 @@
 }
 
 /* Individual pillar colors - matching customizable-sspi patterns */
-.pillar-section[data-pillar-code="SUS"] .pillar-header {
+.pillar-section[data-pillar-code="SUS"] .indicators-pillar-header {
     background: color-mix(in srgb, var(--sus-color) 15%, var(--box-background-color));
     border-color: var(--sus-color);
 }
 
-.pillar-section[data-pillar-code="MS"] .pillar-header {
+.pillar-section[data-pillar-code="MS"] .indicators-pillar-header {
     background: color-mix(in srgb, var(--ms-color) 15%, var(--box-background-color));
     border-color: var(--ms-color);
 }
 
-.pillar-section[data-pillar-code="PG"] .pillar-header {
+.pillar-section[data-pillar-code="PG"] .indicators-pillar-header {
     background: color-mix(in srgb, var(--pg-color) 15%, var(--box-background-color));
     border-color: var(--pg-color);
 }
 
-.pillar-header-content {
+.indicators-pillar-header-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -137,7 +137,7 @@
     border-bottom: none;
 }
 
-.category-header {
+.indicators-category-header {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--subtle-line-color);
     width: 100%;
@@ -145,19 +145,19 @@
 }
 
 /* Category header colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .category-header {
+.pillar-section[data-pillar-code="SUS"] .indicators-category-header {
     background: color-mix(in srgb, var(--sus-color) 10%, var(--box-background-color) 90%);
 }
 
-.pillar-section[data-pillar-code="MS"] .category-header {
+.pillar-section[data-pillar-code="MS"] .indicators-category-header {
     background: color-mix(in srgb, var(--ms-color) 10%, var(--box-background-color) 90%);
 }
 
-.pillar-section[data-pillar-code="PG"] .category-header {
+.pillar-section[data-pillar-code="PG"] .indicators-category-header {
     background: color-mix(in srgb, var(--pg-color) 10%, var(--box-background-color) 90%);
 }
 
-.category-header-content {
+.indicators-category-header-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -238,7 +238,7 @@
     width: 100%;
 }
 
-.indicator-header {
+.indicators-indicator-header {
     padding: 0.75rem;
     cursor: pointer;
     width: 100%;
@@ -246,27 +246,27 @@
 }
 
 /* Indicator header colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .indicator-header {
+.pillar-section[data-pillar-code="SUS"] .indicators-indicator-header {
     background: color-mix(in srgb, var(--sus-color) 8%, var(--input-background-color) 92%);
 }
 
-.pillar-section[data-pillar-code="SUS"] .indicator-header:hover {
+.pillar-section[data-pillar-code="SUS"] .indicators-indicator-header:hover {
     background: color-mix(in srgb, var(--sus-color) 12%, var(--input-background-color) 88%);
 }
 
-.pillar-section[data-pillar-code="MS"] .indicator-header {
+.pillar-section[data-pillar-code="MS"] .indicators-indicator-header {
     background: color-mix(in srgb, var(--ms-color) 8%, var(--input-background-color) 92%);
 }
 
-.pillar-section[data-pillar-code="MS"] .indicator-header:hover {
+.pillar-section[data-pillar-code="MS"] .indicators-indicator-header:hover {
     background: color-mix(in srgb, var(--ms-color) 12%, var(--input-background-color) 88%);
 }
 
-.pillar-section[data-pillar-code="PG"] .indicator-header {
+.pillar-section[data-pillar-code="PG"] .indicators-indicator-header {
     background: color-mix(in srgb, var(--pg-color) 8%, var(--input-background-color) 92%);
 }
 
-.pillar-section[data-pillar-code="PG"] .indicator-header:hover {
+.pillar-section[data-pillar-code="PG"] .indicators-indicator-header:hover {
     background: color-mix(in srgb, var(--pg-color) 12%, var(--input-background-color) 88%);
 }
 
@@ -469,11 +469,11 @@
         padding: 1rem;
     }
     
-    .pillar-header {
+    .indicators-pillar-header {
         padding: 0.75rem;
     }
     
-    .category-header {
+    .indicators-category-header {
         padding: 0.5rem 0.75rem;
     }
     
@@ -482,7 +482,7 @@
         gap: 0.5rem;
     }
     
-    .indicator-header {
+    .indicators-indicator-header {
         padding: 0.5rem;
     }
     
