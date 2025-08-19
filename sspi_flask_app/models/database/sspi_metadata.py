@@ -338,7 +338,7 @@ class SSPIMetadata(MongoWrapper):
     def load_dataset_files(self) -> list:
         """
         Walks through the dataset directory and loads the frontmatter
-        of all dataset files
+        of all dataset files. Supports both flat and organization-nested structures.
         :return: A list of dictionaries containing the metadata from the dataset files
         """
         dataset_dir = os.path.join(os.path.dirname(app.instance_path), "datasets")
