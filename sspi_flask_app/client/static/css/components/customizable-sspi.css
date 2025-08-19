@@ -619,9 +619,14 @@
     contain: layout style;
 }
 
+.customization-category-header h4 {
+    line-height: 1.2;
+}
+
 .customization-category-header-title {
     color: var(--header-text-color);
     font-family: var(--header-font-family);
+    line-height: 0.8;
     margin: 0;
     flex: 1;
     min-width: 0;
