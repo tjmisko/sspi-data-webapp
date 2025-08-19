@@ -158,9 +158,19 @@ sspi metadata country group [CODE] # Get country group metadata
 - `cli/` - Command-line interface components and commands
 - `sspi_flask_app/` - Main Flask application
   - `api/` - API routes and data processing
+    - `core/datasets/` - Dataset cleaners/collectors organized by source organization
+      - `wid/` - World Inequality Database datasets (77 datasets)
+      - `epi/` - Environmental Performance Index datasets (58 datasets)
+      - `wb/` - World Bank datasets (20 datasets)
+      - `unsdg/` - UN Sustainable Development Goals datasets (17 datasets)
+      - ... (24 organization subdirectories total)
   - `client/` - Frontend templates and static files  
   - `models/` - Database models and business logic
-- `datasets/` - Dataset-specific documentation
+- `datasets/` - Dataset documentation organized by source organization
+  - `wid/` - WID dataset documentation files
+  - `epi/` - EPI dataset documentation files
+  - `wb/` - World Bank dataset documentation files
+  - ... (mirroring the Python structure)
 - `methodology` - Item-specific documentation
 - `documentation/` - Project documentation (stale, requires updates)
 - `tests/` - Test files (unit and integration)
@@ -169,6 +179,8 @@ sspi metadata country group [CODE] # Get country group metadata
 - Follow existing patterns in similar components
 - Use MongoDB documents for data storage (JSON format)
 - All indicators use 6-character alphanumeric codes
+- Dataset files maintain organization prefixes (e.g., `wid_carbon_tot_p0p100`)
+- Dataset documentation and Python files are organized by source organization
 - Include proper error handling and logging
 - Write tests for new functionality
 
