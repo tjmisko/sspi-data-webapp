@@ -42,13 +42,13 @@ def compute_watman():
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "WATMAN"})
     
     # Fetch clean datasets
-    cwueff_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_CWUEFF"})
+    cwueff_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_WUSEFF"})
     wtstrs_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_WTSTRS"})
     combined_list = cwueff_clean + wtstrs_clean
     
     clean_list, incomplete_list = score_indicator(
         combined_list, "WATMAN",
-        score_function=lambda UNSDG_CWUEFF, UNSDG_WTSTRS: (UNSDG_CWUEFF + UNSDG_WTSTRS) / 2,
+        score_function=lambda UNSDG_WUSEFF, UNSDG_WTSTRS: (UNSDG_WUSEFF + UNSDG_WTSTRS) / 2,
         unit="Index",
     )
     sspi_indicator_data.insert_many(clean_list)
