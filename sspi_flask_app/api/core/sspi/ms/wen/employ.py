@@ -13,22 +13,6 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/EMPLOY")
-# @login_required
-# def lfpart():
-#     def collect_iterator(**kwargs):
-#         yield from collect_ilo_data(
-#             "DF_EAP_DWAP_SEX_AGE_RT",
-#             "EMPLOY",
-#             QueryParams=".A...AGE_AGGREGATE_Y25-54",
-#             **kwargs
-#         )
-#     return Response(
-#         collect_iterator(Username=current_user.username),
-#         mimetype='text/event-stream'
-#     )
-
-
 @compute_bp.route("/EMPLOY", methods=['POST'])
 @login_required
 def compute_employ():

@@ -6,7 +6,8 @@ Description: The proportion of workers whose terms and conditions at work are de
   by collective bargaining as opposed to individual contracts.
 Source:
   OrganizationCode: ILO
-  OrganizationSeriesCode: null
-  QueryCode: null
+  OrganizationSeriesCode: DF_ILR_CBCT_NOC_RT
+  QueryCode: Indicator=DF_ILR_CBCT_NOC_RT;Parameters=
+  Format: SDMX-JSON
 ---
 
