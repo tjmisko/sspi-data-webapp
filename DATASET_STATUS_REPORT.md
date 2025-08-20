@@ -47,7 +47,7 @@ Note: IEA_COALPW is now computed from constituent datasets rather than requiring
 
 ### UN SDG Environmental & Social (5 datasets)
 - [ ] UNSDG_AVINTR (Availability of Internet)
-- [ ] UNSDG_CWUEFF (Water use efficiency)
+- [ ] UNSDG_WUSEFF (Water use efficiency)
 - [ ] UNSDG_NRGINT (Energy intensity)
 - [ ] UNSDG_UNCONV (UN conventions)
 - [ ] UNSDG_WTSTRS (Water stress)

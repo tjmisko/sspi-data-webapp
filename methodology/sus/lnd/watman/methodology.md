@@ -15,7 +15,7 @@ Footnote: null
 Indicator: Water Management
 IndicatorCode: WATMAN
 DatasetCodes:
-  - UNSDG_CWUEFF
+  - UNSDG_WUSEFF
   - UNSDG_WTSTRS
 Inverted: false
 LowerGoalpost: null
