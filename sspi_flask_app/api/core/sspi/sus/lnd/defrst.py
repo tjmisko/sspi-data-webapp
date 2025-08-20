@@ -14,14 +14,6 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/DEFRST", methods=['POST'])
-# @login_required
-# def defrst():
-#     def collect_iterator(**kwargs):
-#         yield from collect_unfao_data("5110", "6717", "RL", "DEFRST", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/DEFRST", methods=['POST'])
 @login_required
 def compute_defrst():

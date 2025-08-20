@@ -260,3 +260,6 @@ sspi metadata reload
 - You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances
 
 - Check `sspi status` before running sspi commands to ensure that the correct port is being called by sspi cli. If the port does not match the one you expect (from scripts/wtdev, say) then you may have to deactivate the virtual environment and reactivate it in the correct working directory. This is usually caused because we're using the old venv's version of sspi, which is calling port 5000 instead of the correct port.
+
+- Never query the raw data directly! It will not work. Requests that try to send queries to sspi_raw_api_data that are not filtering by series_code will timeout and fail because of data volume.
+- Use the `sspi collect [code] --overwrite-all` option instead of sending echo 'y' into sspi colled.
