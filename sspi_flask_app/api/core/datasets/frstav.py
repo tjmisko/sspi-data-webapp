@@ -35,13 +35,14 @@ def clean_unfao_frstav():
     for country in average_1990s_dict.keys():
         if len(average_1990s_dict[country]["Values"]) > 0:
             avg_value = sum(average_1990s_dict[country]["Values"]) / len(average_1990s_dict[country]["Values"])
-            avg_data_list.append({
-                "DatasetCode": "UNFAO_FRSTAV",
-                "CountryCode": country,
-                "Year": 1995,  # Representative year for 1990s average
-                "Value": avg_value,
-                "Unit": "hectares (1990s Average)"
-            })
+            for year in range(1990, 2023):
+                avg_data_list.append({
+                    "DatasetCode": "UNFAO_FRSTAV",
+                    "CountryCode": country,
+                    "Year": year,
+                    "Value": avg_value,
+                    "Unit": "hectares (1990s Average)"
+                })
     
     sspi_clean_api_data.insert_many(avg_data_list)
     sspi_metadata.record_dataset_range(avg_data_list, "UNFAO_FRSTAV")
