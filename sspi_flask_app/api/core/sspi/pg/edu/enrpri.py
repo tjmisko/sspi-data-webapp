@@ -6,7 +6,7 @@ from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
-    impute_global_average,
+    impute_reference_class_average,
     interpolate_linear,
     parse_json,
     score_indicator,

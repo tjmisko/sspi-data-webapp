@@ -10,7 +10,7 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    impute_global_average
+    impute_reference_class_average
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -82,7 +82,7 @@ def impute_fdepth():
     forward_dposit = extrapolate_forward(obs_dposit, 2023, impute_only=True)
     backward_dposit = extrapolate_backward(obs_dposit, 2000, impute_only=True)
     interpolated_dposit = interpolate_linear(obs_dposit, impute_only=True)
-    gbr_dposit = impute_global_average("GBR", 2000, 2023, "Intermediate", "DPOSIT", clean_dposit)
+    gbr_dposit = impute_reference_class_average("GBR", 2000, 2023, "Intermediate", "DPOSIT", clean_dposit)
     all_dposit = obs_dposit + forward_dposit + backward_dposit + interpolated_dposit + gbr_dposit
     clean_list, incomplete_list = score_indicator(
         all_credit + all_dposit, "FDEPTH",

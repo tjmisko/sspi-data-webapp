@@ -627,40 +627,42 @@ def filter_imputations(doc_list):
     return imputations
 
 
-def impute_global_average(
+def impute_reference_class_average(
     country_code: str, start_year: int, end_year: int, item_type: str, item_code: str, ref_data: list[dict]
 ):
     """
-    Impute the global average for a given country and year range.
+    Impute the reference class average for a given country and year range.
 
     :param country_code: The country code to impute.
     :param start_year: The starting year for the imputation.
     :param end_year: The ending year for the imputation.
     :param item_type: The type of item being imputed. Valid values are "Dataset" or "Indicator".
     :param item_code: The code of the item being imputed (e.g., "GINIPT").
-    :param ref_data: The reference data to calculate the global average.
+    :param ref_data: The reference data to calculate the reference class average.
     """
+    if not ref_data:
+        raise ValueError("Reference data cannot be empty.")
     if not all([x["Unit"] == ref_data[0]["Unit"] for x in ref_data]):
         raise ValueError("Units are not consistent across reference data.")
     if item_type not in ["Dataset", "Indicator"]:
         raise ValueError("item_type must be either 'Dataset' or 'Indicator'.")
-    mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
-    mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
     imputation_list = []
     for year in range(start_year, end_year + 1):
         imputed_document = {
             "CountryCode": country_code,
-            "Value": mean_value,
-            "Score": mean_score,
             "Year": year,
             "Unit": ref_data[0]["Unit"],
             "Imputed": True,
-            "ImputationMethod": "ImputeGlobalAverage",
+            "ImputationMethod": "ImputeReferenceClassAverage",
         }
         if item_type == "Dataset":
             imputed_document["DatasetCode"] = item_code
+            mean_value = sum([x["Value"] for x in ref_data]) / len(ref_data)
+            imputed_document["Value"] = mean_value
         elif item_type == "Indicator":
             imputed_document["IndicatorCode"] = item_code
+            mean_score = sum([x["Score"] for x in ref_data]) / len(ref_data)
+            imputed_document["Score"] = mean_score
         imputation_list.append(imputed_document)
     return imputation_list
 

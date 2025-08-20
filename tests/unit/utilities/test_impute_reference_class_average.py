@@ -1,5 +1,5 @@
 import pytest
-from sspi_flask_app.api.resources.utilities import impute_global_average
+from sspi_flask_app.api.resources.utilities import impute_reference_class_average
 
 
 @pytest.fixture
@@ -13,10 +13,10 @@ def sample_ref_data():
     ]
 
 
-def test_impute_global_average_basic_functionality(sample_ref_data):
-    """Test basic global average imputation functionality."""
+def test_impute_reference_class_average_basic_functionality(sample_ref_data):
+    """Test basic reference class average imputation functionality."""
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="USA",
         start_year=2020,
         end_year=2022,
@@ -35,8 +35,8 @@ def test_impute_global_average_basic_functionality(sample_ref_data):
     for i, doc in enumerate(result):
         expected_year = 2020 + i
         
-        # Check document structure
-        required_fields = ["CountryCode", "Value", "Score", "Year", "Unit", 
+        # Check document structure for Dataset type
+        required_fields = ["CountryCode", "Value", "Year", "Unit", 
                           "Imputed", "ImputationMethod", "DatasetCode"]
         for field in required_fields:
             assert field in doc, f"Missing field {field}"
@@ -45,17 +45,17 @@ def test_impute_global_average_basic_functionality(sample_ref_data):
         assert doc["CountryCode"] == "USA"
         assert doc["Year"] == expected_year
         assert doc["Value"] == expected_mean_value
-        assert doc["Score"] == expected_mean_score
+        assert "Score" not in doc  # Dataset should not have Score
         assert doc["Unit"] == "Percentage"
         assert doc["Imputed"] is True
-        assert doc["ImputationMethod"] == "ImputeGlobalAverage"
+        assert doc["ImputationMethod"] == "ImputeReferenceClassAverage"
         assert doc["DatasetCode"] == "TEST_DATASET"
 
 
-def test_impute_global_average_indicator_type(sample_ref_data):
+def test_impute_reference_class_average_indicator_type(sample_ref_data):
     """Test imputation with item_type='Indicator'."""
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="CAN",
         start_year=2021,
         end_year=2021,
@@ -67,15 +67,19 @@ def test_impute_global_average_indicator_type(sample_ref_data):
     assert len(result) == 1
     doc = result[0]
     
-    # Should have IndicatorCode instead of DatasetCode
+    # Should have IndicatorCode and Score instead of DatasetCode and Value
     assert "IndicatorCode" in doc
     assert "DatasetCode" not in doc
     assert doc["IndicatorCode"] == "TEST_INDICATOR"
+    assert "Score" in doc
+    assert "Value" not in doc  # Indicator should not have Value
+    expected_mean_score = sum([x["Score"] for x in sample_ref_data]) / len(sample_ref_data)
+    assert doc["Score"] == expected_mean_score
     assert doc["CountryCode"] == "CAN"
     assert doc["Year"] == 2021
 
 
-def test_impute_global_average_single_year():
+def test_impute_reference_class_average_single_year():
     """Test imputation for a single year (start_year == end_year)."""
     
     ref_data = [
@@ -83,7 +87,7 @@ def test_impute_global_average_single_year():
         {"Value": 200.0, "Score": 0.7, "Unit": "Index"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="GBR",
         start_year=2023,
         end_year=2023,
@@ -96,10 +100,10 @@ def test_impute_global_average_single_year():
     doc = result[0]
     assert doc["Year"] == 2023
     assert doc["Value"] == 150.0  # (100 + 200) / 2
-    assert doc["Score"] == 0.6    # (0.5 + 0.7) / 2
+    assert "Score" not in doc  # Dataset type should not have Score
 
 
-def test_impute_global_average_multiple_years():
+def test_impute_reference_class_average_multiple_years():
     """Test imputation across multiple years."""
     
     ref_data = [
@@ -107,7 +111,7 @@ def test_impute_global_average_multiple_years():
         {"Value": 60.0, "Score": 0.6, "Unit": "Points"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="FRA",
         start_year=2015,
         end_year=2020,
@@ -124,13 +128,13 @@ def test_impute_global_average_multiple_years():
     
     # All documents should have same imputed values
     for doc in result:
-        assert doc["Value"] == 55.0  # (50 + 60) / 2
+        assert "Value" not in doc  # Indicator type should not have Value
         assert doc["Score"] == 0.5   # (0.4 + 0.6) / 2
         assert doc["CountryCode"] == "FRA"
         assert doc["IndicatorCode"] == "MULTI_YEAR"
 
 
-def test_impute_global_average_inconsistent_units():
+def test_impute_reference_class_average_inconsistent_units():
     """Test that inconsistent units raise an error."""
     
     inconsistent_ref_data = [
@@ -140,7 +144,7 @@ def test_impute_global_average_inconsistent_units():
     ]
     
     with pytest.raises(ValueError) as exc_info:
-        impute_global_average(
+        impute_reference_class_average(
             country_code="DEU",
             start_year=2020,
             end_year=2021,
@@ -152,7 +156,7 @@ def test_impute_global_average_inconsistent_units():
     assert "Units are not consistent" in str(exc_info.value)
 
 
-def test_impute_global_average_invalid_item_type():
+def test_impute_reference_class_average_invalid_item_type():
     """Test that invalid item_type raises an error."""
     
     ref_data = [
@@ -163,7 +167,7 @@ def test_impute_global_average_invalid_item_type():
     
     for invalid_type in invalid_types:
         with pytest.raises(ValueError) as exc_info:
-            impute_global_average(
+            impute_reference_class_average(
                 country_code="JPN",
                 start_year=2020,
                 end_year=2020,
@@ -175,11 +179,11 @@ def test_impute_global_average_invalid_item_type():
         assert "item_type must be either 'Dataset' or 'Indicator'" in str(exc_info.value)
 
 
-def test_impute_global_average_empty_ref_data():
+def test_impute_reference_class_average_empty_ref_data():
     """Test behavior with empty reference data."""
     
-    with pytest.raises(ZeroDivisionError):
-        impute_global_average(
+    with pytest.raises(ValueError) as exc_info:
+        impute_reference_class_average(
             country_code="BRA",
             start_year=2020,
             end_year=2020,
@@ -187,16 +191,18 @@ def test_impute_global_average_empty_ref_data():
             item_code="EMPTY_REF",
             ref_data=[]
         )
+    
+    assert "Reference data cannot be empty" in str(exc_info.value)
 
 
-def test_impute_global_average_single_ref_point():
+def test_impute_reference_class_average_single_ref_point():
     """Test imputation with single reference data point."""
     
     single_ref_data = [
         {"Value": 42.0, "Score": 0.75, "Unit": "Score"}
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="IND",
         start_year=2019,
         end_year=2021,
@@ -208,12 +214,12 @@ def test_impute_global_average_single_ref_point():
     assert len(result) == 3  # 2019, 2020, 2021
     
     for doc in result:
-        assert doc["Value"] == 42.0
+        assert "Value" not in doc  # Indicator type should not have Value
         assert doc["Score"] == 0.75
         assert doc["Unit"] == "Score"
 
 
-def test_impute_global_average_extreme_values():
+def test_impute_reference_class_average_extreme_values():
     """Test imputation with extreme reference values."""
     
     extreme_ref_data = [
@@ -222,7 +228,7 @@ def test_impute_global_average_extreme_values():
         {"Value": -500.0, "Score": 0.2, "Unit": "Scale"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="CHN",
         start_year=2020,
         end_year=2020,
@@ -233,13 +239,12 @@ def test_impute_global_average_extreme_values():
     
     doc = result[0]
     expected_mean_value = (0.0 + 1000000.0 + (-500.0)) / 3
-    expected_mean_score = (0.0 + 1.0 + 0.2) / 3
     
     assert abs(doc["Value"] - expected_mean_value) < 1e-10
-    assert abs(doc["Score"] - expected_mean_score) < 1e-10
+    assert "Score" not in doc  # Dataset type should not have Score
 
 
-def test_impute_global_average_floating_point_precision():
+def test_impute_reference_class_average_floating_point_precision():
     """Test that floating point calculations are handled correctly."""
     
     precision_ref_data = [
@@ -248,7 +253,7 @@ def test_impute_global_average_floating_point_precision():
         {"Value": 1.0, "Score": 3.0/7.0, "Unit": "Ratio"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="RUS",
         start_year=2020,
         end_year=2020,
@@ -258,14 +263,13 @@ def test_impute_global_average_floating_point_precision():
     )
     
     doc = result[0]
-    expected_mean_value = (1.0/3.0 + 2.0/3.0 + 1.0) / 3
     expected_mean_score = (1.0/7.0 + 2.0/7.0 + 3.0/7.0) / 3
     
-    assert abs(doc["Value"] - expected_mean_value) < 1e-15
+    assert "Value" not in doc  # Indicator type should not have Value
     assert abs(doc["Score"] - expected_mean_score) < 1e-15
 
 
-def test_impute_global_average_reverse_year_range():
+def test_impute_reference_class_average_reverse_year_range():
     """Test behavior when start_year > end_year."""
     
     ref_data = [
@@ -273,7 +277,7 @@ def test_impute_global_average_reverse_year_range():
     ]
     
     # Should return empty list for reverse range
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="AUS",
         start_year=2022,
         end_year=2020,  # Earlier than start_year
@@ -285,7 +289,7 @@ def test_impute_global_average_reverse_year_range():
     assert len(result) == 0
 
 
-def test_impute_global_average_zero_values():
+def test_impute_reference_class_average_zero_values():
     """Test imputation with zero values in reference data."""
     
     zero_ref_data = [
@@ -294,7 +298,7 @@ def test_impute_global_average_zero_values():
         {"Value": 0.0, "Score": 0.0, "Unit": "Zero"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="NOR",
         start_year=2021,
         end_year=2022,
@@ -306,11 +310,11 @@ def test_impute_global_average_zero_values():
     assert len(result) == 2
     
     for doc in result:
-        assert doc["Value"] == 0.0
+        assert "Value" not in doc  # Indicator type should not have Value
         assert doc["Score"] == 0.0
 
 
-def test_impute_global_average_negative_values():
+def test_impute_reference_class_average_negative_values():
     """Test imputation with negative values in reference data."""
     
     negative_ref_data = [
@@ -319,7 +323,7 @@ def test_impute_global_average_negative_values():
         {"Value": -15.0, "Score": 0.2, "Unit": "Negative"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="SWE",
         start_year=2020,
         end_year=2020,
@@ -330,17 +334,17 @@ def test_impute_global_average_negative_values():
     
     doc = result[0]
     assert doc["Value"] == -10.0  # (-10 + -5 + -15) / 3
-    assert doc["Score"] == 0.3    # (0.3 + 0.4 + 0.2) / 3
+    assert "Score" not in doc  # Dataset type should not have Score
 
 
-def test_impute_global_average_large_year_range():
+def test_impute_reference_class_average_large_year_range():
     """Test imputation across a large year range."""
     
     ref_data = [
         {"Value": 100.0, "Score": 0.8, "Unit": "Large"}
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="MEX",
         start_year=2000,
         end_year=2023,  # 24 years
@@ -357,11 +361,11 @@ def test_impute_global_average_large_year_range():
     
     # All should have same imputed values
     for doc in result:
-        assert doc["Value"] == 100.0
+        assert "Value" not in doc  # Indicator type should not have Value
         assert doc["Score"] == 0.8
 
 
-def test_impute_global_average_special_country_codes():
+def test_impute_reference_class_average_special_country_codes():
     """Test imputation with special country codes."""
     
     ref_data = [
@@ -371,7 +375,7 @@ def test_impute_global_average_special_country_codes():
     special_codes = ["XKX", "EU-28", "OECD", "WLD", "LDC"]
     
     for country_code in special_codes:
-        result = impute_global_average(
+        result = impute_reference_class_average(
             country_code=country_code,
             start_year=2020,
             end_year=2020,
@@ -384,7 +388,7 @@ def test_impute_global_average_special_country_codes():
         assert result[0]["CountryCode"] == country_code
 
 
-def test_impute_global_average_mixed_data_types():
+def test_impute_reference_class_average_mixed_data_types():
     """Test that function handles mixed numeric types in reference data."""
     
     mixed_ref_data = [
@@ -393,7 +397,7 @@ def test_impute_global_average_mixed_data_types():
         {"Value": 5.0, "Score": 0.7, "Unit": "Mixed"},     # float
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="ESP",
         start_year=2020,
         end_year=2020,
@@ -403,14 +407,13 @@ def test_impute_global_average_mixed_data_types():
     )
     
     doc = result[0]
-    expected_mean_value = (10 + 15.5 + 5.0) / 3
     expected_mean_score = (0.8 + 0.9 + 0.7) / 3
     
-    assert abs(doc["Value"] - expected_mean_value) < 1e-10
+    assert "Value" not in doc  # Indicator type should not have Value
     assert abs(doc["Score"] - expected_mean_score) < 1e-10
 
 
-def test_impute_global_average_unit_preservation():
+def test_impute_reference_class_average_unit_preservation():
     """Test that the unit from reference data is preserved."""
     
     ref_data = [
@@ -418,7 +421,7 @@ def test_impute_global_average_unit_preservation():
         {"Value": 35.0, "Score": 0.8, "Unit": "CustomUnit"},
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="ITA",
         start_year=2019,
         end_year=2021,
@@ -431,14 +434,14 @@ def test_impute_global_average_unit_preservation():
         assert doc["Unit"] == "CustomUnit"
 
 
-def test_impute_global_average_metadata_consistency():
+def test_impute_reference_class_average_metadata_consistency():
     """Test that imputation metadata is consistent across all documents."""
     
     ref_data = [
         {"Value": 75.0, "Score": 0.85, "Unit": "Metadata"}
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="POL",
         start_year=2018,
         end_year=2022,
@@ -449,13 +452,15 @@ def test_impute_global_average_metadata_consistency():
     
     for doc in result:
         assert doc["Imputed"] is True
-        assert doc["ImputationMethod"] == "ImputeGlobalAverage"
+        assert doc["ImputationMethod"] == "ImputeReferenceClassAverage"
         assert doc["CountryCode"] == "POL"
         assert doc["IndicatorCode"] == "METADATA"
         assert "DatasetCode" not in doc  # Should not exist for Indicator type
+        assert "Score" in doc  # Should have Score for Indicator type
+        assert "Value" not in doc  # Should not have Value for Indicator type
 
 
-def test_impute_global_average_ref_data_with_missing_fields():
+def test_impute_reference_class_average_ref_data_with_missing_fields():
     """Test behavior when reference data is missing required fields."""
     
     # Missing Value field
@@ -465,7 +470,7 @@ def test_impute_global_average_ref_data_with_missing_fields():
     ]
     
     with pytest.raises(KeyError):
-        impute_global_average(
+        impute_reference_class_average(
             country_code="TUR",
             start_year=2020,
             end_year=2020,
@@ -475,7 +480,7 @@ def test_impute_global_average_ref_data_with_missing_fields():
         )
 
 
-def test_impute_global_average_realistic_scenario():
+def test_impute_reference_class_average_realistic_scenario():
     """Test imputation with realistic SSPI-like data."""
     
     # Realistic reference data for education access indicator
@@ -487,7 +492,7 @@ def test_impute_global_average_realistic_scenario():
         {"Value": 73.9, "Score": 0.739, "Unit": "Percentage"},  # Lower performer
     ]
     
-    result = impute_global_average(
+    result = impute_reference_class_average(
         country_code="LKA",  # Sri Lanka
         start_year=2020,
         end_year=2023,
@@ -498,16 +503,15 @@ def test_impute_global_average_realistic_scenario():
     
     assert len(result) == 4  # 2020-2023
     
-    # Calculate expected averages
-    expected_value = sum([x["Value"] for x in realistic_ref_data]) / len(realistic_ref_data)
+    # Calculate expected average
     expected_score = sum([x["Score"] for x in realistic_ref_data]) / len(realistic_ref_data)
     
     for doc in result:
         assert doc["CountryCode"] == "LKA"
         assert doc["IndicatorCode"] == "EDUACC"
         assert doc["Unit"] == "Percentage"
-        assert abs(doc["Value"] - expected_value) < 1e-10
+        assert "Value" not in doc  # Indicator type should not have Value
         assert abs(doc["Score"] - expected_score) < 1e-10
         assert doc["Imputed"] is True
-        assert doc["ImputationMethod"] == "ImputeGlobalAverage"
+        assert doc["ImputationMethod"] == "ImputeReferenceClassAverage"
         assert 2020 <= doc["Year"] <= 2023

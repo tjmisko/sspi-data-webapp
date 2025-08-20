@@ -7,7 +7,7 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    impute_global_average,
+    impute_reference_class_average,
     parse_json,
     score_indicator,
     goalpost
@@ -56,9 +56,9 @@ def impute_taxrev():
     interpolated = interpolate_linear(clean_taxrev, impute_only=True)
     imputed_taxrev = forward + backward + interpolated
     # Handle VNM, NGA, VEN, DZA : each is missing all observations
-    vnm_taxrev = impute_global_average("VNM", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    nga_taxrev = impute_global_average("NGA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    ven_taxrev = impute_global_average("VEN", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    dza_taxrev = impute_global_average("DZA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    vnm_taxrev = impute_reference_class_average("VNM", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    nga_taxrev = impute_reference_class_average("NGA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    ven_taxrev = impute_reference_class_average("VEN", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
+    dza_taxrev = impute_reference_class_average("DZA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
     sspi_imputed_data.insert_many(imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev)
     return parse_json(imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev)
