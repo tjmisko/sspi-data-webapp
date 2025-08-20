@@ -7,10 +7,7 @@ Description: 'Level of Water Stress: Freshwater withdrawal as a proportion of av
   sectors and total renewable freshwater resources, after taking into account environmental
   water requirements. This indicator is also known as water withdrawal intensity'
 Source:
-  OrganizationName: UN SDG
   OrganizationCode: UNSDG
-  OrganizationSeriesCode: 6.4.2
   QueryCode: 6.4.2
-  BaseURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

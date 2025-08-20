@@ -18,8 +18,8 @@
         {% else %}
             {% for pillar in indicators_data.pillars %}
             <div class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
-                <div class="pillar-header">
-                    <div class="pillar-header-content">
+                <div class="indicators-pillar-header">
+                    <div class="indicators-pillar-header-content">
                         <button class="collapse-toggle-btn" aria-label="Toggle pillar">
                             <span class="collapse-icon">▼</span>
                         </button>
@@ -33,8 +33,8 @@
                 <div class="pillar-content" data-expanded="true">
                     {% for category in pillar.categories %}
                     <div class="category-section" data-category-code="{{ category.category_code }}">
-                        <div class="category-header">
-                            <div class="category-header-content">
+                        <div class="indicators-category-header">
+                            <div class="indicators-category-header-content">
                                 <button class="collapse-toggle-btn" aria-label="Toggle category">
                                     <span class="collapse-icon">▼</span>
                                 </button>
@@ -50,7 +50,7 @@
                                 {% if category.indicators %}
                                     {% for indicator in category.indicators %}
                                     <div class="indicator-item" data-indicator-code="{{ indicator.indicator_code }}">
-                                        <div class="indicator-header">
+                                        <div class="indicators-indicator-header">
                                             <div class="indicator-info">
                                                 <button class="collapse-toggle-btn" aria-label="Toggle datasets">
                                                     <span class="collapse-icon">▼</span>

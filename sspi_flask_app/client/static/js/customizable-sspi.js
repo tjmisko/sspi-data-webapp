@@ -205,10 +205,10 @@ class CustomizableSSPIStructure {
             const defaultCode = defaultCodes[index] || 'PIL';
 
             const header = document.createElement('div');
-            header.classList.add('pillar-header');
+            header.classList.add('customization-pillar-header');
             header.setAttribute('role', 'treeitem');
             header.innerHTML = `
-                <div class="pillar-header-content">
+                <div class="customization-pillar-header-content">
                     <div class="pillar-name" contenteditable="true" spellcheck="false" tabindex="0">${name}</div>
                     <div class="pillar-code-section">
                         <label class="code-label">Code:</label>
@@ -239,7 +239,7 @@ class CustomizableSSPIStructure {
 
     addEventListeners() {
         // Pillar rename
-        this.container.querySelectorAll('.pillar-header').forEach(h =>
+        this.container.querySelectorAll('.customization-pillar-header').forEach(h =>
             h.addEventListener('keydown', e => {
                 if (e.key === 'Enter') { e.preventDefault(); h.blur(); }
             })
@@ -434,11 +434,11 @@ class CustomizableSSPIStructure {
         cat.dataset.type='category';
         cat.innerHTML = `
 <div class="category-collapsible" data-expanded="true">
-    <div class="category-header">
+    <div class="customization-category-header">
         <button class="collapse-toggle-btn category-toggle" type="button">
             <span class="collapse-icon">▼</span>
         </button>
-        <h4 class="category-header-title" contenteditable="true">New Category</h4>
+        <h4 class="customization-category-header-title" contenteditable="true">New Category</h4>
         <div class="category-code-section">
             <label class="code-label">Code:</label>
             <input type="text" class="category-code-input" maxlength="3" placeholder="CAT" 
@@ -465,7 +465,7 @@ class CustomizableSSPIStructure {
         ind.dataset.type='indicator';
         ind.innerHTML = `
 <div class="indicator-collapsible" data-expanded="false">
-    <div class="indicator-header">
+    <div class="customization-indicator-header">
         <button class="collapse-toggle-btn indicator-toggle" type="button">
             <span class="collapse-icon">▼</span>
         </button>
@@ -725,7 +725,7 @@ class CustomizableSSPIStructure {
                 
                 // Get categories in this pillar
                 pillarCol.querySelectorAll('.category-box').forEach(catBox => {
-                    const categoryName = catBox.querySelector('.category-header-title').textContent.trim();
+                    const categoryName = catBox.querySelector('.customization-category-header-title').textContent.trim();
                     const categoryCode = catBox.querySelector('.category-code-input').value.trim();
                     
                     if (categoryCode) {
@@ -879,7 +879,7 @@ class CustomizableSSPIStructure {
         
         // Check that all categories have at least one indicator
         this.container.querySelectorAll('.category-box').forEach(category => {
-            const categoryName = category.querySelector('.category-header-title').textContent.trim();
+            const categoryName = category.querySelector('.customization-category-header-title').textContent.trim();
             const categoryCode = category.querySelector('.category-code-input').value.trim();
             const indicators = category.querySelectorAll('.indicator-card');
             
@@ -1286,7 +1286,7 @@ class CustomizableSSPIStructure {
                 const catEl = this.createCategoryElement();
                 
                 // Set category details
-                const categoryHeader = catEl.querySelector('.category-header-title');
+                const categoryHeader = catEl.querySelector('.customization-category-header-title');
                 const categoryCodeInput = catEl.querySelector('.category-code-input');
                 
                 if (categoryHeader) categoryHeader.textContent = categoryItem.ItemName;
@@ -1380,7 +1380,7 @@ class CustomizableSSPIStructure {
             const zone = col.querySelector('.categories-container');
             Object.entries(grouping[p]).forEach(([catName, info]) => {
                 const catEl = this.createCategoryElement();
-                catEl.querySelector('.category-header-title').textContent = catName;
+                catEl.querySelector('.customization-category-header-title').textContent = catName;
                 
                 // Set category code
                 const categoryCodeInput = catEl.querySelector('.category-code-input');
@@ -1679,14 +1679,14 @@ class CustomizableSSPIStructure {
     }
 
     getNameForCodeInput(input, type) {
-        const container = input.closest(type === 'pillar' ? '.pillar-header' : 
+        const container = input.closest(type === 'pillar' ? '.customization-pillar-header' : 
                                       type === 'category' ? '.category-box' : 
                                       '.indicator-card');
         
         if (type === 'pillar') {
             return container.querySelector('.pillar-name').textContent.trim();
         } else if (type === 'category') {
-            return container.querySelector('.category-header-title').textContent.trim();
+            return container.querySelector('.customization-category-header-title').textContent.trim();
         } else if (type === 'indicator') {
             return container.querySelector('.indicator-name').textContent.trim();
         }
