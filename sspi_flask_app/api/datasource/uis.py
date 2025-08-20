@@ -16,11 +16,17 @@ def collect_uis_data(uis_indicator_code, **kwargs):
         "QueryCode": uis_indicator_code,
         "URL": url_source
     }
-    count = sspi_raw_api_data.raw_insert_many(requests.get(url_source).json(), source_info, **kwargs)
-    yield f"Inserted {count} data points; collection complete for UNESCO Institute for Statistics Indicator {uis_indicator_code}"
+    response = requests.get(url_source)
+    if response.status_code != 200:
+        yield f"Error fetching data from UIS API: {response.status_code}\n"
+        return
+    json = response.json()
+    count = sspi_raw_api_data.raw_insert_many(json["records"], source_info, **kwargs)
+    yield f"Inserted {count} raw documents\n"
+    yield f"Collection complete for UNESCO Institute for Statistics Indicator {uis_indicator_code}"
 
 
-def clean_uis_data(raw_data, IndicatorCode, unit, description):
+def clean_uis_data(raw_data, dataset_code, unit, description):
     clean_data_list = []
     for obs in raw_data:
         country = obs["Raw"]["geoUnit"]
@@ -33,7 +39,7 @@ def clean_uis_data(raw_data, IndicatorCode, unit, description):
             continue
         clean_obs = {
             "CountryCode": country,
-            "IndicatorCode": IndicatorCode,
+            "DatasetCode": dataset_code,
             "Description": description,
             "Year": year,
             "Unit": unit,

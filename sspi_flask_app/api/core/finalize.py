@@ -490,6 +490,8 @@ def finalize_sspi_dynamic_score():
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
     sspi_item_data.delete_many({})
     # Filter to only complete indicators to avoid scoring incomplete categories
+    if country_codes is None:
+        country_codes = sspi_metadata.country_group("SSPI67")
     coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
     complete_indicators = coverage.complete()
     mongo_query = {
@@ -513,6 +515,7 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
     yield "Scoring Data\n"
     documents = []
     for country_code, year_data in data_map.items():
+        yield f"Scoring {country_code}\n"
         for year, data in year_data.items():
             data["SSPI"] = SSPI(details, data["Data"])
             scores = data["SSPI"].to_score_documents(country_code)

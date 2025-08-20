@@ -3,7 +3,8 @@ from sspi_flask_app.models.errors import (
     InvalidDocumentFormatError,
     DataMetadataMismatchError
 )
-
+import logging
+log = logging.getLogger(__name__)
 
 class SSPI:
     def __init__(self, item_details: list[dict], indicator_scores: list[dict], strict_year: bool = True):
@@ -91,9 +92,15 @@ class SSPI:
                 item.year = self.year
         
         if len(self.indicators) != len(self.indicator_scores):
+            indicator_codes_metadata = [i.code for i in self.indicators]
+            indicator_codes_data = [d.get("IndicatorCode") for d in self.indicator_scores]
+            symmetric_diff = set(indicator_codes_metadata) ^ set(indicator_codes_data)
             raise DataMetadataMismatchError(
                 "Number of indicator codes does not match number of indicator scores:"
-                f" {len(self.indicators)} vs {len(self.indicator_scores)}"
+                f" {len(self.indicators)} vs {len(self.indicator_scores)}\n"
+                f"Symmetric difference: {symmetric_diff}\n"
+                f"Metadata codes: {sorted(indicator_codes_metadata)}\n"
+                f"Data codes: {sorted(indicator_codes_data)}"
             )
 
     def score(self):

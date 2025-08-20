@@ -12,10 +12,7 @@ Indicator: Primary School Net Enrollment
 IndicatorCode: ENRPRI
 Inverted: false
 LowerGoalpost: 80.0
-Policy: "Accessibility of \nPrimary Education"
-SourceOrganization: UIS
-SourceOrganizationIndicatorCode: NERT.1.CP
-SourceOrganizationURL: https://databrowser.uis.unesco.org/
+Policy: Accessibility of Primary Education
 UpperGoalpost: 100.0
 ---
 

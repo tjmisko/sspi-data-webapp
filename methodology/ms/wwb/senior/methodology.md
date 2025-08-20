@@ -14,7 +14,10 @@ DatasetCodes:
   - OECD_YRSRTW
 Inverted: true
 LowerGoalpost: 15.0
-Policy: "1) Old Age Income Poverty \n2) Retirement \nWellbeing"
+Description: > 
+  Average of two measures: 
+  1) Old Age Income Poverty 
+  2) Retirement Wellbeing
 SourceOrganization: OECD
 SourceOrganizationIndicatorCode: PAG
 SourceOrganizationURL: https://stats.oecd.org/
