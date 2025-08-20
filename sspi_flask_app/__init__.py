@@ -36,7 +36,7 @@ import sspi_flask_app.api.core.sspi.ms.fin.pubacc
 import sspi_flask_app.api.core.sspi.ms.neq.ginipt
 import sspi_flask_app.api.core.sspi.ms.neq.ishrat
 import sspi_flask_app.api.core.sspi.ms.tax.crptax
-import sspi_flask_app.api.core.sspi.ms.tax.taxprg
+import sspi_flask_app.api.core.sspi.ms.tax.txrdst
 import sspi_flask_app.api.core.sspi.ms.tax.taxrev
 import sspi_flask_app.api.core.sspi.ms.wen.colbar
 import sspi_flask_app.api.core.sspi.ms.wen.employ

@@ -9,7 +9,7 @@ CategoryCode: TAX
 IndicatorCodes:
   - CRPTAX
   - TAXREV
-  - TAXPRG
+  - TXRDST 
 Pillar: Market Structure
 PillarCode: MS
 ---
