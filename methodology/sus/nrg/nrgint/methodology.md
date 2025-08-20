@@ -7,6 +7,7 @@ ItemName: Energy Intensity
 Description: >
   Energy intensity level of primary energy measured in megajoules per constant
   2017 purchasing power parity GDP.
+IndicatorCode: NRGINT
 Policy: Energy Efficiency
 Footnote: null
 Indicator: Energy Intensity
