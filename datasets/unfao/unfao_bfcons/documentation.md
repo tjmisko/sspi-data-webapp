@@ -4,10 +4,7 @@ DatasetName: Beef Consumption
 DatasetCode: UNFAO_BFCONS
 Description: Beef and buffalo meat consumed annually, in kilograms per person.
 Source:
-  OrganizationName: UN FAO
   OrganizationCode: UNFAO
-  OrganizationSeriesCode: null
-  QueryCode: null
-  BaseURL: https://www.fao.org/faostat/en/#home
+  QueryCode: Domain=FBS;Element=645;Item=2731
 ---
 

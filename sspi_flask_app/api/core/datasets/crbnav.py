@@ -23,25 +23,29 @@ def clean_unfao_crbnav():
     
     # Calculate 1990s averages
     average_1990s_dict = {}
+    all_years = set()
     for obs in clean_obs_list:
+        all_years.add(obs["Year"])
         if obs["Year"] not in list(range(1990, 2000)):
             continue
         if obs["CountryCode"] not in average_1990s_dict.keys():
             average_1990s_dict[obs["CountryCode"]] = {"Values": []}
         average_1990s_dict[obs["CountryCode"]]["Values"].append(obs["Value"])
     
-    # Create average records
+    # Create average records rolled forward to all years
     avg_data_list = []
     for country in average_1990s_dict.keys():
         if len(average_1990s_dict[country]["Values"]) > 0:
             avg_value = sum(average_1990s_dict[country]["Values"]) / len(average_1990s_dict[country]["Values"])
-            avg_data_list.append({
-                "DatasetCode": "UNFAO_CRBNAV",
-                "CountryCode": country,
-                "Year": 1995,  # Representative year for 1990s average
-                "Value": avg_value,
-                "Unit": "millions of kilograms (1990s Average)"
-            })
+            # Roll forward the 1990s average to every year in the dataset
+            for year in sorted(all_years):
+                avg_data_list.append({
+                    "DatasetCode": "UNFAO_CRBNAV",
+                    "CountryCode": country,
+                    "Year": year,
+                    "Value": avg_value,
+                    "Unit": "millions of kilograms (1990s Average)"
+                })
     
     sspi_clean_api_data.insert_many(avg_data_list)
     sspi_metadata.record_dataset_range(avg_data_list, "UNFAO_CRBNAV")

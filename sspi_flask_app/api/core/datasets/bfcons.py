@@ -12,7 +12,7 @@ import jq
 @dataset_collector("UNFAO_BFCONS")
 def collect_unfao_bfcons(**kwargs):
     yield from collect_unfao_data(
-        "2910%2C645%2C2610%2C2510%2C511", "2731", "FBS", **kwargs
+        "645", "2731", "FBS", **kwargs
     )
 
 

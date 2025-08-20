@@ -18,13 +18,10 @@ def clean_unfao_crbnlv():
     sspi_clean_api_data.delete_many({"DatasetCode": "UNFAO_CRBNLV"})
     source_info = sspi_metadata.get_source_info("UNFAO_CRBNLV")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
-    
     clean_obs_list = format_fao_data_series(raw_data[0]["Raw"]["data"], "UNFAO_CRBNLV")
-    
     # Assign DatasetCode to all records
     for obs in clean_obs_list:
         obs["DatasetCode"] = "UNFAO_CRBNLV"
-    
     sspi_clean_api_data.insert_many(clean_obs_list)
     sspi_metadata.record_dataset_range(clean_obs_list, "UNFAO_CRBNLV")
     return parse_json(clean_obs_list)
