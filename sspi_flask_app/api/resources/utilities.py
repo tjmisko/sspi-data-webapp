@@ -1,5 +1,5 @@
 import json
-from typing import Callable
+from typing import Callable, List, Tuple
 import pycountry
 from bson import json_util
 from flask import jsonify
@@ -138,14 +138,26 @@ def score_indicator(
     indicator_code: str,
     score_function: Callable,
     unit: str | Callable,
+    compute_series_specification: List[Tuple] = [],
 ):
     """
     Utility function for computing indicator scores documents into indicator documents
+
+    :param dataset_document_list: List of dataset documents to score.
+    :param indicator_code: The indicator code for the indicator being computed.
+    :param score_function: Function to compute the score for each document. The
+    :param unit: Function to compute the unit for each document, or a string
+    representing the unit. If a function is provided, it must take the same
+    arguments as the score_function and return a string.
+    :param computed_datasets: List of length 2 tuples, where the first element is a
+    string for the dataset code to be computed, and the second element is a function
+    that takes the same arguments as the score_function and returns a float.
     """
     dataset_document_list = convert_data_types(dataset_document_list)
     sspi_clean_api_data.validate_dataset_list(dataset_document_list)
     dataset_document_list, noneish_list = drop_none_or_na(dataset_document_list)
     indicator_list = group_by_indicator(dataset_document_list, indicator_code)
+    indicator_list = create_computed_series(indicator_list, compute_series_specification)
     scored_indicator_document_list = score_indicator_documents(
         indicator_list, score_function, unit
     )
@@ -194,6 +206,49 @@ def group_by_indicator(dataset_document_list, indicator_code) -> list:
             }
         indicator_document_hashmap[document_id]["Datasets"].append(document)
     return list(indicator_document_hashmap.values())
+
+
+def create_computed_series(
+    indicator_document_list: list[dict], 
+    value_function_specification: list[Tuple[str, str, Callable]],
+):
+    """
+    Utility function for computing new series (~Datasets) from existing
+    datasets when scoring indicator documents.
+
+    :param indicator_document_list: List of indicator documents to score.
+    :param value_function_specification: List of tuples containing (series_code, unit, value_function)
+        where value_function takes DatasetCodes as arguments and returns a float.
+    """
+    for vf_spec in value_function_specification:
+        series_code, unit, value_function = vf_spec
+        arg_name_list = list(inspect.signature(value_function).parameters.keys())
+        for i, document in enumerate(indicator_document_list):
+            arg_value_dict = {
+                dataset["DatasetCode"]: dataset.get("Value", None)
+                for dataset in document["Datasets"]
+            }
+            if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
+                continue
+            try:
+                arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
+            except KeyError:
+                print(f"KeyError: {arg_name_list} for {arg_value_dict}")
+                continue
+            try:
+                new_dataset = {
+                    "DatasetCode": series_code,
+                    "CountryCode": document["CountryCode"],
+                    "Year": document["Year"],
+                    "Value": value_function(*arg_value_list),
+                    "Unit": unit,
+                    "ValueFunction": str(inspect.getsource(value_function)).strip(),
+                    "Computed": True,
+                } 
+                document["Datasets"].append(new_dataset)
+            except Exception as e:
+                print(f"Error computing {series_code} for {document['CountryCode']} in {document['Year']}: {e}")
+    return indicator_document_list
 
 
 def score_indicator_documents(

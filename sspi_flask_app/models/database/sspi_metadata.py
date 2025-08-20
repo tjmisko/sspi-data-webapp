@@ -576,7 +576,10 @@ class SSPIMetadata(MongoWrapper):
             "DocumentType": "DatasetDetail",
             "Metadata.DatasetCode": DatasetCode
         }
-        return self.find_one(query)["Metadata"]
+        result = self.find_one(query)
+        if not result:
+            return {}
+        return result.get("Metadata", {})
 
     def get_series_type(self, series_code: str) -> str|None:
         """
