@@ -14,22 +14,18 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/DEFRST", methods=['POST'])
-# @login_required
-# def defrst():
-#     def collect_iterator(**kwargs):
-#         yield from collect_unfao_data("5110", "6717", "RL", "DEFRST", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/DEFRST", methods=['POST'])
 @login_required
 def compute_defrst():
+    lg, ug = sspi_metadata.get_goalposts("DEFRST")
+    def score_defrst(UNFAO_FRSTLV, UNFAO_FRSTAV) -> float: 
+        if UNFAO_FRSTAV == 0:
+            return 0
+        return goalpost((UNFAO_FRSTLV - UNFAO_FRSTAV) / UNFAO_FRSTAV * 100, lg, ug)
+
     app.logger.info("Running /api/v1/compute/DEFRST")
     sspi_indicator_data.delete_many({"IndicatorCode": "DEFRST"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "DEFRST"})
-    
-    # Fetch clean datasets
     frstlv_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_FRSTLV"})
     frstav_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_FRSTAV"})
     combined_list = frstlv_clean + frstav_clean
@@ -42,12 +38,11 @@ def compute_defrst():
         elif obs.get("DatasetCode") == "UNFAO_FRSTAV":
             filtered_combined.append(obs)
     
-    lg, ug = sspi_metadata.get_goalposts("DEFRST")
     
     clean_list, incomplete_list = score_indicator(
         filtered_combined,
         "DEFRST",
-        score_function=lambda UNFAO_FRSTLV, UNFAO_FRSTAV: goalpost((UNFAO_FRSTLV - UNFAO_FRSTAV) / UNFAO_FRSTAV * 100, lg, ug),
+        score_function=score_defrst,
         unit="Index",
     )
     sspi_indicator_data.insert_many(clean_list)

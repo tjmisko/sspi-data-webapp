@@ -158,9 +158,19 @@ sspi metadata country group [CODE] # Get country group metadata
 - `cli/` - Command-line interface components and commands
 - `sspi_flask_app/` - Main Flask application
   - `api/` - API routes and data processing
+    - `core/datasets/` - Dataset cleaners/collectors organized by source organization
+      - `wid/` - World Inequality Database datasets (77 datasets)
+      - `epi/` - Environmental Performance Index datasets (58 datasets)
+      - `wb/` - World Bank datasets (20 datasets)
+      - `unsdg/` - UN Sustainable Development Goals datasets (17 datasets)
+      - ... (24 organization subdirectories total)
   - `client/` - Frontend templates and static files  
   - `models/` - Database models and business logic
-- `datasets/` - Dataset-specific documentation
+- `datasets/` - Dataset documentation organized by source organization
+  - `wid/` - WID dataset documentation files
+  - `epi/` - EPI dataset documentation files
+  - `wb/` - World Bank dataset documentation files
+  - ... (mirroring the Python structure)
 - `methodology` - Item-specific documentation
 - `documentation/` - Project documentation (stale, requires updates)
 - `tests/` - Test files (unit and integration)
@@ -169,6 +179,8 @@ sspi metadata country group [CODE] # Get country group metadata
 - Follow existing patterns in similar components
 - Use MongoDB documents for data storage (JSON format)
 - All indicators use 6-character alphanumeric codes
+- Dataset files maintain organization prefixes (e.g., `wid_carbon_tot_p0p100`)
+- Dataset documentation and Python files are organized by source organization
 - Include proper error handling and logging
 - Write tests for new functionality
 
@@ -246,11 +258,9 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 ```bash
 # 1. Check current worktree port
 scripts/wtdev  # e.g., shows port 5002
-
 # 2. Kill and restart Flask server (NOT just touch wsgi.py)
 kill $(ps aux | grep "flask.*5002" | grep -v grep | awk '{print $2}')
 flask run --debug --port 5002 &
-
 # 3. Reload metadata
 sspi metadata reload
 ```
@@ -258,6 +268,11 @@ sspi metadata reload
 **Remember**: `touch wsgi.py` only reloads for code changes within already-imported modules. New modules require full restart.
 
 - You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances
-
 - Check `sspi status` before running sspi commands to ensure that the correct port is being called by sspi cli. If the port does not match the one you expect (from scripts/wtdev, say) then you may have to deactivate the virtual environment and reactivate it in the correct working directory. This is usually caused because we're using the old venv's version of sspi, which is calling port 5000 instead of the correct port.
+<<<<<<< HEAD
 - Prefer `sspi url` to `curl` for hitting endpoints on the server.
+=======
+- Never query the raw data directly! It will not work. Requests that try to send queries to sspi_raw_api_data that are not filtering by series_code will timeout and fail because of data volume.
+- Use the `sspi collect [code] --overwrite-all` option instead of sending echo 'y' into sspi collectd.
+- You can use prettier (globally installed already) to parse out the contents of style.css and script.js
+>>>>>>> main

@@ -21,11 +21,14 @@ from sspi_flask_app.models.database import (
 @compute_bp.route("/ALTNRG", methods=["POST"])
 @login_required
 def compute_altnrg():
+    lg, ug = sspi_metadata.get_goalposts("ALTNRG")
     def score_altnrg(IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL):
-        lg, ug = sspi_metadata.get_goalposts("ALTNRG")
         return goalpost(
             ((IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS) - 0.5 * IEA_BIOWAS) / 
             (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL) * 100, lg, ug)
+
+    def altnrg_percent_value(IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL):
+        return ((IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS) - 0.5 * IEA_BIOWAS) / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL) * 100
 
     app.logger.info("Running /api/v1/compute/ALTNRG")
     sspi_indicator_data.delete_many({"IndicatorCode": "ALTNRG"})
@@ -40,6 +43,13 @@ def compute_altnrg():
         "ALTNRG",
         score_function=score_altnrg,
         unit="Index",
+        compute_series_specification=[
+            (
+                "IEA_ALTNRG_PERCENTAGE",
+                "% of Total Energy Supply from Alternative Sources (Partial Credit for Biowaste)",
+                altnrg_percent_value
+            )
+        ]
     )
     sspi_indicator_data.insert_many(clean_list)
     sspi_incomplete_indicator_data.insert_many(incomplete_list)

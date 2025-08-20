@@ -37,5 +37,14 @@ def dataset_cleaner(name: str):
         return wrapper
     return decorator
 
-for _, modname, _ in pkgutil.iter_modules(__path__):
-    importlib.import_module(f"{__name__}.{modname}")
+# Recursively import all modules in this package and subdirectories
+def import_submodules(package_name, package_path):
+    """Recursively import all submodules of a package."""
+    for importer, modname, ispkg in pkgutil.walk_packages(package_path, f"{package_name}."):
+        if not ispkg:  # Only import actual modules, not packages
+            try:
+                importlib.import_module(modname)
+            except ImportError as e:
+                print(f"Warning: Could not import {modname}: {e}")
+
+import_submodules(__name__, __path__)
