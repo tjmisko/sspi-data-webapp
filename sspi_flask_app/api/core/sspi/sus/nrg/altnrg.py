@@ -4,10 +4,13 @@ from flask_login import login_required
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
+    extrapolate_backward,
+    interpolate_linear,
     goalpost,
     parse_json,
     score_indicator,
-    slice_dataset
+    slice_dataset,
+    filter_imputations
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -59,78 +62,105 @@ def compute_altnrg():
 @impute_bp.route("/ALTNRG", methods=["POST"])
 @login_required
 def impute_altnrg():
-    """
-    Imputation for alternative energy sources is not implemented yet.
-    """
     app.logger.info("Running /api/v1/impute/ALTNRG")
-    sspi_imputed_data.delete_many({"IndicatorCode": "ALTNRG"})
-    # Forward Extrapolate from 2022 to 2023
-    clean_data = sspi_clean_api_data.find({"IndicatorCode": "ALTNRG", "CountryCode": {"$ne": "KWT"}})
-    forward_extrap = extrapolate_forward(clean_data, 2023, impute_only=True)
-    # Handle KWT: All sources confirm that almost all energy is from fossil fuels
-    kwt_incomplete = sspi_incomplete_indicator_data.find(
-        {"IndicatorCode": "ALTNRG", "CountryCode": "KWT"}
-    )
-    impute_info = {
-        "Imputed": True,
-        "ImputationMethod": "ManualSourcing",
-        "ImputationDescription": (
-            "Kuwait's energy supply is almost entirely from fossil "
-                "fuels, with negligible contributions from renewable "
-                "sources, which includes Biowaste sources. Most of the "
-                "available sources are from recent years, but given KWT's "
-                "long-standing status as a major oil producer, it is "
-                "reasonable to assume that this pattern has been consistent"
-                " for many years."
-        ),
-        "ImputationSources": [
-            {
-                "URL": "https://www.iea.org/countries/kuwait/energy-mix",
-                "Evidence": "Oil and natural gas account for >99% of Kuwait's Total Energy Supply in 2022. See figure ' Largest source of energy in Kuwait, 2022.'",
-            },
-            {
-                "URL": "https://www.eia.gov/international/content/analysis/countries_long/Kuwait/kuwait.pdf",
-                "Evidence": "Primary energy consumption by fuel is >99% petroleum/other liquids and natural gas in 2021.",
-            },
-            {
-                "URL": "https://www.irena.org/-/media/Files/IRENA/Agency/Statistics/Statistical_Profiles/Middle%20East/Kuwait_Middle%20East_RE_SP.pdf",
-                "Evidence": "Renewable energy supply is only 8715 TJ out of 517,966 TJ of TES in 2021, and only 619 TJ in 2016.",
-            },
+    mongo_query = {"IndicatorCode": "ALTNRG"}
+    sspi_imputed_data.delete_many(mongo_query)
+    
+    # Get SSPI67 countries using metadata
+    sspi67_countries = sspi_metadata.country_group("SSPI67")
+    
+    # Get all datasets for ALTNRG (same as COALPW)
+    all_altnrg_datasets = sspi_clean_api_data.find({
+        "$or": [
+            {"DatasetCode": "IEA_TLCOAL"},
+            {"DatasetCode": "IEA_NATGAS"},
+            {"DatasetCode": "IEA_NCLEAR"},
+            {"DatasetCode": "IEA_HYDROP"},
+            {"DatasetCode": "IEA_GEOPWR"},
+            {"DatasetCode": "IEA_BIOWAS"},
+            {"DatasetCode": "IEA_FSLOIL"}
         ]
-    }
-    for i, obs in enumerate(kwt_incomplete):
-        obs["Imputed"] = True
-        obs["ImputationMethod"] = True
-        obs["ImputationDistance"] = 0
-        year = obs["Year"]
-        country_code = obs["CountryCode"]
-        int_codes = [inter["IntermediateCode"] for inter in obs["Intermediates"]]
-        if "BIOWAS" not in int_codes:
-            imputed_intermediate = {
-                "IntermediateCode": "BIOWAS",
-                "Value": 0.0,
-                "Unit": "TJ",
-                "Year": year,
-                "CountryCode": country_code
-            }
-            imputed_intermediate.update(impute_info)
-            obs["Intermediates"].append(imputed_intermediate)
-        if "ALTSUM" not in int_codes:
-            imputed_intermediate = {
-                "IntermediateCode": "ALTSUM",
-                "Value": 0.0,
-                "Unit": "TJ",
-                "Year": year,
-                "CountryCode": country_code
-            }
-            imputed_intermediate.update(impute_info)
-            obs["Intermediates"].append(imputed_intermediate)
-    kwt_clean, kwt_still_missing = score_indicator(
-        slice_dataset(kwt_incomplete, ["IEA_TTLSUM", "IEA_ALTSUM", "IEA_BIOWAS"]),
-        "ALTNRG", 
-        score_function=lambda TTLSUM, ALTSUM, BIOWAS: (ALTSUM - 0.5 * BIOWAS) / TTLSUM,
-        unit="%",
+    })
+    
+    # Group datasets by type
+    datasets_by_type = {}
+    dataset_codes = ["IEA_TLCOAL", "IEA_NATGAS", "IEA_NCLEAR", "IEA_HYDROP", "IEA_GEOPWR", "IEA_BIOWAS", "IEA_FSLOIL"]
+    
+    for code in dataset_codes:
+        datasets_by_type[code] = []
+    
+    for dataset in all_altnrg_datasets:
+        dataset_code = dataset["DatasetCode"]
+        if dataset_code in datasets_by_type:
+            datasets_by_type[dataset_code].append(dataset)
+    
+    # Process each dataset type individually
+    all_imputed_datasets = []
+    
+    for dataset_code, dataset_data in datasets_by_type.items():
+        # Get countries that have data for this dataset
+        dataset_countries = {d["CountryCode"] for d in dataset_data}
+        
+        # Impute zeros for SSPI67 countries missing from this dataset
+        missing_countries = [c for c in sspi67_countries if c not in dataset_countries]
+        
+        # Add zero imputations for missing countries
+        for country in missing_countries:
+            for year in range(2000, 2024):
+                zero_observation = {
+                    "DatasetCode": dataset_code,
+                    "CountryCode": country,
+                    "Year": year,
+                    "Value": 0.0,
+                    "Unit": "PJ",
+                    "Description": f"Zero imputation for missing energy type {dataset_code}",
+                    "Imputed": True,
+                    "ImputationMethod": "Zero imputation for missing energy type"
+                }
+                all_imputed_datasets.append(zero_observation)
+        
+        # Extrapolate and interpolate existing data to fill temporal gaps
+        if dataset_data:
+            extrapolated_backward = extrapolate_backward(
+                dataset_data, 2000, series_id=["CountryCode", "DatasetCode"], impute_only=True
+            )
+            extrapolated_forward = extrapolate_forward(
+                dataset_data, 2023, series_id=["CountryCode", "DatasetCode"], impute_only=True
+            )
+            
+            # Combine for interpolation
+            all_data = dataset_data + extrapolated_backward + extrapolated_forward
+            interpolated = interpolate_linear(
+                all_data, series_id=["CountryCode", "DatasetCode"], impute_only=True
+            )
+            
+            # Add temporal imputations (only the imputed values)
+            all_imputed_datasets.extend(extrapolated_backward + extrapolated_forward + interpolated)
+    
+    # Combine original datasets with imputations for indicator computation
+    combined_datasets = list(all_altnrg_datasets) + all_imputed_datasets
+    
+    # Now compute ALTNRG indicator with complete datasets
+    lg, ug = sspi_metadata.get_goalposts("ALTNRG")
+    def score_altnrg(IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL):
+        IEA_TTLSUM = IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL
+        if IEA_TTLSUM == 0:
+            return 0.0  # No energy data available, worst score for alternative energy
+        alt_energy = IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS - 0.5 * IEA_BIOWAS
+        return goalpost((alt_energy / IEA_TTLSUM) * 100, lg, ug)
+    
+    # Recompute indicator scores using complete datasets
+    overall_altnrg, missing_imputations = score_indicator(
+        combined_datasets, "ALTNRG",
+        score_function=score_altnrg,
+        unit="Index"
     )
-    imputations = extrapolate_forward(kwt_clean, 2023) + forward_extrap
-    sspi_imputed_data.insert_many(imputations)
-    return parse_json(imputations)
+    
+    # Filter to only imputed observations
+    imputed_altnrg = filter_imputations(overall_altnrg)
+    
+    # Insert into database
+    if imputed_altnrg:
+        sspi_imputed_data.insert_many(imputed_altnrg)
+    
+    return parse_json(imputed_altnrg)
