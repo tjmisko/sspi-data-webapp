@@ -150,6 +150,11 @@ sspi metadata country group [CODE] # Get country group metadata
 - `meta` → `sspi_metadata`
 - `imputed` → `sspi_imputed_data`
 
+### Query Functions with ItemCodes
+- `sspi query clean [ITEM_CODE]` can accept indicator codes (e.g., `COALPW`) and will return all underlying datasets that the indicator depends on
+- This is useful for imputation when you need to work with all datasets required by a multi-dataset indicator
+- Example: `sspi query clean COALPW` returns data for all 7 IEA energy datasets (IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL)
+
 *N.B.* the CLI is mostly case-insensitive.
 
 ## Code Conventions

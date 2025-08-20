@@ -75,8 +75,6 @@ class TestSliceDataset:
         assert usa_dataset["Value"] == 100.0
         assert can_dataset["Value"] == 95.0
         
-        # Verify print was called for each document (debug output)
-        assert mock_print.call_count == 2
     
     @patch('builtins.print')
     def test_slice_dataset_list_of_codes(self, mock_print, sample_scored_documents):

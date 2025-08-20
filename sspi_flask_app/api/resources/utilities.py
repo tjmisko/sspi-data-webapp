@@ -605,7 +605,6 @@ def slice_dataset(doc_list, dataset_codes: list[str] | str):
     if not isinstance(dataset_codes, list):
         dataset_codes = [dataset_codes]
     for doc in doc_list:
-        print(doc)
         for dataset in doc.get("Datasets", []):
             if dataset.get("DatasetCode") in dataset_codes:
                 datasets.append(dataset)
