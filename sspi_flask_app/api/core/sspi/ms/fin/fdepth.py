@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
+    goalpost,
     slice_dataset,
     score_indicator,
     extrapolate_backward,
@@ -21,18 +22,11 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/FDEPTH", methods=['POST'])
-# @login_required
-# def fdepth():
-#     def collect_iterator(**kwargs):
-#         yield from collect_wb_data("FS.AST.PRVT.GD.ZS", "FDEPTH", IntermediateCode="CREDIT", **kwargs)
-#         yield from collect_wb_data("GFDD.OI.02", "FDEPTH", IntermediateCode="DPOSIT", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/FDEPTH", methods=['POST'])
 @login_required
 def compute_fdepth():
+    def score_fdepth(WB_CREDIT, WB_DPOSIT): 
+        return goalpost(WB_CREDIT, 0, 200) / 2 + goalpost(WB_DPOSIT, 0, 100) / 2
     app.logger.info("Running /api/v1/compute/FDEPTH")
     sspi_indicator_data.delete_many({"IndicatorCode": "FDEPTH"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "FDEPTH"})
@@ -42,7 +36,7 @@ def compute_fdepth():
     combined_list = credit_clean + deposit_clean
     clean_list, incomplete_list = score_indicator(
         combined_list, "FDEPTH",
-        score_function=lambda CREDIT, DPOSIT: (CREDIT + DPOSIT) / 2,
+        score_function=score_fdepth,
         unit="Index"
     )
     sspi_indicator_data.insert_many(clean_list)

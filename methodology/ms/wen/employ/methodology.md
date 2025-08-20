@@ -13,8 +13,6 @@ Inverted: false
 LowerGoalpost: 50.0
 Policy: "Job placement \npolicies"
 SourceOrganization: ILO
-SourceOrganizationIndicatorCode: DF_EAP_DWAP_SEX_AGE_RT
-SourceOrganizationURL: https://ilostat.ilo.org/
 UpperGoalpost: 95.0
 ---
 

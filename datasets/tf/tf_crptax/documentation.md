@@ -5,7 +5,6 @@ DatasetName: Corporate Tax Rate
 Description: Tax imposed on the net income of the company.
 Source:
   OrganizationCode: TF
-  OrganizationSeriesCode: Rates
-  QueryCode: Rates
+  QueryCode: rates_final 
 ---
 

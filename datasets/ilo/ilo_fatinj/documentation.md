@@ -6,6 +6,7 @@ Description: Number of fatal injuries per 100,000 workers.
 Source:
   OrganizationCode: ILO
   OrganizationSeriesCode: DF_SDG_F881_SEX_MIG_RT
-  QueryCode: DF_SDG_F881_SEX_MIG_RT
+  QueryCode: Indicator=DF_SDG_F881_SEX_MIG_RT;Parameters=
+  Format: SDMX-JSON
 ---
 
