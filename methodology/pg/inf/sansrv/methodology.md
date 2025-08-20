@@ -12,9 +12,6 @@ IndicatorCode: SANSRV
 Inverted: false
 LowerGoalpost: 50.0
 Policy: "Sanitation \nInfrastructure"
-SourceOrganization: World Bank (wash report)
-SourceOrganizationIndicatorCode: SH.STA.BASS.ZS
-SourceOrganizationURL: https://databank.worldbank.org/
 UpperGoalpost: 100.0
 ---
 

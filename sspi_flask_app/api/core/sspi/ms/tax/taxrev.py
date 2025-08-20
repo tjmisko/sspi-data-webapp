@@ -20,14 +20,6 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/TAXREV", methods=['GET'])
-# @login_required
-# def taxrev():
-#     def collect_iterator(**kwargs):
-#         yield from collect_wb_data("GC.TAX.TOTL.GD.ZS", "TAXREV", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/TAXREV", methods=["POST"])
 @login_required
 def compute_taxrev():
@@ -50,15 +42,22 @@ def compute_taxrev():
 def impute_taxrev():
     app.logger.info("Running /api/v1/impute/TAXREV")
     sspi_imputed_data.delete_many({"IndicatorCode": "TAXREV"})
-    clean_taxrev = sspi_clean_api_data.find({"IndicatorCode": "TAXREV"})
-    forward = extrapolate_forward(clean_taxrev, 2023, impute_only=True)
-    backward = extrapolate_backward(clean_taxrev, 2000, impute_only=True)
-    interpolated = interpolate_linear(clean_taxrev, impute_only=True)
+    clean_taxrev = sspi_clean_api_data.find({"DatasetCode": "WB_TAXREV"})
+    forward = extrapolate_forward(clean_taxrev, 2023, series_id=["CountryCode", "DatasetCode"], impute_only=True)
+    backward = extrapolate_backward(clean_taxrev, 2000, series_id=["CountryCode", "DatasetCode"], impute_only=True)
+    interpolated = interpolate_linear(clean_taxrev, series_id=["CountryCode", "DatasetCode"], impute_only=True)
     imputed_taxrev = forward + backward + interpolated
     # Handle VNM, NGA, VEN, DZA : each is missing all observations
-    vnm_taxrev = impute_reference_class_average("VNM", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    nga_taxrev = impute_reference_class_average("NGA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    ven_taxrev = impute_reference_class_average("VEN", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    dza_taxrev = impute_reference_class_average("DZA", 2000, 2023, "Indicator", "TAXREV", clean_taxrev)
-    sspi_imputed_data.insert_many(imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev)
-    return parse_json(imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev)
+    vnm_taxrev = impute_reference_class_average("VNM", 2000, 2023, "Dataset", "WB_TAXREV", clean_taxrev)
+    nga_taxrev = impute_reference_class_average("NGA", 2000, 2023, "Dataset", "WB_TAXREV", clean_taxrev)
+    ven_taxrev = impute_reference_class_average("VEN", 2000, 2023, "Dataset", "WB_TAXREV", clean_taxrev)
+    dza_taxrev = impute_reference_class_average("DZA", 2000, 2023, "Dataset", "WB_TAXREV", clean_taxrev)
+    lg, ug = sspi_metadata.get_goalposts("TAXREV")
+    scored_list, _ = score_indicator(
+        imputed_taxrev + vnm_taxrev + nga_taxrev + ven_taxrev + dza_taxrev, 
+        "TAXREV",
+        score_function = lambda WB_TAXREV: goalpost(WB_TAXREV, lg, ug),
+        unit="Percentage"
+    )
+    sspi_imputed_data.insert_many(scored_list)
+    return parse_json(scored_list)
