@@ -17,6 +17,12 @@ from sspi_flask_app.api.resources.utilities import (
 @compute_bp.route("/CARBON", methods=['POST'])
 @login_required
 def compute_carbon():
+    lg, ug = sspi_metadata.get_goalposts("CARBON")
+    def score_carbon(UNFAO_CRBNLV, UNFAO_CRBNAV) -> float: 
+        if UNFAO_CRBNAV == 0:
+            return 0
+        return goalpost((UNFAO_CRBNLV - UNFAO_CRBNAV) / UNFAO_CRBNAV * 100, lg, ug)
+
     sspi_indicator_data.delete_many({"IndicatorCode": "CARBON"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "CARBON"})
     crbnlv_clean = sspi_clean_api_data.find({"DatasetCode": "UNFAO_CRBNLV"})
@@ -34,7 +40,7 @@ def compute_carbon():
     clean_list, incomplete_list = score_indicator(
         filtered_combined,
         "CARBON",
-        score_function=lambda UNFAO_CRBNLV, UNFAO_CRBNAV: goalpost((UNFAO_CRBNLV - UNFAO_CRBNAV) / UNFAO_CRBNAV * 100, lg, ug),
+        score_function=score_carbon,
         unit="Index",
     )
     sspi_indicator_data.insert_many(clean_list)
