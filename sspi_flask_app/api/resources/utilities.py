@@ -51,7 +51,7 @@ def jsonify_df(df: pd.DataFrame):
     return jsonify(json.loads(str(df.to_json(orient="records"))))
 
 
-def goalpost(value, lower, upper):
+def goalpost(value, lower, upper) -> float:
     """Implement the goalposting formula"""
     return max(0, min(1, (value - lower) / (upper - lower)))
 
