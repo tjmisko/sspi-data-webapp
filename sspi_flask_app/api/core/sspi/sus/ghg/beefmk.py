@@ -1,16 +1,20 @@
 from flask import current_app as app
 from flask_login import login_required
-from sspi_flask_app.api.core.sspi import compute_bp
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
+    sspi_imputed_data,
     sspi_metadata
 )
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
     score_indicator,
+    extrapolate_forward,
+    extrapolate_backward,
+    impute_reference_class_average
 )
 
 
@@ -62,3 +66,40 @@ def compute_beefmk():
     sspi_indicator_data.insert_many(clean_list)
     sspi_incomplete_indicator_data.insert_many(incomplete_list)
     return parse_json(clean_list)
+
+
+@impute_bp.route("/BEEFMK", methods=["POST"])
+@login_required
+def impute_beefmk():
+    mongo_query = {"IndicatorCode": "BEEFMK"}
+    sspi_imputed_data.delete_many(mongo_query)
+    
+    # Get complete indicator data
+    clean_list = sspi_indicator_data.find(mongo_query)
+    
+    # Extrapolate indicator scores backward to 2000 and forward to 2023
+    imputed_backward = extrapolate_backward(
+        clean_list, 2000, series_id=["CountryCode", "IndicatorCode"], impute_only=True
+    )
+    imputed_forward = extrapolate_forward(
+        clean_list, 2023, series_id=["CountryCode", "IndicatorCode"], impute_only=True
+    )
+    imputed_beefmk = imputed_backward + imputed_forward
+    
+    # Handle countries with no data using reference class average
+    # From coverage report, SGP has no observations
+    countries_no_data = ["SGP"]
+    ref_data = [d for d in clean_list if d["CountryCode"] not in countries_no_data]
+    
+    for country in countries_no_data:
+        if ref_data:
+            country_imputed = impute_reference_class_average(
+                country, 2000, 2023, "Indicator", "BEEFMK", ref_data
+            )
+            imputed_beefmk.extend(country_imputed)
+    
+    # Insert into database
+    if imputed_beefmk:
+        sspi_imputed_data.insert_many(imputed_beefmk)
+    
+    return parse_json(imputed_beefmk)
