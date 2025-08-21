@@ -8,7 +8,6 @@ Description: Rule of Law Index measures extent to which laws are transparently, 
   the column "v2x_rule".
 Source:
   OrganizationCode: VDEM
-  OrganizationSeriesCode: 'V-Dem-CY-FullOthers_csv_v13'
-  QueryCode: 'V-Dem-CY-FullOthers_csv_v13'
+  QueryCode: V-Dem-CY-FullOthers_csv_v13
 ---
 
