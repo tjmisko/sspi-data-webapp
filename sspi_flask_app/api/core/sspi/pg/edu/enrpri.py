@@ -20,14 +20,6 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/ENRPRI", methods=['POST'])
-# @login_required
-# def enrpri():
-#     def collect_iterator(**kwargs):
-#         yield from collect_uis_data("NERT.1.CP", "ENRPRI", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/ENRPRI", methods=['POST'])
 @login_required
 def compute_enrpri():
@@ -49,15 +41,18 @@ def compute_enrpri():
 def impute_enrpri():
     app.logger.info("Running /api/v1/impute/ENRPRI")
     sspi_imputed_data.delete_many({"IndicatorCode": "ENRPRI"})
-    clean_enrpri = sspi_clean_api_data.find({"IndicatorCode": "ENRPRI"})
-    forward = extrapolate_forward(clean_enrpri, 2023, impute_only=True)
-    backward = extrapolate_backward(clean_enrpri, 2000, impute_only=True)
-    interpolated = interpolate_linear(clean_enrpri, impute_only=True)
+    clean_enrpri = sspi_clean_api_data.find({"DatasetCode": "UIS_ENRPRI"})
+    forward = extrapolate_forward(clean_enrpri, 2023, series_id=["CountryCode", "DatasetCode"], impute_only=True)
+    backward = extrapolate_backward(clean_enrpri, 2000, series_id=["CountryCode", "DatasetCode"], impute_only=True)
+    interpolated = interpolate_linear(clean_enrpri, series_id=["CountryCode", "DatasetCode"], impute_only=True)
     imputed_enrpri = forward + backward + interpolated
-    # Handle China, which is missing all observations
-    # chn_enrpri = impute_global_average("CHN", 2000, 2023, "Indicator", "ENRPRI", clean_enrpri)
-    # Actually: China has observations from the 1990s. Would it be better to extrapolate these forward for twenty five years? Or to rely on the global average?
-    # sspi_imputed_data.insert_many(imputed_enrpri + chn_enrpri)
-    sspi_imputed_data.insert_many(imputed_enrpri)
-    # return parse_json(imputed_enrpri + chn_enrpri)
-    return parse_json(imputed_enrpri)
+    # chn_enrpri = impute_reference_class_average("CHN", 2000, 2023, "Dataset", "UIS_ENRPRI", clean_enrpri)
+    lg, ug = sspi_metadata.get_goalposts("ENRPRI")
+    scored_list, _ = score_indicator(
+        imputed_enrpri, "ENRPRI",
+        score_function=lambda UIS_ENRPRI: goalpost(UIS_ENRPRI, lg, ug),
+        unit="%"
+    )
+
+    sspi_imputed_data.insert_many(scored_list)
+    return parse_json(scored_list)

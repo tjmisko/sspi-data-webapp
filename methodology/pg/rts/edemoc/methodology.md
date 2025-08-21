@@ -13,9 +13,6 @@ IndicatorCode: EDEMOC
 Inverted: false
 LowerGoalpost: 0.0
 Policy: "Political \nParticipation and Influence"
-SourceOrganization: V-Dem
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/
 UpperGoalpost: 1.0
 ---
 
