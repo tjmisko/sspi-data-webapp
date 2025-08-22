@@ -244,8 +244,7 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 
 ### Development Environment
 - Be sure to always check your working directory before acting: you may be in git worktree or on the main branch. To tell the difference, you can check whether .git is a file or a directory.
-- Always run the setup script inside the worktree, never in the main repository. You're setting up the worktree to work correctly by doing so. 
-- You must always check your pwd before running commands when you are working with worktrees. You should always assume that worktrees may be involved
+- You must always check your environment before running commands when you are working with worktrees by running `scripts/wtdev`. You should always assume that worktrees may be involved
 - Never instantiate one worktree inside another. Before instantiating, always check that you are in the main repository.
 - Don't guess at metadata like seriescodes, itemcodes, or indicator codes. Look them up using `sspi metadata item` or `sspi metadata dataset`. See their implementation and subcommands at @cli/commands/metadata.py
 - You must always kill only the server running on the current port for the worktree. Other servers are running in parallel.
@@ -274,10 +273,7 @@ sspi metadata reload
 
 - You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances
 - Check `sspi status` before running sspi commands to ensure that the correct port is being called by sspi cli. If the port does not match the one you expect (from scripts/wtdev, say) then you may have to deactivate the virtual environment and reactivate it in the correct working directory. This is usually caused because we're using the old venv's version of sspi, which is calling port 5000 instead of the correct port.
-<<<<<<< HEAD
 - Prefer `sspi url` to `curl` for hitting endpoints on the server.
-=======
 - Never query the raw data directly! It will not work. Requests that try to send queries to sspi_raw_api_data that are not filtering by series_code will timeout and fail because of data volume.
 - Use the `sspi collect [code] --overwrite-all` option instead of sending echo 'y' into sspi collectd.
 - You can use prettier (globally installed already) to parse out the contents of style.css and script.js
->>>>>>> main
