@@ -90,12 +90,6 @@ class ThemeToggle {
             window.SSPICharts.forEach((chartObj) => {
                 if (chartObj && typeof chartObj.setTheme === 'function') {
                     chartObj.setTheme(window.theme)
-                    if (typeof chartObj.updateChartOptions === 'function') {
-                        chartObj.updateChartOptions()
-                    }
-                    if (chartObj.chart && typeof chartObj.chart.update === 'function') {
-                        chartObj.chart.update()
-                    }
                 }
             })
         }

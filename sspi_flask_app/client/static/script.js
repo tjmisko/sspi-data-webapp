@@ -862,9 +862,7 @@ this.checkbox.checked=false}
 this.updateCharts()}
 updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
 this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
-updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)
-if(typeof chartObj.updateChartOptions==='function'){chartObj.updateChartOptions()}
-if(chartObj.chart&&typeof chartObj.chart.update==='function'){chartObj.chart.update()}}})}}
+updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
 getTheme(){return this.currentTheme}}
 class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
 this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
@@ -928,7 +926,16 @@ this.axisTitleColor="#bbb"
 this.titleColor="#ccc"}else{this.theme="light"
 this.tickColor="#444"
 this.axisTitleColor="#444"
-this.titleColor="#444"}}
+this.titleColor="#444"}
+if(this.chart){this.updateChartOptionsPreservingYAxis()}}
+updateChartOptionsPreservingYAxis(){const currentYMin=this.chart.options.scales?.y?.min
+const currentYMax=this.chart.options.scales?.y?.max
+const currentYTitle=this.chart.options.scales?.y?.title?.text
+this.updateChartOptions()
+if(currentYMin!==undefined){this.chart.options.scales.y.min=currentYMin}
+if(currentYMax!==undefined){this.chart.options.scales.y.max=currentYMax}
+if(currentYTitle!==undefined){this.chart.options.scales.y.title.text=currentYTitle}
+this.chart.update()}
 async fetch(url){const response=await fetch(url)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){console.log(data)
@@ -1086,7 +1093,9 @@ this.axisTitleColor="#444"
 this.titleColor="#444"
 this.headerBackgroundColor="#f0f0f0"}
 const bg=getComputedStyle(root).getPropertyValue('--header-color').trim()
-this.headerBackgroundColor=bg}
+this.headerBackgroundColor=bg
+if(this.chart){this.updateChartOptions()
+this.updateChartPreservingYAxis()}}
 async fetch(url){const response=await fetch(url)
 try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){console.log(data)
