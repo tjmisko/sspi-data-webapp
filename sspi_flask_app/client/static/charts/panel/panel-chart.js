@@ -4,6 +4,7 @@ class PanelChart {
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.pins = new Set() // pins contains a list of pinned countries
+        this.missingCountries = [] // Array of countries with no data, populated from API response
         this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.chartInteractionPlugin = chartInteractionPlugin
@@ -62,10 +63,10 @@ class PanelChart {
         </div>
     </div>
 </details>
-<details class="country-group-options chart-options-details">
-    <summary class="country-group-selector-summary">Country Groups</summary>
+<details class="select-countries-options chart-options-details">
+    <summary class="select-countries-summary">Select Countries</summary>
     <div class="view-options-suboption-container">
-        <div class="chart-view-subheader">Country Group</div>
+        <div class="chart-view-subheader">Country Groups</div>
         <div class="chart-view-option">
             <select class="country-group-selector"></select>
         </div>
@@ -75,18 +76,21 @@ class PanelChart {
                 <button class="show-in-group-button">Show All in Group</button>
             </div>
         </div>
-    </div> 
-</details>
-<details class="pinned-country-details chart-options-details">
-    <summary>Pinned Countries</summary>
-    <div class="legend-title-bar-buttons">
-        <button class="add-country-button">Search Country</button>
-        <button class="hideunpinned-button">Hide Unpinned</button>
-        <button class="clearpins-button">Clear Pins</button>
+        <div class="chart-view-subheader">Pinned Countries</div>
+        <div class="legend-title-bar-buttons">
+            <button class="add-country-button">Search Country</button>
+            <button class="hideunpinned-button">Hide Unpinned</button>
+            <button class="clearpins-button">Clear Pins</button>
+        </div>
+        <legend class="dynamic-line-legend">
+            <div class="legend-items"></div>
+        </legend>
+        <div class="chart-view-subheader">Missing Countries</div>
+        <div class="missing-countries-container">
+            <div class="missing-countries-list"></div>
+            <div class="missing-countries-summary"></div>
+        </div>
     </div>
-    <legend class="dynamic-line-legend">
-        <div class="legend-items"></div>
-    </legend>
 </details>
 <details class="download-data-details chart-options-details">
     <summary>Download Chart Data</summary>
@@ -355,6 +359,58 @@ class PanelChart {
         })
     }
 
+    updateMissingCountries() {
+        const missingCountriesList = this.chartOptions.querySelector('.missing-countries-list')
+        const missingCountriesSummary = this.chartOptions.querySelector('.missing-countries-summary')
+        
+        if (!missingCountriesList || !missingCountriesSummary) {
+            return
+        }
+        
+        // Filter missing countries by current country group and display
+        this.refreshMissingCountriesDisplay()
+    }
+
+    refreshMissingCountriesDisplay() {
+        const missingCountriesList = this.chartOptions.querySelector('.missing-countries-list')
+        const missingCountriesSummary = this.chartOptions.querySelector('.missing-countries-summary')
+        
+        if (!missingCountriesList || !missingCountriesSummary) {
+            return
+        }
+        
+        // Filter missing countries by current country group
+        const filteredMissing = this.missingCountries.filter(country => {
+            return country.CGroup && country.CGroup.includes(this.countryGroup)
+        })
+        
+        // Count visible countries in the current group
+        const visibleCountriesInGroup = this.chart.data.datasets.filter(dataset => {
+            return dataset.CGroup && dataset.CGroup.includes(this.countryGroup)
+        }).length
+        
+        // Total countries that should be visible = missing in group + visible in group
+        const totalCountriesInGroup = filteredMissing.length + visibleCountriesInGroup
+        
+        missingCountriesList.innerHTML = ''
+        
+        if (filteredMissing.length === 0) {
+            const message = this.missingCountries.length === 0 
+                ? 'All countries have data' 
+                : 'All countries in ' + this.countryGroup + ' have data'
+            missingCountriesList.innerHTML = '<div class="missing-countries-none">' + message + '</div>'
+            missingCountriesSummary.innerHTML = ''
+        } else {
+            // Display missing countries as a compact list
+            const countryElements = filteredMissing.map(country => {
+                return '<span class="missing-country-item">' + country.CCode + '</span>'
+            }).join(', ')
+            
+            missingCountriesList.innerHTML = countryElements
+            missingCountriesSummary.innerHTML = filteredMissing.length + ' of ' + totalCountriesInGroup + ' countries in ' + this.countryGroup + ' missing data'
+        }
+    }
+
     updateDescription(description) {
         const dbox = this.chartOptions.querySelector('.dynamic-item-description')
         dbox.innerHTML = '<p><b>Description: </b> ' + description + '</p>'
@@ -395,6 +451,12 @@ class PanelChart {
         }
         const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
         this.headerBackgroundColor = bg
+        
+        // Update chart with new theme colors while preserving y-axis scale
+        if (this.chart) {
+            this.updateChartOptions()
+            this.updateChartPreservingYAxis()
+        }
     }
 
     async fetch(url) {
@@ -424,6 +486,8 @@ class PanelChart {
         this.title.innerText = data.title
         this.itemType = data.itemType
         this.groupOptions = data.groupOptions
+        this.countryGroupMap = data.countryGroupMap || {}
+        this.missingCountries = [] // Initialize as empty, will be populated asynchronously
         this.getPins()
         this.updateLegend()
         this.updateItemDropdown(data.itemOptions, data.itemType)
@@ -431,8 +495,86 @@ class PanelChart {
         this.updateChartColors()
         this.updateCountryGroups()
         this.chart.update()
+        
+        // Compute missing countries asynchronously after chart rendering
+        console.log('=== About to call computeMissingCountriesAsync ===')
+        console.log('countryGroupMap available?', !!this.countryGroupMap, Object.keys(this.countryGroupMap || {}).length, 'countries')
+        this.computeMissingCountriesAsync()
     }
 
+    computeMissingCountriesAsync() {
+        console.log('=== computeMissingCountriesAsync called ===')
+        // Use setTimeout to defer execution until after chart rendering is complete
+        setTimeout(() => {
+            console.log('=== setTimeout callback executing ===')
+            this.computeMissingCountries()
+        }, 0)
+    }
+
+    computeMissingCountries() {
+        console.log('=== Starting computeMissingCountries ===')
+        
+        if (!this.countryGroupMap || Object.keys(this.countryGroupMap).length === 0) {
+            console.log('No country group map available for missing countries computation')
+            return
+        }
+
+        console.log('Country group map keys:', Object.keys(this.countryGroupMap).length, 'countries')
+        console.log('First 10 countries in group map:', Object.keys(this.countryGroupMap).slice(0, 10))
+        console.log('SGP in group map?', 'SGP' in this.countryGroupMap, this.countryGroupMap['SGP'])
+
+        const missingCountries = []
+        const seenCountries = new Set()
+
+        console.log('Total datasets:', this.chart.data.datasets.length)
+        console.log('Dataset country codes:', this.chart.data.datasets.map(d => d.CCode))
+
+        // First pass: process countries that appear in datasets
+        this.chart.data.datasets.forEach(countryData => {
+            const countryCode = countryData.CCode
+            console.log(`Processing dataset for country: ${countryCode}`)
+            seenCountries.add(countryCode)
+            const scores = countryData.data || []
+            const scoresEmpty = !scores || scores.length === 0 || scores.every(s => s === null || s === undefined || s === '')
+            console.log(`Country ${countryCode}: data length=${scores.length}, empty=${scoresEmpty}`)
+            if (scoresEmpty) {
+                console.log(`Adding ${countryCode} to missing (empty data)`)
+                missingCountries.push({
+                    CCode: countryCode,
+                    CName: countryData.CName || countryCode,
+                    CGroup: countryData.CGroup || this.countryGroupMap[countryCode] || []
+                })
+            }
+        })
+
+        console.log('Seen countries:', Array.from(seenCountries))
+        console.log('SGP in seen countries?', seenCountries.has('SGP'))
+
+        // Second pass: find countries in group map that don't appear in datasets at all
+        let notSeenCount = 0
+        Object.entries(this.countryGroupMap).forEach(([countryCode, countryGroups]) => {
+            if (!seenCountries.has(countryCode)) {
+                notSeenCount++
+                if (countryCode === 'SGP') {
+                    console.log(`SGP not seen - adding to missing. Groups:`, countryGroups)
+                }
+                missingCountries.push({
+                    CCode: countryCode,
+                    CName: countryCode, // We only have the country code from the map
+                    CGroup: countryGroups
+                })
+            }
+        })
+
+        console.log(`Countries not seen in datasets: ${notSeenCount}`)
+        console.log(`Total missing countries found: ${missingCountries.length}`)
+        console.log('Missing countries:', missingCountries.map(c => c.CCode))
+        console.log('=== End computeMissingCountries ===')
+
+        // Update the missing countries and refresh display
+        this.missingCountries = missingCountries
+        this.updateMissingCountries()
+    }
 
     getPins() {
         const storedPins = window.observableStorage.getItem('pinnedCountries')
@@ -483,6 +625,8 @@ class PanelChart {
             }
         })
         this.updateChartPreservingYAxis()
+        // Update missing countries display for the new group
+        this.refreshMissingCountriesDisplay()
     }
 
     hideUnpinned() {
