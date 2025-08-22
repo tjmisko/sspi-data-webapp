@@ -451,6 +451,12 @@ class PanelChart {
         }
         const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
         this.headerBackgroundColor = bg
+        
+        // Update chart with new theme colors while preserving y-axis scale
+        if (this.chart) {
+            this.updateChartOptions()
+            this.updateChartPreservingYAxis()
+        }
     }
 
     async fetch(url) {

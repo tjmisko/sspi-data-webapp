@@ -221,6 +221,35 @@ class CountryScoreChart {
             this.axisTitleColor = "#444"
             this.titleColor = "#444"
         }
+        
+        // Update chart theme while preserving y-axis scale
+        if (this.chart) {
+            this.updateChartOptionsPreservingYAxis()
+        }
+    }
+
+    updateChartOptionsPreservingYAxis() {
+        // Store current y-axis scale settings
+        const currentYMin = this.chart.options.scales?.y?.min
+        const currentYMax = this.chart.options.scales?.y?.max
+        const currentYTitle = this.chart.options.scales?.y?.title?.text
+        
+        // Update chart options with new theme colors
+        this.updateChartOptions()
+        
+        // Restore preserved y-axis scale settings
+        if (currentYMin !== undefined) {
+            this.chart.options.scales.y.min = currentYMin
+        }
+        if (currentYMax !== undefined) {
+            this.chart.options.scales.y.max = currentYMax
+        }
+        if (currentYTitle !== undefined) {
+            this.chart.options.scales.y.title.text = currentYTitle
+        }
+        
+        // Update the chart to apply changes
+        this.chart.update()
     }
 
     async fetch(url) {
