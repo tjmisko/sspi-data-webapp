@@ -20,6 +20,7 @@ def clean_who_dptcov():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     description = "DTP3 immunization coverage among one-year-olds (%)"
     cleaned_data = clean_who_data(raw_data, "WHO_DPTCOV", "Percent", description)
+    return parse_json(cleaned_data)
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "WHO_DPTCOV")
     return parse_json(cleaned_data)

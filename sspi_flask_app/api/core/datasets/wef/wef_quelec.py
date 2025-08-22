@@ -42,7 +42,9 @@ def clean_wef_quelec():
         lambda x: x.split(",")[1].strip() if "," in x else ""
     )
     df_final = df_sorted[["DatasetCode", "CountryCode", "Year", "Value", "Unit"]]
-    cleaned_data = df_final.to_dict(orient="records")
+    # drop if Value is NaN
+    dropna_df = df_final.dropna(subset=["Value"])
+    cleaned_data = dropna_df.to_dict(orient="records")
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "WEF_QUELEC")
     return parse_json(cleaned_data)

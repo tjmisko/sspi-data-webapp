@@ -13,15 +13,6 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/PUPTCH", methods=['POST'])
-# @login_required
-# def puptch():
-#     def collect_iterator(**kwargs):
-#         yield from collect_wb_data("SE.PRM.ENRL.TC.ZS", "PUPTCH", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
-
 @compute_bp.route("/PUPTCH", methods=['POST'])
 @login_required
 def compute_puptch():

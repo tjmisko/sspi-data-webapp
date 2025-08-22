@@ -17,14 +17,6 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/YRSEDU")
-# @login_required
-# def yrsedu():
-#     def collect_iterator(**kwargs):
-#         yield from collect_uis_data("YEARS.FC.COMP.1T3", "YRSEDU", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/YRSEDU", methods=['POST'])
 @login_required
 def compute_yrsedu():
@@ -45,7 +37,13 @@ def compute_yrsedu():
 @login_required
 def impute_yrsedu():
     sspi_imputed_data.delete_many({"IndicatorCode": "YRSEDU"})
-    clean_data = sspi_clean_api_data.find({"IndicatorCode": "YRSEDU"})
-    imputations = extrapolate_backward(clean_data, 2000, impute_only=True)
-    sspi_imputed_data.insert_many(imputations)
-    return parse_json(imputations)
+    clean_data = sspi_clean_api_data.find({"DatasetCode": "UIS_YRSEDU"})
+    imputations = extrapolate_backward(clean_data, 2000, series_id=["CountryCode", "DatasetCode"], impute_only=True)
+    lg, ug = sspi_metadata.get_goalposts("YRSEDU")
+    scored_list, _ = score_indicator(
+        imputations, "YRSEDU",
+        score_function=lambda UIS_YRSEDU: goalpost(UIS_YRSEDU, lg, ug),
+        unit="Years"
+    )
+    sspi_imputed_data.insert_many(scored_list)
+    return parse_json(scored_list)

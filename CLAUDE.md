@@ -244,8 +244,7 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 
 ### Development Environment
 - Be sure to always check your working directory before acting: you may be in git worktree or on the main branch. To tell the difference, you can check whether .git is a file or a directory.
-- Always run the setup script inside the worktree, never in the main repository. You're setting up the worktree to work correctly by doing so. 
-- You must always check your pwd before running commands when you are working with worktrees. You should always assume that worktrees may be involved
+- You must always check your environment before running commands when you are working with worktrees by running `scripts/wtdev`. You should always assume that worktrees may be involved
 - Never instantiate one worktree inside another. Before instantiating, always check that you are in the main repository.
 - Don't guess at metadata like seriescodes, itemcodes, or indicator codes. Look them up using `sspi metadata item` or `sspi metadata dataset`. See their implementation and subcommands at @cli/commands/metadata.py
 - You must always kill only the server running on the current port for the worktree. Other servers are running in parallel.

@@ -33,7 +33,7 @@ def collect_wef_data(world_bank_indicator_code, **kwargs):
         "OrganizationName": "World Economic Forum",
         "OrganizationCode": "WEF",
         "OrganizationSeriesCode": world_bank_indicator_code,
-        "QueryCode": "WEF-GCIHH",
+        "QueryCode": world_bank_indicator_code,
         "URL": url,
     }
     sspi_raw_api_data.raw_insert_one(
