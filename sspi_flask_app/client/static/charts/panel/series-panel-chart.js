@@ -3,14 +3,8 @@ class SeriesPanelChart extends PanelChart {
         super(parentElement, { CountryList: CountryList, endpointURL: endpointURL, width: width, height: height })
     }
 
-    rigItemInfoBox() {
-        const infoBox = document.createElement('div')
-        infoBox.classList.add('item-panel-info-box')
-        this.root.prepend(infoBox)
-    }
-
     updateDescription(description) {
-        const dbox = this.root.querySelector('.item-panel-info-box')
+        const dbox = this.root.querySelector('.dynamic-item-description')
         let identifiersHTML = ''
         let code = ''
         let desc = ''
@@ -21,11 +15,11 @@ class SeriesPanelChart extends PanelChart {
             if (k === 'ItemCode' || k === 'DatasetCode') {
                 code = v
             }
-            identifiersHTML += `<li class="item-panel-info-box-element"><b>${k}</b>:<span class="item-panel-info-box-value">${v}</span></li>`
+            identifiersHTML += `<li class="item-detail-element"><b>${k}</b>: <span class="item-detail-value">${v}</span></li>`
         }
         dbox.innerHTML = `
-            <p class="item-panel-info-box-title"> </b>${code}</b>: ${desc}</p>
-            <ul class="item-panel-info-box-list">${identifiersHTML}</ul>
+            <div class="item-info-title"><strong>${code}</strong>: ${desc}</div>
+            <ul class="item-detail-list">${identifiersHTML}</ul>
         `;
     }
 
@@ -38,7 +32,6 @@ class SeriesPanelChart extends PanelChart {
         this.pinnedOnly = false
         this.getPins()
         this.updateLegend()
-        this.rigItemInfoBox()
         this.updateDescription(data.description)
         this.updateCountryGroups()
         if (this.pinnedOnly) {
