@@ -166,6 +166,8 @@ class IndicatorPanelChart extends PanelChart {
         
         this.itemType = data.itemType
         this.groupOptions = data.groupOptions
+        this.countryGroupMap = data.countryGroupMap || {}
+        this.missingCountries = [] // Initialize as empty, will be populated asynchronously
         this.getPins()
         this.updateLegend()
         this.updateItemDropdown(data.itemOptions, data.itemType)
@@ -177,6 +179,11 @@ class IndicatorPanelChart extends PanelChart {
         this.updateChartTitle()  // Set initial title based on active series
         this.updateActiveSeriesDescription()  // Set initial active series description
         this.chart.update()
+        
+        // Compute missing countries asynchronously after chart rendering
+        console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
+        console.log('countryGroupMap available?', !!this.countryGroupMap, Object.keys(this.countryGroupMap || {}).length, 'countries')
+        this.computeMissingCountriesAsync()
     }
 
     initChartJSCanvas() {
