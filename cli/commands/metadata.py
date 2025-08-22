@@ -10,7 +10,8 @@ def metadata():
 
 
 @metadata.command(help="Reload all metadata in sspi_metadata from local json")
-def reload():
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def reload(remote: bool):
     """
     Get SSPI Pillar Metadata
     """
@@ -24,7 +25,7 @@ def reload():
                 result.status_code}"
         )
     url = "/api/v1/load/sspi_metadata"
-    result = connector.call(url, method="GET")
+    result = connector.call(url, method="GET", remote=remote)
     click.echo(result.text)
     if result.status_code != 200:
         raise click.ClickException(

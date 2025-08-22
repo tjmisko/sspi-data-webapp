@@ -1,4 +1,6 @@
 import secrets
+import json
+from bson import json_util
 from flask import (
     current_app as app,
     Blueprint,
@@ -226,7 +228,7 @@ def query():
             'apikey': user.apikey,
             'id': user.id
         })
-    return str(user_info)
+    return jsonify(user_info), 200
 
 
 @auth_bp.route("/auth/token", methods=["GET"])
