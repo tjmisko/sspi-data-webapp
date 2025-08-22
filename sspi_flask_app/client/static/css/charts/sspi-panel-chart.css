@@ -105,7 +105,6 @@
 
 .treeview-navigation a[role="treeitem"][aria-current] {
   border-left: 2px solid #005a9c;
-  padding-left: 4px;
   background-color: var(--green-accent);
 }
 .treeview-navigation a[role="treeitem"] span.icon {
@@ -124,13 +123,10 @@
 
 .treeview-navigation a[role="treeitem"]:focus {
   outline: 0;
-  padding: 2px;
-  padding-left: 7px;
   border: 2px #005a9c solid;
 }
 
 .treeview-navigation a[role="treeitem"][aria-current]:focus {
-  padding-left: 4px;
   border-left-width: 5px;
 }
 
@@ -138,7 +134,6 @@
   color: var(--green-accent);
   text-decoration: underline;
   cursor: pointer;
-  padding-left: 4px;
   /* border-left: 5px solid #333; */
 }
 
