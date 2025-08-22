@@ -13,10 +13,14 @@ from sspi_flask_app.models.database import (
 @compute_bp.route("/TXRDST", methods=["POST"])
 @login_required
 def compute_txrdst():
-    def score_txrdst(WID_NINCSH_PRETAX_P90P100, WID_NINCSH_PRETAX_P0P50, WID_NINCSH_POSTAX_EQUALSPLIT_P0P50, WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100): 
+    lg, ug = sspi_metadata.get_goalposts("TXRDST")
+    def score_txrdst(WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50, WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100, WID_NINCSH_PRETAX_P0P50, WID_NINCSH_PRETAX_P90P100): 
         pretax_ratio = WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100
-        posttax_ratio = WID_NINCSH_POSTAX_EQUALSPLIT_P0P50 / WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100
-        return goalpost((posttax_ratio - pretax_ratio) / pretax_ratio * 100, -50, 50)
+        posttax_ratio = WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50 / WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100
+        if pretax_ratio == 0:
+            app.logger.warning("Pretax ratio is zero, cannot compute TXRDST.")
+            return goalpost(0, lg, ug)
+        return goalpost((posttax_ratio - pretax_ratio) / pretax_ratio * 100, lg, ug)
 
     app.logger.info("Running /api/v1/compute/TXRDST")
     sspi_indicator_data.delete_many({"IndicatorCode": "TXRDST"})

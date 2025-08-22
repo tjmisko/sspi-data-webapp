@@ -9,17 +9,8 @@ from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
+    goalpost
 )
-
-
-
-# @collect_bp.route("/AQELEC", methods=['GET'])
-# @login_required
-# def aqelec():
-#     def collect_iterator(**kwargs):
-#         yield from collect_wb_data("EG.ELC.ACCS.ZS", "AQELEC", IntermediateCode="AVELEC", **kwargs)
-#         yield from collect_wef_data("WEF.GCIHH.EOSQ064", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
 
 
 
@@ -35,7 +26,7 @@ def compute_aqelec():
     combined_list = wb_avelec + wef_quelec
     clean_list, incomplete_list = score_indicator(
         combined_list, "AQELEC",
-        score_function=lambda WB_AVELEC, WEF_QUELEC: 0.5 * WB_AVELEC + 0.5 * WEF_QUELEC,
+        score_function=lambda WB_AVELEC, WEF_QUELEC: 0.5 * goalpost(WB_AVELEC, 0, 100) + 0.5 * goalpost(WEF_QUELEC, 1, 7),
         unit="Index"
     )
     sspi_indicator_data.insert_many(clean_list)

@@ -13,14 +13,6 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/DPTCOV", methods=['GET'])
-# @login_required
-# def dptcov():
-#     def collect_iterator(**kwargs):
-#         yield from collect_who_data("vdpt", "DPTCOV", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/DPTCOV", methods=["POST"])
 @login_required
 def compute_dptcov():

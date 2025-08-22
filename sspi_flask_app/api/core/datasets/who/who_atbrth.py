@@ -18,10 +18,10 @@ def clean_who_atbrth():
     sspi_clean_api_data.delete_many({"DatasetCode": "WHO_ATBRTH"})
     source_info = sspi_metadata.get_source_info("WHO_ATBRTH")
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
-    description = """
-    The proportion of births attended by trained and/or skilled
-    health personnel
-    """
+    description = (
+        "The proportion of births attended by trained and/or skilled "
+        "health personnel"
+    )
     cleaned_data = clean_who_data(raw_data, "WHO_ATBRTH", "Percent", description)
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "WHO_ATBRTH")
