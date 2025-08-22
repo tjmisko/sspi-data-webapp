@@ -812,6 +812,60 @@ const key=e.key;const ti=e.currentTarget;const vis=this.items.filter(n=>!this.#p
 ti.ariaExpanded='false';else target=this.#parent(ti);};const printable=key.length===1&&/\S/.test(key);switch(key){case'ArrowDown':next();break;case'ArrowUp':prev();break;case'ArrowRight':expand();break;case'ArrowLeft':collapse();break;case'Home':home();break;case'End':end();break;case' ':ti.click();break;default:if(printable){target=vis.find((n,idx)=>idx>i&&n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()))||vis.find(n=>n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()));}}
 if(target){target.focus();this.items.forEach(n=>n.tabIndex=-1);target.tabIndex=0;e.preventDefault();}}#focusShell(e){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}#parent(ti){return ti.parentElement?.parentElement?.previousElementSibling?.role==='treeitem'?ti.parentElement.parentElement.previousElementSibling:null;}
 highlightTreeItem(ItemCode){this.items.forEach(ti=>{ti.classList.remove('active-view-element');});const item=this.items.find(ti=>ti.dataset.itemCode===ItemCode);if(item){item.classList.add('active-view-element')}}}
+class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
+this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
+this.initToggle()
+this.rigEventListeners()
+this.updateToggleState()}
+initToggle(){this.parentElement.innerHTML='<div id="theme-label-header-span" class="theme-label"></div>'+
+'<label class="theme-toggle">'+
+'<input type="checkbox" id="darkModeToggle" />'+
+'<span class="icons moon-svg">'+
+'<svg class="icon moon" viewBox="0 0 24 24">'+
+'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />'+
+'</svg>'+
+'</span>'+
+'<span class="slider"></span>'+
+'<span class="icons sun-svg">'+
+'<svg class="icon sun" viewBox="0 0 24 24">'+
+'<circle cx="12" cy="12" r="5" />'+
+'<g stroke-width="2">'+
+'<line x1="12" y1="1" x2="12" y2="3" />'+
+'<line x1="12" y1="21" x2="12" y2="23" />'+
+'<line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />'+
+'<line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />'+
+'<line x1="1" y1="12" x2="3" y2="12" />'+
+'<line x1="21" y1="12" x2="23" y2="12" />'+
+'<line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />'+
+'<line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />'+
+'</g>'+
+'</svg>'+
+'</span>'+
+'</label>';this.checkbox=this.parentElement.querySelector("#darkModeToggle");this.label=this.parentElement.querySelector("#theme-label-header-span");}
+rigEventListeners(){this.checkbox.title="Toggle Light/Dark Page Theme"
+this.checkbox.addEventListener("change",()=>{this.handleThemeChange()})}
+handleThemeChange(){const newTheme=this.checkbox.checked?"light":"dark"
+this.setTheme(newTheme)}
+setTheme(theme){this.currentTheme=theme
+const htmlTag=document.documentElement
+if(theme==="light"){htmlTag.classList.remove("dark-theme")
+htmlTag.classList.add("light-theme")
+localStorage.setItem("theme","light")
+window.theme="light"
+this.label.innerText="Light Theme"
+this.checkbox.checked=true}else{htmlTag.classList.remove("light-theme")
+htmlTag.classList.add("dark-theme")
+localStorage.setItem("theme","dark")
+window.theme="dark"
+this.label.innerText="Dark Theme"
+this.checkbox.checked=false}
+this.updateCharts()}
+updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
+this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
+updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)
+if(typeof chartObj.updateChartOptions==='function'){chartObj.updateChartOptions()}
+if(chartObj.chart&&typeof chartObj.chart.update==='function'){chartObj.chart.update()}}})}}
+getTheme(){return this.currentTheme}}
 class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
 this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
 this.pins=new Set()
