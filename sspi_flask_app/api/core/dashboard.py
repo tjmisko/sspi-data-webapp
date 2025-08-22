@@ -35,10 +35,13 @@ from sspi_flask_app.models.database import (
 )
 from datetime import datetime
 import hashlib
+import logging
+log = logging.getLogger(__name__)
 
 dashboard_bp = Blueprint(
     "dashboard_bp", __name__, template_folder="templates", static_folder="static"
 )
+
 
 
 @dashboard_bp.route("/status/database/<database>")
@@ -177,6 +180,7 @@ def get_dynamic_indicator_line_data(indicator_code):
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
+    country_group_map = sspi_metadata.country_group_map()
     return jsonify(
         {
             "data": dynamic_score_data,
@@ -184,6 +188,7 @@ def get_dynamic_indicator_line_data(indicator_code):
             "labels": year_labels,
             "description": description,
             "groupOptions": group_options,
+            "countryGroupMap": country_group_map,
             "itemOptions": item_options,
             "itemType": doc_type,
             "itemCode": indicator_code,
@@ -291,6 +296,7 @@ def get_dynamic_score_line_data(item_code):
         year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
+    country_group_map = sspi_metadata.country_group_map()
     return jsonify(
         {
             "data": dynamic_score_data,
@@ -298,6 +304,7 @@ def get_dynamic_score_line_data(item_code):
             "labels": year_labels,
             "description": description,
             "groupOptions": group_options,
+            "countryGroupMap": country_group_map,
             "itemOptions": item_options,
             "itemType": doc_type,
             "itemCode": item_code,
