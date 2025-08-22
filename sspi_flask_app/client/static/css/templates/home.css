@@ -9,9 +9,10 @@
   gap: 1.25rem;
   margin-bottom: 1rem;
   margin-top: 0.25rem;
-  max-width: 1400px;
+  max-width: min(1400px, 100%);
   margin-left: auto;
   margin-right: auto;
+  box-sizing: border-box;
 }
 
 .hero-textbox {
@@ -19,10 +20,11 @@
   min-width: min(100%, 700px);
   background-color: var(--box-background-color);
   padding: 1.25rem;
-  max-width: 85ch;
+  max-width: min(85ch, 100%);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
+  box-sizing: border-box;
 }
 
 .hero-aside-wrapper {
@@ -76,10 +78,12 @@
 
 .pillar-navigation {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 0.8rem;
   margin-top: 1.25rem;
   font-size: 0.85em;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .home-link {
@@ -128,6 +132,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .category-item {
@@ -164,6 +170,9 @@
   transition: all 0.2s ease-in-out;
   border: 2px solid transparent;
   box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 100%;
 }
 
 .pillar-navigation-wrapper:hover {
@@ -212,4 +221,68 @@
   background-color: color-mix(in srgb, var(--primary-color) 85%, black);
   transform: none;
   color: white;
+}
+
+/* Responsive Media Queries */
+
+/* Small screens: Prevent overflow */
+@media (max-width: 900px) {
+  .hero-box {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  .hero-textbox {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .pillar-navigation {
+    grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  }
+}
+
+/* Mobile: Single column layout */
+@media (max-width: 768px) {
+  .pillar-navigation {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .pillar-navigation-wrapper {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Adjust hero layout for mobile */
+  .hero-box {
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .hero-textbox {
+    padding: 1rem;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .hero-aside-wrapper {
+    width: 100%;
+  }
+
+  .hero-title {
+    font-size: 1.2rem;
+  }
+
+  .hero-p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Desktop: Three columns layout */
+@media (min-width: 769px) {
+  .pillar-navigation {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
