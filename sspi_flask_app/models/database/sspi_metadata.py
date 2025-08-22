@@ -175,7 +175,10 @@ class SSPIMetadata(MongoWrapper):
             {"DocumentType": "IndicatorCodes", "Metadata": item_codes["Indicator"]},
             {"DocumentType": "DatasetCodes", "Metadata": [d["DatasetCode"] for d in dataset_details]},
         ])
-        metadata.extend(self.build_country_groups(country_groups))
+        cgroups = self.build_country_groups(country_groups)
+        cgroup_map = self.build_country_group_map(cgroups)
+        metadata.extend(cgroups)
+        metadata.append(cgroup_map)
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_item_details)
         metadata.extend(source_details)
@@ -657,14 +660,46 @@ class SSPIMetadata(MongoWrapper):
             })
         return groups_tree
 
-    def get_country_groups(self, CountryCode: str) -> list[str]:
+    def country_group_map(self) -> dict[str, list[str]]:
+        """
+        Returns a map from country_code to groups for all countries
+        """
+        return self.find_one({"DocumentType": "CountryGroupMap"})["Metadata"]
+
+    def build_country_group_map(self, cgroups):
+        """
+        Build a country group map where each country code maps to the list of groups it belongs to
+        
+        :param cgroups: List of country group documents from build_country_groups
+        :return: A metadata document containing the country group map
+        """
+        country_group_map = {}
+        
+        # Process each country group document
+        for group_doc in cgroups:
+            if group_doc["DocumentType"] == "CountryGroup":
+                group_name = group_doc["Metadata"]["CountryGroupName"]
+                countries = group_doc["Metadata"]["Countries"]
+                
+                # Add this group to each country's list of groups
+                for country_code in countries:
+                    if country_code not in country_group_map:
+                        country_group_map[country_code] = []
+                    country_group_map[country_code].append(group_name)
+        
+        return {
+            "DocumentType": "CountryGroupMap",
+            "Metadata": country_group_map
+        }
+
+    def get_country_groups(self, country_code: str) -> list[str]:
         """
         Return a list containing the group names to which the country belongs
         """
         groups = self.find({"DocumentType": "CountryGroup"})
         group_list = []
         for g in groups:
-            if CountryCode in g["Metadata"]["Countries"]:
+            if country_code in g["Metadata"]["Countries"]:
                 group_list.append(g["Metadata"]["CountryGroupName"])
         return group_list
 

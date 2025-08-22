@@ -918,6 +918,7 @@ class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=
 this.CountryList=CountryList
 this.endpointURL=endpointURL
 this.pins=new Set()
+this.missingCountries=[]
 this.colorProvider=colorProvider
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
 this.chartInteractionPlugin=chartInteractionPlugin
@@ -940,7 +941,7 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-this.chartOptions.innerHTML=`<button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div></div></details><details class="country-group-options chart-options-details"><summary class="country-group-selector-summary">Country Groups</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Group</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="draw-button">Draw 10 Countries</button><button class="show-in-group-button">Show All in Group</button></div></div></div></details><details class="pinned-country-details chart-options-details"><summary>Pinned Countries</summary><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.chartOptions.innerHTML=`<button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="draw-button">Draw 10 Countries</button><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -1012,6 +1013,22 @@ this.legendItems.appendChild(newPin)})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
 button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
+updateMissingCountries(){const missingCountriesList=this.chartOptions.querySelector('.missing-countries-list')
+const missingCountriesSummary=this.chartOptions.querySelector('.missing-countries-summary')
+if(!missingCountriesList||!missingCountriesSummary){return}
+this.refreshMissingCountriesDisplay()}
+refreshMissingCountriesDisplay(){const missingCountriesList=this.chartOptions.querySelector('.missing-countries-list')
+const missingCountriesSummary=this.chartOptions.querySelector('.missing-countries-summary')
+if(!missingCountriesList||!missingCountriesSummary){return}
+const filteredMissing=this.missingCountries.filter(country=>{return country.CGroup&&country.CGroup.includes(this.countryGroup)})
+const visibleCountriesInGroup=this.chart.data.datasets.filter(dataset=>{return dataset.CGroup&&dataset.CGroup.includes(this.countryGroup)}).length
+const totalCountriesInGroup=filteredMissing.length+visibleCountriesInGroup
+missingCountriesList.innerHTML=''
+if(filteredMissing.length===0){const message=this.missingCountries.length===0?'All countries have data':'All countries in '+this.countryGroup+' have data'
+missingCountriesList.innerHTML='<div class="missing-countries-none">'+message+'</div>'
+missingCountriesSummary.innerHTML=''}else{const countryElements=filteredMissing.map(country=>{return'<span class="missing-country-item">'+country.CCode+'</span>'}).join(', ')
+missingCountriesList.innerHTML=countryElements
+missingCountriesSummary.innerHTML=filteredMissing.length+' of '+totalCountriesInGroup+' countries in '+this.countryGroup+' missing data'}}
 updateDescription(description){const dbox=this.chartOptions.querySelector('.dynamic-item-description')
 dbox.innerHTML='<p><b>Description: </b> '+description+'</p>'}
 updateItemDropdown(options){const default_item=this.window.location.href.split('/')[-1]
@@ -1043,13 +1060,51 @@ if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.title.innerText=data.title
 this.itemType=data.itemType
 this.groupOptions=data.groupOptions
+this.countryGroupMap=data.countryGroupMap||{}
+this.missingCountries=[]
 this.getPins()
 this.updateLegend()
 this.updateItemDropdown(data.itemOptions,data.itemType)
 this.updateDescription(data.description)
 this.updateChartColors()
 this.updateCountryGroups()
-this.chart.update()}
+this.chart.update()
+console.log('=== About to call computeMissingCountriesAsync ===')
+console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
+this.computeMissingCountriesAsync()}
+computeMissingCountriesAsync(){console.log('=== computeMissingCountriesAsync called ===')
+setTimeout(()=>{console.log('=== setTimeout callback executing ===')
+this.computeMissingCountries()},0)}
+computeMissingCountries(){console.log('=== Starting computeMissingCountries ===')
+if(!this.countryGroupMap||Object.keys(this.countryGroupMap).length===0){console.log('No country group map available for missing countries computation')
+return}
+console.log('Country group map keys:',Object.keys(this.countryGroupMap).length,'countries')
+console.log('First 10 countries in group map:',Object.keys(this.countryGroupMap).slice(0,10))
+console.log('SGP in group map?','SGP'in this.countryGroupMap,this.countryGroupMap['SGP'])
+const missingCountries=[]
+const seenCountries=new Set()
+console.log('Total datasets:',this.chart.data.datasets.length)
+console.log('Dataset country codes:',this.chart.data.datasets.map(d=>d.CCode))
+this.chart.data.datasets.forEach(countryData=>{const countryCode=countryData.CCode
+console.log(`Processing dataset for country:${countryCode}`)
+seenCountries.add(countryCode)
+const scores=countryData.data||[]
+const scoresEmpty=!scores||scores.length===0||scores.every(s=>s===null||s===undefined||s==='')
+console.log(`Country ${countryCode}:data length=${scores.length},empty=${scoresEmpty}`)
+if(scoresEmpty){console.log(`Adding ${countryCode}to missing(empty data)`)
+missingCountries.push({CCode:countryCode,CName:countryData.CName||countryCode,CGroup:countryData.CGroup||this.countryGroupMap[countryCode]||[]})}})
+console.log('Seen countries:',Array.from(seenCountries))
+console.log('SGP in seen countries?',seenCountries.has('SGP'))
+let notSeenCount=0
+Object.entries(this.countryGroupMap).forEach(([countryCode,countryGroups])=>{if(!seenCountries.has(countryCode)){notSeenCount++
+if(countryCode==='SGP'){console.log(`SGP not seen-adding to missing.Groups:`,countryGroups)}
+missingCountries.push({CCode:countryCode,CName:countryCode,CGroup:countryGroups})}})
+console.log(`Countries not seen in datasets:${notSeenCount}`)
+console.log(`Total missing countries found:${missingCountries.length}`)
+console.log('Missing countries:',missingCountries.map(c=>c.CCode))
+console.log('=== End computeMissingCountries ===')
+this.missingCountries=missingCountries
+this.updateMissingCountries()}
 getPins(){const storedPins=window.observableStorage.getItem('pinnedCountries')
 console.log("Stored pins:",storedPins)
 if(storedPins){this.pins=new Set(storedPins)}
@@ -1070,7 +1125,8 @@ this.countryGroup=groupName
 window.observableStorage.setItem("countryGroup",groupName)
 console.log('Showing group:',groupName)
 this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
-this.updateChartPreservingYAxis()}
+this.updateChartPreservingYAxis()
+this.refreshMissingCountriesDisplay()}
 hideUnpinned(){this.pinnedOnly=true
 window.observableStorage.setItem("pinnedOnly",true)
 console.log('Hiding unpinned countries')
@@ -1313,6 +1369,8 @@ this.treepath=data.treepath
 if(data.itemType==="Indicator"&&data.treepath){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
 this.itemType=data.itemType
 this.groupOptions=data.groupOptions
+this.countryGroupMap=data.countryGroupMap||{}
+this.missingCountries=[]
 this.getPins()
 this.updateLegend()
 this.updateItemDropdown(data.itemOptions,data.itemType)
@@ -1323,7 +1381,10 @@ this.initializeDefaultRanges()
 this.updateSeriesDropdown()
 this.updateChartTitle()
 this.updateActiveSeriesDescription()
-this.chart.update()}
+this.chart.update()
+console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
+console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
+this.computeMissingCountriesAsync()}
 initChartJSCanvas(){this.chartContainer=document.createElement('div')
 this.chartContainer.classList.add('panel-chart-container')
 this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
