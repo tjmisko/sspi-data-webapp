@@ -377,7 +377,59 @@ expandPillar(pillarCode){const pillarSection=this.container.querySelector(`[data
 collapsePillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='false';this.updateSectionVisibility(pillarContent,false);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}}}}
 findToggleButtonForSection(section){const parent=section.parentElement;if(!parent)return null;if(section.classList.contains('pillar-content')){return parent.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');}else if(section.classList.contains('category-content')){return parent.querySelector('.indicator-table-category-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-details')){return parent.querySelector('.indicator-header .collapse-toggle-btn');}
 return null;}}
-window.IndicatorTable=IndicatorTable;const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"rgba(0,0,0,.5)",circleWidth:1,guideColor:"rgba(0,0,0,.35)",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#000",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
+window.IndicatorTable=IndicatorTable;class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
+this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
+this.initToggle()
+this.rigEventListeners()
+this.updateToggleState()}
+initToggle(){this.parentElement.innerHTML='<div id="theme-label-header-span" class="theme-label"></div>'+
+'<label class="theme-toggle">'+
+'<input type="checkbox" id="darkModeToggle" />'+
+'<span class="icons moon-svg">'+
+'<svg class="icon moon" viewBox="0 0 24 24">'+
+'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />'+
+'</svg>'+
+'</span>'+
+'<span class="slider"></span>'+
+'<span class="icons sun-svg">'+
+'<svg class="icon sun" viewBox="0 0 24 24">'+
+'<circle cx="12" cy="12" r="5" />'+
+'<g stroke-width="2">'+
+'<line x1="12" y1="1" x2="12" y2="3" />'+
+'<line x1="12" y1="21" x2="12" y2="23" />'+
+'<line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />'+
+'<line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />'+
+'<line x1="1" y1="12" x2="3" y2="12" />'+
+'<line x1="21" y1="12" x2="23" y2="12" />'+
+'<line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />'+
+'<line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />'+
+'</g>'+
+'</svg>'+
+'</span>'+
+'</label>';this.checkbox=this.parentElement.querySelector("#darkModeToggle");this.label=this.parentElement.querySelector("#theme-label-header-span");}
+rigEventListeners(){this.checkbox.title="Toggle Light/Dark Page Theme"
+this.checkbox.addEventListener("change",()=>{this.handleThemeChange()})}
+handleThemeChange(){const newTheme=this.checkbox.checked?"light":"dark"
+this.setTheme(newTheme)}
+setTheme(theme){this.currentTheme=theme
+const htmlTag=document.documentElement
+if(theme==="light"){htmlTag.classList.remove("dark-theme")
+htmlTag.classList.add("light-theme")
+localStorage.setItem("theme","light")
+window.theme="light"
+this.label.innerText="Light Theme"
+this.checkbox.checked=true}else{htmlTag.classList.remove("light-theme")
+htmlTag.classList.add("dark-theme")
+localStorage.setItem("theme","dark")
+window.theme="dark"
+this.label.innerText="Dark Theme"
+this.checkbox.checked=false}
+this.updateCharts()}
+updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
+this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
+updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
+getTheme(){return this.currentTheme}}
+const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"rgba(0,0,0,.5)",circleWidth:1,guideColor:"rgba(0,0,0,.35)",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#000",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
 catch(e){console.error("chartInteractionPlugin onDatasetClick:",e);}}}
 chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled){this._resetProximity(chart);return;}
 const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
@@ -840,7 +892,6 @@ createNodeElement(node,isRoot=false){const ul=document.createElement('ul');ul.ro
 const li=document.createElement('li');li.role='none';const a=document.createElement('a');a.role='treeitem';a.ariaOwns=node.children.length?`id-${node.itemCode.toLowerCase()}-subtree`:null;a.ariaExpanded=node.children.length?(node.expanded?'true':'false'):null;a.tabIndex=-1;a.dataset.itemCode=node.itemCode;node.element=a;const label=document.createElement('span');label.className='label';if(node.children.length>0){const icon=document.createElement('span');icon.className='icon';icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"width="13"height="10"viewBox="0 0 13 10"><polygon points="2 1, 12 1, 7 9"></polygon></svg>`;icon.addEventListener('click',(e)=>{e.stopPropagation();this.handleToggle(node);});label.appendChild(icon);}
 label.appendChild(document.createTextNode(node.itemName));a.appendChild(label);li.appendChild(a);if(node.expanded&&node.children.length>0){node.children.forEach(child=>{li.appendChild(this.createNodeElement(child));});}
 ul.appendChild(li);return ul;}
-<<<<<<< HEAD
 setupNavigation(){this.container.addEventListener('keydown',this.handleKeyDown.bind(this));this.container.addEventListener('click',this.handleClick.bind(this));document.body.addEventListener('focusin',this.handleFocusChange.bind(this));document.body.addEventListener('mousedown',this.handleFocusChange.bind(this));}
 handleKeyDown(e){const activeElement=document.activeElement;if(activeElement&&(activeElement.tagName==='INPUT'||activeElement.tagName==='TEXTAREA'||activeElement.contentEditable==='true')){return;}
 if(e.target.getAttribute('role')!=='treeitem'){return;}
@@ -865,65 +916,6 @@ handleFocusChange(e){if(this.tree){this.navShell.classList.toggle('focus',this.t
 highlightTreeItem(itemCode){this.container.querySelectorAll('[role="treeitem"]').forEach(el=>{el.classList.remove('active-view-element');el.tabIndex=-1;});const node=this.findNodeByItemCode(this.rootNode,itemCode);if(node&&node.element){node.element.classList.add('active-view-element');node.element.tabIndex=0;}else{if(this.rootNode.element){this.rootNode.element.tabIndex=0;}}}
 ensureItemVisible(itemCode){const node=this.findNodeByItemCode(this.rootNode,itemCode);if(node){const changedNodes=node.expandToRoot();if(changedNodes.length>0){changedNodes.forEach(changedNode=>{this.rebuildSubtree(changedNode);});this.navigationManager.rebuild();}
 this.highlightTreeItem(itemCode);}}}
-=======
-#onActivate(e){const itemCode=e.currentTarget.dataset.itemCode;this.highlightTreeItem(itemCode);e.stopPropagation();this.reload?.(itemCode);}#onKey(e){const activeElement=document.activeElement;if(activeElement&&(activeElement.tagName==='INPUT'||activeElement.tagName==='TEXTAREA'||activeElement.contentEditable==='true')){return;}
-const key=e.key;const ti=e.currentTarget;const vis=this.items.filter(n=>!this.#parent(n)||this.#parent(n).ariaExpanded==='true');const i=vis.indexOf(ti);let target=null;const move=(idx)=>{target=vis[idx];};const next=()=>move((i+1)%vis.length);const prev=()=>move((i-1+vis.length)%vis.length);const home=()=>move(0);const end=()=>move(vis.length-1);const expand=()=>{if(ti.hasAttribute('aria-expanded')){if(ti.ariaExpanded==='false')ti.ariaExpanded='true';else next();}};const collapse=()=>{if(ti.hasAttribute('aria-expanded')&&ti.ariaExpanded==='true')
-ti.ariaExpanded='false';else target=this.#parent(ti);};const printable=key.length===1&&/\S/.test(key);switch(key){case'ArrowDown':next();break;case'ArrowUp':prev();break;case'ArrowRight':expand();break;case'ArrowLeft':collapse();break;case'Home':home();break;case'End':end();break;case' ':ti.click();break;default:if(printable){target=vis.find((n,idx)=>idx>i&&n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()))||vis.find(n=>n.textContent.trim().toLowerCase().startsWith(key.toLowerCase()));}}
-if(target){target.focus();this.items.forEach(n=>n.tabIndex=-1);target.tabIndex=0;e.preventDefault();}}#focusShell(e){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}#parent(ti){return ti.parentElement?.parentElement?.previousElementSibling?.role==='treeitem'?ti.parentElement.parentElement.previousElementSibling:null;}
-highlightTreeItem(ItemCode){this.items.forEach(ti=>{ti.classList.remove('active-view-element');});const item=this.items.find(ti=>ti.dataset.itemCode===ItemCode);if(item){item.classList.add('active-view-element')}}}
-class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
-this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
-this.initToggle()
-this.rigEventListeners()
-this.updateToggleState()}
-initToggle(){this.parentElement.innerHTML='<div id="theme-label-header-span" class="theme-label"></div>'+
-'<label class="theme-toggle">'+
-'<input type="checkbox" id="darkModeToggle" />'+
-'<span class="icons moon-svg">'+
-'<svg class="icon moon" viewBox="0 0 24 24">'+
-'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />'+
-'</svg>'+
-'</span>'+
-'<span class="slider"></span>'+
-'<span class="icons sun-svg">'+
-'<svg class="icon sun" viewBox="0 0 24 24">'+
-'<circle cx="12" cy="12" r="5" />'+
-'<g stroke-width="2">'+
-'<line x1="12" y1="1" x2="12" y2="3" />'+
-'<line x1="12" y1="21" x2="12" y2="23" />'+
-'<line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />'+
-'<line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />'+
-'<line x1="1" y1="12" x2="3" y2="12" />'+
-'<line x1="21" y1="12" x2="23" y2="12" />'+
-'<line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />'+
-'<line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />'+
-'</g>'+
-'</svg>'+
-'</span>'+
-'</label>';this.checkbox=this.parentElement.querySelector("#darkModeToggle");this.label=this.parentElement.querySelector("#theme-label-header-span");}
-rigEventListeners(){this.checkbox.title="Toggle Light/Dark Page Theme"
-this.checkbox.addEventListener("change",()=>{this.handleThemeChange()})}
-handleThemeChange(){const newTheme=this.checkbox.checked?"light":"dark"
-this.setTheme(newTheme)}
-setTheme(theme){this.currentTheme=theme
-const htmlTag=document.documentElement
-if(theme==="light"){htmlTag.classList.remove("dark-theme")
-htmlTag.classList.add("light-theme")
-localStorage.setItem("theme","light")
-window.theme="light"
-this.label.innerText="Light Theme"
-this.checkbox.checked=true}else{htmlTag.classList.remove("light-theme")
-htmlTag.classList.add("dark-theme")
-localStorage.setItem("theme","dark")
-window.theme="dark"
-this.label.innerText="Dark Theme"
-this.checkbox.checked=false}
-this.updateCharts()}
-updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
-this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
-updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
-getTheme(){return this.currentTheme}}
->>>>>>> main
 class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
 this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
 this.pins=new Set()
