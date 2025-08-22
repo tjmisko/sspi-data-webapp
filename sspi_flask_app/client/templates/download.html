@@ -1,0 +1,195 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>Download SSPI Data</title>
+{% endblock %}
+
+{% block content %}
+<article class="page-content">
+    <section class="download-section">
+        <h1>Download SSPI Data</h1>
+        <p>Select your data criteria and download format to export SSPI data for your analysis.</p>
+        
+        <form id="download-form" class="download-form">
+            <div class="form-section">
+                <h2>Select Database</h2>
+                <select name="database" id="database-select" class="form-control">
+                    <option value="sspi_main_data_v3" selected>Main SSPI Data</option>
+                    {% for db in databases %}
+                        <option value="{{ db }}">{{ db }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-section">
+                <h2>Select Indicators</h2>
+                <p class="form-help">Select indicators, categories, or entire pillars. Parent selections automatically include all children.</p>
+                
+                {% if indicator_tree.error %}
+                    <div class="error-message">
+                        <p>Error loading indicator tree: {{ indicator_tree.error }}</p>
+                        <p>Falling back to basic indicator selection.</p>
+                        <select name="IndicatorCode" id="indicator-select-fallback" class="form-control" multiple size="10">
+                            <option value="">All Indicators</option>
+                        </select>
+                    </div>
+                {% else %}
+                    <div class="hierarchical-selector-container"></div>
+                    
+                    <!-- Hidden inputs will be populated by JavaScript -->
+                    <div class="selected-codes-container" style="display: none;"></div>
+                {% endif %}
+            </div>
+
+            <div class="form-section">
+                <h2>Select Countries</h2>
+                <div class="country-selection-toggle">
+                    <div class="toggle-switch">
+                        <input type="radio" name="country-type" value="group" id="country-group-radio" checked>
+                        <label for="country-group-radio" class="toggle-option">Country Groups</label>
+                        <input type="radio" name="country-type" value="individual" id="country-individual-radio">
+                        <label for="country-individual-radio" class="toggle-option">Individual Countries</label>
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                
+                <div id="country-groups" class="country-option">
+                    <p class="form-help">Select one or more country groups</p>
+                    <div class="country-groups-grid">
+                        {% for group in country_groups %}
+                            <label class="country-group-checkbox">
+                                <input type="checkbox" name="CountryGroup" value="{{ group }}">
+                                <span class="checkbox-label">{{ group }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div id="individual-countries" class="country-option" style="display: none;">
+                    <p class="form-help">Select one or more countries</p>
+                    <div class="countries-grid">
+                        {% for country in countries %}
+                            <label class="country-checkbox">
+                                <input type="checkbox" name="CountryCode" value="{{ country.code }}">
+                                <span class="checkbox-label">{{ country.name }} ({{ country.code }})</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Select Years</h2>
+                <p class="form-help">Select one or more years</p>
+                <div class="years-controls">
+                    <button type="button" class="years-btn" data-action="select-all-years">Select All Years</button>
+                    <button type="button" class="years-btn" data-action="deselect-all-years">Deselect All Years</button>
+                </div>
+                <div class="years-grid">
+                    {% for year in range(2000, 2024) %}
+                        <label class="year-checkbox">
+                            <input type="checkbox" name="Year" value="{{ year }}" checked>
+                            <span class="checkbox-label">{{ year }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Download Format</h2>
+                <div class="download-buttons">
+                    <button type="button" class="download-btn csv-btn">
+                        Download as CSV
+                    </button>
+                    <button type="button" class="download-btn json-btn">
+                        Download as JSON
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+</article>
+
+<script>
+// Initialize the DownloadForm class and HierarchicalSelector when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const formElement = document.getElementById('download-form');
+    
+    // Initialize hierarchical selector if tree data is available
+    {% if indicator_tree.error %}
+        console.error('Indicator tree error:', '{{ indicator_tree.error }}');
+    {% else %}
+        const indicatorTreeData = {{ indicator_tree | tojson }};
+        const selectorContainer = document.querySelector('.hierarchical-selector-container');
+        
+        if (indicatorTreeData && selectorContainer && typeof HierarchicalIndicatorSelector !== 'undefined') {
+            window.hierarchicalSelector = new HierarchicalIndicatorSelector(selectorContainer, {
+                onSelectionChange: (selectedCodes) => {
+                    // Update hidden form inputs for form submission
+                    const hiddenContainer = document.querySelector('.selected-codes-container');
+                    if (hiddenContainer) {
+                        hiddenContainer.innerHTML = selectedCodes.map(code => 
+                            `<input type="hidden" name="IndicatorCode" value="${code}">`
+                        ).join('');
+                    }
+                }
+            });
+            window.hierarchicalSelector.initialize(indicatorTreeData);
+        } else {
+            console.error('Failed to initialize HierarchicalIndicatorSelector:', {
+                hasTreeData: !!indicatorTreeData,
+                hasContainer: !!selectorContainer,
+                hasClass: typeof HierarchicalIndicatorSelector !== 'undefined'
+            });
+        }
+    {% endif %}
+    
+    // Initialize download form
+    if (formElement && typeof DownloadForm !== 'undefined') {
+        const downloadForm = new DownloadForm(formElement);
+        console.log('DownloadForm initialized');
+    } else {
+        console.error('Failed to initialize DownloadForm:', {
+            hasFormElement: !!formElement,
+            hasClass: typeof DownloadForm !== 'undefined'
+        });
+    }
+    
+    // Handle country selection toggle
+    const countryTypeRadios = document.querySelectorAll('input[name="country-type"]');
+    const countryGroupsDiv = document.getElementById('country-groups');
+    const individualCountriesDiv = document.getElementById('individual-countries');
+    
+    countryTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'group') {
+                countryGroupsDiv.style.display = 'block';
+                individualCountriesDiv.style.display = 'none';
+            } else {
+                countryGroupsDiv.style.display = 'none';
+                individualCountriesDiv.style.display = 'block';
+            }
+        });
+    });
+    
+    // Handle years select/deselect all buttons
+    const yearsButtons = document.querySelectorAll('.years-btn');
+    yearsButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.dataset.action;
+            const yearCheckboxes = document.querySelectorAll('input[name="Year"]');
+            
+            if (action === 'select-all-years') {
+                yearCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            } else if (action === 'deselect-all-years') {
+                yearCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

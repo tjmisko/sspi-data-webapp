@@ -212,6 +212,82 @@ hasChangesFromBaseline(){if(!this.baselineMetadata)return false;const diff=this.
 getChangeCount(){if(!this.baselineMetadata)return 0;const diff=this.generateDiff();return diff.summary?diff.summary.totalChanges:0;}
 async fetch(url,options={}){const response=await window.fetch(url,options);if(!response.ok){throw new Error(`HTTP error!status:${response.status}`);}
 return await response.json();}}
+class DownloadForm{constructor(formElement){this.form=formElement;this.initializeEventListeners();}
+initializeEventListeners(){const countryTypeRadios=this.form.querySelectorAll('input[name="country-type"]');countryTypeRadios.forEach(radio=>{radio.addEventListener('change',(e)=>this.handleCountryTypeChange(e));});const csvBtn=this.form.querySelector('.csv-btn');const jsonBtn=this.form.querySelector('.json-btn');if(csvBtn){csvBtn.addEventListener('click',()=>this.downloadData('csv'));}
+if(jsonBtn){jsonBtn.addEventListener('click',()=>this.downloadData('json'));}}
+handleCountryTypeChange(event){const individualSection=document.getElementById('individual-countries');const groupSection=document.getElementById('country-groups');const countrySelect=document.getElementById('country-select');const groupSelect=document.getElementById('country-group-select');if(event.target.value==='individual'){individualSection.style.display='block';groupSection.style.display='none';if(groupSelect){groupSelect.value='';}}else{individualSection.style.display='none';groupSection.style.display='block';if(countrySelect){Array.from(countrySelect.options).forEach(option=>{option.selected=false;});}}}
+buildQueryParams(){const formData=new FormData(this.form);const params=new URLSearchParams();const database=formData.get('database');if(database){params.append('database',database);}
+let indicators=[];if(window.hierarchicalSelector){indicators=window.hierarchicalSelector.getSelectedCodes();}else{indicators=formData.getAll('IndicatorCode');}
+indicators.forEach(indicator=>{if(indicator){params.append('IndicatorCode',indicator);}});const countryType=this.form.querySelector('input[name="country-type"]:checked');if(countryType&&countryType.value==='individual'){const countries=formData.getAll('CountryCode');countries.forEach(country=>{if(country){params.append('CountryCode',country);}});}else{const countryGroup=formData.get('CountryGroup');if(countryGroup){params.append('CountryGroup',countryGroup);}}
+const years=formData.getAll('Year');years.forEach(year=>{if(year){params.append('Year',year);}});return params;}
+downloadData(format){if(!this.validateForm()){return;}
+const params=this.buildQueryParams();const downloadUrl=`/api/v1/download/${format}?${params.toString()}`;window.location.href=downloadUrl;}
+clearSelections(){const selects=this.form.querySelectorAll('select');selects.forEach(select=>{if(select.multiple){Array.from(select.options).forEach(option=>{option.selected=false;});}else{select.selectedIndex=0;}});const individualRadio=this.form.querySelector('input[name="country-type"][value="individual"]');if(individualRadio){individualRadio.checked=true;this.handleCountryTypeChange({target:individualRadio});}}
+validateForm(){const params=this.buildQueryParams();let hasIndicators=false;if(window.hierarchicalSelector){hasIndicators=window.hierarchicalSelector.getSelectedCodes().length>0;}else{const formData=new FormData(this.form);hasIndicators=formData.getAll('IndicatorCode').some(code=>code);}
+if(!hasIndicators){alert('Please select at least one indicator, category, or pillar before downloading.');return false;}
+return true;}}
+class HierarchicalIndicatorSelector{constructor(container,options={}){if(!(container instanceof HTMLElement)){throw new Error('Container must be a valid HTMLElement');}
+this.container=container;this.options={onSelectionChange:null,initialExpanded:['SSPI'],enableSearch:true,enableControls:true,expandFirstLevel:true,...options};this.treeData=null;this.selectedCodes=new Set();this.expandedNodes=new Set();this.searchTerm='';this.container.innerHTML='';this.container.className='hierarchical-selector';}
+initialize(treeData){if(!treeData){this.container.innerHTML='<div class="error-message">No tree data provided</div>';return;}
+this.treeData=treeData;if(this.options.expandFirstLevel&&this.treeData.children){this.treeData.children.forEach(pillar=>{this.expandedNodes.add(pillar.itemCode);});}
+this.render();this.bindEvents();}
+render(){if(!this.treeData)return;const html=`${this.options.enableControls?this.createControlsHTML():''}<div class="tree-container">${this.renderNode(this.treeData)}</div>`;this.container.innerHTML=html;this.updateIndeterminateStates();}
+renderTreeOnly(){if(!this.treeData)return;const treeContainer=this.container.querySelector('.tree-container');if(treeContainer){treeContainer.innerHTML=this.renderNode(this.treeData);this.updateIndeterminateStates();}}
+createControlsHTML(){return`<div class="selector-controls"><div class="control-buttons"><button type="button"data-action="expand-all"class="control-btn">Expand All</button><button type="button"data-action="collapse-all"class="control-btn">Collapse All</button><button type="button"data-action="select-all"class="control-btn">Select All</button><button type="button"data-action="deselect-all"class="control-btn">Deselect All</button></div>${this.options.enableSearch?this.createSearchHTML():''}</div>`;}
+createSearchHTML(){return`<div class="search-container"><input type="text"class="search-input"placeholder="Search indicators..."value="${this.searchTerm}"></div>`;}
+renderNode(node,isVisible=true){if(!node)return'';const isExpanded=this.expandedNodes.has(node.itemCode);const isSelected=this.selectedCodes.has(node.itemCode);const hasChildren=node.children&&node.children.length>0;const matchesSearch=this.nodeMatchesSearch(node);const hasMatchingDescendants=this.hasMatchingDescendants(node);const shouldShow=isVisible&&(this.searchTerm===''||matchesSearch||hasMatchingDescendants);if(!shouldShow)return'';let checkboxState='unchecked';if(isSelected){checkboxState='checked';}else if(hasChildren&&this.hasSelectedChildren(node)){checkboxState='indeterminate';}
+let html=`<div class="tree-node level-${node.level}"data-code="${node.itemCode}"data-type="${node.itemType}"data-pillar="${this.getPillarCode(node)}"><div class="node-content">`;if(hasChildren){const expandIcon=isExpanded?'▼':'▶';html+=`<button type="button"class="expand-btn"data-code="${node.itemCode}">${expandIcon}</button>`;}else{html+=`<span class="expand-spacer"></span>`;}
+const checkedAttr=checkboxState==='checked'?' checked':'';html+=`<input type="checkbox"
+class="node-checkbox"
+data-code="${node.itemCode}"
+data-state="${checkboxState}"
+${checkedAttr}>`;const highlightedName=this.highlightSearchTerm(node.itemName);html+=`<label class="node-label ${node.itemType.toLowerCase()}-label"><span class="item-text">${highlightedName}(${this.highlightSearchTerm(node.itemCode)})</span></label></div>`;if(hasChildren&&isExpanded){html+=`<div class="children">`;for(const child of node.children){html+=this.renderNode(child,shouldShow);}
+html+=`</div>`;}
+html+=`</div>`;return html;}
+bindEvents(){this.container.addEventListener('click',(e)=>{const action=e.target.dataset.action;if(action){this.handleControlAction(action);return;}
+if(e.target.classList.contains('expand-btn')){this.toggleExpand(e.target.dataset.code);return;}});this.container.addEventListener('change',(e)=>{if(e.target.classList.contains('node-checkbox')){this.toggleSelection(e.target.dataset.code,e.target.checked);}});if(this.options.enableSearch){this.container.addEventListener('input',(e)=>{if(e.target.classList.contains('search-input')){this.handleSearchInput(e.target.value);}});this.container.addEventListener('keydown',(e)=>{if(e.target.classList.contains('search-input')&&e.key==='Enter'){e.preventDefault();this.selectFirstMatch();}});}}
+handleControlAction(action){switch(action){case'expand-all':this.expandAll();break;case'collapse-all':this.collapseAll();break;case'select-all':this.selectAll();break;case'deselect-all':this.deselectAll();break;}}
+handleSearchInput(value){this.searchTerm=value.toLowerCase();this.renderTreeOnly();}
+toggleExpand(itemCode){if(this.expandedNodes.has(itemCode)){this.expandedNodes.delete(itemCode);}else{this.expandedNodes.add(itemCode);}
+this.renderTreeOnly();}
+toggleSelection(itemCode,isChecked){const node=this.findNode(this.treeData,itemCode);if(!node)return;if(isChecked){this.selectNodeAndDescendants(node);}else{this.deselectNodeAndDescendants(node);}
+this.updateParentStates(node);this.renderTreeOnly();this.notifySelectionChange();}
+selectNodeAndDescendants(node){this.selectedCodes.add(node.itemCode);if(node.children){node.children.forEach(child=>this.selectNodeAndDescendants(child));}}
+deselectNodeAndDescendants(node){this.selectedCodes.delete(node.itemCode);if(node.children){node.children.forEach(child=>this.deselectNodeAndDescendants(child));}}
+updateParentStates(node){const parent=this.findParentNode(this.treeData,node.itemCode);if(!parent)return;const selectedChildren=parent.children.filter(child=>this.selectedCodes.has(child.itemCode));if(selectedChildren.length===0){this.selectedCodes.delete(parent.itemCode);}else if(selectedChildren.length===parent.children.length){this.selectedCodes.add(parent.itemCode);}else{this.selectedCodes.delete(parent.itemCode);}
+this.updateParentStates(parent);}
+hasSelectedChildren(node){if(!node.children)return false;return node.children.some(child=>this.selectedCodes.has(child.itemCode)||this.hasSelectedChildren(child));}
+expandAll(){const addAllNodes=(node)=>{this.expandedNodes.add(node.itemCode);if(node.children){node.children.forEach(addAllNodes);}};addAllNodes(this.treeData);this.renderTreeOnly();}
+collapseAll(){this.expandedNodes.clear();this.renderTreeOnly();}
+selectAll(){const addAllNodes=(node)=>{this.selectedCodes.add(node.itemCode);if(node.children){node.children.forEach(addAllNodes);}};addAllNodes(this.treeData);this.renderTreeOnly();this.notifySelectionChange();}
+deselectAll(){this.selectedCodes.clear();this.renderTreeOnly();this.notifySelectionChange();}
+nodeMatchesSearch(node){if(!this.searchTerm)return true;return node.itemName.toLowerCase().includes(this.searchTerm)||node.itemCode.toLowerCase().includes(this.searchTerm);}
+hasMatchingDescendants(node){if(!node.children)return false;return node.children.some(child=>this.nodeMatchesSearch(child)||this.hasMatchingDescendants(child));}
+highlightSearchTerm(text){if(!this.searchTerm)return text;const regex=new RegExp(`(${this.searchTerm})`,'gi');return text.replace(regex,'<mark>$1</mark>');}
+selectFirstMatch(){if(!this.searchTerm)return;const firstMatch=this.findFirstMatchingNode(this.treeData);if(firstMatch){const isCurrentlySelected=this.selectedCodes.has(firstMatch.itemCode);this.toggleSelection(firstMatch.itemCode,!isCurrentlySelected);this.expandParentsToNode(firstMatch.itemCode);}}
+findFirstMatchingNode(node){if(this.nodeMatchesSearch(node)){return node;}
+if(node.children){for(const child of node.children){const match=this.findFirstMatchingNode(child);if(match)return match;}}
+return null;}
+expandParentsToNode(itemCode){const expandParent=(node,targetCode,parentCode=null)=>{if(node.itemCode===targetCode&&parentCode){this.expandedNodes.add(parentCode);return true;}
+if(node.children){for(const child of node.children){if(expandParent(child,targetCode,node.itemCode)){if(parentCode){this.expandedNodes.add(parentCode);}
+return true;}}}
+return false;};expandParent(this.treeData,itemCode);}
+getPillarCode(node){if(node.itemType==='SSPI'){return'';}
+if(node.itemType==='Pillar'){return node.itemCode;}
+return this.findPillarAncestor(node,this.treeData);}
+findPillarAncestor(targetNode,currentNode,pillarCode=null){if(currentNode.itemType==='Pillar'){pillarCode=currentNode.itemCode;}
+if(currentNode.itemCode===targetNode.itemCode){return pillarCode;}
+if(currentNode.children){for(const child of currentNode.children){const result=this.findPillarAncestor(targetNode,child,pillarCode);if(result)return result;}}
+return null;}
+findNode(root,itemCode){if(root.itemCode===itemCode)return root;if(root.children){for(const child of root.children){const found=this.findNode(child,itemCode);if(found)return found;}}
+return null;}
+findParentNode(root,childCode,parent=null){if(root.itemCode===childCode)return parent;if(root.children){for(const child of root.children){const found=this.findParentNode(child,childCode,root);if(found)return found;}}
+return null;}
+updateIndeterminateStates(){const checkboxes=this.container.querySelectorAll('.node-checkbox');checkboxes.forEach(checkbox=>{const state=checkbox.dataset.state;if(state==='indeterminate'){checkbox.indeterminate=true;}});}
+notifySelectionChange(){if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedCodes());}}
+getSelectedCodes(){return Array.from(this.selectedCodes);}
+setSelectedCodes(codes){this.selectedCodes=new Set(codes);this.renderTreeOnly();this.notifySelectionChange();}
+destroy(){this.container.innerHTML='';this.container.className='';this.selectedCodes.clear();this.expandedNodes.clear();this.treeData=null;}}
 class IndicatorSelectionMenu{constructor(options={}){this.options={onCreateNew:null,onAddExisting:null,...options}
 this.modal=null}
 show(indicatorsContainer){this.indicatorsContainer=indicatorsContainer
