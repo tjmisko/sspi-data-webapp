@@ -8,7 +8,7 @@ from cli.utilities import stream_response
 @click.argument("series_code", type=str)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 @click.option("--overwrite-all", "-O", default=False, is_flag=True, help="Overwrite all existing data for the series")
-@click.option("--overwrite", "-o", multiple=True, required=False, is_flag=True, help="")
+@click.option("--overwrite", "-o", multiple=True, required=False, help="")
 def collect(series_code, overwrite_all: bool, overwrite: list[str], remote: bool):
     connector = SSPIDatabaseConnector()
     series_code = series_code.upper()
