@@ -18,8 +18,10 @@ class MongoWrapper:
         cursor = self._mongo_database.find_one(query, options)
         return json.loads(json_util.dumps(cursor))
 
-    def find(self, query: dict, options: dict = {"_id": 0}) -> list[dict]:
+    def find(self, query: dict, options: dict = {"_id": 0}, limit: int = None) -> list[dict]:
         cursor = self._mongo_database.find(query, options)
+        if limit is not None and limit > 0:
+            cursor = cursor.limit(limit)
         return json.loads(json_util.dumps(cursor))
 
     def insert_one(self, document: dict) -> int:
