@@ -61,6 +61,10 @@ const chartInteractionPlugin = {
     closestDatasetIdx: null
   },
 
+  // Collision detection throttling
+  _lastCollisionTime: 0,
+  _collisionCooldown: 1000, // Minimum milliseconds between collision detections
+
   // Constants
   _LABEL_FONT: 'bold 14px Arial',
   _POINT_SCALE: 1.6,
@@ -70,6 +74,8 @@ const chartInteractionPlugin = {
     // Clear label state when data changes to force rebuild with new data
     if (args.mode !== 'resize') {
       this._clearLabelState(chart);
+      // Reset collision throttle to allow immediate recalculation after data change
+      this._lastCollisionTime = 0;
     }
   },
 
@@ -458,7 +464,17 @@ const chartInteractionPlugin = {
       chart._needsLabelRebuild = false;
     }
     
-    if (opts.showDefaultLabels && !chart._defaultVisibleLabels) {
+    // Throttle collision detection - only run if cooldown period has elapsed
+    const now = Date.now();
+    const timeSinceLastCollision = now - this._lastCollisionTime;
+    const shouldRunCollisionDetection = opts.showDefaultLabels && 
+                                       !chart._defaultVisibleLabels && 
+                                       timeSinceLastCollision >= this._collisionCooldown;
+    
+    if (shouldRunCollisionDetection) {
+      // Update timestamp before running collision detection
+      this._lastCollisionTime = now;
+      console.log(`[Chart Plugin] Running collision detection at ${now} (${labels.length} labels)`);
       const spacing = opts.defaultLabelSpacing;
       const defaultVisible = new Set();
       
@@ -504,6 +520,9 @@ const chartInteractionPlugin = {
       
       // Reorder datasets so those with visible labels are drawn on top
       this._reorderDatasetsForVisibility(chart, labels, defaultVisible);
+    } else if (opts.showDefaultLabels && !chart._defaultVisibleLabels) {
+      // We're in cooldown period but cache is missing - skip collision detection for now
+      // Labels will be drawn with default opacity until cooldown expires
     }
 
     /* Draw labels - draw winners last so they appear on top */

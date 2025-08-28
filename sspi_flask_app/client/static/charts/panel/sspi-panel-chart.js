@@ -52,6 +52,11 @@ class SSPIPanelChart extends PanelChart {
     }
 
     buildItemTree(tree, selectedItemCode) {
+      // Cleanup existing tree instance before creating a new one
+      if (this.itemTreeObject && typeof this.itemTreeObject.destroy === 'function') {
+        this.itemTreeObject.destroy();
+      }
+      
       this.itemTreeObject = new SSPIItemTree(
         this.itemTree.querySelector('.item-tree-content'),   // only the content box
         tree,
