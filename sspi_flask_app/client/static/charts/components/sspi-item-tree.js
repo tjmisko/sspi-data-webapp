@@ -314,13 +314,18 @@ class SSPIItemTree {
         // Initial tab focus will be set by highlightTreeItem/ensureItemVisible
         // or default to first item if no active item
         
+        // Store bound functions for proper cleanup
+        this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+        this.boundHandleClick = this.handleClick.bind(this);
+        this.boundHandleFocusChange = this.handleFocusChange.bind(this);
+        
         // Add event listeners
-        this.container.addEventListener('keydown', this.handleKeyDown.bind(this));
-        this.container.addEventListener('click', this.handleClick.bind(this));
+        this.container.addEventListener('keydown', this.boundHandleKeyDown);
+        this.container.addEventListener('click', this.boundHandleClick);
         
         // Focus management
-        document.body.addEventListener('focusin', this.handleFocusChange.bind(this));
-        document.body.addEventListener('mousedown', this.handleFocusChange.bind(this));
+        document.body.addEventListener('focusin', this.boundHandleFocusChange);
+        document.body.addEventListener('mousedown', this.boundHandleFocusChange);
     }
     
     handleKeyDown(e) {
@@ -546,5 +551,31 @@ class SSPIItemTree {
             // Highlight the item
             this.highlightTreeItem(itemCode);
         }
+    }
+    
+    // Cleanup method to remove all event listeners and clear references
+    destroy() {
+        // Remove event listeners using stored bound functions
+        if (this.container && this.boundHandleKeyDown) {
+            this.container.removeEventListener('keydown', this.boundHandleKeyDown);
+            this.container.removeEventListener('click', this.boundHandleClick);
+        }
+        
+        if (document.body && this.boundHandleFocusChange) {
+            document.body.removeEventListener('focusin', this.boundHandleFocusChange);
+            document.body.removeEventListener('mousedown', this.boundHandleFocusChange);
+        }
+        
+        // Clear all references
+        this.container = null;
+        this.reload = null;
+        this.rootNode = null;
+        this.navigationManager = null;
+        this.tree = null;
+        this.navShell = null;
+        this.activeItemCode = null;
+        this.boundHandleKeyDown = null;
+        this.boundHandleClick = null;
+        this.boundHandleFocusChange = null;
     }
 }
