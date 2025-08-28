@@ -8,7 +8,8 @@ import json
 @click.argument("database", type=str, required=True)
 @click.argument("series_codes", type=str, required=False, nargs=-1)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
-def query(database, series_codes: list[str]=[], remote=False):
+@click.option("--limit", "-l", type=int, help="Limit number of results returned")
+def query(database, series_codes: list[str]=[], remote=False, limit=None):
     database = full_name(database)
     connector = SSPIDatabaseConnector()
     request_string = f"/api/v1/query/{database}?"
@@ -19,6 +20,11 @@ def query(database, series_codes: list[str]=[], remote=False):
                 request_string += new_series[1:]
             else:
                 request_string += new_series
+    if limit is not None:
+        if request_string.endswith("?"):
+            request_string += f"limit={limit}"
+        else:
+            request_string += f"&limit={limit}"
     # Use longer timeout for raw data queries which contain large documents
     timeout = 300 if database == "sspi_raw_api_data" else 120
     res = connector.call(request_string, remote=remote, timeout=timeout)
