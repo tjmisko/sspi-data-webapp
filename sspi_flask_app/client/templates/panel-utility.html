@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title> Series Panel Data </title>
+{% endblock title %}
+
+{% block content %}
+
+{% for series_id in series_id_list %}
+<section class="chart-section" id="{{ series_id }}"></section>
+{% endfor %}
+
+<script>
+    window.addEventListener("load", (event) => {
+        window.SSPICharts.push(...[
+        {% for series_id in series_id_list %}
+            new SeriesPanelChart(document.getElementById("{{ series_id }}"), { endpointURL: "/api/v1/panel/series/{{ series_id }}" }),
+        {% endfor %}
+        ]);
+        const x = localStorage.getItem('windowX');
+        const y = localStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
+    })
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('windowX', window.screenX);
+      localStorage.setItem('windowY', window.screenY);
+    });
+</script>
+{% endblock content %}

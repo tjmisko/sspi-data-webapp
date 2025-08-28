@@ -13,9 +13,74 @@ download_bp = Blueprint(
     url_prefix="/download"
 )
 
-db_choices = sspidb.list_collection_names()
+# Only allow downloading from specific databases
+allowed_databases = [
+    'sspi_score_data',
+    'sspi_indicator_data', 
+    'sspi_clean_api_data',
+    'sspi_main_data_v3'
+]
+db_choices = [db for db in allowed_databases if db in sspidb.list_collection_names()]
 ic_choices = sspi_metadata.indicator_codes()
 cg_choices = sspi_metadata.country_groups()
+
+
+def get_all_indicator_descendants(item_code):
+    """
+    Recursively get all indicator codes that descend from a given item code.
+    
+    Args:
+        item_code (str): The item code to expand (SSPI, Pillar, Category, or Indicator)
+        
+    Returns:
+        set: Set of indicator codes that are descendants of the given item
+    """
+    try:
+        item_detail = sspi_metadata.get_item_detail(item_code)
+        item_type = item_detail.get('ItemType', 'Unknown')
+        
+        if item_type == 'Indicator':
+            return {item_code}
+        
+        # For SSPI, Pillar, or Category, recursively get all indicators
+        indicator_codes = set()
+        children_codes = item_detail.get('Children', [])
+        
+        for child_code in children_codes:
+            child_indicators = get_all_indicator_descendants(child_code)
+            indicator_codes.update(child_indicators)
+        
+        return indicator_codes
+        
+    except Exception as e:
+        # If there's an error getting item detail, assume it's an indicator
+        return {item_code}
+
+
+def expand_codes_to_indicators(codes):
+    """
+    Expand mixed codes (SSPI, pillar, category, indicator) to indicator codes only.
+    
+    Args:
+        codes (list): List of mixed item codes
+        
+    Returns:
+        list: List of indicator codes only
+    """
+    if not codes:
+        return []
+    
+    indicator_codes = set()
+    
+    for code in codes:
+        if not code:  # Skip empty strings
+            continue
+            
+        # Get all indicator descendants of this code
+        descendants = get_all_indicator_descendants(code)
+        indicator_codes.update(descendants)
+    
+    return list(indicator_codes)
 
 
 def fetch_data_for_download(request_args):
@@ -24,21 +89,37 @@ def fetch_data_for_download(request_args):
     """
     mongo_query = {}
     if request_args.getlist('IndicatorCode'):
+        # Expand mixed codes to indicator codes only
+        mixed_codes = request.args.getlist('IndicatorCode')
+        indicator_codes = expand_codes_to_indicators(mixed_codes)
         mongo_query["IndicatorCode"] = {
-            "$in": request.args.getlist('IndicatorCode')}
+            "$in": indicator_codes}
     if request_args.get('CountryGroup'):
+        group = request.args.get('CountryGroup')
+        if not group:
+            return []
+        group_countries = sspi_metadata.country_group(group)
         mongo_query['CountryCode'] = {
-            "$in": sspi_metadata.country_group(request.args.get('CountryGroup'))
+            "$in": group_countries
         }
     elif request_args.getlist('CountryCode'):
         mongo_query["CountryCode"] = {
             "$in": request.args.getlist('CountryCode')
         }
-    if request_args.getlist('YEAR'):
-        mongo_query["timePeriod"] = {
-            "$in": request.args.getlist('timePeriod')
+    if request_args.getlist('Year'):
+        mongo_query["Year"] = {
+            "$in": [int(year) for year in request.args.getlist('Year')]
+        }
+    elif request_args.getlist('timePeriod'):
+        mongo_query["Year"] = {
+            "$in": [int(year) for year in request.args.getlist('timePeriod')]
         }
     database_name = request_args.get("database", default="sspi_main_data_v3")
+    
+    # Validate that requested database is allowed
+    if database_name not in allowed_databases:
+        return []
+    
     database = lookup_database(database_name)
     data_to_download = parse_json(database.find(mongo_query))
     return data_to_download

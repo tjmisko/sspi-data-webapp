@@ -1,14 +1,24 @@
 from sspi_flask_app.models.database import sspi_raw_api_data
 import pandas as pd 
 from ..resources.utilities import get_country_code
-def collect_itu_data(IndicatorCode, **kwargs):
+
+def load_itu_data_from_local_transcription(**kwargs):
     local_csv_file = pd.read_csv('local/gci-local-indicator-summary.csv')
     csv_string = local_csv_file.to_csv(index=False)  
-    count = sspi_raw_api_data.raw_insert_one(csv_string, IndicatorCode, **kwargs)
+    source_info = {
+        "OrganizationName": "ITU",
+        "OrganizationCode": "ITU",
+        "OrganizationSeriesCode": "GCI",
+        "QueryCode": "gci-local-indicator-summary",
+        "Flag": (
+            "ITU data was transcribed by hand from the website then "
+            "loaded by the CSV file specified in the @dataset_collector"
+        )
+    }
+    count = sspi_raw_api_data.raw_insert_one(csv_string, source_info, **kwargs)
     yield f"\nInserted {count} observations into the database.\n"
-    yield f"Collection complete for {IndicatorCode}\n"
 
-def cleanITUData_cybsec(RawData, IndName):
+def clean_itu_data(raw_data):
     local_csv_file = pd.read_csv('local/gci-local-indicator-summary.csv')
     columns = ['Country', '2014', 'Rank_2014', '2017', 'Rank_2017', '2018', 'Rank_2018','2020', 'Rank_2020', '2024', 'Rank_2024']
     df = pd.DataFrame(local_csv_file, columns=columns)

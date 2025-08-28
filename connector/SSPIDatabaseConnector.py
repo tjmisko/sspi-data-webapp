@@ -1,4 +1,5 @@
 from os import environ, path
+import re
 import ssl
 import json
 from dotenv import load_dotenv
@@ -21,7 +22,19 @@ class SSPIDatabaseConnector:
         self.remote_session = requests.Session()
         self.login_session_local()
         self.login_session_remote()
-        self.local_base = "http://127.0.0.1:5000"
+        wsgi_path = path.join(path.dirname(path.dirname(__file__)), 'wsgi.py')
+        if not path.exists(wsgi_path):
+            self.local_port_number = "5000"
+        else:
+            with open(wsgi_path, 'r') as f:
+                contents = f.read().strip()
+                result = re.search(r"port=(\d+)", contents)
+                if result:
+                    self.local_port_number = str(result.group(1))
+                else: 
+                    log.error("Could not find port number in wsgi.py!")
+                    self.local_port_number = "5000"
+        self.local_base = f"http://127.0.0.1:{self.local_port_number}"
         self.remote_base = "https://sspi.world"
 
     def get_token(self, token_name="SSPI_APIKEY"):
@@ -42,17 +55,19 @@ class SSPIDatabaseConnector:
         headers = {'Authorization': f'Bearer {self.remote_token}'}
         self.remote_session.headers.update(headers)
 
-    def call(self, request_string, method="GET", remote=False, stream=False):
+    def call(self, request_string, method="GET", remote=False, stream=False, data=None, timeout=120):
         sesh = self.remote_session if remote else self.local_session
         base_url = self.remote_base if remote else self.local_base
         if request_string[0] == "/":
             request_string = request_string[1:]
         endpoint = f"{base_url}/{request_string}"
         if method == "POST":
-            return sesh.post(endpoint, stream=stream)
+            if data:
+                sesh.headers.update({'Content-Type': 'application/json'})
+            return sesh.post(endpoint, stream=stream, json=data, timeout=timeout)
         if method == "DELETE":
-            return sesh.delete(endpoint, stream=stream)
-        return sesh.get(endpoint, stream=stream)
+            return sesh.delete(endpoint, stream=stream, timeout=timeout)
+        return sesh.get(endpoint, stream=stream, timeout=timeout)
 
     def load(self, obs_lst: list[dict], database_name: str, indicator_code: str, remote=False) -> str:
         """

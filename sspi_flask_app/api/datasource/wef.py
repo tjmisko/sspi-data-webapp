@@ -4,7 +4,7 @@ import io
 import pandas as pd
 
 
-def collectWEFQUELEC(WorldBankIndicatorCode, IndicatorCode, **kwargs):
+def collect_wef_data(world_bank_indicator_code, **kwargs):
     """
     Downloads an Excel file from a predefined URL, converts it into CSV format,
     and inserts the CSV data into the database.
@@ -18,8 +18,7 @@ def collectWEFQUELEC(WorldBankIndicatorCode, IndicatorCode, **kwargs):
       - "Indicator Code"
       - One column per year (e.g., "2007", "2008", etc.)
     """
-    yield f"Collecting WorldBank data {WorldBankIndicatorCode} for {IndicatorCode}\n"
-    # Fixed URL for the Excel file
+    yield f"Collecting WEF-WorldBank data {world_bank_indicator_code}\n" 
     url = "https://thedocs.worldbank.org/en/doc/cf8eee7ff5029398f75e897b342e7320-0050122023/related/WEF-GCIHH.xlsx"
     yield f"Downloading Excel file from: {url}\n"
     response = requests.get(url)
@@ -29,9 +28,14 @@ def collectWEFQUELEC(WorldBankIndicatorCode, IndicatorCode, **kwargs):
     excel_file = io.BytesIO(response.content)
     df = pd.read_excel(excel_file)
     yield f"Excel file opened successfully. Found {len(df)} rows.\n"
-    # Convert the DataFrame to CSV format (without index)
     csv_string = df.to_csv(index=False)
+    source_info = {
+        "OrganizationName": "World Economic Forum",
+        "OrganizationCode": "WEF",
+        "OrganizationSeriesCode": world_bank_indicator_code,
+        "QueryCode": world_bank_indicator_code,
+        "URL": url,
+    }
     sspi_raw_api_data.raw_insert_one(
-        {"csv": csv_string}, IndicatorCode, **kwargs)
-    yield f"Inserted CSV data for {IndicatorCode} into database.\n"
-    yield f"Collection complete {IndicatorCode}\n"
+        {"csv": csv_string}, source_info, **kwargs
+    )

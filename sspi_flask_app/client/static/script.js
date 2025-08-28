@@ -44,305 +44,489 @@ chartObject.chart.update()
 sleep(1000).then(()=>{if(alpha){html2canvas(chartObject.parentElement,{backgroundColor:null}).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}else{html2canvas(chartObject.parentElement).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}
 chartObject.textColor=textColorOriginal
 chartObject.gridColor=gridColorOriginal
-chartObject.chart.update()})};class ColorMap{constructor(){this.SSPI="#FFD54F"
+chartObject.chart.update()})};const customCountryColors={"ARG":"#36A2EB","AUS":"#FF6384","AUT":"#FF9F40","BEL":"#FFCD56","BRA":"#4BC0C0","CAN":"#9966FF","CHL":"#C9CBCF","CHN":"#FFD8B1","COL":"#FF6384","CZE":"#F4D35E","DNK":"#36A2EB","EST":"#FF6384","FIN":"#FF9F40","FRA":"#FFCD56","DEU":"#4BC0C0","GRC":"#9966FF","HUN":"#C9CBCF","ISL":"#F4D35E","IND":"#8FD14F","IDN":"#FFD8B1","IRL":"#36A2EB","ISR":"#FF6384","ITA":"#FF9F40","JPN":"#FFCD56","KOR":"#4BC0C0","KWT":"#9966FF","LVA":"#C9CBCF","LTU":"#F4D35E","LUX":"#8FD14F","MEX":"#FFD8B1","NLD":"#36A2EB","NZL":"#FF6384","NOR":"#FF9F40","POL":"#FFCD56","PRT":"#4BC0C0","RUS":"#9966FF","SAU":"#C9CBCF","SGP":"#F4D35E","SVK":"#8FD14F","SVN":"#FFD8B1","ZAF":"#F4D35E","ESP":"#FF6384","SWE":"#FF9F40","CHE":"#FFCD56","TUR":"#4BC0C0","ARE":"#9966FF","GBR":"#C9CBCF","USA":"#36A2EB","URY":"#8FD14F","DZA":"#FFD8B1","BGD":"#36A2EB","ECU":"#FF9F40","EGY":"#FFCD56","ETH":"#4BC0C0","IRN":"#9966FF","IRQ":"#C9CBCF","KEN":"#F4D35E","MYS":"#8FD14F","NGA":"#FFD8B1","PAK":"#36A2EB","PER":"#FF6384","PHL":"#FF9F40","ROU":"#FFCD56","THA":"#4BC0C0","VEN":"#9966FF","VNM":"#C9CBCF"}
+class ColorMap{constructor(){this.SSPI="#FFD54F"
 this.SUS="#28a745"
 this.MS="#ff851b"
-this.PG="#007bff"}
+this.PG="#007bff"
+this.colors={SSPI:"#FFD54F",SUS:"#28a745",MS:"#ff851b",PG:"#007bff",...customCountryColors}}
+get(entity){if(this.colors[entity]===undefined){return this.random();}
+return this.colors[entity]}
+random(){const keys=Object.keys(this.colors);const randomKey=keys[Math.floor(Math.random()*keys.length)];return this.colors[randomKey];}}
+const SSPIColors=new ColorMap(customCountryColors)
+class CustomizableSSPIStructure{constructor(parentElement,options={}){const{pillars=['Sustainability','Market Structure','Public Goods'],autoLoad=true,loadingDelay=100}=options;this.parentElement=parentElement;this.pillars=pillars;this.autoLoad=autoLoad;this.loadingDelay=loadingDelay;this.unsavedChanges=false;this.draggedEl=null;this.origin=null;this.dropped=false;this.isLoading=false;this.cacheTimeout=null;this.baselineMetadata=null;this.diffCache=null;this.injectStyles();this.initToolbar();this.initRoot();this.addEventListeners();this.loadConfigurationsList();this.setupCacheSync();if(this.autoLoad){setTimeout(()=>{this.loadInitialData();},this.loadingDelay);}}
+injectStyles(){const style=document.createElement('style');style.textContent=`.insertion-indicator{height:5px;background:var(--green-accent);margin:4px 0;}.drag-over{outline:2px dashed var(--green-accent);}.unsaved-changes{background:var(--ms-color);color:white;}.draggable-item{cursor:grab;}.draggable-item.dragging{visibility:hidden;}.sspi-loading{display:flex;align-items:center;justify-content:center;padding:2rem;color:var(--text-color);font-size:1.1rem;}.sspi-loading::before{content:'';width:20px;height:20px;margin-right:10px;border:2px solid var(--subtle-line-color);border-top-color:var(--green-accent);border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}@keyframes slideInRight{from{transform:translateX(100%);opacity:0;}
+to{transform:translateX(0);opacity:1;}}@keyframes slideOutRight{from{transform:translateX(0);opacity:1;}
+to{transform:translateX(100%);opacity:0;}}.sspi-error{display:flex;align-items:center;justify-content:center;padding:2rem;color:var(--sus-color);font-size:1rem;flex-direction:column;gap:1rem;}`;document.head.appendChild(style);}
+initToolbar(){const toolbar=document.createElement('div');toolbar.classList.add('sspi-toolbar');const importBtn=document.createElement('button');importBtn.textContent='Load Default SSPI';importBtn.addEventListener('click',async()=>{try{this.showLoadingState('Loading default SSPI metadata...');this.clearCache();const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Loading default SSPI metadata with',response.stats);await this.importDataAsync(response.metadata);this.hideLoadingState();this.flagUnsaved();}else{this.hideLoadingState();alert('Error loading default metadata: '+response.error);}}catch(err){this.hideLoadingState();console.error('Error loading default metadata:',err);alert('Error loading default metadata. Please try again.');}});const exportBtn=document.createElement('button');exportBtn.textContent='Export Metadata';exportBtn.addEventListener('click',()=>{const json=JSON.stringify(this.exportData(),null,2);console.log('SSPI Metadata Format:',json);alert('Metadata JSON copied to console.');});this.saveButton=document.createElement('button');this.saveButton.textContent='Save';this.saveButton.addEventListener('click',async()=>{await this.saveConfiguration();});const expandAllBtn=document.createElement('button');expandAllBtn.textContent='Expand All';expandAllBtn.addEventListener('click',()=>{this.expandAll();});const collapseAllBtn=document.createElement('button');collapseAllBtn.textContent='Collapse All';collapseAllBtn.addEventListener('click',()=>{this.collapseAll();});const validateBtn=document.createElement('button');validateBtn.textContent='Validate';validateBtn.addEventListener('click',()=>{this.showHierarchyStatus();});this.discardButton=document.createElement('button');this.discardButton.textContent='Discard Changes';this.discardButton.style.opacity='0.5';this.discardButton.style.cursor='not-allowed';this.discardButton.disabled=true;this.discardButton.addEventListener('click',async()=>{if(this.unsavedChanges&&confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')){await this.discardChanges();}});toolbar.append(importBtn,exportBtn,this.saveButton,validateBtn,this.discardButton,expandAllBtn,collapseAllBtn);this.parentElement.appendChild(toolbar);}
+async fetch(url){const res=await window.fetch(url);if(!res.ok)throw new Error('Network response was not ok');return await res.json();}
+initRoot(){this.container=document.createElement('div');this.container.classList.add('pillars-container','pillars-grid');this.container.setAttribute('role','tree');this.pillars.forEach((name,index)=>{const col=document.createElement('div');col.classList.add('pillar-column');col.dataset.pillar=name;col.setAttribute('aria-label',name+' pillar');const defaultCodes=['SUS','MS','PG'];const defaultCode=defaultCodes[index]||'PIL';const header=document.createElement('div');header.classList.add('customization-pillar-header');header.setAttribute('role','treeitem');header.innerHTML=`<div class="customization-pillar-header-content"><div class="pillar-name"contenteditable="true"spellcheck="false"tabindex="0">${name}</div><div class="pillar-code-section"><label class="code-label">Code:</label><input type="text"class="pillar-code-input"maxlength="3"placeholder="${defaultCode}"
+pattern="[A-Z]{2,3}"title="2-3 uppercase letters required"value="${defaultCode}"><span class="code-validation-message"></span></div></div>`;col.appendChild(header);this.setupCodeValidation(header.querySelector('.pillar-code-input'),'pillar');const categories=document.createElement('div');categories.classList.add('categories-container','drop-zone');categories.dataset.accept='category';col.appendChild(categories);const addCat=document.createElement('button');addCat.classList.add('add-category');addCat.textContent='+ Add Category';addCat.setAttribute('aria-label','Add Category to '+name);col.appendChild(addCat);this.container.appendChild(col);});this.parentElement.appendChild(this.container);}
+addEventListeners(){this.container.querySelectorAll('.customization-pillar-header').forEach(h=>h.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();h.blur();}}));this.container.addEventListener('click',e=>{if(e.target.classList.contains('add-category')){const zone=e.target.previousElementSibling;const cat=this.createCategoryElement();zone.appendChild(cat);this.validate(zone);this.updateHierarchyOnAdd(cat,'category');}
+if(e.target.classList.contains('add-indicator')){let list=e.target.previousElementSibling;if(!list||!list.classList.contains('indicators-container')){list=e.target.parentElement.querySelector('.indicators-container');}
+if(list){this.showIndicatorSelectionMenu(list);}}});this.container.addEventListener('dragstart',e=>{const el=e.target.closest('.draggable-item');if(!el)return;this.draggedEl=el;this.origin={parent:el.parentNode,next:el.nextSibling};this.dropped=false;el.classList.add('dragging');const clone=el.cloneNode(true);clone.style.position='absolute'
+document.body.appendChild(clone);const rect=el.getBoundingClientRect();e.dataTransfer.setDragImage(clone,rect.width/2,rect.height/2);setTimeout(()=>document.body.removeChild(clone),0);if(!el.id)el.id=`id-${Math.random().toString(36).substr(2,9)}`;e.dataTransfer.setData('text/plain',el.id);e.dataTransfer.effectAllowed='move';});this.container.addEventListener('dragend',()=>{if(!this.dropped&&this.origin&&this.draggedEl){this.origin.parent.insertBefore(this.draggedEl,this.origin.next);}
+if(this.draggedEl)this.draggedEl.classList.remove('dragging');this.draggedEl=null;this.origin=null;this.dropped=false;this.clearIndicators();});this.container.addEventListener('dragover',e=>{const z=e.target.closest('.drop-zone');if(!z||!this.draggedEl)return;e.preventDefault();z.classList.add('drag-over');this.clearIndicators(z);const overItem=e.target.closest('.draggable-item');if(overItem&&overItem.parentNode===z){const{top,height}=overItem.getBoundingClientRect();const before=(e.clientY-top)<(height/2);const indicator=document.createElement('div');indicator.className='insertion-indicator';z.insertBefore(indicator,before?overItem:overItem.nextSibling);}});this.container.addEventListener('dragleave',e=>{const z=e.target.closest('.drop-zone');if(z){z.classList.remove('drag-over');this.clearIndicators(z);}});this.container.addEventListener('drop',e=>{const z=e.target.closest('.drop-zone');if(!z||!this.draggedEl)return;e.preventDefault();z.classList.remove('drag-over');const indicator=z.querySelector('.insertion-indicator');if(indicator){z.insertBefore(this.draggedEl,indicator);indicator.remove();}else if(z.dataset.accept===this.draggedEl.dataset.type){z.appendChild(this.draggedEl);}
+this.dropped=true;this.draggedEl.classList.remove('dragging');this.validate(z);this.flagUnsaved();const order=Array.from(z.children).map(c=>c.id);console.log('New order:',order);});this.container.addEventListener('contextmenu',e=>{const t=e.target.closest('.draggable-item');if(!t)return;e.preventDefault();this.showContextMenu(e.pageX,e.pageY,t);});this.container.addEventListener('keydown',e=>{if((e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))&&e.target.closest('.draggable-item')){e.preventDefault();const r=e.target.getBoundingClientRect();this.showContextMenu(r.right,r.bottom,e.target);}});this.container.addEventListener('focus',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()==='New Indicator'){indicatorName.textContent='';}}},true);this.container.addEventListener('blur',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()===''){indicatorName.textContent='New Indicator';}}},true);this.container.addEventListener('click',e=>{if(e.target.closest('.collapse-toggle-btn')){const toggleBtn=e.target.closest('.collapse-toggle-btn');const collapsible=toggleBtn.closest('[data-expanded]');if(collapsible){const isExpanded=collapsible.dataset.expanded==='true';collapsible.dataset.expanded=(!isExpanded).toString();console.log('Toggled collapsible:',collapsible,'new state:',collapsible.dataset.expanded);}}});}
+flagUnsaved(){this.saveButton.classList.add('unsaved-changes');this.unsavedChanges=true;this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';this.debouncedCacheState();}
+clearUnsavedState(){this.unsavedChanges=false;this.saveButton.classList.remove('unsaved-changes');this.discardButton.disabled=true;this.discardButton.style.opacity='0.5';this.discardButton.style.cursor='not-allowed';}
+setUnsavedState(hasChanges){this.unsavedChanges=hasChanges;if(hasChanges){this.saveButton.classList.add('unsaved-changes');this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';}else{this.clearUnsavedState();}}
+clearIndicators(scope){const parent=scope||this.container;parent.querySelectorAll('.insertion-indicator').forEach(node=>node.remove());}
+createCategoryElement(){const cat=document.createElement('div');cat.classList.add('category-box','draggable-item');cat.setAttribute('draggable','true');cat.setAttribute('role','group');cat.dataset.type='category';cat.innerHTML=`<div class="category-collapsible"data-expanded="true"><div class="customization-category-header"><button class="collapse-toggle-btn category-toggle"type="button"><span class="collapse-icon">▼</span></button><h4 class="customization-category-header-title"contenteditable="true">New Category</h4><div class="category-code-section"><label class="code-label">Code:</label><input type="text"class="category-code-input"maxlength="3"placeholder="CAT"
+pattern="[A-Z]{3}"title="Exactly 3 uppercase letters required"><span class="code-validation-message"></span></div></div><div class="category-content"><div class="indicators-container drop-zone"data-accept="indicator"role="group"></div><button class="add-indicator"aria-label="Add Indicator">+Add Indicator</button></div></div>`;this.setupCodeValidation(cat.querySelector('.category-code-input'),'category');this.setupCollapsibleHandlers(cat);return cat;}
+createIndicatorElement(){const ind=document.createElement('div');ind.classList.add('indicator-card','draggable-item');ind.setAttribute('draggable','true');ind.setAttribute('role','treeitem');ind.dataset.type='indicator';ind.innerHTML=`<div class="indicator-collapsible"data-expanded="false"><div class="customization-indicator-header"><button class="collapse-toggle-btn indicator-toggle"type="button"><span class="collapse-icon">▼</span></button><h5 class="indicator-name"contenteditable="true">New Indicator</h5><div class="indicator-code-section"><label class="code-label">Code:</label><input type="text"class="indicator-code-input"maxlength="6"placeholder="INDIC1"
+pattern="[A-Z0-9]{6}"title="Exactly 6 uppercase letters/numbers required"><span class="code-validation-message"></span></div></div><div class="indicator-config"><div class="dataset-selection"><label>Datasets(max 5):</label><div class="selected-datasets"></div><button class="add-dataset-btn"type="button">+Add Dataset</button></div><div class="scoring-function"><label>Scoring Function:</label><select class="scoring-function-select"><option value="average">Average</option><option value="weighted_average">Weighted Average</option><option value="sum">Sum</option><option value="min">Minimum</option><option value="max">Maximum</option></select></div><div class="goalposts-section"><div class="goalpost-input"><label>Lower Goalpost:</label><input type="number"class="lower-goalpost"value="0"step="0.1"></div><div class="goalpost-input"><label>Upper Goalpost:</label><input type="number"class="upper-goalpost"value="100"step="0.1"></div><div class="indicator-options"><label><input type="checkbox"class="inverted-checkbox">Inverted(lower is better)</label></div></div></div></div>`;this.setupCodeValidation(ind.querySelector('.indicator-code-input'),'indicator');this.setupDatasetSelection(ind);this.setupIndicatorChangeListeners(ind);this.setupCollapsibleHandlers(ind);return ind;}
+setupIndicatorChangeListeners(indicatorElement){const inputs=indicatorElement.querySelectorAll('input, select');inputs.forEach(input=>{input.addEventListener('change',()=>this.flagUnsaved());input.addEventListener('input',()=>this.flagUnsaved());});}
+setupCollapsibleHandlers(element){const collapseIcons=element.querySelectorAll('.category-collapse-icon, .indicator-collapse-icon');collapseIcons.forEach(icon=>{icon.addEventListener('click',(e)=>{e.stopPropagation();const details=icon.closest('details');if(details){details.open=!details.open;}});});}
+expandAll(){const allCollapsibles=this.container.querySelectorAll('[data-expanded]');allCollapsibles.forEach(collapsible=>{collapsible.dataset.expanded='true';});}
+collapseAll(){const allCollapsibles=this.container.querySelectorAll('[data-expanded]');allCollapsibles.forEach(collapsible=>{collapsible.dataset.expanded='false';});}
+flagUnsaved(){this.unsavedChanges=true;this.saveButton.classList.add('unsaved-changes');this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';this.debouncedCacheState();}
+showIndicatorSelectionMenu(indicatorsContainer){const menu=new IndicatorSelectionMenu({onCreateNew:(container)=>{this.createNewIndicator(container);},onAddExisting:(container)=>{this.showIndicatorSelector(container);}});menu.show(indicatorsContainer);}
+createNewIndicator(indicatorsContainer){const ind=this.createIndicatorElement();indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');}
+showIndicatorSelector(indicatorsContainer){const selector=new IndicatorSelector({onSelectionChange:(indicator)=>{this.addExistingIndicator(indicatorsContainer,indicator);}});selector.show();}
+addExistingIndicator(indicatorsContainer,indicator){const ind=this.createIndicatorElement();const indicatorName=ind.querySelector('.indicator-name');const indicatorCodeInput=ind.querySelector('.indicator-code-input');const lowerGoalpost=ind.querySelector('.lower-goalpost');const upperGoalpost=ind.querySelector('.upper-goalpost');const invertedCheckbox=ind.querySelector('.inverted-checkbox');if(indicatorName)indicatorName.textContent=indicator.indicator_name||'';if(indicatorCodeInput)indicatorCodeInput.value=indicator.indicator_code||'';if(lowerGoalpost)lowerGoalpost.value=indicator.lower_goalpost||0;if(upperGoalpost)upperGoalpost.value=indicator.upper_goalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicator.inverted||false;if(indicator.dataset_codes&&indicator.dataset_codes.length>0){const selectedDatasetsDiv=ind.querySelector('.selected-datasets');indicator.dataset_codes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode,1.0);});}
+indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');}
+showContextMenu(x,y,target){let m=document.getElementById('sspi-context-menu');if(m)m.remove();m=document.createElement('ul');m.id='sspi-context-menu';m.className='context-menu';m.style.position='absolute';m.style.top=`${y}px`;m.style.left=`${x}px`;[{name:'Move to Pillar',handler:()=>this.promptMove(target)},{name:'Rename',handler:()=>this.renameItem(target)},{name:'Delete',handler:()=>this.deleteItem(target)},{name:'Set Goalposts',handler:()=>this.editGoalposts(target)}].forEach(a=>{const i=document.createElement('li');i.textContent=a.name;i.tabIndex=0;i.addEventListener('click',()=>{a.handler();m.remove();});m.appendChild(i);});document.body.appendChild(m);document.addEventListener('click',()=>m.remove(),{once:true});}
+promptMove(el){const p=prompt(`Enter pillar(${this.pillars.join(', ')}):`);const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===p);if(col){const z=col.querySelector('.categories-container');if(z.dataset.accept===el.dataset.type)z.appendChild(el);}}
+renameItem(el){const ed=el.querySelector('[contenteditable]');if(ed)ed.focus();}
+deleteItem(el){if(confirm('Delete this item?'))el.remove();}
+editGoalposts(t){const l=prompt('Lower Goalpost:','0');const u=prompt('Upper Goalpost:','100');const s=t.querySelector('.goal-slider');if(s){s.min=l;s.max=u;s.value=Math.min(Math.max(s.value,l),u);}}
+validate(z){const selector=z.dataset.accept==='indicator'?'.indicator-card':'.category-box';const items=z.querySelectorAll(selector);const ok=items.length>=1&&items.length<=10;z.classList.toggle('invalid',!ok);if(!ok){z.title='Must have 1–10 items';}else{z.removeAttribute('title');}}
+exportData(){return this.exportMetadataFormat();}
+exportMetadataFormat(){const metadataItems=[];const pillars={};const categories={};const indicators={};this.container.querySelectorAll('.pillar-column').forEach(pillarCol=>{const pillarName=pillarCol.querySelector('.pillar-name').textContent.trim();const pillarCode=pillarCol.querySelector('.pillar-code-input').value.trim();if(pillarCode){pillars[pillarCode]={code:pillarCode,name:pillarName,categories:[]};pillarCol.querySelectorAll('.category-box').forEach(catBox=>{const categoryName=catBox.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=catBox.querySelector('.category-code-input').value.trim();if(categoryCode){pillars[pillarCode].categories.push(categoryCode);categories[categoryCode]={code:categoryCode,name:categoryName,pillarCode:pillarCode,indicators:[]};catBox.querySelectorAll('.indicator-card').forEach((indCard,idx)=>{const indicatorName=indCard.querySelector('.indicator-name').textContent.trim();const indicatorCode=indCard.querySelector('.indicator-code-input').value.trim();if(indicatorCode){categories[categoryCode].indicators.push(indicatorCode);const datasetCodes=[];indCard.querySelectorAll('.dataset-item').forEach(item=>{const datasetCode=item.dataset.datasetCode;if(datasetCode){datasetCodes.push(datasetCode);}});const lowerGoalpost=parseFloat(indCard.querySelector('.lower-goalpost').value)||null;const upperGoalpost=parseFloat(indCard.querySelector('.upper-goalpost').value)||null;const inverted=indCard.querySelector('.inverted-checkbox').checked;indicators[indicatorCode]={code:indicatorCode,name:indicatorName,categoryCode:categoryCode,pillarCode:pillarCode,datasetCodes:datasetCodes,lowerGoalpost:lowerGoalpost,upperGoalpost:upperGoalpost,inverted:inverted,itemOrder:idx};}});}});}});const pillarCodes=Object.keys(pillars).sort();if(pillarCodes.length>0){metadataItems.push({ItemType:"SSPI",ItemCode:"SSPI",ItemName:"Custom SSPI",Children:pillarCodes,Description:"Custom SSPI metadata created through the customization interface"});}
+Object.values(pillars).forEach(pillar=>{metadataItems.push({ItemType:"Pillar",ItemCode:pillar.code,ItemName:pillar.name,Children:pillar.categories,Pillar:pillar.name,PillarCode:pillar.code});});Object.values(categories).forEach(category=>{metadataItems.push({ItemType:"Category",ItemCode:category.code,ItemName:category.name,Children:category.indicators,Category:category.name,CategoryCode:category.code,Pillar:pillars[category.pillarCode].name,PillarCode:category.pillarCode});});Object.values(indicators).forEach(indicator=>{metadataItems.push({ItemType:"Indicator",ItemCode:indicator.code,ItemName:indicator.name,Children:[],DatasetCodes:indicator.datasetCodes,Indicator:indicator.name,IndicatorCode:indicator.code,Category:categories[indicator.categoryCode].name,CategoryCode:indicator.categoryCode,Pillar:pillars[indicator.pillarCode].name,PillarCode:indicator.pillarCode,LowerGoalpost:indicator.lowerGoalpost,UpperGoalpost:indicator.upperGoalpost,Inverted:indicator.inverted,ItemOrder:indicator.itemOrder});});return metadataItems;}
+updateHierarchyOnAdd(element,elementType){this.flagUnsaved();console.log(`Added ${elementType}:`,element);const errors=this.validateHierarchy();if(errors.length>0){console.warn('Hierarchy validation errors after add:',errors);}}
+updateHierarchyOnRemove(element,elementType){this.flagUnsaved();console.log(`Removed ${elementType}:`,element);const errors=this.validateHierarchy();if(errors.length>0){console.warn('Hierarchy validation errors after remove:',errors);}}
+validateHierarchy(){const errors=[];const warnings=[];this.container.querySelectorAll('.pillar-column').forEach(pillar=>{const pillarName=pillar.querySelector('.pillar-name').textContent.trim();const pillarCode=pillar.querySelector('.pillar-code-input').value.trim();const categories=pillar.querySelectorAll('.category-box');if(categories.length===0){warnings.push(`Pillar"${pillarName}"(${pillarCode})has no categories`);}});this.container.querySelectorAll('.category-box').forEach(category=>{const categoryName=category.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=category.querySelector('.category-code-input').value.trim();const indicators=category.querySelectorAll('.indicator-card');if(indicators.length===0){warnings.push(`Category"${categoryName}"(${categoryCode})has no indicators`);}});this.container.querySelectorAll('.indicator-card').forEach(indicator=>{const indicatorName=indicator.querySelector('.indicator-name').textContent.trim();const indicatorCode=indicator.querySelector('.indicator-code-input').value.trim();const datasets=indicator.querySelectorAll('.dataset-item');if(datasets.length===0){warnings.push(`Indicator"${indicatorName}"(${indicatorCode})has no datasets`);}});const pillarCodes=new Set();const categoryCodes=new Set();const indicatorCodes=new Set();this.container.querySelectorAll('.pillar-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(pillarCodes.has(code)){errors.push(`Duplicate pillar code:${code}`);}else{pillarCodes.add(code);}}});this.container.querySelectorAll('.category-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(categoryCodes.has(code)){errors.push(`Duplicate category code:${code}`);}else{categoryCodes.add(code);}}});this.container.querySelectorAll('.indicator-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(indicatorCodes.has(code)){errors.push(`Duplicate indicator code:${code}`);}else{indicatorCodes.add(code);}}});if(warnings.length>0){console.warn('Hierarchy warnings:',warnings);}
+return{errors,warnings};}
+showHierarchyStatus(){const result=this.validateHierarchy();const stats=this.getMetadataStats();let message=`Metadata Stats:\n`;message+=`-Pillars:${stats.pillars}\n`;message+=`-Categories:${stats.categories}\n`;message+=`-Indicators:${stats.indicators}\n`;message+=`-Total Datasets:${stats.datasets}\n\n`;if(result.errors.length>0){message+=`Errors(${result.errors.length}):\n`;result.errors.forEach(error=>message+=`-${error}\n`);message+='\n';}
+if(result.warnings.length>0){message+=`Warnings(${result.warnings.length}):\n`;result.warnings.forEach(warning=>message+=`-${warning}\n`);}
+if(result.errors.length===0&&result.warnings.length===0){message+='Metadata is valid! ✓';}
+alert(message);}
+getMetadataStats(){return{pillars:this.container.querySelectorAll('.pillar-column').length,categories:this.container.querySelectorAll('.category-box').length,indicators:this.container.querySelectorAll('.indicator-card').length,datasets:this.container.querySelectorAll('.dataset-item').length};}
+async loadInitialData(){if(this.hasCachedModifications()){try{const loaded=await this.loadCachedState();if(loaded){this.showCacheRestoredIndicator();return;}}catch(error){console.warn('Failed to load cached modifications, falling back to default:',error);}}
+await this.loadDefaultMetadata();}
+showCacheRestoredIndicator(){const indicator=document.createElement('div');indicator.className='cache-restored-indicator';indicator.style.cssText=`position:fixed;top:20px;right:20px;background:var(--green-accent);color:white;padding:10px 15px;border-radius:5px;z-index:1000;animation:slideInRight 0.3s ease-out;`;indicator.textContent='✓ Restored from previous session';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},3000);}
+async discardChanges(){try{this.clearCache();this.showLoadingState('Discarding changes...');this.clearUnsavedState();setTimeout(()=>{this.hideLoadingState();setTimeout(()=>{window.location.reload();},100);},400);}catch(error){this.hideLoadingState();console.error('Error discarding changes:',error);alert('Error discarding changes. Please try again.');}}
+async loadDefaultMetadata(){if(this.isLoading){console.log('Already loading metadata, skipping...');return;}
+try{this.showLoadingState('Loading default SSPI metadata...');const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Auto-loading default SSPI metadata:',response.stats);await this.importDataAsync(response.metadata);this.hideLoadingState();this.clearUnsavedState();console.log('Default SSPI metadata loaded successfully');}else{this.handleLoadError('Failed to load default metadata: '+response.error);}}catch(error){console.error('Error auto-loading default metadata:',error);this.handleLoadError('Network error loading default metadata');}}
+showLoadingState(message='Loading...'){this.isLoading=true;const loadingDiv=document.createElement('div');loadingDiv.classList.add('sspi-loading');loadingDiv.textContent=message;loadingDiv.id='sspi-loading-indicator';this.container.style.display='none';this.parentElement.appendChild(loadingDiv);this.setToolbarDisabled(true);}
+hideLoadingState(){this.isLoading=false;const loadingDiv=this.parentElement.querySelector('#sspi-loading-indicator');if(loadingDiv){loadingDiv.remove();}
+this.container.style.display='';this.setToolbarDisabled(false);}
+handleLoadError(errorMessage){this.isLoading=false;const loadingDiv=this.parentElement.querySelector('#sspi-loading-indicator');if(loadingDiv){loadingDiv.remove();}
+const errorDiv=document.createElement('div');errorDiv.classList.add('sspi-error');errorDiv.id='sspi-error-indicator';const errorText=document.createElement('div');errorText.textContent=errorMessage;const retryBtn=document.createElement('button');retryBtn.textContent='Load Default Metadata';retryBtn.addEventListener('click',()=>{errorDiv.remove();this.loadDefaultMetadata();});errorDiv.appendChild(errorText);errorDiv.appendChild(retryBtn);this.parentElement.appendChild(errorDiv);this.container.style.display='';this.setToolbarDisabled(false);console.error('SSPI metadata loading failed:',errorMessage);}
+setToolbarDisabled(disabled){const toolbar=this.parentElement.querySelector('.sspi-toolbar');if(toolbar){const buttons=toolbar.querySelectorAll('button');buttons.forEach(btn=>{btn.disabled=disabled;if(disabled){btn.style.opacity='0.5';btn.style.cursor='not-allowed';}else{btn.style.opacity='';btn.style.cursor='';}});}}
+buildHierarchyTree(metadataItems){const itemsById={};const hierarchy={sspi:null,pillars:{},categories:{},indicators:{}};metadataItems.forEach(item=>{itemsById[item.ItemCode]=item;});metadataItems.forEach(item=>{switch(item.ItemType){case'SSPI':hierarchy.sspi=item;break;case'Pillar':hierarchy.pillars[item.ItemCode]=item;break;case'Category':hierarchy.categories[item.ItemCode]=item;break;case'Indicator':hierarchy.indicators[item.ItemCode]=item;break;}});return{hierarchy,itemsById};}
+async importDataAsync(metadataItems){console.log('Importing',metadataItems.length,'metadata items asynchronously');this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const{hierarchy,itemsById}=this.buildHierarchyTree(metadataItems);if(!hierarchy.sspi){console.error('No SSPI root item found in metadata');return;}
+const pillarCodes=hierarchy.sspi.Children||[];for(let i=0;i<pillarCodes.length;i++){const pillarCode=pillarCodes[i];const pillarItem=hierarchy.pillars[pillarCode];if(pillarItem){await this.processPillarFromMetadata(pillarItem,hierarchy);}
+if(i<pillarCodes.length-1){await new Promise(resolve=>setTimeout(resolve,0));}}
+console.log('Async metadata import completed');}
+async processPillarFromMetadata(pillarItem,hierarchy){const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===pillarItem.ItemName);if(!col){console.warn(`No UI column found for pillar:${pillarItem.ItemName}`);return;}
+const pillarCodeInput=col.querySelector('.pillar-code-input');if(pillarCodeInput){pillarCodeInput.value=pillarItem.ItemCode;}
+const pillarNameEl=col.querySelector('.pillar-name');if(pillarNameEl){pillarNameEl.textContent=pillarItem.ItemName;}
+const categoriesContainer=col.querySelector('.categories-container');if(!categoriesContainer)return;const fragment=document.createDocumentFragment();const categoryCodes=pillarItem.Children||[];for(const categoryCode of categoryCodes){const categoryItem=hierarchy.categories[categoryCode];if(categoryItem){const catEl=this.createCategoryElement();const categoryHeader=catEl.querySelector('.customization-category-header-title');const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryHeader)categoryHeader.textContent=categoryItem.ItemName;if(categoryCodeInput)categoryCodeInput.value=categoryItem.ItemCode;const indicatorsContainer=catEl.querySelector('.indicators-container');const indicatorCodes=categoryItem.Children||[];indicatorCodes.forEach(indicatorCode=>{const indicatorItem=hierarchy.indicators[indicatorCode];if(indicatorItem){const indEl=this.createIndicatorElement();const indicatorName=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const lowerGoalpost=indEl.querySelector('.lower-goalpost');const upperGoalpost=indEl.querySelector('.upper-goalpost');const invertedCheckbox=indEl.querySelector('.inverted-checkbox');if(indicatorName)indicatorName.textContent=indicatorItem.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicatorItem.ItemCode||'';if(lowerGoalpost)lowerGoalpost.value=indicatorItem.LowerGoalpost||0;if(upperGoalpost)upperGoalpost.value=indicatorItem.UpperGoalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicatorItem.Inverted||false;const datasetCodes=indicatorItem.DatasetCodes||[];if(datasetCodes.length>0){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');datasetCodes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode,1.0);});}
+indicatorsContainer.appendChild(indEl);}});fragment.appendChild(catEl);}}
+categoriesContainer.appendChild(fragment);this.validate(categoriesContainer);}
+importData(data){console.log('Importing data:',data);this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const grouping={};const pillarCodes={};data.forEach(item=>{const{Pillar,Category,CategoryCode,PillarCode,ItemOrder}=item;if(PillarCode){pillarCodes[Pillar]=PillarCode;}
+grouping[Pillar]=grouping[Pillar]||{};grouping[Pillar][Category]=grouping[Pillar][Category]||{CategoryCode:CategoryCode||'',items:[]};grouping[Pillar][Category].items.push(item);});this.pillars.forEach(p=>{const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===p);if(!col)return;const pillarCodeInput=col.querySelector('.pillar-code-input');if(pillarCodeInput&&pillarCodes[p]){pillarCodeInput.value=pillarCodes[p];}
+if(!grouping[p])return;const zone=col.querySelector('.categories-container');Object.entries(grouping[p]).forEach(([catName,info])=>{const catEl=this.createCategoryElement();catEl.querySelector('.customization-category-header-title').textContent=catName;const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryCodeInput&&info.CategoryCode){categoryCodeInput.value=info.CategoryCode;}
+zone.appendChild(catEl);info.items.sort((a,b)=>a.ItemOrder-b.ItemOrder).forEach(item=>{const indEl=this.createIndicatorElement();indEl.querySelector('.indicator-name').textContent=item.Indicator||'New Indicator';const indicatorCodeInput=indEl.querySelector('.indicator-code-input');if(indicatorCodeInput&&item.IndicatorCode){indicatorCodeInput.value=item.IndicatorCode;}
+indEl.title=item.Description||'';const lowerGoalpostInput=indEl.querySelector('.lower-goalpost');const upperGoalpostInput=indEl.querySelector('.upper-goalpost');if(lowerGoalpostInput&&item.LowerGoalpost!=null){lowerGoalpostInput.value=item.LowerGoalpost;}
+if(upperGoalpostInput&&item.UpperGoalpost!=null){upperGoalpostInput.value=item.UpperGoalpost;}
+const invertedCheckbox=indEl.querySelector('.inverted-checkbox');if(invertedCheckbox){invertedCheckbox.checked=item.Inverted||false;}
+const scoringSelect=indEl.querySelector('.scoring-function-select');if(scoringSelect&&item.scoring_function&&item.scoring_function.type){scoringSelect.value=item.scoring_function.type;}
+if(item.datasets&&Array.isArray(item.datasets)){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');item.datasets.forEach(dataset=>{this.addDatasetToIndicator(selectedDatasetsDiv,dataset.dataset_code,dataset.weight||1.0);});}
+catEl.querySelector('.indicators-container').appendChild(indEl);});this.validate(catEl.querySelector('.indicators-container'));});});}
+async saveConfiguration(){try{const name=prompt('Enter a name for this configuration:');if(!name)return;const metadata=this.exportData();const response=await this.fetch('/api/v1/customize/save',{method:'POST',headers:{'Content-Type':'application/json',},body:JSON.stringify({name:name,metadata:metadata})});if(response.success){this.clearUnsavedState();this.clearCache();alert(`Configuration"${name}"saved successfully!`);this.loadConfigurationsList();}else{alert(`Error saving configuration:${response.error}`);}}catch(error){console.error('Error saving configuration:',error);alert('Error saving configuration. Please try again.');}}
+async loadConfigurationsList(){try{const response=await this.fetch('/api/v1/customize/list');if(response.success&&response.configurations){this.updateConfigurationsDropdown(response.configurations);}}catch(error){console.error('Error loading configurations list:',error);}}
+updateConfigurationsDropdown(configurations){const existingDropdown=this.parentElement.querySelector('.config-selector');if(existingDropdown){existingDropdown.remove();}
+if(configurations.length===0)return;const selectorContainer=document.createElement('div');selectorContainer.classList.add('config-selector');selectorContainer.style.marginBottom='1rem';const label=document.createElement('label');label.textContent='Load Configuration: ';label.style.marginRight='0.5rem';const select=document.createElement('select');select.style.marginRight='0.5rem';const defaultOption=document.createElement('option');defaultOption.value='';defaultOption.textContent='Select a configuration...';select.appendChild(defaultOption);configurations.forEach(config=>{const option=document.createElement('option');option.value=config.config_id;option.textContent=config.name;select.appendChild(option);});const loadButton=document.createElement('button');loadButton.textContent='Load';loadButton.addEventListener('click',async()=>{const configId=select.value;if(configId){await this.loadConfiguration(configId);}});const deleteButton=document.createElement('button');deleteButton.textContent='Delete';deleteButton.style.marginLeft='0.5rem';deleteButton.addEventListener('click',async()=>{const configId=select.value;if(configId){const selectedOption=select.options[select.selectedIndex];const configName=selectedOption.textContent;if(confirm(`Are you sure you want to delete"${configName}"?`)){await this.deleteConfiguration(configId);}}});selectorContainer.append(label,select,loadButton,deleteButton);this.parentElement.insertBefore(selectorContainer,this.parentElement.firstChild);}
+async loadConfiguration(configId){try{const response=await this.fetch(`/api/v1/customize/load/${configId}`);if(response.success&&response.configuration){this.clearCache();this.importData(response.configuration.metadata);this.clearUnsavedState();alert(`Configuration"${response.configuration.name}"loaded successfully!`);}else{alert(`Error loading configuration:${response.error}`);}}catch(error){console.error('Error loading configuration:',error);alert('Error loading configuration. Please try again.');}}
+async deleteConfiguration(configId){try{const response=await this.fetch(`/api/v1/customize/delete/${configId}`,{method:'DELETE'});if(response.success){alert('Configuration deleted successfully!');this.loadConfigurationsList();}else{alert(`Error deleting configuration:${response.error}`);}}catch(error){console.error('Error deleting configuration:',error);alert('Error deleting configuration. Please try again.');}}
+setupCodeValidation(input,type){if(!input)return;const validationMessage=input.nextElementSibling;input.addEventListener('input',(e)=>{let value=e.target.value.toUpperCase();e.target.value=value;const isValid=this.validateCode(value,type);const isUnique=this.isCodeUnique(value,type,input);if(!value){this.showValidationMessage(validationMessage,'','');}else if(!isValid){this.showValidationMessage(validationMessage,'Invalid format','error');}else if(!isUnique){this.showValidationMessage(validationMessage,'Code already used','error');}else{this.showValidationMessage(validationMessage,'Valid','success');}
+this.flagUnsaved();});input.addEventListener('blur',()=>{if(input.value&&this.validateCode(input.value,type)&&this.isCodeUnique(input.value,type,input)){if(!input.value){const name=this.getNameForCodeInput(input,type);if(name){const generatedCode=this.generateCodeFromName(name,type);if(this.isCodeUnique(generatedCode,type,input)){input.value=generatedCode;this.showValidationMessage(validationMessage,'Generated','success');}}}}});}
+validateCode(code,type){if(!code)return false;switch(type){case'pillar':return /^[A-Z]{2,3}$/.test(code);case'category':return /^[A-Z]{3}$/.test(code);case'indicator':return /^[A-Z0-9]{6}$/.test(code);default:return false;}}
+isCodeUnique(code,type,currentInput){if(!code)return true;const selector=type==='pillar'?'.pillar-code-input':type==='category'?'.category-code-input':'.indicator-code-input';const allInputs=this.container.querySelectorAll(selector);for(const input of allInputs){if(input!==currentInput&&input.value===code){return false;}}
+return true;}
+showValidationMessage(element,message,type){if(!element)return;element.textContent=message;element.className='code-validation-message';if(type==='error'){element.classList.add('error');}else if(type==='success'){element.classList.add('success');}}
+getNameForCodeInput(input,type){const container=input.closest(type==='pillar'?'.customization-pillar-header':type==='category'?'.category-box':'.indicator-card');if(type==='pillar'){return container.querySelector('.pillar-name').textContent.trim();}else if(type==='category'){return container.querySelector('.customization-category-header-title').textContent.trim();}else if(type==='indicator'){return container.querySelector('.indicator-name').textContent.trim();}
+return'';}
+generateCodeFromName(name,type){if(!name)return'';const cleanName=name.toUpperCase().replace(/\b(THE|AND|OR|OF|FOR|IN|ON|AT|TO|A|AN)\b/g,'').replace(/[^A-Z0-9]/g,'');const maxLength=type==='indicator'?6:3;if(cleanName.length<=maxLength){return cleanName.padEnd(maxLength,'1');}
+const words=name.split(/\s+/);let code='';for(const word of words){if(code.length<maxLength){const firstChar=word.replace(/[^A-Z0-9]/gi,'').charAt(0).toUpperCase();if(firstChar&&/[A-Z0-9]/.test(firstChar)){code+=firstChar;}}}
+if(code.length<maxLength){for(const char of cleanName){if(code.length>=maxLength)break;if(!code.includes(char)&&/[A-Z0-9]/.test(char)){code+=char;}}}
+while(code.length<maxLength){code+='1';}
+return code.substring(0,maxLength);}
+setupDatasetSelection(indicatorElement){const addDatasetBtn=indicatorElement.querySelector('.add-dataset-btn');const selectedDatasetsDiv=indicatorElement.querySelector('.selected-datasets');addDatasetBtn.addEventListener('click',async()=>{await this.showDatasetSelector(selectedDatasetsDiv);});}
+async showDatasetSelector(selectedDatasetsDiv){try{const currentDatasets=selectedDatasetsDiv.querySelectorAll('.dataset-item');if(currentDatasets.length>=5){alert('Maximum of 5 datasets allowed per indicator');return;}
+this.showDatasetSelectionModal(selectedDatasetsDiv);}catch(error){console.error('Error showing dataset selector:',error);alert('Error loading datasets. Please try again.');}}
+async showDatasetSelectionModal(selectedDatasetsDiv){const currentSelections=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item')).map(item=>item.dataset.datasetCode);const selector=new DatasetSelector({maxSelections:5,multiSelect:true,enableSearch:true,enableFilters:true,showOrganizations:true,showTypes:true,onSelectionChange:(selectedCodes)=>{this.updateDatasetSelection(selectedDatasetsDiv,selectedCodes);}});await selector.show(currentSelections);}
+updateDatasetSelection(selectedDatasetsDiv,selectedCodes){selectedDatasetsDiv.innerHTML='';selectedCodes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode,1.0);});}
+findSelectedDatasetsDiv(modal){const indicators=document.querySelectorAll('.indicator-card');return indicators[indicators.length-1]?.querySelector('.selected-datasets');}
+addDatasetToIndicator(selectedDatasetsDiv,datasetCode,weight=1.0){const existing=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(existing){alert('Dataset already added');return;}
+const datasetItem=document.createElement('div');datasetItem.classList.add('dataset-item');datasetItem.dataset.datasetCode=datasetCode;datasetItem.dataset.weight=weight;datasetItem.innerHTML=`<span class="dataset-code">${datasetCode}</span><div class="dataset-actions"><button class="dataset-menu-btn"type="button"title="Dataset options"><svg width="16"height="16"viewBox="0 0 16 16"fill="currentColor"><circle cx="8"cy="2"r="1.5"/><circle cx="8"cy="8"r="1.5"/><circle cx="8"cy="14"r="1.5"/></svg></button><button class="remove-dataset"type="button"title="Remove dataset">×</button></div>`;const menuBtn=datasetItem.querySelector('.dataset-menu-btn');menuBtn.addEventListener('click',(e)=>{e.stopPropagation();this.showDatasetOptionsMenu(menuBtn,datasetCode);});datasetItem.querySelector('.remove-dataset').addEventListener('click',()=>{datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');});selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');}
+showDatasetOptionsMenu(buttonElement,datasetCode){const existingMenu=document.querySelector('.dataset-options-menu');if(existingMenu){existingMenu.remove();}
+const menu=document.createElement('div');menu.className='dataset-options-menu';menu.innerHTML=`<div class="menu-item"data-action="weight"><span>Set Weight</span></div><div class="menu-item"data-action="rename"><span>Rename</span></div><div class="menu-item"data-action="duplicate"><span>Duplicate</span></div><div class="menu-item"data-action="info"><span>View Info</span></div>`;const rect=buttonElement.getBoundingClientRect();menu.style.position='fixed';menu.style.top=rect.bottom+5+'px';menu.style.left=rect.left+'px';menu.style.zIndex='1000';document.body.appendChild(menu);menu.addEventListener('click',(e)=>{const action=e.target.closest('.menu-item')?.dataset.action;if(action){this.handleDatasetMenuAction(action,datasetCode);menu.remove();}});const closeMenu=(e)=>{if(!menu.contains(e.target)&&e.target!==buttonElement){menu.remove();document.removeEventListener('click',closeMenu);}};setTimeout(()=>document.addEventListener('click',closeMenu),0);}
+handleDatasetMenuAction(action,datasetCode){switch(action){case'weight':const currentWeight=document.querySelector(`[data-dataset-code="${datasetCode}"]`)?.dataset.weight||'1.0';const newWeight=prompt('Enter weight (0-10):',currentWeight);if(newWeight!==null&&!isNaN(newWeight)&&newWeight>=0&&newWeight<=10){document.querySelector(`[data-dataset-code="${datasetCode}"]`).dataset.weight=newWeight;this.flagUnsaved();}
+break;case'rename':alert('Rename functionality - placeholder');break;case'duplicate':alert('Duplicate functionality - placeholder');break;case'info':alert('Dataset info functionality - placeholder');break;}}
+cacheCurrentState(){try{const cacheData={hasModifications:this.unsavedChanges,lastModified:Date.now(),metadata:this.exportData(),version:"1.0"};const cacheSize=JSON.stringify(cacheData).length;if(cacheSize>5*1024*1024){console.warn('Cache data is too large (>5MB), skipping cache');return;}
+window.observableStorage.setItem("sspi-custom-modifications",cacheData);console.log('SSPI modifications cached successfully');}catch(error){console.warn('Failed to cache SSPI modifications:',error);if(error.name==='QuotaExceededError'||error.name==='NS_ERROR_DOM_QUOTA_REACHED'){this.handleStorageQuotaExceeded();}}}
+handleStorageQuotaExceeded(){console.warn('localStorage quota exceeded, attempting to free space');try{const allKeys=[];for(let i=0;i<localStorage.length;i++){allKeys.push(localStorage.key(i));}
+allKeys.forEach(key=>{if(key&&key.startsWith('sspi-')&&key!=='sspi-custom-modifications'){try{localStorage.removeItem(key);console.log('Removed old cache entry:',key);}catch(e){}}});const indicator=document.createElement('div');indicator.style.cssText=`position:fixed;top:20px;right:20px;background:#ff9500;color:white;padding:10px 15px;border-radius:5px;z-index:1000;max-width:300px;animation:slideInRight 0.3s ease-out;`;indicator.textContent='⚠ Storage limit reached. Changes may not be cached across sessions.';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},5000);}catch(e){console.error('Error handling storage quota exceeded:',e);}}
+async loadCachedState(){try{const cacheData=window.observableStorage.getItem("sspi-custom-modifications");if(!cacheData||!this.isValidCacheData(cacheData)){return false;}
+console.log('Loading cached SSPI modifications from:',new Date(cacheData.lastModified));await this.importDataAsync(cacheData.metadata);this.setUnsavedState(cacheData.hasModifications);return true;}catch(error){console.warn('Failed to load cached SSPI modifications:',error);this.clearCache();return false;}}
+clearCache(){try{window.observableStorage.removeItem("sspi-custom-modifications");console.log('SSPI modifications cache cleared');}catch(error){console.warn('Failed to clear SSPI modifications cache:',error);}}
+hasCachedModifications(){try{const cacheData=window.observableStorage.getItem("sspi-custom-modifications");return cacheData&&this.isValidCacheData(cacheData)&&cacheData.hasModifications;}catch(error){console.warn('Error checking for cached modifications:',error);return false;}}
+isValidCacheData(cacheData){if(!cacheData||typeof cacheData!=='object'){return false;}
+const requiredFields=['hasModifications','lastModified','metadata','version'];for(const field of requiredFields){if(!(field in cacheData)){console.warn(`Invalid cache data:missing field'${field}'`);return false;}}
+if(typeof cacheData.hasModifications!=='boolean'){console.warn('Invalid cache data: hasModifications must be boolean');return false;}
+if(typeof cacheData.lastModified!=='number'||cacheData.lastModified<=0){console.warn('Invalid cache data: lastModified must be a positive number');return false;}
+if(!Array.isArray(cacheData.metadata)){console.warn('Invalid cache data: metadata must be an array');return false;}
+if(typeof cacheData.version!=='string'){console.warn('Invalid cache data: version must be a string');return false;}
+const maxAge=7*24*60*60*1000;const age=Date.now()-cacheData.lastModified;if(age>maxAge){console.warn('Cache data is too old (>7 days), discarding');return false;}
+if(cacheData.metadata.length>0){const firstItem=cacheData.metadata[0];if(!firstItem||typeof firstItem!=='object'||!firstItem.ItemType){console.warn('Invalid cache data: metadata items have invalid structure');return false;}}
+return true;}
+debouncedCacheState(){if(this.cacheTimeout){clearTimeout(this.cacheTimeout);}
+this.cacheTimeout=setTimeout(()=>{this.cacheCurrentState();},500);}
+setupCacheSync(){window.observableStorage.onChange("sspi-custom-modifications",async(oldValue,newValue)=>{console.log('Cache change detected from another tab');if(!this.unsavedChanges){if(newValue&&this.isValidCacheData(newValue)&&newValue.hasModifications){console.log('Syncing modifications from another tab');await this.importDataAsync(newValue.metadata);this.setUnsavedState(newValue.hasModifications);this.showSyncIndicator();}else if(!newValue){console.log('Cache cleared in another tab, reloading default');await this.loadDefaultMetadata();}}});}
+showSyncIndicator(){const indicator=document.createElement('div');indicator.style.cssText=`position:fixed;top:20px;right:20px;background:var(--ms-color);color:white;padding:10px 15px;border-radius:5px;z-index:1000;animation:slideInRight 0.3s ease-out;`;indicator.textContent='⟲ Synced from another tab';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},2000);}
+captureBaseline(){try{this.baselineMetadata=this.exportData();this.diffCache=null;console.log('Baseline captured with',this.baselineMetadata.length,'items');}catch(error){console.warn('Failed to capture baseline:',error);}}
+generateDiff(){if(!this.baselineMetadata){return{error:'No baseline available for comparison'};}
+try{const currentMetadata=this.exportData();if(this.diffCache&&this.areMetadataEqual(this.diffCache.currentSnapshot,currentMetadata)){return this.diffCache.diff;}
+const diff=this.compareMetadata(this.baselineMetadata,currentMetadata);this.diffCache={currentSnapshot:JSON.parse(JSON.stringify(currentMetadata)),diff:diff};return diff;}catch(error){console.error('Error generating diff:',error);return{error:'Failed to generate diff: '+error.message};}}
+compareMetadata(baseline,current){const baselineMap=this.createItemMap(baseline);const currentMap=this.createItemMap(current);const changes={summary:{totalChanges:0,pillarsAffected:0,categoriesAffected:0,indicatorsAffected:0},added:[],removed:[],modified:[],moved:[],unchanged:[]};for(const[code,baselineItem]of baselineMap){if(!currentMap.has(code)){changes.removed.push({type:baselineItem.ItemType,code:code,name:baselineItem.ItemName,item:baselineItem});}}
+for(const[code,currentItem]of currentMap){if(!baselineMap.has(code)){changes.added.push({type:currentItem.ItemType,code:code,name:currentItem.ItemName,item:currentItem});}else{const baselineItem=baselineMap.get(code);const itemChanges=this.compareItems(baselineItem,currentItem);if(itemChanges){changes.modified.push({type:currentItem.ItemType,code:code,name:currentItem.ItemName,changes:itemChanges,before:baselineItem,after:currentItem});}else{changes.unchanged.push({type:currentItem.ItemType,code:code,name:currentItem.ItemName});}}}
+changes.summary.totalChanges=changes.added.length+changes.removed.length+changes.modified.length+changes.moved.length;const affectedTypes=new Set();[...changes.added,...changes.removed,...changes.modified,...changes.moved].forEach(change=>{affectedTypes.add(change.type);switch(change.type){case'Pillar':changes.summary.pillarsAffected++;break;case'Category':changes.summary.categoriesAffected++;break;case'Indicator':changes.summary.indicatorsAffected++;break;}});return changes;}
+createItemMap(metadata){const map=new Map();metadata.forEach(item=>{map.set(item.ItemCode,item);});return map;}
+compareItems(baselineItem,currentItem){const changes={};if(baselineItem.ItemName!==currentItem.ItemName){changes.name={from:baselineItem.ItemName,to:currentItem.ItemName};}
+if(!this.arraysEqual(baselineItem.Children||[],currentItem.Children||[])){changes.children={from:baselineItem.Children||[],to:currentItem.Children||[]};}
+if(baselineItem.ItemType==='Indicator'){if(!this.arraysEqual(baselineItem.DatasetCodes||[],currentItem.DatasetCodes||[])){changes.datasets={from:baselineItem.DatasetCodes||[],to:currentItem.DatasetCodes||[]};}
+if(baselineItem.LowerGoalpost!==currentItem.LowerGoalpost){changes.lowerGoalpost={from:baselineItem.LowerGoalpost,to:currentItem.LowerGoalpost};}
+if(baselineItem.UpperGoalpost!==currentItem.UpperGoalpost){changes.upperGoalpost={from:baselineItem.UpperGoalpost,to:currentItem.UpperGoalpost};}
+if(baselineItem.Inverted!==currentItem.Inverted){changes.inverted={from:baselineItem.Inverted,to:currentItem.Inverted};}}
+if(baselineItem.PillarCode!==currentItem.PillarCode){changes.pillar={from:baselineItem.PillarCode,to:currentItem.PillarCode};}
+if(baselineItem.CategoryCode!==currentItem.CategoryCode){changes.category={from:baselineItem.CategoryCode,to:currentItem.CategoryCode};}
+return Object.keys(changes).length>0?changes:null;}
+arraysEqual(arr1,arr2){if(arr1.length!==arr2.length)return false;return arr1.every((item,index)=>item===arr2[index]);}
+areMetadataEqual(metadata1,metadata2){if(!metadata1||!metadata2)return false;if(metadata1.length!==metadata2.length)return false;return JSON.stringify(metadata1)===JSON.stringify(metadata2);}
+hasChangesFromBaseline(){if(!this.baselineMetadata)return false;const diff=this.generateDiff();return diff.summary&&diff.summary.totalChanges>0;}
+getChangeCount(){if(!this.baselineMetadata)return 0;const diff=this.generateDiff();return diff.summary?diff.summary.totalChanges:0;}
+async fetch(url,options={}){const response=await window.fetch(url,options);if(!response.ok){throw new Error(`HTTP error!status:${response.status}`);}
+return await response.json();}}
+class DownloadForm{constructor(formElement){this.form=formElement;this.initializeEventListeners();}
+initializeEventListeners(){const countryTypeRadios=this.form.querySelectorAll('input[name="country-type"]');countryTypeRadios.forEach(radio=>{radio.addEventListener('change',(e)=>this.handleCountryTypeChange(e));});const csvBtn=this.form.querySelector('.csv-btn');const jsonBtn=this.form.querySelector('.json-btn');if(csvBtn){csvBtn.addEventListener('click',()=>this.downloadData('csv'));}
+if(jsonBtn){jsonBtn.addEventListener('click',()=>this.downloadData('json'));}}
+handleCountryTypeChange(event){const individualSection=document.getElementById('individual-countries');const groupSection=document.getElementById('country-groups');const countrySelect=document.getElementById('country-select');const groupSelect=document.getElementById('country-group-select');if(event.target.value==='individual'){individualSection.style.display='block';groupSection.style.display='none';if(groupSelect){groupSelect.value='';}}else{individualSection.style.display='none';groupSection.style.display='block';if(countrySelect){Array.from(countrySelect.options).forEach(option=>{option.selected=false;});}}}
+buildQueryParams(){const formData=new FormData(this.form);const params=new URLSearchParams();const database=formData.get('database');if(database){params.append('database',database);}
+let indicators=[];if(window.hierarchicalSelector){indicators=window.hierarchicalSelector.getSelectedCodes();}else{indicators=formData.getAll('IndicatorCode');}
+indicators.forEach(indicator=>{if(indicator){params.append('IndicatorCode',indicator);}});const countryType=this.form.querySelector('input[name="country-type"]:checked');if(countryType&&countryType.value==='individual'){const countries=formData.getAll('CountryCode');countries.forEach(country=>{if(country){params.append('CountryCode',country);}});}else{const countryGroup=formData.get('CountryGroup');if(countryGroup){params.append('CountryGroup',countryGroup);}}
+const years=formData.getAll('Year');years.forEach(year=>{if(year){params.append('Year',year);}});return params;}
+downloadData(format){if(!this.validateForm()){return;}
+const params=this.buildQueryParams();const downloadUrl=`/api/v1/download/${format}?${params.toString()}`;window.location.href=downloadUrl;}
+clearSelections(){const selects=this.form.querySelectorAll('select');selects.forEach(select=>{if(select.multiple){Array.from(select.options).forEach(option=>{option.selected=false;});}else{select.selectedIndex=0;}});const individualRadio=this.form.querySelector('input[name="country-type"][value="individual"]');if(individualRadio){individualRadio.checked=true;this.handleCountryTypeChange({target:individualRadio});}}
+validateForm(){const params=this.buildQueryParams();let hasIndicators=false;if(window.hierarchicalSelector){hasIndicators=window.hierarchicalSelector.getSelectedCodes().length>0;}else{const formData=new FormData(this.form);hasIndicators=formData.getAll('IndicatorCode').some(code=>code);}
+if(!hasIndicators){alert('Please select at least one indicator, category, or pillar before downloading.');return false;}
+return true;}}
+class HierarchicalIndicatorSelector{constructor(container,options={}){if(!(container instanceof HTMLElement)){throw new Error('Container must be a valid HTMLElement');}
+this.container=container;this.options={onSelectionChange:null,initialExpanded:['SSPI'],enableSearch:true,enableControls:true,expandFirstLevel:true,...options};this.treeData=null;this.selectedCodes=new Set();this.expandedNodes=new Set();this.searchTerm='';this.container.innerHTML='';this.container.className='hierarchical-selector';}
+initialize(treeData){if(!treeData){this.container.innerHTML='<div class="error-message">No tree data provided</div>';return;}
+this.treeData=treeData;if(this.options.expandFirstLevel&&this.treeData.children){this.treeData.children.forEach(pillar=>{this.expandedNodes.add(pillar.itemCode);});}
+this.render();this.bindEvents();}
+render(){if(!this.treeData)return;const html=`${this.options.enableControls?this.createControlsHTML():''}<div class="tree-container">${this.renderNode(this.treeData)}</div>`;this.container.innerHTML=html;this.updateIndeterminateStates();}
+renderTreeOnly(){if(!this.treeData)return;const treeContainer=this.container.querySelector('.tree-container');if(treeContainer){treeContainer.innerHTML=this.renderNode(this.treeData);this.updateIndeterminateStates();}}
+createControlsHTML(){return`<div class="selector-controls"><div class="control-buttons"><button type="button"data-action="expand-all"class="control-btn">Expand All</button><button type="button"data-action="collapse-all"class="control-btn">Collapse All</button><button type="button"data-action="select-all"class="control-btn">Select All</button><button type="button"data-action="deselect-all"class="control-btn">Deselect All</button></div>${this.options.enableSearch?this.createSearchHTML():''}</div>`;}
+createSearchHTML(){return`<div class="search-container"><input type="text"class="search-input"placeholder="Search indicators..."value="${this.searchTerm}"></div>`;}
+renderNode(node,isVisible=true){if(!node)return'';const isExpanded=this.expandedNodes.has(node.itemCode);const isSelected=this.selectedCodes.has(node.itemCode);const hasChildren=node.children&&node.children.length>0;const matchesSearch=this.nodeMatchesSearch(node);const hasMatchingDescendants=this.hasMatchingDescendants(node);const shouldShow=isVisible&&(this.searchTerm===''||matchesSearch||hasMatchingDescendants);if(!shouldShow)return'';let checkboxState='unchecked';if(isSelected){checkboxState='checked';}else if(hasChildren&&this.hasSelectedChildren(node)){checkboxState='indeterminate';}
+let html=`<div class="tree-node level-${node.level}"data-code="${node.itemCode}"data-type="${node.itemType}"data-pillar="${this.getPillarCode(node)}"><div class="node-content">`;if(hasChildren){const expandIcon=isExpanded?'▼':'▶';html+=`<button type="button"class="expand-btn"data-code="${node.itemCode}">${expandIcon}</button>`;}else{html+=`<span class="expand-spacer"></span>`;}
+const checkedAttr=checkboxState==='checked'?' checked':'';html+=`<input type="checkbox"
+class="node-checkbox"
+data-code="${node.itemCode}"
+data-state="${checkboxState}"
+${checkedAttr}>`;const highlightedName=this.highlightSearchTerm(node.itemName);html+=`<label class="node-label ${node.itemType.toLowerCase()}-label"><span class="item-text">${highlightedName}(${this.highlightSearchTerm(node.itemCode)})</span></label></div>`;if(hasChildren&&isExpanded){html+=`<div class="children">`;for(const child of node.children){html+=this.renderNode(child,shouldShow);}
+html+=`</div>`;}
+html+=`</div>`;return html;}
+bindEvents(){this.container.addEventListener('click',(e)=>{const action=e.target.dataset.action;if(action){this.handleControlAction(action);return;}
+if(e.target.classList.contains('expand-btn')){this.toggleExpand(e.target.dataset.code);return;}});this.container.addEventListener('change',(e)=>{if(e.target.classList.contains('node-checkbox')){this.toggleSelection(e.target.dataset.code,e.target.checked);}});if(this.options.enableSearch){this.container.addEventListener('input',(e)=>{if(e.target.classList.contains('search-input')){this.handleSearchInput(e.target.value);}});this.container.addEventListener('keydown',(e)=>{if(e.target.classList.contains('search-input')&&e.key==='Enter'){e.preventDefault();this.selectFirstMatch();}});}}
+handleControlAction(action){switch(action){case'expand-all':this.expandAll();break;case'collapse-all':this.collapseAll();break;case'select-all':this.selectAll();break;case'deselect-all':this.deselectAll();break;}}
+handleSearchInput(value){this.searchTerm=value.toLowerCase();this.renderTreeOnly();}
+toggleExpand(itemCode){if(this.expandedNodes.has(itemCode)){this.expandedNodes.delete(itemCode);}else{this.expandedNodes.add(itemCode);}
+this.renderTreeOnly();}
+toggleSelection(itemCode,isChecked){const node=this.findNode(this.treeData,itemCode);if(!node)return;if(isChecked){this.selectNodeAndDescendants(node);}else{this.deselectNodeAndDescendants(node);}
+this.updateParentStates(node);this.renderTreeOnly();this.notifySelectionChange();}
+selectNodeAndDescendants(node){this.selectedCodes.add(node.itemCode);if(node.children){node.children.forEach(child=>this.selectNodeAndDescendants(child));}}
+deselectNodeAndDescendants(node){this.selectedCodes.delete(node.itemCode);if(node.children){node.children.forEach(child=>this.deselectNodeAndDescendants(child));}}
+updateParentStates(node){const parent=this.findParentNode(this.treeData,node.itemCode);if(!parent)return;const selectedChildren=parent.children.filter(child=>this.selectedCodes.has(child.itemCode));if(selectedChildren.length===0){this.selectedCodes.delete(parent.itemCode);}else if(selectedChildren.length===parent.children.length){this.selectedCodes.add(parent.itemCode);}else{this.selectedCodes.delete(parent.itemCode);}
+this.updateParentStates(parent);}
+hasSelectedChildren(node){if(!node.children)return false;return node.children.some(child=>this.selectedCodes.has(child.itemCode)||this.hasSelectedChildren(child));}
+expandAll(){const addAllNodes=(node)=>{this.expandedNodes.add(node.itemCode);if(node.children){node.children.forEach(addAllNodes);}};addAllNodes(this.treeData);this.renderTreeOnly();}
+collapseAll(){this.expandedNodes.clear();this.renderTreeOnly();}
+selectAll(){const addAllNodes=(node)=>{this.selectedCodes.add(node.itemCode);if(node.children){node.children.forEach(addAllNodes);}};addAllNodes(this.treeData);this.renderTreeOnly();this.notifySelectionChange();}
+deselectAll(){this.selectedCodes.clear();this.renderTreeOnly();this.notifySelectionChange();}
+nodeMatchesSearch(node){if(!this.searchTerm)return true;return node.itemName.toLowerCase().includes(this.searchTerm)||node.itemCode.toLowerCase().includes(this.searchTerm);}
+hasMatchingDescendants(node){if(!node.children)return false;return node.children.some(child=>this.nodeMatchesSearch(child)||this.hasMatchingDescendants(child));}
+highlightSearchTerm(text){if(!this.searchTerm)return text;const regex=new RegExp(`(${this.searchTerm})`,'gi');return text.replace(regex,'<mark>$1</mark>');}
+selectFirstMatch(){if(!this.searchTerm)return;const firstMatch=this.findFirstMatchingNode(this.treeData);if(firstMatch){const isCurrentlySelected=this.selectedCodes.has(firstMatch.itemCode);this.toggleSelection(firstMatch.itemCode,!isCurrentlySelected);this.expandParentsToNode(firstMatch.itemCode);}}
+findFirstMatchingNode(node){if(this.nodeMatchesSearch(node)){return node;}
+if(node.children){for(const child of node.children){const match=this.findFirstMatchingNode(child);if(match)return match;}}
+return null;}
+expandParentsToNode(itemCode){const expandParent=(node,targetCode,parentCode=null)=>{if(node.itemCode===targetCode&&parentCode){this.expandedNodes.add(parentCode);return true;}
+if(node.children){for(const child of node.children){if(expandParent(child,targetCode,node.itemCode)){if(parentCode){this.expandedNodes.add(parentCode);}
+return true;}}}
+return false;};expandParent(this.treeData,itemCode);}
+getPillarCode(node){if(node.itemType==='SSPI'){return'';}
+if(node.itemType==='Pillar'){return node.itemCode;}
+return this.findPillarAncestor(node,this.treeData);}
+findPillarAncestor(targetNode,currentNode,pillarCode=null){if(currentNode.itemType==='Pillar'){pillarCode=currentNode.itemCode;}
+if(currentNode.itemCode===targetNode.itemCode){return pillarCode;}
+if(currentNode.children){for(const child of currentNode.children){const result=this.findPillarAncestor(targetNode,child,pillarCode);if(result)return result;}}
+return null;}
+findNode(root,itemCode){if(root.itemCode===itemCode)return root;if(root.children){for(const child of root.children){const found=this.findNode(child,itemCode);if(found)return found;}}
+return null;}
+findParentNode(root,childCode,parent=null){if(root.itemCode===childCode)return parent;if(root.children){for(const child of root.children){const found=this.findParentNode(child,childCode,root);if(found)return found;}}
+return null;}
+updateIndeterminateStates(){const checkboxes=this.container.querySelectorAll('.node-checkbox');checkboxes.forEach(checkbox=>{const state=checkbox.dataset.state;if(state==='indeterminate'){checkbox.indeterminate=true;}});}
+notifySelectionChange(){if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedCodes());}}
+getSelectedCodes(){return Array.from(this.selectedCodes);}
+setSelectedCodes(codes){this.selectedCodes=new Set(codes);this.renderTreeOnly();this.notifySelectionChange();}
+destroy(){this.container.innerHTML='';this.container.className='';this.selectedCodes.clear();this.expandedNodes.clear();this.treeData=null;}}
+class IndicatorSelectionMenu{constructor(options={}){this.options={onCreateNew:null,onAddExisting:null,...options}
+this.modal=null}
+show(indicatorsContainer){this.indicatorsContainer=indicatorsContainer
+this.createModal()
+this.bindEvents()
+document.body.appendChild(this.modal)}
+createModal(){this.modal=document.createElement('div')
+this.modal.className='indicator-selection-overlay'
+const modalContent=document.createElement('div')
+modalContent.className='indicator-selection-content'
+modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicator</h3><p>Choose how you'd like to add an indicator to this category:</p>
+            </div>
+            <div class="indicator-selection-options">
+                <button id="create-new-indicator" class="indicator-option-btn create-new">
+                    <div class="option-icon">+</div>
+                    <div class="option-text">
+                        <div class="option-title">Create New Indicator</div>
+                        <div class="option-description">Start with a blank indicator and customize it</div>
+                    </div>
+                </button>
+                <button id="add-existing-indicator" class="indicator-option-btn add-existing">
+                    <div class="option-icon">📋</div>
+                    <div class="option-text">
+                        <div class="option-title">Add Existing Indicator</div>
+                        <div class="option-description">Choose from the SSPI indicator library</div>
+                    </div>
+                </button>
+            </div>
+            <div class="indicator-selection-actions">
+                <button id="menu-cancel" class="cancel-btn">Cancel</button>
+            </div>
+        `
+        
+        this.modal.appendChild(modalContent)
+    }
+    
+    bindEvents() {
+        if (!this.modal) return
+        
+        const createNewBtn = this.modal.querySelector('#create-new-indicator')
+        const addExistingBtn = this.modal.querySelector('#add-existing-indicator')
+        const cancelBtn = this.modal.querySelector('#menu-cancel')
+        
+        if (createNewBtn) {
+            createNewBtn.addEventListener('click', () => {
+                this.close()
+                if (this.options.onCreateNew) {
+                    this.options.onCreateNew(this.indicatorsContainer)
+                }
+            })
+        }
+        
+        if (addExistingBtn) {
+            addExistingBtn.addEventListener('click', () => {
+                this.close()
+                if (this.options.onAddExisting) {
+                    this.options.onAddExisting(this.indicatorsContainer)
+                }
+            })
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                this.close()
+            })
+        }
+        
+        // Close on overlay click
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.close()
+            }
+        })
+        
+        // Close on escape key
+        document.addEventListener('keydown', this.handleKeyDown.bind(this))
+    }
+    
+    handleKeyDown(e) {
+        if (e.key === 'Escape' && this.modal) {
+            this.close()
+        }
+    }
+    
+    close() {
+        if (this.modal && this.modal.parentNode) {
+            document.body.removeChild(this.modal)
+        }
+        document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+        this.modal = null
+    }
 }
-const SSPIColors=new ColorMap()
-const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
-const xLeftMid=(chartArea.left+chartArea.right+offset)/4;const xRightMid=3*(chartArea.left+chartArea.right-offset)/4;const yTop=(chartArea.top+chartArea.bottom)/10+5;ctx.fillText(optionVars.LeftCountry+" Higher",xLeftMid,yTop);ctx.fillStyle='#32CD3299';ctx.fillText(optionVars.RightCountry+" Higher",xRightMid,yTop);ctx.restore();}}
-class StaticPillarDifferentialChart{constructor(BaseCountry,ComparisonCountry,PillarCode,parentElement){this.parentElement=parentElement;this.BaseCountry=BaseCountry;this.ComparisonCountry=ComparisonCountry;this.PillarCode=PillarCode;this.titleString=`Sustainability Score Differences(${ComparisonCountry}-${BaseCountry})`;this.initRoot()
-this.initTitle()
-this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-colormap(diff){if(diff>0){return"#32CD3299"}else{return"#FF634799"}}
-async fetch(){const response=await fetch(`/api/v1/static/differential/pillar/${this.PillarCode}?BaseCountry=${this.BaseCountry}&ComparisonCountry=${this.ComparisonCountry}`);return response.json();}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-pillar-differential')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h2')
-this.title.classList.add('differential-chart-title')
-this.title.textContent="Test Title"
-this.root.appendChild(this.title)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id=`pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;this.canvas.width=300
-this.canvas.height=300
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',plugins:[chartArrowLabels],options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false,},chartArrowLabels:{LeftCountry:this.BaseCountry,RightCountry:this.ComparisonCountry},tooltip:{callbacks:{title:function(tooltipItems){return`Category:${tooltipItems[0].raw.CategoryName}`;},label:function(tooltipItem){if(tooltipItem.raw.Diff>0){return`Difference:+${tooltipItem.formattedValue}`;}
-return`Difference:${tooltipItem.formattedValue}`;},},backgroundColor:'rgba(0, 0, 0, 0.7)',titleColor:'#ffffff',bodyColor:'#ffcc00',padding:5}},parsing:{xAxisKey:'Diff',yAxisKey:'CategoryCode'},scales:{x:{beginAtZero:true,grid:{drawTicks:false},ticks:{color:'#bbb',stepSize:0.1},title:{display:true,color:'#bbb',},min:-1,max:1,},y:{ticks:{color:'#bbb',minRotation:90,maxRotation:90,align:'center',crossAlign:'center',},title:{padding:10,display:true,text:'Categories',color:'#bbb',},type:'category',reverse:false}}}})}
-update(data){this.baseCCode=data.baseCCode
-this.baseCName=data.baseCName
-this.comparisonCCode=data.comparisonCCode
-this.comparisonCName=data.comparisonCName
-this.title.textContent=data.title
-data.datasets.forEach(dataset=>{dataset.backgroundColor=dataset.data.map(item=>this.colormap(item.Diff))
-dataset.borderColor=dataset.data.map(item=>this.colormap(item.Diff).slice(0,-2))
-dataset.borderWidth=1})
-this.chart.data.datasets=data.datasets
-this.chart.options.scales.x.title.text=data.title
-this.chart.labels=data.labels
-this.chart.options.plugins.tooltip.callbacks.beforeLabel=(tooltipItem)=>{const base=`${this.baseCCode}Score:${tooltipItem.raw.baseScore.toFixed(3)}`;const comparison=`${this.comparisonCCode}Score:${tooltipItem.raw.comparisonScore.toFixed(3)}`;return[base,comparison];}
-this.chart.update()}}
-class CategoryRadarStatic{constructor(countryCode,parentElement,textColor="#bbb",gridColor="#cccccc33"){this.parentElement=parentElement
-this.countryCode=countryCode
-this.textColor=textColor
-this.gridColor=gridColor
-this.initRoot()
-this.legend=this.initLegend()
-this.initRoot()
-this.initTitle()
-this.initLegend()
-this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('radar-chart-box')
-this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h3')
-this.title.classList.add('radar-chart-title')
-this.root.appendChild(this.title)}
-initLegend(){this.legend=document.createElement('div')
-this.legend.classList.add('radar-chart-legend-box')
-this.root.appendChild(this.legend)}
-initChartJSCanvas(){this.canvasContainer=document.createElement('div')
-this.canvasContainer.classList.add('radar-chart-canvas-container')
-this.canvas=document.createElement('canvas')
-this.canvasContainer.appendChild(this.canvas)
-this.canvas.width=300
-this.canvas.height=300
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvasContainer)
-this.chart=new Chart(this.context,{type:'polarArea',options:{responsive:true,elements:{line:{borderWidth:3}},scales:{r:{pointLabels:{display:true,font:{size:10},color:this.textColor,centerPointLabels:true,padding:0},angleLines:{display:true,color:this.gridColor},grid:{color:this.gridColor,circular:true},ticks:{backdropColor:'rgba(0, 0, 0, 0)',clip:true,color:this.textColor,font:{size:8}},suggestedMin:0,suggestedMax:1}},plugins:{legend:{display:false,},tooltip:{backgroundColor:'#1B2A3Ccc',},}}})}
-async fetch(){const response=await fetch(`/api/v1/static/radar/${this.countryCode}`)
-return response.json();}
-update(data){this.labelMap=data.labelMap
-this.chart.data.labels=data.labels
-this.ranks=data.ranks
-this.chart.data.datasets=data.datasets
-this.title.innerText=data.title
-this.updateLegend(data)
-this.chart.options.plugins.tooltip.callbacks.title=(context)=>{const categoryName=this.labelMap[context[0].label]
-return categoryName}
-this.chart.options.plugins.tooltip.callbacks.label=(context)=>{return["Category Score: "+context.raw.toFixed(3),"Category Rank: "+this.ranks[context.dataIndex].Rank,]}
-this.chart.update()}
-updateLegend(data){this.legendItems=data.legendItems
-const pillarColorsAlpha=data.datasets.map(d=>d.backgroundColor)
-const pillarColorsSolid=pillarColorsAlpha.map(c=>c.slice(0,7))
-for(let i=0;i<this.legendItems.length;i++){const pillarLegendItem=document.createElement('div')
-pillarLegendItem.classList.add('radar-chart-legend-item')
-const pillarLegendCanvasContainer=document.createElement('div')
-pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
-const pillarLegendItemCanvas=document.createElement('canvas')
-pillarLegendItemCanvas.width=150
-pillarLegendItemCanvas.height=50
-pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
-this.drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i)
-pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
-pillarLegendItem.appendChild(pillarLegendCanvasContainer)
-const pillarLegendItemText=document.createElement('div')
-pillarLegendItemText.classList.add('radar-chart-legend-item-text')
-pillarLegendItemText.innerText=this.legendItems[i].Name
-pillarLegendItem.appendChild(pillarLegendItemText)
-this.legend.appendChild(pillarLegendItem)}}
-drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i){const pillarLegendContext=pillarLegendItemCanvas.getContext('2d')
-const shadedWidth=(pillarLegendItemCanvas.width*this.legendItems[i].Score).toFixed(0)
-pillarLegendContext.strokeStyle=this.textColor
-pillarLegendContext.linewidth=5
-pillarLegendContext.beginPath()
-pillarLegendContext.moveTo(0,0)
-pillarLegendContext.lineTo(0,pillarLegendItemCanvas.height)
-pillarLegendContext.moveTo(pillarLegendItemCanvas.width,0)
-pillarLegendContext.lineTo(pillarLegendItemCanvas.width,pillarLegendItemCanvas.height)
-pillarLegendContext.stroke()
-pillarLegendContext.strokeStyle=this.gridColor
-pillarLegendContext.linewidth=3
-pillarLegendContext.beginPath()
-const spacing=pillarLegendItemCanvas.width/10
-pillarLegendContext.beginPath();for(let i=0;i<10;i++){const x=(i*spacing)
-pillarLegendContext.moveTo(x,5)
-pillarLegendContext.lineTo(x,pillarLegendItemCanvas.height)}
-pillarLegendContext.stroke();pillarLegendContext.fillStyle=pillarColorsAlpha[i]
-pillarLegendContext.fillRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)
-pillarLegendContext.strokeStyle=pillarColorsSolid[i]
-pillarLegendContext.linewidth=10
-pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}}
-const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class DynamicMatrixChart{constructor(parentElement,countryGroup="SSPI49",width=400,height=400){this.parentElement=parentElement
-this.countryGroup=countryGroup
-this.width=width
-this.height=height
-this.initRoot()
-this.initChartJSCanvas()
-this.fetch().then(res=>{this.update(res)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-dynamic-matrix')
-this.parentElement.appendChild(this.root)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=this.width
-this.canvas.height=this.height
-this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Dynamic Data Status';},label(context){const v=context.dataset.data[context.dataIndex];if(v.problems){return["Issue:"+v.problems,'Country: '+v.CName,'Indicator: '+v.IName]}
-return['Country: '+v.CName,'Indicator: '+v.IName,'Years: '+v.v];}}}}},plugins:[shiftRotatedTicksPlugin]})}
-async fetch(){const response=await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);return response.json();}
-update(res){this.n_indicators=res.icodes.length;this.n_countries=res.ccodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
-if(collect){return'#FFBF0066';}
-if(load){return'#FFBF00';}
-return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.data[context.dataIndex].problems;const confident=context.dataset.data[context.dataIndex].confident;if(problems){return"rgba(255, 99, 132, 1)";}
-if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
-this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
-this.chart.update()}}
-const endLabelPlugin={id:'endLabelPlugin',afterDatasetsDraw(chart){chart.data.datasets.forEach((dataset,i)=>{if(dataset.hidden){return;}
-const meta=chart.getDatasetMeta(i);let lastNonNullIndex=meta.data.length-1;for(let j=meta.data.length;j>=0;j--){if(meta.data[j]===undefined){continue}
-if(meta.data[j].raw!==null){lastNonNullIndex=j
-break}}
-const lastPoint=meta.data[lastNonNullIndex];const value=dataset.CCode;chart.ctx.save();chart.ctx.font='bold 14px Arial';chart.ctx.fillStyle=dataset.borderColor;chart.ctx.textAlign='left';chart.ctx.fillText(value,lastPoint.x+5,lastPoint.y+4);chart.ctx.restore();});}}
-const extrapolatePlugin={id:'extrapolateBackwards',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;chart.data.datasets.forEach((dataset,i)=>{if(dataset.hidden)return;const meta=chart.getDatasetMeta(i);let firstNonNullIndex=0;for(let j=0;j<meta.data.length;j++){if(meta.data[j]===undefined)continue;if(meta.data[j].raw!==null){firstNonNullIndex=j;break;}}
-const firstElement=meta.data[firstNonNullIndex];const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor||'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}});}};class DynamicLineChart{constructor(parentElement,IndicatorCode,CountryList=[]){this.parentElement=parentElement
-this.IndicatorCode=IndicatorCode
-this.CountryList=CountryList
-this.pinnedArray=Array()
-this.endLabelPlugin=endLabelPlugin
-this.extrapolatePlugin=extrapolatePlugin
-this.setTheme(localStorage.getItem("theme"))
-this.initRoot()
-this.rigCountryGroupSelector()
-this.initChartJSCanvas()
-this.updateChartOptions()
-this.rigLegend()
-this.fetch().then(data=>{this.update(data)})
-this.rigPinStorageOnUnload()}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-dynamic-line')
-this.parentElement.appendChild(this.root)
-this.root.innerHTML=`<div class="chart-section-title-bar"><h2 class="chart-section-title">Dynamic Indicator Data</h2><div class="chart-section-title-bar-buttons"><label>Backward Extrapolation</label><input type="checkbox"class="extrapolate-backwards"/><button class="draw-button">Draw 10 Countries</button><button class="showall-button">Show All</button><button class="hideunpinned-button">Hide Unpinned</button></div></div>`;this.rigTitleBarButtons()}
-rigTitleBarButtons(){this.extrapolateCheckbox=this.root.querySelector('.extrapolate-backwards')
-this.extrapolateCheckbox.checked=!this.extrapolatePlugin.hidden
-this.extrapolateCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
-this.drawButton=this.root.querySelector('.draw-button')
-this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
-this.showAllButton=this.root.querySelector('.showall-button')
-this.showAllButton.addEventListener('click',()=>{this.showAll()})
-this.hideUnpinnedButton=this.root.querySelector('.hideunpinned-button')
-this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=400
-this.canvas.height=300
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'line',plugins:[endLabelPlugin,extrapolatePlugin],options:{onClick:(event,elements)=>{elements.forEach(element=>{const dataset=this.chart.data.datasets[element.datasetIndex]
-this.togglePin(dataset)})},datasets:{line:{spanGaps:true,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{}},layout:{padding:{right:40}}}})}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
-rigCountryGroupSelector(){const container=document.createElement('div')
-container.id='country-group-selector-container'
-this.countryGroupContainer=this.root.appendChild(container)}
-updateCountryGroups(){const numOptions=this.groupOptions.length;this.countryGroupContainer.style.setProperty('--num-options',numOptions);this.groupOptions.forEach((option,index)=>{const id=`option${index+1}`;const input=document.createElement('input');input.type='radio';input.id=id;input.name='options';input.value=option;if(index===0){input.checked=true;this.countryGroupContainer.style.setProperty('--selected-index',index);}
-input.addEventListener('change',()=>{const countryGroupOptions=document.querySelectorAll(`#country-group-selector-container input[type="radio"]`);countryGroupOptions.forEach((countryGroup,index)=>{if(countryGroup.checked){this.countryGroupContainer.style.setProperty('--selected-index',index);this.showGroup(countryGroup.value)}});});const label=document.createElement('label');label.htmlFor=id;label.textContent=option;this.countryGroupContainer.appendChild(input);this.countryGroupContainer.appendChild(label);});const slider=document.createElement('div');slider.className='slider';this.countryGroupContainer.appendChild(slider);}
-rigLegend(){const legend=document.createElement('legend')
-legend.classList.add('dynamic-line-legend')
-legend.innerHTML=`<div class="legend-title-bar"><h4 class="legend-title">Pinned Countries</h4><div class="legend-title-bar-buttons"><button class="saveprefs-button">Save Pins</button><button class="clearpins-button">Clear Pins</button></div></div><div class="legend-items"></div>`;this.savePrefsButton=legend.querySelector('.saveprefs-button')
-this.savePrefsButton.addEventListener('click',()=>{this.sendPrefs()})
-this.clearPinsButton=legend.querySelector('.clearpins-button')
-this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
-this.legend=this.root.appendChild(legend)
-this.legendItems=this.legend.querySelector('.legend-items')}
-updateLegend(){this.legendItems.innerHTML=''
-this.pinnedArray.forEach((PinnedCountry)=>{this.legendItems.innerHTML+=`<div class="legend-item"><span>${PinnedCountry.CName}(<b style="color: ${PinnedCountry.borderColor};">${PinnedCountry.CCode}</b>)</span><button class="remove-button-legend-item"id="${PinnedCountry.CCode}-remove-button-legend">Remove</button></div>`})
-this.legendItems.innerHTML+=`<div class="legend-item"><button class="add-country-button">Add Country</button></div>`;this.addCountryButton=this.legend.querySelector('.add-country-button')
-this.addCountryButton.addEventListener('click',()=>{new SearchDropdown(this.addCountryButton,this.chart.data.datasets,this)})
-let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
-removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
-button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
-updateDescription(description){const dbox=document.getElementById("dynamic-indicator-description")
-dbox.innerText=description}
-setTheme(theme){if(theme!=="light"){this.theme="dark"
-this.tickColor="#bbb"
-this.axisTitleColor="#bbb"
-this.titleColor="#ccc"}else{this.theme="light"
-this.tickColor="#444"
-this.axisTitleColor="#444"
-this.titleColor="#444"}}
-async fetch(){const response=await fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`)
-try{return response.json()}catch(error){console.error('Error:',error)}}
-update(data){this.chart.data=data
-this.chart.data.labels=data.labels
-this.chart.data.datasets=data.data
-this.chart.options.plugins.title=data.title
-if(data.chartPreferences.pinnedArray!==undefined){this.pinnedArray.push(...data.chartPreferences.pinnedArray)}else{this.pinnedArray=[]}
-this.groupOptions=data.groupOptions
-this.pinnedOnly=data.chartPreferences.pinnedOnly
-this.updatePins()
-this.updateLegend()
-this.updateDescription(data.description)
-this.updateCountryGroups()
-if(this.pinnedOnly){this.hideUnpinned()}
-this.chart.update()}
-updatePins(){if(this.pinnedArray.length===0){return}
-this.chart.data.datasets.forEach(dataset=>{if(this.pinnedArray.map(cou=>cou.CCode).includes(dataset.CCode)){dataset.pinned=true
-dataset.hidden=false}})
-this.chart.update()}
-showAll(){this.pinnedOnly=false
-console.log('Showing all countries')
-this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
-this.chart.update({duration:0,lazy:false})}
-showGroup(groupName){this.pinnedOnly=false
-console.log('Showing group:',groupName)
-this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
-this.chart.update({duration:0,lazy:false})}
-hideUnpinned(){this.pinnedOnly=true
-console.log('Hiding unpinned countries')
-this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
-this.chart.update({duration:0,lazy:false})}
-showRandomN(N=10){this.pinnedOnly=false
-const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
-let availableDatasetIndices=[]
-this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
-console.log('Showing',N,'random countries from group',activeGroup)
-this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
-let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
-shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
-console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
-this.chart.update({duration:0,lazy:false})}
-sendPrefs(){const activeGroup=this.groupOptions[this.countryGroupContainer.style.getPropertyValue('--selected-index')]
-fetch(`/api/v1/dynamic/line/${this.IndicatorCode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pinnedArray:this.pinnedArray,activeGroup:activeGroup,pinnedOnly:this.pinnedOnly})})}
-pinCountry(dataset){if(dataset.pinned){return}
-dataset.pinned=true
-dataset.hidden=false
-this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
-this.updateLegend()
-this.chart.update()}
-pinCountryByCode(CountryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=true
-dataset.hidden=false
-this.pinnedArray.push({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}})
-this.updateLegend()
-this.chart.update()}
-unpinCountry(dataset,hide=false){if(this.pinnedOnly){dataset.hidden=true}
-dataset.pinned=false
-this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)
-this.updateLegend()
-this.chart.update()}
-unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=false
-if(hide){dataset.hidden=true}
-this.pinnedArray=this.pinnedArray.filter((item)=>item.CCode!==dataset.CCode)}})
-this.updateLegend()
-this.chart.update()}
-togglePin(dataset){if(dataset.pinned){this.unpinCountry(dataset,false)}else{this.pinCountry(dataset,false)}
-this.updateLegend()
-this.chart.update()}
-clearPins(){this.pinnedArray.forEach((PinnedCountry)=>{this.unpinCountryByCode(PinnedCountry.CCode,true)})
-this.pinnedArray=Array()
-this.updateLegend()}
-dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
-return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
-dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
-return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.IndicatorCode+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
-rigPinStorageOnUnload(){window.addEventListener("beforeunload",()=>{localStorage.setItem('pins',JSON.stringify(this.chart.data.datasets.map((dataset)=>{dataset.pinned})));})}
-toggleBackwardExtrapolation(){this.extrapolatePlugin.toggle()
-this.chart.update();}}
-class SearchDropdown{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
+/**
+ * IndicatorTable - Interactive functionality for the SSPI Indicators Overview page
+ * Handles collapsible sections for pillars, categories, and indicator details
+ */
+class IndicatorTable {
+    constructor() {
+        this.container = document.querySelector('.indicators-container');
+        if (!this.container) {
+            console.warn('IndicatorTable:Container not found');
+            return;
+        }
+        
+        this.initializeEventListeners();
+        this.initializeState();
+    }
+    
+    initializeEventListeners() {
+        // Add click listeners to all collapse toggle buttons
+        this.container.addEventListener('click', (event) => {
+            const toggleBtn = event.target.closest('.collapse-toggle-btn');
+            if (toggleBtn) {
+                event.preventDefault();
+                event.stopPropagation();
+                this.handleToggle(toggleBtn);
+            }
+        });
+        
+        // Add keyboard support for toggle buttons
+        this.container.addEventListener('keydown', (event) => {
+            const toggleBtn = event.target.closest('.collapse-toggle-btn');
+            if (toggleBtn && (event.key === 'Enter' || event.key === '')) {
+                event.preventDefault();
+                this.handleToggle(toggleBtn);
+            }
+        });
+    }
+    
+    initializeState() {
+        // Set initial expanded states based on data-expanded attributes
+        const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
+        collapsibleSections.forEach(section => {
+            const isExpanded = section.dataset.expanded === 'true';
+            this.updateSectionVisibility(section, isExpanded);
+        });
+    }
+    
+    handleToggle(toggleBtn) {
+        const section = this.findToggleableSection(toggleBtn);
+        if (!section) return;
+        
+        const isCurrentlyExpanded = section.dataset.expanded === 'true';
+        const newExpandedState = !isCurrentlyExpanded;
+        
+        // Update the data attribute
+        section.dataset.expanded = newExpandedState.toString();
+        
+        // Update visual state
+        this.updateSectionVisibility(section, newExpandedState);
+        this.updateToggleIcon(toggleBtn, newExpandedState);
+    }
+    
+    findToggleableSection(toggleBtn) {
+        // Find the appropriate collapsible section based on the toggle button's context
+const pillarSection=toggleBtn.closest('.pillar-section');const categorySection=toggleBtn.closest('.category-section');const indicatorItem=toggleBtn.closest('.indicator-item');if(indicatorItem&&toggleBtn.closest('.indicators-indicator-header')){return indicatorItem.querySelector('.indicator-details');}else if(categorySection&&toggleBtn.closest('.indicators-category-header')){return categorySection.querySelector('.category-content');}else if(pillarSection&&toggleBtn.closest('.indicators-pillar-header')){return pillarSection.querySelector('.pillar-content');}
+return null;}
+updateSectionVisibility(section,isExpanded){if(isExpanded){section.style.display='';section.style.maxHeight='';section.style.opacity='';}else{section.style.display='none';}}
+updateToggleIcon(toggleBtn,isExpanded){const icon=toggleBtn.querySelector('.collapse-icon');if(icon){if(isExpanded){icon.style.transform='rotate(0deg)';}else{icon.style.transform='rotate(-90deg)';}}}
+expandAll(){const allSections=this.container.querySelectorAll('[data-expanded]');allSections.forEach(section=>{section.dataset.expanded='true';this.updateSectionVisibility(section,true);const toggleBtn=this.findToggleButtonForSection(section);if(toggleBtn){this.updateToggleIcon(toggleBtn,true);}});}
+collapseAll(){const allSections=this.container.querySelectorAll('[data-expanded]');allSections.forEach(section=>{section.dataset.expanded='false';this.updateSectionVisibility(section,false);const toggleBtn=this.findToggleButtonForSection(section);if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}});}
+expandPillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='true';this.updateSectionVisibility(pillarContent,true);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,true);}}}}
+collapsePillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='false';this.updateSectionVisibility(pillarContent,false);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}}}}
+findToggleButtonForSection(section){const parent=section.parentElement;if(!parent)return null;if(section.classList.contains('pillar-content')){return parent.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');}else if(section.classList.contains('category-content')){return parent.querySelector('.indicator-table-category-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-details')){return parent.querySelector('.indicator-header .collapse-toggle-btn');}
+return null;}}
+window.IndicatorTable=IndicatorTable;class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
+this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
+this.initToggle()
+this.rigEventListeners()
+this.updateToggleState()}
+initToggle(){this.parentElement.innerHTML='<div id="theme-label-header-span" class="theme-label"></div>'+
+'<label class="theme-toggle">'+
+'<input type="checkbox" id="darkModeToggle" />'+
+'<span class="icons moon-svg">'+
+'<svg class="icon moon" viewBox="0 0 24 24">'+
+'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />'+
+'</svg>'+
+'</span>'+
+'<span class="slider"></span>'+
+'<span class="icons sun-svg">'+
+'<svg class="icon sun" viewBox="0 0 24 24">'+
+'<circle cx="12" cy="12" r="5" />'+
+'<g stroke-width="2">'+
+'<line x1="12" y1="1" x2="12" y2="3" />'+
+'<line x1="12" y1="21" x2="12" y2="23" />'+
+'<line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />'+
+'<line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />'+
+'<line x1="1" y1="12" x2="3" y2="12" />'+
+'<line x1="21" y1="12" x2="23" y2="12" />'+
+'<line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />'+
+'<line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />'+
+'</g>'+
+'</svg>'+
+'</span>'+
+'</label>';this.checkbox=this.parentElement.querySelector("#darkModeToggle");this.label=this.parentElement.querySelector("#theme-label-header-span");}
+rigEventListeners(){this.checkbox.title="Toggle Light/Dark Page Theme"
+this.checkbox.addEventListener("change",()=>{this.handleThemeChange()})}
+handleThemeChange(){const newTheme=this.checkbox.checked?"light":"dark"
+this.setTheme(newTheme)}
+setTheme(theme){this.currentTheme=theme
+const htmlTag=document.documentElement
+if(theme==="light"){htmlTag.classList.remove("dark-theme")
+htmlTag.classList.add("light-theme")
+localStorage.setItem("theme","light")
+window.theme="light"
+this.label.innerText="Light Theme"
+this.checkbox.checked=true}else{htmlTag.classList.remove("light-theme")
+htmlTag.classList.add("dark-theme")
+localStorage.setItem("theme","dark")
+window.theme="dark"
+this.label.innerText="Dark Theme"
+this.checkbox.checked=false}
+this.updateCharts()}
+updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
+this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
+updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
+getTheme(){return this.currentTheme}}
+const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"rgba(0,0,0,.5)",circleWidth:1,guideColor:"rgba(0,0,0,.35)",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#000",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_lastCollisionTime:0,_collisionCooldown:1000,_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);this._lastCollisionTime=0;}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
+catch(e){console.error("chartInteractionPlugin onDatasetClick:",e);}}}
+chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled){this._resetProximity(chart);return;}
+const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
+const R=opts.radius;const CR=opts.clickRadius;const cr2=CR*CR;const ctx=chart.ctx;const area=chart.chartArea;let nearest={d2:Infinity,x:null,idx:null,valX:null};let closestDatasetMinD2=Infinity;let anyNear=false;this._interaction.closestDatasetIdx=null;chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(ds.hidden||!meta?.data?.length){ds._isNear=ds._isHover=false;return;}
+ds._full=ds._full||{border:ds.borderColor,bg:ds.backgroundColor};ds._faded=ds._faded||this._fade(ds._full.border,opts.fadeAlpha);let datasetClosestD2=Infinity;meta.data.forEach((pt,colIdx)=>{if(!pt)return;const dx=pt.x-pos.x,dy=pt.y-pos.y,d2=dx*dx+dy*dy;if(d2<nearest.d2)nearest={d2,x:pt.x,idx:colIdx,valX:pt.parsed?.x??colIdx};if(d2<datasetClosestD2)datasetClosestD2=d2;});if(datasetClosestD2<closestDatasetMinD2-1e-3){closestDatasetMinD2=datasetClosestD2;this._interaction.closestDatasetIdx=i;}else if(Math.abs(datasetClosestD2-closestDatasetMinD2)<1e-3){if(Math.random()<0.5)this._interaction.closestDatasetIdx=i;}
+const pt=meta.data[nearest.idx];const d2pt=pt?(pt.x-pos.x)**2+(pt.y-pos.y)**2:Infinity;const near=d2pt<=R*R;const hover=d2pt<=cr2;ds._isNear=near;ds._isHover=hover;if(near)anyNear=true;ds.borderColor=near?ds._full.border:ds._faded;ds.backgroundColor=near?ds._full.bg:ds._faded;if(meta.dataset)meta.dataset.options.borderColor=ds.borderColor;meta.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;const clickNear=(p.x-pos.x)**2+(p.y-pos.y)**2<=cr2;if(clickNear){if(p.__origR===undefined)
+p.__origR=p.options.radius??p.radius??3;p.options.radius=p.__origR*this._POINT_SCALE;}else if(p.__origR!==undefined){p.options.radius=p.__origR;}});});if(!anyNear){this._resetProximity(chart);return;}
+this._interaction.nearest=nearest;ctx.save();ctx.beginPath();ctx.arc(pos.x,pos.y,R,0,2*Math.PI);ctx.strokeStyle=opts.circleColor;ctx.lineWidth=opts.circleWidth;ctx.setLineDash([3,3]);ctx.stroke();ctx.beginPath();ctx.moveTo(nearest.x,area.top);ctx.lineTo(nearest.x,area.bottom);ctx.strokeStyle=opts.guideColor;ctx.lineWidth=opts.guideWidth;ctx.setLineDash(opts.guideDash);ctx.stroke();ctx.restore();const vis=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const el=chart.getDatasetMeta(i).data[nearest.idx];const v=el?.parsed?.y??el?.raw;if(v==null||isNaN(v))return;vis.push({i,v});});vis.sort((a,b)=>b.v-a.v);const tot=vis.length,rankMap={};vis.forEach((o,r)=>rankMap[o.i]="#"+(r+1)+" / "+tot);const items=[];chart.data.datasets.forEach((ds,i)=>{if(!ds._isNear)return;const el=chart.getDatasetMeta(i).data[nearest.idx];let val=el?.parsed?.y??el?.raw;if(typeof val==="number")val=val.toFixed(3);const prefix=ds.CName?ds.CName+" ("+ds.CCode+")":(ds.CCode?ds.CCode+":":`Series ${i+1}:`);items.push({prefix,value:val,rank:rankMap[i]||"",colour:ds._full?ds._full.border:ds.borderColor,y:el.y,hover:ds._isHover});});items.sort((a,b)=>a.y-b.y);this._interaction.tooltipItems=items;},afterDraw(chart,_a,opts){if(!opts?.enabled)return;this._drawTooltip(chart,opts);this._drawLabels(chart,opts);},_drawTooltip(chart,opts){const rows=this._interaction.tooltipItems;if(!rows?.length)return;const ctx=chart.ctx;const pad=opts.tooltipPad,gap=opts.colGap,lh=14;const baseFont=opts.tooltipFont;const boldFont="bold "+baseFont;const boldItal="italic bold "+baseFont;let prefixW=0,valW=0,rankW=0;rows.forEach(r=>{ctx.font=r.hover?boldItal:baseFont;prefixW=Math.max(prefixW,ctx.measureText(r.prefix).width);});ctx.font=baseFont;rows.forEach(r=>{rankW=Math.max(rankW,ctx.measureText(" "+r.rank).width);});ctx.font=boldFont;rows.forEach(r=>{valW=Math.max(valW,ctx.measureText(r.value).width);});const header=this._headerText(chart,this._interaction.nearest.valX);const width=pad+12+prefixW+gap+valW+rankW+pad;const height=(rows.length+1)*lh+pad*2;const area=chart.chartArea;const nearestX=this._interaction.nearest.x;const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+opts.tooltipGap:nearestX-opts.tooltipGap-width;if(x+width>area.right)x=nearestX-opts.tooltipGap-width;if(x<area.left)x=nearestX+opts.tooltipGap;if(x+width>area.right)x=area.right-width-2;const above=this._interaction.mouse.y>(area.top+area.bottom)/2;let y=above?this._interaction.mouse.y-opts.radius-height-2:this._interaction.mouse.y+opts.radius+2;if(y<area.top)y=area.top+2;if(y+height>area.bottom)y=area.bottom-height-2;ctx.save();ctx.fillStyle=opts.tooltipBg;ctx.strokeStyle="rgba(0,0,0,0.25)";ctx.beginPath();ctx.rect(x,y,width,height);ctx.fill();ctx.stroke();ctx.font=boldFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(header,x+pad,y+pad+0.75*lh);rows.forEach((r,i)=>{const rowY=y+pad+lh+(i+0.75)*lh;ctx.fillStyle=r.colour;ctx.fillRect(x+pad,rowY-8,8,8);const preX=x+pad+12;const valX=preX+prefixW+gap;const rankX=valX+valW;ctx.font=r.hover?boldItal:baseFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(r.prefix,preX,rowY);ctx.font=boldFont;ctx.fillText(r.value,valX,rowY);ctx.font=baseFont;ctx.fillText(" "+r.rank,rankX,rowY);});ctx.restore();},_drawLabels(chart,opts){const ctx=chart.ctx;const labels=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;let last=null;for(let j=meta.data.length-1;j>=0;--j){const el=meta.data[j];if(el?.parsed?.y!==null){last=el;break;}}
+if(!last)return;const text=ds[opts.labelField]??'';this._setupCanvas(ctx,this._LABEL_FONT,'#000');const w=ctx.measureText(text).width;ctx.restore();const x=last.x+5;const y=last.y+4;labels.push({idx:i,text,colour:ds.borderColor??'#000',x,y,box:{left:x,right:x+w,top:y-14,bottom:y},order:0,isPinned:!!ds.pinned});});const animating=chart.animating||(chart._animations&&chart._animations.size)||(chart.animations&&chart.animations.size);if(animating){chart._labelRandDone=false;chart._defaultVisibleLabels=null;labels.forEach(l=>{this._setupCanvas(ctx,this._LABEL_FONT,l.colour,opts.animAlpha);ctx.fillText(l.text,l.x,l.y);ctx.restore();});return;}
+if(!chart._labelRandDone){const pinnedIndices=labels.filter(l=>l.isPinned).map(l=>l.idx);const unpinnedIndices=labels.filter(l=>!l.isPinned).map(l=>l.idx);for(let i=unpinnedIndices.length-1;i>0;--i){const k=Math.floor(Math.random()*(i+1));[unpinnedIndices[i],unpinnedIndices[k]]=[unpinnedIndices[k],unpinnedIndices[i]];}
+const orderSeq=[...pinnedIndices,...unpinnedIndices];chart._labelOrder=Object.fromEntries(orderSeq.map((d,pos)=>[d,pos]));chart._labelRandDone=true;}
+labels.forEach(l=>{l.order=chart._labelOrder[l.idx]??0;});labels.sort((a,b)=>a.order-b.order);const currentDatasetCount=labels.length;if(chart._lastDatasetCount!==currentDatasetCount){chart._defaultVisibleLabels=null;chart._lastDatasetCount=currentDatasetCount;}
+if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.size>0){const cachedIndices=Array.from(chart._defaultVisibleLabels);const maxCachedIndex=Math.max(...cachedIndices);if(maxCachedIndex>=labels.length){chart._defaultVisibleLabels=null;}}
+const shouldRebuild=!chart._defaultVisibleLabels||chart._defaultVisibleLabels.size===0||chart._needsLabelRebuild;if(shouldRebuild){chart._defaultVisibleLabels=null;chart._needsLabelRebuild=false;}
+const now=Date.now();const timeSinceLastCollision=now-this._lastCollisionTime;const shouldRunCollisionDetection=opts.showDefaultLabels&&!chart._defaultVisibleLabels&&timeSinceLastCollision>=this._collisionCooldown;if(shouldRunCollisionDetection){this._lastCollisionTime=now;console.log(`[Chart Plugin]Running collision detection at ${now}(${labels.length}labels)`);const spacing=opts.defaultLabelSpacing;const defaultVisible=new Set();labels.forEach(label=>{label.occluded=false;});labels.forEach((label,labelIndex)=>{let hasCollision=false;let collisionWith=[];if(label.isPinned){defaultVisible.add(labelIndex);return;}
+for(const higherPriorityIdx of defaultVisible){const higherPriority=labels[higherPriorityIdx];const horizontalOverlap=label.box.right+spacing>=higherPriority.box.left-spacing&&label.box.left-spacing<=higherPriority.box.right+spacing;const verticalOverlap=label.box.bottom+spacing>=higherPriority.box.top-spacing&&label.box.top-spacing<=higherPriority.box.bottom+spacing;if(horizontalOverlap&&verticalOverlap){hasCollision=true;collisionWith.push(`${higherPriority.text}${higherPriority.isPinned?' (pinned)':''}`);break;}}
+if(!hasCollision){defaultVisible.add(labelIndex);}else{label.occluded=true;}});chart._defaultVisibleLabels=defaultVisible;this._reorderDatasetsForVisibility(chart,labels,defaultVisible);}else if(opts.showDefaultLabels&&!chart._defaultVisibleLabels){}
+const occludedLabels=[];const visibleLabels=[];labels.forEach((l,i)=>{let alpha,reason;if(this._interaction.closestDatasetIdx!==null&&this._interaction.mouse){alpha=l.idx===this._interaction.closestDatasetIdx?1:opts.occludedAlpha;reason=`mouse interaction:${l.idx===this._interaction.closestDatasetIdx?'closest':'not closest'}`;}else if(opts.showDefaultLabels&&chart._defaultVisibleLabels){alpha=chart._defaultVisibleLabels.has(i)?1:opts.occludedAlpha;reason=`default visible:${chart._defaultVisibleLabels.has(i)?'in set':'not in set'}`;}else{alpha=opts.occludedAlpha;reason=`fallback:${opts.showDefaultLabels?'no default set':'default labels disabled'}`;}
+const labelInfo={label:l,alpha,reason,arrayIdx:i};if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.has(i)){visibleLabels.push(labelInfo);}else{occludedLabels.push(labelInfo);}});occludedLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});visibleLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});},_resetProximity(chart){chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(!ds._full)return;ds.borderColor=ds._full.border;ds.backgroundColor=ds._full.bg;ds._isNear=ds._isHover=false;if(meta?.dataset)meta.dataset.options.borderColor=ds.borderColor;meta?.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;if(p.__origR!==undefined){p.options.radius=p.__origR;delete p.__origR;}});});this._interaction.tooltipItems=null;this._interaction.closestDatasetIdx=null;},_clearLabelState(chart){chart._defaultVisibleLabels=null;chart._labelRandDone=false;chart._labelOrder=null;chart._lastDatasetCount=null;},_forceRefreshLabels(chart){this._clearLabelState(chart);chart._needsLabelRebuild=true;},_reorderDatasetsForVisibility(chart,labels,visibleLabelIndices){if(!chart.data?.datasets)return;const visibleLabelDatasetIndices=new Set();labels.forEach((label,labelIndex)=>{if(visibleLabelIndices.has(labelIndex)){visibleLabelDatasetIndices.add(label.idx);}});const datasets=chart.data.datasets;const datasetsWithHiddenLabels=[];const datasetsWithVisibleLabels=[];datasets.forEach((ds,index)=>{if(visibleLabelDatasetIndices.has(index)){datasetsWithVisibleLabels.push({dataset:ds,originalIndex:index});}else{datasetsWithHiddenLabels.push({dataset:ds,originalIndex:index});}});datasetsWithVisibleLabels.sort((a,b)=>{const aPinned=!!a.dataset.pinned;const bPinned=!!b.dataset.pinned;if(aPinned&&!bPinned)return 1;if(!aPinned&&bPinned)return-1;return 0;});const reorderedDatasets=[...datasetsWithHiddenLabels.map(item=>item.dataset),...datasetsWithVisibleLabels.map(item=>item.dataset)];const orderChanged=reorderedDatasets.some((ds,i)=>ds!==datasets[i]);if(orderChanged){chart.data.datasets=reorderedDatasets;}},_setupCanvas(ctx,font,color,alpha=1){ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.textAlign='left';},_fade(col,a){if(col.startsWith("rgba"))return col.replace(/, *[^,]+\)$/,`,${a})`);if(col.startsWith("rgb"))return col.replace("rgb","rgba").replace(")",`,${a})`);if(col[0]==="#"&&col.length===7)
+return col+Math.round(a*255).toString(16).padStart(2,"0");return col;},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
+if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class CountrySelector{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
 this.datasets=datasets
 this.parentChart=parentChart
 this.initResultsWindow()
@@ -390,38 +574,1728 @@ if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
 if(optionArray.length===limit){break;}}
 return optionArray}
 closeResults(){this.resultsWindow.remove()}}
-class StaticOverallStackedBarChart{constructor(parentElement,colormap={}){this.parentElement=parentElement;this.textColor='#bbb';this.gridColor='#cccccc33';this.initRoot()
-this.initTitle()
-if(Object.keys(colormap).length===0){this.initColormap()}else{this.colormap=colormap}
-this.createLegend()
+class DatasetSelector{constructor(options={}){this.options={maxSelections:5,multiSelect:true,showOrganizations:true,showTypes:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/datasets',...options}
+this.datasets=[]
+this.filteredDatasets=[]
+this.selectedDatasets=[]
+this.currentFilters={search:'',organization:'',type:'',category:''}
+this.modal=null}
+async initialize(){await this.loadDatasets()
+this.applyFilters()}
+async loadDatasets(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=300`)
+const data=await response.json()
+this.datasets=data.datasets||[]}catch(error){console.error('Error loading datasets:',error)
+this.datasets=[]}}
+async show(currentSelections=[]){try{if(!this.datasets.length){await this.initialize()}
+this.selectedDatasets=[...currentSelections]
+this.createModal()
+if(!this.modal){console.error('Failed to create modal')
+return}
+this.renderModal()
+this.bindEvents()
+document.body.appendChild(this.modal)}catch(error){console.error('Error showing dataset selector:',error)}}
+createModal(){this.modal=document.createElement('div')
+this.modal.className='dataset-modal-overlay'
+const modalContent=document.createElement('div')
+modalContent.className='dataset-modal-content enhanced'
+modalContent.innerHTML='<div class="dataset-modal-header">'+
+'<h3 class="dataset-modal-title">Select Dataset</h3>'+
+'<div class="dataset-selection-counter">'+
+'<span class="selected-count">'+this.selectedDatasets.length+'</span> of '+
+'<span class="max-count">'+this.options.maxSelections+'</span> selected'+
+'</div>'+
+'</div>'+
+(this.options.enableSearch?this.createSearchHTML():'')+
+(this.options.enableFilters?this.createFiltersHTML():'')+
+'<div class="dataset-list-container">'+
+'<div id="dataset-list" class="dataset-list enhanced">'+
+'<div class="dataset-loading-message">Loading datasets...</div>'+
+'</div>'+
+'</div>'+
+'<div class="dataset-modal-actions">'+
+'<button id="modal-cancel" class="dataset-modal-cancel">Close</button>'+
+'</div>'
+this.modal.appendChild(modalContent)}
+createSearchHTML(){return'<div class="dataset-search-container">'+
+'<input type="text" id="dataset-search" class="dataset-search-input" '+
+'placeholder="Search datasets by code, name, or description...">'+
+'<div class="search-results-count"></div>'+
+'</div>';}
+createFiltersHTML(){const organizations=[...new Set(this.datasets.map(d=>d.organization))].sort()
+const types=[...new Set(this.datasets.map(d=>d.dataset_type))].sort()
+const categories=[...new Set(this.datasets.map(d=>d.topic_category))].sort()
+const orgOptions=organizations.map(org=>'<option value="'+org+'">'+org+'</option>').join('')
+const typeOptions=types.map(type=>'<option value="'+type+'">'+type+'</option>').join('')
+const catOptions=categories.map(cat=>'<option value="'+cat+'">'+cat+'</option>').join('')
+return'<div class="dataset-filters-container">'+
+'<div class="filter-group">'+
+'<label for="org-filter">Organization:</label>'+
+'<select id="org-filter" class="filter-select">'+
+'<option value="">All Organizations</option>'+
+orgOptions+
+'</select>'+
+'</div>'+
+'<div class="filter-group">'+
+'<label for="type-filter">Type:</label>'+
+'<select id="type-filter" class="filter-select">'+
+'<option value="">All Types</option>'+
+typeOptions+
+'</select>'+
+'</div>'+
+'<div class="filter-group">'+
+'<label for="category-filter">Category:</label>'+
+'<select id="category-filter" class="filter-select">'+
+'<option value="">All Categories</option>'+
+catOptions+
+'</select>'+
+'</div>'+
+'<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>'+
+'</div>';}
+renderModal(){this.applyFilters()
+this.renderDatasetList()
+this.updateSelectionCounter()}
+applyFilters(){this.filteredDatasets=this.datasets.filter(dataset=>{const matchesSearch=!this.currentFilters.search||dataset.dataset_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||dataset.dataset_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(dataset.description&&dataset.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+const matchesOrg=!this.currentFilters.organization||dataset.organization===this.currentFilters.organization
+const matchesType=!this.currentFilters.type||dataset.dataset_type===this.currentFilters.type
+const matchesCategory=!this.currentFilters.category||dataset.topic_category===this.currentFilters.category
+return matchesSearch&&matchesOrg&&matchesType&&matchesCategory})
+this.updateResultsCount()}
+renderDatasetList(){if(!this.modal){console.error('Modal not found in renderDatasetList')
+return}
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList){console.error('Dataset list element not found')
+return}
+if(this.filteredDatasets.length===0){datasetList.innerHTML='<div class="dataset-no-results">No datasets found matching your criteria.</div>'
+return}
+const htmlParts=[]
+this.filteredDatasets.forEach(dataset=>{const isSelected=this.selectedDatasets.includes(dataset.dataset_code)
+const isDisabled=!isSelected&&this.selectedDatasets.length>=this.options.maxSelections
+let cssClasses='dataset-option enhanced'
+if(isSelected)cssClasses+=' selected'
+if(isDisabled)cssClasses+=' disabled'
+let badges=''
+if(this.options.showOrganizations){badges+='<span class="dataset-organization-badge '+dataset.organization.toLowerCase()+'">'+dataset.organization+'</span>'}
+if(this.options.showTypes){badges+='<span class="dataset-type-badge '+dataset.dataset_type.toLowerCase()+'">'+dataset.dataset_type+'</span>'}
+badges+='<span class="dataset-category-badge '+dataset.topic_category.toLowerCase()+'">'+dataset.topic_category+'</span>'
+let actions=''
+if(isSelected){actions='<button class="dataset-remove-btn">Remove</button>'}else{actions='<button class="dataset-add-btn"'+(isDisabled?' disabled':'')+'>Add Dataset</button>'}
+if(isDisabled&&!isSelected){actions+='<div class="dataset-limit-note">Selection limit reached</div>'}
+const description=dataset.description_short||dataset.description||''
+const organization=dataset.organization_name||dataset.organization||''
+htmlParts.push('<div class="'+cssClasses+' compact" data-dataset-code="'+dataset.dataset_code+'">'+
+'<div class="dataset-compact-header">'+
+'<div class="dataset-compact-code">'+dataset.dataset_code+'</div>'+
+'<div class="dataset-compact-badges">'+badges+'</div>'+
+'</div>'+
+'<div class="dataset-compact-name">'+dataset.dataset_name+'</div>'+
+'<div class="dataset-compact-description">'+description+'</div>'+
+'</div>')})
+datasetList.innerHTML=htmlParts.join('')
+this.bindDatasetEvents()}
+bindEvents(){if(!this.modal){console.error('Modal not found in bindEvents')
+return}
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#dataset-search')
+if(searchInput){searchInput.addEventListener('input',(e)=>{this.currentFilters.search=e.target.value
+this.applyFilters()
+this.renderDatasetList()})}}
+if(this.options.enableFilters){const orgFilter=this.modal.querySelector('#org-filter')
+const typeFilter=this.modal.querySelector('#type-filter')
+const categoryFilter=this.modal.querySelector('#category-filter')
+const clearButton=this.modal.querySelector('#clear-filters')
+if(orgFilter){orgFilter.addEventListener('change',(e)=>{this.currentFilters.organization=e.target.value
+this.applyFilters()
+this.renderDatasetList()})}
+if(typeFilter){typeFilter.addEventListener('change',(e)=>{this.currentFilters.type=e.target.value
+this.applyFilters()
+this.renderDatasetList()})}
+if(categoryFilter){categoryFilter.addEventListener('change',(e)=>{this.currentFilters.category=e.target.value
+this.applyFilters()
+this.renderDatasetList()})}
+if(clearButton){clearButton.addEventListener('click',()=>{this.clearFilters()})}}
+const cancelButton=this.modal.querySelector('#modal-cancel')
+const confirmButton=this.modal.querySelector('#modal-confirm')
+const clearButton=this.modal.querySelector('#modal-clear')
+if(cancelButton){cancelButton.addEventListener('click',()=>{this.close()})}
+if(confirmButton){confirmButton.addEventListener('click',()=>{this.confirm()})}
+if(clearButton){clearButton.addEventListener('click',()=>{this.clearAll()})}
+this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})}
+bindDatasetEvents(){if(!this.modal)return
+this.modal.querySelectorAll('.dataset-option').forEach(option=>{const datasetCode=option.dataset.datasetCode
+const isSelected=this.selectedDatasets.includes(datasetCode)
+const isDisabled=!isSelected&&this.selectedDatasets.length>=this.options.maxSelections
+if(!isDisabled){option.style.cursor='pointer'
+option.addEventListener('click',(e)=>{e.stopPropagation()
+if(isSelected){this.removeDataset(datasetCode)}else{this.addDataset(datasetCode)}})}else{option.style.cursor='not-allowed'}})}
+addDataset(datasetCode){if(this.selectedDatasets.length>=this.options.maxSelections)return
+if(this.selectedDatasets.includes(datasetCode))return
+this.selectedDatasets.push(datasetCode)
+if(this.options.onSelectionChange){this.options.onSelectionChange(this.selectedDatasets)}
+this.renderDatasetList()
+this.updateSelectionCounter()}
+removeDataset(datasetCode){this.selectedDatasets=this.selectedDatasets.filter(code=>code!==datasetCode)
+if(this.options.onSelectionChange){this.options.onSelectionChange(this.selectedDatasets)}
+this.renderDatasetList()
+this.updateSelectionCounter()}
+clearAll(){this.selectedDatasets=[]
+this.renderDatasetList()
+this.updateSelectionCounter()}
+clearFilters(){this.currentFilters={search:'',organization:'',type:'',category:''}
+if(!this.modal)return
+const searchInput=this.modal.querySelector('#dataset-search')
+if(searchInput)searchInput.value=''
+const orgFilter=this.modal.querySelector('#org-filter')
+const typeFilter=this.modal.querySelector('#type-filter')
+const categoryFilter=this.modal.querySelector('#category-filter')
+if(orgFilter)orgFilter.value=''
+if(typeFilter)typeFilter.value=''
+if(categoryFilter)categoryFilter.value=''
+this.applyFilters()
+this.renderDatasetList()}
+updateSelectionCounter(){if(!this.modal)return
+const counter=this.modal.querySelector('.selected-count')
+if(counter)counter.textContent=this.selectedDatasets.length}
+updateResultsCount(){if(!this.modal)return
+const resultsCount=this.modal.querySelector('.search-results-count')
+if(resultsCount){resultsCount.textContent=this.filteredDatasets.length+' dataset'+(this.filteredDatasets.length!==1?'s':'')+' found'}}
+confirm(){if(this.options.onSelectionChange){this.options.onSelectionChange(this.selectedDatasets)}
+this.close()}
+close(){if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
+this.modal=null}
+hide(){this.close()}
+getSelectedDatasets(){return this.selectedDatasets}}
+class IndicatorSelector{constructor(options={}){this.options={maxSelections:1,multiSelect:false,showCategories:true,showPillars:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/indicators',...options}
+this.indicators=[]
+this.filteredIndicators=[]
+this.selectedIndicator=null
+this.currentFilters={search:'',category:'',pillar:''}
+this.modal=null}
+async initialize(){await this.loadIndicators()
+this.applyFilters()}
+async loadIndicators(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=300`)
+const data=await response.json()
+this.indicators=data.indicators||[]}catch(error){console.error('Error loading indicators:',error)
+this.indicators=[]}}
+async show(currentSelection=null){try{if(!this.indicators.length){await this.initialize()}
+this.selectedIndicator=currentSelection
+this.createModal()
+if(!this.modal){console.error('Failed to create modal')
+return}
+this.renderModal()
+this.bindEvents()
+document.body.appendChild(this.modal)}catch(error){console.error('Error showing indicator selector:',error)}}
+createModal(){this.modal=document.createElement('div')
+this.modal.className='dataset-modal-overlay'
+const modalContent=document.createElement('div')
+modalContent.className='dataset-modal-content enhanced'
+modalContent.innerHTML='<div class="dataset-modal-header">'+
+'<h3 class="dataset-modal-title">Select Existing Indicator</h3>'+
+'<div class="dataset-selection-counter">'+
+'<span class="selected-count">'+(this.selectedIndicator?1:0)+'</span> of 1 selected'+
+'</div>'+
+'</div>'+
+(this.options.enableSearch?this.createSearchHTML():'')+
+(this.options.enableFilters?this.createFiltersHTML():'')+
+'<div class="dataset-list-container">'+
+'<div id="indicator-list" class="dataset-list enhanced">'+
+'<div class="dataset-loading-message">Loading indicators...</div>'+
+'</div>'+
+'</div>'+
+'<div class="dataset-modal-actions">'+
+'<button id="modal-cancel" class="dataset-modal-cancel">Cancel</button>'+
+'<button id="modal-confirm" class="dataset-modal-confirm" '+
+(this.selectedIndicator?'':'disabled')+'>Add Indicator</button>'+
+'</div>'
+this.modal.appendChild(modalContent)}
+createSearchHTML(){return'<div class="dataset-search-container">'+
+'<input type="text" id="indicator-search" class="dataset-search-input" '+
+'placeholder="Search indicators by code, name, or description...">'+
+'<div class="search-results-count"></div>'+
+'</div>';}
+createFiltersHTML(){const categories=[...new Set(this.indicators.map(i=>i.category_name).filter(Boolean))].sort()
+const pillars=[...new Set(this.indicators.map(i=>i.pillar_name).filter(Boolean))].sort()
+const catOptions=categories.map(cat=>'<option value="'+cat+'">'+cat+'</option>').join('')
+const pillarOptions=pillars.map(pillar=>'<option value="'+pillar+'">'+pillar+'</option>').join('')
+return'<div class="dataset-filters-container">'+
+'<div class="filter-group">'+
+'<label for="pillar-filter">Pillar:</label>'+
+'<select id="pillar-filter" class="filter-select">'+
+'<option value="">All Pillars</option>'+
+pillarOptions+
+'</select>'+
+'</div>'+
+'<div class="filter-group">'+
+'<label for="category-filter">Category:</label>'+
+'<select id="category-filter" class="filter-select">'+
+'<option value="">All Categories</option>'+
+catOptions+
+'</select>'+
+'</div>'+
+'<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>'+
+'</div>';}
+renderModal(){this.applyFilters()
+this.renderIndicatorList()
+this.updateSelectionCounter()}
+applyFilters(){this.filteredIndicators=this.indicators.filter(indicator=>{const matchesSearch=!this.currentFilters.search||indicator.indicator_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||indicator.indicator_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(indicator.description&&indicator.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+const matchesCategory=!this.currentFilters.category||indicator.category_name===this.currentFilters.category
+const matchesPillar=!this.currentFilters.pillar||indicator.pillar_name===this.currentFilters.pillar
+return matchesSearch&&matchesCategory&&matchesPillar})
+this.updateResultsCount()}
+renderIndicatorList(){if(!this.modal){console.error('Modal not found in renderIndicatorList')
+return}
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList){console.error('Indicator list element not found')
+return}
+if(this.filteredIndicators.length===0){indicatorList.innerHTML='<div class="dataset-no-results">No indicators found matching your criteria.</div>'
+return}
+const htmlParts=[]
+this.filteredIndicators.forEach(indicator=>{const isSelected=this.selectedIndicator===indicator.indicator_code
+let cssClasses='dataset-option enhanced'
+if(isSelected)cssClasses+=' selected'
+let badges=''
+if(this.options.showPillars&&indicator.pillar_name){badges+='<span class="dataset-organization-badge '+indicator.pillar_code.toLowerCase()+'">'+indicator.pillar_name+'</span>'}
+if(this.options.showCategories&&indicator.category_name){badges+='<span class="dataset-category-badge '+indicator.category_code.toLowerCase()+'">'+indicator.category_name+'</span>'}
+const description=indicator.description||''
+htmlParts.push('<div class="'+cssClasses+' compact" data-indicator-code="'+indicator.indicator_code+'">'+
+'<div class="dataset-compact-header">'+
+'<div class="dataset-compact-code">'+indicator.indicator_code+'</div>'+
+'<div class="dataset-compact-badges">'+badges+'</div>'+
+'</div>'+
+'<div class="dataset-compact-name">'+indicator.indicator_name+'</div>'+
+'<div class="dataset-compact-description">'+description+'</div>'+
+'</div>')})
+indicatorList.innerHTML=htmlParts.join('')
+this.bindIndicatorEvents()}
+bindEvents(){if(!this.modal){console.error('Modal not found in bindEvents')
+return}
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#indicator-search')
+if(searchInput){searchInput.addEventListener('input',(e)=>{this.currentFilters.search=e.target.value
+this.applyFilters()
+this.renderIndicatorList()})}}
+if(this.options.enableFilters){const pillarFilter=this.modal.querySelector('#pillar-filter')
+const categoryFilter=this.modal.querySelector('#category-filter')
+const clearButton=this.modal.querySelector('#clear-filters')
+if(pillarFilter){pillarFilter.addEventListener('change',(e)=>{this.currentFilters.pillar=e.target.value
+this.applyFilters()
+this.renderIndicatorList()})}
+if(categoryFilter){categoryFilter.addEventListener('change',(e)=>{this.currentFilters.category=e.target.value
+this.applyFilters()
+this.renderIndicatorList()})}
+if(clearButton){clearButton.addEventListener('click',()=>{this.clearFilters()})}}
+const cancelButton=this.modal.querySelector('#modal-cancel')
+const confirmButton=this.modal.querySelector('#modal-confirm')
+if(cancelButton){cancelButton.addEventListener('click',()=>{this.close()})}
+if(confirmButton){confirmButton.addEventListener('click',()=>{this.confirm()})}
+this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})}
+bindIndicatorEvents(){if(!this.modal)return
+this.modal.querySelectorAll('.dataset-option').forEach(option=>{const indicatorCode=option.dataset.indicatorCode
+option.style.cursor='pointer'
+option.addEventListener('click',(e)=>{e.stopPropagation()
+this.selectIndicator(indicatorCode)})})}
+selectIndicator(indicatorCode){this.selectedIndicator=indicatorCode
+this.renderIndicatorList()
+this.updateSelectionCounter()
+this.updateConfirmButton()}
+updateConfirmButton(){if(!this.modal)return
+const confirmButton=this.modal.querySelector('#modal-confirm')
+if(confirmButton){confirmButton.disabled=!this.selectedIndicator}}
+clearFilters(){this.currentFilters={search:'',category:'',pillar:''}
+if(!this.modal)return
+const searchInput=this.modal.querySelector('#indicator-search')
+if(searchInput)searchInput.value=''
+const pillarFilter=this.modal.querySelector('#pillar-filter')
+const categoryFilter=this.modal.querySelector('#category-filter')
+if(pillarFilter)pillarFilter.value=''
+if(categoryFilter)categoryFilter.value=''
+this.applyFilters()
+this.renderIndicatorList()}
+updateSelectionCounter(){if(!this.modal)return
+const counter=this.modal.querySelector('.selected-count')
+if(counter)counter.textContent=this.selectedIndicator?1:0}
+updateResultsCount(){if(!this.modal)return
+const resultsCount=this.modal.querySelector('.search-results-count')
+if(resultsCount){resultsCount.textContent=this.filteredIndicators.length+' indicator'+(this.filteredIndicators.length!==1?'s':'')+' found'}}
+confirm(){if(this.selectedIndicator&&this.options.onSelectionChange){const indicator=this.indicators.find(i=>i.indicator_code===this.selectedIndicator)
+this.options.onSelectionChange(indicator)}
+this.close()}
+close(){if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
+this.modal=null}
+hide(){this.close()}
+getSelectedIndicator(){return this.selectedIndicator}}
+class ObservableStorage{constructor(){this.listeners={};this.store={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);this.store[key]=this._parse(localStorage.getItem(key));}}
+setItem(key,value){const oldValue=this.store[key];const stringValue=JSON.stringify(value);localStorage.setItem(key,stringValue);this.store[key]=value;this._emit(key,oldValue,value);}
+getItem(key){return this.store[key];}
+removeItem(key){const oldValue=this.store[key];localStorage.removeItem(key);delete this.store[key];this._emit(key,oldValue,undefined);}
+clear(){for(const key of Object.keys(this.store)){this.removeItem(key);}}
+onChange(key,callback){if(!this.listeners[key]){this.listeners[key]=[];}
+this.listeners[key].push(callback);}
+_emit(key,oldValue,newValue){if(JSON.stringify(oldValue)===JSON.stringify(newValue))return;const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
+_parse(value){try{return JSON.parse(value);}catch{return value;}}}
+class TreeNode{constructor(data,parent=null,level=1){this.itemCode=data.ItemCode;this.itemName=data.ItemName;this.parent=parent;this.children=[];this.level=level;this.expanded=data.Children?.length>0&&level<3;this.element=null;if(data.Children?.length){this.children=data.Children.map(child=>new TreeNode(child,this,level+1));}}
+getVisibleDescendants(){if(!this.expanded||!this.children.length){return[];}
+const visible=[];this.children.forEach(child=>{visible.push(child);visible.push(...child.getVisibleDescendants());});return visible;}
+getAncestorAtLevel(targetLevel){if(this.level===targetLevel)return this;if(this.level<targetLevel||!this.parent)return null;return this.parent.getAncestorAtLevel(targetLevel);}
+toggle(){if(this.children.length>0){this.expanded=!this.expanded;if(this.element){this.element.ariaExpanded=this.expanded?'true':'false';}
+return true;}
+return false;}
+expand(){if(this.children.length>0&&!this.expanded){this.expanded=true;if(this.element){this.element.ariaExpanded='true';}
+return true;}
+return false;}
+expandToRoot(){const changedNodes=[];let current=this;while(current){if(current.expand()){changedNodes.push(current);}
+current=current.parent;}
+return changedNodes;}}
+class NavigationManager{constructor(rootNode){this.rootNode=rootNode;this.navigationIndex=[];this.currentIndex=0;this.rebuild();}
+rebuild(){this.navigationIndex=[this.rootNode];this.navigationIndex.push(...this.rootNode.getVisibleDescendants());}
+getCurrentNode(){return this.navigationIndex[this.currentIndex]||null;}
+moveTo(node){const index=this.navigationIndex.indexOf(node);if(index!==-1){this.currentIndex=index;return node;}
+return null;}
+moveNext(){if(this.currentIndex<this.navigationIndex.length-1){this.currentIndex++;return this.getCurrentNode();}
+return null;}
+movePrevious(){if(this.currentIndex>0){this.currentIndex--;return this.getCurrentNode();}
+return null;}
+moveFirst(){this.currentIndex=0;return this.getCurrentNode();}
+moveLast(){this.currentIndex=this.navigationIndex.length-1;return this.getCurrentNode();}
+handleExpand(){const current=this.getCurrentNode();if(!current)return null;if(current.children.length>0){if(!current.expanded){const stateChanged=current.toggle();this.rebuild();return{node:current,stateChanged,targetNode:current};}else{const targetNode=this.moveNext();return{node:current,stateChanged:false,targetNode};}}
+return null;}
+handleCollapse(){const current=this.getCurrentNode();if(!current)return null;if(current.expanded&&current.children.length>0){const stateChanged=current.toggle();this.rebuild();return{node:current,stateChanged,targetNode:current};}else if(current.parent){const targetNode=this.moveTo(current.parent);return{node:current,stateChanged:false,targetNode};}
+return null;}
+findByItemCode(itemCode){return this.navigationIndex.find(node=>node.itemCode===itemCode)||null;}
+findByPrefix(prefix,startFromCurrent=true){const startIndex=startFromCurrent?this.currentIndex+1:0;for(let i=startIndex;i<this.navigationIndex.length;i++){if(this.navigationIndex[i].itemName.toLowerCase().startsWith(prefix.toLowerCase())){return this.navigationIndex[i];}}
+if(startFromCurrent){for(let i=0;i<this.currentIndex;i++){if(this.navigationIndex[i].itemName.toLowerCase().startsWith(prefix.toLowerCase())){return this.navigationIndex[i];}}}
+return null;}}
+class SSPIItemTree{constructor(container,json,reloadCallback=null,activeItemCode=null){if(!(container instanceof HTMLElement)||!json)return;this.container=container;this.reload=reloadCallback;this.activeItemCode=activeItemCode||null;container.innerHTML='';this.rootNode=new TreeNode(json,null,1);this.navigationManager=new NavigationManager(this.rootNode);this.buildDOM();this.setupNavigation();if(this.activeItemCode){this.ensureItemVisible(this.activeItemCode);}else{if(this.rootNode.element){this.rootNode.element.tabIndex=0;}}}
+buildDOM(){const treeElement=this.createNodeElement(this.rootNode,true);this.container.appendChild(treeElement);this.tree=this.container.querySelector('[role="tree"]');this.navShell=this.tree.parentElement;}
+createNodeElement(node,isRoot=false){const ul=document.createElement('ul');ul.role=isRoot?'tree':'group';ul.className='treeview-navigation';if(!isRoot){ul.id=`id-${node.itemCode.toLowerCase()}-subtree`;}
+const li=document.createElement('li');li.role='none';const a=document.createElement('a');a.role='treeitem';a.ariaOwns=node.children.length?`id-${node.itemCode.toLowerCase()}-subtree`:null;a.ariaExpanded=node.children.length?(node.expanded?'true':'false'):null;a.tabIndex=-1;a.dataset.itemCode=node.itemCode;node.element=a;const label=document.createElement('span');label.className='label';if(node.children.length>0){const icon=document.createElement('span');icon.className='icon';icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"width="13"height="10"viewBox="0 0 13 10"><polygon points="2 1, 12 1, 7 9"></polygon></svg>`;icon.addEventListener('click',(e)=>{e.stopPropagation();this.handleToggle(node);});label.appendChild(icon);}
+label.appendChild(document.createTextNode(node.itemName));a.appendChild(label);li.appendChild(a);if(node.expanded&&node.children.length>0){node.children.forEach(child=>{li.appendChild(this.createNodeElement(child));});}
+ul.appendChild(li);return ul;}
+setupNavigation(){this.boundHandleKeyDown=this.handleKeyDown.bind(this);this.boundHandleClick=this.handleClick.bind(this);this.boundHandleFocusChange=this.handleFocusChange.bind(this);this.container.addEventListener('keydown',this.boundHandleKeyDown);this.container.addEventListener('click',this.boundHandleClick);document.body.addEventListener('focusin',this.boundHandleFocusChange);document.body.addEventListener('mousedown',this.boundHandleFocusChange);}
+handleKeyDown(e){const activeElement=document.activeElement;if(activeElement&&(activeElement.tagName==='INPUT'||activeElement.tagName==='TEXTAREA'||activeElement.contentEditable==='true')){return;}
+if(e.target.getAttribute('role')!=='treeitem'){return;}
+const currentNode=this.findNodeByElement(e.target);if(!currentNode)return;this.navigationManager.moveTo(currentNode);let targetNode=null;switch(e.key){case'ArrowDown':targetNode=this.navigationManager.moveNext();break;case'ArrowUp':targetNode=this.navigationManager.movePrevious();break;case'ArrowRight':const expandResult=this.navigationManager.handleExpand();if(expandResult){if(expandResult.stateChanged){this.rebuildSubtree(expandResult.node);}
+targetNode=expandResult.targetNode;}
+break;case'ArrowLeft':const collapseResult=this.navigationManager.handleCollapse();if(collapseResult){if(collapseResult.stateChanged){this.rebuildSubtree(collapseResult.node);}
+targetNode=collapseResult.targetNode;}
+break;case'Home':targetNode=this.navigationManager.moveFirst();break;case'End':targetNode=this.navigationManager.moveLast();break;case' ':case'Enter':this.handleActivate(currentNode);e.preventDefault();return;default:if(e.key.length===1&&/\S/.test(e.key)){targetNode=this.navigationManager.findByPrefix(e.key);if(targetNode){this.navigationManager.moveTo(targetNode);}}}
+if(targetNode&&targetNode.element){this.focusNode(targetNode);e.preventDefault();}}
+handleClick(e){let treeitem=e.target;while(treeitem&&treeitem.getAttribute('role')!=='treeitem'){treeitem=treeitem.parentElement;}
+if(treeitem){const node=this.findNodeByElement(treeitem);if(node){this.handleActivate(node);e.stopPropagation();}}}
+handleToggle(node){if(node.toggle()){this.rebuildSubtree(node);this.navigationManager.rebuild();}}
+handleActivate(node){const changedNodes=node.expandToRoot();if(changedNodes.length>0){changedNodes.forEach(changedNode=>{this.rebuildSubtree(changedNode);});this.navigationManager.rebuild();}
+this.highlightTreeItem(node.itemCode);if(this.reload){this.reload(node.itemCode);}}
+rebuildSubtree(node){if(!node.element)return;const li=node.element.parentElement;const existingGroups=li.querySelectorAll('[role="group"]');existingGroups.forEach(group=>group.remove());this.clearElementReferences(node);if(node.expanded&&node.children.length>0){node.children.forEach(child=>{li.appendChild(this.createNodeElement(child));});}}
+clearElementReferences(node){node.children.forEach(child=>{child.element=null;this.clearElementReferences(child);});}
+focusNode(node){if(!node.element)return;this.container.querySelectorAll('[role="treeitem"]').forEach(el=>{el.tabIndex=-1;});node.element.tabIndex=0;node.element.focus();}
+findNodeByElement(element){const itemCode=element.dataset.itemCode;return this.findNodeByItemCode(this.rootNode,itemCode);}
+findNodeByItemCode(node,itemCode){if(node.itemCode===itemCode)return node;for(const child of node.children){const found=this.findNodeByItemCode(child,itemCode);if(found)return found;}
+return null;}
+handleFocusChange(e){if(this.tree){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}}
+highlightTreeItem(itemCode){this.container.querySelectorAll('[role="treeitem"]').forEach(el=>{el.classList.remove('active-view-element');el.tabIndex=-1;});const node=this.findNodeByItemCode(this.rootNode,itemCode);if(node&&node.element){node.element.classList.add('active-view-element');node.element.tabIndex=0;}else{if(this.rootNode.element){this.rootNode.element.tabIndex=0;}}}
+ensureItemVisible(itemCode){const node=this.findNodeByItemCode(this.rootNode,itemCode);if(node){const changedNodes=node.expandToRoot();if(changedNodes.length>0){changedNodes.forEach(changedNode=>{this.rebuildSubtree(changedNode);});this.navigationManager.rebuild();}
+this.highlightTreeItem(itemCode);}}
+destroy(){if(this.container&&this.boundHandleKeyDown){this.container.removeEventListener('keydown',this.boundHandleKeyDown);this.container.removeEventListener('click',this.boundHandleClick);}
+if(document.body&&this.boundHandleFocusChange){document.body.removeEventListener('focusin',this.boundHandleFocusChange);document.body.removeEventListener('mousedown',this.boundHandleFocusChange);}
+this.container=null;this.reload=null;this.rootNode=null;this.navigationManager=null;this.tree=null;this.navShell=null;this.activeItemCode=null;this.boundHandleKeyDown=null;this.boundHandleClick=null;this.boundHandleFocusChange=null;}}
+class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
+this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
+this.pins=new Set()
+this.colorProvider=colorProvider
+this.yAxisScale="value"
+this.endLabelPlugin=endLabelPlugin
+this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
+this.setTheme(window.observableStorage.getItem("theme"))
+this.initRoot()
 this.initChartJSCanvas()
-this.fetch().then(data=>{this.update(data)})}
-async fetch(){const response=await fetch('/api/v1/static/stacked/sspi');return response.json();}
+this.buildChartOptions()
+this.rigChartOptions()
+this.rigItemDropdown()
+this.updateChartOptions()
+this.fetch(this.endpointURL).then(data=>{this.update(data)})
+this.rigUnloadListener()}
 initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-overall-stack')
+this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
-initTitle(){this.title=document.createElement('h4')
-this.title.classList.add('stack-bar-title')
-this.root.appendChild(this.title)}
-initColormap(){this.colormap={"SUS":"#28a745","MS":"#ff851b","PG":"#007bff"}}
-createLegend(){this.legend=document.createElement('div')
-this.legend.classList.add('overall-stack-bar-legend')
-this.root.appendChild(this.legend)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id=`overall-stacked-bar-canvas`;this.canvas.width=1000
-this.canvas.height=1000
+buildChartOptions(){this.chartOptions=document.createElement('div')
+this.chartOptions.classList.add('chart-options')
+this.chartOptions.innerHTML=`<button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description"></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form id="downloadForm"><fieldset><legend>Select data scope:</legend><label><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label><input type="radio"name="scope"value="visible">Visible countries</label><label><input type="radio"name="scope"value="group">Countries in group</label><label><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset><legend>Choose file format:</legend><label><input type="radio"name="format"value="json"required>JSON</label><label><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.showChartOptions.classList.add("icon-button","show-chart-options")
+this.showChartOptions.ariaLabel="Show Chart Options"
+this.showChartOptions.title="Show Chart Options"
+this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-menu"/></svg>`;this.root.appendChild(this.showChartOptions)
+this.overlay=document.createElement('div')
+this.overlay.classList.add('chart-options-overlay')
+this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
+this.root.appendChild(this.overlay)
+const wrapper=document.createElement('div')
+wrapper.classList.add('chart-options-wrapper')
+wrapper.appendChild(this.chartOptions)
+this.root.appendChild(wrapper)}
+rigChartOptions(){this.showChartOptions.addEventListener('click',()=>{this.openChartOptionsSidebar()})
+this.hideChartOptions=this.chartOptions.querySelector('.hide-chart-options')
+this.hideChartOptions.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
+let openDetails=window.observableStorage.getItem("openCountryChartDetails")
+const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
+detailsElements.forEach((details)=>{if(openDetails&&openDetails.includes(details.classList[0])){details.open=true}else{details.open=false}})
+const sidebarStatus=window.observableStorage.getItem("chartOptionsStatus")
+if(sidebarStatus==="active"){this.openChartOptionsSidebar()}else{this.closeChartOptionsSidebar()}}
+rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-information')
+this.itemDropdown=this.itemInformation.querySelector('.item-dropdown')}
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',options:{plugins:{legend:{display:false,},tooltip:{intersect:false,padding:10,backgroundColor:'rgba(0, 0, 0, 0.7)',yAlign:'center',callbacks:{afterTitle(context){const info=context[0].dataset.info[context[0].dataIndex]
-return[`SSPI Overall Score:${info.SSPIScore.toFixed(3)}`,`SSPI Overall Rank:${info.SSPIRank}`]},label(context){const info=context.dataset.info[context.dataIndex]
-return['Pillar: '+info.IName,'Pillar Score: '+info.IName,'Pillar Rank: '+Number.parseFloat(info.Score).toFixed(3),'Rank: '+info.Rank,];}}}},responsive:true,indexAxis:'y',scales:{x2:{position:'top',display:true,ticks:{color:this.textColor,},grid:{display:false,},min:0,max:1,stacked:true,},x:{title:{display:true,text:'SSPI Score',color:this.textColor,},ticks:{color:this.textColor,},stacked:true,min:0,max:1,},y2:{position:'left',display:true,ticks:{color:this.textColor,callback:function(value,index,values){return index+1},padding:8,font:{size:12,weight:'bold'},},stacked:true,grid:{display:false,}},y:{position:'left',stacked:true,ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}},})}
-update(data){this.chart.data=data.data
-this.chart.data.datasets.forEach((dataset)=>{const color=this.colormap[dataset.label]
-dataset.backgroundColor=color+"99"
-dataset.borderColor=color})
+this.chart=new Chart(this.context,{type:'line',plugins:[this.endLabelPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,maintainAspectRatio:false,datasets:{fill:true,line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{labelField:'ICode'},tooltip:{mode:'index',}},layout:{padding:{right:40}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{stacked:true,ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
+updateChartColors(){for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
+const color=this.colorProvider.get(dataset.ICode)
+dataset.borderColor=color
+dataset.backgroundColor=color+"44"}}
+setTheme(theme){if(theme!=="light"){this.theme="dark"
+this.tickColor="#bbb"
+this.axisTitleColor="#bbb"
+this.titleColor="#ccc"}else{this.theme="light"
+this.tickColor="#444"
+this.axisTitleColor="#444"
+this.titleColor="#444"}
+if(this.chart){this.updateChartOptionsPreservingYAxis()}}
+updateChartOptionsPreservingYAxis(){const currentYMin=this.chart.options.scales?.y?.min
+const currentYMax=this.chart.options.scales?.y?.max
+const currentYTitle=this.chart.options.scales?.y?.title?.text
+this.updateChartOptions()
+if(currentYMin!==undefined){this.chart.options.scales.y.min=currentYMin}
+if(currentYMax!==undefined){this.chart.options.scales.y.max=currentYMax}
+if(currentYTitle!==undefined){this.chart.options.scales.y.title.text=currentYTitle}
+this.chart.update()}
+async fetch(url){const response=await fetch(url)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+update(data){console.log(data)
+this.chart.data.datasets=data.data
+this.chart.data.labels=data.labels
 this.title.innerText=data.title
+this.itemType=data.itemType
+this.updateChartColors()
+this.chart.options.scales.y.min=0
+this.chart.options.scales.y.max=1
+this.chart.update()}
+closeChartOptionsSidebar(){this.chartOptions.classList.remove('active')
+this.chartOptions.classList.add('inactive')
+this.overlay.classList.remove('active')
+this.overlay.classList.add('inactive')}
+openChartOptionsSidebar(){this.chartOptions.classList.add('active')
+this.chartOptions.classList.remove('inactive')
+this.overlay.classList.remove('inactive')
+this.overlay.classList.add('active')}
+toggleChartOptionsSidebar(){if(this.chartOptions.classList.contains('active')){this.closeChartOptionsSidebar()}else{this.openChartOptionsSidebar()}}
+dumpChartDataJSON(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i],"Value":dataset.values[i],"Year":dataset.years[i]}));}).flat();const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+dumpChartDataCSV(screenVisibility=true){const observations=this.chart.data.datasets.map(dataset=>{if(screenVisibility&&dataset.hidden){return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode,"CountryCode":dataset.CCode,"Score":dataset.scores[i].toString(),"Value":dataset.values[i].toString(),"Year":dataset.years[i].toString()}));}).flat();const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openCountryChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
+window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
+setYAxisScale(scale){this.yAxisScale=scale
+const scaleType=scale.charAt(0).toUpperCase()+scale.slice(1)
+let itemType=""
+if(this.itemType==="sspi"){itemType=this.itemType.toUpperCase()}else{itemType=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+this.chart.options.scales.y.title.text=itemType+" "+scaleType
+let yMin=0
+let yMax=1
+for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i];if(i==0){yMin=(this.yAxisScale==="value")?dataset.maxYValue:0;yMax=(this.yAxisScale==="value")?dataset.maxYValue:1;}
+dataset.parsing.yAxisKey=this.yAxisScale;for(let j=0;j<dataset.data.length;j++){if(this.yAxisScale==="value"){dataset.data[j]=dataset.value[j]}else{dataset.data[j]=dataset.score[j]}}}
+this.chart.options.scales.y.min=yMin
+this.chart.options.scales.y.max=yMax
+this.chart.update()}
+toggleYAxisScale(){if(this.yAxisScale==="score"){this.setYAxisScale("value")}else{this.setYAxisScale("score")}}}
+class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300,colorProvider=SSPIColors}){this.parentElement=parentElement
+this.CountryList=CountryList
+this.endpointURL=endpointURL
+this.pins=new Set()
+this.missingCountries=[]
+this.colorProvider=colorProvider
+this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
+this.chartInteractionPlugin=chartInteractionPlugin
+this.setTheme(window.observableStorage.getItem("theme"))
+this.pinnedOnly=window.observableStorage.getItem("pinnedOnly")||false
+this.countryGroup=window.observableStorage.getItem("countryGroup")||"SSPI67"
+this.initRoot()
+this.initChartJSCanvas()
+this.buildChartOptions()
+this.rigChartOptions()
+this.rigItemDropdown()
+this.rigCountryGroupSelector()
+this.updateChartOptions()
+this.rigLegend()
+this.fetch(this.endpointURL).then(data=>{this.update(data)})
+this.rigPinChangeListener()
+this.rigUnloadListener()}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('panel-chart-root-container')
+this.parentElement.appendChild(this.root)}
+buildChartOptions(){this.chartOptions=document.createElement('div')
+this.chartOptions.classList.add('chart-options')
+this.chartOptions.innerHTML=`<button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="draw-button">Draw 10 Countries</button><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.showChartOptions.classList.add("icon-button","show-chart-options")
+this.showChartOptions.ariaLabel="Show Chart Options"
+this.showChartOptions.title="Show Chart Options"
+this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-menu"/></svg>`;this.root.appendChild(this.showChartOptions)
+this.overlay=document.createElement('div')
+this.overlay.classList.add('chart-options-overlay')
+this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
+this.root.appendChild(this.overlay)
+const wrapper=document.createElement('div')
+wrapper.classList.add('chart-options-wrapper')
+wrapper.appendChild(this.chartOptions)
+this.root.appendChild(wrapper)}
+rigChartOptions(){this.showChartOptions.addEventListener('click',()=>{this.openChartOptionsSidebar()})
+this.hideChartOptions=this.chartOptions.querySelector('.hide-chart-options')
+this.hideChartOptions.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
+this.extrapolateBackwardCheckbox=this.chartOptions.querySelector('.extrapolate-backward')
+this.extrapolateBackwardCheckbox.checked=true
+this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
+this.interpolateCheckbox=this.chartOptions.querySelector('.interpolate-linear')
+this.interpolateCheckbox.checked=true
+this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpolation()})
+this.drawButton=this.root.querySelector('.draw-button')
+this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
+this.showInGroupButton=this.chartOptions.querySelector('.show-in-group-button')
+this.showInGroupButton.addEventListener('click',()=>{const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
+this.showGroup(activeGroup)})
+const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
+let openDetails=window.observableStorage.getItem("openPanelChartDetails")
+detailsElements.forEach((details)=>{if(openDetails&&openDetails.includes(details.classList[0])){details.open=true}else{details.open=false}})
+const sidebarStatus=window.observableStorage.getItem("chartOptionsStatus")
+if(sidebarStatus==="active"){this.openChartOptionsSidebar()}else{this.closeChartOptionsSidebar()}
+this.rigDownloadForm()}
+rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-information')
+this.itemDropdown=this.itemInformation.querySelector('.item-dropdown')}
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
+this.context=this.canvas.getContext('2d')
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
+rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
+this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
+this.hideUnpinnedButton=this.chartOptions.querySelector('.hideunpinned-button')
+this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
+updateCountryGroups(){const groupOptionDefault=window.observableStorage.getItem("countryGroup")||"SSPI67"
+this.countryGroupSelector.innerHTML=''
+this.groupOptions.forEach((option,index)=>{const opt=document.createElement('option');opt.value=option;opt.textContent=option;if(option===groupOptionDefault){opt.selected=true;}
+this.countryGroupSelector.appendChild(opt);});}
+rigLegend(){this.addCountryButton=this.chartOptions.querySelector('.add-country-button')
+this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
+this.clearPinsButton=this.chartOptions.querySelector('.clearpins-button')
+this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
+this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
+this.legendItems=this.legend.querySelector('.legend-items')}
+updateLegend(){this.legendItems.innerHTML=''
+if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{const pinSpan=document.createElement('span')
+pinSpan.innerText=PinnedCountry.CName+" ("+PinnedCountry.CCode+")"
+const removeButton=document.createElement('button')
+removeButton.classList.add('icon-button','remove-button-legend-item')
+removeButton.id=`${PinnedCountry.CCode}-remove-button-legend`;removeButton.ariaLabel=`Remove ${PinnedCountry.CName}from pinned countries`;removeButton.title=`Unpin ${PinnedCountry.CName}`;removeButton.innerHTML=`<svg class="remove-button-legend-item-svg"width="16"height="16"><use href="#icon-close"/></svg>`;const newPin=document.createElement('div')
+newPin.classList.add('legend-item')
+newPin.style.borderColor=PinnedCountry.borderColor
+newPin.style.backgroundColor=PinnedCountry.borderColor+"44"
+newPin.appendChild(pinSpan)
+newPin.appendChild(removeButton)
+this.legendItems.appendChild(newPin)})}
+let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
+removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
+button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
+updateMissingCountries(){const missingCountriesList=this.chartOptions.querySelector('.missing-countries-list')
+const missingCountriesSummary=this.chartOptions.querySelector('.missing-countries-summary')
+if(!missingCountriesList||!missingCountriesSummary){return}
+this.refreshMissingCountriesDisplay()}
+refreshMissingCountriesDisplay(){const missingCountriesList=this.chartOptions.querySelector('.missing-countries-list')
+const missingCountriesSummary=this.chartOptions.querySelector('.missing-countries-summary')
+if(!missingCountriesList||!missingCountriesSummary){return}
+const filteredMissing=this.missingCountries.filter(country=>{return country.CGroup&&country.CGroup.includes(this.countryGroup)})
+const visibleCountriesInGroup=this.chart.data.datasets.filter(dataset=>{return dataset.CGroup&&dataset.CGroup.includes(this.countryGroup)}).length
+const totalCountriesInGroup=filteredMissing.length+visibleCountriesInGroup
+missingCountriesList.innerHTML=''
+if(filteredMissing.length===0){const message=this.missingCountries.length===0?'All countries have data':'All countries in '+this.countryGroup+' have data'
+missingCountriesList.innerHTML='<div class="missing-countries-none">'+message+'</div>'
+missingCountriesSummary.innerHTML=''}else{const countryElements=filteredMissing.map(country=>{return'<span class="missing-country-item">'+country.CCode+'</span>'}).join(', ')
+missingCountriesList.innerHTML=countryElements
+missingCountriesSummary.innerHTML=filteredMissing.length+' of '+totalCountriesInGroup+' countries in '+this.countryGroup+' missing data'}}
+updateDescription(description){const dbox=this.chartOptions.querySelector('.dynamic-item-description')
+dbox.innerHTML='<p><b>Description: </b> '+description+'</p>'}
+updateItemDropdown(options){const default_item=this.window.location.href.split('/')[-1]
+for(const option of options){const opt=document.createElement('option')
+opt.value=option.Code
+opt.textContent=`${option.Name}(${option.Code})`;this.itemDropdown.appendChild(opt)}}
+updateChartColors(){for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
+const color=this.colorProvider.get(dataset.CCode)
+dataset.borderColor=color
+dataset.backgroundColor=color+"44"}}
+setTheme(theme){const root=document.documentElement
+if(theme!=="light"){this.theme="dark"
+this.tickColor="#bbb"
+this.axisTitleColor="#bbb"
+this.titleColor="#ccc"}else{this.theme="light"
+this.tickColor="#444"
+this.axisTitleColor="#444"
+this.titleColor="#444"
+this.headerBackgroundColor="#f0f0f0"}
+const bg=getComputedStyle(root).getPropertyValue('--header-color').trim()
+this.headerBackgroundColor=bg
+if(this.chart){this.updateChartOptions()
+this.updateChartPreservingYAxis()}}
+async fetch(url){const response=await fetch(url)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+update(data){console.log(data)
+if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
+this.chart.data.datasets=data.data
+this.chart.data.labels=data.labels
+if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
+this.title.innerText=data.title
+this.itemType=data.itemType
+this.groupOptions=data.groupOptions
+this.countryGroupMap=data.countryGroupMap||{}
+this.missingCountries=[]
+this.getPins()
+this.updateLegend()
+this.updateItemDropdown(data.itemOptions,data.itemType)
+this.updateDescription(data.description)
+this.updateChartColors()
+this.updateCountryGroups()
+this.chart.update()
+console.log('=== About to call computeMissingCountriesAsync ===')
+console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
+this.computeMissingCountriesAsync()}
+computeMissingCountriesAsync(){console.log('=== computeMissingCountriesAsync called ===')
+setTimeout(()=>{console.log('=== setTimeout callback executing ===')
+this.computeMissingCountries()},0)}
+computeMissingCountries(){console.log('=== Starting computeMissingCountries ===')
+if(!this.countryGroupMap||Object.keys(this.countryGroupMap).length===0){console.log('No country group map available for missing countries computation')
+return}
+console.log('Country group map keys:',Object.keys(this.countryGroupMap).length,'countries')
+console.log('First 10 countries in group map:',Object.keys(this.countryGroupMap).slice(0,10))
+console.log('SGP in group map?','SGP'in this.countryGroupMap,this.countryGroupMap['SGP'])
+const missingCountries=[]
+const seenCountries=new Set()
+console.log('Total datasets:',this.chart.data.datasets.length)
+console.log('Dataset country codes:',this.chart.data.datasets.map(d=>d.CCode))
+this.chart.data.datasets.forEach(countryData=>{const countryCode=countryData.CCode
+console.log(`Processing dataset for country:${countryCode}`)
+seenCountries.add(countryCode)
+const scores=countryData.data||[]
+const scoresEmpty=!scores||scores.length===0||scores.every(s=>s===null||s===undefined||s==='')
+console.log(`Country ${countryCode}:data length=${scores.length},empty=${scoresEmpty}`)
+if(scoresEmpty){console.log(`Adding ${countryCode}to missing(empty data)`)
+missingCountries.push({CCode:countryCode,CName:countryData.CName||countryCode,CGroup:countryData.CGroup||this.countryGroupMap[countryCode]||[]})}})
+console.log('Seen countries:',Array.from(seenCountries))
+console.log('SGP in seen countries?',seenCountries.has('SGP'))
+let notSeenCount=0
+Object.entries(this.countryGroupMap).forEach(([countryCode,countryGroups])=>{if(!seenCountries.has(countryCode)){notSeenCount++
+if(countryCode==='SGP'){console.log(`SGP not seen-adding to missing.Groups:`,countryGroups)}
+missingCountries.push({CCode:countryCode,CName:countryCode,CGroup:countryGroups})}})
+console.log(`Countries not seen in datasets:${notSeenCount}`)
+console.log(`Total missing countries found:${missingCountries.length}`)
+console.log('Missing countries:',missingCountries.map(c=>c.CCode))
+console.log('=== End computeMissingCountries ===')
+this.missingCountries=missingCountries
+this.updateMissingCountries()}
+getPins(){const storedPins=window.observableStorage.getItem('pinnedCountries')
+console.log("Stored pins:",storedPins)
+if(storedPins){this.pins=new Set(storedPins)}
+if(this.pins.size===0){return}
+this.chart.data.datasets.forEach(dataset=>{for(const element of this.pins){if(dataset.CCode===element.CCode){dataset.pinned=true
+dataset.hidden=false}}})
+this.updateLegend()
+this.chart.update()}
+pushPinUpdate(){window.observableStorage.setItem("pinnedCountries",Array.from(this.pins))}
+showAll(){this.pinnedOnly=false
+window.observableStorage.setItem("pinnedOnly",false)
+console.log('Showing all countries')
+this.chart.data.datasets.forEach((dataset)=>{dataset.hidden=false})
+this.updateChartPreservingYAxis()}
+showGroup(groupName){this.pinnedOnly=false
+window.observableStorage.setItem("pinnedOnly",false)
+this.countryGroup=groupName
+window.observableStorage.setItem("countryGroup",groupName)
+console.log('Showing group:',groupName)
+this.chart.data.datasets.forEach((dataset)=>{if(dataset.CGroup.includes(groupName)|dataset.pinned){dataset.hidden=false}else{dataset.hidden=true}})
+this.updateChartPreservingYAxis()
+this.refreshMissingCountriesDisplay()}
+hideUnpinned(){this.pinnedOnly=true
+window.observableStorage.setItem("pinnedOnly",true)
+console.log('Hiding unpinned countries')
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
+this.updateChartPreservingYAxis()}
+showRandomN(N=10){this.pinnedOnly=false
+window.observableStorage.setItem("pinnedOnly",false)
+const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
+let availableDatasetIndices=[]
+this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
+console.log('Showing',N,'random countries from group',activeGroup)
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
+let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
+shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
+console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
+this.updateChartPreservingYAxis()}
+pinCountry(dataset){if(dataset.pinned){return}
+dataset.pinned=true
+dataset.hidden=false
+this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
+this.pushPinUpdate()
+this.updateLegend()}
+pinCountryByCode(CountryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=true
+dataset.hidden=false
+this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}})
+this.pushPinUpdate()
+this.updateLegend()}
+unpinCountry(dataset,hide=false){dataset.pinned=false
+if(hide&&this.pinnedOnly){dataset.hidden=true}
+for(const element of this.pins){if(element.CCode===dataset.CCode){this.pins.delete(element)}}
+this.updateChartPreservingYAxis()
+this.pushPinUpdate()
+this.updateLegend()}
+unpinCountryByCode(CountryCode,hide=false){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){this.unpinCountry(dataset,hide)}})}
+togglePin(dataset){if(dataset.pinned){this.unpinCountry(dataset,false)}else{this.pinCountry(dataset,false)}}
+clearPins(){this.pins.forEach((PinnedCountry)=>{this.unpinCountryByCode(PinnedCountry.CCode,true)})
+this.pins=new Set()
+this.updateLegend()
+this.pushPinUpdate()}
+closeChartOptionsSidebar(){this.chartOptions.classList.remove('active')
+this.chartOptions.classList.add('inactive')
+this.overlay.classList.remove('active')
+this.overlay.classList.add('inactive')}
+openChartOptionsSidebar(){this.chartOptions.classList.add('active')
+this.chartOptions.classList.remove('inactive')
+this.overlay.classList.remove('inactive')
+this.overlay.classList.add('active')}
+toggleChartOptionsSidebar(){if(this.chartOptions.classList.contains('active')){this.closeChartOptionsSidebar()}else{this.openChartOptionsSidebar()}}
+dumpChartDataJSON(scope='visible'){console.log('dumpChartDataJSON called with scope:',scope)
+console.log('Available datasets:',this.chart.data.datasets.length)
+if(this.chart.data.datasets.length>0){console.log('First dataset structure:',Object.keys(this.chart.data.datasets[0]))
+console.log('First dataset sample:',this.chart.data.datasets[0])}
+const observations=this.chart.data.datasets.map(dataset=>{const shouldInclude=this.shouldIncludeDataset(dataset,scope)
+console.log(`Dataset ${dataset.CCode}(${dataset.CName})-include:${shouldInclude}`)
+if(!shouldInclude){return[]}
+const scores=dataset.scores||dataset.score||[]
+const values=dataset.values||dataset.value||[]
+const years=dataset.years||dataset.year||this.chart.data.labels||[]
+if(!dataset.data||!Array.isArray(dataset.data)){console.warn(`Dataset ${dataset.CCode}has no data array`)
+return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]??null,"Value":values[i]??null,"Year":years[i]??null}));}).flat();console.log('Total observations to download:',observations.length)
+if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
+return}
+const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);console.log('JSON download initiated')}
+dumpChartDataCSV(scope='visible'){console.log('dumpChartDataCSV called with scope:',scope)
+const observations=this.chart.data.datasets.map(dataset=>{if(!this.shouldIncludeDataset(dataset,scope)){return[]}
+const scores=dataset.scores||dataset.score||[]
+const values=dataset.values||dataset.value||[]
+const years=dataset.years||dataset.year||this.chart.data.labels||[]
+if(!dataset.data||!Array.isArray(dataset.data)){console.warn(`Dataset ${dataset.CCode}has no data array`)
+return[]}
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]?.toString()||'',"Value":values[i]?.toString()||'',"Year":years[i]?.toString()||''}));}).flat();console.log('Total observations for CSV:',observations.length)
+if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
+return}
+const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);console.log('CSV download initiated')}
+rigPinChangeListener(){window.observableStorage.onChange("pinnedCountries",()=>{this.getPins()
+console.log("Pin change detected!")})}
+rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
+window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
+toggleBackwardExtrapolation(){this.extrapolateBackwardPlugin.toggle()
+this.chart.update();}
+toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
+this.chart.update();}
+warnHidden(){if(this.pinnedOnly&&this.pins.size===0){alert("All countries are hidden!")
+return true}}
+rigDownloadForm(){this.downloadForm=this.chartOptions.querySelector('.panel-download-form')
+if(this.downloadForm){this.downloadForm.addEventListener('submit',(e)=>{e.preventDefault()
+e.stopPropagation()
+this.handleDownloadRequest()
+return false})}}
+handleDownloadRequest(){console.log('Download request initiated')
+const formData=new FormData(this.downloadForm)
+const scope=formData.get('scope')
+const format=formData.get('format')
+console.log('Download scope:',scope)
+console.log('Download format:',format)
+if(!scope||!format){console.error('Missing scope or format in form data')
+alert('Please select both scope and format options')
+return}
+if(format==='json'){console.log('Calling dumpChartDataJSON with scope:',scope)
+this.dumpChartDataJSON(scope)}else if(format==='csv'){console.log('Calling dumpChartDataCSV with scope:',scope)
+this.dumpChartDataCSV(scope)}else{console.error('Unknown format:',format)
+alert('Unknown format selected')}}
+shouldIncludeDataset(dataset,scope){let result
+switch(scope){case'pinned':result=!!dataset.pinned
+break
+case'visible':result=!dataset.hidden
+break
+case'group':const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
+result=dataset.CGroup&&dataset.CGroup.includes(activeGroup)
+break
+case'all':result=true
+break
+default:result=!dataset.hidden
+break}
+return result}
+updateChartPreservingYAxis(updateOptions={duration:0,lazy:false}){const yScale=this.chart.scales?.y
+const currentMin=yScale?.min
+const currentMax=yScale?.max
+const yAxis=this.chart.options.scales?.y
+const configuredMin=yAxis?.min
+const configuredMax=yAxis?.max
+const minToPreserve=configuredMin!==undefined?configuredMin:currentMin
+const maxToPreserve=configuredMax!==undefined?configuredMax:currentMax
+this.chart.update(updateOptions)
+if(minToPreserve!==undefined||maxToPreserve!==undefined){this.chart.options.scales.y.min=minToPreserve
+this.chart.options.scales.y.max=maxToPreserve
+this.chart.update({duration:0,lazy:false})}}}
+class SeriesPanelChart extends PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',width=400,height=300}={}){super(parentElement,{CountryList:CountryList,endpointURL:endpointURL,width:width,height:height})}
+updateDescription(description){const dbox=this.root.querySelector('.dynamic-item-description')
+let identifiersHTML=''
+let code=''
+let desc=''
+for(const[k,v]of Object.entries(description)){if(k==='Description'){desc=v}
+if(k==='ItemCode'||k==='DatasetCode'){code=v}
+identifiersHTML+=`<li class="item-detail-element"><b>${k}</b>:<span class="item-detail-value">${v}</span></li>`}
+dbox.innerHTML=`<div class="item-info-title"><strong>${code}</strong>:${desc}</div><ul class="item-detail-list">${identifiersHTML}</ul>`;}
+update(data){this.chart.data=data
+this.chart.data.labels=data.labels
+this.chart.data.datasets=data.data
+this.chart.options.plugins.title=data.title
+this.groupOptions=data.groupOptions
+this.pinnedOnly=false
+this.getPins()
+this.updateLegend()
+this.updateDescription(data.description)
+this.updateCountryGroups()
+if(this.pinnedOnly){this.hideUnpinned()}
+this.chart.options.scales.y.min=data.yMin
+this.chart.options.scales.y.max=data.yMax
+if(data.hasScore){this.yAxisScale="score"
+this.rigTitleBarScaleToggle()}
 this.chart.update()}}
-function createDiagonalPattern(color){let shape=document.createElement('canvas')
+class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
+this.itemCode=itemCode}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
+updateItemDropdown(options,itemType){let itemTypeCapped=itemType
+if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+const itemTitle=itemTypeCapped+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
+itemSummary.textContent=itemTitle;const defaultValue='/data/'+itemType.toLowerCase()+'/'+this.itemCode
+console.log('Default value for item dropdown:',defaultValue)
+for(const option of options){const opt=document.createElement('option')
+opt.value=option.Value
+if(option.Value===defaultValue){opt.selected=true;}
+opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
+this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
+initChartJSCanvas(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('panel-chart-container');this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.title=this.chartContainer.querySelector('.panel-chart-title');this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb');this.canvas=this.chartContainer.querySelector('.panel-chart-canvas');this.context=this.canvas.getContext('2d');this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset);});}},},layout:{padding:{right:40}}}});}
+renderBreadcrumb(treePath,title,itemCode,itemType){if(!treePath||treePath.length===0){this.title.style.display='block';this.breadcrumb.style.display='none';return;}
+this.title.style.display='none';this.breadcrumb.style.display='block';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
+if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<a href="'+url+'" class="breadcrumb-item" title="'+itemName+'">'+displayName+'</a>';}
+if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span>';this.breadcrumb.innerHTML=breadcrumbHTML;}
+generateTooltipText(parentItemName,parentItemType,childTypeTitle,childrenCount){const pluralToSingular={'Pillars':'Pillar','Categories':'Category','Indicators':'Indicator'};const childTypeSingular=pluralToSingular[childTypeTitle]||childTypeTitle;const childTypeDisplay=childrenCount===1?childTypeSingular:childTypeTitle;const parentTypeDisplay=parentItemType==='SSPI'?'SSPI':parentItemName+' '+parentItemType;return parentTypeDisplay+' scores are the arithmetic average of the '+childTypeSingular.toLowerCase()+' scores of the '+childrenCount+' '+childTypeDisplay.toLowerCase()+' below';}
+updateChildren(children,childTypeTitle,parentItemName,parentItemType){const descriptionContainer=this.chartOptions.querySelector('.dynamic-item-description-container');const existingChildrenSection=descriptionContainer.querySelector('.item-children-section');if(existingChildrenSection){existingChildrenSection.remove();}
+if(children&&children.length>0&&childTypeTitle){const tooltipText=this.generateTooltipText(parentItemName,parentItemType,childTypeTitle,children.length);console.log('Generated tooltip text:',tooltipText);const childrenHTML='<div class="item-children-section">'+
+'<div class="children-title-wrapper">'+
+'<h4>'+childTypeTitle+'</h4>'+
+'<span class="children-info-icon" title="'+tooltipText+'" aria-label="Information about scoring">i</span>'+
+'</div>'+
+'<ul class="children-list">'+
+children.map(child=>{const url=child.itemType==='Category'?'/data/category/'+child.itemCode:'/data/indicator/'+child.itemCode;return'<li><a href="'+url+'" class="child-link">'+child.itemName+' ('+child.itemCode+')</a></li>';}).join('')+
+'</ul>'+
+'</div>';descriptionContainer.insertAdjacentHTML('beforeend',childrenHTML);}}
+update(data){console.log(data);if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart);}
+this.chart.data.datasets=data.data;this.chart.data.labels=data.labels;if(this.pinnedOnly){this.hideUnpinned();}else{this.showGroup(this.countryGroup);}
+this.treepath=data.treepath;if(data.treepath&&data.treepath.length>0){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
+this.itemType=data.itemType;this.groupOptions=data.groupOptions;this.getPins();this.updateLegend();this.updateItemDropdown(data.itemOptions,data.itemType);this.updateDescription(data.description);this.updateChildren(data.children,data.childTypeTitle,data.itemName,data.itemType);this.updateChartColors();this.updateCountryGroups();this.chart.update();}}
+class IndicatorPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/indicator/${itemCode}`,width:width,height:height})
+this.itemCode=itemCode
+this.activeSeries=itemCode
+this.currentYMin=0
+this.currentYMax=1
+this.defaultYMin=0
+this.defaultYMax=1}
+updateChartOptions(){let yAxisTitle='Item Value'
+if(this.activeSeries===this.itemCode){yAxisTitle='Indicator Score'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+if(dataset){const baseName=dataset.datasetName||dataset.datasetCode
+const unit=dataset.unit||dataset.Unit
+yAxisTitle=unit?`${baseName}(${unit})`:baseName}}
+this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:this.currentYMin,max:this.currentYMax,title:{display:true,text:yAxisTitle,color:this.axisTitleColor,font:{size:16}}}}}
+updateItemDropdown(options,itemType){let itemTypeCapped=itemType
+if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
+const itemTitle=itemTypeCapped+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
+itemSummary.textContent=itemTitle;const defaultValue='/data/'+itemType.toLowerCase()+'/'+this.itemCode
+console.log('Default value for item dropdown:',defaultValue)
+for(const option of options){const opt=document.createElement('option')
+opt.value=option.Value
+if(option.Value===defaultValue){opt.selected=true;}
+opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
+this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
+setActiveSeries(series){this.activeSeries=series
+this.updateDefaultsForActiveSeries()
+if(this.activeSeries===this.itemCode){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.score});this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else if(this.datasetOptions&&this.datasetOptions.map(o=>o.datasetCode).includes(this.activeSeries)){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.Datasets[this.activeSeries].data});console.log(`Setting active series to ${this.activeSeries}with yMin:${this.defaultYMin},yMax:${this.defaultYMax}`);this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else{console.warn(`Active series"${this.activeSeries}"not found in dataset options.`);}
+this.updateChartTitle()
+this.updateChartOptions()
+this.updateActiveSeriesDescription()
+this.updateYAxisInputs()
+this.updateRestoreButton()
+this.chart.update()}
+setYAxisMinMax(min,max,update=true){this.currentYMin=Math.round(min*100)/100
+this.currentYMax=Math.round(max*100)/100
+this.chart.options.scales.y.min=this.currentYMin
+this.chart.options.scales.y.max=this.currentYMax
+if(update){this.chart.update()}
+if(this.yMinInput){this.yMinInput.value=this.currentYMin}
+if(this.yMaxInput){this.yMaxInput.value=this.currentYMax}}
+update(data){console.log(data)
+if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
+this.chart.data.datasets=data.data
+this.chart.data.labels=data.labels
+if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
+this.datasetOptions=data.datasetOptions
+this.originalTitle=data.title
+this.treepath=data.treepath
+if(data.itemType==="Indicator"&&data.treepath){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
+this.itemType=data.itemType
+this.groupOptions=data.groupOptions
+this.countryGroupMap=data.countryGroupMap||{}
+this.missingCountries=[]
+this.getPins()
+this.updateLegend()
+this.updateItemDropdown(data.itemOptions,data.itemType)
+this.updateDescription(data.description)
+this.updateChartColors()
+this.updateCountryGroups()
+this.initializeDefaultRanges()
+this.updateSeriesDropdown()
+this.updateChartTitle()
+this.updateActiveSeriesDescription()
+this.chart.update()
+console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
+console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
+this.computeMissingCountriesAsync()}
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
+this.context=this.canvas.getContext('2d')
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+renderBreadcrumb(treePath,title,itemCode,itemType){if(itemType!=="Indicator"||!treePath||treePath.length===0){this.title.style.display='block';this.breadcrumb.style.display='none';return;}
+this.title.style.display='none';this.breadcrumb.style.display='block';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url,tooltip;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
+if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<a href="'+url+'" class="breadcrumb-item" title="'+itemName+'">'+displayName+'</a>';}
+if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
+breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span>';this.breadcrumb.innerHTML=breadcrumbHTML;}
+buildChartOptions(){super.buildChartOptions()
+const viewOptions=this.chartOptions.querySelector('.chart-view-options')
+if(viewOptions){const existingContainer=viewOptions.querySelector('.view-options-suboption-container')
+if(existingContainer){const seriesControlsHTML=`<div class="chart-view-subheader">Active Series</div><div class="chart-view-option series-selector-container"><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-option active-series-description"style="display: none;"><div class="active-series-description-content"></div></div><div class="chart-view-subheader">Y-Axis Range</div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="0.01"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="0.01"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;existingContainer.insertAdjacentHTML('afterbegin',seriesControlsHTML)}}}
+rigChartOptions(){super.rigChartOptions()
+this.rigViewOptionsControls()}
+rigViewOptionsControls(){this.seriesSelector=this.chartOptions.querySelector('.series-selector')
+this.yMinInput=this.chartOptions.querySelector('.y-min-input')
+this.yMaxInput=this.chartOptions.querySelector('.y-max-input')
+this.restoreYAxisButton=this.chartOptions.querySelector('.restore-y-axis-button')
+if(this.seriesSelector){this.seriesSelector.addEventListener('change',(event)=>{this.setActiveSeries(event.target.value)})}
+const handleYAxisChange=(event)=>{const yMinValue=this.yMinInput.value
+const yMaxValue=this.yMaxInput.value
+if(event.type==='input'&&(yMinValue.endsWith('.')||yMinValue==='-'||yMaxValue.endsWith('.')||yMaxValue==='-')){return }
+const yMin=parseFloat(yMinValue)
+const yMax=parseFloat(yMaxValue)
+if(isNaN(yMin)||isNaN(yMax)){return }
+if(yMin>=yMax){return }
+this.setYAxisMinMax(yMin,yMax)
+this.updateRestoreButton()}
+if(this.yMinInput){this.yMinInput.addEventListener('input',handleYAxisChange)
+this.yMinInput.addEventListener('blur',handleYAxisChange)}
+if(this.yMaxInput){this.yMaxInput.addEventListener('input',handleYAxisChange)
+this.yMaxInput.addEventListener('blur',handleYAxisChange)}
+if(this.restoreYAxisButton){this.restoreYAxisButton.addEventListener('click',()=>{this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)
+this.updateRestoreButton()})}}
+updateRestoreButton(){if(!this.restoreYAxisButton)return
+const hasChanged=(this.currentYMin!==this.defaultYMin||this.currentYMax!==this.defaultYMax)
+this.restoreYAxisButton.style.display=hasChanged?'block':'none'}
+updateYAxisInputs(){if(this.yMinInput){this.yMinInput.value=this.currentYMin}
+if(this.yMaxInput){this.yMaxInput.value=this.currentYMax}}
+initializeDefaultRanges(){this.seriesDefaults={[this.itemCode]:{yMin:0,yMax:1}}
+if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{this.seriesDefaults[dataset.datasetCode]={yMin:dataset.yMin||0,yMax:dataset.yMax||100}})}
+this.updateDefaultsForActiveSeries()}
+updateDefaultsForActiveSeries(){if(this.seriesDefaults&&this.seriesDefaults[this.activeSeries]){this.defaultYMin=this.seriesDefaults[this.activeSeries].yMin
+this.defaultYMax=this.seriesDefaults[this.activeSeries].yMax}else{this.defaultYMin=this.activeSeries===this.itemCode?0:0
+this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
+updateChartTitle(){if(!this.title)return
+if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
+this.title.innerText=`${dataset.datasetCode}-${datasetName}`;}else{this.title.innerText=this.activeSeries;}
+this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}}
+updateSeriesDropdown(){if(!this.seriesSelector){return}
+this.seriesSelector.innerHTML=''
+const indicatorOption=document.createElement('option')
+indicatorOption.value=this.itemCode
+indicatorOption.textContent=this.itemCode+' Indicator Score'
+this.seriesSelector.appendChild(indicatorOption)
+if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const option=document.createElement('option')
+option.value=dataset.datasetCode
+option.textContent=dataset.datasetName||dataset.datasetCode
+this.seriesSelector.appendChild(option)})}
+this.seriesSelector.value=this.activeSeries
+this.updateYAxisInputs()}
+updateActiveSeriesDescription(){const activeSeriesDescription=this.chartOptions.querySelector('.active-series-description')
+if(!activeSeriesDescription){console.warn('Active series description element not found')
+return}
+const contentDiv=activeSeriesDescription.querySelector('.active-series-description-content')
+if(!contentDiv){console.warn('Active series description content element not found')
+return}
+console.log('Updating active series description for:',this.activeSeries)
+if(this.activeSeries===this.itemCode){activeSeriesDescription.style.display='none'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+console.log('Found dataset:',dataset)
+if(dataset&&dataset.description){contentDiv.innerHTML='<strong>Dataset:</strong> '+dataset.description
+activeSeriesDescription.style.display='block'}else if(dataset){contentDiv.innerHTML='<strong>Dataset:</strong> '+(dataset.datasetName||dataset.datasetCode)+' (no description available)'
+activeSeriesDescription.style.display='block'}else{contentDiv.innerHTML='<em>Dataset not found</em>'
+activeSeriesDescription.style.display='block'}}else{contentDiv.innerHTML='<em>No dataset options available</em>'
+activeSeriesDescription.style.display='block'}}}
+class SSPIPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
+this.itemCode=itemCode}
+initItemTree(){this.itemTree=document.createElement('div')
+this.itemTree.classList.add('sspi-tree-container')
+this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree-header">SSPI Structure</h3><p class="sspi-tree-description-text">Explore the scores across SSPI's pillars, categories, and indicators below. Click on an item below to view its data.
+                </p>
+            </div>
+            <div class="item-tree-content">
+            </div>
+        `;
+    }
+
+
+    initRoot() {
+        this.initItemTree()
+        this.root = document.createElement('div')
+        this.root.classList.add('panel-chart-root-container')
+        this.root.appendChild(this.itemTree)
+        this.parentElement.appendChild(this.root)
+    }
+
+    rigItemDropdown() {
+        this.itemInformation = this.chartOptions.querySelector('.item-information')
+        this.itemDropdown = this.itemInformation.querySelector('.item-dropdown')
+        this.itemDropdown.style.display = "none";
+    }
+
+    updateItemDropdown(options, itemType) {
+        let itemTypeCapped = itemType
+        if (itemType === "sspi") {
+            itemTypeCapped = this.itemType.toUpperCase()
+        } else {
+            itemTypeCapped = this.itemType.charAt(0).toUpperCase() + this.itemType.slice(1)
+        }
+        const itemTitle = itemTypeCapped + " Information";
+        const itemSummary = this.itemInformation.querySelector('.item-information-summary')
+        itemSummary.textContent = itemTitle;
+    }
+
+    update(data) {
+        super.update(data);
+        this.buildItemTree(data.tree, data.itemCode);
+    }
+
+    buildItemTree(tree, selectedItemCode) {
+      // Cleanup existing tree instance before creating a new one
+      if (this.itemTreeObject && typeof this.itemTreeObject.destroy === 'function') {
+        this.itemTreeObject.destroy();
+      }
+      
+      this.itemTreeObject = new SSPIItemTree(
+        this.itemTree.querySelector('.item-tree-content'),   // only the content box
+        tree,
+        (itemCode) => {
+          // fetch new data, then re-run the usual update pipeline
+          this.fetch(`/api/v1/panel/score/${itemCode}`)
+              .then(d => this.update(d));
+        },
+        selectedItemCode
+      );
+    }
+}
+
+const chartArrowLabels = {
+    id: 'chartArrowLabels',
+    afterDraw(chart, args, optionVars) {
+        const {ctx, chartArea} = chart;
+        ctx.save();
+
+        ctx.fillStyle = '#FF634799';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        const offset = 10
+        const xLeftMid = (chartArea.left + chartArea.right + offset) / 4;
+        const xRightMid = 3 * (chartArea.left + chartArea.right - offset) / 4;
+        const yTop = (chartArea.top + chartArea.bottom) / 10 + 5;
+        ctx.fillText(optionVars.LeftCountry + " Higher", xLeftMid, yTop);
+        ctx.fillStyle = '#32CD3299';
+        ctx.fillText(optionVars.RightCountry + " Higher", xRightMid, yTop);
+
+        ctx.restore();
+    }
+}
+
+class StaticPillarDifferentialChart {
+    constructor(BaseCountry, ComparisonCountry, PillarCode, parentElement) {
+        this.parentElement = parentElement;
+        this.BaseCountry = BaseCountry;
+        this.ComparisonCountry = ComparisonCountry;
+        this.PillarCode = PillarCode;
+        this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry})`;
+        this.initRoot()
+        this.initTitle()
+        this.initChartJSCanvas()
+        this.fetch().then(data => {
+            this.update(data)
+        })
+    }
+
+    colormap(diff) {
+        if (diff > 0) {
+            return "#32CD3299"
+        } else {
+            return "#FF634799"
+        }
+    }
+
+    async fetch() {
+        const response = await fetch(`/api/v1/static/differential/pillar/${this.PillarCode}?BaseCountry=${this.BaseCountry}&ComparisonCountry=${this.ComparisonCountry}`);
+        return response.json();
+    }
+
+    initRoot() {
+        // Create the root element
+        this.root = document.createElement('div')
+        this.root.classList.add('chart-section-pillar-differential')
+        this.parentElement.appendChild(this.root)
+    }
+
+    initTitle() {
+        this.title = document.createElement('h2')
+        this.title.classList.add('differential-chart-title')
+        this.title.textContent = "Test Title"
+        this.root.appendChild(this.title)
+    }
+
+    initChartJSCanvas() {
+        this.canvas = document.createElement('canvas')
+        this.canvas.id = `pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;
+        this.canvas.width = 300
+        this.canvas.height = 300
+        this.context = this.canvas.getContext('2d')
+        this.root.appendChild(this.canvas)
+        this.chart = new Chart(this.context, {
+            type: 'bar',
+            plugins: [ chartArrowLabels ],
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    chartArrowLabels: {
+                        LeftCountry: this.BaseCountry,
+                        RightCountry: this.ComparisonCountry
+                    },
+                    tooltip: {
+                        callbacks: {
+                            // Customize the title (top line in tooltip)
+                            title: function(tooltipItems) {
+                                return `Category: ${tooltipItems[0].raw.CategoryName}`;
+                            },
+                            // Customize the label (each line below the title)
+                            label: function(tooltipItem) {
+                                // const diff = tooltipItem.raw;
+                                if (tooltipItem.raw.Diff > 0) {
+                                    return `Difference: +${tooltipItem.formattedValue}`;
+                                }
+                                return `Difference: ${tooltipItem.formattedValue}`;
+                            },
+                            // Customize any additional lines
+                        },
+                        backgroundColor: 'rgba(0,0,0,0.7)',  // Customize tooltip background color
+                        titleColor: '#ffffff',                 // Customize tooltip title color
+                        bodyColor: '#ffcc00',                  // Customize tooltip body color
+                        padding: 5                            // Tooltip padding
+                    }
+                },
+                parsing:
+                {
+                    xAxisKey: 'Diff',
+                    yAxisKey: 'CategoryCode'
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            drawTicks: false
+                        },
+                        ticks: {
+                            color: '#bbb',
+                            stepSize: 0.1
+                        },
+                        title: {
+                            display: true,
+                            color: '#bbb',
+                        },
+                        min: -1,
+                        max: 1,
+                    },
+                    y: {
+                        ticks: {
+                            color: '#bbb',
+                            minRotation: 90,
+                            maxRotation: 90,
+                            align: 'center',
+                            crossAlign: 'center',
+                        },
+                        title: {
+                            padding: 10,
+                            display: true,
+                            text: 'Categories',
+                            color: '#bbb',
+                        },
+                        type: 'category',
+                        reverse: false
+                    }
+                }
+            }
+        })
+    }
+
+    update(data) {
+        this.baseCCode = data.baseCCode
+        this.baseCName = data.baseCName
+        this.comparisonCCode = data.comparisonCCode
+        this.comparisonCName = data.comparisonCName
+        this.title.textContent = data.title
+        data.datasets.forEach(dataset => {
+            dataset.backgroundColor = dataset.data.map(item => this.colormap(item.Diff)) // Assign colors dynamically
+            dataset.borderColor = dataset.data.map(item => this.colormap(item.Diff).slice(0, -2)) // Assign colors dynamically
+            dataset.borderWidth = 1
+        })
+        this.chart.data.datasets = data.datasets
+        this.chart.options.scales.x.title.text = data.title
+        this.chart.labels = data.labels
+        this.chart.options.plugins.tooltip.callbacks.beforeLabel = (tooltipItem) => {
+            const base = `${this.baseCCode} Score: ${tooltipItem.raw.baseScore.toFixed(3)}`;
+            const comparison = `${this.comparisonCCode} Score: ${tooltipItem.raw.comparisonScore.toFixed(3)}`;
+            return [base, comparison];
+        }
+        // this.chart.plugins[0].options.LeftCountry = this.baseCName
+        // this.chart.plugins[0].options.RightCountry = this.comparisonCName
+        this.chart.update()
+    }
+}
+
+class CategoryRadarStatic {
+    constructor(countryCode, parentElement, textColor="#bbb", gridColor="#cccccc33") {
+        this.parentElement = parentElement
+        this.countryCode = countryCode
+        this.textColor = textColor
+        this.gridColor = gridColor
+
+        this.initRoot()
+        this.legend = this.initLegend()
+        this.initRoot()
+        this.initTitle()
+        this.initLegend()
+        this.initChartJSCanvas()
+
+        this.fetch().then(data => {
+            this.update(data)
+        })
+    }
+
+    initRoot() {
+        this.root = document.createElement('div')
+        this.root.classList.add('radar-chart-box')
+        this.parentElement.appendChild(this.root)
+    }
+
+    initTitle() {
+        this.title = document.createElement('h3')
+        this.title.classList.add('radar-chart-title')
+        this.root.appendChild(this.title)
+    }
+
+    initLegend() {
+        this.legend = document.createElement('div')
+        this.legend.classList.add('radar-chart-legend-box')
+        this.root.appendChild(this.legend)
+    }
+
+    initChartJSCanvas() {
+        this.canvasContainer = document.createElement('div')
+        this.canvasContainer.classList.add('radar-chart-canvas-container')
+        this.canvas = document.createElement('canvas')
+        this.canvasContainer.appendChild(this.canvas)
+        this.canvas.width = 300
+        this.canvas.height = 300
+        this.context = this.canvas.getContext('2d')
+        this.root.appendChild(this.canvasContainer)
+        this.chart = new Chart(this.context, {
+            type: 'polarArea',
+            options: {
+                responsive: true,
+                elements: {
+                    line: {
+                        borderWidth: 3
+                    }
+                },
+                scales: {
+                    r: {
+                        pointLabels: {
+                            display: true,
+                            font: {
+                                size: 10
+                            },
+                            color: this.textColor,
+                            centerPointLabels: true,
+                            padding:0
+                        },
+                        angleLines: {
+                            display: true,
+                            color: this.gridColor
+                        },
+                        grid: {
+                            color: this.gridColor,
+                            circular: true
+                        },
+                        ticks: {
+                            backdropColor: 'rgba(0,0,0,0)',
+                            clip: true,
+                            color: this.textColor,
+                            font: {
+                                size: 8
+                            }
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 1
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: '#1B2A3Ccc',
+                    },
+                }
+            }
+        })
+    }
+
+    async fetch() {
+        const response = await fetch(`/api/v1/static/radar/${this.countryCode}`)
+        return response.json();
+    }
+
+    update(data) {
+        this.labelMap = data.labelMap
+        this.chart.data.labels = data.labels
+        this.ranks = data.ranks
+        this.chart.data.datasets = data.datasets
+        this.title.innerText = data.title
+        this.updateLegend(data)
+        this.chart.options.plugins.tooltip.callbacks.title = (context) => {
+            const categoryName = this.labelMap[context[0].label]
+            return categoryName
+        }
+        this.chart.options.plugins.tooltip.callbacks.label = (context) => {
+            return [
+                "Category Score: " + context.raw.toFixed(3),
+                "Category Rank: " + this.ranks[context.dataIndex].Rank,
+            ]
+        }
+        this.chart.update()
+    }
+
+    updateLegend(data) {
+        this.legendItems = data.legendItems
+        const pillarColorsAlpha = data.datasets.map(d => d.backgroundColor)
+        const pillarColorsSolid = pillarColorsAlpha.map(c => c.slice(0, 7))
+        for (let i = 0; i < this.legendItems.length; i++) {
+            const pillarLegendItem = document.createElement('div')
+            pillarLegendItem.classList.add('radar-chart-legend-item')
+            const pillarLegendCanvasContainer = document.createElement('div')
+            pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
+            const pillarLegendItemCanvas = document.createElement('canvas')
+            pillarLegendItemCanvas.width = 150
+            pillarLegendItemCanvas.height = 50
+            pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
+            this.drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i)
+            pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
+            pillarLegendItem.appendChild(pillarLegendCanvasContainer)
+            const pillarLegendItemText = document.createElement('div')
+            pillarLegendItemText.classList.add('radar-chart-legend-item-text')
+            pillarLegendItemText.innerText = this.legendItems[i].Name
+            pillarLegendItem.appendChild(pillarLegendItemText)
+            this.legend.appendChild(pillarLegendItem)
+        }
+    }
+
+    drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i) {
+        const pillarLegendContext = pillarLegendItemCanvas.getContext('2d')
+        const shadedWidth = (pillarLegendItemCanvas.width * this.legendItems[i].Score).toFixed(0)
+        // Draw the main boundary lines at 0 and 1
+        pillarLegendContext.strokeStyle = this.textColor
+        pillarLegendContext.linewidth = 5
+        pillarLegendContext.beginPath()
+        pillarLegendContext.moveTo(0, 0) // Move to the top of the canvas at x = 0
+        pillarLegendContext.lineTo(0, pillarLegendItemCanvas.height) // Draw a line to the bottom of the canvas at x = 0
+        pillarLegendContext.moveTo(pillarLegendItemCanvas.width, 0) // Move to the top of the canvas at x = width
+        pillarLegendContext.lineTo(pillarLegendItemCanvas.width, pillarLegendItemCanvas.height) // Draw a line to the bottom of the canvas at x = width
+        pillarLegendContext.stroke() // Render the lines
+        // Draw the grid lines
+        pillarLegendContext.strokeStyle = this.gridColor
+        pillarLegendContext.linewidth = 3
+        pillarLegendContext.beginPath()
+        const spacing = pillarLegendItemCanvas.width / 10
+        pillarLegendContext.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const x = (i * spacing)
+            pillarLegendContext.moveTo(x, 5)
+            pillarLegendContext.lineTo(x, pillarLegendItemCanvas.height)
+        }
+        pillarLegendContext.stroke(); // Render all lines
+        // Draw the main shaded rectangle
+        pillarLegendContext.fillStyle = pillarColorsAlpha[i]
+        pillarLegendContext.fillRect(3, 5, shadedWidth, pillarLegendItemCanvas.height-5)
+        pillarLegendContext.strokeStyle = pillarColorsSolid[i]
+        pillarLegendContext.linewidth = 10
+        pillarLegendContext.strokeRect(3, 5, shadedWidth, pillarLegendItemCanvas.height-5)
+    }
+}
+
+class OutcomeScatterStatic {
+    constructor(parentElement, outcomeVariable) {
+        this.outcomeVariable = outcomeVariable
+        this.parentElement = parentElement;
+        this.initRoot()
+        // this.initTitle()
+        // this.initChartJSCanvas()
+        // this.fetch().then(data => {
+        //     this.update(data)
+        // })
+    }
+
+    async fetch() {
+        const response = await fetch(`/api/v1/...`);
+        return response.json();
+    }
+
+    initRoot() {
+        // Create the root element
+        this.root = document.createElement('div')
+        this.root.classList.add('outcome-scatter-static')
+        this.parentElement.appendChild(this.root)
+    }
+
+    initTitle() {
+    }
+
+    initChartJSCanvas() {
+    }
+
+    update(data) {
+    }
+}
+
+class StaticOverallStackedBarChart {
+    constructor(parentElement, colormap = {}) {
+        this.parentElement = parentElement;
+        this.textColor = '#bbb';
+        this.gridColor = '#cccccc33';
+        this.initRoot()
+        this.initTitle()
+        if (Object.keys(colormap).length === 0) {
+            this.initColormap()
+        } else {
+            this.colormap = colormap
+        }
+        this.createLegend()
+        this.initChartJSCanvas()
+        this.fetch().then(data => {
+            this.update(data)
+        })
+    }
+
+    async fetch() {
+        const response = await fetch('/api/v1/static/stacked/sspi');
+        return response.json();
+    }
+
+    initRoot() {
+        // Create the root element
+        this.root = document.createElement('div')
+        this.root.classList.add('chart-section-overall-stack')
+        this.parentElement.appendChild(this.root)
+    }
+
+    initTitle() {
+        this.title = document.createElement('h4')
+        this.title.classList.add('stack-bar-title')
+        this.root.appendChild(this.title)
+    }
+
+    initColormap() {
+        this.colormap = {
+            "SUS": "#28a745",
+            "MS": "#ff851b",
+            "PG": "#007bff"
+        }
+    }
+
+    createLegend() {
+        this.legend = document.createElement('div')
+        this.legend.classList.add('overall-stack-bar-legend')
+        // this.countryCodes.map((countryCode) => {
+        //     const legendElement = document.createElement('div')
+        //     legendElement.classList.add('stack-bar-legend-element')
+        //     const legendBox = document.createElement('div')
+        //     legendBox.classList.add('legend-box')
+        //     legendBox.style.backgroundColor = this.colormap[countryCode]
+        //     legendElement.appendChild(legendBox)
+        //     const legendText = document.createElement('span')
+        //     legendText.id = countryCode + '-' + this.pillarCode + '-stack-bar-legend-text'
+        //     legendText.innerText = countryCode
+        //     legendElement.appendChild(legendText)
+        //     this.legend.appendChild(legendElement)
+        // })
+        this.root.appendChild(this.legend)
+    }
+
+    initChartJSCanvas() {
+        this.canvas = document.createElement('canvas')
+        this.canvas.id = `overall-stacked-bar-canvas`;
+        this.canvas.width = 1000
+        this.canvas.height = 1000
+        this.context = this.canvas.getContext('2d')
+        this.root.appendChild(this.canvas)
+        this.chart = new Chart(this.context, {
+            type: 'bar',
+            options: {
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        intersect: false,
+                        padding: 10,
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        yAlign: 'center',
+                        callbacks: {
+                            afterTitle(context) {
+                                const info = context[0].dataset.info[context[0].dataIndex]
+                                return [
+                                    `SSPI Overall Score: ${info.SSPIScore.toFixed(3)}`,
+                                    `SSPI Overall Rank: ${info.SSPIRank}`
+                                ]
+                            },
+                            label(context) {
+                                const info = context.dataset.info[context.dataIndex]
+                                return [
+                                    'Pillar:' + info.IName,
+                                    'Pillar Score:' + info.IName,
+                                    'Pillar Rank:' + Number.parseFloat(info.Score).toFixed(3),
+                                    'Rank:' + info.Rank,
+                                ];
+                            }
+                        }
+                    }
+                },
+                responsive: true,
+                indexAxis: 'y',
+                scales: {
+                    x2: {
+                        position: 'top',
+                        display: true,
+                        ticks: {
+                            color: this.textColor,
+                        },
+                        grid: {
+                            display: false,
+                        },
+                        min: 0,
+                        max: 1,
+                        stacked: true,
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'SSPI Score',
+                            color: this.textColor,
+                        },
+                        ticks: {
+                            color: this.textColor,
+                        },
+                        stacked: true,
+                        min: 0,
+                        max: 1,
+                    },
+                    y2: {
+                        position: 'left',
+                        display: true,
+                        ticks: {
+                            color: this.textColor,
+                            callback: function(value, index, values) {
+                                return index + 1
+                            },
+                            padding: 8,
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            },
+                        },
+                        stacked: true,
+                        grid: {
+                            display: false,
+                        }
+                    },
+                    y: {
+                        position: 'left',
+                        stacked: true,
+                        ticks: {
+                            color: this.textColor,
+                        },
+                        grid: {
+                            display: true,
+                            drawBorder: true,
+                            drawOnChartArea: true,
+                            color: function(context) {
+                                // Draw gridline only every 10 indices
+                                return context.index % 10 === 0 ? '#66666666' : 'rgba(0,0,0,0)';
+                            }
+                        },
+                    },
+                }
+            },
+        })
+    }
+
+    update(data) {
+        this.chart.data = data.data
+        this.chart.data.datasets.forEach((dataset) => {
+            const color = this.colormap[dataset.label]
+            dataset.backgroundColor = color + "99"
+            dataset.borderColor = color
+        })
+        this.title.innerText = data.title
+        this.chart.update()
+    }
+}
+
+function createDiagonalPattern(color) {
+    // create a 10x10 px canvas for the pattern's base shape
+let shape=document.createElement('canvas')
 shape.width=5
 shape.height=5
 let c=shape.getContext('2d')
@@ -609,4 +2483,63 @@ this.title.innerText=data.title
 this.chart.options.scales.x.title.text=data.xTitle
 this.initHighlights()
 this.updateSummaryBox(this.computeSummaryStats(data.data))
+this.chart.update()}}
+class DynamicMatrixChart{constructor(parentElement,countryGroup="SSPI49",width=400,height=400){this.parentElement=parentElement
+this.countryGroup=countryGroup
+this.width=width
+this.height=height
+this.initRoot()
+this.initChartJSCanvas()
+this.fetch().then(res=>{this.update(res)})}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('chart-section-dynamic-matrix')
+this.parentElement.appendChild(this.root)}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id='dynamic-line-chart-canvas'
+this.canvas.width=this.width
+this.canvas.height=this.height
+this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Dynamic Data Status';},label(context){const v=context.dataset.data[context.dataIndex];if(v.problems){return["Issue:"+v.problems,'Country: '+v.CName,'Indicator: '+v.IName]}
+return['Country: '+v.CName,'Indicator: '+v.IName,'Years: '+v.v];}}}}},plugins:[shiftRotatedTicksPlugin]})}
+async fetch(){const response=await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);return response.json();}
+update(res){this.n_indicators=res.icodes.length;this.n_countries=res.ccodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
+if(collect){return'#FFBF0066';}
+if(load){return'#FFBF00';}
+return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.data[context.dataIndex].problems;const confident=context.dataset.data[context.dataIndex].confident;if(problems){return"rgba(255, 99, 132, 1)";}
+if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
+this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
+this.chart.update()}}
+class ItemCoverageMatrixChart{constructor(parentElement,itemCode,{countryGroup="SSPI67",minYear=2000,maxYear=2023,width=400,height=400,callbacks=[]}){this.parentElement=parentElement
+this.itemCode=itemCode
+this.countryGroup=countryGroup
+this.minYear=minYear
+this.maxYear=maxYear
+this.width=width
+this.height=height
+this.callbacks=callbacks
+this.initRoot()
+this.rigSummary()
+this.initChartJSCanvas()
+this.fetch(`/api/v1/item/coverage/matrix/${this.itemCode}/${this.countryGroup}`).then(res=>{this.update(res)})}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('coverage-section-dynamic-matrix')
+this.parentElement.appendChild(this.root)}
+rigSummary(){this.summary=document.createElement('div')
+this.summary.classList.add('item-coverage-summary')
+this.root.appendChild(this.summary)}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id='dynamic-line-chart-canvas'
+this.canvas.width=this.width
+this.canvas.height=this.height
+this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Data Coverage';},label(context){const v=context.dataset.data[context.dataIndex];return['Country Code: '+v.x,'Year: '+v.y,'Coverage Level: '+v.v+' / '+v.vComplete,'Data Available: '+(v.intermediateCodes?v.intermediateCodes.join(', '):'None')];}}}}},plugins:[shiftRotatedTicksPlugin]})}
+async fetch(url){const response=await fetch(url);return response.json();}
+update(res){this.n_years=res.years.length;this.n_countries=res.ccodes.length;this.vComplete=res.vComplete;res.summary.forEach((line,i)=>{const summaryLine=document.createElement('div');summaryLine.classList.add('item-coverage-summary-line');summaryLine.innerHTML=`<span class="item-coverage-summary-color-block"></span><span class="item-coverage-summary-country">${line}</span>`;const color=summaryLine.querySelector('.item-coverage-summary-color-block')
+color.classList.add(`coverage-summary-color-${i}`);this.summary.appendChild(summaryLine);});this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 0.2)";}else if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 0.2)";}else{return"rgba(200, 0, 0, 0.2)";}},borderColor(context){if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 1)";}else if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 1)";}else{return"rgba(200, 0, 0, 1)";}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_years-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
+this.chart.options.scales={x:{type:'category',labels:res.years,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
+this.callbacks.forEach((callback)=>{callback(res)})
 this.chart.update()}}

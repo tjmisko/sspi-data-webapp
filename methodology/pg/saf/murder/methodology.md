@@ -1,0 +1,17 @@
+---
+ItemType: Indicator
+ItemCode: MURDER
+DatasetCodes:
+  - WB_MURDER
+ItemName: Intentional Homicide
+Description: Intentional homicides per 100,000 people.
+Footnote: null
+Indicator: Intentional Homicide
+IndicatorCode: MURDER
+Inverted: true
+LowerGoalpost: 20.0
+Policy: "Gun control. Police Enforcement"
+SourceOrganizationURL: https://databank.worldbank.org/
+UpperGoalpost: 0.0
+---
+

@@ -1,0 +1,150 @@
+.sspi-tree-container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--box-background-color, #0F1A24aa);
+  border-radius: 10px;
+  border: var(--theme-border-thick, 2px solid #2A2A2A);
+  padding: 1em;
+  color: var(--text-color, #CCCCCC);
+  max-width: clamp(100px, 30vw, 250px);
+  font-size: 0.8em;
+  margin-right: 2em;
+  flex: 0 0 auto;
+  overflow: scroll;
+}
+
+.sspi-tree-header {
+  color: var(--header-text-color, #F5F5F5);
+  padding: 0;
+  margin: 0;
+  font-size: 1.2em;
+  line-height: 1.2em;
+  font-family: var(--header-font-family, sans-serif);
+}
+
+.sspi-tree-description-text {
+  color: var(--text-color, #E0E0E0);
+  font-size: 0.9em;
+  line-height: 1.25;
+  padding: 0;
+}
+
+.treeview-navigation {
+  line-height: 1.25em;
+  font-family: var(--header-font-family, sans-serif);
+}
+
+.treeview-navigation ul,
+.treeview-navigation li {
+  margin: 0;
+  padding: 0;
+}
+.treeview-navigation li span.label {
+  padding-left: 0.75em;
+  font-size: 0.8em;
+}
+.treeview-navigation li li span.label {
+  padding-left: 0.75em;
+  font-size: 0.8em;
+}
+
+.treeview-navigation li li li span.label {
+  padding-left: 1.5em;
+  font-size: 0.7em
+}
+
+.treeview-navigation li li li li span.label {
+  padding-left: 3em;
+  font-size: 0.7em;
+}
+
+
+.treeview-navigation[role="tree"] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeview-navigation[role="tree"] li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeview-navigation a[role="treeitem"] ul {
+  margin: 0;
+  padding: 0;
+}
+
+.treeview-navigation
+  a[role="treeitem"][aria-expanded="false"]
+  + [role="group"] {
+  display: none;
+}
+
+.treeview-navigation a[role="treeitem"][aria-expanded="true"] + [role="group"] {
+  display: block;
+}
+
+.treeview-navigation a[role="treeitem"] > span svg {
+  transform: translate(0, 0);
+}
+
+.treeview-navigation a[role="treeitem"][aria-expanded="false"] > span svg {
+  transform: rotate(270deg) translate(2px, 2px);
+}
+
+.treeview-navigation a[role="treeitem"] {
+  margin: 0;
+  padding: 4px;
+  text-decoration: none;
+  color: var(--header-text-color);
+  border: none;
+  display: block;
+}
+
+.treeview-navigation a[role="treeitem"][aria-current] {
+  border-left: 2px solid #005a9c;
+  background-color: var(--green-accent);
+}
+.treeview-navigation a[role="treeitem"] span.icon {
+  margin-right: 3px;
+}
+.treeview-navigation a[role="treeitem"] span.icon svg polygon {
+  stroke-width: 2px;
+  margin-right: 3px;
+  padding-right: 3px;
+  fill: var(--low-importance-font-color, #888888);
+  stroke: transparent;
+}
+
+/* disable default keyboard focus styling for treeitems
+   Keyboard focus is styled with the following CSS */
+
+.treeview-navigation a[role="treeitem"]:focus {
+  outline: 0;
+  border: 2px #005a9c solid;
+}
+
+.treeview-navigation a[role="treeitem"][aria-current]:focus {
+  border-left-width: 5px;
+}
+
+.treeview-navigation a[role="treeitem"]:hover {
+  color: var(--green-accent);
+  text-decoration: underline;
+  cursor: pointer;
+  /* border-left: 5px solid #333; */
+}
+
+.treeview-navigation a[role="treeitem"] span.icon:hover {
+  color: #333;
+}
+
+.treeview-navigation a[role="treeitem"] span.icon svg polygon:hover {
+  stroke: currentcolor;
+}
+
+.active-view-element {
+  font-weight: bold;
+}

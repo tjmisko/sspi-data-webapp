@@ -1,8 +1,92 @@
-from flask import Blueprint, render_template, request, url_for, current_app as app
+from flask import Blueprint, render_template, request, current_app as app
+import os
+from markdown import markdown
 from flask_login import login_required
 import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json
+from sspi_flask_app.models.database import sspi_metadata, sspidb
+from sspi_flask_app.api.core.dashboard import build_indicators_data
+
+
+def build_download_tree_structure():
+    """
+    Build hierarchical tree structure for download form indicator selector.
+    Similar to build_indicators_data() but simplified for form use.
+    
+    Returns:
+        dict: Tree structure with SSPI -> Pillars -> Categories -> Indicators
+    """
+    try:
+        # Get all item details
+        all_items = sspi_metadata.item_details()
+        
+        if not all_items:
+            return {"error": "No metadata items found"}
+        
+        # Organize items by type and code
+        items_by_type = {
+            'SSPI': [],
+            'Pillar': [],
+            'Category': [],
+            'Indicator': []
+        }
+        
+        items_by_code = {}
+        
+        for item in all_items:
+            item_type = item.get('ItemType', 'Unknown')
+            item_code = item.get('ItemCode', '')
+            
+            if item_type in items_by_type:
+                items_by_type[item_type].append(item)
+            
+            if item_code:
+                items_by_code[item_code] = item
+        
+        # Start with SSPI root
+        sspi_items = items_by_type.get('SSPI', [])
+        if not sspi_items:
+            return {"error": "No SSPI root item found"}
+        
+        sspi_item = sspi_items[0]  # Should only be one SSPI item
+        
+        # Build tree structure recursively
+        def build_node(item, level=0):
+            node = {
+                'itemCode': item.get('ItemCode', ''),
+                'itemName': item.get('ItemName', item.get('ItemCode', '')),
+                'itemType': item.get('ItemType', 'Unknown'),
+                'level': level,
+                'children': []
+            }
+            
+            # Get children codes
+            children_codes = item.get('Children', [])
+            
+            for child_code in children_codes:
+                child_item = items_by_code.get(child_code)
+                if child_item:
+                    child_node = build_node(child_item, level + 1)
+                    node['children'].append(child_node)
+            
+            # Sort children by ItemOrder if available, then by name
+            node['children'].sort(key=lambda x: (
+                items_by_code.get(x['itemCode'], {}).get('ItemOrder', 999),
+                x['itemName']
+            ))
+            
+            return node
+        
+        tree_structure = build_node(sspi_item)
+        
+        return tree_structure
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error building download tree structure: {str(e)}")
+        return {"error": f"Error building tree structure: {str(e)}"}
 
 
 client_bp = Blueprint(
@@ -15,7 +99,8 @@ client_bp = Blueprint(
 
 @client_bp.route('/')
 def home():
-    return render_template('home.html')
+    pillar_category_tree = sspi_metadata.pillar_category_summary_tree()
+    return render_template('home.html', pillar_category_tree=pillar_category_tree)
 
 
 @client_bp.route('/favicon.ico')
@@ -37,25 +122,80 @@ def contact():
 def data():
     return render_template('data.html')
 
+@client_bp.route('/customize')
+def customize():
+    return render_template('customize.html')
+
 
 @client_bp.route('/data/country/<CountryCode>')
 def country_data(CountryCode):
-    return render_template('country-template.html', CountryCode=CountryCode)
+    return render_template('country-data.html', CountryCode=CountryCode)
 
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
 def indicator_data(IndicatorCode):
-    return render_template('indicator-data.html', IndicatorCode=IndicatorCode)
+    IndicatorCode = IndicatorCode.upper()
+    if IndicatorCode not in sspi_metadata.indicator_codes():
+        return render_template(
+            'score-panel-data.html',
+            PanelItemCode=IndicatorCode,
+            PanelItemType='Indicator',
+            error=True
+        )
+    return render_template(
+        'score-panel-data.html',
+        PanelItemCode=IndicatorCode,
+        PanelItemType='Indicator',
+        methodology=sspi_metadata.get_item_methodology_html(IndicatorCode),
+        error=False
+    )
 
 
 @client_bp.route('/data/category/<CategoryCode>')
 def category_data(CategoryCode):
-    return render_template('category-data.html', CategoryCode=CategoryCode)
+    CategoryCode = CategoryCode.upper()
+    if CategoryCode not in sspi_metadata.category_codes():
+        return render_template(
+            'score-panel-data.html',
+            PanelItemCode=CategoryCode,
+            PanelItemType='Category',
+            error=True
+        )
+    return render_template(
+        'score-panel-data.html',
+        PanelItemCode=CategoryCode,
+        PanelItemType='Category',
+        methodology=sspi_metadata.get_item_methodology_html(CategoryCode),
+        error=False
+    )
+
+
+@client_bp.route('/data/pillar/<PillarCode>')
+def pillar_data(PillarCode):
+    PillarCode = PillarCode.upper()
+    if PillarCode not in sspi_metadata.pillar_codes():
+        return render_template(
+            'score-panel-data.html',
+            PanelItemCode=PillarCode,
+            PanelItemType='Pillar',
+            medhodology=sspi_metadata.get_item_methodology_html(PillarCode),
+            error=True
+        )
+    return render_template(
+        'score-panel-data.html',
+        PanelItemCode=PillarCode,
+        PanelItemType='Pillar',
+        error=False
+    )
 
 
 @client_bp.route('/indicators')
 def indicators():
-    return render_template('indicators.html')
+    # Get structured data using the new backend function
+    indicators_data = build_indicators_data()
+    
+    return render_template('indicators.html', 
+                         indicators_data=indicators_data)
 
 
 @client_bp.route('/methodology')
@@ -163,9 +303,14 @@ def data_overview():
     return render_template("data-overview.html")
 
 
-@client_bp.route('/scores')
+@client_bp.route('/outcome')
+def outcome():
+    return render_template("outcome.html")
+
+
+@client_bp.route('/static/scores')
 def overall_scores():
-    return render_template("scores.html")
+    return render_template("static-scores.html")
 
 
 @client_bp.route('/resources')
@@ -174,11 +319,51 @@ def paper_resources():
     return render_template("paper-resources.html")
 
 
-@client_bp.route('/api/v1/view/line/<idcode>')
-def view_dynamic_line(idcode):
-    return render_template("headless/dynamic-line.html", idcode=idcode)
-
-
 @client_bp.route('/api/v1/view/overview')
 def view_data_overview():
     return render_template("headless/data-overview.html")
+
+
+@client_bp.route('/download')
+def download():
+    # Get available databases, indicators, countries, and country groups
+    # Only expose specific databases for download
+    allowed_databases = [
+        'sspi_score_data',
+        'sspi_indicator_data', 
+        'sspi_clean_api_data',
+        'sspi_main_data_v3'
+    ]
+    databases = [db for db in allowed_databases if db in sspidb.list_collection_names()]
+    
+    # Build hierarchical tree structure for indicator selection
+    indicator_tree = build_download_tree_structure()
+    
+    country_groups = sspi_metadata.country_groups()
+    
+    # Get countries with proper formatting (using SSPI67 as default country list)
+    countries = []
+    country_codes = sspi_metadata.country_group('SSPI67')
+    for code in country_codes:
+        try:
+            country = pycountry.countries.get(alpha_3=code)
+            if country:
+                countries.append({
+                    'code': code,
+                    'name': country.name
+                })
+        except:
+            # If pycountry doesn't have the country, just use the code
+            countries.append({
+                'code': code,
+                'name': code
+            })
+    
+    # Sort countries by name
+    countries.sort(key=lambda x: x['name'])
+    
+    return render_template('download.html', 
+                         databases=databases,
+                         indicator_tree=indicator_tree,
+                         countries=countries,
+                         country_groups=country_groups)

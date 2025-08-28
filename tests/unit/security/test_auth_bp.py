@@ -2,11 +2,11 @@ from security import get_route_rules
 
 EXEMPT_ENDPOINTS_GET = {
     'auth_bp.login',
-    'auth_bp.remote_login',
+    'auth_bp.apikey_web'
 }
 EXEMPT_ENDPOINTS_POST = {
     'auth_bp.login',
-    'auth_bp.remote_login',
+    'auth_bp.apikey_web'
 }
 EXEMPT_PREFIXES_GET = (
     'auth_bp.static',

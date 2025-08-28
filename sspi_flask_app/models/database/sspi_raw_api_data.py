@@ -1,4 +1,5 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
+from sspi_flask_app.models.database import sspi_metadata 
 from bson import json_util
 import hashlib
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
@@ -12,29 +13,35 @@ log = logging.getLogger(__name__)
 class SSPIRawAPIData(MongoWrapper):
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
-        Raises an InvalidDocumentFormatError if the document is not in the
-        valid:
+        Raises an InvalidDocumentFormatError if the document is not in valid
+        RawDocument format
 
-        Valid Document Format:
+        Valid Raw Document Format:
             {
-                "IndicatorCode": str,
+                "CollectionInfo": {
+                    "Username": str,
+                    "Date": str
+                }
+                "Source": {
+                    "OrganizationCode": str,
+                    "OrganizationQueryCode": str
+                    "QueryCode": str
+                },
                 "Raw": str or dict or int or float,
-                "CollectedAt": datetime,
                 ...
             }
         The fields IndicatorCode, Raw, and CollectedAt are required.
         Additional fields are allowed, but not required.
         """
-        self.validate_indicator_code(document, document_number)
         self.validate_raw(document, document_number)
-        self.validate_collected_at(document, document_number)
-        self.validate_username(document, document_number)
+        self.validate_collection_info(document, document_number)
+        self.validate_source_info(document, document_number)
 
     def tabulate_ids(self):
         tab_ids = self._mongo_database.aggregate([
             {"$group": {
                 "_id": {
-                    "IndicatorCode": "$IndicatorCode",
+                    "Source": "$Source",
                     "Raw": "$Raw"
                 },
                 "count": {"$sum": 1},
@@ -43,30 +50,60 @@ class SSPIRawAPIData(MongoWrapper):
         ])
         return json.loads(json_util.dumps(tab_ids))
 
-    def validate_collected_at(self, document: dict, document_number: int = 0):
-        # Validate CollectedAt format
-        if "CollectedAt" not in document.keys():
+    def validate_collection_info(self, document: dict, document_number: int = 0):
+        # Validate Date format
+        if "CollectionInfo" not in document.keys():
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' is a required argument {doc_id}")
-        if not type(document["CollectedAt"]) is str:
+                f"'CollectionInfo' is a required field {doc_id}")
+        if "Date" not in document["CollectionInfo"].keys():
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'CollectedAt' must be a str {(doc_id)}")
-
-    def validate_username(self, document: dict, document_number: int = 0):
-        # Validate Username format
-        if "Username" not in document.keys():
+                f"'Date' is a required field of CollectionInfo {doc_id}")
+        if not isinstance(document["CollectionInfo"]["Date"], str):
             print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
-                f"'Username' is a required argument {doc_id}")
-        if not type(document["Username"]) is str:
+                f"'Date' must be a str {(doc_id)}")
+        if "Username" not in document["CollectionInfo"].keys():
+            print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
+            raise InvalidDocumentFormatError(
+                f"'Username' is a required field of CollectionInfo  {doc_id}")
+        if not isinstance(document["CollectionInfo"]["Username"], str):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Username' must be a str (document {document_number})")
+
+    def validate_source_info(self, document: dict, document_number: int = 0):
+        # Validate Source format
+        if "Source" not in document.keys():
+            print(f"Document Produced an Error: {document}")
+            doc_id = f"(document {document_number})"
+            raise InvalidDocumentFormatError(
+                f"'Source' is a required field {doc_id}")
+        if not isinstance(document["Source"], dict):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"'Source' must be a dict (document {document_number})")
+        if not all([isinstance(k, str) for k in document["Source"].keys()]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"All Source keys must be strings (document {document_number})")
+        if not all([isinstance(v, str) for v in document["Source"].values()]):
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"All Source Values must be strings (document {document_number})")
+        if "OrganizationCode" not in document["Source"].keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"Source dict must contain an OrganizationCode (document {document_number})")
+        if "QueryCode" not in document["Source"].keys():
+            print(f"Document Produced an Error: {document}")
+            raise InvalidDocumentFormatError(
+                f"Source dict must contain an QueryCode (document {document_number})")
 
     def validate_raw(self, document: dict, document_number: int = 0):
         # Validate Raw format
@@ -74,73 +111,76 @@ class SSPIRawAPIData(MongoWrapper):
             print(f"Document Produced an Error: {document}")
             raise InvalidDocumentFormatError(
                 f"'Raw' is a required argument (document {document_number})")
-        if not type(document["Raw"]) in [str, dict, int, float, list]:
-            print(f"Document Produced an Error: {document}")
+        if type(document["Raw"]) not in [str, dict, int, float, list]:
+            print(f"Document Produced an Error: {type(document["Raw"])}")
+            # print(f"Document Produced an Error: {document}")
             doc_id = f"(document {document_number})"
             raise InvalidDocumentFormatError(
                 f"'Raw' must be a string, dict, int, float, or list {doc_id}")
 
-    def raw_insert_one(self, document: list | str | dict, IndicatorCode, **kwargs) -> int:
+    def raw_insert_one(self, document: list | str | dict, source_info: dict[str, str], **kwargs) -> int:
         """
         Utility Function the response from an API call in the database
         - Document to be passed as a well-formed dictionary or string for entry
         into pymongo
-        - IndicatorCode is the indicator code for the indicator that the
-        observation is for
         - Implements automatic fragmentation to handle strings which are too large
+        :param source_id: Dictionary uniquely identifying raw document sets
         """
+        username = kwargs.get("username", None)
+        assert username is not None, "username must be provided as a key word argument to raw_insert_one"
+        obs = {
+            "CollectionInfo": {
+                "Date": datetime.now().strftime("%F %R"),
+                "Username": username,
+            },
+            "Source": source_info
+        }
         byte_max = self.maximum_document_size_bytes
         if isinstance(document, str) and len(document) > byte_max:
+            print(f"Document too large, fragmenting: {len(document)} bytes")
             num_fragments = (len(document) + byte_max - 1) // byte_max
+            source_info_id = f"{source_info['OrganizationCode']}_{source_info['QueryCode']}"
             fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
             for i in range(num_fragments):
-                obs = {
-                    "IndicatorCode": IndicatorCode,
-                    "Raw": document[byte_max * i:byte_max * i + byte_max],
-                    "CollectedAt": datetime.now().strftime("%F %R")
-                }
+                obs["Raw"] = document[byte_max * i:byte_max * i + byte_max]
                 obs.update(kwargs)
                 obs.update({
-                    "FragmentGroupID": f"{IndicatorCode}_{fragment_group_id}",
+                    "FragmentGroupID": f"{source_info_id}_{fragment_group_id}",
                     "FragmentNumber": i,
                     "FragmentTotal": num_fragments,
                 })
                 self.insert_one(obs)
+                del obs["_id"]
             return num_fragments
-        obs = {
-            "IndicatorCode": IndicatorCode,
-            "Raw": document,
-            "CollectedAt": datetime.now().strftime("%F %R")
-        }
+        obs["Raw"] = document
         obs.update(kwargs)
         self.insert_one(obs)
         return 1
 
-    def raw_insert_many(self, document_list, IndicatorCode, **kwargs) -> int:
+    def raw_insert_many(self, document_list: list,  source_info: dict[str, str], **kwargs) -> int:
         """
         Utility Function
         - Observation to be past as a list of well form observation
         dictionaries
-        - IndicatorCode is the indicator code for the indicator that the
-        observation is for
+        - raw_document_set_id specifies the RawDocumentSet to which the RawDocument belongs
         """
         for observation in document_list:
-            self.raw_insert_one(observation, IndicatorCode, **kwargs)
+            self.raw_insert_one(observation, source_info, **kwargs)
         return len(document_list)
 
-    def fetch_raw_data(self, IndicatorCode, **kwargs) -> list:
+    def fetch_raw_data(self, source_info: dict[str, str], **kwargs) -> list:
         """
-        Utility function that handles querying the database
+        Utility function that handles querying the database.
+
+        Kwargs passed to this function are used to update the pymongo query
         """
-        if not bool(self.find_one({"IndicatorCode": IndicatorCode})):
-            msg = (
-                "No Documents with IndicatorCode " f"{IndicatorCode} in "
-                "sspi_raw_api_data. Do you forget to run collect?"
+        source_query = self.build_source_query(source_info)
+        raw_data = self.find(source_query, **kwargs)
+        if not raw_data:
+            raise ValueError(
+                "No Documents found with provided source_info in "
+                f"sspi_raw_api_data. {source_info}"
             )
-            raise ValueError(msg)
-        mongoQuery = {"IndicatorCode": IndicatorCode}
-        mongoQuery.update(kwargs)
-        raw_data = self.find(mongoQuery)
         fragment_dict = {}
         defragged_raw = []
         for obs in raw_data:
@@ -159,6 +199,7 @@ class SSPIRawAPIData(MongoWrapper):
                     "Fragmentation Error! Your data is missing a fragment "
                     f"in FragmentGroup ({k})"
                 ))
+            assert all([isinstance(x["Raw"], str) for x in v]), "All fragments must have a Raw field of type str"
             raw = "".join([x["Raw"] for x in v])
             drops = ["FragmentNumber", "FragmentTotal", "Raw"]
             rebuilt = {f: data for f, data in v[0].items() if f not in drops}
@@ -166,11 +207,36 @@ class SSPIRawAPIData(MongoWrapper):
             defragged_raw.append(rebuilt)
         return defragged_raw
 
-    def raw_data_available(self, IndicatorCode, **kwargs) -> bool:
+    def raw_data_available(self, source_info) -> bool:
         """
-        Returns True if raw data is available for the given indicator code and
-        kwargs
+        Check if raw data is available for a given source.
+        :param source_info: Dictionary containing the source information
+        :return: True if raw data is available, False otherwise
         """
-        MongoQuery = {"IndicatorCode": IndicatorCode}
-        MongoQuery.update(kwargs)
-        return bool(self.find_one(MongoQuery))
+        source_query = self.build_source_query(source_info)
+        return self.find_one(source_query) is not None
+
+    def build_source_query(self, source_info: dict[str, str]) -> dict:
+        """
+        Given a source_info dictionary, build a query to find documents 
+        with matching source information.
+        :param source_info: Dictionary containing source information
+        :return: A dictionary representing the query to be used in MongoDB
+        """
+        source_query = {}
+        for k,v in source_info.items():
+            source_query["Source." + k] = v
+        return source_query
+
+    def get_collection_info(self, source_info: dict[str, str]) -> dict:
+        """
+        Get the collection information for a given source.
+        :param source_info: Dictionary containing the source information
+        :return: A dictionary containing the collection information
+        """
+        source_query = self.build_source_query(source_info)
+        doc = self.find_one(source_query, {"CollectionInfo": 1})
+        if not doc:
+            return {}
+        return doc["CollectionInfo"]
+

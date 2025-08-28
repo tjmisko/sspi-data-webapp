@@ -8,7 +8,7 @@ from datetime import datetime
 import base64
 
 
-def collectPrisonStudiesData(**kwargs):
+def collect_prison_studies_data(**kwargs):
     url_slugs = get_href_list()
     yield from collect_all_pages(url_slugs, **kwargs)
 
@@ -28,7 +28,7 @@ def get_href_list():
 
 
 def collect_all_pages(url_slugs, **kwargs):
-    url_base = "https://www.prisonstudies.org"
+    base_url = "https://www.prisonstudies.org"
     count = 0
     failed_matches = []
     for url_slug in url_slugs:
@@ -36,28 +36,38 @@ def collect_all_pages(url_slugs, **kwargs):
         count += 1
         yield f"{url_slug}\n"
         try:
-            COU = get_country_code(query_string)
+            cou = get_country_code(query_string)
         except LookupError:
             yield f"Error! Could not find country based on query string '{query_string}'\n"
             if query_string in namefix.keys():
-                COU = get_country_code(namefix[query_string])
+                cou = get_country_code(namefix[query_string])
             else:
                 failed_matches.append(query_string)
                 continue
-        yield f"Collecting data for country {count} of {len(url_slugs)} from {url_base + url_slug}\n"
+        yield f"Collecting data for country {count} of {len(url_slugs)} from {base_url + url_slug}\n"
         # The site blocked my IP after only a few requests
         time.sleep(10)
-        response = requests.get(url_base + url_slug)
+        request_url = base_url + url_slug
+        response = requests.get(request_url)
         # special case of UK being split into three --> scotland, northern ireland, england + wales
-        if COU == "GBR":
-            COU = COU + url_slug.split("-")[-1]
-        obs = {"IndicatorCode": "PRISON",
-               "IntermediateCode": "PRIPOP",
-               "CountryCode": COU,
-               "Raw": response.content,
-               "CollectedAt": datetime.now()}
-        sspi_raw_api_data.raw_insert_one(obs, "PRISON", **kwargs)
-        yield f"Inserted {COU} page\n"
+        if cou == "GBR":
+            cou = cou + url_slug.split("-")[-1]
+        obs = {
+           "IndicatorCode": "PRISON",
+           "IntermediateCode": "PRIPOP",
+           "CountryCode": cou,
+           "Raw": response.content,
+           "CollectedAt": datetime.now()
+        }
+        source_info = {
+            "OrganizationName": "World Prison Brief",
+            "OrganizationCode": "WPB",
+            "QueryCode": "WPB",
+            "BaseURL": base_url,
+            "URL": request_url,
+        }        
+        sspi_raw_api_data.raw_insert_one(obs, source_info, **kwargs)
+        yield f"Inserted {cou} page\n"
     print(failed_matches)
     return f"Collected {count} country webpages"
 

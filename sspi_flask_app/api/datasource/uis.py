@@ -5,20 +5,28 @@ from pycountry import countries
 from ..resources.utilities import string_to_float
 
 
-def collectUISdata(UISIndicatorCode, IndicatorCode, **kwargs):
-    yield f"Collecting data for UNESCO Institute for Statistics Indicator {UISIndicatorCode}\n"
-    url_source = f"https://api.uis.unesco.org/api/public/data/indicators?indicator={UISIndicatorCode}"
-    response = requests.get(url_source).json()
+def collect_uis_data(uis_indicator_code, **kwargs):
+    yield f"Collecting data for UNESCO Institute for Statistics Indicator {uis_indicator_code}\n"
+    url_source = f"https://api.uis.unesco.org/api/public/data/indicators?indicator={uis_indicator_code}"
     count = 0
-    document_list = []
-    for obs in response["records"]:
-        count += 1
-        document_list.append(obs)
-    sspi_raw_api_data.raw_insert_many(document_list, IndicatorCode, **kwargs)
-    yield f"Inserted {count} data points; collection complete for UNESCO Institute for Statistics Indicator {UISIndicatorCode}"
+    source_info = {
+        "OrganizationName": "UNESCO Institute for Statistics",
+        "OrganizationCode": "UIS",
+        "OrganizationSeriesCode": uis_indicator_code,
+        "QueryCode": uis_indicator_code,
+        "URL": url_source
+    }
+    response = requests.get(url_source)
+    if response.status_code != 200:
+        yield f"Error fetching data from UIS API: {response.status_code}\n"
+        return
+    json = response.json()
+    count = sspi_raw_api_data.raw_insert_many(json["records"], source_info, **kwargs)
+    yield f"Inserted {count} raw documents\n"
+    yield f"Collection complete for UNESCO Institute for Statistics Indicator {uis_indicator_code}"
 
 
-def cleanUISdata(raw_data, IndicatorCode, unit, description):
+def clean_uis_data(raw_data, dataset_code, unit, description):
     clean_data_list = []
     for obs in raw_data:
         country = obs["Raw"]["geoUnit"]
@@ -31,7 +39,7 @@ def cleanUISdata(raw_data, IndicatorCode, unit, description):
             continue
         clean_obs = {
             "CountryCode": country,
-            "IndicatorCode": IndicatorCode,
+            "DatasetCode": dataset_code,
             "Description": description,
             "Year": year,
             "Unit": unit,

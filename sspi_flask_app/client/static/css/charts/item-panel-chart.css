@@ -1,0 +1,40 @@
+.item-dropdown {
+  /* color: var(--text-color); */
+  /* font-weight: bold; */
+  width: 100%;
+  padding: 0.5em;
+  border: 0px solid #ccc;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  font-size: 0.85em;
+}
+
+/* Enhanced item description in chart sidebar */
+.item-info-title {
+  font-size: 0.9em;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+  color: var(--header-text-color, #1f2937);
+  padding: 0.3em;
+  background-color: var(--region-background-color, #f5f5f5);
+  border-radius: 4px;
+}
+
+.item-detail-list {
+  font-size: 0.8em;
+  list-style-type: none;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0;
+}
+
+.item-detail-element {
+  margin-bottom: 0.2em;
+  padding: 0.1em 0;
+}
+
+.item-detail-value {
+  color: var(--green-accent, #8BA342);
+  padding-left: 0.3em;
+  font-weight: 500;
+}

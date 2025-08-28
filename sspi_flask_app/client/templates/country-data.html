@@ -1,5 +1,33 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+    <title> {{ CountryCode | upper }} Data </title>
+{% endblock title %}
+
 {% block content %}
-<p> hello world </p>
+{% if error %}
+    <div class="alert alert-danger" role="alert">
+        <strong>Error:</strong> No Country {{ CountryCode }} found!
+    </div>
+{% else %}
+    <section class="chart-section" id="dynamic-data-section"></section>
+    <script>
+        window.addEventListener("load", (event) => {
+            window.SSPICharts.push(
+                new CountryScoreChart(document.getElementById("dynamic-data-section"), "{{ CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors })
+            );
+            const x = window.observableStorage.getItem('windowX');
+            const y = window.observableStorage.getItem('windowY');
+            
+            if (x !== null && y !== null) {
+              window.moveTo(parseInt(x), parseInt(y));
+            }
+        })
+        window.addEventListener('beforeunload', () => {
+          window.observableStorage.setItem('windowX', window.screenX);
+          window.observableStorage.setItem('windowY', window.screenY);
+        });
+    </script>
+{% endif %}
 {% endblock content %}
+

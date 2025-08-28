@@ -23,19 +23,8 @@ class SSPIRankingTable:
     def __init__(self, data: list[dict]):
         self.data = data
         self.classes = []
-        self.rank_by_value = all([
-            all(["Value" in obs.keys() for obs in data]),
-            all(["LowerGoalpost" in obs.keys() and obs["LowerGoalpost"] is not None
-                for obs in data]),
-            all(["UpperGoalpost" in obs.keys() and obs["UpperGoalpost"] is not None
-                for obs in data])
-        ])
-        if self.rank_by_value:
-            self.inverted = self.detect_inversion()
-            self.assign_classes("Value")
-        else:
-            self.inverted = False
-            self.assign_classes("Score")
+        self.inverted = False
+        self.assign_classes("Score")
         self.compute_ranks()
         self.label_ties()
 
@@ -61,23 +50,6 @@ class SSPIRankingTable:
             cls.rank(r)
             r += len(cls.data)
 
-    def validate_goalposts(self):
-        if self.rank_by_value:
-            ref_lg = self.data[0]["LowerGoalpost"]
-            ref_ug = self.data[0]["UpperGoalpost"]
-            for obs in self.data[1:]:
-                if abs(obs["LowerGoalpost"] - ref_lg) > 1E-5:
-                    message = "Mismatched Lower Goalposts " + \
-                        str(ref_lg) + " and " + str(obs["LowerGoalpost"])
-                    raise ValueError(message)
-                if abs(obs["UpperGoalpost"] - ref_ug) > 1E-5:
-                    message = "Mismatched Upper Goalposts " + \
-                        str(ref_ug) + " and " + str(obs["UpperGoalpost"])
-                    raise ValueError(message)
-
-    def detect_inversion(self):
-        self.validate_goalposts()
-        return self.data[0]["LowerGoalpost"] > self.data[0]["UpperGoalpost"]
 
     def label_ties(self):
         for cls in self.classes:

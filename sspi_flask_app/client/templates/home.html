@@ -1,41 +1,85 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-    <article class="page-content">
-      <section class="hero-box">
+<article class="page-content">
+    <section class="hero-box">
         <div class="hero-textbox"> 
-          <h1 class="hero-title">How well are countries doing at supporting wellbeing for people and the planet?</h1>
-          <p class="hero-p"> The SSPI assembles data measuring country
-                performance across 57 Policy Indicators, offering a
-                comprehensive and data-driven look at policy around the world.
-          </p> 
-          <p class="hero-p"> The SSPI groups these Policy Indicators
-                into sixteen Categories, each of measures the performance of a
-                package of related policies in a specific sector. The
-                Categories are grouped into three Pillars corresponding to the
-                three core purposes of governments in the twenty-first century:
-                protecting the planet (Sustainability), structuring markets
-                (Market Structure), and providing Public Goods. 
-          </p>
-          <a class="hero-datalink" href="/data"> Explore SSPI Data</a>
+            <h1 class="hero-title">How well are countries doing at supporting wellbeing for people and the planet?</h1>
+            <p class="hero-p">
+                The SSPI measures the strength of national policies across
+                57 policy indicators, offering a comprehensive and
+                data-driven look at policy around the world.
+            </p> 
+            <p class="hero-p"> 
+                The SSPI organizes indicators into categories, each
+                of measures the performance of a package of related
+                policies in a specific sector. Categories are grouped into
+                pillars corresponding to the three core tasks of
+                government in the twenty-first century.
+            </p>
+            <div class="pillar-navigation">
+                {% for pillar in pillar_category_tree %}
+                    <div class="pillar-navigation-wrapper {{ pillar.ItemCode | lower }}">
+                        <a href="/data/pillar/{{ pillar.ItemCode | upper }}" class="home-link pillar-link">
+                            <h3 class="pillar-link-title">{{ pillar.ItemName }}</h3>
+                            <p class="pillar-description">
+                                {{ pillar.ShortDescription }}
+                            </p>
+                        </a>
+                        <div class="category-navigation-wrapper">
+                            <h4 class="home-category-header"> Categories </h4>
+                            <ul class="category-list">
+                            {% for category in pillar.Categories %}
+                                <li class="category-item">
+                                    <a href="/data/category/{{ category.ItemCode | upper }}" class="home-link category-link" title="{{ category.ShortDescription }}">{{ category.ItemName }}</a>
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        </div> 
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-      </section>
-      <section class="chart-section" id="overall-score-chart">
-        <h2>SSPI Scores (2018 Data)</h2>
-        <script defer>
-            window.overallStackedBar = new StaticOverallStackedBarChart(document.getElementById('overall-score-chart'));
-        </script>
-      </section>
-      <section class="side" id="pillars">
-        <h2>Three Pillars of the SSPI</h2>
-        <div id="pillars-description">
-          The three pillars of the SSPI correspond to the three major policy challenges facing governments around the world.
-          <ul>
-            <li> Protecting the natual environment from degredation to guarantee a liveable and thriving planet for all creatures </li>
-            <li> Structuring free and fair markets that promote general prosperity and equality </li>
-            <li> Providing public goods that all citizens share  </li>
-          </ul>
+        <div class="hero-aside-wrapper"> 
+            <div class="aside-box">
+                <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
+                <p class="hero-p">
+                    Our working paper conducts an in-depth cross-sectional
+                    analysis of country polcies from 2018 working paper using the SSPI.
+                </p>
+                <div class="aside-navigation">
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
+                        IRLE Working Paper
+                    </a>
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
+                        IRLE Climate and Society Center
+                    </a>
+                </div>
+            </div>
+            <div class="aside-box">
+                <h2 class="hero-title">National Policy Scores</h2>
+                <p class="hero-p">
+                    Explore the latest SSPI data, with scores spanning from 2000 to 2023 across 67 countries.
+                </p>
+                <div class="aside-navigation">
+                    <a href="/indicators" class="home-link aside-link">
+                        Indicator Table
+                    </a>
+                    <a href="/data/indicator/biodiv" class="home-link aside-link">
+                        Explore Data by Indicator
+                    </a>
+                    <a href="/data/country/aus" class="home-link aside-link">
+                        Explore Data by Country
+                    </a>
+                    <a href="/download" class="home-link aside-link">
+                        Download Data
+                    </a>
+                </div>
+            </div>
         </div>
-      </section>
-    </article>
+    </section>
+    <hr>
+    <section class="chart-section" id="overall-score-chart">
+    </section>
+</article>
 {% endblock %}

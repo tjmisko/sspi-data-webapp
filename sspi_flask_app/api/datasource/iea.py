@@ -2,12 +2,19 @@ import requests
 from sspi_flask_app.models.database import sspi_raw_api_data
 import pycountry
 
-def collectIEAData(IEAIndicatorCode, IndicatorCode, **kwargs):
-    raw_data = requests.get(f"https://api.iea.org/stats/indicator/{IEAIndicatorCode}").json()
-    count = sspi_raw_api_data.raw_insert_many(raw_data, IndicatorCode, **kwargs)
-    yield f"Successfully inserted {count} observations into the database"
+def collect_iea_data(iea_indicator_code, **kwargs):
+    url = f"https://api.iea.org/stats/indicator/{iea_indicator_code}"
+    raw_data = requests.get(url).json()
+    source_info = {
+        "OrganizationName": "International Energy Organization",
+        "OrganizationCode": "IEA",
+        "QueryCode": iea_indicator_code,
+        "URL": url
+    }
+    count = sspi_raw_api_data.raw_insert_many(raw_data, source_info, **kwargs)
+    yield f"Successfully inserted {count} observations of IEA Indicator {iea_indicator_code}"
 
-def filterSeriesListiea(series_list, filterVAR, IndicatorCode):
+def filter_series_list_iea(series_list, filterVAR, IndicatorCode):
     # Return a list of series that match the filterVAR variable name
     document_list = []
     for i, series in enumerate(series_list):
@@ -29,7 +36,7 @@ def filterSeriesListiea(series_list, filterVAR, IndicatorCode):
         document_list.extend(new_documents)
     return document_list
 
-def cleanIEAData_altnrg(RawData, IndName):
+def clean_iea_data_altnrg(RawData, IndName):
     """
     Takes in list of collected raw data and our 6 letter indicator code 
     and returns a list of dictionaries with only relevant data from wanted countries
@@ -82,3 +89,53 @@ def clean_IEA_data_GTRANS(raw_data, indicator_code, description):
         }
         clean_data_list.append(clean_obs)
     return clean_data_list
+
+
+def filter_iea_data(raw_data, dataset_code, filter_code):
+    """
+    Filter and process IEA data for a specific dataset.
+    
+    Args:
+        raw_data: Raw data from sspi_raw_api_data.fetch_raw_data()
+        dataset_code: Target dataset code (e.g., "IEA_BIOWAS")
+        filter_code: Single intermediate code to filter for (e.g., "COMRENEW")
+    
+    Returns:
+        List of cleaned documents ready for database insertion
+    """
+    import pandas as pd
+    import json
+    from sspi_flask_app.api.resources.utilities import parse_json
+    
+    # Use existing cleaning function
+    intermediate_data = pd.DataFrame(clean_iea_data_altnrg(raw_data, dataset_code))
+    
+    # Filter out invalid country codes
+    intermediate_data.drop(
+        intermediate_data[
+            intermediate_data["CountryCode"].map(lambda s: len(s) != 3)
+        ].index.tolist(),
+        inplace=True,
+    )
+    
+    # Filter for specific intermediate code
+    intermediate_data = intermediate_data[intermediate_data["IntermediateCode"] == filter_code]
+    
+    # Extract target intermediate code from dataset code (remove "IEA_" prefix)
+    target_code = dataset_code.replace("IEA_", "")
+    intermediate_data["IntermediateCode"] = target_code
+    
+    # Fix type conversion with proper assignment
+    intermediate_data = intermediate_data.astype({"Year": "int", "Value": "float"})
+    
+    # Assign DatasetCode to all records
+    intermediate_data["DatasetCode"] = dataset_code
+    
+    # Convert to JSON format
+    intermediate_document_list = json.loads(
+        str(intermediate_data.to_json(orient="records")),
+        parse_int=int,
+        parse_float=float,
+    )
+    
+    return intermediate_document_list

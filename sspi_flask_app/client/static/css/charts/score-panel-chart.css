@@ -1,0 +1,442 @@
+.panel-chart-root-container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  min-height: clamp(600px, 80vh, 80vh);
+}
+
+.panel-chart-container { /* Contains title and chart canvas */
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  min-width: 300px;
+  max-width: 100%;
+  height: clamp(600px, 80vh, 80vh);
+}
+
+.panel-chart-title {
+  font-size: 1em;
+  margin: 0.5em 0;
+}
+
+.panel-canvas-wrapper { /* Wraps the chart canvas */
+  padding: 0.5em;
+  position: relative;
+  flex: 1 1 0;
+}
+
+.chart-options-wrapper {
+  position: relative;
+}
+
+.icon-button {
+  all: unset;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  flex-align: center;
+  justify-content: center;
+  padding: 0.5em;
+}
+
+.show-chart-options {
+  position: absolute;
+  top: 0.2em;
+  right: 0;
+  z-index: 2;
+}
+
+.hide-chart-options {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.remove-button-legend-item {
+  padding: 0;
+  margin-left: 0.2em;
+  z-index: 2;
+}
+
+.icon-button:hover .hide-chart-options-svg {
+  stroke: var(--green-accent, #FFFFFF);
+}
+
+.icon-button:hover .show-chart-options-svg {
+  stroke: var(--green-accent, #FFFFFF);
+}
+
+.icon-button:hover .remove-button-legend-item {
+  stroke: var(--green-accent, #FFFFFF);
+}
+
+.show-chart-options-svg, .hide-chart-options-svg, .remove-button-legend-item-svg {
+  margin: auto;
+  stroke: var(--text-color, #CCCCCC);
+  fill: none;
+}
+
+.chart-options {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.5em;
+  border-radius: 5px;
+  background-color: var(--box-background-color, #000);
+  border: var(--theme-border-thick, none);
+  color: var(--header-text-color, #fff);
+  overflow-y: scroll;
+  max-height: 80vh;
+  min-width: clamp(250px, 20vw, 20vw);
+  z-index: 3;
+}
+
+.chart-options-overlay.inactive {
+  display: none;
+  position: absolute;
+  inset: 0;
+}
+
+.chart-options-overlay.active {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  z-index: 2;
+}
+
+.chart-options.inactive {
+  transform: translateX(150%);
+}
+
+.chart-options.active {
+  transform: translateX(0);
+}
+
+@media (min-width: 1000px) {
+  /* Only Show Sidebar on large enough desktops */
+  .panel-canvas-wrapper {
+    max-width: 75vw;
+  }
+
+  .chart-options-wrapper {
+    display: inline-block;
+    flex: 0.5 2 0;
+    max-width: 20vw;
+  }
+  .chart-options {
+    position: relative;
+    transform: translateX(0);
+    min-width: 15vw;
+  }
+  .show-chart-options {
+    display: none;
+  }
+  /* Show chart options by default on larger screens */
+  .chart-options.inactive {
+    transform: translateX(0%);
+  }
+  .hide-chart-options {
+    display: none;
+  }
+  .chart-options-overlay.active {
+    display: none;
+  }
+}
+
+.chart-options-details {
+  font-size: 0.75em;
+  font-family: var(--header-font-family);
+}
+
+.chart-options-details {
+  font-size: 0.75em;
+  font-family: var(--header-font-family);
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--subtle-line-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.chart-options-details summary {
+  padding: 0.5rem 0.75rem;
+  background-color: var(--region-background-color);
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.chart-options-details summary:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 10%, var(--region-background-color));
+}
+
+.chart-options-details[open] summary {
+  border-bottom: 1px solid var(--subtle-line-color);
+}
+
+.chart-options-details > *:not(summary) {
+  padding: 0.5rem 0.5rem;
+}
+
+.view-options-suboption-container {
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+/* Spacing for form elements inside sections */
+.chart-options-details .chart-view-option {
+  margin-bottom: 0.15rem;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.chart-options-details .chart-view-option:last-child {
+  margin-bottom: 0;
+}
+
+/* Tighter spacing specifically for imputation checkboxes */
+.chart-options-details .chart-view-option:has(input[type="checkbox"]) {
+  line-height: 1.2;
+  margin-bottom: 0.05rem;
+}
+
+/* Section subheaders within View Options */
+.chart-options-details .chart-view-subheader {
+  font-size: 0.75em;
+  font-weight: 600;
+  margin: 0.2rem 0 0.1rem 0;
+  padding: 0;
+  color: var(--header-text-color);
+  line-height: 1;
+}
+
+/* Inline layout for Y-axis inputs */
+.chart-options-details .y-axis-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.1rem;
+  padding-left: 0.2rem;
+}
+
+.chart-options-details .y-axis-input-group label {
+  margin: 0 0.3rem 0 0;
+  padding: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: fit-content;
+  font-size: 0.75em;
+  line-height: 1;
+}
+
+.chart-options-details .y-axis-input-group input {
+  flex: 1 1 0;
+  margin: 0;
+  max-width: 120px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.75em;
+  line-height: 1;
+}
+
+.dynamic-item-description {
+  font-size: 0.9em;
+  line-height: 1.25;
+  padding: 0.5em 0;
+}
+
+.dynamic-item-description p {
+  margin: 0;
+}
+
+.legend-title-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+.legend-title-bar-buttons {
+  font-size: 0.65em;
+  padding: 0 0.5em;
+}
+
+.panel-legend-item-country-code {
+  padding-left: 0.2em;
+}
+
+.legend-title {
+  font-size: 0.9em;
+  margin: 0;
+  padding: 0.1em 0;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 0.75em;
+  font-weight: 500;
+  padding: 0.1em 1em;
+  border-radius: 20px;
+  border-width: 1.5px;
+  border-style: solid;
+  margin: 0.2em;
+}
+
+.legend-item span {
+  line-height: 2;
+}
+
+.add-country-pin-results-window {
+  position: relative;
+  display: flex;
+  font-size: 0.7em;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow-y: scroll;
+  max-height: 300px;
+  align-items: center;
+}
+
+.add-country-pin-result:hover {
+  background-color: var(--green-accent, #000);
+  height: auto;
+  border-radius: 5px;
+}
+
+/* Only target labels within chart view options */
+.chart-options-details .chart-view-option .title-bar-label {
+  font-size: 0.75em;
+  margin: 0;
+  padding: 0;
+  line-height: 1.1;
+}
+
+/* Override inherited margins for inputs and labels in chart options only */
+.chart-options-details .chart-view-option input[type="checkbox"] {
+  margin: 0 0.25rem 0 0;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.chart-options-details .chart-view-option input[type="number"] {
+  margin: 0;
+  padding: 0.1rem 0.3rem;
+}
+
+/* Compact button spacing only in chart options */
+.chart-options-details .chart-view-option button {
+  margin: 0.1rem 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.7em;
+  line-height: 1;
+}
+
+/* Inline layout for Country Group buttons */
+.chart-options-details .country-group-button-group {
+  display: flex;
+  gap: 0.3rem;
+  width: 100%;
+}
+
+.chart-options-details .country-group-button-group button {
+  flex: 1;
+  margin: 0;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.65em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* Form element styling for both themes */
+.chart-options-details select,
+.chart-options-details input[type="number"] {
+  background-color: var(--input-background-color);
+  color: var(--input-text-color);
+  border: 1px solid var(--subtle-line-color);
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+/* Button styling for chart options */
+.chart-options-details button {
+  background-color: var(--input-background-color);
+  color: var(--input-text-color);
+  border: 1px solid var(--subtle-line-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}
+
+.chart-options-details button:hover {
+  background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--green-accent) 20%);
+}
+
+/* Make Active Series and Country Group dropdowns match Item dropdown size */
+.chart-options-details .series-selector,
+.chart-options-details .country-group-selector {
+  width: 100%;
+  padding: 0.5em;
+  font-size: 0.85em;
+  border-radius: 4px;
+}
+
+/* Styling for the unified Select Countries section */
+.select-countries-options .chart-view-subheader {
+  margin-top: 0.8rem;
+}
+
+.select-countries-options .chart-view-subheader:first-of-type {
+  margin-top: 0.2rem;
+}
+
+/* Missing Countries section styling */
+.missing-countries-container {
+  margin-top: 0.3rem;
+}
+
+.missing-countries-list {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.7em;
+  line-height: 1.3;
+  padding: 0.2rem 0;
+}
+
+.missing-countries-summary {
+  font-size: 0.65em;
+  color: var(--low-importance-font-color);
+  margin-top: 0.2rem;
+  font-style: italic;
+}
+
+.missing-country-item {
+  display: inline;
+  font-family: monospace;
+  color: var(--text-color);
+}
+
+.missing-countries-none {
+  color: var(--green-accent);
+  font-size: 0.75em;
+  font-style: italic;
+}

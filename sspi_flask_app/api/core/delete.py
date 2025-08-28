@@ -1,25 +1,20 @@
-from sspi_flask_app.models.database import sspidb, sspi_metadata
-from sspi_flask_app.api.resources.utilities import lookup_database
-from flask import (
-    Blueprint,
-    redirect,
-    render_template,
-    request,
-    flash,
-    url_for,
-    current_app as app
-)
+import json
+import os
+import tempfile
+from datetime import datetime
+
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import current_app as app
 from flask_login import login_required
+
 # from wtforms import StringField
 # from bson.objectid import ObjectId
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, SelectField
+from wtforms import SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired
-import tempfile
-from datetime import datetime
-import json
-import os
 
+from sspi_flask_app.api.resources.utilities import lookup_database
+from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data, sspidb
 
 delete_bp = Blueprint(
     "delete_bp", __name__,
@@ -173,3 +168,53 @@ def delete_clear_database(database_name):
     )
     app.logger.info(msg)
     return msg
+
+@delete_bp.route("/loose/<database_name>", methods=["DELETE"])
+@login_required
+def delete_loose_data(database_name):
+    database = lookup_database(database_name)
+    if database.name == "sspi_raw_api_data":
+        query = {"$nor": []}
+        dataset_codes = sspi_metadata.dataset_codes()
+        for dsc in dataset_codes:
+            source_info = sspi_metadata.get_source_info(dsc)
+            query_line = sspi_raw_api_data.build_source_query(source_info)
+            query["$nor"].append(query_line)
+        if len(query["$nor"]) > 0:
+            count = sspi_raw_api_data.delete_many(query)
+            return f"Deleted {count} loose observations from {database.name}"
+        return "No loose observations found in this database"
+    else:
+        return "Not implemented for this database type"
+    count = database.delete_many(MongoQuery)
+    msg = f"Deleted {count} loose observations from database {database.name}"
+    app.logger.info(msg)
+    return msg
+
+@delete_bp.route("/raw/<raw_delete_code>", methods=["DELETE"])
+@login_required
+def delete_raw_data(raw_delete_code):
+    if ":" in raw_delete_code:
+        split_list = raw_delete_code.split(":")
+        organization_code = split_list[0]
+        query_code = split_list[1]
+        query = {
+            "Source.OrganizationCode": organization_code,
+            "Source.QueryCode": query_code
+        }
+        count = sspi_raw_api_data.delete_many(query)
+        msg = f"Deleted {count} raw API data for {query}"
+        return msg
+    elif raw_delete_code in sspi_metadata.dataset_codes():
+        dataset_code = raw_delete_code.upper()
+        source_info = sspi_metadata.get_source_info(dataset_code)
+        query = sspi_raw_api_data.build_source_query(source_info)
+        count = sspi_raw_api_data.delete_many(query)
+        msg = f"Deleted {count} raw API data for {dataset_code}"
+        app.logger.info(msg)
+        return msg
+    else:
+        return (
+            "Invalid raw_delete_code format. Use "
+            "'OrganizationCode:QueryCode' or a valid DatasetCode."
+        )

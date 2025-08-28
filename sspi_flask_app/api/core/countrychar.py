@@ -4,6 +4,16 @@ import pycountry
 from pycountry import countries
 from sspi_flask_app.models.database import sspi_country_characteristics
 
+
+# @collect_bp.route("/characteristic/POPULN", methods=['GET'])
+# @login_required
+# def unpopl():
+#     def collect_iterator(**kwargs):
+#         # insert UN population data into sspi_country_characteristics database
+#         yield from insert_pop_data()
+#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
+
+
 def insert_pop_data():
     pop_data = pd.read_csv("local/UN_population_data.csv").astype(str).drop(columns = "Unnamed: 0")
     country_codes = []
@@ -28,7 +38,7 @@ def insert_pop_data():
     pop_data["pop"] = (pop_data["pop"]).astype(int)
     print(pop_data)
     obs_list = []
-    intermediate_code = "UNPOPL"
+    intermediate_code = "POPULN"
     country_list = pop_data["CountryCode"].unique().tolist()
     count = 0
     for country in country_list:

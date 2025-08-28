@@ -4,7 +4,7 @@ from datetime import timedelta
 import logging
 
 basedir = path.abspath(path.dirname(__file__))
-print("basedir: " + basedir)
+print("App Directory: " + basedir)
 load_dotenv(path.join(basedir, '.env'))
 
 
@@ -29,14 +29,12 @@ class ProdConfig(Config):
     DEBUG = False
     LOG_LEVEL = logging.DEBUG
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
 
 
 class DevConfig(Config):
     DEBUG = True
     LOGIN_DISABLED = True
     LOG_LEVEL = logging.DEBUG
-    SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']
 
 
 class TestConfig(Config):
@@ -45,4 +43,3 @@ class TestConfig(Config):
     TESTING = True
     LOG_LEVEL = logging.DEBUG
     LOGIN_DISABLED = False
-    SQLALCHEMY_DATABASE_URI = environ['SQLALCHEMY_DATABASE_URI']

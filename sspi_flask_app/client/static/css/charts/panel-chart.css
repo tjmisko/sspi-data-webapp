@@ -1,0 +1,196 @@
+/* Breadcrumb navigation styling */
+.panel-chart-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin: 0.5em 0;
+  font-family: var(--header-font-family, 'Helvetica', sans-serif);
+  font-size: 1em;
+  line-height: 1.4;
+}
+
+.breadcrumb-item {
+  color: var(--header-font-color, #1f2937);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.breadcrumb-item:hover {
+  color: var(--green-accent, #8BA342);
+  text-decoration: underline;
+  transform: scale(1.02);
+}
+
+.breadcrumb-separator {
+  color: var(--low-importance-font-color, #6b7280);
+  font-size: 0.9em;
+  user-select: none;
+  margin: 0 0.1em;
+}
+
+.breadcrumb-current {
+  color: var(--header-font-color, #1f2937);
+  font-weight: normal;
+  font-size: 1.1em;
+}
+
+/* Tooltip styling for breadcrumb items */
+.breadcrumb-item {
+  position: relative;
+}
+
+/* Enhanced tooltip appearance - native browser tooltips are styled by the browser */
+/* This ensures consistent behavior across browsers */
+.breadcrumb-item[title]:hover {
+  cursor: pointer;
+}
+
+/* Children section styling */
+.item-children-section {
+  margin-top: 0.3em;
+}
+
+.item-children-section h4 {
+  margin: 0.2rem 0 0.1rem 0;
+  font-weight: bold;
+  font-size: 0.9em;
+  font-family: inherit;
+  padding: 0;
+  color: var(--header-text-color, #1f2937);
+  line-height: 1.25;
+}
+
+.children-list {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.9em;
+  line-height: 1.25;
+}
+
+.children-list li {
+  margin-bottom: 0.05em;
+}
+
+.child-link {
+  color: var(--header-font-color, #1f2937);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.child-link:hover {
+  color: var(--green-accent, #8BA342);
+  text-decoration: underline;
+}
+
+/* Info icon styling */
+.children-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.children-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  background-color: var(--low-importance-font-color, #6b7280);
+  color: white;
+  font-size: 0.7em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.children-info-icon:hover {
+  background-color: var(--green-accent, #8BA342);
+}
+
+/* Remove border-radius from item dropdown specifically */
+.item-dropdown {
+  border-radius: 0;
+}
+
+/* Responsive breadcrumb */
+@media (max-width: 768px) {
+  .panel-chart-breadcrumb {
+    font-size: 0.9em;
+    gap: 0.3em;
+  }
+  
+  .breadcrumb-current {
+    font-size: 1em;
+  }
+  
+  .breadcrumb-separator {
+    margin: 0 0.05em;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-chart-breadcrumb {
+    font-size: 0.8em;
+  }
+  
+  .breadcrumb-item, .breadcrumb-current {
+    word-break: break-word;
+  }
+}
+
+/* Download form styling */
+.panel-download-form fieldset {
+  border: 1px solid var(--subtle-line-color, #ccc);
+  border-radius: 4px;
+  padding: 0.5em;
+  margin: 0.3em 0;
+}
+
+.panel-download-form legend {
+  font-weight: bold;
+  font-size: 0.9em;
+  padding: 0 0.3em;
+}
+
+/* Data scope options - each on separate line with tighter spacing */
+.download-scope-option {
+  display: block;
+  padding: 0.15em 0;
+  cursor: pointer;
+}
+
+/* File format options - side by side */
+.download-format-option {
+  display: inline-block;
+  margin-right: 1em;
+  padding: 0.2em 0;
+  cursor: pointer;
+}
+
+.panel-download-form label:hover {
+  color: var(--green-accent, #8BA342);
+}
+
+.panel-download-form input[type="radio"] {
+  margin-right: 0.5em;
+  cursor: pointer;
+}
+
+.download-submit-button {
+  margin-top: 0.5em;
+  padding: 0.5em 1em;
+  background-color: var(--green-accent, #8BA342);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.download-submit-button:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}

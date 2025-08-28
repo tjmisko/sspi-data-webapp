@@ -1,0 +1,3056 @@
+[
+  {
+    "Country": "Syria Old",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#007A3D",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Ethiopia",
+    "CountryCode": "ETH",
+    "OfficialName": "Federal Democratic Republic of Ethiopia",
+    "CommonName": "",
+    "M49": "231",
+    "Alpha2": "ET",
+    "Flag": "🇪🇹",
+    "FlagColors": [
+      "#078930",
+      "#FDE642",
+      "#DA121A"
+    ]
+  },
+  {
+    "Country": "East Timor",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#000000",
+      "#FFFFFF",
+      "#FFC72C",
+      "#DA291C"
+    ]
+  },
+  {
+    "Country": "Paraguay",
+    "CountryCode": "PRY",
+    "OfficialName": "Republic of Paraguay",
+    "CommonName": "",
+    "M49": "600",
+    "Alpha2": "PY",
+    "Flag": "🇵🇾",
+    "FlagColors": [
+      "#D52B1E",
+      "#FFFFFF",
+      "#0038A8",
+      "#000000",
+      "#EAC102",
+      "#784421"
+    ]
+  },
+  {
+    "Country": "Northern Ireland Flag (Ulster Banner)",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#D10000",
+      "#B4171A",
+      "#FFFFFF",
+      "#FFC722",
+      "#046547",
+      "#083484",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "United Kingdom",
+    "CountryCode": "GBR",
+    "OfficialName": "United Kingdom of Great Britain and Northern Ireland",
+    "CommonName": "",
+    "M49": "826",
+    "Alpha2": "GB",
+    "Flag": "🇬🇧",
+    "FlagColors": [
+      "#012169",
+      "#FFFFFF",
+      "#C8102E"
+    ]
+  },
+  {
+    "Country": "Holy See (Vatican City State)",
+    "CountryCode": "VAT",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "336",
+    "Alpha2": "VA",
+    "Flag": "🇻🇦",
+    "FlagColors": [
+      "#FFF200",
+      "#FFCC20",
+      "#FFFFFF",
+      "#BDBEC0",
+      "#515356",
+      "#A88D37",
+      "#C9252C"
+    ]
+  },
+  {
+    "Country": "England",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#CE1124",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Niue",
+    "CountryCode": "NIU",
+    "OfficialName": "Niue",
+    "CommonName": "",
+    "M49": "570",
+    "Alpha2": "NU",
+    "Flag": "🇳🇺",
+    "FlagColors": [
+      "#FEDD00",
+      "#012169",
+      "#FFFFFF",
+      "#C8102E"
+    ]
+  },
+  {
+    "Country": "United Kingdom",
+    "CountryCode": "GBR",
+    "OfficialName": "United Kingdom of Great Britain and Northern Ireland",
+    "CommonName": "",
+    "M49": "826",
+    "Alpha2": "GB",
+    "Flag": "🇬🇧",
+    "FlagColors": [
+      "#FFFFFF",
+      "#C8102E",
+      "#012169"
+    ]
+  },
+  {
+    "Country": "Vanuatu",
+    "CountryCode": "VUT",
+    "OfficialName": "Republic of Vanuatu",
+    "CommonName": "",
+    "M49": "548",
+    "Alpha2": "VU",
+    "Flag": "🇻🇺",
+    "FlagColors": [
+      "#C0102E",
+      "#000000",
+      "#FFCD00",
+      "#009A44"
+    ]
+  },
+  {
+    "Country": "United Kingdom",
+    "CountryCode": "GBR",
+    "OfficialName": "United Kingdom of Great Britain and Northern Ireland",
+    "CommonName": "",
+    "M49": "826",
+    "Alpha2": "GB",
+    "Flag": "🇬🇧",
+    "FlagColors": [
+      "#FFFFFF",
+      "#C8102E",
+      "#012169"
+    ]
+  },
+  {
+    "Country": "Sahrawi Arab Democratic Republic",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#C4111B",
+      "#000000",
+      "#FFFFFF",
+      "#007A3D"
+    ]
+  },
+  {
+    "Country": "Netherlands",
+    "CountryCode": "NLD",
+    "OfficialName": "Kingdom of the Netherlands",
+    "CommonName": "",
+    "M49": "528",
+    "Alpha2": "NL",
+    "Flag": "🇳🇱",
+    "FlagColors": [
+      "#002B7F",
+      "#FFFFFF",
+      "#F9E814"
+    ]
+  },
+  {
+    "Country": "Turkmenistan",
+    "CountryCode": "TKM",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "795",
+    "Alpha2": "TM",
+    "Flag": "🇹🇲",
+    "FlagColors": [
+      "#E03C31",
+      "#009739",
+      "#FFFFFF",
+      "#FFC72C"
+    ]
+  },
+  {
+    "Country": "Tonga",
+    "CountryCode": "TON",
+    "OfficialName": "Kingdom of Tonga",
+    "CommonName": "",
+    "M49": "776",
+    "Alpha2": "TO",
+    "Flag": "🇹🇴",
+    "FlagColors": [
+      "#C10000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Central African Republic",
+    "CountryCode": "CAF",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "140",
+    "Alpha2": "CF",
+    "Flag": "🇨🇫",
+    "FlagColors": [
+      "#003082",
+      "#FFFFFF",
+      "#289728",
+      "#FFCE00",
+      "#D21034"
+    ]
+  },
+  {
+    "Country": "Togo",
+    "CountryCode": "TGO",
+    "OfficialName": "Togolese Republic",
+    "CommonName": "",
+    "M49": "768",
+    "Alpha2": "TG",
+    "Flag": "🇹🇬",
+    "FlagColors": [
+      "#D21034",
+      "#FFFFFF",
+      "#006A4A",
+      "#FFCE00"
+    ]
+  },
+  {
+    "Country": "Tuvalu",
+    "CountryCode": "TUV",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "798",
+    "Alpha2": "TV",
+    "Flag": "🇹🇻",
+    "FlagColors": [
+      "#012169",
+      "#418FDE",
+      "#FFFFFF",
+      "#C8102E",
+      "#FFCD00"
+    ]
+  },
+  {
+    "Country": "Solomon Islands",
+    "CountryCode": "SLB",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "090",
+    "Alpha2": "SB",
+    "Flag": "🇸🇧",
+    "FlagColors": [
+      "#0051BA",
+      "#FFFFFF",
+      "#FCD116",
+      "#215B33"
+    ]
+  },
+  {
+    "Country": "Tajikistan",
+    "CountryCode": "TJK",
+    "OfficialName": "Republic of Tajikistan",
+    "CommonName": "",
+    "M49": "762",
+    "Alpha2": "TJ",
+    "Flag": "🇹🇯",
+    "FlagColors": [
+      "#CC0000",
+      "#FFFFFF",
+      "#006600",
+      "#F8C300"
+    ]
+  },
+  {
+    "Country": "Saint Vincent and the Grenadines",
+    "CountryCode": "VCT",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "670",
+    "Alpha2": "VC",
+    "Flag": "🇻🇨",
+    "FlagColors": [
+      "#002674",
+      "#FCD022",
+      "#007C2E"
+    ]
+  },
+  {
+    "Country": "Zimbabwe",
+    "CountryCode": "ZWE",
+    "OfficialName": "Republic of Zimbabwe",
+    "CommonName": "",
+    "M49": "716",
+    "Alpha2": "ZW",
+    "Flag": "🇿🇼",
+    "FlagColors": [
+      "#009739",
+      "#FCE300",
+      "#000000",
+      "#FFFFFF",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Cook Islands",
+    "CountryCode": "COK",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "184",
+    "Alpha2": "CK",
+    "Flag": "🇨🇰",
+    "FlagColors": [
+      "#00205B",
+      "#FFFFFF",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Comoros",
+    "CountryCode": "COM",
+    "OfficialName": "Union of the Comoros",
+    "CommonName": "",
+    "M49": "174",
+    "Alpha2": "KM",
+    "Flag": "🇰🇲",
+    "FlagColors": [
+      "#FFD100",
+      "#FFFFFF",
+      "#EF3340",
+      "#003DA5",
+      "#009739"
+    ]
+  },
+  {
+    "Country": "Suriname",
+    "CountryCode": "SUR",
+    "OfficialName": "Republic of Suriname",
+    "CommonName": "",
+    "M49": "740",
+    "Alpha2": "SR",
+    "Flag": "🇸🇷",
+    "FlagColors": [
+      "#007A33",
+      "#FFFFFF",
+      "#C8102E",
+      "#FFCD00"
+    ]
+  },
+  {
+    "Country": "Cape Verde",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#003DA5",
+      "#FFFFFF",
+      "#EF3340",
+      "#FFD100"
+    ]
+  },
+  {
+    "Country": "Trinidad and Tobago",
+    "CountryCode": "TTO",
+    "OfficialName": "Republic of Trinidad and Tobago",
+    "CommonName": "",
+    "M49": "780",
+    "Alpha2": "TT",
+    "Flag": "🇹🇹",
+    "FlagColors": [
+      "#C8102E",
+      "#000000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Sierra Leone",
+    "CountryCode": "SLE",
+    "OfficialName": "Republic of Sierra Leone",
+    "CommonName": "",
+    "M49": "694",
+    "Alpha2": "SL",
+    "Flag": "🇸🇱",
+    "FlagColors": [
+      "#1EB53A",
+      "#FFFFFF",
+      "#0072C6"
+    ]
+  },
+  {
+    "Country": "Equatorial Guinea",
+    "CountryCode": "GNQ",
+    "OfficialName": "Republic of Equatorial Guinea",
+    "CommonName": "",
+    "M49": "226",
+    "Alpha2": "GQ",
+    "Flag": "🇬🇶",
+    "FlagColors": [
+      "#3E9A00",
+      "#0073CE",
+      "#FFFFFF",
+      "#E32118"
+    ]
+  },
+  {
+    "Country": "Burkina Faso",
+    "CountryCode": "BFA",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "854",
+    "Alpha2": "BF",
+    "Flag": "🇧🇫",
+    "FlagColors": [
+      "#EF3340",
+      "#FFCD00",
+      "#009739"
+    ]
+  },
+  {
+    "Country": "Brunei Darussalam",
+    "CountryCode": "BRN",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "096",
+    "Alpha2": "BN",
+    "Flag": "🇧🇳",
+    "FlagColors": [
+      "#FCE300",
+      "#FFFFFF",
+      "#000000",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "San Marino",
+    "CountryCode": "SMR",
+    "OfficialName": "Republic of San Marino",
+    "CommonName": "",
+    "M49": "674",
+    "Alpha2": "SM",
+    "Flag": "🇸🇲",
+    "FlagColors": [
+      "#FFFFFF",
+      "#62B5E5"
+    ]
+  },
+  {
+    "Country": "Bosnia and Herzegovina",
+    "CountryCode": "BIH",
+    "OfficialName": "Republic of Bosnia and Herzegovina",
+    "CommonName": "",
+    "M49": "070",
+    "Alpha2": "BA",
+    "Flag": "🇧🇦",
+    "FlagColors": [
+      "#002F6C",
+      "#FFFFFF",
+      "#FFCD00"
+    ]
+  },
+  {
+    "Country": "Dominica",
+    "CountryCode": "DMA",
+    "OfficialName": "Commonwealth of Dominica",
+    "CommonName": "",
+    "M49": "212",
+    "Alpha2": "DM",
+    "Flag": "🇩🇲",
+    "FlagColors": [
+      "#009A44",
+      "#FFCD00",
+      "#000000",
+      "#FFFFFF",
+      "#E4002B",
+      "#981E97"
+    ]
+  },
+  {
+    "Country": "Timor-Leste",
+    "CountryCode": "TLS",
+    "OfficialName": "Democratic Republic of Timor-Leste",
+    "CommonName": "",
+    "M49": "626",
+    "Alpha2": "TL",
+    "Flag": "🇹🇱",
+    "FlagColors": [
+      "#DA291C",
+      "#FFFFFF",
+      "#000000",
+      "#FFC72C"
+    ]
+  },
+  {
+    "Country": "Democratic Republic of the Congo",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#0085CA",
+      "#FFD100",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Sao Tome and Principe",
+    "CountryCode": "STP",
+    "OfficialName": "Democratic Republic of Sao Tome and Principe",
+    "CommonName": "",
+    "M49": "678",
+    "Alpha2": "ST",
+    "Flag": "🇸🇹",
+    "FlagColors": [
+      "#009739",
+      "#FFD100",
+      "#000000",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Saint Kitts and Nevis",
+    "CountryCode": "KNA",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "659",
+    "Alpha2": "KN",
+    "Flag": "🇰🇳",
+    "FlagColors": [
+      "#009739",
+      "#FFD100",
+      "#000000",
+      "#FFFFFF",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Papua New Guinea",
+    "CountryCode": "PNG",
+    "OfficialName": "Independent State of Papua New Guinea",
+    "CommonName": "",
+    "M49": "598",
+    "Alpha2": "PG",
+    "Flag": "🇵🇬",
+    "FlagColors": [
+      "#C8102E",
+      "#000000",
+      "#FFFFFF",
+      "#FFCD00"
+    ]
+  },
+  {
+    "Country": "Mozambique",
+    "CountryCode": "MOZ",
+    "OfficialName": "Republic of Mozambique",
+    "CommonName": "",
+    "M49": "508",
+    "Alpha2": "MZ",
+    "Flag": "🇲🇿",
+    "FlagColors": [
+      "#009739",
+      "#FFFFFF",
+      "#000000",
+      "#FFD100",
+      "#E4002B"
+    ]
+  },
+  {
+    "Country": "Palau",
+    "CountryCode": "PLW",
+    "OfficialName": "Republic of Palau",
+    "CommonName": "",
+    "M49": "585",
+    "Alpha2": "PW",
+    "Flag": "🇵🇼",
+    "FlagColors": [
+      "#0085CA",
+      "#FFD100"
+    ]
+  },
+  {
+    "Country": "Saint Lucia",
+    "CountryCode": "LCA",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "662",
+    "Alpha2": "LC",
+    "Flag": "🇱🇨",
+    "FlagColors": [
+      "#0077C8",
+      "#FFFFFF",
+      "#000000",
+      "#FFD100"
+    ]
+  },
+  {
+    "Country": "Micronesia, Federated States of",
+    "CountryCode": "FSM",
+    "OfficialName": "Federated States of Micronesia",
+    "CommonName": "",
+    "M49": "583",
+    "Alpha2": "FM",
+    "Flag": "🇫🇲",
+    "FlagColors": [
+      "#ABCAE9",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Maldives",
+    "CountryCode": "MDV",
+    "OfficialName": "Republic of Maldives",
+    "CommonName": "",
+    "M49": "462",
+    "Alpha2": "MV",
+    "Flag": "🇲🇻",
+    "FlagColors": [
+      "#C8102E",
+      "#00843D",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Nauru",
+    "CountryCode": "NRU",
+    "OfficialName": "Republic of Nauru",
+    "CommonName": "",
+    "M49": "520",
+    "Alpha2": "NR",
+    "Flag": "🇳🇷",
+    "FlagColors": [
+      "#012169",
+      "#FFC72C",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Liechtenstein",
+    "CountryCode": "LIE",
+    "OfficialName": "Principality of Liechtenstein",
+    "CommonName": "",
+    "M49": "438",
+    "Alpha2": "LI",
+    "Flag": "🇱🇮",
+    "FlagColors": [
+      "#000000",
+      "#003DA5",
+      "#E4002B",
+      "#FFD100"
+    ]
+  },
+  {
+    "Country": "Marshall Islands",
+    "CountryCode": "MHL",
+    "OfficialName": "Republic of the Marshall Islands",
+    "CommonName": "",
+    "M49": "584",
+    "Alpha2": "MH",
+    "Flag": "🇲🇭",
+    "FlagColors": [
+      "#003087",
+      "#FFFFFF",
+      "#E57200"
+    ]
+  },
+  {
+    "Country": "Lesotho",
+    "CountryCode": "LSO",
+    "OfficialName": "Kingdom of Lesotho",
+    "CommonName": "",
+    "M49": "426",
+    "Alpha2": "LS",
+    "Flag": "🇱🇸",
+    "FlagColors": [
+      "#001489",
+      "#FFFFFF",
+      "#000000",
+      "#009A44"
+    ]
+  },
+  {
+    "Country": "Kyrgyzstan",
+    "CountryCode": "KGZ",
+    "OfficialName": "Kyrgyz Republic",
+    "CommonName": "",
+    "M49": "417",
+    "Alpha2": "KG",
+    "Flag": "🇰🇬",
+    "FlagColors": [
+      "#FF0000",
+      "#FFFF00"
+    ]
+  },
+  {
+    "Country": "South Sudan",
+    "CountryCode": "SSD",
+    "OfficialName": "Republic of South Sudan",
+    "CommonName": "",
+    "M49": "728",
+    "Alpha2": "SS",
+    "Flag": "🇸🇸",
+    "FlagColors": [
+      "#0F47FF",
+      "#FCDD09",
+      "#000000",
+      "#FFFFFF",
+      "#DA121A",
+      "#078930"
+    ]
+  },
+  {
+    "Country": "Kiribati",
+    "CountryCode": "KIR",
+    "OfficialName": "Republic of Kiribati",
+    "CommonName": "",
+    "M49": "296",
+    "Alpha2": "KI",
+    "Flag": "🇰🇮",
+    "FlagColors": [
+      "#EF3340",
+      "#FFD100",
+      "#FFFFFF",
+      "#0032A0"
+    ]
+  },
+  {
+    "Country": "Swaziland (Eswatini)",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#000000",
+      "#333333",
+      "#3E5EB9",
+      "#FFFFFF",
+      "#FFD900",
+      "#B10C0C"
+    ]
+  },
+  {
+    "Country": "French Polynesia",
+    "CountryCode": "PYF",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "258",
+    "Alpha2": "PF",
+    "Flag": "🇵🇫",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#FF9C10",
+      "#083D9C"
+    ]
+  },
+  {
+    "Country": "Zambia",
+    "CountryCode": "ZMB",
+    "OfficialName": "Republic of Zambia",
+    "CommonName": "",
+    "M49": "894",
+    "Alpha2": "ZM",
+    "Flag": "🇿🇲",
+    "FlagColors": [
+      "#198A00",
+      "#DE2010",
+      "#000000",
+      "#EF7D00"
+    ]
+  },
+  {
+    "Country": "Guyana",
+    "CountryCode": "GUY",
+    "OfficialName": "Republic of Guyana",
+    "CommonName": "",
+    "M49": "328",
+    "Alpha2": "GY",
+    "Flag": "🇬🇾",
+    "FlagColors": [
+      "#EF3340",
+      "#000000",
+      "#FFD100",
+      "#FFFFFF",
+      "#009739"
+    ]
+  },
+  {
+    "Country": "Uzbekistan",
+    "CountryCode": "UZB",
+    "OfficialName": "Republic of Uzbekistan",
+    "CommonName": "",
+    "M49": "860",
+    "Alpha2": "UZ",
+    "Flag": "🇺🇿",
+    "FlagColors": [
+      "#0072CE",
+      "#DA291C",
+      "#FFFFFF",
+      "#43B02A"
+    ]
+  },
+  {
+    "Country": "Guinea-Bissau",
+    "CountryCode": "GNB",
+    "OfficialName": "Republic of Guinea-Bissau",
+    "CommonName": "",
+    "M49": "624",
+    "Alpha2": "GW",
+    "Flag": "🇬🇼",
+    "FlagColors": [
+      "#EF3340",
+      "#FFD100",
+      "#009739",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Djibouti",
+    "CountryCode": "DJI",
+    "OfficialName": "Republic of Djibouti",
+    "CommonName": "",
+    "M49": "262",
+    "Alpha2": "DJ",
+    "Flag": "🇩🇯",
+    "FlagColors": [
+      "#6AB2E7",
+      "#FFFFFF",
+      "#D7141A",
+      "#12AD2B"
+    ]
+  },
+  {
+    "Country": "Grenada",
+    "CountryCode": "GRD",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "308",
+    "Alpha2": "GD",
+    "Flag": "🇬🇩",
+    "FlagColors": [
+      "#EF3340",
+      "#FFD100",
+      "#009739"
+    ]
+  },
+  {
+    "Country": "Eritrea",
+    "CountryCode": "ERI",
+    "OfficialName": "the State of Eritrea",
+    "CommonName": "",
+    "M49": "232",
+    "Alpha2": "ER",
+    "Flag": "🇪🇷",
+    "FlagColors": [
+      "#43B02A",
+      "#E4002B",
+      "#418FDE",
+      "#FFC72C"
+    ]
+  },
+  {
+    "Country": "Burundi",
+    "CountryCode": "BDI",
+    "OfficialName": "Republic of Burundi",
+    "CommonName": "",
+    "M49": "108",
+    "Alpha2": "BI",
+    "Flag": "🇧🇮",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#1EB53A"
+    ]
+  },
+  {
+    "Country": "Rwanda",
+    "CountryCode": "RWA",
+    "OfficialName": "Rwandese Republic",
+    "CommonName": "",
+    "M49": "646",
+    "Alpha2": "RW",
+    "Flag": "🇷🇼",
+    "FlagColors": [
+      "#00A1DE",
+      "#E5BE01",
+      "#FAD201",
+      "#20603D"
+    ]
+  },
+  {
+    "Country": "Seychelles",
+    "CountryCode": "SYC",
+    "OfficialName": "Republic of Seychelles",
+    "CommonName": "",
+    "M49": "690",
+    "Alpha2": "SC",
+    "Flag": "🇸🇨",
+    "FlagColors": [
+      "#002F6C",
+      "#FED141",
+      "#D22730",
+      "#FFFFFF",
+      "#007A33"
+    ]
+  },
+  {
+    "Country": "Yemen",
+    "CountryCode": "YEM",
+    "OfficialName": "Republic of Yemen",
+    "CommonName": "",
+    "M49": "887",
+    "Alpha2": "YE",
+    "Flag": "🇾🇪",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Malawi",
+    "CountryCode": "MWI",
+    "OfficialName": "Republic of Malawi",
+    "CommonName": "",
+    "M49": "454",
+    "Alpha2": "MW",
+    "Flag": "🇲🇼",
+    "FlagColors": [
+      "#000000",
+      "#C8102E",
+      "#007A33"
+    ]
+  },
+  {
+    "Country": "Gambia",
+    "CountryCode": "GMB",
+    "OfficialName": "Republic of the Gambia",
+    "CommonName": "",
+    "M49": "270",
+    "Alpha2": "GM",
+    "Flag": "🇬🇲",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#0C1C8C",
+      "#3A7728"
+    ]
+  },
+  {
+    "Country": "Samoa",
+    "CountryCode": "WSM",
+    "OfficialName": "Independent State of Samoa",
+    "CommonName": "",
+    "M49": "882",
+    "Alpha2": "WS",
+    "Flag": "🇼🇸",
+    "FlagColors": [
+      "#002B7F",
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  },
+  {
+    "Country": "Bhutan",
+    "CountryCode": "BTN",
+    "OfficialName": "Kingdom of Bhutan",
+    "CommonName": "",
+    "M49": "064",
+    "Alpha2": "BT",
+    "Flag": "🇧🇹",
+    "FlagColors": [
+      "#FFCD00",
+      "#FF6720",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Moldova, Republic of",
+    "CountryCode": "MDA",
+    "OfficialName": "Republic of Moldova",
+    "CommonName": "Moldova",
+    "M49": "498",
+    "Alpha2": "MD",
+    "Flag": "🇲🇩",
+    "FlagColors": [
+      "#003DA5",
+      "#FFD100",
+      "#C8102E",
+      "#AD7C59",
+      "#007749",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Syrian Arab Republic",
+    "CountryCode": "SYR",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "760",
+    "Alpha2": "SY",
+    "Flag": "🇸🇾",
+    "FlagColors": [
+      "#007A3D",
+      "#FFFFFF",
+      "#CE1126",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Bahrain",
+    "CountryCode": "BHR",
+    "OfficialName": "Kingdom of Bahrain",
+    "CommonName": "",
+    "M49": "048",
+    "Alpha2": "BH",
+    "Flag": "🇧🇭",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Uganda",
+    "CountryCode": "UGA",
+    "OfficialName": "Republic of Uganda",
+    "CommonName": "",
+    "M49": "800",
+    "Alpha2": "UG",
+    "Flag": "🇺🇬",
+    "FlagColors": [
+      "#FCDC04",
+      "#D90000",
+      "#000000",
+      "#9CA69C"
+    ]
+  },
+  {
+    "Country": "North Macedonia",
+    "CountryCode": "MKD",
+    "OfficialName": "Republic of North Macedonia",
+    "CommonName": "",
+    "M49": "807",
+    "Alpha2": "MK",
+    "Flag": "🇲🇰",
+    "FlagColors": [
+      "#D82126",
+      "#F8E92E"
+    ]
+  },
+  {
+    "Country": "Korea, Democratic People's Republic of",
+    "CountryCode": "PRK",
+    "OfficialName": "Democratic People's Republic of Korea",
+    "CommonName": "North Korea",
+    "M49": "408",
+    "Alpha2": "KP",
+    "Flag": "🇰🇵",
+    "FlagColors": [
+      "#024FA2",
+      "#FFFFFF",
+      "#ED1C27"
+    ]
+  },
+  {
+    "Country": "Mauritius",
+    "CountryCode": "MUS",
+    "OfficialName": "Republic of Mauritius",
+    "CommonName": "",
+    "M49": "480",
+    "Alpha2": "MU",
+    "Flag": "🇲🇺",
+    "FlagColors": [
+      "#EA2839",
+      "#1A206D",
+      "#FFD500",
+      "#00A551"
+    ]
+  },
+  {
+    "Country": "Libya",
+    "CountryCode": "LBY",
+    "OfficialName": "Libya",
+    "CommonName": "",
+    "M49": "434",
+    "Alpha2": "LY",
+    "Flag": "🇱🇾",
+    "FlagColors": [
+      "#E70013",
+      "#000000",
+      "#FFFFFF",
+      "#239E46"
+    ]
+  },
+  {
+    "Country": "Cambodia",
+    "CountryCode": "KHM",
+    "OfficialName": "Kingdom of Cambodia",
+    "CommonName": "",
+    "M49": "116",
+    "Alpha2": "KH",
+    "Flag": "🇰🇭",
+    "FlagColors": [
+      "#032EA1",
+      "#E00025",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Botswana",
+    "CountryCode": "BWA",
+    "OfficialName": "Republic of Botswana",
+    "CommonName": "",
+    "M49": "072",
+    "Alpha2": "BW",
+    "Flag": "🇧🇼",
+    "FlagColors": [
+      "#ABCAE9",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Mauritania",
+    "CountryCode": "MRT",
+    "OfficialName": "Islamic Republic of Mauritania",
+    "CommonName": "",
+    "M49": "478",
+    "Alpha2": "MR",
+    "Flag": "🇲🇷",
+    "FlagColors": [
+      "#D01C1F",
+      "#FFD700",
+      "#00A95C"
+    ]
+  },
+  {
+    "Country": "Andorra",
+    "CountryCode": "AND",
+    "OfficialName": "Principality of Andorra",
+    "CommonName": "",
+    "M49": "020",
+    "Alpha2": "AD",
+    "Flag": "🇦🇩",
+    "FlagColors": [
+      "#10069F",
+      "#FEDD00",
+      "#D50032",
+      "#C6AA76"
+    ]
+  },
+  {
+    "Country": "Namibia",
+    "CountryCode": "NAM",
+    "OfficialName": "Republic of Namibia",
+    "CommonName": "",
+    "M49": "516",
+    "Alpha2": "NA",
+    "Flag": "🇳🇦",
+    "FlagColors": [
+      "#001489",
+      "#FFC72C",
+      "#FFFFFF",
+      "#DA291C",
+      "#009A44"
+    ]
+  },
+  {
+    "Country": "Sudan",
+    "CountryCode": "SDN",
+    "OfficialName": "Republic of the Sudan",
+    "CommonName": "",
+    "M49": "729",
+    "Alpha2": "SD",
+    "Flag": "🇸🇩",
+    "FlagColors": [
+      "#D21034",
+      "#FFFFFF",
+      "#000000",
+      "#007229"
+    ]
+  },
+  {
+    "Country": "Fiji",
+    "CountryCode": "FJI",
+    "OfficialName": "Republic of Fiji",
+    "CommonName": "",
+    "M49": "242",
+    "Alpha2": "FJ",
+    "Flag": "🇫🇯",
+    "FlagColors": [
+      "#69B3E7",
+      "#012169",
+      "#FFFFFF",
+      "#C8102E",
+      "#00AD50",
+      "#FEDD00"
+    ]
+  },
+  {
+    "Country": "Gabon",
+    "CountryCode": "GAB",
+    "OfficialName": "Gabonese Republic",
+    "CommonName": "",
+    "M49": "266",
+    "Alpha2": "GA",
+    "Flag": "🇬🇦",
+    "FlagColors": [
+      "#009E60",
+      "#FCD116",
+      "#4664B2"
+    ]
+  },
+  {
+    "Country": "Mongolia",
+    "CountryCode": "MNG",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "496",
+    "Alpha2": "MN",
+    "Flag": "🇲🇳",
+    "FlagColors": [
+      "#DA2032",
+      "#0066B3",
+      "#FFD900"
+    ]
+  },
+  {
+    "Country": "Iraq",
+    "CountryCode": "IRQ",
+    "OfficialName": "Republic of Iraq",
+    "CommonName": "",
+    "M49": "368",
+    "Alpha2": "IQ",
+    "Flag": "🇮🇶",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#000000",
+      "#007A3D"
+    ]
+  },
+  {
+    "Country": "Barbados",
+    "CountryCode": "BRB",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "052",
+    "Alpha2": "BB",
+    "Flag": "🇧🇧",
+    "FlagColors": [
+      "#00267F",
+      "#000000",
+      "#FFC726"
+    ]
+  },
+  {
+    "Country": "Kazakhstan",
+    "CountryCode": "KAZ",
+    "OfficialName": "Republic of Kazakhstan",
+    "CommonName": "",
+    "M49": "398",
+    "Alpha2": "KZ",
+    "Flag": "🇰🇿",
+    "FlagColors": [
+      "#00AFCA",
+      "#FEC50C"
+    ]
+  },
+  {
+    "Country": "Belize",
+    "CountryCode": "BLZ",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "084",
+    "Alpha2": "BZ",
+    "Flag": "🇧🇿",
+    "FlagColors": [
+      "#D90F19",
+      "#171696",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Dominican Republic",
+    "CountryCode": "DOM",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "214",
+    "Alpha2": "DO",
+    "Flag": "🇩🇴",
+    "FlagColors": [
+      "#002D62",
+      "#FFFFFF",
+      "#CE1126",
+      "#000000",
+      "#006300",
+      "#EAC102"
+    ]
+  },
+  {
+    "Country": "Aruba",
+    "CountryCode": "ABW",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "533",
+    "Alpha2": "AW",
+    "Flag": "🇦🇼",
+    "FlagColors": [
+      "#418FDE",
+      "#FBE122",
+      "#FFFFFF",
+      "#C8102E"
+    ]
+  },
+  {
+    "Country": "Guinea",
+    "CountryCode": "GIN",
+    "OfficialName": "Republic of Guinea",
+    "CommonName": "",
+    "M49": "324",
+    "Alpha2": "GN",
+    "Flag": "🇬🇳",
+    "FlagColors": [
+      "#CE1126",
+      "#FCD116",
+      "#009460"
+    ]
+  },
+  {
+    "Country": "Nigeria",
+    "CountryCode": "NGA",
+    "OfficialName": "Federal Republic of Nigeria",
+    "CommonName": "",
+    "M49": "566",
+    "Alpha2": "NG",
+    "Flag": "🇳🇬",
+    "FlagColors": [
+      "#E05206",
+      "#FFFFFF",
+      "#0DB02B"
+    ]
+  },
+  {
+    "Country": "Tunisia",
+    "CountryCode": "TUN",
+    "OfficialName": "Republic of Tunisia",
+    "CommonName": "",
+    "M49": "788",
+    "Alpha2": "TN",
+    "Flag": "🇹🇳",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Liberia",
+    "CountryCode": "LBR",
+    "OfficialName": "Republic of Liberia",
+    "CommonName": "",
+    "M49": "430",
+    "Alpha2": "LR",
+    "Flag": "🇱🇷",
+    "FlagColors": [
+      "#00205B",
+      "#FFFFFF",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Myanmar",
+    "CountryCode": "MMR",
+    "OfficialName": "Republic of Myanmar",
+    "CommonName": "",
+    "M49": "104",
+    "Alpha2": "MM",
+    "Flag": "🇲🇲",
+    "FlagColors": [
+      "#FFCD00",
+      "#FFFFFF",
+      "#43B02A",
+      "#EE2737"
+    ]
+  },
+  {
+    "Country": "Bahamas",
+    "CountryCode": "BHS",
+    "OfficialName": "Commonwealth of the Bahamas",
+    "CommonName": "",
+    "M49": "044",
+    "Alpha2": "BS",
+    "Flag": "🇧🇸",
+    "FlagColors": [
+      "#00A9CE",
+      "#000000",
+      "#FDDA25"
+    ]
+  },
+  {
+    "Country": "Laos",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#002868"
+    ]
+  },
+  {
+    "Country": "Montenegro",
+    "CountryCode": "MNE",
+    "OfficialName": "Montenegro",
+    "CommonName": "",
+    "M49": "499",
+    "Alpha2": "ME",
+    "Flag": "🇲🇪",
+    "FlagColors": [
+      "#C40308",
+      "#D4AF3A",
+      "#1D5E91",
+      "#6D8C3E",
+      "#B96B29"
+    ]
+  },
+  {
+    "Country": "Honduras",
+    "CountryCode": "HND",
+    "OfficialName": "Republic of Honduras",
+    "CommonName": "",
+    "M49": "340",
+    "Alpha2": "HN",
+    "Flag": "🇭🇳",
+    "FlagColors": [
+      "#00bce4",
+      "#ffffff"
+    ]
+  },
+  {
+    "Country": "Azerbaijan",
+    "CountryCode": "AZE",
+    "OfficialName": "Republic of Azerbaijan",
+    "CommonName": "",
+    "M49": "031",
+    "Alpha2": "AZ",
+    "Flag": "🇦🇿",
+    "FlagColors": [
+      "#0092BC",
+      "#E4002B",
+      "#FFFFFF",
+      "#00AF66"
+    ]
+  },
+  {
+    "Country": "Greenland",
+    "CountryCode": "GRL",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "304",
+    "Alpha2": "GL",
+    "Flag": "🇬🇱",
+    "FlagColors": [
+      "#D00C33",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Cameroon",
+    "CountryCode": "CMR",
+    "OfficialName": "Republic of Cameroon",
+    "CommonName": "",
+    "M49": "120",
+    "Alpha2": "CM",
+    "Flag": "🇨🇲",
+    "FlagColors": [
+      "#007A5E",
+      "#CE1126",
+      "#FCD116"
+    ]
+  },
+  {
+    "Country": "Nicaragua",
+    "CountryCode": "NIC",
+    "OfficialName": "Republic of Nicaragua",
+    "CommonName": "",
+    "M49": "558",
+    "Alpha2": "NI",
+    "Flag": "🇳🇮",
+    "FlagColors": [
+      "#0067c6",
+      "#FFFFFF",
+      "#C8A400",
+      "#6FD8F3",
+      "#EDE71F",
+      "#97C924"
+    ]
+  },
+  {
+    "Country": "Haiti",
+    "CountryCode": "HTI",
+    "OfficialName": "Republic of Haiti",
+    "CommonName": "",
+    "M49": "332",
+    "Alpha2": "HT",
+    "Flag": "🇭🇹",
+    "FlagColors": [
+      "#00209F",
+      "#D21034",
+      "#FFFFFF",
+      "#016A16",
+      "#F1B517"
+    ]
+  },
+  {
+    "Country": "Ivory Coast",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#FF8200",
+      "#FFFFFF",
+      "#009A44"
+    ]
+  },
+  {
+    "Country": "El Salvador",
+    "CountryCode": "SLV",
+    "OfficialName": "Republic of El Salvador",
+    "CommonName": "",
+    "M49": "222",
+    "Alpha2": "SV",
+    "Flag": "🇸🇻",
+    "FlagColors": [
+      "#0047AB",
+      "#FFFFFF",
+      "#FCE300",
+      "#000000",
+      "#E60000",
+      "#009900"
+    ]
+  },
+  {
+    "Country": "Tanzania, United Republic of",
+    "CountryCode": "TZA",
+    "OfficialName": "United Republic of Tanzania",
+    "CommonName": "Tanzania",
+    "M49": "834",
+    "Alpha2": "TZ",
+    "Flag": "🇹🇿",
+    "FlagColors": [
+      "#1EB53A",
+      "#FCD116",
+      "#000000",
+      "#00A3DD"
+    ]
+  },
+  {
+    "Country": "Madagascar",
+    "CountryCode": "MDG",
+    "OfficialName": "Republic of Madagascar",
+    "CommonName": "",
+    "M49": "450",
+    "Alpha2": "MG",
+    "Flag": "🇲🇬",
+    "FlagColors": [
+      "#F9423A",
+      "#FFFFFF",
+      "#00843D"
+    ]
+  },
+  {
+    "Country": "Senegal",
+    "CountryCode": "SEN",
+    "OfficialName": "Republic of Senegal",
+    "CommonName": "",
+    "M49": "686",
+    "Alpha2": "SN",
+    "Flag": "🇸🇳",
+    "FlagColors": [
+      "#00853F",
+      "#FDEF42",
+      "#E31B23"
+    ]
+  },
+  {
+    "Country": "Sri Lanka",
+    "CountryCode": "LKA",
+    "OfficialName": "Democratic Socialist Republic of Sri Lanka",
+    "CommonName": "",
+    "M49": "144",
+    "Alpha2": "LK",
+    "Flag": "🇱🇰",
+    "FlagColors": [
+      "#FFBE29",
+      "#EB7400",
+      "#00534E",
+      "#8D153A",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Panama",
+    "CountryCode": "PAN",
+    "OfficialName": "Republic of Panama",
+    "CommonName": "",
+    "M49": "591",
+    "Alpha2": "PA",
+    "Flag": "🇵🇦",
+    "FlagColors": [
+      "#DA121A",
+      "#FFFFFF",
+      "#072357"
+    ]
+  },
+  {
+    "Country": "Paraguay",
+    "CountryCode": "PRY",
+    "OfficialName": "Republic of Paraguay",
+    "CommonName": "",
+    "M49": "600",
+    "Alpha2": "PY",
+    "Flag": "🇵🇾",
+    "FlagColors": [
+      "#D52B1E",
+      "#FFFFFF",
+      "#0038A8",
+      "#FEDF00",
+      "#000000",
+      "#009B3A"
+    ]
+  },
+  {
+    "Country": "Mali",
+    "CountryCode": "MLI",
+    "OfficialName": "Republic of Mali",
+    "CommonName": "",
+    "M49": "466",
+    "Alpha2": "ML",
+    "Flag": "🇲🇱",
+    "FlagColors": [
+      "#14B53A",
+      "#FCD116",
+      "#CE1126"
+    ]
+  },
+  {
+    "Country": "Nepal",
+    "CountryCode": "NPL",
+    "OfficialName": "Federal Democratic Republic of Nepal",
+    "CommonName": "",
+    "M49": "524",
+    "Alpha2": "NP",
+    "Flag": "🇳🇵",
+    "FlagColors": [
+      "#FFFFFF",
+      "#003893",
+      "#DC143C"
+    ]
+  },
+  {
+    "Country": "Lebanon",
+    "CountryCode": "LBN",
+    "OfficialName": "Lebanese Republic",
+    "CommonName": "",
+    "M49": "422",
+    "Alpha2": "LB",
+    "Flag": "🇱🇧",
+    "FlagColors": [
+      "#D81C22",
+      "#FFFFFF",
+      "#019E3F"
+    ]
+  },
+  {
+    "Country": "Chad",
+    "CountryCode": "TCD",
+    "OfficialName": "Republic of Chad",
+    "CommonName": "",
+    "M49": "148",
+    "Alpha2": "TD",
+    "Flag": "🇹🇩",
+    "FlagColors": [
+      "#002664",
+      "#FECB00",
+      "#C60C30"
+    ]
+  },
+  {
+    "Country": "Slovakia",
+    "CountryCode": "SVK",
+    "OfficialName": "Slovak Republic",
+    "CommonName": "",
+    "M49": "703",
+    "Alpha2": "SK",
+    "Flag": "🇸🇰",
+    "FlagColors": [
+      "#FFFFFF",
+      "#0B4EA2",
+      "#EE1C25"
+    ]
+  },
+  {
+    "Country": "Jordan",
+    "CountryCode": "JOR",
+    "OfficialName": "Hashemite Kingdom of Jordan",
+    "CommonName": "",
+    "M49": "400",
+    "Alpha2": "JO",
+    "Flag": "🇯🇴",
+    "FlagColors": [
+      "#CE1126",
+      "#000000",
+      "#FFFFFF",
+      "#007A3D"
+    ]
+  },
+  {
+    "Country": "Armenia",
+    "CountryCode": "ARM",
+    "OfficialName": "Republic of Armenia",
+    "CommonName": "",
+    "M49": "051",
+    "Alpha2": "AM",
+    "Flag": "🇦🇲",
+    "FlagColors": [
+      "#D90012",
+      "#001489",
+      "#FF9E1B"
+    ]
+  },
+  {
+    "Country": "Monaco",
+    "CountryCode": "MCO",
+    "OfficialName": "Principality of Monaco",
+    "CommonName": "",
+    "M49": "492",
+    "Alpha2": "MC",
+    "Flag": "🇲🇨",
+    "FlagColors": [
+      "#CE1126",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Albania",
+    "CountryCode": "ALB",
+    "OfficialName": "Republic of Albania",
+    "CommonName": "",
+    "M49": "008",
+    "Alpha2": "AL",
+    "Flag": "🇦🇱",
+    "FlagColors": [
+      "#DA291C",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Slovenia",
+    "CountryCode": "SVN",
+    "OfficialName": "Republic of Slovenia",
+    "CommonName": "",
+    "M49": "705",
+    "Alpha2": "SI",
+    "Flag": "🇸🇮",
+    "FlagColors": [
+      "#FFFFFF",
+      "#003DA5",
+      "#FF0000",
+      "#FFCD00"
+    ]
+  },
+  {
+    "Country": "Angola",
+    "CountryCode": "AGO",
+    "OfficialName": "Republic of Angola",
+    "CommonName": "",
+    "M49": "024",
+    "Alpha2": "AO",
+    "Flag": "🇦🇴",
+    "FlagColors": [
+      "#CC092F",
+      "#000000",
+      "#FFCB00"
+    ]
+  },
+  {
+    "Country": "Qatar",
+    "CountryCode": "QAT",
+    "OfficialName": "State of Qatar",
+    "CommonName": "",
+    "M49": "634",
+    "Alpha2": "QA",
+    "Flag": "🇶🇦",
+    "FlagColors": [
+      "#8A1538",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Malta",
+    "CountryCode": "MLT",
+    "OfficialName": "Republic of Malta",
+    "CommonName": "",
+    "M49": "470",
+    "Alpha2": "MT",
+    "Flag": "🇲🇹",
+    "FlagColors": [
+      "#CF142B",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Luxembourg",
+    "CountryCode": "LUX",
+    "OfficialName": "Grand Duchy of Luxembourg",
+    "CommonName": "",
+    "M49": "442",
+    "Alpha2": "LU",
+    "Flag": "🇱🇺",
+    "FlagColors": [
+      "#EA141D",
+      "#FFFFFF",
+      "#51ADDA"
+    ]
+  },
+  {
+    "Country": "Kuwait",
+    "CountryCode": "KWT",
+    "OfficialName": "State of Kuwait",
+    "CommonName": "",
+    "M49": "414",
+    "Alpha2": "KW",
+    "Flag": "🇰🇼",
+    "FlagColors": [
+      "#007A3D",
+      "#FFFFFF",
+      "#CE1126",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Uruguay",
+    "CountryCode": "URY",
+    "OfficialName": "Eastern Republic of Uruguay",
+    "CommonName": "",
+    "M49": "858",
+    "Alpha2": "UY",
+    "Flag": "🇺🇾",
+    "FlagColors": [
+      "#001489",
+      "#FFFFFF",
+      "#FFCD00",
+      "#7B3F00"
+    ]
+  },
+  {
+    "Country": "Taiwan, Province of China",
+    "CountryCode": "TWN",
+    "OfficialName": "Taiwan, Province of China",
+    "CommonName": "Taiwan",
+    "M49": "158",
+    "Alpha2": "TW",
+    "Flag": "🇹🇼",
+    "FlagColors": [
+      "#FE0000",
+      "#000095",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Benin",
+    "CountryCode": "BEN",
+    "OfficialName": "Republic of Benin",
+    "CommonName": "",
+    "M49": "204",
+    "Alpha2": "BJ",
+    "Flag": "🇧🇯",
+    "FlagColors": [
+      "#008751",
+      "#FCD116",
+      "#E8112D"
+    ]
+  },
+  {
+    "Country": "Ecuador",
+    "CountryCode": "ECU",
+    "OfficialName": "Republic of Ecuador",
+    "CommonName": "",
+    "M49": "218",
+    "Alpha2": "EC",
+    "Flag": "🇪🇨",
+    "FlagColors": [
+      "#FFD100",
+      "#0072CE",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Guatemala",
+    "CountryCode": "GTM",
+    "OfficialName": "Republic of Guatemala",
+    "CommonName": "",
+    "M49": "320",
+    "Alpha2": "GT",
+    "Flag": "🇬🇹",
+    "FlagColors": [
+      "#4997D0",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Congo",
+    "CountryCode": "COG",
+    "OfficialName": "Republic of the Congo",
+    "CommonName": "",
+    "M49": "178",
+    "Alpha2": "CG",
+    "Flag": "🇨🇬",
+    "FlagColors": [
+      "#009543",
+      "#FBDE4A",
+      "#DC241F"
+    ]
+  },
+  {
+    "Country": "Belarus",
+    "CountryCode": "BLR",
+    "OfficialName": "Republic of Belarus",
+    "CommonName": "",
+    "M49": "112",
+    "Alpha2": "BY",
+    "Flag": "🇧🇾",
+    "FlagColors": [
+      "#D22730",
+      "#00AF66",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Venezuela, Bolivarian Republic of",
+    "CountryCode": "VEN",
+    "OfficialName": "Bolivarian Republic of Venezuela",
+    "CommonName": "Venezuela",
+    "M49": "862",
+    "Alpha2": "VE",
+    "Flag": "🇻🇪",
+    "FlagColors": [
+      "#FCE300",
+      "#003DA5",
+      "#EF3340",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Ghana",
+    "CountryCode": "GHA",
+    "OfficialName": "Republic of Ghana",
+    "CommonName": "",
+    "M49": "288",
+    "Alpha2": "GH",
+    "Flag": "🇬🇭",
+    "FlagColors": [
+      "#EF3340",
+      "#FFD100",
+      "#009739",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Cuba",
+    "CountryCode": "CUB",
+    "OfficialName": "Republic of Cuba",
+    "CommonName": "",
+    "M49": "192",
+    "Alpha2": "CU",
+    "Flag": "🇨🇺",
+    "FlagColors": [
+      "#DA291C",
+      "#004B87",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Lithuania",
+    "CountryCode": "LTU",
+    "OfficialName": "Republic of Lithuania",
+    "CommonName": "",
+    "M49": "440",
+    "Alpha2": "LT",
+    "Flag": "🇱🇹",
+    "FlagColors": [
+      "#FFB81C",
+      "#046A38",
+      "#BE3A34"
+    ]
+  },
+  {
+    "Country": "Bangladesh",
+    "CountryCode": "BGD",
+    "OfficialName": "People's Republic of Bangladesh",
+    "CommonName": "",
+    "M49": "050",
+    "Alpha2": "BD",
+    "Flag": "🇧🇩",
+    "FlagColors": [
+      "#F42A41",
+      "#006A4E"
+    ]
+  },
+  {
+    "Country": "Georgia",
+    "CountryCode": "GEO",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "268",
+    "Alpha2": "GE",
+    "Flag": "🇬🇪",
+    "FlagColors": [
+      "#DA291C",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Kenya",
+    "CountryCode": "KEN",
+    "OfficialName": "Republic of Kenya",
+    "CommonName": "",
+    "M49": "404",
+    "Alpha2": "KE",
+    "Flag": "🇰🇪",
+    "FlagColors": [
+      "#000000",
+      "#FFFFFF",
+      "#BB0000",
+      "#006600"
+    ]
+  },
+  {
+    "Country": "Australia",
+    "CountryCode": "AUS",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "036",
+    "Alpha2": "AU",
+    "Flag": "🇦🇺",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF",
+      "#00B140"
+    ]
+  },
+  {
+    "Country": "Bulgaria",
+    "CountryCode": "BGR",
+    "OfficialName": "Republic of Bulgaria",
+    "CommonName": "",
+    "M49": "100",
+    "Alpha2": "BG",
+    "Flag": "🇧🇬",
+    "FlagColors": [
+      "#FFFFFF",
+      "#00966E",
+      "#D62612"
+    ]
+  },
+  {
+    "Country": "Algeria",
+    "CountryCode": "DZA",
+    "OfficialName": "People's Democratic Republic of Algeria",
+    "CommonName": "",
+    "M49": "012",
+    "Alpha2": "DZ",
+    "Flag": "🇩🇿",
+    "FlagColors": [
+      "#006633",
+      "#FFFFFF",
+      "#D21034"
+    ]
+  },
+  {
+    "Country": "Estonia",
+    "CountryCode": "EST",
+    "OfficialName": "Republic of Estonia",
+    "CommonName": "",
+    "M49": "233",
+    "Alpha2": "EE",
+    "Flag": "🇪🇪",
+    "FlagColors": [
+      "#0072CE",
+      "#000000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Saudi Arabia",
+    "CountryCode": "SAU",
+    "OfficialName": "Kingdom of Saudi Arabia",
+    "CommonName": "",
+    "M49": "682",
+    "Alpha2": "SA",
+    "Flag": "🇸🇦",
+    "FlagColors": [
+      "#165d31",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Singapore",
+    "CountryCode": "SGP",
+    "OfficialName": "Republic of Singapore",
+    "CommonName": "",
+    "M49": "702",
+    "Alpha2": "SG",
+    "Flag": "🇸🇬",
+    "FlagColors": [
+      "#EE2536",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Serbia",
+    "CountryCode": "SRB",
+    "OfficialName": "Republic of Serbia",
+    "CommonName": "",
+    "M49": "688",
+    "Alpha2": "RS",
+    "Flag": "🇷🇸",
+    "FlagColors": [
+      "#C6363C",
+      "#0C4076",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Jamaica",
+    "CountryCode": "JAM",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "388",
+    "Alpha2": "JM",
+    "Flag": "🇯🇲",
+    "FlagColors": [
+      "#009B3A",
+      "#FED100",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Latvia",
+    "CountryCode": "LVA",
+    "OfficialName": "Republic of Latvia",
+    "CommonName": "",
+    "M49": "428",
+    "Alpha2": "LV",
+    "Flag": "🇱🇻",
+    "FlagColors": [
+      "#A4343A",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Morocco",
+    "CountryCode": "MAR",
+    "OfficialName": "Kingdom of Morocco",
+    "CommonName": "",
+    "M49": "504",
+    "Alpha2": "MA",
+    "Flag": "🇲🇦",
+    "FlagColors": [
+      "#C1272D",
+      "#006233"
+    ]
+  },
+  {
+    "Country": "Antigua and Barbuda",
+    "CountryCode": "ATG",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "028",
+    "Alpha2": "AG",
+    "Flag": "🇦🇬",
+    "FlagColors": [
+      "#EF3340",
+      "#000000",
+      "#005EB8",
+      "#FFFFFF",
+      "#FFD100"
+    ]
+  },
+  {
+    "Country": "Philippines",
+    "CountryCode": "PHL",
+    "OfficialName": "Republic of the Philippines",
+    "CommonName": "",
+    "M49": "608",
+    "Alpha2": "PH",
+    "Flag": "🇵🇭",
+    "FlagColors": [
+      "#0032A0",
+      "#BF0D3E",
+      "#FFFFFF",
+      "#FED141"
+    ]
+  },
+  {
+    "Country": "Korea, Republic of",
+    "CountryCode": "KOR",
+    "OfficialName": "",
+    "CommonName": "South Korea",
+    "M49": "410",
+    "Alpha2": "KR",
+    "Flag": "🇰🇷",
+    "FlagColors": [
+      "#CD2E3A",
+      "#0F64CD",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "New Zealand",
+    "CountryCode": "NZL",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "554",
+    "Alpha2": "NZ",
+    "Flag": "🇳🇿",
+    "FlagColors": [
+      "#C8102E",
+      "#012169",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Oman",
+    "CountryCode": "OMN",
+    "OfficialName": "Sultanate of Oman",
+    "CommonName": "",
+    "M49": "512",
+    "Alpha2": "OM",
+    "Flag": "🇴🇲",
+    "FlagColors": [
+      "#FFFFFF",
+      "#C8102E",
+      "#009A44"
+    ]
+  },
+  {
+    "Country": "Czechia",
+    "CountryCode": "CZE",
+    "OfficialName": "Czech Republic",
+    "CommonName": "",
+    "M49": "203",
+    "Alpha2": "CZ",
+    "Flag": "🇨🇿",
+    "FlagColors": [
+      "#11457E",
+      "#FFFFFF",
+      "#D7141A"
+    ]
+  },
+  {
+    "Country": "Ukraine",
+    "CountryCode": "UKR",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "804",
+    "Alpha2": "UA",
+    "Flag": "🇺🇦",
+    "FlagColors": [
+      "#0057B7",
+      "#FFDD00"
+    ]
+  },
+  {
+    "Country": "Iran, Islamic Republic of",
+    "CountryCode": "IRN",
+    "OfficialName": "Islamic Republic of Iran",
+    "CommonName": "",
+    "M49": "364",
+    "Alpha2": "IR",
+    "Flag": "🇮🇷",
+    "FlagColors": [
+      "#239F40",
+      "#FFFFFF",
+      "#DA0000"
+    ]
+  },
+  {
+    "Country": "Pakistan",
+    "CountryCode": "PAK",
+    "OfficialName": "Islamic Republic of Pakistan",
+    "CommonName": "",
+    "M49": "586",
+    "Alpha2": "PK",
+    "Flag": "🇵🇰",
+    "FlagColors": [
+      "#115740",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Spain",
+    "CountryCode": "ESP",
+    "OfficialName": "Kingdom of Spain",
+    "CommonName": "",
+    "M49": "724",
+    "Alpha2": "ES",
+    "Flag": "🇪🇸",
+    "FlagColors": [
+      "#AA151B",
+      "#F1BF00"
+    ]
+  },
+  {
+    "Country": "Costa Rica",
+    "CountryCode": "CRI",
+    "OfficialName": "Republic of Costa Rica",
+    "CommonName": "",
+    "M49": "188",
+    "Alpha2": "CR",
+    "Flag": "🇨🇷",
+    "FlagColors": [
+      "#00205B",
+      "#FFFFFF",
+      "#EF3340"
+    ]
+  },
+  {
+    "Country": "Croatia",
+    "CountryCode": "HRV",
+    "OfficialName": "Republic of Croatia",
+    "CommonName": "",
+    "M49": "191",
+    "Alpha2": "HR",
+    "Flag": "🇭🇷",
+    "FlagColors": [
+      "#ff0000",
+      "#FFFFFF",
+      "#012169",
+      "#71C5E8",
+      "#FFCD00",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Nigeria",
+    "CountryCode": "NGA",
+    "OfficialName": "Federal Republic of Nigeria",
+    "CommonName": "",
+    "M49": "566",
+    "Alpha2": "NG",
+    "Flag": "🇳🇬",
+    "FlagColors": [
+      "#1B7339",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Canada",
+    "CountryCode": "CAN",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "124",
+    "Alpha2": "CA",
+    "Flag": "🇨🇦",
+    "FlagColors": [
+      "#D80621",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Russian Federation",
+    "CountryCode": "RUS",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "643",
+    "Alpha2": "RU",
+    "Flag": "🇷🇺",
+    "FlagColors": [
+      "#FFFFFF",
+      "#0036A7",
+      "#D62718"
+    ]
+  },
+  {
+    "Country": "South Africa",
+    "CountryCode": "ZAF",
+    "OfficialName": "Republic of South Africa",
+    "CommonName": "",
+    "M49": "710",
+    "Alpha2": "ZA",
+    "Flag": "🇿🇦",
+    "FlagColors": [
+      "#E03C31",
+      "#FFFFFF",
+      "#007749",
+      "#001489",
+      "#FFB81C",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Peru",
+    "CountryCode": "PER",
+    "OfficialName": "Republic of Peru",
+    "CommonName": "",
+    "M49": "604",
+    "Alpha2": "PE",
+    "Flag": "🇵🇪",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Finland",
+    "CountryCode": "FIN",
+    "OfficialName": "Republic of Finland",
+    "CommonName": "",
+    "M49": "246",
+    "Alpha2": "FI",
+    "Flag": "🇫🇮",
+    "FlagColors": [
+      "#FFFFFF",
+      "#002F6C"
+    ]
+  },
+  {
+    "Country": "Bolivia, Plurinational State of",
+    "CountryCode": "BOL",
+    "OfficialName": "Plurinational State of Bolivia",
+    "CommonName": "Bolivia",
+    "M49": "068",
+    "Alpha2": "BO",
+    "Flag": "🇧🇴",
+    "FlagColors": [
+      "#DA291C",
+      "#F8E600",
+      "#007A33"
+    ]
+  },
+  {
+    "Country": "Afghanistan",
+    "CountryCode": "AFG",
+    "OfficialName": "Islamic Republic of Afghanistan",
+    "CommonName": "",
+    "M49": "004",
+    "Alpha2": "AF",
+    "Flag": "🇦🇫",
+    "FlagColors": [
+      "#000000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Scotland",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#005EB8",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Romania",
+    "CountryCode": "ROU",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "642",
+    "Alpha2": "RO",
+    "Flag": "🇷🇴",
+    "FlagColors": [
+      "#002B7F",
+      "#FCD116",
+      "#CE1126"
+    ]
+  },
+  {
+    "Country": "Chile",
+    "CountryCode": "CHL",
+    "OfficialName": "Republic of Chile",
+    "CommonName": "",
+    "M49": "152",
+    "Alpha2": "CL",
+    "Flag": "🇨🇱",
+    "FlagColors": [
+      "#FFFFFF",
+      "#DA291C",
+      "#0032A0"
+    ]
+  },
+  {
+    "Country": "Israel",
+    "CountryCode": "ISR",
+    "OfficialName": "State of Israel",
+    "CommonName": "",
+    "M49": "376",
+    "Alpha2": "IL",
+    "Flag": "🇮🇱",
+    "FlagColors": [
+      "#005EB8",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Thailand",
+    "CountryCode": "THA",
+    "OfficialName": "Kingdom of Thailand",
+    "CommonName": "",
+    "M49": "764",
+    "Alpha2": "TH",
+    "Flag": "🇹🇭",
+    "FlagColors": [
+      "#EF3340",
+      "#FFFFFF",
+      "#00247D"
+    ]
+  },
+  {
+    "Country": "Switzerland",
+    "CountryCode": "CHE",
+    "OfficialName": "Swiss Confederation",
+    "CommonName": "",
+    "M49": "756",
+    "Alpha2": "CH",
+    "Flag": "🇨🇭",
+    "FlagColors": [
+      "#DA291C",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Viet Nam",
+    "CountryCode": "VNM",
+    "OfficialName": "Socialist Republic of Viet Nam",
+    "CommonName": "Vietnam",
+    "M49": "704",
+    "Alpha2": "VN",
+    "Flag": "🇻🇳",
+    "FlagColors": [
+      "#C8102E",
+      "#FFCD00"
+    ]
+  },
+  {
+    "Country": "Malaysia",
+    "CountryCode": "MYS",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "458",
+    "Alpha2": "MY",
+    "Flag": "🇲🇾",
+    "FlagColors": [
+      "#CC0000",
+      "#FFFFFF",
+      "#0032A0",
+      "#FFD100"
+    ]
+  },
+  {
+    "Country": "Ireland",
+    "CountryCode": "IRL",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "372",
+    "Alpha2": "IE",
+    "Flag": "🇮🇪",
+    "FlagColors": [
+      "#009A44",
+      "#FFFFFF",
+      "#FF8200"
+    ]
+  },
+  {
+    "Country": "Austria",
+    "CountryCode": "AUT",
+    "OfficialName": "Republic of Austria",
+    "CommonName": "",
+    "M49": "040",
+    "Alpha2": "AT",
+    "Flag": "🇦🇹",
+    "FlagColors": [
+      "#EF3340",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Norway",
+    "CountryCode": "NOR",
+    "OfficialName": "Kingdom of Norway",
+    "CommonName": "",
+    "M49": "578",
+    "Alpha2": "NO",
+    "Flag": "🇳🇴",
+    "FlagColors": [
+      "#BA0C2F",
+      "#FFFFFF",
+      "#00205B"
+    ]
+  },
+  {
+    "Country": "Türkiye (Turkey)",
+    "CountryCode": "",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "",
+    "Alpha2": "",
+    "Flag": "",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Colombia",
+    "CountryCode": "COL",
+    "OfficialName": "Republic of Colombia",
+    "CommonName": "",
+    "M49": "170",
+    "Alpha2": "CO",
+    "Flag": "🇨🇴",
+    "FlagColors": [
+      "#FFCD00",
+      "#003087",
+      "#C8102E"
+    ]
+  },
+  {
+    "Country": "Hungary",
+    "CountryCode": "HUN",
+    "OfficialName": "Hungary",
+    "CommonName": "",
+    "M49": "348",
+    "Alpha2": "HU",
+    "Flag": "🇭🇺",
+    "FlagColors": [
+      "#CE2939",
+      "#FFFFFF",
+      "#477050"
+    ]
+  },
+  {
+    "Country": "Netherlands",
+    "CountryCode": "NLD",
+    "OfficialName": "Kingdom of the Netherlands",
+    "CommonName": "",
+    "M49": "528",
+    "Alpha2": "NL",
+    "Flag": "🇳🇱",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF",
+      "#003DA5"
+    ]
+  },
+  {
+    "Country": "Argentina",
+    "CountryCode": "ARG",
+    "OfficialName": "Argentine Republic",
+    "CommonName": "",
+    "M49": "032",
+    "Alpha2": "AR",
+    "Flag": "🇦🇷",
+    "FlagColors": [
+      "#6CACE4",
+      "#FFB81C",
+      "#FFFFFF",
+      "#7D4016"
+    ]
+  },
+  {
+    "Country": "Indonesia",
+    "CountryCode": "IDN",
+    "OfficialName": "Republic of Indonesia",
+    "CommonName": "",
+    "M49": "360",
+    "Alpha2": "ID",
+    "Flag": "🇮🇩",
+    "FlagColors": [
+      "#ff0000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Greece",
+    "CountryCode": "GRC",
+    "OfficialName": "Hellenic Republic",
+    "CommonName": "",
+    "M49": "300",
+    "Alpha2": "GR",
+    "Flag": "🇬🇷",
+    "FlagColors": [
+      "#0D5EAF",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Australia",
+    "CountryCode": "AUS",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "036",
+    "Alpha2": "AU",
+    "Flag": "🇦🇺",
+    "FlagColors": [
+      "#012169",
+      "#FFFFFF",
+      "#E4002B"
+    ]
+  },
+  {
+    "Country": "Portugal",
+    "CountryCode": "PRT",
+    "OfficialName": "Portuguese Republic",
+    "CommonName": "",
+    "M49": "620",
+    "Alpha2": "PT",
+    "Flag": "🇵🇹",
+    "FlagColors": [
+      "#046A38",
+      "#DA291C",
+      "#FFE900",
+      "#002D72",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "Mexico",
+    "CountryCode": "MEX",
+    "OfficialName": "United Mexican States",
+    "CommonName": "",
+    "M49": "484",
+    "Alpha2": "MX",
+    "Flag": "🇲🇽",
+    "FlagColors": [
+      "#006341",
+      "#FFFFFF",
+      "#C8102E"
+    ]
+  },
+  {
+    "Country": "Poland",
+    "CountryCode": "POL",
+    "OfficialName": "Republic of Poland",
+    "CommonName": "",
+    "M49": "616",
+    "Alpha2": "PL",
+    "Flag": "🇵🇱",
+    "FlagColors": [
+      "#DC143C",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Belgium",
+    "CountryCode": "BEL",
+    "OfficialName": "Kingdom of Belgium",
+    "CommonName": "",
+    "M49": "056",
+    "Alpha2": "BE",
+    "Flag": "🇧🇪",
+    "FlagColors": [
+      "#2D2926",
+      "#FFCD00",
+      "#C8102E"
+    ]
+  },
+  {
+    "Country": "Brazil",
+    "CountryCode": "BRA",
+    "OfficialName": "Federative Republic of Brazil",
+    "CommonName": "",
+    "M49": "076",
+    "Alpha2": "BR",
+    "Flag": "🇧🇷",
+    "FlagColors": [
+      "#009739",
+      "#FEDD00",
+      "#FFFFFF",
+      "#012169"
+    ]
+  },
+  {
+    "Country": "Denmark",
+    "CountryCode": "DNK",
+    "OfficialName": "Kingdom of Denmark",
+    "CommonName": "",
+    "M49": "208",
+    "Alpha2": "DK",
+    "Flag": "🇩🇰",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Iceland",
+    "CountryCode": "ISL",
+    "OfficialName": "Republic of Iceland",
+    "CommonName": "",
+    "M49": "352",
+    "Alpha2": "IS",
+    "Flag": "🇮🇸",
+    "FlagColors": [
+      "#02529C",
+      "#FFFFFF",
+      "#DC1E35"
+    ]
+  },
+  {
+    "Country": "Ethiopia",
+    "CountryCode": "ETH",
+    "OfficialName": "Federal Democratic Republic of Ethiopia",
+    "CommonName": "",
+    "M49": "231",
+    "Alpha2": "ET",
+    "Flag": "🇪🇹",
+    "FlagColors": [
+      "#009A44",
+      "#FEDD00",
+      "#EF3340",
+      "#0645B1"
+    ]
+  },
+  {
+    "Country": "Germany",
+    "CountryCode": "DEU",
+    "OfficialName": "Federal Republic of Germany",
+    "CommonName": "",
+    "M49": "276",
+    "Alpha2": "DE",
+    "Flag": "🇩🇪",
+    "FlagColors": [
+      "#000000",
+      "#DD0000",
+      "#FFCC00"
+    ]
+  },
+  {
+    "Country": "Japan",
+    "CountryCode": "JPN",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "392",
+    "Alpha2": "JP",
+    "Flag": "🇯🇵",
+    "FlagColors": [
+      "#BC002D",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Sweden",
+    "CountryCode": "SWE",
+    "OfficialName": "Kingdom of Sweden",
+    "CommonName": "",
+    "M49": "752",
+    "Alpha2": "SE",
+    "Flag": "🇸🇪",
+    "FlagColors": [
+      "#006AA7",
+      "#FECC02"
+    ]
+  },
+  {
+    "Country": "Italy",
+    "CountryCode": "ITA",
+    "OfficialName": "Italian Republic",
+    "CommonName": "",
+    "M49": "380",
+    "Alpha2": "IT",
+    "Flag": "🇮🇹",
+    "FlagColors": [
+      "#008C45",
+      "#F4F9FF",
+      "#CD212A"
+    ]
+  },
+  {
+    "Country": "China",
+    "CountryCode": "CHN",
+    "OfficialName": "People's Republic of China",
+    "CommonName": "",
+    "M49": "156",
+    "Alpha2": "CN",
+    "Flag": "🇨🇳",
+    "FlagColors": [
+      "#EE1C25",
+      "#FFFF00"
+    ]
+  },
+  {
+    "Country": "France",
+    "CountryCode": "FRA",
+    "OfficialName": "French Republic",
+    "CommonName": "",
+    "M49": "250",
+    "Alpha2": "FR",
+    "Flag": "🇫🇷",
+    "FlagColors": [
+      "#000091",
+      "#FFFFFF",
+      "#E1000F"
+    ]
+  },
+  {
+    "Country": "Cyprus",
+    "CountryCode": "CYP",
+    "OfficialName": "Republic of Cyprus",
+    "CommonName": "",
+    "M49": "196",
+    "Alpha2": "CY",
+    "Flag": "🇨🇾",
+    "FlagColors": [
+      "#D57800",
+      "#FFFFFF",
+      "#4E5B31"
+    ]
+  },
+  {
+    "Country": "Somalia",
+    "CountryCode": "SOM",
+    "OfficialName": "Federal Republic of Somalia",
+    "CommonName": "",
+    "M49": "706",
+    "Alpha2": "SO",
+    "Flag": "🇸🇴",
+    "FlagColors": [
+      "#4189DD",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "Country": "Egypt",
+    "CountryCode": "EGY",
+    "OfficialName": "Arab Republic of Egypt",
+    "CommonName": "",
+    "M49": "818",
+    "Alpha2": "EG",
+    "Flag": "🇪🇬",
+    "FlagColors": [
+      "#C8102E",
+      "#FFFFFF",
+      "#C09300",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "United Arab Emirates",
+    "CountryCode": "ARE",
+    "OfficialName": "",
+    "CommonName": "",
+    "M49": "784",
+    "Alpha2": "AE",
+    "Flag": "🇦🇪",
+    "FlagColors": [
+      "#EF3340",
+      "#009739",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "Country": "United States",
+    "CountryCode": "USA",
+    "OfficialName": "United States of America",
+    "CommonName": "",
+    "M49": "840",
+    "Alpha2": "US",
+    "Flag": "🇺🇸",
+    "FlagColors": [
+      "#B31942",
+      "#FFFFFF",
+      "#0A3161"
+    ]
+  },
+  {
+    "Country": "India",
+    "CountryCode": "IND",
+    "OfficialName": "Republic of India",
+    "CommonName": "",
+    "M49": "356",
+    "Alpha2": "IN",
+    "Flag": "🇮🇳",
+    "FlagColors": [
+      "#FF671F",
+      "#FFFFFF",
+      "#046A38",
+      "#06038D"
+    ]
+  }
+]

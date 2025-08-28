@@ -1,16 +1,98 @@
 #!/bin/bash
-cat << EOF >| wsgi.py
+set -euo pipefail
+
+# Function to find free port (checks both system and registry)
+find_free_port() {
+    local port=$1
+    local registry_file="$2"
+    
+    while true; do
+        # Check if port is in use by system
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            ((port++))
+            continue
+        fi
+        
+        # Check if port is already assigned in registry
+        if [[ -f "$registry_file" ]] && grep -q "=$port$" "$registry_file"; then
+            ((port++))
+            continue
+        fi
+        
+        break
+    done
+    echo $port
+}
+
+# Simple worktree detection - check if .git is a file (worktree) vs directory (main)
+if [[ -f .git ]]; then
+    IS_WORKTREE=true
+    # Get the main repository's .git directory using git command
+    GIT_COMMON_DIR=$(git rev-parse --git-common-dir)
+    # Main repo is the parent of .git
+    MAIN_REPO=$(dirname "$GIT_COMMON_DIR")
+    PARENT_DIR=$(dirname "$MAIN_REPO")
+    
+    # Single source of truth: port registry in main repo
+    PORT_REGISTRY="$MAIN_REPO/.worktree-ports"
+    WORKTREE_NAME=$(basename "$PWD")
+    
+    # Create port registry if it doesn't exist
+    [[ ! -f "$PORT_REGISTRY" ]] && touch "$PORT_REGISTRY"
+    
+    # Clean up stale entries for non-existent worktrees
+    if [[ -f "$PORT_REGISTRY" ]]; then
+        # Create temp file with only active worktrees
+        TEMP_REGISTRY=$(mktemp)
+        while IFS='=' read -r worktree_name port; do
+            if [[ -n "$worktree_name" ]] && git worktree list --porcelain | grep -q "^worktree.*/$worktree_name$"; then
+                echo "$worktree_name=$port" >> "$TEMP_REGISTRY"
+            fi
+        done < "$PORT_REGISTRY"
+        mv "$TEMP_REGISTRY" "$PORT_REGISTRY"
+    fi
+    # Check for existing port assignment
+    if grep -q "^$WORKTREE_NAME=" "$PORT_REGISTRY"; then
+        PORT=$(grep "^$WORKTREE_NAME=" "$PORT_REGISTRY" | cut -d= -f2)
+        echo "Worktree '$WORKTREE_NAME' reusing assigned port $PORT"
+    else
+        PORT=$(find_free_port 5001 "$PORT_REGISTRY")
+        echo "$WORKTREE_NAME=$PORT" >> "$PORT_REGISTRY"
+        echo "Worktree '$WORKTREE_NAME' assigned new port $PORT"
+    fi
+    
+    # Symlink configs instead of copying
+    echo "Symlinking configs from main repository..."
+    ln -sfn "$MAIN_REPO/.env" .env
+else
+    # Main repository - always uses port 5000
+    IS_WORKTREE=false
+    PARENT_DIR=$(dirname "$PWD")
+    PORT=5000
+    echo "Main repository using port $PORT"
+    
+    # Create port registry file if it doesn't exist (single source of truth)
+    [[ ! -f .worktree-ports ]] && touch .worktree-ports
+    
+    # Create .env only if it doesn't exist
+    [[ ! -f .env ]] && echo "SECRET_KEY='thiscanbewhateveryouwantfordevelopment'" > .env
+fi
+
+# Generate wsgi.py with assigned port
+cat > wsgi.py <<EOF
 from sspi_flask_app import init_app
 from config import DevConfig
 
 app = init_app(DevConfig)
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='127.0.0.1', port=$PORT)
 EOF
-echo SECRET_KEY='thiscanbewhateveryouwantfordevelopment' > .env 
-mkdir -p instance && touch instance/database.db
-echo SQLALCHEMY_DATABASE_URI=\"sqlite:///$(pwd)/instance/database.db\" >> .env 
+
+# Create local venv and install packages
 type python && SSPI_PYTHON=python || SSPI_PYTHON=python3
-$SSPI_PYTHON -m venv env
+"$SSPI_PYTHON" -m venv env
 source env/bin/activate && pip install -r requirements.txt
 pip install -e .
+
+echo "✓ Setup complete! Run with:"
+echo "  source env/bin/activate && flask run --debug --port $PORT"
