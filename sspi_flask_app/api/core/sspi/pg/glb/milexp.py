@@ -26,5 +26,3 @@ def compute_milexp():
     )
     sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
-
-
