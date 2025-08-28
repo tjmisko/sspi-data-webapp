@@ -3,18 +3,22 @@ from flask import Response
 from flask import current_app as app
 from flask_login import current_user, login_required
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
-from sspi_flask_app.api.datasource.unsdg import (
-    collect_sdg_indicator_data,
-    extract_sdg,
-    filter_sdg,
-)
-from sspi_flask_app.api.resources.utilities import parse_json, score_indicator
+from sspi_flask_app.api.resources.utilities import parse_json, score_indicator, goalpost
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
 )
+from sspi_flask_app.api.resources.utilities import (
+    extrapolate_backward,
+    extrapolate_forward,
+    interpolate_linear,
+    slice_dataset,
+    filter_imputations,
+    impute_reference_class_average
+)
+    
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +27,10 @@ log = logging.getLogger(__name__)
 @login_required
 def compute_biodiv():
     def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
-        return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3 / 100
+        frshwt = goalpost(UNSDG_FRSHWT, 0, 100)
+        terrst = goalpost(UNSDG_TERRST, 0, 100)
+        marine = goalpost(UNSDG_MARINE, 0, 100)
+        return (frshwt + terrst + marine) / 3
 
     sspi_indicator_data.delete_many({"IndicatorCode": "BIODIV"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "BIODIV"})
@@ -47,15 +54,6 @@ def impute_biodiv():
     def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
         return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3 / 100
         
-    from sspi_flask_app.api.resources.utilities import (
-        extrapolate_backward,
-        extrapolate_forward,
-        interpolate_linear,
-        slice_dataset,
-        filter_imputations,
-        impute_reference_class_average
-    )
-    
     mongo_query = {"IndicatorCode": "BIODIV"}
     sspi_imputed_data.delete_many(mongo_query)
     
