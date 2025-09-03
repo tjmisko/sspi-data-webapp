@@ -1,14 +1,12 @@
 # SSPI Data Webapp - Claude Instructions
 
 ## Project Overview
-The SSPI Data Webapp is a Flask application for building and serving the Social Policy and Progress Index dataset. It uses MongoDB for data storage and includes both API endpoints and web interface components.
+The SSPI Data Webapp is a Flask application for building and serving the Sustainable and Shared-Prosperity Policy Index datasets and indicators. It uses MongoDB for data storage, flask to server the webapp, and includes both API endpoints and web interface components.
 
 ## Development Workflow
 You will do most of your work inside of git worktrees. This system has a specialized command for setting up git worktrees based on issue numbers: `gh issue worktree develop -c [Issue Number]`, which creates a worktree for the appropriate development branch (as in `gh issue develop -c [Issue Number]`). 
 
 You must be `cd`ed into the correct worktree for you to execute commands, edit files, and see changes without causing conflicts.
-
-You can find important information about the current development status by running
 
 Before making any changes, always:
 
@@ -16,12 +14,13 @@ Before making any changes, always:
 ```bash
 scripts/wtdev
 ```
-2. Determine whether you are in a work tree. Remember to do all your work inside the tree, and to check whether you are in the worktree or inside of the main repository. Inside worktrees, you must start the development server with the correct port number. Each worktree has a different port number to ensure parallelism. To find the correct number, consult wsgi.py inside the current worktree. It should never be 5000: that is reserved for the main branch. Every worktree should be a number greater than 5000.
-3. Don't be too anxious to restart the development server: it is running in debug mode and need only be refreshed for most changes.
+2. Use the output of wtdev to determine whether you are in a work tree. Remember to do all your work inside the tree, and to check whether you are in the worktree or inside of the main repository.
+3. Assume the development server is running in debug mode. Only restart the server when you need to change the modules that are imported at application startup (typically for 'Creating New Datasets')
+4. When making changes to any non-python files, you must run `touch wsgi.py` to get the development server to reload and pickup changes
 
 ## Key Concepts
 
-### **Series**
+### Series
 
 A **Series** is structured data containing:
 * `CountryCode`
@@ -31,12 +30,12 @@ A **Series** is structured data containing:
 
 All **Datasets** and **Items** are types of Series.
 
-### **Dataset**
+### Dataset
 * A **Series** that originates from a **single, unique data source**.
 * Always linked to exactly **one** `RawDocumentSet`.
 * **Role in dataflow:** Datasets are the direct inputs for Indicators.
 
-### **Item**
+### Item
 * A **Series** whose elements are **Scores** instead of Values.
 * Does **not** have a unique source.
 * Exists in a hierarchy:
@@ -47,7 +46,7 @@ All **Datasets** and **Items** are types of Series.
      * Uses a `ScoreFunction` to transform Dataset Values into Scores.
 * Items may depend on one or more Datasets.
 
-### **RawDocumentSet**
+### RawDocumentSet
 * The direct result of an external API call.
 * We do not model RawDocumentSets: they are emergent entities that result from calls to `sspi_raw_api_data` based on Source information. The standard source information we use is specified in the documentation.md for each dataset and is accessed via `sspi_metadata.get_source_info(dataset_code)`. You can view the information that draws on by inspecting the output of 
 `sspi metadata dataset [DATASET_CODE]` and looking in the `Source` field of the resulting object. Typically, a Source field will specify the `OrganizationCode` and the `QueryCode` used to fetch the dataset, but more information may be specified to make more granular queries depending on the query structure.
@@ -58,7 +57,7 @@ All **Datasets** and **Items** are types of Series.
   * Collection username
 * May yield one or more Datasets.
 
-### **RawDocument**
+### RawDocument
 * A single record inside a `RawDocumentSet`.
 
 ## Dataflow
@@ -97,9 +96,9 @@ The project includes a comprehensive CLI tool accessible via the `sspi` command 
 sspi collect SERIES_CODE     # Collect raw data from source APIs
 sspi clean SERIES_CODE       # Clean raw API data
 sspi compute SERIES_CODE     # Compute indicator scores
-sspi query DATABASE [CODES]  # Query SSPI databases  
 sspi impute SERIES_CODE      # Impute missing data
-sspi finalize SERIES_CODE    # Finalize processed data
+sspi query DATABASE [CODES]  # Query SSPI databases  
+sspi finalize                # Finalize data pulling from imputed and computed observations, producing plottable scores
 ```
 
 ### Data Management 
@@ -134,7 +133,7 @@ sspi metadata dataset [CODE]   # Get dataset metadata
                                # 'CODES': list dataset codes only
                                # Specific code: get details for that dataset
 
-sspi metadata item ITEM_CODE   # Get specific item metadata (requires item code)
+sspi metadata item [ITEM_CODE]   # Get specific item metadata (requires item code)
 
 # Country metadata
 sspi metadata country group [CODE] # Get country group metadata
@@ -144,6 +143,27 @@ sspi metadata country group [CODE] # Get country group metadata
                                    # --remote/-r: query remote server
 ```
 
+### Database Names 
+```bash
+sspi_metadata                       # Contains All Metadata
+sspi_static_metadata                # LEGACY: Metadata for "static SSPI"
+sspi_main_data_v3                   # LEGACY: Data for "static SSPI"
+sspi_raw_api_data                   # Contains raw API data, i.e. RawDocuments, inserted by `sspi collect [SERIES_CODE]`
+sspi_clean_api_data                 # Contains clean API data, i.e. Datasets, inserted by `sspi clean [SERIES_CODE]`
+sspi_indicator_data                 # Contains scored indicator documents, i.e. Items, inserted by `sspi compute [SERIES_CODE]`
+sspi_incomplete_indicator_data      # Contains "incomplete indicator" documents which have insufficient information to compute an indicator score
+sspi_imputed_data                   # Contains scored indicator documents with at least one imputed value for a dataset, inserted by calling `sspi impute [SERIES_CODE]`. 
+
+# Other databases produced by finalize, for caching and querying from the frontend
+sspi_item_data 
+sspi_static_rank_data
+sspi_static_radar_data
+sspi_item_dynamic_line_data 
+sspi_indicator_dynamic_line_data
+sspi_dynamic_matrix_data
+sspi_panel_data
+```
+
 ### Database Shortcodes (for use with CLI only)
 - `raw` → `sspi_raw_api_data`
 - `clean` → `sspi_clean_api_data` 
@@ -151,7 +171,7 @@ sspi metadata country group [CODE] # Get country group metadata
 - `imputed` → `sspi_imputed_data`
 
 ### Query Functions with ItemCodes
-- `sspi query clean [ITEM_CODE]` can accept indicator codes (e.g., `COALPW`) and will return all underlying datasets that the indicator depends on
+- `sspi query clean [ITEM_CODE]` can accept indicator codes (e.g., `COALPW`) and will all underlying datasets that the indicator depends on
 - This is useful for imputation when you need to work with all datasets required by a multi-dataset indicator
 - Example: `sspi query clean COALPW` returns data for all 7 IEA energy datasets (IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL)
 
@@ -161,23 +181,14 @@ sspi metadata country group [CODE] # Get country group metadata
 
 ### File Structure
 - `cli/` - Command-line interface components and commands
-- `sspi_flask_app/` - Main Flask application
-  - `api/` - API routes and data processing
-    - `core/datasets/` - Dataset cleaners/collectors organized by source organization
-      - `wid/` - World Inequality Database datasets (77 datasets)
-      - `epi/` - Environmental Performance Index datasets (58 datasets)
-      - `wb/` - World Bank datasets (20 datasets)
-      - `unsdg/` - UN Sustainable Development Goals datasets (17 datasets)
-      - ... (24 organization subdirectories total)
-  - `client/` - Frontend templates and static files  
-  - `models/` - Database models and business logic
 - `datasets/` - Dataset documentation organized by source organization
-  - `wid/` - WID dataset documentation files
-  - `epi/` - EPI dataset documentation files
-  - `wb/` - World Bank dataset documentation files
-  - ... (mirroring the Python structure)
-- `methodology` - Item-specific documentation
 - `documentation/` - Project documentation (stale, requires updates)
+- `methodology` - Item documentation organized in item-heirarchy structure
+- `sspi_flask_app/` - Main Flask application
+    - `sspi_flask_app/api/` - API routes and data processing
+    - `sspi_flask_app/api/core/datasets/` - Dataset cleaners/collectors organized by source organization
+    - `sspi_flask_app/client/` - Frontend templates and static files  
+    - `sspi_flask_app/models/` - Database models and business logic
 - `tests/` - Test files (unit and integration)
 
 ### Coding Standards
@@ -196,15 +207,12 @@ sspi metadata country group [CODE] # Get country group metadata
 - **Series Codes**: Unique identifiers for data series/indicators
 
 ## Important Notes
+- Use `sspi` CLI for data operations rather than direct API calls to handle token-based authentication automatically
 - Always activate virtual environment before development
 - Use existing database models and patterns
 - Follow MongoDB document structure conventions
-- Test both API endpoints and web interface components
-- Use `sspi` CLI for data operations rather than direct API calls
-- Check documentation/ folder for detailed technical specs
 
 ## Development Tips
-- When making changes to any non-python files, you must run `touch wsgi.py` to get the development server to reload
 
 ## Finalize Process and Active Schema
 
@@ -213,8 +221,8 @@ The `finalize.py` module (`sspi_flask_app/api/core/finalize.py`) is the final st
 
 1. **Score Generation**: Creates score documents for all items (SSPI, Pillars, Categories, Indicators) using the SSPI hierarchical scoring system
 2. **Metadata Enrichment**: Adds metadata from `sspi_metadata` to each score document, including:
-   - `Children` field: List of child ItemCodes from the hierarchy 
-   - `ItemName` field: The most specific name available (Indicator > Category > Pillar > Name)
+- `Children` field: List of child ItemCodes from the hierarchy 
+- `ItemName` field: The most specific name available (Indicator > Category > Pillar > Name)
 3. **Data Storage**: Inserts the finalized score documents into `sspi_item_data` collection
 
 ### Active Schema Method
@@ -222,10 +230,10 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 
 1. **Purpose**: Returns a hierarchical tree structure showing only items with actual score data
 2. **Filtering Logic**:
-   - Queries only documents with non-null `Score` values
-   - Builds tree bottom-up from indicators with scores
-   - Excludes empty branches (pillars/categories with no child indicators having data)
-   - Uses `ItemName` from documents, falling back to `name_map` parameter if needed
+- Queries only documents with non-null `Score` values
+- Builds tree bottom-up from indicators with scores
+- Excludes empty branches (pillars/categories with no child indicators having data)
+- Uses `ItemName` from documents, falling back to `name_map` parameter if needed
 3. **Result**: A pruned tree containing only the active data structure
 
 ### Data Coverage and Empty Items
@@ -253,7 +261,6 @@ The `active_schema` method in `SSPIItemData` (`sspi_flask_app/models/database/ss
 ### Dataset Registry and Server Restart
 
 **Critical**: When adding new dataset collectors/cleaners, you MUST fully restart the Flask server.
-
 **Problem**: New datasets won't appear in metadata after `sspi metadata reload` even though documentation files exist.
 
 **Root Cause**: Dataset registries are built at Python module import time via decorators (`@dataset_collector`, `@dataset_cleaner`). Without a server restart, new Python modules in `sspi_flask_app/api/core/datasets/` aren't imported, so cleaners aren't registered.
@@ -271,9 +278,10 @@ sspi metadata reload
 
 **Remember**: `touch wsgi.py` only reloads for code changes within already-imported modules. New modules require full restart.
 
+
 - You must use the sspi cli to access any `@login_protected` routes. Just sending curl requests to the URLs will fail because token based authentication is required. The sspi cli should always be used in such instances
 - Check `sspi status` before running sspi commands to ensure that the correct port is being called by sspi cli. If the port does not match the one you expect (from scripts/wtdev, say) then you may have to deactivate the virtual environment and reactivate it in the correct working directory. This is usually caused because we're using the old venv's version of sspi, which is calling port 5000 instead of the correct port.
 - Prefer `sspi url` to `curl` for hitting endpoints on the server.
 - Never query the raw data directly! It will not work. Requests that try to send queries to sspi_raw_api_data that are not filtering by series_code will timeout and fail because of data volume.
-- Use the `sspi collect [code] --overwrite-all` option instead of sending echo 'y' into sspi collectd.
-- You can use prettier (globally installed already) to parse out the contents of style.css and script.js
+- Use the `sspi collect [code] --overwrite-all` option instead of sending echo 'y' into `sspi collect`.
+- You can use `prettier` (globally installed already) to parse out the contents of style.css and script.js, then grep through the result.

@@ -14,6 +14,7 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost,
     extrapolate_backward,
     extrapolate_forward,
+    interpolate_linear,
     slice_dataset,
     filter_imputations,
     impute_reference_class_average
@@ -58,7 +59,6 @@ def impute_watman():
         """
         Create synthetic CWUEFF data from WUSEFF by extrapolating backward to create baseline.
         """
-        from sspi_flask_app.api.resources.utilities import interpolate_linear
         
         # Extrapolate WUSEFF backward to 2000-2005 for baseline  
         extended_wuseff = extrapolate_backward(
@@ -153,7 +153,6 @@ def impute_watman():
     )
     
     # Get WUSEFF data to create synthetic CWUEFF for missing countries
-    from sspi_flask_app.models.database import sspi_clean_api_data
     wuseff_data = sspi_clean_api_data.find({"DatasetCode": "UNSDG_WUSEFF"})
     
     # Countries missing CWUEFF but having WUSEFF (excluding SGP handled separately)

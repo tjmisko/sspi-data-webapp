@@ -321,47 +321,49 @@ def country_code_to_name(CountryCode):
         return CountryCode
 
 
-def get_country_code(CountryName):
+def get_country_code(country_name):
     """
     Handles edge cases of country fuzzy matching
     """
-    if "kosovo" in str.lower(CountryName):
+    if "kosovo" in str.lower(country_name):
         return "XKX"
-    if "korea" in str.lower(CountryName) and "democratic" not in str.lower(CountryName):
+    if "korea" in str.lower(country_name) and ("democratic" not in str.lower(country_name) or "south" in str.lower(country_name)):
         return "KOR"
-    if "korea" in str.lower(CountryName) and "democratic" in str.lower(CountryName):
+    if "korea" in str.lower(country_name) and ("democratic" in str.lower(country_name) or "north" in str.lower(country_name)):
         return "PRK"
-    if "niger" in str.lower(CountryName) and "nigeria" not in str.lower(CountryName):
+    if "niger" in str.lower(country_name) and "nigeria" not in str.lower(country_name):
         return "NER"
-    if "democratic republic" in str.lower(CountryName) or "dr" in str.lower(CountryName) and "congo" in str.lower(CountryName):
+    if "democratic republic" in str.lower(country_name) or "dr" in str.lower(country_name) and "congo" in str.lower(country_name):
         return "COD"
-    if "congo republic" in str.lower(CountryName):
+    if "congo republic" in str.lower(country_name):
         return "COG"
-    if "guinea bissau" in str.lower(CountryName):
+    if "guinea bissau" in str.lower(country_name):
         return "GNB"
-    if "laos" in str.lower(CountryName):
+    if "laos" in str.lower(country_name):
         return "LAO"
-    if "kiye" in str.lower(CountryName):
+    if "kiye" in str.lower(country_name):
         return "TUR"
-    if "turkiye" in str.lower(CountryName) or "turkey" in str.lower(CountryName):
+    if "turkiye" in str.lower(country_name) or "turkey" in str.lower(country_name):
         return "TUR"
-    if "cape verde" in str.lower(CountryName):
+    if "cape verde" in str.lower(country_name):
         return "CPV"
-    if "swaziland" in str.lower(CountryName):
+    if "swaziland" in str.lower(country_name):
         return "SWZ"
-    if "israel and west bank" in str.lower(CountryName):
+    if "israel and west bank" in str.lower(country_name):
         return "ISR"
-    if "gambia the" in str.lower(CountryName):
+    if "gambia the" in str.lower(country_name):
         return "GMB"
-    if "timor leste" in str.lower(CountryName):
+    if "timor leste" in str.lower(country_name):
         return "TLS"
+    if "russia" == str.lower(country_name) or "russian federation" in str.lower(country_name):
+        return "RUS"
     else:
         try:
-            guess = pycountry.countries.lookup(CountryName)
+            guess = pycountry.countries.lookup(country_name)
             return guess.alpha_3
         except LookupError:
             # If the country name is not found, return the name as is
-            return CountryName
+            return country_name
 
 
 def colormap(PillarCode, alpha: str = "ff"):
@@ -665,6 +667,25 @@ def impute_reference_class_average(
         imputation_list.append(imputed_document)
     return imputation_list
 
+def impute_dataset_value(
+    country_code: str,
+    start_year: int,
+    end_year: int,
+    dataset_code: str,
+    dataset_value: float|int,
+    dataset_unit: str
+):
+    return [
+        {
+            "DatasetCode": dataset_code,
+            "CountryCode": country_code,
+            "Year": year,
+            "Value": dataset_value,
+            "Unit": dataset_unit,
+            "Imputed": True,
+            "ImputationMethod": "ImputeDatasetValue",
+        } for year in range(start_year, end_year + 1)
+    ]
 
 def regression_imputation(
     feature_list: list[dict],
