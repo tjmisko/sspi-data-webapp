@@ -13,19 +13,11 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/CSTUNT", methods=['POST'])
-# @login_required
-# def cstunt():
-#     def collect_iterator(**kwargs):
-#         yield from collect_gho_cstunt_data(**kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/CSTUNT", methods=['POST'])
 @login_required
 def compute_cstunt():
     """
-    GHO Reports Two Different Kinds of Series:
+    UNSDG Reports Two Different Kinds of Series:
     1. NUTRITION_ANT_HAZ_NE2 - Survey-based estimates of child stunting
     2. NUTSTUNTINGPREV       - Model-based estimates of child stunting
 
@@ -35,11 +27,11 @@ def compute_cstunt():
     """
     app.logger.info("Running /api/v1/compute/CSTUNT")
     sspi_indicator_data.delete_many({"IndicatorCode": "CSTUNT"})
-    cstunt_clean = sspi_clean_api_data.find({"DatasetCode": "GHO_CSTUNT"})
+    cstunt_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_CSTUNT"})
     lg, ug = sspi_metadata.get_goalposts("CSTUNT")
     scored_list, _ = score_indicator(
         cstunt_clean, "CSTUNT",
-        score_function=lambda GHO_CSTUNT: goalpost(GHO_CSTUNT, lg, ug),
+        score_function=lambda UNSDG_CSTUNT: goalpost(UNSDG_CSTUNT, lg, ug),
         unit = "%"
     )
     sspi_indicator_data.insert_many(scored_list)
