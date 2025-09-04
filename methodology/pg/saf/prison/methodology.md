@@ -8,14 +8,10 @@ Footnote: null
 Indicator: Incarceration Rates
 IndicatorCode: PRISON
 DatasetCodes:
-  - WPB_PRIPOP
-  - WB_POPULN
+  - UNODC_PRIPOP
 Inverted: true
 LowerGoalpost: 540.0
 Policy: "Criminal Justice \nPolicy"
-SourceOrganization: "World \nPrison \nBrief"
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.prisonstudies.org/highest-to-lowest/prison-population-total?field_region_taxonomy_tid=All
 UpperGoalpost: 40.0
 ---
 
