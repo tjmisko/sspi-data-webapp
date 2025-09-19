@@ -20,8 +20,8 @@ def collect_fpi_data(fpi_indicator_code, **kwargs):
     username = "tjmisko"
     yield f"Collecting data for FPI Indicator {fpi_indicator_code}\n"
     
-    # Iterate through years from 2000 to 2025
-    for year in range(2000, 2026):
+    # Iterate through years from 2000 to 2024 (2025 data not available yet)
+    for year in range(2000, 2025):
         # Construct URL for all countries for this year
         data_url = f"https://api.footprintnetwork.org/v1/data/all/{year}/{fpi_indicator_code}"
         

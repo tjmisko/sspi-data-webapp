@@ -4,8 +4,15 @@ import json
 
 base_url = 'http://localhost:5000'
 home_dir = '/home/tjmisko/Projects/SSPI/sspi-data-webapp/'
-sheet_data = pandas.read_csv(home_dir + './local/SSPIMainDataV3.csv',
-                             skiprows=1)
+sheet_data = pandas.read_csv(
+    home_dir + './local/SSPIMainDataV3.csv',
+    skiprows=1,
+    delimiter=',',
+    quoting=1,  # QUOTE_ALL
+    encoding='utf-8',
+    on_bad_lines='skip',
+    low_memory=False
+)
 
 
 def split_last(in_string: str):

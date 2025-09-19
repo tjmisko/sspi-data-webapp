@@ -33,8 +33,15 @@ class SSPIMainDataV3(MongoWrapper):
         Loads the metadata into the database
         """
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
-        sspi_main_data_wide = pd.read_csv(os.path.join(
-            local_path, "SSPIMainDataV3.csv"), skiprows=1)
+        sspi_main_data_wide = pd.read_csv(
+            os.path.join(local_path, "SSPIMainDataV3.csv"), 
+            skiprows=1,
+            delimiter=',',
+            quoting=1,  # QUOTE_ALL
+            encoding='utf-8',
+            on_bad_lines='skip',
+            low_memory=False
+        )
         sspi_main_data_documents = self.process_sspi_main_data(
             sspi_main_data_wide)
         count = self.insert_many(sspi_main_data_documents)
