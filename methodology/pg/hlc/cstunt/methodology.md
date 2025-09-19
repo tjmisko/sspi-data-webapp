@@ -2,7 +2,7 @@
 ItemType: Indicator
 ItemCode: CSTUNT
 DatasetCodes:
-  - GHO_CSTUNT
+  - UNSDG_CSTUNT
 ItemName: Child Stunting
 Description: Estimated prevalence of stunting in children under 5 (%).
 Footnote: null
