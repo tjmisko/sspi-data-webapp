@@ -717,12 +717,6 @@ def regression_imputation(
     )
     # ---------- 5. train ----------
     train = X.join(y, how="inner").dropna()
-    
-    # Check if we have enough data after cleaning
-    if train.empty:
-        print(f"Warning: No valid training data available for {target_indicator} regression imputation")
-        return []
-    
     X_train, y_train = train.drop(columns="target"), train["target"]
     model = LinearRegression(fit_intercept=True).fit(X_train, y_train)
     # ---------- 4. predict ----------
