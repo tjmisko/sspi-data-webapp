@@ -4,6 +4,16 @@
         <span class="site-title-line"> Shared-Prosperity</span>
         <span class="site-title-line"> Policy Index</span>
     </a>
+
+    <!-- CSS-only hamburger menu using checkbox hack -->
+    <input type="checkbox" id="menu-toggle" class="menu-toggle-checkbox">
+    <label for="menu-toggle" class="hamburger-menu" aria-label="Toggle menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </label>
+
+    <!-- Desktop Navigation -->
     <div class="header-nav-bar">
         <ol class="header-nav-bar-link-list">
             <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.data') }}"><div>Data</div></a></li>
@@ -11,13 +21,32 @@
             <li><a class="header-nav-bar-link" href="{{ url_for('client_bp.about') }}"><div>About</div></a></li>
         </ol>
     </div>
+
+    <!-- Desktop Theme Toggle -->
     <div class="theme-toggle-container" id="theme-toggle-container"></div>
+
+    <!-- Mobile Menu (shown when checkbox is checked) -->
+    <nav class="mobile-menu">
+        <ol class="mobile-menu-list">
+            <li><a class="mobile-menu-link" href="{{ url_for('client_bp.data') }}">Data</a></li>
+            <li><a class="mobile-menu-link" href="{{ url_for('client_bp.methodology') }}">Methodology</a></li>
+            <li><a class="mobile-menu-link" href="{{ url_for('client_bp.about') }}">About</a></li>
+        </ol>
+        <div class="mobile-theme-toggle-container" id="mobile-theme-toggle-container"></div>
+    </nav>
+
     <script>
         // Initialize observable storage and SSPICharts array
         window.observableStorage = new ObservableStorage();
         window.SSPICharts = [];
-        
+
         // Instantiate theme toggle component immediately after loading
         new ThemeToggle(document.getElementById('theme-toggle-container'));
+
+        // Initialize mobile theme toggle
+        const mobileToggleContainer = document.getElementById('mobile-theme-toggle-container');
+        if (mobileToggleContainer) {
+            new ThemeToggle(mobileToggleContainer);
+        }
     </script>
 </header>
