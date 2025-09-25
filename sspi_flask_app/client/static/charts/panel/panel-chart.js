@@ -37,11 +37,13 @@ class PanelChart {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options')
         this.chartOptions.innerHTML = `
-<button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
-    <svg class="hide-chart-options-svg" width="24" height="24">
-        <use href="#icon-close" />
-    </svg>
-</button>
+<div class="hide-chart-button-container">
+    <button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
+        <svg class="hide-chart-options-svg" width="24" height="24">
+            <use href="#icon-close" />
+        </svg>
+    </button>
+</div>
 <details class="item-information chart-options-details">
     <summary class="item-information-summary">Item Information</summary>
     <select class="item-dropdown"></select>
