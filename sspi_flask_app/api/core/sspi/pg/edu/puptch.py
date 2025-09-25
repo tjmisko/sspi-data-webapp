@@ -1,15 +1,19 @@
-from sspi_flask_app.api.core.sspi import compute_bp
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from flask_login import login_required, current_user
 from flask import current_app as app, Response
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
-    goalpost
+    goalpost,
+    extrapolate_forward,
+    extrapolate_backward,
+    interpolate_linear
 )
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_metadata
+    sspi_metadata,
+    sspi_imputed_data
 )
 
 
@@ -27,3 +31,21 @@ def compute_puptch():
     )
     sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+@impute_bp.route("/PUPTCH", methods=['POST'])
+@login_required
+def impute_puptch():
+    sspi_imputed_data.delete_many({"IndicatorCode": "PUPTCH"})
+    puptch_clean = sspi_clean_api_data.find({"DatasetCode": "WB_PUPTCH"})
+    forward = extrapolate_forward(puptch_clean, 2023, ["CountryCode", "DatasetCode"], impute_only=True)
+    backward = extrapolate_backward(puptch_clean, 2000, ["CountryCode", "DatasetCode"], impute_only=True)
+    interpolated = interpolate_linear(puptch_clean, ["CountryCode", "DatasetCode"], impute_only=True)
+    lg, ug = sspi_metadata.get_goalposts("PUPTCH")
+    scored_list, _ = score_indicator(
+        forward + backward + interpolated, "PUPTCH",
+        score_function=lambda WB_PUPTCH: goalpost(WB_PUPTCH, lg, ug),
+        unit="Ratio"
+    )
+    sspi_imputed_data.insert_many(scored_list)
+    return parse_json(scored_list)
+
