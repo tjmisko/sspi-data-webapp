@@ -76,7 +76,7 @@ def finalize_all_production_data():
     )
 
 
-@finalize_bp.route("/production/finalize/static/rank")
+@finalize_bp.route("/finalize/gstatic/rank")
 @login_required
 def finalize_sspi_static_rank_data():
     """
@@ -132,7 +132,7 @@ def finalize_sspi_static_rank_data():
     return "Successfully finalized rank data!"
 
 
-@finalize_bp.route("/production/finalize/static/stack")
+@finalize_bp.route("/finalize/gstatic/stack")
 @login_required
 def finalize_static_overall_stack_data():
     sspi_static_stack_data.delete_many({})
@@ -195,7 +195,7 @@ def finalize_static_overall_stack_data():
     return "Successfully finalized stack data!"
 
 
-@finalize_bp.route("/production/finalize/static/radar")
+@finalize_bp.route("/finalize/gstatic/radar")
 @login_required
 def finalize_sspi_static_radar_data():
     sspi_static_radar_data.delete_many({})
@@ -259,7 +259,7 @@ def finalize_sspi_static_radar_data():
     return "Successfully finalized radar data!"
 
 
-@finalize_bp.route("/production/finalize/dynamic/line")
+@finalize_bp.route("/finalize/gdynamic/line")
 @login_required
 def finalize_dynamic_line_data():
     """
@@ -395,7 +395,7 @@ def finalize_dynamic_line_score_datasets():
         count += 1
 
 
-@finalize_bp.route("/production/finalize/dynamic/matrix")
+@finalize_bp.route("/finalize/gdynamic/matrix")
 @login_required
 def finalize_dynamic_matrix_data():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
@@ -469,7 +469,7 @@ def finalize_matrix_iterator(local_path, endpoints):
         count += 1
 
 
-@finalize_bp.route("/production/finalize/dynamic/score")
+@finalize_bp.route("/finalize/gdynamic/score")
 @login_required
 def finalize_sspi_dynamic_score():
     """
