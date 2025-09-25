@@ -235,6 +235,8 @@ class PanelChart {
                         clickRadius: 2,
                         tooltipBg: this.headerBackgroundColor,
                         tooltipFg: this.titleColor,
+                        circleColor: this.tickColor,
+                        guideColor: this.tickColor,
                         labelField: 'CCode',
                         showDefaultLabels: true,
                         defaultLabelSpacing: 5,
@@ -440,19 +442,19 @@ class PanelChart {
         if (theme !== "light") {
             this.theme = "dark"
             this.tickColor = "#bbb"
+            this.guideColor = "#333333"
             this.axisTitleColor = "#bbb"
             this.titleColor = "#ccc"
         } else {
             this.theme = "light"
             this.tickColor = "#444"
+            this.guideColor = "#bbbbbb"
             this.axisTitleColor = "#444"
             this.titleColor = "#444"
             this.headerBackgroundColor = "#f0f0f0"
         }
         const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
         this.headerBackgroundColor = bg
-        
-        // Update chart with new theme colors while preserving y-axis scale
         if (this.chart) {
             this.updateChartOptions()
             this.updateChartPreservingYAxis()

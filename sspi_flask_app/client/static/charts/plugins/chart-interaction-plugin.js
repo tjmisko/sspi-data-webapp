@@ -28,15 +28,15 @@ const chartInteractionPlugin = {
     fadeAlpha: 0.1,
     
     // Visual guide settings
-    circleColor: "rgba(0,0,0,.5)",
+    circleColor: "#bbbbbb",
     circleWidth: 1,
-    guideColor: "rgba(0,0,0,.35)",
+    guideColor: "#bbbbbb",
     guideWidth: 1,
     guideDash: [],
     
     // Tooltip settings
     tooltipBg: "rgba(255,255,255,0.85)",
-    tooltipFg: "#000",
+    tooltipFg: "#111",
     tooltipFont: "12px sans-serif",
     tooltipPad: 6,
     tooltipGap: 10,
