@@ -16,7 +16,7 @@
   color: var(--green-accent, #000);
   text-decoration: none;
   align-items: flex-start;
-  margin: 5px 0;
+  margin-bottom: 5px;
 }
 
 
@@ -290,7 +290,8 @@
 }
 
 /* Responsive Media Queries */
-@media screen and (max-width: 700px) {
+/* Hamburger breakpoint: corresponds to --hamburger-break-width in variables.css */
+@media screen and (max-width: 850px) {
   .site-header {
     padding: 0.5em 1em;
     align-items: center;
@@ -316,7 +317,7 @@
   }
 }
 
-@media screen and (min-width: 701px) {
+@media screen and (min-width: 851px) {
   .hamburger-menu,
   .mobile-menu,
   .menu-toggle-checkbox {

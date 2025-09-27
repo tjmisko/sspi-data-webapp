@@ -1,0 +1,26 @@
+.analysis-metadata-line {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+}
+
+.analysis-author-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: row;
+}
+
+.analysis-author-list-element:not(:first-child)::before {
+  content: ",";
+}
+.analysis-author-list-element {
+  color: var(--low-importance-font-color);
+}
+
+.analysis-date {
+  color: var(--low-importance-font-color);
+}
+.methodology-subsection
+.methodology-wrapper
