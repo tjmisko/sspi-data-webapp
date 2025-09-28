@@ -1,0 +1,1 @@
+The only question I had was trying to understand the reasons behind why the weights for the indicators in each pillar were equal. I now understand that this doesn't cause big changes. Thank you!
