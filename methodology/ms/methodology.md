@@ -3,7 +3,7 @@ ItemType: Pillar
 ItemName: Market Structure
 ItemCode: MS
 Description: Placeholder
-ShortDescription: Measures policies which by which countries structure markets to provide goods and services.
+ShortDescription: Measures policies by which countries structure and regulate markets.
 CategoryCodes:
   - WEN
   - WWB
