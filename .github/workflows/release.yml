@@ -1,0 +1,93 @@
+name: release-and-deploy
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - name: Install deps & test
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest -q
+
+      - name: Build runtime tarball
+        run: |
+          VER="${GITHUB_REF_NAME}"
+          mkdir -p dist
+          TAR="sspi-${VER}.tar.gz"
+          tar -czf "dist/${TAR}" \
+            --exclude-vcs --exclude='__pycache__' --exclude='*.pyc' \
+            --exclude='env' --exclude='local' --exclude='logs' \
+            --exclude='tests' --exclude='documentation' --exclude='*.egg-info' \
+            ./sspi_flask_app ./connector ./cli ./datasets ./scripts \
+            ./config.py ./requirements.txt ./pyproject.toml
+          (cd dist && sha256sum "${TAR}" > "${TAR}.sha256")
+
+      - name: Publish GitHub Release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/sspi-${{ github.ref_name }}.tar.gz
+            dist/sspi-${{ github.ref_name }}.sha256
+
+  deploy:
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release assets
+        uses: robinraju/release-downloader@v1.10
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          fileName: "sspi-${{ github.ref_name }}.*"
+          out-file-path: dist
+
+      - name: Start ssh-agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy over SSH
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}        # e.g. sspi.world
+          USER: ${{ secrets.DEPLOY_USER }}        # deploy
+          BASE: ${{ secrets.DEPLOY_PATH }}        # /srv/sspi
+          VER:  ${{ github.ref_name }}            # tag name
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" "mkdir -p '$BASE/releases/$VER'"
+          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".sha256 "$USER@$HOST":"$BASE/releases/$VER/"
+
+          ssh "$USER@$HOST" bash -s <<'EOF'
+          set -euo pipefail
+          BASE="${BASE:-/srv/sspi}"
+          VER="${VER}"
+          DIR="$BASE/releases/$VER"
+          cd "$DIR"
+          sha256sum -c "sspi-$VER.sha256"
+          tar -xzf "sspi-$VER.tar.gz"
+          python3 -m venv env
+          ./env/bin/pip install --no-cache-dir --upgrade pip wheel
+          ./env/bin/pip install --no-cache-dir -r requirements.txt
+          ./env/bin/pip install --no-cache-dir -e .
+          touch sspi.world.wsgi
+          "from sspi_flask_app import init_app" >> sspi.world.wsgi
+          "from config import ProdConfig" >> sspi.world.wsgi
+          "application = init_app(ProdConfig)" >> sspi.world.wsgi
+          ln -sfn "$BASE/shared" ./.shared
+          ln -sfn "$DIR" "$BASE/current"
+          sudo /usr/sbin/apachectl graceful
+          EOF
+        shell: bash
+        env:
+          BASE: ${{ secrets.DEPLOY_PATH }}
+          VER:  ${{ github.ref_name }}
