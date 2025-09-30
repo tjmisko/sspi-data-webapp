@@ -1,4 +1,4 @@
-name: release-and-deploy
+name: deploy
 on:
   push:
     tags: ["v*"]
@@ -34,6 +34,7 @@ jobs:
 
       - name: Publish GitHub Release assets
         uses: softprops/action-gh-release@v2
+
         with:
           files: |
             dist/sspi-${{ github.ref_name }}.tar.gz
