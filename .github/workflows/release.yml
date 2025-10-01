@@ -46,7 +46,7 @@ jobs:
             --exclude='.env' \
             ./sspi_flask_app ./connector ./cli ./datasets ./scripts \
             ./config.py ./requirements.txt ./pyproject.toml
-          (cd dist && sha256sum "${TAR}" > "${TAR}.sha256")
+          (cd dist && sha256sum "${TAR}" > "sspi-${VER}.sha256")
 
       - name: Publish GitHub Release assets
         uses: softprops/action-gh-release@v2
