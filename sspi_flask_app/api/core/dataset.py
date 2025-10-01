@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, jsonify, render_template, request
+import logging
 from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.datasets import (
@@ -11,6 +12,8 @@ from sspi_flask_app.api.resources.utilities import (
     reduce_dataset_list,
 )
 from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
+
+log = logging.getLogger(__name__)
 
 dataset_bp = Blueprint(
     "dataset_bp",
@@ -86,6 +89,7 @@ def collect_iterator(dataset_list, **kwargs):
     Generate the collect iterator for the dataset list 
     """
     reduced_dataset_list = reduce_dataset_list(dataset_list)
+    log.info(reduced_dataset_list)
     for ds in reduced_dataset_list:
         source_info = sspi_metadata.get_source_info(ds)
         if sspi_raw_api_data.raw_data_available(source_info):
