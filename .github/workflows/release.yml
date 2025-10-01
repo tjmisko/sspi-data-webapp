@@ -83,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
           ssh -o StrictHostKeyChecking=accept-new "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE/releases/$VER'"
-          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".sha256 "$DEPLOY_USER@$DEPLOY_HOST":"$DEPLOY_BASE/releases/$VER/"
+          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".tar.gz.sha256 "$DEPLOY_USER@$DEPLOY_HOST":"$DEPLOY_BASE/releases/$VER/"
 
           ssh "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'EOF'
           set -euo pipefail
@@ -91,7 +91,7 @@ jobs:
           VER="${VER}"
           DIR="$DEPLOY_BASE/releases/$VER"
           cd "$DIR"
-          sha256sum -c "sspi-$VER.sha256"
+          sha256sum -c "sspi-$VER.tar.gz.sha256"
           tar -xzf "sspi-$VER.tar.gz"
           python3 -m venv env
           ./env/bin/pip install --no-cache-dir --upgrade pip wheel
