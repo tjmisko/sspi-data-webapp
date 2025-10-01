@@ -75,15 +75,15 @@ jobs:
 
       - name: Deploy over SSH
         env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}        # e.g. sspi.world
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}        # deploy
-          DEPLOY_BASE: ${{ secrets.DEPLOY_PATH }}        # /srv/sspi
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_BASE: ${{ secrets.DEPLOY_PATH }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          VER:  ${{ github.ref_name }}            # tag name
+          VER:  ${{ github.ref_name }}
         run: |
           set -euo pipefail
           ssh -o StrictHostKeyChecking=accept-new "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE/releases/$VER'"
-          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".sha256 "$DEPLOY_USER@$DEPLO_HOST":"$DEPLOY_BASE/releases/$VER/"
+          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".sha256 "$DEPLOY_USER@$DEPLOY_HOST":"$DEPLOY_BASE/releases/$VER/"
 
           ssh "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'EOF'
           set -euo pipefail
