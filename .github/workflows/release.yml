@@ -25,7 +25,6 @@ jobs:
 
       - name: Install deps & test
         run: |
-          apt install
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pytest -q
