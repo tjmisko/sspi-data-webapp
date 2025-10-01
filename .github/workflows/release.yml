@@ -71,25 +71,25 @@ jobs:
       - name: Start ssh-agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: "${{ secrets.SSH_PRIVATE_KEY }}"
 
       - name: Deploy over SSH
         env:
-          HOST: ${{ secrets.DEPLOY_HOST }}        # e.g. sspi.world
-          USER: ${{ secrets.DEPLOY_USER }}        # deploy
-          BASE: ${{ secrets.DEPLOY_PATH }}        # /srv/sspi
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}        # e.g. sspi.world
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}        # deploy
+          DEPLOY_BASE: ${{ secrets.DEPLOY_PATH }}        # /srv/sspi
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           VER:  ${{ github.ref_name }}            # tag name
         run: |
           set -euo pipefail
-          ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" "mkdir -p '$BASE/releases/$VER'"
-          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".sha256 "$USER@$HOST":"$BASE/releases/$VER/"
+          ssh -o StrictHostKeyChecking=accept-new "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_BASE/releases/$VER'"
+          scp dist/sspi-"$VER".tar.gz dist/sspi-"$VER".sha256 "$DEPLOY_USER@$DEPLO_HOST":"$DEPLOY_BASE/releases/$VER/"
 
-          ssh "$USER@$HOST" bash -s <<'EOF'
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'EOF'
           set -euo pipefail
-          BASE="${BASE:-/srv/sspi}"
+          DEPLOY_BASE="${DEPLOY_BASE:-/srv/sspi}"
           VER="${VER}"
-          DIR="$BASE/releases/$VER"
+          DIR="$DEPLOY_BASE/releases/$VER"
           cd "$DIR"
           sha256sum -c "sspi-$VER.sha256"
           tar -xzf "sspi-$VER.tar.gz"
@@ -102,9 +102,9 @@ jobs:
           "from config import ProdConfig" >> sspi.world.wsgi
           "application = init_app(ProdConfig)" >> sspi.world.wsgi
           touch
-          ln -sfn "$BASE/shared" ./.shared
-          ln -sfn "$DIR" "$BASE/current"
-          ln -sfn "$BASE/secrets/.env" ./.env
+          ln -sfn "$DEPLOY_BASE/shared" ./.shared
+          ln -sfn "$DIR" "$DEPLOY_BASE/current"
+          ln -sfn "$DEPLOY_BASE/secrets/.env" ./.env
           sudo /usr/sbin/apachectl graceful
           EOF
         shell: bash
