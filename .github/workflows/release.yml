@@ -60,14 +60,20 @@ jobs:
     needs: build-release
     runs-on: ubuntu-latest
     steps:
-      - name: Download release assets
+      - name: Download release tarball
         uses: robinraju/release-downloader@v1.10
         with:
           repository: ${{ github.repository }}
           tag: ${{ github.ref_name }}
-          fileName: |
-            sspi-${{ github.ref_name }}.tar.gz
-            sspi-${{ github.ref_name }}.sha256
+          fileName: sspi-${{ github.ref_name }}.tar.gz
+          out-file-path: dist
+
+      - name: Download release sha256
+        uses: robinraju/release-downloader@v1.10
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          fileName: sspi-${{ github.ref_name }}.sha256
           out-file-path: dist
 
       - name: Start ssh-agent
