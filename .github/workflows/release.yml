@@ -89,6 +89,3 @@ jobs:
           sudo /usr/sbin/apachectl graceful
           EOF
         shell: bash
-        env:
-          BASE: ${{ secrets.DEPLOY_PATH }}
-          VER:  ${{ github.ref_name }}
