@@ -106,11 +106,13 @@ jobs:
           ./env/bin/pip install --no-cache-dir --upgrade pip wheel
           ./env/bin/pip install --no-cache-dir -r requirements.txt
           ./env/bin/pip install --no-cache-dir -e .
-          touch sspi.world.wsgi
-          "from sspi_flask_app import init_app" >> sspi.world.wsgi
-          "from config import ProdConfig" >> sspi.world.wsgi
-          "application = init_app(ProdConfig)" >> sspi.world.wsgi
-          touch
+          cat > sspi.world.wsgi << 'PYWSGI'
+          from sspi_flask_app import init_app
+          from config import ProdConfig
+
+          application = init_app(ProdConfig)
+          PYWSGI
+
           ln -sfn "$DEPLOY_BASE/shared" ./.shared
           ln -sfn "$DIR" "$DEPLOY_BASE/current"
           ln -sfn "$DEPLOY_BASE/secrets/.env" ./.env
