@@ -16,7 +16,7 @@
   color: var(--green-accent, #000);
   text-decoration: none;
   align-items: flex-start;
-  margin-bottom: 5px;
+  margin: 5px 0;
 }
 
 
@@ -299,7 +299,7 @@
 
   .header-titlebox {
     flex-grow: 1;
-    margin-bottom: 0;
+    margin: 0;
   }
 
   .hamburger-menu {
