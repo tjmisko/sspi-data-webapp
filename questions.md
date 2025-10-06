@@ -6,10 +6,21 @@ description: >
 purpose: >
     Students should refer back to the questions here throughout their research to remind themselves about the big picture questions about the SSPI.
 ---
+
 ## Core Questions
 
+### Weighting and Aggregation
+- Why does the SSPI use equal weights for policy indicators, categories, and pillars?
+- If we use equal weights across each level, then don't the weights at the overall level become unequal? How do we interpret this in the context of the SSPI? How would an SSPI computed with equal weights across all indicators differ?
+- What does the difference between arithmetic and geometric averaging?
+- How much does the weighting across indicators matter? How should we quantify that in the context of dynamic data? How should we set up sensitivity testing to accomplish this?
+
+### Measuring Policy and Proxying 
+- How are proxy measures determined, and how rigorously are their approximations to the target variable evaluated? For example, with the case of beef consumption in India being more likely indicative of a cultural norm than a policy success, how can we better isolate policy effects or at least better understand confounding variables?
+
 ### Universality of Policy
-- The paper talked about how there are ideal policy benchmarks that are set, but is there a universal, international benchmark given that policy landscape varies so much by country?
+- The paper discusses ideal policy benchmarks that are set. How do we decide what a universal, international benchmark is? 
+- We know that the policy landscape varies so much by country, so how do we decide which policies must be universal, and which to leave open to the preferences and interpretations of individual countries?
 
 ### Accounting for Country Size
 - How are we standardizing our findings across sizes of countries? Small country like Singapore or Luxembourg may have a different set of policies available to them than large countries like 
@@ -22,9 +33,6 @@ purpose: >
     - What does the minimum at the national level tell us? How does its interpretation differ from the state by state average? **How might measuring the national minimum address questions about inequality, access, and distribution?**
 - Additionally, how do we account for the effect of supranational bodies like the European Union? The EU can set policies across many countries simultaneously through regulations promulgated from Brussels. Can we see the effect of this in important EU policies that affect many European countries simultaneously, but not countries outside the European Union?
 
-### Measuring Policy and Proxying 
-- How are proxy measures determined, and how rigorously are their approximations to the target variable evaluated? For example, with the case of beef consumption in India being more likely indicative of a cultural norm than a policy success, how can we better isolate policy effects or at least better understand confounding variables?
-
 ### History and Culture
 - The SSPI is *ahistorical*: it does not consider the particular histories of each country, the cultures that emerged over that long history, and the historical memory that informs the political constraints on policy in those countries. What would reintroducing some of those considerations look like in the context of particular countries in the SSPI? Might we be able to explain some policy challenges (low score in the SSPI) on the basis of historical and/or culture factors? How would these considerations change the SSPI?
 
@@ -35,4 +43,3 @@ The discussion of “Who is in charge” (Section II, p.3) makes the power relat
 - Neoliberal economics imagines positive sum transactions among agents free to refuse or engage, but we know that countries exert power over other countries all the time. Under these conditions, the prosperity of one country may come at the direct loss of another. Perhaps we could call this the dark side of interdependence. 
 - I wonder if this would be an interesting comparative perspective to take on: to present exports, lack of homegrown industry, etc. of one country in direct relation to another, potentially shedding light on colonial history (Belgium's economic interests in the DRC, skilled medical practitioners emigrating from Sierra Leone to Britain).
 - In the SSPI, is it possible to model the effect of one country's policies on another with respect to the power relations among them? How might we quantify or model those power relations? Perhaps by modeling the countries as a network, with links across former colonies?
-
