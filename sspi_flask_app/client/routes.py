@@ -18,40 +18,27 @@ def build_download_tree_structure():
         dict: Tree structure with SSPI -> Pillars -> Categories -> Indicators
     """
     try:
-        # Get all item details
         all_items = sspi_metadata.item_details()
-        
         if not all_items:
             return {"error": "No metadata items found"}
-        
-        # Organize items by type and code
         items_by_type = {
             'SSPI': [],
             'Pillar': [],
             'Category': [],
             'Indicator': []
         }
-        
         items_by_code = {}
-        
         for item in all_items:
             item_type = item.get('ItemType', 'Unknown')
             item_code = item.get('ItemCode', '')
-            
             if item_type in items_by_type:
                 items_by_type[item_type].append(item)
-            
             if item_code:
                 items_by_code[item_code] = item
-        
-        # Start with SSPI root
         sspi_items = items_by_type.get('SSPI', [])
         if not sspi_items:
             return {"error": "No SSPI root item found"}
-        
         sspi_item = sspi_items[0]  # Should only be one SSPI item
-        
-        # Build tree structure recursively
         def build_node(item, level=0):
             node = {
                 'itemCode': item.get('ItemCode', ''),
@@ -60,26 +47,18 @@ def build_download_tree_structure():
                 'level': level,
                 'children': []
             }
-            
-            # Get children codes
             children_codes = item.get('Children', [])
-            
             for child_code in children_codes:
                 child_item = items_by_code.get(child_code)
                 if child_item:
                     child_node = build_node(child_item, level + 1)
                     node['children'].append(child_node)
-            
-            # Sort children by ItemOrder if available, then by name
             node['children'].sort(key=lambda x: (
                 items_by_code.get(x['itemCode'], {}).get('ItemOrder', 999),
                 x['itemName']
             ))
-            
             return node
-        
         tree_structure = build_node(sspi_item)
-        
         return tree_structure
         
     except Exception as e:
@@ -196,6 +175,29 @@ def indicators():
     
     return render_template('indicators.html', 
                          indicators_data=indicators_data)
+
+
+@client_bp.route('/analysis')
+def analysis():
+    return render_template('analysis.html')
+
+@client_bp.route('/analysis/<analysis_code>')
+def analysis_page(analysis_code):
+    analysis_code = analysis_code.upper()
+    analysis_detail = sspi_metadata.get_analysis_detail(analysis_code)
+    analysis_title = analysis_detail.get("AnalysisTitle")
+    analysis_subtitle = analysis_detail.get("AnalysisSubtitle")
+    analysis_date = analysis_detail.get("Date")
+    analysis_authors = analysis_detail.get("Authors")
+    analysis_html = sspi_metadata.get_analysis_html(analysis_code)
+    return render_template(
+        'analysis-template.html',
+        title = analysis_title,
+        subtitle = analysis_subtitle,
+        authors = analysis_authors,
+        date = analysis_date,
+        analysis = analysis_html
+    )
 
 
 @client_bp.route('/methodology')

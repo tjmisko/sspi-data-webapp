@@ -39,10 +39,14 @@ def compute_crptax():
 def impute_crptax():
     app.logger.info("Running /api/v1/impute/CRPTAX")
     sspi_imputed_data.delete_many({"IndicatorCode": "CRPTAX"})
-    clean_crptax = sspi_indicator_data.find({"IndicatorCode": "CRPTAX"})
-    # forward = extrapolate_forward(clean_crptax, 2023, impute_only=True)
-    backward = extrapolate_backward(clean_crptax, 2000, impute_only=True)
-    interpolated = interpolate_linear(clean_crptax, impute_only=True)
-    imputed_crptax = backward + interpolated
+    clean_crptax = sspi_clean_api_data.find({"DatasetCode": "TF_CRPTAX"})
+    backward = extrapolate_backward(clean_crptax, 2000, ["CountryCode", "DatasetCode"], impute_only=True)
+    interpolated = interpolate_linear(clean_crptax, ["CountryCode", "DatasetCode"], impute_only=True)
+    lg, ug = sspi_metadata.get_goalposts("CRPTAX")
+    imputed_crptax, _ = score_indicator(
+        backward + interpolated, "CRPTAX",
+        score_function=lambda TF_CRPTAX: goalpost(TF_CRPTAX, lg, ug),
+        unit="Tax Rate"
+    )
     sspi_imputed_data.insert_many(imputed_crptax) 
     return parse_json(imputed_crptax)

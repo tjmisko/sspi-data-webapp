@@ -1,7 +1,7 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 import frontmatter
 from markdown import markdown
-from sspi_flask_app.models.errors import InvalidDocumentFormatError, MethodologyFileError, DatasetFileError
+from sspi_flask_app.models.errors import InvalidDocumentFormatError, MethodologyFileError, DatasetFileError, AnalysisFileError
 from flask import current_app as app
 import os
 import json
@@ -9,6 +9,7 @@ import yaml
 from bson import json_util
 import pandas as pd
 import logging
+from datetime import date
 
 log = logging.getLogger(__name__)
 
@@ -122,6 +123,12 @@ class SSPIMetadata(MongoWrapper):
             assert type(detail["DatasetCodes"]) is list, "DatasetCodes must be a list"
             assert all(isinstance(code, str) for code in detail["DatasetCodes"]), "All DatasetCodes must be strings"
 
+    def validate_analysis_detail_format(self, detail: dict):
+        assert "AnalysisTitle" in detail.keys(), "AnalysisTitle is required in detail"
+        assert "AnalysisCode" in detail.keys(), "AnalysisCode is required in detail"
+        assert "Authors" in detail.keys(), "Authors is required in detail"
+        assert "Date" in detail.keys(), "Date is required in detail"
+
     def validate_dataset_detail_format(self, detail: dict):
         assert "DatasetName" in detail.keys(), "DatasetName is required in detail"
         assert "DatasetCode" in detail.keys(), "DatasetCode is required in detail"
@@ -151,6 +158,10 @@ class SSPIMetadata(MongoWrapper):
         """
         dataset_details = self.load_dataset_files()
         dataset_details.sort(key=lambda x: x["DatasetCode"])
+        analysis_details = self.load_analysis_files()
+        for doc in analysis_details:
+            if isinstance(doc["Date"], date):
+                doc["Date"] = doc["Date"].strftime("%F")
         source_details = self.generate_source_details(dataset_details)
         source_details.sort(key=lambda x: x["Metadata"]["DatasetCodes"][0])
         item_details = self.load_methodology_files()
@@ -182,6 +193,10 @@ class SSPIMetadata(MongoWrapper):
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_item_details)
         metadata.extend(source_details)
+        metadata.extend([{
+            "DocumentType": "AnalysisDetail",
+            "Metadata": a
+        } for a in analysis_details])
         metadata.extend([{
             "DocumentType": "DatasetDetail",
             "Metadata": d
@@ -337,6 +352,31 @@ class SSPIMetadata(MongoWrapper):
             self.validate_item_detail_format(detail)
         
         return item_details
+
+    def load_analysis_files(self) -> list:
+        """
+        Walks through the analysis directory and loads the frontmatter
+        of all dataset files. Supports both flat and organization-nested structures.
+        :return: A list of dictionaries containing the metadata from the dataset files
+        """
+        analysis_dir = os.path.join(os.path.dirname(app.instance_path), "analysis")
+        print("Analysis Directory: ", analysis_dir)
+        details = []
+        for dirpath, dirnames, filenames in os.walk(analysis_dir):
+            for analysis_file in filenames:
+                full_analysis_path = os.path.join(dirpath, analysis_file)
+                try:
+                    detail = frontmatter.load(full_analysis_path)
+                except (ValueError, yaml.YAMLError) as e:
+                    raise AnalysisFileError(
+                        f"Error loading analysis file {full_analysis_path}: {e};\n"
+                        "It is likely that there is an error in the YAML frontmatter format."
+                    )
+                detail = detail.metadata
+                self.validate_analysis_detail_format(detail)
+                details.append(detail)
+        return details
+
 
     def load_dataset_files(self) -> list:
         """
@@ -584,6 +624,19 @@ class SSPIMetadata(MongoWrapper):
             return {}
         return result.get("Metadata", {})
 
+    def get_analysis_detail(self, analysis_code: str) -> dict:
+        """
+        Return a document containing indicator details for a specific IndicatorCode
+        """
+        query = {
+            "DocumentType": "AnalysisDetail",
+            "Metadata.AnalysisCode": analysis_code.upper()
+        }
+        result = self.find_one(query)
+        if not result:
+            return {}
+        return result.get("Metadata", {})
+
     def get_series_type(self, series_code: str) -> str|None:
         """
         """
@@ -748,6 +801,27 @@ class SSPIMetadata(MongoWrapper):
             {"DocumentType": "PillarCategorySummaryTree"}
         )["Metadata"] 
 
+    def get_analysis_html(self, analysis_code: str) -> str:
+        analysis_code = analysis_code.lower()
+        path_lst = [app.root_path, "..", "analysis", analysis_code + ".md"]
+        analysis_path = os.path.join(*path_lst)
+        with open(analysis_path, 'r', encoding='utf-8') as f:
+            analysis_page = f.read()
+        if not analysis_page:
+            analysis_html = f"<p>Invalid analysis code {analysis_code} requested.</p>"
+        try:
+            post = frontmatter.loads(analysis_page)
+            analysis_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+        except (ValueError, yaml.YAMLError) as e:
+            raise MethodologyFileError(
+                f"Error loading analysis file for {analysis_code}: {e};\n"
+                "Is there an error in the YAML frontmatter?"
+            )
+        return analysis_html 
+
+             
+
+
     def get_item_methodology_html(self, ItemCode: str) -> str:
         """
         Returns the HTML for the methodology of the given ItemCode
@@ -768,7 +842,7 @@ class SSPIMetadata(MongoWrapper):
         except (ValueError, yaml.YAMLError) as e:
             raise MethodologyFileError(
                 f"Error loading methodology file {methdology_fp}: {e};\n"
-                "It is likely that there is an error in the YAML frontmatter format."
+                "Is there an error in the YAML frontmatter?"
             )
         return methodology_html
 

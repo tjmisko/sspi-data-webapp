@@ -226,7 +226,7 @@ def test_item_details():
             "ItemType": "Pillar",
             "Pillar": "Market Structure",
             "PillarCode": "MS",
-            "ShortDescription": "Measures policies which by which countries structure markets to provide goods and services.",
+            "ShortDescription": "Measures policies by which countries regulate and structure markets.",
             "TreePath": "sspi/ms"
         },
         {

@@ -13,20 +13,12 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-# @collect_bp.route("/FAMPLN", methods=['GET'])
-# @login_required
-# def fampln():
-#     def collect_iterator(**kwargs):
-#         yield from collect_sdg_indicator_data("3.7.1", "FAMPLN", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
 @compute_bp.route("/FAMPLN", methods=["POST"])
 @login_required
 def compute_fampln():
     app.logger.info("Running /api/v1/compute/FAMPLN")
     sspi_indicator_data.delete_many({"IndicatorCode": "FAMPLN"})
-    fampln_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_FAMPLN"})
+    fampln_clean = sspi_clean_api_data.find({"DatasetCode": "WHO_FAMPLN"})
     lg, ug = sspi_metadata.get_goalposts("FAMPLN")
     scored_list, _ = score_indicator(
         fampln_clean, "FAMPLN",
