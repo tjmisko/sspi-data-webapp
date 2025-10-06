@@ -27,7 +27,7 @@ purpose: >
 - What is our core set of basic assumptions about how countries should conduct policy? Where (which categories and indicators) might that run aground of differing cultural values? How do we account for these differences?
 
 ### Accounting for Country Size
-- How are we standardizing our findings across sizes of countries? Small country like Singapore or Luxembourg may have a different set of policies available to them than large countries like 
+- How are we standardizing our findings across sizes of countries? Small country like Singapore or Luxembourg may have a different set of policies available to them than large countries like the United States, China, India, Russia, etc.
 - Countries may be large or small in geographic terms (land area) and in population terms (population size). How do we account for these differences? Does population size and/or geographic area predict SSPI scores? What (if anything) does that tell us about the relationship between country size and policy?
 
 ### Federalism and Supranational Organizations
