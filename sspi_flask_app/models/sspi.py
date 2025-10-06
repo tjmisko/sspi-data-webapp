@@ -101,6 +101,7 @@ class SSPI:
                 f"Symmetric difference: {symmetric_diff}\n"
                 f"Metadata codes: {sorted(indicator_codes_metadata)}\n"
                 f"Data codes: {sorted(indicator_codes_data)}"
+                f"CountryCode: {self.indicator_scores[0].get('CountryCode', '')}"
             )
 
     def score(self):
