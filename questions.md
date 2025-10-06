@@ -6,7 +6,6 @@ description: >
 purpose: >
     Students should refer back to the questions here throughout their research to remind themselves about the big picture questions about the SSPI.
 ---
-
 ## Core Questions
 
 ### Weighting and Aggregation
@@ -14,13 +13,17 @@ purpose: >
 - If we use equal weights across each level, then don't the weights at the overall level become unequal? How do we interpret this in the context of the SSPI? How would an SSPI computed with equal weights across all indicators differ?
 - What does the difference between arithmetic and geometric averaging?
 - How much does the weighting across indicators matter? How should we quantify that in the context of dynamic data? How should we set up sensitivity testing to accomplish this?
+- How do we think about the number of policies available to countries to affect a given outcome?
 
 ### Measuring Policy and Proxying 
 - How are proxy measures determined, and how rigorously are their approximations to the target variable evaluated? For example, with the case of beef consumption in India being more likely indicative of a cultural norm than a policy success, how can we better isolate policy effects or at least better understand confounding variables?
+- What are we actually measuring when we talk about policy strength or weakness? What is the difference, if any, in interpreting the data as data and interpreting the data as policy?
 
 ### Universality of Policy
 - The paper discusses ideal policy benchmarks that are set. How do we decide what a universal, international benchmark is? 
 - We know that the policy landscape varies so much by country, so how do we decide which policies must be universal, and which to leave open to the preferences and interpretations of individual countries?
+- How do we decide on goalposts for a given indicator? What research do we bring to bear to decide on goalposts? How does setting upper and lower goalposts differ methodologically?
+- What is our core set of basic assumptions about how countries should conduct policy? Where (which categories and indicators) might that run aground of differing cultural values? How do we account for these differences?
 
 ### Accounting for Country Size
 - How are we standardizing our findings across sizes of countries? Small country like Singapore or Luxembourg may have a different set of policies available to them than large countries like 
@@ -43,3 +46,6 @@ The discussion of “Who is in charge” (Section II, p.3) makes the power relat
 - Neoliberal economics imagines positive sum transactions among agents free to refuse or engage, but we know that countries exert power over other countries all the time. Under these conditions, the prosperity of one country may come at the direct loss of another. Perhaps we could call this the dark side of interdependence. 
 - I wonder if this would be an interesting comparative perspective to take on: to present exports, lack of homegrown industry, etc. of one country in direct relation to another, potentially shedding light on colonial history (Belgium's economic interests in the DRC, skilled medical practitioners emigrating from Sierra Leone to Britain).
 - In the SSPI, is it possible to model the effect of one country's policies on another with respect to the power relations among them? How might we quantify or model those power relations? Perhaps by modeling the countries as a network, with links across former colonies?
+
+### Waste
+- How do we measure policies to regulate the production of waste? What policies are available to countries? How successful have particular countries been in implementing these policies? Can we measure these policies at the national level?
