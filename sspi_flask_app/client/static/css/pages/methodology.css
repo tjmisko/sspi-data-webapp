@@ -1,17 +1,9 @@
 .print-style-article {
-    max-width: 70ch;
-    margin: 0 auto;
-    text-align: justify;
-    hyphens: auto;
+  max-width: 60ch;
+  margin: 0 auto;
+  line-height: 1.65;
 }
 
 .print-style-article p {
-    max-width: 70ch;
-    margin: 0 auto;
-    text-align: justify;
-    hyphens: auto;
-}
-
-.print-style-article p + p {
-    text-indent: 3em;
+    margin: 1.5em auto;
 }

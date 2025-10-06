@@ -23,7 +23,7 @@ def dynamic():
 def line(remote=False):
     click.echo("Finalizing Dynamic Line Data")
     connector = SSPIDatabaseConnector()
-    url = "/api/v1/production/finalize/dynamic/line"
+    url = "/api/v1/finalize/dynamic/line"
     stream_response(connector.call(url, remote=remote, stream=True))
     click.secho("\nFinalization Complete", fg="green")
 
@@ -33,7 +33,7 @@ def line(remote=False):
 def overview(remote=False):
     click.echo("Finalizing Dynamic Line Data")
     connector = SSPIDatabaseConnector()
-    url = "/api/v1/production/finalize/dynamic/matrix"
+    url = "/api/v1/finalize/dynamic/matrix"
     stream_response(connector.call(url, remote=remote, stream=True))
     click.secho("\nFinalization Complete", fg="green")
 
@@ -45,7 +45,7 @@ def overview(remote=False):
 def score(remote=False, country=[], country_group="SSPI67"):
     click.echo("Finalizing Dynamic Score Data")
     connector = SSPIDatabaseConnector()
-    url = "/api/v1/production/finalize/dynamic/score"
+    url = "/api/v1/finalize/dynamic/score"
     if country or country_group:
         url += "?"
     if country_group:

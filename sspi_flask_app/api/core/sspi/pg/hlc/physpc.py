@@ -1,34 +1,20 @@
-from sspi_flask_app.api.core.sspi import compute_bp
+from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from flask import current_app as app, Response
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_metadata
+    sspi_metadata,
+    sspi_imputed_data
 )
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
-    goalpost
+    goalpost,
+    extrapolate_forward,
+    extrapolate_backward,
+    interpolate_linear
 )
-
-# # PHYSPC for Correlation Analysis with UHC
-# @collect_bp.route("/PHYSPC", methods=['GET'])
-# @login_required
-# def physpc():
-#     def collect_iterator(**kwargs):
-#         yield from collect_who_data("UHC_INDEX_REPORTED", "PHYSPC", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
-
-# @collect_bp.route("/PHYSPC", methods=['GET'])
-# @login_required
-# def physpc():
-#     def collect_iterator(**kwargs):
-#         yield from collect_who_data("HWF_0001", "PHYSPC", **kwargs)
-#         yield from collect_sdg_indicator_data("3.8.1", "PHYSPC", **kwargs)
-#     return Response(collect_iterator(Username=current_user.username), mimetype='text/event-stream')
-
 
 @compute_bp.route("/PHYSPC", methods=["POST"])
 @login_required
@@ -44,3 +30,20 @@ def compute_physpc():
     )
     sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
+
+@impute_bp.route("/PHYSPC", methods=["POST"])
+@login_required
+def impute_physpc():
+    sspi_imputed_data.delete_many({"IndicatorCode": "PHYSPC"})
+    physpc_clean = sspi_clean_api_data.find({"DatasetCode": "WHO_PHYSPC"})
+    forward = extrapolate_forward(physpc_clean, 2023, ["CountryCode", "DatasetCode"], impute_only=True)
+    backward = extrapolate_backward(physpc_clean, 2000, ["CountryCode", "DatasetCode"], impute_only=True)
+    interpolated = interpolate_linear(physpc_clean, ["CountryCode", "DatasetCode"], impute_only=True)
+    lg, ug = sspi_metadata.get_goalposts("PHYSPC")
+    imputed_list, _ = score_indicator(
+        forward + backward + interpolated, "PHYSPC", 
+        score_function=lambda WHO_PHYSPC: goalpost(WHO_PHYSPC, lg, ug),
+        unit="Rate"
+    )
+    sspi_imputed_data.insert_many(imputed_list)
+    return parse_json(imputed_list)

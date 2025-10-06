@@ -1,6 +1,4 @@
 import secrets
-import json
-from bson import json_util
 from flask import (
     current_app as app,
     Blueprint,
@@ -17,8 +15,6 @@ from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from sspi_flask_app.models.database import sspi_user_data
 from sspi_flask_app import login_manager, flask_bcrypt
 
-# from sqlalchemy_serializer import SerializerMixin
-# from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     fresh_login_required,
     login_user,
@@ -270,7 +266,7 @@ def unauthorized():
 
 @login_manager.request_loader
 def load_user_from_request(request):
-    app.logger.debug(f"request_loader fired for request {request}")
+    app.logger.debug(f"Requested Login Protected Page {request.url}")
     auth_header = request.headers.get("Authorization")
     if not auth_header:
         return None
