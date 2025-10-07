@@ -13,15 +13,15 @@ from sspi_flask_app.api.resources.utilities import (
 )
 
 
-@compute_bp.route("/UNEMPL", methods=['POST'])
+@compute_bp.route("/UNEMPB", methods=['POST'])
 @login_required
-def compute_unempl():
-    app.logger.info("Running /api/v1/compute/UNEMPL")
-    sspi_indicator_data.delete_many({"IndicatorCode": "UNEMPL"})
-    unempl_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_BENFTS_UNEMP"})
-    lg, ug = sspi_metadata.get_goalposts("UNEMPL")
+def compute_unempb():
+    app.logger.info("Running /api/v1/compute/UNEMPB")
+    sspi_indicator_data.delete_many({"IndicatorCode": "UNEMPB"})
+    unempb_clean = sspi_clean_api_data.find({"DatasetCode": "UNSDG_BENFTS_UNEMP"})
+    lg, ug = sspi_metadata.get_goalposts("UNEMPB")
     scored_data, _ = score_indicator(
-        unempl_clean, "UNEMPL",
+        unempb_clean, "UNEMPB",
         score_function=lambda UNSDG_BENFTS_UNEMP: goalpost(UNSDG_BENFTS_UNEMP, lg, ug),
         unit="Benefits Coverage (%)"
     )
