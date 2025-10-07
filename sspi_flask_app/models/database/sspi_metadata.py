@@ -282,7 +282,7 @@ class SSPIMetadata(MongoWrapper):
         print("Methodology Directory: ", method_dir)
         details = []
         for dirpath, dirnames, filenames in os.walk(method_dir):
-            if not filenames:
+            if not filenames and "sources" not in dirpath:
                 raise MethodologyFileError(
                     f"No methodology.md files found in directory {dirpath}. "
                     "Please ensure that all directories in methodology are appropriately named "
