@@ -27,13 +27,6 @@ PillarCode: SUS
 * **Economic Incentives**: Caps and taxation on emissions, to incentiveses reduction by businesses. 
     * Existence and extent of carbon taxes, cap-and-trade system and more 
 
-# Thoughts & Questions
-* On the topic of weightage, it must be easier to prioritise and rank categories of GHG, given that there is clear emissions data. Some countries prioritise categories which emit a higher amount and that should be considered when comparing across countries  
-* Being careful not to overlap with the energy section (because the bulk of GHG is caused by energy production), what is the distinction between the GHG category and the other sustainability categories? 
-* Different countries adopt different policies based on their national context (e.g., some countries just can't harvest natural energy) so would it make more sense just to look at overall carbon emissions? 
-* Would PM2.5 and PM10 be an accurate measurement? They are pollutants more than GHGs. Is this category meant to be understanding GHGs which speed up global warming? 
-* Seems messy that some indicators directly measure pollution while others measure consumption, and others measure policies like fuel prices. 
-
 # Literature Review 
 Sources 
 * [Greenhouse Gas Protocol](https://ghgprotocol.org/policy-and-action-standard)
@@ -75,3 +68,26 @@ What data is used in the literature to measure policy and its effects? How is it
 A global one-of-its-kind framework to evaluate the effectiveness of policies and actions in reducing GHGs is the Policy and Action Standard by the World Resources Institute. it operates by evaluating a singple specific policy or a small group of policies. This process is done by identifying the sources/sinks for GHGs and estimating policy scenarios for each one of them. Together with a baseline emission, the estimated emission level will be found. Afterwards, there is an assessment of uncertainty and performance, based on established key performance indicators. 
 
 Usage of the Energy Indicators for Sustainable Development (EISD) (IAEA, 2005). This measured 30 indicators in three dimensions of Social, Economic and Environmental. This is a reliable and well-used framework which includes indicators like GHG per capita and Carbon Intensity of GDP. 
+
+# Looking at the SSPI 
+Strengths of current measurement: 
+* There is minimal overlap of policies as it steers clear of any areas which related to energy and land use.
+* Even between indicators, there are minimal overlaps with clear distiinction (I assume PM2.5 and PM10 were chosen as they don't include Methane, which is measured with beef consumption).
+
+Weaknesses of the current measurement: 
+* Would PM2.5 and PM10 be an accurate measurement? They are pollutants more than GHGs. Is this category meant to be understanding GHGs which speed up global warming? 
+* Seems messy that some indicators directly measure pollution while others measure consumption, and others measure policies like fuel prices. 
+* Uneven weightage between the different factors (e.g., transportation contributes more than beef consumption). 
+* Blind spots that are not being considered like the larger agriculture apart from beef consumption. 
+* Unclear distinction whether the measurement is on policies or a more ingrained culture (e.g., beef consumption, overall emissions). There could be clearer measures on some quantitative policies like taxations, subsidies. 
+
+Random thoughts & questions: 
+* On the topic of weightage, it must be easier to prioritise and rank categories of GHG, given that there is clear emissions data. Some countries prioritise categories which emit a higher amount and that should be considered when comparing across countries  
+* Being careful not to overlap with the energy section (because the bulk of GHG is caused by energy production), what is the distinction between the GHG category and the other sustainability categories? 
+* Different countries adopt different policies based on their national context (e.g., some countries just can't harvest natural energy) so would it make more sense just to look at overall carbon emissions? 
+
+Policies that could be measured: 
+* Emissions in agricultural sector based on agriculture output  
+* Total government per capita spending on green efforts (subsidies)
+* Existence of carbon taxes and cap and trade (need further literature on what the right amount would be)
+* Consider doing an overall GHG measurement 

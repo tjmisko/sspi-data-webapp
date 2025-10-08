@@ -4,7 +4,7 @@ ItemName: Healthcare
 ItemCode: HLC
 Category: Healthcare
 CategoryCode: HLC
-Description: Placeholder
+Description: Policies to equitably ensure quality healthy living across all groups
 ShortDescription: Policies providing access to basic healthcare services.
 IndicatorCodes:
   - ATBRTH
@@ -18,14 +18,14 @@ PillarCode: PG
 
 # First Impressions of the Category 
 * Accessibility - Costs of healthcare services
-  * Price of services pegged to the cost of living of the country 
+  * Price of services pegged to the cost of living in the country 
   * Extensiveness of subsidies 
-  * Government investmnet into healthcare per capita 
+  * Government investment in healthcare per capita 
 * Accessibility - Physical proximity to the services 
   * Geographical spread of medical services 
 * Quality of the doctors/nurses 
-  * Ratio of number of doctors to the number of residents in the country 
-  * Index for the quality of medical school education (number of doctors with formally recognised ceritification)
+  * Ratio of the number of doctors to the number of residents in the country 
+  * Index for the quality of medical school education (number of doctors with formally recognised certification)
 * Quality of the service itself 
   * Approximated waiting time for each category of severity 
 * Mental health services 
@@ -38,9 +38,6 @@ PillarCode: PG
   * Government support for caregivers 
   * Availability of specialists 
 
-# Thoughts & Questions
-* What level are we pegging this healthcare at, given that we are currently focused on more developed countries? 
-
 # Literature Review 
 Sources 
 * [Healthcare systems—an international review: an overview](https://doi.org/10.1093/ndt/14.suppl_6.3)
@@ -52,21 +49,56 @@ Sources
 * [Healthcare policies over the last 20 years: Reforms and counter-reforms](https://doi.org/10.1016/j.healthpol.2009.11.006) (future)
 
 ## Pursued Policies - successes, limitations, failures and unintended consequences
-In developing countries, there are two models of healthcare provision: 
-* Comprehensive primary healthcare which requires a change in socioeconomic status, distribution of resources, a focus on health system development, and emphasis on basic health services. It was considered too idealistic and expensive.
-* Selective primary healthcare, as currently used, is more disease-focused.
-
+There are a few ways of approaching healthcare policies 
+* Coverage and access policies 
+* Financing and cost control policies 
+* Service delivery and quality policies 
+* Preventive and public health policies (vaccinations, education, nudging)
+* Healthcare research innovation policies 
 
 ## Academic Debates 
-There are three main structures of healthcare funding: 
+There is consensus on the following topics 
+* Healthcare is a public good
+* There is a need to balance between efficiency and equity of services 
+* Preventive care is better than responsive care 
+
+There are debates around which is the better funding model and how much private companies should be involved, which can be categorised as: 
 * Beveridge model: based on taxation and has many public providers. Creates higher costs but high accessibility and quality
 * Bismarck ‘mixed’ model: funded by a premium financed social insurance system and with a mixture of public and private providers. Creates lower costs with high accessibility and quality 
-* Private Insurance model: only in existence in the US. Both hgh costs and low access, lowly ranked on quality paramaters 
+* Private Insurance model: only in existence in the US. Both high costs and low access, lowly ranked on quality parameters 
 
-The main debate is centred on how healthcare provision should work in developing countries, and whether the current services are efficient and comprehensive enough. 
+There are also debates on resource allocation and priority-setting. This extends to the developing countries and whether disease-specific intervention is the best approach. 
 
 ## Data 
 What data is used in the literature to measure policy and its effects? How is it quantitatively analyzed?
+Found [here](https://www.who.int/data/gho/data/indicators). 
 * Spatial accessibility of health care
+* Life expectancy (at birth, at 60)
+* Mortality 
+* Disability adjusted life years (DALYs)
+* Suicide rates 
+* Road traffic deaths and accidents 
+* Deaths due to unintentional poisoning 
+* Deaths due to noncommunicable diseases 
+* Maternal mortality 
+* Electrification of healthcare facilities 
+* Health infrastructure and systems 
+* Alcohol/substance use 
+* Air pollution
+* Antimicrobial resistance 
+* Assistive technology 
+
+# Looking at the SSPI 
+Strengths of current measurement: 
+* Comprehensive overview, especially with the use of indices, since some areas of safety are harder to quantify 
+
+Weaknesses of current measurement: 
+* Unclear what level of healthcare we are pegging this at, given that the current countries are developed ones and many of the indicators are bigger issues in developing countries 
+
+Policies that could be measured: 
+* Accessibility of healthcare services via costs and geographical proximity 
+* Quality of the service via approximated waiting time for each category of severity 
+* Mental health services via number of trained practitioners per capita 
+
 
 
