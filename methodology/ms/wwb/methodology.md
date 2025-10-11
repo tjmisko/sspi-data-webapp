@@ -7,7 +7,7 @@ CategoryCode: WWB
 Description: Research policies of reducing hours of work in Korea and Japan and gender disaggregated wage statistics
 ShortDescription: Policies promoting the safety of workers on and off the job
 IndicatorCodes:
-  - UNEMPL
+  - UNEMPB
   - MATERN
   - FATINJ
   - SENIOR
