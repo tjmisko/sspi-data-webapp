@@ -210,9 +210,14 @@ def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
 
 
-@client_bp.route('/compare')
-def compare_home():
-    return render_template("compare-home.html")
+@client_bp.route('/2018')
+def home_2018():
+    return render_template("2018-home.html")
+
+
+@client_bp.route('/2018/compare')
+def compare_home_2018():
+    return render_template("2018-compare-home.html")
 
 
 @client_bp.route('/compare/custom', methods=['POST'])

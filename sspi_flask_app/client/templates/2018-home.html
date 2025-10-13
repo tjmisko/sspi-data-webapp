@@ -1,0 +1,54 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>SSPI 2018 Data</title>
+{% endblock %}
+
+{% block content %}
+<article class="page-content">
+    <section class="hero-box">
+        <div class="hero-textbox"> 
+            <h1 class="hero-title">Sustainable and Shared Prosperity Index 2018</h1>
+            <p class="hero-p">
+                The 2018 SSPI measures the strength of national policies across
+                57 policy indicators across 49 countries in the year 2018. This 
+                "static" index is the progenitor to the 2000-2023 "dynamic" SSPI
+                presented <a href="/">here</a>.
+            </p> 
+            <p class="hero-p"> 
+                The SSPI organizes indicators into categories, each
+                of measures the performance of a package of related
+                policies in a specific sector. Categories are grouped into
+                pillars corresponding to the three core tasks of
+                government in the twenty-first century.
+            </p>
+        </div>
+        <div class="hero-aside-wrapper"> 
+            <div class="aside-box">
+                <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
+                <p class="hero-p">
+                    Our working paper conducts an in-depth cross-sectional
+                    analysis of country polcies from 2018 working paper using the SSPI.
+                </p>
+                <div class="aside-navigation">
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
+                        IRLE Working Paper
+                    </a>
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
+                        IRLE Climate and Society Center
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="home-chart-section-2018" >
+        <div id="overall-score-chart-parent"></div>
+    </section>
+    <script>
+    const overallChartParent = document.getElementById("overall-score-chart-parent");
+    SSPICharts.push(
+        new StaticOverallStackedBarChart(overallChartParent)
+    )
+    </script>
+</article>
+{% endblock %}

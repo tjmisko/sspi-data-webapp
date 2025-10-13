@@ -1,0 +1,10 @@
+.home-chart-section-2018 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2em;
+}
+
+#overall-score-chart-parent {
+  max-width: 800px;
+}

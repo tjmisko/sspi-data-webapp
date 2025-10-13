@@ -22,6 +22,7 @@
   padding: 1.25rem;
   max-width: min(85ch, 100%);
   border-radius: var(--border-radius-lg);
+  align-self: stretch;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
   box-sizing: border-box;
