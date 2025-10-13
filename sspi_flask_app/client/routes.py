@@ -275,11 +275,6 @@ def compare_brazil_india_indonesia():
     return render_template("compare/brazil-india-indonesia.html")
 
 
-@client_bp.route('/structure')
-def sspi_structure_tree():
-    return render_template("sspi-structure.html")
-
-
 @client_bp.route('/map')
 def world_map_page():
     return render_template("world-map.html")
