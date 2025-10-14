@@ -212,12 +212,12 @@ def make_widget(widgettype):
 
 @client_bp.route('/2018')
 def home_2018():
-    return render_template("2018-home.html")
+    return render_template("static/2018-home.html")
 
 
 @client_bp.route('/2018/compare')
 def compare_home_2018():
-    return render_template("2018-compare-home.html")
+    return render_template("static/2018-compare-home.html")
 
 
 @client_bp.route('/compare/custom', methods=['POST'])
@@ -267,17 +267,17 @@ def compare_custom():
 
 @client_bp.route('/2018/compare/sweden-france-japan')
 def compare_sweden_france_japan():
-    return render_template("compare/sweden-france-japan.html")
+    return render_template("static/compare/sweden-france-japan.html")
 
 
 @client_bp.route('/2018/compare/china-russia-usa')
 def compare_china_russia_usa():
-    return render_template("compare/china-russia-usa.html")
+    return render_template("static/compare/china-russia-usa.html")
 
 
 @client_bp.route('/2018/compare/brazil-india-indonesia')
 def compare_brazil_india_indonesia():
-    return render_template("compare/brazil-india-indonesia.html")
+    return render_template("static/compare/brazil-india-indonesia.html")
 
 
 @client_bp.route('/map')
@@ -295,11 +295,6 @@ def project_history():
     return render_template("history.html")
 
 
-@client_bp.route('/interview')
-def interview():
-    return render_template("interview/tree.html")
-
-
 @client_bp.route('/data/overview')
 def data_overview():
     return render_template("data-overview.html")
@@ -310,15 +305,15 @@ def outcome():
     return render_template("outcome.html")
 
 
-@client_bp.route('/static/scores')
+@client_bp.route('/2018/scores')
 def overall_scores():
-    return render_template("static-scores.html")
+    return render_template("static/2018-scores.html")
 
 
-@client_bp.route('/resources')
+@client_bp.route('/2018/resources')
 @login_required
 def paper_resources():
-    return render_template("paper-resources.html")
+    return render_template("/static/paper-resources.html")
 
 
 @client_bp.route('/api/v1/view/overview')

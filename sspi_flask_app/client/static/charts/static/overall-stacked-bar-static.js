@@ -80,7 +80,7 @@ class StaticOverallStackedBarChart {
                         intersect: false,
                         padding: 10,
                         backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        yAlign: 'center',
+                        xAlign: 'left',
                         callbacks: {
                             afterTitle(context) {
                                 const info = context[0].dataset.info[context[0].dataIndex]
@@ -92,10 +92,8 @@ class StaticOverallStackedBarChart {
                             label(context) {
                                 const info = context.dataset.info[context.dataIndex]
                                 return [
-                                    'Pillar: ' + info.IName,
-                                    'Pillar Score: ' + info.IName,
-                                    'Pillar Rank: ' + Number.parseFloat(info.Score).toFixed(3),
-                                    'Rank: ' + info.Rank,
+                                    info.IName + '\tScore:\t' + Number.parseFloat(info.Score).toFixed(3),
+                                    info.IName + '\tRank:\t' + info.Rank,
                                 ];
                             }
                         }
