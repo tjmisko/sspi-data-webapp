@@ -25,8 +25,9 @@
   </head>
 
   <body>
-    {% include 'symbols.html' %} <!-- Include symbols for use in the document -->
+    {% include 'symbols.html' %} <!-- Include SVG symbols for use in the document -->
     {% include 'header.html' %}
+    {% block subheader %}{% endblock %} <!-- Optional custom subheader -->
         <main>
             {% block content %}{% endblock %}
         </main>

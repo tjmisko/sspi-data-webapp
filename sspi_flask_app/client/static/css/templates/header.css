@@ -7,6 +7,8 @@
   border-bottom: var(--theme-border-thick, none);
   padding: 0 1.15em;
   box-sizing: content-box;
+  box-shadow: var(--theme-header-box-shadow, none);
+  z-index: 5;
 }
 
 .header-titlebox {
