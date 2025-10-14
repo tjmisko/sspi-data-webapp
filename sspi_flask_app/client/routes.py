@@ -265,17 +265,17 @@ def compare_custom():
     })
 
 
-@client_bp.route('/compare/sweden-france-japan')
+@client_bp.route('/2018/compare/sweden-france-japan')
 def compare_sweden_france_japan():
     return render_template("compare/sweden-france-japan.html")
 
 
-@client_bp.route('/compare/china-russia-usa')
+@client_bp.route('/2018/compare/china-russia-usa')
 def compare_china_russia_usa():
     return render_template("compare/china-russia-usa.html")
 
 
-@client_bp.route('/compare/brazil-india-indonesia')
+@client_bp.route('/2018/compare/brazil-india-indonesia')
 def compare_brazil_india_indonesia():
     return render_template("compare/brazil-india-indonesia.html")
 

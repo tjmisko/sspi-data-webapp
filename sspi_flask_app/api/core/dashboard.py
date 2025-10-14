@@ -27,6 +27,7 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_panel_data,
     sspi_static_rank_data,
+    sspi_static_metadata,
     sspi_static_radar_data,
     sspi_static_stack_data,
     sspi_indicator_dynamic_line_data,
@@ -224,7 +225,6 @@ def get_dynamic_score_line_data(item_code):
     name = detail["ItemName"]
     tree_path = detail.get("TreePath", "")
     tree_path_parts = tree_path.split("/")
-    
     # Build enriched treepath with itemCodes and itemNames for pillars and categories
     enriched_treepath = []
     for itemCode in tree_path_parts:
@@ -251,9 +251,7 @@ def get_dynamic_score_line_data(item_code):
                         "itemCode": itemCode.lower(),
                         "itemName": itemCode.upper()
                     })
-    
     description = detail.get("Description", "")
-    
     # Get children information for pillars and categories
     children_info = []
     child_type_title = None
@@ -347,32 +345,32 @@ def get_static_pillar_differential(pillar_code):
         return jsonify(
             {"error": "BaseCountry and ComparisonCountry must not be undefined"}
         ), 400
-    indicator_details = sspi_metadata.indicator_details()
+    item_details = sspi_static_metadata.item_details()
     base_country_data = parse_json(
         sspi_main_data_v3.find({"CountryCode": base_country}, {"_id": 0})
     )
-    base_sspi = SSPI(indicator_details, base_country_data, strict_year=False)
-    base_pillar = base_sspi.get_pillar(pillar_code)
+    base_sspi = SSPI(item_details, base_country_data, strict_year=False)
+    base_pillar = base_sspi.get_item(pillar_code)
     comparison_country_data = parse_json(
         sspi_main_data_v3.find({"CountryCode": comparison_country}, {"_id": 0})
     )
     comparison_sspi = SSPI(
-        indicator_details, comparison_country_data, strict_year=False
+        item_details, comparison_country_data, strict_year=False
     )
-    comparison_pillar = comparison_sspi.get_pillar(pillar_code)
+    comparison_pillar = comparison_sspi.get_item(pillar_code)
     by_category = []
     by_indicator = []
     assert base_pillar is not None
     assert comparison_pillar is not None
-    for category in base_pillar.categories:
-        category_code = category.code
-        comparison_category = comparison_pillar.get_category(category_code)
-        base_score = category.score()
-        comparison_score = comparison_category.score()
-        for indicator in category.indicators:
-            indicator_code = indicator.code
+    for category_code in base_pillar.category_codes:
+        category = base_sspi.get_item(category_code)
+        comparison_category = comparison_sspi.get_item(category_code)
+        base_score = category.score
+        comparison_score = comparison_category.score
+        for indicator_code in category.indicator_codes:
+            indicator = base_sspi.get_item(indicator_code)
             base_indicator_score = indicator.score
-            comparison_indicator = comparison_category.get_indicator(indicator.code)
+            comparison_indicator = comparison_sspi.get_item(indicator.code)
             comparison_indicator_score = comparison_indicator.score
             by_indicator.append(
                 {
@@ -427,34 +425,35 @@ def get_static_pillar_stack(pillar_code):
         return jsonify(
             {"error": "CountryCode URL Parameter must not be undefined"}
         ), 400
-    indicator_details = sspi_metadata.indicator_details()
+    item_details = sspi_static_metadata.item_details()
     datasets = []
     labels = []
     code_map = {}
     pillar_name = ""
     for i, cou in enumerate(country_codes):
-        cou_data = parse_json(sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0}))
-        cou_sspi = SSPI(indicator_details, cou_data, strict_year=False)
-        cou_pillar = cou_sspi.get_pillar(pillar_code)
-        assert cou_pillar is not None, f"Pillar {pillar_code} not found for country {cou}"
+        cou_data = sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0})
+        cou_sspi = SSPI(item_details, cou_data, strict_year=False)
+        pillar = cou_sspi.get_item(pillar_code)
+        assert pillar is not None, f"Pillar {pillar_code} not found for country {cou}"
         if i == 0:
-            pillar_name = cou_pillar.name
+            pillar_name = pillar.name
         country_lookup = pycountry.countries.get(alpha_3=cou) 
         assert country_lookup is not None, "Country not found"
         country_name = country_lookup.name
         country_flag = country_lookup.flag
         code_map[cou] = {"name": country_name, "flag": country_flag}
-        for j, category in enumerate(cou_pillar.categories):
-            # Only add the category label once
+        for j, cat_code in enumerate(pillar.category_codes):
+            category = cou_sspi.get_item(cat_code)
             if i == 0:
                 labels.append(category.name)
-            for indicator in category.indicators:
+            for ind_code in category.indicator_codes:
+                indicator = cou_sspi.get_item(ind_code)
                 dataset = {}
                 indicator_rank = sspi_static_rank_data.find_one(
                     {"ICode": indicator.code, "CCode": cou}, {"_id": 0}
                 )["Rank"]
-                data = [None] * len(cou_pillar.categories)
-                n_indicators = len(category.indicators)
+                data = [None] * len(pillar.category_codes)
+                n_indicators = len(category.indicator_codes)
                 dataset["CatCode"] = category.code
                 dataset["CatName"] = category.name
                 dataset["CName"] = category.name
