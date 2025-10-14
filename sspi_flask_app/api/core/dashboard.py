@@ -52,18 +52,6 @@ def get_database_status(database):
     return render_template("database-status.html", database=database, ndocs=ndocs)
 
 
-@dashboard_bp.route("/compare")
-@login_required
-def compare():
-    details = sspi_metadata.indicator_details()
-    option_details = []
-    for indicator in details:
-        option_details.append(
-            {key: indicator[key] for key in ["IndicatorCode", "Indicator"]}
-        )
-    return render_template("compare.html", indicators=option_details)
-
-
 @dashboard_bp.route("/static/indicator/<IndicatorCode>")
 def get_static_indicator_data(IndicatorCode):
     """
