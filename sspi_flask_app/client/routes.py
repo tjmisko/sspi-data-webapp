@@ -210,9 +210,14 @@ def make_widget(widgettype):
     return render_template("data-widget.html", widgettype=widgettype)
 
 
-@client_bp.route('/compare')
-def compare_home():
-    return render_template("compare-home.html")
+@client_bp.route('/2018')
+def home_2018():
+    return render_template("2018-home.html")
+
+
+@client_bp.route('/2018/compare')
+def compare_home_2018():
+    return render_template("2018-compare-home.html")
 
 
 @client_bp.route('/compare/custom', methods=['POST'])
@@ -260,24 +265,19 @@ def compare_custom():
     })
 
 
-@client_bp.route('/compare/sweden-france-japan')
+@client_bp.route('/2018/compare/sweden-france-japan')
 def compare_sweden_france_japan():
     return render_template("compare/sweden-france-japan.html")
 
 
-@client_bp.route('/compare/china-russia-usa')
+@client_bp.route('/2018/compare/china-russia-usa')
 def compare_china_russia_usa():
     return render_template("compare/china-russia-usa.html")
 
 
-@client_bp.route('/compare/brazil-india-indonesia')
+@client_bp.route('/2018/compare/brazil-india-indonesia')
 def compare_brazil_india_indonesia():
     return render_template("compare/brazil-india-indonesia.html")
-
-
-@client_bp.route('/structure')
-def sspi_structure_tree():
-    return render_template("sspi-structure.html")
 
 
 @client_bp.route('/map')

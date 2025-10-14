@@ -1,16 +1,25 @@
 {% extends 'layout.html' %}
 
+
+{% block title %}
+<title>SSPI 2018: Compare Countries</title>
+{% endblock %}
+
+{% block subheader %}
+{% include 'subheader.html' %}
+{% endblock %}
+
 {% block content %}
 <section class="comparison-article-options">
     <h1> Selected Country Comparisons (2018 Data) </h1>
     <article class="comparsion-article">
-        <a href="/compare/sweden-france-japan"> Sweden, France, Japan </a>
+        <a href="/2018/compare/sweden-france-japan"> Sweden, France, Japan </a>
     </article>
     <article class="comparsion-article">
-        <a href="/compare/china-russia-usa"> China, Russia, USA </a>
+        <a href="/2018/compare/china-russia-usa"> China, Russia, USA </a>
     </article>
     <article class="comparsion-article">
-        <a href="/compare/brazil-india-indonesia"> Brazil, India, and Indonesia</a>
+        <a href="/2018/compare/brazil-india-indonesia"> Brazil, India, and Indonesia</a>
     </article>
 </section>
 <section class="custom-country-comparison-section">

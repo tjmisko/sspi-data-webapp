@@ -1,20 +1,28 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+<title>SSPI 2018: Compare Countries</title>
+{% endblock %}
+
+{% block subheader %}
+{% include 'subheader.html' %}
+{% endblock %}
+
 {% block content %}
 <article class="comparison-article"> 
     {% block comparison_title %} {% endblock %}
     {% block comparison_subtitle %} {% endblock %}
     {% block comparison_radar %} {% endblock %}
 
-    <section class="pillar-section">
+    <section class="compare-pillar-section">
         <h3> Sustainability </h3>
         {% block sustainability %}{% endblock %}
     </section>
-    <section class="pillar-section">
+    <section class="compare-pillar-section">
         <h3> Market Structure </h3>
         {% block market_structure %}{% endblock %}
     </section>
-    <section class="pillar-section">
+    <section class="compare-pillar-section">
         <h3> Public Goods </h3>
         {% block public_goods %}{% endblock %}
     </section>

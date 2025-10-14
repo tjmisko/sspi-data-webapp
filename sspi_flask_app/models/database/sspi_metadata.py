@@ -363,6 +363,8 @@ class SSPIMetadata(MongoWrapper):
         print("Analysis Directory: ", analysis_dir)
         details = []
         for dirpath, dirnames, filenames in os.walk(analysis_dir):
+            if "notebooks" in dirpath:
+                continue
             for analysis_file in filenames:
                 full_analysis_path = os.path.join(dirpath, analysis_file)
                 try:
