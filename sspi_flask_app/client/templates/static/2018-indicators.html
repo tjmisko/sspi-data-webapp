@@ -1,9 +1,13 @@
 {% extends 'layout.html' %}
 
+{% block subheader %}
+{% include 'subheader.html' %}
+{% endblock %}
+
 {% block content %}
 <div class="indicators-page">
     <h2>SSPI Indicators Overview</h2>
-    <p class="page-description">Explore the complete structure of SSPI indicators, grouped by pillar and category. Click on indicators to view their constituent datasets and methodological details.</p>
+    <p class="page-description">Explore the complete structure of SSPI indicators, grouped by pillar and category.</p>
     
     <div class="indicators-container">
         {% if indicators_data.error %}
@@ -47,14 +51,11 @@
                                     <div class="indicator-item" data-indicator-code="{{ indicator.indicator_code }}">
                                         <div class="indicators-indicator-header">
                                             <div class="indicator-info">
-                                                <button class="collapse-toggle-btn" aria-label="Toggle datasets">
-                                                    <span class="collapse-icon">▼</span>
-                                                </button>
                                                 <div class="indicator-main-info">
                                                     <h5 class="indicator-name">{{ indicator.indicator_name }}</h5>
                                                     <span class="indicator-code">{{ indicator.indicator_code }}</span>
                                                 </div>
-                                                <a href="/data/indicator/{{ indicator.indicator_code }}" class="view-data-btn">
+                                                <a href="/2018/data/indicator/{{ indicator.indicator_code }}" class="view-data-btn">
                                                     View Indicator Data
                                                 </a>
                                             </div>
@@ -67,27 +68,6 @@
                                             </div>
                                             {% endif %}
                                             
-                                            {% if indicator.datasets %}
-                                            <div class="datasets-section">
-                                                <h6>Datasets</h6>
-                                                <div class="datasets-list">
-                                                    {% for dataset in indicator.datasets %}
-                                                    <div class="dataset-item">
-                                                        <div class="dataset-info">
-                                                            <div class="dataset-name">{{ dataset.dataset_name }}</div>
-                                                            <div class="dataset-code">{{ dataset.dataset_code }}</div>
-                                                        </div>
-                                                        {% if dataset.organization_code %}
-                                                        <div class="dataset-source">
-                                                            <span class="source-label">Source:</span>
-                                                            <span class="source-org">{{ dataset.organization_code }}</span>
-                                                        </div>
-                                                        {% endif %}
-                                                    </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                            {% endif %}
                                         </div>
                                     </div>
                                     {% endfor %}
