@@ -2,6 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <meta name="darkreader-lock">
     {% block title %}{% endblock %}
     <script>
         window.theme = localStorage.getItem("theme")
@@ -24,8 +25,9 @@
   </head>
 
   <body>
-    {% include 'symbols.html' %} <!-- Include symbols for use in the document -->
+    {% include 'symbols.html' %} <!-- Include SVG symbols for use in the document -->
     {% include 'header.html' %}
+    {% block subheader %}{% endblock %} <!-- Optional custom subheader -->
         <main>
             {% block content %}{% endblock %}
         </main>

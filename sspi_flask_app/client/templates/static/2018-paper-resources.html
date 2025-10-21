@@ -45,7 +45,7 @@
             <script defer>
             window.RadarSWE = new CategoryRadarStatic("SWE", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
             window.RadarFRA = new CategoryRadarStatic("FRA", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
-            window.RadarJPN = new CategoryRadarStatic("JPN", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
+            window.RadarNLD = new CategoryRadarStatic("NLD", document.getElementById('radar-chart-flex-container-1'), "#111", "#33333333")
             </script>
             <div id="chart-and-button-wrapper-2" class="chart-and-button-wrapper">
                 <section id="radar-chart-flex-container-2" class="radar-chart-flex-container datawindow"> </section>
@@ -74,12 +74,12 @@
                     window.RadarUSA,
                     window.RadarIND,
                     window.RadarIDN,
-                    window.RadarJPN]
+                    window.RadarNLD]
                 )
             }, 1000)
             const save1 = document.createElement('button')
             save1.id = 'save1'
-            save1.innerHTML = 'Save SWE-FRA-JPN'
+            save1.innerHTML = 'Save SWE-FRA-NLD'
             save1.style.padding = '10px'
             save1.style.margin = '10px'
             save1.style.fontSize = '16px'
@@ -92,7 +92,6 @@
             save1.style.margin = '10px'
             save1.style.fontSize = '16px'
             save2.style.color = 'black'
-
             document.getElementById('chart-and-button-wrapper-2').prepend(save2)
             const save3 = document.createElement('button')
             save3.id = 'save3'
@@ -106,7 +105,7 @@
                 const element = document.getElementById('radar-chart-flex-container-1');
                 html2canvas(element, {backgroundColor: null}).then(canvas => {
                     const link = document.createElement('a');
-                    link.download = 'SWE-FRA-JPN.png';
+                    link.download = 'SWE-FRA-NDL.png';
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                 });

@@ -49,13 +49,28 @@ class SSPI:
                 msg = f"Unknown ItemType {item_type} in item details."
                 raise InvalidDocumentFormatError(msg)
             self._item_detail_table[item_code] = item_obj 
+        self.items = [self.root] + self.pillars + self.categories + self.indicators
 
     def validate_input_assumptions(self):
         if self.strict_year:
             assert [s['Year'] for s in self.indicator_scores], \
-                "Year must be specified in indicator_scores"
-        assert self.root, "SSPI root item not found in item details."
-        
+            "Year must be specified in indicator_scores"
+        if not self.root: # SSPI root item not found in item details (for Static Back-Compatibility)
+            self.root = Root({
+                "Description": "The Sustainable and Shared Proseperity Index scores national policies across three pillars: Sustainability, Market Structure, and Public Goods\n",
+                "DocumentType": "SSPIDetail",
+                "ItemCode": "SSPI",
+                "ItemName": "Sustainable and Shared Prosperity Policy Index",
+                "ItemOrder": 0,
+                "ItemType": "SSPI",
+                "PillarCodes": [
+                    "SUS",
+                    "MS",
+                    "PG"
+                ],
+                "ShortDescription": "The Sustainable and Shared Proseperity Index scores national policies across three pillars: Sustainability, Market Structure, and Public Goods\n",
+                "TreePath": "sspi"
+            })
         if self.strict_year:
             # Fragile design: enforce year consistency when strict_year=True
             years = [ind.get('Year') for ind in self.indicator_scores]
@@ -101,6 +116,7 @@ class SSPI:
                 f"Symmetric difference: {symmetric_diff}\n"
                 f"Metadata codes: {sorted(indicator_codes_metadata)}\n"
                 f"Data codes: {sorted(indicator_codes_data)}"
+                f"CountryCode: {self.indicator_scores[0].get('CountryCode', '')}"
             )
 
     def score(self):
@@ -138,39 +154,16 @@ class SSPI:
 
     def to_rank_dict(self, country_code: str, year: int) -> dict:
         """Export all items as dictionaries suitable for ranking"""
-        # Fragile design: require valid year parameter, no defaults
-        assert year is not None, "Year parameter is required - no fallback allowed"
-        
-        results = {}
-        
-        # Root SSPI
-        assert hasattr(self.root, 'year') and self.root.year is not None, \
-            "Root SSPI item missing year - invalid state"
-        assert self.root.year == year, \
-            f"Root SSPI year {self.root.year} doesn't match expected year {year}"
-        results["SSPI"] = {
-            "CCode": country_code,
-            "Score": self.root.score,
-            "IName": "SSPI",
-            "ICode": "SSPI",
-            "Year": self.root.year
-        }
-        
-        # Pillars, Categories, Indicators
-        for item in self._item_detail_table.values():
-            assert hasattr(item, 'year') and item.year is not None, \
-                f"Item {item.code} missing year - invalid state"
-            assert item.year == year, \
-                f"Item {item.code} year {item.year} doesn't match expected year {year}"
-            results[item.code] = {
-                "CCode": country_code,
-                "Score": item.score,
-                "IName": item.name,
+        rank_dict = {}
+        for item in self.items:
+            rank_dict[item.code] = {
                 "ICode": item.code,
-                "Year": item.year
+                "IName": item.name,
+                "CCode": country_code,
+                "Year": year,
+                "Score": item.score,
             }
-        
-        return results
+        return rank_dict
 
     def get_all_items(self) -> list:
         """Get all items (pillars, categories, indicators) as a flat list"""

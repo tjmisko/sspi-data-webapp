@@ -1,8 +1,12 @@
 {% extends 'layout.html' %}
 
+{% block subheader %}
+{% include 'subheader.html' %}
+{% endblock %}
+
 {% block content %}
 <article class="print-style-article">
-    <h2> Methodology</h2>
+<h2> Methodology</h2>
 
 <p>The SSPI is calculated for forty-nine countries, which comprise the
 Organisation for Economic Cooperation and Development (OECD), the Group
@@ -14,6 +18,7 @@ account for 90% of world GDP and approximately 67% of the world
 population. They also account for the large majority of greenhouse gas
 emissions.</p>
 
+<h3> Developing Policy Indicators </h3>
 <p>Our research team relied upon a large body of literature that
 described and analyzed the various policies and programs, and focused on
 best practices across countries or in selected countries. We especially
@@ -42,6 +47,7 @@ quality data is used. We also used sensitivity testing to evaluate how
 sensitive an indicator was to the use of different variables and their
 aggregation into the relevant category.</p>
 
+<h3> Direct Measures and Policy Proxies </h3>
 <p>In designing policy indicators, we opted for the most direct
 measurement of policy for which reliable data were available for 2018.
 Where possible, direct measurements of policy were used to create policy
@@ -70,6 +76,7 @@ policies, each adapted to a particular geographic, cultural, and
 political context, that countries may pursue to achieve a universal
 policy goal.</p>
 
+<h3> Organizing Policy Indicators </h3>
 <p>The Indicator Table describes the data used in constructing the three
 Pillars. Public Goods is the broadest pillar and includes government
 programs of the goods and services that are directly supplied by the
@@ -116,6 +123,7 @@ transportation network, with the infrastructure commonly built by
 governments and service either directly provided by the government or
 regulated through private companies.</p>
 
+<h3> Scoring Policy Indicators: Setting Goalposts to Evaluate Policies </h3>
 <p>All indicators are set up so that a higher score represents a policy
 oriented toward a superior outcome. Each policy indicator is normalized
 to a value between 0 and 1, so that the widely varying data are
@@ -192,7 +200,5 @@ setting lower targets at the 2.5th percentile of the distribution. Each
 SDG indicator distribution is censored, with values exceeding the upper
 bound scored 100, and values below the lower bound scored 0.14.</p>
 
-<h2>Indicator Table</h2>
-    <div id="methodology-indicator-table"></div>
 
 {% endblock %}

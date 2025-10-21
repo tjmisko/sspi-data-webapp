@@ -1,11 +1,14 @@
 .site-header {
   display: flex;
-  padding: 0.4em 1.5em;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  align-items: end;
   background-color: var(--header-color, #000);
   border-bottom: var(--theme-border-thick, none);
+  padding: 0 1.15em;
+  box-sizing: content-box;
+  box-shadow: var(--theme-header-box-shadow, none);
+  z-index: 5;
 }
 
 .header-titlebox {
@@ -15,6 +18,7 @@
   color: var(--green-accent, #000);
   text-decoration: none;
   align-items: flex-start;
+  margin: 5px 0;
 }
 
 
@@ -27,7 +31,7 @@
 }
 
 .header-nav-bar {
-  position: relative;
+  align-self: stretch;
   width: 70%;
 }
 
@@ -36,16 +40,30 @@
   display: flex;
   justify-content: right;
   padding: 0 0.5em;
+  margin: 0;
+  height: 100%;
+}
+
+.header-nav-bar-link-list li {
+  padding: 0 1em;
+  display: flex;
 }
 
 .header-nav-bar-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
   font-family: var(--header-font-family, sans-serif);
   font-size: 0.8em;
   color: var(--header-text-color, #fff);
   font-family: sans-serif;
   text-decoration: none;
-  padding: 0 1em;
 }
+
+.header-nav-bar-link:hover {
+  border-bottom: 3px solid var(--green-accent);
+}
+
 
 .title-subdiv {
   flex: 0 1 min-content;
@@ -64,6 +82,10 @@
 
 /* theme-toggle.css */
 .theme-toggle-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
   max-width: 5em;
   padding-left: 1em;
   border-left: var(--theme-border-thin);
@@ -168,4 +190,139 @@
 
 .theme-toggle input:checked ~ .slider::before {
   transform: translateX(32px);
+}
+
+/* Hamburger Menu Styles */
+.menu-toggle-checkbox {
+  display: none;
+}
+
+.hamburger-menu {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-self: center;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-right: 1em;
+}
+
+.hamburger-line {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background-color: var(--header-text-color, #fff);
+  margin: 3px 0;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+/* Animate hamburger to X when checked */
+.menu-toggle-checkbox:checked ~ .hamburger-menu .hamburger-line:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.menu-toggle-checkbox:checked ~ .hamburger-menu .hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.menu-toggle-checkbox:checked ~ .hamburger-menu .hamburger-line:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
+/* Mobile Menu Styles */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--header-color, #000);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+}
+
+/* Show mobile menu when checkbox is checked */
+.menu-toggle-checkbox:checked ~ .mobile-menu {
+  transform: translateX(0);
+}
+
+.mobile-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2em 0;
+  text-align: center;
+}
+
+.mobile-menu-link {
+  display: block;
+  padding: 1em 2em;
+  color: var(--header-text-color, #fff);
+  text-decoration: none;
+  font-family: var(--header-font-family, sans-serif);
+  font-size: 1.2em;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-link:hover {
+  color: var(--green-accent, #8BA342);
+  transform: scale(1.05);
+}
+
+.mobile-theme-toggle-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+  border-top: var(--theme-border-thin);
+  min-width: 150px;
+}
+
+/* Responsive Media Queries */
+/* Hamburger breakpoint: corresponds to --hamburger-break-width in variables.css */
+@media screen and (max-width: 850px) {
+  .site-header {
+    padding: 0.5em 1em;
+    align-items: center;
+  }
+
+  .header-titlebox {
+    flex-grow: 1;
+    margin: 0;
+  }
+
+  .hamburger-menu {
+    display: flex;
+    z-index: 1000;
+  }
+
+  .header-nav-bar,
+  .theme-toggle-container {
+    display: none;
+  }
+
+  .site-title-line {
+    font-size: 0.95em;
+  }
+}
+
+@media screen and (min-width: 851px) {
+  .hamburger-menu,
+  .mobile-menu,
+  .menu-toggle-checkbox {
+    display: none !important;
+  }
 }

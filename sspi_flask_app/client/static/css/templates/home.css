@@ -22,6 +22,7 @@
   padding: 1.25rem;
   max-width: min(85ch, 100%);
   border-radius: var(--border-radius-lg);
+  align-self: stretch;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
   box-sizing: border-box;
@@ -98,7 +99,7 @@
 
 
 .pillar-link-title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--header-font-color);
   line-height: 1.2;
   margin: 0 0 0.25rem 0;

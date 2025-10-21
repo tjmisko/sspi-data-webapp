@@ -3,7 +3,7 @@ import json
 from sspi_flask_app.models.database import sspi_raw_api_data
 
 
-def collect_ilo_data(ilo_indicator_code, QueryParams="", URLParams=[], **kwargs):
+def collect_ilo_data(ilo_indicator_code, QueryParams="", URLParams: list=[], **kwargs):
     yield "Sending Data Request to ILO API\n"
     base_url = f"https://sdmx.ilo.org/rest/data/{ilo_indicator_code}"
     if QueryParams:

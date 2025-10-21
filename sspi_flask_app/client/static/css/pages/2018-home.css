@@ -1,0 +1,67 @@
+.static-subheader-bar {
+  background-color: var(--subheader-background-color, none);
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0.1em 1em;
+  z-index: 2;
+}
+.static-nav-subheader { 
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+  gap: 2em;
+  flex: 1 1 0;
+}
+
+.static-nav-subheader-link {
+  font-family: var(--header-font-family);
+  font-size: 0.8em;
+  text-decoration: none;
+}
+
+.static-subheader-title {
+  font-family: var(--title-font-family, sans-serif);
+  font-size: 0.8rem;
+  font-color: var(--text-color);
+  font-weight: 800;
+  flex: 0 1 0;
+  text-wrap: nowrap;
+  margin-right: 2em;
+}
+
+.static-subheader-tooltip {
+  border-radius: 0.5em;
+  font-size: 0.9rem;
+  position: absolute;
+  display: none;
+  padding: 0.25em 0.75em;
+  max-width: 60ch;
+  text-align: justify;
+  overflow-wrap: break-all;
+  top: 2em;
+  left: 0.5em;
+}
+.static-subheader-title:hover {
+  cursor: help;
+}
+.static-subheader-title:hover + .static-subheader-tooltip  {
+  background-color: var(--caution-background-color, rgba(150,100,0,0.95));
+  display: block;
+  cursor: help;
+}
+
+
+.home-chart-section-2018 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2em;
+}
+
+#overall-score-chart-parent {
+  max-width: 1000px;
+}
