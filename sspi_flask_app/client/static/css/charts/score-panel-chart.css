@@ -430,6 +430,7 @@
 
 .missing-countries-summary {
   font-size: 0.65em;
+  line-height: 1;
   color: var(--low-importance-font-color);
   margin-top: 0.2rem;
   font-style: italic;
