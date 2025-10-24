@@ -66,8 +66,10 @@ class PanelChart {
         </div>
         <div class="chart-view-subheader">Randomization</div>
         <div class="chart-view-option">
-            <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
-            <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
+            <div class="randomization-options">
+                <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
+                <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
+            </div>
         </div>
     </div>
 </details>

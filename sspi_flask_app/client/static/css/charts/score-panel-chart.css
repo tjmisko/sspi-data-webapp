@@ -222,7 +222,7 @@
 .chart-options-details .chart-view-subheader {
   font-size: 0.75em;
   font-weight: 600;
-  margin: 0.2rem 0 0.1rem 0;
+  margin: 0.4rem 0 0.2rem 0;
   padding: 0;
   color: var(--header-text-color);
   line-height: 1;
@@ -245,12 +245,14 @@
   min-width: fit-content;
   font-size: 0.75em;
   line-height: 1;
+  font-color: var(--low-importance-font-color);
 }
 
 .chart-options-details .y-axis-input-group input {
   flex: 1 1 0;
   margin: 0;
-  max-width: 120px;
+  max-width: 100px;
+  min-width: 0;
   padding: 0.1rem 0.3rem;
   font-size: 0.75em;
   line-height: 1;
@@ -411,8 +413,8 @@
   margin-top: 0.8rem;
 }
 
-.select-countries-options .chart-view-subheader:first-of-type {
-  margin-top: 0.2rem;
+.chart-view-subheader:first-of-type {
+  margin-top: 0.0rem;
 }
 
 /* Missing Countries section styling */
