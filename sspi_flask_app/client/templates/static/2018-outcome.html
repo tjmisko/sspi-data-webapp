@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block subheader %}
+{% include 'subheader.html' %}
+{% endblock %}
+
+{% block title %}
+<title> Outcome Variable Regressions </title>
+{% endblock title %}
+
+{% block content %}
+Hello this is the scatter page
+<section class="chart-section" id="outcome-scatter-section"></section>
+
+<script>
+    window.addEventListener("load", (event) => {
+        window.SSPICharts.push(
+            new OutcomeScatterStatic(document.getElementById("dynamic-data-section"), "{{ IndicatorCode | upper }}"),
+        );
+        const x = window.observableStorage.getItem('windowX');
+        const y = window.observableStorage.getItem('windowY');
+        
+        if (x !== null && y !== null) {
+          window.moveTo(parseInt(x), parseInt(y));
+        }
+    })
+    window.addEventListener('beforeunload', () => {
+        window.observableStorage.setItem('windowX', window.screenX);
+        window.observableStorage.setItem('windowY', window.screenY);
+    });
+</script>
+{% endblock content %}

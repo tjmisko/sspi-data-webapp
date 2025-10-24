@@ -520,7 +520,7 @@ updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
 this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
 updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
 getTheme(){return this.currentTheme}}
-const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"rgba(0,0,0,.5)",circleWidth:1,guideColor:"rgba(0,0,0,.35)",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#000",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
+const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"#bbbbbb",circleWidth:1,guideColor:"#bbbbbb",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#111",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_lastCollisionTime:0,_collisionCooldown:1000,_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);this._lastCollisionTime=0;}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
 catch(e){console.error("chartInteractionPlugin onDatasetClick:",e);}}}
 chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled){this._resetProximity(chart);return;}
 const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
@@ -535,9 +535,9 @@ const orderSeq=[...pinnedIndices,...unpinnedIndices];chart._labelOrder=Object.fr
 labels.forEach(l=>{l.order=chart._labelOrder[l.idx]??0;});labels.sort((a,b)=>a.order-b.order);const currentDatasetCount=labels.length;if(chart._lastDatasetCount!==currentDatasetCount){chart._defaultVisibleLabels=null;chart._lastDatasetCount=currentDatasetCount;}
 if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.size>0){const cachedIndices=Array.from(chart._defaultVisibleLabels);const maxCachedIndex=Math.max(...cachedIndices);if(maxCachedIndex>=labels.length){chart._defaultVisibleLabels=null;}}
 const shouldRebuild=!chart._defaultVisibleLabels||chart._defaultVisibleLabels.size===0||chart._needsLabelRebuild;if(shouldRebuild){chart._defaultVisibleLabels=null;chart._needsLabelRebuild=false;}
-if(opts.showDefaultLabels&&!chart._defaultVisibleLabels){const spacing=opts.defaultLabelSpacing;const defaultVisible=new Set();labels.forEach(label=>{label.occluded=false;});labels.forEach((label,labelIndex)=>{let hasCollision=false;let collisionWith=[];if(label.isPinned){defaultVisible.add(labelIndex);return;}
+const now=Date.now();const timeSinceLastCollision=now-this._lastCollisionTime;const shouldRunCollisionDetection=opts.showDefaultLabels&&!chart._defaultVisibleLabels&&timeSinceLastCollision>=this._collisionCooldown;if(shouldRunCollisionDetection){this._lastCollisionTime=now;console.log(`[Chart Plugin]Running collision detection at ${now}(${labels.length}labels)`);const spacing=opts.defaultLabelSpacing;const defaultVisible=new Set();labels.forEach(label=>{label.occluded=false;});labels.forEach((label,labelIndex)=>{let hasCollision=false;let collisionWith=[];if(label.isPinned){defaultVisible.add(labelIndex);return;}
 for(const higherPriorityIdx of defaultVisible){const higherPriority=labels[higherPriorityIdx];const horizontalOverlap=label.box.right+spacing>=higherPriority.box.left-spacing&&label.box.left-spacing<=higherPriority.box.right+spacing;const verticalOverlap=label.box.bottom+spacing>=higherPriority.box.top-spacing&&label.box.top-spacing<=higherPriority.box.bottom+spacing;if(horizontalOverlap&&verticalOverlap){hasCollision=true;collisionWith.push(`${higherPriority.text}${higherPriority.isPinned?' (pinned)':''}`);break;}}
-if(!hasCollision){defaultVisible.add(labelIndex);}else{label.occluded=true;}});chart._defaultVisibleLabels=defaultVisible;this._reorderDatasetsForVisibility(chart,labels,defaultVisible);}
+if(!hasCollision){defaultVisible.add(labelIndex);}else{label.occluded=true;}});chart._defaultVisibleLabels=defaultVisible;this._reorderDatasetsForVisibility(chart,labels,defaultVisible);}else if(opts.showDefaultLabels&&!chart._defaultVisibleLabels){}
 const occludedLabels=[];const visibleLabels=[];labels.forEach((l,i)=>{let alpha,reason;if(this._interaction.closestDatasetIdx!==null&&this._interaction.mouse){alpha=l.idx===this._interaction.closestDatasetIdx?1:opts.occludedAlpha;reason=`mouse interaction:${l.idx===this._interaction.closestDatasetIdx?'closest':'not closest'}`;}else if(opts.showDefaultLabels&&chart._defaultVisibleLabels){alpha=chart._defaultVisibleLabels.has(i)?1:opts.occludedAlpha;reason=`default visible:${chart._defaultVisibleLabels.has(i)?'in set':'not in set'}`;}else{alpha=opts.occludedAlpha;reason=`fallback:${opts.showDefaultLabels?'no default set':'default labels disabled'}`;}
 const labelInfo={label:l,alpha,reason,arrayIdx:i};if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.has(i)){visibleLabels.push(labelInfo);}else{occludedLabels.push(labelInfo);}});occludedLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});visibleLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});},_resetProximity(chart){chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(!ds._full)return;ds.borderColor=ds._full.border;ds.backgroundColor=ds._full.bg;ds._isNear=ds._isHover=false;if(meta?.dataset)meta.dataset.options.borderColor=ds.borderColor;meta?.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;if(p.__origR!==undefined){p.options.radius=p.__origR;delete p.__origR;}});});this._interaction.tooltipItems=null;this._interaction.closestDatasetIdx=null;},_clearLabelState(chart){chart._defaultVisibleLabels=null;chart._labelRandDone=false;chart._labelOrder=null;chart._lastDatasetCount=null;},_forceRefreshLabels(chart){this._clearLabelState(chart);chart._needsLabelRebuild=true;},_reorderDatasetsForVisibility(chart,labels,visibleLabelIndices){if(!chart.data?.datasets)return;const visibleLabelDatasetIndices=new Set();labels.forEach((label,labelIndex)=>{if(visibleLabelIndices.has(labelIndex)){visibleLabelDatasetIndices.add(label.idx);}});const datasets=chart.data.datasets;const datasetsWithHiddenLabels=[];const datasetsWithVisibleLabels=[];datasets.forEach((ds,index)=>{if(visibleLabelDatasetIndices.has(index)){datasetsWithVisibleLabels.push({dataset:ds,originalIndex:index});}else{datasetsWithHiddenLabels.push({dataset:ds,originalIndex:index});}});datasetsWithVisibleLabels.sort((a,b)=>{const aPinned=!!a.dataset.pinned;const bPinned=!!b.dataset.pinned;if(aPinned&&!bPinned)return 1;if(!aPinned&&bPinned)return-1;return 0;});const reorderedDatasets=[...datasetsWithHiddenLabels.map(item=>item.dataset),...datasetsWithVisibleLabels.map(item=>item.dataset)];const orderChanged=reorderedDatasets.some((ds,i)=>ds!==datasets[i]);if(orderChanged){chart.data.datasets=reorderedDatasets;}},_setupCanvas(ctx,font,color,alpha=1){ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.textAlign='left';},_fade(col,a){if(col.startsWith("rgba"))return col.replace(/, *[^,]+\)$/,`,${a})`);if(col.startsWith("rgb"))return col.replace("rgb","rgba").replace(")",`,${a})`);if(col[0]==="#"&&col.length===7)
 return col+Math.round(a*255).toString(16).padStart(2,"0");return col;},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
@@ -983,7 +983,7 @@ createNodeElement(node,isRoot=false){const ul=document.createElement('ul');ul.ro
 const li=document.createElement('li');li.role='none';const a=document.createElement('a');a.role='treeitem';a.ariaOwns=node.children.length?`id-${node.itemCode.toLowerCase()}-subtree`:null;a.ariaExpanded=node.children.length?(node.expanded?'true':'false'):null;a.tabIndex=-1;a.dataset.itemCode=node.itemCode;node.element=a;const label=document.createElement('span');label.className='label';if(node.children.length>0){const icon=document.createElement('span');icon.className='icon';icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"width="13"height="10"viewBox="0 0 13 10"><polygon points="2 1, 12 1, 7 9"></polygon></svg>`;icon.addEventListener('click',(e)=>{e.stopPropagation();this.handleToggle(node);});label.appendChild(icon);}
 label.appendChild(document.createTextNode(node.itemName));a.appendChild(label);li.appendChild(a);if(node.expanded&&node.children.length>0){node.children.forEach(child=>{li.appendChild(this.createNodeElement(child));});}
 ul.appendChild(li);return ul;}
-setupNavigation(){this.container.addEventListener('keydown',this.handleKeyDown.bind(this));this.container.addEventListener('click',this.handleClick.bind(this));document.body.addEventListener('focusin',this.handleFocusChange.bind(this));document.body.addEventListener('mousedown',this.handleFocusChange.bind(this));}
+setupNavigation(){this.boundHandleKeyDown=this.handleKeyDown.bind(this);this.boundHandleClick=this.handleClick.bind(this);this.boundHandleFocusChange=this.handleFocusChange.bind(this);this.container.addEventListener('keydown',this.boundHandleKeyDown);this.container.addEventListener('click',this.boundHandleClick);document.body.addEventListener('focusin',this.boundHandleFocusChange);document.body.addEventListener('mousedown',this.boundHandleFocusChange);}
 handleKeyDown(e){const activeElement=document.activeElement;if(activeElement&&(activeElement.tagName==='INPUT'||activeElement.tagName==='TEXTAREA'||activeElement.contentEditable==='true')){return;}
 if(e.target.getAttribute('role')!=='treeitem'){return;}
 const currentNode=this.findNodeByElement(e.target);if(!currentNode)return;this.navigationManager.moveTo(currentNode);let targetNode=null;switch(e.key){case'ArrowDown':targetNode=this.navigationManager.moveNext();break;case'ArrowUp':targetNode=this.navigationManager.movePrevious();break;case'ArrowRight':const expandResult=this.navigationManager.handleExpand();if(expandResult){if(expandResult.stateChanged){this.rebuildSubtree(expandResult.node);}
@@ -1006,7 +1006,10 @@ return null;}
 handleFocusChange(e){if(this.tree){this.navShell.classList.toggle('focus',this.tree.contains(e.target));}}
 highlightTreeItem(itemCode){this.container.querySelectorAll('[role="treeitem"]').forEach(el=>{el.classList.remove('active-view-element');el.tabIndex=-1;});const node=this.findNodeByItemCode(this.rootNode,itemCode);if(node&&node.element){node.element.classList.add('active-view-element');node.element.tabIndex=0;}else{if(this.rootNode.element){this.rootNode.element.tabIndex=0;}}}
 ensureItemVisible(itemCode){const node=this.findNodeByItemCode(this.rootNode,itemCode);if(node){const changedNodes=node.expandToRoot();if(changedNodes.length>0){changedNodes.forEach(changedNode=>{this.rebuildSubtree(changedNode);});this.navigationManager.rebuild();}
-this.highlightTreeItem(itemCode);}}}
+this.highlightTreeItem(itemCode);}}
+destroy(){if(this.container&&this.boundHandleKeyDown){this.container.removeEventListener('keydown',this.boundHandleKeyDown);this.container.removeEventListener('click',this.boundHandleClick);}
+if(document.body&&this.boundHandleFocusChange){document.body.removeEventListener('focusin',this.boundHandleFocusChange);document.body.removeEventListener('mousedown',this.boundHandleFocusChange);}
+this.container=null;this.reload=null;this.rootNode=null;this.navigationManager=null;this.tree=null;this.navShell=null;this.activeItemCode=null;this.boundHandleKeyDown=null;this.boundHandleClick=null;this.boundHandleFocusChange=null;}}
 class CountryScoreChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
 this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
 this.pins=new Set()
@@ -1129,7 +1132,8 @@ this.chartInteractionPlugin=chartInteractionPlugin
 this.setTheme(window.observableStorage.getItem("theme"))
 this.pinnedOnly=window.observableStorage.getItem("pinnedOnly")||false
 this.countryGroup=window.observableStorage.getItem("countryGroup")||"SSPI67"
-this.initRoot()
+this.randomN=window.observableStorage.getItem("randomN")||10
+this.randomHistoryIndex=0;this.initRoot()
 this.initChartJSCanvas()
 this.buildChartOptions()
 this.rigChartOptions()
@@ -1145,7 +1149,7 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-this.chartOptions.innerHTML=`<button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="draw-button">Draw 10 Countries</button><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -1167,11 +1171,18 @@ this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackw
 this.interpolateCheckbox=this.chartOptions.querySelector('.interpolate-linear')
 this.interpolateCheckbox.checked=true
 this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpolation()})
-this.drawButton=this.root.querySelector('.draw-button')
-this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
+this.randomHistoryBackButton=this.root.querySelector('.random-history-back-button')
+this.randomHistoryBackButton.addEventListener('click',()=>{this.randomHistoryBack()})
+this.randomHistoryBackButton.style.display="none";this.randomHistoryForwardButton=this.root.querySelector('.random-history-forward-button')
+this.randomHistoryForwardButton.addEventListener('click',()=>{this.randomHistoryForward()})
+this.randomHistoryForwardButton.style.display="none";this.drawButton=this.root.querySelector('.draw-button')
+this.drawButton.innerText="Draw "+this.randomN.toString()+" Countries";this.drawButton.addEventListener('click',()=>{this.showRandomN(this.randomN)})
 this.showInGroupButton=this.chartOptions.querySelector('.show-in-group-button')
 this.showInGroupButton.addEventListener('click',()=>{const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 this.showGroup(activeGroup)})
+this.randomNumberField=this.chartOptions.querySelector('.random-country-sample')
+this.randomNumberField.value=this.randomN
+this.randomNumberField.addEventListener('input',(event)=>{this.updateRandomN(this.randomNumberField.value)})
 const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
 let openDetails=window.observableStorage.getItem("openPanelChartDetails")
 detailsElements.forEach((details)=>{if(openDetails&&openDetails.includes(details.classList[0])){details.open=true}else{details.open=false}})
@@ -1186,7 +1197,7 @@ this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="pa
 this.title=this.chartContainer.querySelector('.panel-chart-title')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
@@ -1246,9 +1257,11 @@ dataset.backgroundColor=color+"44"}}
 setTheme(theme){const root=document.documentElement
 if(theme!=="light"){this.theme="dark"
 this.tickColor="#bbb"
+this.guideColor="#333333"
 this.axisTitleColor="#bbb"
 this.titleColor="#ccc"}else{this.theme="light"
 this.tickColor="#444"
+this.guideColor="#bbbbbb"
 this.axisTitleColor="#444"
 this.titleColor="#444"
 this.headerBackgroundColor="#f0f0f0"}
@@ -1303,7 +1316,6 @@ console.log('Seen countries:',Array.from(seenCountries))
 console.log('SGP in seen countries?',seenCountries.has('SGP'))
 let notSeenCount=0
 Object.entries(this.countryGroupMap).forEach(([countryCode,countryGroups])=>{if(!seenCountries.has(countryCode)){notSeenCount++
-if(countryCode==='SGP'){console.log(`SGP not seen-adding to missing.Groups:`,countryGroups)}
 missingCountries.push({CCode:countryCode,CName:countryCode,CGroup:countryGroups})}})
 console.log(`Countries not seen in datasets:${notSeenCount}`)
 console.log(`Total missing countries found:${missingCountries.length}`)
@@ -1338,17 +1350,36 @@ window.observableStorage.setItem("pinnedOnly",true)
 console.log('Hiding unpinned countries')
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
 this.updateChartPreservingYAxis()}
+updateRandomN(N){N=parseInt(N)
+if(isNaN(N)||N<=0){this.updateRandomN(10)}else{this.randomN=N;window.observableStorage.setItem("randomN",N);this.drawButton.innerText="Draw "+N.toString()+" Countries";}}
 showRandomN(N=10){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
 const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 let availableDatasetIndices=[]
 this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
 console.log('Showing',N,'random countries from group',activeGroup)
-this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
-let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
-shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
-console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
-this.updateChartPreservingYAxis()}
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
+if(dataset.drawHistoryArray===undefined){dataset.drawHistoryArray=new Array();}
+dataset.drawHistoryArray.push(0)})
+this.randomHistoryIndex=this.chart.data.datasets[0].drawHistoryArray.length-1;let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
+shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false;this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex]=1;console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)
+console.log(this.chart.data.datasets[index].drawHistoryArray)})
+this.updateChartPreservingYAxis()
+if(this.randomHistoryIndex>0){this.randomHistoryBackButton.style.display="block";this.randomHistoryForwardButton.style.display="none";}else{this.randomHistoryBackButton.style.display="none";}}
+randomHistoryBack(){if(this.randomHistoryIndex>0){this.randomHistoryIndex--}
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
+if(dataset.drawHistoryArray===undefined){console.log(underfined)}
+if(dataset.drawHistoryArray[this.randomHistoryIndex]==1){dataset.hidden=false}})
+this.updateChartPreservingYAxis()
+if(this.randomHistoryIndex==0){this.randomHistoryBackButton.style.display="none";}
+this.randomHistoryForwardButton.style.display="block";}
+randomHistoryForward(){const lastHistoryIndex=this.chart.data.datasets[0].drawHistoryArray.length-1;if(this.randomHistoryIndex<lastHistoryIndex){this.randomHistoryIndex++}
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
+if(dataset.drawHistoryArray===undefined){console.log(underfined)}
+if(dataset.drawHistoryArray[this.randomHistoryIndex]==1){dataset.hidden=false}})
+this.updateChartPreservingYAxis()
+if(this.randomHistoryIndex==lastHistoryIndex){this.randomHistoryForwardButton.style.display="none";}
+this.randomHistoryBackButton.style.display="block";}
 pinCountry(dataset){if(dataset.pinned){return}
 dataset.pinned=true
 dataset.hidden=false
@@ -1714,6 +1745,11 @@ this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree
     }
 
     buildItemTree(tree, selectedItemCode) {
+      // Cleanup existing tree instance before creating a new one
+      if (this.itemTreeObject && typeof this.itemTreeObject.destroy === 'function') {
+        this.itemTreeObject.destroy();
+      }
+      
       this.itemTreeObject = new SSPIItemTree(
         this.itemTree.querySelector('.item-tree-content'),   // only the content box
         tree,
@@ -2198,7 +2234,7 @@ class StaticOverallStackedBarChart {
                         intersect: false,
                         padding: 10,
                         backgroundColor: 'rgba(0,0,0,0.7)',
-                        yAlign: 'center',
+                        xAlign: 'left',
                         callbacks: {
                             afterTitle(context) {
                                 const info = context[0].dataset.info[context[0].dataIndex]
@@ -2210,10 +2246,8 @@ class StaticOverallStackedBarChart {
                             label(context) {
                                 const info = context.dataset.info[context.dataIndex]
                                 return [
-                                    'Pillar:' + info.IName,
-                                    'Pillar Score:' + info.IName,
-                                    'Pillar Rank:' + Number.parseFloat(info.Score).toFixed(3),
-                                    'Rank:' + info.Rank,
+                                    info.IName + '\tScore:\t' + Number.parseFloat(info.Score).toFixed(3),
+                                    info.IName + '\tRank:\t' + info.Rank,
                                 ];
                             }
                         }

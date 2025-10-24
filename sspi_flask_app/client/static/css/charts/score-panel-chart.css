@@ -49,11 +49,17 @@
   z-index: 2;
 }
 
+.hide-chart-button-container {
+  display: flex;
+  justify-content: right;
+  padding-top: 0.25em;
+  padding-bottom: 0.5em;
+}
+
 .hide-chart-options {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: relative;
   z-index: 2;
+  padding: 0;
 }
 
 .remove-button-legend-item {
@@ -216,7 +222,7 @@
 .chart-options-details .chart-view-subheader {
   font-size: 0.75em;
   font-weight: 600;
-  margin: 0.2rem 0 0.1rem 0;
+  margin: 0.4rem 0 0.2rem 0;
   padding: 0;
   color: var(--header-text-color);
   line-height: 1;
@@ -239,12 +245,14 @@
   min-width: fit-content;
   font-size: 0.75em;
   line-height: 1;
+  font-color: var(--low-importance-font-color);
 }
 
 .chart-options-details .y-axis-input-group input {
   flex: 1 1 0;
   margin: 0;
-  max-width: 120px;
+  max-width: 100px;
+  min-width: 0;
   padding: 0.1rem 0.3rem;
   font-size: 0.75em;
   line-height: 1;
@@ -355,17 +363,38 @@
 /* Inline layout for Country Group buttons */
 .chart-options-details .country-group-button-group {
   display: flex;
+  flex-direction: column;
   gap: 0.3rem;
   width: 100%;
 }
 
 .chart-options-details .country-group-button-group button {
-  flex: 1;
   margin: 0;
   padding: 0.2rem 0.3rem;
   font-size: 0.65em;
   line-height: 1.1;
-  white-space: nowrap;
+}
+
+.random-draw-controls {
+  display: flex;
+  justify-content: space-around;
+}
+
+.random-draw-controls .draw-button {
+  flex: 1 1 0;
+  white-space: wrap;
+  min-width: 0;
+}
+.random-draw-controls .random-history-back-button,.random-history-forward-button {
+  flex: 0 1 0;
+  margin: 3px;
+}
+
+.random-history-back-button,.random-history-forward-button svg {
+  margin: auto;
+  stroke: var(--text-color, #CCCCCC);
+  stroke-width: 1.5;
+  fill: none;
 }
 
 /* Form element styling for both themes */
@@ -405,8 +434,8 @@
   margin-top: 0.8rem;
 }
 
-.select-countries-options .chart-view-subheader:first-of-type {
-  margin-top: 0.2rem;
+.chart-view-subheader:first-of-type {
+  margin-top: 0.0rem;
 }
 
 /* Missing Countries section styling */
@@ -424,6 +453,7 @@
 
 .missing-countries-summary {
   font-size: 0.65em;
+  line-height: 1;
   color: var(--low-importance-font-color);
   margin-top: 0.2rem;
   font-style: italic;

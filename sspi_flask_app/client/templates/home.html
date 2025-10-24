@@ -1,14 +1,18 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+<title>Sustainable and Shared-Prosperity Policy Index</title>
+{% endblock %}
+
 {% block content %}
 <article class="page-content">
     <section class="hero-box">
         <div class="hero-textbox"> 
-            <h1 class="hero-title">How well are countries doing at supporting wellbeing for people and the planet?</h1>
+            <h1 class="hero-title">Policies supporting wellbeing for people and the planet are well known. To what extent are countries implementing them?</h1>
             <p class="hero-p">
                 The SSPI measures the strength of national policies across
                 57 policy indicators, offering a comprehensive and
-                data-driven look at policy around the world.
+                data-driven evaluation of policies across 66 countries.
             </p> 
             <p class="hero-p"> 
                 The SSPI organizes indicators into categories, each
@@ -42,21 +46,6 @@
         </div>
         <div class="hero-aside-wrapper"> 
             <div class="aside-box">
-                <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
-                <p class="hero-p">
-                    Our working paper conducts an in-depth cross-sectional
-                    analysis of country polcies from 2018 working paper using the SSPI.
-                </p>
-                <div class="aside-navigation">
-                    <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
-                        IRLE Working Paper
-                    </a>
-                    <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
-                        IRLE Climate and Society Center
-                    </a>
-                </div>
-            </div>
-            <div class="aside-box">
                 <h2 class="hero-title">National Policy Scores</h2>
                 <p class="hero-p">
                     Explore the latest SSPI data, with scores spanning from 2000 to 2023 across 67 countries.
@@ -76,9 +65,26 @@
                     </a>
                 </div>
             </div>
+            <div class="aside-box">
+                <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
+                <p class="hero-p">
+                    Our working paper conducts an in-depth cross-sectional
+                    analysis of country polcies from 2018 working paper using the SSPI.
+                </p>
+                <div class="aside-navigation">
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
+                        IRLE Working Paper
+                    </a>
+                    <a class="home-link aside-link" href="/2018" target="_blank">
+                        SSPI 2018 Data
+                    </a>
+                    <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
+                        IRLE Climate and Society Center
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
-    <hr>
     <section class="chart-section" id="overall-score-chart">
     </section>
 </article>

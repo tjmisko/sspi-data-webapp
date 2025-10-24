@@ -17,7 +17,7 @@ def reload(remote: bool):
     """
     connector = SSPIDatabaseConnector()
     url = "/api/v1/delete/clear/sspi_metadata"
-    result = connector.call(url, method="DELETE")
+    result = connector.call(url, method="DELETE", remote=remote)
     click.echo(result.text)
     if result.status_code != 200:
         raise click.ClickException(

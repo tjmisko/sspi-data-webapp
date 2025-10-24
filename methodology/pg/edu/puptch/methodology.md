@@ -11,7 +11,7 @@ Indicator: Primary Education Pupil to Teacher Ratio
 IndicatorCode: PUPTCH
 Inverted: true
 LowerGoalpost: 40.0
-Policy: "Investment in \nTeachers"
+Policy: Investment in and Recruitment of Teachers
 SourceOrganization: World Bank
 UpperGoalpost: 9.0
 ---

@@ -16,7 +16,8 @@ def query_database(database_string):
     try: 
         database = lookup_database(database_string)
         query_params = get_query_params(request, database)
-        return jsonify(parse_json(database.find(query_params, options={"_id": 0})))
+        limit = request.args.get('limit', type=int)
+        return jsonify(parse_json(database.find(query_params, options={"_id": 0}, limit=limit)))
     except InvalidDatabaseError as e:
         return jsonify({"error": "Invalid Database Provided: " + str(e)}), 400
     except InvalidQueryError as e:

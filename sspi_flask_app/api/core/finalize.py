@@ -37,7 +37,7 @@ finalize_bp = Blueprint(
 
 
 def finalize_iterator(local_path, endpoints):
-    # Defaulst for country_list and indicator_list
+    # Defaults for country_list and indicator_list
     try:
         coverage = DataCoverage(2000, 2023, "SSPI67")
         indicator_list = coverage.complete()
@@ -76,37 +76,32 @@ def finalize_all_production_data():
     )
 
 
-@finalize_bp.route("/production/finalize/static/rank")
+@finalize_bp.route("/finalize/static/rank")
 @login_required
 def finalize_sspi_static_rank_data():
     """
     Computes the SSPI scores at all levels and stores them in a database
     ItemCode is the PillarCode, CategoryCode, or IndicatorCode
     """
-    try:
-        sspi_static_rank_data.delete_many({})
-        country_codes = sspi_static_metadata.country_group("SSPI49")
-        item_details = sspi_static_metadata.item_details()
-        sspi_item_codes = ["SSPI"] + sspi_static_metadata.pillar_codes() + \
-            sspi_static_metadata.category_codes() + \
-            sspi_static_metadata.indicator_codes()
-        score_group_dictionary = {
-            item_code: [
-                {"CCode": "", "Score": 0, "Rank": 0,
-                    "IName": "", "ICode": "", "Year": 0}
-                for _ in country_codes]
-            for item_code in sspi_item_codes}
-        for i, cou in enumerate(country_codes):
-            country_data = sspi_main_data_v3.find({"CountryCode": cou})
-            sspi_scores = SSPI(item_details, country_data, strict_year=False)
-            
-            # Use the new helper method to get all rank dictionaries
-            rank_dicts = sspi_scores.to_rank_dict(cou, year=2018)
-            for item_code, rank_dict in rank_dicts.items():
-                if item_code in score_group_dictionary:
-                    score_group_dictionary[item_code][i].update(rank_dict)
-    except Exception as e:
-        return f"error: Static rank finalization failed for country {cou if 'cou' in locals() else 'unknown'}: {str(e)}"
+    sspi_static_rank_data.delete_many({})
+    country_codes = sspi_static_metadata.country_group("SSPI49")
+    item_details = sspi_static_metadata.item_details()
+    sspi_item_codes = ["SSPI"] + sspi_static_metadata.pillar_codes() + \
+        sspi_static_metadata.category_codes() + \
+        sspi_static_metadata.indicator_codes()
+    score_group_dictionary = {
+        item_code: [
+            {"CCode": "", "Score": 0, "Rank": 0,
+                "IName": "", "ICode": "", "Year": 0}
+            for _ in country_codes]
+        for item_code in sspi_item_codes}
+    for i, cou in enumerate(country_codes):
+        country_data = sspi_main_data_v3.find({"CountryCode": cou})
+        sspi_scores = SSPI(item_details, country_data, strict_year=False)
+        rank_dict = sspi_scores.to_rank_dict(cou, 2018)
+        for item_code, rank_dict in rank_dict.items():
+            if item_code in score_group_dictionary:
+                score_group_dictionary[item_code][i].update(rank_dict)
     for item_code in sspi_item_codes:
         # Ranking table modifies each list[dict] in place
         SSPIRankingTable(score_group_dictionary[item_code])
@@ -132,15 +127,13 @@ def finalize_sspi_static_rank_data():
     return "Successfully finalized rank data!"
 
 
-@finalize_bp.route("/production/finalize/static/stack")
+@finalize_bp.route("/finalize/static/stack")
 @login_required
 def finalize_static_overall_stack_data():
     sspi_static_stack_data.delete_many({})
     overall_scores = sspi_static_rank_data.find({"ICode": "SSPI"}, {"_id": 0})
-    
     # Create lookup dictionary for performance
     overall_lookup = {score["CCode"]: score for score in overall_scores}
-
     def fetch_overall(observation: dict, field="Rank") -> float:
         if observation["CCode"] in overall_lookup:
             return overall_lookup[observation["CCode"]][field]
@@ -157,7 +150,6 @@ def finalize_static_overall_stack_data():
         "info": sus_scores,
         "borderWidth": 2
     }
-    
     ms_scores = sspi_static_rank_data.find({"ICode": "MS"}, {"_id": 0})
     ms_scores.sort(key=fetch_overall)
     for score in ms_scores:
@@ -169,7 +161,6 @@ def finalize_static_overall_stack_data():
         "info": ms_scores,
         "borderWidth": 2
     }
-    
     pg_scores = sspi_static_rank_data.find({"ICode": "PG"}, {"_id": 0})
     pg_scores.sort(key=fetch_overall)
     for score in pg_scores:
@@ -181,7 +172,6 @@ def finalize_static_overall_stack_data():
         "info": pg_scores,
         "borderWidth": 2
     }
-    
     sspi_static_stack_data.insert_one({
         "data": {
             "labels": [c["CName"] + " " + c["CFlag"] for c in overall_scores],
@@ -195,7 +185,7 @@ def finalize_static_overall_stack_data():
     return "Successfully finalized stack data!"
 
 
-@finalize_bp.route("/production/finalize/static/radar")
+@finalize_bp.route("/finalize/static/radar")
 @login_required
 def finalize_sspi_static_radar_data():
     sspi_static_radar_data.delete_many({})
@@ -259,7 +249,7 @@ def finalize_sspi_static_radar_data():
     return "Successfully finalized radar data!"
 
 
-@finalize_bp.route("/production/finalize/dynamic/line")
+@finalize_bp.route("/finalize/dynamic/line")
 @login_required
 def finalize_dynamic_line_data():
     """
@@ -395,7 +385,7 @@ def finalize_dynamic_line_score_datasets():
         count += 1
 
 
-@finalize_bp.route("/production/finalize/dynamic/matrix")
+@finalize_bp.route("/finalize/dynamic/matrix")
 @login_required
 def finalize_dynamic_matrix_data():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
@@ -469,7 +459,7 @@ def finalize_matrix_iterator(local_path, endpoints):
         count += 1
 
 
-@finalize_bp.route("/production/finalize/dynamic/score")
+@finalize_bp.route("/finalize/dynamic/score")
 @login_required
 def finalize_sspi_dynamic_score():
     """

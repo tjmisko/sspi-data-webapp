@@ -20,16 +20,6 @@ from sspi_flask_app.models.database import (
 )
 
 
-# @collect_bp.route("/GINIPT", methods=["GET"])
-# @login_required
-# def ginipt():
-#     def collect_iterator(**kwargs):
-#         yield from collect_wb_data("SI.POV.GINI", "GINIPT", **kwargs)
-#     return Response(
-#         collect_iterator(Username=current_user.username), mimetype="text/event-stream"
-#     )
-
-
 @compute_bp.route("/GINIPT", methods=["POST"])
 @login_required
 def compute_ginipt():
@@ -52,18 +42,23 @@ def compute_ginipt():
 def impute_ginipt():
     app.logger.info("Running /api/v1/impute/GINIPT")
     sspi_imputed_data.delete_many({"IndicatorCode": "GINIPT"})
-    clean_ginipt = sspi_clean_api_data.find({"IndicatorCode": "GINIPT"})
-    forward = extrapolate_forward(clean_ginipt, 2023, impute_only=True)
-    backward = extrapolate_backward(clean_ginipt, 2000, impute_only=True)
-    interpolated = interpolate_linear(clean_ginipt, impute_only=True)
-    imputed_ginipt = forward + backward + interpolated
+    clean_ginipt = sspi_indicator_data.find({"IndicatorCode": "GINIPT"})
+    ginipt_dataset = sspi_clean_api_data.find({"DatasetCode": "WB_GINIPT"})
+    forward = extrapolate_forward(ginipt_dataset, 2023, ["CountryCode", "DatasetCode"], impute_only=True)
+    backward = extrapolate_backward(ginipt_dataset, 2000, ["CountryCode", "DatasetCode"], impute_only=True)
+    interpolated = interpolate_linear(ginipt_dataset, ["CountryCode", "DatasetCode"], impute_only=True)
+    lg, ug = sspi_metadata.get_goalposts("GINIPT")
+    imputed_ginipt, _ = score_indicator(
+        forward + backward + interpolated, "GINIPT",
+        score_function=lambda WB_GINIPT: goalpost(WB_GINIPT, lg, ug),
+        unit="Coefficient"
+    )
     country_codes = {obs["CountryCode"] for obs in imputed_ginipt}
-    print(list(country_codes))
     # Impute missing GINIPT by predicting them with ISHRAT data
-    ishrat_data = sspi_clean_api_data.find(
+    ishrat_data = sspi_indicator_data.find(
         {"IndicatorCode": "ISHRAT"}
     )
-    prediction_input = sspi_clean_api_data.find(
+    prediction_input = sspi_indicator_data.find(
         {"IndicatorCode": "ISHRAT", "CountryCode": {"$nin": list(country_codes)}}
     )
     unit = clean_ginipt[0]["Unit"]
@@ -80,7 +75,7 @@ def impute_ginipt():
         obs["FeatureCode"] = "ISHRAT"
     for obs in prediction_input:
         obs["FeatureCode"] = "ISHRAT"
-    predicted = regression_imputation(
+    predicted_ginipt = regression_imputation(
         ishrat_data,
         clean_ginipt,
         prediction_input,
@@ -91,5 +86,5 @@ def impute_ginipt():
         lg=lg,
         ug=ug,
     )
-    sspi_imputed_data.insert_many(imputed_ginipt + predicted)
-    return parse_json(imputed_ginipt + predicted)
+    sspi_imputed_data.insert_many(imputed_ginipt + predicted_ginipt)
+    return parse_json(imputed_ginipt + predicted_ginipt)

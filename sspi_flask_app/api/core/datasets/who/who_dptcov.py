@@ -10,7 +10,7 @@ from sspi_flask_app.api.core.datasets import dataset_collector, dataset_cleaner
 
 @dataset_collector("WHO_DPTCOV")
 def collect_who_dptcov(**kwargs):
-    yield from collect_who_data("vdpt", **kwargs)
+    yield from collect_who_data("WHS4_100", **kwargs)
 
 
 @dataset_cleaner("WHO_DPTCOV")
@@ -20,7 +20,10 @@ def clean_who_dptcov():
     raw_data = sspi_raw_api_data.fetch_raw_data(source_info)
     description = "DTP3 immunization coverage among one-year-olds (%)"
     cleaned_data = clean_who_data(raw_data, "WHO_DPTCOV", "Percent", description)
-    return parse_json(cleaned_data)
+    # data_sources = ["DATASOURCE_EQ_DHS", "DATASOURCE_EQ_MICS", "DATASOURCE_EQ_RHS"]
+    # levels_table = {}
+    # for obs in cleaned_data:
+    #     levels_table.setdefault(f"{obs["CountryCode"]}_{obs["Year"]}", []).append(obs)
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "WHO_DPTCOV")
     return parse_json(cleaned_data)

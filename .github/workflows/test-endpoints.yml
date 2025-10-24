@@ -36,11 +36,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       
-      - name: Create Database
-        run: |
-          mkdir ./instance
-          touch ./instance/database.db
-      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
