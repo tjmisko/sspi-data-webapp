@@ -363,17 +363,38 @@
 /* Inline layout for Country Group buttons */
 .chart-options-details .country-group-button-group {
   display: flex;
+  flex-direction: column;
   gap: 0.3rem;
   width: 100%;
 }
 
 .chart-options-details .country-group-button-group button {
-  flex: 1;
   margin: 0;
   padding: 0.2rem 0.3rem;
   font-size: 0.65em;
   line-height: 1.1;
-  white-space: nowrap;
+}
+
+.random-draw-controls {
+  display: flex;
+  justify-content: space-around;
+}
+
+.random-draw-controls .draw-button {
+  flex: 1 1 0;
+  white-space: wrap;
+  min-width: 0;
+}
+.random-draw-controls .random-history-back-button,.random-history-forward-button {
+  flex: 0 1 0;
+  margin: 3px;
+}
+
+.random-history-back-button,.random-history-forward-button svg {
+  margin: auto;
+  stroke: var(--text-color, #CCCCCC);
+  stroke-width: 1.5;
+  fill: none;
 }
 
 /* Form element styling for both themes */

@@ -12,6 +12,7 @@ class PanelChart {
         this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
         this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
         this.randomN = window.observableStorage.getItem("randomN") || 10
+        this.randomHistoryIndex = 0;
         this.initRoot()
         this.initChartJSCanvas()
         this.buildChartOptions()
@@ -82,7 +83,11 @@ class PanelChart {
         </div>
         <div class="chart-view-option country-group-buttons">
             <div class="country-group-button-group">
-                <button class="draw-button">Draw 10 Countries</button>
+                <div class="random-draw-controls">
+                    <button class="random-history-back-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-right"/></svg></button>
+                    <button class="draw-button">Draw 10 Countries</button>
+                    <button class="random-history-forward-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-left"/></svg></button>
+                </div>
                 <button class="show-in-group-button">Show All in Group</button>
             </div>
         </div>
@@ -161,6 +166,12 @@ class PanelChart {
         this.interpolateCheckbox.addEventListener('change', () => {
             this.toggleLinearInterpolation()
         })
+        this.randomHistoryBackButton = this.root.querySelector('.random-history-back-button')
+        this.randomHistoryBackButton.addEventListener('click', () => { this.randomHistoryBack() })
+        this.randomHistoryBackButton.style.display = "none";
+        this.randomHistoryForwardButton = this.root.querySelector('.random-history-forward-button')
+        this.randomHistoryForwardButton.addEventListener('click', () => { this.randomHistoryForward() })
+        this.randomHistoryForwardButton.style.display = "none";
         this.drawButton = this.root.querySelector('.draw-button')
         this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries";
         this.drawButton.addEventListener('click', () => {
@@ -683,13 +694,73 @@ class PanelChart {
             if (!dataset.pinned) {
                 dataset.hidden = true
             }
+            if (dataset.drawHistoryArray === undefined) {
+                dataset.drawHistoryArray = new Array();
+            }
+            dataset.drawHistoryArray.push(0)
         })
+        this.randomHistoryIndex = this.chart.data.datasets[0].drawHistoryArray.length - 1;
         let shownIndexArray = availableDatasetIndices.sort(() => Math.random() - 0.5).slice(0, N)
         shownIndexArray.forEach((index) => {
-            this.chart.data.datasets[index].hidden = false
+            this.chart.data.datasets[index].hidden = false;
+            this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex] = 1;
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
+            console.log(this.chart.data.datasets[index].drawHistoryArray)
         })
         this.updateChartPreservingYAxis()
+        if (this.randomHistoryIndex > 0) {
+            this.randomHistoryBackButton.style.display = "block";
+            this.randomHistoryForwardButton.style.display = "none";
+        } else {
+            this.randomHistoryBackButton.style.display = "none";
+        }
+    }
+    
+
+    randomHistoryBack() {
+        if (this.randomHistoryIndex > 0) {
+            this.randomHistoryIndex--
+        }
+        this.chart.data.datasets.forEach((dataset) => {
+            if (!dataset.pinned) {
+                dataset.hidden = true
+            }
+            if (dataset.drawHistoryArray === undefined) {
+                console.log(underfined)
+            }
+            if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
+                dataset.hidden = false
+            }
+        })
+        this.updateChartPreservingYAxis()
+        if (this.randomHistoryIndex == 0) {
+            this.randomHistoryBackButton.style.display = "none";
+        }
+        this.randomHistoryForwardButton.style.display = "block";
+    }
+
+    randomHistoryForward() {
+        const lastHistoryIndex = this.chart.data.datasets[0].drawHistoryArray.length - 1;
+        if (this.randomHistoryIndex < lastHistoryIndex) {
+            this.randomHistoryIndex++
+        }
+        this.chart.data.datasets.forEach((dataset) => {
+            if (!dataset.pinned) {
+                dataset.hidden = true
+            }
+            if (dataset.drawHistoryArray === undefined) {
+                console.log(underfined)
+            }
+            if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
+                dataset.hidden = false
+            }
+        })
+        this.updateChartPreservingYAxis()
+        if (this.randomHistoryIndex == lastHistoryIndex) {
+            this.randomHistoryForwardButton.style.display = "none";
+        }
+        this.randomHistoryBackButton.style.display = "block";
+
     }
 
     pinCountry(dataset) {
