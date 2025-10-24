@@ -11,75 +11,101 @@
 
 {% block content %}
 <section class="comparison-article-options">
-    <h1> Selected Country Comparisons (2018 Data) </h1>
-    <article class="comparsion-article">
-        <a href="/2018/compare/sweden-france-japan"> Sweden, France, Japan </a>
-    </article>
-    <article class="comparsion-article">
-        <a href="/2018/compare/china-russia-usa"> China, Russia, USA </a>
-    </article>
-    <article class="comparsion-article">
-        <a href="/2018/compare/brazil-india-indonesia"> Brazil, India, and Indonesia</a>
-    </article>
+    <div>
+        <h2> Selected Country Comparisons (2018 Data) </h2>
+        <p class="comparison-article-explainer-text"> Three country comparisons of interest are presented at the links below: </p>
+        <ul>
+            <li>
+                <article class="comparison-article">
+                    <a href="/2018/compare/sweden-france-japan"><b>Sweden, France, Japan:</b></a>
+                    <p> Top performers vary in their strengths, and each has weak policies in some areas.</p>
+                    <a class="read-more-link" href="/2018/compare/sweden-france-japan">Read More</a>
+                </article>
+            </li>
+            <li>
+                <article class="comparison-article">
+                    <a href="/2018/compare/china-russia-usa"> <b>China, Russia, United States:</b> </a>
+                    <p> Global superpowers struggle to translate geopolitical prowess into wellfare for citizens.</p>
+                    <a class="read-more-link" href="/2018/compare/china-russia-usa">Read More</a>
+                </article>
+            </li>
+            <li>
+                <article class="comparison-article">
+                    <a href="/2018/compare/brazil-india-indonesia"><b>Brazil, India, and Indonesia:</b></a>
+                    <p> Emerging economies vary in their policy needs; all must remain mindful of sustainability as they develop.</p>
+                    <a class="read-more-link" href="/2018/compare/brazil-india-indonesia">Read More</a>
+                </article>
+            </li>
+        </ul>
+    </div>
 </section>
 <section class="custom-country-comparison-section">
-    <h1> Custom Country Comparisons </h1>
-    <form id="comparison-country-selection-form">
-        <datalist id="countries">
-            {% include "country-selection-options.html" %}
-        </datalist>
-        <label for="country-selection-1">Country 1:</label>
-        <input list="countries" id="country-selection-1" name="country-selection-1" placeholder="Country Name or Code">
-        <label for="country-selection-2">Country 2:</label>
-        <input list="countries" id="country-selection-2" name="country-selection-2" placeholder="Country Name or Code">
-        <label for="country-selection-3">Country 3:</label>
-        <input list="countries" id="country-selection-3" name="country-selection-3" placeholder="Country Name or Code">
-    <button type="submit"> Generate Comparison </button>
-    </form>
-    <script>
-        function pillarComparison(pillarCode, comparisonList) {
-            const countryCodes = comparisonList.map(cdata => cdata.code);
-            const colors = ["#FECC02", "#BBBBBB", "#BC002D"]
-            const colorMap = Object.fromEntries(countryCodes.map((code, idx) => [code, colors[idx]]));
-            window.SUSStack = new StaticPillarStackedBarChart(
-                countryCodes,
-                pillarCode,
-                document.getElementById(pillarCode.toLowerCase() + "-stack"),
-                colorMap
-            )
-            if ( comparisonList.length == 2 ) {
-                window.StaticDiffSUS0 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[1].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
-            } else if ( comparisonList.length == 3 ) {
-                window.StaticDiffSUS0 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[1].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
-                window.StaticDiffSUS1 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[2].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
-                window.StaticDiffSUS2 = new StaticPillarDifferentialChart(comparisonList[1].code, comparisonList[2].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+    <div>
+        <h2> Custom Country Comparisons </h2>
+        <p>Input countries of interest into the form below and submit to generate customized comparison reports.</p>
+        <form id="comparison-country-selection-form">
+            <datalist id="countries">
+                {% include "country-selection-options.html" %}
+            </datalist>
+            <div class="comparison-country-selection-field">
+                <label for="country-selection-1">Country #1</label>
+                <input list="countries" id="country-selection-1" name="country-selection-1" placeholder="Country Name or Code">
+            </div>
+            <div class="comparison-country-selection-field">
+                <label for="country-selection-2">Country #2</label>
+                <input list="countries" id="country-selection-2" name="country-selection-2" placeholder="Country Name or Code">
+            </div>
+            <div class="comparison-country-selection-field">
+                <label for="country-selection-3">Country #3</label>
+                <input list="countries" id="country-selection-3" name="country-selection-3" placeholder="Country Name or Code (Optional)">
+            </div>
+        <button type="submit"> Generate Comparison </button>
+        </form>
+        <script>
+            function pillarComparison(pillarCode, comparisonList) {
+                const countryCodes = comparisonList.map(cdata => cdata.code);
+                const colors = ["#FECC02", "#BBBBBB", "#BC002D"]
+                const colorMap = Object.fromEntries(countryCodes.map((code, idx) => [code, colors[idx]]));
+                window.SUSStack = new StaticPillarStackedBarChart(
+                    countryCodes,
+                    pillarCode,
+                    document.getElementById(pillarCode.toLowerCase() + "-stack"),
+                    colorMap
+                )
+                if ( comparisonList.length == 2 ) {
+                    window.StaticDiffSUS0 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[1].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+                } else if ( comparisonList.length == 3 ) {
+                    window.StaticDiffSUS0 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[1].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+                    window.StaticDiffSUS1 = new StaticPillarDifferentialChart(comparisonList[0].code, comparisonList[2].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+                    window.StaticDiffSUS2 = new StaticPillarDifferentialChart(comparisonList[1].code, comparisonList[2].code, pillarCode, document.getElementById(pillarCode.toLowerCase() + "-diff"))
+                }
             }
-        }
-        document.getElementById("comparison-country-selection-form").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const formData = new FormData(this); // Collect form data
-            const data = Object.fromEntries(formData.entries());
-            fetch('/compare/custom', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(res => {
-                document.getElementById("comparison-result-section").innerHTML = res.html;
-                window.customComparisonList= res.data;
-                window.customComparisonList.forEach(cdata => {
-                    new CategoryRadarStatic(cdata.code, document.getElementById("radar-chart-flex-container"));
+            document.getElementById("comparison-country-selection-form").addEventListener("submit", function(event) {
+                event.preventDefault();
+                const formData = new FormData(this); // Collect form data
+                const data = Object.fromEntries(formData.entries());
+                fetch('/2018/compare/custom', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(res => {
+                    document.getElementById("comparison-result-section").innerHTML = res.html;
+                    window.customComparisonList= res.data;
+                    window.customComparisonList.forEach(cdata => {
+                        new CategoryRadarStatic(cdata.code, document.getElementById("radar-chart-flex-container"));
+                    });
+                    pillarComparison("SUS", window.customComparisonList);
+                    pillarComparison("MS", window.customComparisonList);
+                    pillarComparison("PG", window.customComparisonList);
+                })
+                .catch(error => console.error("Error:", error));
                 });
-                pillarComparison("SUS", window.customComparisonList);
-                pillarComparison("MS", window.customComparisonList);
-                pillarComparison("PG", window.customComparisonList);
-            })
-            .catch(error => console.error("Error:", error));
-            });
-    </script>
-    <section id="comparison-result-section"> </section>
-<section>
+        </script>
+    </div>
+</section>
+<section id="comparison-result-section"></section>
 {% endblock %}

@@ -35,9 +35,10 @@ def favicon():
 def about():
     return render_template('about.html')
 
+
 @client_bp.route('/methodology')
 def methodology():
-    return render_template('methdology.html')
+    return render_template('methodology.html')
 
 
 @client_bp.route('/contact')
@@ -225,7 +226,7 @@ def category_data_2018(CategoryCode):
 
 
 
-@client_bp.route('/compare/custom', methods=['POST'])
+@client_bp.route('/2018/compare/custom', methods=['POST'])
 def compare_custom():
     def bind_country_information(selection, index):
         if len(selection) == 0 and index < 2:

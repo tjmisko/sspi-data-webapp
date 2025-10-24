@@ -194,3 +194,31 @@
   opacity: 0.9;
   transform: scale(1.02);
 }
+
+.randomization-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.1rem;
+  padding-left: 0.2rem;
+}
+
+.randomization-options label {
+  margin: 0 0.3rem 0 0;
+  padding: 0;
+  flex: 0 1 0;
+  white-space: nowrap;
+  font-size: 0.75em;
+  line-height: 1;
+  font-color: var(--low-importance-font-color);
+}
+
+.randomization-options input {
+  flex: 1 2 0;
+  margin: 0;
+  max-width: 100px;
+  min-width: 0;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.75em;
+  line-height: 1;
+}

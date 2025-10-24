@@ -1117,7 +1117,8 @@ this.chartInteractionPlugin=chartInteractionPlugin
 this.setTheme(window.observableStorage.getItem("theme"))
 this.pinnedOnly=window.observableStorage.getItem("pinnedOnly")||false
 this.countryGroup=window.observableStorage.getItem("countryGroup")||"SSPI67"
-this.initRoot()
+this.randomN=window.observableStorage.getItem("randomN")||10
+this.randomHistoryIndex=0;this.initRoot()
 this.initChartJSCanvas()
 this.buildChartOptions()
 this.rigChartOptions()
@@ -1133,7 +1134,7 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="draw-button">Draw 10 Countries</button><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -1155,11 +1156,18 @@ this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackw
 this.interpolateCheckbox=this.chartOptions.querySelector('.interpolate-linear')
 this.interpolateCheckbox.checked=true
 this.interpolateCheckbox.addEventListener('change',()=>{this.toggleLinearInterpolation()})
-this.drawButton=this.root.querySelector('.draw-button')
-this.drawButton.addEventListener('click',()=>{this.showRandomN(10)})
+this.randomHistoryBackButton=this.root.querySelector('.random-history-back-button')
+this.randomHistoryBackButton.addEventListener('click',()=>{this.randomHistoryBack()})
+this.randomHistoryBackButton.style.display="none";this.randomHistoryForwardButton=this.root.querySelector('.random-history-forward-button')
+this.randomHistoryForwardButton.addEventListener('click',()=>{this.randomHistoryForward()})
+this.randomHistoryForwardButton.style.display="none";this.drawButton=this.root.querySelector('.draw-button')
+this.drawButton.innerText="Draw "+this.randomN.toString()+" Countries";this.drawButton.addEventListener('click',()=>{this.showRandomN(this.randomN)})
 this.showInGroupButton=this.chartOptions.querySelector('.show-in-group-button')
 this.showInGroupButton.addEventListener('click',()=>{const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 this.showGroup(activeGroup)})
+this.randomNumberField=this.chartOptions.querySelector('.random-country-sample')
+this.randomNumberField.value=this.randomN
+this.randomNumberField.addEventListener('input',(event)=>{this.updateRandomN(this.randomNumberField.value)})
 const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
 let openDetails=window.observableStorage.getItem("openPanelChartDetails")
 detailsElements.forEach((details)=>{if(openDetails&&openDetails.includes(details.classList[0])){details.open=true}else{details.open=false}})
@@ -1293,7 +1301,6 @@ console.log('Seen countries:',Array.from(seenCountries))
 console.log('SGP in seen countries?',seenCountries.has('SGP'))
 let notSeenCount=0
 Object.entries(this.countryGroupMap).forEach(([countryCode,countryGroups])=>{if(!seenCountries.has(countryCode)){notSeenCount++
-if(countryCode==='SGP'){console.log(`SGP not seen-adding to missing.Groups:`,countryGroups)}
 missingCountries.push({CCode:countryCode,CName:countryCode,CGroup:countryGroups})}})
 console.log(`Countries not seen in datasets:${notSeenCount}`)
 console.log(`Total missing countries found:${missingCountries.length}`)
@@ -1328,17 +1335,36 @@ window.observableStorage.setItem("pinnedOnly",true)
 console.log('Hiding unpinned countries')
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
 this.updateChartPreservingYAxis()}
+updateRandomN(N){N=parseInt(N)
+if(isNaN(N)||N<=0){this.updateRandomN(10)}else{this.randomN=N;window.observableStorage.setItem("randomN",N);this.drawButton.innerText="Draw "+N.toString()+" Countries";}}
 showRandomN(N=10){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
 const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 let availableDatasetIndices=[]
 this.chart.data.datasets.filter((dataset,index)=>{if(dataset.CGroup.includes(activeGroup)){availableDatasetIndices.push(index)}})
 console.log('Showing',N,'random countries from group',activeGroup)
-this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}})
-let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
-shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false
-console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)})
-this.updateChartPreservingYAxis()}
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
+if(dataset.drawHistoryArray===undefined){dataset.drawHistoryArray=new Array();}
+dataset.drawHistoryArray.push(0)})
+this.randomHistoryIndex=this.chart.data.datasets[0].drawHistoryArray.length-1;let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
+shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false;this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex]=1;console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)
+console.log(this.chart.data.datasets[index].drawHistoryArray)})
+this.updateChartPreservingYAxis()
+if(this.randomHistoryIndex>0){this.randomHistoryBackButton.style.display="block";this.randomHistoryForwardButton.style.display="none";}else{this.randomHistoryBackButton.style.display="none";}}
+randomHistoryBack(){if(this.randomHistoryIndex>0){this.randomHistoryIndex--}
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
+if(dataset.drawHistoryArray===undefined){console.log(underfined)}
+if(dataset.drawHistoryArray[this.randomHistoryIndex]==1){dataset.hidden=false}})
+this.updateChartPreservingYAxis()
+if(this.randomHistoryIndex==0){this.randomHistoryBackButton.style.display="none";}
+this.randomHistoryForwardButton.style.display="block";}
+randomHistoryForward(){const lastHistoryIndex=this.chart.data.datasets[0].drawHistoryArray.length-1;if(this.randomHistoryIndex<lastHistoryIndex){this.randomHistoryIndex++}
+this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
+if(dataset.drawHistoryArray===undefined){console.log(underfined)}
+if(dataset.drawHistoryArray[this.randomHistoryIndex]==1){dataset.hidden=false}})
+this.updateChartPreservingYAxis()
+if(this.randomHistoryIndex==lastHistoryIndex){this.randomHistoryForwardButton.style.display="none";}
+this.randomHistoryBackButton.style.display="block";}
 pinCountry(dataset){if(dataset.pinned){return}
 dataset.pinned=true
 dataset.hidden=false

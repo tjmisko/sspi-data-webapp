@@ -11,6 +11,8 @@ class PanelChart {
         this.setTheme(window.observableStorage.getItem("theme"))
         this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
         this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
+        this.randomN = window.observableStorage.getItem("randomN") || 10
+        this.randomHistoryIndex = 0;
         this.initRoot()
         this.initChartJSCanvas()
         this.buildChartOptions()
@@ -63,6 +65,13 @@ class PanelChart {
             <input type="checkbox" class="interpolate-linear"/>
             <label class="title-bar-label">Linear Interpolation</label>
         </div>
+        <div class="chart-view-subheader">Randomization</div>
+        <div class="chart-view-option">
+            <div class="randomization-options">
+                <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
+                <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
+            </div>
+        </div>
     </div>
 </details>
 <details class="select-countries-options chart-options-details">
@@ -74,7 +83,11 @@ class PanelChart {
         </div>
         <div class="chart-view-option country-group-buttons">
             <div class="country-group-button-group">
-                <button class="draw-button">Draw 10 Countries</button>
+                <div class="random-draw-controls">
+                    <button class="random-history-back-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-right"/></svg></button>
+                    <button class="draw-button">Draw 10 Countries</button>
+                    <button class="random-history-forward-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-left"/></svg></button>
+                </div>
                 <button class="show-in-group-button">Show All in Group</button>
             </div>
         </div>
@@ -153,15 +166,28 @@ class PanelChart {
         this.interpolateCheckbox.addEventListener('change', () => {
             this.toggleLinearInterpolation()
         })
+        this.randomHistoryBackButton = this.root.querySelector('.random-history-back-button')
+        this.randomHistoryBackButton.addEventListener('click', () => { this.randomHistoryBack() })
+        this.randomHistoryBackButton.style.display = "none";
+        this.randomHistoryForwardButton = this.root.querySelector('.random-history-forward-button')
+        this.randomHistoryForwardButton.addEventListener('click', () => { this.randomHistoryForward() })
+        this.randomHistoryForwardButton.style.display = "none";
         this.drawButton = this.root.querySelector('.draw-button')
+        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries";
         this.drawButton.addEventListener('click', () => {
-            this.showRandomN(10)
+            this.showRandomN(this.randomN)
         })
         this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
         this.showInGroupButton.addEventListener('click', () => {
             const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
             this.showGroup(activeGroup)
         })
+        this.randomNumberField = this.chartOptions.querySelector('.random-country-sample')
+        this.randomNumberField.value = this.randomN
+        this.randomNumberField.addEventListener('input', (event) => {
+            this.updateRandomN(this.randomNumberField.value)
+        })
+
 
         const detailsElements = this.chartOptions.querySelectorAll('.chart-options-details')
         let openDetails = window.observableStorage.getItem("openPanelChartDetails")
@@ -554,14 +580,10 @@ class PanelChart {
         console.log('Seen countries:', Array.from(seenCountries))
         console.log('SGP in seen countries?', seenCountries.has('SGP'))
 
-        // Second pass: find countries in group map that don't appear in datasets at all
         let notSeenCount = 0
         Object.entries(this.countryGroupMap).forEach(([countryCode, countryGroups]) => {
             if (!seenCountries.has(countryCode)) {
                 notSeenCount++
-                if (countryCode === 'SGP') {
-                    console.log(`SGP not seen - adding to missing. Groups:`, countryGroups)
-                }
                 missingCountries.push({
                     CCode: countryCode,
                     CName: countryCode, // We only have the country code from the map
@@ -645,6 +667,17 @@ class PanelChart {
         this.updateChartPreservingYAxis()
     }
 
+    updateRandomN(N) {
+        N = parseInt(N)
+        if (isNaN(N) || N <= 0) {
+            this.updateRandomN(10)
+        } else {
+            this.randomN = N;
+            window.observableStorage.setItem("randomN", N);
+            this.drawButton.innerText = "Draw " + N.toString() + " Countries";
+        }
+    }
+
     showRandomN(N = 10) {
         // Adjust this to only select from those in the current country group
         this.pinnedOnly = false
@@ -661,13 +694,73 @@ class PanelChart {
             if (!dataset.pinned) {
                 dataset.hidden = true
             }
+            if (dataset.drawHistoryArray === undefined) {
+                dataset.drawHistoryArray = new Array();
+            }
+            dataset.drawHistoryArray.push(0)
         })
+        this.randomHistoryIndex = this.chart.data.datasets[0].drawHistoryArray.length - 1;
         let shownIndexArray = availableDatasetIndices.sort(() => Math.random() - 0.5).slice(0, N)
         shownIndexArray.forEach((index) => {
-            this.chart.data.datasets[index].hidden = false
+            this.chart.data.datasets[index].hidden = false;
+            this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex] = 1;
             console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
+            console.log(this.chart.data.datasets[index].drawHistoryArray)
         })
         this.updateChartPreservingYAxis()
+        if (this.randomHistoryIndex > 0) {
+            this.randomHistoryBackButton.style.display = "block";
+            this.randomHistoryForwardButton.style.display = "none";
+        } else {
+            this.randomHistoryBackButton.style.display = "none";
+        }
+    }
+    
+
+    randomHistoryBack() {
+        if (this.randomHistoryIndex > 0) {
+            this.randomHistoryIndex--
+        }
+        this.chart.data.datasets.forEach((dataset) => {
+            if (!dataset.pinned) {
+                dataset.hidden = true
+            }
+            if (dataset.drawHistoryArray === undefined) {
+                console.log(underfined)
+            }
+            if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
+                dataset.hidden = false
+            }
+        })
+        this.updateChartPreservingYAxis()
+        if (this.randomHistoryIndex == 0) {
+            this.randomHistoryBackButton.style.display = "none";
+        }
+        this.randomHistoryForwardButton.style.display = "block";
+    }
+
+    randomHistoryForward() {
+        const lastHistoryIndex = this.chart.data.datasets[0].drawHistoryArray.length - 1;
+        if (this.randomHistoryIndex < lastHistoryIndex) {
+            this.randomHistoryIndex++
+        }
+        this.chart.data.datasets.forEach((dataset) => {
+            if (!dataset.pinned) {
+                dataset.hidden = true
+            }
+            if (dataset.drawHistoryArray === undefined) {
+                console.log(underfined)
+            }
+            if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
+                dataset.hidden = false
+            }
+        })
+        this.updateChartPreservingYAxis()
+        if (this.randomHistoryIndex == lastHistoryIndex) {
+            this.randomHistoryForwardButton.style.display = "none";
+        }
+        this.randomHistoryBackButton.style.display = "block";
+
     }
 
     pinCountry(dataset) {
