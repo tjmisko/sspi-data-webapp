@@ -11,6 +11,7 @@ class PanelChart {
         this.setTheme(window.observableStorage.getItem("theme"))
         this.pinnedOnly = window.observableStorage.getItem("pinnedOnly") || false
         this.countryGroup = window.observableStorage.getItem("countryGroup") || "SSPI67"
+        this.randomN = window.observableStorage.getItem("randomN") || 10
         this.initRoot()
         this.initChartJSCanvas()
         this.buildChartOptions()
@@ -62,6 +63,13 @@ class PanelChart {
         <div class="chart-view-option">
             <input type="checkbox" class="interpolate-linear"/>
             <label class="title-bar-label">Linear Interpolation</label>
+        </div>
+    </div>
+    <div class="view-options-suboption-container">
+        <div class="chart-view-subheader">Randomization</div>
+        <div class="chart-view-option">
+            <label class="title-bar-label" for="random-country-sample">Random Draw Size:</label>
+            <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
         </div>
     </div>
 </details>
@@ -154,14 +162,21 @@ class PanelChart {
             this.toggleLinearInterpolation()
         })
         this.drawButton = this.root.querySelector('.draw-button')
+        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries";
         this.drawButton.addEventListener('click', () => {
-            this.showRandomN(10)
+            this.showRandomN(this.randomN)
         })
         this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
         this.showInGroupButton.addEventListener('click', () => {
             const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
             this.showGroup(activeGroup)
         })
+        this.randomNumberField = this.chartOptions.querySelector('.random-country-sample')
+        this.randomNumberField.value = this.randomN
+        this.randomNumberField.addEventListener('input', (event) => {
+            this.updateRandomN(this.randomNumberField.value)
+        })
+
 
         const detailsElements = this.chartOptions.querySelectorAll('.chart-options-details')
         let openDetails = window.observableStorage.getItem("openPanelChartDetails")
@@ -554,14 +569,10 @@ class PanelChart {
         console.log('Seen countries:', Array.from(seenCountries))
         console.log('SGP in seen countries?', seenCountries.has('SGP'))
 
-        // Second pass: find countries in group map that don't appear in datasets at all
         let notSeenCount = 0
         Object.entries(this.countryGroupMap).forEach(([countryCode, countryGroups]) => {
             if (!seenCountries.has(countryCode)) {
                 notSeenCount++
-                if (countryCode === 'SGP') {
-                    console.log(`SGP not seen - adding to missing. Groups:`, countryGroups)
-                }
                 missingCountries.push({
                     CCode: countryCode,
                     CName: countryCode, // We only have the country code from the map
@@ -643,6 +654,12 @@ class PanelChart {
             }
         })
         this.updateChartPreservingYAxis()
+    }
+
+    updateRandomN(N) {
+        this.randomN = N;
+        window.observableStorage.setItem("randomN", N);
+        this.drawButton.innerText = "Draw " + N.toString() + " Countries";
     }
 
     showRandomN(N = 10) {
