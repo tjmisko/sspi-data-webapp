@@ -336,6 +336,7 @@ class CustomizableSSPIStructure {
             if (!z || !this.draggedEl) return;
             e.preventDefault();
             z.classList.remove('drag-over');
+
             const indicator = z.querySelector('.insertion-indicator');
             if (indicator) {
                 z.insertBefore(this.draggedEl, indicator);
@@ -348,6 +349,7 @@ class CustomizableSSPIStructure {
             this.validate(z);
             this.flagUnsaved();
             this.markInvalidIndicatorPlacements();
+            this.markInvalidNestedCategories();
             const order = Array.from(z.children).map(c => c.id);
             console.log('New order:', order);
         });
@@ -925,6 +927,39 @@ class CustomizableSSPIStructure {
         });
     }
 
+    markInvalidNestedCategories() {
+        /**
+         * Scans all categories and marks any that contain nested categories
+         * as temporarily invalid. This provides visual feedback that nested
+         * categories are not allowed.
+         */
+
+        // First, remove all nested category warnings
+        this.container.querySelectorAll('.category-box').forEach(category => {
+            category.classList.remove('nested-category-invalid');
+            if (category.title === 'This category contains nested categories - please move them out') {
+                category.removeAttribute('title');
+            }
+        });
+
+        // Check all categories for nested categories
+        this.container.querySelectorAll('.category-box').forEach(category => {
+            const nestedCategories = category.querySelectorAll('.category-box');
+
+            if (nestedCategories.length > 0) {
+                // Mark this category as invalid
+                category.classList.add('nested-category-invalid');
+                category.title = 'This category contains nested categories - please move them out';
+
+                // Also mark each nested category as invalid
+                nestedCategories.forEach(nested => {
+                    nested.classList.add('nested-category-invalid');
+                    nested.title = 'This is a nested category - please move it to the pillar level';
+                });
+            }
+        });
+    }
+
     validate(z) {
         const selector = z.dataset.accept === 'indicator' ? '.indicator-card' : '.category-box';
         const items = z.querySelectorAll(selector);
@@ -1344,12 +1379,23 @@ class CustomizableSSPIStructure {
             const indicatorName = indicator.querySelector('.indicator-name').textContent.trim();
             const indicatorCode = indicator.querySelector('.indicator-code-input').value.trim();
             const datasets = indicator.querySelectorAll('.dataset-item');
-            
+
             if (datasets.length === 0) {
                 warnings.push(`Indicator "${indicatorName}" (${indicatorCode}) has no datasets`);
             }
         });
-        
+
+        // Check for nested categories (categories inside categories)
+        this.container.querySelectorAll('.category-box').forEach(category => {
+            const categoryName = category.querySelector('.customization-category-header-title').textContent.trim();
+            const categoryCode = category.querySelector('.category-code-input').value.trim();
+            const nestedCategories = category.querySelectorAll('.category-box');
+
+            if (nestedCategories.length > 0) {
+                errors.push(`Category "${categoryName}" (${categoryCode}) contains nested categories. Nested categories are not allowed.`);
+            }
+        });
+
         // Check for duplicate codes
         const pillarCodes = new Set();
         const categoryCodes = new Set();
@@ -1700,6 +1746,8 @@ class CustomizableSSPIStructure {
 
         // Mark any indicators that are outside categories
         this.markInvalidIndicatorPlacements();
+        // Mark any nested categories
+        this.markInvalidNestedCategories();
     }
 
     async processPillarFromMetadata(pillarItem, hierarchy) {
@@ -1899,10 +1947,21 @@ class CustomizableSSPIStructure {
 
         // Mark any indicators that are outside categories
         this.markInvalidIndicatorPlacements();
+        // Mark any nested categories
+        this.markInvalidNestedCategories();
     }
 
     async saveConfiguration() {
         try {
+            // Validate before saving
+            const validation = this.validateHierarchy();
+            if (validation.errors.length > 0) {
+                let errorMessage = 'Cannot save configuration due to validation errors:\n\n';
+                validation.errors.forEach(error => errorMessage += `• ${error}\n`);
+                alert(errorMessage);
+                return;
+            }
+
             const name = prompt('Enter a name for this configuration:');
             if (!name) return;
 

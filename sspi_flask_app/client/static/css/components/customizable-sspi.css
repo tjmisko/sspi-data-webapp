@@ -174,7 +174,7 @@
 .indicator-collapsible {
     border: var(--theme-border-thin);
     border-radius: var(--border-radius);
-    margin-bottom: 0.375em;
+    margin-bottom: 0.250em;
     background: var(--box-background-color);
 }
 
@@ -519,6 +519,8 @@
 .indicators-container {
   border: var(--theme-border-thin);
   border-radius: 0.5em;
+  box-sizing: border-box;
+  background-color: var(--page-background);
   padding: 0.25em;
   min-height: 1rem;
   margin: 0.25em 0;
@@ -541,13 +543,9 @@
   background-color: red;
 }
 
-/* Reduced margins for draggable category boxes */
-.category-box.draggable-item {
-  margin-bottom: 0.125em !important;
-}
-
 /* Reduced margins for drop zone categories containers */
 .categories-container.drop-zone {
+  background-color: var(--page-background);
   margin: 0.125em 0 !important;
 }
 
@@ -555,7 +553,7 @@
 .category-collapsible {
     border: var(--theme-border-thin);
     border-radius: var(--border-radius);
-    margin-bottom: 0.375em;
+    margin-bottom: 0.250em;
     background: var(--box-background-color);
 }
 
@@ -603,10 +601,7 @@
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
-    margin-bottom: 0.375em;
-    background: var(--box-background-color);
-    border: 1px solid var(--subtle-line-color);
-    border-radius: var(--border-radius);
+    margin-bottom: 0.250em;
     contain: layout style;
 }
 
@@ -614,11 +609,16 @@
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
-    margin-bottom: 0.375em;
-    background: var(--box-background-color);
-    border: 1px solid var(--subtle-line-color);
-    border-radius: var(--border-radius);
+    margin-bottom: 0.250em;
     contain: layout style;
+}
+
+.indicator-card:first-child {
+  margin-top: 0.250em;
+}
+
+.indicator-card:last-child {
+  margin-bottom: 0;
 }
 
 .customization-category-header h4 {
@@ -1168,6 +1168,22 @@
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+}
+
+/* Medium screen adjustments - Stack pillars vertically at 1250px */
+@media (max-width: 1250px) {
+    .pillars-container,
+    .pillars-container.pillars-grid {
+        grid-template-columns: 1fr !important;
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .pillar-column {
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: none;
+    }
 }
 
 /* Responsive adjustments */
@@ -1936,6 +1952,79 @@
     }
 
     .temporary-invalid-placement:hover::after {
+        white-space: normal;
+        max-width: 80%;
+        bottom: -80px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Nested Category Invalid Styles */
+.nested-category-invalid {
+    border: 2px dashed rgba(220, 53, 69, 0.6) !important;
+    background: color-mix(in srgb, #dc3545 3%, var(--box-background-color)) !important;
+    position: relative;
+    margin-top: 2.5rem !important;
+    animation: invalidPulse 2s ease-in-out infinite;
+}
+
+/* First nested invalid category needs extra top space */
+.categories-container > .nested-category-invalid:first-child,
+.indicators-container > .nested-category-invalid:first-child {
+    margin-top: 2.5rem !important;
+}
+
+/* Ensure parent has space for the label */
+.categories-container:has(> .nested-category-invalid),
+.indicators-container:has(> .nested-category-invalid) {
+    padding-top: 1.5rem;
+}
+
+.nested-category-invalid::before {
+    content: '⚠ Nested Category';
+    position: absolute;
+    top: -2rem;
+    left: 0;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: bold;
+    font-family: var(--body-font-family);
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.nested-category-invalid:hover::after {
+    content: 'Categories cannot contain other categories. Move nested categories to the pillar level.';
+    position: absolute;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    font-family: var(--body-font-family);
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.95;
+}
+
+/* Mobile adjustments for nested category invalid */
+@media (max-width: var(--small-tablet-break-width)) {
+    .nested-category-invalid::before {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+        top: -1.3rem;
+    }
+
+    .nested-category-invalid:hover::after {
         white-space: normal;
         max-width: 80%;
         bottom: -80px;

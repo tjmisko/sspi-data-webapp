@@ -274,6 +274,7 @@
   justify-content: space-between;
   align-items: center;
 }
+
 .legend-title-bar-buttons {
   font-size: 0.65em;
   padding: 0 0.5em;
@@ -311,7 +312,7 @@
 }
 
 .legend-item span {
-  line-height: 2;
+  line-height: 3;
 }
 
 .add-country-pin-results-window {
