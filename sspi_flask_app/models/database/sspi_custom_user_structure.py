@@ -234,9 +234,9 @@ class SSPICustomUserStructure(MongoWrapper):
                     f"Indicator config {indicator_index} 'datasets' must be an array (document {document_number})"
                 )
             
-            if len(datasets) > 5:
+            if len(datasets) > 10:
                 raise InvalidDocumentFormatError(
-                    f"Indicator config {indicator_index} 'datasets' cannot contain more than 5 datasets (document {document_number})"
+                    f"Indicator config {indicator_index} 'datasets' cannot contain more than 10 datasets (document {document_number})"
                 )
             
             # Validate each dataset object

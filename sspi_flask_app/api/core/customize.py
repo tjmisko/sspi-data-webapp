@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request
-from sspi_flask_app.models.database import sspi_custom_user_structure, sspi_metadata, sspi_item_data
+from sspi_flask_app.models.database import sspi_custom_user_structure, sspi_custom_user_data, sspi_metadata, sspi_item_data
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.rank import SSPIRankingTable
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,18 +13,83 @@ customize_bp = Blueprint("customize_bp", __name__,
                         url_prefix="/customize")
 
 
+def convert_metadata_to_structure(metadata):
+    """
+    Convert metadata format (with SSPI, Pillars, Categories, Indicators)
+    to structure format (only indicators with full hierarchy info).
+
+    Args:
+        metadata: List of metadata items including all hierarchy levels
+
+    Returns:
+        List of indicator configurations suitable for validation
+    """
+    structure = []
+
+    # Extract items by type
+    indicators = [item for item in metadata if item.get("ItemType") == "Indicator"]
+    categories = {item["ItemCode"]: item for item in metadata if item.get("ItemType") == "Category"}
+    pillars = {item["ItemCode"]: item for item in metadata if item.get("ItemType") == "Pillar"}
+
+    # Build structure from indicators
+    for idx, indicator in enumerate(indicators):
+        indicator_code = indicator.get("ItemCode") or indicator.get("IndicatorCode")
+        category_code = indicator.get("CategoryCode")
+        pillar_code = indicator.get("PillarCode")
+
+        # Get category and pillar names from the hierarchy
+        category = categories.get(category_code, {})
+        pillar = pillars.get(pillar_code, {})
+
+        # Extract or derive the names
+        indicator_name = indicator.get("ItemName") or indicator.get("Indicator") or indicator_code
+        category_name = category.get("ItemName") or category.get("Category") or category_code
+        pillar_name = pillar.get("ItemName") or pillar.get("Pillar") or pillar_code
+
+        # Convert dataset codes to expected format
+        dataset_codes = indicator.get("DatasetCodes", [])
+        datasets = [{"dataset_code": code, "weight": 1.0} for code in dataset_codes]
+
+        structure_item = {
+            "Indicator": indicator_name,
+            "IndicatorCode": indicator_code,
+            "Category": category_name,
+            "CategoryCode": category_code,
+            "Pillar": pillar_name,
+            "PillarCode": pillar_code,
+            "LowerGoalpost": indicator.get("LowerGoalpost"),
+            "UpperGoalpost": indicator.get("UpperGoalpost"),
+            "Inverted": indicator.get("Inverted", False),
+            "ItemOrder": indicator.get("ItemOrder", idx),
+            "datasets": datasets
+        }
+
+        structure.append(structure_item)
+
+    # Sort by item order
+    structure.sort(key=lambda x: (x["ItemOrder"], x["IndicatorCode"]))
+
+    return structure
+
+
 @customize_bp.route("/save", methods=["POST"])
 def save_configuration():
     """
     Save a new custom SSPI structure configuration.
-    
+
     Expected JSON payload:
     {
         "name": "My Custom SSPI",
         "structure": [...],  // Array of indicator objects from CustomizableSSPIStructure
         "user_id": "optional_user_id"
     }
-    
+    OR
+    {
+        "name": "My Custom SSPI",
+        "metadata": [...],  // Full metadata array (SSPI, Pillars, Categories, Indicators)
+        "user_id": "optional_user_id"
+    }
+
     Returns:
     {
         "success": true,
@@ -34,25 +100,26 @@ def save_configuration():
     try:
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
-        
+
         data = request.get_json()
-        
+
         # Validate required fields
         if "name" not in data:
             return jsonify({"error": "Configuration name is required"}), 400
-        
+
         # Support both 'metadata' (new) and 'structure' (legacy) fields
         if "metadata" not in data and "structure" not in data:
             return jsonify({"error": "Metadata or structure data is required"}), 400
-        
+
         name = data["name"]
-        
+
         # Use metadata if provided, otherwise fall back to structure
         if "metadata" in data:
-            structure = data["metadata"]
+            # Convert full metadata array to structure format (indicators only)
+            structure = convert_metadata_to_structure(data["metadata"])
         else:
             structure = data["structure"]
-            
+
         user_id = data.get("user_id")
         
         # Create the configuration
@@ -1318,7 +1385,7 @@ def list_indicators():
         limit = int(request.args.get('limit', 100))
         
         # Get all indicator details from metadata
-        indicator_details = sspi_metadata.get_indicator_details()
+        indicator_details = sspi_metadata.indicator_details()
         
         if not indicator_details:
             return jsonify({
@@ -1430,3 +1497,480 @@ def get_indicator_details(indicator_code):
     except Exception as e:
         logger.error(f"Error getting indicator details for {indicator_code}: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+def format_results_for_panel_chart(results: list, config: dict) -> dict:
+    """
+    Format cached results for consumption by panel chart components.
+    
+    Args:
+        results: List of cached scoring results
+        config: Configuration metadata
+        
+    Returns:
+        Dictionary formatted for panel chart consumption
+    """
+    try:
+        if not results:
+            return {
+                "success": True,
+                "data": [],
+                "labels": [],
+                "title": config.get("name", "Custom SSPI"),
+                "itemType": "custom",
+                "groupOptions": [],
+                "itemOptions": [],
+                "description": "Custom SSPI structure with no available data"
+            }
+        
+        # Group results by country and item
+        country_data = {}
+        item_codes = set()
+        years = set()
+        
+        for result in results:
+            country_code = result["country_code"]
+            item_code = result["item_code"]
+            year = result["year"]
+            score = result["score"]
+            
+            if country_code not in country_data:
+                country_data[country_code] = {
+                    "CCode": country_code,
+                    "CName": country_code,  # Would need country name lookup
+                    "CGroup": ["CUSTOM"],   # Custom group
+                    "data": [],
+                    "scores": [],
+                    "ICode": item_code
+                }
+            
+            country_data[country_code]["data"].append(score)
+            country_data[country_code]["scores"].append(score)
+            
+            item_codes.add(item_code)
+            years.add(year)
+        
+        # Convert to list format expected by panel charts
+        datasets = list(country_data.values())
+        
+        # Create labels (years)
+        labels = sorted(list(years))
+        
+        # Create item options for dropdown
+        item_options = []
+        for item_code in sorted(item_codes):
+            # Find an example result to get the item name
+            example_result = next((r for r in results if r["item_code"] == item_code), {})
+            item_options.append({
+                "Code": item_code,
+                "Name": example_result.get("item_name", item_code)
+            })
+        
+        return {
+            "success": True,
+            "data": datasets,
+            "labels": [str(year) for year in labels],
+            "title": config.get("name", "Custom SSPI"),
+            "itemType": "custom",
+            "itemCode": item_options[0]["Code"] if item_options else "CUSTOM",
+            "groupOptions": ["CUSTOM"],
+            "itemOptions": item_options,
+            "description": f"Custom SSPI structure: {config.get('name', 'Unnamed')}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error formatting results for panel chart: {str(e)}")
+        return {
+            "success": False,
+            "error": f"Failed to format results: {str(e)}"
+        }
+
+
+@customize_bp.route("/score-and-cache/<config_id>", methods=["POST"])
+def score_and_cache_configuration(config_id):
+    """
+    Score a custom SSPI structure and cache the results.
+    
+    Expected JSON payload:
+    {
+        "structure": {...},  // Optional: structure to score (if not using saved config)
+        "country_codes": ["USA", "GBR"],  // Optional: specific countries
+        "years": [2020, 2021],  // Optional: specific years
+        "force_refresh": false  // Optional: force recalculation even if cached
+    }
+    
+    Returns:
+    {
+        "success": true,
+        "config_id": "config_id",
+        "message": "Configuration scored and cached successfully",
+        "cached_results_count": 1234
+    }
+    """
+    try:
+        data = request.get_json() if request.is_json else {}
+        
+        # Get configuration or use provided structure
+        if "structure" in data:
+            # Use provided structure (for unsaved configurations)
+            structure = data["structure"]
+            config_name = structure.get("itemName", "Temporary Configuration")
+        else:
+            # Load saved configuration
+            config = sspi_custom_user_structure.find_by_config_id(config_id)
+            if not config:
+                return jsonify({"error": "Configuration not found"}), 404
+            structure = config["structure"] 
+            config_name = config["name"]
+        
+        # Convert structure to metadata format
+        try:
+            metadata_items = convert_structure_to_metadata(structure)
+        except Exception as e:
+            logger.error(f"Error converting structure to metadata: {str(e)}")
+            return jsonify({"error": f"Invalid structure format: {str(e)}"}), 400
+        
+        # Extract optional parameters
+        country_codes = data.get("country_codes")
+        years = data.get("years")  
+        force_refresh = data.get("force_refresh", False)
+        
+        # Check if we already have cached results (unless force refresh)
+        if not force_refresh:
+            existing_results = sspi_custom_user_data.get_config_results(config_id)
+            if existing_results:
+                return jsonify({
+                    "success": True,
+                    "config_id": config_id,
+                    "message": "Using cached results (use force_refresh=true to recalculate)",
+                    "cached_results_count": len(existing_results)
+                })
+        
+        # Score the custom structure
+        try:
+            scoring_results = score_custom_metadata(
+                metadata_items, 
+                country_codes=country_codes,
+                years=years
+            )
+        except Exception as e:
+            logger.error(f"Error scoring custom structure: {str(e)}")
+            return jsonify({"error": f"Scoring failed: {str(e)}"}), 500
+        
+        if not scoring_results.get("success", False):
+            return jsonify({
+                "error": f"Scoring failed: {scoring_results.get('error', 'Unknown error')}"
+            }), 500
+        
+        # Clear existing cached results if force refresh
+        if force_refresh:
+            sspi_custom_user_data.clear_config_results(config_id)
+        
+        # Store results in cache
+        try:
+            cache_results = sspi_custom_user_data.store_scoring_results(
+                config_id, scoring_results["results"]
+            )
+            
+            if not cache_results["success"]:
+                logger.error(f"Failed to cache results: {cache_results.get('error')}")
+                return jsonify({
+                    "error": f"Failed to cache results: {cache_results.get('error')}"
+                }), 500
+                
+        except Exception as e:
+            logger.error(f"Error caching scoring results: {str(e)}")
+            return jsonify({"error": f"Failed to cache results: {str(e)}"}), 500
+        
+        logger.info(f"Successfully scored and cached configuration {config_id}")
+        return jsonify({
+            "success": True,
+            "config_id": config_id,
+            "message": "Configuration scored and cached successfully",
+            "cached_results_count": len(scoring_results["results"])
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in score_and_cache_configuration: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@customize_bp.route("/cached-scores/<config_id>", methods=["GET"])
+def get_cached_scores(config_id):
+    """
+    Retrieve cached scoring results for a configuration.
+    
+    Query parameters:
+    - format: 'raw' (default) or 'panel_data' (formatted for SSPIPanelChart)
+    - country_codes: comma-separated list of countries to filter
+    - years: comma-separated list of years to filter
+    - item_types: comma-separated list of item types (SSPI,Pillar,Category,Indicator)
+    
+    Returns:
+    {
+        "success": true,
+        "config_id": "config_id", 
+        "results": [...],
+        "count": 123
+    }
+    """
+    try:
+        # Get cached results
+        results = sspi_custom_user_data.get_config_results(config_id)
+        
+        if not results:
+            return jsonify({"error": "No cached results found for this configuration"}), 404
+        
+        # Apply filters if provided
+        country_filter = request.args.get("country_codes")
+        if country_filter:
+            country_codes = [c.strip().upper() for c in country_filter.split(",")]
+            results = [r for r in results if r.get("country_code") in country_codes]
+        
+        years_filter = request.args.get("years")
+        if years_filter:
+            years = [int(y.strip()) for y in years_filter.split(",") if y.strip().isdigit()]
+            results = [r for r in results if r.get("year") in years]
+            
+        item_types_filter = request.args.get("item_types")
+        if item_types_filter:
+            item_types = [t.strip() for t in item_types_filter.split(",")]
+            results = [r for r in results if r.get("item_type") in item_types]
+        
+        # Format for panel charts if requested
+        response_format = request.args.get("format", "raw").lower()
+        if response_format == "panel_data":
+            # Get the configuration for metadata
+            config = sspi_custom_user_structure.find_by_config_id(config_id)
+            formatted_data = format_results_for_panel_chart(results, config)
+            return jsonify(formatted_data)
+        
+        # Return raw results
+        return jsonify({
+            "success": True,
+            "config_id": config_id,
+            "results": results,
+            "count": len(results)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error retrieving cached scores for {config_id}: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@customize_bp.route("/cached-scores/<config_id>", methods=["DELETE"])
+def clear_cached_scores(config_id):
+    """
+    Clear cached scoring results for a configuration.
+    
+    Returns:
+    {
+        "success": true,
+        "message": "Cached results cleared successfully"
+    }
+    """
+    try:
+        success = sspi_custom_user_data.clear_config_results(config_id)
+        
+        if success:
+            logger.info(f"Cleared cached results for configuration: {config_id}")
+            return jsonify({
+                "success": True,
+                "message": "Cached results cleared successfully"
+            })
+        else:
+            return jsonify({"error": "No cached results found for this configuration"}), 404
+            
+    except Exception as e:
+        logger.error(f"Error clearing cached scores for {config_id}: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+def score_custom_metadata(metadata_items: list, country_codes: list = None, years: list = None) -> dict:
+    """
+    Score a custom SSPI structure using the existing SSPI class.
+    
+    Args:
+        metadata_items: List of metadata items in SSPI format
+        country_codes: Optional list of country codes to score
+        years: Optional list of years to score
+    
+    Returns:
+        dict: {
+            "success": bool,
+            "results": [list of scored documents],
+            "error": str (if success=False)
+        }
+    """
+    try:
+        # Extract indicator codes from metadata
+        indicator_codes = []
+        for item in metadata_items:
+            if item.get("ItemType") == "Indicator":
+                indicator_codes.append(item.get("ItemCode"))
+        
+        if not indicator_codes:
+            return {
+                "success": False,
+                "error": "No indicators found in structure"
+            }
+        
+        # Get indicator scores from the database
+        query = {"ItemCode": {"$in": indicator_codes}}
+        
+        if country_codes:
+            query["CountryCode"] = {"$in": country_codes}
+            
+        if years:
+            query["Year"] = {"$in": years}
+        
+        # Query existing indicator data
+        indicator_scores = list(sspi_item_data.find(query))
+        
+        if not indicator_scores:
+            return {
+                "success": False,
+                "error": "No indicator data found for the specified structure"
+            }
+        
+        # Create SSPI instance with custom metadata
+        try:
+            sspi_instance = SSPI(
+                item_details=metadata_items,
+                indicator_scores=indicator_scores,
+                strict_year=True
+            )
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to initialize SSPI instance: {str(e)}"
+            }
+        
+        # Calculate scores for all levels of the hierarchy
+        try:
+            sspi_instance.calculate_all_scores()
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to calculate scores: {str(e)}"
+            }
+        
+        # Extract all calculated results
+        results = []
+        
+        # Get all countries and years from the indicator scores
+        all_countries = set(score.get("CountryCode") for score in indicator_scores)
+        all_years = set(score.get("Year") for score in indicator_scores)
+        
+        # Create ranking table for relative rankings
+        ranking_table = SSPIRankingTable()
+        
+        # Process each metadata item to extract scores
+        for item in metadata_items:
+            item_code = item.get("ItemCode")
+            item_name = item.get("ItemName", item_code)
+            item_type = item.get("ItemType")
+            
+            for country_code in all_countries:
+                for year in all_years:
+                    # Get score from SSPI instance
+                    try:
+                        if item_type == "Indicator":
+                            # For indicators, get from indicator_scores
+                            score_doc = next((
+                                s for s in indicator_scores 
+                                if s.get("ItemCode") == item_code 
+                                and s.get("CountryCode") == country_code 
+                                and s.get("Year") == year
+                            ), None)
+                            
+                            if score_doc:
+                                score_value = score_doc.get("Score")
+                            else:
+                                continue
+                        else:
+                            # For higher-level items, get from SSPI instance
+                            score_value = sspi_instance.get_score(item_code, country_code, year)
+                            if score_value is None:
+                                continue
+                        
+                        # Calculate rank (simple ranking within this dataset)
+                        rank = ranking_table.calculate_rank(
+                            item_code, country_code, year, score_value
+                        ) if hasattr(ranking_table, 'calculate_rank') else None
+                        
+                        # Create result document
+                        result = {
+                            "config_id": "temp",  # Will be updated by caller
+                            "country_code": country_code,
+                            "year": year,
+                            "item_code": item_code,
+                            "item_name": item_name,
+                            "item_type": item_type,
+                            "score": round(score_value, 3) if score_value is not None else None,
+                            "rank": rank,
+                            "calculated_at": None,  # Will be set by storage function
+                            "metadata": {
+                                "structure_hash": None,  # Will be calculated if needed
+                                "indicator_count": len(indicator_codes),
+                                "data_source": "custom_structure"
+                            }
+                        }
+                        
+                        results.append(result)
+                        
+                    except Exception as e:
+                        logger.warning(f"Failed to get score for {item_code}/{country_code}/{year}: {str(e)}")
+                        continue
+        
+        return {
+            "success": True,
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in score_custom_metadata: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+def convert_structure_to_metadata(structure):
+    """
+    Convert frontend structure format to SSPI metadata format.
+    
+    Args:
+        structure: Hierarchical structure from frontend
+        
+    Returns:
+        list: Flat list of metadata items in SSPI format
+    """
+    metadata_items = []
+    
+    def process_item(item, parent_code=None):
+        # Create metadata item
+        metadata_item = {
+            "ItemCode": item["itemCode"],
+            "ItemName": item["itemName"], 
+            "ItemType": item["itemType"],
+            "Children": [child["itemCode"] for child in item.get("children", [])]
+        }
+        
+        # Add parent relationship if exists
+        if parent_code:
+            metadata_item["Parent"] = parent_code
+            
+        # Add any additional fields from the item
+        for key, value in item.items():
+            if key not in ["itemCode", "itemName", "itemType", "children"]:
+                metadata_item[key] = value
+                
+        metadata_items.append(metadata_item)
+        
+        # Process children recursively
+        for child in item.get("children", []):
+            process_item(child, item["itemCode"])
+    
+    process_item(structure)
+    return metadata_items

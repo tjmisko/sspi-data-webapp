@@ -180,7 +180,18 @@ class CustomizableSSPIStructure {
             }
         });
 
-        toolbar.append(importBtn, exportBtn, this.saveButton, validateBtn, this.discardButton, expandAllBtn, collapseAllBtn);
+        // Add "Score & Visualize" button
+        const scoreVisualizeBtn = document.createElement('button');
+        scoreVisualizeBtn.textContent = 'Score & Visualize';
+        scoreVisualizeBtn.title = 'Generate scores and visualize this custom SSPI structure';
+        scoreVisualizeBtn.style.backgroundColor = '#4CAF50';
+        scoreVisualizeBtn.style.color = 'white';
+        scoreVisualizeBtn.style.fontWeight = 'bold';
+        scoreVisualizeBtn.addEventListener('click', async () => {
+            await this.scoreAndVisualize();
+        });
+
+        toolbar.append(importBtn, exportBtn, this.saveButton, scoreVisualizeBtn, validateBtn, this.discardButton, expandAllBtn, collapseAllBtn);
         this.parentElement.appendChild(toolbar);
     }
 
@@ -336,6 +347,7 @@ class CustomizableSSPIStructure {
             this.draggedEl.classList.remove('dragging');
             this.validate(z);
             this.flagUnsaved();
+            this.markInvalidIndicatorPlacements();
             const order = Array.from(z.children).map(c => c.id);
             console.log('New order:', order);
         });
@@ -657,13 +669,180 @@ class CustomizableSSPIStructure {
     }
 
     promptMove(el) {
-        const p = prompt(`Enter pillar (${this.pillars.join(', ')}):`);
-        const col = Array.from(this.container.querySelectorAll('.pillar-column'))
-            .find(c => c.dataset.pillar === p);
-        if (col) {
-            const z = col.querySelector('.categories-container');
-            if (z.dataset.accept === el.dataset.type) z.appendChild(el);
-        }
+        // Create styled modal instead of native prompt
+        const modal = this.createMoveToPillarModal(el);
+        document.body.appendChild(modal);
+
+        // Focus on the input
+        setTimeout(() => {
+            const input = modal.querySelector('.move-pillar-input');
+            if (input) input.focus();
+        }, 100);
+    }
+
+    createMoveToPillarModal(element) {
+        const overlay = document.createElement('div');
+        overlay.className = 'move-pillar-overlay';
+
+        // Get pillar info for display
+        const pillarInfo = this.container.querySelectorAll('.pillar-column');
+        const pillarOptions = Array.from(pillarInfo).map(col => {
+            const name = col.dataset.pillar;
+            const codeInput = col.querySelector('.pillar-code-input');
+            const code = codeInput ? codeInput.value.trim() : '';
+            return { name, code };
+        }).filter(p => p.name && p.code);
+
+        const optionsHtml = pillarOptions.map(p =>
+            `<button class="pillar-option clickable" type="button" data-pillar-name="${p.name}" data-pillar-code="${p.code}">
+                <strong>${p.code}</strong> - ${p.name}
+            </button>`
+        ).join('');
+
+        const elementType = element.dataset.type;
+        const isIndicator = elementType === 'indicator';
+        const instructionText = isIndicator
+            ? 'Select destination pillar (indicator will be moved to pillar bottom):'
+            : 'Select destination pillar or enter pillar name/code:';
+
+        // Create dynamic placeholder from available pillar codes
+        const placeholderCodes = pillarOptions.slice(0, 3).map(p => p.code).join(', ');
+        const placeholder = placeholderCodes ? `Enter pillar name or code (e.g., ${placeholderCodes})` : 'Enter pillar name or code';
+
+        overlay.innerHTML = `
+            <div class="move-pillar-modal">
+                <div class="move-pillar-header">
+                    <h3>Move ${elementType === 'category' ? 'Category' : 'Indicator'} to Pillar</h3>
+                    <button class="modal-close-btn" type="button">×</button>
+                </div>
+                <div class="move-pillar-body">
+                    <p>${instructionText}</p>
+                    <div class="pillar-options-list">
+                        ${optionsHtml}
+                    </div>
+                    <input type="text" class="move-pillar-input" placeholder="${placeholder}">
+                </div>
+                <div class="move-pillar-actions">
+                    <button class="modal-cancel-btn" type="button">Cancel</button>
+                    <button class="modal-confirm-btn" type="button">Move</button>
+                </div>
+            </div>
+        `;
+
+        const modal = overlay.querySelector('.move-pillar-modal');
+        const input = overlay.querySelector('.move-pillar-input');
+        const confirmBtn = overlay.querySelector('.modal-confirm-btn');
+        const cancelBtn = overlay.querySelector('.modal-cancel-btn');
+        const closeBtn = overlay.querySelector('.modal-close-btn');
+        const pillarOptionButtons = overlay.querySelectorAll('.pillar-option.clickable');
+
+        // Add click handlers to pillar option buttons
+        pillarOptionButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const pillarCode = btn.dataset.pillarCode;
+                input.value = pillarCode;
+                input.focus();
+            });
+        });
+
+        const handleMove = () => {
+            const userInput = input.value.trim();
+            if (!userInput) {
+                overlay.remove();
+                return;
+            }
+
+            // Find pillar column by name or code (case-insensitive)
+            const col = Array.from(this.container.querySelectorAll('.pillar-column'))
+                .find(c => {
+                    const pillarName = c.dataset.pillar;
+                    const codeInput = c.querySelector('.pillar-code-input');
+                    const pillarCode = codeInput ? codeInput.value.trim() : '';
+
+                    return pillarName.toLowerCase() === userInput.toLowerCase() ||
+                           pillarCode.toLowerCase() === userInput.toLowerCase();
+                });
+
+            if (col) {
+                const elementType = element.dataset.type;
+
+                if (elementType === 'category') {
+                    // Move category to pillar's categories-container
+                    const targetContainer = col.querySelector('.categories-container');
+                    if (targetContainer) {
+                        targetContainer.appendChild(element);
+                        this.flagUnsaved();
+                        overlay.remove();
+                        console.log(`Category moved to pillar: ${userInput}`);
+                    } else {
+                        alert('Error: Could not find categories container in the target pillar');
+                    }
+                } else if (elementType === 'indicator') {
+                    // Move indicator to bottom of categories-container (outside any specific category)
+                    // This creates an invalid state but keeps it in the proper drop zone
+                    // This allows users to temporarily move indicators between pillars
+                    // before assigning them to a specific category
+
+                    // Append to the categories-container at the bottom
+                    const categoriesContainer = col.querySelector('.categories-container');
+                    if (categoriesContainer) {
+                        categoriesContainer.appendChild(element);
+                    } else {
+                        // Fallback: insert before Add Category button
+                        const addCategoryBtn = col.querySelector('.add-category');
+                        if (addCategoryBtn) {
+                            col.insertBefore(element, addCategoryBtn);
+                        } else {
+                            col.appendChild(element);
+                        }
+                    }
+
+                    this.flagUnsaved();
+                    overlay.remove();
+                    console.log(`Indicator moved to categories-container bottom (invalid state): ${userInput}`);
+
+                    // Add visual indicator that this is an invalid state
+                    element.classList.add('temporary-invalid-placement');
+                    element.title = 'This indicator needs to be moved into a category';
+                } else {
+                    alert(`Cannot move this ${elementType} to a pillar`);
+                }
+            } else {
+                alert(`Pillar "${userInput}" not found. Please use a valid pillar name or code.`);
+            }
+        };
+
+        const handleCancel = () => {
+            overlay.remove();
+        };
+
+        // Event listeners
+        confirmBtn.addEventListener('click', handleMove);
+        cancelBtn.addEventListener('click', handleCancel);
+        closeBtn.addEventListener('click', handleCancel);
+
+        // Enter key to confirm
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleMove();
+            }
+        });
+
+        // Escape key to cancel
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                handleCancel();
+            }
+        });
+
+        // Click outside to cancel
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                handleCancel();
+            }
+        });
+
+        return overlay;
     }
 
     renameItem(el) {
@@ -684,6 +863,66 @@ class CustomizableSSPIStructure {
             s.max = u;
             s.value = Math.min(Math.max(s.value, l), u);
         }
+    }
+
+    markInvalidIndicatorPlacements() {
+        /**
+         * Scans all pillar columns and marks indicators that are placed
+         * outside of categories as temporarily invalid.
+         * This provides visual feedback that these indicators need to be
+         * moved into a category.
+         */
+        const pillarColumns = this.container.querySelectorAll('.pillar-column');
+
+        pillarColumns.forEach(col => {
+            // Check direct children of pillar column
+            Array.from(col.children).forEach(child => {
+                if (child.classList.contains('indicator-card')) {
+                    // This indicator is a direct child of pillar (not in category)
+                    if (!child.classList.contains('temporary-invalid-placement')) {
+                        child.classList.add('temporary-invalid-placement');
+                        child.title = 'This indicator needs to be moved into a category';
+                    }
+                } else if (child.dataset && child.dataset.type === 'indicator') {
+                    // Catch any other indicator types
+                    if (!child.classList.contains('temporary-invalid-placement')) {
+                        child.classList.add('temporary-invalid-placement');
+                        child.title = 'This indicator needs to be moved into a category';
+                    }
+                }
+            });
+
+            // Check direct children of categories-container
+            const categoriesContainer = col.querySelector('.categories-container');
+            if (categoriesContainer) {
+                Array.from(categoriesContainer.children).forEach(child => {
+                    // If it's an indicator card but NOT inside a category-box
+                    if (child.classList.contains('indicator-card') && !child.closest('.category-box')) {
+                        if (!child.classList.contains('temporary-invalid-placement')) {
+                            child.classList.add('temporary-invalid-placement');
+                            child.title = 'This indicator needs to be moved into a category';
+                        }
+                    } else if (child.dataset && child.dataset.type === 'indicator' && !child.closest('.category-box')) {
+                        if (!child.classList.contains('temporary-invalid-placement')) {
+                            child.classList.add('temporary-invalid-placement');
+                            child.title = 'This indicator needs to be moved into a category';
+                        }
+                    }
+                });
+            }
+
+            // Remove invalid class from indicators that ARE properly in categories
+            const categoriesInPillar = col.querySelectorAll('.category-box');
+            categoriesInPillar.forEach(category => {
+                const indicatorsInCategory = category.querySelectorAll('.indicator-card');
+                indicatorsInCategory.forEach(indicator => {
+                    indicator.classList.remove('temporary-invalid-placement');
+                    if (indicator.title === 'This indicator needs to be moved into a category') {
+                        indicator.removeAttribute('title');
+                    }
+                });
+            });
+        });
     }
 
     validate(z) {
@@ -837,6 +1076,218 @@ class CustomizableSSPIStructure {
         });
         
         return metadataItems;
+    }
+
+    /**
+     * Export data in format suitable for scoring pipeline
+     * @returns {Object} Structure data with metadata for scoring
+     */
+    exportForScoring() {
+        const metadata = this.exportData();
+        const structureData = this.convertMetadataToStructure(metadata);
+        
+        return {
+            metadata: metadata,
+            structure: structureData,
+            exportedAt: new Date().toISOString(),
+            totalItems: metadata.length,
+            hasUnsavedChanges: this.unsavedChanges
+        };
+    }
+
+    /**
+     * Convert metadata format to frontend structure format for compatibility
+     * @param {Array} metadata - SSPI metadata items
+     * @returns {Array} Structure items for frontend consumption
+     */
+    convertMetadataToStructure(metadata) {
+        const structure = [];
+        
+        // Find all indicators and build structure from them
+        const indicators = metadata.filter(item => item.ItemType === 'Indicator');
+        
+        indicators.forEach(indicator => {
+            // Find related pillar and category
+            const pillar = metadata.find(item => 
+                item.ItemType === 'Pillar' && 
+                item.ItemCode === indicator.PillarCode
+            );
+            const category = metadata.find(item => 
+                item.ItemType === 'Category' && 
+                item.ItemCode === indicator.CategoryCode
+            );
+            
+            // Convert datasets to expected format
+            const datasets = (indicator.DatasetCodes || []).map(code => ({
+                code: code,
+                weight: 1.0 // Default weight
+            }));
+            
+            structure.push({
+                Indicator: indicator.ItemName || indicator.Indicator || indicator.ItemCode,
+                IndicatorCode: indicator.ItemCode,
+                Category: category ? (category.ItemName || category.Category || category.ItemCode) : 'Unknown',
+                CategoryCode: indicator.CategoryCode,
+                Pillar: pillar ? (pillar.ItemName || pillar.Pillar || pillar.ItemCode) : 'Unknown', 
+                PillarCode: indicator.PillarCode,
+                LowerGoalpost: indicator.LowerGoalpost,
+                UpperGoalpost: indicator.UpperGoalpost,
+                Inverted: indicator.Inverted || false,
+                ItemOrder: indicator.ItemOrder || 0,
+                datasets: datasets
+            });
+        });
+        
+        // Sort by item order and codes
+        structure.sort((a, b) => {
+            if (a.ItemOrder !== b.ItemOrder) {
+                return a.ItemOrder - b.ItemOrder;
+            }
+            return a.IndicatorCode.localeCompare(b.IndicatorCode);
+        });
+        
+        return structure;
+    }
+
+    /**
+     * Score the current structure and open visualization
+     */
+    async scoreAndVisualize() {
+        try {
+            // Validate current structure
+            const validationErrors = this.validateHierarchy();
+            if (validationErrors.length > 0) {
+                const proceed = confirm(
+                    `The current structure has validation issues:\n${validationErrors.join('\n')}\n\nDo you want to continue with scoring anyway?`
+                );
+                if (!proceed) {
+                    return;
+                }
+            }
+
+            // Show loading indicator
+            this.showLoadingState('Preparing structure for scoring...');
+
+            // Export current structure
+            const exportData = this.exportForScoring();
+            
+            if (!exportData.structure || exportData.structure.length === 0) {
+                this.hideLoadingState();
+                alert('No indicators found in the current structure. Please add some indicators before scoring.');
+                return;
+            }
+
+            // Check if we should save first, or save if no config ID exists yet
+            let configId = null;
+            if (this.unsavedChanges) {
+                const shouldSave = confirm('You have unsaved changes. Would you like to save this configuration before scoring?');
+                if (shouldSave) {
+                    configId = await this.saveConfiguration();
+                    exportData.hasUnsavedChanges = false;
+                }
+            } else {
+                // Try to find existing config ID if this was loaded from a saved config
+                const selector = document.querySelector('.config-selector select');
+                if (selector && selector.value) {
+                    configId = selector.value;
+                }
+            }
+
+            // Update loading message
+            this.showLoadingState('Initiating scoring process...');
+
+            let visualizationUrl;
+            if (configId) {
+                // Use the production visualization page with saved config
+                visualizationUrl = `/customize/visualize/${configId}`;
+            } else {
+                // Fall back to test page with structure data
+                visualizationUrl = `/customize/test-chart?structure=${encodeURIComponent(JSON.stringify(exportData.structure))}`;
+                
+                // Show message about saving
+                this.showNotification(
+                    'Using test mode - save your configuration for full features!', 
+                    'warning', 
+                    7000
+                );
+            }
+            
+            this.hideLoadingState();
+            
+            // Open in new tab/window
+            const visualizationWindow = window.open(visualizationUrl, '_blank', 'width=1200,height=800');
+            
+            if (!visualizationWindow) {
+                alert('Popup blocked. Please allow popups for this site and try again.');
+            } else {
+                // Show success message
+                const notification = this.showNotification(
+                    '🎉 Scoring visualization opened in new window!', 
+                    'success', 
+                    5000
+                );
+            }
+
+        } catch (error) {
+            this.hideLoadingState();
+            console.error('Error in scoreAndVisualize:', error);
+            alert(`Error preparing visualization: ${error.message}`);
+        }
+    }
+
+    /**
+     * Show a temporary notification to the user
+     * @param {string} message - The message to display
+     * @param {string} type - The notification type ('success', 'error', 'info')
+     * @param {number} duration - Duration in milliseconds (default: 3000)
+     */
+    showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            max-width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideInRight 0.3s ease-out;
+        `;
+        
+        // Set background color based on type
+        switch(type) {
+            case 'success':
+                notification.style.backgroundColor = '#4CAF50';
+                break;
+            case 'error':
+                notification.style.backgroundColor = '#f44336';
+                break;
+            case 'warning':
+                notification.style.backgroundColor = '#ff9800';
+                break;
+            default:
+                notification.style.backgroundColor = '#2196F3';
+        }
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Auto-remove after duration
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, duration);
+        
+        return notification;
     }
 
     // Hierarchy management methods
@@ -1244,8 +1695,11 @@ class CustomizableSSPIStructure {
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
-        
+
         console.log('Async metadata import completed');
+
+        // Mark any indicators that are outside categories
+        this.markInvalidIndicatorPlacements();
     }
 
     async processPillarFromMetadata(pillarItem, hierarchy) {
@@ -1442,6 +1896,9 @@ class CustomizableSSPIStructure {
                 this.validate(catEl.querySelector('.indicators-container'));
             });
         });
+
+        // Mark any indicators that are outside categories
+        this.markInvalidIndicatorPlacements();
     }
 
     async saveConfiguration() {

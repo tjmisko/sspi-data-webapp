@@ -493,6 +493,7 @@
   box-sizing: border-box;
   min-width: 0; /* Allow column to shrink below content size */
   overflow-wrap: break-word; /* Break long words to prevent overflow */
+  overflow: visible; /* Ensure labels aren't clipped */
 }
 
 .pillar-header {
@@ -512,6 +513,7 @@
   padding: 0.375em;
   min-height: 4rem;
   margin: 0.25em 0;
+  overflow: visible;
 }
 
 .indicators-container {
@@ -1488,5 +1490,455 @@
     
     .option-description {
         font-size: 0.8rem;
+    }
+}
+
+/* Context Menu Styles */
+.context-menu {
+    position: absolute;
+    background: var(--box-background-color);
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 0.25rem 0;
+    min-width: 160px;
+    z-index: 10000;
+    list-style: none;
+    margin: 0;
+    animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.context-menu li {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    font-size: 0.9rem;
+    color: var(--text-color);
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    user-select: none;
+}
+
+.context-menu li:hover,
+.context-menu li:focus {
+    background: color-mix(in srgb, var(--green-accent) 10%, var(--box-background-color));
+    border-left-color: var(--green-accent);
+    outline: none;
+}
+
+.context-menu li:active {
+    background: color-mix(in srgb, var(--green-accent) 20%, var(--box-background-color));
+}
+
+/* Individual menu item styling based on action type */
+.context-menu li:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.context-menu li:last-child {
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+/* Optional: Add icons or special styling for specific actions */
+.context-menu li[data-action="delete"]:hover {
+    background: color-mix(in srgb, #dc3545 10%, var(--box-background-color));
+    border-left-color: #dc3545;
+    color: #dc3545;
+}
+
+/* Dataset options menu (similar styling for consistency) */
+.dataset-options-menu {
+    position: absolute;
+    background: var(--box-background-color);
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 0.25rem 0;
+    min-width: 140px;
+    z-index: 1000;
+    animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+.dataset-options-menu .menu-item {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-family: var(--body-font-family);
+    font-size: 0.85rem;
+    color: var(--text-color);
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+    user-select: none;
+}
+
+.dataset-options-menu .menu-item:hover {
+    background: color-mix(in srgb, var(--green-accent) 10%, var(--box-background-color));
+    border-left-color: var(--green-accent);
+}
+
+.dataset-options-menu .menu-item:active {
+    background: color-mix(in srgb, var(--green-accent) 20%, var(--box-background-color));
+}
+
+/* Add separator support if needed in the future */
+.context-menu .menu-separator {
+    height: 1px;
+    background: var(--subtle-line-color);
+    margin: 0.25rem 0;
+    border: none;
+}
+
+/* Focus visible for keyboard navigation */
+.context-menu li:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: -2px;
+}
+
+/* Move to Pillar Modal Styles */
+.move-pillar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.move-pillar-modal {
+    background: var(--box-background-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 450px;
+    animation: slideInScale 0.3s ease-out;
+    overflow: hidden;
+}
+
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.move-pillar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--subtle-line-color);
+    background: var(--region-background-color);
+}
+
+.move-pillar-header h3 {
+    margin: 0;
+    font-family: var(--header-font-family);
+    font-size: 1.3rem;
+    color: var(--header-text-color);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--low-importance-font-color);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close-btn:hover {
+    background: color-mix(in srgb, var(--low-importance-font-color) 15%, transparent);
+    color: var(--text-color);
+}
+
+.move-pillar-body {
+    padding: 1.5rem;
+}
+
+.move-pillar-body p {
+    margin: 0 0 1rem 0;
+    font-family: var(--body-font-family);
+    color: var(--body-text-color);
+    font-size: 0.95rem;
+}
+
+.pillar-options-list {
+    background: var(--region-background-color);
+    border: 1px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.pillar-options-list:last-child {
+    margin-bottom: 0;
+}
+
+.pillar-option {
+    padding: 0.5rem;
+    font-family: var(--body-font-family);
+    font-size: 0.9rem;
+    color: var(--text-color);
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+.pillar-option.clickable {
+    cursor: pointer;
+    background: var(--region-background-color);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+    margin-bottom: 0.25rem;
+    padding: 0.75rem;
+}
+
+.pillar-option.clickable:hover {
+    background: color-mix(in srgb, var(--green-accent) 10%, var(--region-background-color));
+    border-color: var(--green-accent);
+    transform: translateX(4px);
+}
+
+.pillar-option.clickable:active {
+    background: color-mix(in srgb, var(--green-accent) 15%, var(--region-background-color));
+    transform: translateX(2px);
+}
+
+.pillar-option strong {
+    color: var(--green-accent);
+    font-family: monospace;
+    font-size: 0.95rem;
+    margin-right: 0.5rem;
+}
+
+.move-pillar-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--subtle-line-color);
+    border-radius: var(--border-radius);
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    font-family: var(--body-font-family);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.move-pillar-input:focus {
+    outline: none;
+    border-color: var(--green-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-accent) 15%, transparent);
+}
+
+.move-pillar-input::placeholder {
+    color: var(--low-importance-font-color);
+}
+
+.move-pillar-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--region-background-color);
+    border-top: 1px solid var(--subtle-line-color);
+}
+
+.modal-cancel-btn,
+.modal-confirm-btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-family: var(--body-font-family);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-weight: 500;
+}
+
+.modal-cancel-btn {
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+    border: 1px solid var(--subtle-line-color);
+}
+
+.modal-cancel-btn:hover {
+    background: color-mix(in srgb, var(--input-background-color) 85%, var(--text-color));
+}
+
+.modal-confirm-btn {
+    background: var(--green-accent);
+    color: white;
+    font-weight: 600;
+}
+
+.modal-confirm-btn:hover {
+    background: color-mix(in srgb, var(--green-accent) 85%, black);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--green-accent) 30%, transparent);
+}
+
+.modal-confirm-btn:active {
+    transform: translateY(1px);
+}
+
+/* Mobile adjustments for Move to Pillar modal */
+@media (max-width: var(--small-tablet-break-width)) {
+    .move-pillar-modal {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .move-pillar-header {
+        padding: 1rem;
+    }
+
+    .move-pillar-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .move-pillar-body {
+        padding: 1rem;
+    }
+
+    .pillar-options-list {
+        padding: 0.5rem;
+    }
+
+    .pillar-option {
+        padding: 0.4rem;
+        font-size: 0.85rem;
+    }
+
+    .move-pillar-actions {
+        padding: 0.75rem 1rem;
+        flex-direction: column-reverse;
+    }
+
+    .modal-cancel-btn,
+    .modal-confirm-btn {
+        width: 100%;
+        padding: 0.75rem;
+    }
+}
+
+/* Temporary Invalid Placement Styles */
+.temporary-invalid-placement {
+    border: 2px dashed rgba(220, 53, 69, 0.6) !important;
+    background: color-mix(in srgb, #dc3545 3%, var(--box-background-color)) !important;
+    position: relative;
+    margin-top: 2.5rem !important;
+    animation: invalidPulse 2s ease-in-out infinite;
+}
+
+/* First invalid indicator in categories-container needs extra top space */
+.categories-container > .temporary-invalid-placement:first-child {
+    margin-top: 2.5rem !important;
+}
+
+/* Ensure parent has space for the label */
+.categories-container:has(> .temporary-invalid-placement) {
+    padding-top: 1.5rem;
+}
+
+@keyframes invalidPulse {
+    0%, 100% {
+        border-color: rgba(220, 53, 69, 0.6);
+        box-shadow: 0 0 0 rgba(220, 53, 69, 0);
+    }
+    50% {
+        border-color: rgba(255, 107, 122, 0.8);
+        box-shadow: 0 0 8px rgba(220, 53, 69, 0.2);
+    }
+}
+
+.temporary-invalid-placement::before {
+    content: '⚠ Needs Category';
+    position: absolute;
+    top: -2rem;
+    left: 0;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--border-radius);
+    font-size: 0.75rem;
+    font-weight: bold;
+    font-family: var(--body-font-family);
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.temporary-invalid-placement:hover::after {
+    content: 'This indicator is temporarily placed at the pillar level. Drag it into a category to fix.';
+    position: absolute;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+    font-family: var(--body-font-family);
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.95;
+}
+
+/* Mobile adjustments for temporary invalid placement */
+@media (max-width: var(--small-tablet-break-width)) {
+    .temporary-invalid-placement::before {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+        top: -1.3rem;
+    }
+
+    .temporary-invalid-placement:hover::after {
+        white-space: normal;
+        max-width: 80%;
+        bottom: -80px;
+        font-size: 0.75rem;
     }
 }
