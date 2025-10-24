@@ -10,7 +10,7 @@ from sspi_flask_app.api.core.datasets import dataset_collector, dataset_cleaner
 
 @dataset_collector("FSI_SECAPP")
 def collect_fsi_secapp(**kwargs):
-    yield from collect_fsi_data("SECAPP", **kwargs)
+    yield from collect_fsi_data(**kwargs)
 
 
 @dataset_cleaner("FSI_SECAPP")
