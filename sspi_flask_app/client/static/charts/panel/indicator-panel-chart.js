@@ -343,8 +343,6 @@ class IndicatorPanelChart extends PanelChart {
     buildChartOptions() {
         // Call parent method first
         super.buildChartOptions()
-        
-        // Find the View Options details element and modify its content
         const viewOptions = this.chartOptions.querySelector('.chart-view-options')
         if (viewOptions) {
             // Find the existing container with Imputation Options
@@ -394,15 +392,11 @@ class IndicatorPanelChart extends PanelChart {
         this.yMinInput = this.chartOptions.querySelector('.y-min-input')
         this.yMaxInput = this.chartOptions.querySelector('.y-max-input')
         this.restoreYAxisButton = this.chartOptions.querySelector('.restore-y-axis-button')
-        
-        // Wire up series selector
         if (this.seriesSelector) {
             this.seriesSelector.addEventListener('change', (event) => {
                 this.setActiveSeries(event.target.value)
             })
         }
-        
-        // Wire up Y-axis input change listeners
         const handleYAxisChange = (event) => {
             const yMinValue = this.yMinInput.value
             const yMaxValue = this.yMaxInput.value
