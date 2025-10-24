@@ -64,11 +64,9 @@ class PanelChart {
             <input type="checkbox" class="interpolate-linear"/>
             <label class="title-bar-label">Linear Interpolation</label>
         </div>
-    </div>
-    <div class="view-options-suboption-container">
         <div class="chart-view-subheader">Randomization</div>
         <div class="chart-view-option">
-            <label class="title-bar-label" for="random-country-sample">Random Draw Size:</label>
+            <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
             <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
         </div>
     </div>
@@ -657,9 +655,14 @@ class PanelChart {
     }
 
     updateRandomN(N) {
-        this.randomN = N;
-        window.observableStorage.setItem("randomN", N);
-        this.drawButton.innerText = "Draw " + N.toString() + " Countries";
+        N = parseInt(N)
+        if (isNaN(N) || N <= 0) {
+            this.updateRandomN(10)
+        } else {
+            this.randomN = N;
+            window.observableStorage.setItem("randomN", N);
+            this.drawButton.innerText = "Draw " + N.toString() + " Countries";
+        }
     }
 
     showRandomN(N = 10) {
