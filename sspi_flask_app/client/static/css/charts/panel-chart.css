@@ -222,3 +222,27 @@
   font-size: 0.75em;
   line-height: 1;
 }
+
+.pin-actions-box {
+  display: flex;
+  margin: 0.25em 0;
+}
+
+.pin-actions-box button {
+  flex: 1 1 auto;
+}
+
+.pin-actions-box button form input {
+  color: var(--font-color);
+  background-color: var(--input-background-color);
+}
+
+.country-search-results-window {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-result-index-selected {
+  border: 2px solid var(--green-accent);
+  border-radius: 5px;
+}

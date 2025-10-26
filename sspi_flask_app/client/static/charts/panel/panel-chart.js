@@ -93,9 +93,14 @@ class PanelChart {
         </div>
         <div class="chart-view-subheader">Pinned Countries</div>
         <div class="legend-title-bar-buttons">
-            <button class="add-country-button">Search Country</button>
-            <button class="hideunpinned-button">Hide Unpinned</button>
-            <button class="clearpins-button">Clear Pins</button>
+            <div class="pin-actions-box">
+                <button class="hideunpinned-button">Hide Unpinned</button>
+                <button class="clearpins-button">Clear Pins</button>
+            </div>
+            <div class="pin-actions-box">
+                <button class="add-country-button">Search Country</button>
+            </div>
+            <div class="country-search-results-window"></div>
         </div>
         <legend class="dynamic-line-legend">
             <div class="legend-items"></div>
@@ -173,7 +178,7 @@ class PanelChart {
         this.randomHistoryForwardButton.addEventListener('click', () => { this.randomHistoryForward() })
         this.randomHistoryForwardButton.style.display = "none";
         this.drawButton = this.root.querySelector('.draw-button')
-        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries";
+        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries ";
         this.drawButton.addEventListener('click', () => {
             this.showRandomN(this.randomN)
         })
@@ -343,9 +348,10 @@ class PanelChart {
     }
 
     rigLegend() {
+        this.countrySearchResultsWindow =  this.chartOptions.querySelector('.country-search-results-window')
         this.addCountryButton = this.chartOptions.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
-            new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
+            new CountrySelector(this.addCountryButton, this.countrySearchResultsWindow, this.chart.data.datasets, this)
         })
         this.clearPinsButton = this.chartOptions.querySelector('.clearpins-button')
         this.clearPinsButton.addEventListener('click', () => {
@@ -499,8 +505,6 @@ class PanelChart {
     }
 
     update(data) {
-        console.log(data)
-        
         // Force refresh of chart interaction plugin labels when data changes
         if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
             this.chartInteractionPlugin._forceRefreshLabels(this.chart)
@@ -527,48 +531,30 @@ class PanelChart {
         this.chart.update()
         
         // Compute missing countries asynchronously after chart rendering
-        console.log('=== About to call computeMissingCountriesAsync ===')
-        console.log('countryGroupMap available?', !!this.countryGroupMap, Object.keys(this.countryGroupMap || {}).length, 'countries')
         this.computeMissingCountriesAsync()
     }
 
     computeMissingCountriesAsync() {
-        console.log('=== computeMissingCountriesAsync called ===')
         // Use setTimeout to defer execution until after chart rendering is complete
         setTimeout(() => {
-            console.log('=== setTimeout callback executing ===')
             this.computeMissingCountries()
         }, 0)
     }
 
     computeMissingCountries() {
-        console.log('=== Starting computeMissingCountries ===')
-        
         if (!this.countryGroupMap || Object.keys(this.countryGroupMap).length === 0) {
             console.log('No country group map available for missing countries computation')
             return
         }
-
-        console.log('Country group map keys:', Object.keys(this.countryGroupMap).length, 'countries')
-        console.log('First 10 countries in group map:', Object.keys(this.countryGroupMap).slice(0, 10))
-        console.log('SGP in group map?', 'SGP' in this.countryGroupMap, this.countryGroupMap['SGP'])
-
         const missingCountries = []
         const seenCountries = new Set()
-
-        console.log('Total datasets:', this.chart.data.datasets.length)
-        console.log('Dataset country codes:', this.chart.data.datasets.map(d => d.CCode))
-
         // First pass: process countries that appear in datasets
         this.chart.data.datasets.forEach(countryData => {
             const countryCode = countryData.CCode
-            console.log(`Processing dataset for country: ${countryCode}`)
             seenCountries.add(countryCode)
             const scores = countryData.data || []
             const scoresEmpty = !scores || scores.length === 0 || scores.every(s => s === null || s === undefined || s === '')
-            console.log(`Country ${countryCode}: data length=${scores.length}, empty=${scoresEmpty}`)
             if (scoresEmpty) {
-                console.log(`Adding ${countryCode} to missing (empty data)`)
                 missingCountries.push({
                     CCode: countryCode,
                     CName: countryData.CName || countryCode,
@@ -576,10 +562,6 @@ class PanelChart {
                 })
             }
         })
-
-        console.log('Seen countries:', Array.from(seenCountries))
-        console.log('SGP in seen countries?', seenCountries.has('SGP'))
-
         let notSeenCount = 0
         Object.entries(this.countryGroupMap).forEach(([countryCode, countryGroups]) => {
             if (!seenCountries.has(countryCode)) {
@@ -591,12 +573,6 @@ class PanelChart {
                 })
             }
         })
-
-        console.log(`Countries not seen in datasets: ${notSeenCount}`)
-        console.log(`Total missing countries found: ${missingCountries.length}`)
-        console.log('Missing countries:', missingCountries.map(c => c.CCode))
-        console.log('=== End computeMissingCountries ===')
-
         // Update the missing countries and refresh display
         this.missingCountries = missingCountries
         this.updateMissingCountries()
@@ -604,7 +580,6 @@ class PanelChart {
 
     getPins() {
         const storedPins = window.observableStorage.getItem('pinnedCountries')
-        console.log("Stored pins:", storedPins)
         if (storedPins) {
             this.pins = new Set(storedPins)
         }
@@ -704,8 +679,6 @@ class PanelChart {
         shownIndexArray.forEach((index) => {
             this.chart.data.datasets[index].hidden = false;
             this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex] = 1;
-            console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
-            console.log(this.chart.data.datasets[index].drawHistoryArray)
         })
         this.updateChartPreservingYAxis()
         if (this.randomHistoryIndex > 0) {
@@ -724,9 +697,6 @@ class PanelChart {
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
                 dataset.hidden = true
-            }
-            if (dataset.drawHistoryArray === undefined) {
-                console.log(underfined)
             }
             if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
                 dataset.hidden = false
@@ -747,9 +717,6 @@ class PanelChart {
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
                 dataset.hidden = true
-            }
-            if (dataset.drawHistoryArray === undefined) {
-                console.log(underfined)
             }
             if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
                 dataset.hidden = false
@@ -774,12 +741,14 @@ class PanelChart {
         this.updateLegend()
     }
 
-    pinCountryByCode(CountryCode) {
+    pinCountryByCode(countryCode) {
         this.chart.data.datasets.forEach(dataset => {
-            if (dataset.CCode === CountryCode) {
+            if (dataset.CCode === countryCode) {
+                if (!dataset.pinned) {
+                    this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+                }
                 dataset.pinned = true
                 dataset.hidden = false
-                this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
             }
         })
         this.pushPinUpdate()
@@ -849,19 +818,8 @@ class PanelChart {
     }
 
     dumpChartDataJSON(scope = 'visible') {
-        console.log('dumpChartDataJSON called with scope:', scope)
-        console.log('Available datasets:', this.chart.data.datasets.length)
-        
-        // Debug: log the structure of the first dataset
-        if (this.chart.data.datasets.length > 0) {
-            console.log('First dataset structure:', Object.keys(this.chart.data.datasets[0]))
-            console.log('First dataset sample:', this.chart.data.datasets[0])
-        }
-        
         const observations = this.chart.data.datasets.map(dataset => {
             const shouldInclude = this.shouldIncludeDataset(dataset, scope)
-            console.log(`Dataset ${dataset.CCode} (${dataset.CName}) - include: ${shouldInclude}`)
-            
             if (!shouldInclude) {
                 return []
             }
@@ -885,14 +843,11 @@ class PanelChart {
                 "Year": years[i] ?? null
             }));
         }).flat();
-        
         console.log('Total observations to download:', observations.length)
-        
         if (observations.length === 0) {
             alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
             return
         }
-        
         const jsonString = JSON.stringify(observations, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -903,13 +858,10 @@ class PanelChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
         console.log('JSON download initiated')
     }
 
     dumpChartDataCSV(scope = 'visible') {
-        console.log('dumpChartDataCSV called with scope:', scope)
-        
         const observations = this.chart.data.datasets.map(dataset => {
             if (!this.shouldIncludeDataset(dataset, scope)) {
                 return []
@@ -934,9 +886,6 @@ class PanelChart {
                 "Year": years[i]?.toString() || ''
             }));
         }).flat();
-        
-        console.log('Total observations for CSV:', observations.length)
-        
         if (observations.length === 0) {
             alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
             return
@@ -952,8 +901,6 @@ class PanelChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
-        console.log('CSV download initiated')
     }
 
     rigPinChangeListener() {
@@ -1008,14 +955,9 @@ class PanelChart {
     }
 
     handleDownloadRequest() {
-        console.log('Download request initiated')
         const formData = new FormData(this.downloadForm)
         const scope = formData.get('scope')
         const format = formData.get('format')
-        
-        console.log('Download scope:', scope)
-        console.log('Download format:', format)
-        
         if (!scope || !format) {
             console.error('Missing scope or format in form data')
             alert('Please select both scope and format options')

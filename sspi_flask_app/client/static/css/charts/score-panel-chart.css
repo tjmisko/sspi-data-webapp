@@ -327,9 +327,10 @@
 }
 
 .add-country-pin-result:hover {
-  background-color: var(--green-accent, #000);
+  background-color: color-mix(in srgb, var(--green-accent, #000) 30%, transparent);
   height: auto;
   border-radius: 5px;
+  cursor: pointer;
 }
 
 /* Only target labels within chart view options */
