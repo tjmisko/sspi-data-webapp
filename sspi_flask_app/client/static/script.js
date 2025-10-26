@@ -526,45 +526,52 @@ if(!hasCollision){defaultVisible.add(labelIndex);}else{label.occluded=true;}});c
 const occludedLabels=[];const visibleLabels=[];labels.forEach((l,i)=>{let alpha,reason;if(this._interaction.closestDatasetIdx!==null&&this._interaction.mouse){alpha=l.idx===this._interaction.closestDatasetIdx?1:opts.occludedAlpha;reason=`mouse interaction:${l.idx===this._interaction.closestDatasetIdx?'closest':'not closest'}`;}else if(opts.showDefaultLabels&&chart._defaultVisibleLabels){alpha=chart._defaultVisibleLabels.has(i)?1:opts.occludedAlpha;reason=`default visible:${chart._defaultVisibleLabels.has(i)?'in set':'not in set'}`;}else{alpha=opts.occludedAlpha;reason=`fallback:${opts.showDefaultLabels?'no default set':'default labels disabled'}`;}
 const labelInfo={label:l,alpha,reason,arrayIdx:i};if(chart._defaultVisibleLabels&&chart._defaultVisibleLabels.has(i)){visibleLabels.push(labelInfo);}else{occludedLabels.push(labelInfo);}});occludedLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});visibleLabels.forEach(({label,alpha})=>{this._setupCanvas(ctx,this._LABEL_FONT,label.colour,alpha);ctx.fillText(label.text,label.x,label.y);ctx.restore();});},_resetProximity(chart){chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(!ds._full)return;ds.borderColor=ds._full.border;ds.backgroundColor=ds._full.bg;ds._isNear=ds._isHover=false;if(meta?.dataset)meta.dataset.options.borderColor=ds.borderColor;meta?.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;if(p.__origR!==undefined){p.options.radius=p.__origR;delete p.__origR;}});});this._interaction.tooltipItems=null;this._interaction.closestDatasetIdx=null;},_clearLabelState(chart){chart._defaultVisibleLabels=null;chart._labelRandDone=false;chart._labelOrder=null;chart._lastDatasetCount=null;},_forceRefreshLabels(chart){this._clearLabelState(chart);chart._needsLabelRebuild=true;},_reorderDatasetsForVisibility(chart,labels,visibleLabelIndices){if(!chart.data?.datasets)return;const visibleLabelDatasetIndices=new Set();labels.forEach((label,labelIndex)=>{if(visibleLabelIndices.has(labelIndex)){visibleLabelDatasetIndices.add(label.idx);}});const datasets=chart.data.datasets;const datasetsWithHiddenLabels=[];const datasetsWithVisibleLabels=[];datasets.forEach((ds,index)=>{if(visibleLabelDatasetIndices.has(index)){datasetsWithVisibleLabels.push({dataset:ds,originalIndex:index});}else{datasetsWithHiddenLabels.push({dataset:ds,originalIndex:index});}});datasetsWithVisibleLabels.sort((a,b)=>{const aPinned=!!a.dataset.pinned;const bPinned=!!b.dataset.pinned;if(aPinned&&!bPinned)return 1;if(!aPinned&&bPinned)return-1;return 0;});const reorderedDatasets=[...datasetsWithHiddenLabels.map(item=>item.dataset),...datasetsWithVisibleLabels.map(item=>item.dataset)];const orderChanged=reorderedDatasets.some((ds,i)=>ds!==datasets[i]);if(orderChanged){chart.data.datasets=reorderedDatasets;}},_setupCanvas(ctx,font,color,alpha=1){ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.textAlign='left';},_fade(col,a){if(col.startsWith("rgba"))return col.replace(/, *[^,]+\)$/,`,${a})`);if(col.startsWith("rgb"))return col.replace("rgb","rgba").replace(")",`,${a})`);if(col[0]==="#"&&col.length===7)
 return col+Math.round(a*255).toString(16).padStart(2,"0");return col;},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
-if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class CountrySelector{constructor(parentElement,datasets,parentChart){this.parentElement=parentElement
+if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const shiftRotatedTicksPlugin={id:'shiftRotatedTicks',afterDraw(chart){const xScale=chart.scales['x'];if(!xScale)return;const ctx=chart.ctx;const ticks=xScale.ticks;const options=xScale.options.ticks;const rotation=options.maxRotation||0;const rad=rotation*Math.PI/180;const shift=20;ctx.save();ctx.font=Chart.helpers.toFont(options.font).string;ctx.textAlign='left';ctx.textBaseline='middle';ticks.forEach((tick,i)=>{const x=xScale.getPixelForTick(i);const y=xScale.bottom+options.padding;ctx.save();ctx.translate(x,y-shift);ctx.rotate(-rad);ctx.fillStyle=typeof options.color==='function'?options.color({chart,tick,index:i}):options.color||'#666';ctx.fillText(tick.label,0,0);ctx.restore();});ctx.restore();}};class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
+this.buttonHTML=parentElement.innerHTML
+this.resultsWindow=resultsWindow
 this.datasets=datasets
 this.parentChart=parentChart
-this.initResultsWindow()
+this.searchSelectorIndex=-1;this.initResultsWindow()
 this.initSearch()}
 initResultsWindow(){const resultsWindow=document.createElement('div')
-resultsWindow.classList.add('add-country-pin-results-window')
-resultsWindow.classList.add('legend-item')
-resultsWindow.style.display='none'
-this.resultsWindow=this.parentElement.parentNode.parentNode.appendChild(resultsWindow)}
-initSearch(){this.parentElement.innerHTML=`<form class="add-country-pin-search-form"><input type="text"name="Country"placeholder="Country"></form>`;this.textInput=this.parentElement.querySelector("input")
+this.resultsWindow.style.display='none'}
+initSearch(){this.parentElement.innerHTML=`<form class="add-country-pin-search-form"><input type="text"name="Country"placeholder="Country Name or Code"autocomplete="off"></form>`;this.textInput=this.parentElement.querySelector("input")
 this.textInput.focus()
+this.textInput.addEventListener("keydown",()=>{if(event.key==="ArrowDown"&&this.searchSelectorIndex<this.resultsWindow.children.length-1){this.searchSelectorIndex++
+this.highlightSelectedIndex()}else if(event.key=="ArrowUp"&&this.searchSelectorIndex>-1){this.searchSelectorIndex--
+this.highlightSelectedIndex()}})
+this.textInput.addEventListener("focusout",(event)=>{setTimeout(()=>{console.log("Teardown!")
+this.parentElement.innerHTML=this.buttonHTML;this.closeResults();},100);})
 this.textInput.addEventListener("input",()=>this.runSearch())
 this.formElement=this.parentElement.querySelector("form")
 this.formElement.addEventListener("submit",(event)=>{event.preventDefault()
 this.selectResultEnter()})}
-selectResultEnter(){let CountryCode=this.readResults()
-if(!CountryCode){return}
-this.parentChart.pinCountryByCode(CountryCode)
-this.closeResults()}
-readResults(){let result=this.resultsWindow.querySelector('.add-country-pin-result')
-let CountryCode=result.id.split('-')[0]
-return CountryCode}
+selectResultEnter(){let countryCode=this.readResults()
+if(!countryCode|countryCode===null){return}
+this.parentChart.pinCountryByCode(countryCode)
+this.closeResults()
+this.textInput.value="";}
+readResults(){let result=null;if(this.resultsWindow.style.display=='none'){return result}else if(this.searchSelectorIndex===-1){result=this.resultsWindow.children[0]}else{result=this.resultsWindow.children[this.searchSelectorIndex]}
+if(result===null){return null;}
+const countryCode=result.id.split('-')[0]
+return countryCode}
 async runSearch(){const queryString=this.textInput.value
 const options=await this.getOptions(queryString)
 if(options.length===0){this.resultsWindow.style.display='none'
 return}
 this.resultsWindow.style.display='flex'
 this.resultsWindow.innerHTML=''
-options.forEach(option=>{const resultElement=document.createElement('div')
+options.forEach((option,i)=>{const resultElement=document.createElement('div')
 resultElement.classList.add('add-country-pin-result')
 resultElement.id=option.CCode+'-add-country-pin-result'
-resultElement.addEventListener('click',()=>{this.selectResultClick(option)
-this.closeResults()})
 const resultSpan=document.createElement('span')
 resultSpan.classList.add('add-country-pin-button')
-resultSpan.innerHTML=`${option.CName}(<b style="color: ${option.borderColor};">${option.CCode}</b>)`;resultElement.appendChild(resultSpan)
-this.resultsWindow.appendChild(resultElement)})}
-selectResultClick(option){this.parentChart.pinCountry(option)}
+resultSpan.innerHTML=option.CName+' (<b style="color:'+option.borderColor+'">'+option.CCode+'</b>)';resultSpan.addEventListener('click',(event)=>{this.selectResultClick(option)
+this.closeResults()})
+resultElement.appendChild(resultSpan)
+this.resultsWindow.appendChild(resultElement)})
+this.highlightSelectedIndex();}
+selectResultClick(option){this.parentChart.pinCountryByCode(option.CCode)}
 async getOptions(queryString,limit=10){queryString=queryString.toLowerCase()
 if(!queryString){return[]}
 let optionArray=Array()
@@ -573,7 +580,9 @@ const matched_code=this.datasets[i].CCode.toLowerCase().includes(queryString)
 if(matched_code|matched_name){optionArray.push(this.datasets[i]);}
 if(optionArray.length===limit){break;}}
 return optionArray}
-closeResults(){this.resultsWindow.remove()}}
+closeResults(){this.resultsWindow.innerHTML='';this.resultsWindow.style.display='none';}
+highlightSelectedIndex(){if(this.searchSelectorIndex>this.resultsWindow.children.length-1){this.searchSelectorIndex=this.resultsWindow.children.length-1}
+for(var j=0;j<this.resultsWindow.children.length;j++){if(this.searchSelectorIndex===j){this.resultsWindow.children[this.searchSelectorIndex].classList.add('search-result-index-selected');}else{this.resultsWindow.children[j].classList.remove('search-result-index-selected');}}}}
 class DatasetSelector{constructor(options={}){this.options={maxSelections:5,multiSelect:true,showOrganizations:true,showTypes:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/datasets',...options}
 this.datasets=[]
 this.filteredDatasets=[]
@@ -930,11 +939,11 @@ onChange(key,callback){if(!this.listeners[key]){this.listeners[key]=[];}
 this.listeners[key].push(callback);}
 _emit(key,oldValue,newValue){if(JSON.stringify(oldValue)===JSON.stringify(newValue))return;const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
 _parse(value){try{return JSON.parse(value);}catch{return value;}}}
-class TreeNode{constructor(data,parent=null,level=1){this.itemCode=data.ItemCode;this.itemName=data.ItemName;this.parent=parent;this.children=[];this.level=level;this.expanded=data.Children?.length>0&&level<3;this.element=null;if(data.Children?.length){this.children=data.Children.map(child=>new TreeNode(child,this,level+1));}}
+class TreeNode{constructor(data,parent=null,level=1){this.itemCode=data.ItemCode;this.itemName=data.ItemName;this.parent=parent;this.children=[];this.level=level;this.expanded=data.Children?.length>0&&(level===1||level<3);this.element=null;if(data.Children?.length){this.children=data.Children.map(child=>new TreeNode(child,this,level+1));}}
 getVisibleDescendants(){if(!this.expanded||!this.children.length){return[];}
 const visible=[];this.children.forEach(child=>{visible.push(child);visible.push(...child.getVisibleDescendants());});return visible;}
 getAncestorAtLevel(targetLevel){if(this.level===targetLevel)return this;if(this.level<targetLevel||!this.parent)return null;return this.parent.getAncestorAtLevel(targetLevel);}
-toggle(){if(this.children.length>0){this.expanded=!this.expanded;if(this.element){this.element.ariaExpanded=this.expanded?'true':'false';}
+toggle(){if(this.children.length>0&&this.level>1){this.expanded=!this.expanded;if(this.element){this.element.ariaExpanded=this.expanded?'true':'false';}
 return true;}
 return false;}
 expand(){if(this.children.length>0&&!this.expanded){this.expanded=true;if(this.element){this.element.ariaExpanded='true';}
@@ -964,10 +973,11 @@ if(startFromCurrent){for(let i=0;i<this.currentIndex;i++){if(this.navigationInde
 return null;}}
 class SSPIItemTree{constructor(container,json,reloadCallback=null,activeItemCode=null){if(!(container instanceof HTMLElement)||!json)return;this.container=container;this.reload=reloadCallback;this.activeItemCode=activeItemCode||null;container.innerHTML='';this.rootNode=new TreeNode(json,null,1);this.navigationManager=new NavigationManager(this.rootNode);this.buildDOM();this.setupNavigation();if(this.activeItemCode){this.ensureItemVisible(this.activeItemCode);}else{if(this.rootNode.element){this.rootNode.element.tabIndex=0;}}}
 buildDOM(){const treeElement=this.createNodeElement(this.rootNode,true);this.container.appendChild(treeElement);this.tree=this.container.querySelector('[role="tree"]');this.navShell=this.tree.parentElement;}
-createNodeElement(node,isRoot=false){const ul=document.createElement('ul');ul.role=isRoot?'tree':'group';ul.className='treeview-navigation';if(!isRoot){ul.id=`id-${node.itemCode.toLowerCase()}-subtree`;}
-const li=document.createElement('li');li.role='none';const a=document.createElement('a');a.role='treeitem';a.ariaOwns=node.children.length?`id-${node.itemCode.toLowerCase()}-subtree`:null;a.ariaExpanded=node.children.length?(node.expanded?'true':'false'):null;a.tabIndex=-1;a.dataset.itemCode=node.itemCode;node.element=a;const label=document.createElement('span');label.className='label';if(node.children.length>0){const icon=document.createElement('span');icon.className='icon';icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"width="13"height="10"viewBox="0 0 13 10"><polygon points="2 1, 12 1, 7 9"></polygon></svg>`;icon.addEventListener('click',(e)=>{e.stopPropagation();this.handleToggle(node);});label.appendChild(icon);}
-label.appendChild(document.createTextNode(node.itemName));a.appendChild(label);li.appendChild(a);if(node.expanded&&node.children.length>0){node.children.forEach(child=>{li.appendChild(this.createNodeElement(child));});}
-ul.appendChild(li);return ul;}
+createNodeElement(node,isRoot=false){const listElement=document.createElement('ul');listElement.role=isRoot?'tree':'group';listElement.className='treeview-navigation';if(!isRoot){listElement.id=`id-${node.itemCode.toLowerCase()}-subtree`;}
+const li=document.createElement('li');li.role='none';const a=document.createElement('a');a.role='treeitem';a.ariaOwns=node.children.length?`id-${node.itemCode.toLowerCase()}-subtree`:null;a.ariaExpanded=(node.children.length&&node.level>1)?(node.expanded?'true':'false'):null;a.tabIndex=-1;a.dataset.itemCode=node.itemCode;node.element=a;const label=document.createElement('span');label.className='label';if(node.children.length>0&&node.level>1){const icon=document.createElement('span');icon.className='icon';icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"width="10"height="8"viewBox="0 0 13 10"><polygon points="2 1, 12 1, 7 9"></polygon></svg>`;icon.addEventListener('click',(e)=>{e.stopPropagation();this.handleToggle(node);});label.appendChild(icon);}
+const textSpan=document.createElement('span');textSpan.className='text';textSpan.appendChild(document.createTextNode(node.itemName));label.appendChild(textSpan);a.appendChild(label);li.appendChild(a);if(node.expanded&&node.children.length>0){if(node.level===3){const ol=document.createElement('ol');ol.role='group';ol.className='treeview-navigation';ol.id=`id-${node.itemCode.toLowerCase()}-indicators`;node.children.forEach(child=>{const indicatorLi=this.createIndicatorElement(child);ol.appendChild(indicatorLi);});li.appendChild(ol);}else{node.children.forEach(child=>{li.appendChild(this.createNodeElement(child));});}}
+listElement.appendChild(li);return listElement;}
+createIndicatorElement(node){const li=document.createElement('li');li.role='none';const a=document.createElement('a');a.role='treeitem';a.tabIndex=-1;a.dataset.itemCode=node.itemCode;node.element=a;const label=document.createElement('span');label.className='label';const textSpan=document.createElement('span');textSpan.className='text';textSpan.appendChild(document.createTextNode(node.itemName));label.appendChild(textSpan);a.appendChild(label);li.appendChild(a);return li;}
 setupNavigation(){this.boundHandleKeyDown=this.handleKeyDown.bind(this);this.boundHandleClick=this.handleClick.bind(this);this.boundHandleFocusChange=this.handleFocusChange.bind(this);this.container.addEventListener('keydown',this.boundHandleKeyDown);this.container.addEventListener('click',this.boundHandleClick);document.body.addEventListener('focusin',this.boundHandleFocusChange);document.body.addEventListener('mousedown',this.boundHandleFocusChange);}
 handleKeyDown(e){const activeElement=document.activeElement;if(activeElement&&(activeElement.tagName==='INPUT'||activeElement.tagName==='TEXTAREA'||activeElement.contentEditable==='true')){return;}
 if(e.target.getAttribute('role')!=='treeitem'){return;}
@@ -1134,7 +1144,7 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><button class="add-country-button">Search Country</button><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button></div><div class="pin-actions-box"><button class="add-country-button">Search Country</button></div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -1161,7 +1171,7 @@ this.randomHistoryBackButton.addEventListener('click',()=>{this.randomHistoryBac
 this.randomHistoryBackButton.style.display="none";this.randomHistoryForwardButton=this.root.querySelector('.random-history-forward-button')
 this.randomHistoryForwardButton.addEventListener('click',()=>{this.randomHistoryForward()})
 this.randomHistoryForwardButton.style.display="none";this.drawButton=this.root.querySelector('.draw-button')
-this.drawButton.innerText="Draw "+this.randomN.toString()+" Countries";this.drawButton.addEventListener('click',()=>{this.showRandomN(this.randomN)})
+this.drawButton.innerText="Draw "+this.randomN.toString()+" Countries ";this.drawButton.addEventListener('click',()=>{this.showRandomN(this.randomN)})
 this.showInGroupButton=this.chartOptions.querySelector('.show-in-group-button')
 this.showInGroupButton.addEventListener('click',()=>{const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 this.showGroup(activeGroup)})
@@ -1182,7 +1192,7 @@ this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="pa
 this.title=this.chartContainer.querySelector('.panel-chart-title')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
@@ -1192,8 +1202,9 @@ updateCountryGroups(){const groupOptionDefault=window.observableStorage.getItem(
 this.countryGroupSelector.innerHTML=''
 this.groupOptions.forEach((option,index)=>{const opt=document.createElement('option');opt.value=option;opt.textContent=option;if(option===groupOptionDefault){opt.selected=true;}
 this.countryGroupSelector.appendChild(opt);});}
-rigLegend(){this.addCountryButton=this.chartOptions.querySelector('.add-country-button')
-this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.chart.data.datasets,this)})
+rigLegend(){this.countrySearchResultsWindow=this.chartOptions.querySelector('.country-search-results-window')
+this.addCountryButton=this.chartOptions.querySelector('.add-country-button')
+this.addCountryButton.addEventListener('click',()=>{new CountrySelector(this.addCountryButton,this.countrySearchResultsWindow,this.chart.data.datasets,this)})
 this.clearPinsButton=this.chartOptions.querySelector('.clearpins-button')
 this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
 this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
@@ -1256,8 +1267,7 @@ if(this.chart){this.updateChartOptions()
 this.updateChartPreservingYAxis()}}
 async fetch(url){const response=await fetch(url)
 try{return response.json()}catch(error){console.error('Error:',error)}}
-update(data){console.log(data)
-if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
+update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
 if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
@@ -1273,43 +1283,23 @@ this.updateDescription(data.description)
 this.updateChartColors()
 this.updateCountryGroups()
 this.chart.update()
-console.log('=== About to call computeMissingCountriesAsync ===')
-console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
 this.computeMissingCountriesAsync()}
-computeMissingCountriesAsync(){console.log('=== computeMissingCountriesAsync called ===')
-setTimeout(()=>{console.log('=== setTimeout callback executing ===')
-this.computeMissingCountries()},0)}
-computeMissingCountries(){console.log('=== Starting computeMissingCountries ===')
-if(!this.countryGroupMap||Object.keys(this.countryGroupMap).length===0){console.log('No country group map available for missing countries computation')
+computeMissingCountriesAsync(){setTimeout(()=>{this.computeMissingCountries()},0)}
+computeMissingCountries(){if(!this.countryGroupMap||Object.keys(this.countryGroupMap).length===0){console.log('No country group map available for missing countries computation')
 return}
-console.log('Country group map keys:',Object.keys(this.countryGroupMap).length,'countries')
-console.log('First 10 countries in group map:',Object.keys(this.countryGroupMap).slice(0,10))
-console.log('SGP in group map?','SGP'in this.countryGroupMap,this.countryGroupMap['SGP'])
 const missingCountries=[]
 const seenCountries=new Set()
-console.log('Total datasets:',this.chart.data.datasets.length)
-console.log('Dataset country codes:',this.chart.data.datasets.map(d=>d.CCode))
 this.chart.data.datasets.forEach(countryData=>{const countryCode=countryData.CCode
-console.log(`Processing dataset for country:${countryCode}`)
 seenCountries.add(countryCode)
 const scores=countryData.data||[]
 const scoresEmpty=!scores||scores.length===0||scores.every(s=>s===null||s===undefined||s==='')
-console.log(`Country ${countryCode}:data length=${scores.length},empty=${scoresEmpty}`)
-if(scoresEmpty){console.log(`Adding ${countryCode}to missing(empty data)`)
-missingCountries.push({CCode:countryCode,CName:countryData.CName||countryCode,CGroup:countryData.CGroup||this.countryGroupMap[countryCode]||[]})}})
-console.log('Seen countries:',Array.from(seenCountries))
-console.log('SGP in seen countries?',seenCountries.has('SGP'))
+if(scoresEmpty){missingCountries.push({CCode:countryCode,CName:countryData.CName||countryCode,CGroup:countryData.CGroup||this.countryGroupMap[countryCode]||[]})}})
 let notSeenCount=0
 Object.entries(this.countryGroupMap).forEach(([countryCode,countryGroups])=>{if(!seenCountries.has(countryCode)){notSeenCount++
 missingCountries.push({CCode:countryCode,CName:countryCode,CGroup:countryGroups})}})
-console.log(`Countries not seen in datasets:${notSeenCount}`)
-console.log(`Total missing countries found:${missingCountries.length}`)
-console.log('Missing countries:',missingCountries.map(c=>c.CCode))
-console.log('=== End computeMissingCountries ===')
 this.missingCountries=missingCountries
 this.updateMissingCountries()}
 getPins(){const storedPins=window.observableStorage.getItem('pinnedCountries')
-console.log("Stored pins:",storedPins)
 if(storedPins){this.pins=new Set(storedPins)}
 if(this.pins.size===0){return}
 this.chart.data.datasets.forEach(dataset=>{for(const element of this.pins){if(dataset.CCode===element.CCode){dataset.pinned=true
@@ -1347,20 +1337,17 @@ this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=
 if(dataset.drawHistoryArray===undefined){dataset.drawHistoryArray=new Array();}
 dataset.drawHistoryArray.push(0)})
 this.randomHistoryIndex=this.chart.data.datasets[0].drawHistoryArray.length-1;let shownIndexArray=availableDatasetIndices.sort(()=>Math.random()-0.5).slice(0,N)
-shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false;this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex]=1;console.log(this.chart.data.datasets[index].CCode,this.chart.data.datasets[index].CName)
-console.log(this.chart.data.datasets[index].drawHistoryArray)})
+shownIndexArray.forEach((index)=>{this.chart.data.datasets[index].hidden=false;this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex]=1;})
 this.updateChartPreservingYAxis()
 if(this.randomHistoryIndex>0){this.randomHistoryBackButton.style.display="block";this.randomHistoryForwardButton.style.display="none";}else{this.randomHistoryBackButton.style.display="none";}}
 randomHistoryBack(){if(this.randomHistoryIndex>0){this.randomHistoryIndex--}
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
-if(dataset.drawHistoryArray===undefined){console.log(underfined)}
 if(dataset.drawHistoryArray[this.randomHistoryIndex]==1){dataset.hidden=false}})
 this.updateChartPreservingYAxis()
 if(this.randomHistoryIndex==0){this.randomHistoryBackButton.style.display="none";}
 this.randomHistoryForwardButton.style.display="block";}
 randomHistoryForward(){const lastHistoryIndex=this.chart.data.datasets[0].drawHistoryArray.length-1;if(this.randomHistoryIndex<lastHistoryIndex){this.randomHistoryIndex++}
 this.chart.data.datasets.forEach((dataset)=>{if(!dataset.pinned){dataset.hidden=true}
-if(dataset.drawHistoryArray===undefined){console.log(underfined)}
 if(dataset.drawHistoryArray[this.randomHistoryIndex]==1){dataset.hidden=false}})
 this.updateChartPreservingYAxis()
 if(this.randomHistoryIndex==lastHistoryIndex){this.randomHistoryForwardButton.style.display="none";}
@@ -1371,9 +1358,9 @@ dataset.hidden=false
 this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})
 this.pushPinUpdate()
 this.updateLegend()}
-pinCountryByCode(CountryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===CountryCode){dataset.pinned=true
-dataset.hidden=false
-this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}})
+pinCountryByCode(countryCode){this.chart.data.datasets.forEach(dataset=>{if(dataset.CCode===countryCode){if(!dataset.pinned){this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:dataset.borderColor})}
+dataset.pinned=true
+dataset.hidden=false}})
 this.pushPinUpdate()
 this.updateLegend()}
 unpinCountry(dataset,hide=false){dataset.pinned=false
@@ -1397,12 +1384,7 @@ this.chartOptions.classList.remove('inactive')
 this.overlay.classList.remove('inactive')
 this.overlay.classList.add('active')}
 toggleChartOptionsSidebar(){if(this.chartOptions.classList.contains('active')){this.closeChartOptionsSidebar()}else{this.openChartOptionsSidebar()}}
-dumpChartDataJSON(scope='visible'){console.log('dumpChartDataJSON called with scope:',scope)
-console.log('Available datasets:',this.chart.data.datasets.length)
-if(this.chart.data.datasets.length>0){console.log('First dataset structure:',Object.keys(this.chart.data.datasets[0]))
-console.log('First dataset sample:',this.chart.data.datasets[0])}
-const observations=this.chart.data.datasets.map(dataset=>{const shouldInclude=this.shouldIncludeDataset(dataset,scope)
-console.log(`Dataset ${dataset.CCode}(${dataset.CName})-include:${shouldInclude}`)
+dumpChartDataJSON(scope='visible'){const observations=this.chart.data.datasets.map(dataset=>{const shouldInclude=this.shouldIncludeDataset(dataset,scope)
 if(!shouldInclude){return[]}
 const scores=dataset.scores||dataset.score||[]
 const values=dataset.values||dataset.value||[]
@@ -1413,17 +1395,15 @@ return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":data
 if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
 return}
 const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);console.log('JSON download initiated')}
-dumpChartDataCSV(scope='visible'){console.log('dumpChartDataCSV called with scope:',scope)
-const observations=this.chart.data.datasets.map(dataset=>{if(!this.shouldIncludeDataset(dataset,scope)){return[]}
+dumpChartDataCSV(scope='visible'){const observations=this.chart.data.datasets.map(dataset=>{if(!this.shouldIncludeDataset(dataset,scope)){return[]}
 const scores=dataset.scores||dataset.score||[]
 const values=dataset.values||dataset.value||[]
 const years=dataset.years||dataset.year||this.chart.data.labels||[]
 if(!dataset.data||!Array.isArray(dataset.data)){console.warn(`Dataset ${dataset.CCode}has no data array`)
 return[]}
-return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]?.toString()||'',"Value":values[i]?.toString()||'',"Year":years[i]?.toString()||''}));}).flat();console.log('Total observations for CSV:',observations.length)
-if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
+return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]?.toString()||'',"Value":values[i]?.toString()||'',"Year":years[i]?.toString()||''}));}).flat();if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
 return}
-const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);console.log('CSV download initiated')}
+const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 rigPinChangeListener(){window.observableStorage.onChange("pinnedCountries",()=>{this.getPins()
 console.log("Pin change detected!")})}
 rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
@@ -1439,12 +1419,9 @@ if(this.downloadForm){this.downloadForm.addEventListener('submit',(e)=>{e.preven
 e.stopPropagation()
 this.handleDownloadRequest()
 return false})}}
-handleDownloadRequest(){console.log('Download request initiated')
-const formData=new FormData(this.downloadForm)
+handleDownloadRequest(){const formData=new FormData(this.downloadForm)
 const scope=formData.get('scope')
 const format=formData.get('format')
-console.log('Download scope:',scope)
-console.log('Download format:',format)
 if(!scope||!format){console.error('Missing scope or format in form data')
 alert('Please select both scope and format options')
 return}

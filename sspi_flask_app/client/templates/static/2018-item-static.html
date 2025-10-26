@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+
+{% block subheader %}
+{% include 'subheader.html' %}
+{% endblock %}
+
+{% block title %}
+<title>SSPI Scores</title>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}
+
+{% block stylesheet %}
+{% endblock %}
+
+{% block content %}
+    <section class="score-bar-flexbox">
+        <div id="score-bar-parent" class="score-bar-parent"></div>
+    </section>
+    <script defer>
+        const scoreBarStaticParent = document.getElementById('score-bar-parent');
+        window.SSPICharts = [
+            new ScoreBarStatic(scoreBarStaticParent, "{{ item_code }}")
+        ];
+    </script>
+{% endblock %}

@@ -1,28 +1,45 @@
 class CountrySelector {
-    constructor(parentElement, datasets, parentChart) {
+    constructor(parentElement, resultsWindow, datasets, parentChart) {
         this.parentElement = parentElement
+        this.buttonHTML = parentElement.innerHTML
+        this.resultsWindow = resultsWindow
         this.datasets = datasets
         this.parentChart = parentChart
+        this.searchSelectorIndex = -1;
         this.initResultsWindow()
         this.initSearch()
     }
 
     initResultsWindow() {
         const resultsWindow = document.createElement('div')
-        resultsWindow.classList.add('add-country-pin-results-window')
-        resultsWindow.classList.add('legend-item')
-        resultsWindow.style.display = 'none'
-        this.resultsWindow = this.parentElement.parentNode.parentNode.appendChild(resultsWindow)
+        this.resultsWindow.style.display = 'none'
     }
 
     initSearch() {
         this.parentElement.innerHTML = `
             <form class="add-country-pin-search-form">
-                <input type="text" name="Country" placeholder="Country">
+                <input type="text" name="Country" placeholder="Country Name or Code" autocomplete="off">
             </form>
         `;
         this.textInput = this.parentElement.querySelector("input")
         this.textInput.focus()
+        this.textInput.addEventListener("keydown", () => {
+            if (event.key === "ArrowDown" && this.searchSelectorIndex < this.resultsWindow.children.length - 1) {
+                this.searchSelectorIndex++
+                this.highlightSelectedIndex()
+            } else if (event.key == "ArrowUp" && this.searchSelectorIndex > -1) {
+                this.searchSelectorIndex--
+                this.highlightSelectedIndex()
+            }
+        })
+        this.textInput.addEventListener("focusout", (event) => {
+            // teardown on focusout
+            setTimeout(() => {
+                console.log("Teardown!")
+                this.parentElement.innerHTML = this.buttonHTML;
+                this.closeResults();
+            }, 100);
+        })
         this.textInput.addEventListener("input", () => this.runSearch())
         this.formElement = this.parentElement.querySelector("form")
         this.formElement.addEventListener("submit", (event) => {
@@ -32,18 +49,30 @@ class CountrySelector {
     }
 
     selectResultEnter() {
-        let CountryCode = this.readResults()
-        if (!CountryCode) {
+        let countryCode = this.readResults()
+        if (!countryCode | countryCode === null) {
             return
         }
-        this.parentChart.pinCountryByCode(CountryCode)
+        this.parentChart.pinCountryByCode(countryCode)
         this.closeResults()
+        this.textInput.value = "";
     }
 
     readResults() {
-        let result = this.resultsWindow.querySelector('.add-country-pin-result')
-        let CountryCode = result.id.split('-')[0]
-        return CountryCode
+        let result = null;
+        if (this.resultsWindow.style.display == 'none') {
+            return result
+        } else if (this.searchSelectorIndex === -1) {
+            result = this.resultsWindow.children[0]
+        } else {
+            result = this.resultsWindow.children[this.searchSelectorIndex]
+        }
+        if (result === null) {
+            return null;
+        }
+        const countryCode = result.id.split('-')[0]
+        return countryCode 
+
     }
 
     async runSearch() {
@@ -55,27 +84,25 @@ class CountrySelector {
         }
         this.resultsWindow.style.display = 'flex'
         this.resultsWindow.innerHTML = ''
-        options.forEach(option => {
+        options.forEach((option, i) => {
             const resultElement = document.createElement('div')
             resultElement.classList.add('add-country-pin-result')
             resultElement.id = option.CCode + '-add-country-pin-result'
-            resultElement.addEventListener('click', () => {
+            const resultSpan = document.createElement('span')
+            resultSpan.classList.add('add-country-pin-button')
+            resultSpan.innerHTML = option.CName + ' (<b style="color:' + option.borderColor + '">' + option.CCode + '</b>)';
+            resultSpan.addEventListener('click', (event) => {
                 this.selectResultClick(option)
                 this.closeResults()
             })
-            const resultSpan = document.createElement('span')
-            resultSpan.classList.add('add-country-pin-button')
-
-            resultSpan.innerHTML = `
-                ${option.CName} (<b style="color: ${option.borderColor};">${option.CCode}</b>)
-            `;
             resultElement.appendChild(resultSpan)
             this.resultsWindow.appendChild(resultElement)
         })
+        this.highlightSelectedIndex();
     }
 
     selectResultClick(option) {
-        this.parentChart.pinCountry(option)
+        this.parentChart.pinCountryByCode(option.CCode)
     }
 
     async getOptions(queryString, limit = 10) {
@@ -99,6 +126,21 @@ class CountrySelector {
     }
 
     closeResults() {
-        this.resultsWindow.remove()
+        this.resultsWindow.innerHTML = '';
+        this.resultsWindow.style.display = 'none';
+    }
+
+    highlightSelectedIndex() { 
+        if (this.searchSelectorIndex > this.resultsWindow.children.length - 1) {
+            this.searchSelectorIndex = this.resultsWindow.children.length - 1
+        }
+        for (var j = 0; j < this.resultsWindow.children.length; j++) {
+            if (this.searchSelectorIndex === j) {
+                this.resultsWindow.children[this.searchSelectorIndex].classList.add('search-result-index-selected');
+            } else {
+                this.resultsWindow.children[j].classList.remove('search-result-index-selected');
+            }
+        }
     }
 }
+    
