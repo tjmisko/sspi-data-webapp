@@ -12,7 +12,8 @@ class TreeNode {
         this.parent = parent;
         this.children = [];
         this.level = level;
-        this.expanded = data.Children?.length > 0 && level < 3; // Expand SSPI and pillars, collapse categories (hiding indicators)
+        // Root level (level 1) is always expanded and cannot be collapsed
+        this.expanded = data.Children?.length > 0 && (level === 1 || level < 3); // Expand SSPI and pillars, collapse categories (hiding indicators)
         this.element = null; // Will hold the DOM element
         
         // Create child nodes
@@ -45,9 +46,9 @@ class TreeNode {
         return this.parent.getAncestorAtLevel(targetLevel);
     }
     
-    // Toggle expansion state
+    // Toggle expansion state (root level cannot be toggled)
     toggle() {
-        if (this.children.length > 0) {
+        if (this.children.length > 0 && this.level > 1) {
             this.expanded = !this.expanded;
             if (this.element) {
                 this.element.ariaExpanded = this.expanded ? 'true' : 'false';
@@ -255,59 +256,104 @@ class SSPIItemTree {
     }
     
     createNodeElement(node, isRoot = false) {
-        const ul = document.createElement('ul');
-        ul.role = isRoot ? 'tree' : 'group';
-        ul.className = 'treeview-navigation';
-        
+        const listElement = document.createElement('ul');
+        listElement.role = isRoot ? 'tree' : 'group';
+        listElement.className = 'treeview-navigation';
+
         if (!isRoot) {
-            ul.id = `id-${node.itemCode.toLowerCase()}-subtree`;
+            listElement.id = `id-${node.itemCode.toLowerCase()}-subtree`;
         }
-        
+
         const li = document.createElement('li');
         li.role = 'none';
-        
+
         const a = document.createElement('a');
         a.role = 'treeitem';
         a.ariaOwns = node.children.length ? `id-${node.itemCode.toLowerCase()}-subtree` : null;
-        a.ariaExpanded = node.children.length ? (node.expanded ? 'true' : 'false') : null;
+        // Only set aria-expanded for collapsible nodes (not root level)
+        a.ariaExpanded = (node.children.length && node.level > 1) ? (node.expanded ? 'true' : 'false') : null;
         a.tabIndex = -1;
         a.dataset.itemCode = node.itemCode;
-        
+
         // Store reference to DOM element in node
         node.element = a;
-        
+
         const label = document.createElement('span');
         label.className = 'label';
-        
-        // Add disclosure icon for nodes with children
-        if (node.children.length > 0) {
+
+        // Add disclosure icon for nodes with children (except root level)
+        if (node.children.length > 0 && node.level > 1) {
             const icon = document.createElement('span');
             icon.className = 'icon';
-            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="10" viewBox="0 0 13 10">
+            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 13 10">
                 <polygon points="2 1, 12 1, 7 9"></polygon>
             </svg>`;
-            
+
             icon.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.handleToggle(node);
             });
-            
+
             label.appendChild(icon);
         }
-        
-        label.appendChild(document.createTextNode(node.itemName));
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'text';
+        textSpan.appendChild(document.createTextNode(node.itemName));
+        label.appendChild(textSpan);
         a.appendChild(label);
         li.appendChild(a);
-        
+
         // Add child elements if expanded
         if (node.expanded && node.children.length > 0) {
-            node.children.forEach(child => {
-                li.appendChild(this.createNodeElement(child));
-            });
+            // If this is a category (level 3), create a single ordered list for all indicators
+            if (node.level === 3) {
+                const ol = document.createElement('ol');
+                ol.role = 'group';
+                ol.className = 'treeview-navigation';
+                ol.id = `id-${node.itemCode.toLowerCase()}-indicators`;
+
+                node.children.forEach(child => {
+                    const indicatorLi = this.createIndicatorElement(child);
+                    ol.appendChild(indicatorLi);
+                });
+
+                li.appendChild(ol);
+            } else {
+                // For other levels, use the standard recursive approach
+                node.children.forEach(child => {
+                    li.appendChild(this.createNodeElement(child));
+                });
+            }
         }
-        
-        ul.appendChild(li);
-        return ul;
+
+        listElement.appendChild(li);
+        return listElement;
+    }
+
+    createIndicatorElement(node) {
+        const li = document.createElement('li');
+        li.role = 'none';
+
+        const a = document.createElement('a');
+        a.role = 'treeitem';
+        a.tabIndex = -1;
+        a.dataset.itemCode = node.itemCode;
+
+        // Store reference to DOM element in node
+        node.element = a;
+
+        const label = document.createElement('span');
+        label.className = 'label';
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'text';
+        textSpan.appendChild(document.createTextNode(node.itemName));
+        label.appendChild(textSpan);
+        a.appendChild(label);
+        li.appendChild(a);
+
+        return li;
     }
     
     setupNavigation() {
