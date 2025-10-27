@@ -9,3 +9,37 @@
   font-size: 1.8em;
 }
 
+.globe-visualization-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5em;
+  background-color: var(--box-background-color);
+  color: var(--header-text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 1em;
+}
+
+.globe-tab-bar {
+  width: 100%;
+  display: flex;
+}
+
+.globe-tab-bar button {
+  padding: 1em 0.5em;
+  flex: 1 1 0;
+  background-color: var(--box-background-color);
+  border: none;
+  color: var(--header-text-color);
+  font-size: 0.7em;
+}
+
+.globe-tab-bar button:hover {
+  cursor: pointer;
+  background-color: color-mix(in srgb, var(--green-accent) 15%, var(--region-background-color));
+}
+
+.globe-tab-bar [data-active-tab=true] {
+  border-bottom: 5px solid var(--green-accent);
+}

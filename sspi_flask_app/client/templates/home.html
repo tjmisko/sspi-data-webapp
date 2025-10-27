@@ -4,6 +4,13 @@
 <title>Sustainable and Shared-Prosperity Policy Index</title>
 {% endblock %}
 
+{% set globe_data_url = url_for('client_bp.static', filename='globe_data.geojson') %}
+
+{% block javascript %}
+<script src="//unpkg.com/d3"></script>
+<script src="//unpkg.com/globe.gl"></script>
+{% endblock %}
+
 {% block content %}
 <article class="page-content">
     <section class="hero-box">
@@ -85,7 +92,17 @@
             </div>
         </div>
     </section>
-    <section class="chart-section" id="overall-score-chart">
+    <section class="home-globe-section">
+        <div class="globe-chart-container">
+            <div id="globeViz"></div>
+        </div>
     </section>
 </article>
+
+<script defer>
+    const globeDataURL = "{{ globe_data_url }}"
+    window.SSPICharts.push(
+        new SSPIGlobeChart(document.getElementById("globeViz"), globeDataURL)
+    )
+</script>
 {% endblock %}

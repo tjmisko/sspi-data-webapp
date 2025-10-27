@@ -8,11 +8,13 @@
 {% endblock %}
 
 {% block content %}
+<div class="home-globe-section">
     <div id="globeViz"></div>
-    <script>
-        const globeDataURL = "{{ globe_data_url }}"
-        window.SSPICharts.push(
-            new SSPIGlobeChart(document.getElementById("globeViz"), globeDataURL)
-        )
-    </script>
+</div>
+<script>
+const globeDataURL = "{{ globe_data_url }}"
+    window.SSPICharts.push(
+        new SSPIGlobeChart(document.getElementById("globeViz"), globeDataURL)
+    )
+</script>
 {% endblock %}
