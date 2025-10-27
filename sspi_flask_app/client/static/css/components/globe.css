@@ -1,0 +1,11 @@
+.globegl-hover {
+  background-color: var(--box-background-color);
+  color: var(--text-color);
+  padding: 0.5em;
+}
+
+.globegl-hover h3 {
+  font: var(--header-font-style);
+  font-size: 1.8em;
+}
+

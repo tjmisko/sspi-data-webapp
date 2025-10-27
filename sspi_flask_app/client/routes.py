@@ -297,14 +297,14 @@ def paper_resources():
     return render_template("/static/2018-paper-resources.html")
 
 
-# @client_bp.route('/map')
-# def world_map_page():
-#     return render_template("world-map.html")
+@client_bp.route('/map')
+def world_map_page():
+    return render_template("world-map.html")
 
 
-# @client_bp.route('/globe')
-# def globe_tree():
-#     return render_template("globe.html")
+@client_bp.route('/globe')
+def globe_tree():
+    return render_template("globe.html")
 
 
 # @client_bp.route('/history')
