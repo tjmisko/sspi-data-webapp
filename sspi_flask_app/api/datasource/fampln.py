@@ -37,15 +37,15 @@ def collect_fampln_data(**kwargs):
                     csv_string, source_info, **kwargs
                 )
     yield "Collection complete for FAMPLN Indicators\n"
-    # yield {"csv_string": csv_string}
+    yield {"csv_string": csv_string}
 
 # for testing
-# csv_string = None
-# for message in collect_fampln_data():
-#     if isinstance(message, str):
-#         print(message)
-#     elif isinstance(message, dict) and "csv_string" in message:
-#         csv_string = message["csv_string"]
+csv_string = None
+for message in collect_fampln_data(username = 'claranhc'):
+    if isinstance(message, str):
+        print(message)
+    elif isinstance(message, dict) and "csv_string" in message:
+        csv_string = message["csv_string"]
 
 
 
@@ -70,6 +70,10 @@ def clean_fampln_csv(raw_csv_string: str, dataset_code: str) -> list[dict]:
     return json.loads(str(fam_pln.to_json(orient="records")))
 
 # for testing
-# output = clean_fampln_csv(raw_csv_string=csv_string, dataset_code="FAMPLN_2024_INDICATORS")
-# print(output[:5])
+output = clean_fampln_csv(raw_csv_string=csv_string, dataset_code="FAMPLN_2024_INDICATORS")
+print(output[:5])
 
+# EDA portion
+output_df = pd.DataFrame(output)
+countries = output_df['CountryCode'].unique()
+print(countries)
