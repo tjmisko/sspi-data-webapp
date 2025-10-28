@@ -82,9 +82,10 @@ def customize():
     return render_template('customize.html')
 
 
-@client_bp.route('/data/country/<CountryCode>')
-def country_data(CountryCode):
-    return render_template('country-data.html', CountryCode=CountryCode)
+@client_bp.route('/data/country/<country_code>')
+def country_data(country_code):
+    cdetail = sspi_metadata.get_country_detail(country_code)
+    return render_template('country-data.html', cdetail=cdetail)
 
 
 @client_bp.route('/data/indicator/<IndicatorCode>')

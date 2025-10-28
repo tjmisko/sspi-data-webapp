@@ -980,3 +980,10 @@ class SSPIMetadata(MongoWrapper):
             "Metadata.CountryGroups": {"$in": [country_group_code]}
         })
         return country_group_details
+
+    def get_country_detail(self, country_code:str) -> dict:
+        country_detail = self.find_one({
+            "DocumentType": "CountryDetail",
+            "Metadata.CountryCode": country_code
+        })
+        return country_detail["Metadata"]

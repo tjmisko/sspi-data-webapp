@@ -138,7 +138,7 @@ class PanelChart {
     <use href="#icon-menu" />
 </svg>
 `;
-        this.root.appendChild(this.showChartOptions)
+        this.titleActions.appendChild(this.showChartOptions)
         this.overlay = document.createElement('div')
         this.overlay.classList.add('chart-options-overlay')
         this.overlay.addEventListener('click', () => {
@@ -220,13 +220,17 @@ class PanelChart {
         this.chartContainer = document.createElement('div')
         this.chartContainer.classList.add('panel-chart-container')
         this.chartContainer.innerHTML = `
-<h2 class="panel-chart-title"></h2>
+<div class="panel-chart-title-container">
+    <h2 class="panel-chart-title"></h2>
+    <div class="panel-chart-title-actions"></div>
+</div>
 <div class="panel-canvas-wrapper">
     <canvas class="panel-chart-canvas"></canvas>
 </div>
 `;
         this.root.appendChild(this.chartContainer)
         this.title = this.chartContainer.querySelector('.panel-chart-title')
+        this.titleActions = this.chartContainer.querySelector('.panel-chart-title-actions')
         this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
         this.context = this.canvas.getContext('2d')
         this.chart = new Chart(this.context, {

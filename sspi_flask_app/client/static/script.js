@@ -1155,7 +1155,7 @@ this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button cl
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
-this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-menu"/></svg>`;this.root.appendChild(this.showChartOptions)
+this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-menu"/></svg>`;this.titleActions.appendChild(this.showChartOptions)
 this.overlay=document.createElement('div')
 this.overlay.classList.add('chart-options-overlay')
 this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
@@ -1195,8 +1195,9 @@ rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-in
 this.itemDropdown=this.itemInformation.querySelector('.item-dropdown')}
 initChartJSCanvas(){this.chartContainer=document.createElement('div')
 this.chartContainer.classList.add('panel-chart-container')
-this.chartContainer.innerHTML=`<h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.chartContainer.innerHTML=`<div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
 this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
 this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
@@ -1491,7 +1492,9 @@ if(data.hasScore){this.yAxisScale="score"
 this.rigTitleBarScaleToggle()}
 this.chart.update()}}
 class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
-this.itemCode=itemCode}
+this.itemCode=itemCode
+this.moveBurgerToBreadcrumb()}
+moveBurgerToBreadcrumb(){if(this.showChartOptions&&this.breadcrumbActions){this.breadcrumbActions.appendChild(this.showChartOptions)}}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 updateItemDropdown(options,itemType){let itemTypeCapped=itemType
 if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
@@ -1503,9 +1506,9 @@ opt.value=option.Value
 if(option.Value===defaultValue){opt.selected=true;}
 opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
-initChartJSCanvas(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('panel-chart-container');this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.title=this.chartContainer.querySelector('.panel-chart-title');this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb');this.canvas=this.chartContainer.querySelector('.panel-chart-canvas');this.context=this.canvas.getContext('2d');this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset);});}},},layout:{padding:{right:40}}}});}
-renderBreadcrumb(treePath,title,itemCode,itemType){if(!treePath||treePath.length===0){this.title.style.display='block';this.breadcrumb.style.display='none';return;}
-this.title.style.display='none';this.breadcrumb.style.display='block';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
+initChartJSCanvas(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('panel-chart-container');this.chartContainer.innerHTML=`<div class="panel-chart-breadcrumb-container"style="display: none;"><nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"></nav><div class="panel-chart-breadcrumb-actions"></div></div><div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.breadcrumbContainer=this.chartContainer.querySelector('.panel-chart-breadcrumb-container');this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb');this.breadcrumbActions=this.chartContainer.querySelector('.panel-chart-breadcrumb-actions');this.title=this.chartContainer.querySelector('.panel-chart-title');this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions');this.canvas=this.chartContainer.querySelector('.panel-chart-canvas');this.context=this.canvas.getContext('2d');this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset);});}},},layout:{padding:{right:40}}}});}
+renderBreadcrumb(treePath,title,itemCode,itemType){if(!treePath||treePath.length===0){this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';this.breadcrumbContainer.style.display='none';return;}
+this.chartContainer.querySelector('.panel-chart-title-container').style.display='none';this.breadcrumbContainer.style.display='flex';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
 if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
 breadcrumbHTML+='<a href="'+url+'" class="breadcrumb-item" title="'+itemName+'">'+displayName+'</a>';}
 if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
@@ -1523,7 +1526,7 @@ children.map(child=>{const url=child.itemType==='Category'?'/data/category/'+chi
 '</div>';descriptionContainer.insertAdjacentHTML('beforeend',childrenHTML);}}
 update(data){console.log(data);if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart);}
 this.chart.data.datasets=data.data;this.chart.data.labels=data.labels;if(this.pinnedOnly){this.hideUnpinned();}else{this.showGroup(this.countryGroup);}
-this.treepath=data.treepath;if(data.treepath&&data.treepath.length>0){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
+this.treepath=data.treepath;if(data.treepath&&data.treepath.length>0){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}
 this.itemType=data.itemType;this.groupOptions=data.groupOptions;this.getPins();this.updateLegend();this.updateItemDropdown(data.itemOptions,data.itemType);this.updateDescription(data.description);this.updateChildren(data.children,data.childTypeTitle,data.itemName,data.itemType);this.updateChartColors();this.updateCountryGroups();this.chart.update();}}
 class IndicatorPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/indicator/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode
@@ -1531,7 +1534,9 @@ this.activeSeries=itemCode
 this.currentYMin=0
 this.currentYMax=1
 this.defaultYMin=0
-this.defaultYMax=1}
+this.defaultYMax=1
+this.moveBurgerToBreadcrumb()}
+moveBurgerToBreadcrumb(){if(this.showChartOptions&&this.breadcrumbActions){this.breadcrumbActions.appendChild(this.showChartOptions)}}
 updateChartOptions(){let yAxisTitle='Item Value'
 if(this.activeSeries===this.itemCode){yAxisTitle='Indicator Score'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
 if(dataset){const baseName=dataset.datasetName||dataset.datasetCode
@@ -1572,7 +1577,7 @@ if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.datasetOptions=data.datasetOptions
 this.originalTitle=data.title
 this.treepath=data.treepath
-if(data.itemType==="Indicator"&&data.treepath){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}
+if(data.itemType==="Indicator"&&data.treepath){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}
 this.itemType=data.itemType
 this.groupOptions=data.groupOptions
 this.countryGroupMap=data.countryGroupMap||{}
@@ -1593,14 +1598,17 @@ console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this
 this.computeMissingCountriesAsync()}
 initChartJSCanvas(){this.chartContainer=document.createElement('div')
 this.chartContainer.classList.add('panel-chart-container')
-this.chartContainer.innerHTML=`<nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"style="display: none;"></nav><h2 class="panel-chart-title"></h2><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
-this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.chartContainer.innerHTML=`<div class="panel-chart-breadcrumb-container"style="display: none;"><nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"></nav><div class="panel-chart-breadcrumb-actions"></div></div><div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.breadcrumbContainer=this.chartContainer.querySelector('.panel-chart-breadcrumb-container')
 this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb')
+this.breadcrumbActions=this.chartContainer.querySelector('.panel-chart-breadcrumb-actions')
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
 this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
-renderBreadcrumb(treePath,title,itemCode,itemType){if(itemType!=="Indicator"||!treePath||treePath.length===0){this.title.style.display='block';this.breadcrumb.style.display='none';return;}
-this.title.style.display='none';this.breadcrumb.style.display='block';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url,tooltip;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
+renderBreadcrumb(treePath,title,itemCode,itemType){if(itemType!=="Indicator"||!treePath||treePath.length===0){this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';this.breadcrumbContainer.style.display='none';return;}
+this.chartContainer.querySelector('.panel-chart-title-container').style.display='none';this.breadcrumbContainer.style.display='flex';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url,tooltip;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
 if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
 breadcrumbHTML+='<a href="'+url+'" class="breadcrumb-item" title="'+itemName+'">'+displayName+'</a>';}
 if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
@@ -1643,10 +1651,10 @@ updateDefaultsForActiveSeries(){if(this.seriesDefaults&&this.seriesDefaults[this
 this.defaultYMax=this.seriesDefaults[this.activeSeries].yMax}else{this.defaultYMin=this.activeSeries===this.itemCode?0:0
 this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
 updateChartTitle(){if(!this.title)return
-if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
+if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
 if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
 this.title.innerText=`${dataset.datasetCode}-${datasetName}`;}else{this.title.innerText=this.activeSeries;}
-this.title.style.display='block';if(this.breadcrumb){this.breadcrumb.style.display='none';}}}
+this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}
 updateSeriesDropdown(){if(!this.seriesSelector){return}
 this.seriesSelector.innerHTML=''
 const indicatorOption=document.createElement('option')

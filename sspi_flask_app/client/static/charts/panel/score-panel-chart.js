@@ -2,6 +2,14 @@ class ScorePanelChart extends PanelChart {
     constructor(parentElement, itemCode, { CountryList = [], width = 600, height = 600 } = {} ) {
         super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`, width: width, height: height })
         this.itemCode = itemCode
+        this.moveBurgerToBreadcrumb()
+    }
+
+    moveBurgerToBreadcrumb() {
+        // Move hamburger menu from title actions to breadcrumb actions
+        if (this.showChartOptions && this.breadcrumbActions) {
+            this.breadcrumbActions.appendChild(this.showChartOptions)
+        }
     }
 
     updateChartOptions() {
@@ -69,15 +77,24 @@ class ScorePanelChart extends PanelChart {
         this.chartContainer = document.createElement('div');
         this.chartContainer.classList.add('panel-chart-container');
         this.chartContainer.innerHTML = `
-<nav class="panel-chart-breadcrumb" aria-label="Hierarchy navigation" style="display: none;"></nav>
-<h2 class="panel-chart-title"></h2>
+<div class="panel-chart-breadcrumb-container" style="display: none;">
+    <nav class="panel-chart-breadcrumb" aria-label="Hierarchy navigation"></nav>
+    <div class="panel-chart-breadcrumb-actions"></div>
+</div>
+<div class="panel-chart-title-container">
+    <h2 class="panel-chart-title"></h2>
+    <div class="panel-chart-title-actions"></div>
+</div>
 <div class="panel-canvas-wrapper">
     <canvas class="panel-chart-canvas"></canvas>
 </div>
 `;
         this.root.appendChild(this.chartContainer);
-        this.title = this.chartContainer.querySelector('.panel-chart-title');
+        this.breadcrumbContainer = this.chartContainer.querySelector('.panel-chart-breadcrumb-container');
         this.breadcrumb = this.chartContainer.querySelector('.panel-chart-breadcrumb');
+        this.breadcrumbActions = this.chartContainer.querySelector('.panel-chart-breadcrumb-actions');
+        this.title = this.chartContainer.querySelector('.panel-chart-title');
+        this.titleActions = this.chartContainer.querySelector('.panel-chart-title-actions');
         this.canvas = this.chartContainer.querySelector('.panel-chart-canvas');
         this.context = this.canvas.getContext('2d');
         this.chart = new Chart(this.context, {
@@ -138,15 +155,15 @@ class ScorePanelChart extends PanelChart {
 
     renderBreadcrumb(treePath, title, itemCode, itemType) {
         if (!treePath || treePath.length === 0) {
-            // Show simple title if no treepath
-            this.title.style.display = 'block';
-            this.breadcrumb.style.display = 'none';
+            // Show simple title container if no treepath
+            this.chartContainer.querySelector('.panel-chart-title-container').style.display = 'flex';
+            this.breadcrumbContainer.style.display = 'none';
             return;
         }
 
-        // Hide simple title and show breadcrumb for items with treepath
-        this.title.style.display = 'none';
-        this.breadcrumb.style.display = 'block';
+        // Hide title container and show breadcrumb container for items with treepath
+        this.chartContainer.querySelector('.panel-chart-title-container').style.display = 'none';
+        this.breadcrumbContainer.style.display = 'flex';
 
         // Build breadcrumb HTML
         let breadcrumbHTML = '';
@@ -291,9 +308,9 @@ class ScorePanelChart extends PanelChart {
         } else {
             // Fallback to simple title if no treepath
             this.title.innerText = data.title;
-            this.title.style.display = 'block';
-            if (this.breadcrumb) {
-                this.breadcrumb.style.display = 'none';
+            this.chartContainer.querySelector('.panel-chart-title-container').style.display = 'flex';
+            if (this.breadcrumbContainer) {
+                this.breadcrumbContainer.style.display = 'none';
             }
         }
         

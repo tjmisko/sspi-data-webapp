@@ -18,9 +18,31 @@
   height: clamp(600px, 80vh, 80vh);
 }
 
-.panel-chart-title {
-  font-size: 1em;
+.panel-chart-title-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;  /* Align to top instead of center */
   margin: 0.5em 0;
+  gap: 0.5em;  /* Reduced gap to prevent wrapping */
+  flex-wrap: nowrap;  /* Prevent wrapping */
+}
+
+.panel-chart-title {
+  flex: 1 1 0;  /* Allow title to shrink if needed */
+  font-size: 1em;
+  margin: 0;  /* Margin now on container */
+  line-height: 1.2;  /* Tighter line spacing when title wraps */
+  min-width: 0;  /* Allow title to shrink below content size */
+  overflow-wrap: break-word;  /* Allow long words to wrap */
+}
+
+.panel-chart-title-actions {
+  flex: 0 0 auto;  /* Don't grow, don't shrink */
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  align-self: flex-start;  /* Align to top of container */
 }
 
 .panel-canvas-wrapper { /* Wraps the chart canvas */
@@ -44,10 +66,8 @@
 }
 
 .show-chart-options {
-  position: absolute;
-  top: 0.2em;
-  right: 0;
-  z-index: 2;
+  /* Now positioned in flex flow within .panel-chart-title-actions */
+  /* No absolute positioning needed */
 }
 
 .hide-chart-button-container {
