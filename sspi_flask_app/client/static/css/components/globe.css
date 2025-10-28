@@ -1,8 +1,12 @@
+div:has(> .globegl-hover) {
+  background-color: transparent;
+}
 .globegl-hover {
-  background-color: var(--box-background-color);
+  background-color: color-mix(in srgb, var(--box-background-color) 90%, transparent);
   color: var(--text-color);
   padding: 0.5em;
   box-sizing: border-box;
+  border-radius: 0.5em;
 }
 .globegl-hover-score-container {
   padding: 0.5em;
@@ -26,10 +30,88 @@
   font-size: 1rem;
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
+.globegl-hover-year {
+  font-size: 0.85rem;
+  color: var(--green-accent);
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.country-name {
+  flex: 1 1 auto;
+  word-wrap: break-word;
+}
+
+.country-details-info {
+  color: var(--text-color);
+  padding: 0.5em;
+  box-sizing: border-box;
+}
+
+.country-details-header {
+  font: var(--header-font-style);
+  font-size: 0.9em;
+  line-height: 1;
+  margin: 0 0 0.5em 0;
+  padding: 0;
+  color: var(--header-text-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
+.country-details-year {
+  font-size: 0.9em;
+  color: var(--green-accent);
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.country-details-score-container {
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.country-details-score-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.75em;
+  box-sizing: border-box;
+  line-height: 1.8;
+}
+
+.country-details-score-line[data-active-tab=true] {
+  font-weight: bold;
+}
+
+.country-details-label {
+  flex: 0 0 auto;
+}
+
+.country-details-score {
+  flex: 0 0 auto;
+  font-weight: 600;
 }
 
 
 .globe-visualization-container {
+  position: relative;
   display: flex;
   flex-direction: row-reverse;
   align-items: flex-start;
@@ -50,9 +132,10 @@
 .globe-tab-bar {
   width: 100%;
   display: flex;
+  align-items: center;
 }
 
-.globe-tab-bar button {
+.globe-tab-bar button:not(.globe-hamburger-menu) {
   padding: 1em 0.5em;
   flex: 1 1 0;
   background-color: var(--box-background-color);
@@ -61,13 +144,44 @@
   font-size: 0.7em;
 }
 
-.globe-tab-bar button:hover {
+.globe-tab-bar button:not(.globe-hamburger-menu):hover {
   cursor: pointer;
   background-color: color-mix(in srgb, var(--green-accent) 15%, var(--region-background-color));
 }
 
-.globe-tab-bar [data-active-tab=true] {
+.globe-tab-bar button:not(.globe-hamburger-menu)[data-active-tab=true] {
   border-bottom: 5px solid var(--green-accent);
+}
+
+.globe-hamburger-menu {
+  position: relative;
+  flex: 0 0 auto;
+  width: 3em;
+  height: 3em;
+  padding: 0.5em;
+  margin-right: 1em;
+  background-color: var(--box-background-color);
+  border: none;
+  color: var(--header-text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.globe-hamburger-menu:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 15%, var(--region-background-color));
+}
+
+.globe-hamburger-menu svg {
+  display: block;
+  margin: auto;
+}
+
+@media (min-width: 1000px) {
+  .globe-hamburger-menu {
+    display: none;
+  }
 }
 
 .country-information-box[data-unpopulated=true] {
@@ -77,4 +191,179 @@
 .country-informaton-box {
   display: flex;
   font-size: 0.3em;
+}
+.#active-country-informaton {
+  display: flex;
+  font-size: 0.1em;
+}
+
+
+.globe-year-slider-container {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75em 0.75em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75em;
+}
+
+.year-slider-controls {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1em;
+}
+
+.year-slider-label {
+  display: flex;
+  align-items: center;
+  font-size: 0.9em;
+  color: var(--header-text-color);
+  min-width: 3em;
+}
+
+.year-value-display {
+  font-weight: bold;
+  color: var(--green-accent);
+  font-size: 1.1em;
+  cursor: text;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.year-value-display:hover {
+  background-color: var(--region-background-color);
+}
+
+.year-value-display:focus {
+  outline: 2px solid var(--green-accent);
+  background-color: var(--region-background-color);
+}
+
+.year-value-display.year-input-error {
+  animation: shake 0.3s;
+  background-color: rgba(255, 0, 0, 0.2);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.year-slider-input {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color);
+  outline: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.year-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--green-accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.year-slider-input::-webkit-slider-thumb:hover {
+  background: color-mix(in srgb, var(--green-accent) 80%, white);
+}
+
+.year-slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--green-accent);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.year-slider-input::-moz-range-thumb:hover {
+  background: color-mix(in srgb, var(--green-accent) 80%, white);
+}
+
+.year-slider-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.year-slider-track-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.year-slider-bounds {
+  position: absolute;
+  bottom: -2em;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.7em;
+  color: var(--low-importance-font-color);
+  pointer-events: none;
+}
+
+.year-slider-min,
+.year-slider-max {
+  user-select: none;
+}
+
+.year-slider-ticks {
+  position: absolute;
+  width: 100%;
+  height: 8px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--border-color) 0px,
+    var(--border-color) 1px,
+    transparent 1px,
+    transparent calc(100% / 23)
+  );
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 3px;
+}
+
+.year-slider-input {
+  position: relative;
+  z-index: 1;
+}
+
+.year-play-pause-button {
+  width: 2em;
+  height: 2em;
+  padding: 0.25em;
+  background: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--header-text-color);
+  font-size: 1em;
+  transition: background 0.2s ease;
+}
+
+.year-play-pause-button:hover {
+  background: color-mix(in srgb, var(--green-accent) 15%, var(--region-background-color));
 }

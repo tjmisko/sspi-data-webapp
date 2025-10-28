@@ -292,4 +292,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}globe.gloe
+}
+.country-directory {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+}
+.country-directory-box {
+  display: flex;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  flex-direction: column;
+  justify-content: center;
+  padding: 1em;
+  border-radius: var(--border-radius-lg);
+  font-family: var(--body-font-family);
+}
+
+.country-directory-card-container {
+  display: flex;
+}
+
+
+
