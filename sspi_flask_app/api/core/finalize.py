@@ -552,8 +552,11 @@ def finalize_globe_data():
     globe_geojson = sspi_metadata.find_one({"DocumentType": "GlobeGeoJSON"})
     for feature in globe_geojson["Metadata"]["features"]:
         country_code = feature["properties"]["ISO_A3"]
+        if str(country_code) == "-99" or not country_code:
+            country_code = feature["properties"]["ADM0_A3"]
         result = pycountry.countries.get(alpha_3=country_code)
         if not result:
+            print(feature["properties"])
             app.logger.error(f"Country Code {country_code} not found in pycountry!")
             continue
         country_name = result.name
@@ -575,7 +578,6 @@ def finalize_globe_data():
             if globe_item_data[i]["CountryCode"] == country_code:
                 country_data = globe_item_data[i]
             i += 1
-        print(country_data)
         feature["properties"] = {
             "SSPI": country_data["Scores"]["SSPI"],
             "SUS": country_data["Scores"]["SUS"],
