@@ -24,7 +24,9 @@ client_bp = Blueprint(
 def home():
     pillar_category_tree = sspi_metadata.pillar_category_summary_tree()
     sspi_49_details = sspi_metadata.country_group_details("SSPI49")
+    sspi_49_details.sort(key=lambda x: x["Metadata"]["Country"])
     sspi_extended_details = sspi_metadata.country_group_details("SSPIExtended")
+    sspi_extended_details.sort(key=lambda x: x["Metadata"]["Country"])
     return render_template(
         "home.html",
         pillar_category_tree=pillar_category_tree,
