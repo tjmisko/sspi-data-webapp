@@ -437,6 +437,10 @@ class SSPIMetadata(MongoWrapper):
         for cou in country_colors:
             if "CountryCode" not in cou.keys():
                 continue
+            cou["CountryGroups"] = []
+            for g, ccode_list in country_groups.items():
+                if cou["CountryCode"] in ccode_list:
+                    cou["CountryGroups"].append(g)
             details.append({
                 "DocumentType": "CountryDetail",
                 "Metadata": cou
@@ -966,3 +970,10 @@ class SSPIMetadata(MongoWrapper):
             }}
         )
 
+    def country_group_details(self, country_group_code: str) -> list[dict]:
+        """
+        Returns a list of country details corresponding to the group code
+        :param country_group_code: The group code for the query.
+        """
+        country_group_details = []
+        return country_group_details
