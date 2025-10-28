@@ -127,7 +127,7 @@
                     <a class="country-directory-card" data-ccode="{{ cdetails.Metadata.CountryCode }}" href="/data/country/{{ cdetails.Metadata.CountryCode }}">
                         <span class="flag-span"> {{ cdetails.Metadata.Flag }}</span>
                         <span class="name-span"> {{ cdetails.Metadata.Country }}</span>
-                        <span class="code-span"> {{ cdetails.Metadata.CountryCode }}</span>
+                        <span class="code-span"> ({{ cdetails.Metadata.CountryCode }})</span>
                     </a>
                 {% endfor %}
             </div>

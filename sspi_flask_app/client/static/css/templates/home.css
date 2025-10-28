@@ -241,6 +241,10 @@
   .pillar-navigation {
     grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   }
+
+  .country-directory-card-container {
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  }
 }
 
 /* Mobile: Single column layout */
@@ -279,12 +283,37 @@
   .hero-p {
     font-size: 0.85rem;
   }
+
+  .country-directory-card-container {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .country-directory-card {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .country-directory-card .flag-span {
+    font-size: 1.3rem;
+  }
 }
 
 /* Desktop: Three columns layout */
 @media (min-width: 769px) {
   .pillar-navigation {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .country-directory-card-container {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* Large Desktop: More columns for country directory */
+@media (min-width: 1200px) {
+  .country-directory-card-container {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 }
 
@@ -311,7 +340,66 @@
 }
 
 .country-directory-card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.country-directory-card {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  color: var(--body-text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.country-directory-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+}
+
+.country-directory-card .flag-span {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.country-directory-card .name-span {
+  font-weight: 500;
+  color: var(--header-font-color);
+  flex: 1;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.country-directory-card .code-span {
+  font-size: 0.75rem;
+  color: var(--body-text-color);
+  opacity: 0.7;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 
