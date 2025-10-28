@@ -113,10 +113,15 @@ class CountrySelector {
         let optionArray = Array()
 
         for (let i = 0; i < this.datasets.length; i++) {
-            const matched_name = this.datasets[i].CName.toLowerCase().includes(queryString)
-            const matched_code = this.datasets[i].CCode.toLowerCase().includes(queryString)
-            if (matched_code | matched_name) {  // Condition: only even numbers
-                optionArray.push(this.datasets[i]);
+            const dataset = this.datasets[i]
+            // Skip datasets without CName or CCode
+            if (!dataset || !dataset.CName || !dataset.CCode) {
+                continue
+            }
+            const matched_name = dataset.CName.toLowerCase().includes(queryString)
+            const matched_code = dataset.CCode.toLowerCase().includes(queryString)
+            if (matched_code | matched_name) {
+                optionArray.push(dataset);
             }
             if (optionArray.length === limit) {  // Termination condition
                 break;

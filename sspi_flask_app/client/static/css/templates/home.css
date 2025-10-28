@@ -1,3 +1,27 @@
+/* Unified page container system */
+.page-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  margin-bottom: 2rem;
+}
+
+.page-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.content-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding: 0 1rem;
+}
+
+/* Hero Section */
 .hero-box {
   font-size: 0.85em;
   font-family: var(--body-font-family, Arial, sans-serif);
@@ -9,18 +33,14 @@
   gap: 1.25rem;
   margin-bottom: 1rem;
   margin-top: 0.25rem;
-  max-width: min(1400px, 100%);
-  margin-left: auto;
-  margin-right: auto;
   box-sizing: border-box;
 }
 
 .hero-textbox {
-  flex: 4 1 700px;
-  min-width: min(100%, 700px);
+  flex: 2 1 600px;
+  min-width: min(100%, 600px);
   background-color: var(--box-background-color);
   padding: 1.25rem;
-  max-width: min(85ch, 100%);
   border-radius: var(--border-radius-lg);
   align-self: stretch;
   box-shadow: var(--shadow-md);
@@ -29,12 +49,12 @@
 }
 
 .hero-aside-wrapper {
-  flex: 1 1 200px;
+  flex: 1 1 300px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.8rem;
-  min-width: min(100%, 200px);
+  min-width: min(100%, 300px);
 }
 
 .aside-box {
@@ -79,7 +99,7 @@
 
 .pillar-navigation {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  grid-template-columns: 1fr;
   gap: 0.8rem;
   margin-top: 1.25rem;
   font-size: 0.85em;
@@ -207,65 +227,39 @@
 
 .aside-link {
   display: inline-block;
-  padding: 0.45rem 0.6rem;
-  background-color: var(--primary-color);
-  color: white;
+  padding: 0.35rem 0.5rem;
+  background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
   text-decoration: none;
   border-radius: var(--border-radius);
-  font-weight: 500;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
+  font-weight: 400;
   text-align: center;
   transition: all 0.2s ease-in-out;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .aside-link:hover {
-  background-color: color-mix(in srgb, var(--primary-color) 85%, black);
+  background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
+  border-color: var(--primary-color);
   transform: none;
-  color: white;
+  color: var(--primary-color);
 }
 
 /* Responsive Media Queries */
 
-/* Small screens: Prevent overflow */
-@media (max-width: 900px) {
-  .hero-box {
-    max-width: 100%;
-    padding: 0 1rem;
+/* Mobile: <768px - Single column, compact layout */
+@media (max-width: 767px) {
+  .content-container {
+    padding: 0 0.75rem;
   }
 
-  .hero-textbox {
-    max-width: 100%;
-    width: 100%;
-  }
-
-  .pillar-navigation {
-    grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
-  }
-}
-
-/* Mobile: Single column layout */
-@media (max-width: 768px) {
-  .pillar-navigation {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  
-  .pillar-navigation-wrapper {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-
-  /* Adjust hero layout for mobile */
   .hero-box {
     gap: 1rem;
-    padding: 0 1rem;
   }
 
   .hero-textbox {
     padding: 1rem;
-    max-width: 100%;
-    width: 100%;
   }
 
   .hero-aside-wrapper {
@@ -279,11 +273,136 @@
   .hero-p {
     font-size: 0.85rem;
   }
+
+  .pillar-navigation {
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .pillar-navigation-wrapper {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .home-globe-box,
+  .country-directory-box {
+    padding: 1rem;
+  }
+
+  .country-directory-card-container {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .country-directory-card {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .country-directory-card .flag-span {
+    font-size: 1.3rem;
+  }
 }
 
-/* Desktop: Three columns layout */
-@media (min-width: 769px) {
+/* Tablet and up: Country cards responsive */
+@media (min-width: 768px) {
+  .country-directory-card-container {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+/* Large screens only: 3-column pillar layout */
+@media (min-width: 1150px) {
   .pillar-navigation {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* Globe Section */
+.home-globe-box {
+  width: 100%;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+/* Country Directory */
+.country-directory-box {
+  width: 100%;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  box-sizing: border-box;
+  font-family: var(--body-font-family);
+}
+
+.country-directory-card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.country-directory-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  color: var(--body-text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.country-directory-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+}
+
+.country-directory-card .flag-span {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.country-directory-card .name-span {
+  font-weight: 500;
+  color: var(--header-font-color);
+  flex: 1;
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.country-directory-card .code-span {
+  font-size: 0.75rem;
+  color: var(--body-text-color);
+  opacity: 0.7;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+
+

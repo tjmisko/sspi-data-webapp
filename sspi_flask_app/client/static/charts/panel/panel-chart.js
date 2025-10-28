@@ -96,8 +96,6 @@ class PanelChart {
             <div class="pin-actions-box">
                 <button class="hideunpinned-button">Hide Unpinned</button>
                 <button class="clearpins-button">Clear Pins</button>
-            </div>
-            <div class="pin-actions-box">
                 <button class="add-country-button">Search Country</button>
             </div>
             <div class="country-search-results-window"></div>
@@ -140,17 +138,17 @@ class PanelChart {
     <use href="#icon-menu" />
 </svg>
 `;
-        this.root.appendChild(this.showChartOptions)
+        this.titleActions.appendChild(this.showChartOptions)
         this.overlay = document.createElement('div')
         this.overlay.classList.add('chart-options-overlay')
         this.overlay.addEventListener('click', () => {
             this.closeChartOptionsSidebar()
         })
         this.root.appendChild(this.overlay)
-        const wrapper = document.createElement('div')
-        wrapper.classList.add('chart-options-wrapper')
-        wrapper.appendChild(this.chartOptions)
-        this.root.appendChild(wrapper)
+        this.chartOptionsWrapper = document.createElement('div')
+        this.chartOptionsWrapper.classList.add('chart-options-wrapper')
+        this.chartOptionsWrapper.appendChild(this.chartOptions)
+        this.root.appendChild(this.chartOptionsWrapper)
     }
 
     rigChartOptions() {
@@ -222,13 +220,17 @@ class PanelChart {
         this.chartContainer = document.createElement('div')
         this.chartContainer.classList.add('panel-chart-container')
         this.chartContainer.innerHTML = `
-<h2 class="panel-chart-title"></h2>
+<div class="panel-chart-title-container">
+    <h2 class="panel-chart-title"></h2>
+    <div class="panel-chart-title-actions"></div>
+</div>
 <div class="panel-canvas-wrapper">
     <canvas class="panel-chart-canvas"></canvas>
 </div>
 `;
         this.root.appendChild(this.chartContainer)
         this.title = this.chartContainer.querySelector('.panel-chart-title')
+        this.titleActions = this.chartContainer.querySelector('.panel-chart-title-actions')
         this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
         this.context = this.canvas.getContext('2d')
         this.chart = new Chart(this.context, {
@@ -798,6 +800,8 @@ class PanelChart {
     closeChartOptionsSidebar() {
         this.chartOptions.classList.remove('active')
         this.chartOptions.classList.add('inactive')
+        this.chartOptionsWrapper.classList.remove('active')
+        this.chartOptionsWrapper.classList.add('inactive')
         this.overlay.classList.remove('active')
         this.overlay.classList.add('inactive')
     }
@@ -805,6 +809,8 @@ class PanelChart {
     openChartOptionsSidebar() {
         this.chartOptions.classList.add('active')
         this.chartOptions.classList.remove('inactive')
+        this.chartOptionsWrapper.classList.add('active')
+        this.chartOptionsWrapper.classList.remove('inactive')
         this.overlay.classList.remove('inactive')
         this.overlay.classList.add('active')
     }

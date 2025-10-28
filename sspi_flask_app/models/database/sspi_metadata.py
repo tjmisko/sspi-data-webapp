@@ -142,14 +142,17 @@ class SSPIMetadata(MongoWrapper):
             country_colors = json.load(file)
         with open(os.path.join(local_path, "sspi-colors.json")) as file:
             sspi_custom_colors = json.load(file)
+        with open(os.path.join(local_path, "globe-data.geojson")) as file:
+            globe_json = json.load(file)
         count = self.load_dynamic(
             country_groups,
             country_colors,
-            sspi_custom_colors
+            sspi_custom_colors,
+            globe_json
         )
         return count
 
-    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors) -> int:
+    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors, globe_json) -> int:
         """
         Load metadata specified in methodology files into the database
 
@@ -190,6 +193,10 @@ class SSPIMetadata(MongoWrapper):
         cgroup_map = self.build_country_group_map(cgroups)
         metadata.extend(cgroups)
         metadata.append(cgroup_map)
+        metadata.append({
+            "DocumentType": "GlobeGeoJSON",
+            "Metadata": globe_json
+        })
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_item_details)
         metadata.extend(source_details)
@@ -270,7 +277,6 @@ class SSPIMetadata(MongoWrapper):
                 "Metadata": detail
             })
         return packaged_details
-        
 
     def load_methodology_files(self) -> list:
         """
@@ -431,6 +437,10 @@ class SSPIMetadata(MongoWrapper):
         for cou in country_colors:
             if "CountryCode" not in cou.keys():
                 continue
+            cou["CountryGroups"] = []
+            for g, ccode_list in country_groups.items():
+                if cou["CountryCode"] in ccode_list:
+                    cou["CountryGroups"].append(g)
             details.append({
                 "DocumentType": "CountryDetail",
                 "Metadata": cou
@@ -960,3 +970,20 @@ class SSPIMetadata(MongoWrapper):
             }}
         )
 
+    def country_group_details(self, country_group_code: str) -> list[dict]:
+        """
+        Returns a list of country details corresponding to the group code
+        :param country_group_code: The group code for the query.
+        """
+        country_group_details = self.find({
+            "DocumentType": "CountryDetail",
+            "Metadata.CountryGroups": {"$in": [country_group_code]}
+        })
+        return country_group_details
+
+    def get_country_detail(self, country_code:str) -> dict:
+        country_detail = self.find_one({
+            "DocumentType": "CountryDetail",
+            "Metadata.CountryCode": country_code
+        })
+        return country_detail["Metadata"]

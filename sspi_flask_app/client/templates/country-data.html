@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    <title> {{ CountryCode | upper }} Data </title>
+<title> SSPI Data for {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }}) </title>
 {% endblock title %}
 
 {% block content %}
@@ -10,6 +10,8 @@
         <strong>Error:</strong> No Country {{ CountryCode }} found!
     </div>
 {% else %}
+    <section class="overview-section">
+    </section>
     <section class="chart-section" id="dynamic-data-section"></section>
     <script>
         window.addEventListener("load", (event) => {

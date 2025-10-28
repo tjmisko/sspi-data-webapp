@@ -1,8 +1,9 @@
 .panel-chart-root-container {
-  position: relative;
+  position: relative;  /* Establish positioning context for absolute children */
   display: flex;
   flex-direction: row;
   justify-content: left;
+  align-items: stretch;  /* Stretch children to match tallest child */
   min-height: clamp(600px, 80vh, 80vh);
 }
 
@@ -17,9 +18,31 @@
   height: clamp(600px, 80vh, 80vh);
 }
 
-.panel-chart-title {
-  font-size: 1em;
+.panel-chart-title-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;  /* Align to top instead of center */
   margin: 0.5em 0;
+  gap: 0.5em;  /* Reduced gap to prevent wrapping */
+  flex-wrap: nowrap;  /* Prevent wrapping */
+}
+
+.panel-chart-title {
+  flex: 1 1 0;  /* Allow title to shrink if needed */
+  font-size: 1em;
+  margin: 0;  /* Margin now on container */
+  line-height: 1.2;  /* Tighter line spacing when title wraps */
+  min-width: 0;  /* Allow title to shrink below content size */
+  overflow-wrap: break-word;  /* Allow long words to wrap */
+}
+
+.panel-chart-title-actions {
+  flex: 0 0 auto;  /* Don't grow, don't shrink */
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  align-self: flex-start;  /* Align to top of container */
 }
 
 .panel-canvas-wrapper { /* Wraps the chart canvas */
@@ -43,10 +66,8 @@
 }
 
 .show-chart-options {
-  position: absolute;
-  top: 0.2em;
-  right: 0;
-  z-index: 2;
+  /* Now positioned in flex flow within .panel-chart-title-actions */
+  /* No absolute positioning needed */
 }
 
 .hide-chart-button-container {
@@ -60,12 +81,6 @@
   position: relative;
   z-index: 2;
   padding: 0;
-}
-
-.remove-button-legend-item {
-  padding: 0;
-  margin-left: 0.2em;
-  z-index: 2;
 }
 
 .icon-button:hover .hide-chart-options-svg {
@@ -95,10 +110,10 @@
   background-color: var(--box-background-color, #000);
   border: var(--theme-border-thick, none);
   color: var(--header-text-color, #fff);
-  overflow-y: scroll;
-  max-height: 80vh;
+  overflow-y: auto;  /* Show scrollbar only when needed */
   min-width: clamp(250px, 20vw, 20vw);
   z-index: 3;
+  /* Height is set by media queries to match container */
 }
 
 .chart-options-overlay.inactive {
@@ -128,6 +143,43 @@
   transform: translateX(0);
 }
 
+/* MOBILE: Ensure chart options are properly hidden on narrow screens */
+@media (max-width: 999px) {
+  .panel-chart-root-container {
+    overflow: hidden;  /* Clip chart options when they slide outside container */
+  }
+
+  .chart-options-wrapper {
+    position: absolute;  /* Positioned within root container */
+    top: 0;
+    right: 0;
+    width: 0;  /* Takes no space when hidden */
+    height: 100%;  /* Full height of root container */
+    pointer-events: none;  /* Don't block clicks when inactive */
+  }
+
+  .chart-options {
+    position: absolute;  /* Positioned within wrapper/root container */
+    top: 0;
+    right: 0;
+    height: 100%;  /* Full height of root container, not viewport */
+    width: min(80vw, 350px);  /* Responsive width with max */
+    pointer-events: auto;
+    overflow-y: auto;  /* Enable scrolling within the container */
+  }
+
+  .chart-options.inactive {
+    transform: translateX(100%);  /* Fully off-screen */
+    pointer-events: none;
+  }
+
+  .chart-options.active {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+}
+
+/* DESKTOP: Show sidebar always visible on large screens */
 @media (min-width: 1000px) {
   /* Only Show Sidebar on large enough desktops */
   .panel-canvas-wrapper {
@@ -138,24 +190,46 @@
     display: inline-block;
     flex: 0.5 2 0;
     max-width: 20vw;
+    position: relative;  /* Ensure proper positioning context */
+    width: auto;  /* Override mobile width */
+    height: 100%;  /* Full height of root container */
+    pointer-events: auto;  /* Override mobile pointer-events */
   }
+
+  /* On desktop, ALWAYS show the wrapper - ignore inactive/active state */
+  .chart-options-wrapper.inactive,
+  .chart-options-wrapper.active {
+    flex: 0.5 2 0 !important;
+    max-width: 20vw !important;
+    opacity: 1 !important;
+  }
+
   .chart-options {
-    position: relative;
-    transform: translateX(0);
+    position: relative;  /* Static in flow on desktop */
     min-width: 15vw;
+    height: 100%;  /* Full height to match container */
+    width: auto;  /* Override mobile width */
+    overflow-y: auto;  /* Enable scrolling within fixed height */
   }
+
   .show-chart-options {
-    display: none;
+    display: none;  /* Hide hamburger menu on desktop */
   }
-  /* Show chart options by default on larger screens */
+
+  /* Reset transform for both states on desktop - always in position */
+  .chart-options.active,
   .chart-options.inactive {
-    transform: translateX(0%);
+    transform: translateX(0);
+    pointer-events: auto;
   }
+
   .hide-chart-options {
-    display: none;
+    display: none;  /* No close button needed on desktop */
   }
-  .chart-options-overlay.active {
-    display: none;
+
+  .chart-options-overlay.active,
+  .chart-options-overlay.inactive {
+    display: none;  /* No overlay needed on desktop */
   }
 }
 
@@ -291,28 +365,44 @@
 
 .legend-items {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
+  margin-top: 0.1em;
 }
 
 .legend-item {
   display: flex;
   flex-direction: row;
+  align-self: stretch;
   align-items: center;
-  font-size: 0.75em;
+  justify-content: space-between;
+  font-size: 0.85em;
   font-weight: 500;
-  padding: 0.1em 1em;
+  padding: 0.2em 1em;
   border-radius: 20px;
   border-width: 1.5px;
   border-style: solid;
+  max-width: 220px;
   margin: 0.2em;
 }
 
 .legend-item span {
-  line-height: 2;
+  line-height: 1;
 }
+
+.legend-item button {
+  background-color: transparent;
+}
+
+.remove-button-legend-item {
+  background-color: transparent;
+  padding: 0;
+  margin-left: 0.2em;
+  z-index: 2;
+}
+
 
 .add-country-pin-results-window {
   position: relative;
@@ -470,4 +560,9 @@
   color: var(--green-accent);
   font-size: 0.75em;
   font-style: italic;
+}
+
+.legend-item button {
+  background-color: transparent;
+  border: none;
 }

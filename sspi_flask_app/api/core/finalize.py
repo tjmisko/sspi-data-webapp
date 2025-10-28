@@ -13,11 +13,13 @@ from sspi_flask_app.models.database import (
     sspi_static_stack_data,
     sspi_item_dynamic_line_data,
     sspi_indicator_dynamic_line_data,
-    sspi_dynamic_matrix_data
+    sspi_dynamic_matrix_data,
+    sspi_globe_data
 )
 from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
-    colormap
+    colormap,
+    parse_json
 )
 from sspi_flask_app.models.coverage import DataCoverage
 from sspi_flask_app.models.sspi import SSPI
@@ -57,6 +59,8 @@ def finalize_iterator(local_path, endpoints):
         yield from finalize_dynamic_line_indicator_datasets()
         sspi_item_dynamic_line_data.delete_many({})
         yield from finalize_dynamic_line_score_datasets()
+        yield "Finalizing Globe Data\n"
+        finalize_globe_data()
         yield "Finalization Complete\n"
     except Exception as e:
         yield f"error: Finalization failed with exception: {str(e)}\n"
@@ -522,3 +526,66 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
                 doc["ItemName"] = item_name
                 documents.append(doc)
     sspi_item_data.insert_many(documents)
+
+
+@finalize_bp.route("/finalize/globe")
+@login_required
+def finalize_globe_data():
+    sspi_globe_data.delete_many({})
+    globe_item_data = sspi_item_data.aggregate([
+        { "$match": { "ItemCode": {"$in": ["SSPI", "SUS", "MS", "PG"]} } },
+        { "$sort": { "Year": 1, "ItemCode": 1, "CountryCode": 1 } },
+        { "$group": {
+            "_id": {
+                "ItemCode": "$ItemCode",
+                "CountryCode": "$CountryCode"
+            },
+            "Scores": { "$push": "$Score" },
+        } },
+        { "$group": {
+            "_id": "$_id.CountryCode",
+            "items": { "$push": {"k": "$_id.ItemCode", "v": "$Scores"} }
+        } },
+        { "$project": { "_id": 0, "CountryCode": "$_id", "Scores": { "$arrayToObject": "$items"} } }
+    ])
+    scored_country_codes = {doc["CountryCode"] for doc in globe_item_data}
+    globe_geojson = sspi_metadata.find_one({"DocumentType": "GlobeGeoJSON"})
+    for feature in globe_geojson["Metadata"]["features"]:
+        country_code = feature["properties"]["ISO_A3"]
+        if str(country_code) == "-99" or not country_code:
+            country_code = feature["properties"]["ADM0_A3"]
+        result = pycountry.countries.get(alpha_3=country_code)
+        if not result:
+            print(feature["properties"])
+            app.logger.error(f"Country Code {country_code} not found in pycountry!")
+            continue
+        country_name = result.name
+        country_flag = result.flag
+        if country_code not in scored_country_codes:
+            feature["properties"] = {
+                "SSPI": [None] * 24,
+                "SUS": [None] * 24,
+                "MS": [None] * 24,
+                "PG": [None] * 24,
+                "CName": country_name,
+                "CCode": country_code,
+                "CFlag": country_flag
+            }
+            continue
+        country_data = {}
+        i = 0
+        while not country_data:
+            if globe_item_data[i]["CountryCode"] == country_code:
+                country_data = globe_item_data[i]
+            i += 1
+        feature["properties"] = {
+            "SSPI": country_data["Scores"]["SSPI"],
+            "SUS": country_data["Scores"]["SUS"],
+            "MS": country_data["Scores"]["MS"],
+            "PG": country_data["Scores"]["PG"],
+            "CName": country_name,
+            "CCode": country_code,
+            "CFlag": country_flag
+        }
+    sspi_globe_data.insert_one(globe_geojson["Metadata"])
+    return parse_json(globe_geojson["Metadata"])
