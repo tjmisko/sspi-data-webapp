@@ -55,6 +55,7 @@ div:has(> .globegl-hover) {
   color: var(--text-color);
   padding: 0.5em;
   box-sizing: border-box;
+  container-type: inline-size;
 }
 
 .country-details-header {
@@ -94,6 +95,8 @@ div:has(> .globegl-hover) {
   font-size: 0.75em;
   box-sizing: border-box;
   line-height: 1.8;
+  flex-wrap: nowrap;
+  gap: 0.5em;
 }
 
 .country-details-score-line[data-active-tab=true] {
@@ -101,12 +104,137 @@ div:has(> .globegl-hover) {
 }
 
 .country-details-label {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .country-details-score {
   flex: 0 0 auto;
   font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* Label toggle - default: show full labels, hide codes */
+.label-full {
+  display: inline;
+}
+
+.label-code {
+  display: none;
+}
+
+/* Container query: switch to codes when container is narrow */
+@container (max-width: 200px) {
+  .label-full {
+    display: none;
+  }
+
+  .label-code {
+    display: inline;
+  }
+}
+
+/* Media query fallback for older browsers */
+@media (max-width: 400px) {
+  .label-full {
+    display: none;
+  }
+
+  .label-code {
+    display: inline;
+  }
+}
+
+/* Very narrow: reduce font size slightly */
+@media (max-width: 300px) {
+  .country-details-score-line {
+    font-size: 0.7em;
+  }
+}
+
+.country-details-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-top: 0.75em;
+  padding-top: 0.75em;
+  border-top: 1px solid var(--border-color);
+}
+
+.pin-country-button,
+.unpin-country-button,
+.focus-country-button,
+.view-all-data-link {
+  width: 100%;
+  padding: 0.6em 1em;
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.pin-country-button,
+.focus-country-button {
+  background-color: var(--green-accent);
+  color: var(--page-background);
+  border: 1px solid var(--green-accent);
+}
+
+.pin-country-button:hover,
+.focus-country-button:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 80%, white);
+  border-color: color-mix(in srgb, var(--green-accent) 80%, white);
+  transform: translateY(-1px);
+}
+
+.pin-country-button:active,
+.focus-country-button:active {
+  transform: translateY(0);
+}
+
+.unpin-country-button {
+  background-color: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.unpin-country-button:hover {
+  background-color: #c82333;
+  border-color: #c82333;
+  transform: translateY(-1px);
+}
+
+.unpin-country-button:active {
+  transform: translateY(0);
+}
+
+.view-all-data-link {
+  background-color: var(--box-background-color);
+  color: var(--header-text-color);
+  border: 1px solid var(--border-color);
+}
+
+.view-all-data-link:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 15%, var(--region-background-color));
+  border-color: var(--green-accent);
+  transform: translateY(-1px);
+}
+
+.view-all-data-link:active {
+  transform: translateY(0);
 }
 
 
@@ -115,11 +243,9 @@ div:has(> .globegl-hover) {
   display: flex;
   flex-direction: row-reverse;
   align-items: flex-start;
-  padding: 0.5em;
-  background-color: var(--box-background-color);
   color: var(--header-text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 1em;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .globe-and-tab-container {
@@ -127,6 +253,19 @@ div:has(> .globegl-hover) {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  flex: 1 1 auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.globe-and-tab-container > div {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.globe-and-tab-container canvas {
+  max-width: 100% !important;
+  height: auto !important;
 }
 
 .globe-tab-bar {
@@ -184,8 +323,17 @@ div:has(> .globegl-hover) {
   }
 }
 
+@media (max-width: 700px) {
+  .globe-tab-bar button:not(.globe-hamburger-menu) {
+    font-size: 0.6em;
+    padding: 0.8em 0.3em;
+  }
+}
+
 .country-information-box[data-unpopulated=true] {
   color: var(--low-importance-font-color);
+  line-height: 1.4;
+  font-size: 0.9em;
 }
 
 .country-informaton-box {
@@ -207,6 +355,7 @@ div:has(> .globegl-hover) {
   align-items: center;
   border: 1px solid var(--border-color);
   border-radius: 0.75em;
+  margin-top: 1em;
 }
 
 .year-slider-controls {

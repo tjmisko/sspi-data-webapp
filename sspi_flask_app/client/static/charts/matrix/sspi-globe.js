@@ -21,17 +21,26 @@ class SSPIGlobeChart {
         this.buildGlobe()
         this.hydrateGlobe().then(this.restyleGlobe())
         this.setTheme(window.observableStorage.getItem("theme"))
+        this.rigResizeListener()
         this.rigPinChangeListener()
         this.rigUnloadListener()
     }
 
     computeGlobeDimensions() {
-        if (window.screen.width < 700) {
-            this.globeWidth = window.screen.width
-            this.globeHeight = window.screen.height
+        // Use viewport/container width instead of screen width for better responsiveness
+        const availableWidth = Math.min(window.innerWidth, this.parentElement.clientWidth || window.innerWidth);
+        const availableHeight = window.innerHeight;
+
+        if (availableWidth < 700) {
+            // For narrow viewports, use available width with some padding
+            this.globeWidth = Math.max(300, availableWidth - 40); // Min 300px, max viewport - 40px padding
+            this.globeHeight = Math.min(this.globeWidth, availableHeight - 200); // Leave room for controls
         } else {
-            this.globeWidth = 700;
-            this.globeHeight = 700;
+            // Responsive sizing: use 60% of available width, capped at 900px max, 700px min
+            const maxGlobeSize = 900;
+            const targetSize = Math.min(availableWidth * 0.60, maxGlobeSize);
+            this.globeWidth = Math.max(700, targetSize);
+            this.globeHeight = this.globeWidth;
         }
     }
 
@@ -42,6 +51,40 @@ class SSPIGlobeChart {
       this.styles.boxBackgroundColor = window.getComputedStyle(document.documentElement).getPropertyValue("--box-background-color")
       this.styles.oceanColor = window.getComputedStyle(document.documentElement).getPropertyValue("--ocean-color")
       console.log(this.styles)
+    }
+
+    handleResize() {
+        // Clear existing timeout
+        if (this.resizeTimeout) {
+            clearTimeout(this.resizeTimeout);
+        }
+
+        // Debounce resize events (wait 300ms after last resize)
+        this.resizeTimeout = setTimeout(() => {
+            const oldWidth = this.globeWidth;
+            const oldHeight = this.globeHeight;
+
+            // Recompute dimensions
+            this.computeGlobeDimensions();
+
+            // Only update if dimensions changed significantly (threshold: 50px)
+            const widthDiff = Math.abs(this.globeWidth - oldWidth);
+            const heightDiff = Math.abs(this.globeHeight - oldHeight);
+
+            if (widthDiff > 50 || heightDiff > 50) {
+                // Update globe dimensions
+                if (this.globe) {
+                    this.globe
+                        .width(this.globeWidth)
+                        .height(this.globeHeight);
+                }
+            }
+        }, 300);
+    }
+
+    rigResizeListener() {
+        this.resizeTimeout = null;
+        window.addEventListener('resize', () => this.handleResize());
     }
 
     buildGlobeContainer() {
@@ -343,16 +386,53 @@ class SSPIGlobeChart {
 
     updateCountryInformation() {
         if (!this.activeCountry) return;
+
+        // Check if country is currently pinned
+        const isPinned = this.activeCountry.pinned || false;
+        const pinButtonText = isPinned ? "Unpin Country" : "Pin Country";
+        const pinButtonClass = isPinned ? "unpin-country-button" : "pin-country-button";
+
         this.countryInformationBox.innerHTML = `
 <div id="#active-country-information" class="country-details-info">
 <h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span><span class="country-details-year">${this.year}</span></h3>
 <div class="country-details-score-container">
-    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "SSPI"}><span class="country-details-label">SSPI Score:\u0020</span><span class="country-details-score">\u0020${this.activeCountry?.SSPI?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
-    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "SUS"}><span class="country-details-label">Sustainability\u0020(SUS):\u0020</span><span class="country-details-score">\u0020${this.activeCountry?.SUS?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
-    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "MS"}><span class="country-details-label">Market Structure\u0020(MS):\u0020</span><span class="country-details-score">\u0020${this.activeCountry?.MS?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
-    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "PG"}><span class="country-details-label">Public Goods\u0020(PG):\u0020</span><span class="country-details-score">\u0020${this.activeCountry?.PG?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
+    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "SSPI"}><span class="country-details-label"><span class="label-full">SSPI Score:\u0020</span><span class="label-code">SSPI:\u0020</span></span><span class="country-details-score">\u0020${this.activeCountry?.SSPI?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
+    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "SUS"}><span class="country-details-label"><span class="label-full">Sustainability\u0020(SUS):\u0020</span><span class="label-code">SUS:\u0020</span></span><span class="country-details-score">\u0020${this.activeCountry?.SUS?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
+    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "MS"}><span class="country-details-label"><span class="label-full">Market Structure\u0020(MS):\u0020</span><span class="label-code">MS:\u0020</span></span><span class="country-details-score">\u0020${this.activeCountry?.MS?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
+    <div class="country-details-score-line" data-active-tab=${this.tabBarState === "PG"}><span class="country-details-label"><span class="label-full">Public Goods\u0020(PG):\u0020</span><span class="label-code">PG:\u0020</span></span><span class="country-details-score">\u0020${this.activeCountry?.PG?.[this.year - 2000]?.toFixed(3) ?? "N/A"}</span></div>
+</div>
+<div class="country-details-actions">
+    <button class="${pinButtonClass}" data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button>
+    <button class="focus-country-button" data-country-code="${this.activeCountry.CCode}">Focus Country</button>
+    <a class="view-all-data-link" href="/data/country/${this.activeCountry.CCode}">View All Data</a>
 </div>
 </div>`;
+
+        // Add event listener for Pin/Unpin Country button
+        const pinButton = this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');
+        if (pinButton) {
+            pinButton.addEventListener('click', (e) => {
+                const countryCode = e.target.dataset.countryCode;
+                // Find the feature to toggle
+                const feature = this.geojson.features.find(f => f.properties.CCode === countryCode);
+                if (feature) {
+                    this.togglePin(feature);
+                    // Update the active country reference to reflect the new pin state
+                    this.activeCountry = feature.properties;
+                    // Refresh the country information to update button text
+                    this.updateCountryInformation();
+                }
+            });
+        }
+
+        // Add event listener for Focus Country button
+        const focusButton = this.countryInformationBox.querySelector('.focus-country-button');
+        if (focusButton) {
+            focusButton.addEventListener('click', (e) => {
+                const countryCode = e.target.dataset.countryCode;
+                this.zoomToCountry(countryCode);
+            });
+        }
     }
 
     updateDataset() {
@@ -530,7 +610,7 @@ class SSPIGlobeChart {
         </div>
         <div class="chart-view-option">
             <input type="checkbox" checked="true" class="rotation-on-click-toggle"/>
-            <label class="title-bar-label">Rotation on Click</label>
+            <label class="title-bar-label">Toggle Rotation on Click</label>
         </div>
     </div>
 </details>
@@ -856,6 +936,9 @@ class SSPIGlobeChart {
         this.updateDataset()
         this.pushPinUpdate()
         this.updateLegend()
+
+        // Zoom to the pinned country
+        this.zoomToCountry(countryCode)
     }
 
     unpinCountryByCode(countryCode) {
@@ -881,6 +964,99 @@ class SSPIGlobeChart {
         this.pins = new Set()
         this.updateLegend()
         this.pushPinUpdate()
+    }
+
+    /**
+     * Zooms the globe to focus on a given bounding box
+     * @param {Array} bbox - Bounding box in format [minLng, minLat, maxLng, maxLat]
+     * @param {number} duration - Animation duration in milliseconds (default: 1000)
+     * @param {number} paddingFactor - Additional zoom out factor for padding (default: 1.2)
+     */
+    zoomToBoundingBox(bbox, duration = 1000, paddingFactor = 1.2) {
+        if (!bbox || bbox.length !== 4) {
+            console.error('Invalid bounding box format. Expected [minLng, minLat, maxLng, maxLat]');
+            return;
+        }
+
+        // Pause globe rotation when zooming
+        if (this.globe.controls().autoRotate) {
+            this.globe.controls().autoRotate = false;
+            this.globeRotation = false;
+            if (this.globeRotationToggleButton) {
+                this.globeRotationToggleButton.checked = false;
+            }
+            window.observableStorage.setItem("globeRotation", false);
+        }
+
+        const [minLng, minLat, maxLng, maxLat] = bbox;
+
+        // Calculate the center point of the bounding box
+        let centerLng = (minLng + maxLng) / 2;
+        let centerLat = (minLat + maxLat) / 2;
+
+        // Handle bounding boxes that cross the International Date Line
+        if (minLng > maxLng) {
+            // Bbox crosses the antimeridian
+            centerLng = ((minLng + maxLng + 360) / 2) % 360;
+            if (centerLng > 180) centerLng -= 360;
+        }
+
+        // Calculate the span of the bounding box
+        let lngSpan = maxLng - minLng;
+        if (minLng > maxLng) {
+            // Handle wraparound at International Date Line
+            lngSpan = (360 - minLng) + maxLng;
+        }
+        const latSpan = maxLat - minLat;
+
+        // Use the maximum span to determine altitude
+        // Account for latitude distortion (longitude degrees are smaller near poles)
+        const avgLat = Math.abs(centerLat);
+        const lngSpanAdjusted = lngSpan * Math.cos(avgLat * Math.PI / 180);
+        const maxSpan = Math.max(latSpan, lngSpanAdjusted);
+
+        // Calculate altitude based on the span
+        // The formula is calibrated so that:
+        // - Small bbox (10°): altitude ≈ 0.875-1.0 (close view)
+        // - Medium bbox (40°): altitude ≈ 1.25 (country view)
+        // - Large bbox (80°): altitude ≈ 1.75 (continent view)
+        // - Very large bbox (160°): altitude ≈ 2.75 (global view)
+        const baseAltitude = (maxSpan / 40 + 1.5) / 2;
+        const altitude = baseAltitude * paddingFactor;
+
+        // Clamp altitude to reasonable bounds (lower than before for closer view)
+        const finalAltitude = Math.max(0.8, Math.min(altitude, 4));
+
+        // Animate to the new point of view
+        this.globe.pointOfView({
+            lat: centerLat,
+            lng: centerLng,
+            altitude: finalAltitude
+        }, duration);
+
+        console.log(`Zooming to bbox [${minLng}, ${minLat}, ${maxLng}, ${maxLat}]`);
+        console.log(`Center: (${centerLat.toFixed(2)}°, ${centerLng.toFixed(2)}°), Altitude: ${finalAltitude.toFixed(2)}`);
+    }
+
+    /**
+     * Zooms to a specific country by its country code
+     * @param {string} countryCode - The country code (CCode) to zoom to
+     * @param {number} duration - Animation duration in milliseconds (default: 1000)
+     */
+    zoomToCountry(countryCode, duration = 1000) {
+        const feature = this.geojson.features.find(f => f.properties.CCode === countryCode);
+
+        if (!feature) {
+            console.error(`Country with code "${countryCode}" not found`);
+            return;
+        }
+
+        if (!feature.bbox) {
+            console.error(`Country "${countryCode}" does not have a bounding box`);
+            return;
+        }
+
+        this.zoomToBoundingBox(feature.bbox, duration);
     }
 }
 
