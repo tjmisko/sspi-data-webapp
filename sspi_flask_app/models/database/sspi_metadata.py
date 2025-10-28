@@ -975,5 +975,8 @@ class SSPIMetadata(MongoWrapper):
         Returns a list of country details corresponding to the group code
         :param country_group_code: The group code for the query.
         """
-        country_group_details = []
+        country_group_details = self.find({
+            "DocumentType": "CountryDetail",
+            "Metadata.CountryGroups": {"$in": [country_group_code]}
+        })
         return country_group_details
