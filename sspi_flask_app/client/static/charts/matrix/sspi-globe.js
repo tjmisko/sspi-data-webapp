@@ -1,9 +1,9 @@
 class SSPIGlobeChart {
-    constructor(parentElement, globeDataURL) {
+    constructor(parentElement) {
         this.parentElement = parentElement
-        this.globeDataURL = globeDataURL
+        this.globeDataURL = "/api/v1/globe"
         this.tabBarState = "SSPI"; // load a globe for SSPI by default
-        this.getVal = feat => feat.properties.GDP_MD_EST / Math.max(1e5, feat.properties.POP_EST);
+        this.year = 2023;
         this.computeGlobeDimensions() 
         this.getComputedStyles()
         this.buildGlobeContainer() 
@@ -20,7 +20,6 @@ class SSPIGlobeChart {
             this.globeWidth = 800;
             this.globeHeight = 800;
         }
-
     }
 
     getComputedStyles() {
@@ -85,7 +84,18 @@ class SSPIGlobeChart {
 
     async hydrateGlobe () {
         this.geojson = await fetch(this.globeDataURL).then(res => res.json())
-        this.setColorScale(SSPIColors.SSPI);
+        this.getVal = (feat) => { 
+            let series = feat.properties[this.tabBarState]
+            if (!series) {
+                return -1
+            }
+            let value = series[this.year - 2000] 
+            if (!value) {
+                return -1
+            }
+            return value
+        }
+        this.setColorScale();
         this.globe
             .polygonsData(this.geojson.features.filter(d => d.properties.ISO_A2 !== 'AQ'))
             .polygonCapColor(feat => this.colorScale(this.getVal(feat)))
@@ -128,31 +138,28 @@ Population:\u0020<i>${d.POP_EST}</i>
     }
 
     updateDataset() {
-        const newColor = SSPIColors[this.tabBarState]
-        this.getVal = feat => {feat.properties[this.tabBarState]};
-        this.setColorScale(newColor);
+        this.setColorScale();
         this.globe
             .polygonCapColor(feat => this.colorScale(this.getVal(feat)))
-            .polygonSideColor(feat => "transparent")
-            .onPolygonHover(hoverD => this.globe
-                .polygonAltitude(d => d === hoverD ? 0.02 : 0.01)
-                .polygonSideColor(d => d === hoverD ? this.styles.greenAccent + 'cc' : "transparent")
-                .polygonCapColor(d => d === hoverD ? this.styles.greenAccent : this.colorScale(this.getVal(d)))
-            )
-            .onPolygonClick((p) => {
-                console.log(p.target);
-            })
     }
 
     toggleAltitudeCoding(){};
 
-    setColorScale(newColor) {
+    setColorScale() {
         const maxVal = Math.max(...this.geojson.features.map(this.getVal));
-        console.log(newColor);
-        if (!maxVal) {
-            this.colorScale = function(value) { return newColor }
+        console.log(maxVal)
+        if (maxVal && !maxVal.isNaN) {
+            let colorGrad = SSPIColors.gradients[this.tabBarState]
+            this.colorScale = function(value) { 
+                let decile = Math.ceil(value / maxVal * 10);
+                return colorGrad[decile]
+            }
         } else {
-            this.colorScale = function(value) { return newColor }
+            console.log("Failed to Get Gradient")
+            const newColor = SSPIColors[this.tabBarState]
+            this.colorScale = function(value) { 
+                return newColor
+            }
         }
     };
 }
