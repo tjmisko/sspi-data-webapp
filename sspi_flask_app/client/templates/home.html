@@ -11,126 +11,102 @@
 
 {% block content %}
 <article class="page-content">
-    <section class="hero-box">
-        <div class="hero-textbox"> 
-            <h1 class="hero-title">Policies supporting wellbeing for people and the planet are well known. To what extent are countries implementing them?</h1>
-            <p class="hero-p">
-                The SSPI measures the strength of national policies across
-                57 policy indicators, offering a comprehensive and
-                data-driven evaluation of policies across 66 countries.
-            </p> 
-            <p class="hero-p"> 
-                The SSPI organizes indicators into categories, each
-                of measures the performance of a package of related
-                policies in a specific sector. Categories are grouped into
-                pillars corresponding to the three core tasks of
-                government in the twenty-first century.
-            </p>
-            <div class="pillar-navigation">
-                {% for pillar in pillar_category_tree %}
-                    <div class="pillar-navigation-wrapper {{ pillar.ItemCode | lower }}">
-                        <a href="/data/pillar/{{ pillar.ItemCode | upper }}" class="home-link pillar-link">
-                            <h3 class="pillar-link-title">{{ pillar.ItemName }}</h3>
-                            <p class="pillar-description">
-                                {{ pillar.ShortDescription }}
-                            </p>
-                        </a>
-                        <div class="category-navigation-wrapper">
-                            <h4 class="home-category-header"> Categories </h4>
-                            <ul class="category-list">
-                            {% for category in pillar.Categories %}
-                                <li class="category-item">
-                                    <a href="/data/category/{{ category.ItemCode | upper }}" class="home-link category-link" title="{{ category.ShortDescription }}">{{ category.ItemName }}</a>
-                                </li>
-                            {% endfor %}
-                            </ul>
-                        </div> 
+    <section class="page-section">
+        <div class="content-container">
+            <div class="hero-box">
+                <div class="hero-textbox"> 
+                    <h1 class="hero-title">Policies supporting wellbeing for people and the planet are well known. To what extent are countries implementing them?</h1>
+                    <p class="hero-p">
+                        The SSPI measures the strength of national policies across
+                        57 policy indicators, offering a comprehensive and
+                        data-driven evaluation of policies across 66 countries.
+                    </p> 
+                    <p class="hero-p"> 
+                        The SSPI organizes indicators into categories, each
+                        of measures the performance of a package of related
+                        policies in a specific sector. Categories are grouped into
+                        pillars corresponding to the three core tasks of
+                        government in the twenty-first century.
+                    </p>
+                    <div class="pillar-navigation">
+                        {% for pillar in pillar_category_tree %}
+                        <div class="pillar-navigation-wrapper {{ pillar.ItemCode | lower }}">
+                            <a href="/data/pillar/{{ pillar.ItemCode | upper }}" class="home-link pillar-link">
+                                <h3 class="pillar-link-title">{{ pillar.ItemName }}</h3>
+                                <p class="pillar-description">
+                                    {{ pillar.ShortDescription }}
+                                </p>
+                            </a>
+                            <div class="category-navigation-wrapper">
+                                <h4 class="home-category-header"> Categories </h4>
+                                <ul class="category-list">
+                                    {% for category in pillar.Categories %}
+                                    <li class="category-item">
+                                        <a href="/data/category/{{ category.ItemCode | upper }}" class="home-link category-link" title="{{ category.ShortDescription }}">{{ category.ItemName }}</a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div> 
+                        </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="hero-aside-wrapper"> 
-            <div class="aside-box">
-                <h2 class="hero-title">National Policy Scores</h2>
-                <p class="hero-p">
-                    Explore the latest SSPI data, with scores spanning from 2000 to 2023 across 67 countries.
-                </p>
-                <div class="aside-navigation">
-                    <a href="/indicators" class="home-link aside-link">
-                        Indicator Table
-                    </a>
-                    <a href="/data/indicator/biodiv" class="home-link aside-link">
-                        Explore Data by Indicator
-                    </a>
-                    <a href="/data/country/aus" class="home-link aside-link">
-                        Explore Data by Country
-                    </a>
-                    <a href="/download" class="home-link aside-link">
-                        Download Data
-                    </a>
                 </div>
-            </div>
-            <div class="aside-box">
-                <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
-                <p class="hero-p">
-                    Our working paper conducts an in-depth cross-sectional
-                    analysis of country polcies from 2018 working paper using the SSPI.
-                </p>
-                <div class="aside-navigation">
-                    <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
-                        IRLE Working Paper
-                    </a>
-                    <a class="home-link aside-link" href="2018">
-                        SSPI 2018 Data
-                    </a>
-                    <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
-                        IRLE Climate and Society Center
-                    </a>
+                <div class="hero-aside-wrapper"> 
+                    <div class="aside-box">
+                        <h2 class="hero-title">National Policy Scores</h2>
+                        <p class="hero-p">
+                            Explore the latest SSPI data, with scores spanning from 2000 to 2023 across 67 countries.
+                        </p>
+                        <div class="aside-navigation">
+                            <a href="/indicators" class="home-link aside-link">
+                                Indicator Table
+                            </a>
+                            <a href="/data/indicator/biodiv" class="home-link aside-link">
+                                Explore Data by Indicator
+                            </a>
+                            <a href="/data/country/aus" class="home-link aside-link">
+                                Explore Data by Country
+                            </a>
+                            <a href="/download" class="home-link aside-link">
+                                Download Data
+                            </a>
+                        </div>
+                    </div>
+                    <div class="aside-box">
+                        <h2 class="hero-title">National Policies to Support Sustainable, Equitable Economies</h2>
+                        <p class="hero-p">
+                            Our working paper conducts an in-depth cross-sectional
+                            analysis of country polcies from 2018 working paper using the SSPI.
+                        </p>
+                        <div class="aside-navigation">
+                            <a class="home-link aside-link" href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/" target="_blank">
+                                IRLE Working Paper
+                            </a>
+                            <a class="home-link aside-link" href="2018">
+                                SSPI 2018 Data
+                            </a>
+                            <a class="home-link aside-link" href="https://irle.berkeley.edu/research-centers/climate-and-society-center/" target="_blank">
+                                IRLE Climate and Society Center
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
-    <section class="home-globe-section">
-        <div class="globe-chart-container">
-            <div id="globeViz"></div>
+    <section class="page-section">
+        <div class="content-container">
+            <div class="home-globe-box">
+                <div class="globe-chart-container">
+                    <div id="globeViz"></div>
+                </div>
+            </div>
         </div>
     </section>
-    <section class="country-directory">
-        <div class="country-directory-box">
-            <h3>SSPI Core 49 Countries</h3>
-            <p>The SSPI 49 countries are those which were included in our <a
-                href="/2018">original 2018 index</a>. These countries comprise
-                the Organization for Economic Cooperation and Development
-                (OCED), the G20, plus several other countries classified as
-                'High-income' by the World Bank. Together, the <b>SSPI49</b>
-                account for 90% of world GDP and about two-thirds of the
-                world's population.
-            </p>
-            <div class="country-directory-card-container">
-                {% for cdetails in sspi_49_details %}
-                <a class="country-directory-card" data-ccode="{{ cdetails.Metadata.CountryCode }}" href="/data/country/{{ cdetails.Metadata.CountryCode }}">
-                        <span class="flag-span"> {{ cdetails.Metadata.Flag }}</span>
-                        <span class="name-span"> {{ cdetails.Metadata.Country }}</span>
-                        <span class="code-span"> ({{ cdetails.Metadata.CountryCode }}) </span>
-                </a>
-                {% endfor %}
-            </div>
-            <h3>SSPI Extended Countries</h3>
-            <p> The SSPI Extended countries comprise the countries beyond the
-                original 49 for which the policy data availability,
-                reliability, and quality permit the SSPI to be computed. These
-                include many developing economies, especially in the Global
-                South.
-            </p>
-            <div class="country-directory-card-container">
-                {% for cdetails in sspi_extended_details %}
-                    <a class="country-directory-card" data-ccode="{{ cdetails.Metadata.CountryCode }}" href="/data/country/{{ cdetails.Metadata.CountryCode }}">
-                        <span class="flag-span"> {{ cdetails.Metadata.Flag }}</span>
-                        <span class="name-span"> {{ cdetails.Metadata.Country }}</span>
-                        <span class="code-span"> ({{ cdetails.Metadata.CountryCode }})</span>
-                    </a>
-                {% endfor %}
-            </div>
+    <section class="page-section">
+        <div class="content-container">
+            {% include 'country-directory.html' %}
+        </div>
     </section>
 </article>
 

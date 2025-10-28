@@ -1,0 +1,36 @@
+<div class="country-directory-box">
+    <h3>SSPI Core 49 Countries</h3>
+        <p>The SSPI 49 countries are those which were included in our <a style="text-decoration: underline;"
+            href="/2018">original 2018 index</a>. These countries comprise
+            the Organization for Economic Cooperation and Development
+            (OCED), the G20, plus several other countries classified as
+            'High-income' by the World Bank. Together, the <b>SSPI49</b>
+            account for 90% of world GDP and about two-thirds of the
+            world's population.
+        </p>
+        <div class="country-directory-card-container">
+            {% for cdetails in sspi_49_details %}
+            <a class="country-directory-card" data-ccode="{{ cdetails.Metadata.CountryCode }}" href="/data/country/{{ cdetails.Metadata.CountryCode }}">
+                <span class="flag-span"> {{ cdetails.Metadata.Flag }}</span>
+                <span class="name-span"> {{ cdetails.Metadata.Country }}</span>
+                <span class="code-span"> ({{ cdetails.Metadata.CountryCode }}) </span>
+            </a>
+            {% endfor %}
+        </div>
+        <h3>SSPI Extended Countries</h3>
+        <p> The SSPI Extended countries comprise the countries beyond the
+            original 49 for which the policy data availability,
+            reliability, and quality permit the SSPI to be computed. These
+            include many developing economies, especially in the Global
+            South.
+        </p>
+        <div class="country-directory-card-container">
+            {% for cdetails in sspi_extended_details %}
+            <a class="country-directory-card" data-ccode="{{ cdetails.Metadata.CountryCode }}" href="/data/country/{{ cdetails.Metadata.CountryCode }}">
+                <span class="flag-span"> {{ cdetails.Metadata.Flag }}</span>
+                <span class="name-span"> {{ cdetails.Metadata.Country }}</span>
+                <span class="code-span"> ({{ cdetails.Metadata.CountryCode }})</span>
+            </a>
+            {% endfor %}
+        </div>
+</div>

@@ -45,6 +45,19 @@ def about():
     return render_template('about.html')
 
 
+@client_bp.route('/countries')
+def countries():
+    sspi_49_details = sspi_metadata.country_group_details("SSPI49")
+    sspi_49_details.sort(key=lambda x: x["Metadata"]["Country"])
+    sspi_extended_details = sspi_metadata.country_group_details("SSPIExtended")
+    sspi_extended_details.sort(key=lambda x: x["Metadata"]["Country"])
+    return render_template(
+        'countries.html',
+        sspi_49_details=sspi_49_details,
+        sspi_extended_details=sspi_extended_details,
+    )
+
+
 @client_bp.route('/methodology')
 def methodology():
     return render_template('methodology.html')
