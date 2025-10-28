@@ -1,7 +1,5 @@
 {% extends 'layout.html' %}
 
-{% set globe_data_url = url_for('client_bp.static', filename='globe_data.geojson') %}
-
 {% block javascript %}
 <script src="//unpkg.com/d3"></script>
 <script src="//unpkg.com/globe.gl"></script>
@@ -12,9 +10,8 @@
     <div id="globeViz"></div>
 </div>
 <script>
-const globeDataURL = "{{ globe_data_url }}"
     window.SSPICharts.push(
-        new SSPIGlobeChart(document.getElementById("globeViz"), globeDataURL)
+        new SSPIGlobeChart(document.getElementById("globeViz"))
     )
 </script>
 {% endblock %}
