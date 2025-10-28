@@ -242,10 +242,17 @@ div:has(> .globegl-hover) {
   position: relative;
   display: flex;
   flex-direction: row-reverse;
-  align-items: flex-start;
+  align-items: stretch;  /* Stretch children to match tallest child */
   color: var(--header-text-color);
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* MOBILE: Hide chart options when they slide off-screen */
+@media (max-width: 999px) {
+  .globe-visualization-container {
+    overflow: hidden;  /* Clip chart options when they slide outside container */
+  }
 }
 
 .globe-and-tab-container {

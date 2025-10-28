@@ -145,10 +145,10 @@ class PanelChart {
             this.closeChartOptionsSidebar()
         })
         this.root.appendChild(this.overlay)
-        const wrapper = document.createElement('div')
-        wrapper.classList.add('chart-options-wrapper')
-        wrapper.appendChild(this.chartOptions)
-        this.root.appendChild(wrapper)
+        this.chartOptionsWrapper = document.createElement('div')
+        this.chartOptionsWrapper.classList.add('chart-options-wrapper')
+        this.chartOptionsWrapper.appendChild(this.chartOptions)
+        this.root.appendChild(this.chartOptionsWrapper)
     }
 
     rigChartOptions() {
@@ -796,6 +796,8 @@ class PanelChart {
     closeChartOptionsSidebar() {
         this.chartOptions.classList.remove('active')
         this.chartOptions.classList.add('inactive')
+        this.chartOptionsWrapper.classList.remove('active')
+        this.chartOptionsWrapper.classList.add('inactive')
         this.overlay.classList.remove('active')
         this.overlay.classList.add('inactive')
     }
@@ -803,6 +805,8 @@ class PanelChart {
     openChartOptionsSidebar() {
         this.chartOptions.classList.add('active')
         this.chartOptions.classList.remove('inactive')
+        this.chartOptionsWrapper.classList.add('active')
+        this.chartOptionsWrapper.classList.remove('inactive')
         this.overlay.classList.remove('inactive')
         this.overlay.classList.add('active')
     }

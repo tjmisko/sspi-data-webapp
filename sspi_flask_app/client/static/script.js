@@ -1160,10 +1160,10 @@ this.overlay=document.createElement('div')
 this.overlay.classList.add('chart-options-overlay')
 this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
 this.root.appendChild(this.overlay)
-const wrapper=document.createElement('div')
-wrapper.classList.add('chart-options-wrapper')
-wrapper.appendChild(this.chartOptions)
-this.root.appendChild(wrapper)}
+this.chartOptionsWrapper=document.createElement('div')
+this.chartOptionsWrapper.classList.add('chart-options-wrapper')
+this.chartOptionsWrapper.appendChild(this.chartOptions)
+this.root.appendChild(this.chartOptionsWrapper)}
 rigChartOptions(){this.showChartOptions.addEventListener('click',()=>{this.openChartOptionsSidebar()})
 this.hideChartOptions=this.chartOptions.querySelector('.hide-chart-options')
 this.hideChartOptions.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
@@ -1384,10 +1384,14 @@ this.updateLegend()
 this.pushPinUpdate()}
 closeChartOptionsSidebar(){this.chartOptions.classList.remove('active')
 this.chartOptions.classList.add('inactive')
+this.chartOptionsWrapper.classList.remove('active')
+this.chartOptionsWrapper.classList.add('inactive')
 this.overlay.classList.remove('active')
 this.overlay.classList.add('inactive')}
 openChartOptionsSidebar(){this.chartOptions.classList.add('active')
 this.chartOptions.classList.remove('inactive')
+this.chartOptionsWrapper.classList.add('active')
+this.chartOptionsWrapper.classList.remove('inactive')
 this.overlay.classList.remove('inactive')
 this.overlay.classList.add('active')}
 toggleChartOptionsSidebar(){if(this.chartOptions.classList.contains('active')){this.closeChartOptionsSidebar()}else{this.openChartOptionsSidebar()}}
@@ -2696,10 +2700,10 @@ this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button cl
 this.overlay.classList.add('chart-options-overlay','inactive')
 this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
 this.root.appendChild(this.overlay)
-const wrapper=document.createElement('div')
-wrapper.classList.add('chart-options-wrapper')
-wrapper.appendChild(this.chartOptions)
-this.root.appendChild(wrapper)
+this.chartOptionsWrapper=document.createElement('div')
+this.chartOptionsWrapper.classList.add('chart-options-wrapper')
+this.chartOptionsWrapper.appendChild(this.chartOptions)
+this.root.appendChild(this.chartOptionsWrapper)
 this.rigChartOptions()}
 rigChartOptions(){this.hideChartOptions=this.chartOptions.querySelector('.hide-chart-options')
 this.hideChartOptions.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
@@ -2752,10 +2756,14 @@ break}
 return result}
 closeChartOptionsSidebar(){this.chartOptions.classList.remove('active')
 this.chartOptions.classList.add('inactive')
+this.chartOptionsWrapper.classList.remove('active')
+this.chartOptionsWrapper.classList.add('inactive')
 this.overlay.classList.remove('active')
 this.overlay.classList.add('inactive')}
 openChartOptionsSidebar(){this.chartOptions.classList.add('active')
 this.chartOptions.classList.remove('inactive')
+this.chartOptionsWrapper.classList.add('active')
+this.chartOptionsWrapper.classList.remove('inactive')
 this.overlay.classList.remove('inactive')
 this.overlay.classList.add('active')}
 rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("globeYear",this.year)
