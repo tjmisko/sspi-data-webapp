@@ -33,6 +33,7 @@ from sspi_flask_app.models.database import (
     sspi_indicator_dynamic_line_data,
     sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
+    sspi_globe_data
 )
 from datetime import datetime
 import hashlib
@@ -1164,3 +1165,8 @@ def item_coverage_data(ItemCode, CountryGroup):
         "years": list(range(2000, 2024)),
         "ccodes": sorted(list(set(d["y"] for d in data))),
     }
+
+
+@dashboard_bp.route("/globe")
+def globe_data():
+    return sspi_globe_data.find({})[0]
