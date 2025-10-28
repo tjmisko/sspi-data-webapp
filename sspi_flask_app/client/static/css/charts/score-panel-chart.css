@@ -62,12 +62,6 @@
   padding: 0;
 }
 
-.remove-button-legend-item {
-  padding: 0;
-  margin-left: 0.2em;
-  z-index: 2;
-}
-
 .icon-button:hover .hide-chart-options-svg {
   stroke: var(--green-accent, #FFFFFF);
 }
@@ -291,28 +285,44 @@
 
 .legend-items {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
+  margin-top: 0.1em;
 }
 
 .legend-item {
   display: flex;
   flex-direction: row;
+  align-self: stretch;
   align-items: center;
-  font-size: 0.75em;
+  justify-content: space-between;
+  font-size: 0.85em;
   font-weight: 500;
-  padding: 0.1em 1em;
+  padding: 0.2em 1em;
   border-radius: 20px;
   border-width: 1.5px;
   border-style: solid;
+  max-width: 220px;
   margin: 0.2em;
 }
 
 .legend-item span {
-  line-height: 2;
+  line-height: 1;
 }
+
+.legend-item button {
+  background-color: transparent;
+}
+
+.remove-button-legend-item {
+  background-color: transparent;
+  padding: 0;
+  margin-left: 0.2em;
+  z-index: 2;
+}
+
 
 .add-country-pin-results-window {
   position: relative;
@@ -470,4 +480,9 @@
   color: var(--green-accent);
   font-size: 0.75em;
   font-style: italic;
+}
+
+.legend-item button {
+  background-color: transparent;
+  border: none;
 }

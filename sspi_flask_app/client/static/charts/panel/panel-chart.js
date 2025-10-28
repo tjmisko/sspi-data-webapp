@@ -96,8 +96,6 @@ class PanelChart {
             <div class="pin-actions-box">
                 <button class="hideunpinned-button">Hide Unpinned</button>
                 <button class="clearpins-button">Clear Pins</button>
-            </div>
-            <div class="pin-actions-box">
                 <button class="add-country-button">Search Country</button>
             </div>
             <div class="country-search-results-window"></div>

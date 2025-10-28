@@ -225,11 +225,13 @@
 
 .pin-actions-box {
   display: flex;
+  flex-direction: column;
+  gap: 0.5em;
   margin: 0.25em 0;
 }
 
 .pin-actions-box button {
-  flex: 1 1 auto;
+  width: 100%;
 }
 
 .pin-actions-box button form input {
