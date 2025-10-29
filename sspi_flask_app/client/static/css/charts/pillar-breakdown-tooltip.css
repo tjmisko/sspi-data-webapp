@@ -1,0 +1,79 @@
+/* Pillar Breakdown Tooltip Styles */
+/* Parallel structure to globegl-hover but with unique classes */
+
+div:has(> .pillar-breakdown-tooltip) {
+  background-color: transparent;
+}
+
+.pillar-breakdown-tooltip {
+  background-color: color-mix(in srgb, var(--box-background-color) 90%, transparent);
+  color: var(--text-color);
+  padding: 0.5em;
+  box-sizing: border-box;
+  border-radius: 0.5em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: var(--body-font-family);
+}
+
+.pillar-breakdown-tooltip h3 {
+  font-family: var(--body-font-family);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
+.pillar-breakdown-country-name {
+  flex: 1 1 auto;
+  word-wrap: break-word;
+}
+
+.pillar-breakdown-year {
+  font-size: 0.85rem;
+  color: var(--green-accent);
+  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.pillar-breakdown-score-container {
+  padding: 0.5em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pillar-breakdown-score-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.pillar-breakdown-score-line.sspi-total {
+  font-weight: bold;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.25em;
+  padding-top: 0.25em;
+}
+
+.pillar-breakdown-item-label {
+  flex: 0 0 auto;
+  font-weight: 500;
+}
+
+.pillar-breakdown-item-score {
+  flex: 0 0 auto;
+  font-weight: 600;
+  text-align: right;
+  margin-left: auto;
+  padding-left: 1em;
+}

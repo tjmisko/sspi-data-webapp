@@ -1,0 +1,61 @@
+/* Category Radar Chart Styles */
+
+.radar-chart-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-sizing: border-box;
+}
+
+.radar-chart-title {
+  font-family: var(--heading-font-family);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.radar-chart-canvas-container {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.radar-chart-legend-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.radar-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.radar-chart-legend-canvas-container {
+  flex: 0 0 150px;
+  min-width: 0;
+}
+
+.radar-chart-legend-item-canvas {
+  display: block;
+}
+
+.radar-chart-legend-item-text {
+  flex: 0 0 auto;
+  font-family: var(--body-font-family);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+/* Year slider is reused from globe styles via .globe-year-slider-container */

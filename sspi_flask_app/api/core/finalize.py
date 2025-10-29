@@ -14,7 +14,8 @@ from sspi_flask_app.models.database import (
     sspi_item_dynamic_line_data,
     sspi_indicator_dynamic_line_data,
     sspi_dynamic_matrix_data,
-    sspi_globe_data
+    sspi_globe_data,
+    sspi_dynamic_radar_data
 )
 from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
@@ -48,6 +49,8 @@ def finalize_iterator(local_path, endpoints):
         finalize_sspi_static_rank_data()
         yield "Finalizing Static Radar Data\n"
         finalize_sspi_static_radar_data()
+        yield "Finalizing Dynamic Radar Data\n"
+        finalize_sspi_dynamic_radar_data()
         yield "Finalizing Static Stack Data\n"
         finalize_static_overall_stack_data()
         yield "Finalizing Dynamic Matrix Data\n"
@@ -100,14 +103,13 @@ def finalize_sspi_static_rank_data():
             for _ in country_codes]
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
-        country_data = sspi_main_data_v3.find({"CountryCode": cou})
+        country_data = sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0})
         sspi_scores = SSPI(item_details, country_data, strict_year=False)
         rank_dict = sspi_scores.to_rank_dict(cou, 2018)
         for item_code, rank_dict in rank_dict.items():
             if item_code in score_group_dictionary:
                 score_group_dictionary[item_code][i].update(rank_dict)
     for item_code in sspi_item_codes:
-        # Ranking table modifies each list[dict] in place
         SSPIRankingTable(score_group_dictionary[item_code])
         score_group_dictionary[item_code] = sorted(
             score_group_dictionary[item_code], key=lambda x: x["Rank"]
@@ -253,6 +255,135 @@ def finalize_sspi_static_radar_data():
     return "Successfully finalized radar data!"
 
 
+@finalize_bp.route("/finalize/dynamic/radar")
+@login_required
+def finalize_sspi_dynamic_radar_data():
+    sspi_dynamic_radar_data.delete_many({})
+    pillar_codes = sspi_metadata.pillar_codes()
+    category_codes = sspi_metadata.category_codes()
+
+    # Pre-compute metadata structure for consistent positioning
+    pillar_details = sspi_metadata.pillar_details()
+    # Sort pillars by ItemOrder to ensure consistent ordering
+    sorted_pillars = sorted(pillar_details, key=lambda p: p.get('ItemOrder', 999))
+
+    # Build complete category list and position map
+    all_categories = []
+    pillar_positions = {}  # Maps pillar_code -> {start_index, category_codes}
+    all_labels_map = {}    # Maps category_code -> category_name
+
+    category_start_index = 0
+    for pillar in sorted_pillars:
+        pillar_code = pillar['ItemCode']
+        cat_codes = pillar.get('Children', [])
+
+        pillar_positions[pillar_code] = {
+            'start_index': category_start_index,
+            'category_codes': cat_codes
+        }
+
+        # Build labels in order
+        for cat_code in cat_codes:
+            all_categories.append(cat_code)
+            # Get category name from metadata
+            try:
+                cat_detail = sspi_metadata.get_item_detail(cat_code)
+                all_labels_map[cat_code] = cat_detail.get('ItemName', cat_code)
+            except:
+                all_labels_map[cat_code] = cat_code
+
+        category_start_index += len(cat_codes)
+
+    total_categories = len(all_categories)
+
+    # Single aggregation to get all pillar and category data
+    pipeline = [
+        {"$match": {
+            "Year": {"$gte": 2000, "$lte": 2023},
+            "ItemCode": {"$in": pillar_codes + category_codes}
+        }},
+        {"$sort": {"CountryCode": 1, "Year": 1, "ItemCode": 1}},
+        {"$group": {
+            "_id": {"CCode": "$CountryCode", "Year": "$Year"},
+            "items": {"$push": {
+                "ICode": "$ItemCode",
+                "IName": "$ItemName",
+                "Score": "$Score",
+                "ItemType": "$ItemType",
+                "Children": "$Children"
+            }}
+        }},
+        {"$project": {"_id": 0, "CCode": "$_id.CCode", "Year": "$_id.Year", "items": 1}}
+    ]
+    aggregated_data = sspi_item_data.aggregate(pipeline)
+    radar_documents = []
+
+    for doc in aggregated_data:
+        country_code, year = doc["CCode"], doc["Year"]
+        item_map = {item["ICode"]: item for item in doc["items"]}
+
+        output_dict = {
+            "CCode": country_code,
+            "Year": year,
+            "title": f"{country_code_to_name(country_code)} ({year})",
+            "labels": all_categories,      # Use pre-built complete list
+            "labelMap": all_labels_map,    # Use pre-built map
+            "datasets": [],
+            "legendItems": []
+        }
+
+        # Process pillars in sorted order
+        for pillar_detail in sorted_pillars:
+            pillar_code = pillar_detail['ItemCode']
+
+            # Check if this pillar exists in the aggregated data
+            pillar_item = next((item for item in doc["items"] if item["ICode"] == pillar_code), None)
+            if not pillar_item:
+                continue  # Skip if pillar not available for this country-year
+
+            # Get position information
+            position_info = pillar_positions[pillar_code]
+            start_index = position_info['start_index']
+            cat_codes = position_info['category_codes']
+
+            # Initialize full-length array with nulls
+            data = [None] * total_categories
+
+            # Fill only this pillar's category positions
+            for i, cat_code in enumerate(cat_codes):
+                if cat_code in item_map:
+                    data[start_index + i] = item_map[cat_code]["Score"]
+                # else: leave as None
+
+            # Add legend item
+            output_dict["legendItems"].append({
+                "Code": pillar_code,
+                "Name": pillar_item["IName"],
+                "Score": pillar_item["Score"]
+            })
+
+            # Add dataset with properly positioned data
+            pillar_color = colormap(pillar_code, alpha="66")
+            output_dict["datasets"].append({
+                "label": pillar_item["IName"],
+                "pillarCode": pillar_code,
+                "data": data,
+                "backgroundColor": pillar_color,
+                "borderColor": pillar_color,
+                "pointBackgroundColor": pillar_color,
+                "pointBorderColor": '#fff',
+                "pointHoverBackgroundColor": '#fff',
+                "pointHoverBorderColor": pillar_color,
+                "fill": True
+            })
+
+        radar_documents.append(output_dict)
+
+    if radar_documents:
+        sspi_dynamic_radar_data.insert_many(radar_documents)
+    return f"Successfully finalized dynamic radar data for {len(radar_documents)} country-year combinations!"
+
+
 @finalize_bp.route("/finalize/dynamic/line")
 @login_required
 def finalize_dynamic_line_data():
@@ -272,121 +403,314 @@ def finalize_dynamic_line_indicator_datasets():
     max_year = datetime.now().year
     label_list = list(range(min_year, max_year + 1))
     indicator_codes = sspi_metadata.indicator_codes()
-    indicator_data = sspi_indicator_data.find({
+
+    # Build metadata lookups ONCE upfront to avoid repeated function calls
+    yield "Building Metadata Lookups\n"
+    indicator_details = {
+        ind["IndicatorCode"]: ind
+        for ind in sspi_metadata.indicator_details()
+    }
+    goalposts_lookup = {
+        code: sspi_metadata.get_goalposts(code)
+        for code in indicator_codes
+    }
+
+    # Get all unique countries from the data
+    all_countries = set()
+    for ind_data in sspi_indicator_data.find({
         "IndicatorCode": {"$in": indicator_codes},
         "Year": {"$gte": min_year, "$lte": max_year}
-    })
-    data_map = {}
-    for obs in indicator_data:
-        indicator_code = obs["IndicatorCode"]
-        country_code = obs["CountryCode"]
-        data_map.setdefault(indicator_code, {})
-        data_map[indicator_code].setdefault(country_code, [])
-        data_map[indicator_code][country_code].append(obs)
-    count = 1
-    for indicator_code in indicator_codes:
-        yield f"{indicator_code} [ {count} of {len(indicator_codes)} ]\n"
-        detail = sspi_metadata.get_indicator_detail(indicator_code)
-        lg, ug = sspi_metadata.get_goalposts(indicator_code)
+    }, {"CountryCode": 1}):
+        all_countries.add(ind_data["CountryCode"])
+
+    country_groups_lookup = {
+        country: sspi_metadata.get_country_groups(country)
+        for country in all_countries
+    }
+    country_name_lookup = {
+        country: country_code_to_name(country)
+        for country in all_countries
+    }
+    # MongoDB Aggregation Pipeline
+    # Groups ~150k documents into ~8,800 groups (IndicatorCode + CountryCode combinations)
+    pipeline = [
+        # Stage 1: Filter to relevant data
+        {
+            "$match": {
+                "IndicatorCode": {"$in": indicator_codes},
+                "Year": {"$gte": min_year, "$lte": max_year}
+            }
+        },
+
+        # Stage 2: Sort by year in MongoDB (faster than Python)
+        {
+            "$sort": {"Year": 1}
+        },
+
+        # Stage 3: Group by IndicatorCode + CountryCode
+        # This is the key optimization: reduces ~150k docs to ~8,800 groups
+        {
+            "$group": {
+                "_id": {
+                    "IndicatorCode": "$IndicatorCode",
+                    "CountryCode": "$CountryCode"
+                },
+                "observations": {
+                    "$push": {
+                        "Year": "$Year",
+                        "Score": "$Score",
+                        "Unit": "$Unit",
+                        "Datasets": "$Datasets"
+                    }
+                },
+                # Store first observation's Datasets for initializing the dataset map
+                "firstDatasets": {"$first": "$Datasets"}
+            }
+        },
+
+        # Stage 4: Reshape output for easier processing
+        {
+            "$project": {
+                "_id": 0,
+                "IndicatorCode": "$_id.IndicatorCode",
+                "CountryCode": "$_id.CountryCode",
+                "observations": 1,
+                "firstDatasets": 1
+            }
+        },
+
+        # Stage 5: Sort for consistent output
+        {
+            "$sort": {"IndicatorCode": 1, "CountryCode": 1}
+        }
+    ]
+    yield "Executing Aggregation Pipeline\n"
+    grouped_data_cursor = sspi_indicator_data.aggregate(pipeline)
+    yield "Processing Indicator Line Data\n"
+    documents = []
+    BATCH_SIZE = 500
+    count = 0
+    total_documents_inserted = 0
+
+    # Process pre-grouped, pre-sorted data from MongoDB
+    for group in grouped_data_cursor:
+        indicator_code = group["IndicatorCode"]
+        country_code = group["CountryCode"]
+        observations = group["observations"]  # Already sorted by Year
+
+        count += 1
+
+        # O(1) metadata lookups using pre-built dictionaries
+        detail = indicator_details.get(indicator_code, {})
+        lg, ug = goalposts_lookup.get(indicator_code, (None, None))
         lg = 0 if not lg else lg  # aggregates may not have goalposts
         ug = 1 if not ug else ug  # aggregates may not have goalposts
-        if not data_map.get(indicator_code, None):
-            count += 1
-            continue
-        for country_code, obs_list in data_map[indicator_code].items():
-            obs_list = sorted(obs_list, key=lambda x: x["Year"])
-            group_list = sspi_metadata.get_country_groups(country_code)
-            years = [None] * len(label_list)
-            scores = [None] * len(label_list)
-            data = [None] * len(label_list)
-            sspi_dataset_map = {}
-            for dataset in obs_list[0].get("Datasets", []):
-                sspi_dataset_map[dataset["DatasetCode"]] = {
-                    "data": [None] * len(label_list)
-                }
-            for doc in obs_list:
-                try:
-                    year_index = label_list.index(doc["Year"])
-                except ValueError:
-                    continue
-                years[year_index] = doc["Year"]
-                data[year_index] = doc["Score"]
-                scores[year_index] = doc["Score"]
-                sspi_datasets = doc["Datasets"]
-                for dataset in sspi_datasets:
-                    if dataset["DatasetCode"] in sspi_dataset_map:
-                        sspi_dataset_map[dataset["DatasetCode"]]["data"][year_index] = dataset["Value"]
-            dataset = {
-                "CCode": country_code,
-                "CName": country_code_to_name(country_code),
-                "ICode": indicator_code,
-                "IName": detail["Indicator"],
-                "CGroup": group_list,
-                "pinned": False,
-                "label": f"{country_code} - {country_code_to_name(country_code)}",
-                "years": years,
-                "Datasets": sspi_dataset_map,
-                "minYear": min_year,
-                "maxYear": max_year,
-                "data": data,
-                "score": scores,
-                "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
-                "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
+        group_list = country_groups_lookup.get(country_code, [])
+        country_name = country_name_lookup.get(country_code, country_code)
+
+        # Build sparse arrays with None values
+        years = [None] * len(label_list)
+        scores = [None] * len(label_list)
+        data = [None] * len(label_list)
+
+        # Initialize dataset map from first observation
+        sspi_dataset_map = {}
+        for dataset in group.get("firstDatasets", []):
+            sspi_dataset_map[dataset["DatasetCode"]] = {
+                "data": [None] * len(label_list)
             }
-            sspi_indicator_dynamic_line_data.insert_one(dataset)
-        count += 1
+
+        # Populate arrays (observations already sorted by Year)
+        for obs in observations:
+            try:
+                year_index = label_list.index(obs["Year"])
+            except ValueError:
+                continue
+
+            years[year_index] = obs["Year"]
+            data[year_index] = obs["Score"]
+            scores[year_index] = obs["Score"]
+
+            # Populate dataset values
+            for dataset in obs.get("Datasets", []):
+                if dataset["DatasetCode"] in sspi_dataset_map:
+                    sspi_dataset_map[dataset["DatasetCode"]]["data"][year_index] = dataset["Value"]
+
+        # Build document
+        dataset = {
+            "CCode": country_code,
+            "CName": country_name,
+            "ICode": indicator_code,
+            "IName": detail.get("Indicator", ""),
+            "CGroup": group_list,
+            "pinned": False,
+            "label": f"{country_code} - {country_name}",
+            "years": years,
+            "Datasets": sspi_dataset_map,
+            "minYear": min_year,
+            "maxYear": max_year,
+            "data": data,
+            "score": scores,
+            "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
+            "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
+        }
+        documents.append(dataset)
+
+        # Batch insert for better performance
+        if len(documents) >= BATCH_SIZE:
+            sspi_indicator_dynamic_line_data.insert_many(documents)
+            total_documents_inserted += len(documents)
+            documents = []
+
+    # Insert any remaining documents
+    if documents:
+        sspi_indicator_dynamic_line_data.insert_many(documents)
+        total_documents_inserted += len(documents)
+        yield f"Inserted final {len(documents)} documents\n"
+
+    yield f"Complete - Processed {count} indicator-country combinations, inserted {total_documents_inserted} documents\n"
 
 
 def finalize_dynamic_line_score_datasets():
     min_year = 2000
     max_year = datetime.now().year
-    scores = sspi_item_data.find({})
-    score_map = {}
-    for observation in scores:
-        country_code = observation["CountryCode"]
-        item_code = observation["ItemCode"]
-        score_map.setdefault(item_code, {})
-        score_map[item_code].setdefault(country_code, [])
-        score_map[item_code][country_code].append(observation)
-    count = 1
-    for item_code in score_map.keys():
-        yield f"{item_code} [ {count} of {len(score_map.keys())} ]\n"
-        detail = sspi_metadata.get_item_detail(item_code)
-        # find the most specific name in the detail
+
+    # Build metadata lookups ONCE upfront to avoid repeated function calls
+    yield "Building Metadata Lookups\n"
+    item_details = {
+        item["ItemCode"]: item
+        for item in sspi_metadata.item_details()
+        if item.get("ItemCode")
+    }
+
+    # Build country groups lookup for all countries we might encounter
+    all_countries = set()
+    for item_data in sspi_item_data.find({}, {"CountryCode": 1}):
+        all_countries.add(item_data["CountryCode"])
+
+    country_groups_lookup = {
+        country: sspi_metadata.get_country_groups(country)
+        for country in all_countries
+    }
+    country_name_lookup = {
+        country: country_code_to_name(country)
+        for country in all_countries
+    }
+
+    yield "Building Aggregation Pipeline\n"
+
+    # MongoDB Aggregation Pipeline
+    # Groups ~87k documents into ~15k groups (ItemCode + CountryCode combinations)
+    pipeline = [
+        # Stage 1: Sort by year in MongoDB (faster than Python)
+        {
+            "$sort": {"Year": 1}
+        },
+
+        # Stage 2: Group by ItemCode + CountryCode
+        # This is the key optimization: reduces ~87k docs to ~15k groups
+        {
+            "$group": {
+                "_id": {
+                    "ItemCode": "$ItemCode",
+                    "CountryCode": "$CountryCode"
+                },
+                "observations": {
+                    "$push": {
+                        "Year": "$Year",
+                        "Score": "$Score"
+                    }
+                }
+            }
+        },
+
+        # Stage 3: Reshape output for easier processing
+        {
+            "$project": {
+                "_id": 0,
+                "ItemCode": "$_id.ItemCode",
+                "CountryCode": "$_id.CountryCode",
+                "observations": 1
+            }
+        },
+
+        # Stage 4: Sort for consistent output
+        {
+            "$sort": {"ItemCode": 1, "CountryCode": 1}
+        }
+    ]
+
+    yield "Executing Aggregation Pipeline\n"
+    grouped_data_cursor = sspi_item_data.aggregate(pipeline)
+
+    yield "Processing Score Line Data\n"
+    documents = []
+    BATCH_SIZE = 500
+    count = 0
+    total_documents_inserted = 0
+
+    # Process pre-grouped, pre-sorted data from MongoDB
+    for group in grouped_data_cursor:
+        item_code = group["ItemCode"]
+        country_code = group["CountryCode"]
+        observations = group["observations"]  # Already sorted by Year
+
+        count += 1
+        if count % 500 == 0:
+            yield f"Processing {item_code} - {country_code} ({count} groups)\n"
+
+        # O(1) metadata lookups using pre-built dictionaries
+        detail = item_details.get(item_code, {})
+        group_list = country_groups_lookup.get(country_code, [])
+        country_name = country_name_lookup.get(country_code, country_code)
+
+        # Find the most specific name in the detail
         name_spec = ["IntermediateName", "IndicatorName",
                      "CategoryName", "PillarName", "Name"]
         item_name = ""
         for name in name_spec:
-            if name in detail.keys():
-                item_name = name
+            if name in detail:
+                item_name = detail[name]
                 break
-        for country_code, obs_list in score_map[item_code].items():
-            group_list = sspi_metadata.get_country_groups(country_code)
-            obs_list = sorted(obs_list, key=lambda x: x["Year"])
-            dataset = {
-                "CCode": country_code,
-                "CName": country_code_to_name(country_code),
-                "ICode": item_code,
-                "IName": item_name,
-                "CGroup": group_list,
-                "Detail": detail,
-                "parsing": {
-                    "xAxisKey": "years",
-                    "yAxisKey": "scores"
-                },
-                "pinned": False,
-                "hidden": "SSPI67" not in group_list,
-                "label": f"{country_code} - {country_code_to_name(country_code)}",
-                "years": [o["Year"] for o in obs_list],
-                "minYear": min_year,
-                "maxYear": max_year,
-                "data": [o["Score"] for o in obs_list],
-                "score": [o["Score"] for o in obs_list],
-                "yAxisMinValue": 0,
-                "yAxisMaxValue": 1
-            }
-            sspi_item_dynamic_line_data.insert_one(dataset)
-        count += 1
+
+        # Build document
+        dataset = {
+            "CCode": country_code,
+            "CName": country_name,
+            "ICode": item_code,
+            "IName": item_name,
+            "CGroup": group_list,
+            "Detail": detail,
+            "parsing": {
+                "xAxisKey": "years",
+                "yAxisKey": "scores"
+            },
+            "pinned": False,
+            "hidden": "SSPI67" not in group_list,
+            "label": f"{country_code} - {country_name}",
+            "years": [o["Year"] for o in observations],
+            "minYear": min_year,
+            "maxYear": max_year,
+            "data": [o["Score"] for o in observations],
+            "score": [o["Score"] for o in observations],
+            "yAxisMinValue": 0,
+            "yAxisMaxValue": 1
+        }
+        documents.append(dataset)
+
+        # Batch insert for better performance
+        if len(documents) >= BATCH_SIZE:
+            sspi_item_dynamic_line_data.insert_many(documents)
+            total_documents_inserted += len(documents)
+            documents = []
+
+    # Insert any remaining documents
+    if documents:
+        sspi_item_dynamic_line_data.insert_many(documents)
+        total_documents_inserted += len(documents)
+        yield f"Inserted final {len(documents)} documents\n"
+
+    yield f"Complete - Processed {count} item-country combinations, inserted {total_documents_inserted} documents\n"
 
 
 @finalize_bp.route("/finalize/dynamic/matrix")
@@ -483,49 +807,143 @@ def finalize_sspi_dynamic_score():
 
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
     sspi_item_data.delete_many({})
+
     # Filter to only complete indicators to avoid scoring incomplete categories
     if country_codes is None:
         country_codes = sspi_metadata.country_group("SSPI67")
     coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
     complete_indicators = coverage.complete()
-    mongo_query = {
-        "CountryCode": {"$in": country_codes},
-        "IndicatorCode": {"$in": complete_indicators},
-        "Year": {"$gte": 2000, "$lte": 2023}
-    }
-    details = sspi_metadata.item_details(indicator_filter=complete_indicators)
-    clean_data = sspi_indicator_data.find(mongo_query)
-    imputed_data = sspi_imputed_data.find(mongo_query)
-    yield "Building Data Map\n"
-    data_map = {}
-    # Combine the two lists since they're already converted by MongoWrapper
-    combined_data = clean_data + imputed_data
-    for observation in combined_data:
-        country_code = observation["CountryCode"]
-        data_map.setdefault(country_code, {})
-        data_map[country_code].setdefault(
-            observation["Year"], {"Data": [], "SSPI": None})
-        data_map[country_code][observation["Year"]]["Data"].append(observation)
-    yield "Scoring Data\n"
+
+    # Get metadata for scoring - this properly filters to complete indicators
+    # and includes the full hierarchy (pillars, categories, indicators, root)
+    details_for_scoring = sspi_metadata.item_details(indicator_filter=complete_indicators)
+
+    # Build item detail lookup from ALL item details for enrichment after scoring
+    # This ensures we can enrich computed items (pillars, categories) with metadata
+    all_details = sspi_metadata.item_details()
+    item_detail_lookup = {detail.get("ItemCode"): detail for detail in all_details if detail.get("ItemCode")}
+
+    yield "Building Aggregation Pipeline\n"
+
+    # Optimized MongoDB aggregation pipeline:
+    # 1. Unions both collections (indicator_data + imputed_data)
+    # 2. Filters to only needed data
+    # 3. Groups by CountryCode + Year in database (reduces 195k docs to ~1600 groups)
+    # 4. Returns pre-grouped data ready for SSPI scoring
+    pipeline = [
+        # Stage 1: Match documents from sspi_indicator_data
+        {
+            "$match": {
+                "CountryCode": {"$in": country_codes},
+                "IndicatorCode": {"$in": complete_indicators},
+                "Year": {"$gte": 2000, "$lte": 2023}
+            }
+        },
+        # Stage 2: Union with sspi_imputed_data (combines both collections)
+        {
+            "$unionWith": {
+                "coll": "sspi_imputed_data",
+                "pipeline": [
+                    {
+                        "$match": {
+                            "CountryCode": {"$in": country_codes},
+                            "IndicatorCode": {"$in": complete_indicators},
+                            "Year": {"$gte": 2000, "$lte": 2023}
+                        }
+                    }
+                ]
+            }
+        },
+        # Stage 3: Group by CountryCode and Year, collecting all indicator data
+        # This is the key optimization: reduces ~195k docs to ~1600 groups in MongoDB
+        {
+            "$group": {
+                "_id": {
+                    "CountryCode": "$CountryCode",
+                    "Year": "$Year"
+                },
+                "Data": {
+                    "$push": {
+                        "CountryCode": "$CountryCode",
+                        "IndicatorCode": "$IndicatorCode",
+                        "Score": "$Score",
+                        "Year": "$Year",
+                        "Unit": "$Unit",
+                        "Datasets": "$Datasets"
+                    }
+                }
+            }
+        },
+        # Stage 4: Reshape output for easier processing
+        {
+            "$project": {
+                "_id": 0,
+                "CountryCode": "$_id.CountryCode",
+                "Year": "$_id.Year",
+                "Data": 1
+            }
+        },
+        # Stage 5: Sort for consistent processing order
+        {
+            "$sort": {"CountryCode": 1, "Year": 1}
+        }
+    ]
+
+    yield "Executing Aggregation Pipeline\n"
+    # Execute aggregation - returns cursor of pre-grouped country-year data
+    grouped_data_cursor = sspi_indicator_data.aggregate(pipeline)
+
+    yield "Scoring Data with Batch Inserts\n"
+
+    # Batch insert configuration for better performance
+    BATCH_SIZE = 500  # Insert every 500 documents to balance memory and DB performance
     documents = []
-    for country_code, year_data in data_map.items():
-        yield f"Scoring {country_code}\n"
-        for year, data in year_data.items():
-            data["SSPI"] = SSPI(details, data["Data"])
-            scores = data["SSPI"].to_score_documents(country_code)
-            for doc in scores:
-                detail = sspi_metadata.get_item_detail(doc["ItemCode"])
+    count = 0
+    total_documents_inserted = 0
+
+    # Process cursor without loading everything into memory
+    for group in grouped_data_cursor:
+        country_code = group["CountryCode"]
+        year = group["Year"]
+        indicator_data = group["Data"]
+
+        count += 1
+        if count % 25 == 0:
+            yield f"Scoring {country_code} ({year}) - Group {count}\n"
+
+        # Create SSPI object and compute scores for this country-year
+        sspi = SSPI(details_for_scoring, indicator_data)
+        scores = sspi.to_score_documents(country_code)
+
+        # Enrich score documents with metadata using pre-built lookup
+        for doc in scores:
+            item_code = doc["ItemCode"]
+            if item_code in item_detail_lookup:
+                detail = item_detail_lookup[item_code]
                 doc["Children"] = detail.get("Children", [])
+
                 # Add ItemName from metadata - use most specific name available
                 name_priority = ["Indicator", "Category", "Pillar", "Name", "ItemName"]
-                item_name = ""
                 for name_key in name_priority:
                     if name_key in detail and detail[name_key]:
-                        item_name = detail[name_key]
+                        doc["ItemName"] = detail[name_key]
                         break
-                doc["ItemName"] = item_name
-                documents.append(doc)
-    sspi_item_data.insert_many(documents)
+
+            documents.append(doc)
+
+        # Batch insert when we hit the batch size threshold
+        if len(documents) >= BATCH_SIZE:
+            sspi_item_data.insert_many(documents)
+            total_documents_inserted += len(documents)
+            documents = []  # Clear batch
+
+    # Insert any remaining documents
+    if documents:
+        sspi_item_data.insert_many(documents)
+        total_documents_inserted += len(documents)
+        yield f"Inserted final {len(documents)} documents\n"
+
+    yield f"Scoring Complete - Total: {total_documents_inserted} documents inserted\n"
 
 
 @finalize_bp.route("/finalize/globe")

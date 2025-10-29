@@ -4,23 +4,50 @@
 <title> SSPI Data for {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }}) </title>
 {% endblock title %}
 
+
 {% block content %}
 {% if error %}
     <div class="alert alert-danger" role="alert">
         <strong>Error:</strong> No Country {{ CountryCode }} found!
     </div>
 {% else %}
-    <section class="overview-section">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="country-overview-box">
+                <div class="country-header">
+                    <h2 class="country-title">{{ cdetail.Flag }} {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }}) </h2>
+                </div>
+                <div class="country-pillar-chart-container" id="dynamic-data-section"></div>
+            </div>
+            <div class="country-overview-box">
+                <div id="category-radar-section"></div>
+            </div>
+        </div>
     </section>
-    <section class="chart-section" id="dynamic-data-section"></section>
     <script>
+        const countryDetail = {
+            "Flag": "{{ cdetail.Flag }}",
+            "Country": "{{ cdetail.Country }}",
+            "CCode": "{{ cdetail.CountryCode }}"
+        };
         window.addEventListener("load", (event) => {
             window.SSPICharts.push(
-                new CountryScoreChart(document.getElementById("dynamic-data-section"), "{{ CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors })
+                new CountryPillarPanelChart(document.getElementById("dynamic-data-section"), "{{ cdetail.CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors }, countryDetail)
             );
+
+            // Get theme colors for radar chart
+            const root = document.documentElement;
+            const theme = window.observableStorage.getItem("theme");
+            const textColor = theme === "light" ? "#444" : "#bbb";
+            const gridColor = theme === "light" ? "#cccccc33" : "#cccccc33";
+
+            window.SSPICharts.push(
+                new CategoryRadarDynamic("{{ cdetail.CountryCode | upper}}", document.getElementById("category-radar-section"), textColor, gridColor)
+            );
+
             const x = window.observableStorage.getItem('windowX');
             const y = window.observableStorage.getItem('windowY');
-            
+
             if (x !== null && y !== null) {
               window.moveTo(parseInt(x), parseInt(y));
             }
@@ -32,4 +59,3 @@
     </script>
 {% endif %}
 {% endblock content %}
-

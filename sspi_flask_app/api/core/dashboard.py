@@ -33,7 +33,8 @@ from sspi_flask_app.models.database import (
     sspi_indicator_dynamic_line_data,
     sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
-    sspi_globe_data
+    sspi_globe_data,
+    sspi_dynamic_radar_data
 )
 from datetime import datetime
 import hashlib
@@ -307,6 +308,18 @@ def get_dynamic_score_line_data(item_code):
 @dashboard_bp.route("/static/radar/<CountryCode>")
 def get_static_radar_data(CountryCode):
     radar_data = sspi_static_radar_data.find_one({"CCode": CountryCode})
+    return jsonify(radar_data)
+
+
+@dashboard_bp.route("/dynamic/radar/<CountryCode>/<int:Year>")
+def get_dynamic_radar_data(CountryCode, Year):
+    radar_data = sspi_dynamic_radar_data.find_one(
+        {"CCode": CountryCode, "Year": Year}, {"_id": 0}
+    )
+    if not radar_data:
+        return jsonify({
+            "error": f"No radar data found for country {CountryCode} in year {Year}"
+        }), 404
     return jsonify(radar_data)
 
 

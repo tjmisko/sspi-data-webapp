@@ -113,6 +113,9 @@ sspi_dynamic_matrix_data = SSPIProductionData(
 sspi_static_stack_data = SSPIProductionData(
     sspidb.sspi_static_stack_data
 )
+sspi_dynamic_radar_data = SSPIProductionData(
+    sspidb.sspi_dynamic_radar_data
+)
 
 # User Authentication Data
 sspi_user_data = SSPIUserData(

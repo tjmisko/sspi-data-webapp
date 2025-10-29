@@ -1,16 +1,18 @@
-class CategoryRadarStatic {
+class CategoryRadarDynamic {
     constructor(countryCode, parentElement, textColor="#bbb", gridColor="#cccccc33") {
         this.parentElement = parentElement
         this.countryCode = countryCode
         this.textColor = textColor
         this.gridColor = gridColor
+        this.year = window.observableStorage.getItem("radarYear") || 2023;
+        this.minYear = 2000
+        this.maxYear = 2023
 
-        this.initRoot()
-        this.legend = this.initLegend()
         this.initRoot()
         this.initTitle()
         this.initLegend()
         this.initChartJSCanvas()
+        this.buildYearSlider()
 
         this.fetch().then(data => {
             this.update(data)
@@ -110,8 +112,90 @@ class CategoryRadarStatic {
         })
     }
 
+    buildYearSlider() {
+        this.yearSliderContainer = document.createElement("div");
+        this.yearSliderContainer.classList.add('globe-year-slider-container')
+        this.yearSliderContainer.innerHTML = `
+<div class="year-slider-controls">
+    <label class="year-slider-label" for="radar-year-slider">
+        <span class="year-value-display" contenteditable="true" spellcheck="false">${this.year}</span>
+    </label>
+    <div class="year-slider-wrapper">
+        <div class="year-slider-track-container">
+            <div class="year-slider-ticks"></div>
+            <input
+                type="range"
+                class="year-slider-input"
+                id="radar-year-slider"
+                min="${this.minYear}"
+                max="${this.maxYear}"
+                value="${this.year}"
+                step="1"
+            />
+        </div>
+        <div class="year-slider-bounds">
+            <span class="year-slider-min">${this.minYear}</span>
+            <span class="year-slider-max">${this.maxYear}</span>
+        </div>
+    </div>
+</div>
+        `;
+        this.root.appendChild(this.yearSliderContainer)
+        this.rigYearSlider()
+    }
+
+    rigYearSlider() {
+        this.yearSliderInput = this.yearSliderContainer.querySelector('.year-slider-input')
+        this.yearValueDisplay = this.yearSliderContainer.querySelector('.year-value-display')
+
+        this.yearSliderInput.addEventListener('input', (e) => {
+            this.year = parseInt(e.target.value)
+            this.yearValueDisplay.textContent = this.year
+            window.observableStorage.setItem("radarYear", this.year)
+            this.fetch().then(data => {
+                this.update(data)
+            })
+        })
+
+        // Handle contenteditable year display
+        this.yearValueDisplay.addEventListener('keydown', (e) => {
+            // Only allow numbers, backspace, delete, arrow keys, enter
+            if (e.key === 'Enter') {
+                e.preventDefault()
+                this.yearValueDisplay.blur()
+            } else if (!/^\d$/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
+                e.preventDefault()
+            }
+        })
+
+        this.yearValueDisplay.addEventListener('blur', () => {
+            const inputYear = parseInt(this.yearValueDisplay.textContent.trim())
+
+            if (isNaN(inputYear) || inputYear < this.minYear || inputYear > this.maxYear) {
+                // Invalid year, revert to current year
+                this.yearValueDisplay.textContent = this.year
+                this.yearValueDisplay.classList.add('year-input-error')
+                setTimeout(() => {
+                    this.yearValueDisplay.classList.remove('year-input-error')
+                }, 500)
+            } else if (inputYear !== this.year) {
+                // Valid year and different from current, update
+                this.year = inputYear
+                this.yearSliderInput.value = this.year
+                this.yearValueDisplay.textContent = this.year
+                window.observableStorage.setItem("radarYear", this.year)
+                this.fetch().then(data => {
+                    this.update(data)
+                })
+            } else {
+                // Same year, just ensure formatting is correct
+                this.yearValueDisplay.textContent = this.year
+            }
+        })
+    }
+
     async fetch() {
-        const response = await fetch(`/api/v1/static/radar/${this.countryCode}`)
+        const response = await fetch(`/api/v1/dynamic/radar/${this.countryCode}/${this.year}`)
         return response.json();
     }
 
@@ -159,6 +243,7 @@ class CategoryRadarStatic {
     }
 
     updateLegend(data) {
+        this.legend.innerHTML = '' // Clear existing legend items
         this.legendItems = data.legendItems
         const pillarColorsAlpha = data.datasets.map(d => d.backgroundColor)
         const pillarColorsSolid = pillarColorsAlpha.map(c => c.slice(0, 7))

@@ -471,10 +471,9 @@ class SSPIGlobeChart {
 
     updatePolygonLabel() {
         this.globe.polygonLabel(({ properties: d }) => this.getPolygonLabel(d))
-
         // If currently hovering, manually update the tooltip DOM
         if (this.hoveredCountry) {
-            // Find the Globe.gl tooltip element (not our sidebar)
+            // Find the Globe.gl tooltip element (not the sidebar)
             // Globe.gl creates tooltips as siblings of the scene container
             const tooltipElements = this.globeSceneContainer.parentElement.querySelectorAll('.globegl-hover');
             tooltipElements.forEach(tooltip => {
