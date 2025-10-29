@@ -311,16 +311,86 @@ def get_static_radar_data(CountryCode):
     return jsonify(radar_data)
 
 
-@dashboard_bp.route("/dynamic/radar/<CountryCode>/<int:Year>")
-def get_dynamic_radar_data(CountryCode, Year):
-    radar_data = sspi_dynamic_radar_data.find_one(
-        {"CCode": CountryCode, "Year": Year}, {"_id": 0}
-    )
-    if not radar_data:
+@dashboard_bp.route("/dynamic/radar/<CountryCode>")
+def get_dynamic_radar_data(CountryCode):
+    """
+    Get all years of radar data for a country in a single request.
+    Uses MongoDB aggregation pipeline for optimal performance.
+
+    Returns:
+        {
+            "CCode": "USA",
+            "minYear": 2000,
+            "maxYear": 2023,
+            "metadata": {
+                "labels": [...],      # Category codes (same for all years)
+                "labelMap": {...}     # Category names (same for all years)
+            },
+            "years": {
+                "2000": {
+                    "title": "United States (2000)",
+                    "datasets": [...],
+                    "legendItems": [...],
+                    "ranks": [...]
+                },
+                "2001": {...},
+                ...
+            }
+        }
+    """
+    # MongoDB aggregation pipeline for efficient data processing
+    pipeline = [
+        # Match documents for this country
+        {"$match": {"CCode": CountryCode}},
+        # Sort by year
+        {"$sort": {"Year": 1}},
+        # Group all documents together
+        {"$group": {
+            "_id": "$CCode",
+            "minYear": {"$min": "$Year"},
+            "maxYear": {"$max": "$Year"},
+            "firstDoc": {"$first": "$$ROOT"},
+            "allDocs": {"$push": "$$ROOT"}
+        }},
+        # Project to final shape
+        {"$project": {
+            "_id": 0,
+            "CCode": "$_id",
+            "minYear": 1,
+            "maxYear": 1,
+            "metadata": {
+                "labels": "$firstDoc.labels",
+                "labelMap": "$firstDoc.labelMap"
+            },
+            "years": {
+                "$arrayToObject": {
+                    "$map": {
+                        "input": "$allDocs",
+                        "as": "doc",
+                        "in": {
+                            "k": {"$toString": "$$doc.Year"},
+                            "v": {
+                                "title": "$$doc.title",
+                                "datasets": "$$doc.datasets",
+                                "legendItems": "$$doc.legendItems",
+                                "ranks": {"$ifNull": ["$$doc.ranks", []]}
+                            }
+                        }
+                    }
+                }
+            }
+        }}
+    ]
+
+    # Execute aggregation pipeline
+    result = list(sspi_dynamic_radar_data.aggregate(pipeline))
+
+    if not result:
         return jsonify({
-            "error": f"No radar data found for country {CountryCode} in year {Year}"
+            "error": f"No radar data found for country {CountryCode}"
         }), 404
-    return jsonify(radar_data)
+
+    return jsonify(result[0])
 
 
 @dashboard_bp.route("/dynamic/matrix/<country_group>")

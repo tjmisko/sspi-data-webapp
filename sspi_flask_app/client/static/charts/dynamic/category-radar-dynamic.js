@@ -1,12 +1,15 @@
 class CategoryRadarDynamic {
-    constructor(countryCode, parentElement, textColor="#bbb", gridColor="#cccccc33") {
+    constructor(countryCode, parentElement) {
         this.parentElement = parentElement
         this.countryCode = countryCode
-        this.textColor = textColor
-        this.gridColor = gridColor
         this.year = window.observableStorage.getItem("radarYear") || 2023;
         this.minYear = 2000
         this.maxYear = 2023
+        this.playing = window.observableStorage.getItem("radarPlaying") || false
+        this.playInterval = null
+        this.allYearsData = null  // Cache for all years data
+
+        this.setTheme(window.observableStorage.getItem("theme"))
 
         this.initRoot()
         this.initTitle()
@@ -15,8 +18,46 @@ class CategoryRadarDynamic {
         this.buildYearSlider()
 
         this.fetch().then(data => {
-            this.update(data)
+            this.allYearsData = data
+            // Update slider range dynamically
+            this.minYear = data.minYear
+            this.maxYear = data.maxYear
+            this.yearSliderInput.min = this.minYear
+            this.yearSliderInput.max = this.maxYear
+            this.yearSliderContainer.querySelector('.year-slider-min').textContent = this.minYear
+            this.yearSliderContainer.querySelector('.year-slider-max').textContent = this.maxYear
+            // Initial render
+            this.updateYear(this.year)
+        }).catch(error => {
+            console.error("Failed to load radar data:", error)
+            this.showErrorState(error)
         })
+    }
+
+    setTheme(theme) {
+        if (theme !== "light") {
+            this.theme = "dark"
+            this.textColor = "#bbb"
+            this.gridColor = "#cccccc33"
+        } else {
+            this.theme = "light"
+            this.textColor = "#444"
+            this.gridColor = "#bbbbbb"
+        }
+        if (this.chart) {
+            this.chart.options.scales.r.pointLabels.color = this.textColor
+            this.chart.options.scales.r.angleLines.color = this.gridColor
+            this.chart.options.scales.r.grid.color = this.gridColor
+            this.chart.options.scales.r.ticks.color = this.textColor
+            this.chart.update()
+            // Re-render legend with new theme colors
+            if (this.legendItems) {
+                this.updateLegend({
+                    legendItems: this.legendItems,
+                    datasets: this.chart.data.datasets
+                })
+            }
+        }
     }
 
     initRoot() {
@@ -138,6 +179,10 @@ class CategoryRadarDynamic {
             <span class="year-slider-max">${this.maxYear}</span>
         </div>
     </div>
+    <button class="year-play-pause-button" aria-label="Play timeline">
+        <span class="play-icon">▶</span>
+        <span class="pause-icon" style="display:none;">⏸</span>
+    </button>
 </div>
         `;
         this.root.appendChild(this.yearSliderContainer)
@@ -147,14 +192,18 @@ class CategoryRadarDynamic {
     rigYearSlider() {
         this.yearSliderInput = this.yearSliderContainer.querySelector('.year-slider-input')
         this.yearValueDisplay = this.yearSliderContainer.querySelector('.year-value-display')
+        this.playPauseButton = this.yearSliderContainer.querySelector('.year-play-pause-button')
+        this.playIcon = this.yearSliderContainer.querySelector('.play-icon')
+        this.pauseIcon = this.yearSliderContainer.querySelector('.pause-icon')
 
         this.yearSliderInput.addEventListener('input', (e) => {
+            if (this.playing) {
+                this.stopPlay()
+            }
             this.year = parseInt(e.target.value)
             this.yearValueDisplay.textContent = this.year
             window.observableStorage.setItem("radarYear", this.year)
-            this.fetch().then(data => {
-                this.update(data)
-            })
+            this.updateYear(this.year)
         })
 
         // Handle contenteditable year display
@@ -180,6 +229,9 @@ class CategoryRadarDynamic {
                 }, 500)
             } else if (inputYear !== this.year) {
                 // Valid year and different from current, update
+                if (this.playing) {
+                    this.stopPlay()
+                }
                 this.year = inputYear
                 this.yearSliderInput.value = this.year
                 this.yearValueDisplay.textContent = this.year
@@ -192,17 +244,75 @@ class CategoryRadarDynamic {
                 this.yearValueDisplay.textContent = this.year
             }
         })
+
+        this.playPauseButton.addEventListener('click', () => {
+            this.togglePlay()
+        })
+
+        // Restore playing state if it was active
+        if (this.playing) {
+            this.startPlay()
+        }
     }
 
     async fetch() {
-        const response = await fetch(`/api/v1/dynamic/radar/${this.countryCode}/${this.year}`)
-        return response.json();
+        const response = await fetch(`/api/v1/dynamic/radar/${this.countryCode}`)
+        if (!response.ok) {
+            throw new Error(`Failed to fetch radar data: ${response.status}`)
+        }
+        return response.json()
+    }
+
+    updateYear(year) {
+        // Ensure data is loaded
+        if (!this.allYearsData) {
+            console.error("Cannot update year: all years data not loaded yet")
+            return
+        }
+
+        // Get data for requested year
+        const yearKey = year.toString()
+        const yearData = this.allYearsData.years[yearKey]
+
+        if (!yearData) {
+            console.error(`No radar data available for year ${year}`)
+            return
+        }
+
+        // Construct data object in format expected by update()
+        const data = {
+            CCode: this.allYearsData.CCode,
+            Year: year,
+            title: yearData.title,
+            labels: this.allYearsData.metadata.labels,
+            labelMap: this.allYearsData.metadata.labelMap,
+            datasets: yearData.datasets,
+            legendItems: yearData.legendItems
+        }
+
+        // Use existing update method for DOM manipulation
+        this.update(data)
+    }
+
+    showErrorState(error) {
+        this.title.innerText = "Error Loading Data"
+        this.title.style.color = "var(--red-accent, #ff4444)"
+        console.error("Radar chart error:", error)
+
+        // Optionally display error in chart area
+        const errorMsg = document.createElement('div')
+        errorMsg.style.cssText = 'text-align: center; padding: 2rem; color: var(--text-color);'
+        errorMsg.innerHTML = `
+            <p>Failed to load radar data</p>
+            <p style="font-size: 0.9em; opacity: 0.7;">${error.message}</p>
+        `;
+        this.canvasContainer.style.display = 'none'
+        this.root.appendChild(errorMsg)
     }
 
     update(data) {
         this.labelMap = data.labelMap
         this.chart.data.labels = data.labels
-        this.ranks = data.ranks
 
         // Update datasets in place to preserve animation continuity
         // This prevents bars from animating from 0 on every update
@@ -234,10 +344,7 @@ class CategoryRadarDynamic {
             return categoryName
         }
         this.chart.options.plugins.tooltip.callbacks.label = (context) => {
-            return [
-                "Category Score: " + context.raw.toFixed(3),
-                "Category Rank: " + this.ranks[context.dataIndex].Rank,
-            ]
+            return "Category Score: " + context.raw.toFixed(3)
         }
         this.chart.update()
     }
@@ -253,8 +360,8 @@ class CategoryRadarDynamic {
             const pillarLegendCanvasContainer = document.createElement('div')
             pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
             const pillarLegendItemCanvas = document.createElement('canvas')
-            pillarLegendItemCanvas.width = 150
-            pillarLegendItemCanvas.height = 50
+            pillarLegendItemCanvas.width = 120
+            pillarLegendItemCanvas.height = 40
             pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
             this.drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i)
             pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
@@ -297,5 +404,46 @@ class CategoryRadarDynamic {
         pillarLegendContext.strokeStyle = pillarColorsSolid[i]
         pillarLegendContext.linewidth = 10
         pillarLegendContext.strokeRect(3, 5, shadedWidth, pillarLegendItemCanvas.height-5)
+    }
+
+    advanceYear() {
+        if (this.year < this.maxYear) {
+            this.year++
+        } else {
+            // Loop back to beginning
+            this.year = this.minYear
+        }
+        this.yearSliderInput.value = this.year
+        this.yearValueDisplay.textContent = this.year
+        window.observableStorage.setItem("radarYear", this.year)
+        this.updateYear(this.year)
+    }
+
+    startPlay() {
+        this.playing = true
+        window.observableStorage.setItem("radarPlaying", true)
+        this.playIcon.style.display = 'none'
+        this.pauseIcon.style.display = 'inline'
+        // Use 1200ms to match globe (750ms animation + 450ms viewing time)
+        this.playInterval = setInterval(() => this.advanceYear(), 1200)
+    }
+
+    stopPlay() {
+        this.playing = false
+        window.observableStorage.setItem("radarPlaying", false)
+        this.playIcon.style.display = 'inline'
+        this.pauseIcon.style.display = 'none'
+        if (this.playInterval) {
+            clearInterval(this.playInterval)
+            this.playInterval = null
+        }
+    }
+
+    togglePlay() {
+        if (this.playing) {
+            this.stopPlay()
+        } else {
+            this.startPlay()
+        }
     }
 }

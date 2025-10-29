@@ -2664,18 +2664,39 @@ this.chart.options.scales.x.title.text=data.xTitle
 this.initHighlights()
 this.updateSummaryBox(this.computeSummaryStats(data.data))
 this.chart.update()}}
-class CategoryRadarDynamic{constructor(countryCode,parentElement,textColor="#bbb",gridColor="#cccccc33"){this.parentElement=parentElement
+class CategoryRadarDynamic{constructor(countryCode,parentElement){this.parentElement=parentElement
 this.countryCode=countryCode
-this.textColor=textColor
-this.gridColor=gridColor
 this.year=window.observableStorage.getItem("radarYear")||2023;this.minYear=2000
 this.maxYear=2023
+this.playing=window.observableStorage.getItem("radarPlaying")||false
+this.playInterval=null
+this.allYearsData=null
+this.setTheme(window.observableStorage.getItem("theme"))
 this.initRoot()
 this.initTitle()
 this.initLegend()
 this.initChartJSCanvas()
 this.buildYearSlider()
-this.fetch().then(data=>{this.update(data)})}
+this.fetch().then(data=>{this.allYearsData=data
+this.minYear=data.minYear
+this.maxYear=data.maxYear
+this.yearSliderInput.min=this.minYear
+this.yearSliderInput.max=this.maxYear
+this.yearSliderContainer.querySelector('.year-slider-min').textContent=this.minYear
+this.yearSliderContainer.querySelector('.year-slider-max').textContent=this.maxYear
+this.updateYear(this.year)}).catch(error=>{console.error("Failed to load radar data:",error)
+this.showErrorState(error)})}
+setTheme(theme){if(theme!=="light"){this.theme="dark"
+this.textColor="#bbb"
+this.gridColor="#cccccc33"}else{this.theme="light"
+this.textColor="#444"
+this.gridColor="#bbbbbb"}
+if(this.chart){this.chart.options.scales.r.pointLabels.color=this.textColor
+this.chart.options.scales.r.angleLines.color=this.gridColor
+this.chart.options.scales.r.grid.color=this.gridColor
+this.chart.options.scales.r.ticks.color=this.textColor
+this.chart.update()
+if(this.legendItems){this.updateLegend({legendItems:this.legendItems,datasets:this.chart.data.datasets})}}}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('radar-chart-box')
 this.parentElement.appendChild(this.root)}
@@ -2703,29 +2724,51 @@ min="${this.minYear}"
 max="${this.maxYear}"
 value="${this.year}"
 step="1"/
-></div><div class="year-slider-bounds"><span class="year-slider-min">${this.minYear}</span><span class="year-slider-max">${this.maxYear}</span></div></div></div>`;this.root.appendChild(this.yearSliderContainer)
+></div><div class="year-slider-bounds"><span class="year-slider-min">${this.minYear}</span><span class="year-slider-max">${this.maxYear}</span></div></div><button class="year-play-pause-button"aria-label="Play timeline"><span class="play-icon">▶</span><span class="pause-icon"style="display:none;">⏸</span></button></div>`;this.root.appendChild(this.yearSliderContainer)
 this.rigYearSlider()}
 rigYearSlider(){this.yearSliderInput=this.yearSliderContainer.querySelector('.year-slider-input')
 this.yearValueDisplay=this.yearSliderContainer.querySelector('.year-value-display')
-this.yearSliderInput.addEventListener('input',(e)=>{this.year=parseInt(e.target.value)
+this.playPauseButton=this.yearSliderContainer.querySelector('.year-play-pause-button')
+this.playIcon=this.yearSliderContainer.querySelector('.play-icon')
+this.pauseIcon=this.yearSliderContainer.querySelector('.pause-icon')
+this.yearSliderInput.addEventListener('input',(e)=>{if(this.playing){this.stopPlay()}
+this.year=parseInt(e.target.value)
 this.yearValueDisplay.textContent=this.year
 window.observableStorage.setItem("radarYear",this.year)
-this.fetch().then(data=>{this.update(data)})})
+this.updateYear(this.year)})
 this.yearValueDisplay.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault()
 this.yearValueDisplay.blur()}else if(!/^\d$/.test(e.key)&&!['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)){e.preventDefault()}})
 this.yearValueDisplay.addEventListener('blur',()=>{const inputYear=parseInt(this.yearValueDisplay.textContent.trim())
 if(isNaN(inputYear)||inputYear<this.minYear||inputYear>this.maxYear){this.yearValueDisplay.textContent=this.year
 this.yearValueDisplay.classList.add('year-input-error')
-setTimeout(()=>{this.yearValueDisplay.classList.remove('year-input-error')},500)}else if(inputYear!==this.year){this.year=inputYear
+setTimeout(()=>{this.yearValueDisplay.classList.remove('year-input-error')},500)}else if(inputYear!==this.year){if(this.playing){this.stopPlay()}
+this.year=inputYear
 this.yearSliderInput.value=this.year
 this.yearValueDisplay.textContent=this.year
 window.observableStorage.setItem("radarYear",this.year)
-this.fetch().then(data=>{this.update(data)})}else{this.yearValueDisplay.textContent=this.year}})}
-async fetch(){const response=await fetch(`/api/v1/dynamic/radar/${this.countryCode}/${this.year}`)
-return response.json();}
+this.fetch().then(data=>{this.update(data)})}else{this.yearValueDisplay.textContent=this.year}})
+this.playPauseButton.addEventListener('click',()=>{this.togglePlay()})
+if(this.playing){this.startPlay()}}
+async fetch(){const response=await fetch(`/api/v1/dynamic/radar/${this.countryCode}`)
+if(!response.ok){throw new Error(`Failed to fetch radar data:${response.status}`)}
+return response.json()}
+updateYear(year){if(!this.allYearsData){console.error("Cannot update year: all years data not loaded yet")
+return}
+const yearKey=year.toString()
+const yearData=this.allYearsData.years[yearKey]
+if(!yearData){console.error(`No radar data available for year ${year}`)
+return}
+const data={CCode:this.allYearsData.CCode,Year:year,title:yearData.title,labels:this.allYearsData.metadata.labels,labelMap:this.allYearsData.metadata.labelMap,datasets:yearData.datasets,legendItems:yearData.legendItems}
+this.update(data)}
+showErrorState(error){this.title.innerText="Error Loading Data"
+this.title.style.color="var(--red-accent, #ff4444)"
+console.error("Radar chart error:",error)
+const errorMsg=document.createElement('div')
+errorMsg.style.cssText='text-align: center; padding: 2rem; color: var(--text-color);'
+errorMsg.innerHTML=`<p>Failed to load radar data</p><p style="font-size: 0.9em; opacity: 0.7;">${error.message}</p>`;this.canvasContainer.style.display='none'
+this.root.appendChild(errorMsg)}
 update(data){this.labelMap=data.labelMap
 this.chart.data.labels=data.labels
-this.ranks=data.ranks
 if(this.chart.data.datasets.length===0){this.chart.data.datasets=data.datasets}else{data.datasets.forEach((newDataset,i)=>{if(this.chart.data.datasets[i]){this.chart.data.datasets[i].data=newDataset.data
 this.chart.data.datasets[i].label=newDataset.label}else{this.chart.data.datasets.push(newDataset)}})
 while(this.chart.data.datasets.length>data.datasets.length){this.chart.data.datasets.pop()}}
@@ -2733,7 +2776,7 @@ this.title.innerText=data.title
 this.updateLegend(data)
 this.chart.options.plugins.tooltip.callbacks.title=(context)=>{const categoryName=this.labelMap[context[0].label]
 return categoryName}
-this.chart.options.plugins.tooltip.callbacks.label=(context)=>{return["Category Score: "+context.raw.toFixed(3),"Category Rank: "+this.ranks[context.dataIndex].Rank,]}
+this.chart.options.plugins.tooltip.callbacks.label=(context)=>{return"Category Score: "+context.raw.toFixed(3)}
 this.chart.update()}
 updateLegend(data){this.legend.innerHTML=''
 this.legendItems=data.legendItems
@@ -2744,8 +2787,8 @@ pillarLegendItem.classList.add('radar-chart-legend-item')
 const pillarLegendCanvasContainer=document.createElement('div')
 pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
 const pillarLegendItemCanvas=document.createElement('canvas')
-pillarLegendItemCanvas.width=150
-pillarLegendItemCanvas.height=50
+pillarLegendItemCanvas.width=120
+pillarLegendItemCanvas.height=40
 pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
 this.drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i)
 pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
@@ -2776,66 +2819,24 @@ pillarLegendContext.stroke();pillarLegendContext.fillStyle=pillarColorsAlpha[i]
 pillarLegendContext.fillRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)
 pillarLegendContext.strokeStyle=pillarColorsSolid[i]
 pillarLegendContext.linewidth=10
-pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}}
-class DynamicMatrixChart{constructor(parentElement,countryGroup="SSPI49",width=400,height=400){this.parentElement=parentElement
-this.countryGroup=countryGroup
-this.width=width
-this.height=height
-this.initRoot()
-this.initChartJSCanvas()
-this.fetch().then(res=>{this.update(res)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('chart-section-dynamic-matrix')
-this.parentElement.appendChild(this.root)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=this.width
-this.canvas.height=this.height
-this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Dynamic Data Status';},label(context){const v=context.dataset.data[context.dataIndex];if(v.problems){return["Issue:"+v.problems,'Country: '+v.CName,'Indicator: '+v.IName]}
-return['Country: '+v.CName,'Indicator: '+v.IName,'Years: '+v.v];}}}}},plugins:[shiftRotatedTicksPlugin]})}
-async fetch(){const response=await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);return response.json();}
-update(res){this.n_indicators=res.icodes.length;this.n_countries=res.ccodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
-if(collect){return'#FFBF0066';}
-if(load){return'#FFBF00';}
-return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.data[context.dataIndex].problems;const confident=context.dataset.data[context.dataIndex].confident;if(problems){return"rgba(255, 99, 132, 1)";}
-if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
-this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
-this.chart.update()}}
-class ItemCoverageMatrixChart{constructor(parentElement,itemCode,{countryGroup="SSPI67",minYear=2000,maxYear=2023,width=400,height=400,callbacks=[]}){this.parentElement=parentElement
-this.itemCode=itemCode
-this.countryGroup=countryGroup
-this.minYear=minYear
-this.maxYear=maxYear
-this.width=width
-this.height=height
-this.callbacks=callbacks
-this.initRoot()
-this.rigSummary()
-this.initChartJSCanvas()
-this.fetch(`/api/v1/item/coverage/matrix/${this.itemCode}/${this.countryGroup}`).then(res=>{this.update(res)})}
-initRoot(){this.root=document.createElement('div')
-this.root.classList.add('coverage-section-dynamic-matrix')
-this.parentElement.appendChild(this.root)}
-rigSummary(){this.summary=document.createElement('div')
-this.summary.classList.add('item-coverage-summary')
-this.root.appendChild(this.summary)}
-initChartJSCanvas(){this.canvas=document.createElement('canvas')
-this.canvas.id='dynamic-line-chart-canvas'
-this.canvas.width=this.width
-this.canvas.height=this.height
-this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
-this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Data Coverage';},label(context){const v=context.dataset.data[context.dataIndex];return['Country Code: '+v.x,'Year: '+v.y,'Coverage Level: '+v.v+' / '+v.vComplete,'Data Available: '+(v.intermediateCodes?v.intermediateCodes.join(', '):'None')];}}}}},plugins:[shiftRotatedTicksPlugin]})}
-async fetch(url){const response=await fetch(url);return response.json();}
-update(res){this.n_years=res.years.length;this.n_countries=res.ccodes.length;this.vComplete=res.vComplete;res.summary.forEach((line,i)=>{const summaryLine=document.createElement('div');summaryLine.classList.add('item-coverage-summary-line');summaryLine.innerHTML=`<span class="item-coverage-summary-color-block"></span><span class="item-coverage-summary-country">${line}</span>`;const color=summaryLine.querySelector('.item-coverage-summary-color-block')
-color.classList.add(`coverage-summary-color-${i}`);this.summary.appendChild(summaryLine);});this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 0.2)";}else if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 0.2)";}else{return"rgba(200, 0, 0, 0.2)";}},borderColor(context){if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 1)";}else if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 1)";}else{return"rgba(200, 0, 0, 1)";}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_years-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
-this.chart.options.scales={x:{type:'category',labels:res.years,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
-this.callbacks.forEach((callback)=>{callback(res)})
-this.chart.update()}}
+pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}
+advanceYear(){if(this.year<this.maxYear){this.year++}else{this.year=this.minYear}
+this.yearSliderInput.value=this.year
+this.yearValueDisplay.textContent=this.year
+window.observableStorage.setItem("radarYear",this.year)
+this.updateYear(this.year)}
+startPlay(){this.playing=true
+window.observableStorage.setItem("radarPlaying",true)
+this.playIcon.style.display='none'
+this.pauseIcon.style.display='inline'
+this.playInterval=setInterval(()=>this.advanceYear(),1200)}
+stopPlay(){this.playing=false
+window.observableStorage.setItem("radarPlaying",false)
+this.playIcon.style.display='inline'
+this.pauseIcon.style.display='none'
+if(this.playInterval){clearInterval(this.playInterval)
+this.playInterval=null}}
+togglePlay(){if(this.playing){this.stopPlay()}else{this.startPlay()}}}
 class SSPIGlobeChart{constructor(parentElement){this.parentElement=parentElement
 this.globeDataURL="/api/v1/globe"
 this.tabBarState="SSPI";this.year=window.observableStorage.getItem("globeYear")||2023;this.altitudeCoding=false;this.cloropleth=true;this.darkenBorders=false;this.globeRotation=window.observableStorage.getItem("globeRotation")??true;this.rotationOnClick=window.observableStorage.getItem("rotationOnClick")??true;this.activeCountry=null;this.hoveredCountry=null;this.hoveredFeature=null;this.pins=new Set()
@@ -3110,3 +3111,62 @@ const latSpan=maxLat-minLat;const avgLat=Math.abs(centerLat);const lngSpanAdjust
 zoomToCountry(countryCode,duration=1000){const feature=this.geojson.features.find(f=>f.properties.CCode===countryCode);if(!feature){console.error(`Country with code"${countryCode}"not found`);return;}
 if(!feature.bbox){console.error(`Country"${countryCode}"does not have a bounding box`);return;}
 this.zoomToBoundingBox(feature.bbox,duration);}}
+class DynamicMatrixChart{constructor(parentElement,countryGroup="SSPI49",width=400,height=400){this.parentElement=parentElement
+this.countryGroup=countryGroup
+this.width=width
+this.height=height
+this.initRoot()
+this.initChartJSCanvas()
+this.fetch().then(res=>{this.update(res)})}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('chart-section-dynamic-matrix')
+this.parentElement.appendChild(this.root)}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id='dynamic-line-chart-canvas'
+this.canvas.width=this.width
+this.canvas.height=this.height
+this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Dynamic Data Status';},label(context){const v=context.dataset.data[context.dataIndex];if(v.problems){return["Issue:"+v.problems,'Country: '+v.CName,'Indicator: '+v.IName]}
+return['Country: '+v.CName,'Indicator: '+v.IName,'Years: '+v.v];}}}}},plugins:[shiftRotatedTicksPlugin]})}
+async fetch(){const response=await fetch(`/api/v1/dynamic/matrix/${this.countryGroup}`);return response.json();}
+update(res){this.n_indicators=res.icodes.length;this.n_countries=res.ccodes.length;this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){const years=context.dataset.data[context.dataIndex].v;const load=context.dataset.data[context.dataIndex].to_be_loaded;const collect=context.dataset.data[context.dataIndex].collect;if(years!=0){const alpha=(years+5)/40;return`rgba(15,200,15,${alpha})`;}
+if(collect){return'#FFBF0066';}
+if(load){return'#FFBF00';}
+return"rgba(0, 0, 0, 0)";},borderColor(context){const problems=context.dataset.data[context.dataIndex].problems;const confident=context.dataset.data[context.dataIndex].confident;if(problems){return"rgba(255, 99, 132, 1)";}
+if(confident){return`rgba(15,200,15,0.5)`;}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_indicators-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
+this.chart.options.scales={x:{type:'category',labels:res.icodes,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},x2:{position:'top',ticks:{font:this.font,type:'category',display:false,padding:40,autoSkip:false,callback:function(value,index,ticks){if(index<2){return'ECO'}else if(index>=2&&index<=5){return'LND'}else{return'GHG'}}}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
+this.chart.update()}}
+class ItemCoverageMatrixChart{constructor(parentElement,itemCode,{countryGroup="SSPI67",minYear=2000,maxYear=2023,width=400,height=400,callbacks=[]}){this.parentElement=parentElement
+this.itemCode=itemCode
+this.countryGroup=countryGroup
+this.minYear=minYear
+this.maxYear=maxYear
+this.width=width
+this.height=height
+this.callbacks=callbacks
+this.initRoot()
+this.rigSummary()
+this.initChartJSCanvas()
+this.fetch(`/api/v1/item/coverage/matrix/${this.itemCode}/${this.countryGroup}`).then(res=>{this.update(res)})}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('coverage-section-dynamic-matrix')
+this.parentElement.appendChild(this.root)}
+rigSummary(){this.summary=document.createElement('div')
+this.summary.classList.add('item-coverage-summary')
+this.root.appendChild(this.summary)}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id='dynamic-line-chart-canvas'
+this.canvas.width=this.width
+this.canvas.height=this.height
+this.font={family:'Courier New',size:12,style:"normal",weight:"normal"}
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'matrix',options:{layout:{padding:{top:40,right:25}},plugins:{legend:false,tooltip:{callbacks:{title(){return'Data Coverage';},label(context){const v=context.dataset.data[context.dataIndex];return['Country Code: '+v.x,'Year: '+v.y,'Coverage Level: '+v.v+' / '+v.vComplete,'Data Available: '+(v.intermediateCodes?v.intermediateCodes.join(', '):'None')];}}}}},plugins:[shiftRotatedTicksPlugin]})}
+async fetch(url){const response=await fetch(url);return response.json();}
+update(res){this.n_years=res.years.length;this.n_countries=res.ccodes.length;this.vComplete=res.vComplete;res.summary.forEach((line,i)=>{const summaryLine=document.createElement('div');summaryLine.classList.add('item-coverage-summary-line');summaryLine.innerHTML=`<span class="item-coverage-summary-color-block"></span><span class="item-coverage-summary-country">${line}</span>`;const color=summaryLine.querySelector('.item-coverage-summary-color-block')
+color.classList.add(`coverage-summary-color-${i}`);this.summary.appendChild(summaryLine);});this.chart.data={datasets:[{label:'SSPI Data Coverage Matrix',data:res.data,backgroundColor(context){if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 0.2)";}else if(context.dataset.data[context.dataIndex].v===context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 0.2)";}else{return"rgba(200, 0, 0, 0.2)";}},borderColor(context){if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete){return"rgba(0, 200, 0, 1)";}else if(context.dataset.data[context.dataIndex].v==context.dataset.data[context.dataIndex].vComplete-1){return"rgba(200, 200, 0, 1)";}else{return"rgba(200, 0, 0, 1)";}},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_years-2,height:({chart})=>(chart.chartArea||{}).height/this.n_countries-2}]}
+this.chart.options.scales={x:{type:'category',labels:res.years,position:'top',ticks:{align:"start",color:"#666666",font:this.font,display:true,padding:10,autoSkip:false,minRotation:60,maxRoatation:60,display:false},grid:{display:true,color:"#666666",drawOnChartArea:false,drawTicks:true}},y:{type:'category',labels:res.ccodes,offset:true,reverse:false,ticks:{font:this.font,display:true,autoSkip:false},grid:{display:true}}}
+this.callbacks.forEach((callback)=>{callback(res)})
+this.chart.update()}}

@@ -986,4 +986,6 @@ class SSPIMetadata(MongoWrapper):
             "DocumentType": "CountryDetail",
             "Metadata.CountryCode": country_code
         })
+        if not country_detail or not country_detail.get("Metadata"):
+            return {}
         return country_detail["Metadata"]
