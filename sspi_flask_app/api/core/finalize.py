@@ -403,8 +403,6 @@ def finalize_dynamic_line_indicator_datasets():
     max_year = datetime.now().year
     label_list = list(range(min_year, max_year + 1))
     indicator_codes = sspi_metadata.indicator_codes()
-
-    # Build metadata lookups ONCE upfront to avoid repeated function calls
     yield "Building Metadata Lookups\n"
     indicator_details = {
         ind["IndicatorCode"]: ind
@@ -414,41 +412,26 @@ def finalize_dynamic_line_indicator_datasets():
         code: sspi_metadata.get_goalposts(code)
         for code in indicator_codes
     }
-
-    # Get all unique countries from the data
     all_countries = set()
     for ind_data in sspi_indicator_data.find({
         "IndicatorCode": {"$in": indicator_codes},
         "Year": {"$gte": min_year, "$lte": max_year}
     }, {"CountryCode": 1}):
         all_countries.add(ind_data["CountryCode"])
-
-    country_groups_lookup = {
-        country: sspi_metadata.get_country_groups(country)
+    country_details_lookup = {
+        country: sspi_metadata.get_country_detail(country)
         for country in all_countries
     }
-    country_name_lookup = {
-        country: country_code_to_name(country)
-        for country in all_countries
-    }
-    # MongoDB Aggregation Pipeline
-    # Groups ~150k documents into ~8,800 groups (IndicatorCode + CountryCode combinations)
     pipeline = [
-        # Stage 1: Filter to relevant data
         {
             "$match": {
                 "IndicatorCode": {"$in": indicator_codes},
                 "Year": {"$gte": min_year, "$lte": max_year}
             }
         },
-
-        # Stage 2: Sort by year in MongoDB (faster than Python)
         {
             "$sort": {"Year": 1}
         },
-
-        # Stage 3: Group by IndicatorCode + CountryCode
-        # This is the key optimization: reduces ~150k docs to ~8,800 groups
         {
             "$group": {
                 "_id": {
@@ -463,12 +446,9 @@ def finalize_dynamic_line_indicator_datasets():
                         "Datasets": "$Datasets"
                     }
                 },
-                # Store first observation's Datasets for initializing the dataset map
-                "firstDatasets": {"$first": "$Datasets"}
+                "firstDatasets": {"$first": "$Datasets"} # Store first observation's Datasets
             }
         },
-
-        # Stage 4: Reshape output for easier processing
         {
             "$project": {
                 "_id": 0,
@@ -478,8 +458,6 @@ def finalize_dynamic_line_indicator_datasets():
                 "firstDatasets": 1
             }
         },
-
-        # Stage 5: Sort for consistent output
         {
             "$sort": {"IndicatorCode": 1, "CountryCode": 1}
         }
@@ -491,22 +469,18 @@ def finalize_dynamic_line_indicator_datasets():
     BATCH_SIZE = 500
     count = 0
     total_documents_inserted = 0
-
-    # Process pre-grouped, pre-sorted data from MongoDB
     for group in grouped_data_cursor:
         indicator_code = group["IndicatorCode"]
         country_code = group["CountryCode"]
         observations = group["observations"]  # Already sorted by Year
-
         count += 1
-
-        # O(1) metadata lookups using pre-built dictionaries
         detail = indicator_details.get(indicator_code, {})
         lg, ug = goalposts_lookup.get(indicator_code, (None, None))
         lg = 0 if not lg else lg  # aggregates may not have goalposts
         ug = 1 if not ug else ug  # aggregates may not have goalposts
-        group_list = country_groups_lookup.get(country_code, [])
-        country_name = country_name_lookup.get(country_code, country_code)
+        group_list = country_details_lookup.get(country_code, {}).get("CountryGroups", [])
+        country_name = country_details_lookup.get(country_code, {}).get("Country", country_code)
+        country_flag = country_details_lookup.get(country_code, {}).get("Flag", country_code)
 
         # Build sparse arrays with None values
         years = [None] * len(label_list)
@@ -519,8 +493,6 @@ def finalize_dynamic_line_indicator_datasets():
             sspi_dataset_map[dataset["DatasetCode"]] = {
                 "data": [None] * len(label_list)
             }
-
-        # Populate arrays (observations already sorted by Year)
         for obs in observations:
             try:
                 year_index = label_list.index(obs["Year"])
@@ -535,11 +507,11 @@ def finalize_dynamic_line_indicator_datasets():
             for dataset in obs.get("Datasets", []):
                 if dataset["DatasetCode"] in sspi_dataset_map:
                     sspi_dataset_map[dataset["DatasetCode"]]["data"][year_index] = dataset["Value"]
-
         # Build document
         dataset = {
             "CCode": country_code,
             "CName": country_name,
+            "CFlag": country_flag,
             "ICode": indicator_code,
             "IName": detail.get("Indicator", ""),
             "CGroup": group_list,
@@ -555,14 +527,10 @@ def finalize_dynamic_line_indicator_datasets():
             "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
         }
         documents.append(dataset)
-
-        # Batch insert for better performance
         if len(documents) >= BATCH_SIZE:
             sspi_indicator_dynamic_line_data.insert_many(documents)
             total_documents_inserted += len(documents)
             documents = []
-
-    # Insert any remaining documents
     if documents:
         sspi_indicator_dynamic_line_data.insert_many(documents)
         total_documents_inserted += len(documents)
@@ -574,41 +542,25 @@ def finalize_dynamic_line_indicator_datasets():
 def finalize_dynamic_line_score_datasets():
     min_year = 2000
     max_year = datetime.now().year
-
-    # Build metadata lookups ONCE upfront to avoid repeated function calls
     yield "Building Metadata Lookups\n"
     item_details = {
         item["ItemCode"]: item
         for item in sspi_metadata.item_details()
         if item.get("ItemCode")
     }
-
-    # Build country groups lookup for all countries we might encounter
     all_countries = set()
     for item_data in sspi_item_data.find({}, {"CountryCode": 1}):
         all_countries.add(item_data["CountryCode"])
 
-    country_groups_lookup = {
-        country: sspi_metadata.get_country_groups(country)
+    country_details_lookup = {
+        country: sspi_metadata.get_country_detail(country)
         for country in all_countries
     }
-    country_name_lookup = {
-        country: country_code_to_name(country)
-        for country in all_countries
-    }
-
     yield "Building Aggregation Pipeline\n"
-
-    # MongoDB Aggregation Pipeline
-    # Groups ~87k documents into ~15k groups (ItemCode + CountryCode combinations)
     pipeline = [
-        # Stage 1: Sort by year in MongoDB (faster than Python)
         {
             "$sort": {"Year": 1}
         },
-
-        # Stage 2: Group by ItemCode + CountryCode
-        # This is the key optimization: reduces ~87k docs to ~15k groups
         {
             "$group": {
                 "_id": {
@@ -623,8 +575,6 @@ def finalize_dynamic_line_score_datasets():
                 }
             }
         },
-
-        # Stage 3: Reshape output for easier processing
         {
             "$project": {
                 "_id": 0,
@@ -633,8 +583,6 @@ def finalize_dynamic_line_score_datasets():
                 "observations": 1
             }
         },
-
-        # Stage 4: Sort for consistent output
         {
             "$sort": {"ItemCode": 1, "CountryCode": 1}
         }
@@ -649,22 +597,14 @@ def finalize_dynamic_line_score_datasets():
     count = 0
     total_documents_inserted = 0
 
-    # Process pre-grouped, pre-sorted data from MongoDB
     for group in grouped_data_cursor:
         item_code = group["ItemCode"]
         country_code = group["CountryCode"]
         observations = group["observations"]  # Already sorted by Year
-
-        count += 1
-        if count % 500 == 0:
-            yield f"Processing {item_code} - {country_code} ({count} groups)\n"
-
-        # O(1) metadata lookups using pre-built dictionaries
         detail = item_details.get(item_code, {})
-        group_list = country_groups_lookup.get(country_code, [])
-        country_name = country_name_lookup.get(country_code, country_code)
-
-        # Find the most specific name in the detail
+        group_list = country_details_lookup.get(country_code, {}).get("CountryGroups", [])
+        country_name = country_details_lookup.get(country_code, {}).get("Country", country_code)
+        country_flag = country_details_lookup.get(country_code, {}).get("Flag", country_code)
         name_spec = ["IntermediateName", "IndicatorName",
                      "CategoryName", "PillarName", "Name"]
         item_name = ""
@@ -672,11 +612,10 @@ def finalize_dynamic_line_score_datasets():
             if name in detail:
                 item_name = detail[name]
                 break
-
-        # Build document
         dataset = {
             "CCode": country_code,
             "CName": country_name,
+            "CFlag": country_flag,
             "ICode": item_code,
             "IName": item_name,
             "CGroup": group_list,

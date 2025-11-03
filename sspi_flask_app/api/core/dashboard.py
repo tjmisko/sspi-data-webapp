@@ -584,7 +584,7 @@ def get_static_score_item(item_code):
 def get_static_stacked_sspi():
     score_data = sspi_static_stack_data.find_one({}, {"_id": 0})
     return jsonify(
-        {"title": "SSPI Overall Scores by Country", "data": score_data["data"]}
+        {"title": "SSPI 2018 Score Breakdown by Pillar", "data": score_data["data"]}
     )
 
 
@@ -927,23 +927,25 @@ def active_schema():
     return jsonify(active_schema)
 
 
-@dashboard_bp.route("/country/dynamic/stack/<CountryCode>/<RootItemCode>")
-def dynamic_stack_data(CountryCode, RootItemCode):
+@dashboard_bp.route("/country/dynamic/stack/<country_code>/<root_item_code>")
+def dynamic_stack_data(country_code, root_item_code):
     """
     Get the dynamic data for the given country code and root item code
     """
-    root_item_detail = sspi_metadata.get_item_detail(RootItemCode)
-    child_items = sspi_metadata.get_child_details(RootItemCode)
+    root_item_detail = sspi_metadata.get_item_detail(root_item_code)
+    child_items = sspi_metadata.get_child_details(root_item_code)
+    country_detail = sspi_metadata.get_country_detail(country_code)
     child_codes = [child["Metadata"]["ItemCode"] for child in child_items]
     stack_div = len(child_codes)
     mongo_query = {
-        "CCode": CountryCode,
-        "ICode": {"$in": child_codes + [RootItemCode]},
+        "CCode": country_code,
+        "ICode": {"$in": child_codes + [root_item_code]},
     }
     data = sspi_item_dynamic_line_data.find(mongo_query)
+    data.sort(key=lambda x: ([root_item_code] + child_codes).index(x["Detail"]["ItemCode"]))
     year_labels = list(range(2000, datetime.now().year + 1))
     for document in data:
-        if document["ICode"] == RootItemCode:
+        if document["ICode"] == root_item_code:
             document["hidden"] = True
         else:
             document["divisor"] = stack_div
@@ -952,7 +954,7 @@ def dynamic_stack_data(CountryCode, RootItemCode):
     return parse_json(
         {
             "data": data,
-            "title": f"{root_item_detail['ItemName']} ({RootItemCode}) for Country {CountryCode}",
+            "title": f"{country_detail["Flag"]} {country_detail["Country"]} {root_item_detail['ItemType']} Score Breakdown",
             "labels": year_labels,
             "itemType": root_item_detail["DocumentType"][0:-6].lower(),
             "hasScore": True,
