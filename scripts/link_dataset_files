@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+documentation=$(fd documentation datasets | sort)
+for docfile in ${documentation}
+do
+    dataset_docdir="$(dirname "$docfile")"
+    dataset_code="${dataset_docdir##*/}"
+    dataset_python_file=$(fd "$dataset_code" "sspi_flask_app/api/core/datasets/")
+    if [[ -z "$dataset_python_file" ]]; then
+        echo "No file found"
+        continue
+    fi
+    result_length=$(wc -l <<< $dataset_python_file)
+    if [[ $result_length -ne 1 ]]; then
+        echo "result_length: $result_length"
+        continue
+    fi
+    echo "===================================="
+    echo "DatasetCode: $(tr "[:lower:]" "[:upper:]" <<< "$dataset_code")"
+    echo "# Documentation: $docfile"
+    echo "# Dataset Processors: $dataset_python_file"
+    backup=$(mktemp)
+    sed -i '1,3{/^#/d}' $dataset_python_file
+    cp $dataset_python_file $backup
+    sepstring=$(printf '%*s' "$((${#docfile} + 19))" '' | tr ' ' '#')
+    cat <<EOF > "$dataset_python_file" 
+$sepstring
+# Documentation: $docfile #
+$sepstring
+EOF
+    cat "$backup" >> $dataset_python_file
+    sed -i "/^DatasetProcessorFile/d" $docfile
+    yaml_del=($(grep -n '^---$' "$docfile"))
+    if (( ${#yaml_del[@]} == 2 )); then
+        line=${yaml_del[1]%%:*}
+    else
+        break
+    fi
+    sed -i -e "${line}i DatasetProcessorFile: $dataset_python_file" $docfile
+done
