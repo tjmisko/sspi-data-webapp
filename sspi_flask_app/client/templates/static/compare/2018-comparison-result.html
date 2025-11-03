@@ -1,0 +1,28 @@
+<article class="comparison-article"> 
+    {% if comparison_list | length == 2 %}
+        <h1> {{ comparison_list[0].name }} and {{ comparison_list[1].name }} </h1>
+    {% elif comparison_list | length == 3 %} 
+        <h1> {{ comparison_list[0].name }}, {{ comparison_list[1].name }}, and {{ comparison_list[2].name }} </h1>
+    {% endif %}
+
+    <section id="radar-chart-flex-container" class="radar-chart-flex-outer-container datawindow"> 
+        <div id="radar-chart-flex-container-1"></div>
+        <div id="radar-chart-flex-container-2"></div>
+        <div id="radar-chart-flex-container-3"></div>
+    </section>
+    <section class="comparison-static-pillar-section">
+        <h3> Sustainability </h3>
+        <div id="sus-stack" class="pillar-stack-window"> </div>
+        <div id="sus-diff" class="pillar-diff-window"> </div>
+    </section>
+    <section class="comparison-static-pillar-section">
+        <h3> Market Structure </h3>
+        <div id="ms-stack" class="pillar-stack-window"> </div>
+        <div id="ms-diff" class="pillar-diff-window"> </div>
+    </section>
+    <section class="comparison-static-pillar-section">
+        <h3> Public Goods </h3>
+        <div id="pg-stack" class="pillar-stack-window"> </div>
+        <div id="pg-diff" class="pillar-diff-window"> </div>
+    </section>
+</article> 
