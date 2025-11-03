@@ -84,6 +84,7 @@ def customize():
 
 @client_bp.route('/data/country/<country_code>')
 def country_data(country_code):
+    country_code = country_code.upper()
     cdetail = sspi_metadata.get_country_detail(country_code)
     return render_template('country-data.html', cdetail=cdetail)
 
@@ -289,7 +290,7 @@ def compare_custom():
                        for code, name in zip(country_codes, country_names)]
     print(comparison_list)
     return parse_json({
-        "html": render_template("static/compare/comparison-result.html", comparison_list=comparison_list),
+        "html": render_template("static/compare/2018-comparison-result.html", comparison_list=comparison_list),
         "data": comparison_list
     })
 
