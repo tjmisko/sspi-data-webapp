@@ -404,5 +404,12 @@
   white-space: nowrap;
 }
 
-
-
+.home-chart-box {
+  width: 100%;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  box-sizing: border-box;
+}

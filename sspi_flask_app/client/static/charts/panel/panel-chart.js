@@ -53,25 +53,10 @@ class PanelChart {
         <div class="dynamic-item-description"></div>
     </div>
 </details>
-<details class="chart-options-details chart-view-options">
-    <summary class="chart-view-options-summary">View Options</summary>
-    <div class="view-options-suboption-container">
-        <div class="chart-view-subheader">Imputation Options</div>
-        <div class="chart-view-option">
-            <input type="checkbox" class="extrapolate-backward"/>
-            <label class="title-bar-label">Backward Extrapolation</label>
-        </div>
-        <div class="chart-view-option">
-            <input type="checkbox" class="interpolate-linear"/>
-            <label class="title-bar-label">Linear Interpolation</label>
-        </div>
-        <div class="chart-view-subheader">Randomization</div>
-        <div class="chart-view-option">
-            <div class="randomization-options">
-                <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
-                <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
-            </div>
-        </div>
+<details class="item-information chart-options-details">
+    <summary class="item-information-summary">Country Information</summary>
+    <div class="country-information-box" data-unpopulated=true>
+        Click on a Country to Show Details and Links Here.
     </div>
 </details>
 <details class="select-countries-options chart-options-details">
@@ -107,6 +92,27 @@ class PanelChart {
         <div class="missing-countries-container">
             <div class="missing-countries-list"></div>
             <div class="missing-countries-summary"></div>
+        </div>
+    </div>
+</details>
+<details class="chart-options-details chart-view-options">
+    <summary class="chart-view-options-summary">View Options</summary>
+    <div class="view-options-suboption-container">
+        <div class="chart-view-subheader">Imputation Options</div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="extrapolate-backward"/>
+            <label class="title-bar-label">Backward Extrapolation</label>
+        </div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="interpolate-linear"/>
+            <label class="title-bar-label">Linear Interpolation</label>
+        </div>
+        <div class="chart-view-subheader">Randomization</div>
+        <div class="chart-view-option">
+            <div class="randomization-options">
+                <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
+                <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
+            </div>
         </div>
     </div>
 </details>
@@ -159,6 +165,7 @@ class PanelChart {
         this.hideChartOptions.addEventListener('click', () => {
             this.closeChartOptionsSidebar()
         })
+        this.countryInformationBox = this.chartOptions.querySelector(".country-information-box");
         this.extrapolateBackwardCheckbox = this.chartOptions.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
@@ -278,6 +285,8 @@ class PanelChart {
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.togglePin(dataset)
+                                this.activeCountry = dataset;
+                                this.updateCountryInformation();
                             });
                         }
                     },
@@ -363,7 +372,51 @@ class PanelChart {
         this.legendItems = this.legend.querySelector('.legend-items')
     }
 
+    updateCountryInformation() {
+        if (!this.activeCountry) return;
+        const isPinned = this.activeCountry.pinned || false;
+        const pinButtonText = isPinned ? "Unpin Country" : "Pin Country";
+        const pinButtonClass = isPinned ? "unpin-country-button" : "pin-country-button";
+        this.countryInformationBox.innerHTML = `
+<div id="#active-country-information" class="country-details-info">
+<h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
+<div class="country-details-score-container"></div>
+<div class="country-details-actions">
+    <button class="${pinButtonClass}" data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button>
+    <a class="view-all-data-link" href="/data/country/${this.activeCountry.CCode}">View All Data</a>
+</div>
+</div>`;
+
+        // Add event listener for Pin/Unpin Country button
+        const pinButton = this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');
+        if (pinButton) {
+            pinButton.addEventListener('click', (e) => {
+                const countryCode = e.target.dataset.countryCode;
+                // Find the feature to toggle
+                const dataset = this.chart.data.datasets.find(d => d.CCode === countryCode);
+                if (dataset) {
+                    this.togglePin(dataset);
+                    this.activeCountry = dataset;
+                    this.updateCountryInformation();
+                }
+            });
+        }
+    }
+
     updateLegend() {
+        function generateListener(countryCode, PanelChartObject) {
+            function listener() {
+                let dataset = PanelChartObject.chart.data.datasets.find((d) => d.CCode === countryCode);
+                if (dataset) {
+                    PanelChartObject.activeCountry = dataset;
+                    PanelChartObject.countryInformationBox.dataset.unpopulated = false;
+                    PanelChartObject.updateCountryInformation();
+                } else {
+                    console.log("Country " + countryCode + " Not Found in Datasets!")
+                }
+            }
+            return listener
+        }
         this.legendItems.innerHTML = ''
         if (this.pins.size > 0) {
             this.pins.forEach((PinnedCountry) => {
@@ -385,6 +438,7 @@ class PanelChart {
                 newPin.style.backgroundColor = PinnedCountry.borderColor + "44"
                 newPin.appendChild(pinSpan)
                 newPin.appendChild(removeButton)
+                newPin.addEventListener('click', generateListener(PinnedCountry.CCode, this))
                 this.legendItems.appendChild(newPin)
             })
         }
@@ -530,8 +584,7 @@ class PanelChart {
         this.updateDescription(data.description)
         this.updateChartColors()
         this.updateCountryGroups()
-        this.chart.update()
-        
+        this.updateChartPreservingYAxis();
         // Compute missing countries asynchronously after chart rendering
         this.computeMissingCountriesAsync()
     }
@@ -597,7 +650,7 @@ class PanelChart {
             }
         })
         this.updateLegend()
-        this.chart.update()
+        this.updateChartPreservingYAxis();
     }
 
     pushPinUpdate() {
@@ -933,12 +986,12 @@ class PanelChart {
 
     toggleBackwardExtrapolation() {
         this.extrapolateBackwardPlugin.toggle()
-        this.chart.update();
+        this.updateChartPreservingYAxis();
     }
 
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
-        this.chart.update();
+        this.updateChartPreservingYAxis();
     }
 
     warnHidden() {
@@ -1014,18 +1067,14 @@ class PanelChart {
         const yScale = this.chart.scales?.y
         const currentMin = yScale?.min
         const currentMax = yScale?.max
-        
         // Also check if there are explicitly set bounds in options
         const yAxis = this.chart.options.scales?.y
         const configuredMin = yAxis?.min
         const configuredMax = yAxis?.max
-        
         // Prefer configured bounds, but fall back to current scale if not explicitly configured
         const minToPreserve = configuredMin !== undefined ? configuredMin : currentMin
         const maxToPreserve = configuredMax !== undefined ? configuredMax : currentMax
-        
         this.chart.update(updateOptions)
-        
         // Restore the y-axis limits
         if (minToPreserve !== undefined || maxToPreserve !== undefined) {
             this.chart.options.scales.y.min = minToPreserve

@@ -1050,7 +1050,7 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button><button class="add-country-button">Search Country</button></div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="item-information chart-options-details"><summary class="item-information-summary">Country Information</summary><div class="country-information-box"data-unpopulated=true>Click on a Country to Show Details and Links Here.</div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button><button class="add-country-button">Search Country</button></div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -1066,7 +1066,7 @@ this.root.appendChild(this.chartOptionsWrapper)}
 rigChartOptions(){this.showChartOptions.addEventListener('click',()=>{this.openChartOptionsSidebar()})
 this.hideChartOptions=this.chartOptions.querySelector('.hide-chart-options')
 this.hideChartOptions.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
-this.extrapolateBackwardCheckbox=this.chartOptions.querySelector('.extrapolate-backward')
+this.countryInformationBox=this.chartOptions.querySelector(".country-information-box");this.extrapolateBackwardCheckbox=this.chartOptions.querySelector('.extrapolate-backward')
 this.extrapolateBackwardCheckbox.checked=true
 this.extrapolateBackwardCheckbox.addEventListener('change',()=>{this.toggleBackwardExtrapolation()})
 this.interpolateCheckbox=this.chartOptions.querySelector('.interpolate-linear')
@@ -1099,7 +1099,8 @@ this.title=this.chartContainer.querySelector('.panel-chart-title')
 this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)
+this.activeCountry=dataset;this.updateCountryInformation();});}},},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
@@ -1116,7 +1117,10 @@ this.clearPinsButton=this.chartOptions.querySelector('.clearpins-button')
 this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
 this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
 this.legendItems=this.legend.querySelector('.legend-items')}
-updateLegend(){this.legendItems.innerHTML=''
+updateCountryInformation(){if(!this.activeCountry)return;const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;this.updateCountryInformation();}});}}
+updateLegend(){function generateListener(countryCode,PanelChartObject){function listener(){let dataset=PanelChartObject.chart.data.datasets.find((d)=>d.CCode===countryCode);if(dataset){PanelChartObject.activeCountry=dataset;PanelChartObject.countryInformationBox.dataset.unpopulated=false;PanelChartObject.updateCountryInformation();}else{console.log("Country "+countryCode+" Not Found in Datasets!")}}
+return listener}
+this.legendItems.innerHTML=''
 if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{const pinSpan=document.createElement('span')
 pinSpan.innerText=PinnedCountry.CName+" ("+PinnedCountry.CCode+")"
 const removeButton=document.createElement('button')
@@ -1127,6 +1131,7 @@ newPin.style.borderColor=PinnedCountry.borderColor
 newPin.style.backgroundColor=PinnedCountry.borderColor+"44"
 newPin.appendChild(pinSpan)
 newPin.appendChild(removeButton)
+newPin.addEventListener('click',generateListener(PinnedCountry.CCode,this))
 this.legendItems.appendChild(newPin)})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
@@ -1189,8 +1194,7 @@ this.updateItemDropdown(data.itemOptions,data.itemType)
 this.updateDescription(data.description)
 this.updateChartColors()
 this.updateCountryGroups()
-this.chart.update()
-this.computeMissingCountriesAsync()}
+this.updateChartPreservingYAxis();this.computeMissingCountriesAsync()}
 computeMissingCountriesAsync(){setTimeout(()=>{this.computeMissingCountries()},0)}
 computeMissingCountries(){if(!this.countryGroupMap||Object.keys(this.countryGroupMap).length===0){console.log('No country group map available for missing countries computation')
 return}
@@ -1212,7 +1216,7 @@ if(this.pins.size===0){return}
 this.chart.data.datasets.forEach(dataset=>{for(const element of this.pins){if(dataset.CCode===element.CCode){dataset.pinned=true
 dataset.hidden=false}}})
 this.updateLegend()
-this.chart.update()}
+this.updateChartPreservingYAxis();}
 pushPinUpdate(){window.observableStorage.setItem("pinnedCountries",Array.from(this.pins))}
 showAll(){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
@@ -1320,9 +1324,9 @@ console.log("Pin change detected!")})}
 rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
 window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
 toggleBackwardExtrapolation(){this.extrapolateBackwardPlugin.toggle()
-this.chart.update();}
+this.updateChartPreservingYAxis();}
 toggleLinearInterpolation(){this.chart.options.datasets.line.spanGaps=!this.chart.options.datasets.line.spanGaps
-this.chart.update();}
+this.updateChartPreservingYAxis();}
 warnHidden(){if(this.pinnedOnly&&this.pins.size===0){alert("All countries are hidden!")
 return true}}
 rigDownloadForm(){this.downloadForm=this.chartOptions.querySelector('.panel-download-form')
@@ -1505,7 +1509,8 @@ this.title=this.chartContainer.querySelector('.panel-chart-title')
 this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)});}},},layout:{padding:{right:40}}}})}
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)
+this.activeCountry=dataset;this.updateCountryInformation();});}},},layout:{padding:{right:40}}}})}
 renderBreadcrumb(treePath,title,itemCode,itemType){if(itemType!=="Indicator"||!treePath||treePath.length===0){this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';this.breadcrumbContainer.style.display='none';return;}
 this.chartContainer.querySelector('.panel-chart-title-container').style.display='none';this.breadcrumbContainer.style.display='flex';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url,tooltip;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
 if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
@@ -1894,7 +1899,6 @@ class StaticPillarDifferentialChart {
         this.PillarCode = PillarCode;
         this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry})`;
         this.initRoot()
-        this.initTitle()
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -1919,13 +1923,6 @@ class StaticPillarDifferentialChart {
         this.root = document.createElement('div')
         this.root.classList.add('chart-section-pillar-differential')
         this.parentElement.appendChild(this.root)
-    }
-
-    initTitle() {
-        this.title = document.createElement('h2')
-        this.title.classList.add('differential-chart-title')
-        this.title.textContent = "Test Title"
-        this.root.appendChild(this.title)
     }
 
     initChartJSCanvas() {
@@ -2020,7 +2017,6 @@ class StaticPillarDifferentialChart {
         this.baseCName = data.baseCName
         this.comparisonCCode = data.comparisonCCode
         this.comparisonCName = data.comparisonCName
-        this.title.textContent = data.title
         data.datasets.forEach(dataset => {
             dataset.backgroundColor = dataset.data.map(item => this.colormap(item.Diff)) // Assign colors dynamically
             dataset.borderColor = dataset.data.map(item => this.colormap(item.Diff).slice(0, -2)) // Assign colors dynamically
@@ -2048,8 +2044,6 @@ class CategoryRadarStatic {
         this.gridColor = gridColor
 
         this.initRoot()
-        this.legend = this.initLegend()
-        this.initRoot()
         this.initTitle()
         this.initLegend()
         this.initChartJSCanvas()
@@ -2072,9 +2066,12 @@ class CategoryRadarStatic {
     }
 
     initLegend() {
+        this.chartArea = document.createElement('div')
+        this.chartArea.classList.add('radar-chart-area')
         this.legend = document.createElement('div')
         this.legend.classList.add('radar-chart-legend-box')
-        this.root.appendChild(this.legend)
+        this.chartArea.appendChild(this.legend)
+        this.root.appendChild(this.chartArea)
     }
 
     initChartJSCanvas() {
@@ -2085,7 +2082,7 @@ class CategoryRadarStatic {
         this.canvas.width = 300
         this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvasContainer)
+        this.chartArea.appendChild(this.canvasContainer)
         this.chart = new Chart(this.context, {
             type: 'polarArea',
             options: {
@@ -2210,7 +2207,7 @@ class CategoryRadarStatic {
             const pillarLegendCanvasContainer = document.createElement('div')
             pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
             const pillarLegendItemCanvas = document.createElement('canvas')
-            pillarLegendItemCanvas.width = 150
+            pillarLegendItemCanvas.width = 100
             pillarLegendItemCanvas.height = 50
             pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
             this.drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i)
@@ -2303,7 +2300,6 @@ class StaticOverallStackedBarChart {
         } else {
             this.colormap = colormap
         }
-        this.createLegend()
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -2336,24 +2332,6 @@ class StaticOverallStackedBarChart {
         }
     }
 
-    createLegend() {
-        this.legend = document.createElement('div')
-        this.legend.classList.add('overall-stack-bar-legend')
-        // this.countryCodes.map((countryCode) => {
-        //     const legendElement = document.createElement('div')
-        //     legendElement.classList.add('stack-bar-legend-element')
-        //     const legendBox = document.createElement('div')
-        //     legendBox.classList.add('legend-box')
-        //     legendBox.style.backgroundColor = this.colormap[countryCode]
-        //     legendElement.appendChild(legendBox)
-        //     const legendText = document.createElement('span')
-        //     legendText.id = countryCode + '-' + this.pillarCode + '-stack-bar-legend-text'
-        //     legendText.innerText = countryCode
-        //     legendElement.appendChild(legendText)
-        //     this.legend.appendChild(legendElement)
-        // })
-        this.root.appendChild(this.legend)
-    }
 
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
@@ -2361,10 +2339,13 @@ class StaticOverallStackedBarChart {
         this.canvas.width = 1000
         this.canvas.height = 1000
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvas)
+        this.chartWrapper = document.createElement('div')
+        this.chartWrapper.appendChild(this.canvas)
+        this.root.appendChild(this.chartWrapper)
         this.chart = new Chart(this.context, {
             type: 'bar',
             options: {
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: false,
@@ -2571,13 +2552,14 @@ this.itemCode=itemCode
 this.backgroundBase=backgroundColor
 this.width=width
 this.height=height
-this.setTheme(localStorage.getItem("theme"))
-this.initRoot()
+this.setTheme(window.observableStorage.getItem("theme"))
+this.highlights=[];this.initRoot()
 this.initTitle()
 this.initChartJSCanvas()
 this.updateChartOptions()
 this.initSummaryBox()
-this.fetch().then(data=>{this.update(data)})}
+this.fetch().then(data=>{this.update(data)})
+this.setHighlights()}
 initRoot(){this.root=document.createElement('div')
 this.root.classList.add('chart-container-bar-score-static')
 this.parentElement.appendChild(this.root)}
@@ -2589,8 +2571,7 @@ this.canvas.id=`score-bar-chart-canvas-${this.itemCode}`;this.canvas.width=this.
 this.canvas.height=this.height
 this.context=this.canvas.getContext('2d')
 this.root.appendChild(this.canvas)
-this.chart=new Chart(this.context,{type:'bar',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
-console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)})},plugins:{legend:false,tooltip:{backgroundColor:'#1B2A3Ccc',callbacks:{label:function(context){const info=context.dataset.info[context.dataIndex]
+this.chart=new Chart(this.context,{type:'bar',options:{onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)})},plugins:{legend:false,tooltip:{backgroundColor:'#1B2A3Ccc',callbacks:{label:function(context){const info=context.dataset.info[context.dataIndex]
 return[`${info.IName}Score:${info.Score.toFixed(3)}`,`${info.IName}Rank:${info.Rank}`,`Year:${info.Year}`]}}},},indexAxis:'y',}})}
 updateChartOptions(){this.chart.options.scales={x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:12,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}}
 initSummaryBox(){this.summaryBox=document.createElement('div')
@@ -2621,47 +2602,33 @@ this.gridColor="#333333cc"
 this.backgroundColor=this.backgroundBase+"cc"
 this.highlightColor="#ff0000ee"
 this.borderColor=this.backgroundBase
-this.titleColor="#333"}}
-getStoredHighlights(){let highlights=[]
-if(localStorage.getItem('scoreBarHighlights')===null){highlights=[]}else{highlights=localStorage.getItem('scoreBarHighlights').split(',')}
-return highlights}
-setStoredHighlights(highlights){localStorage.setItem('scoreBarHighlights',highlights)}
-clearVisibleHighlights(){this.chart.data.datasets[0].backgroundColor=Array(49).fill(this.backgroundColor)}
-setVisibleHighlights(highlights){this.clearVisibleHighlights()
-highlights.forEach(countryCode=>{this.addVisibleHighlight(countryCode)})}
-addVisibleHighlight(countryCode){const index=this.chart.data.datasets[0].info.findIndex(info=>info.CCode===countryCode)
-this.chart.data.datasets[0].backgroundColor[index]=this.highlightColor
+this.titleColor="#333"}
+if(this.chart){this.chart.update()}}
+highlightCountry(countryCode){const dsIndex=this.chart.data?.datasets?.[0].info.findIndex((d)=>d.CCode===countryCode)
+if(dsIndex){this.chart.data.datasets[0].backgroundColor[dsIndex]=this.highlightColor}
+if(!this.highlights.includes(countryCode)){this.highlights.push(countryCode)}
+this.setHighlights()
 this.chart.update()}
-removeVisibleHighlight(countryCode){const index=this.chart.data.datasets[0].info.findIndex(info=>info.CCode===countryCode)
-this.chart.data.datasets[0].backgroundColor[index]=this.backgroundColor
+unhighlightCountry(countryCode){const dsIndex=this.chart.data?.datasets?.[0].info.findIndex((d)=>d.CCode===countryCode)
+if(dsIndex){this.chart.data.datasets[0].backgroundColor[dsIndex]=this.backgroundColor;}
+if(this.highlights.includes(countryCode)){this.highlights=this.highlights.filter((c)=>c===countryCode)}
+this.setHighlights()
 this.chart.update()}
-updateHighlights(){const highlights=this.getStoredHighlights()
-this.setVisibleHighlights(highlights)
+toggleHighlight(countryCode){const dsIndex=this.chart.data?.datasets?.[0].info.findIndex((d)=>d.CCode===countryCode);console.log(dsIndex)
+if(this.chart.data.datasets[0].backgroundColor[dsIndex]===this.highlightColor){this.chart.data.datasets[0].backgroundColor[dsIndex]=this.backgroundColor;}else{this.chart.data.datasets[0].backgroundColor[dsIndex]=this.highlightColor;}
+this.chart.update()}
+getHighlights(){this.highlights=window.observableStorage.getItem('scoreBarHighlights')
+if(this.highlights){for(var i=0;i<this.highlights.length;i++){this.highlightCountry(this.highlights[i]);}}
+this.chart.update()}
+setHighlights(){window.observableStorage.setItem('scoreBarHighlights',this.highlights)
 this.propagateHighlights()}
-syncHighlights(){const highlights=this.getStoredHighlights()
-this.setVisibleHighlights(highlights)}
-initHighlights(){let highlights=this.getStoredHighlights()
-this.setVisibleHighlights(highlights)}
-removeStoredHighlight(countryCode){let highlights=this.getStoredHighlights()
-highlights=highlights.filter(highlight=>highlight!==countryCode)
-this.setStoredHighlights(highlights)}
-addStoredHighlight(countryCode){let highlights=this.getStoredHighlights()
-if(highlights.includes(countryCode)){return}
-highlights.push(countryCode)
-this.setStoredHighlights(highlights)}
-toggleHighlight(countryCode){let highlights=this.getStoredHighlights()
-if(highlights.includes(countryCode)){this.removeVisibleHighlight(countryCode)
-this.removeStoredHighlight(countryCode)}else{this.addVisibleHighlight(countryCode)
-this.addStoredHighlight(countryCode)}
-this.updateHighlights()}
-propagateHighlights(){window.chartObjectRegistry.forEach(chartObject=>{if(chartObject!==this){chartObject.syncHighlights()}})}
+propagateHighlights(){window.SSPICharts.forEach(chartObject=>{if(chartObject!==this){chartObject.getHighlights()}})}
 update(data){this.chart.data=data.data
 this.chart.data.datasets[0].backgroundColor=Array(49).fill(this.backgroundColor)
 this.chart.data.datasets[0].borderColor=Array(49).fill(this.borderColor)
 this.chart.data.datasets[0].borderWidth=2
 this.title.innerText=data.title
 this.chart.options.scales.x.title.text=data.xTitle
-this.initHighlights()
 this.updateSummaryBox(this.computeSummaryStats(data.data))
 this.chart.update()}}
 class CategoryRadarDynamic{constructor(countryCode,parentElement){this.parentElement=parentElement
@@ -2703,9 +2670,12 @@ this.parentElement.appendChild(this.root)}
 initTitle(){this.title=document.createElement('h3')
 this.title.classList.add('radar-chart-title')
 this.root.appendChild(this.title)}
-initLegend(){this.legend=document.createElement('div')
+initLegend(){this.chartArea=document.createElement('div')
+this.chartArea.classList.add('radar-chart-area')
+this.legend=document.createElement('div')
 this.legend.classList.add('radar-chart-legend-box')
-this.root.appendChild(this.legend)}
+this.chartArea.appendChild(this.legend)
+this.root.appendChild(this.chartArea)}
 initChartJSCanvas(){this.canvasContainer=document.createElement('div')
 this.canvasContainer.classList.add('radar-chart-canvas-container')
 this.canvas=document.createElement('canvas')
@@ -2713,7 +2683,7 @@ this.canvasContainer.appendChild(this.canvas)
 this.canvas.width=300
 this.canvas.height=300
 this.context=this.canvas.getContext('2d')
-this.root.appendChild(this.canvasContainer)
+this.chartArea.appendChild(this.canvasContainer)
 this.chart=new Chart(this.context,{type:'polarArea',options:{responsive:true,animation:{animateRotate:false,animateScale:true,duration:750,easing:'easeInOutQuart'},transitions:{active:{animation:{duration:400}}},elements:{line:{borderWidth:3}},scales:{r:{animate:true,pointLabels:{display:true,font:{size:10},color:this.textColor,centerPointLabels:true,padding:0},angleLines:{display:true,color:this.gridColor},grid:{color:this.gridColor,circular:true},ticks:{backdropColor:'rgba(0, 0, 0, 0)',clip:true,color:this.textColor,font:{size:8}},suggestedMin:0,suggestedMax:1}},plugins:{legend:{display:false,},tooltip:{backgroundColor:'#1B2A3Ccc',},}}})}
 buildYearSlider(){this.yearSliderContainer=document.createElement("div");this.yearSliderContainer.classList.add('globe-year-slider-container')
 this.yearSliderContainer.innerHTML=`<div class="year-slider-controls"><label class="year-slider-label"for="radar-year-slider"><span class="year-value-display"contenteditable="true"spellcheck="false">${this.year}</span></label><div class="year-slider-wrapper"><div class="year-slider-track-container"><div class="year-slider-ticks"></div><input
@@ -2787,7 +2757,7 @@ pillarLegendItem.classList.add('radar-chart-legend-item')
 const pillarLegendCanvasContainer=document.createElement('div')
 pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
 const pillarLegendItemCanvas=document.createElement('canvas')
-pillarLegendItemCanvas.width=120
+pillarLegendItemCanvas.width=100
 pillarLegendItemCanvas.height=40
 pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
 this.drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i)
@@ -3025,10 +2995,6 @@ shouldIncludeDataset(feature,scope){const props=feature.properties
 let result
 switch(scope){case'pinned':result=!!props.pinned
 break
-case'visible':result=true
-break
-case'group':result=true
-break
 case'all':result=true
 break
 default:result=true
@@ -3054,9 +3020,11 @@ if(this.playing){this.stopPlay()}
 window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
 window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
 updateLegend(){this.legendItems.innerHTML=''
+function generateListener(countryCode,GlobeChartObject){function listener(){GlobeChartObject.zoomToCountry(countryCode);let feature=GlobeChartObject.geojson.features.filter((f)=>f.properties.CCode===countryCode)[0];console.log(feature)
+GlobeChartObject.activeCountry=feature.properties;GlobeChartObject.countryInformationBox.dataset.unpopulated=false;GlobeChartObject.updateCountryInformation();}
+return listener}
 if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{const pinSpan=document.createElement('span')
-pinSpan.innerText=PinnedCountry.CName+" ("+PinnedCountry.CCode+")"
-const removeButton=document.createElement('button')
+pinSpan.innerText=PinnedCountry.CName+" ("+PinnedCountry.CCode+")";const removeButton=document.createElement('button')
 removeButton.classList.add('icon-button','remove-button-legend-item')
 removeButton.id=`${PinnedCountry.CCode}-remove-button-legend`;removeButton.ariaLabel=`Remove ${PinnedCountry.CName}from pinned countries`;removeButton.title=`Unpin ${PinnedCountry.CName}`;removeButton.innerHTML=`<svg class="remove-button-legend-item-svg"width="16"height="16"><use href="#icon-close"/></svg>`;const newPin=document.createElement('div')
 newPin.classList.add('legend-item')
@@ -3064,6 +3032,7 @@ newPin.style.borderColor=PinnedCountry.borderColor
 newPin.style.backgroundColor=PinnedCountry.borderColor+"44"
 newPin.appendChild(pinSpan)
 newPin.appendChild(removeButton)
+newPin.addEventListener('click',generateListener(PinnedCountry.CCode,this))
 this.legendItems.appendChild(newPin)})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
 removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]

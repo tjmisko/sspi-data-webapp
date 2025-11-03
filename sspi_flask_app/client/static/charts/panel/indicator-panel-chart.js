@@ -261,6 +261,8 @@ class IndicatorPanelChart extends PanelChart {
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.togglePin(dataset)
+                                this.activeCountry = dataset;
+                                this.updateCountryInformation();
                             });
                         }
                     },

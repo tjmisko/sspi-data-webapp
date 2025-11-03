@@ -27,7 +27,6 @@ class StaticPillarDifferentialChart {
         this.PillarCode = PillarCode;
         this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry})`;
         this.initRoot()
-        this.initTitle()
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -52,13 +51,6 @@ class StaticPillarDifferentialChart {
         this.root = document.createElement('div')
         this.root.classList.add('chart-section-pillar-differential')
         this.parentElement.appendChild(this.root)
-    }
-
-    initTitle() {
-        this.title = document.createElement('h2')
-        this.title.classList.add('differential-chart-title')
-        this.title.textContent = "Test Title"
-        this.root.appendChild(this.title)
     }
 
     initChartJSCanvas() {
@@ -153,7 +145,6 @@ class StaticPillarDifferentialChart {
         this.baseCName = data.baseCName
         this.comparisonCCode = data.comparisonCCode
         this.comparisonCName = data.comparisonCName
-        this.title.textContent = data.title
         data.datasets.forEach(dataset => {
             dataset.backgroundColor = dataset.data.map(item => this.colormap(item.Diff)) // Assign colors dynamically
             dataset.borderColor = dataset.data.map(item => this.colormap(item.Diff).slice(0, -2)) // Assign colors dynamically

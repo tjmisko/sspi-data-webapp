@@ -10,7 +10,6 @@ class StaticOverallStackedBarChart {
         } else {
             this.colormap = colormap
         }
-        this.createLegend()
         this.initChartJSCanvas()
         this.fetch().then(data => {
             this.update(data)
@@ -43,24 +42,6 @@ class StaticOverallStackedBarChart {
         }
     }
 
-    createLegend() {
-        this.legend = document.createElement('div')
-        this.legend.classList.add('overall-stack-bar-legend')
-        // this.countryCodes.map((countryCode) => {
-        //     const legendElement = document.createElement('div')
-        //     legendElement.classList.add('stack-bar-legend-element')
-        //     const legendBox = document.createElement('div')
-        //     legendBox.classList.add('legend-box')
-        //     legendBox.style.backgroundColor = this.colormap[countryCode]
-        //     legendElement.appendChild(legendBox)
-        //     const legendText = document.createElement('span')
-        //     legendText.id = countryCode + '-' + this.pillarCode + '-stack-bar-legend-text'
-        //     legendText.innerText = countryCode
-        //     legendElement.appendChild(legendText)
-        //     this.legend.appendChild(legendElement)
-        // })
-        this.root.appendChild(this.legend)
-    }
 
     initChartJSCanvas() {
         this.canvas = document.createElement('canvas')
@@ -68,10 +49,13 @@ class StaticOverallStackedBarChart {
         this.canvas.width = 1000
         this.canvas.height = 1000
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvas)
+        this.chartWrapper = document.createElement('div')
+        this.chartWrapper.appendChild(this.canvas)
+        this.root.appendChild(this.chartWrapper)
         this.chart = new Chart(this.context, {
             type: 'bar',
             options: {
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: false,

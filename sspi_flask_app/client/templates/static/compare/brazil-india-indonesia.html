@@ -3,11 +3,15 @@
 {% block comparison_title %} <h1> Brazil, India, and Indonesia </h1> {% endblock %} 
 {% block comparison_subtitle %} <h2> Emerging Economies Vary in Their Policy Needs, But All Must Remain Mindful of Sustainability in Development </h2> {% endblock %}
 {% block comparison_radar %} 
-    <section id="radar-chart-flex-container" class="radar-chart-flex-container datawindow"> </section>
+    <section id="radar-chart-flex-container" class="radar-chart-flex-outer-container datawindow"> 
+        <div id="radar-chart-flex-container-1"></div>
+        <div id="radar-chart-flex-container-2"></div>
+        <div id="radar-chart-flex-container-3"></div>
+    </section>
     <script defer>
-        window.RadarBRA = new CategoryRadarStatic("BRA", document.getElementById('radar-chart-flex-container'))
-        window.RadarIND = new CategoryRadarStatic("IND", document.getElementById('radar-chart-flex-container'))
-        window.RadarIDN = new CategoryRadarStatic("IDN", document.getElementById('radar-chart-flex-container'))
+        window.RadarBRA = new CategoryRadarStatic("BRA", document.getElementById('radar-chart-flex-container-1'))
+        window.RadarIND = new CategoryRadarStatic("IND", document.getElementById('radar-chart-flex-container-2'))
+        window.RadarIDN = new CategoryRadarStatic("IDN", document.getElementById('radar-chart-flex-container-3'))
     </script>
     {% endblock %}
     {% block sustainability %}
