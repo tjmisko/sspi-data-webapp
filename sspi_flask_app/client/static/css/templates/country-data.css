@@ -8,7 +8,14 @@
   box-shadow: var(--shadow-md);
   padding: 1.25rem;
   box-sizing: border-box;
+  margin-bottom: 2em;
 }
+
+.country-overview-box p {
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+}
+
 
 .country-header {
   margin-bottom: 1rem;

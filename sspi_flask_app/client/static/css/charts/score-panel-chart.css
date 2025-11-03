@@ -256,6 +256,7 @@
   font-weight: 600;
   user-select: none;
   transition: background-color 0.2s ease;
+  line-height: 1.25;
 }
 
 .chart-options-details summary:hover {
@@ -390,6 +391,10 @@
 
 .legend-item span {
   line-height: 1;
+}
+
+.legend-item {
+  cursor: pointer;
 }
 
 .legend-item button {

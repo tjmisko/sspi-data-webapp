@@ -771,15 +771,6 @@ class SSPIGlobeChart {
             case 'pinned':
                 result = !!props.pinned
                 break
-            case 'visible':
-                // Since we removed the hidden property, visible now means all countries
-                result = true
-                break
-            case 'group':
-                // Group functionality not yet implemented for globe
-                // Would need this.groupOptions and this.countryGroupSelector
-                result = true
-                break
             case 'all':
                 result = true
                 break
@@ -832,10 +823,21 @@ class SSPIGlobeChart {
 
     updateLegend() {
         this.legendItems.innerHTML = ''
+        function generateListener(countryCode, GlobeChartObject) {
+            function listener() {
+                GlobeChartObject.zoomToCountry(countryCode);
+                let feature = GlobeChartObject.geojson.features.filter((f) => f.properties.CCode === countryCode)[0];
+                console.log(feature)
+                GlobeChartObject.activeCountry = feature.properties;
+                GlobeChartObject.countryInformationBox.dataset.unpopulated = false;
+                GlobeChartObject.updateCountryInformation();
+            }
+            return listener
+        }
         if (this.pins.size > 0) {
             this.pins.forEach((PinnedCountry) => {
                 const pinSpan = document.createElement('span')
-                pinSpan.innerText = PinnedCountry.CName + " (" + PinnedCountry.CCode + ")"
+                pinSpan.innerText = PinnedCountry.CName + " (" + PinnedCountry.CCode + ")";
                 const removeButton = document.createElement('button')
                 removeButton.classList.add('icon-button', 'remove-button-legend-item')
                 removeButton.id = `${PinnedCountry.CCode}-remove-button-legend`;
@@ -852,6 +854,7 @@ class SSPIGlobeChart {
                 newPin.style.backgroundColor = PinnedCountry.borderColor + "44"
                 newPin.appendChild(pinSpan)
                 newPin.appendChild(removeButton)
+                newPin.addEventListener('click', generateListener(PinnedCountry.CCode, this))
                 this.legendItems.appendChild(newPin)
             })
         }

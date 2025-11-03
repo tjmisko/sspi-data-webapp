@@ -5,7 +5,8 @@ class ScoreBarStatic {
         this.backgroundBase = backgroundColor
         this.width = width
         this.height = height
-        this.setTheme(localStorage.getItem("theme"))
+        this.setTheme(window.observableStorage.getItem("theme"))
+        this.highlights = [];
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
@@ -14,6 +15,7 @@ class ScoreBarStatic {
         this.fetch().then(data => {
             this.update(data)
         })
+        this.setHighlights()
     }
 
     initRoot() {
@@ -44,7 +46,6 @@ class ScoreBarStatic {
                         this.toggleHighlight(
                             this.chart.data.datasets[element.datasetIndex].info[element.index].CCode
                         )
-                        console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
                     })
                 },
                 plugins: {
@@ -192,92 +193,65 @@ class ScoreBarStatic {
             this.borderColor = this.backgroundBase
             this.titleColor = "#333"
         }
-    }
-
-    getStoredHighlights() {
-        let highlights = []
-        if (localStorage.getItem('scoreBarHighlights') === null) {
-            highlights = []
-        } else {
-            highlights = localStorage.getItem('scoreBarHighlights').split(',')
+        if (this.chart) {
+            this.chart.update()
         }
-        return highlights
     }
 
-    setStoredHighlights(highlights) {
-        localStorage.setItem('scoreBarHighlights', highlights)
-    }
-
-    clearVisibleHighlights() {
-        this.chart.data.datasets[0].backgroundColor = Array(49).fill(this.backgroundColor)
-    }
-
-    setVisibleHighlights(highlights) {
-        this.clearVisibleHighlights()
-        highlights.forEach(countryCode => {
-            this.addVisibleHighlight(countryCode)
-        })
-    }
-
-    addVisibleHighlight(countryCode) {
-        const index = this.chart.data.datasets[0].info.findIndex(info => info.CCode === countryCode)
-        this.chart.data.datasets[0].backgroundColor[index] = this.highlightColor
+    highlightCountry(countryCode) {
+        const dsIndex = this.chart.data?.datasets?.[0].info.findIndex((d) => d.CCode === countryCode)
+        if (dsIndex) {
+            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.highlightColor
+        }
+        if (!this.highlights.includes(countryCode)) {
+            this.highlights.push(countryCode)
+        }
+        this.setHighlights()
         this.chart.update()
     }
 
-    removeVisibleHighlight(countryCode) {
-        const index = this.chart.data.datasets[0].info.findIndex(info => info.CCode === countryCode)
-        this.chart.data.datasets[0].backgroundColor[index] = this.backgroundColor
-        this.chart.update()
-    }
-
-    updateHighlights() {
-        const highlights = this.getStoredHighlights()
-        this.setVisibleHighlights(highlights)
-        this.propagateHighlights()
-    }
-
-    syncHighlights() {
-        const highlights = this.getStoredHighlights()
-        this.setVisibleHighlights(highlights)
-    }
-
-    initHighlights() {
-        let highlights = this.getStoredHighlights()
-        this.setVisibleHighlights(highlights)
-    }
-
-    removeStoredHighlight(countryCode) {
-        let highlights = this.getStoredHighlights()
-        highlights = highlights.filter(highlight => highlight !== countryCode)
-        this.setStoredHighlights(highlights)
-    }
-
-    addStoredHighlight(countryCode) {
-        let highlights = this.getStoredHighlights()
-        if (highlights.includes(countryCode)) {
-            return
+    unhighlightCountry(countryCode) {
+        const dsIndex = this.chart.data?.datasets?.[0].info.findIndex((d) => d.CCode === countryCode)
+        if (dsIndex) {
+            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.backgroundColor;
         }
-        highlights.push(countryCode)
-        this.setStoredHighlights(highlights)
+        if (this.highlights.includes(countryCode)) {
+            this.highlights = this.highlights.filter((c) => c === countryCode)
+        }
+        this.setHighlights()
+        this.chart.update()
     }
 
     toggleHighlight(countryCode) {
-        let highlights = this.getStoredHighlights()
-        if (highlights.includes(countryCode)) {
-            this.removeVisibleHighlight(countryCode)
-            this.removeStoredHighlight(countryCode)
+        const dsIndex = this.chart.data?.datasets?.[0].info.findIndex((d) => d.CCode === countryCode);
+        console.log(dsIndex)
+        if (this.chart.data.datasets[0].backgroundColor[dsIndex] === this.highlightColor) {
+            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.backgroundColor;
         } else {
-            this.addVisibleHighlight(countryCode)
-            this.addStoredHighlight(countryCode)
+            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.highlightColor;
         }
-        this.updateHighlights()
+        this.chart.update()
+    }
+
+    getHighlights() {
+        this.highlights = window.observableStorage.getItem('scoreBarHighlights')
+        if (this.highlights) {
+            for (var i = 0; i < this.highlights.length; i++) {
+                this.highlightCountry(this.highlights[i]);
+            }
+        }
+        this.chart.update()
+    }
+
+    setHighlights() {
+        window.observableStorage.setItem('scoreBarHighlights', this.highlights)
+        this.propagateHighlights()
     }
 
     propagateHighlights() {
-        window.chartObjectRegistry.forEach(chartObject => {
+        window.SSPICharts.forEach(chartObject => {
             if (chartObject !== this) {
-                chartObject.syncHighlights()
+                chartObject.getHighlights()
             }
         })
     }
@@ -289,7 +263,6 @@ class ScoreBarStatic {
         this.chart.data.datasets[0].borderWidth = 2
         this.title.innerText = data.title
         this.chart.options.scales.x.title.text = data.xTitle
-        this.initHighlights()
         this.updateSummaryBox(this.computeSummaryStats(data.data))
         this.chart.update()
     }

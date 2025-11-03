@@ -17,10 +17,37 @@
                 <div class="country-header">
                     <h2 class="country-title">{{ cdetail.Flag }} {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }}) </h2>
                 </div>
-                <div class="country-pillar-chart-container" id="dynamic-data-section"></div>
             </div>
             <div class="country-overview-box">
-                <div id="category-radar-section"></div>
+                <h3>Pillar Score Breakdown</h3>
+                <p> The overall SSPI score is computed as the arithmetic
+                average of the Sustainability, Market Structure, and Public
+                Goods Pillars. The Pillar Score Breakdown below shows the
+                relative contributions of the three pillars to the overall score
+                over time.</p>
+                <div class="country-pillar-chart-container" id="pillar-breakdown-chart"></div>
+            </div>
+            <div class="country-overview-box">
+                <h3>Category Score Breakdown</h3>
+                <p> The Category Score Breakdown shows the
+                category scores for a given year. Use the year
+                slider below to scrub through years of
+                interest.</p>
+                <div id="category-radar-chart"></div>
+            </div>
+            <div class="country-overview-box">
+                <h3>Indicator Summary</h3>
+                <p></p>
+                <div id="category-radar-chart"></div>
+            </div>
+            <div class="country-overview-box">
+                <h3>Data Coverage and Imputations</h3>
+            <p>The SSPI uses the best available data to generate
+                policy scores. Where data availability presents
+                challenges, we use imputations and data modelling
+                to make scores as commensurable across countries
+                and years as possible. </p>
+                <div id="category-radar-chart"></div>
             </div>
         </div>
     </section>
@@ -32,11 +59,11 @@
         };
         window.addEventListener("load", (event) => {
             window.SSPICharts.push(
-                new CountryPillarPanelChart(document.getElementById("dynamic-data-section"), "{{ cdetail.CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors }, countryDetail)
+                new CountryPillarPanelChart(document.getElementById("pillar-breakdown-chart"), "{{ cdetail.CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors }, countryDetail)
             );
 
             window.SSPICharts.push(
-                new CategoryRadarDynamic("{{ cdetail.CountryCode | upper}}", document.getElementById("category-radar-section"))
+                new CategoryRadarDynamic("{{ cdetail.CountryCode | upper}}", document.getElementById("category-radar-chart"))
             );
 
             const x = window.observableStorage.getItem('windowX');

@@ -9,12 +9,9 @@
 {% endblock %}
 
 {% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/colorMap.js') }}"></script>
 {% endblock %}
 
 {% block stylesheet %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/score-bar.css') }}"> 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
@@ -35,10 +32,9 @@
         const scoreBarSUSParent = document.getElementById('sus-score-bar-parent');
         const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
         const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
-        window.scoreBarSSPI = new ScoreBarStatic(scoreBarSSPIParent, "SSPI");
-        window.scoreBarSUS = new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS, width=450);
-        window.scoreBarMS = new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS, width=450);
-        window.scoreBarPG = new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG, width=450);
-        window.chartObjectRegistry = [scoreBarSSPI, scoreBarSUS, scoreBarMS, scoreBarPG];
+        SSPICharts.push(new ScoreBarStatic(scoreBarSSPIParent, "SSPI"));
+        SSPICharts.push(new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS, width=375));
+        SSPICharts.push(new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS, width=375));
+        SSPICharts.push(new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG, width=375));
     </script>
 {% endblock %}
