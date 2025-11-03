@@ -6,6 +6,7 @@ Description: Distribution of post-tax national income shares for the bottom 50% 
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincsh_posttax_equalsplit_p0p50.py
 ---
 # Post-Tax National Income
 

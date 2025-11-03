@@ -7,5 +7,6 @@ Source:
   OrganizationCode: UIS
   OrganizationSeriesCode: YEARS.FC.COMP.1T3
   QueryCode: YEARS.FC.COMP.1T3
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/uis/uis_yrsedu.py
 ---
 

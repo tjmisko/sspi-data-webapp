@@ -7,4 +7,5 @@ Source:
   OrganizationCode: FPI
   OrganizationSeriesCode: EFCpc
   QueryCode: EFCpc
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/fpi/fpi_ecofpt_per_cap.py
 ---

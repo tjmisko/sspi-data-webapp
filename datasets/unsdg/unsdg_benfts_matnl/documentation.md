@@ -7,6 +7,7 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1
   QueryCode: 1.3.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg_benfts_matnl.py
 ---
 
 SDG Indicator 1.3.1 - Maternity Benefits Coverage:

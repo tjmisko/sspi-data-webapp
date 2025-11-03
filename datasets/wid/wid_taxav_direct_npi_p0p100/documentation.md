@@ -6,6 +6,7 @@ Description: Average direct taxes across all population percentiles for net prim
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_taxav_direct_npi_p0p100.py
 ---
 # Direct Taxes
 

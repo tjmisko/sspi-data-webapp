@@ -6,6 +6,7 @@ Description: Average per capita carbon emissions from consumption across top 10%
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_carbon_cons_p90p100.py
 ---
 # Personal Carbon Footprint - Consumption Part
 

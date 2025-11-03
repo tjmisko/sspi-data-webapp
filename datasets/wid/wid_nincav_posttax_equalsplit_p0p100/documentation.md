@@ -6,6 +6,7 @@ Description: Average post-tax national income across all population percentiles 
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincav_posttax_equalsplit_p0p100.py
 ---
 # Post-Tax National Income
 

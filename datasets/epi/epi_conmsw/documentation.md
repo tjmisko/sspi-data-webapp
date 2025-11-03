@@ -7,4 +7,5 @@ Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SMW
   QueryCode: epi2024indicators
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/epi/epi_conmsw.py
 ---

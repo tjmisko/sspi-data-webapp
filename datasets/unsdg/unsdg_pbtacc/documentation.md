@@ -7,6 +7,7 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 11.2.1
   QueryCode: 11.2.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_pbtacc.py
 ---
 Unfortunately, this dataset is not useable. It is identified at the city level, and has only one year of data (2020) for almost all countries. Certainly not for dynamic data.
 

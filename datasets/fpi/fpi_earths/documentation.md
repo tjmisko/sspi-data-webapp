@@ -7,4 +7,5 @@ Source:
   OrganizationCode: FPI
   OrganizationSeriesCode: earth
   QueryCode: earth
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/fpi/fpi_earths.py
 ---

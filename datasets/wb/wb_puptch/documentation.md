@@ -7,5 +7,6 @@ Description: Average number of pupils per teacher in primary school, based on he
 Source:
   OrganizationName: World Bank
   QueryCode: SE.PRM.ENRL.TC.ZS
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_puptch.py
 ---
 

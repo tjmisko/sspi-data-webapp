@@ -6,6 +6,7 @@ Description: Alternative gender breakdown coefficients for net personal wealth d
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_wealthbrk_net_gender_alt_p0p100.py
 ---
 # Net Personal Wealth
 

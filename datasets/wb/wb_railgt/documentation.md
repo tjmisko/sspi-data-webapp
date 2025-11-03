@@ -7,6 +7,7 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.GOOD.MT.K6
   QueryCode: IS.RRS.GOOD.MT.K6
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_railgt.py
 ---
 Unit of Measure: Ton-km
 Periodicity: Annual

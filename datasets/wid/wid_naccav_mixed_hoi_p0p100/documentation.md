@@ -6,6 +6,7 @@ Description: Average mixed income across all population percentiles for HOI (Hig
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_naccav_mixed_hoi_p0p100.py
 ---
 # Consumption Of Fixed Capital Attributable To Mixed Income
 

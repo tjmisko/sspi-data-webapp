@@ -9,5 +9,6 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 15.5.1
   QueryCode: 15.5.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_redlst.py
 ---
 

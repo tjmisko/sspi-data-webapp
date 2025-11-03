@@ -7,5 +7,6 @@ Description: >
 Source:
   OrganizationCode: UNSDG
   QueryCode: 9.5.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_rdpgdp.py
 ---
 

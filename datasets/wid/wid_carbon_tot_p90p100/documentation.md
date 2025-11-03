@@ -6,6 +6,7 @@ Description: Average per capita total carbon emissions across top 10% income per
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_carbon_tot_p90p100.py
 ---
 # Personal Carbon Footprint
 

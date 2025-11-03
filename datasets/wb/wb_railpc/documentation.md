@@ -7,6 +7,7 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.PASG.KM
   QueryCode: IS.RRS.PASG.KM
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_railpc.py
 ---
 Unit of Measure: Passenger-kilometers
 Aggregation Method: Median
