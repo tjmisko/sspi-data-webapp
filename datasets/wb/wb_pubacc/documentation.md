@@ -8,5 +8,6 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: FX.OWN.TOTL.ZS
   QueryCode: FX.OWN.TOTL.ZS
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_pubacc.py
 ---
 

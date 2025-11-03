@@ -6,6 +6,7 @@ Description: Gender breakdown coefficients for pre-tax national income distribut
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincbrk_pretax_gender_p90p100.py
 ---
 # Pre-Tax National Income
 

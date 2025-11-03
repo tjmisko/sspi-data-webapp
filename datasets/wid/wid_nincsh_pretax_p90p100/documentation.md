@@ -6,6 +6,7 @@ Description: Share of total pre-tax national income received by the top 10% of e
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincsh_pretax_p90p100.py
 ---
 # Pre-Tax National Income
 

@@ -6,4 +6,5 @@ Description: CO2 emissions from transport, tonnes referring to thousands of kilo
 Source:
   OrganizationCode: IEA
   QueryCode: CO2BySector
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/iea/iea_tco2em.py
 ---

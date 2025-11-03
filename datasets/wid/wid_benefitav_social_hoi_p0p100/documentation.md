@@ -6,6 +6,7 @@ Description: Average social benefits other than social transfers in kind across 
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_benefitav_social_hoi_p0p100.py
 ---
 # Social Benefits Other Than Social Transfers In Kind
 

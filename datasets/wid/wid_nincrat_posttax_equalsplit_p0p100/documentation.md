@@ -6,6 +6,7 @@ Description: Inequality ratios for post-tax national income among equal-split ad
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincrat_posttax_equalsplit_p0p100.py
 ---
 # Post-Tax National Income
 

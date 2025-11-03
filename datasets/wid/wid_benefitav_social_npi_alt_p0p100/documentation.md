@@ -6,6 +6,7 @@ Description: Alternative average social benefits other than social transfers in 
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_benefitav_social_npi_alt_p0p100.py
 ---
 # Social Contributions
 

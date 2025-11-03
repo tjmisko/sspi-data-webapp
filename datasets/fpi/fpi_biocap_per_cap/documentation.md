@@ -7,6 +7,7 @@ Source:
   OrganizationCode: FPI
   OrganizationSeriesCode: BCpc
   QueryCode: BCpc
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/fpi/fpi_biocap_per_cap.py
 ---
 
 What Biocapacity measures

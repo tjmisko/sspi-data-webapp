@@ -7,6 +7,7 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
   QueryCode: 12.4.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_basela.py
 ---
 
 Basel Convention:

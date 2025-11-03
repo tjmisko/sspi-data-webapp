@@ -6,6 +6,7 @@ Description: Average net personal wealth for the top 10% of earners for equal-sp
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_wealthav_net_equalsplit_p90p100.py
 ---
 # Net Personal Wealth
 

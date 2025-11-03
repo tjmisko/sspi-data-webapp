@@ -7,6 +7,7 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.ROD.PSGR.K6
   QueryCode: IS.ROD.PSGR.K6
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_roadps.py
 ---
 This data is unusable for the SSPI because it only covers low- and middle-income countries. Almost none of the SSPI67 countries are included in the coverage.
 

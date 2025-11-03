@@ -7,4 +7,5 @@ Source:
   OrganizationCode: FPI
   OrganizationSeriesCode: hdi
   QueryCode: hdi
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/fpi/fpi_hdi.py
 ---

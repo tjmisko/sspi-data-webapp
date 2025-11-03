@@ -7,6 +7,7 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1
   QueryCode: 12.4.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_minmat.py
 ---
 
 The Minamata Convention requires, under its article 17, paragraph 4, that each Party designates a National 

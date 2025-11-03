@@ -18,5 +18,6 @@ Source:
   OrganizationCode: IEA
   OrganizationName: International Energy Agency
   Note: Computed from constituent datasets, not directly collected
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/iea/iea_coalpw.py
 ---
 

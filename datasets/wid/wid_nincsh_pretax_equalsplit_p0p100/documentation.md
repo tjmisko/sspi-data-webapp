@@ -6,6 +6,7 @@ Description: Distribution of pre-tax national income shares across all populatio
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincsh_pretax_equalsplit_p0p100.py
 ---
 # Pre-Tax National Income
 

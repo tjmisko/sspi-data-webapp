@@ -8,5 +8,6 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 11.6.2
   QueryCode: 11.6.2
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_airpol.py
 ---
 

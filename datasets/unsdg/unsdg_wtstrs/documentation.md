@@ -9,5 +9,6 @@ Description: 'Level of Water Stress: Freshwater withdrawal as a proportion of av
 Source:
   OrganizationCode: UNSDG
   QueryCode: 6.4.2
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_wtstrs.py
 ---
 

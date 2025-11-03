@@ -7,5 +7,6 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: SI.POV.GINI
   QueryCode: SI.POV.GINI
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_ginipt.py
 ---
 

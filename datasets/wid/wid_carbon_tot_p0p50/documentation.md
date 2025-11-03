@@ -6,6 +6,7 @@ Description: Average per capita total carbon emissions across bottom 50% income 
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_carbon_tot_p0p50.py
 ---
 # Personal Carbon Footprint
 

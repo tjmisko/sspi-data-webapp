@@ -6,6 +6,7 @@ Description: Net personal wealth percentile threshold values for equal-split adu
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_wealthth_net_equalsplit_p90p100.py
 ---
 # Net Personal Wealth
 

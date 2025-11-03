@@ -7,5 +7,6 @@ Description: The percentage of people using at least basic sanitation services, 
 Source:
   OrganizationCode: WB
   QueryCode: SH.STA.BASS.ZS
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_sansrv.py
 ---
 

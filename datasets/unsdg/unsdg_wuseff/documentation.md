@@ -10,5 +10,6 @@ Description: |
 Source:
   OrganizationCode: UNSDG
   QueryCode: 6.4.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_wuseff.py
 ---
 

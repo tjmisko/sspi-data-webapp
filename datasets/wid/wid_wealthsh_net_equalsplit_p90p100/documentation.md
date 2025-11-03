@@ -6,6 +6,7 @@ Description: Distribution of net personal wealth shares for the top 10% of earne
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_wealthsh_net_equalsplit_p90p100.py
 ---
 # Net Personal Wealth
 

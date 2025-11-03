@@ -6,5 +6,6 @@ Description: Percentage of total final energy consumption generated from Biowast
 Source:
   OrganizationCode: IEA
   QueryCode: TESbySource
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/iea/iea_biowas.py
 ---
 

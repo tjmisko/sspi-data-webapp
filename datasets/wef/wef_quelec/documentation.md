@@ -8,5 +8,6 @@ Description: >
 Source:
   OrganizationCode: WEF
   QueryCode: WEF.GCIHH.EOSQ064
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wef/wef_quelec.py
 ---
 

@@ -6,6 +6,7 @@ Description: Average per capita carbon emissions from consumption across bottom 
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_carbon_cons_p0p50.py
 ---
 # Personal Carbon Footprint - Consumption Part
 

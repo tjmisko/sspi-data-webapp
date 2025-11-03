@@ -12,5 +12,6 @@ Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SNM
   QueryCode: epi2024indicators
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/epi/epi_nitrog.py
 ---
 

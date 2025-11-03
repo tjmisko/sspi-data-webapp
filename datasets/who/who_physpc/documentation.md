@@ -7,5 +7,6 @@ Description: Number of medical doctors (physicians), both generalists and specia
 Source:
   OrganizationCode: WHO
   QueryCode: HWF_0001
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/who/who_physpc.py
 ---
 

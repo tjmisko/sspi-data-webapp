@@ -6,6 +6,7 @@ Description: Average per capita CO2 emissions across full income distribution. C
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_co2_footprint_p0p100.py
 ---
 
 # Personal CO2 Footprint (Full Distribution)

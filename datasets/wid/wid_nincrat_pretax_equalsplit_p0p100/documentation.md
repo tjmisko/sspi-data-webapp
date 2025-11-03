@@ -6,6 +6,7 @@ Description: Inequality ratios for pre-tax national income among equal-split adu
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincrat_pretax_equalsplit_p0p100.py
 ---
 # Pre-Tax National Income
 

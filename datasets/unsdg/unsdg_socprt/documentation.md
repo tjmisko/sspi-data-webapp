@@ -7,6 +7,7 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1
   QueryCode: 1.3.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg_socprt.py
 ---
 
 SDG Indicator 1.3.1 - Social Protection Coverage:

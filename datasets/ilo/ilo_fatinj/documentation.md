@@ -8,5 +8,6 @@ Source:
   OrganizationSeriesCode: DF_SDG_F881_SEX_MIG_RT
   QueryCode: Indicator=DF_SDG_F881_SEX_MIG_RT;Parameters=
   Format: SDMX-JSON
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/ilo/ilo_fatinj.py
 ---
 
