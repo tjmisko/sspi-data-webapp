@@ -73,9 +73,12 @@ class CategoryRadarDynamic {
     }
 
     initLegend() {
+        this.chartArea = document.createElement('div')
+        this.chartArea.classList.add('radar-chart-area')
         this.legend = document.createElement('div')
         this.legend.classList.add('radar-chart-legend-box')
-        this.root.appendChild(this.legend)
+        this.chartArea.appendChild(this.legend)
+        this.root.appendChild(this.chartArea)
     }
 
     initChartJSCanvas() {
@@ -86,7 +89,7 @@ class CategoryRadarDynamic {
         this.canvas.width = 300
         this.canvas.height = 300
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvasContainer)
+        this.chartArea.appendChild(this.canvasContainer)
         this.chart = new Chart(this.context, {
             type: 'polarArea',
             options: {
@@ -360,7 +363,7 @@ class CategoryRadarDynamic {
             const pillarLegendCanvasContainer = document.createElement('div')
             pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
             const pillarLegendItemCanvas = document.createElement('canvas')
-            pillarLegendItemCanvas.width = 120
+            pillarLegendItemCanvas.width = 100
             pillarLegendItemCanvas.height = 40
             pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
             this.drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i)
