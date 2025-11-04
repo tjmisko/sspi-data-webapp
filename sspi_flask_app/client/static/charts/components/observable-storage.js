@@ -42,7 +42,8 @@ class ObservableStorage {
     }
 
     _emit(key, oldValue, newValue) {
-        if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return;
+        // if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return;
+        console.log('keychange!')
         const callbacks = this.listeners[key] || [];
         for (const cb of callbacks) {
             cb(oldValue, newValue);

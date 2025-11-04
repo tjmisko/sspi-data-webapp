@@ -237,17 +237,22 @@ def compare_home_2018():
     return render_template("static/2018-compare-home.html")
 
 
-@client_bp.route('/2018/data/indicator/<IndicatorCode>')
-def indicator_data_2018(IndicatorCode):
-    IndicatorCode = IndicatorCode.upper()
-    return render_template('2018-indicator-static.html')
+@client_bp.route('/2018/data/indicator/<indicator_code>')
+def indicator_data_2018(indicator_code):
+    indicator_code = indicator_code.upper()
+    return render_template('static/2018-item-static.html', item_code=indicator_code)
 
 
-@client_bp.route('/2018/data/category/<CategoryCode>')
-def category_data_2018(CategoryCode):
-    CategoryCode = CategoryCode.upper()
-    return render_template('2018-category-static.html')
+@client_bp.route('/2018/data/category/<category_code>')
+def category_data_2018(category_code):
+    category_code = category_code.upper()
+    return render_template('static/2018-item-static.html', item_code=category_code)
 
+
+@client_bp.route('/2018/data/pillar/<pillar_code>')
+def pillar_data_2018(pillar_code):
+    pillar_code = pillar_code.upper()
+    return render_template('static/2018-item-static.html', item_code=pillar_code)
 
 
 @client_bp.route('/2018/compare/custom', methods=['POST'])

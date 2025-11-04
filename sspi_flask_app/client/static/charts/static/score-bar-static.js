@@ -5,8 +5,6 @@ class ScoreBarStatic {
         this.backgroundBase = backgroundColor
         this.width = width
         this.height = height
-        this.setTheme(window.observableStorage.getItem("theme"))
-        this.highlights = [];
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
@@ -15,7 +13,7 @@ class ScoreBarStatic {
         this.fetch().then(data => {
             this.update(data)
         })
-        this.setHighlights()
+        this.setTheme(window.observableStorage.getItem("theme"))
     }
 
     initRoot() {
@@ -33,19 +31,29 @@ class ScoreBarStatic {
     initChartJSCanvas() {
         // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
-        this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`;
-        this.canvas.width = this.width
-        this.canvas.height = this.height
+        this.canvas.id = `score-bar-canvas-container${this.itemCode}`;
+        // this.canvas.width = this.width
+        // this.canvas.height = this.height
+        this.chartContainer = document.createElement('div')
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvas)
+        this.chartContainer.classList.add('score-bar-chart-container')
+        this.chartContainer.appendChild(this.canvas)
+        this.root.appendChild(this.chartContainer)
         this.chart = new Chart(this.context, {
             type: 'bar',
             options: {
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 0,
+                    }
+                },
                 onClick: (event, elements) => {
                     elements.forEach(element => {
                         this.toggleHighlight(
                             this.chart.data.datasets[element.datasetIndex].info[element.index].CCode
                         )
+                        console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
                     })
                 },
                 plugins: {
@@ -56,9 +64,9 @@ class ScoreBarStatic {
                             label: function(context) {
                                 const info = context.dataset.info[context.dataIndex]
                                 return [
-                                    `${info.IName} Score: ${info.Score.toFixed(3)}`,
-                                    `${info.IName} Rank: ${info.Rank}`,
-                                    `Year: ${info.Year}`
+                                    info.IName + ' Score: ' + info.Score.toFixed(3),
+                                    info.IName + ' Rank: ' + info.Rank,
+                                    'Year: ' + info.Year
                                 ]
                             }
                         }
@@ -110,7 +118,7 @@ class ScoreBarStatic {
                 ticks: {
                     color: this.textColor,
                     font: {
-                        size: 12,
+                        size: 10,
                         weight: 'bold'
                     },
                     callback: function(value, index, values) {
@@ -123,6 +131,9 @@ class ScoreBarStatic {
                 position: 'left',
                 ticks: {
                     color: this.textColor,
+                    font: {
+                        size: 10,
+                    }
                 },
                 grid: {
                     display: true,
@@ -165,7 +176,7 @@ class ScoreBarStatic {
         for (const key in summaryStats) {
             const stat = document.createElement('div')
             stat.classList.add('score-bar-summary-stat')
-            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`;
+            stat.innerHTML = key + ': <b>' + summaryStats[key] + '</b>'
             this.summaryBox.appendChild(stat)
         }
     }
@@ -178,7 +189,7 @@ class ScoreBarStatic {
     setTheme(theme) {
         if (theme !== "light") {
             this.theme = "dark"
-            this.textColor = "#bbb"
+            this.textColor = "#dddddd"
             this.gridColor = "#cccccc33"
             this.backgroundColor = this.backgroundBase + "99"
             this.highlightColor = "#ff0000ee"
@@ -194,64 +205,95 @@ class ScoreBarStatic {
             this.titleColor = "#333"
         }
         if (this.chart) {
+            this.updateChartOptions()
             this.chart.update()
         }
     }
 
-    highlightCountry(countryCode) {
-        const dsIndex = this.chart.data?.datasets?.[0].info.findIndex((d) => d.CCode === countryCode)
-        if (dsIndex) {
-            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.highlightColor
+    getStoredHighlights() {
+        let highlights = []
+        if (localStorage.getItem('scoreBarHighlights') === null) {
+            highlights = []
+        } else {
+            highlights = localStorage.getItem('scoreBarHighlights').split(',')
         }
-        if (!this.highlights.includes(countryCode)) {
-            this.highlights.push(countryCode)
-        }
-        this.setHighlights()
+        return highlights
+    }
+
+    setStoredHighlights(highlights) {
+        localStorage.setItem('scoreBarHighlights', highlights)
+    }
+
+    clearVisibleHighlights() {
+        this.chart.data.datasets[0].backgroundColor = Array(49).fill(this.backgroundColor)
+    }
+
+    setVisibleHighlights(highlights) {
+        this.clearVisibleHighlights()
+        highlights.forEach(countryCode => {
+            this.addVisibleHighlight(countryCode)
+        })
+    }
+
+    addVisibleHighlight(countryCode) {
+        const index = this.chart.data.datasets[0].info.findIndex(info => info.CCode === countryCode)
+        this.chart.data.datasets[0].backgroundColor[index] = this.highlightColor
         this.chart.update()
     }
 
-    unhighlightCountry(countryCode) {
-        const dsIndex = this.chart.data?.datasets?.[0].info.findIndex((d) => d.CCode === countryCode)
-        if (dsIndex) {
-            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.backgroundColor;
-        }
-        if (this.highlights.includes(countryCode)) {
-            this.highlights = this.highlights.filter((c) => c === countryCode)
-        }
-        this.setHighlights()
+    removeVisibleHighlight(countryCode) {
+        const index = this.chart.data.datasets[0].info.findIndex(info => info.CCode === countryCode)
+        this.chart.data.datasets[0].backgroundColor[index] = this.backgroundColor
         this.chart.update()
+    }
+
+    updateHighlights() {
+        const highlights = this.getStoredHighlights()
+        this.setVisibleHighlights(highlights)
+        this.propagateHighlights()
+    }
+
+    syncHighlights() {
+        const highlights = this.getStoredHighlights()
+        this.setVisibleHighlights(highlights)
+    }
+
+    initHighlights() {
+        let highlights = this.getStoredHighlights()
+        this.setVisibleHighlights(highlights)
+    }
+
+    removeStoredHighlight(countryCode) {
+        let highlights = this.getStoredHighlights()
+        highlights = highlights.filter(highlight => highlight !== countryCode)
+        this.setStoredHighlights(highlights)
+    }
+
+    addStoredHighlight(countryCode) {
+        let highlights = this.getStoredHighlights()
+        if (highlights.includes(countryCode)) {
+            return
+        }
+        highlights.push(countryCode)
+        this.setStoredHighlights(highlights)
     }
 
     toggleHighlight(countryCode) {
-        const dsIndex = this.chart.data?.datasets?.[0].info.findIndex((d) => d.CCode === countryCode);
-        console.log(dsIndex)
-        if (this.chart.data.datasets[0].backgroundColor[dsIndex] === this.highlightColor) {
-            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.backgroundColor;
+        let highlights = this.getStoredHighlights()
+        if (highlights.includes(countryCode)) {
+            this.removeVisibleHighlight(countryCode)
+            this.removeStoredHighlight(countryCode)
         } else {
-            this.chart.data.datasets[0].backgroundColor[dsIndex] = this.highlightColor;
+            this.addVisibleHighlight(countryCode)
+            this.addStoredHighlight(countryCode)
         }
-        this.chart.update()
-    }
-
-    getHighlights() {
-        this.highlights = window.observableStorage.getItem('scoreBarHighlights')
-        if (this.highlights) {
-            for (var i = 0; i < this.highlights.length; i++) {
-                this.highlightCountry(this.highlights[i]);
-            }
-        }
-        this.chart.update()
-    }
-
-    setHighlights() {
-        window.observableStorage.setItem('scoreBarHighlights', this.highlights)
-        this.propagateHighlights()
+        this.updateHighlights()
     }
 
     propagateHighlights() {
         window.SSPICharts.forEach(chartObject => {
             if (chartObject !== this) {
-                chartObject.getHighlights()
+                chartObject.syncHighlights()
             }
         })
     }
@@ -263,6 +305,7 @@ class ScoreBarStatic {
         this.chart.data.datasets[0].borderWidth = 2
         this.title.innerText = data.title
         this.chart.options.scales.x.title.text = data.xTitle
+        this.initHighlights()
         this.updateSummaryBox(this.computeSummaryStats(data.data))
         this.chart.update()
     }

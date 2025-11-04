@@ -1,7 +1,7 @@
 class PanelChart {
     constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300, colorProvider = SSPIColors } ) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
-        this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
+        this.CountryLisr = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.pins = new Set() // pins contains a list of pinned countries
         this.missingCountries = [] // Array of countries with no data, populated from API response

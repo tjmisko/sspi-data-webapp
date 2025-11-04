@@ -1,42 +1,109 @@
-.score-bar-parent {
+.score-bar-overall-box {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 2em 3em;
+  background-color: var(--box-background-color);
+  margin-bottom: 2em;
+  padding: 1.25em;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
 }
 
-.chart-container-bar-score-static {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: column;
+.score-bar-overall-box h2, .pillar-chart-box h2 {
+  margin-top: 0;
+  font-size: 1.2em;
+  line-height: 1.2;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.score-bar-overall-flexbox {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
+.score-bar-overall-box p {
+  margin-bottom: 0.5em;
+  color: var(--low-importance-font-color, #bbb);
+  font-family: var(--body-font-family);
+}
+
+
+.score-bar-overall-box p {
+  margin-bottom: 0.5em;
+  color: var(--low-importance-font-color, #bbb);
+  font-family: var(--body-font-family);
+}
+
+.static-pillar-par-box {
+  margin-bottom: 0.5em;
+  font-family: var(--body-font-family);
+}
+  
+
+
+.pillar-chart-box {
+  padding: 1.25em;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
 }
 
 .score-bar-pillar-flexbox {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.score-bar-parent {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-self: stretch;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em;
+  min-width: 0;
+}
+ 
+.score-bar-chart-title {
+    font-size: 0.8em;
+    margin-bottom: 0.5em;
+    text-align: center;
+}
+
+.chart-container-bar-score-static {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 0;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+}
+
+.score-bar-chart-container {
+  width: clamp(150px, 100%, 1000px);
+  height: clamp(900px, 83vh, 83vh);
+}
+
+
+.score-bar-pillar-flexbox div {
+  min-width: 0;
+  padding: 0.25em;
 }
 
 .score-bar-summary-box {
-    margin-top: 0.25em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: row;
-    padding: 0.25em 2em;
-    background-color: #1B2A3C;
-    border-radius: 5px;
+  margin-top: 0.25em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 0.25em 0.5em;
+  background-color: var(--box-background-color);
+  border-radius: 5px;
 }
 
 .score-bar-summary-stat {
-    padding: 0 1em;
+  font-size: 0.8em;
+  padding: 0.4em;
 }
