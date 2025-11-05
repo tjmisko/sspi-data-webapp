@@ -52,16 +52,6 @@
     cursor: text;
 }
 
-/* Global width constraints for form elements to prevent grid expansion */
-.pillar-column input,
-.pillar-column select, 
-.pillar-column button,
-.pillar-column textarea {
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow-wrap: break-word;
-}
-
 /* Code input styles */
 /* Header content containers - main flexbox layout */
 .customization-pillar-header-content {
@@ -106,20 +96,26 @@
 }
 
 /* Code sections within the flexbox */
-.pillar-code-section, .category-code-section, .indicator-code-section {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    flex-shrink: 0;
+.pillar-code-section, .category-code-section {
+  box-sizing: border-box;
+  display: flex;
+  gap: 0.5em;
+  box-sizing: border-box;
 }
 
 .code-label {
-    font-size: 0.75em;
+    font-size: 12px;
     font-weight: normal;
     color: var(--low-importance-font-color);
     white-space: nowrap;
     margin: 0;
+    padding: 0;
     font-family: var(--body-font-family);
+    flex: 0 0 auto;
+    display: inline-block;
+    min-width: fit-content;
+    visibility: visible;
+    opacity: 1;
 }
 
 .pillar-code-input, .category-code-input {
@@ -136,7 +132,8 @@
 }
 
 .indicator-code-input {
-    width: 65px;
+    flex: 0 0 8ch;
+    min-width: 0;
     padding: 0.2em 0.3em;
     border: 1px solid var(--subtle-line-color, #ccc);
     border-radius: var(--border-radius);
@@ -146,6 +143,7 @@
     background: var(--input-background-color);
     color: var(--input-text-color);
     text-align: center;
+    box-sizing: border-box;
 }
 
 .pillar-code-input:focus, .category-code-input:focus, .indicator-code-input:focus {
@@ -158,7 +156,12 @@
     font-size: 0.65em;
     margin-left: 0.3em;
     font-weight: bold;
-    flex-shrink: 0;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.code-validation-message:empty {
+    display: none;
 }
 
 .code-validation-message.error {
@@ -184,9 +187,11 @@
     list-style: none;
     background: var(--box-background-color);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
+    box-sizing: border-box;
     user-select: none;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 0.5rem;
 }
 
@@ -203,9 +208,10 @@
 
 .indicator-name {
     margin: 0;
-    flex: 1;
+    flex: 999 1 0%;
     min-width: 0;
     color: var(--header-text-color);
+    box-sizing: border-box;
     font-family: var(--header-font-family);
     font-size: 0.8rem;
     font-weight: 500;
@@ -220,7 +226,9 @@
     align-items: center;
     gap: 0.25rem;
     flex: 0 0 auto;
-    margin-left: auto;
+    width: 125px;
+    max-width: 125px;
+    box-sizing: border-box;
 }
 
 .indicator-config {
@@ -487,7 +495,7 @@
   display: flex;
   flex-direction: column;
   border: var(--theme-border-thick);
-  padding: 0.75rem;
+  padding: 0.6rem;
   border-radius: 0.75rem;
   width: 100%;
   box-sizing: border-box;
@@ -1298,15 +1306,15 @@
     .customization-category-header, .customization-indicator-header {
         flex-wrap: wrap;
         gap: 0.25rem;
+        box-sizing: border-box;
     }
     
     .customization-category-header-title, .indicator-name {
         min-width: 80px;
-        flex: 1 1 auto;
     }
     
-    .category-code-section, .indicator-code-section {
-        flex: 0 0 auto;
+    .category-code-section {
+        flex: 0 1 0;
         margin-left: 0;
     }
     
@@ -1330,15 +1338,6 @@
         max-width: none;
     }
 
-    /* Force all form elements to respect container width on mobile */
-    .pillar-column input,
-    .pillar-column select,
-    .pillar-column button {
-        max-width: 100%;
-        width: auto;
-        min-width: 0;
-    }
-    
     /* Make dataset items stack better on mobile */
     .dataset-item {
         flex-wrap: wrap;
@@ -2029,5 +2028,282 @@
         max-width: 80%;
         bottom: -80px;
         font-size: 0.75rem;
+    }
+}
+
+/* Inline Visualization Section Styles */
+.visualization-section {
+    margin-bottom: 1.5rem;
+    border: 2px solid var(--green-accent);
+    border-radius: var(--border-radius-lg);
+    background: var(--box-background-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 2000px;
+    }
+}
+
+.visualization-section.collapsed {
+    /* Let header size naturally - no max-height restriction */
+}
+
+.visualization-section.collapsed .visualization-chart-container {
+    display: none;
+    height: 0;
+    overflow: hidden;
+    padding: 0;
+    opacity: 0;
+}
+
+.visualization-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--green-accent) 15%, var(--box-background-color)),
+        color-mix(in srgb, var(--green-accent) 5%, var(--box-background-color))
+    );
+    border-bottom: 1px solid var(--subtle-line-color);
+    cursor: pointer;
+    user-select: none;
+}
+
+.visualization-section.collapsed .visualization-header {
+    border-bottom: none;
+    cursor: pointer;
+}
+
+.visualization-title {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.visualization-title h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-family: var(--header-font-family);
+    color: var(--header-text-color);
+    font-weight: 600;
+}
+
+.visualization-subtitle {
+    font-size: 0.85rem;
+    color: var(--low-importance-font-color);
+    margin-left: 2.5rem;
+    font-family: var(--body-font-family);
+}
+
+/* Collapse/Expand Button (Disclosure Triangle) */
+.collapse-viz-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    margin-right: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.5em;
+    height: 1.5em;
+    color: var(--header-text-color);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border-radius: 3px;
+}
+
+.collapse-viz-btn:hover {
+    background-color: color-mix(in srgb, var(--low-importance-font-color) 15%, transparent);
+    transform: scale(1.1);
+}
+
+/* Rotate arrow when collapsed */
+.visualization-section.collapsed .collapse-viz-btn {
+    transform: rotate(-90deg);
+}
+
+.visualization-section.collapsed .collapse-viz-btn:hover {
+    transform: rotate(-90deg) scale(1.1);
+}
+
+.visualization-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.visualization-controls button {
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: 1px solid var(--subtle-line-color);
+    padding: 0.4em 0.8em;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--header-font-family);
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.visualization-controls button:hover {
+    background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--green-accent) 20%);
+    border-color: var(--green-accent);
+}
+
+.visualization-controls .refresh-viz-btn {
+    background-color: var(--green-accent);
+    color: white;
+    border-color: var(--green-accent);
+}
+
+.visualization-controls .refresh-viz-btn:hover {
+    background-color: color-mix(in srgb, var(--green-accent) 85%, black);
+}
+
+.visualization-controls .close-viz-btn {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+    font-weight: bold;
+}
+
+.visualization-controls .close-viz-btn:hover {
+    background-color: #c82333;
+}
+
+.visualization-chart-container {
+    padding: 1.5rem;
+    background: var(--page-background);
+    min-height: 400px;
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+.visualization-chart-container.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.visualization-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--subtle-line-color);
+    border-top-color: var(--green-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.visualization-loading-text {
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+    font-size: 1rem;
+}
+
+.visualization-error {
+    padding: 2rem;
+    text-align: center;
+    color: #dc3545;
+    font-family: var(--body-font-family);
+}
+
+.visualization-error-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.visualization-error-message {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.visualization-error-details {
+    font-size: 0.9rem;
+    color: var(--body-text-color);
+    margin-top: 0.5rem;
+}
+
+.visualization-empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
+}
+
+.visualization-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.visualization-empty-message {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--body-text-color);
+}
+
+.visualization-empty-instructions {
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Mobile adjustments for visualization section */
+@media (max-width: var(--small-tablet-break-width)) {
+    .visualization-header {
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .collapse-viz-btn {
+        margin-right: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .visualization-title {
+        flex: 1 1 auto;
+        min-width: 150px;
+    }
+
+    .visualization-title h2 {
+        font-size: 0.95rem;
+    }
+
+    .visualization-controls {
+        flex: 0 1 auto;
+    }
+
+    .visualization-controls button {
+        font-size: 0.75em;
+        padding: 0.3em 0.6em;
+    }
+
+    .visualization-chart-container {
+        padding: 1rem;
+        min-height: 300px;
+    }
+
+    .visualization-subtitle {
+        margin-left: 0;
+        font-size: 0.8rem;
     }
 }
