@@ -529,7 +529,7 @@
   border-radius: 0.5em;
   box-sizing: border-box;
   background-color: var(--page-background);
-  padding: 0.25em;
+  padding: 0.35em;
   min-height: 1rem;
   margin: 0.25em 0;
 }
