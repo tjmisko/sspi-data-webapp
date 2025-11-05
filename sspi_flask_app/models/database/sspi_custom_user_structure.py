@@ -283,24 +283,21 @@ class SSPICustomUserStructure(MongoWrapper):
         """Validates goalpost values."""
         lower = indicator_config.get("LowerGoalpost")
         upper = indicator_config.get("UpperGoalpost")
-        
+
         if lower is not None:
             if not isinstance(lower, (int, float)):
                 raise InvalidDocumentFormatError(
                     f"Indicator config {indicator_index} 'LowerGoalpost' must be a number (document {document_number})"
                 )
-        
+
         if upper is not None:
             if not isinstance(upper, (int, float)):
                 raise InvalidDocumentFormatError(
                     f"Indicator config {indicator_index} 'UpperGoalpost' must be a number (document {document_number})"
                 )
-        
-        if lower is not None and upper is not None:
-            if lower > upper:
-                raise InvalidDocumentFormatError(
-                    f"Indicator config {indicator_index} 'LowerGoalpost' cannot be greater than 'UpperGoalpost' (document {document_number})"
-                )
+
+        # Note: LowerGoalpost is allowed to be greater than UpperGoalpost
+        # This can be used for inverted indicators or other scoring scenarios
     
     def validate_timestamps(self, document: dict, document_number: int = 0):
         """Validates timestamp format."""

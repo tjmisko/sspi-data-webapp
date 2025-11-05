@@ -292,14 +292,15 @@
 
 .legend-items {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
 
 .legend-item {
   display: flex;
+  flex: 1 1 0;
   flex-direction: row;
   align-items: center;
   font-size: 0.75em;
@@ -312,7 +313,7 @@
 }
 
 .legend-item span {
-  line-height: 3;
+  line-height: 1;
 }
 
 .add-country-pin-results-window {
