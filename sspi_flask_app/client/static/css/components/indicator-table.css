@@ -6,17 +6,24 @@
     margin: 0;
     padding: 0;
 }
-
-.indicators-page h2 {
-    color: var(--header-font-color);
-    font-family: var(--header-font-family);
-    margin-bottom: 0.5rem;
-    padding: 0 var(--theme-gap);
+.indicator-table-title-controls-box {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.indicator-table-title-controls-box h2 {
+  flex: 1 1 0;
+  color: var(--header-font-color);
+  font-family: var(--header-font-family);
+  margin-bottom: 0.5rem;
+  padding: 0 var(--theme-gap);
 }
 
-.indicators-page p {
+.indicator-table-container p {
   font-family: var(--body-font-family);
   color: var(--low-importance-font-color);
+  padding: 0 var(--theme-gap);
+  margin-top: 0.5em 0;
 }
 
 .page-description {
@@ -28,22 +35,30 @@
   padding: 0 var(--theme-gap);
 }
 
-.indicators-container {
+.indicator-table-container {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  box-sizing: border-box;
+  padding: 0.5em;
   width: 100%;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  box-sizing: border-box;
 }
 
 /* Pillar Section Styling */
 .pillar-section {
-  background: var(--box-background-color);
+  min-width: 0;
   border: none;
   border-top: 1px solid var(--subtle-line-color);
   border-radius: 0;
   overflow: hidden;
   width: 100%;
   margin-bottom: 1px;
+  box-sizing: border-box;
 }
 
 .pillar-section:first-child {
@@ -51,7 +66,8 @@
 }
 
 .pillar-section:last-child {
-  border-bottom: 1px solid var(--subtle-line-color);
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .indicators-pillar-header {
@@ -63,17 +79,17 @@
 
 /* Individual pillar colors - matching customizable-sspi patterns */
 .pillar-section[data-pillar-code="SUS"] .indicators-pillar-header {
-  background: color-mix(in srgb, var(--sus-color) 15%, var(--box-background-color));
+  background: color-mix(in srgb, var(--sus-color) 20%, var(--box-background-color));
   border-color: var(--sus-color);
 }
 
 .pillar-section[data-pillar-code="MS"] .indicators-pillar-header {
-  background: color-mix(in srgb, var(--ms-color) 15%, var(--box-background-color));
+  background: color-mix(in srgb, var(--ms-color) 20%, var(--box-background-color));
   border-color: var(--ms-color);
 }
 
 .pillar-section[data-pillar-code="PG"] .indicators-pillar-header {
-  background: color-mix(in srgb, var(--pg-color) 15%, var(--box-background-color));
+  background: color-mix(in srgb, var(--pg-color) 20%, var(--box-background-color));
   border-color: var(--pg-color);
 }
 
@@ -134,7 +150,7 @@
 
 /* Category Section Styling */
 .category-section {
-  border-bottom: 1px solid var(--subtle-line-color);
+  /* border-bottom: 1px solid var(--subtle-line-color); */
   width: 100%;
 }
 
@@ -143,8 +159,7 @@
 }
 
 .indicators-category-header {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--subtle-line-color);
+  padding: 0.65rem 1rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -208,9 +223,13 @@
   background: var(--pg-color);
 }
 
-.indictors-page .category-content {
-    padding: 0;
-    width: 100%;
+.indicator-table-category-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0.25em;
+  box-sizing: border-box;
+  margin-bottom: 0.25em;
 }
 
 .category-content[data-expanded="false"] {
@@ -218,11 +237,10 @@
 }
 
 /* Indicators List Styling */
-.indicators-list {
-  padding: 1rem;
+.indicator-table-indicators-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.25rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -244,10 +262,11 @@
 }
 
 .indicators-indicator-header {
-  padding: 0.75rem;
+  padding: 0.5rem 0.5em;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
+  font-family: var(--body-font-family);
 }
 
 /* Indicator header colors based on parent pillar */
@@ -343,7 +362,7 @@
 }
 
 /* Datasets Section */
-.datasets-section h6 {
+.datasets-section h6, .indicator-description h6 {
   color: var(--header-font-color);
   font-family: var(--header-font-family);
   font-size: 0.9rem;
@@ -359,7 +378,8 @@
 
 .dataset-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
   padding: 0.75rem;
   border: 1px solid var(--subtle-line-color);
@@ -384,6 +404,7 @@
   flex-direction: column;
   gap: 0.25rem;
   flex: 1;
+  width: 100%;
 }
 
 .view-data-btn {
@@ -405,38 +426,69 @@
   color: var(--link-color);
 }
 
+.dataset-header-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+
 .dataset-name {
+  flex: 1 1 auto;
   color: var(--font-color);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-family: var(--header-font-family);
 }
 
 .dataset-code {
+  flex: 0 0 auto;
   color: var(--medium-importance-font-color);
   font-family: var(--code-font-family);
   font-size: 0.8rem;
+  line-height: 1.2;
+  max-width: 300px;
+  overflow-wrap: break-word;
+}
+
+.dataset-description {
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  line-height: 1.2;
+  font-size: 0.9rem;
 }
 
 .dataset-source {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
+  margin-top: 0.5em;
+  width: 100%;
+}
+
+.source-org {
+  color: var(--body-font-color);
+  font-family: var(--code-font-family);
+  font-size: 0.8rem;
+  margin-right: 0.25em;
+  line-height: 1;
 }
 
 .source-label {
   color: var(--low-importance-font-color);
   font-size: 0.8rem;
+  margin-right: 0.25em;
+  line-height: 1;
 }
 
-.source-org {
-  background: var(--header-background-color);
-  color: var(--header-font-color);
-  padding: 0.15rem 0.3rem;
-  border-radius: var(--border-radius);
-  font-family: var(--code-font-family);
-  font-size: 0.75rem;
-  font-weight: 500;
+.dataset-source-link-container {
+  margin-top: 0.25em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em;
+  width: 100%;
+}
+
+.dataset-source-link-container a {
+  font-size: 0.7rem;
+  padding: 0.3rem 0.6rem;
 }
 
 /* Collapse Toggle Button Styling (reusing from customizable-sspi-enhanced.css) */
@@ -498,19 +550,13 @@
   .pillar-info,
   .category-info,
   .indicator-main-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .dataset-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
-  }
-
-  .dataset-source {
-    align-self: flex-end;
   }
 }
 

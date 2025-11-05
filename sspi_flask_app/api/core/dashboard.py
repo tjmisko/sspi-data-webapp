@@ -1007,7 +1007,8 @@ def build_indicators_data():
                 'pillar_description': pillar_item.get('Description', ''),
                 'categories': []
             }
-            category_codes = pillar_item.get('Children', [])
+            category_codes = pillar_item.get('CategoryCodes', [])
+            print(category_codes)
             for category_code in category_codes:
                 category_item = items_by_code.get(category_code)
                 if not category_item:
@@ -1018,7 +1019,7 @@ def build_indicators_data():
                     'category_description': category_item.get('Description', ''),
                     'indicators': []
                 }
-                indicator_codes = category_item.get('Children', [])
+                indicator_codes = category_item.get('IndicatorCodes', [])
                 for indicator_code in indicator_codes:
                     indicator_item = items_by_code.get(indicator_code)
                     if not indicator_item:
@@ -1047,9 +1048,7 @@ def build_indicators_data():
                         'inverted': indicator_item.get('Inverted', False)
                     }
                     category_data['indicators'].append(indicator_data)
-                category_data['indicators'].sort(key=lambda x: x['indicator_name'])
                 pillar_data['categories'].append(category_data)
-            pillar_data['categories'].sort(key=lambda x: x['category_name'])
             pillars.append(pillar_data)
         return {
             'pillars': pillars,
