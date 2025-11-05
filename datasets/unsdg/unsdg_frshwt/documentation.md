@@ -1,7 +1,7 @@
 ---
 DatasetType: Intermediate
 DatasetCode: UNSDG_FRSHWT
-DatasetName: Marine Areas Protected
+DatasetName: Freshwater Areas Protected
 Description: Percentage of important sites covered by protected areas, freshwater
 Source:
   OrganizationCode: UNSDG

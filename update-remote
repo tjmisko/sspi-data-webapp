@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+sspi collect --remote COLBAR --overwrite-all
+sspi clean --remote COLBAR
+sspi compute --remote COLBAR
+sspi impute --remote COLBAR
+sspi collect --remote UNEMPB --overwrite-all
+sspi clean --remote UNEMPB
+sspi compute --remote UNEMPB
+sspi impute --remote UNEMPB
+sspi collect --remote MATERN --overwrite-all
+sspi clean --remote MATERN
+sspi compute --remote MATERN
+sspi impute --remote MATERN
+sspi collect --remote FATINJ --overwrite-all
+sspi clean --remote FATINJ
+sspi compute --remote FATINJ
+sspi impute --remote FATINJ
+sspi collect --remote SENIOR --overwrite-all
+sspi clean --remote SENIOR
+sspi compute --remote SENIOR
+sspi impute --remote SENIOR
+sspi collect --remote CRPTAX --overwrite-all
+sspi clean --remote CRPTAX
+sspi compute --remote CRPTAX
+sspi impute --remote CRPTAX
+sspi collect --remote TAXREV --overwrite-all
+sspi clean --remote TAXREV
+sspi compute --remote TAXREV
+sspi impute --remote TAXREV
+sspi collect --remote TXRDST --overwrite-all
+sspi clean --remote TXRDST
+sspi compute --remote TXRDST
+sspi impute --remote TXRDST
+sspi collect --remote FSTABL --overwrite-all
+sspi clean --remote FSTABL
+sspi compute --remote FSTABL
+sspi impute --remote FSTABL
+sspi collect --remote FDEPTH --overwrite-all
+sspi clean --remote FDEPTH
+sspi compute --remote FDEPTH
+sspi impute --remote FDEPTH
+sspi collect --remote PUBACC --overwrite-all
+sspi clean --remote PUBACC
+sspi compute --remote PUBACC
+sspi impute --remote PUBACC
+sspi collect --remote ISHRAT --overwrite-all
+sspi clean --remote ISHRAT
+sspi compute --remote ISHRAT
+sspi impute --remote ISHRAT
+sspi collect --remote GINIPT --overwrite-all
+sspi clean --remote GINIPT
+sspi compute --remote GINIPT
+sspi impute --remote GINIPT
+sspi collect --remote ENRPRI --overwrite-all
+sspi clean --remote ENRPRI
+sspi collect --remote ATBRTH --overwrite-all
+sspi clean --remote ATBRTH
+sspi compute --remote ATBRTH
+sspi impute --remote ATBRTH
+sspi collect --remote DPTCOV --overwrite-all
+sspi clean --remote DPTCOV
+sspi compute --remote DPTCOV
+sspi impute --remote DPTCOV
+sspi collect --remote PHYSPC --overwrite-all
+sspi clean --remote PHYSPC
+sspi compute --remote PHYSPC
+sspi impute --remote PHYSPC
+sspi collect --remote FAMPLN --overwrite-all
+sspi clean --remote FAMPLN
+sspi compute --remote FAMPLN
+sspi impute --remote FAMPLN
+sspi collect --remote CSTUNT --overwrite-all
+sspi clean --remote CSTUNT
+sspi compute --remote CSTUNT
+sspi impute --remote CSTUNT
+sspi collect --remote AQELEC --overwrite-all
+sspi clean --remote AQELEC
+sspi compute --remote AQELEC
+sspi impute --remote AQELEC
+sspi collect --remote SANSRV --overwrite-all
+sspi clean --remote SANSRV
+sspi compute --remote SANSRV
+sspi impute --remote SANSRV
+sspi collect --remote DRKWAT --overwrite-all
+sspi clean --remote DRKWAT
+sspi compute --remote DRKWAT
+sspi impute --remote DRKWAT
+sspi collect --remote INTRNT --overwrite-all
+sspi clean --remote INTRNT
+sspi compute --remote INTRNT
+sspi impute --remote INTRNT
+sspi collect --remote TRNETW --overwrite-all
+sspi clean --remote TRNETW
+sspi compute --remote TRNETW
+sspi impute --remote TRNETW
+sspi collect --remote RULELW --overwrite-all
+sspi clean --remote RULELW
+sspi compute --remote RULELW
+sspi impute --remote RULELW
+sspi collect --remote PUBSRV --overwrite-all
+sspi clean --remote PUBSRV
+sspi compute --remote PUBSRV
+sspi impute --remote PUBSRV
+sspi collect --remote EDEMOC --overwrite-all
+sspi clean --remote EDEMOC
+sspi compute --remote EDEMOC
+sspi impute --remote EDEMOC
+sspi collect --remote UNCONV --overwrite-all
+sspi clean --remote UNCONV
+sspi compute --remote UNCONV
+sspi impute --remote UNCONV
+sspi collect --remote GENDEQ --overwrite-all
+sspi clean --remote GENDEQ
+sspi compute --remote GENDEQ
+sspi impute --remote GENDEQ
+sspi collect --remote MURDER --overwrite-all
+sspi clean --remote MURDER
+sspi compute --remote MURDER
+sspi impute --remote MURDER
+sspi collect --remote CYBSEC --overwrite-all
+sspi clean --remote CYBSEC
+sspi compute --remote CYBSEC
+sspi impute --remote CYBSEC
+sspi collect --remote SECAPP --overwrite-all
+sspi clean --remote SECAPP
+sspi compute --remote SECAPP
+sspi impute --remote SECAPP
+sspi collect --remote PRISON --overwrite-all
+sspi clean --remote PRISON
+sspi compute --remote PRISON
+sspi impute --remote PRISON
+sspi collect --remote ARMEXP --overwrite-all
+sspi clean --remote ARMEXP
+sspi compute --remote ARMEXP
+sspi impute --remote ARMEXP
+sspi collect --remote MILEXP --overwrite-all
+sspi clean --remote MILEXP
+sspi compute --remote MILEXP
+sspi impute --remote MILEXP
+sspi collect --remote RDFUND --overwrite-all
+sspi clean --remote RDFUND
+sspi compute --remote RDFUND
+sspi impute --remote RDFUND
+sspi collect --remote FORAID --overwrite-all
+sspi clean --remote FORAID
+sspi compute --remote FORAID
+sspi impute --remote FORAID

@@ -349,6 +349,7 @@
   justify-content: space-between;
   align-items: center;
 }
+
 .legend-title-bar-buttons {
   font-size: 0.65em;
   padding: 0 0.5em;
@@ -375,6 +376,7 @@
 
 .legend-item {
   display: flex;
+  flex: 1 1 0;
   flex-direction: row;
   align-self: stretch;
   align-items: center;

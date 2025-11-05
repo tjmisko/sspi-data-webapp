@@ -208,9 +208,9 @@
   background: var(--pg-color);
 }
 
-.category-content {
-  padding: 0;
-  width: 100%;
+.indictors-page .category-content {
+    padding: 0;
+    width: 100%;
 }
 
 .category-content[data-expanded="false"] {

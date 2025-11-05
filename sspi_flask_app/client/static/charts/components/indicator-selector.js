@@ -339,11 +339,26 @@ class IndicatorSelector {
         }
     }
     
-    confirm() {
+    async confirm() {
         if (this.selectedIndicator && this.options.onSelectionChange) {
-            // Find the full indicator object
-            const indicator = this.indicators.find(i => i.indicator_code === this.selectedIndicator)
-            this.options.onSelectionChange(indicator)
+            // Fetch the full indicator details from the API to get complete information
+            try {
+                const response = await fetch(`/api/v1/customize/indicators/${this.selectedIndicator}`)
+                const data = await response.json()
+
+                if (data.success && data.indicator) {
+                    this.options.onSelectionChange(data.indicator)
+                } else {
+                    // Fallback to basic info if API call fails
+                    const indicator = this.indicators.find(i => i.indicator_code === this.selectedIndicator)
+                    this.options.onSelectionChange(indicator)
+                }
+            } catch (error) {
+                console.error('Error fetching indicator details:', error)
+                // Fallback to basic info from the list
+                const indicator = this.indicators.find(i => i.indicator_code === this.selectedIndicator)
+                this.options.onSelectionChange(indicator)
+            }
         }
         this.close()
     }
