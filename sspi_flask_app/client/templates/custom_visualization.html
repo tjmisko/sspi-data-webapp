@@ -1,0 +1,371 @@
+{% extends 'layout.html' %}
+
+{% block title %}Custom SSPI Visualization{% endblock %}
+
+{% block stylesheet %}
+<!-- CSS Dependencies -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/variables.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/base.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/charts/panel-chart.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/charts/sspi-panel-chart.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/charts/custom-sspi-panel-chart.css') }}">
+
+<style>
+    .visualization-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .visualization-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-lg);
+        padding: var(--spacing-md);
+        background-color: var(--panel-background);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+    
+    .visualization-title {
+        flex: 1;
+    }
+    
+    .visualization-title h1 {
+        margin: 0 0 var(--spacing-xs) 0;
+        color: var(--text-primary);
+        font-size: 1.8em;
+    }
+    
+    .visualization-subtitle {
+        color: var(--text-secondary);
+        font-size: 1em;
+        margin: 0;
+    }
+    
+    .visualization-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+    
+    .action-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        background-color: var(--button-background);
+        color: var(--button-text);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+    
+    .action-btn:hover {
+        background-color: var(--button-background-hover);
+        border-color: var(--button-border-hover);
+        transform: translateY(-1px);
+    }
+    
+    .action-btn.primary {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+    }
+    
+    .action-btn.primary:hover {
+        background-color: var(--color-primary-dark);
+        border-color: var(--color-primary-dark);
+    }
+    
+    .chart-container {
+        min-height: 800px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background-color: var(--panel-background);
+        position: relative;
+    }
+    
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--panel-background);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 1000;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top: 4px solid var(--color-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .loading-text {
+        color: var(--text-secondary);
+        font-size: 1.1em;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .error-container {
+        text-align: center;
+        padding: var(--spacing-xl);
+        color: var(--text-secondary);
+    }
+    
+    .error-icon {
+        font-size: 3em;
+        margin-bottom: var(--spacing-md);
+        opacity: 0.5;
+    }
+    
+    .error-title {
+        font-size: 1.4em;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .error-message {
+        margin-bottom: var(--spacing-lg);
+        line-height: 1.5;
+    }
+    
+    .breadcrumb {
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-sm);
+        background-color: var(--background-secondary);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9em;
+    }
+    
+    .breadcrumb a {
+        color: var(--color-primary);
+        text-decoration: none;
+    }
+    
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-separator {
+        color: var(--text-secondary);
+        margin: 0 var(--spacing-xs);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="visualization-container">
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb">
+        <a href="{{ url_for('client_bp.home') }}">Home</a>
+        <span class="breadcrumb-separator">›</span>
+        <a href="{{ url_for('client_bp.customize') }}">Customize SSPI</a>
+        <span class="breadcrumb-separator">›</span>
+        <span>Visualization</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="visualization-header">
+        <div class="visualization-title">
+            <h1 id="config-title">Custom SSPI Visualization</h1>
+            <p class="visualization-subtitle" id="config-subtitle">Loading configuration...</p>
+        </div>
+        <div class="visualization-actions">
+            <button class="action-btn" onclick="refreshVisualization()" title="Refresh data">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 3a5 5 0 0 1 4.546 2.914.5.5 0 0 0 .908-.408A6 6 0 0 0 8 2v1z"/>
+                    <path d="M8 13a5 5 0 0 0 4.546-2.914.5.5 0 0 1 .908.408A6 6 0 0 1 8 14v-1z"/>
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1z"/>
+                </svg>
+                Refresh
+            </button>
+            <a href="{{ url_for('client_bp.customize') }}" class="action-btn primary">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                    <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                </svg>
+                Edit Configuration
+            </a>
+        </div>
+    </div>
+
+    <!-- Chart Container -->
+    <div id="chart-container" class="chart-container">
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading custom SSPI visualization...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Include SVG Icons -->
+<svg style="display: none;">
+    <defs>
+        <g id="icon-close">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </g>
+        <g id="icon-menu">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </g>
+    </defs>
+</svg>
+{% endblock %}
+
+{% block javascript %}
+<!-- Chart.js -->
+<script src="{{ url_for('static', filename='dist/chart.umd.min.js') }}"></script>
+
+<!-- Papa Parse for CSV handling -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+
+<!-- Chart Plugin Dependencies -->
+<script src="{{ url_for('static', filename='charts/plugins/chart-interaction-plugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/extrapolate-backward-plugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sspi-colors.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sspi-item-tree.js') }}"></script>
+<script src="{{ url_for('static', filename='js/country-selector.js') }}"></script>
+<script src="{{ url_for('static', filename='js/observable-storage.js') }}"></script>
+
+<!-- Chart Component Dependencies -->
+<script src="{{ url_for('static', filename='charts/panel/panel-chart.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/panel/sspi-panel-chart.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/panel/custom-sspi-panel-chart.js') }}"></script>
+
+<script>
+    let currentChart = null;
+    const configId = '{{ config_id }}';
+    
+    // Initialize the visualization
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeVisualization();
+    });
+    
+    async function initializeVisualization() {
+        try {
+            // Validate config ID
+            if (!configId || configId === 'None') {
+                showError('No configuration ID provided', 'Please provide a valid configuration ID');
+                return;
+            }
+            
+            // Load configuration info first
+            await loadConfigurationInfo();
+            
+            // Initialize the custom chart
+            await createCustomChart();
+            
+        } catch (error) {
+            console.error('Error initializing visualization:', error);
+            showError('Initialization Error', error.message);
+        }
+    }
+    
+    async function loadConfigurationInfo() {
+        try {
+            const response = await fetch(`/api/v1/customize/load/${configId}`);
+            const data = await response.json();
+            
+            if (data.success && data.configuration) {
+                // Update page title and subtitle
+                document.title = `${data.configuration.name} - Custom SSPI Visualization`;
+                document.getElementById('config-title').textContent = data.configuration.name;
+                
+                // Calculate structure stats
+                const structure = data.configuration.structure || data.configuration.metadata || [];
+                const pillars = new Set();
+                const categories = new Set();
+                const indicators = structure.length;
+                
+                structure.forEach(item => {
+                    if (item.PillarCode) pillars.add(item.PillarCode);
+                    if (item.CategoryCode) categories.add(item.CategoryCode);
+                });
+                
+                document.getElementById('config-subtitle').textContent = 
+                    `${pillars.size} pillars, ${categories.size} categories, ${indicators} indicators`;
+            } else {
+                throw new Error(data.error || 'Configuration not found');
+            }
+        } catch (error) {
+            console.error('Error loading configuration info:', error);
+            document.getElementById('config-subtitle').textContent = 'Error loading configuration details';
+        }
+    }
+    
+    async function createCustomChart() {
+        try {
+            // Clear any existing chart
+            const chartContainer = document.getElementById('chart-container');
+            
+            // Create the custom chart
+            currentChart = new CustomSSPIPanelChart(
+                chartContainer,
+                configId,
+                {
+                    CountryList: [], // Empty list means all available countries
+                    width: 1200,
+                    height: 700
+                }
+            );
+            
+            // Hide loading overlay once chart is initialized
+            setTimeout(() => {
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error creating custom chart:', error);
+            showError('Chart Creation Error', error.message);
+        }
+    }
+    
+    function refreshVisualization() {
+        // Reload the page to refresh everything
+        window.location.reload();
+    }
+    
+    function showError(title, message) {
+        const chartContainer = document.getElementById('chart-container');
+        chartContainer.innerHTML = `
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">${title}</div>
+                <div class="error-message">${message}</div>
+                <button class="action-btn primary" onclick="window.history.back()">
+                    ← Go Back
+                </button>
+            </div>
+        `;
+    }
+    
+    // Global error handlers
+    window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+    });
+    
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e.reason);
+    });
+</script>
+{% endblock %}

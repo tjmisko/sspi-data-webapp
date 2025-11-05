@@ -82,6 +82,18 @@ def customize():
     return render_template('customize.html')
 
 
+@client_bp.route('/customize/visualize/<config_id>')
+def custom_visualization(config_id):
+    """Production visualization page for custom SSPI configurations"""
+    return render_template('custom_visualization.html', config_id=config_id)
+
+
+@client_bp.route('/customize/test-chart')
+def test_custom_chart():
+    """Test page for custom SSPI chart development and debugging"""
+    return render_template('test_custom_chart.html')
+
+
 @client_bp.route('/data/country/<country_code>')
 def country_data(country_code):
     country_code = country_code.upper()

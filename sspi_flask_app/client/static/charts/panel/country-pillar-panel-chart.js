@@ -13,6 +13,7 @@ class CountryPillarPanelChart {
         this.fetch(this.endpointURL).then(data => {
             this.update(data)
         })
+        this.rigUnloadListener()
     }
 
     initRoot() {
@@ -21,7 +22,6 @@ class CountryPillarPanelChart {
         this.root.classList.add('panel-chart-root-container')
         this.parentElement.appendChild(this.root)
     }
-
 
     initChartJSCanvas() {
         this.chartContainer = document.createElement('div')
@@ -69,6 +69,17 @@ class CountryPillarPanelChart {
                 plugins: {
                     legend: {
                         display: false,
+                    },
+                    endLabelPlugin: {
+                        labelField: 'ICode'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                    }
+                },
+                layout: {
+                    padding: {
+                        right: 40
                     },
                     tooltip: {
                         enabled: false,
@@ -154,8 +165,6 @@ class CountryPillarPanelChart {
         }
         const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
         this.headerBackgroundColor = bg
-
-        // Update chart theme while preserving y-axis scale
         if (this.chart) {
             this.updateChartOptionsPreservingYAxis()
         }
@@ -166,15 +175,11 @@ class CountryPillarPanelChart {
         const currentYMin = this.chart.options.scales?.y?.min
         const currentYMax = this.chart.options.scales?.y?.max
         const currentYTitle = this.chart.options.scales?.y?.title?.text
-
         // Update chart options with new theme colors
         this.updateChartOptions()
-
-        // Update plugin colors
         if (this.chart.options.plugins.pillarBreakdownInteractionPlugin) {
             this.chart.options.plugins.pillarBreakdownInteractionPlugin.guideColor = this.tickColor
         }
-
         // Restore preserved y-axis scale settings
         if (currentYMin !== undefined) {
             this.chart.options.scales.y.min = currentYMin
@@ -185,7 +190,6 @@ class CountryPillarPanelChart {
         if (currentYTitle !== undefined) {
             this.chart.options.scales.y.title.text = currentYTitle
         }
-
         // Update the chart to apply changes
         this.chart.update()
     }
@@ -201,18 +205,14 @@ class CountryPillarPanelChart {
 
     update(data) {
         console.log(data)
-
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
         this.title.innerText = data.title
         this.itemType = data.itemType
-
-        // Update plugin with country details from data
         if (data.countryDetails) {
             this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryName = data.countryDetails.CName;
             this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryFlag = data.countryDetails.CFlag;
         }
-
         this.updateChartColors()
         this.chart.options.scales.y.min = 0
         this.chart.options.scales.y.max = 1

@@ -1,6 +1,6 @@
 ---
 DatasetType: Intermediate
-DatasetName: Marine Areas Protected
+DatasetName: Terresterial Areas Protected
 DatasetCode: UNSDG_TERRST
 Description: Percentage of important sites covered by protected areas, terrestrial
 Source:
