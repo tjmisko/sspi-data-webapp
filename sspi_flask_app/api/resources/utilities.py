@@ -1,33 +1,36 @@
+import inspect
 import json
+import math
+from copy import deepcopy
 from typing import Callable, List, Tuple
+
+import pandas as pd
 import pycountry
 from bson import json_util
 from flask import jsonify
-import pandas as pd
-import inspect
-import math
+from sklearn.linear_model import LinearRegression
+
 from sspi_flask_app.models.database import (
-    sspi_main_data_v3,
-    sspi_raw_api_data,
-    sspi_clean_api_data,
-    sspi_indicator_data,
-    sspi_incomplete_indicator_data,
-    sspi_imputed_data,
-    sspi_item_data,
-    sspi_metadata,
-    sspi_static_metadata,
-    sspi_country_characteristics,
-    sspi_static_radar_data,
-    sspi_item_dynamic_line_data,
-    sspi_indicator_dynamic_line_data,
-    sspi_dynamic_matrix_data,
-    sspi_static_rank_data,
     sspi_analysis,
+    sspi_clean_api_data,
+    sspi_country_characteristics,
+    sspi_custom_user_structure,
+    sspi_dynamic_matrix_data,
+    sspi_imputed_data,
+    sspi_incomplete_indicator_data,
+    sspi_indicator_data,
+    sspi_indicator_dynamic_line_data,
+    sspi_item_data,
+    sspi_item_dynamic_line_data,
+    sspi_main_data_v3,
+    sspi_metadata,
     sspi_panel_data,
+    sspi_raw_api_data,
+    sspi_static_metadata,
+    sspi_static_radar_data,
+    sspi_static_rank_data,
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
-from copy import deepcopy
-from sklearn.linear_model import LinearRegression
 
 
 def format_m49_as_string(input):
@@ -98,6 +101,8 @@ def lookup_database(database_name):
             return sspi_dynamic_matrix_data
         case "sspi_panel_data":
             return sspi_panel_data
+        case "sspi_custom_user_structure":
+            return sspi_custom_user_structure
         case _:
             raise InvalidDatabaseError(database_name)
 
