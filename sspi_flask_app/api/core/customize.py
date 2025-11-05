@@ -60,7 +60,7 @@ def convert_metadata_to_structure(metadata):
             "LowerGoalpost": indicator.get("LowerGoalpost"),
             "UpperGoalpost": indicator.get("UpperGoalpost"),
             "Inverted": indicator.get("Inverted", False),
-            "ItemOrder": indicator.get("ItemOrder", idx),
+            "ItemOrder": indicator.get("ItemOrder", idx + 1),  # ItemOrder must be positive (>= 1)
             "datasets": datasets
         }
 
@@ -98,62 +98,41 @@ def save_configuration():
     }
     """
     try:
-        if not request.is_json:
-            return jsonify({"error": "Request must be JSON"}), 400
-
         data = request.get_json()
-
-        # Validate required fields
         if "name" not in data:
             return jsonify({"error": "Configuration name is required"}), 400
-
-        # Support both 'metadata' (new) and 'structure' (legacy) fields
         if "metadata" not in data and "structure" not in data:
             return jsonify({"error": "Metadata or structure data is required"}), 400
-
         name = data["name"]
-
-        # Use metadata if provided, otherwise fall back to structure
         if "metadata" in data:
-            # Convert full metadata array to structure format (indicators only)
             structure = convert_metadata_to_structure(data["metadata"])
         else:
             structure = data["structure"]
-
         user_id = data.get("user_id")
-        
-        # Create the configuration
         config_id = sspi_custom_user_structure.create_config(
             name=name,
             structure=structure,
             user_id=user_id
         )
-        
         logger.info(f"Created custom structure configuration: {config_id}")
-        
         return jsonify({
             "success": True,
             "config_id": config_id,
             "message": "Configuration saved successfully"
         })
-        
     except InvalidDocumentFormatError as e:
         logger.error(f"Validation error saving configuration: {str(e)}")
         return jsonify({"error": f"Validation error: {str(e)}"}), 400
-    
     except Exception as e:
         logger.error(f"Error saving configuration: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
 
 @customize_bp.route("/list", methods=["GET"])
 def list_configurations():
     """
     List all saved configuration names.
-    
     Query parameters:
     - user_id: Optional filter by user
-    
     Returns:
     {
         "success": true,
@@ -165,14 +144,11 @@ def list_configurations():
     """
     try:
         user_id = request.args.get("user_id")
-        
         configurations = sspi_custom_user_structure.list_config_names(user_id=user_id)
-        
         return jsonify({
             "success": True,
             "configurations": configurations
         })
-        
     except Exception as e:
         logger.error(f"Error listing configurations: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
@@ -182,7 +158,6 @@ def list_configurations():
 def load_configuration(config_id):
     """
     Load a specific configuration by ID.
-    
     Returns:
     {
         "success": true,
@@ -197,20 +172,15 @@ def load_configuration(config_id):
     """
     try:
         configuration = sspi_custom_user_structure.find_by_config_id(config_id)
-        
         if not configuration:
             return jsonify({"error": "Configuration not found"}), 404
-        
-        # Return both metadata and structure fields for backward compatibility
         configuration_response = configuration.copy()
         if "structure" in configuration_response:
             configuration_response["metadata"] = configuration_response["structure"]
-        
         return jsonify({
             "success": True,
             "configuration": configuration_response
         })
-        
     except Exception as e:
         logger.error(f"Error loading configuration {config_id}: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
@@ -236,17 +206,11 @@ def update_configuration(config_id):
     try:
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
-        
         data = request.get_json()
-        
-        # Check if configuration exists
         existing_config = sspi_custom_user_structure.find_by_config_id(config_id)
         if not existing_config:
             return jsonify({"error": "Configuration not found"}), 404
-        
-        # Update the configuration
         success = sspi_custom_user_structure.update_config(config_id, data)
-        
         if success:
             logger.info(f"Updated custom structure configuration: {config_id}")
             return jsonify({
@@ -255,11 +219,9 @@ def update_configuration(config_id):
             })
         else:
             return jsonify({"error": "Failed to update configuration"}), 500
-        
     except InvalidDocumentFormatError as e:
         logger.error(f"Validation error updating configuration {config_id}: {str(e)}")
         return jsonify({"error": f"Validation error: {str(e)}"}), 400
-    
     except Exception as e:
         logger.error(f"Error updating configuration {config_id}: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
@@ -269,7 +231,6 @@ def update_configuration(config_id):
 def delete_configuration(config_id):
     """
     Delete a configuration.
-    
     Returns:
     {
         "success": true,
@@ -278,7 +239,6 @@ def delete_configuration(config_id):
     """
     try:
         success = sspi_custom_user_structure.delete_config(config_id)
-        
         if success:
             logger.info(f"Deleted custom structure configuration: {config_id}")
             return jsonify({
@@ -287,7 +247,6 @@ def delete_configuration(config_id):
             })
         else:
             return jsonify({"error": "Configuration not found"}), 404
-        
     except Exception as e:
         logger.error(f"Error deleting configuration {config_id}: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
@@ -457,21 +416,17 @@ def list_datasets():
             dataset_name = dataset.get("DatasetName", "")
             description = dataset.get("Description", "")
             dataset_type = dataset.get("DatasetType", "Unknown")
-            
             # Extract organization from dataset code (e.g., EPI_CO2GRW -> EPI)
             organization = dataset_code.split("_")[0] if "_" in dataset_code else ""
-            
             # Get organization name from source if available
             source = dataset.get("Source", {})
             organization_name = source.get("OrganizationName", organization)
-            
             # Create short description (first 60 words)
             description_short = description
             if description:
                 words = description.split()
                 if len(words) > 60:
                     description_short = " ".join(words[:60]) + "..."
-            
             # Determine topic category based on common patterns
             topic_category = "General"
             if any(keyword in dataset_code.upper() for keyword in ["CO2", "GHG", "EMISS", "CARB", "CLIM", "ENV", "ECO", "BIO", "FOREST", "MARIN"]):
@@ -480,14 +435,11 @@ def list_datasets():
                 topic_category = "MS"
             elif any(keyword in dataset_code.upper() for keyword in ["EDU", "HEAL", "DEMO", "RIGH", "GOV", "SAFE", "INFR", "PUBL"]):
                 topic_category = "PG"
-            
             # Apply filters
             if search_term and search_term not in dataset_code.upper() and search_term not in dataset_name.upper() and search_term not in description.upper():
                 continue
-                
             if organization_filter and organization_filter != organization:
                 continue
-            
             filtered_datasets.append({
                 "dataset_code": dataset_code,
                 "dataset_name": dataset_name,
@@ -498,19 +450,13 @@ def list_datasets():
                 "dataset_type": dataset_type,
                 "topic_category": topic_category
             })
-            
-            # Apply limit
             if len(filtered_datasets) >= limit:
                 break
-        
-        # Sort by dataset code for consistency
         filtered_datasets.sort(key=lambda x: x["dataset_code"])
-        
         return jsonify({
             "success": True,
             "datasets": filtered_datasets
         })
-        
     except Exception as e:
         logger.error(f"Error listing datasets: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
@@ -583,15 +529,12 @@ def validate_code():
     """
     try:
         import re
-        
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
-        
         data = request.get_json()
         code = data.get("code", "").upper()
         code_type = data.get("type", "").lower()
         existing_codes = data.get("existing_codes", [])
-        
         if not code or not code_type:
             return jsonify({
                 "success": True,
@@ -635,7 +578,6 @@ def validate_code():
                 "valid": False,
                 "message": "Code already in use"
             })
-        
         # Check against existing SSPI codes
         if code_type == "indicator":
             existing_indicators = sspi_metadata.get_indicator_codes()
@@ -645,7 +587,6 @@ def validate_code():
                     "valid": False,
                     "message": "Code conflicts with existing SSPI indicator"
                 })
-        
         return jsonify({
             "success": True,
             "valid": True,
@@ -665,18 +606,15 @@ def structure_to_metadata(structure_data: list) -> list:
     :return: List of metadata items suitable for SSPI class
     """
     metadata_items = []
-    
     # Group items by type for building hierarchy
     pillars = {}
     categories = {}
     indicators = {}
-    
     # First pass: collect all items and group them
     for item in structure_data:
         pillar_code = item.get('PillarCode', '')
         category_code = item.get('CategoryCode', '')
         indicator_code = item.get('IndicatorCode', '')
-        
         # Store pillar info
         if pillar_code and pillar_code not in pillars:
             pillars[pillar_code] = {
@@ -684,7 +622,6 @@ def structure_to_metadata(structure_data: list) -> list:
                 'name': item.get('Pillar', pillar_code),
                 'categories': set()
             }
-        
         # Store category info
         if category_code and category_code not in categories:
             categories[category_code] = {
@@ -693,7 +630,6 @@ def structure_to_metadata(structure_data: list) -> list:
                 'pillar_code': pillar_code,
                 'indicators': set()
             }
-        
         # Store indicator info
         if indicator_code:
             indicators[indicator_code] = {
@@ -705,7 +641,7 @@ def structure_to_metadata(structure_data: list) -> list:
                 'lower_goalpost': item.get('LowerGoalpost'),
                 'upper_goalpost': item.get('UpperGoalpost'),
                 'inverted': item.get('Inverted', False),
-                'item_order': item.get('ItemOrder', 0)
+                'item_order': item.get('ItemOrder', 1)  # Default to 1 (must be positive)
             }
         
         # Build relationships
@@ -714,7 +650,6 @@ def structure_to_metadata(structure_data: list) -> list:
         
         if category_code and indicator_code:
             categories[category_code]['indicators'].add(indicator_code)
-    
     # Create root SSPI item
     pillar_codes = sorted(pillars.keys())
     if pillar_codes:
@@ -726,7 +661,6 @@ def structure_to_metadata(structure_data: list) -> list:
             "PillarCodes": pillar_codes,
             "Description": "Custom SSPI structure created through the customization interface"
         })
-    
     # Create pillar items
     for pillar_code, pillar_data in pillars.items():
         category_codes = sorted(list(pillar_data['categories']))
@@ -739,7 +673,6 @@ def structure_to_metadata(structure_data: list) -> list:
             "Pillar": pillar_data['name'],
             "PillarCode": pillar_code
         })
-    
     # Create category items
     for category_code, category_data in categories.items():
         indicator_codes = sorted(list(category_data['indicators']))
@@ -821,7 +754,7 @@ def metadata_to_structure(metadata_items: list) -> list:
                 'LowerGoalpost': item.get('LowerGoalpost'),
                 'UpperGoalpost': item.get('UpperGoalpost'),
                 'Inverted': item.get('Inverted', False),
-                'ItemOrder': item.get('ItemOrder', 0),
+                'ItemOrder': item.get('ItemOrder', 1),  # Default to 1 (must be positive)
                 'datasets': datasets
             })
     
@@ -844,16 +777,13 @@ def validate_custom_structure(structure_data: list) -> dict:
     :return: Dict with 'valid' boolean and 'errors' list
     """
     errors = []
-    
     if not structure_data:
         errors.append("Structure cannot be empty")
         return {"valid": False, "errors": errors}
-    
     # Check for required codes
     pillar_codes = set()
     category_codes = set()
     indicator_codes = set()
-    
     for item in structure_data:
         pillar_code = item.get('PillarCode', '').strip()
         category_code = item.get('CategoryCode', '').strip()
@@ -870,15 +800,12 @@ def validate_custom_structure(structure_data: list) -> dict:
         if not indicator_code:
             errors.append(f"Missing IndicatorCode for item: {item}")
             continue
-        
         pillar_codes.add(pillar_code)
         category_codes.add(category_code)
         indicator_codes.add(indicator_code)
-        
         # Validate goalpost values
         lower = item.get('LowerGoalpost')
         upper = item.get('UpperGoalpost')
-        
         if lower is not None and upper is not None:
             try:
                 lower_val = float(lower)
@@ -887,17 +814,13 @@ def validate_custom_structure(structure_data: list) -> dict:
                     errors.append(f"Invalid goalposts for {indicator_code}: lower ({lower_val}) must be less than upper ({upper_val})")
             except (ValueError, TypeError):
                 errors.append(f"Invalid goalpost values for {indicator_code}: must be numeric")
-    
     # Check minimum structure requirements
     if len(pillar_codes) == 0:
         errors.append("Structure must contain at least one pillar")
-    
     if len(category_codes) == 0:
         errors.append("Structure must contain at least one category")
-        
     if len(indicator_codes) == 0:
         errors.append("Structure must contain at least one indicator")
-    
     # Check for duplicate codes
     if len(set(indicator_codes)) != len(indicator_codes):
         errors.append("Duplicate indicator codes found")
@@ -1243,6 +1166,127 @@ def score_custom_structure():
     except Exception as e:
         logger.error(f"Error scoring custom structure: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+@customize_bp.route("/score-dynamic/<config_id>", methods=["POST"])
+def score_dynamic_configuration(config_id):
+    """
+    Score a custom SSPI configuration across all years and countries.
+    Follows the finalize.py pattern for dynamic scoring.
+    Stores results in sspi_custom_user_data collection.
+
+    Returns:
+    {
+        "success": true,
+        "config_id": "config_id",
+        "documents_scored": 12345,
+        "years": [2000, 2001, ...],
+        "countries_count": 67
+    }
+    """
+    try:
+        # 1. Load configuration
+        config = sspi_custom_user_structure.find_by_config_id(config_id)
+        if not config:
+            return jsonify({"error": "Configuration not found"}), 404
+
+        logger.info(f"Scoring dynamic configuration: {config_id}")
+
+        # 2. Convert structure to metadata
+        structure = config.get("structure", [])
+        if not structure:
+            return jsonify({"error": "Configuration has no structure"}), 400
+
+        metadata_items = structure_to_metadata(structure)
+        if not metadata_items:
+            return jsonify({"error": "Could not convert structure to metadata"}), 400
+
+        # 3. Get indicator codes
+        indicator_codes = [
+            item["ItemCode"] for item in metadata_items
+            if item.get("ItemType") == "Indicator"
+        ]
+
+        if not indicator_codes:
+            return jsonify({"error": "No indicators in structure"}), 400
+
+        logger.info(f"Scoring {len(indicator_codes)} indicators across years and countries")
+
+        # 4. Define scope
+        years = list(range(2000, 2024))
+        countries = sspi_metadata.country_group("SSPI67")
+
+        # 5. Build data map (following finalize.py pattern)
+        data_map = {}
+        for country in countries:
+            data_map[country] = {}
+            for year in years:
+                # Get indicator scores for this country/year
+                year_scores = []
+                for ind_code in indicator_codes:
+                    score_doc = sspi_item_data.get_item_score(
+                        country_code=country,
+                        item_code=ind_code,
+                        year=year
+                    )
+                    if score_doc and score_doc.get("Score") is not None:
+                        year_scores.append({
+                            "IndicatorCode": ind_code,
+                            "Score": score_doc["Score"],
+                            "Year": year
+                        })
+
+                # Only add if we have data for this year
+                if year_scores:
+                    data_map[country][year] = year_scores
+
+        # 6. Score each country/year combination
+        documents = []
+        for country, year_data in data_map.items():
+            for year, indicator_scores in year_data.items():
+                try:
+                    # Create SSPI instance (following finalize.py pattern)
+                    sspi_instance = SSPI(
+                        item_details=metadata_items,
+                        indicator_scores=indicator_scores,
+                        strict_year=True
+                    )
+
+                    # Get score documents
+                    score_docs = sspi_instance.to_score_documents(country)
+
+                    # Add config_id to each document for filtering
+                    for doc in score_docs:
+                        doc["config_id"] = config_id
+                        documents.append(doc)
+
+                except Exception as e:
+                    logger.warning(f"Could not score {country} {year}: {str(e)}")
+                    continue
+
+        if not documents:
+            return jsonify({"error": "No scores could be calculated"}), 400
+
+        # 7. Store in database
+        logger.info(f"Storing {len(documents)} score documents for config {config_id}")
+        sspi_custom_user_data.delete_many({"config_id": config_id})  # Clear old scores
+        sspi_custom_user_data.insert_many(documents)
+
+        # 8. Return success
+        return jsonify({
+            "success": True,
+            "config_id": config_id,
+            "documents_scored": len(documents),
+            "years": years,
+            "countries_count": len(countries),
+            "indicators_count": len(indicator_codes)
+        })
+
+    except Exception as e:
+        logger.error(f"Error in score_dynamic_configuration: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
 @customize_bp.route("/score/<config_id>", methods=["GET"])
