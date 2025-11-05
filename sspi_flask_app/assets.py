@@ -19,7 +19,7 @@ def compile_static_assets(assets):
         'client_bp/js/*.js',
         'client_bp/charts/plugins/*.js',
         'client_bp/charts/components/*.js',
-        'client_bp/charts/country-score-chart.js',
+        'client_bp/charts/panel/country-pillar-panel-chart.js',
         'client_bp/charts/panel/panel-chart.js',
         'client_bp/charts/panel/series-panel-chart.js',
         'client_bp/charts/panel/score-panel-chart.js',
