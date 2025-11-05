@@ -8,5 +8,6 @@ Source:
   OrganizationCode: SIPRI
   OrganizationSeriesCode: milex
   QueryCode: milex
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/sipri/sipri_milexp.py
 ---
 

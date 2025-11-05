@@ -29,6 +29,7 @@ from sspi_flask_app.models.database import (
     sspi_static_metadata,
     sspi_static_radar_data,
     sspi_static_rank_data,
+    sspi_globe_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -91,6 +92,8 @@ def lookup_database(database_name):
             return sspi_item_data 
         case "sspi_static_rank_data":
             return sspi_static_rank_data
+        case "sspi_globe_data": 
+            return sspi_globe_data
         case "sspi_static_radar_data":
             return sspi_static_radar_data
         case "sspi_item_dynamic_line_data":

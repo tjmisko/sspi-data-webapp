@@ -9,5 +9,6 @@ Description: Rule of Law Index measures extent to which laws are transparently, 
 Source:
   OrganizationCode: VDEM
   QueryCode: V-Dem-CY-FullOthers_csv_v13
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/vdem/vdem_rulelw.py
 ---
 

@@ -101,6 +101,9 @@ sspi_static_corr_data = SSPIProductionData(
 sspi_static_radar_data = SSPIProductionData(
     sspidb.sspi_static_radar_data
 )
+sspi_globe_data = SSPIProductionData(
+    sspidb.sspi_globe_data
+)
 sspi_item_dynamic_line_data = SSPIProductionData(
     sspidb.sspi_item_dynamic_line_data
 )
@@ -112,6 +115,9 @@ sspi_dynamic_matrix_data = SSPIProductionData(
 )
 sspi_static_stack_data = SSPIProductionData(
     sspidb.sspi_static_stack_data
+)
+sspi_dynamic_radar_data = SSPIProductionData(
+    sspidb.sspi_dynamic_radar_data
 )
 
 # User Authentication Data

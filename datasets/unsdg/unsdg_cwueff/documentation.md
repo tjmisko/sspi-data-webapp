@@ -10,6 +10,7 @@ Description: 'Change in Water Use Efficiency (WUE) compared with 2000-2005 avera
 Source:
   OrganizationCode: UNSDG
   QueryCode: 6.4.1
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_cwueff.py
 ---
 This dataset is computed from the same data as UNSDG_WUSEFF, using a 2000-2005 average as the baseline and computing percentage change for all years from 2006 onward.
 

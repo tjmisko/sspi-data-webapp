@@ -153,48 +153,9 @@
 }
 
 .stack-bar-title {
-   font-style: italic;
    margin: 0;
    padding: 0.2em;
    font-size: 1em;
-}
-
-.radar-chart-legend-box {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.8em;
-  padding-bottom: 0.5em;
-}
-
-.radar-chart-legend-item {
-  display: flex;
-  align-items: center;
-  justify-content: left;
-  padding: 0.1em 0.1em;
-  border-radius: 2px;
-  border-width: 1px;
-}
-
-.radar-chart-legend-item-canvas {
-  width: 100%;
-  height: 100%;
-  padding: 0em 0.5em 0.5em 0.2em;
-  margin-right: 0.5em;
-  border-radius: 2px;
-  box-sizing: border-box;
-}
-
-.radar-chart-legend-canvas-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100px;
-}
-
-.radar-chart-legend-item-text {
-  text-align: center;
-  justify-content: left;
-  padding: 0.1em 0.1em;
 }
 
 .paper-resources-article {

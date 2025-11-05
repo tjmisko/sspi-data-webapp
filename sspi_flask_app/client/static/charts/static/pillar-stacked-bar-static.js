@@ -38,7 +38,7 @@ function createCrossHatch(color = 'black') {
 
 
 class StaticPillarStackedBarChart {
-    constructor(countryCodes, pillarCode, parentElement, colormap = {}) {
+    constructor(countryCodes, pillarCode, parentElement, colormap = {}, countryDetails) {
         this.parentElement = parentElement;
         this.textColor = '#bbb';
         this.countryCodes = countryCodes;

@@ -8,5 +8,6 @@ Source:
   OrganizationCode: SIPRI
   OrganizationSeriesCode: armstransfers
   QueryCode: armstransfers
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/sipri/sipri_armexp.py
 ---
 

@@ -8,5 +8,6 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: GFDD.OI.02
   QueryCode: GFDD.OI.02
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_dposit.py
 ---
 

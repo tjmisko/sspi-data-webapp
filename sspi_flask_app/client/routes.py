@@ -23,7 +23,16 @@ client_bp = Blueprint(
 @client_bp.route('/')
 def home():
     pillar_category_tree = sspi_metadata.pillar_category_summary_tree()
-    return render_template('home.html', pillar_category_tree=pillar_category_tree)
+    sspi_49_details = sspi_metadata.country_group_details("SSPI49")
+    sspi_49_details.sort(key=lambda x: x["Metadata"]["Country"])
+    sspi_extended_details = sspi_metadata.country_group_details("SSPIExtended")
+    sspi_extended_details.sort(key=lambda x: x["Metadata"]["Country"])
+    return render_template(
+        "home.html",
+        pillar_category_tree=pillar_category_tree,
+        sspi_49_details=sspi_49_details,
+        sspi_extended_details=sspi_extended_details,
+    )
 
 
 @client_bp.route('/favicon.ico')
@@ -34,6 +43,19 @@ def favicon():
 @client_bp.route('/about')
 def about():
     return render_template('about.html')
+
+
+@client_bp.route('/countries')
+def countries():
+    sspi_49_details = sspi_metadata.country_group_details("SSPI49")
+    sspi_49_details.sort(key=lambda x: x["Metadata"]["Country"])
+    sspi_extended_details = sspi_metadata.country_group_details("SSPIExtended")
+    sspi_extended_details.sort(key=lambda x: x["Metadata"]["Country"])
+    return render_template(
+        'countries.html',
+        sspi_49_details=sspi_49_details,
+        sspi_extended_details=sspi_extended_details,
+    )
 
 
 @client_bp.route('/methodology')
@@ -72,9 +94,11 @@ def test_custom_chart():
     return render_template('test_custom_chart.html')
 
 
-@client_bp.route('/data/country/<CountryCode>')
-def country_data(CountryCode):
-    return render_template('country-data.html', CountryCode=CountryCode)
+@client_bp.route('/data/country/<country_code>')
+def country_data(country_code):
+    country_code = country_code.upper()
+    cdetail = sspi_metadata.get_country_detail(country_code)
+    return render_template('country-data.html', cdetail=cdetail)
 
 
 @client_bp.route('/data/indicator/<IndicatorCode>')
@@ -225,17 +249,22 @@ def compare_home_2018():
     return render_template("static/2018-compare-home.html")
 
 
-@client_bp.route('/2018/data/indicator/<IndicatorCode>')
-def indicator_data_2018(IndicatorCode):
-    IndicatorCode = IndicatorCode.upper()
-    return render_template('2018-indicator-static.html')
+@client_bp.route('/2018/data/indicator/<indicator_code>')
+def indicator_data_2018(indicator_code):
+    indicator_code = indicator_code.upper()
+    return render_template('static/2018-item-static.html', item_code=indicator_code)
 
 
-@client_bp.route('/2018/data/category/<CategoryCode>')
-def category_data_2018(CategoryCode):
-    CategoryCode = CategoryCode.upper()
-    return render_template('2018-category-static.html')
+@client_bp.route('/2018/data/category/<category_code>')
+def category_data_2018(category_code):
+    category_code = category_code.upper()
+    return render_template('static/2018-item-static.html', item_code=category_code)
 
+
+@client_bp.route('/2018/data/pillar/<pillar_code>')
+def pillar_data_2018(pillar_code):
+    pillar_code = pillar_code.upper()
+    return render_template('static/2018-item-static.html', item_code=pillar_code)
 
 
 @client_bp.route('/2018/compare/custom', methods=['POST'])
@@ -278,7 +307,7 @@ def compare_custom():
                        for code, name in zip(country_codes, country_names)]
     print(comparison_list)
     return parse_json({
-        "html": render_template("static/compare/comparison-result.html", comparison_list=comparison_list),
+        "html": render_template("static/compare/2018-comparison-result.html", comparison_list=comparison_list),
         "data": comparison_list
     })
 
@@ -309,14 +338,14 @@ def paper_resources():
     return render_template("/static/2018-paper-resources.html")
 
 
-# @client_bp.route('/map')
-# def world_map_page():
-#     return render_template("world-map.html")
+@client_bp.route('/map')
+def world_map_page():
+    return render_template("world-map.html")
 
 
-# @client_bp.route('/globe')
-# def globe_tree():
-#     return render_template("globe.html")
+@client_bp.route('/globe')
+def globe_tree():
+    return render_template("globe.html")
 
 
 # @client_bp.route('/history')

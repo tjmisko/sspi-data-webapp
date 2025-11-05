@@ -6,6 +6,7 @@ Description: Average gross mixed income across all population percentiles for HN
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_naccav_gross_mixed_hni_p0p100.py
 ---
 # Gross Mixed Income
 

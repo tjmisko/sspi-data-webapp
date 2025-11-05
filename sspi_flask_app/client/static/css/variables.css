@@ -66,6 +66,7 @@
   --input-text-color: #111827;
   --theme-header-box-shadow: 0px 0px 3px #999;
   --caution-background-color:  rgba(230,230,230,0.95);
+  --ocean-color: #0b2d51;
 }
 
 .dark-theme {
@@ -93,4 +94,5 @@
   --input-text-color: #f9fafb;
   --theme-header-box-shadow: 0px 0px 3px #222;
   --caution-background-color:  rgba(20,20,20,0.95);
+  --ocean-color: #0b2131;
 }

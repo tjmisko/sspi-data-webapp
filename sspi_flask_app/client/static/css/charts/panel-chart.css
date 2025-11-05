@@ -1,13 +1,34 @@
+/* Breadcrumb container with actions */
+.panel-chart-breadcrumb-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0.5em 0;
+  gap: 0.5em;
+  flex-wrap: nowrap;
+}
+
+.panel-chart-breadcrumb-actions {
+  flex: 0 0 auto;  /* Don't grow, don't shrink */
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  align-self: flex-start;  /* Align to top of container */
+}
+
 /* Breadcrumb navigation styling */
 .panel-chart-breadcrumb {
+  flex: 1 1 0;  /* Allow breadcrumb to take available space */
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5em;
-  margin: 0.5em 0;
+  margin: 0;  /* Margin now on container */
   font-family: var(--header-font-family, 'Helvetica', sans-serif);
   font-size: 1em;
   line-height: 1.4;
+  min-width: 0;  /* Allow breadcrumb to shrink if needed */
 }
 
 .breadcrumb-item {
@@ -222,3 +243,30 @@
   font-size: 0.75em;
   line-height: 1;
 }
+
+.pin-actions-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin: 0.25em 0;
+}
+
+.pin-actions-box button {
+  width: 100%;
+}
+
+.pin-actions-box button form input {
+  color: var(--font-color);
+  background-color: var(--input-background-color);
+}
+
+.country-search-results-window {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-result-index-selected {
+  border: 2px solid var(--green-accent);
+  border-radius: 5px;
+}
+

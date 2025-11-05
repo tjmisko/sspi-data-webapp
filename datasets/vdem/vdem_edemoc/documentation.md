@@ -8,5 +8,6 @@ Description: Electoral Democracy Index seeks to embody the core values that make
 Source:
   OrganizationCode: VDEM
   QueryCode: V-Dem-CY-FullOthers_csv_v13 
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/vdem/vdem_edemoc.py
 ---
 

@@ -81,6 +81,8 @@ class ColorMap {
             PG: "#007bff",
             ...customCountryColors
         }
+        this.gradients = {};
+        this.updateGradients();
     }
 
     get(entity) {
@@ -94,6 +96,63 @@ class ColorMap {
         const keys = Object.keys(this.colors);
         const randomKey = keys[Math.floor(Math.random() * keys.length)];
         return this.colors[randomKey];
+    }
+
+    updateGradients() {
+        // Gradients are lookups defined from full intensity (10) to no intensity (0)
+        // Generated at https://colorkit.io/
+        this.gradients.SSPI = {
+            10: "#ffd54f",
+            9: "#ffd961",
+            8: "#ffdd73",
+            7: "#ffe185",
+            6: "#ffe597",
+            5: "#ffe9a9",
+            4: "#ffedbb",
+            3: "#fff1cd",
+            2: "#fff5df",
+            1: "#fff9f1",
+            0: "#fefefe",
+        }
+        this.gradients.SUS = {
+            10: "#28a745",
+            9: "#3db058",
+            8: "#52b96b",
+            7: "#67c27e",
+            6: "#7ccb91",
+            5: "#91d4a4",
+            4: "#a6ddb7",
+            3: "#bbe6ca",
+            2: "#d0efdd",
+            1: "#e5f8f0",
+            0: "#fefefe"
+        }
+        this.gradients.MS = {
+            10: "#ff851b", 
+            9: "#ff9132",
+            8: "#ff9d49",
+            7: "#ffa960",
+            6: "#ffb577",
+            5: "#ffc18e",
+            4: "#ffcda5",
+            3: "#ffd9bc",
+            2: "#ffe5d3",
+            1: "#fff1ea",
+            0: "#fefefe"
+        }
+        this.gradients.PG = {
+            10: "#007bff",
+            9: "#1988ff", 
+            8: "#3295ff",
+            7: "#4ba2ff",
+            6: "#64afff",
+            5: "#7dbcff",
+            4: "#96c9ff",
+            3: "#afd6ff",
+            2: "#c8e3ff",
+            1: "#e1f0ff",
+            0: "#fefefe"
+        }
     }
 }
 const SSPIColors = new ColorMap(customCountryColors)

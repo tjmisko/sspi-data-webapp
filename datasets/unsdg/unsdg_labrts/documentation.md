@@ -8,6 +8,7 @@ Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 8.8.2
   QueryCode: 8.8.2
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/unsdg/unsdg_labrts.py
 ---
 
 SDG Indicator 8.8.2 - Labor Rights:

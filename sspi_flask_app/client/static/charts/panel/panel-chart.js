@@ -1,7 +1,7 @@
 class PanelChart {
     constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300, colorProvider = SSPIColors } ) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
-        this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
+        this.CountryLisr = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.pins = new Set() // pins contains a list of pinned countries
         this.missingCountries = [] // Array of countries with no data, populated from API response
@@ -53,25 +53,10 @@ class PanelChart {
         <div class="dynamic-item-description"></div>
     </div>
 </details>
-<details class="chart-options-details chart-view-options">
-    <summary class="chart-view-options-summary">View Options</summary>
-    <div class="view-options-suboption-container">
-        <div class="chart-view-subheader">Imputation Options</div>
-        <div class="chart-view-option">
-            <input type="checkbox" class="extrapolate-backward"/>
-            <label class="title-bar-label">Backward Extrapolation</label>
-        </div>
-        <div class="chart-view-option">
-            <input type="checkbox" class="interpolate-linear"/>
-            <label class="title-bar-label">Linear Interpolation</label>
-        </div>
-        <div class="chart-view-subheader">Randomization</div>
-        <div class="chart-view-option">
-            <div class="randomization-options">
-                <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
-                <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
-            </div>
-        </div>
+<details class="item-information chart-options-details">
+    <summary class="item-information-summary">Country Information</summary>
+    <div class="country-information-box" data-unpopulated=true>
+        Click on a Country to Show Details and Links Here.
     </div>
 </details>
 <details class="select-countries-options chart-options-details">
@@ -93,9 +78,12 @@ class PanelChart {
         </div>
         <div class="chart-view-subheader">Pinned Countries</div>
         <div class="legend-title-bar-buttons">
-            <button class="add-country-button">Search Country</button>
-            <button class="hideunpinned-button">Hide Unpinned</button>
-            <button class="clearpins-button">Clear Pins</button>
+            <div class="pin-actions-box">
+                <button class="hideunpinned-button">Hide Unpinned</button>
+                <button class="clearpins-button">Clear Pins</button>
+                <button class="add-country-button">Search Country</button>
+            </div>
+            <div class="country-search-results-window"></div>
         </div>
         <legend class="dynamic-line-legend">
             <div class="legend-items"></div>
@@ -104,6 +92,27 @@ class PanelChart {
         <div class="missing-countries-container">
             <div class="missing-countries-list"></div>
             <div class="missing-countries-summary"></div>
+        </div>
+    </div>
+</details>
+<details class="chart-options-details chart-view-options">
+    <summary class="chart-view-options-summary">View Options</summary>
+    <div class="view-options-suboption-container">
+        <div class="chart-view-subheader">Imputation Options</div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="extrapolate-backward"/>
+            <label class="title-bar-label">Backward Extrapolation</label>
+        </div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="interpolate-linear"/>
+            <label class="title-bar-label">Linear Interpolation</label>
+        </div>
+        <div class="chart-view-subheader">Randomization</div>
+        <div class="chart-view-option">
+            <div class="randomization-options">
+                <label class="title-bar-label" for="random-country-sample">Draw Size:</label>
+                <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
+            </div>
         </div>
     </div>
 </details>
@@ -135,17 +144,17 @@ class PanelChart {
     <use href="#icon-menu" />
 </svg>
 `;
-        this.root.appendChild(this.showChartOptions)
+        this.titleActions.appendChild(this.showChartOptions)
         this.overlay = document.createElement('div')
         this.overlay.classList.add('chart-options-overlay')
         this.overlay.addEventListener('click', () => {
             this.closeChartOptionsSidebar()
         })
         this.root.appendChild(this.overlay)
-        const wrapper = document.createElement('div')
-        wrapper.classList.add('chart-options-wrapper')
-        wrapper.appendChild(this.chartOptions)
-        this.root.appendChild(wrapper)
+        this.chartOptionsWrapper = document.createElement('div')
+        this.chartOptionsWrapper.classList.add('chart-options-wrapper')
+        this.chartOptionsWrapper.appendChild(this.chartOptions)
+        this.root.appendChild(this.chartOptionsWrapper)
     }
 
     rigChartOptions() {
@@ -156,6 +165,7 @@ class PanelChart {
         this.hideChartOptions.addEventListener('click', () => {
             this.closeChartOptionsSidebar()
         })
+        this.countryInformationBox = this.chartOptions.querySelector(".country-information-box");
         this.extrapolateBackwardCheckbox = this.chartOptions.querySelector('.extrapolate-backward')
         this.extrapolateBackwardCheckbox.checked = true
         this.extrapolateBackwardCheckbox.addEventListener('change', () => {
@@ -173,7 +183,7 @@ class PanelChart {
         this.randomHistoryForwardButton.addEventListener('click', () => { this.randomHistoryForward() })
         this.randomHistoryForwardButton.style.display = "none";
         this.drawButton = this.root.querySelector('.draw-button')
-        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries";
+        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries ";
         this.drawButton.addEventListener('click', () => {
             this.showRandomN(this.randomN)
         })
@@ -217,20 +227,24 @@ class PanelChart {
         this.chartContainer = document.createElement('div')
         this.chartContainer.classList.add('panel-chart-container')
         this.chartContainer.innerHTML = `
-<h2 class="panel-chart-title"></h2>
+<div class="panel-chart-title-container">
+    <h2 class="panel-chart-title"></h2>
+    <div class="panel-chart-title-actions"></div>
+</div>
 <div class="panel-canvas-wrapper">
     <canvas class="panel-chart-canvas"></canvas>
 </div>
 `;
         this.root.appendChild(this.chartContainer)
         this.title = this.chartContainer.querySelector('.panel-chart-title')
+        this.titleActions = this.chartContainer.querySelector('.panel-chart-title-actions')
         this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
         this.context = this.canvas.getContext('2d')
         this.chart = new Chart(this.context, {
             type: 'line',
             plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
             options: {
-                // animation: false,
+                animation: false,
                 responsive: true,
                 hover: {
                     mode: null
@@ -271,6 +285,8 @@ class PanelChart {
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.togglePin(dataset)
+                                this.activeCountry = dataset;
+                                this.updateCountryInformation();
                             });
                         }
                     },
@@ -343,9 +359,10 @@ class PanelChart {
     }
 
     rigLegend() {
+        this.countrySearchResultsWindow =  this.chartOptions.querySelector('.country-search-results-window')
         this.addCountryButton = this.chartOptions.querySelector('.add-country-button')
         this.addCountryButton.addEventListener('click', () => {
-            new CountrySelector(this.addCountryButton, this.chart.data.datasets, this)
+            new CountrySelector(this.addCountryButton, this.countrySearchResultsWindow, this.chart.data.datasets, this)
         })
         this.clearPinsButton = this.chartOptions.querySelector('.clearpins-button')
         this.clearPinsButton.addEventListener('click', () => {
@@ -355,7 +372,51 @@ class PanelChart {
         this.legendItems = this.legend.querySelector('.legend-items')
     }
 
+    updateCountryInformation() {
+        if (!this.activeCountry) return;
+        const isPinned = this.activeCountry.pinned || false;
+        const pinButtonText = isPinned ? "Unpin Country" : "Pin Country";
+        const pinButtonClass = isPinned ? "unpin-country-button" : "pin-country-button";
+        this.countryInformationBox.innerHTML = `
+<div id="#active-country-information" class="country-details-info">
+<h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
+<div class="country-details-score-container"></div>
+<div class="country-details-actions">
+    <button class="${pinButtonClass}" data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button>
+    <a class="view-all-data-link" href="/data/country/${this.activeCountry.CCode}">View All Data</a>
+</div>
+</div>`;
+
+        // Add event listener for Pin/Unpin Country button
+        const pinButton = this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');
+        if (pinButton) {
+            pinButton.addEventListener('click', (e) => {
+                const countryCode = e.target.dataset.countryCode;
+                // Find the feature to toggle
+                const dataset = this.chart.data.datasets.find(d => d.CCode === countryCode);
+                if (dataset) {
+                    this.togglePin(dataset);
+                    this.activeCountry = dataset;
+                    this.updateCountryInformation();
+                }
+            });
+        }
+    }
+
     updateLegend() {
+        function generateListener(countryCode, PanelChartObject) {
+            function listener() {
+                let dataset = PanelChartObject.chart.data.datasets.find((d) => d.CCode === countryCode);
+                if (dataset) {
+                    PanelChartObject.activeCountry = dataset;
+                    PanelChartObject.countryInformationBox.dataset.unpopulated = false;
+                    PanelChartObject.updateCountryInformation();
+                } else {
+                    console.log("Country " + countryCode + " Not Found in Datasets!")
+                }
+            }
+            return listener
+        }
         this.legendItems.innerHTML = ''
         if (this.pins.size > 0) {
             this.pins.forEach((PinnedCountry) => {
@@ -377,6 +438,7 @@ class PanelChart {
                 newPin.style.backgroundColor = PinnedCountry.borderColor + "44"
                 newPin.appendChild(pinSpan)
                 newPin.appendChild(removeButton)
+                newPin.addEventListener('click', generateListener(PinnedCountry.CCode, this))
                 this.legendItems.appendChild(newPin)
             })
         }
@@ -499,8 +561,6 @@ class PanelChart {
     }
 
     update(data) {
-        console.log(data)
-        
         // Force refresh of chart interaction plugin labels when data changes
         if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
             this.chartInteractionPlugin._forceRefreshLabels(this.chart)
@@ -524,51 +584,32 @@ class PanelChart {
         this.updateDescription(data.description)
         this.updateChartColors()
         this.updateCountryGroups()
-        this.chart.update()
-        
+        this.updateChartPreservingYAxis();
         // Compute missing countries asynchronously after chart rendering
-        console.log('=== About to call computeMissingCountriesAsync ===')
-        console.log('countryGroupMap available?', !!this.countryGroupMap, Object.keys(this.countryGroupMap || {}).length, 'countries')
         this.computeMissingCountriesAsync()
     }
 
     computeMissingCountriesAsync() {
-        console.log('=== computeMissingCountriesAsync called ===')
         // Use setTimeout to defer execution until after chart rendering is complete
         setTimeout(() => {
-            console.log('=== setTimeout callback executing ===')
             this.computeMissingCountries()
         }, 0)
     }
 
     computeMissingCountries() {
-        console.log('=== Starting computeMissingCountries ===')
-        
         if (!this.countryGroupMap || Object.keys(this.countryGroupMap).length === 0) {
             console.log('No country group map available for missing countries computation')
             return
         }
-
-        console.log('Country group map keys:', Object.keys(this.countryGroupMap).length, 'countries')
-        console.log('First 10 countries in group map:', Object.keys(this.countryGroupMap).slice(0, 10))
-        console.log('SGP in group map?', 'SGP' in this.countryGroupMap, this.countryGroupMap['SGP'])
-
         const missingCountries = []
         const seenCountries = new Set()
-
-        console.log('Total datasets:', this.chart.data.datasets.length)
-        console.log('Dataset country codes:', this.chart.data.datasets.map(d => d.CCode))
-
         // First pass: process countries that appear in datasets
         this.chart.data.datasets.forEach(countryData => {
             const countryCode = countryData.CCode
-            console.log(`Processing dataset for country: ${countryCode}`)
             seenCountries.add(countryCode)
             const scores = countryData.data || []
             const scoresEmpty = !scores || scores.length === 0 || scores.every(s => s === null || s === undefined || s === '')
-            console.log(`Country ${countryCode}: data length=${scores.length}, empty=${scoresEmpty}`)
             if (scoresEmpty) {
-                console.log(`Adding ${countryCode} to missing (empty data)`)
                 missingCountries.push({
                     CCode: countryCode,
                     CName: countryData.CName || countryCode,
@@ -576,10 +617,6 @@ class PanelChart {
                 })
             }
         })
-
-        console.log('Seen countries:', Array.from(seenCountries))
-        console.log('SGP in seen countries?', seenCountries.has('SGP'))
-
         let notSeenCount = 0
         Object.entries(this.countryGroupMap).forEach(([countryCode, countryGroups]) => {
             if (!seenCountries.has(countryCode)) {
@@ -591,12 +628,6 @@ class PanelChart {
                 })
             }
         })
-
-        console.log(`Countries not seen in datasets: ${notSeenCount}`)
-        console.log(`Total missing countries found: ${missingCountries.length}`)
-        console.log('Missing countries:', missingCountries.map(c => c.CCode))
-        console.log('=== End computeMissingCountries ===')
-
         // Update the missing countries and refresh display
         this.missingCountries = missingCountries
         this.updateMissingCountries()
@@ -604,7 +635,6 @@ class PanelChart {
 
     getPins() {
         const storedPins = window.observableStorage.getItem('pinnedCountries')
-        console.log("Stored pins:", storedPins)
         if (storedPins) {
             this.pins = new Set(storedPins)
         }
@@ -620,7 +650,7 @@ class PanelChart {
             }
         })
         this.updateLegend()
-        this.chart.update()
+        this.updateChartPreservingYAxis();
     }
 
     pushPinUpdate() {
@@ -704,8 +734,6 @@ class PanelChart {
         shownIndexArray.forEach((index) => {
             this.chart.data.datasets[index].hidden = false;
             this.chart.data.datasets[index].drawHistoryArray[this.randomHistoryIndex] = 1;
-            console.log(this.chart.data.datasets[index].CCode, this.chart.data.datasets[index].CName)
-            console.log(this.chart.data.datasets[index].drawHistoryArray)
         })
         this.updateChartPreservingYAxis()
         if (this.randomHistoryIndex > 0) {
@@ -724,9 +752,6 @@ class PanelChart {
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
                 dataset.hidden = true
-            }
-            if (dataset.drawHistoryArray === undefined) {
-                console.log(underfined)
             }
             if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
                 dataset.hidden = false
@@ -747,9 +772,6 @@ class PanelChart {
         this.chart.data.datasets.forEach((dataset) => {
             if (!dataset.pinned) {
                 dataset.hidden = true
-            }
-            if (dataset.drawHistoryArray === undefined) {
-                console.log(underfined)
             }
             if (dataset.drawHistoryArray[this.randomHistoryIndex] == 1) {
                 dataset.hidden = false
@@ -774,12 +796,14 @@ class PanelChart {
         this.updateLegend()
     }
 
-    pinCountryByCode(CountryCode) {
+    pinCountryByCode(countryCode) {
         this.chart.data.datasets.forEach(dataset => {
-            if (dataset.CCode === CountryCode) {
+            if (dataset.CCode === countryCode) {
+                if (!dataset.pinned) {
+                    this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
+                }
                 dataset.pinned = true
                 dataset.hidden = false
-                this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: dataset.borderColor })
             }
         })
         this.pushPinUpdate()
@@ -829,6 +853,8 @@ class PanelChart {
     closeChartOptionsSidebar() {
         this.chartOptions.classList.remove('active')
         this.chartOptions.classList.add('inactive')
+        this.chartOptionsWrapper.classList.remove('active')
+        this.chartOptionsWrapper.classList.add('inactive')
         this.overlay.classList.remove('active')
         this.overlay.classList.add('inactive')
     }
@@ -836,6 +862,8 @@ class PanelChart {
     openChartOptionsSidebar() {
         this.chartOptions.classList.add('active')
         this.chartOptions.classList.remove('inactive')
+        this.chartOptionsWrapper.classList.add('active')
+        this.chartOptionsWrapper.classList.remove('inactive')
         this.overlay.classList.remove('inactive')
         this.overlay.classList.add('active')
     }
@@ -849,19 +877,8 @@ class PanelChart {
     }
 
     dumpChartDataJSON(scope = 'visible') {
-        console.log('dumpChartDataJSON called with scope:', scope)
-        console.log('Available datasets:', this.chart.data.datasets.length)
-        
-        // Debug: log the structure of the first dataset
-        if (this.chart.data.datasets.length > 0) {
-            console.log('First dataset structure:', Object.keys(this.chart.data.datasets[0]))
-            console.log('First dataset sample:', this.chart.data.datasets[0])
-        }
-        
         const observations = this.chart.data.datasets.map(dataset => {
             const shouldInclude = this.shouldIncludeDataset(dataset, scope)
-            console.log(`Dataset ${dataset.CCode} (${dataset.CName}) - include: ${shouldInclude}`)
-            
             if (!shouldInclude) {
                 return []
             }
@@ -885,14 +902,11 @@ class PanelChart {
                 "Year": years[i] ?? null
             }));
         }).flat();
-        
         console.log('Total observations to download:', observations.length)
-        
         if (observations.length === 0) {
             alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
             return
         }
-        
         const jsonString = JSON.stringify(observations, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -903,13 +917,10 @@ class PanelChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
         console.log('JSON download initiated')
     }
 
     dumpChartDataCSV(scope = 'visible') {
-        console.log('dumpChartDataCSV called with scope:', scope)
-        
         const observations = this.chart.data.datasets.map(dataset => {
             if (!this.shouldIncludeDataset(dataset, scope)) {
                 return []
@@ -934,9 +945,6 @@ class PanelChart {
                 "Year": years[i]?.toString() || ''
             }));
         }).flat();
-        
-        console.log('Total observations for CSV:', observations.length)
-        
         if (observations.length === 0) {
             alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
             return
@@ -952,8 +960,6 @@ class PanelChart {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
-        console.log('CSV download initiated')
     }
 
     rigPinChangeListener() {
@@ -980,12 +986,12 @@ class PanelChart {
 
     toggleBackwardExtrapolation() {
         this.extrapolateBackwardPlugin.toggle()
-        this.chart.update();
+        this.updateChartPreservingYAxis();
     }
 
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
-        this.chart.update();
+        this.updateChartPreservingYAxis();
     }
 
     warnHidden() {
@@ -1008,14 +1014,9 @@ class PanelChart {
     }
 
     handleDownloadRequest() {
-        console.log('Download request initiated')
         const formData = new FormData(this.downloadForm)
         const scope = formData.get('scope')
         const format = formData.get('format')
-        
-        console.log('Download scope:', scope)
-        console.log('Download format:', format)
-        
         if (!scope || !format) {
             console.error('Missing scope or format in form data')
             alert('Please select both scope and format options')
@@ -1066,18 +1067,14 @@ class PanelChart {
         const yScale = this.chart.scales?.y
         const currentMin = yScale?.min
         const currentMax = yScale?.max
-        
         // Also check if there are explicitly set bounds in options
         const yAxis = this.chart.options.scales?.y
         const configuredMin = yAxis?.min
         const configuredMax = yAxis?.max
-        
         // Prefer configured bounds, but fall back to current scale if not explicitly configured
         const minToPreserve = configuredMin !== undefined ? configuredMin : currentMin
         const maxToPreserve = configuredMax !== undefined ? configuredMax : currentMax
-        
         this.chart.update(updateOptions)
-        
         // Restore the y-axis limits
         if (minToPreserve !== undefined || maxToPreserve !== undefined) {
             this.chart.options.scales.y.min = minToPreserve

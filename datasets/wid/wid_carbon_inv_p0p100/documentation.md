@@ -6,6 +6,7 @@ Description: Average per capita carbon emissions from investments across full in
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_carbon_inv_p0p100.py
 ---
 
 # Personal Carbon Footprint - Investment (Full Distribution)

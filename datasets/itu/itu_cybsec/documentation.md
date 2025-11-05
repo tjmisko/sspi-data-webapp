@@ -10,5 +10,6 @@ Source:
   OrganizationSeriesCode: null
   QueryCode: null
   BaseURL: https://www.itu.int/en/ITU-D/Cybersecurity/Pages/global-cybersecurity-index.aspx
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/itu/itu_cybsec.py
 ---
 

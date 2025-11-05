@@ -5,7 +5,6 @@ class ScoreBarStatic {
         this.backgroundBase = backgroundColor
         this.width = width
         this.height = height
-        this.setTheme(localStorage.getItem("theme"))
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
@@ -14,6 +13,7 @@ class ScoreBarStatic {
         this.fetch().then(data => {
             this.update(data)
         })
+        this.setTheme(window.observableStorage.getItem("theme"))
     }
 
     initRoot() {
@@ -31,14 +31,23 @@ class ScoreBarStatic {
     initChartJSCanvas() {
         // Initialize the chart canvas
         this.canvas = document.createElement('canvas')
-        this.canvas.id = `score-bar-chart-canvas-${this.itemCode}`;
-        this.canvas.width = this.width
-        this.canvas.height = this.height
+        this.canvas.id = `score-bar-canvas-container${this.itemCode}`;
+        // this.canvas.width = this.width
+        // this.canvas.height = this.height
+        this.chartContainer = document.createElement('div')
         this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvas)
+        this.chartContainer.classList.add('score-bar-chart-container')
+        this.chartContainer.appendChild(this.canvas)
+        this.root.appendChild(this.chartContainer)
         this.chart = new Chart(this.context, {
             type: 'bar',
             options: {
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 0,
+                    }
+                },
                 onClick: (event, elements) => {
                     elements.forEach(element => {
                         this.toggleHighlight(
@@ -55,9 +64,9 @@ class ScoreBarStatic {
                             label: function(context) {
                                 const info = context.dataset.info[context.dataIndex]
                                 return [
-                                    `${info.IName} Score: ${info.Score.toFixed(3)}`,
-                                    `${info.IName} Rank: ${info.Rank}`,
-                                    `Year: ${info.Year}`
+                                    info.IName + ' Score: ' + info.Score.toFixed(3),
+                                    info.IName + ' Rank: ' + info.Rank,
+                                    'Year: ' + info.Year
                                 ]
                             }
                         }
@@ -109,7 +118,7 @@ class ScoreBarStatic {
                 ticks: {
                     color: this.textColor,
                     font: {
-                        size: 12,
+                        size: 10,
                         weight: 'bold'
                     },
                     callback: function(value, index, values) {
@@ -122,6 +131,9 @@ class ScoreBarStatic {
                 position: 'left',
                 ticks: {
                     color: this.textColor,
+                    font: {
+                        size: 10,
+                    }
                 },
                 grid: {
                     display: true,
@@ -164,7 +176,7 @@ class ScoreBarStatic {
         for (const key in summaryStats) {
             const stat = document.createElement('div')
             stat.classList.add('score-bar-summary-stat')
-            stat.innerHTML = `${key}: <b>${summaryStats[key]}</b>`;
+            stat.innerHTML = key + ': <b>' + summaryStats[key] + '</b>'
             this.summaryBox.appendChild(stat)
         }
     }
@@ -177,7 +189,7 @@ class ScoreBarStatic {
     setTheme(theme) {
         if (theme !== "light") {
             this.theme = "dark"
-            this.textColor = "#bbb"
+            this.textColor = "#dddddd"
             this.gridColor = "#cccccc33"
             this.backgroundColor = this.backgroundBase + "99"
             this.highlightColor = "#ff0000ee"
@@ -191,6 +203,10 @@ class ScoreBarStatic {
             this.highlightColor = "#ff0000ee"
             this.borderColor = this.backgroundBase
             this.titleColor = "#333"
+        }
+        if (this.chart) {
+            this.updateChartOptions()
+            this.chart.update()
         }
     }
 
@@ -275,7 +291,7 @@ class ScoreBarStatic {
     }
 
     propagateHighlights() {
-        window.chartObjectRegistry.forEach(chartObject => {
+        window.SSPICharts.forEach(chartObject => {
             if (chartObject !== this) {
                 chartObject.syncHighlights()
             }

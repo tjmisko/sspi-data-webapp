@@ -8,5 +8,6 @@ Source:
   OrganizationCode: WB
   OrganizationSeriesCode: FS.AST.PRVT.GD.ZS
   QueryCode: FS.AST.PRVT.GD.ZS
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wb/wb_credit.py
 ---
 

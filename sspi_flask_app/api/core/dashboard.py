@@ -33,6 +33,8 @@ from sspi_flask_app.models.database import (
     sspi_indicator_dynamic_line_data,
     sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
+    sspi_globe_data,
+    sspi_dynamic_radar_data
 )
 from datetime import datetime
 import hashlib
@@ -309,6 +311,88 @@ def get_static_radar_data(CountryCode):
     return jsonify(radar_data)
 
 
+@dashboard_bp.route("/dynamic/radar/<CountryCode>")
+def get_dynamic_radar_data(CountryCode):
+    """
+    Get all years of radar data for a country in a single request.
+    Uses MongoDB aggregation pipeline for optimal performance.
+
+    Returns:
+        {
+            "CCode": "USA",
+            "minYear": 2000,
+            "maxYear": 2023,
+            "metadata": {
+                "labels": [...],      # Category codes (same for all years)
+                "labelMap": {...}     # Category names (same for all years)
+            },
+            "years": {
+                "2000": {
+                    "title": "United States (2000)",
+                    "datasets": [...],
+                    "legendItems": [...],
+                    "ranks": [...]
+                },
+                "2001": {...},
+                ...
+            }
+        }
+    """
+    # MongoDB aggregation pipeline for efficient data processing
+    pipeline = [
+        # Match documents for this country
+        {"$match": {"CCode": CountryCode}},
+        # Sort by year
+        {"$sort": {"Year": 1}},
+        # Group all documents together
+        {"$group": {
+            "_id": "$CCode",
+            "minYear": {"$min": "$Year"},
+            "maxYear": {"$max": "$Year"},
+            "firstDoc": {"$first": "$$ROOT"},
+            "allDocs": {"$push": "$$ROOT"}
+        }},
+        # Project to final shape
+        {"$project": {
+            "_id": 0,
+            "CCode": "$_id",
+            "minYear": 1,
+            "maxYear": 1,
+            "metadata": {
+                "labels": "$firstDoc.labels",
+                "labelMap": "$firstDoc.labelMap"
+            },
+            "years": {
+                "$arrayToObject": {
+                    "$map": {
+                        "input": "$allDocs",
+                        "as": "doc",
+                        "in": {
+                            "k": {"$toString": "$$doc.Year"},
+                            "v": {
+                                "title": "$$doc.title",
+                                "datasets": "$$doc.datasets",
+                                "legendItems": "$$doc.legendItems",
+                                "ranks": {"$ifNull": ["$$doc.ranks", []]}
+                            }
+                        }
+                    }
+                }
+            }
+        }}
+    ]
+
+    # Execute aggregation pipeline
+    result = list(sspi_dynamic_radar_data.aggregate(pipeline))
+
+    if not result:
+        return jsonify({
+            "error": f"No radar data found for country {CountryCode}"
+        }), 404
+
+    return jsonify(result[0])
+
+
 @dashboard_bp.route("/dynamic/matrix/<country_group>")
 def get_dynamic_matrix_data(country_group):
     countries = sspi_metadata.country_group(country_group)
@@ -500,7 +584,7 @@ def get_static_score_item(item_code):
 def get_static_stacked_sspi():
     score_data = sspi_static_stack_data.find_one({}, {"_id": 0})
     return jsonify(
-        {"title": "SSPI Overall Scores by Country", "data": score_data["data"]}
+        {"title": "SSPI 2018 Score Breakdown by Pillar", "data": score_data["data"]}
     )
 
 
@@ -843,23 +927,25 @@ def active_schema():
     return jsonify(active_schema)
 
 
-@dashboard_bp.route("/country/dynamic/stack/<CountryCode>/<RootItemCode>")
-def dynamic_stack_data(CountryCode, RootItemCode):
+@dashboard_bp.route("/country/dynamic/stack/<country_code>/<root_item_code>")
+def dynamic_stack_data(country_code, root_item_code):
     """
     Get the dynamic data for the given country code and root item code
     """
-    root_item_detail = sspi_metadata.get_item_detail(RootItemCode)
-    child_items = sspi_metadata.get_child_details(RootItemCode)
+    root_item_detail = sspi_metadata.get_item_detail(root_item_code)
+    child_items = sspi_metadata.get_child_details(root_item_code)
+    country_detail = sspi_metadata.get_country_detail(country_code)
     child_codes = [child["Metadata"]["ItemCode"] for child in child_items]
     stack_div = len(child_codes)
     mongo_query = {
-        "CCode": CountryCode,
-        "ICode": {"$in": child_codes + [RootItemCode]},
+        "CCode": country_code,
+        "ICode": {"$in": child_codes + [root_item_code]},
     }
     data = sspi_item_dynamic_line_data.find(mongo_query)
+    data.sort(key=lambda x: ([root_item_code] + child_codes).index(x["Detail"]["ItemCode"]))
     year_labels = list(range(2000, datetime.now().year + 1))
     for document in data:
-        if document["ICode"] == RootItemCode:
+        if document["ICode"] == root_item_code:
             document["hidden"] = True
         else:
             document["divisor"] = stack_div
@@ -868,7 +954,7 @@ def dynamic_stack_data(CountryCode, RootItemCode):
     return parse_json(
         {
             "data": data,
-            "title": f"{root_item_detail['ItemName']} ({RootItemCode}) for Country {CountryCode}",
+            "title": f"{country_detail["Flag"]} {country_detail["Country"]} {root_item_detail['ItemType']} Score Breakdown",
             "labels": year_labels,
             "itemType": root_item_detail["DocumentType"][0:-6].lower(),
             "hasScore": True,
@@ -1164,3 +1250,8 @@ def item_coverage_data(ItemCode, CountryGroup):
         "years": list(range(2000, 2024)),
         "ccodes": sorted(list(set(d["y"] for d in data))),
     }
+
+
+@dashboard_bp.route("/globe")
+def globe_data():
+    return sspi_globe_data.find({})[0]

@@ -6,6 +6,7 @@ Description: Distribution of net personal wealth shares across all population pe
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_wealthsh_net_equalsplit_p0p100.py
 ---
 # Net Personal Wealth
 

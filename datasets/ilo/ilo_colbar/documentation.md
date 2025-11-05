@@ -9,5 +9,6 @@ Source:
   OrganizationSeriesCode: DF_ILR_CBCT_NOC_RT
   QueryCode: Indicator=DF_ILR_CBCT_NOC_RT;Parameters=
   Format: SDMX-JSON
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/ilo/ilo_colbar.py
 ---
 

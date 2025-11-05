@@ -7,4 +7,5 @@ Source:
   OrganizationCode: FPI
   OrganizationSeriesCode: gdp
   QueryCode: gdp
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/fpi/fpi_gdp_per_cap.py
 ---

@@ -9,13 +9,9 @@
 {% endblock %}
 
 {% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'charts/score-bar-static.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'js/colorMap.js') }}"></script>
 {% endblock %}
 
 {% block stylesheet %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'css/score-bar.css') }}"> 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
@@ -23,23 +19,63 @@
 {% endblock %}
 
 {% block content %}
-    <section class="score-bar-overall-flexbox">
-        <div id="sspi-score-bar-parent" class="score-bar-parent"></div>
+    <section class=" page-section">
+        <div class="content-container">
+            <div class="score-bar-overall-box">
+                <h2>Policy Scores and Ranks: Sustainable and Shared Prosperity Policy Index 2018</h2>
+                <p> Use the charts below to compare scores and ranks
+                across countries for the SSPI and its underlying pillars
+                and categories. Click a country's bar on any chart to
+                highlight it on all charts, showing a country's policy
+                strengths and weaknesses, both in absolute terms and
+                relative to other countries.</p>
+                <div id="sspi-score-bar-parent" class="score-bar-parent"></div>
+            </div>
+        </div>
     </section>
-    <section class="score-bar-pillar-flexbox">
-        <div id="sus-score-bar-parent" class="score-bar-parent"></div>
-        <div id="ms-score-bar-parent" class="score-bar-parent"></div>
-        <div id="pg-score-bar-parent" class="score-bar-parent"></div>
+    <section class="page-section">
+        <div class="content-container">
+            <div class="pillar-chart-box">
+                <h2>Scores and Ranks: SSPI Pillars</h2>
+                <div class="static-pillar-par-box">
+                    <p>The SSPI is comprised of three pillars:
+                    Sustainability, Market Structure, and Public
+                    Goods. </p>
+                    <ul> 
+                        <li> Public Goods is the strongest
+                        pillar with a low spread around a
+                        comparatively high average. </li> 
+                        <li> Sustainability has the weakest average,
+                        but few strong performers, and few
+                        exceptionally weak performers. All
+                        countries must improve Sustainability
+                        policies</li>
+                        <li>Market structure has an average nearly
+                        as low as Sustainability, but a higher
+                        spread around that average.</li>
+                    </ul>
+                <div
+                <div class="score-bar-pillar-flexbox">
+                    <div id="sus-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="ms-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="pg-score-bar-parent" class="score-bar-parent"></div>
+                </div>
+            </div>
+        </div>
     </section>
     <script defer>
-        const scoreBarSSPIParent = document.getElementById('sspi-score-bar-parent');
-        const scoreBarSUSParent = document.getElementById('sus-score-bar-parent');
-        const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
-        const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
-        window.scoreBarSSPI = new ScoreBarStatic(scoreBarSSPIParent, "SSPI");
-window.scoreBarSUS = new ScoreBarStatic(scoreBarSUSParent, "SUS", { SSPIColors.SUS, width=450 });
-window.scoreBarMS = new ScoreBarStatic(scoreBarMSParent, "MS", { SSPIColors.MS, width=450 } );
-window.scoreBarPG = new ScoreBarStatic(scoreBarPGParent, "PG", { SSPIColors.PG, width=450 });
-        window.chartObjectRegistry = [scoreBarSSPI, scoreBarSUS, scoreBarMS, scoreBarPG];
+    const scoreBarSSPIParent = document.getElementById('sspi-score-bar-parent');
+    const scoreBarSUSParent = document.getElementById('sus-score-bar-parent');
+    const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
+    const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSSPIParent, "SSPI"));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS, width=375));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS, width=375));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG, width=375));
+    setTimeout(() => {
+        window.SSPICharts[1].title.innerHTML = "Sustainability"
+        window.SSPICharts[2].title.innerHTML = "Market Structure"
+        window.SSPICharts[3].title.innerHTML = "Public Goods"
+    }, 1000)
     </script>
 {% endblock %}

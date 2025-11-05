@@ -6,6 +6,7 @@ Description: Average net personal wealth across all population percentiles for i
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_wealthav_net_ind_p0p100.py
 ---
 # Net Personal Wealth
 

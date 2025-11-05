@@ -6,6 +6,7 @@ Description: Average post-tax national income for the top 10% of earners for equ
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/wid/wid_nincav_posttax_equalsplit_p90p100.py
 ---
 # Post-Tax National Income
 
