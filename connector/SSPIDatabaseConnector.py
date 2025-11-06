@@ -69,13 +69,13 @@ class SSPIDatabaseConnector:
             return sesh.delete(endpoint, stream=stream, timeout=timeout)
         return sesh.get(endpoint, stream=stream, timeout=timeout)
 
-    def load(self, obs_lst: list[dict], database_name: str, indicator_code: str, remote=False) -> str:
+    def load(self, obs_lst: list[dict], database_name: str, remote=False):
         """
         Load a list of observations in JSON format into the database
         """
         sesh = self.remote_session if remote else self.local_session
         base_url = self.remote_base if remote else self.local_base
-        endpoint = f"{base_url}/api/v1/load/{database_name}/{indicator_code}"
+        endpoint = f"{base_url}/api/v1/load/{database_name}"
         res = sesh.post(endpoint, json=json.dumps(obs_lst))
         return res
 

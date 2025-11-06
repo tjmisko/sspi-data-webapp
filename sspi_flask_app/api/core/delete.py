@@ -1,14 +1,8 @@
-import json
-import os
-import tempfile
-from datetime import datetime
-
+import re
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask import current_app as app
 from flask_login import login_required
 
-# from wtforms import StringField
-# from bson.objectid import ObjectId
 from flask_wtf import FlaskForm
 from wtforms import SelectField, StringField, SubmitField
 from wtforms.validators import DataRequired
@@ -122,6 +116,7 @@ def remove_loose_data():
     return redirect(url_for(".get_delete_page"))
 
 
+
 @delete_bp.route("/clear", methods=["POST"])
 @login_required
 def clear_db():
@@ -136,6 +131,35 @@ def clear_db():
         else:
             flash("Database names do not match")
     return redirect(url_for(".get_delete_page"))
+
+
+@delete_bp.route("/series/<database_name>/<series_code>", methods=["DELETE"])
+@login_required
+def delete_series(database_name, series_code):
+    database = lookup_database(database_name)
+    dataset_codes = sspi_metadata.get_dataset_dependencies(series_code)
+    if database_name == "sspi_raw_api_data":
+        message = ""
+        for ds in dataset_codes:
+            message += delete_raw_data(ds) + "\n"
+    else:
+        match = re.match("^[A-Za-z0-9_]+$", series_code)
+        if not match:
+            return "SeriesCode may contain only letters, numbers, and underscores"
+        dataset_codes = sspi_metadata.get_dataset_dependencies(series_code)
+        indicator_codes = sspi_metadata.get_indicator_dependencies(series_code)
+        print(indicator_codes)
+        delete_query = {
+            "$or": [
+                { "ItemCode": series_code },
+                { "IndicatorCode": {"$in": indicator_codes } },
+                { "DatasetCode": {"$in": dataset_codes }  }
+            ]
+        }
+        count = database.delete_many(delete_query)
+        message = f"Deleted {count} observations of SeriesCode {series_code} from Database {database.name}"
+        app.logger.info(message)
+    return message
 
 
 @delete_bp.route("/indicator/<database_name>/<IndicatorCode>", methods=["DELETE"])

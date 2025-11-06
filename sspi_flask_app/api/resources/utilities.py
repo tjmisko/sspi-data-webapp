@@ -54,6 +54,16 @@ def jsonify_df(df: pd.DataFrame):
     """
     return jsonify(json.loads(str(df.to_json(orient="records"))))
 
+def detect_repeated_item(item_list: list[str]) -> dict[str, list]:
+    index_dict = {}
+    for i, item in enumerate(item_list):
+        index_dict.setdefault(item, [])
+        index_dict[item].append(i)
+    return {
+        item: index_list 
+        for item, index_list in index_dict.items() 
+        if len(index_list) > 1
+    }
 
 def goalpost(value, lower, upper) -> float:
     """Implement the goalposting formula"""
@@ -241,7 +251,6 @@ def create_computed_series(
             try:
                 arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
             except KeyError:
-                print(f"KeyError: {arg_name_list} for {arg_value_dict}")
                 continue
             try:
                 new_dataset = {
@@ -254,8 +263,8 @@ def create_computed_series(
                     "Computed": True,
                 } 
                 document["Datasets"].append(new_dataset)
-            except Exception as e:
-                print(f"Error computing {series_code} for {document['CountryCode']} in {document['Year']}: {e}")
+            except Exception:
+                pass
     return indicator_document_list
 
 
@@ -828,3 +837,4 @@ def reduce_dataset_list(dataset_list: list[str]) -> list[str]:
                 found = True
             i += 1
     return dataset_list_reduced
+

@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 @compute_bp.route("/REDLST", methods=['POST'])
 @login_required
-def compute_rdlst():
+def compute_redlst():
     sspi_indicator_data.delete_many({"IndicatorCode": "REDLST"})
     dataset_list = sspi_clean_api_data.find({"DatasetCode": "UNSDG_REDLST"})
     lg, ug = sspi_metadata.get_goalposts("REDLST") 

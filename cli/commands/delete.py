@@ -71,6 +71,29 @@ def indicator(database, indicator_code, remote=False):
 
 @delete.command()
 @click.argument("database", type=str, required=True)
+@click.argument("series_code", type=str, required=True)
+@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+def series(database, series_code, remote=False):
+    database = full_name(database)
+    series_code = series_code.upper()
+    confirm_msg_lst = [
+        "Confirm ",
+        click.style("DELETE", fg="red"),
+        " of all observations of ",
+        click.style(series_code, fg="red"),
+        " from ",
+        click.style((lambda x: "Remote" if x else "Local")(remote), fg="red"),
+        " database ",
+        click.style(database, fg="red")
+    ]
+    if click.confirm("".join(confirm_msg_lst)):
+        connector = SSPIDatabaseConnector()
+        endpoint = f"/api/v1/delete/series/{database}/{series_code}"
+        res = connector.call(endpoint, remote=remote, method="DELETE")
+        echo_pretty(res.text)
+
+@delete.command()
+@click.argument("database", type=str, required=True)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 def loose(database, remote=False):
     """Delete loose documents from the database"""
