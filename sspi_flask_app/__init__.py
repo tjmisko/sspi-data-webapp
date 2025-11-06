@@ -83,7 +83,6 @@ limiter = Limiter(
 )
 assets = Environment()
 
-
 def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
@@ -115,7 +114,6 @@ def init_app(Config):
         from sspi_flask_app.api.core.dashboard import dashboard_bp
         from sspi_flask_app.api.core.delete import delete_bp
         from sspi_flask_app.api.core.download import download_bp
-        from sspi_flask_app.api.core.sync import sync_bp
         from sspi_flask_app.api.core.finalize import finalize_bp
         from sspi_flask_app.api.core.host import host_bp
         from sspi_flask_app.api.core.load import load_bp
@@ -137,7 +135,6 @@ def init_app(Config):
         api_bp.register_blueprint(host_bp)
         api_bp.register_blueprint(impute_bp)
         api_bp.register_blueprint(load_bp)
-        api_bp.register_blueprint(sync_bp)
         api_bp.register_blueprint(query_bp)
         api_bp.register_blueprint(save_bp)
         api_bp.register_blueprint(customize_bp)

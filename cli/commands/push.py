@@ -1,6 +1,6 @@
 import click
 from connector import SSPIDatabaseConnector
-from cli.utilities import full_name, stream_response
+from cli.utilities import full_name, echo_pretty
 
 
 @click.command(help="Push local data to remote server")
@@ -22,12 +22,23 @@ def push(database: str, series_code: str, yes_to_all: bool):
     ]
     if yes_to_all or click.confirm("".join(confirm_msg_lst)):
         connector = SSPIDatabaseConnector()
-        exit_code = stream_response(connector.call(
-            f"/api/v1/push/{database}/{series_code}",
-            method="POST",
-            stream=True
+        query_url = f"/api/v1/query/{database}?SeriesCode={series_code}"
+        query_res = connector.call(query_url)
+        local_data = query_res.json()
+        echo_pretty((
+            f"Sourced {len(local_data)} local observations of Indicator "
+            f"{series_code} from local database {database}\n"
         ))
-        if exit_code == 0:
-            click.secho("\nPush Complete", fg="green")
-        else:
-            click.secho("\nPush Failed", fg="red")
+        if not local_data:
+            echo_pretty((
+                f"error: No local observations of Indicator {series_code} "
+                f"found in local database {database}\n"
+            ))
+            return
+        url = f"/api/v1/delete/series/{database}/{series_code}"
+        res_1 = connector.call(url, remote=True, method="DELETE")
+        click.secho(str(res_1.text) + "\n")
+        res_2 = connector.load(
+            local_data, database, remote=True
+        )
+        echo_pretty(str(res_2.text) + "\n")
