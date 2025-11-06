@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from sspi_flask_app.api.resources.utilities import detect_repeated_item
 from sspi_flask_app.models.errors import (
     InvalidDocumentFormatError,
     DataMetadataMismatchError
@@ -108,12 +109,18 @@ class SSPI:
         
         if len(self.indicators) != len(self.indicator_scores):
             indicator_codes_metadata = [i.code for i in self.indicators]
-            indicator_codes_data = [d.get("IndicatorCode") for d in self.indicator_scores]
+            indicator_codes_data = [str(d.get("IndicatorCode")) for d in self.indicator_scores]
             symmetric_diff = set(indicator_codes_metadata) ^ set(indicator_codes_data)
+            country_code = self.indicator_scores[0].get("CountryCode", None)
+            year = self.year or "Missing"
             raise DataMetadataMismatchError(
                 "Number of indicator codes does not match number of indicator scores:"
                 f" {len(self.indicators)} vs {len(self.indicator_scores)}\n"
+                f"CountryCode: {country_code}\n"
+                f"Year: {year}\n"
                 f"Symmetric difference: {symmetric_diff}\n"
+                f"Repeats in Metadata Codes: {detect_repeated_item(indicator_codes_metadata)}\n"
+                f"Repeats in Data Codes: {detect_repeated_item(indicator_codes_data)}\n"
                 f"Metadata codes: {sorted(indicator_codes_metadata)}\n"
                 f"Data codes: {sorted(indicator_codes_data)}"
                 f"CountryCode: {self.indicator_scores[0].get('CountryCode', '')}"

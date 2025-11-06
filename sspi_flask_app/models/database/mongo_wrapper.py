@@ -328,9 +328,6 @@ class MongoWrapper:
             self.validate_value(dataset, document_number)
             self.validate_unit(dataset, document_number)
             document_id = f"{dataset['DatasetCode']}_{dataset['CountryCode']}_{dataset['Year']}"
-            print("==========================")
-            print(document_id)
-            print(dataset)
             if document_id in id_set:
                 print(f"Document Produced an Error: {dataset}")
                 raise InvalidDocumentFormatError(

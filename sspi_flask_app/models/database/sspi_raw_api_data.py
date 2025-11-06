@@ -2,7 +2,7 @@ from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.database import sspi_metadata 
 from bson import json_util
 import hashlib
-from sspi_flask_app.models.errors import InvalidDocumentFormatError
+from sspi_flask_app.models.errors import InvalidDocumentFormatError, InvalidQueryError
 import json
 from datetime import datetime
 import logging
@@ -174,6 +174,8 @@ class SSPIRawAPIData(MongoWrapper):
 
         Kwargs passed to this function are used to update the pymongo query
         """
+        if not isinstance(source_info, dict) or not source_info:
+            raise InvalidQueryError(f"Invalid Source Info {source_info} Provided!")
         source_query = self.build_source_query(source_info)
         raw_data = self.find(source_query, **kwargs)
         if not raw_data:
