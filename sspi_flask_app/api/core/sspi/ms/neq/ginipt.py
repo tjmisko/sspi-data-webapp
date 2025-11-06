@@ -53,13 +53,13 @@ def impute_ginipt():
         score_function=lambda WB_GINIPT: goalpost(WB_GINIPT, lg, ug),
         unit="Coefficient"
     )
-    country_codes = {obs["CountryCode"] for obs in imputed_ginipt}
+    country_codes = list({obs["CountryCode"] for obs in imputed_ginipt + clean_ginipt})
     # Impute missing GINIPT by predicting them with ISHRAT data
     ishrat_data = sspi_indicator_data.find(
         {"IndicatorCode": "ISHRAT"}
     )
     prediction_input = sspi_indicator_data.find(
-        {"IndicatorCode": "ISHRAT", "CountryCode": {"$nin": list(country_codes)}}
+        {"IndicatorCode": "ISHRAT", "CountryCode": {"$nin":country_codes}}
     )
     unit = clean_ginipt[0]["Unit"]
     imputation_details = (
