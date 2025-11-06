@@ -31,13 +31,13 @@ def echo_pretty(msg):
     lines = msg.splitlines()
     for line in lines:
         if "error:" in line[0:8] or "problem:" in line[0:9]:
-            click.secho(line.split(": ", 1)[1], fg='red')
+            click.secho(line.split(": ", 1)[1], fg="red")
             continue
         tokens = re.split(r"([\[\],()\s]+)", line)
         output = []
         for i, t in enumerate(tokens):
             if is_numeric_string(t):
-                output.append(click.style(t, fg='cyan'))
+                output.append(click.style(t, fg="cyan"))
             else:
                 output.append(t)
         click.echo("".join(output))
@@ -59,14 +59,14 @@ def open_browser_subprocess(url):
     .env. A suggested configuration is `firefox --kiosk --new-window`
     """
     basedir = path.abspath(path.dirname(path.dirname(__file__)))
-    load_dotenv(path.join(basedir, '.env'))
-    view_cmd = environ.get('SSPI_VIEW_COMMAND')
+    load_dotenv(path.join(basedir, ".env"))
+    view_cmd = environ.get("SSPI_VIEW_COMMAND")
     subprocess.Popen(
         view_cmd.split(" ") + [url],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         stdin=subprocess.DEVNULL,
-        start_new_session=True
+        start_new_session=True,
     )
 
 

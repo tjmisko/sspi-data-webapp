@@ -15,19 +15,16 @@ load_bp = Blueprint(
 )
 
 
-@load_bp.route("/<database_name>/<IndicatorCode>", methods=["POST"])
+@load_bp.route("/<database_name>", methods=["POST"])
 @login_required
-def load(database_name, IndicatorCode):
+def load(database_name):
     """
     Utility function that handles loading data from the API into the database
     """
     database = lookup_database(database_name)
     observations_list = json.loads(request.get_json())
     count = database.insert_many(observations_list)
-    message = (
-        f"Inserted {count} documents into {database_name} for "
-        f"IndicatorCode {IndicatorCode}"
-    )
+    message = f"Inserted {count} documents into {database_name}"
     app.logger.info(message)
     return Response(message, status=200, mimetype="text/plain")
 

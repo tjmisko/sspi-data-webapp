@@ -1016,3 +1016,22 @@ class SSPIMetadata(MongoWrapper):
         if not org_detail or not org_detail.get("Metadata"):
             return {}
         return org_detail["Metadata"]
+
+    def get_indicator_dependencies(self, item_code: str) -> list:
+        """
+        Returns the list indicator codes on which the provided series_code depends
+        """
+        if item_code not in self.item_codes():
+            return []
+        item_detail = self.get_item_detail(item_code)
+        if not item_detail:
+            return []
+        if item_detail["ItemType"] == "Indicator":
+            return [ item_code ]
+        else:
+            children = item_detail.get("Children", [])
+            assert not any([c is None for c in children])
+            item_dependencies = []
+            for c in children:
+                item_dependencies += self.get_indicator_dependencies(c)
+            return item_dependencies   
