@@ -144,15 +144,18 @@ class SSPIMetadata(MongoWrapper):
             sspi_custom_colors = json.load(file)
         with open(os.path.join(local_path, "globe-data.geojson")) as file:
             globe_json = json.load(file)
+        with open(os.path.join(local_path, "organization-details.json")) as file:
+            organization_details = json.load(file)
         count = self.load_dynamic(
             country_groups,
             country_colors,
             sspi_custom_colors,
-            globe_json
+            globe_json,
+            organization_details
         )
         return count
 
-    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors, globe_json) -> int:
+    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors, globe_json, organization_details) -> int:
         """
         Load metadata specified in methodology files into the database
 
@@ -197,6 +200,10 @@ class SSPIMetadata(MongoWrapper):
             "DocumentType": "GlobeGeoJSON",
             "Metadata": globe_json
         })
+        metadata.extend([{
+            "DocumentType": "OrganizationDetail",
+            "Metadata": o
+        } for o in organization_details])
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_item_details)
         metadata.extend(source_details)
@@ -989,3 +996,23 @@ class SSPIMetadata(MongoWrapper):
         if not country_detail or not country_detail.get("Metadata"):
             return {}
         return country_detail["Metadata"]
+    
+    def organization_details(self) -> list[dict]:
+        organization_details = self.find({ "DocumentType": "OrganizationDetail" })
+        if not organization_details:
+            return []
+        clean_details = []
+        for d in clean_details:
+            meta_dict = d.get("Metadata")
+            if isinstance(meta_dict, dict):
+                clean_details.append(meta_dict)
+        return clean_details
+
+    def get_organization_detail(self, organization_code: str) -> dict:
+        org_detail = self.find_one({ 
+            "DocumentType": "OrganizationDetail",
+            "Metadata.OrganizationCode": organization_code 
+        })
+        if not org_detail or not org_detail.get("Metadata"):
+            return {}
+        return org_detail["Metadata"]

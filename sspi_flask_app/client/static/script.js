@@ -427,7 +427,7 @@ modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicato
  */
 class IndicatorTable {
     constructor() {
-        this.container = document.querySelector('.indicators-container');
+        this.container = document.querySelector('.indicator-table-container');
         if (!this.container) {
             console.warn('IndicatorTable:Container not found');
             return;
@@ -435,6 +435,7 @@ class IndicatorTable {
         
         this.initializeEventListeners();
         this.initializeState();
+        this.rigUnloadListener();
     }
     
     initializeEventListeners() {
@@ -461,9 +462,14 @@ class IndicatorTable {
     initializeState() {
         // Set initial expanded states based on data-expanded attributes
         const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
+        const cachedStateObject = window.observableStorage.getItem('indicatorTableState')
         collapsibleSections.forEach(section => {
-            const isExpanded = section.dataset.expanded === 'true';
-            this.updateSectionVisibility(section, isExpanded);
+            const defaultState = section.dataset.expanded === 'true';
+            const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
+            this.updateSectionVisibility(section, cachedState);
+            section.dataset.expanded = cachedState.toString();
+            const toggleButton = this.findToggleButton(section)
+            this.updateToggleIcon(toggleButton, cachedState);
         });
     }
     
@@ -481,10 +487,21 @@ class IndicatorTable {
         this.updateSectionVisibility(section, newExpandedState);
         this.updateToggleIcon(toggleBtn, newExpandedState);
     }
+
+    findToggleButton(toggleSection) {
+        const parentSection = toggleSection.parentElement
+        if (parentSection.classList.contains('pillar-section')) {
+            return parentSection.querySelector('.indicators-pillar-header-content>button')
+        } else if (parentSection.classList.contains('category-section')) {
+            return parentSection.querySelector('.indicators-category-header-content>button')
+        } else if (parentSection.classList.contains('indicator-item')) {
+            return parentSection.querySelector('.indicator-info>button')
+        }
+    }
     
     findToggleableSection(toggleBtn) {
         // Find the appropriate collapsible section based on the toggle button's context
-const pillarSection=toggleBtn.closest('.pillar-section');const categorySection=toggleBtn.closest('.category-section');const indicatorItem=toggleBtn.closest('.indicator-item');if(indicatorItem&&toggleBtn.closest('.indicators-indicator-header')){return indicatorItem.querySelector('.indicator-details');}else if(categorySection&&toggleBtn.closest('.indicators-category-header')){return categorySection.querySelector('.category-content');}else if(pillarSection&&toggleBtn.closest('.indicators-pillar-header')){return pillarSection.querySelector('.pillar-content');}
+const pillarSection=toggleBtn.closest('.pillar-section');const categorySection=toggleBtn.closest('.category-section');const indicatorItem=toggleBtn.closest('.indicator-item');if(indicatorItem&&toggleBtn.closest('.indicators-indicator-header')){return indicatorItem.querySelector('.indicator-details');}else if(categorySection&&toggleBtn.closest('.indicators-category-header')){return categorySection.querySelector('.indicator-table-category-content');}else if(pillarSection&&toggleBtn.closest('.indicators-pillar-header')){return pillarSection.querySelector('.pillar-content');}
 return null;}
 updateSectionVisibility(section,isExpanded){if(isExpanded){section.style.display='';section.style.maxHeight='';section.style.opacity='';}else{section.style.display='none';}}
 updateToggleIcon(toggleBtn,isExpanded){const icon=toggleBtn.querySelector('.collapse-icon');if(icon){if(isExpanded){icon.style.transform='rotate(0deg)';}else{icon.style.transform='rotate(-90deg)';}}}
@@ -492,9 +509,15 @@ expandAll(){const allSections=this.container.querySelectorAll('[data-expanded]')
 collapseAll(){const allSections=this.container.querySelectorAll('[data-expanded]');allSections.forEach(section=>{section.dataset.expanded='false';this.updateSectionVisibility(section,false);const toggleBtn=this.findToggleButtonForSection(section);if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}});}
 expandPillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='true';this.updateSectionVisibility(pillarContent,true);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,true);}}}}
 collapsePillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='false';this.updateSectionVisibility(pillarContent,false);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}}}}
-findToggleButtonForSection(section){const parent=section.parentElement;if(!parent)return null;if(section.classList.contains('pillar-content')){return parent.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');}else if(section.classList.contains('category-content')){return parent.querySelector('.indicator-table-category-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-details')){return parent.querySelector('.indicator-header .collapse-toggle-btn');}
-return null;}}
-window.IndicatorTable=IndicatorTable;class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
+findToggleButtonForSection(section){const parent=section.parentElement;if(!parent)return null;if(section.classList.contains('pillar-content')){return parent.querySelector('.indicator-table-pillar-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-table-category-content')){return parent.querySelector('.indicators-category-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-details')){return parent.querySelector('.indicator-header .collapse-toggle-btn');}
+return null;}
+resetView(){const collapsibleSections=this.container.querySelectorAll('[data-expanded]');collapsibleSections.forEach((section)=>{if(section.dataset.icode.length===6){this.updateSectionVisibility(section,false);section.dataset.expanded='false';const toggleButton=this.findToggleButton(section)
+this.updateToggleIcon(toggleButton,false);}else{this.updateSectionVisibility(section,true);section.dataset.expanded='true';const toggleButton=this.findToggleButton(section)
+this.updateToggleIcon(toggleButton,true);}})
+window.observableStorage.setItem('indicatorTableState',{})}
+rigUnloadListener(){window.addEventListener('beforeunload',()=>{const collapsibleSections=this.container.querySelectorAll('[data-expanded]');let stateLookup={};collapsibleSections.forEach((section)=>{stateLookup[section.dataset.icode]=section.dataset.expanded;})
+window.observableStorage.setItem('indicatorTableState',stateLookup)})}}
+class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
 this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
 this.initToggle()
 this.rigEventListeners()
