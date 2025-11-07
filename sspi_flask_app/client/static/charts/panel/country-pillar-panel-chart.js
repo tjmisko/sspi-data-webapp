@@ -13,7 +13,6 @@ class CountryPillarPanelChart {
         this.fetch(this.endpointURL).then(data => {
             this.update(data)
         })
-        this.rigUnloadListener()
     }
 
     initRoot() {
