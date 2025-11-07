@@ -1,0 +1,41 @@
+<script>
+const header = document.querySelector('.site-header')
+header.classList.add('hide-header-page')
+const headerHoverBox = document.createElement('div')
+headerHoverBox.classList.add('site-header-reveal-box')
+const body = document.querySelector('body')
+body.insertBefore(headerHoverBox, header)
+</script>
+<style>
+/* Hidden header */
+.hide-header-page.site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(-100%);
+  pointer-events: none;   /* critical */
+  z-index: 999;
+}
+
+/* hover zone */
+.site-header-reveal-box {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: auto;
+  z-index: 2000;
+}
+
+/* header appears when body is hovered */
+.site-header-reveal-box:hover ~ .hide-header-page.site-header,
+.hide-header-page.site-header:hover {
+  transform: translateY(0);
+  transition: transform .4s ease;
+  pointer-events: auto;   /* restore */
+}
+</style>
+

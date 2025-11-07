@@ -1,10 +1,12 @@
 class ScoreBarStatic {
-    constructor(parentElement, itemCode, backgroundColor = SSPIColors.SSPI, width = 800, height = 1000) {
+    constructor(parentElement, itemCode, { backgroundColor = SSPIColors.SSPI, width = 800, height = 1000, animate = true } = {}) {
         this.parentElement = parentElement
         this.itemCode = itemCode
         this.backgroundBase = backgroundColor
         this.width = width
         this.height = height
+        this.animate = animate
+        console.log(this.animate)
         this.initRoot()
         this.initTitle()
         this.initChartJSCanvas()
@@ -42,6 +44,9 @@ class ScoreBarStatic {
         this.chart = new Chart(this.context, {
             type: 'bar',
             options: {
+                animation: { 
+                    duration: this.animation? 1000 : 0,
+                },
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
@@ -64,8 +69,9 @@ class ScoreBarStatic {
                             label: function(context) {
                                 const info = context.dataset.info[context.dataIndex]
                                 return [
-                                    info.IName + ' Score: ' + info.Score.toFixed(3),
-                                    info.IName + ' Rank: ' + info.Rank,
+                                    info.IName + ' (' + info.ICode + ')', 
+                                    'Score: ' + info.Score.toFixed(3),
+                                    'Rank: ' + info.Rank,
                                     'Year: ' + info.Year
                                 ]
                             }
@@ -300,6 +306,12 @@ class ScoreBarStatic {
 
     update(data) {
         this.chart.data = data.data
+        if (this.chart.width < 400) {
+            const chartInfo = this.chart.data.datasets[0].info
+            const codeLabels = chartInfo.map((i) => i.CCode + " " + i.CFlag)
+            this.chart.data.labels = codeLabels
+            this.chart.options.scales.x.title.font.size = 11;
+        }
         this.chart.data.datasets[0].backgroundColor = Array(49).fill(this.backgroundColor)
         this.chart.data.datasets[0].borderColor = Array(49).fill(this.borderColor)
         this.chart.data.datasets[0].borderWidth = 2

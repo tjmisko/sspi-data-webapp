@@ -4,9 +4,13 @@
 {% include 'subheader.html' %}
 {% endblock %}
 
+{% block static_css %}
+{% include 'site-header-fix.html' %}
+{% endblock %}
+
 {% block content %}
 <div class="indicators-page">
-    <h2>SSPI Indicators Overview</h2>
+    <h2>SSPI 2018 Indicator Table</h2>
     <p class="page-description">Explore the complete structure of SSPI indicators, grouped by pillar and category.</p>
     
     <div class="indicators-container">

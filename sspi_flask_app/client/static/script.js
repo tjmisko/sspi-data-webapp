@@ -2636,11 +2636,13 @@ const name=data.codeMap[cou].name
 item.querySelector('span').innerText=name+" ("+cou+")"})
 this.title.innerText=data.title
 this.chart.update()}}
-class ScoreBarStatic{constructor(parentElement,itemCode,backgroundColor=SSPIColors.SSPI,width=800,height=1000){this.parentElement=parentElement
+class ScoreBarStatic{constructor(parentElement,itemCode,{backgroundColor=SSPIColors.SSPI,width=800,height=1000,animate=true}={}){this.parentElement=parentElement
 this.itemCode=itemCode
 this.backgroundBase=backgroundColor
 this.width=width
 this.height=height
+this.animate=animate
+console.log(this.animate)
 this.initRoot()
 this.initTitle()
 this.initChartJSCanvas()
@@ -2660,9 +2662,9 @@ this.context=this.canvas.getContext('2d')
 this.chartContainer.classList.add('score-bar-chart-container')
 this.chartContainer.appendChild(this.canvas)
 this.root.appendChild(this.chartContainer)
-this.chart=new Chart(this.context,{type:'bar',options:{maintainAspectRatio:false,layout:{padding:{left:0,}},onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
+this.chart=new Chart(this.context,{type:'bar',options:{animation:{duration:this.animation?1000:0,},maintainAspectRatio:false,layout:{padding:{left:0,}},onClick:(event,elements)=>{elements.forEach(element=>{this.toggleHighlight(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)
 console.log(this.chart.data.datasets[element.datasetIndex].info[element.index].CCode)})},plugins:{legend:false,tooltip:{backgroundColor:'#1B2A3Ccc',callbacks:{label:function(context){const info=context.dataset.info[context.dataIndex]
-return[info.IName+' Score: '+info.Score.toFixed(3),info.IName+' Rank: '+info.Rank,'Year: '+info.Year]}}},},indexAxis:'y',}})}
+return[info.IName+' ('+info.ICode+')','Score: '+info.Score.toFixed(3),'Rank: '+info.Rank,'Year: '+info.Year]}}},},indexAxis:'y',}})}
 updateChartOptions(){this.chart.options.scales={x2:{position:'top',min:0,max:1,ticks:{color:this.textColor},label:{color:this.textColor,},grid:{display:false,},},x:{position:'bottom',min:0,max:1,ticks:{color:this.textColor},title:{display:true,font:{size:16,},color:this.textColor},label:{color:this.textColor,},grid:{color:this.gridColor,}},y2:{position:'left',ticks:{color:this.textColor,font:{size:10,weight:'bold'},callback:function(value,index,values){return this.chart.data.datasets[0].info[index].Rank},padding:8},},y:{position:'left',ticks:{color:this.textColor,font:{size:10,}},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}}
 initSummaryBox(){this.summaryBox=document.createElement('div')
 this.summaryBox.classList.add('score-bar-summary-box')
@@ -2730,6 +2732,10 @@ this.addStoredHighlight(countryCode)}
 this.updateHighlights()}
 propagateHighlights(){window.SSPICharts.forEach(chartObject=>{if(chartObject!==this){chartObject.syncHighlights()}})}
 update(data){this.chart.data=data.data
+if(this.chart.width<400){const chartInfo=this.chart.data.datasets[0].info
+const codeLabels=chartInfo.map((i)=>i.CCode+" "+i.CFlag)
+this.chart.data.labels=codeLabels
+this.chart.options.scales.x.title.font.size=11;}
 this.chart.data.datasets[0].backgroundColor=Array(49).fill(this.backgroundColor)
 this.chart.data.datasets[0].borderColor=Array(49).fill(this.borderColor)
 this.chart.data.datasets[0].borderWidth=2

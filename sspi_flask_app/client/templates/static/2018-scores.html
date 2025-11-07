@@ -4,6 +4,11 @@
 {% include 'subheader.html' %}
 {% endblock %}
 
+{% block static_css %}
+{% include 'site-header-fix.html' %}
+{% endblock %}
+
+
 {% block title %}
 <title>SSPI Scores</title>
 {% endblock %}
@@ -63,19 +68,172 @@
             </div>
         </div>
     </section>
+    <section class="page-section">
+        <div class="content-container">
+            <div class="category-chart-box">
+                <h2>Scores and Ranks: Sustainability Pillar</h2>
+                <div class="static-pillar-par-box">
+                    <p>The Sustainability Pillar contains five categories:
+                    Ecosystem, Land, Energy, Greenhouse Gases, and Waste.
+                   </p>
+                    <ul> 
+                        <!-- <li> Public Goods is the strongest -->
+                        <!-- pillar with a low spread around a -->
+                        <!-- comparatively high average. </li> --> 
+                        <!-- <li> Sustainability has the weakest average, -->
+                        <!-- but few strong performers, and few -->
+                        <!-- exceptionally weak performers. All -->
+                        <!-- countries must improve Sustainability -->
+                        <!-- policies</li> -->
+                        <!-- <li>Market structure has an average nearly -->
+                        <!-- as low as Sustainability, but a higher -->
+                        <!-- spread around that average.</li> -->
+                    </ul>
+                </div>
+                <div class="score-bar-category-flexbox">
+                    <div id="eco-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="lnd-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="nrg-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="ghg-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="wst-score-bar-parent" class="score-bar-parent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="page-section">
+        <div class="content-container">
+            <div class="category-chart-box">
+                <h2>Scores and Ranks: Market Structure Pillar</h2>
+                <div class="static-pillar-par-box">
+                    <p>The Market Structure Pillar contains five categories:
+                    Worker Engagement, Worker Wellbeing, Tax,
+                    Financial Sector, and Inequality </p>
+                    <ul> 
+                        <!-- <li> Public Goods is the strongest -->
+                        <!-- pillar with a low spread around a -->
+                        <!-- comparatively high average. </li> --> 
+                        <!-- <li> Sustainability has the weakest average, -->
+                        <!-- but few strong performers, and few -->
+                        <!-- exceptionally weak performers. All -->
+                        <!-- countries must improve Sustainability -->
+                        <!-- policies</li> -->
+                        <!-- <li>Market structure has an average nearly -->
+                        <!-- as low as Sustainability, but a higher -->
+                        <!-- spread around that average.</li> -->
+                    </ul>
+                </div>
+                <div class="score-bar-category-flexbox">
+                    <div id="wen-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="wwb-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="tax-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="fin-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="neq-score-bar-parent" class="score-bar-parent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="page-section">
+        <div class="content-container">
+            <div class="category-chart-box">
+                <h2>Scores and Ranks: Public Goods Pillar</h2>
+                <div class="static-pillar-par-box">
+                    <p>The Public Goods Pillar contains six categories:
+                    Education, Healthcare, Infrastructure,
+                    Rights, Public Safety and Global Role </p>
+                    <ul> 
+                        <!-- <li> Public Goods is the strongest -->
+                        <!-- pillar with a low spread around a -->
+                        <!-- comparatively high average. </li> --> 
+                        <!-- <li> Sustainability has the weakest average, -->
+                        <!-- but few strong performers, and few -->
+                        <!-- exceptionally weak performers. All -->
+                        <!-- countries must improve Sustainability -->
+                        <!-- policies</li> -->
+                        <!-- <li>Market structure has an average nearly -->
+                        <!-- as low as Sustainability, but a higher -->
+                        <!-- spread around that average.</li> -->
+                    </ul>
+                </div>
+                <div class="score-bar-category-flexbox">
+                    <div id="edu-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="hlc-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="inf-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="rts-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="saf-score-bar-parent" class="score-bar-parent"></div>
+                    <div id="glb-score-bar-parent" class="score-bar-parent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
     <script defer>
     const scoreBarSSPIParent = document.getElementById('sspi-score-bar-parent');
     const scoreBarSUSParent = document.getElementById('sus-score-bar-parent');
     const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
     const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarSSPIParent, "SSPI"));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS, width=375));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS, width=375));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG, width=375));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSSPIParent, "SSPI", { animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSUSParent, "SUS", { backgroundColor: SSPIColors.SUS, width: 375, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarMSParent, "MS", { backgroundColor: SSPIColors.MS, width: 375, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarPGParent, "PG", { backgroundColor: SSPIColors.PG, width: 375, animate: false }));
     setTimeout(() => {
         window.SSPICharts[1].title.innerHTML = "Sustainability"
         window.SSPICharts[2].title.innerHTML = "Market Structure"
         window.SSPICharts[3].title.innerHTML = "Public Goods"
-    }, 1000)
+    }, 700)
+
+    const scoreBarECOParent = document.getElementById("eco-score-bar-parent")
+    const scoreBarLNDParent = document.getElementById("lnd-score-bar-parent")
+    const scoreBarNRGParent = document.getElementById("nrg-score-bar-parent")
+    const scoreBarGHGParent = document.getElementById("ghg-score-bar-parent")
+    const scoreBarWSTParent = document.getElementById("wst-score-bar-parent")
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarECOParent, "ECO", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarLNDParent, "LND", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarNRGParent, "NRG", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarGHGParent, "GHG", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarWSTParent, "WST", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    setTimeout(() => {
+        window.SSPICharts[4].title.innerHTML = "Ecosystem"
+        window.SSPICharts[5].title.innerHTML = "Land"
+        window.SSPICharts[6].title.innerHTML = "Energy"
+        window.SSPICharts[7].title.innerHTML = "Greenhouse Gases"
+        window.SSPICharts[8].title.innerHTML = "Waste"
+    }, 700)
+
+    const scoreBarWENParent = document.getElementById('wen-score-bar-parent')
+    const scoreBarWWBParent = document.getElementById('wwb-score-bar-parent')
+    const scoreBarTAXParent = document.getElementById('tax-score-bar-parent')
+    const scoreBarFINParent = document.getElementById('fin-score-bar-parent')
+    const scoreBarNEQParent = document.getElementById('neq-score-bar-parent')
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarWENParent, "WEN", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarWWBParent, "WWB", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarTAXParent, "TAX", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarFINParent, "FIN", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarNEQParent, "NEQ", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    setTimeout(() => {
+        window.SSPICharts[9].title.innerHTML = "Worker Engagement"
+        window.SSPICharts[10].title.innerHTML = "Worker Wellbeing"
+        window.SSPICharts[11].title.innerHTML = "Taxation"
+        window.SSPICharts[12].title.innerHTML = "Financial Sector"
+        window.SSPICharts[13].title.innerHTML = "Inequality"
+    }, 700)
+    const scoreBarEDUParent = document.getElementById('edu-score-bar-parent')
+    const scoreBarHLCParent = document.getElementById('hlc-score-bar-parent')
+    const scoreBarINFParent = document.getElementById('inf-score-bar-parent')
+    const scoreBarRTSParent = document.getElementById('rts-score-bar-parent')
+    const scoreBarSAFParent = document.getElementById('saf-score-bar-parent')
+    const scoreBarGLBParent = document.getElementById('glb-score-bar-parent')
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarEDUParent, "EDU", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarHLCParent, "HLC", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarINFParent, "INF", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarRTSParent, "RTS", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSAFParent, "SAF", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarGLBParent, "GLB", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    setTimeout(() => {
+        window.SSPICharts[14].title.innerHTML = "Education"
+        window.SSPICharts[15].title.innerHTML = "Healthcare"
+        window.SSPICharts[16].title.innerHTML = "Infrastructure"
+        window.SSPICharts[17].title.innerHTML = "Rights"
+        window.SSPICharts[18].title.innerHTML = "Public Safety"
+        window.SSPICharts[19].title.innerHTML = "Global Role"
+    }, 700)
     </script>
 {% endblock %}
