@@ -11,7 +11,7 @@
   border-radius: var(--border-radius-lg);
 }
 
-.score-bar-overall-box>h2, .pillar-chart-box>h2 {
+.score-bar-overall-box>h2, .pillar-chart-box>h2, .category-chart-box>h2 {
   margin-top: 0;
   font-size: 1.2em;
   line-height: 1.2;
@@ -40,7 +40,7 @@
   
 
 
-.pillar-chart-box {
+.pillar-chart-box, .category-chart-box {
   padding: 1.25em;
   background-color: var(--box-background-color);
   border: 1px solid var(--border-color);
@@ -60,7 +60,7 @@
   flex: 1 1 0;
   align-self: stretch;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 0.5em;
   min-width: 0;
 }
@@ -84,7 +84,7 @@
 
 .score-bar-chart-container {
   width: clamp(150px, 100%, 1000px);
-  height: clamp(900px, 83vh, 83vh);
+  height: clamp(850px, 81vh, 81vh);
 }
 
 
@@ -108,4 +108,19 @@
 .score-bar-summary-stat {
   font-size: 0.8em;
   padding: 0.4em;
+}
+
+.category-chart-box .score-bar-summary-box {
+  margin-top: 0.25em;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: 0.25em 0.5em;
+  background-color: var(--box-background-color);
+  border-radius: 5px;
+}
+
+.category-chart-box .score-bar-summary-stat {
+  line-height: 1.2;
 }
