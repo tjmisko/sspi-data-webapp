@@ -69,7 +69,8 @@
             const x = window.observableStorage.getItem('windowX');
             const y = window.observableStorage.getItem('windowY');
 
-            if (x !== null && y !== null) {
+            if (x !== null && y !== null && !String(location).includes("#")) {
+              console.log("Scrolling")
               window.moveTo(parseInt(x), parseInt(y));
             }
         })

@@ -432,7 +432,6 @@ class IndicatorTable {
             console.warn('IndicatorTable:Container not found');
             return;
         }
-        
         this.initializeEventListeners();
         this.initializeState();
         this.rigUnloadListener();
@@ -448,7 +447,15 @@ class IndicatorTable {
                 this.handleToggle(toggleBtn);
             }
         });
-        
+        const indicators = this.container.querySelectorAll('.indicator-item')
+        indicators.forEach((indicator) => {
+            indicator.addEventListener('click', (event) => {
+                console.log(event)
+                console.log(indicator)
+                const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
+                this.handleToggle(toggleBtn);
+            })
+        })
         // Add keyboard support for toggle buttons
         this.container.addEventListener('keydown', (event) => {
             const toggleBtn = event.target.closest('.collapse-toggle-btn');
@@ -462,10 +469,11 @@ class IndicatorTable {
     initializeState() {
         // Set initial expanded states based on data-expanded attributes
         const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
-        const cachedStateObject = window.observableStorage.getItem('indicatorTableState')
+        const cachedStateObject = window.observableStorage.getItem('indicatorTableState');
         collapsibleSections.forEach(section => {
             const defaultState = section.dataset.expanded === 'true';
             const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
+            console.log('cachedState for itemCode', section.dataset.icode, ':', cachedState)
             this.updateSectionVisibility(section, cachedState);
             section.dataset.expanded = cachedState.toString();
             const toggleButton = this.findToggleButton(section)
@@ -511,10 +519,10 @@ expandPillar(pillarCode){const pillarSection=this.container.querySelector(`[data
 collapsePillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='false';this.updateSectionVisibility(pillarContent,false);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}}}}
 findToggleButtonForSection(section){const parent=section.parentElement;if(!parent)return null;if(section.classList.contains('pillar-content')){return parent.querySelector('.indicator-table-pillar-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-table-category-content')){return parent.querySelector('.indicators-category-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-details')){return parent.querySelector('.indicator-header .collapse-toggle-btn');}
 return null;}
-resetView(){const collapsibleSections=this.container.querySelectorAll('[data-expanded]');collapsibleSections.forEach((section)=>{if(section.dataset.icode.length===6){this.updateSectionVisibility(section,false);section.dataset.expanded='false';const toggleButton=this.findToggleButton(section)
-this.updateToggleIcon(toggleButton,false);}else{this.updateSectionVisibility(section,true);section.dataset.expanded='true';const toggleButton=this.findToggleButton(section)
-this.updateToggleIcon(toggleButton,true);}})
-window.observableStorage.setItem('indicatorTableState',{})}
+resetView(){const collapsibleSections=this.container.querySelectorAll('[data-expanded]');let stateLookup={};collapsibleSections.forEach((section)=>{if(section.dataset.icode.length===6){this.updateSectionVisibility(section,false);section.dataset.expanded='false';const toggleButton=this.findToggleButton(section)
+this.updateToggleIcon(toggleButton,false);stateLookup[section.dataset.icode]=false;}else{this.updateSectionVisibility(section,true);section.dataset.expanded='true';const toggleButton=this.findToggleButton(section)
+stateLookup[section.dataset.icode]=true;this.updateToggleIcon(toggleButton,true);}})
+window.observableStorage.setItem('indicatorTableState',stateLookup)}
 rigUnloadListener(){window.addEventListener('beforeunload',()=>{const collapsibleSections=this.container.querySelectorAll('[data-expanded]');let stateLookup={};collapsibleSections.forEach((section)=>{stateLookup[section.dataset.icode]=section.dataset.expanded;})
 window.observableStorage.setItem('indicatorTableState',stateLookup)})}}
 class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
@@ -1017,8 +1025,7 @@ removeItem(key){const oldValue=this.store[key];localStorage.removeItem(key);dele
 clear(){for(const key of Object.keys(this.store)){this.removeItem(key);}}
 onChange(key,callback){if(!this.listeners[key]){this.listeners[key]=[];}
 this.listeners[key].push(callback);}
-_emit(key,oldValue,newValue){console.log('keychange!')
-const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
+_emit(key,oldValue,newValue){const callbacks=this.listeners[key]||[];for(const cb of callbacks){cb(oldValue,newValue);}}
 _parse(value){try{return JSON.parse(value);}catch{return value;}}}
 class TreeNode{constructor(data,parent=null,level=1){this.itemCode=data.ItemCode;this.itemName=data.ItemName;this.parent=parent;this.children=[];this.level=level;this.expanded=data.Children?.length>0&&(level===1||level<3);this.element=null;if(data.Children?.length){this.children=data.Children.map(child=>new TreeNode(child,this,level+1));}}
 getVisibleDescendants(){if(!this.expanded||!this.children.length){return[];}
@@ -1163,8 +1170,8 @@ this.title=this.chartContainer.querySelector('.panel-chart-title')
 this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions')
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
-this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset)
-this.activeCountry=dataset;this.updateCountryInformation();});}},},layout:{padding:{right:40}}}})}
+this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:4,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
+this.updateCountryInformation();});}},},layout:{padding:{right:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
@@ -1181,8 +1188,17 @@ this.clearPinsButton=this.chartOptions.querySelector('.clearpins-button')
 this.clearPinsButton.addEventListener('click',()=>{this.clearPins()})
 this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
 this.legendItems=this.legend.querySelector('.legend-items')}
-updateCountryInformation(){if(!this.activeCountry)return;const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;this.updateCountryInformation();}});}}
-updateLegend(){function generateListener(countryCode,PanelChartObject){function listener(){let dataset=PanelChartObject.chart.data.datasets.find((d)=>d.CCode===countryCode);if(dataset){PanelChartObject.activeCountry=dataset;PanelChartObject.countryInformationBox.dataset.unpopulated=false;PanelChartObject.updateCountryInformation();}else{console.log("Country "+countryCode+" Not Found in Datasets!")}}
+updateCountryInformation(){if(!this.activeCountry)return;this.countryInformationBox.dataset.unpopulated=false
+const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";let dataset=this.chart.data.datasets.find((ds)=>{return ds.CCode===this.activeCountry.CCode})
+const avgScore=(dataset.score.reduce((a,b)=>a+b)/dataset.score.length)
+const minScore=Math.min(...dataset.score)
+const maxScore=Math.max(...dataset.score)
+const minScoreYear=dataset.score.findIndex((el)=>el===minScore)+2000
+const maxScoreYear=dataset.score.findIndex((el)=>el===maxScore)+2000
+this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"><div class="summary-stat-line"><span class="summary-stat-label">Average:</span><span class="summary-stat-score">${avgScore.toFixed(3)}</span><span class="summary-stat-year">2000-2023</span></div><div class="summary-stat-line"><span class="summary-stat-label">Minimum:</span><span class="summary-stat-score">${minScore.toFixed(3)}</span><span class="summary-stat-year">${minScoreYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Maximum:</span><span class="summary-stat-score">${maxScore.toFixed(3)}</span><span class="summary-stat-year">${maxScoreYear}</span></div></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
+this.updateCountryInformation();}});}}
+updateLegend(){function generateListener(countryCode,PanelChartObject){function listener(){let dataset=PanelChartObject.chart.data.datasets.find((d)=>d.CCode===countryCode);if(dataset){PanelChartObject.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
+PanelChartObject.countryInformationBox.dataset.unpopulated=false;PanelChartObject.updateCountryInformation();}else{console.log("Country "+countryCode+" Not Found in Datasets!")}}
 return listener}
 this.legendItems.innerHTML=''
 if(this.pins.size>0){this.pins.forEach((PinnedCountry)=>{const pinSpan=document.createElement('span')
@@ -1217,7 +1233,12 @@ missingCountriesSummary.innerHTML=''}else{const countryElements=filteredMissing.
 missingCountriesList.innerHTML=countryElements
 missingCountriesSummary.innerHTML=filteredMissing.length+' of '+totalCountriesInGroup+' countries in '+this.countryGroup+' missing data'}}
 updateDescription(description){const dbox=this.chartOptions.querySelector('.dynamic-item-description')
-dbox.innerHTML='<p><b>Description: </b> '+description+'</p>'}
+dbox.innerHTML='<p><b>Description: </b> '+description+'</p>'
+var itemCode;if(this.activeItemCode){itemCode=this.activeItemCode;}else if(this.itemCode){itemCode=this.itemCode;}
+if(itemCode){this.chartOptions.querySelector('.item-metadata-link-button')?.remove()
+const metadataLink=document.createElement('a');metadataLink.innerText="View "+itemCode+" Metadata";metadataLink.classList.add("view-all-data-link","item-metadata-link-button")
+if(itemCode==="SSPI"){metadataLink.href="/indicators"}else{metadataLink.href="/indicators?viewItem="+itemCode+"#"+itemCode}
+dbox.parentElement.appendChild(metadataLink)}}
 updateItemDropdown(options){const default_item=this.window.location.href.split('/')[-1]
 for(const option of options){const opt=document.createElement('option')
 opt.value=option.Code
@@ -1258,7 +1279,8 @@ this.updateItemDropdown(data.itemOptions,data.itemType)
 this.updateDescription(data.description)
 this.updateChartColors()
 this.updateCountryGroups()
-this.updateChartPreservingYAxis();this.computeMissingCountriesAsync()}
+this.updateChartPreservingYAxis();this.computeMissingCountriesAsync()
+this.activeCountry=window.observableStorage.getItem("activeCountry")||null;if(this.activeCountry){this.updateCountryInformation();}}
 computeMissingCountriesAsync(){setTimeout(()=>{this.computeMissingCountries()},0)}
 computeMissingCountries(){if(!this.countryGroupMap||Object.keys(this.countryGroupMap).length===0){console.log('No country group map available for missing countries computation')
 return}
@@ -1473,7 +1495,8 @@ opt.value=option.Value
 if(option.Value===defaultValue){opt.selected=true;}
 opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
-initChartJSCanvas(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('panel-chart-container');this.chartContainer.innerHTML=`<div class="panel-chart-breadcrumb-container"style="display: none;"><nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"></nav><div class="panel-chart-breadcrumb-actions"></div></div><div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.breadcrumbContainer=this.chartContainer.querySelector('.panel-chart-breadcrumb-container');this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb');this.breadcrumbActions=this.chartContainer.querySelector('.panel-chart-breadcrumb-actions');this.title=this.chartContainer.querySelector('.panel-chart-title');this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions');this.canvas=this.chartContainer.querySelector('.panel-chart-canvas');this.context=this.canvas.getContext('2d');this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:2,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.togglePin(dataset);});}},},layout:{padding:{right:40}}}});}
+initChartJSCanvas(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('panel-chart-container');this.chartContainer.innerHTML=`<div class="panel-chart-breadcrumb-container"style="display: none;"><nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"></nav><div class="panel-chart-breadcrumb-actions"></div></div><div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.breadcrumbContainer=this.chartContainer.querySelector('.panel-chart-breadcrumb-container');this.breadcrumb=this.chartContainer.querySelector('.panel-chart-breadcrumb');this.breadcrumbActions=this.chartContainer.querySelector('.panel-chart-breadcrumb-actions');this.title=this.chartContainer.querySelector('.panel-chart-title');this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions');this.canvas=this.chartContainer.querySelector('.panel-chart-canvas');this.context=this.canvas.getContext('2d');this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:4,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
+this.updateCountryInformation();});}},},layout:{padding:{right:40}}}});}
 renderBreadcrumb(treePath,title,itemCode,itemType){if(!treePath||treePath.length===0){this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';this.breadcrumbContainer.style.display='none';return;}
 this.chartContainer.querySelector('.panel-chart-title-container').style.display='none';this.breadcrumbContainer.style.display='flex';let breadcrumbHTML='';for(let i=0;i<treePath.length-1;i++){const item=treePath[i];let code,itemName,displayName,url;if(typeof item==='string'){code=item.toLowerCase();if(code==='sspi'){displayName='SSPI';itemName='Social Policy and Progress Index';url='/data';}else if(i===1){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();itemName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();itemName=code.toUpperCase();url=null;}}else{code=item.itemCode;itemName=item.itemName;if(code==='sspi'){displayName='SSPI';url='/data';}else if(i===1){displayName=code.toUpperCase();url='/data/pillar/'+code.toUpperCase();}else if(i===2){displayName=code.toUpperCase();url='/data/category/'+code.toUpperCase();}else{displayName=code.toUpperCase();url=null;}}
 if(i>0){breadcrumbHTML+='<span class="breadcrumb-separator">></span>';}
@@ -1491,10 +1514,11 @@ if(children&&children.length>0&&childTypeTitle){const tooltipText=this.generateT
 children.map(child=>{const url=child.itemType==='Category'?'/data/category/'+child.itemCode:'/data/indicator/'+child.itemCode;return'<li><a href="'+url+'" class="child-link">'+child.itemName+' ('+child.itemCode+')</a></li>';}).join('')+
 '</ul>'+
 '</div>';descriptionContainer.insertAdjacentHTML('beforeend',childrenHTML);}}
-update(data){console.log(data);if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart);}
+update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart);}
 this.chart.data.datasets=data.data;this.chart.data.labels=data.labels;if(this.pinnedOnly){this.hideUnpinned();}else{this.showGroup(this.countryGroup);}
 this.treepath=data.treepath;if(data.treepath&&data.treepath.length>0){this.renderBreadcrumb(data.treepath,data.title,data.itemCode,data.itemType);}else{this.title.innerText=data.title;this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}
-this.itemType=data.itemType;this.groupOptions=data.groupOptions;this.getPins();this.updateLegend();this.updateItemDropdown(data.itemOptions,data.itemType);this.updateDescription(data.description);this.updateChildren(data.children,data.childTypeTitle,data.itemName,data.itemType);this.updateChartColors();this.updateCountryGroups();this.chart.update();}}
+this.itemType=data.itemType;this.groupOptions=data.groupOptions;this.getPins();this.updateLegend();this.updateItemDropdown(data.itemOptions,data.itemType);this.updateDescription(data.description);this.updateChildren(data.children,data.childTypeTitle,data.itemName,data.itemType);this.updateChartColors();this.updateCountryGroups();this.chart.update();this.activeCountry=window.observableStorage.getItem('activeCountry')
+if(this.activeCountry){this.updateCountryInformation();}}}
 class IndicatorPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/indicator/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode
 this.activeSeries=itemCode
@@ -1650,7 +1674,8 @@ activeSeriesDescription.style.display='block'}else{contentDiv.innerHTML='<em>Dat
 activeSeriesDescription.style.display='block'}}else{contentDiv.innerHTML='<em>No dataset options available</em>'
 activeSeriesDescription.style.display='block'}}}
 class SSPIPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
-this.itemCode=itemCode}
+this.itemCode=itemCode
+this.activeItemCode=itemCode}
 initItemTree(){this.itemTree=document.createElement('div')
 this.itemTree.classList.add('sspi-tree-container')
 this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree-header">SSPI Structure</h3><p class="sspi-tree-description-text">Explore the scores across SSPI's pillars, categories, and indicators below. Click on an item below to view its data.
@@ -1689,6 +1714,7 @@ this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree
     }
 
     update(data) {
+        this.activeItemCode = data.itemCode
         super.update(data);
         this.buildItemTree(data.tree, data.itemCode);
     }
@@ -1727,7 +1753,6 @@ class CountryPillarPanelChart {
         this.fetch(this.endpointURL).then(data => {
             this.update(data)
         })
-        this.rigUnloadListener()
     }
 
     initRoot() {
@@ -3098,6 +3123,7 @@ rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observabl
 window.observableStorage.setItem("globePlaying",this.playing)
 window.observableStorage.setItem("globeRotation",this.globeRotation)
 window.observableStorage.setItem("rotationOnClick",this.rotationOnClick)
+window.observableStorage.setItem("activeCountry",this.activeCountry)
 if(this.playing){this.stopPlay()}
 window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
 window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}

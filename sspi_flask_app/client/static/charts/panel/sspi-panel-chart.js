@@ -2,6 +2,7 @@ class SSPIPanelChart extends PanelChart {
     constructor(parentElement, itemCode, { CountryList = [], width = 600, height = 600 } = {} ) {
         super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`, width: width, height: height })
         this.itemCode = itemCode
+        this.activeItemCode = itemCode
     }
 
     initItemTree() {
@@ -47,6 +48,7 @@ class SSPIPanelChart extends PanelChart {
     }
 
     update(data) {
+        this.activeItemCode = data.itemCode
         super.update(data);
         this.buildItemTree(data.tree, data.itemCode);
     }

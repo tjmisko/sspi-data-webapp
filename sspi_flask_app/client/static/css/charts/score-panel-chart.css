@@ -4,7 +4,7 @@
   flex-direction: row;
   justify-content: left;
   align-items: stretch;  /* Stretch children to match tallest child */
-  min-height: clamp(600px, 80vh, 80vh);
+  height: clamp(600px, 80vh, 80vh);
 }
 
 .panel-chart-container { /* Contains title and chart canvas */
@@ -107,13 +107,15 @@
   right: 0;
   padding: 0.5em;
   border-radius: 5px;
-  background-color: var(--box-background-color, #000);
-  border: var(--theme-border-thick, none);
   color: var(--header-text-color, #fff);
   overflow-y: auto;  /* Show scrollbar only when needed */
   min-width: clamp(250px, 20vw, 20vw);
   z-index: 3;
   /* Height is set by media queries to match container */
+}
+
+.chart-options details {
+  background-color: var(--box-background-color);
 }
 
 .chart-options-overlay.inactive {

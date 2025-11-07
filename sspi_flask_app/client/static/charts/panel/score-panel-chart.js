@@ -131,7 +131,7 @@ class ScorePanelChart extends PanelChart {
                     chartInteractionPlugin: {
                         enabled: true,
                         radius: 20,
-                        clickRadius: 2,
+                        clickRadius: 4,
                         tooltipBg: this.headerBackgroundColor,
                         tooltipFg: this.titleColor,
                         labelField: 'CCode',
@@ -139,7 +139,9 @@ class ScorePanelChart extends PanelChart {
                         defaultLabelSpacing: 5,
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
-                                this.togglePin(dataset);
+                                this.activeCountry = dataset;
+                                window.observableStorage.setItem('activeCountry', dataset)
+                                this.updateCountryInformation();
                             });
                         }
                     },
@@ -160,19 +162,15 @@ class ScorePanelChart extends PanelChart {
             this.breadcrumbContainer.style.display = 'none';
             return;
         }
-
         // Hide title container and show breadcrumb container for items with treepath
         this.chartContainer.querySelector('.panel-chart-title-container').style.display = 'none';
         this.breadcrumbContainer.style.display = 'flex';
-
         // Build breadcrumb HTML
         let breadcrumbHTML = '';
-        
         // Process each level in the tree path (except the last one)
         for (let i = 0; i < treePath.length - 1; i++) {
             const item = treePath[i];
             let code, itemName, displayName, url;
-            
             // Handle both old format (strings) and new format (objects) for backwards compatibility
             if (typeof item === 'string') {
                 code = item.toLowerCase();
@@ -217,12 +215,10 @@ class ScorePanelChart extends PanelChart {
                     url = null;
                 }
             }
-
             // Add separator if not first item
             if (i > 0) {
                 breadcrumbHTML += '<span class="breadcrumb-separator">></span>';
             }
-
             // Add breadcrumb item with link and tooltip
             breadcrumbHTML += '<a href="' + url + '" class="breadcrumb-item" title="' + itemName + '">' + displayName + '</a>';
         }
@@ -232,7 +228,6 @@ class ScorePanelChart extends PanelChart {
             breadcrumbHTML += '<span class="breadcrumb-separator">></span>';
         }
         breadcrumbHTML += '<span class="breadcrumb-current">' + title + ' (' + itemCode + ')</span>';
-
         this.breadcrumb.innerHTML = breadcrumbHTML;
     }
 
@@ -284,13 +279,10 @@ class ScorePanelChart extends PanelChart {
     }
 
     update(data) {
-        console.log(data);
-        
         // Force refresh of chart interaction plugin labels when data changes
         if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
             this.chartInteractionPlugin._forceRefreshLabels(this.chart);
         }
-        
         this.chart.data.datasets = data.data;
         this.chart.data.labels = data.labels;
         if (this.pinnedOnly) {
@@ -298,10 +290,8 @@ class ScorePanelChart extends PanelChart {
         } else {
             this.showGroup(this.countryGroup);
         }
-        
         // Store treepath for breadcrumb rendering
         this.treepath = data.treepath;
-        
         // Use breadcrumb navigation if treepath is available
         if (data.treepath && data.treepath.length > 0) {
             this.renderBreadcrumb(data.treepath, data.title, data.itemCode, data.itemType);
@@ -313,7 +303,6 @@ class ScorePanelChart extends PanelChart {
                 this.breadcrumbContainer.style.display = 'none';
             }
         }
-        
         this.itemType = data.itemType;
         this.groupOptions = data.groupOptions;
         this.getPins();
@@ -324,5 +313,9 @@ class ScorePanelChart extends PanelChart {
         this.updateChartColors();
         this.updateCountryGroups();
         this.chart.update();
+        this.activeCountry = window.observableStorage.getItem('activeCountry')
+        if (this.activeCountry) {
+            this.updateCountryInformation();
+        }
     }
 }
