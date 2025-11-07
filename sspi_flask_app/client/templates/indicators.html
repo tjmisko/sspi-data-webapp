@@ -26,7 +26,7 @@
                     </div>
                     {% else %}
                         {% for pillar in indicators_data.pillars %}
-                        <div class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
+                        <div id="{{ pillar.pillar_code }}" class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
                             <div class="indicators-pillar-header">
                                 <div class="indicators-pillar-header-content">
                                     <button class="collapse-toggle-btn" aria-label="Toggle pillar">
@@ -44,7 +44,7 @@
                             
                             <div class="pillar-content" data-expanded="true" data-icode="{{ pillar.pillar_code }}">
                                 {% for category in pillar.categories %}
-                                <div class="category-section" data-category-code="{{ category.category_code }}">
+                                <div id="{{ category.category_code }}" class="category-section" data-category-code="{{ category.category_code }}">
                                     <div class="indicators-category-header">
                                         <div class="indicators-category-header-content">
                                             <button class="collapse-toggle-btn" aria-label="Toggle category">
@@ -64,7 +64,7 @@
                                         <div class="indicator-table-indicators-list">
                                             {% if category.indicators %}
                                                 {% for indicator in category.indicators %}
-                                                <div class="indicator-item" data-indicator-code="{{ indicator.indicator_code }}">
+                                                  <div class="indicator-item" id="{{ indicator.indicator_code}}" "data-indicator-code="{{ indicator.indicator_code }}">
                                                     <div class="indicators-indicator-header">
                                                         <div class="indicator-info">
                                                             <button class="collapse-toggle-btn" aria-label="Toggle datasets">
@@ -136,6 +136,11 @@
     </section>
 </article>
 <script>
+const tableState = window.observableStorage.getItem('indicatorTableState')
+if ("{{ view_item }}".length > 1 && tableState["{{ view_item }}"]) {
+    tableState["{{ view_item }}"] = 'true'
+    window.observableStorage.setItem('indicatorTableState', tableState)
+}
 let indicatorTable = new IndicatorTable();
 document.addEventListener('DOMContentLoaded', () => {
     SSPICharts.push(indicatorTable);

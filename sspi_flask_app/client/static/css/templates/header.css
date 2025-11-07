@@ -293,7 +293,7 @@
 
 /* Responsive Media Queries */
 /* Hamburger breakpoint: corresponds to --hamburger-break-width in variables.css */
-@media screen and (max-width: 850px) {
+@media screen and (max-width: 900px) {
   .site-header {
     padding: 0.5em 1em;
     align-items: center;
@@ -319,7 +319,7 @@
   }
 }
 
-@media screen and (min-width: 851px) {
+@media screen and (min-width: 901px) {
   .hamburger-menu,
   .mobile-menu,
   .menu-toggle-checkbox {

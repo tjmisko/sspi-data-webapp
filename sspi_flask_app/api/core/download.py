@@ -15,10 +15,30 @@ download_bp = Blueprint(
 
 # Only allow downloading from specific databases
 allowed_databases = [
-    'sspi_score_data',
-    'sspi_indicator_data', 
-    'sspi_clean_api_data',
-    'sspi_main_data_v3'
+    {   
+        'name': 'sspi_item_data',
+        'description': 'Contains score data for SSPI Indicators, Categories, Pillars, and Scores. Includes imputations.'
+    },
+    {
+        'name': 'sspi_indicator_data',
+        'description': 'Contains score data for SSPI Indicators and their underlying Datasets. Does not include imputations.'
+    },
+    {
+        'name': 'sspi_imputed_indicator_data',
+        'description': 'The complement to sspi_indicator_data, containing only indicator imputations and their underlying datasets.'
+    },
+    {
+        'name': 'sspi_clean_api_data',
+        'description': 'Contains datasets processed from source data APIs. In series format.'
+    },
+    {
+        'name': 'sspi_raw_api_data',
+        'description': 'Contains unprocessed results of raw API calls. For replication purposes only.'
+    },
+    {
+        'name': 'sspi_main_data_v3',
+        'description': 'Contains the dataset used to produce the 2018 SSPI'
+    }
 ]
 db_choices = [db for db in allowed_databases if db in sspidb.list_collection_names()]
 ic_choices = sspi_metadata.indicator_codes()

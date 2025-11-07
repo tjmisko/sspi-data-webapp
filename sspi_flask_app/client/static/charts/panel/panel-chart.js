@@ -274,7 +274,7 @@ class PanelChart {
                     chartInteractionPlugin: {
                         enabled: true,
                         radius: 20,
-                        clickRadius: 2,
+                        clickRadius: 4,
                         tooltipBg: this.headerBackgroundColor,
                         tooltipFg: this.titleColor,
                         circleColor: this.tickColor,
@@ -284,8 +284,8 @@ class PanelChart {
                         defaultLabelSpacing: 5,
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
-                                this.togglePin(dataset)
                                 this.activeCountry = dataset;
+                                window.observableStorage.setItem('activeCountry', dataset)
                                 this.updateCountryInformation();
                             });
                         }
@@ -374,19 +374,43 @@ class PanelChart {
 
     updateCountryInformation() {
         if (!this.activeCountry) return;
+        this.countryInformationBox.dataset.unpopulated = false
         const isPinned = this.activeCountry.pinned || false;
         const pinButtonText = isPinned ? "Unpin Country" : "Pin Country";
         const pinButtonClass = isPinned ? "unpin-country-button" : "pin-country-button";
+        let dataset = this.chart.data.datasets.find((ds) => {
+            return ds.CCode === this.activeCountry.CCode
+        })
+        const avgScore = ( dataset.score.reduce((a, b) => a + b) / dataset.score.length )
+        const minScore = Math.min(...dataset.score) 
+        const maxScore = Math.max(...dataset.score)
+        const minScoreYear = dataset.score.findIndex((el) => el === minScore) + 2000
+        const maxScoreYear = dataset.score.findIndex((el) => el === maxScore) + 2000
         this.countryInformationBox.innerHTML = `
 <div id="#active-country-information" class="country-details-info">
 <h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
-<div class="country-details-score-container"></div>
+<div class="country-details-score-container">
+    <div class="summary-stat-line">
+        <span class="summary-stat-label">Average:</span> 
+        <span class="summary-stat-score">${avgScore.toFixed(3)}</span>
+        <span class="summary-stat-year">2000-2023</span>
+    </div>
+    <div class="summary-stat-line">
+        <span class="summary-stat-label">Minimum:</span>
+        <span class="summary-stat-score">${minScore.toFixed(3)}</span>
+        <span class="summary-stat-year">${minScoreYear}</span>
+    </div>
+    <div class="summary-stat-line">
+        <span class="summary-stat-label">Maximum:</span>
+        <span class="summary-stat-score">${maxScore.toFixed(3)}</span>
+        <span class="summary-stat-year">${maxScoreYear}</span>
+    </div>
+</div>
 <div class="country-details-actions">
     <button class="${pinButtonClass}" data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button>
     <a class="view-all-data-link" href="/data/country/${this.activeCountry.CCode}">View All Data</a>
 </div>
 </div>`;
-
         // Add event listener for Pin/Unpin Country button
         const pinButton = this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');
         if (pinButton) {
@@ -397,6 +421,7 @@ class PanelChart {
                 if (dataset) {
                     this.togglePin(dataset);
                     this.activeCountry = dataset;
+                    window.observableStorage.setItem('activeCountry', dataset)
                     this.updateCountryInformation();
                 }
             });
@@ -409,6 +434,7 @@ class PanelChart {
                 let dataset = PanelChartObject.chart.data.datasets.find((d) => d.CCode === countryCode);
                 if (dataset) {
                     PanelChartObject.activeCountry = dataset;
+                    window.observableStorage.setItem('activeCountry', dataset)
                     PanelChartObject.countryInformationBox.dataset.unpopulated = false;
                     PanelChartObject.updateCountryInformation();
                 } else {
@@ -506,6 +532,24 @@ class PanelChart {
     updateDescription(description) {
         const dbox = this.chartOptions.querySelector('.dynamic-item-description')
         dbox.innerHTML = '<p><b>Description: </b> ' + description + '</p>'
+        var itemCode;
+        if (this.activeItemCode) {
+            itemCode = this.activeItemCode;
+        } else if (this.itemCode) {
+            itemCode = this.itemCode;
+        }
+        if (itemCode) {
+            this.chartOptions.querySelector('.item-metadata-link-button')?.remove()
+            const metadataLink = document.createElement('a');
+            metadataLink.innerText = "View " + itemCode + " Metadata";
+            metadataLink.classList.add("view-all-data-link", "item-metadata-link-button")
+            if (itemCode === "SSPI") {
+                metadataLink.href = "/indicators"
+            } else {
+                metadataLink.href = "/indicators?viewItem=" + itemCode + "#" + itemCode
+            }
+            dbox.parentElement.appendChild(metadataLink)
+        }
     }
 
     updateItemDropdown(options) {
@@ -587,6 +631,10 @@ class PanelChart {
         this.updateChartPreservingYAxis();
         // Compute missing countries asynchronously after chart rendering
         this.computeMissingCountriesAsync()
+        this.activeCountry = window.observableStorage.getItem("activeCountry") || null;
+        if (this.activeCountry) {
+            this.updateCountryInformation();
+        }
     }
 
     computeMissingCountriesAsync() {

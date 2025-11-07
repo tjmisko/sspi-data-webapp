@@ -9,7 +9,6 @@ class IndicatorTable {
             console.warn('IndicatorTable: Container not found');
             return;
         }
-        
         this.initializeEventListeners();
         this.initializeState();
         this.rigUnloadListener();
@@ -25,7 +24,15 @@ class IndicatorTable {
                 this.handleToggle(toggleBtn);
             }
         });
-        
+        const indicators = this.container.querySelectorAll('.indicator-item')
+        indicators.forEach((indicator) => {
+            indicator.addEventListener('click', (event) => {
+                console.log(event)
+                console.log(indicator)
+                const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
+                this.handleToggle(toggleBtn);
+            })
+        })
         // Add keyboard support for toggle buttons
         this.container.addEventListener('keydown', (event) => {
             const toggleBtn = event.target.closest('.collapse-toggle-btn');
@@ -39,10 +46,11 @@ class IndicatorTable {
     initializeState() {
         // Set initial expanded states based on data-expanded attributes
         const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
-        const cachedStateObject = window.observableStorage.getItem('indicatorTableState')
+        const cachedStateObject = window.observableStorage.getItem('indicatorTableState');
         collapsibleSections.forEach(section => {
             const defaultState = section.dataset.expanded === 'true';
             const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
+            console.log('cachedState for itemCode', section.dataset.icode, ': ', cachedState)
             this.updateSectionVisibility(section, cachedState);
             section.dataset.expanded = cachedState.toString();
             const toggleButton = this.findToggleButton(section)
@@ -195,20 +203,23 @@ class IndicatorTable {
 
     resetView() {
         const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
+        let stateLookup = {};
         collapsibleSections.forEach((section) => {
             if (section.dataset.icode.length === 6) { // indicators hidden, others expanded
                 this.updateSectionVisibility(section, false);
                 section.dataset.expanded = 'false';
                 const toggleButton = this.findToggleButton(section)
                 this.updateToggleIcon(toggleButton, false);
+                stateLookup[section.dataset.icode] = false;
             } else {
                 this.updateSectionVisibility(section, true);
                 section.dataset.expanded = 'true';
                 const toggleButton = this.findToggleButton(section)
+                stateLookup[section.dataset.icode] = true;
                 this.updateToggleIcon(toggleButton, true);
             }
         })
-        window.observableStorage.setItem('indicatorTableState', {})
+        window.observableStorage.setItem('indicatorTableState', stateLookup)
     }
 
     rigUnloadListener() {

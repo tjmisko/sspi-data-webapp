@@ -1,9 +1,7 @@
 
 /* Download Page Styles */
 .download-section {
-    max-width: 800px;
-    margin: 1rem auto;
-    padding: 1rem;
+  margin-top: 1em;
 }
 
 .download-section h1 {
@@ -16,9 +14,9 @@
 }
 
 .form-section {
+    background-color: var(--box-background-color);
     margin-bottom: 1rem;
     padding: 0.75rem;
-    background: var(--background-secondary);
     border-radius: 6px;
     border: 1px solid var(--border-color);
 }
@@ -32,9 +30,10 @@
 }
 
 .form-help {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--low-importance-font-color);
-    margin-top: 0;
+  font-family: var(--body-font-family);
+    margin-top: 0.1rem;
     margin-bottom: 0.4rem;
 }
 
@@ -390,7 +389,8 @@ select[multiple] option:checked {
 }
 
 .tree-container {
-    padding: 0.25rem;
+  font-family: var(--header-font-family);
+  padding: 0.25rem;
 }
 
 .tree-node {
@@ -410,10 +410,10 @@ select[multiple] option:checked {
 }
 
 /* Level-based indentation */
-.tree-node.level-0 .node-content { padding-left: 0.25rem; }    /* SSPI */
-.tree-node.level-1 .node-content { padding-left: 0.75rem; }   /* Pillars */
-.tree-node.level-2 .node-content { padding-left: 1.25rem; }   /* Categories */
-.tree-node.level-3 .node-content { padding-left: 1.75rem; }   /* Indicators */
+.tree-node.level-0 .node-content { padding-left: 0rem; }    /* SSPI */
+.tree-node.level-1 .node-content { padding-left: 1.5rem; }   /* Pillars */
+.tree-node.level-2 .node-content { padding-left: 3rem; }   /* Categories */
+.tree-node.level-3 .node-content { padding-left: 4.25rem; }   /* Indicators */
 
 .expand-btn {
     width: 16px;

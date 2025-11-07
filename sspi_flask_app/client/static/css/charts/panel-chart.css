@@ -270,3 +270,29 @@
   border-radius: 5px;
 }
 
+.summary-stat-line {
+  display: flex;
+  overflow-x: scroll;
+}
+.summary-stat-line > span{
+  line-height: 1.5;
+  font-size: 0.9em;
+}
+
+.summary-stat-label {
+  display: block;
+  color: var(--low-importance-font-color);
+  min-width: 85px;
+  width: 85px;
+}
+
+.summary-stat-score {
+  margin: 0 0.75em;
+}
+
+.summary-stat-year {
+  align-self: right;
+  color: var(--green-accent);
+  font-weight: bold;
+  margin-left: auto;
+}
