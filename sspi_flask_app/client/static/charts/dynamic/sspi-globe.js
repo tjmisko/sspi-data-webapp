@@ -805,6 +805,7 @@ class SSPIGlobeChart {
             window.observableStorage.setItem("globePlaying", this.playing)
             window.observableStorage.setItem("globeRotation", this.globeRotation)
             window.observableStorage.setItem("rotationOnClick", this.rotationOnClick)
+            window.observableStorage.setItem("activeCountry", this.activeCountry)
             if (this.playing) {
                 this.stopPlay()
             }
