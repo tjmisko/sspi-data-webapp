@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, current_app as app
+from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
 import os
 from markdown import markdown
 from flask_login import login_required
@@ -259,6 +259,9 @@ def indicators_static():
 def overall_scores_2018():
     return render_template("static/2018-scores.html")
 
+@client_bp.route('/2018/data')
+def overall_data_2018():
+    return redirect(url_for('client_bp.overall_scores_2018'))
 
 @client_bp.route('/2018/methodology')
 def methodology_2018():
