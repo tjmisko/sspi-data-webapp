@@ -54,10 +54,10 @@
   flex-wrap: nowrap;
 }
 
+
 .score-bar-parent {
   display: flex;
-  min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 175px;
   align-self: stretch;
   justify-content: space-between;
   align-items: flex-start;
@@ -65,6 +65,18 @@
   min-width: 0;
 }
  
+.score-bar-category-flexbox {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.score-bar-category-flexbox .score-bar-parent {
+  min-width: 175px;
+  max-width: 300px;
+}
+
 .score-bar-chart-title {
   font-size: 0.8em;
   margin-bottom: 0.25em;

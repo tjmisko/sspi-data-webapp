@@ -2734,7 +2734,8 @@ propagateHighlights(){window.SSPICharts.forEach(chartObject=>{if(chartObject!==t
 update(data){this.chart.data=data.data
 if(this.chart.width<400){const chartInfo=this.chart.data.datasets[0].info
 const codeLabels=chartInfo.map((i)=>i.CCode+" "+i.CFlag)
-this.chart.data.labels=codeLabels}
+this.chart.data.labels=codeLabels
+this.chart.options.scales.x.title.font.size=11;}
 this.chart.data.datasets[0].backgroundColor=Array(49).fill(this.backgroundColor)
 this.chart.data.datasets[0].borderColor=Array(49).fill(this.borderColor)
 this.chart.data.datasets[0].borderWidth=2

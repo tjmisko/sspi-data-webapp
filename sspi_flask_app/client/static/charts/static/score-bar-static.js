@@ -310,6 +310,7 @@ class ScoreBarStatic {
             const chartInfo = this.chart.data.datasets[0].info
             const codeLabels = chartInfo.map((i) => i.CCode + " " + i.CFlag)
             this.chart.data.labels = codeLabels
+            this.chart.options.scales.x.title.font.size = 11;
         }
         this.chart.data.datasets[0].backgroundColor = Array(49).fill(this.backgroundColor)
         this.chart.data.datasets[0].borderColor = Array(49).fill(this.borderColor)
