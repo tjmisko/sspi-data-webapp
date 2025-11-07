@@ -84,7 +84,7 @@
                         <!-- as low as Sustainability, but a higher -->
                         <!-- spread around that average.</li> -->
                     </ul>
-                <div
+                </div>
                 <div class="score-bar-pillar-flexbox">
                     <div id="eco-score-bar-parent" class="score-bar-parent"></div>
                     <div id="lnd-score-bar-parent" class="score-bar-parent"></div>
@@ -116,7 +116,7 @@
                         <!-- as low as Sustainability, but a higher -->
                         <!-- spread around that average.</li> -->
                     </ul>
-                <div
+                </div>
                 <div class="score-bar-pillar-flexbox">
                     <div id="wen-score-bar-parent" class="score-bar-parent"></div>
                     <div id="wwb-score-bar-parent" class="score-bar-parent"></div>
@@ -148,7 +148,7 @@
                         <!-- as low as Sustainability, but a higher -->
                         <!-- spread around that average.</li> -->
                     </ul>
-                <div
+                </div>
                 <div class="score-bar-pillar-flexbox">
                     <div id="edu-score-bar-parent" class="score-bar-parent"></div>
                     <div id="hlc-score-bar-parent" class="score-bar-parent"></div>
@@ -165,10 +165,10 @@
     const scoreBarSUSParent = document.getElementById('sus-score-bar-parent');
     const scoreBarMSParent = document.getElementById('ms-score-bar-parent');
     const scoreBarPGParent = document.getElementById('pg-score-bar-parent');
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarSSPIParent, "SSPI"));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarSUSParent, "SUS", SSPIColors.SUS, width=375));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarMSParent, "MS", SSPIColors.MS, width=375));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarPGParent, "PG", SSPIColors.PG, width=375));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSSPIParent, "SSPI", { animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSUSParent, "SUS", { backgroundColor: SSPIColors.SUS, width: 375, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarMSParent, "MS", { backgroundColor: SSPIColors.MS, width: 375, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarPGParent, "PG", { backgroundColor: SSPIColors.PG, width: 375, animate: false }));
     setTimeout(() => {
         window.SSPICharts[1].title.innerHTML = "Sustainability"
         window.SSPICharts[2].title.innerHTML = "Market Structure"
@@ -180,11 +180,11 @@
     const scoreBarNRGParent = document.getElementById("nrg-score-bar-parent")
     const scoreBarGHGParent = document.getElementById("ghg-score-bar-parent")
     const scoreBarWSTParent = document.getElementById("wst-score-bar-parent")
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarECOParent, "ECO", SSPIColors.SUS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarLNDParent, "LND", SSPIColors.SUS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarNRGParent, "NRG", SSPIColors.SUS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarGHGParent, "GHG", SSPIColors.SUS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarWSTParent, "WST", SSPIColors.SUS, width=350));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarECOParent, "ECO", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarLNDParent, "LND", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarNRGParent, "NRG", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarGHGParent, "GHG", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarWSTParent, "WST", { backgroundColor: SSPIColors.SUS, width: 350, animate: false }));
     setTimeout(() => {
         window.SSPICharts[4].title.innerHTML = "Ecosystem"
         window.SSPICharts[5].title.innerHTML = "Land"
@@ -198,11 +198,11 @@
     const scoreBarTAXParent = document.getElementById('tax-score-bar-parent')
     const scoreBarFINParent = document.getElementById('fin-score-bar-parent')
     const scoreBarNEQParent = document.getElementById('neq-score-bar-parent')
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarWENParent, "WEN", SSPIColors.MS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarWWBParent, "WWB", SSPIColors.MS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarTAXParent, "TAX", SSPIColors.MS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarFINParent, "FIN", SSPIColors.MS, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarNEQParent, "NEQ", SSPIColors.MS, width=350));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarWENParent, "WEN", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarWWBParent, "WWB", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarTAXParent, "TAX", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarFINParent, "FIN", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarNEQParent, "NEQ", { backgroundColor: SSPIColors.MS, width: 350, animate: false }));
     setTimeout(() => {
         window.SSPICharts[9].title.innerHTML = "Worker Engagement"
         window.SSPICharts[10].title.innerHTML = "Worker Wellbeing"
@@ -216,12 +216,12 @@
     const scoreBarRTSParent = document.getElementById('rts-score-bar-parent')
     const scoreBarSAFParent = document.getElementById('saf-score-bar-parent')
     const scoreBarGLBParent = document.getElementById('glb-score-bar-parent')
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarEDUParent, "EDU", SSPIColors.PG, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarHLCParent, "HLC", SSPIColors.PG, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarINFParent, "INF", SSPIColors.PG, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarRTSParent, "RTS", SSPIColors.PG, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarSAFParent, "SAF", SSPIColors.PG, width=350));
-    window.SSPICharts.push(new ScoreBarStatic(scoreBarGLBParent, "GLB", SSPIColors.PG, width=350));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarEDUParent, "EDU", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarHLCParent, "HLC", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarINFParent, "INF", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarRTSParent, "RTS", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarSAFParent, "SAF", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
+    window.SSPICharts.push(new ScoreBarStatic(scoreBarGLBParent, "GLB", { backgroundColor: SSPIColors.PG, width: 350, animate: false }));
     setTimeout(() => {
         window.SSPICharts[14].title.innerHTML = "Education"
         window.SSPICharts[15].title.innerHTML = "Healthcare"
