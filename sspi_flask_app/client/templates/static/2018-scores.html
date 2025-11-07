@@ -4,6 +4,11 @@
 {% include 'subheader.html' %}
 {% endblock %}
 
+{% block static_css %}
+{% include 'site-header-fix.html' %}
+{% endblock %}
+
+
 {% block title %}
 <title>SSPI Scores</title>
 {% endblock %}
@@ -85,7 +90,7 @@
                         <!-- spread around that average.</li> -->
                     </ul>
                 </div>
-                <div class="score-bar-pillar-flexbox">
+                <div class="score-bar-category-flexbox">
                     <div id="eco-score-bar-parent" class="score-bar-parent"></div>
                     <div id="lnd-score-bar-parent" class="score-bar-parent"></div>
                     <div id="nrg-score-bar-parent" class="score-bar-parent"></div>
@@ -117,7 +122,7 @@
                         <!-- spread around that average.</li> -->
                     </ul>
                 </div>
-                <div class="score-bar-pillar-flexbox">
+                <div class="score-bar-category-flexbox">
                     <div id="wen-score-bar-parent" class="score-bar-parent"></div>
                     <div id="wwb-score-bar-parent" class="score-bar-parent"></div>
                     <div id="tax-score-bar-parent" class="score-bar-parent"></div>
@@ -149,7 +154,7 @@
                         <!-- spread around that average.</li> -->
                     </ul>
                 </div>
-                <div class="score-bar-pillar-flexbox">
+                <div class="score-bar-category-flexbox">
                     <div id="edu-score-bar-parent" class="score-bar-parent"></div>
                     <div id="hlc-score-bar-parent" class="score-bar-parent"></div>
                     <div id="inf-score-bar-parent" class="score-bar-parent"></div>

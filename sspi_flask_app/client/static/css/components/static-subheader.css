@@ -68,6 +68,10 @@
     padding: 0.5em;
     flex-direction: column;
   }
+
+  .static-nav-subheader-link {
+    flex: 1 1 0;
+  }
 }
 
 @media (max-width: 600px) {
@@ -81,3 +85,4 @@
     gap: 0.25em;
   }
 }
+
