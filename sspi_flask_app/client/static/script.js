@@ -421,10 +421,6 @@ modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicato
         this.modal = null
     }
 }
-/**
- * IndicatorTable - Interactive functionality for the SSPI Indicators Overview page
- * Handles collapsible sections for pillars, categories, and indicator details
- */
 class IndicatorTable {
     constructor() {
         this.container = document.querySelector('.indicator-table-container');
@@ -449,9 +445,8 @@ class IndicatorTable {
         });
         const indicators = this.container.querySelectorAll('.indicator-item')
         indicators.forEach((indicator) => {
-            indicator.addEventListener('click', (event) => {
-                console.log(event)
-                console.log(indicator)
+            const headerBox = indicator.querySelector('.indicators-indicator-header')
+            headerBox.addEventListener('click', (event) => {
                 const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
                 this.handleToggle(toggleBtn);
             })
