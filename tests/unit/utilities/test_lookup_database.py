@@ -4,7 +4,7 @@ from sspi_flask_app.models.errors import InvalidDatabaseError
 from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_static_metadata,
-    sspi_main_data_v3,
+    sspi_static_data_2018,
     sspi_raw_api_data,
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -28,7 +28,7 @@ def test_lookup_database_valid_databases():
     valid_databases = {
         "sspi_metadata": sspi_metadata,
         "sspi_static_metadata": sspi_static_metadata,
-        "sspi_main_data_v3": sspi_main_data_v3,
+        "sspi_static_data_2018": sspi_static_data_2018,
         "sspi_raw_api_data": sspi_raw_api_data,
         "sspi_clean_api_data": sspi_clean_api_data,
         "sspi_indicator_data": sspi_indicator_data,
@@ -143,7 +143,7 @@ def test_lookup_database_all_imports_accessible():
     all_databases = [
         "sspi_metadata",
         "sspi_static_metadata", 
-        "sspi_main_data_v3",
+        "sspi_static_data_2018",
         "sspi_raw_api_data",
         "sspi_clean_api_data",
         "sspi_indicator_data",

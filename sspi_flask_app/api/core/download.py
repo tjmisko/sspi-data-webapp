@@ -36,7 +36,7 @@ allowed_databases = [
         'description': 'Contains unprocessed results of raw API calls. For replication purposes only.'
     },
     {
-        'name': 'sspi_main_data_v3',
+        'name': 'sspi_static_data_2018',
         'description': 'Contains the dataset used to produce the 2018 SSPI'
     }
 ]
@@ -134,7 +134,7 @@ def fetch_data_for_download(request_args):
         mongo_query["Year"] = {
             "$in": [int(year) for year in request.args.getlist('timePeriod')]
         }
-    database_name = request_args.get("database", default="sspi_main_data_v3")
+    database_name = request_args.get("database", default="sspi_static_data_2018")
     
     # Validate that requested database is allowed
     if database_name not in allowed_databases:

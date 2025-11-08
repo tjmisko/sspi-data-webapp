@@ -22,7 +22,7 @@ from sspi_flask_app.models.sspi import SSPI
 from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
-    sspi_main_data_v3,
+    sspi_static_data_2018,
     sspi_item_data,
     sspi_metadata,
     sspi_panel_data,
@@ -60,7 +60,7 @@ def get_static_indicator_data(IndicatorCode):
     Get the static data for the given indicator code
     """
     static_data = parse_json(
-        sspi_main_data_v3.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
+        sspi_static_data_2018.find({"IndicatorCode": IndicatorCode}, {"_id": 0})
     )
     data_series = [
         {
@@ -419,12 +419,12 @@ def get_static_pillar_differential(pillar_code):
         ), 400
     item_details = sspi_static_metadata.item_details()
     base_country_data = parse_json(
-        sspi_main_data_v3.find({"CountryCode": base_country}, {"_id": 0})
+        sspi_static_data_2018.find({"CountryCode": base_country}, {"_id": 0})
     )
     base_sspi = SSPI(item_details, base_country_data, strict_year=False)
     base_pillar = base_sspi.get_item(pillar_code)
     comparison_country_data = parse_json(
-        sspi_main_data_v3.find({"CountryCode": comparison_country}, {"_id": 0})
+        sspi_static_data_2018.find({"CountryCode": comparison_country}, {"_id": 0})
     )
     comparison_sspi = SSPI(
         item_details, comparison_country_data, strict_year=False
@@ -503,7 +503,7 @@ def get_static_pillar_stack(pillar_code):
     code_map = {}
     pillar_name = ""
     for i, cou in enumerate(country_codes):
-        cou_data = sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0})
+        cou_data = sspi_static_data_2018.find({"CountryCode": cou}, {"_id": 0})
         cou_sspi = SSPI(item_details, cou_data, strict_year=False)
         pillar = cou_sspi.get_item(pillar_code)
         assert pillar is not None, f"Pillar {pillar_code} not found for country {cou}"

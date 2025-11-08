@@ -22,7 +22,7 @@ from sspi_flask_app.models.database import (
     sspi_indicator_dynamic_line_data,
     sspi_item_data,
     sspi_item_dynamic_line_data,
-    sspi_main_data_v3,
+    sspi_static_data_2018,
     sspi_metadata,
     sspi_panel_data,
     sspi_raw_api_data,
@@ -84,8 +84,8 @@ def lookup_database(database_name):
             return sspi_metadata
         case "sspi_static_metadata":
             return sspi_static_metadata
-        case "sspi_main_data_v3":
-            return sspi_main_data_v3
+        case "sspi_static_data_2018":
+            return sspi_static_data_2018
         case "sspi_raw_api_data":
             return sspi_raw_api_data
         case "sspi_clean_api_data":

@@ -4,7 +4,7 @@ from sspi_flask_app.api.resources.utilities import lookup_database
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_metadata,
-    sspi_main_data_v3
+    sspi_static_data_2018
 )
 
 load_bp = Blueprint(
@@ -29,10 +29,10 @@ def load(database_name):
     return Response(message, status=200, mimetype="text/plain")
 
 
-@load_bp.route("/sspi_main_data_v3", methods=['GET'])
+@load_bp.route("/sspi_static_data_2018", methods=['GET'])
 @login_required
 def load_maindata():
-    count = sspi_main_data_v3.load()
+    count = sspi_static_data_2018.load()
     return f"Inserted {count} main data documents into database."
 
 

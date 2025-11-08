@@ -7,8 +7,8 @@ from sspi_flask_app.models.database.mongo_wrapper import (
 from sspi_flask_app.models.database.sspi_clean_api_data import (
     SSPICleanAPIData, SSPIIncompleteAPIData
 )
-from sspi_flask_app.models.database.sspi_main_data_v3 import (
-    SSPIMainDataV3
+from sspi_flask_app.models.database.sspi_static_data_2018 import (
+    SSPIStaticData2018
 )
 from sspi_flask_app.models.database.sspi_metadata_deprecated import (
     SSPIMetadataDeprecated
@@ -60,8 +60,8 @@ sspi_static_metadata = SSPIMetadataDeprecated(
     indicator_detail_file="IndicatorDetailsStatic.csv",
     intermediate_detail_file="IntermediateDetailsStatic.csv"
 )
-sspi_main_data_v3 = SSPIMainDataV3(
-    sspidb.sspi_main_data_v3
+sspi_static_data_2018 = SSPIStaticData2018(
+    sspidb.sspi_static_data_2018
 )
 sspi_raw_api_data = SSPIRawAPIData(
     sspidb.sspi_raw_api_data
