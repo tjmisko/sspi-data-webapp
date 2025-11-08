@@ -10,7 +10,7 @@ from sspi_flask_app.logging import configure_logging
 from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_static_metadata,
-    sspi_main_data_v3,
+    sspi_static_data_2018,
     sspi_user_data
 )
 
@@ -98,8 +98,8 @@ def init_app(Config):
     assets.init_app(app)
 
     with app.app_context():
-        if Config.RELOAD or sspi_main_data_v3.is_empty():
-            sspi_main_data_v3.load()
+        if Config.RELOAD or sspi_static_data_2018.is_empty():
+            sspi_static_data_2018.load()
         if Config.RELOAD or sspi_static_metadata.is_empty():
             sspi_static_metadata.load()
         if Config.RELOAD or sspi_metadata.is_empty():

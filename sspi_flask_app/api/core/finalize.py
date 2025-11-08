@@ -7,7 +7,7 @@ from sspi_flask_app.models.database import (
     sspi_item_data,
     sspi_metadata,
     sspi_static_metadata,
-    sspi_main_data_v3,
+    sspi_static_data_2018,
     sspi_static_rank_data,
     sspi_static_radar_data,
     sspi_static_stack_data,
@@ -103,7 +103,7 @@ def finalize_sspi_static_rank_data():
             for _ in country_codes]
         for item_code in sspi_item_codes}
     for i, cou in enumerate(country_codes):
-        country_data = sspi_main_data_v3.find({"CountryCode": cou}, {"_id": 0})
+        country_data = sspi_static_data_2018.find({"CountryCode": cou}, {"_id": 0})
         sspi_scores = SSPI(item_details, country_data, strict_year=False)
         rank_dict = sspi_scores.to_rank_dict(cou, 2018)
         for item_code, rank_dict in rank_dict.items():
@@ -205,7 +205,7 @@ def finalize_sspi_static_radar_data():
             country_lookup[country_code]["Data"].append(document)
         return country_lookup
 
-    main_data = sspi_main_data_v3.find({}, {"_id": 0})
+    main_data = sspi_static_data_2018.find({}, {"_id": 0})
     item_details = sspi_static_metadata.item_details()
     country_lookup = make_country_lookup(main_data)
     radar_data = []

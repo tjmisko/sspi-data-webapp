@@ -211,7 +211,7 @@ def download():
             'description': 'Contains unprocessed results of raw API calls. For replication purposes only.'
         },
         {
-            'name': 'sspi_main_data_v3',
+            'name': 'sspi_static_data_2018',
             'description': 'Contains the dataset used to produce the 2018 SSPI'
         }
     ]

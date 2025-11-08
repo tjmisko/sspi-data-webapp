@@ -4,7 +4,7 @@ import json
 
 base_url = 'http://localhost:5000'
 home_dir = '/home/tjmisko/Projects/SSPI/sspi-data-webapp/'
-sheet_data = pandas.read_csv(home_dir + './local/SSPIMainDataV3.csv',
+sheet_data = pandas.read_csv(home_dir + './local/SSPIStaticData2018.csv',
                              skiprows=1)
 
 

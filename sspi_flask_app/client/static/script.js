@@ -479,13 +479,10 @@ class IndicatorTable {
     handleToggle(toggleBtn) {
         const section = this.findToggleableSection(toggleBtn);
         if (!section) return;
-        
         const isCurrentlyExpanded = section.dataset.expanded === 'true';
         const newExpandedState = !isCurrentlyExpanded;
-        
         // Update the data attribute
         section.dataset.expanded = newExpandedState.toString();
-        
         // Update visual state
         this.updateSectionVisibility(section, newExpandedState);
         this.updateToggleIcon(toggleBtn, newExpandedState);
