@@ -2,11 +2,7 @@
 ItemType: Indicator
 ItemCode: FAMPLN
 DatasetCodes:
-<<<<<<< HEAD
   - FAMPLN
-=======
-  - WHO_FAMPLN
->>>>>>> main
 ItemName: Family Planning
 Description: Modeled data on unmet need for family planning is defined as the percentage
   of women of reproductive age, either married or in a union, who have an unmet need
