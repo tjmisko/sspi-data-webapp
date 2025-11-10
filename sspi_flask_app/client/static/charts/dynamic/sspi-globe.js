@@ -540,15 +540,10 @@ class SSPIGlobeChart {
     }
 
     setColorScale() {
-        const validValues = this.geojson.features
-            .map(this.getVal)
-            .filter(v => v !== -1);
-
-        const minVal = Math.min(...validValues);
-        const maxVal = Math.max(...validValues);
-
+        const aggregates = this.geojson["aggregates"].find(a => a.ICode === this.tabBarState)
+        const minVal = Math.min(aggregates.minScore);
+        const maxVal = Math.max(aggregates.maxScore);
         console.log(`Value range: [${minVal}, ${maxVal}]`);
-
         if (this.cloropleth) {
             const colorGrad = SSPIColors.gradients[this.tabBarState];
             this.colorScale = function(value) {

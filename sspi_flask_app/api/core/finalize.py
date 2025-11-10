@@ -889,6 +889,28 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
 @login_required
 def finalize_globe_data():
     sspi_globe_data.delete_many({})
+    globe_geojson = sspi_metadata.find_one({"DocumentType": "GlobeGeoJSON"})
+    globe_avg_data = sspi_item_data.aggregate(
+        [
+            {"$match": {"ItemCode": {"$in": ["SSPI", "SUS", "MS", "PG"]}}},
+            { "$group": {
+                "_id": {
+                    "ItemCode": "$ItemCode",
+                },
+                "AvgScore": {"$avg": "$Score"},
+                "MinScore": {"$min": "$Score"},
+                "MaxScore": {"$max": "$Score"},
+            } },
+            { "$project": { 
+                "_id": 0,
+                "ICode": "$_id.ItemCode",
+                "avgScore": "$AverageScore",
+                "minScore": "$MinScore",
+                "maxScore": "$MaxScore"
+            } }
+        ]
+    )
+    globe_geojson["Metadata"]["aggregates"] = globe_avg_data
     globe_item_data = sspi_item_data.aggregate([
         { "$match": { "ItemCode": {"$in": ["SSPI", "SUS", "MS", "PG"]} } },
         { "$sort": { "Year": 1, "ItemCode": 1, "CountryCode": 1 } },
@@ -906,7 +928,6 @@ def finalize_globe_data():
         { "$project": { "_id": 0, "CountryCode": "$_id", "Scores": { "$arrayToObject": "$items"} } }
     ])
     scored_country_codes = {doc["CountryCode"] for doc in globe_item_data}
-    globe_geojson = sspi_metadata.find_one({"DocumentType": "GlobeGeoJSON"})
     for feature in globe_geojson["Metadata"]["features"]:
         country_code = feature["properties"]["ISO_A3"]
         if str(country_code) == "-99" or not country_code:
