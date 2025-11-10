@@ -1205,7 +1205,7 @@ def finalize_dataset_range():
     ])
     queries = [{"DocumentType": "DatasetDetail", "Metadata.DatasetCode": ds["DatasetCode"]}
         for ds in dataset_ranges]
-    updates = [{ "$set": { "Range": { "yMin": ds["minValue"], "yMax": ds["maxValue"] } } } 
+    updates = [{ "$set": { "Metadata.Range": { "yMin": ds["minValue"], "yMax": ds["maxValue"] } } } 
         for ds in dataset_ranges]
     result = sspi_metadata.bulk_update(queries, updates)
     if not result:
