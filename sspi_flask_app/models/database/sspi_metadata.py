@@ -1042,3 +1042,16 @@ class SSPIMetadata(MongoWrapper):
             for c in children:
                 item_dependencies += self.get_indicator_dependencies(c)
             return item_dependencies   
+    
+    def time_period_details(self) -> list[dict]:
+        details = self.find({"DocumentType": "TimePeriodDetail"})
+        if not details:
+            return []
+        return [d.get("Metadata", {}) for d in details]
+
+    def get_time_period_detail(self, time_period_label: str) -> dict:
+        detail = self.find_one({"DocumentType": "TimePeriodDetail", "Metadata.Label": time_period_label})
+        if not detail:
+            return {}
+        return detail
+

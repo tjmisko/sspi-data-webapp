@@ -15,7 +15,8 @@ from sspi_flask_app.models.database import (
     sspi_indicator_dynamic_line_data,
     sspi_dynamic_matrix_data,
     sspi_globe_data,
-    sspi_dynamic_radar_data
+    sspi_dynamic_radar_data,
+    sspi_dynamic_rank_data
 )
 from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
@@ -64,6 +65,8 @@ def finalize_iterator(local_path, endpoints):
         yield from finalize_dynamic_line_score_datasets()
         yield "Finalizing Globe Data\n"
         finalize_globe_data()
+        yield "Finalizing Dynamic Rank Data\n"
+        yield from finalize_dynamic_rank_iterator()
         yield "Finalization Complete\n"
     except Exception as e:
         yield f"error: Finalization failed with exception: {str(e)}\n"
@@ -967,3 +970,214 @@ def finalize_globe_data():
         }
     sspi_globe_data.insert_one(globe_geojson["Metadata"])
     return parse_json(globe_geojson["Metadata"])
+
+
+@finalize_bp.route("/finalize/dynamic/rank")
+@login_required
+def finalize_dynamic_rank_data():
+    return Response(finalize_dynamic_rank_iterator(), mimetype="text/event-stream")
+
+def finalize_dynamic_rank_iterator():
+    sspi_dynamic_rank_data.delete_many({})
+    yield "Computing Single Year Ranks\n"
+    time_period_details = sspi_metadata.time_period_details()
+    time_period_intervals = [tp for tp in time_period_details if tp.get("Type","") != "Single Year"]
+    dynamic_ranks_years = sspi_item_data.aggregate([
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "Year": "$Year",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"Score": -1},
+                "output": {"Rank": {"$rank": {}}}
+            }
+        },
+        { "$project": { 
+            "_id": 0,
+            "TimePeriod": {"$toString": "$Year"},
+            "TimePeriodType": "Single Year",
+            "CountryCode": 1,
+            "ItemCode": 1,
+            "Rank": 1,
+            "Score": 1,
+        } },
+    ])
+    count = sspi_dynamic_rank_data.insert_many(dynamic_ranks_years)
+    yield f"Successfully inserted {count} documents for Single Year Dynamic Ranks\n"
+    yield "Computing Time Period Ranks\n"
+    dynamic_ranks_intervals = sspi_item_data.aggregate([
+        {
+            "$set": {
+                "timePeriods": time_period_intervals 
+            }
+        },
+        {
+            "$set": {
+                "matchingPeriods": {
+                    "$filter": {
+                        "input": "$timePeriods",
+                        "as": "tp",
+                        "cond": {"$in": ["$Year", "$$tp.Years"]}
+                    }
+                }
+            }
+        },
+        {"$unwind": "$matchingPeriods"},
+        {
+            "$group": {
+                "_id": {
+                    "TimePeriod": "$matchingPeriods.Label",
+                    "TimePeriodType": "$matchingPeriods.Type",
+                    "CountryCode": "$CountryCode",
+                    "ItemCode": "$ItemCode"
+                },
+                "begScore": {"$first": "$Score"},
+                "endScore": {"$last": "$Score"},
+                "minScore": {"$min": "$Score"},
+                "maxScore": {"$max": "$Score"},
+                "avgScore": {"$avg": "$Score"}
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "TimePeriod": "$_id.TimePeriod",
+                "TimePeriodType": "$_id.TimePeriodType",
+                "CountryCode": "$_id.CountryCode",
+                "ItemCode": "$_id.ItemCode",
+                "begScore": 1,
+                "endScore": 1,
+                "chgScore": { "$subtract": ["$endScore", "$begScore"] },
+                "minScore": 1,
+                "maxScore": 1,
+                "rngScore": { "$subtract": ["$maxScore", "$minScore"] },
+                "avgScore": 1
+            }
+        },
+
+        # --- Rank by avgScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"avgScore": -1},
+                "output": {"avgRank": {"$rank": {}}}
+            }
+        },
+        # --- Rank by begScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"begScore": -1},
+                "output": {"begRank": {"$rank": {}}}
+            }
+        },
+        # --- Rank by endScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"endScore": -1},
+                "output": {"endRank": {"$rank": {}}}
+            }
+        },
+        # --- Rank by chgScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"chgScore": -1},
+                "output": {"chgRank": {"$rank": {}}}
+            }
+        },
+        # --- Rank by minScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"minScore": -1},
+                "output": {"minRank": {"$rank": {}}}
+            }
+        },
+        # --- Rank by maxScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"maxScore": -1},
+                "output": {"maxRank": {"$rank": {}}}
+            }
+        },
+        # --- Rank by rngScore ---
+        {
+            "$setWindowFields": {
+                "partitionBy": {
+                    "TimePeriod": "$TimePeriod",
+                    "TimePeriodType": "$TimePeriodType",
+                    "ItemCode": "$ItemCode"
+                },
+                "sortBy": {"rngScore": -1},
+                "output": {"rngRank": {"$rank": {}}}
+            }
+        },
+        {
+            "$set": {
+                "Ranks": {
+                    "avg": "$avgRank",
+                    "beg": "$begRank",
+                    "end": "$endRank",
+                    "chg": "$chgRank",
+                    "min": "$minRank",
+                    "max": "$maxRank",
+                    "rng": "$rngRank"
+                }
+            }
+        },
+        {
+            "$set": {
+                "Scores": {
+                    "avg": "$avgScore",
+                    "beg": "$begScore",
+                    "end": "$endScore",
+                    "chg": "$chgScore",
+                    "min": "$minScore",
+                    "max": "$maxScore",
+                    "rng": "$rngScore"
+                }
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "TimePeriod": 1,
+                "TimePeriodType": 1,
+                "CountryCode": 1,
+                "ItemCode": 1,
+                "Scores": 1,
+                "Ranks": 1
+            }
+        }
+    ])
+    count = sspi_dynamic_rank_data.insert_many(dynamic_ranks_intervals)
+    yield f"Successfully inserted {count} documents for Time Periods Dynamic Ranks\n"
+
