@@ -1270,3 +1270,4 @@ def item_coverage_data(ItemCode, CountryGroup):
 @dashboard_bp.route("/globe")
 def globe_data():
     return sspi_globe_data.find({})[0]
+
