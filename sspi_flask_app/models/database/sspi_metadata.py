@@ -146,16 +146,19 @@ class SSPIMetadata(MongoWrapper):
             globe_json = json.load(file)
         with open(os.path.join(local_path, "organization-details.json")) as file:
             organization_details = json.load(file)
+        with open(os.path.join(local_path, "sspi-time-periods.json")) as file:
+            sspi_time_periods = json.load(file)
         count = self.load_dynamic(
             country_groups,
             country_colors,
             sspi_custom_colors,
             globe_json,
-            organization_details
+            organization_details,
+            sspi_time_periods
         )
         return count
 
-    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors, globe_json, organization_details) -> int:
+    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors, globe_json, organization_details, sspi_time_periods) -> int:
         """
         Load metadata specified in methodology files into the database
 
@@ -204,6 +207,10 @@ class SSPIMetadata(MongoWrapper):
             "DocumentType": "OrganizationDetail",
             "Metadata": o
         } for o in organization_details])
+        metadata.extend([{
+            "DocumentType": "TimePeriodDetail",
+            "Metadata": t
+        } for t in sspi_time_periods])
         metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
         metadata.extend(sorted_item_details)
         metadata.extend(source_details)
