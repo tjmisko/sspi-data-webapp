@@ -3,25 +3,7 @@ from connector import SSPIDatabaseConnector
 from cli.utilities import open_browser_subprocess
 
 
-class DefaultGroup(click.Group):
-    def resolve_command(self, ctx, args):
-        try:
-            # normal dispatch — works for “repo”, “project”, etc.
-            return super().resolve_command(ctx, args)
-        except click.UsageError:
-            # unknown token → treat it as an IDCODE and fall back
-            idcode = args[0]
-            if len(args) == 1 and len(idcode) == 6:
-                return (
-                    'line',
-                    self.get_command(ctx, 'line'),
-                    args
-                )
-            # anything else really is an error
-            raise click.UsageError("Invalid command or IDCODE")
-
-
-@click.group(cls=DefaultGroup, invoke_without_command=True, help="View webpages")
+@click.group(help="View webpages")
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
 @click.pass_context
 def view(ctx, remote=False):
@@ -32,18 +14,31 @@ def view(ctx, remote=False):
 
 
 @view.command(help="View line chart")
-@click.argument("idcode", type=str, required=True)
+@click.argument("series_code", type=str, required=True)
 @click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
-def line(idcode, remote=False):
+def line(series_code, remote=False):
     """
-    Open a LINE chart plotting IDCODE by Year
-
-    IDCODE is the IndicatorCode, IntermediateCode, PillarCode, CategoryCode,
-    PillarCode, or CountryCode for the chart
+    Open a LINE chart plotting SERIES_CODE by Year
+    SERIES_CODE is the IndicatorCode, DatasetCode, PillarCode, CategoryCode,
+    PillarCode for the chart
     """
+    series_code = series_code.upper()
     connector = SSPIDatabaseConnector()
+    res = connector.call(f"/api/v1/query/metadata/series_detail/{series_code}", remote=remote)
+    res.raise_for_status()
+    item_detail = res.json()
+    item_type = item_detail.get("ItemType", "")
     base_url = connector.remote_base if remote else connector.local_base
-    url = base_url + "/data/indicator/" + idcode
+    if item_type == "Dataset":
+        url = base_url + "/data/dataset/" + series_code 
+    elif item_type == "Indicator":
+        url = base_url + "/data/indicator/" + series_code 
+    elif item_type == "Category":
+        url = base_url + "/data/category/" + series_code 
+    elif item_type == "Pillar":
+        url = base_url + "/data/pillar/" + series_code 
+    else:
+        return f"Series {series_code} not found in SSPI Metadata."
     open_browser_subprocess(url)
 
 

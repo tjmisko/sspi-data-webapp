@@ -1,23 +1,29 @@
 from flask import Blueprint, jsonify, request
-from sspi_flask_app.models.errors import InvalidQueryError, InvalidDatabaseError
 from pymongo.errors import OperationFailure
-from sspi_flask_app.api.resources.validators import validate_data_query
-from sspi_flask_app.api.resources.utilities import parse_json, lookup_database
-from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
 
-query_bp = Blueprint("query_bp", __name__,
-                     template_folder="templates",
-                     static_folder="static",
-                     url_prefix="/query")
+from sspi_flask_app.api.resources.utilities import lookup_database, parse_json
+from sspi_flask_app.api.resources.validators import validate_data_query
+from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
+from sspi_flask_app.models.errors import InvalidDatabaseError, InvalidQueryError
+
+query_bp = Blueprint(
+    "query_bp",
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+    url_prefix="/query",
+)
 
 
 @query_bp.route("/<database_string>")
 def query_database(database_string):
-    try: 
+    try:
         database = lookup_database(database_string)
         query_params = get_query_params(request, database)
-        limit = request.args.get('limit', type=int)
-        return jsonify(parse_json(database.find(query_params, options={"_id": 0}, limit=limit)))
+        limit = request.args.get("limit", type=int)
+        return jsonify(
+            parse_json(database.find(query_params, options={"_id": 0}, limit=limit))
+        )
     except InvalidDatabaseError as e:
         return jsonify({"error": "Invalid Database Provided: " + str(e)}), 400
     except InvalidQueryError as e:
@@ -78,10 +84,12 @@ def build_mongo_query(raw_query_input, database=None):
             source_queries = []
             for dataset_code in dataset_codes:
                 source_info = sspi_metadata.get_source_info(dataset_code)
-                source_queries.append({
-                    "Source.OrganizationCode": source_info["OrganizationCode"],
-                    "Source.QueryCode": source_info["QueryCode"]
-                })
+                source_queries.append(
+                    {
+                        "Source.OrganizationCode": source_info["OrganizationCode"],
+                        "Source.QueryCode": source_info["QueryCode"],
+                    }
+                )
             mongo_query = {"$or": source_queries}
             if not source_queries:
                 raise InvalidQueryError(
@@ -202,3 +210,16 @@ def query_item_details():
 @query_bp.route("/metadata/item_detail/<item_code>", methods=["GET"])
 def query_item_detail(item_code):
     return parse_json(sspi_metadata.get_item_detail(item_code))
+
+
+@query_bp.route("/metadata/series_detail/<series_code>", methods=["GET"])
+def query_series_detail(series_code):
+    series_type = sspi_metadata.get_series_type(series_code)
+    if not series_type:
+        return parse_json({})
+    if series_type == "Dataset":
+        return parse_json(sspi_metadata.get_dataset_detail(series_code))
+    elif series_type == "Item":
+        return parse_json(sspi_metadata.get_item_detail(series_code))
+    else:
+        return parse_json({})
