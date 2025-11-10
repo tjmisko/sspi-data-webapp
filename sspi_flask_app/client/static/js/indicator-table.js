@@ -11,6 +11,15 @@ class IndicatorTable {
     }
     
     initializeEventListeners() {
+        const indicators = this.container.querySelectorAll('.indicator-item')
+        indicators.forEach((indicator) => {
+            const headerBox = indicator.querySelector('.indicators-indicator-header')
+            headerBox.addEventListener('click', (event) => {
+                const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
+                event.stopPropagation();
+                this.handleToggle(toggleBtn);
+            })
+        })
         // Add click listeners to all collapse toggle buttons
         this.container.addEventListener('click', (event) => {
             const toggleBtn = event.target.closest('.collapse-toggle-btn');
@@ -20,18 +29,10 @@ class IndicatorTable {
                 this.handleToggle(toggleBtn);
             }
         });
-        const indicators = this.container.querySelectorAll('.indicator-item')
-        indicators.forEach((indicator) => {
-            const headerBox = indicator.querySelector('.indicators-indicator-header')
-            headerBox.addEventListener('click', (event) => {
-                const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
-                this.handleToggle(toggleBtn);
-            })
-        })
         // Add keyboard support for toggle buttons
         this.container.addEventListener('keydown', (event) => {
             const toggleBtn = event.target.closest('.collapse-toggle-btn');
-            if (toggleBtn && (event.key === 'Enter' || event.key === ' ')) {
+            if (toggleBtn && (event.key === 'Enter' || event.key === ' ' || event.key === "Spacebar")) {
                 event.preventDefault();
                 this.handleToggle(toggleBtn);
             }
@@ -45,7 +46,6 @@ class IndicatorTable {
         collapsibleSections.forEach(section => {
             const defaultState = section.dataset.expanded === 'true';
             const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
-            console.log('cachedState for itemCode', section.dataset.icode, ': ', cachedState)
             this.updateSectionVisibility(section, cachedState);
             section.dataset.expanded = cachedState.toString();
             const toggleButton = this.findToggleButton(section)
@@ -81,7 +81,6 @@ class IndicatorTable {
         const pillarSection = toggleBtn.closest('.pillar-section');
         const categorySection = toggleBtn.closest('.category-section');
         const indicatorItem = toggleBtn.closest('.indicator-item');
-        
         if (indicatorItem && toggleBtn.closest('.indicators-indicator-header')) {
             return indicatorItem.querySelector('.indicator-details');
         } else if (categorySection && toggleBtn.closest('.indicators-category-header')) {
