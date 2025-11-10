@@ -16,36 +16,56 @@ def collect_fampln_data(**kwargs):
     res = requests.get(url)
     if res.status_code != 200:
         err = f"(HTTP Error {res.status_code})"
-        yield "Failed to fetch data from source" + err
+        yield f"Failed to fetch data from source {err}\n"
         return
+    
     with zipfile.ZipFile(BytesIO(res.content)) as z:
         for f in z.namelist():
             if "__MACOSX" in f:
                 continue
             with z.open(f) as data:
                 yield f"Processing file: {f}\n"
+                
+                # Read and decode
                 raw_bytes = data.read()
                 csv_string = raw_bytes.decode('utf-8', errors="replace")
-                source_info = {
-                    "OrganizationName": "United Nations Population Division",
-                    "OrganizationCode": "UNPD",
-                    "OrganizationSeriesCode": "FAMPLN",
-                    "QueryCode": "fampln_2024_indicators",
-                    "URL": url
-                }
-                sspi_raw_api_data.raw_insert_one(
-                    csv_string, source_info, **kwargs
-                )
+                
+                # Split into chunks (10MB each)
+                chunk_size = 10 * 1024 * 1024  # 10MB
+                total_size = len(csv_string)
+                num_chunks = (total_size // chunk_size) + 1
+                
+                yield f"File size: {total_size / (1024**2):.2f} MB\n"
+                yield f"Splitting into {num_chunks} chunks...\n"
+                
+                # Process in chunks
+                for i in range(0, len(csv_string), chunk_size):
+                    chunk = csv_string[i:i + chunk_size]
+                    chunk_num = (i // chunk_size) + 1
+                    
+                    source_info = {
+                        "OrganizationName": "United Nations Population Division",
+                        "OrganizationCode": "UNPD",
+                        "QueryCode": f"unpd_fampln_2024_chunk",
+                        "URL": url
+                    }
+                    
+                    yield f"Inserting chunk {chunk_num}/{num_chunks}...\n"
+                    sspi_raw_api_data.raw_insert_one(
+                        chunk, source_info, **kwargs
+                    )
+                    
+                yield f"Successfully inserted all {num_chunks} chunks\n"
+                
     yield "Collection complete for FAMPLN Indicators\n"
-    yield {"csv_string": csv_string}
 
 # for testing
-csv_string = None
-for message in collect_fampln_data(username = 'claranhc'):
-    if isinstance(message, str):
-        print(message)
-    elif isinstance(message, dict) and "csv_string" in message:
-        csv_string = message["csv_string"]
+# csv_string = None
+# for message in collect_fampln_data(username = 'claranhc'):
+#     if isinstance(message, str):
+#         print(message)
+#     elif isinstance(message, dict) and "csv_string" in message:
+#         csv_string = message["csv_string"]
 
 
 
@@ -70,10 +90,7 @@ def clean_fampln_csv(raw_csv_string: str, dataset_code: str) -> list[dict]:
     return json.loads(str(fam_pln.to_json(orient="records")))
 
 # for testing
-output = clean_fampln_csv(raw_csv_string=csv_string, dataset_code="FAMPLN_2024_INDICATORS")
-print(output[:5])
+# output = clean_fampln_csv(raw_csv_string=csv_string, dataset_code="FAMPLN_2024_INDICATORS")
+# print(output[:5])
 
-# EDA portion
-output_df = pd.DataFrame(output)
-countries = output_df['CountryCode'].unique()
-print(countries)
+
