@@ -34,17 +34,17 @@ from sspi_flask_app.models.database import (
     sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
     sspi_globe_data,
-    sspi_dynamic_radar_data
+    sspi_dynamic_radar_data,
 )
 from datetime import datetime
 import hashlib
 import logging
+
 log = logging.getLogger(__name__)
 
 dashboard_bp = Blueprint(
     "dashboard_bp", __name__, template_folder="templates", static_folder="static"
 )
-
 
 
 @dashboard_bp.route("/status/database/<database>")
@@ -92,13 +92,11 @@ def get_dynamic_indicator_line_data(indicator_code):
     Get the dynamic indicator data for a given indicator code for a line chart
     This is distinguished from retrieving item data, which also returns the
     indicator data, in that this endpoint handles passing the underlying datasets
-    to IndicatorPanelChart, which can render them in addition to the indicator score 
+    to IndicatorPanelChart, which can render them in addition to the indicator score
     data.
     """
     indicator_details = sspi_metadata.indicator_details()
-    name_map = {
-        detail["ItemCode"]: detail["ItemName"] for detail in indicator_details
-    }
+    name_map = {detail["ItemCode"]: detail["ItemName"] for detail in indicator_details}
     active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(indicator_code)
     doc_type = detail.get("ItemType", "No Item Type")
@@ -109,34 +107,36 @@ def get_dynamic_indicator_line_data(indicator_code):
     name = detail.get("ItemName")
     tree_path = detail.get("TreePath", "")
     tree_path_parts = tree_path.split("/")
-    
+
     # Build enriched treepath with itemCodes and itemNames
     enriched_treepath = []
     for itemCode in tree_path_parts:
         if itemCode:  # Skip empty strings from split
             if itemCode.lower() == "sspi":
                 # Handle SSPI root case specially
-                enriched_treepath.append({
-                    "itemCode": itemCode.lower(),
-                    "itemName": "Social Policy and Progress Index"
-                })
+                enriched_treepath.append(
+                    {
+                        "itemCode": itemCode.lower(),
+                        "itemName": "Social Policy and Progress Index",
+                    }
+                )
             else:
                 # Query metadata for other items
                 try:
                     item_detail = sspi_metadata.get_item_detail(itemCode)
                     item_name = item_detail.get("ItemName", itemCode.upper())
-                    enriched_treepath.append({
-                        "itemCode": itemCode.lower(),
-                        "itemName": item_name
-                    })
+                    enriched_treepath.append(
+                        {"itemCode": itemCode.lower(), "itemName": item_name}
+                    )
                 except Exception as e:
                     # Fallback to itemCode if metadata lookup fails
-                    print(f"Warning: Could not get metadata for itemCode {itemCode}: {e}")
-                    enriched_treepath.append({
-                        "itemCode": itemCode.lower(),
-                        "itemName": itemCode.upper()
-                    })
-    
+                    print(
+                        f"Warning: Could not get metadata for itemCode {itemCode}: {e}"
+                    )
+                    enriched_treepath.append(
+                        {"itemCode": itemCode.lower(), "itemName": itemCode.upper()}
+                    )
+
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
     query = {"ICode": indicator_code}
@@ -149,21 +149,25 @@ def get_dynamic_indicator_line_data(indicator_code):
         detail = sspi_metadata.get_dataset_detail(dscode)
         ds_range = detail.get("Range", {})
         if ds_range:
-            dataset_options.append({
-                "datasetCode": dscode,
-                "datasetDescription": detail.get("Description", ""),
-                "unit": detail.get("Unit", ""),
-                "yMin": ds_range.get("yMin", 0),
-                "yMax": ds_range.get("yMax", 1),
-            })
+            dataset_options.append(
+                {
+                    "datasetCode": dscode,
+                    "datasetDescription": detail.get("Description", ""),
+                    "unit": detail.get("Unit", ""),
+                    "yMin": ds_range.get("yMin", 0),
+                    "yMax": ds_range.get("yMax", 1),
+                }
+            )
         else:
-            dataset_options.append({
-                "datasetCode": dscode,
-                "datasetDescription": detail.get("Description", ""),
-                "unit": detail.get("Unit", ""),
-                "yMin": 0,
-                "yMax": 1,
-            })
+            dataset_options.append(
+                {
+                    "datasetCode": dscode,
+                    "datasetDescription": detail.get("Description", ""),
+                    "unit": detail.get("Unit", ""),
+                    "yMin": 0,
+                    "yMax": 1,
+                }
+            )
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
     if dynamic_score_data:
         min_year = dynamic_score_data[0]["minYear"]
@@ -196,9 +200,7 @@ def get_dynamic_score_line_data(item_code):
     Get the dynamic data for the given category code for a line chart
     """
     indicator_details = sspi_metadata.indicator_details()
-    name_map = {
-        detail["ItemCode"]: detail["ItemName"] for detail in indicator_details
-    }
+    name_map = {detail["ItemCode"]: detail["ItemName"] for detail in indicator_details}
     active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(item_code)
     print(detail)
@@ -221,26 +223,28 @@ def get_dynamic_score_line_data(item_code):
         if itemCode:  # Skip empty strings from split
             if itemCode.lower() == "sspi":
                 # Handle SSPI root case specially
-                enriched_treepath.append({
-                    "itemCode": itemCode.lower(),
-                    "itemName": "Social Policy and Progress Index"
-                })
+                enriched_treepath.append(
+                    {
+                        "itemCode": itemCode.lower(),
+                        "itemName": "Social Policy and Progress Index",
+                    }
+                )
             else:
                 # Query metadata for other items
                 try:
                     item_detail = sspi_metadata.get_item_detail(itemCode)
                     item_name = item_detail.get("ItemName", itemCode.upper())
-                    enriched_treepath.append({
-                        "itemCode": itemCode.lower(),
-                        "itemName": item_name
-                    })
+                    enriched_treepath.append(
+                        {"itemCode": itemCode.lower(), "itemName": item_name}
+                    )
                 except Exception as e:
                     # Fallback to itemCode if metadata lookup fails
-                    print(f"Warning: Could not get metadata for itemCode {itemCode}: {e}")
-                    enriched_treepath.append({
-                        "itemCode": itemCode.lower(),
-                        "itemName": itemCode.upper()
-                    })
+                    print(
+                        f"Warning: Could not get metadata for itemCode {itemCode}: {e}"
+                    )
+                    enriched_treepath.append(
+                        {"itemCode": itemCode.lower(), "itemName": itemCode.upper()}
+                    )
     description = detail.get("Description", "")
     # Get children information for pillars and categories
     children_info = []
@@ -249,29 +253,33 @@ def get_dynamic_score_line_data(item_code):
         # Determine formal child type title based on parent item type
         if doc_type == "Pillar":
             child_type_title = "Categories"
-        elif doc_type == "Category": 
+        elif doc_type == "Category":
             child_type_title = "Indicators"
         elif doc_type.lower() == "sspi":
             child_type_title = "Pillars"
         else:
             child_type_title = "Child Elements"
-            
+
         for child_code in detail["Children"]:
             try:
                 child_detail = sspi_metadata.get_item_detail(child_code)
-                children_info.append({
-                    "itemCode": child_code,
-                    "itemName": child_detail.get("ItemName", child_code),
-                    "itemType": child_detail.get("ItemType", "Unknown")
-                })
+                children_info.append(
+                    {
+                        "itemCode": child_code,
+                        "itemName": child_detail.get("ItemName", child_code),
+                        "itemType": child_detail.get("ItemType", "Unknown"),
+                    }
+                )
             except Exception as e:
                 print(f"Warning: Could not get child metadata for {child_code}: {e}")
-                children_info.append({
-                    "itemCode": child_code,
-                    "itemName": child_code,
-                    "itemType": "Unknown"
-                })
-    
+                children_info.append(
+                    {
+                        "itemCode": child_code,
+                        "itemName": child_code,
+                        "itemType": "Unknown",
+                    }
+                )
+
     country_query = request.args.getlist("CountryCode")
     query = {"ICode": item_code}
     if country_query:
@@ -345,50 +353,52 @@ def get_dynamic_radar_data(CountryCode):
         # Sort by year
         {"$sort": {"Year": 1}},
         # Group all documents together
-        {"$group": {
-            "_id": "$CCode",
-            "minYear": {"$min": "$Year"},
-            "maxYear": {"$max": "$Year"},
-            "firstDoc": {"$first": "$$ROOT"},
-            "allDocs": {"$push": "$$ROOT"}
-        }},
+        {
+            "$group": {
+                "_id": "$CCode",
+                "minYear": {"$min": "$Year"},
+                "maxYear": {"$max": "$Year"},
+                "firstDoc": {"$first": "$$ROOT"},
+                "allDocs": {"$push": "$$ROOT"},
+            }
+        },
         # Project to final shape
-        {"$project": {
-            "_id": 0,
-            "CCode": "$_id",
-            "minYear": 1,
-            "maxYear": 1,
-            "metadata": {
-                "labels": "$firstDoc.labels",
-                "labelMap": "$firstDoc.labelMap"
-            },
-            "years": {
-                "$arrayToObject": {
-                    "$map": {
-                        "input": "$allDocs",
-                        "as": "doc",
-                        "in": {
-                            "k": {"$toString": "$$doc.Year"},
-                            "v": {
-                                "title": "$$doc.title",
-                                "datasets": "$$doc.datasets",
-                                "legendItems": "$$doc.legendItems",
-                                "ranks": {"$ifNull": ["$$doc.ranks", []]}
-                            }
+        {
+            "$project": {
+                "_id": 0,
+                "CCode": "$_id",
+                "minYear": 1,
+                "maxYear": 1,
+                "metadata": {
+                    "labels": "$firstDoc.labels",
+                    "labelMap": "$firstDoc.labelMap",
+                },
+                "years": {
+                    "$arrayToObject": {
+                        "$map": {
+                            "input": "$allDocs",
+                            "as": "doc",
+                            "in": {
+                                "k": {"$toString": "$$doc.Year"},
+                                "v": {
+                                    "title": "$$doc.title",
+                                    "datasets": "$$doc.datasets",
+                                    "legendItems": "$$doc.legendItems",
+                                    "ranks": {"$ifNull": ["$$doc.ranks", []]},
+                                },
+                            },
                         }
                     }
-                }
+                },
             }
-        }}
+        },
     ]
 
     # Execute aggregation pipeline
     result = list(sspi_dynamic_radar_data.aggregate(pipeline))
 
     if not result:
-        return jsonify({
-            "error": f"No radar data found for country {CountryCode}"
-        }), 404
+        return jsonify({"error": f"No radar data found for country {CountryCode}"}), 404
 
     return jsonify(result[0])
 
@@ -426,9 +436,7 @@ def get_static_pillar_differential(pillar_code):
     comparison_country_data = parse_json(
         sspi_static_data_2018.find({"CountryCode": comparison_country}, {"_id": 0})
     )
-    comparison_sspi = SSPI(
-        item_details, comparison_country_data, strict_year=False
-    )
+    comparison_sspi = SSPI(item_details, comparison_country_data, strict_year=False)
     comparison_pillar = comparison_sspi.get_item(pillar_code)
     by_category = []
     by_indicator = []
@@ -509,7 +517,7 @@ def get_static_pillar_stack(pillar_code):
         assert pillar is not None, f"Pillar {pillar_code} not found for country {cou}"
         if i == 0:
             pillar_name = pillar.name
-        country_lookup = pycountry.countries.get(alpha_3=cou) 
+        country_lookup = pycountry.countries.get(alpha_3=cou)
         assert country_lookup is not None, "Country not found"
         country_name = country_lookup.name
         country_flag = country_lookup.flag
@@ -705,35 +713,35 @@ def prepare_panel_data():
         # Use the actual field names (with defaults if not specified)
         actual_value_id = value_id if value_id else "Value"
         actual_score_id = score_id if score_id else "Score"
-        
+
         for obs in data:
             obs_has_score = actual_score_id in obs and obs[actual_score_id] is not None
             obs_has_value = actual_value_id in obs and obs[actual_value_id] is not None
-            
+
             if obs_has_score and obs_has_value:
                 # Single observation has both - this is definitely mixed
                 yield "error: Mixed data detected! Some observations have both score and value fields.\n"
                 yield "Panel plots require consistent data: use either scores OR values, not both.\n"
                 yield "Consider filtering your data to include only one type of measurement.\n"
                 return
-            
+
             if obs_has_score:
-                if field_type == 'value':
+                if field_type == "value":
                     # We previously saw values, now seeing scores - mixed data
                     yield "error: Inconsistent data detected! Some observations have scores while others have values.\n"
                     yield "Panel plots require all observations to use the same field type.\n"
                     yield "Filter your data to include only scores or only values.\n"
                     return
-                field_type = 'score'
+                field_type = "score"
             elif obs_has_value:
-                if field_type == 'score':
+                if field_type == "score":
                     # We previously saw scores, now seeing values - mixed data
                     yield "error: Inconsistent data detected! Some observations have scores while others have values.\n"
                     yield "Panel plots require all observations to use the same field type.\n"
                     yield "Filter your data to include only scores or only values.\n"
                     return
-                field_type = 'value'
-        
+                field_type = "value"
+
         series_group_list = generate_series_groups(
             data,
             exclude_fields=exclude_fields,
@@ -771,8 +779,12 @@ def prepare_panel_data():
                     except ValueError:
                         continue
                     year[year_index] = doc["time_id"]
-                    value[year_index] = doc.get("value_id", None) if "value_id" in doc else None
-                    score[year_index] = doc.get("score_id", None) if "score_id" in doc else None
+                    value[year_index] = (
+                        doc.get("value_id", None) if "value_id" in doc else None
+                    )
+                    score[year_index] = (
+                        doc.get("score_id", None) if "score_id" in doc else None
+                    )
                     # Use score if available, otherwise use value
                     if "score_id" in doc and doc.get("score_id") is not None:
                         data[year_index] = doc.get("score_id")
@@ -942,7 +954,9 @@ def dynamic_stack_data(country_code, root_item_code):
         "ICode": {"$in": child_codes + [root_item_code]},
     }
     data = sspi_item_dynamic_line_data.find(mongo_query)
-    data.sort(key=lambda x: ([root_item_code] + child_codes).index(x["Detail"]["ItemCode"]))
+    data.sort(
+        key=lambda x: ([root_item_code] + child_codes).index(x["Detail"]["ItemCode"])
+    )
     year_labels = list(range(2000, datetime.now().year + 1))
     for document in data:
         if document["ICode"] == root_item_code:
@@ -954,7 +968,7 @@ def dynamic_stack_data(country_code, root_item_code):
     return parse_json(
         {
             "data": data,
-            "title": f"{country_detail["Flag"]} {country_detail["Country"]} {root_item_detail['ItemType']} Score Breakdown",
+            "title": f"{country_detail['Flag']} {country_detail['Country']} {root_item_detail['ItemType']} Score Breakdown",
             "labels": year_labels,
             "itemType": root_item_detail["DocumentType"][0:-6].lower(),
             "hasScore": True,
@@ -963,116 +977,122 @@ def dynamic_stack_data(country_code, root_item_code):
         }
     )
 
+
 def build_indicators_data():
     """
     Build a complete hierarchical data structure for the indicators table page.
-    
+
     Returns a structured representation of pillars -> categories -> indicators -> datasets
     suitable for frontend display.
-    
+
     Returns:
         dict: Organized data structure with pillars, categories, indicators, and datasets
     """
     try:
         all_items = sspi_metadata.item_details()
         if not all_items:
-            return {
-                "pillars": [],
-                "error": "No metadata items found"
-            }
+            return {"pillars": [], "error": "No metadata items found"}
         all_datasets = sspi_metadata.dataset_details()
-        datasets_by_code = {dataset['DatasetCode']: dataset for dataset in all_datasets}
-        items_by_type = {
-            'SSPI': [],
-            'Pillar': [],
-            'Category': [],
-            'Indicator': []
-        }
+        datasets_by_code = {dataset["DatasetCode"]: dataset for dataset in all_datasets}
+        items_by_type = {"SSPI": [], "Pillar": [], "Category": [], "Indicator": []}
         items_by_code = {}
         for item in all_items:
-            item_type = item.get('ItemType', 'Unknown')
-            item_code = item.get('ItemCode', '')
+            item_type = item.get("ItemType", "Unknown")
+            item_code = item.get("ItemCode", "")
             if item_type in items_by_type:
                 items_by_type[item_type].append(item)
             if item_code:
                 items_by_code[item_code] = item
         pillars = []
-        sorted_pillars = sorted(items_by_type['Pillar'], 
-                               key=lambda x: (x.get('ItemOrder', 999), x.get('ItemCode', '')))
+        sorted_pillars = sorted(
+            items_by_type["Pillar"],
+            key=lambda x: (x.get("ItemOrder", 999), x.get("ItemCode", "")),
+        )
         for pillar_item in sorted_pillars:
-            pillar_code = pillar_item.get('ItemCode', '')
+            pillar_code = pillar_item.get("ItemCode", "")
             pillar_data = {
-                'pillar_code': pillar_code,
-                'pillar_name': pillar_item.get('ItemName', pillar_code),
-                'pillar_description': pillar_item.get('Description', ''),
-                'categories': []
+                "pillar_code": pillar_code,
+                "pillar_name": pillar_item.get("ItemName", pillar_code),
+                "pillar_description": pillar_item.get("Description", ""),
+                "categories": [],
             }
-            category_codes = pillar_item.get('CategoryCodes', [])
+            category_codes = pillar_item.get("CategoryCodes", [])
             print(category_codes)
             for category_code in category_codes:
                 category_item = items_by_code.get(category_code)
                 if not category_item:
                     continue
                 category_data = {
-                    'category_code': category_code,
-                    'category_name': category_item.get('ItemName', category_code),
-                    'category_description': category_item.get('Description', ''),
-                    'indicators': []
+                    "category_code": category_code,
+                    "category_name": category_item.get("ItemName", category_code),
+                    "category_description": category_item.get("Description", ""),
+                    "indicators": [],
                 }
-                indicator_codes = category_item.get('IndicatorCodes', [])
+                indicator_codes = category_item.get("IndicatorCodes", [])
                 for indicator_code in indicator_codes:
                     indicator_item = items_by_code.get(indicator_code)
                     if not indicator_item:
                         continue
-                    dataset_codes = indicator_item.get('DatasetCodes', [])
+                    dataset_codes = indicator_item.get("DatasetCodes", [])
                     datasets = []
                     for dataset_code in dataset_codes:
                         dataset = datasets_by_code.get(dataset_code)
                         if dataset:
-                            datasets.append({
-                                'dataset_code': dataset_code,
-                                'dataset_name': dataset.get('DatasetName', dataset_code),
-                                'description': dataset.get('Description', ''),
-                                'source': dataset.get('Source', {}),
-                                'organization_code': dataset.get('Source', {}).get('OrganizationCode', ''),
-                                'organization_name': dataset.get('Source', {}).get('OrganizationName', '')
-                            })
+                            datasets.append(
+                                {
+                                    "dataset_code": dataset_code,
+                                    "dataset_name": dataset.get(
+                                        "DatasetName", dataset_code
+                                    ),
+                                    "description": dataset.get("Description", ""),
+                                    "source": dataset.get("Source", {}),
+                                    "organization_code": dataset.get("Source", {}).get(
+                                        "OrganizationCode", ""
+                                    ),
+                                    "organization_name": dataset.get("Source", {}).get(
+                                        "OrganizationName", ""
+                                    ),
+                                }
+                            )
                     indicator_data = {
-                        'indicator_code': indicator_code,
-                        'indicator_name': indicator_item.get('ItemName', indicator_code),
-                        'description': indicator_item.get('Description', ''),
-                        'datasets': datasets,
-                        'dataset_codes': dataset_codes,
-                        'lower_goalpost': indicator_item.get('LowerGoalpost'),
-                        'upper_goalpost': indicator_item.get('UpperGoalpost'),
-                        'inverted': indicator_item.get('Inverted', False)
+                        "indicator_code": indicator_code,
+                        "indicator_name": indicator_item.get(
+                            "ItemName", indicator_code
+                        ),
+                        "description": indicator_item.get("Description", ""),
+                        "datasets": datasets,
+                        "dataset_codes": dataset_codes,
+                        "lower_goalpost": indicator_item.get("LowerGoalpost"),
+                        "upper_goalpost": indicator_item.get("UpperGoalpost"),
+                        "inverted": indicator_item.get("Inverted", False),
                     }
-                    category_data['indicators'].append(indicator_data)
-                pillar_data['categories'].append(category_data)
+                    category_data["indicators"].append(indicator_data)
+                pillar_data["categories"].append(category_data)
             pillars.append(pillar_data)
         return {
-            'pillars': pillars,
-            'stats': {
-                'total_pillars': len(pillars),
-                'total_categories': sum(len(p['categories']) for p in pillars),
-                'total_indicators': sum(len(c['indicators']) for p in pillars for c in p['categories']),
-                'total_datasets': len(datasets_by_code)
-            }
+            "pillars": pillars,
+            "stats": {
+                "total_pillars": len(pillars),
+                "total_categories": sum(len(p["categories"]) for p in pillars),
+                "total_indicators": sum(
+                    len(c["indicators"]) for p in pillars for c in p["categories"]
+                ),
+                "total_datasets": len(datasets_by_code),
+            },
         }
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error building indicators data: {str(e)}")
-        return {
-            'pillars': [],
-            'error': f"Error building indicators data: {str(e)}"
-        }
+        return {"pillars": [], "error": f"Error building indicators data: {str(e)}"}
+
 
 def build_download_tree_structure():
     """
     Build hierarchical tree structure for download form indicator selector.
     Similar to build_indicators_data() but simplified for form use.
-    
+
     Returns:
         dict: Tree structure with SSPI -> Pillars -> Categories -> Indicators
     """
@@ -1080,88 +1100,80 @@ def build_download_tree_structure():
         all_items = sspi_metadata.item_details()
         if not all_items:
             return {"error": "No metadata items found"}
-        items_by_type = {
-            'SSPI': [],
-            'Pillar': [],
-            'Category': [],
-            'Indicator': []
-        }
+        items_by_type = {"SSPI": [], "Pillar": [], "Category": [], "Indicator": []}
         items_by_code = {}
         for item in all_items:
-            item_type = item.get('ItemType', 'Unknown')
-            item_code = item.get('ItemCode', '')
+            item_type = item.get("ItemType", "Unknown")
+            item_code = item.get("ItemCode", "")
             if item_type in items_by_type:
                 items_by_type[item_type].append(item)
             if item_code:
                 items_by_code[item_code] = item
-        sspi_items = items_by_type.get('SSPI', [])
+        sspi_items = items_by_type.get("SSPI", [])
         if not sspi_items:
             return {"error": "No SSPI root item found"}
         sspi_item = sspi_items[0]  # Should only be one SSPI item
+
         def build_node(item, level=0):
             node = {
-                'itemCode': item.get('ItemCode', ''),
-                'itemName': item.get('ItemName', item.get('ItemCode', '')),
-                'itemType': item.get('ItemType', 'Unknown'),
-                'level': level,
-                'children': []
+                "itemCode": item.get("ItemCode", ""),
+                "itemName": item.get("ItemName", item.get("ItemCode", "")),
+                "itemType": item.get("ItemType", "Unknown"),
+                "level": level,
+                "children": [],
             }
-            children_codes = item.get('Children', [])
+            children_codes = item.get("Children", [])
             for child_code in children_codes:
                 child_item = items_by_code.get(child_code)
                 if child_item:
                     child_node = build_node(child_item, level + 1)
-                    node['children'].append(child_node)
-            node['children'].sort(key=lambda x: (
-                items_by_code.get(x['itemCode'], {}).get('ItemOrder', 999),
-                x['itemName']
-            ))
+                    node["children"].append(child_node)
+            node["children"].sort(
+                key=lambda x: (
+                    items_by_code.get(x["itemCode"], {}).get("ItemOrder", 999),
+                    x["itemName"],
+                )
+            )
             return node
+
         tree_structure = build_node(sspi_item)
         return tree_structure
-        
+
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error building download tree structure: {str(e)}")
         return {"error": f"Error building tree structure: {str(e)}"}
 
 
-
 def build_indicators_data_static():
     """
     Build a complete hierarchical data structure for the indicators table page.
-    
+
     Returns a structured representation of pillars -> categories -> indicators -> datasets
     suitable for frontend display.
-    
+
     Returns:
         dict: Organized data structure with pillars, categories, indicators, and datasets
     """
     try:
         all_items = sspi_static_metadata.item_details()
         if not all_items:
-            return {
-                "pillars": [],
-                "error": "No metadata items found"
-            }
-        items_by_type = {
-            'SSPI': [],
-            'Pillar': [],
-            'Category': [],
-            'Indicator': []
-        }
+            return {"pillars": [], "error": "No metadata items found"}
+        items_by_type = {"SSPI": [], "Pillar": [], "Category": [], "Indicator": []}
         items_by_code = {}
         for item in all_items:
-            item_type = item.get('ItemType', 'Unknown')
-            item_code = item.get('ItemCode', '')
+            item_type = item.get("ItemType", "Unknown")
+            item_code = item.get("ItemCode", "")
             if item_type in items_by_type:
                 items_by_type[item_type].append(item)
             if item_code:
                 items_by_code[item_code] = item
         pillars = []
+
         def pillar_order(pillar_doc):
-            pillar_code = pillar_doc.get('ItemCode')
+            pillar_code = pillar_doc.get("ItemCode")
             match pillar_code:
                 case "SUS":
                     return 0
@@ -1171,60 +1183,64 @@ def build_indicators_data_static():
                     return 2
                 case _:
                     return -1
-        sorted_pillars = sorted(items_by_type['Pillar'], key=pillar_order)
+
+        sorted_pillars = sorted(items_by_type["Pillar"], key=pillar_order)
         for pillar_item in sorted_pillars:
-            pillar_code = pillar_item.get('ItemCode', '')
+            pillar_code = pillar_item.get("ItemCode", "")
             pillar_data = {
-                'pillar_code': pillar_code,
-                'pillar_name': pillar_item.get('ItemName', pillar_code),
-                'pillar_description': pillar_item.get('Description', ''),
-                'categories': []
+                "pillar_code": pillar_code,
+                "pillar_name": pillar_item.get("ItemName", pillar_code),
+                "pillar_description": pillar_item.get("Description", ""),
+                "categories": [],
             }
-            category_codes = pillar_item.get('CategoryCodes', [])
+            category_codes = pillar_item.get("CategoryCodes", [])
             for category_code in category_codes:
                 category_item = items_by_code.get(category_code)
                 if not category_item:
                     continue
                 category_data = {
-                    'category_code': category_code,
-                    'category_name': category_item.get('ItemName', category_code),
-                    'category_description': category_item.get('Description', ''),
-                    'indicators': []
+                    "category_code": category_code,
+                    "category_name": category_item.get("ItemName", category_code),
+                    "category_description": category_item.get("Description", ""),
+                    "indicators": [],
                 }
-                indicator_codes = category_item.get('IndicatorCodes', [])
+                indicator_codes = category_item.get("IndicatorCodes", [])
                 for indicator_code in indicator_codes:
                     indicator_item = items_by_code.get(indicator_code)
                     if not indicator_item:
                         continue
                     indicator_data = {
-                        'indicator_code': indicator_code,
-                        'indicator_name': indicator_item.get('ItemName', indicator_code),
-                        'description': indicator_item.get('Description', ''),
-                        'lower_goalpost': indicator_item.get('LowerGoalpost'),
-                        'upper_goalpost': indicator_item.get('UpperGoalpost'),
-                        'inverted': indicator_item.get('Inverted', False)
+                        "indicator_code": indicator_code,
+                        "indicator_name": indicator_item.get(
+                            "ItemName", indicator_code
+                        ),
+                        "description": indicator_item.get("Description", ""),
+                        "lower_goalpost": indicator_item.get("LowerGoalpost"),
+                        "upper_goalpost": indicator_item.get("UpperGoalpost"),
+                        "inverted": indicator_item.get("Inverted", False),
                     }
-                    category_data['indicators'].append(indicator_data)
-                category_data['indicators'].sort(key=lambda x: x['indicator_name'])
-                pillar_data['categories'].append(category_data)
-            pillar_data['categories'].sort(key=lambda x: x['category_name'])
+                    category_data["indicators"].append(indicator_data)
+                category_data["indicators"].sort(key=lambda x: x["indicator_name"])
+                pillar_data["categories"].append(category_data)
+            pillar_data["categories"].sort(key=lambda x: x["category_name"])
             pillars.append(pillar_data)
         return {
-            'pillars': pillars,
-            'stats': {
-                'total_pillars': len(pillars),
-                'total_categories': sum(len(p['categories']) for p in pillars),
-                'total_indicators': sum(len(c['indicators']) for p in pillars for c in p['categories']),
-            }
+            "pillars": pillars,
+            "stats": {
+                "total_pillars": len(pillars),
+                "total_categories": sum(len(p["categories"]) for p in pillars),
+                "total_indicators": sum(
+                    len(c["indicators"]) for p in pillars for c in p["categories"]
+                ),
+            },
         }
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error building indicators data: {str(e)}")
-        return {
-            'pillars': [],
-            'error': f"Error building indicators data: {str(e)}"
-        }
+        return {"pillars": [], "error": f"Error building indicators data: {str(e)}"}
+
 
 @dashboard_bp.route("/item/coverage/matrix/<ItemCode>/<CountryGroup>")
 def item_coverage_data(ItemCode, CountryGroup):
