@@ -29,7 +29,8 @@ from sspi_flask_app.models.database import (
     sspi_static_metadata,
     sspi_static_radar_data,
     sspi_static_rank_data,
-    sspi_globe_data
+    sspi_globe_data,
+    sspi_dynamic_rank_data
 )
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
@@ -116,6 +117,8 @@ def lookup_database(database_name):
             return sspi_panel_data
         case "sspi_custom_user_structure":
             return sspi_custom_user_structure
+        case "sspi_dynamic_rank_data":
+            return sspi_dynamic_rank_data
         case _:
             raise InvalidDatabaseError(database_name)
 
