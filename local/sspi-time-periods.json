@@ -1,5 +1,125 @@
 [
     {
+        "Label": "2000",
+        "Years": [2000],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2001",
+        "Years": [2001],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2002",
+        "Years": [2002],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2003",
+        "Years": [2003],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2004",
+        "Years": [2004],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2005",
+        "Years": [2005],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2006",
+        "Years": [2006],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2007",
+        "Years": [2007],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2008",
+        "Years": [2008],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2009",
+        "Years": [2009],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2010",
+        "Years": [2010],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2011",
+        "Years": [2011],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2012",
+        "Years": [2012],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2013",
+        "Years": [2013],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2014",
+        "Years": [2014],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2015",
+        "Years": [2015],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2016",
+        "Years": [2016],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2017",
+        "Years": [2017],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2018",
+        "Years": [2018],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2019",
+        "Years": [2019],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2020",
+        "Years": [2020],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2021",
+        "Years": [2021],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2022",
+        "Years": [2022],
+        "Type": "Single Year"
+    },
+    {
+        "Label": "2023",
+        "Years": [2023],
+        "Type": "Single Year"
+    },
+    {
         "Label": "2000-2004",
         "Years": [2000, 2001, 2002, 2003, 2004],
         "Type": "Five Year Interval"
