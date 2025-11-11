@@ -1,4 +1,5 @@
 import json
+from pymongo import UpdateOne
 from bson import ObjectId, json_util
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 import math
@@ -333,3 +334,21 @@ class MongoWrapper:
                 raise InvalidDocumentFormatError(
                     f"Duplicate dataset document found (document {document_number})")
             id_set.add(document_id)
+
+    def bulk_update(self, update_queries: list[dict], update_operations: list[dict]):
+        """
+        Utility to zip together queries for items and updates to those items.
+        :param update_queries: MongoDB Queries to select
+        :param update_queries: MongoDB Operations (e.g. "$set") to perform on selected.
+        """
+        assert len(update_operations) == len(update_queries), \
+            "There must be a one-to-one correspondence between operations and queries"
+        operations = [
+            UpdateOne(q, u, upsert=False)
+            for q, u in zip(update_queries, update_operations)
+        ]
+        if operations:
+            result = self._mongo_database.bulk_write(operations, ordered=False)
+            return result
+
+

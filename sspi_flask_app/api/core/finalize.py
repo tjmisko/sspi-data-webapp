@@ -4,6 +4,7 @@ from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_imputed_data,
+    sspi_clean_api_data,
     sspi_item_data,
     sspi_metadata,
     sspi_static_metadata,
@@ -67,6 +68,8 @@ def finalize_iterator(local_path, endpoints):
         finalize_globe_data()
         yield "Finalizing Dynamic Rank Data\n"
         yield from finalize_dynamic_rank_iterator()
+        yield "Finalzing Dataset Range\n"
+        yield finalize_dataset_range() 
         yield "Finalization Complete\n"
     except Exception as e:
         yield f"error: Finalization failed with exception: {str(e)}\n"
@@ -1180,4 +1183,35 @@ def finalize_dynamic_rank_iterator():
     ])
     count = sspi_dynamic_rank_data.insert_many(dynamic_ranks_intervals)
     yield f"Successfully inserted {count} documents for Time Periods Dynamic Ranks\n"
+
+
+@finalize_bp.route("/finalize/dataset/range")
+@login_required
+def finalize_dataset_range():
+    dataset_ranges = sspi_clean_api_data.aggregate([
+        { "$group": {
+            "_id": {
+                "DatasetCode": "$DatasetCode"
+            },
+            "minValue": {"$min": "$Value"},
+            "maxValue": {"$max": "$Value"}
+        } },
+        { "$project": { 
+            "_id": 0,
+            "DatasetCode": "$_id.DatasetCode",
+            "minValue": 1,
+            "maxValue": 1
+        } }
+    ])
+    queries = [{"DocumentType": "DatasetDetail", "Metadata.DatasetCode": ds["DatasetCode"]}
+        for ds in dataset_ranges]
+    updates = [{ "$set": { "Metadata.Range": { "yMin": ds["minValue"], "yMax": ds["maxValue"] } } } 
+        for ds in dataset_ranges]
+    result = sspi_metadata.bulk_update(queries, updates)
+    if not result:
+        return "Error computing dataset ranges!\n"
+    return (
+        f"Computed Dataset Ranges for {result.matched_count} "
+        f"datasets (Updated {result.modified_count} documents)\n"
+    )
 
