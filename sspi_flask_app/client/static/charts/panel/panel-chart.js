@@ -53,7 +53,7 @@ class PanelChart {
         <div class="dynamic-item-description"></div>
     </div>
 </details>
-<details class="item-information chart-options-details">
+<details class="country-information chart-options-details">
     <summary class="item-information-summary">Country Information</summary>
     <div class="country-information-box" data-unpopulated=true>
         Click on a Country to Show Details and Links Here.
