@@ -8,7 +8,9 @@
     <section id="radar-chart-flex-container" class="radar-chart-flex-outer-container datawindow"> 
         <div id="radar-chart-flex-container-1"></div>
         <div id="radar-chart-flex-container-2"></div>
+    {% if comparison_list | length == 3 %}
         <div id="radar-chart-flex-container-3"></div>
+    {% endif %}
     </section>
     <section class="comparison-static-pillar-section">
         <h3> Sustainability </h3>

@@ -78,11 +78,14 @@
 #comparison-result-section {
   margin-top: 2em;
 }
+.radar-chart-flex-outer-container {
+  padding: 1.25em;
+}
 .radar-chart-flex-container {
   padding: 1em;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 .chart-section-pillar-differential {
