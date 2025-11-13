@@ -1,0 +1,21 @@
+.dataset-chart-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dataset-notes-container {
+  margin-top: 2em;
+  background-color: var(--box-background-color);
+  padding: 1.5em;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  font-family: var(--body-font-family);
+}
+.dataset-notes-container h2 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  line-height: 1.1;
+}
+

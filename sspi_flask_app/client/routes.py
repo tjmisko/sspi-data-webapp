@@ -101,58 +101,66 @@ def country_data(country_code):
     return render_template('country-data.html', cdetail=cdetail)
 
 
-@client_bp.route('/data/indicator/<IndicatorCode>')
-def indicator_data(IndicatorCode):
-    IndicatorCode = IndicatorCode.upper()
-    if IndicatorCode not in sspi_metadata.indicator_codes():
+@client_bp.route('/data/dataset/<dataset_code>')
+def dataset_data(dataset_code):
+    dataset_code = dataset_code.upper()
+    dataset_detail = sspi_metadata.get_dataset_detail(dataset_code)
+    dataset_notes = sspi_metadata.get_dataset_documentation(dataset_code)
+    return render_template('dataset-panel-data.html', dataset_detail=dataset_detail, dataset_notes_html=dataset_notes)
+
+
+@client_bp.route('/data/indicator/<indicator_code>')
+def indicator_data(indicator_code):
+    indicator_code = indicator_code.upper()
+    if indicator_code not in sspi_metadata.indicator_codes():
         return render_template(
             'score-panel-data.html',
-            PanelItemCode=IndicatorCode,
+            PanelItemCode=indicator_code,
             PanelItemType='Indicator',
             error=True
         )
     return render_template(
         'score-panel-data.html',
-        PanelItemCode=IndicatorCode,
+        PanelItemCode=indicator_code,
         PanelItemType='Indicator',
-        methodology=sspi_metadata.get_item_methodology_html(IndicatorCode),
+        methodology=sspi_metadata.get_item_methodology_html(indicator_code),
         error=False
     )
 
 
-@client_bp.route('/data/category/<CategoryCode>')
-def category_data(CategoryCode):
-    CategoryCode = CategoryCode.upper()
-    if CategoryCode not in sspi_metadata.category_codes():
+@client_bp.route('/data/category/<category_code>')
+def category_data(category_code):
+    category_code = category_code.upper()
+    if category_code not in sspi_metadata.category_codes():
         return render_template(
             'score-panel-data.html',
-            PanelItemCode=CategoryCode,
+            PanelItemCode=category_code,
             PanelItemType='Category',
             error=True
         )
     return render_template(
         'score-panel-data.html',
-        PanelItemCode=CategoryCode,
+        PanelItemCode=category_code,
         PanelItemType='Category',
-        methodology=sspi_metadata.get_item_methodology_html(CategoryCode),
+        methodology=sspi_metadata.get_item_methodology_html(category_code),
         error=False
     )
 
 
-@client_bp.route('/data/pillar/<PillarCode>')
-def pillar_data(PillarCode):
-    PillarCode = PillarCode.upper()
-    if PillarCode not in sspi_metadata.pillar_codes():
+@client_bp.route('/data/pillar/<pillar_code>')
+def pillar_data(pillar_code):
+    pillar_code = pillar_code.upper()
+    if pillar_code not in sspi_metadata.pillar_codes():
         return render_template(
             'score-panel-data.html',
-            PanelItemCode=PillarCode,
+            PanelItemCode=pillar_code,
             PanelItemType='Pillar',
-            medhodology=sspi_metadata.get_item_methodology_html(PillarCode),
+            medhodology=sspi_metadata.get_item_methodology_html(pillar_code),
             error=True
         )
     return render_template(
         'score-panel-data.html',
-        PanelItemCode=PillarCode,
+        PanelItemCode=pillar_code,
         PanelItemType='Pillar',
         error=False
     )

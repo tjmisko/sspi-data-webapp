@@ -17,7 +17,8 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_globe_data,
     sspi_dynamic_radar_data,
-    sspi_dynamic_rank_data
+    sspi_dynamic_rank_data,
+    sspi_panel_data
 )
 from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
@@ -70,6 +71,8 @@ def finalize_iterator(local_path, endpoints):
         yield from finalize_dynamic_rank_iterator()
         yield "Finalzing Dataset Range\n"
         yield finalize_dataset_range() 
+        yield "Finalizing Dataset Panel\n"
+        yield finalize_dataset_panel() 
         yield "Finalization Complete\n"
     except Exception as e:
         yield f"error: Finalization failed with exception: {str(e)}\n"
@@ -1215,3 +1218,101 @@ def finalize_dataset_range():
         f"datasets (Updated {result.modified_count} documents)\n"
     )
 
+
+@finalize_bp.route("/finalize/dataset/panel")
+def finalize_dataset_panel():
+    sspi_panel_data.delete_many({})
+    min_year = 2000
+    max_year = 2023
+    dataset_codes = sspi_metadata.dataset_codes()
+    panel_data = sspi_clean_api_data.aggregate([
+        {
+            "$match": {
+                "DatasetCode": {"$in": dataset_codes},
+                "Year": {"$gte": min_year, "$lte": max_year}
+            }
+        },
+        {
+            "$sort": {"Year": 1}
+        },
+        {
+            "$group": {
+                "_id": {
+                    "DatasetCode": "$DatasetCode",
+                    "CountryCode": "$CountryCode"
+                },
+                "values": { "$push": "$Value" },
+                "years": { "$push": "$Year" },
+                "unit": { "$first": "$Unit" }
+            }
+        },
+        {
+            "$addFields": {
+                "all_years": {"$range": [min_year, max_year + 1]},
+                "filled_values": {
+                    "$map": {
+                        "input": {"$range": [min_year, max_year + 1]},
+                        "as": "yr",
+                        "in": {
+                            "$let": {
+                                "vars": {
+                                    "idx": {"$indexOfArray": ["$years", "$$yr"]}
+                                },
+                                "in": {
+                                    "$cond": [
+                                        {"$ne": ["$$idx", -1]},
+                                        {"$arrayElemAt": ["$values", "$$idx"]},
+                                        None
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "DatasetCode": "$_id.DatasetCode",
+                "CCode": "$_id.CountryCode",
+                "years": "$all_years",
+                "value": "$filled_values",
+                "data": "$filled_values",
+                "unit": 1
+            }
+        },
+        {
+            "$sort": {"DatasetCode": 1, "CCode": 1}
+        }
+    ])
+    dataset_details = sspi_metadata.dataset_details()
+    country_details = sspi_metadata.country_details()
+    dataset_detail_lookup = {d["DatasetCode"]: d for d in dataset_details}
+    country_detail_lookup = {c["CountryCode"]: c for c in country_details}
+    BATCH_SIZE = 500
+    batch = []
+    count = 0
+    for obs in panel_data:
+        country_code = obs["CCode"]
+        dataset_code = obs["DatasetCode"]
+        if dataset_code not in dataset_detail_lookup.keys():
+            continue
+        if country_code not in country_detail_lookup.keys():
+            continue
+        dataset_detail = dataset_detail_lookup[dataset_code]
+        country_detail = country_detail_lookup[country_code]
+        obs["CName"] = country_detail.get("Country", "")
+        obs["CFlag"] = country_detail.get("Flag", "")
+        obs["CGroup"] = country_detail.get("CountryGroups", [])
+        obs["DatasetName"] = dataset_detail.get("DatasetName", "")
+        obs["pinned"] = False
+        obs["hidden"] = True
+        obs["label"] = f"{country_code} - {country_detail.get("Country", "")}"
+        batch.append(obs)
+        if len(batch) >= BATCH_SIZE:
+            count += sspi_panel_data.insert_many(batch)
+            batch = []
+    if batch:
+        count += sspi_panel_data.insert_many(batch)
+    return f"Finalized {count} observations of Dataset Panel Data"
