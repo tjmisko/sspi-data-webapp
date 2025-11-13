@@ -6,7 +6,7 @@ from sspi_flask_app.models.database import sspi_raw_api_data, sspi_clean_api_dat
 from sspi_flask_app.api.resources.utilities import parse_json
 
 
-@dataset_collector("EPI_NITROG")
+@dataset_collector("PUPTCH_UNESCO")
 def collect_epi_nitrog(**kwargs):
     yield from collect_puptch_zip_data(**kwargs)
 

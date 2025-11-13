@@ -7,7 +7,6 @@ from sspi_flask_app.api.core.datasets import dataset_collector, dataset_cleaner
 import json
 
 
-@dataset_collector("ITU_CYBSEC")
+@dataset_collector("PUPTCH_OWD")
 def collect_itu_cybsec(**kwargs):
     yield from collect_puptch_csv_data(**kwargs)
-    
