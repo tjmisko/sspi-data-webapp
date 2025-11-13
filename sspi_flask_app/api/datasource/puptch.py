@@ -7,7 +7,7 @@ import json
 import re
 from io import BytesIO, StringIO
 
-def collect_puptch_owd_data(**kwargs):
+def collect_puptch_csv_data(**kwargs):
     local_csv_file_owd = pd.read_csv('https://ourworldindata.org/grapher/pupil-teacher-ratio-for-primary-education-by-country.csv?v=1&csvType=full&useColumnShortNames=true')
     csv_string_owd = local_csv_file_owd.to_csv(index=False)  
     source_info_owd = {
@@ -20,6 +20,9 @@ def collect_puptch_owd_data(**kwargs):
     count_owd = sspi_raw_api_data.raw_insert_one(csv_string_owd, source_info_owd, **kwargs)
     yield f"\nInserted {count_owd} observations into the database from puptch_owd csv file.\n"
 
+
+
+def collect_puptch_zip_data(**kwargs):
     url = "https://api.uis.unesco.org/api/public/data/indicators/export?indicator=PTRHC.1.QUALIFIED&start=2000&end=2025&indicatorMetadata=false&footnotes=false&version=20250917-73f4b95c&format=csv"
     res = requests.get(url)
     if res.status_code != 200:
@@ -44,6 +47,7 @@ def collect_puptch_owd_data(**kwargs):
                         csv_string_unesco, source_inf_unesco, **kwargs
                     )
     yield "Collection complete for EPI Indicators\n"
+
 
 
 
