@@ -23,6 +23,7 @@ def compile_static_assets(assets):
         'client_bp/charts/components/*.js',
         'client_bp/charts/panel/panel-chart.js',
         'client_bp/charts/panel/series-panel-chart.js',
+        'client_bp/charts/panel/dataset-panel-chart.js',
         'client_bp/charts/panel/score-panel-chart.js',
         'client_bp/charts/panel/indicator-panel-chart.js',
         'client_bp/charts/panel/sspi-panel-chart.js',

@@ -330,7 +330,7 @@ def get_dataset_panel_data(dataset_code):
         "description": dataset_detail["Description"],
         "groupOptions": group_options,
         "countryGroupMap": country_group_map,
-        "datasetName": dataset_detail["DatasetCode"],
+        "datasetName": dataset_detail["DatasetName"],
         "yMin": dataset_detail.get("Range", {}).get("yMin"),
         "yMax": dataset_detail.get("Range", {}).get("yMax")
     })

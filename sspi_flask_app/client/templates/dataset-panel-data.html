@@ -34,7 +34,7 @@
 <script>
 const datasetCode = "{{ dataset_detail.DatasetCode }}";
 window.SSPICharts.push(
-    new SeriesPanelChart(document.getElementById(datasetCode), { endpointURL: "/api/v1/panel/dataset/" + datasetCode }),
+    new DatasetPanelChart(document.getElementById(datasetCode), datasetCode),
 );
 window.addEventListener("load", (event) => {
     const x = localStorage.getItem('windowX');

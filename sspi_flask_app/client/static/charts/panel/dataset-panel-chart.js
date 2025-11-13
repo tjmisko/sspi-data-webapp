@@ -1,25 +1,17 @@
-class SeriesPanelChart extends PanelChart {
-    constructor(parentElement, { CountryList = [], endpointURL = '', width = 400, height = 300 } = {} ) {
-        super(parentElement, { CountryList: CountryList, endpointURL: endpointURL, width: width, height: height })
+class DatasetPanelChart extends PanelChart {
+    constructor(parentElement, datasetCode, { CountryList = [], endpointURL = ''} = {} ) {
+        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/dataset/${datasetCode}`})
+        this.datasetCode = datasetCode
     }
 
     updateDescription(description) {
         const dbox = this.root.querySelector('.dynamic-item-description')
-        let identifiersHTML = ''
-        let code = ''
-        let desc = ''
-        for (const [k, v] of Object.entries(description)) {
-            if (k === 'Description') {
-                desc = v
-            } 
-            if (k === 'ItemCode' || k === 'DatasetCode') {
-                code = v
-            }
-            identifiersHTML += `<li class="item-detail-element"><b>${k}</b>: <span class="item-detail-value">${v}</span></li>`
-        }
-        dbox.innerHTML = `
-            <div class="item-info-title"><strong>${code}</strong>: ${desc}</div>
-            <ul class="item-detail-list">${identifiersHTML}</ul>
+        dbox.innerHTML =`
+            <div class="item-info-title">${description.Name}</div>
+            <ul class="item-detail-list">
+                <li class="item-detail-element"><b>Dataset Code:</b> <span class="item-detail-value">${this.datasetCode}</li>
+                <li class="item-detail-element"><b>Description:</b> <span class="item-detail-value">${description.Description}</span></li>
+            </ul>
         `;
     }
 
@@ -97,7 +89,11 @@ class SeriesPanelChart extends PanelChart {
         }
         this.getPins()
         this.updateLegend()
-        this.updateDescription(data.description)
+        console.log(data)
+        this.updateDescription({
+            Name: data.datasetName,
+            Description: data.description
+        })
         this.updateCountryGroups()
         if (this.pinnedOnly) {
             this.hideUnpinned()
