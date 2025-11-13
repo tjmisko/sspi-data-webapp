@@ -5,7 +5,23 @@ class DatasetPanelChart extends PanelChart {
     }
 
     updateDescription(description) {
-        const dbox = this.root.querySelector('.dynamic-item-description')
+        const summaryTitle = this.chartOptions.querySelector('.item-information-summary');
+        summaryTitle.innerHTML = "Dataset Information";
+        const datasetDropdown = this.chartOptions.querySelector('.item-dropdown');
+        const defaultValue = '/data/dataset/' + this.datasetCode
+        for (const option of description.Options) {
+            const opt = document.createElement('option')
+            opt.value = '/data/dataset/' + option.datasetCode
+            if (option.datasetCode === this.datasetCode) {
+                opt.selected = true;
+            }
+            opt.textContent = option.datasetName + ' (' + option.datasetCode + ')'
+            datasetDropdown.appendChild(opt)
+        }
+        datasetDropdown.addEventListener('change', (event) => {
+            window.location.href = event.target.value
+        })
+        const dbox = this.chartOptions.querySelector('.dynamic-item-description')
         dbox.innerHTML =`
             <div class="item-info-title">${description.Name}</div>
             <ul class="item-detail-list">
@@ -24,12 +40,13 @@ class DatasetPanelChart extends PanelChart {
         let dataset = this.chart.data.datasets.find((ds) => {
             return ds.CCode === this.activeCountry.CCode
         })
-        const avgValue = ( dataset.value.reduce((a, b) => a + b) / dataset.value.length )
-        const minValue = Math.min(...dataset.value) 
-        const maxValue = Math.max(...dataset.value)
-        const minValueYear = dataset.value.findIndex((el) => el === minValue) + 2000
-        const maxValueYear = dataset.value.findIndex((el) => el === maxValue) + 2000
-        this.countryInformationBox.innerHTML = `
+        try {
+            const avgValue = ( dataset.value.reduce((a, b) => a + b) / dataset.value.length )
+            const minValue = Math.min(...dataset.value) 
+            const maxValue = Math.max(...dataset.value)
+            const minValueYear = dataset.value.findIndex((el) => el === minValue) + 2000
+            const maxValueYear = dataset.value.findIndex((el) => el === maxValue) + 2000
+            this.countryInformationBox.innerHTML = `
 <div id="#active-country-information" class="country-details-info">
 <h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
 <div class="country-details-score-container">
@@ -54,6 +71,9 @@ class DatasetPanelChart extends PanelChart {
     <a class="view-all-data-link" href="/data/country/${this.activeCountry.CCode}">View All Data</a>
 </div>
 </div>`;
+        } catch (error) {
+            console.log(error)
+        }
         // Add event listener for Pin/Unpin Country button
         const pinButton = this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');
         if (pinButton) {
@@ -82,17 +102,17 @@ class DatasetPanelChart extends PanelChart {
         this.chart.options.plugins.title = data.title
         this.groupOptions = data.groupOptions
         this.missingCountries = [] // Initialize as empty, will be populated asynchronously
+        this.getPins()
         if (this.pinnedOnly) {
             this.hideUnpinned()
         } else {
             this.showGroup(this.countryGroup)
         }
-        this.getPins()
         this.updateLegend()
-        console.log(data)
         this.updateDescription({
             Name: data.datasetName,
-            Description: data.description
+            Description: data.description,
+            Options: data.datasetOptions
         })
         this.updateCountryGroups()
         if (this.pinnedOnly) {

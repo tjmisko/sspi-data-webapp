@@ -151,6 +151,7 @@ def get_dynamic_indicator_line_data(indicator_code):
         if ds_range:
             dataset_options.append(
                 {
+                    "datasetName": detail.get("DatasetName", ""),
                     "datasetCode": dscode,
                     "datasetDescription": detail.get("Description", ""),
                     "unit": detail.get("Unit", ""),
@@ -315,6 +316,10 @@ def get_dynamic_score_line_data(item_code):
 
 @dashboard_bp.route("/panel/dataset/<dataset_code>")
 def get_dataset_panel_data(dataset_code):
+    dataset_details = sspi_metadata.dataset_details();
+    dataset_options = []
+    for d in dataset_details:
+        dataset_options.append({"datasetCode": d.get("DatasetCode"), "datasetName": d.get("DatasetName")})
     dataset_detail = sspi_metadata.get_dataset_detail(dataset_code)
     panel_data_datasets = sspi_panel_data.find({"DatasetCode": dataset_code})
     try: 
@@ -331,6 +336,7 @@ def get_dataset_panel_data(dataset_code):
         "groupOptions": group_options,
         "countryGroupMap": country_group_map,
         "datasetName": dataset_detail["DatasetName"],
+        "datasetOptions": dataset_options,
         "yMin": dataset_detail.get("Range", {}).get("yMin"),
         "yMax": dataset_detail.get("Range", {}).get("yMax")
     })
