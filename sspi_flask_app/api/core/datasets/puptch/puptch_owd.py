@@ -8,5 +8,5 @@ import json
 
 
 @dataset_collector("PUPTCH_OWD")
-def collect_itu_cybsec(**kwargs):
+def collect_puptch_owd(**kwargs):
     yield from collect_puptch_csv_data(**kwargs)
