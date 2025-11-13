@@ -151,6 +151,7 @@ def get_dynamic_indicator_line_data(indicator_code):
         if ds_range:
             dataset_options.append(
                 {
+                    "datasetName": detail.get("DatasetName", ""),
                     "datasetCode": dscode,
                     "datasetDescription": detail.get("Description", ""),
                     "unit": detail.get("Unit", ""),
@@ -311,6 +312,34 @@ def get_dynamic_score_line_data(item_code):
             "childTypeTitle": child_type_title,
         }
     )
+
+
+@dashboard_bp.route("/panel/dataset/<dataset_code>")
+def get_dataset_panel_data(dataset_code):
+    dataset_details = sspi_metadata.dataset_details();
+    dataset_options = []
+    for d in dataset_details:
+        dataset_options.append({"datasetCode": d.get("DatasetCode"), "datasetName": d.get("DatasetName")})
+    dataset_detail = sspi_metadata.get_dataset_detail(dataset_code)
+    panel_data_datasets = sspi_panel_data.find({"DatasetCode": dataset_code})
+    try: 
+        year_labels = panel_data_datasets[0]["years"]
+    except Exception:
+        year_labels = list(range(2000, 2024))
+    group_options = sspi_metadata.country_groups()
+    country_group_map = sspi_metadata.country_group_map()
+    return jsonify({
+        "data": panel_data_datasets,
+        "title": f"{dataset_detail["DatasetName"]} ({dataset_detail["DatasetCode"]})",
+        "labels": year_labels,
+        "description": dataset_detail["Description"],
+        "groupOptions": group_options,
+        "countryGroupMap": country_group_map,
+        "datasetName": dataset_detail["DatasetName"],
+        "datasetOptions": dataset_options,
+        "yMin": dataset_detail.get("Range", {}).get("yMin"),
+        "yMax": dataset_detail.get("Range", {}).get("yMax")
+    })
 
 
 @dashboard_bp.route("/static/radar/<CountryCode>")
@@ -1270,4 +1299,3 @@ def item_coverage_data(ItemCode, CountryGroup):
 @dashboard_bp.route("/globe")
 def globe_data():
     return sspi_globe_data.find({})[0]
-

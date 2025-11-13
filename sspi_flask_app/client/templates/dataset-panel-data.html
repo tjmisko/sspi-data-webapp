@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title> Series Panel Data </title>
+{% endblock title %}
+
+{% block content %}
+
+<article class="page-content">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="dataset-chart-section">
+                <h2>{{ dataset_detail.DatasetName }} ({{ dataset_detail.DatasetCode }}) </h2>
+                {{ dataset_detail.Description }}
+                <div id="{{ dataset_detail.DatasetCode }}"></div>
+            </div>
+        </div>
+    </section>
+</article>
+<article class="page-content">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="dataset-notes-container">
+                <h2> Metadata, Notes, and Details</h2>
+                <div id="dataset-description">
+                    {% if dataset_notes_html %}
+                        {{ dataset_notes_html | safe}}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+</article>
+<script>
+const datasetCode = "{{ dataset_detail.DatasetCode }}";
+window.SSPICharts.push(
+    new DatasetPanelChart(document.getElementById(datasetCode), datasetCode),
+);
+window.addEventListener("load", (event) => {
+    const x = localStorage.getItem('windowX');
+    const y = localStorage.getItem('windowY');
+    
+    if (x !== null && y !== null) {
+      window.moveTo(parseInt(x), parseInt(y));
+    }
+})
+window.addEventListener('beforeunload', () => {
+  localStorage.setItem('windowX', window.screenX);
+  localStorage.setItem('windowY', window.screenY);
+});
+</script>
+{% endblock content %}
