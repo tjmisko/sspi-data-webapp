@@ -846,6 +846,33 @@ class SSPIMetadata(MongoWrapper):
         return analysis_html 
 
              
+    def get_dataset_documentation(self, dataset_code: str) -> str:
+        """
+        Returns the HTML for the documentation of the given dataset_code
+
+        NOTE: Assumes datasets correctly coded and organized.
+        1) Dataset must begin with the correct source organization code,
+        followed by an underscore.
+        2) Dataset documentation must be in the correct location: 
+        /datasets/<org_code>/<dataset_code>/documentation.md
+        """
+        org_code = dataset_code.split("_")[0].lower()
+        documentation_fp = os.path.join(
+            app.root_path, "..", "datasets", org_code, dataset_code.lower(), "documentation.md"
+        )
+        with open(documentation_fp, 'r', encoding='utf-8') as f:
+            documentation = f.read()
+        if not documentation:
+            documentation_html = "<p>No methodology available for this item.</p>"
+        try:
+            post = frontmatter.loads(documentation)
+            documentation_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+        except (ValueError, yaml.YAMLError) as e:
+            raise DatasetFileError(
+                f"Error loading methodology file {documentation_fp}: {e};\n"
+                "Is there an error in the YAML frontmatter?"
+            )
+        return documentation_html
 
 
     def get_item_methodology_html(self, ItemCode: str) -> str:
@@ -1003,7 +1030,15 @@ class SSPIMetadata(MongoWrapper):
         if not country_detail or not country_detail.get("Metadata"):
             return {}
         return country_detail["Metadata"]
-    
+
+    def country_details(self) -> list[dict]:
+        country_details = self.find({
+            "DocumentType": "CountryDetail",
+        })
+        if not country_details:
+            return []
+        return [c["Metadata"] for c in country_details]
+
     def organization_details(self) -> list[dict]:
         organization_details = self.find({ "DocumentType": "OrganizationDetail" })
         if not organization_details:
