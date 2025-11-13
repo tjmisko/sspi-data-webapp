@@ -293,7 +293,8 @@ class PanelChart {
                 },
                 layout: {
                     padding: {
-                        right: 40
+                        right: 40,
+                        bottom: 40
                     }
                 }
             }
