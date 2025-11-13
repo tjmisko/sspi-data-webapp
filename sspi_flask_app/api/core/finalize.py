@@ -1220,6 +1220,7 @@ def finalize_dataset_range():
 
 
 @finalize_bp.route("/finalize/dataset/panel")
+@login_required
 def finalize_dataset_panel():
     sspi_panel_data.delete_many({})
     min_year = 2000
