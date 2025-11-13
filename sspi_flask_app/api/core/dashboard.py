@@ -1213,6 +1213,43 @@ def build_indicators_data_static():
                 case _:
                     return -1
 
+        def category_order(category_code):
+            match category_code:
+                case "ECO":
+                    return 0
+                case "LND":
+                    return 1
+                case "NRG":
+                    return 2
+                case "GHG":
+                    return 3
+                case "WST":
+                    return 4
+                case "WEN":
+                    return 5
+                case "WWB":
+                    return 6
+                case "TAX":
+                    return 7
+                case "FIN":
+                    return 8
+                case "NEQ":
+                    return 9
+                case "EDU":
+                    return 10
+                case "HLC":
+                    return 11
+                case "INF":
+                    return 12
+                case "RTS":
+                    return 13
+                case "SAF":
+                    return 14
+                case "GLB":
+                    return 15
+                case _:
+                    return -1
+
         sorted_pillars = sorted(items_by_type["Pillar"], key=pillar_order)
         for pillar_item in sorted_pillars:
             pillar_code = pillar_item.get("ItemCode", "")
@@ -1223,7 +1260,8 @@ def build_indicators_data_static():
                 "categories": [],
             }
             category_codes = pillar_item.get("CategoryCodes", [])
-            for category_code in category_codes:
+            sorted_categories = sorted(category_codes, key=category_order)
+            for category_code in sorted_categories:
                 category_item = items_by_code.get(category_code)
                 if not category_item:
                     continue
@@ -1249,9 +1287,7 @@ def build_indicators_data_static():
                         "inverted": indicator_item.get("Inverted", False),
                     }
                     category_data["indicators"].append(indicator_data)
-                category_data["indicators"].sort(key=lambda x: x["indicator_name"])
                 pillar_data["categories"].append(category_data)
-            pillar_data["categories"].sort(key=lambda x: x["category_name"])
             pillars.append(pillar_data)
         return {
             "pillars": pillars,
