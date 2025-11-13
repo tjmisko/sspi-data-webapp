@@ -306,7 +306,7 @@ class TestAuthenticationRouteIntegration:
         """Test invalid Bearer token is rejected."""
         with app.test_request_context():
             headers = {'Authorization': 'Bearer invalidtoken'}
-            response = client.get('/api/v1/', headers=headers)
+            response = client.get('/api/v1/production/finalize', headers=headers)
             
             # Should be unauthorized
             assert response.status_code == 401
