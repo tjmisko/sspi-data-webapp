@@ -1163,7 +1163,7 @@ this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions'
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
 this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:4,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
-this.updateCountryInformation();});}},},layout:{padding:{right:40}}}})}
+this.updateCountryInformation();});}},},layout:{padding:{right:40,bottom:40}}}})}
 updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
@@ -1456,22 +1456,33 @@ for(const[k,v]of Object.entries(description)){if(k==='Description'){desc=v}
 if(k==='ItemCode'||k==='DatasetCode'){code=v}
 identifiersHTML+=`<li class="item-detail-element"><b>${k}</b>:<span class="item-detail-value">${v}</span></li>`}
 dbox.innerHTML=`<div class="item-info-title"><strong>${code}</strong>:${desc}</div><ul class="item-detail-list">${identifiersHTML}</ul>`;}
-update(data){this.chart.data=data
+updateCountryInformation(){if(!this.activeCountry)return;this.countryInformationBox.dataset.unpopulated=false
+const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";let dataset=this.chart.data.datasets.find((ds)=>{return ds.CCode===this.activeCountry.CCode})
+const avgValue=(dataset.value.reduce((a,b)=>a+b)/dataset.value.length)
+const minValue=Math.min(...dataset.value)
+const maxValue=Math.max(...dataset.value)
+const minValueYear=dataset.value.findIndex((el)=>el===minValue)+2000
+const maxValueYear=dataset.value.findIndex((el)=>el===maxValue)+2000
+this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"><div class="summary-stat-line"><span class="summary-stat-label">Average:</span><span class="summary-stat-score">${avgValue.toFixed(3)}</span><span class="summary-stat-year">2000-2023</span></div><div class="summary-stat-line"><span class="summary-stat-label">Minimum:</span><span class="summary-stat-score">${minValue.toFixed(3)}</span><span class="summary-stat-year">${minValueYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Maximum:</span><span class="summary-stat-score">${maxValue.toFixed(3)}</span><span class="summary-stat-year">${maxValueYear}</span></div></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
+this.updateCountryInformation();}});}}
+update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
+this.chart.data=data
 this.chart.data.labels=data.labels
 this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
 this.groupOptions=data.groupOptions
-this.pinnedOnly=false
+this.missingCountries=[]
+if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.getPins()
 this.updateLegend()
-this.updateDescription(data.description)
+this.updateDescription({"Description":data.description})
 this.updateCountryGroups()
 if(this.pinnedOnly){this.hideUnpinned()}
 this.chart.options.scales.y.min=data.yMin
 this.chart.options.scales.y.max=data.yMax
-if(data.hasScore){this.yAxisScale="score"
-this.rigTitleBarScaleToggle()}
-this.chart.update()}}
+this.chart.update()
+this.computeMissingCountriesAsync()
+this.activeCountry=window.observableStorage.getItem("activeCountry")||null;if(this.activeCountry){this.updateCountryInformation();}}}
 class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode
 this.moveBurgerToBreadcrumb()}
