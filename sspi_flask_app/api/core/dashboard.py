@@ -39,6 +39,7 @@ from sspi_flask_app.models.database import (
 from datetime import datetime
 import hashlib
 import logging
+import re
 
 log = logging.getLogger(__name__)
 
@@ -1213,6 +1214,43 @@ def build_indicators_data_static():
                 case _:
                     return -1
 
+        def category_order(category_code):
+            match category_code:
+                case "ECO":
+                    return 0
+                case "LND":
+                    return 1
+                case "NRG":
+                    return 2
+                case "GHG":
+                    return 3
+                case "WST":
+                    return 4
+                case "WEN":
+                    return 5
+                case "WWB":
+                    return 6
+                case "TAX":
+                    return 7
+                case "FIN":
+                    return 8
+                case "NEQ":
+                    return 9
+                case "EDU":
+                    return 10
+                case "HLC":
+                    return 11
+                case "INF":
+                    return 12
+                case "RTS":
+                    return 13
+                case "SAF":
+                    return 14
+                case "GLB":
+                    return 15
+                case _:
+                    return -1
+
         sorted_pillars = sorted(items_by_type["Pillar"], key=pillar_order)
         for pillar_item in sorted_pillars:
             pillar_code = pillar_item.get("ItemCode", "")
@@ -1223,7 +1261,8 @@ def build_indicators_data_static():
                 "categories": [],
             }
             category_codes = pillar_item.get("CategoryCodes", [])
-            for category_code in category_codes:
+            sorted_categories = sorted(category_codes, key=category_order)
+            for category_code in sorted_categories:
                 category_item = items_by_code.get(category_code)
                 if not category_item:
                     continue
@@ -1243,15 +1282,33 @@ def build_indicators_data_static():
                         "indicator_name": indicator_item.get(
                             "ItemName", indicator_code
                         ),
+                        "goalpost_string": indicator_item.get("GoalpostString", ""),
                         "description": indicator_item.get("Description", ""),
                         "lower_goalpost": indicator_item.get("LowerGoalpost"),
                         "upper_goalpost": indicator_item.get("UpperGoalpost"),
+                        "policy": indicator_item.get("Policy", ""),
+                        "self": indicator_item,
                         "inverted": indicator_item.get("Inverted", False),
+                        "requires_inversion_message": False
                     }
+                    if not indicator_data["lower_goalpost"] or not indicator_data["upper_goalpost"]:
+                        gp_string = indicator_data["goalpost_string"]
+                        result = re.match(r"^\s*\(([0-9]+),\s?([0-9]+)\)\s*$", gp_string)
+                        if result:
+                            lg = result.group(1)
+                            ug = result.group(2) 
+                            if "V" in gp_string:
+                                swap_var = lg
+                                lg = ug
+                                ug = swap_var 
+                            if lg:
+                                indicator_data["lower_goalpost"] = lg
+                            if ug:
+                                indicator_data["upper_goalpost"] = ug
+                        elif "V" in gp_string:
+                            indicator_data["requires_inversion_message"] = True
                     category_data["indicators"].append(indicator_data)
-                category_data["indicators"].sort(key=lambda x: x["indicator_name"])
                 pillar_data["categories"].append(category_data)
-            pillar_data["categories"].sort(key=lambda x: x["category_name"])
             pillars.append(pillar_data)
         return {
             "pillars": pillars,

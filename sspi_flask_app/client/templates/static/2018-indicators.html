@@ -9,91 +9,165 @@
 {% endblock %}
 
 {% block content %}
-<div class="indicators-page">
-    <h2>SSPI 2018 Indicator Table</h2>
-    <p class="page-description">Explore the complete structure of SSPI indicators, grouped by pillar and category.</p>
-    
-    <div class="indicators-container">
-        {% if indicators_data.error %}
-        <div class="error-message">
-            <p>Error loading indicators: {{ indicators_data.error }}</p>
-        </div>
-        {% else %}
-            {% for pillar in indicators_data.pillars %}
-            <div class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
-                <div class="indicators-pillar-header">
-                    <div class="indicators-pillar-header-content">
-                        <button class="collapse-toggle-btn" aria-label="Toggle pillar">
-                            <span class="collapse-icon">▼</span>
-                        </button>
-                        <div class="pillar-info">
-                            <h3 class="pillar-name">{{ pillar.pillar_name }}</h3>
-                            <span class="pillar-code">{{ pillar.pillar_code }}</span>
-                        </div>
+<article class="page-content">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="indicator-table-container">
+                <div class="indicator-table-title-controls-box">
+                    <h2>SSPI 2018 Indicator Table</h2>
+                    <div class="indicator-table-control-buttons">
+                        <button id="reset-button" class="view-data-btn">Reset View</button>
+                        <button id="expand-button" class="view-data-btn">Expand All</button>
+                        <button id="collapse-button" class="view-data-btn">Collapse All</button>
                     </div>
                 </div>
+                <p>Explore the complete structure, definitions, and metadata of
+                    the SSPI Policy Indicators and their underlying datasets.
+                    Click on indicators to view their constituent datasets and
+                    methodological details, or follow links to view data for
+                    each indicator.</p>
                 
-                <div class="pillar-content" data-expanded="true">
-                    {% for category in pillar.categories %}
-                    <div class="category-section" data-category-code="{{ category.category_code }}">
-                        <div class="indicators-category-header">
-                            <div class="indicators-category-header-content">
-                                <button class="collapse-toggle-btn" aria-label="Toggle category">
-                                    <span class="collapse-icon">▼</span>
-                                </button>
-                                <div class="category-info">
-                                    <h4 class="category-name">{{ category.category_name }}</h4>
-                                    <span class="category-code">{{ category.category_code }}</span>
+                <div class="-container">
+                    {% if indicators_data.error %}
+                    <div class="error-message">
+                        <p>Error loading indicators: {{ indicators_data.error }}</p>
+                    </div>
+                    {% else %}
+                        {% for pillar in indicators_data.pillars %}
+                        <div id="{{ pillar.pillar_code }}" class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
+                            <div class="indicators-pillar-header">
+                                <div class="indicators-pillar-header-content">
+                                    <button class="collapse-toggle-btn" aria-label="Toggle pillar">
+                                        <span class="collapse-icon">▼</span>
+                                    </button>
+                                    <div class="pillar-info">
+                                        <h3 class="pillar-name">{{ pillar.pillar_name }}</h3>
+                                        <a href="/2018/data/pillar/{{ pillar.pillar_code }}" class="view-data-btn">
+                                            Pillar Scores
+                                        </a>
+                                        <span class="pillar-code">{{ pillar.pillar_code }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="category-content" data-expanded="true">
-                            <div class="indicators-list">
-                                {% if category.indicators %}
-                                    {% for indicator in category.indicators %}
-                                    <div class="indicator-item" data-indicator-code="{{ indicator.indicator_code }}">
-                                        <div class="indicators-indicator-header">
-                                            <div class="indicator-info">
-                                                <div class="indicator-main-info">
-                                                    <h5 class="indicator-name">{{ indicator.indicator_name }}</h5>
-                                                    <span class="indicator-code">{{ indicator.indicator_code }}</span>
-                                                </div>
-                                                <a href="/2018/data/indicator/{{ indicator.indicator_code }}" class="view-data-btn">
-                                                    View Indicator Data
+                            
+                            <div class="pillar-content" data-expanded="true" data-icode="{{ pillar.pillar_code }}">
+                                {% for category in pillar.categories %}
+                                <div id="{{ category.category_code }}" class="category-section" data-category-code="{{ category.category_code }}">
+                                    <div class="indicators-category-header">
+                                        <div class="indicators-category-header-content">
+                                            <button class="collapse-toggle-btn" aria-label="Toggle category">
+                                                <span class="collapse-icon">▼</span>
+                                            </button>
+                                            <div class="category-info">
+                                                <h4 class="category-name">{{ category.category_name }}</h4>
+                                                <a href="/2018/data/category/{{ category.category_code }}" class="view-data-btn">
+                                                    Category Scores
                                                 </a>
+                                                <span class="category-code">{{ category.category_code }}</span>
                                             </div>
                                         </div>
-                                        
-                                        <div class="indicator-details" data-expanded="false">
-                                            {% if indicator.description %}
-                                            <div class="indicator-description">
-                                                <p>{{ indicator.description }}</p>
-                                            </div>
+                                    </div>
+                                    
+                                    <div class="indicator-table-category-content" data-expanded="true" data-icode="{{ category.category_code }}">
+                                        <div class="indicator-table-indicators-list">
+                                            {% if category.indicators %}
+                                                {% for indicator in category.indicators %}
+                                                  <div class="indicator-item" id="{{ indicator.indicator_code}}" "data-indicator-code="{{ indicator.indicator_code }}">
+                                                    <div class="indicators-indicator-header">
+                                                        <div class="indicator-info">
+                                                            <button class="collapse-toggle-btn" aria-label="Toggle datasets">
+                                                                <span class="collapse-icon" style="transform: rotate(-90deg)">▼</span>
+                                                            </button>
+                                                            <div class="indicator-main-info">
+                                                                <h5 class="indicator-name">{{ indicator.indicator_name }}</h5>
+                                                                <a href="/2018/data/indicator/{{ indicator.indicator_code }}" class="view-data-btn">
+                                                                    Indicator Scores
+                                                                </a>
+                                                                <span class="indicator-code">{{ indicator.indicator_code }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="indicator-details" data-expanded="false" data-icode="{{ indicator.indicator_code }}">
+                                                        {% if indicator.description %}
+                                                        {% if indicator.policy %}
+                                                        <div class="indicator-description">
+                                                            <h6>Policy</h6>
+                                                            <p>{{ indicator.policy }}</p>
+                                                        </div>
+                                                        {% endif %}
+                                                        <div class="indicator-description">
+                                                            <h6>Description</h6>
+                                                            <p>{{ indicator.description }}</p>
+                                                        </div>
+                                                        {% endif %}
+                                                        {% if indicator.lower_goalpost %}
+                                                        <div class="indicator-description">
+                                                            <h6>Goalposts</h6>
+                                                            <p>Lower: {{ indicator.lower_goalpost }}</p>
+                                                            <p>Upper: {{ indicator.upper_goalpost }}</p>
+                                                        </div>
+                                                        {% elif indicator.goalpost_string %}
+                                                        <div class="indicator-description">
+                                                            <h6>Goalposts</h6>
+                                                            <p>{{ indicator.goalpost_string }}</p>
+                                                            <p class="indicator-description-explainer-box"> 
+                                                                * The goalpost string above indicates the goalposts used 
+                                                                to normalize the datasets used to compute the indicator. Normalization
+                                                                occurs before aggregation. The goalpost are applied in the order 
+                                                                of mention in the description. 
+                                                            </p>
+                                                            {% if indicator.requires_inversion_message %}
+                                                            <p class="indicator-description-explainer-box"> 
+                                                                * A "V" following a goalpost set indicates an inversion: the first number 
+                                                                in parentheses corresponds to the Upper Goalpost (best policy), while
+                                                                the second corresponds to the Lower Goalpost (worst policy).
+                                                            </p>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="no-indicators">
+                                                    <em>No indicators available for this category</em>
+                                                </div>
                                             {% endif %}
-                                            
                                         </div>
                                     </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="no-indicators">
-                                        <em>No indicators available for this category</em>
-                                    </div>
-                                {% endif %}
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
-            {% endfor %}
-        {% endif %}
-    </div>
-</div>
-
+        </div>
+    </section>
+</article>
 <script>
+const tableState = window.observableStorage.getItem('indicatorTableState')
+if ("{{ view_item }}".length > 1 && tableState["{{ view_item }}"]) {
+    tableState["{{ view_item }}"] = 'true'
+    window.observableStorage.setItem('indicatorTableState', tableState)
+}
+let indicatorTable = new IndicatorTable();
 document.addEventListener('DOMContentLoaded', () => {
-    new IndicatorTable();
+    SSPICharts.push(indicatorTable);
 });
+const expandAll = document.getElementById('expand-button')
+expandAll.addEventListener('click', function() {
+    indicatorTable.expandAll()
+})
+const resetView = document.getElementById('reset-button')
+resetView.addEventListener('click', function() {
+    indicatorTable.resetView()
+})
+const collapseAll = document.getElementById('collapse-button')
+collapseAll.addEventListener('click', function() {
+    indicatorTable.collapseAll()
+})
 </script>
 {% endblock %}
