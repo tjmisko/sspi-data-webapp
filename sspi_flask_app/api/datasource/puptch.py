@@ -18,7 +18,7 @@ def collect_puptch_csv_data(**kwargs):
         "BaseURL": "https://ourworldindata.org/grapher/pupil-teacher-ratio-for-primary-education-by-country.csv?v=1&csvType=full&useColumnShortNames=true"
     }
     count_owd = sspi_raw_api_data.raw_insert_one(csv_string_owd, source_info_owd, **kwargs)
-    yield f"\nInserted {count_owd} observations into the database from puptch_owd csv file.\n"
+    # yield f"\nInserted {count_owd} observations into the database from puptch_owd csv file.\n"
 
 
 
@@ -33,7 +33,7 @@ def collect_puptch_zip_data(**kwargs):
         for f in z.namelist():
             if "data.csv" in f:
                 with z.open(f) as data:
-                    yield f"Processing file: {f}\n"
+                    # yield f"Processing file: {f}\n"
                     csv_string_unesco = data.read().decode("utf-8")
                     source_inf_unesco = {
                         "OrganizationName": "United Nations Educational, Scientific and Cultural Organization",
@@ -46,7 +46,7 @@ def collect_puptch_zip_data(**kwargs):
                     sspi_raw_api_data.raw_insert_one(
                         csv_string_unesco, source_inf_unesco, **kwargs
                     )
-    yield "Collection complete for EPI Indicators\n"
+    # yield "Collection complete for EPI Indicators\n"
 
 
 
