@@ -39,8 +39,8 @@ def collect_puptch_zip_data(**kwargs):
                     source_inf_unesco = {
                         "OrganizationName": "United Nations Educational, Scientific and Cultural Organization",
                         "OrganizationCode": "UNESCO",
-                        "OrganizationSeriesCode": "GCDL",
-                        "QueryCode": "GCDL",
+                        "OrganizationSeriesCode": "UNESCO",
+                        "QueryCode": "UNESCO",
                         "BaseURL": "https://api.uis.unesco.org/api/public/data/indicators/export?indicator=PTRHC.1.QUALIFIED&start=2000&end=2025&indicatorMetadata=false&footnotes=false&version=20250917-73f4b95c&format=csv"
                     }
                     sspi_raw_api_data.raw_insert_one(
