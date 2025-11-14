@@ -66,7 +66,7 @@ const chartInteractionPlugin = {
     _collisionCooldown: 1000, // Minimum milliseconds between collision detections
 
     // Constants
-    _LABEL_FONT: 'bold 14px Arial',
+    _LABEL_FONT: 'bold 16px Arial',
     _POINT_SCALE: 1.6,
 
     /* ---------- data change detection -------------------------------- */
@@ -113,31 +113,38 @@ const chartInteractionPlugin = {
 
     /* ---------- main proximity & label logic ------------------------- */
     beforeDatasetsDraw(chart, _args, opts) {
+        const ctx = chart.ctx;
+        const area = chart.chartArea;
+
+        // If plugin disabled, just bail (no custom clip, but you also shouldn’t have disabled ds.clip)
         if (!opts || !opts.enabled) {
             this._resetProximity(chart);
             return;
         }
 
+        // 1. Disable per-dataset internal clipping
+        chart.data.datasets.forEach(ds => {
+            ds.clip = false;
+        });
+
+        // 2. Always apply our own clip for dataset drawing
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
+        ctx.clip();
+        chart._interactionClipApplied = true;  // mark that we did a save()
+
+        // 3. Now do interaction logic; but DO NOT early-return before datasets draw
         const pos = this._interaction.mouse;
 
-        // If no mouse, just reset proximity but keep labels
-        if (!pos) {
+        if (!pos) { // No mouse: reset proximity state, but do not touch clipping.
             this._resetProximity(chart);
             return;
         }
 
         const R = opts.radius;
         const CR = opts.clickRadius;
-
         const cr2 = CR * CR;
-        const ctx = chart.ctx;
-        const area = chart.chartArea;
-
-        chart.data.datasets.forEach(ds => { ds.clip = false; });
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
-        ctx.clip();
 
         // Initialize unified tracking
         let nearest = { d2: Infinity, x: null, idx: null, valX: null };
@@ -273,15 +280,17 @@ const chartInteractionPlugin = {
     },
     
     /* ---------- restore context to clip left edge -------------------- */
-    afterDatasetsDraw(chart, args, opts) {
-      chart.ctx.restore();   // remove dataset clip, labels will be free
+    afterDatasetsDraw(chart, _args, opts) {
+      const ctx = chart.ctx;
+      if (chart._interactionClipApplied) {
+        ctx.restore();
+        chart._interactionClipApplied = false;
+      }
     },
-
 
     /* ---------- unified drawing: tooltip + labels -------------------- */
     afterDraw(chart, _a, opts) {
         if (!opts?.enabled) return;
-
         this._drawTooltip(chart, opts);
         this._drawLabels(chart, opts);
     },
@@ -368,7 +377,6 @@ const chartInteractionPlugin = {
     _drawLabels(chart, opts) {
         const ctx = chart.ctx;
         const labels = [];
-
 
         /* Build label list */
         chart.data.datasets.forEach((ds, i) => {

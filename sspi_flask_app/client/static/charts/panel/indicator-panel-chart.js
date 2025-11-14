@@ -21,13 +21,12 @@ class IndicatorPanelChart extends PanelChart {
     updateChartOptions() {
         // Get Y-axis title based on active series
         let yAxisTitle = 'Item Value'  // Default fallback
-        
         if (this.activeSeries === this.itemCode) {
             yAxisTitle = 'Indicator Score'
         } else if (this.datasetOptions) {
             const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries)
             if (dataset) {
-                const baseName = dataset.datasetName || dataset.datasetCode
+                const baseName = "Dataset: " + dataset.datasetName || dataset.datasetCode
                 const unit = dataset.unit || dataset.Unit
                 yAxisTitle = unit ? `${baseName} (${unit})` : baseName
             }
@@ -120,6 +119,7 @@ class IndicatorPanelChart extends PanelChart {
         this.updateActiveSeriesDescription()  // Update active series description
         this.updateYAxisInputs()
         this.updateRestoreButton()
+        this.updateYearRange()
         this.chart.update()
     }
 
@@ -493,8 +493,6 @@ class IndicatorPanelChart extends PanelChart {
                 }
             })
         }
-        
-        // Set defaults for current active series
         this.updateDefaultsForActiveSeries()
     }
     
@@ -529,7 +527,7 @@ class IndicatorPanelChart extends PanelChart {
             const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries)
             if (dataset) {
                 const datasetName = dataset.datasetName || dataset.datasetCode
-                this.title.innerText = `${dataset.datasetCode} - ${datasetName}`;
+                this.title.innerText = datasetName + ' (' + dataset.datasetCode + ')'
             } else {
                 this.title.innerText = this.activeSeries;
             }
@@ -544,29 +542,24 @@ class IndicatorPanelChart extends PanelChart {
         if (!this.seriesSelector) {
             return
         }
-        
         // Clear all existing options
         this.seriesSelector.innerHTML = ''
-        
         // Add the indicator score option first
         const indicatorOption = document.createElement('option')
         indicatorOption.value = this.itemCode
-        indicatorOption.textContent = this.itemCode + ' Indicator Score'
+        indicatorOption.textContent = "Indicator: " + this.itemCode + ' Indicator Score'
         this.seriesSelector.appendChild(indicatorOption)
-        
         // Add dataset options if available
         if (this.datasetOptions) {
             this.datasetOptions.forEach(dataset => {
                 const option = document.createElement('option')
                 option.value = dataset.datasetCode
-                option.textContent = dataset.datasetName || dataset.datasetCode
+                option.textContent = "Dataset: " + dataset.datasetName || dataset.datasetCode
                 this.seriesSelector.appendChild(option)
             })
         }
-        
         // Set the current active series as selected
         this.seriesSelector.value = this.activeSeries
-        
         // Update Y-axis inputs with current values
         this.updateYAxisInputs()
     }
@@ -574,18 +567,12 @@ class IndicatorPanelChart extends PanelChart {
     updateActiveSeriesDescription() {
         const activeSeriesDescription = this.chartOptions.querySelector('.active-series-description')
         if (!activeSeriesDescription) {
-            console.warn('Active series description element not found')
             return
         }
-        
         const contentDiv = activeSeriesDescription.querySelector('.active-series-description-content')
         if (!contentDiv) {
-            console.warn('Active series description content element not found')
             return
         }
-        
-        console.log('Updating active series description for:', this.activeSeries)
-        
         if (this.activeSeries === this.itemCode) {
             // Hide for indicator score - it already has its own description
             activeSeriesDescription.style.display = 'none'

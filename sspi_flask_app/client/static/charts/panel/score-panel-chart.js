@@ -1,6 +1,6 @@
 class ScorePanelChart extends PanelChart {
-    constructor(parentElement, itemCode, { CountryList = [], width = 600, height = 600 } = {} ) {
-        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`, width: width, height: height })
+    constructor(parentElement, itemCode, { CountryList = [] } = {} ) {
+        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`})
         this.itemCode = itemCode
         this.moveBurgerToBreadcrumb()
     }
@@ -19,6 +19,8 @@ class ScorePanelChart extends PanelChart {
                     color: this.tickColor,
                 },
                 type: "category",
+                min: this.startYear.toString(),
+                max: this.endYear.toString(),
                 title: {
                     display: true,
                     text: 'Year',

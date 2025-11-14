@@ -171,10 +171,6 @@ def get_dynamic_indicator_line_data(indicator_code):
                 }
             )
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
-    if dynamic_score_data:
-        min_year = dynamic_score_data[0]["minYear"]
-        max_year = dynamic_score_data[0]["maxYear"]
-        year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
     country_group_map = sspi_metadata.country_group_map()
@@ -205,9 +201,7 @@ def get_dynamic_score_line_data(item_code):
     name_map = {detail["ItemCode"]: detail["ItemName"] for detail in indicator_details}
     active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(item_code)
-    print(detail)
     doc_type = detail.get("ItemType", "No Item Type")
-    print("Document Type:", doc_type)
     if doc_type == "Indicator":
         item_options = sspi_metadata.indicator_options()
     elif doc_type == "Category":
@@ -288,10 +282,6 @@ def get_dynamic_score_line_data(item_code):
         query["CCode"] = {"$in": country_query}
     dynamic_score_data = parse_json(sspi_item_dynamic_line_data.find(query))
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
-    if dynamic_score_data:
-        min_year = dynamic_score_data[0]["minYear"]
-        max_year = dynamic_score_data[0]["maxYear"]
-        year_labels = [str(year) for year in range(min_year, max_year + 1)]
     chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
     country_group_map = sspi_metadata.country_group_map()
@@ -323,10 +313,7 @@ def get_dataset_panel_data(dataset_code):
         dataset_options.append({"datasetCode": d.get("DatasetCode"), "datasetName": d.get("DatasetName")})
     dataset_detail = sspi_metadata.get_dataset_detail(dataset_code)
     panel_data_datasets = sspi_panel_data.find({"DatasetCode": dataset_code})
-    try: 
-        year_labels = panel_data_datasets[0]["years"]
-    except Exception:
-        year_labels = list(range(2000, 2024))
+    year_labels = list(range(2000, datetime.now().year + 1))
     group_options = sspi_metadata.country_groups()
     country_group_map = sspi_metadata.country_group_map()
     return jsonify({
@@ -881,7 +868,7 @@ def get_series_panel_plot(series_id):
     max_year = panel_data[0]["maxYear"]
     has_score = panel_data[0].get("score", None) is not None
     identifiers = panel_data[0]["Identifiers"]
-    year_labels = [str(year) for year in range(min_year, max_year + 1)]
+    year_labels = [year for year in range(min_year, max_year + 1)]
     group_options = sspi_metadata.country_groups()
     yMin = 0
     yMax = 1

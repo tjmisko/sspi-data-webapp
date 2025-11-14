@@ -16,6 +16,7 @@
   min-width: 300px;
   max-width: 100%;
   height: clamp(600px, 80vh, 80vh);
+  box-sizing: border-box;
 }
 
 .panel-chart-title-container {
@@ -49,6 +50,8 @@
   padding: 0.5em;
   position: relative;
   flex: 1 1 0;
+  box-sizing: border-box;
+  min-height: 0;
 }
 
 .chart-options-wrapper {
@@ -78,6 +81,7 @@
 }
 
 .hide-chart-options {
+  margin-top: 6px;
   position: relative;
   z-index: 2;
   padding: 0;
@@ -215,7 +219,7 @@
   }
 
   .show-chart-options {
-    display: none;  /* Hide hamburger menu on desktop */
+    display: none !important;  /* Hide hamburger menu on desktop */
   }
 
   /* Reset transform for both states on desktop - always in position */
@@ -296,6 +300,13 @@
 }
 
 /* Section subheaders within View Options */
+.chart-view-subheader {
+  display: flex;
+  justify-content: space-between;
+}
+.chart-options-details .randomization-options .invalid-year-input {
+  border: 2px solid red;
+}
 .chart-options-details .chart-view-subheader {
   font-size: 0.75em;
   font-weight: 600;

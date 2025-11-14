@@ -1,5 +1,5 @@
 class PanelChart {
-    constructor(parentElement, { CountryList = [], endpointURL = '', colorProvider = SSPIColors, startYear = 2000, endYear = 2025 } ) {
+    constructor(parentElement, { CountryList = [], endpointURL = '', colorProvider = SSPIColors, startYear = 2000, endYear = 2025, favorCachedTimePeriod = true, yBeginAtZero = true} ) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
@@ -8,6 +8,18 @@ class PanelChart {
         this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.chartInteractionPlugin = chartInteractionPlugin
+        this.favorCachedTimePeriod = favorCachedTimePeriod // Set to false to ensure that specified years override user-set custom time periods
+        this.argDefaultStartYear = startYear
+        this.argDefaultEndYear = endYear
+        this.yBeginAtZero = yBeginAtZero
+        let cachedStartYear = window.observableStorage.getItem('startYear')
+        if (cachedStartYear && favorCachedTimePeriod) {
+            startYear = cachedStartYear
+        }
+        let cachedEndYear = window.observableStorage.getItem('endYear')
+        if (cachedStartYear && favorCachedTimePeriod) {
+            endYear = cachedEndYear
+        }
         this.startYear = startYear
         this.endYear = endYear
         this.setTheme(window.observableStorage.getItem("theme"))
@@ -22,6 +34,7 @@ class PanelChart {
         this.rigItemDropdown()
         this.rigCountryGroupSelector()
         this.updateChartOptions()
+        this.updateYearRange({startYear: this.startYear, endYear: this.endYear});
         this.rigLegend()
         this.fetch(this.endpointURL).then(data => {
             this.update(data)
@@ -100,15 +113,18 @@ class PanelChart {
 <details class="chart-options-details chart-view-options">
     <summary class="chart-view-options-summary">View Options</summary>
     <div class="view-options-suboption-container">
-        <div class="chart-view-subheader">Year Range</div>
+        <div class="chart-view-subheader">
+            <div>Year Range</div>
+            <button class="reset-year-range-button">Reset to Default</button>
+        </div>
         <div class="chart-view-option">
             <div class="randomization-options">
                 <label class="title-bar-label">Start Year</label>
-                <input type="number" class="start-year" value="${this.startYear}" min="2000" max="2023"/>
+                <input type="number" class="start-year" value="${this.startYear}" min="2000" max="2025"/>
             </div>
             <div class="randomization-options">
                 <label class="title-bar-label">End Year</label>
-                <input type="number" class="end-year" value="${this.endYear}" min="2000" max="2023"/>
+                <input type="number" class="end-year" value="${this.endYear}" min="2000" max="2025"/>
             </div>
         </div>
         <div class="chart-view-subheader">Imputation Options</div>
@@ -205,12 +221,30 @@ class PanelChart {
             const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
             this.showGroup(activeGroup)
         })
+        this.resetYearInput = this.chartOptions.querySelector('.reset-year-range-button')
+        this.resetYearInput.addEventListener('click', (event) => {
+            this.resetYearRange()
+        })
         this.startYearInput = this.chartOptions.querySelector('.start-year')
         this.startYearInput.addEventListener('change', (event) => {
+            if (this.startYearInput.value < this.startYearInput.min) {
+                this.startYearInput.classList.add("invalid-year-input")
+            } else if (this.startYearInput.value > this.startYearInput.max) {
+                this.startYearInput.classList.add("invalid-year-input")
+            } else {
+                this.startYearInput.classList.remove("invalid-year-input")
+            }
             this.updateYearRange({ startYear: this.startYearInput.value })
         })
         this.endYearInput = this.chartOptions.querySelector('.end-year')
         this.endYearInput.addEventListener('change', (event) => {
+            if (this.endYearInput.value < this.endYearInput.min) {
+                this.endYearInput.classList.add("invalid-year-input")
+            } else if (this.endYearInput.value > this.endYearInput.max) {
+                this.endYearInput.classList.add("invalid-year-input")
+            } else {
+                this.endYearInput.classList.remove("invalid-year-input")
+            }
             this.updateYearRange({ endYear: this.endYearInput.value })
         })
         this.randomNumberField = this.chartOptions.querySelector('.random-country-sample')
@@ -315,7 +349,6 @@ class PanelChart {
                 layout: {
                     padding: {
                         right: 40,
-                        bottom: 40
                     }
                 }
             }
@@ -328,7 +361,8 @@ class PanelChart {
                 ticks: {
                     color: this.tickColor,
                 },
-                type: "category",
+                min: this.startYear,
+                max: this.endYear,
                 title: {
                     display: true,
                     text: 'Year',
@@ -342,7 +376,7 @@ class PanelChart {
                 ticks: {
                     color: this.tickColor,
                 },
-                beginAtZero: true,
+                beginAtZero: this.yBeginAtZero,
                 title: {
                     display: true,
                     text: 'Item Value',
@@ -403,11 +437,14 @@ class PanelChart {
         let dataset = this.chart.data.datasets.find((ds) => {
             return ds.CCode === this.activeCountry.CCode
         })
-        const avgScore = ( dataset.score.reduce((a, b) => a + b) / dataset.score.length )
-        const minScore = Math.min(...dataset.score) 
-        const maxScore = Math.max(...dataset.score)
-        const minScoreYear = dataset.score.findIndex((el) => el === minScore) + this.startYear
-        const maxScoreYear = dataset.score.findIndex((el) => el === maxScore) + this.startYear
+        const startIndex = this.startYear - 2000;
+        const endIndex = this.endYear - 2000 + 1;
+        const yearScreen = dataset.score.slice(startIndex, endIndex)
+        const avgScore = ( yearScreen.reduce((a, b) => a + b) / yearScreen.length )
+        const minScore = Math.min(...yearScreen) 
+        const maxScore = Math.max(...yearScreen)
+        const minScoreYear = yearScreen.findIndex((el) => el === minScore) + this.startYear
+        const maxScoreYear = yearScreen.findIndex((el) => el === maxScore) + this.startYear
         this.countryInformationBox.innerHTML = `
 <div id="#active-country-information" class="country-details-info">
 <h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
@@ -575,10 +612,24 @@ class PanelChart {
             console.log("Invalid End Year: End Year must not be less than or equal to start Year")
             return 
         }
-        this.chart.options.scales.x.min = this.startYear.toString();
-        this.chart.options.scales.x.max = this.endYear.toString();
+        if (this.startYearInput.value != this.startYear) {
+            this.startYearInput.value = this.startYear
+        }
+        if (this.endYearInput.value != this.endYear) {
+            this.endYearInput.value = this.endYear
+        }
+        this.chart.options.scales.x.min = this.startYear;
+        this.chart.options.scales.x.max = this.endYear;
         this.updateCountryInformation();
         this.updateChartPreservingYAxis();
+        window.observableStorage.setItem("startYear", this.startYear)
+        window.observableStorage.setItem("endYear", this.endYear)
+    }
+
+    resetYearRange() {
+        this.updateYearRange({ startYear: this.argDefaultStartYear, endYear: this.argDefaultEndYear })
+        this.startYearInput.classList.remove("invalid-year-input")
+        this.endYearInput.classList.remove("invalid-year-input")
     }
 
     updateDescription(description) {
@@ -664,6 +715,7 @@ class PanelChart {
         
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
+        console.log("Data Labels:", this.chart.data.labels)
         if (this.pinnedOnly) {
             this.hideUnpinned()
         } else {
@@ -680,8 +732,8 @@ class PanelChart {
         this.updateDescription(data.description)
         this.updateChartColors()
         this.updateCountryGroups()
-        this.updateChartPreservingYAxis();
         // Compute missing countries asynchronously after chart rendering
+        this.updateChartPreservingYAxis();
         this.computeMissingCountriesAsync()
         this.activeCountry = window.observableStorage.getItem("activeCountry") || null;
         if (this.activeCountry) {
@@ -957,6 +1009,7 @@ class PanelChart {
         this.chartOptionsWrapper.classList.add('inactive')
         this.overlay.classList.remove('active')
         this.overlay.classList.add('inactive')
+        this.showChartOptions.style.display = 'block'
     }
 
     openChartOptionsSidebar() {
@@ -966,6 +1019,7 @@ class PanelChart {
         this.chartOptionsWrapper.classList.remove('inactive')
         this.overlay.classList.remove('inactive')
         this.overlay.classList.add('active')
+        this.showChartOptions.style.display = 'none'
     }
 
     toggleChartOptionsSidebar() {

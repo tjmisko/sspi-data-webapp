@@ -570,15 +570,15 @@ this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())
 updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
 getTheme(){return this.currentTheme}}
 const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
-if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"#bbbbbb",circleWidth:1,guideColor:"#bbbbbb",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#111",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_lastCollisionTime:0,_collisionCooldown:1000,_LABEL_FONT:'bold 14px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);this._lastCollisionTime=0;}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
+if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"#bbbbbb",circleWidth:1,guideColor:"#bbbbbb",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#111",tooltipFont:"12px sans-serif",tooltipPad:6,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,occludedAlpha:0.15,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_lastCollisionTime:0,_collisionCooldown:1000,_LABEL_FONT:'bold 16px Arial',_POINT_SCALE:1.6,beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);this._lastCollisionTime=0;}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
 catch(e){console.error("chartInteractionPlugin onDatasetClick:",e);}}}
-chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled){this._resetProximity(chart);return;}
-const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
-const R=opts.radius;const CR=opts.clickRadius;const cr2=CR*CR;const ctx=chart.ctx;const area=chart.chartArea;chart.data.datasets.forEach(ds=>{ds.clip=false;});ctx.save();ctx.beginPath();ctx.rect(area.left,area.top,area.right-area.left,area.bottom-area.top);ctx.clip();let nearest={d2:Infinity,x:null,idx:null,valX:null};let closestDatasetMinD2=Infinity;let anyNear=false;this._interaction.closestDatasetIdx=null;chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(ds.hidden||!meta?.data?.length){ds._isNear=ds._isHover=false;return;}
+chart.draw();},beforeDatasetsDraw(chart,_args,opts){const ctx=chart.ctx;const area=chart.chartArea;if(!opts||!opts.enabled){this._resetProximity(chart);return;}
+chart.data.datasets.forEach(ds=>{ds.clip=false;});ctx.save();ctx.beginPath();ctx.rect(area.left,area.top,area.right-area.left,area.bottom-area.top);ctx.clip();chart._interactionClipApplied=true;const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
+const R=opts.radius;const CR=opts.clickRadius;const cr2=CR*CR;let nearest={d2:Infinity,x:null,idx:null,valX:null};let closestDatasetMinD2=Infinity;let anyNear=false;this._interaction.closestDatasetIdx=null;chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(ds.hidden||!meta?.data?.length){ds._isNear=ds._isHover=false;return;}
 ds._full=ds._full||{border:ds.borderColor,bg:ds.backgroundColor};ds._faded=ds._faded||this._fade(ds._full.border,opts.fadeAlpha);let datasetClosestD2=Infinity;meta.data.forEach((pt,colIdx)=>{if(!pt)return;const dx=pt.x-pos.x,dy=pt.y-pos.y,d2=dx*dx+dy*dy;if(d2<nearest.d2)nearest={d2,x:pt.x,idx:colIdx,valX:pt.parsed?.x??colIdx};if(d2<datasetClosestD2)datasetClosestD2=d2;});if(datasetClosestD2<closestDatasetMinD2-1e-3){closestDatasetMinD2=datasetClosestD2;this._interaction.closestDatasetIdx=i;}else if(Math.abs(datasetClosestD2-closestDatasetMinD2)<1e-3){if(Math.random()<0.5)this._interaction.closestDatasetIdx=i;}
 const pt=meta.data[nearest.idx];const d2pt=pt?(pt.x-pos.x)**2+(pt.y-pos.y)**2:Infinity;const near=d2pt<=R*R;const hover=d2pt<=cr2;ds._isNear=near;ds._isHover=hover;if(near)anyNear=true;ds.borderColor=near?ds._full.border:ds._faded;ds.backgroundColor=near?ds._full.bg:ds._faded;if(meta.dataset)meta.dataset.options.borderColor=ds.borderColor;meta.data.forEach(p=>{p.options.backgroundColor=ds.backgroundColor;p.options.borderColor=ds.borderColor;const clickNear=(p.x-pos.x)**2+(p.y-pos.y)**2<=cr2;if(clickNear){if(p.__origR===undefined)
 p.__origR=p.options.radius??p.radius??3;p.options.radius=p.__origR*this._POINT_SCALE;}else if(p.__origR!==undefined){p.options.radius=p.__origR;}});});if(!anyNear){this._resetProximity(chart);return;}
-this._interaction.nearest=nearest;ctx.save();ctx.beginPath();ctx.arc(pos.x,pos.y,R,0,2*Math.PI);ctx.strokeStyle=opts.circleColor;ctx.lineWidth=opts.circleWidth;ctx.setLineDash([3,3]);ctx.stroke();ctx.beginPath();ctx.moveTo(nearest.x,area.top);ctx.lineTo(nearest.x,area.bottom);ctx.strokeStyle=opts.guideColor;ctx.lineWidth=opts.guideWidth;ctx.setLineDash(opts.guideDash);ctx.stroke();ctx.restore();const vis=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const el=chart.getDatasetMeta(i).data[nearest.idx];const v=el?.parsed?.y??el?.raw;if(v==null||isNaN(v))return;vis.push({i,v});});vis.sort((a,b)=>b.v-a.v);const tot=vis.length,rankMap={};vis.forEach((o,r)=>rankMap[o.i]="#"+(r+1)+" / "+tot);const items=[];chart.data.datasets.forEach((ds,i)=>{if(!ds._isNear)return;const el=chart.getDatasetMeta(i).data[nearest.idx];let val=el?.parsed?.y??el?.raw;if(typeof val==="number")val=val.toFixed(3);const prefix=ds.CName?ds.CName+" ("+ds.CCode+")":(ds.CCode?ds.CCode+":":`Series ${i+1}:`);items.push({prefix,value:val,rank:rankMap[i]||"",colour:ds._full?ds._full.border:ds.borderColor,y:el.y,hover:ds._isHover});});items.sort((a,b)=>a.y-b.y);this._interaction.tooltipItems=items;},afterDatasetsDraw(chart,args,opts){chart.ctx.restore();},afterDraw(chart,_a,opts){if(!opts?.enabled)return;this._drawTooltip(chart,opts);this._drawLabels(chart,opts);},_drawTooltip(chart,opts){const rows=this._interaction.tooltipItems;if(!rows?.length)return;const ctx=chart.ctx;const pad=opts.tooltipPad,gap=opts.colGap,lh=14;const baseFont=opts.tooltipFont;const boldFont="bold "+baseFont;const boldItal="italic bold "+baseFont;let prefixW=0,valW=0,rankW=0;rows.forEach(r=>{ctx.font=r.hover?boldItal:baseFont;prefixW=Math.max(prefixW,ctx.measureText(r.prefix).width);});ctx.font=baseFont;rows.forEach(r=>{rankW=Math.max(rankW,ctx.measureText(" "+r.rank).width);});ctx.font=boldFont;rows.forEach(r=>{valW=Math.max(valW,ctx.measureText(r.value).width);});const header=this._headerText(chart,this._interaction.nearest.valX);const width=pad+12+prefixW+gap+valW+rankW+pad;const height=(rows.length+1)*lh+pad*2;const area=chart.chartArea;const nearestX=this._interaction.nearest.x;const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+opts.tooltipGap:nearestX-opts.tooltipGap-width;if(x+width>area.right)x=nearestX-opts.tooltipGap-width;if(x<area.left)x=nearestX+opts.tooltipGap;if(x+width>area.right)x=area.right-width-2;const above=this._interaction.mouse.y>(area.top+area.bottom)/2;let y=above?this._interaction.mouse.y-opts.radius-height-2:this._interaction.mouse.y+opts.radius+2;if(y<area.top)y=area.top+2;if(y+height>area.bottom)y=area.bottom-height-2;ctx.save();ctx.fillStyle=opts.tooltipBg;ctx.strokeStyle="rgba(0,0,0,0.25)";ctx.beginPath();ctx.rect(x,y,width,height);ctx.fill();ctx.stroke();ctx.font=boldFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(header,x+pad,y+pad+0.75*lh);rows.forEach((r,i)=>{const rowY=y+pad+lh+(i+0.75)*lh;ctx.fillStyle=r.colour;ctx.fillRect(x+pad,rowY-8,8,8);const preX=x+pad+12;const valX=preX+prefixW+gap;const rankX=valX+valW;ctx.font=r.hover?boldItal:baseFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(r.prefix,preX,rowY);ctx.font=boldFont;ctx.fillText(r.value,valX,rowY);ctx.font=baseFont;ctx.fillText(" "+r.rank,rankX,rowY);});ctx.restore();},_drawLabels(chart,opts){const ctx=chart.ctx;const labels=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;let maxXIndex=null;if(chart.options.scales.x.max!==undefined){maxXIndex=chart?.data?.labels.findIndex(y=>y===chart.options.scales.x.max);if(maxXIndex==-1){maxXIndex=null};}
+this._interaction.nearest=nearest;ctx.save();ctx.beginPath();ctx.arc(pos.x,pos.y,R,0,2*Math.PI);ctx.strokeStyle=opts.circleColor;ctx.lineWidth=opts.circleWidth;ctx.setLineDash([3,3]);ctx.stroke();ctx.beginPath();ctx.moveTo(nearest.x,area.top);ctx.lineTo(nearest.x,area.bottom);ctx.strokeStyle=opts.guideColor;ctx.lineWidth=opts.guideWidth;ctx.setLineDash(opts.guideDash);ctx.stroke();ctx.restore();const vis=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const el=chart.getDatasetMeta(i).data[nearest.idx];const v=el?.parsed?.y??el?.raw;if(v==null||isNaN(v))return;vis.push({i,v});});vis.sort((a,b)=>b.v-a.v);const tot=vis.length,rankMap={};vis.forEach((o,r)=>rankMap[o.i]="#"+(r+1)+" / "+tot);const items=[];chart.data.datasets.forEach((ds,i)=>{if(!ds._isNear)return;const el=chart.getDatasetMeta(i).data[nearest.idx];let val=el?.parsed?.y??el?.raw;if(typeof val==="number")val=val.toFixed(3);const prefix=ds.CName?ds.CName+" ("+ds.CCode+")":(ds.CCode?ds.CCode+":":`Series ${i+1}:`);items.push({prefix,value:val,rank:rankMap[i]||"",colour:ds._full?ds._full.border:ds.borderColor,y:el.y,hover:ds._isHover});});items.sort((a,b)=>a.y-b.y);this._interaction.tooltipItems=items;},afterDatasetsDraw(chart,_args,opts){const ctx=chart.ctx;if(chart._interactionClipApplied){ctx.restore();chart._interactionClipApplied=false;}},afterDraw(chart,_a,opts){if(!opts?.enabled)return;this._drawTooltip(chart,opts);this._drawLabels(chart,opts);},_drawTooltip(chart,opts){const rows=this._interaction.tooltipItems;if(!rows?.length)return;const ctx=chart.ctx;const pad=opts.tooltipPad,gap=opts.colGap,lh=14;const baseFont=opts.tooltipFont;const boldFont="bold "+baseFont;const boldItal="italic bold "+baseFont;let prefixW=0,valW=0,rankW=0;rows.forEach(r=>{ctx.font=r.hover?boldItal:baseFont;prefixW=Math.max(prefixW,ctx.measureText(r.prefix).width);});ctx.font=baseFont;rows.forEach(r=>{rankW=Math.max(rankW,ctx.measureText(" "+r.rank).width);});ctx.font=boldFont;rows.forEach(r=>{valW=Math.max(valW,ctx.measureText(r.value).width);});const header=this._headerText(chart,this._interaction.nearest.valX);const width=pad+12+prefixW+gap+valW+rankW+pad;const height=(rows.length+1)*lh+pad*2;const area=chart.chartArea;const nearestX=this._interaction.nearest.x;const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+opts.tooltipGap:nearestX-opts.tooltipGap-width;if(x+width>area.right)x=nearestX-opts.tooltipGap-width;if(x<area.left)x=nearestX+opts.tooltipGap;if(x+width>area.right)x=area.right-width-2;const above=this._interaction.mouse.y>(area.top+area.bottom)/2;let y=above?this._interaction.mouse.y-opts.radius-height-2:this._interaction.mouse.y+opts.radius+2;if(y<area.top)y=area.top+2;if(y+height>area.bottom)y=area.bottom-height-2;ctx.save();ctx.fillStyle=opts.tooltipBg;ctx.strokeStyle="rgba(0,0,0,0.25)";ctx.beginPath();ctx.rect(x,y,width,height);ctx.fill();ctx.stroke();ctx.font=boldFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(header,x+pad,y+pad+0.75*lh);rows.forEach((r,i)=>{const rowY=y+pad+lh+(i+0.75)*lh;ctx.fillStyle=r.colour;ctx.fillRect(x+pad,rowY-8,8,8);const preX=x+pad+12;const valX=preX+prefixW+gap;const rankX=valX+valW;ctx.font=r.hover?boldItal:baseFont;ctx.fillStyle=opts.tooltipFg;ctx.fillText(r.prefix,preX,rowY);ctx.font=boldFont;ctx.fillText(r.value,valX,rowY);ctx.font=baseFont;ctx.fillText(" "+r.rank,rankX,rowY);});ctx.restore();},_drawLabels(chart,opts){const ctx=chart.ctx;const labels=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta?.data?.length)return;let maxXIndex=null;if(chart.options.scales.x.max!==undefined){maxXIndex=chart?.data?.labels.findIndex(y=>y===chart.options.scales.x.max);if(maxXIndex==-1){maxXIndex=null};}
 let last=null;let j=maxXIndex!==undefined&&maxXIndex!==null&&maxXIndex<meta.data.length?maxXIndex:meta.data.length-1;while(j>=0){const el=meta.data[j];if(el?.parsed?.y!==null){last=el;break;}
 --j}
 if(!last)return;const text=ds[opts.labelField]??'';this._setupCanvas(ctx,this._LABEL_FONT,'#000');const w=ctx.measureText(text).width;ctx.restore();const x=last.x+5;const y=last.y+4;labels.push({idx:i,text,colour:ds.borderColor??'#000',x,y,box:{left:x,right:x+w,top:y-14,bottom:y},order:0,isPinned:!!ds.pinned});});const animating=chart.animating||(chart._animations&&chart._animations.size)||(chart.animations&&chart.animations.size);if(animating){chart._labelRandDone=false;chart._defaultVisibleLabels=null;labels.forEach(l=>{this._setupCanvas(ctx,this._LABEL_FONT,l.colour,opts.animAlpha);ctx.fillText(l.text,l.x,l.y);ctx.restore();});return;}
@@ -1087,7 +1087,7 @@ this.highlightTreeItem(itemCode);}}
 destroy(){if(this.container&&this.boundHandleKeyDown){this.container.removeEventListener('keydown',this.boundHandleKeyDown);this.container.removeEventListener('click',this.boundHandleClick);}
 if(document.body&&this.boundHandleFocusChange){document.body.removeEventListener('focusin',this.boundHandleFocusChange);document.body.removeEventListener('mousedown',this.boundHandleFocusChange);}
 this.container=null;this.reload=null;this.rootNode=null;this.navigationManager=null;this.tree=null;this.navShell=null;this.activeItemCode=null;this.boundHandleKeyDown=null;this.boundHandleClick=null;this.boundHandleFocusChange=null;}}
-class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',colorProvider=SSPIColors,startYear=2000,endYear=2025}){this.parentElement=parentElement
+class PanelChart{constructor(parentElement,{CountryList=[],endpointURL='',colorProvider=SSPIColors,startYear=2000,endYear=2025,favorCachedTimePeriod=true,yBeginAtZero=true}){this.parentElement=parentElement
 this.CountryList=CountryList
 this.endpointURL=endpointURL
 this.pins=new Set()
@@ -1095,6 +1095,14 @@ this.missingCountries=[]
 this.colorProvider=colorProvider
 this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
 this.chartInteractionPlugin=chartInteractionPlugin
+this.favorCachedTimePeriod=favorCachedTimePeriod
+this.argDefaultStartYear=startYear
+this.argDefaultEndYear=endYear
+this.yBeginAtZero=yBeginAtZero
+let cachedStartYear=window.observableStorage.getItem('startYear')
+if(cachedStartYear&&favorCachedTimePeriod){startYear=cachedStartYear}
+let cachedEndYear=window.observableStorage.getItem('endYear')
+if(cachedStartYear&&favorCachedTimePeriod){endYear=cachedEndYear}
 this.startYear=startYear
 this.endYear=endYear
 this.setTheme(window.observableStorage.getItem("theme"))
@@ -1108,7 +1116,7 @@ this.rigChartOptions()
 this.rigItemDropdown()
 this.rigCountryGroupSelector()
 this.updateChartOptions()
-this.rigLegend()
+this.updateYearRange({startYear:this.startYear,endYear:this.endYear});this.rigLegend()
 this.fetch(this.endpointURL).then(data=>{this.update(data)})
 this.rigPinChangeListener()
 this.rigUnloadListener()}
@@ -1117,7 +1125,7 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="country-information chart-options-details"><summary class="item-information-summary">Country Information</summary><div class="country-information-box"data-unpopulated=true>Click on a Country to Show Details and Links Here.</div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button><button class="add-country-button">Search Country</button></div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Year Range</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label">Start Year</label><input type="number"class="start-year"value="${this.startYear}"min="2000"max="2023"/></div><div class="randomization-options"><label class="title-bar-label">End Year</label><input type="number"class="end-year"value="${this.endYear}"min="2000"max="2023"/></div></div><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="country-information chart-options-details"><summary class="item-information-summary">Country Information</summary><div class="country-information-box"data-unpopulated=true>Click on a Country to Show Details and Links Here.</div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div><div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button><button class="add-country-button">Search Country</button></div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend><div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader"><div>Year Range</div><button class="reset-year-range-button">Reset to Default</button></div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label">Start Year</label><input type="number"class="start-year"value="${this.startYear}"min="2000"max="2025"/></div><div class="randomization-options"><label class="title-bar-label">End Year</label><input type="number"class="end-year"value="${this.endYear}"min="2000"max="2025"/></div></div><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div><div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -1148,10 +1156,14 @@ this.drawButton.innerText="Draw "+this.randomN.toString()+" Countries ";this.dra
 this.showInGroupButton=this.chartOptions.querySelector('.show-in-group-button')
 this.showInGroupButton.addEventListener('click',()=>{const activeGroup=this.groupOptions[this.countryGroupSelector.selectedIndex]
 this.showGroup(activeGroup)})
+this.resetYearInput=this.chartOptions.querySelector('.reset-year-range-button')
+this.resetYearInput.addEventListener('click',(event)=>{this.resetYearRange()})
 this.startYearInput=this.chartOptions.querySelector('.start-year')
-this.startYearInput.addEventListener('change',(event)=>{this.updateYearRange({startYear:this.startYearInput.value})})
+this.startYearInput.addEventListener('change',(event)=>{if(this.startYearInput.value<this.startYearInput.min){this.startYearInput.classList.add("invalid-year-input")}else if(this.startYearInput.value>this.startYearInput.max){this.startYearInput.classList.add("invalid-year-input")}else{this.startYearInput.classList.remove("invalid-year-input")}
+this.updateYearRange({startYear:this.startYearInput.value})})
 this.endYearInput=this.chartOptions.querySelector('.end-year')
-this.endYearInput.addEventListener('change',(event)=>{this.updateYearRange({endYear:this.endYearInput.value})})
+this.endYearInput.addEventListener('change',(event)=>{if(this.endYearInput.value<this.endYearInput.min){this.endYearInput.classList.add("invalid-year-input")}else if(this.endYearInput.value>this.endYearInput.max){this.endYearInput.classList.add("invalid-year-input")}else{this.endYearInput.classList.remove("invalid-year-input")}
+this.updateYearRange({endYear:this.endYearInput.value})})
 this.randomNumberField=this.chartOptions.querySelector('.random-country-sample')
 this.randomNumberField.value=this.randomN
 this.randomNumberField.addEventListener('input',(event)=>{this.updateRandomN(this.randomNumberField.value)})
@@ -1171,8 +1183,8 @@ this.titleActions=this.chartContainer.querySelector('.panel-chart-title-actions'
 this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
 this.context=this.canvas.getContext('2d')
 this.chart=new Chart(this.context,{type:'line',plugins:[this.chartInteractionPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},tooltip:{enabled:false,},chartInteractionPlugin:{enabled:true,radius:20,clickRadius:4,tooltipBg:this.headerBackgroundColor,tooltipFg:this.titleColor,circleColor:this.tickColor,guideColor:this.tickColor,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:5,onDatasetClick:(datasets,event,chart)=>{datasets.forEach((dataset)=>{this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
-this.updateCountryInformation();});}},},layout:{padding:{right:40,bottom:40}}}})}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
+this.updateCountryInformation();});}},},layout:{padding:{right:40,}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},min:this.startYear,max:this.endYear,title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:this.yBeginAtZero,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
 rigCountryGroupSelector(){this.countryGroupSelector=this.chartOptions.querySelector('.country-group-selector')
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
 this.hideUnpinnedButton=this.chartOptions.querySelector('.hideunpinned-button')
@@ -1190,11 +1202,12 @@ this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
 this.legendItems=this.legend.querySelector('.legend-items')}
 updateCountryInformation(){if(!this.activeCountry)return;this.countryInformationBox.dataset.unpopulated=false
 const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";let dataset=this.chart.data.datasets.find((ds)=>{return ds.CCode===this.activeCountry.CCode})
-const avgScore=(dataset.score.reduce((a,b)=>a+b)/dataset.score.length)
-const minScore=Math.min(...dataset.score)
-const maxScore=Math.max(...dataset.score)
-const minScoreYear=dataset.score.findIndex((el)=>el===minScore)+this.startYear
-const maxScoreYear=dataset.score.findIndex((el)=>el===maxScore)+this.startYear
+const startIndex=this.startYear-2000;const endIndex=this.endYear-2000+1;const yearScreen=dataset.score.slice(startIndex,endIndex)
+const avgScore=(yearScreen.reduce((a,b)=>a+b)/yearScreen.length)
+const minScore=Math.min(...yearScreen)
+const maxScore=Math.max(...yearScreen)
+const minScoreYear=yearScreen.findIndex((el)=>el===minScore)+this.startYear
+const maxScoreYear=yearScreen.findIndex((el)=>el===maxScore)+this.startYear
 this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"><div class="summary-stat-line"><span class="summary-stat-label">Average:</span><span class="summary-stat-score">${avgScore.toFixed(3)}</span><span class="summary-stat-year">${this.startYear}-${this.endYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Minimum:</span><span class="summary-stat-score">${minScore.toFixed(3)}</span><span class="summary-stat-year">${minScoreYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Maximum:</span><span class="summary-stat-score">${maxScore.toFixed(3)}</span><span class="summary-stat-year">${maxScoreYear}</span></div></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
 this.updateCountryInformation();}});}}
 updateLegend(){function generateListener(countryCode,PanelChartObject){function listener(){let dataset=PanelChartObject.chart.data.datasets.find((d)=>d.CCode===countryCode);if(dataset){PanelChartObject.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
@@ -1245,7 +1258,13 @@ return}
 if(this.startYear>this.endYear){this.endYear=this.startYear+1
 console.log("Invalid End Year: End Year must not be less than or equal to start Year")
 return}
-this.chart.options.scales.x.min=this.startYear.toString();this.chart.options.scales.x.max=this.endYear.toString();this.updateCountryInformation();this.updateChartPreservingYAxis();}
+if(this.startYearInput.value!=this.startYear){this.startYearInput.value=this.startYear}
+if(this.endYearInput.value!=this.endYear){this.endYearInput.value=this.endYear}
+this.chart.options.scales.x.min=this.startYear;this.chart.options.scales.x.max=this.endYear;this.updateCountryInformation();this.updateChartPreservingYAxis();window.observableStorage.setItem("startYear",this.startYear)
+window.observableStorage.setItem("endYear",this.endYear)}
+resetYearRange(){this.updateYearRange({startYear:this.argDefaultStartYear,endYear:this.argDefaultEndYear})
+this.startYearInput.classList.remove("invalid-year-input")
+this.endYearInput.classList.remove("invalid-year-input")}
 updateDescription(description){const dbox=this.chartOptions.querySelector('.dynamic-item-description')
 dbox.innerHTML='<p><b>Description: </b> '+description+'</p>'
 var itemCode;if(this.activeItemCode){itemCode=this.activeItemCode;}else if(this.itemCode){itemCode=this.itemCode;}
@@ -1281,6 +1300,7 @@ try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
+console.log("Data Labels:",this.chart.data.labels)
 if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.title.innerText=data.title
 this.itemType=data.itemType
@@ -1391,13 +1411,15 @@ this.chartOptions.classList.add('inactive')
 this.chartOptionsWrapper.classList.remove('active')
 this.chartOptionsWrapper.classList.add('inactive')
 this.overlay.classList.remove('active')
-this.overlay.classList.add('inactive')}
+this.overlay.classList.add('inactive')
+this.showChartOptions.style.display='block'}
 openChartOptionsSidebar(){this.chartOptions.classList.add('active')
 this.chartOptions.classList.remove('inactive')
 this.chartOptionsWrapper.classList.add('active')
 this.chartOptionsWrapper.classList.remove('inactive')
 this.overlay.classList.remove('inactive')
-this.overlay.classList.add('active')}
+this.overlay.classList.add('active')
+this.showChartOptions.style.display='none'}
 toggleChartOptionsSidebar(){if(this.chartOptions.classList.contains('active')){this.closeChartOptionsSidebar()}else{this.openChartOptionsSidebar()}}
 dumpChartDataJSON(scope='visible'){const observations=this.chart.data.datasets.map(dataset=>{const shouldInclude=this.shouldIncludeDataset(dataset,scope)
 if(!shouldInclude){return[]}
@@ -1529,6 +1551,7 @@ this.updateCountryInformation();}});}}
 update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data=data
 this.chart.data.labels=data.labels
+console.log("Data Labels:",this.chart.data.labels)
 this.chart.data.datasets=data.data
 this.chart.options.plugins.title=data.title
 this.groupOptions=data.groupOptions
@@ -1544,11 +1567,11 @@ this.chart.options.scales.y.max=data.yMax
 this.chart.update()
 this.computeMissingCountriesAsync()
 this.activeCountry=window.observableStorage.getItem("activeCountry")||null;if(this.activeCountry){this.updateCountryInformation();}}}
-class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
+class ScorePanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[]}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`})
 this.itemCode=itemCode
 this.moveBurgerToBreadcrumb()}
 moveBurgerToBreadcrumb(){if(this.showChartOptions&&this.breadcrumbActions){this.breadcrumbActions.appendChild(this.showChartOptions)}}
-updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",min:this.startYear.toString(),max:this.endYear.toString(),title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:0,max:1,title:{display:true,text:'Indicator Score',color:this.axisTitleColor,font:{size:16}}}}}
 updateItemDropdown(options,itemType){let itemTypeCapped=itemType
 if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
 const itemTitle=itemTypeCapped+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
@@ -1594,7 +1617,7 @@ this.moveBurgerToBreadcrumb()}
 moveBurgerToBreadcrumb(){if(this.showChartOptions&&this.breadcrumbActions){this.breadcrumbActions.appendChild(this.showChartOptions)}}
 updateChartOptions(){let yAxisTitle='Item Value'
 if(this.activeSeries===this.itemCode){yAxisTitle='Indicator Score'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-if(dataset){const baseName=dataset.datasetName||dataset.datasetCode
+if(dataset){const baseName="Dataset: "+dataset.datasetName||dataset.datasetCode
 const unit=dataset.unit||dataset.Unit
 yAxisTitle=unit?`${baseName}(${unit})`:baseName}}
 this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:this.currentYMin,max:this.currentYMax,title:{display:true,text:yAxisTitle,color:this.axisTitleColor,font:{size:16}}}}}
@@ -1616,6 +1639,7 @@ this.updateChartOptions()
 this.updateActiveSeriesDescription()
 this.updateYAxisInputs()
 this.updateRestoreButton()
+this.updateYearRange()
 this.chart.update()}
 setYAxisMinMax(min,max,update=true){this.currentYMin=Math.round(min*100)/100
 this.currentYMax=Math.round(max*100)/100
@@ -1709,27 +1733,24 @@ this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
 updateChartTitle(){if(!this.title)return
 if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
 if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
-this.title.innerText=`${dataset.datasetCode}-${datasetName}`;}else{this.title.innerText=this.activeSeries;}
+this.title.innerText=datasetName+' ('+dataset.datasetCode+')'}else{this.title.innerText=this.activeSeries;}
 this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}
 updateSeriesDropdown(){if(!this.seriesSelector){return}
 this.seriesSelector.innerHTML=''
 const indicatorOption=document.createElement('option')
 indicatorOption.value=this.itemCode
-indicatorOption.textContent=this.itemCode+' Indicator Score'
+indicatorOption.textContent="Indicator: "+this.itemCode+' Indicator Score'
 this.seriesSelector.appendChild(indicatorOption)
 if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const option=document.createElement('option')
 option.value=dataset.datasetCode
-option.textContent=dataset.datasetName||dataset.datasetCode
+option.textContent="Dataset: "+dataset.datasetName||dataset.datasetCode
 this.seriesSelector.appendChild(option)})}
 this.seriesSelector.value=this.activeSeries
 this.updateYAxisInputs()}
 updateActiveSeriesDescription(){const activeSeriesDescription=this.chartOptions.querySelector('.active-series-description')
-if(!activeSeriesDescription){console.warn('Active series description element not found')
-return}
+if(!activeSeriesDescription){return}
 const contentDiv=activeSeriesDescription.querySelector('.active-series-description-content')
-if(!contentDiv){console.warn('Active series description content element not found')
-return}
-console.log('Updating active series description for:',this.activeSeries)
+if(!contentDiv){return}
 if(this.activeSeries===this.itemCode){activeSeriesDescription.style.display='none'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
 console.log('Found dataset:',dataset)
 if(dataset&&dataset.description){contentDiv.innerHTML='<strong>Dataset:</strong> '+dataset.description
