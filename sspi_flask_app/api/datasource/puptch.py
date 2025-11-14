@@ -1,11 +1,12 @@
 from sspi_flask_app.models.database import sspi_raw_api_data
 import pandas as pd 
-from ..resources.utilities import get_country_code
+from ..resources.utilities import get_country_code, parse_json
 import requests
 import zipfile
 import json
 import re
-from io import BytesIO, StringIO
+import io
+from sspi_flask_app.models.database import sspi_raw_api_data, sspi_clean_api_data, sspi_metadata
 
 def collect_puptch_csv_data(**kwargs):
     local_csv_file_owd = pd.read_csv('https://ourworldindata.org/grapher/pupil-teacher-ratio-for-primary-education-by-country.csv?v=1&csvType=full&useColumnShortNames=true')
@@ -52,25 +53,67 @@ def collect_puptch_zip_data(**kwargs):
 
 
 
-# def clean_puptch_data(raw_data):
-#     local_csv_file = pd.read_csv('https://ourworldindata.org/grapher/pupil-teacher-ratio-for-primary-education-by-country.csv?v=1&csvType=full&useColumnShortNames=true')
-#     columns = ['Country', '2014', 'Rank_2014', '2017', 'Rank_2017', '2018', 'Rank_2018','2020', 'Rank_2020', '2024', 'Rank_2024']
-#     df = pd.DataFrame(local_csv_file, columns=columns)
+def clean_puptch_csv_data(raw_data, dataset_code, unit, description):
+    source_info = sspi_metadata.get_source_info(dataset_code)
+    base_url = source_info['BaseURL']
+    csv_Raw_text_data = None
 
-#     df['2024'] = df['2024'] / 100
-#     df['2020'] = df['2020'] / 100
+    #iterate through each value in list to get the dictionaries 
+    # then check whether the base URL for the DatasetCode equal to the url from the raw data
+    for i in range(len(raw_data)):
+        entry = raw_data[i]
+        if entry['Source']['BaseURL'] == base_url:
+            csv_Raw_text_data = entry['Raw'] 
+    if csv_Raw_text_data == None:
+        raise ValueError(f"csv_Raw_data in clean_puptch_csv_data is None")
 
-#     df_year_only = df.drop(['Rank_2014','Rank_2017', 'Rank_2018', 'Rank_2020', 'Rank_2024'], axis = 1)
-#     df_melted = df_year_only.melt(id_vars=['Country'], 
-#                      value_vars=['2014', '2017', '2018', '2020', '2024'], 
-#                      var_name='Year', 
-#                      value_name='Value')
+    df = pd.read_csv(io.StringIO(csv_Raw_text_data))
+    df = df.rename(columns = {"Pupil-qualified teacher ratio in primary education": "Value"})
+    df['DatasetCode'] = dataset_code
+    df['Description'] = description
+    df['Unit'] = unit
+    df['CountryCode'] = df['Entity'].apply(get_country_code)
+    df['Year'] = df['Year'].astype(int)
+    df = df.iloc[:, ["CountryCode", "DatasetCode", "Description", "Unit", "Value", "Year"]]
+    df = df.dropna()
+    rows = df.to_dict(orient="records")
+
+    return parse_json(rows)
+
+
+
+def clean_puptch_zip_data(raw_data, dataset_code, unit, description):
+    source_info = sspi_metadata.get_source_info(dataset_code)
+    base_url = source_info['BaseURL']
+    csv_Raw_text_data = None
+
+    #iterate through each value in list to get the dictionaries 
+    # then check whether the base URL for the DatasetCode equal to the url from the raw data
+    for i in range(len(raw_data)):
+        entry = raw_data[i]
+        if entry['Source']['BaseURL'] == base_url:
+            raw = entry['Raw'] 
+            csv_Raw_text_data = raw.encode('utf-8').decode('unicode_escape')
+
+    if csv_Raw_text_data == None:
+        raise ValueError(f"csv_Raw_data in clean_puptch_csv_data is None")
     
-#     df_melted['Unit'] = 'Percentage'
-#     df_melted['IndicatorCode'] = 'CYBSEC'
-#     df_final = df_melted.dropna()
+    csv_Raw_text_data = io.StringIO(csv_Raw_text_data)
+    df = pd.read_csv(csv_Raw_text_data)
+    df_long = df.melt(id_vars=["country", "iso_3"], var_name="Year", value_name="Value")
+    df_long = df_long.rename(columns={"country": "Country_name","iso_3": "geo_unit"})
+    df_long['DatasetCode'] = dataset_code
+    df_long['Description'] = description
+    df_long['Unit'] = unit
+    df_long['CountryCode'] = df_long['Country_name'].apply(get_country_code)
+    df_long['Year'] = df_long['Year'].astype(int)
+    df_long = df_long.iloc[:, ["CountryCode", "DatasetCode", "Description", "Unit", "Value", "Year"]]
+    df_long = df_long.dropna()
+    rows = df_long.to_dict(orient="records")
+    return parse_json(rows)
 
-#     df_final['CountryCode'] = df_final['Country'].apply(get_country_code)
-#     df_final['Year'] = df_final['Year'].astype(int)
-#     df_f = df_final.drop('Country', axis = 1)
-#     return df_f
+
+
+
+
+
