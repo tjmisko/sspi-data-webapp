@@ -28,7 +28,7 @@ def collect_puptch_zip_data(**kwargs):
         err = f"(HTTP Error {res.status_code})"
         yield "Failed to fetch data from source" + err
         return
-    with zipfile.ZipFile(BytesIO(res.content)) as z:
+    with zipfile.ZipFile(io.BytesIO(res.content)) as z:
         for f in z.namelist():
             if "data.csv" in f:
                 with z.open(f) as data:
