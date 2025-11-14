@@ -6,5 +6,7 @@ Description: Average number of pupils per qualified teacher at each level of edu
 Source:
   OrganizationName: United Nations Educational, Scientific and Cultural Organization
   OrganizationCode: UNESCO
+  OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://api.uis.unesco.org/api/public/data/indicators/export?indicator=PTRHC.1.QUALIFIED&start=2000&end=2025&indicatorMetadata=false&footnotes=false&version=20250917-73f4b95c&format=csv
 ---

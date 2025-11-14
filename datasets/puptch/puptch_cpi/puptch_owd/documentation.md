@@ -6,5 +6,7 @@ Description: Average number of pupils per qualified teacher at a given level of 
 Source:
   OrganizationName: Global Change Data Lab
   OrganizationCode: GCDL
+  OrganizationSeriesCode: null
+  QueryCode: null
   BaseURL: https://ourworldindata.org/grapher/pupil-teacher-ratio-for-primary-education-by-country.csv?v=1&csvType=full&useColumnShortNames=true
 ---
