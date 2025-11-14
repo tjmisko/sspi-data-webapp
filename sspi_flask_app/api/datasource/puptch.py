@@ -14,8 +14,6 @@ def collect_puptch_csv_data(**kwargs):
     source_info_owd = {
         "OrganizationName": "Global Change Data Lab",
         "OrganizationCode": "GCDL",
-        "OrganizationSeriesCode": "",
-        "QueryCode": "",
         "BaseURL": "https://ourworldindata.org/grapher/pupil-teacher-ratio-for-primary-education-by-country.csv?v=1&csvType=full&useColumnShortNames=true"
     }
     count_owd = sspi_raw_api_data.raw_insert_one(csv_string_owd, source_info_owd, **kwargs)
@@ -39,10 +37,7 @@ def collect_puptch_zip_data(**kwargs):
                     source_inf_unesco = {
                         "OrganizationName": "United Nations Educational, Scientific and Cultural Organization",
                         "OrganizationCode": "UNESCO",
-                        "OrganizationSeriesCode": "",
-                        "QueryCode": "",
                         "BaseURL": "https://api.uis.unesco.org/api/public/data/indicators/export?indicator=PTRHC.1.QUALIFIED&start=2000&end=2025&indicatorMetadata=false&footnotes=false&version=20250917-73f4b95c&format=csv"
-
                     }
                     sspi_raw_api_data.raw_insert_one(
                         csv_string_unesco, source_inf_unesco, **kwargs
