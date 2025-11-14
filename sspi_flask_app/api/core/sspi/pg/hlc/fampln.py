@@ -18,11 +18,11 @@ from sspi_flask_app.api.resources.utilities import (
 def compute_fampln():
     app.logger.info("Running /api/v1/compute/FAMPLN")
     sspi_indicator_data.delete_many({"IndicatorCode": "FAMPLN"})
-    fampln_clean = sspi_clean_api_data.find({"DatasetCode": "WHO_FAMPLN"})
+    fampln_clean = sspi_clean_api_data.find({"DatasetCode": "UNPD_FAMPLN"})
     lg, ug = sspi_metadata.get_goalposts("FAMPLN")
     scored_list, _ = score_indicator(
         fampln_clean, "FAMPLN",
-        score_function=lambda UNSDG_FAMPLN: goalpost(UNSDG_FAMPLN, lg, ug),
+        score_function=lambda UNPD_FAMPLN: goalpost(UNPD_FAMPLN, lg, ug),
         unit="%"
     )
     sspi_indicator_data.insert_many(scored_list)
