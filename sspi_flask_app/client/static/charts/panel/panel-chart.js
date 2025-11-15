@@ -404,6 +404,11 @@ class PanelChart {
                 }
             }
         }
+        this.chart.options.plugins.chartInteractionPlugin.tooltipBg = this.headerBackgroundColor;
+        this.chart.options.plugins.chartInteractionPlugin.tooltipFg = this.titleColor;
+        this.chart.options.plugins.chartInteractionPlugin.tooltipFgAccent = this.greenAccent || "green";
+        this.chart.options.plugins.chartInteractionPlugin.circleColor = this.tickColor;
+        this.chart.options.plugins.chartInteractionPlugin.guideColor = this.tickColor;
     }
 
     rigCountryGroupSelector() {
@@ -735,6 +740,10 @@ class PanelChart {
 
     setTheme(theme) {
         const root = document.documentElement
+        const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
+        this.headerBackgroundColor = bg
+        const greenAccent = getComputedStyle(root)?.getPropertyValue('--green-accent')?.trim() || "green";
+        this.greenAccent = greenAccent
         if (theme !== "light") {
             this.theme = "dark"
             this.tickColor = "#bbb"
@@ -749,8 +758,6 @@ class PanelChart {
             this.titleColor = "#444"
             this.headerBackgroundColor = "#f0f0f0"
         }
-        const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
-        this.headerBackgroundColor = bg
         if (this.chart) {
             this.updateChartOptions()
             this.updateChartPreservingYAxis()

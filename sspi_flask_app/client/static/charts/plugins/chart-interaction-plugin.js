@@ -37,8 +37,9 @@ const chartInteractionPlugin = {
         // Tooltip settings
         tooltipBg: "rgba(255,255,255,0.85)",
         tooltipFg: "#111",
+        tooltipFgAccent: "#AECC53",
         tooltipFont: "12px sans-serif",
-        tooltipPad: 6,
+        tooltipPad: 8,
         tooltipGap: 10,
         colGap: 6,
 
@@ -313,14 +314,14 @@ const chartInteractionPlugin = {
 
         this._interaction.tooltipItems = items;
     },
-    
+
     /* ---------- restore context to clip left edge -------------------- */
     afterDatasetsDraw(chart, _args, opts) {
-      const ctx = chart.ctx;
-      if (chart._interactionClipApplied) {
-        ctx.restore();
-        chart._interactionClipApplied = false;
-      }
+        const ctx = chart.ctx;
+        if (chart._interactionClipApplied) {
+            ctx.restore();
+            chart._interactionClipApplied = false;
+        }
     },
 
     /* ---------- unified drawing: tooltip + labels -------------------- */
@@ -341,70 +342,171 @@ const chartInteractionPlugin = {
         const boldFont = "bold " + baseFont;
         const boldItal = "italic bold " + baseFont;
 
-        /* column widths */
-        let prefixW=0,valW=0,rankW=0;
-        rows.forEach(r=>{
+        /* ================================================================
+     * 1. Parse rank into padded 4-segment block:
+     *      "  # "   +   [num centered]   +   " / "   +   [den centered]
+     * ================================================================ */
+        rows.forEach(r => {
+            const raw = (r.rank || "").replace(/\s+/g, "");
+            const m = raw.match(/^#?(\d+)(?:\/(\d+))?$/);
+
+            if (m) {
+                r.rankHash  = "  # ";         // TWO spaces + "#" + ONE space
+                r.rankNum   = m[1];           // "3", "12"
+                r.rankSlash = " / ";          // ONE space + "/" + ONE space
+                r.rankDen   = m[2] || "";
+            } else {
+                r.rankHash  = "  # ";
+                r.rankNum   = "";
+                r.rankSlash = " / ";
+                r.rankDen   = "";
+            }
+        });
+
+        /* ================================================================
+     * 2. Measure columns INCLUDING padded strings
+     * ================================================================ */
+
+        // prefix column
+        let prefixW = 0;
+        rows.forEach(r => {
             ctx.font = r.hover ? boldItal : baseFont;
             prefixW = Math.max(prefixW, ctx.measureText(r.prefix).width);
         });
-        ctx.font = baseFont;
-        rows.forEach(r=>{ rankW = Math.max(rankW, ctx.measureText(" "+r.rank).width); });
+
+        // value column
         ctx.font = boldFont;
-        rows.forEach(r=>{ valW = Math.max(valW, ctx.measureText(r.value).width); });
+        let valW = 0;
+        rows.forEach(r => {
+            valW = Math.max(valW, ctx.measureText(r.value).width);
+        });
 
-        const header = this._headerText(chart, this._interaction.nearest.valX);
-        const width = pad+12+prefixW+gap+valW+rankW+pad;
-        const height = (rows.length+1)*lh + pad*2;
+        // rank block
+        ctx.font = baseFont;
 
-        /* position */
+        const hashW  = ctx.measureText("  # ").width;  // padded hash block
+        const slashW = ctx.measureText(" / ").width;    // padded slash block
+
+        let numW = 0;
+        let denW = 0;
+        rows.forEach(r => {
+            numW = Math.max(numW, ctx.measureText(r.rankNum).width);
+            denW = Math.max(denW, ctx.measureText(r.rankDen).width);
+        });
+
+        const rankBlockW = hashW + numW + slashW + denW;
+
+        /* ================================================================
+     * 3. Header width — your original logic (kept)
+     * ================================================================ */
+
+        const yearText = this._yearText(chart, this._interaction.nearest.valX);
+        const itemCodeHeader = chart.data.datasets[0].ICode + " Score";
+
+        ctx.font = boldFont;
+        const itemWidth = ctx.measureText(itemCodeHeader).width;
+        const yearWidth = ctx.measureText(yearText).width;
+        const headerWidth = pad + Math.max(itemWidth, yearWidth) + pad;
+
+        /* body width uses rankBlockW now */
+        const bodyWidth = pad + 12 + prefixW + gap + valW + rankBlockW + pad;
+        const width = Math.max(bodyWidth, headerWidth);
+        const height = (rows.length + 1) * lh + pad * 2;
+
+        /* ================================================================
+     * 4. Position (your original logic)
+     * ================================================================ */
+
         const area = chart.chartArea;
         const nearestX = this._interaction.nearest.x;
-        const right = nearestX < (area.left+area.right)/2;
+        const right = nearestX < (area.left + area.right) / 2;
         let x = right ? nearestX + opts.tooltipGap
             : nearestX - opts.tooltipGap - width;
-        if (x+width>area.right) x = nearestX - opts.tooltipGap - width;
-        if (x<area.left) x = nearestX + opts.tooltipGap;
-        if (x+width>area.right) x = area.right - width - 2;
 
-        const above = this._interaction.mouse.y > (area.top+area.bottom)/2;
-        let y = above ? this._interaction.mouse.y - opts.radius - height - 2
+        if (x + width > area.right) x = nearestX - opts.tooltipGap - width;
+        if (x < area.left) x = nearestX + opts.tooltipGap;
+        if (x + width > area.right) x = area.right - width - 2;
+
+        const above = this._interaction.mouse.y > (area.top + area.bottom) / 2;
+        let y = above
+            ? this._interaction.mouse.y - opts.radius - height - 2
             : this._interaction.mouse.y + opts.radius + 2;
-        if (y<area.top) y = area.top + 2;
-        if (y+height>area.bottom) y = area.bottom - height - 2;
 
-        /* box */
+        if (y < area.top) y = area.top + 2;
+        if (y + height > area.bottom) y = area.bottom - height - 2;
+
+        /* ================================================================
+     * 5. Draw box
+     * ================================================================ */
         ctx.save();
         ctx.fillStyle = opts.tooltipBg;
         ctx.strokeStyle = "rgba(0,0,0,0.25)";
         ctx.beginPath();
-        ctx.rect(x,y,width,height);
-        ctx.fill(); ctx.stroke();
+        ctx.rect(x, y, width, height);
+        ctx.fill();
+        ctx.stroke();
 
-        /* header */
+        /* ================================================================
+     * 6. Header (your logic remains exactly)
+     * ================================================================ */
         ctx.font = boldFont;
+        const headerY = y + pad + 0.75 * lh;
+
+        ctx.textAlign = "left";
         ctx.fillStyle = opts.tooltipFg;
-        ctx.fillText(header, x+pad, y+pad+0.75*lh);
+        ctx.fillText(itemCodeHeader, x + pad, headerY);
 
-        /* rows */
-        rows.forEach((r,i)=>{
-            const rowY = y+pad+lh+(i+0.75)*lh;
+        ctx.textAlign = "right";
+        ctx.fillStyle = opts.tooltipFgAccent;
+        ctx.fillText(yearText, x + width - pad, headerY);
+
+        ctx.textAlign = "left";
+
+        /* ================================================================
+     * 7. Draw rows with padded rank block
+     * ================================================================ */
+        rows.forEach((r, i) => {
+            const rowY = y + pad + lh + (i + 0.75) * lh;
+
+            // color box
             ctx.fillStyle = r.colour;
-            ctx.fillRect(x+pad,rowY-8,8,8);
+            ctx.fillRect(x + pad, rowY - 8, 8, 8);
 
-            const preX = x+pad+12;
-            const valX = preX+prefixW+gap;
-            const rankX = valX+valW;
+            const preX  = x + pad + 12;
+            const valX  = preX + prefixW + gap;
+            const rankX = valX + valW;
 
+            // prefix
             ctx.font = r.hover ? boldItal : baseFont;
             ctx.fillStyle = opts.tooltipFg;
             ctx.fillText(r.prefix, preX, rowY);
 
+            // value
             ctx.font = boldFont;
             ctx.fillText(r.value, valX, rowY);
 
+            // rank block
             ctx.font = baseFont;
-            ctx.fillText(" "+r.rank, rankX, rowY);
+            let rx = rankX;
+
+            // 1. "  # "
+            ctx.fillText(r.rankHash, rx, rowY);
+            rx += hashW;
+
+            // 2. centered rank number
+            const numActual = ctx.measureText(r.rankNum).width;
+            ctx.fillText(r.rankNum, rx + (numW - numActual) / 2, rowY);
+            rx += numW;
+
+            // 3. " / "
+            ctx.fillText(r.rankSlash, rx, rowY);
+            rx += slashW;
+
+            // 4. centered denominator
+            const denActual = ctx.measureText(r.rankDen).width;
+            ctx.fillText(r.rankDen, rx + (denW - denActual) / 2, rowY);
         });
+
         ctx.restore();
     },
 
@@ -740,7 +842,7 @@ const chartInteractionPlugin = {
         return col;
     },
 
-    _headerText(chart, v) {
+    _yearText(chart, v) {
         const xs = chart.scales?.x;
         if (xs?.getLabelForValue) return String(xs.getLabelForValue(v));
         const lbls = chart.data?.labels;
