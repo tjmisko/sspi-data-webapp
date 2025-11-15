@@ -8,6 +8,7 @@ Description: An index measuring the sustainability of Nitrogen management based 
   of nitrogen fertilizer with maximum crop yields as a measure of the environmental
   performance of agricultural production. The 2022 EPI uses the SNMI as a proxy for
   agricultural drivers of environmental damage.
+Unit: Index
 Source:
   OrganizationCode: EPI
   OrganizationSeriesCode: SNM

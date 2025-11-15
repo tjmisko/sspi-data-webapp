@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Social Protection Coverage
 DatasetCode: UNSDG_SOCPRT
 Description: Proportion of population covered by at least one social protection benefit, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

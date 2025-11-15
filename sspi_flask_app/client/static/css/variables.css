@@ -49,6 +49,7 @@
   --subheader-background-color:  rgba(250,200,0,0.75);
   --box-background-color: #ffffff;
   --region-background-color: #F5F5F5;
+  --pre-background-color: #dedede44;
   --header-text-color: #1f2937;
   --header-font-color: #1f2937;
   --body-text-color: #4b5563;
@@ -75,6 +76,7 @@
   --title-weight: 300;
   --header-color: #1e293b;
   --subheader-background-color: rgba(150,100,0,0.95);
+  --pre-background-color: #0e193b;
   --box-background-color: #1f2937;
   --region-background-color: #1e293b44;
   --header-text-color: #f1f5f9;

@@ -1,21 +1,23 @@
 ---
 ItemType: Indicator
 ItemCode: COLBAR
+ItemName: Collective Bargaining Coverage
+Policy: Labor Rights
 DatasetCodes:
   - ILO_COLBAR
-ItemName: Collective Bargaining Coverage
 Description: The proportion of workers whose terms and conditions at work are determined
   by collective bargaining as opposed to individual contracts.
 Footnote: null
 Indicator: Collective Bargaining Coverage
 IndicatorCode: COLBAR
+LowerGoalpost: 0
+UpperGoalpost: 100
+ScoreFunction: >
+    Score = goalpost(ILO_COLBAR, 0, 100)
 Inverted: false
-LowerGoalpost: 0.0
-Policy: Labor rights
 SourceOrganization: ILO
 SourceOrganizationIndicatorCode: null
 SourceOrganizationURL: https://ilostat.ilo.org/
-UpperGoalpost: 100.0
 ---
 
 ## Imputations

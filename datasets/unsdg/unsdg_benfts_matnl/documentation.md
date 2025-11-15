@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Mothers with Newborns Receiving Maternity Cash Benefit
 DatasetCode: UNSDG_BENFTS_MATNL
 Description: Proportion of mothers with newborns receiving maternity cash benefit (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

@@ -2,8 +2,10 @@
 DatasetType: Indicator
 DatasetCode: WB_PUPTCH
 DatasetName: Primary Education Pupil to Teacher Ratio
-Description: Average number of pupils per teacher in primary school, based on headcounts
+Description: >
+  Average number of pupils per teacher in primary school, based on headcounts
   of both pupils and teachers.
+Unit: Number of Pupils per Teacher (Average)
 Source:
   OrganizationName: World Bank
   QueryCode: SE.PRM.ENRL.TC.ZS

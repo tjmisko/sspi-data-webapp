@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Poor Population Receiving Social Assistance Cash Benefit
 DatasetCode: UNSDG_BENFTS_CASH_POOR
 Description: Proportion of poor population receiving social assistance cash benefit, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

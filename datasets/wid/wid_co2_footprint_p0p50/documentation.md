@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Personal CO2 Footprint (Bottom 50%)
 DatasetCode: WID_CO2_FOOTPRINT_P0P50
 Description: Average per capita CO2 emissions across bottom 50% income percentiles. CO2-only version of personal carbon footprint that excludes other greenhouse gases. Provides focused analysis of carbon dioxide inequality for climate policy design.
+Unit: >
+    tCO2 equivalent/cap; percentile p0p50; lpfcari999
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

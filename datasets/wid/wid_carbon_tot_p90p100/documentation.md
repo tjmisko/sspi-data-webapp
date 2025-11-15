@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Personal Carbon Footprint - Total (Top 10%)
 DatasetCode: WID_CARBON_TOT_P90P100
 Description: Average per capita total carbon emissions across top 10% income percentiles. Combines both consumption and investment-related emissions for comprehensive personal carbon footprint. Includes emissions from individual consumption, government expenditures, and individual investments.
+Unit: >
+    tCO2 equivalent/cap; percentile p90p100; lpfghgi999
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

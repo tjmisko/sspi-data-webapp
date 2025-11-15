@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Public Transportation Access
 DatasetCode: UNSDG_PBTACC
 Description: Proportion of population that has convenient access to public transport
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 11.2.1

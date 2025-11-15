@@ -81,13 +81,24 @@
                                                     </div>
                                                     
                                                     <div class="indicator-details" data-expanded="false" data-icode="{{ indicator.indicator_code }}">
+                                                        {% if indicator.policy %}
+                                                        <div class="indicator-description">
+                                                            <h6>Policy</h6>
+                                                            <p>{{ indicator.policy }}</p>
+                                                        </div>
+                                                        {% endif %}
                                                         {% if indicator.description %}
                                                         <div class="indicator-description">
                                                             <h6>Description</h6>
                                                             <p>{{ indicator.description }}</p>
                                                         </div>
                                                         {% endif %}
-                                                        
+                                                        {% if indicator.score_function %}
+                                                        <div class="indicator-description">
+                                                            <h6>Score Function</h6>
+                                                            <pre class="indicator-score-function">{{ indicator.score_function }}</pre>
+                                                        </div>
+                                                        {% endif %}
                                                         {% if indicator.datasets %}
                                                         <div class="datasets-section">
                                                             <h6>Datasets</h6>

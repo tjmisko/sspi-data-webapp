@@ -3,6 +3,7 @@ DatasetType: Indicator
 DatasetCode: UIS_YRSEDU
 DatasetName: Years of Compulsory Education
 Description: Total years of compulsory education
+Unit: Years
 Source:
   OrganizationCode: UIS
   OrganizationSeriesCode: YEARS.FC.COMP.1T3

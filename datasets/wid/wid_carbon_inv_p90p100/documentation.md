@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Personal Carbon Footprint - Investment (Top 10%)
 DatasetCode: WID_CARBON_INV_P90P100
 Description: Average per capita carbon emissions from investments across top 10% income percentiles. Represents emissions from individual investments and capital formation attributed to firm owners. Excludes consumption-related emissions. Essential for analyzing wealth-based climate policy impacts.
+Unit: >
+    tCO2 equivalent/cap; percentile p90p100; lifghgi999
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

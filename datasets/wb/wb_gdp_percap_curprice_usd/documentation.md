@@ -4,6 +4,7 @@ DatasetCode: WB_GDP_PERCAP_CURPRICE_USD
 DatasetName: GDP per capita (current US$)
 Description: >
     Gross domestic product is the total income earned through the production of goods and services in an economic territory during an accounting period. It can be measured in three different ways: using either the expenditure approach, the income approach, or the production approach. The core indicator has been divided by the general population to achieve a per capita estimate.This indicator is expressed in current prices, meaning no adjustment has been made to account for price changes over time. This indicator is expressed in United States dollars.
+Unit: USD (Current Prices)
 Source:
   OrganizationCode: WB
   QueryCode: NY.GDP.PCAP.CD

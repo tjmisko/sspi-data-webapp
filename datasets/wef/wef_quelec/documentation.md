@@ -5,6 +5,7 @@ DatasetCode: WEF_QUELEC
 Description: >
   Executive opinion survey responses to the question--"In your country, 
   how would you assess the reliability of the electricity supply?"
+Unit: 1-7 (best)
 Source:
   OrganizationCode: WEF
   QueryCode: WEF.GCIHH.EOSQ064

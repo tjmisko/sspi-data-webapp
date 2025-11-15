@@ -4,6 +4,7 @@ DatasetCode: ILO_COLBAR
 DatasetName: Collective Bargaining Coverage
 Description: The proportion of workers whose terms and conditions at work are determined
   by collective bargaining as opposed to individual contracts.
+Unit: Proportion
 Source:
   OrganizationCode: ILO
   OrganizationSeriesCode: DF_ILR_CBCT_NOC_RT

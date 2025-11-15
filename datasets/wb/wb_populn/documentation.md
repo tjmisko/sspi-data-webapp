@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Population
 DatasetCode: WB_POPULN
 Description: Population
+Unit: Population
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: SP.POP.TOTL

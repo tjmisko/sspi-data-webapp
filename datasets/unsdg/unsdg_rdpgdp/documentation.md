@@ -4,6 +4,7 @@ DatasetCode: UNSDG_RDPGDP
 DatasetName: Educational R&D
 Description: > 
     Proportion of GDP spent on higher R&D.
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   QueryCode: 9.5.1

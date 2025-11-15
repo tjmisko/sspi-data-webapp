@@ -1,21 +1,25 @@
 ---
 ItemType: Indicator
 ItemCode: STCONS
+ItemName: Status Consumption
+Policy: Reduction of Unsustainable Consumption Among Elites
+Description: >
+  Proportion of CO2 Emissions attributable to the Top 10% of earners.
+Footnote: null
+Indicator: Status Consumption
+IndicatorCode: STCONS
 DatasetCodes:
   - WID_CARBON_TOT_P0P100
   - WID_CARBON_TOT_P90P100
   - FPI_ECOFPT_PER_CAP
-ItemName: Status Consumption
-Description: >
-    Proportion of CO2 Emissions attributable to the Top 10% of earners.
-Footnote: null
-Indicator: Status Consumption
-IndicatorCode: STCONS
 Inverted: false
 LowerGoalpost: 30
-Policy: Reduction of Unsustainable Consumption Among Elites
-SourceOrganization: Footprint Index
 UpperGoalpost: 1.6
+ScoreFunction: >
+    Score = goalpost(FPI_ECOFPT_PER_CAP * WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, 30, 1.6)
+SourceOrganization: Footprint Index
+SourceOrganizationIndicatorCode: null
+SourceOrganizationURL: null
 ---
 ## Interpretation
 The footprint of consumption among the richest people in society represents an outsized impact from a small group on the environment. The richest individuals consume at a rate many multiples higher than the average individuals in most societies, and a still higher multiple above the rate among the poorest in society. As constructed, the indicator measures country policies across two dimensions:

@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Minamata Convention Compliance
 DatasetCode: UNSDG_MINMAT
 Description: "Minamata Convention on Mercury (Minamata Convention) Minamata Convention: national focal points."
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1

@@ -1,18 +1,23 @@
 ---
 ItemType: Indicator
 ItemCode: NRGINT
-DatasetCodes:
-  - UNSDG_NRGINT
 ItemName: Energy Intensity
+Policy: Energy Efficiency
 Description: >
   Energy intensity level of primary energy measured in megajoules per constant
   2017 purchasing power parity GDP.
-IndicatorCode: NRGINT
-Policy: Energy Efficiency
+LowerGoalpost: 15
+UpperGoalpost: 0
+ScoreFunction: >
+  Score = goalpost(UNSDG_NRGINT, LowerGoalpost, UpperGoalpost)
 Footnote: null
 Indicator: Energy Intensity
+IndicatorCode: NRGINT
+DatasetCodes:
+  - UNSDG_NRGINT
 Inverted: true
-LowerGoalpost: 15.0
-UpperGoalpost: 0.0
+SourceOrganization: UN SDG
+SourceOrganizationIndicatorCode: 7.3.1
+SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

@@ -4,6 +4,7 @@ DatasetCode: UNSDG_NRGINT
 DatasetName: Energy Intensity
 Description: Energy intensity level of primary energy measured in megajoules per constant
   2017 purchasing power parity GDP.
+Unit: MJ_PER_GDP_CON_PPP_USD
 Source:
   OrganizationCode: UNSDG
   QueryCode: 7.3.1

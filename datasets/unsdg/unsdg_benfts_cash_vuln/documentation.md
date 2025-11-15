@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Vulnerable Population Receiving Social Assistance Cash Benefit
 DatasetCode: UNSDG_BENFTS_CASH_VULN
 Description: Proportion of vulnerable population receiving social assistance cash benefit, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Roads, passengers carried
 DatasetCode: WB_ROADPS
 Description: Passengers carried by road (million passenger-km)
+Unit: Million passenger-km
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.ROD.PSGR.K6

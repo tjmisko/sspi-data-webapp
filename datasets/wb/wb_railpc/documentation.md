@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Rail Passengers Carried
 DatasetCode: WB_RAILPC
 Description: Passengers carried by railway are the number of passengers transported by rail multiplied by kilometers traveled.
+Unit: Passenger-Kilometers (million)
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.PASG.KM

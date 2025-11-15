@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Population
 DatasetCode: FPI_POPULN
 Description: Population
+Unit: People
 Source:
   OrganizationCode: FPI
   OrganizationSeriesCode: pop
