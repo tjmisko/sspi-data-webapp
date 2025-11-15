@@ -548,10 +548,13 @@ class PanelChart {
                 newPin.classList.add('legend-item')
                 newPin.style.borderColor = PinnedCountry.borderColor
                 newPin.style.backgroundColor = PinnedCountry.borderColor + "44"
+                newPin.dataset.ccode = PinnedCountry.CCode
                 newPin.appendChild(pinSpan)
                 newPin.appendChild(removeButton)
                 newPin.addEventListener('click', generateListener(PinnedCountry.CCode, this))
+                newPin.addEventListener('mouseenter', (event) => this.handleChartCountryHighlight(event.target.dataset.ccode))
                 this.legendItems.appendChild(newPin)
+                this.legendItems.addEventListener('mouseleave', (event) => this.handleChartCountryHighlight(null))
             })
         }
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
@@ -613,6 +616,19 @@ class PanelChart {
             missingCountriesList.innerHTML = countryElements
             missingCountriesSummary.innerHTML = filteredMissing.length + ' of ' + totalCountriesInGroup + ' countries in ' + this.countryGroup + ' missing data'
         }
+    }
+
+    handleChartCountryHighlight(countryCode) {
+        if (countryCode === null) {
+            this.chartInteractionPlugin.setExternalHover(this.chart, null)
+        }
+        const ds = this.chart.data.datasets.findIndex((ds) => ds.CCode === countryCode)
+        if (ds == -1) {
+            this.chartInteractionPlugin.setExternalHover(this.chart, null)
+        } else if (ds) {
+            this.chartInteractionPlugin.setExternalHover(this.chart, ds)
+        }
+        this.updateChartPreservingYAxis();
     }
 
     updateHoverRadius(radius) {

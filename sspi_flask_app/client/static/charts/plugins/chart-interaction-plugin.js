@@ -46,7 +46,7 @@ const chartInteractionPlugin = {
         labelField: 'CCode',
         showDefaultLabels: true,
         defaultLabelSpacing: 0,
-        occludedAlpha: 0.10,
+        occludedAlpha: 0.12,
         animAlpha: 0.50,
 
         // Callbacks
@@ -69,6 +69,13 @@ const chartInteractionPlugin = {
     _LABEL_FONT: 'bold 16px Arial',
     _POINT_SCALE: 1.6,
 
+    setExternalHover(chart, datasetIndex) {
+        this._interaction.mouse = null;               // turn off normal proximity
+        this._interaction.closestDatasetIdx = datasetIndex;
+        this._interaction.tooltipItems = null;        // no tooltip
+        chart.update('none');                         // redraw without animation
+    },
+
     /* ---------- data change detection -------------------------------- */
     beforeUpdate(chart, args, opts) {
         // Clear label state when data changes to force rebuild with new data
@@ -83,7 +90,6 @@ const chartInteractionPlugin = {
     afterEvent(chart, args) {
         const cfg = chart.options.plugins && chart.options.plugins.chartInteractionPlugin;
         if (!cfg || !cfg.enabled) return;
-
         const ev = args.event;
         if (!ev) return;
 
@@ -136,11 +142,16 @@ const chartInteractionPlugin = {
 
         // 3. Now do interaction logic; but DO NOT early-return before datasets draw
         const pos = this._interaction.mouse;
+        const externalIdx = this._interaction.closestDatasetIdx;
+        console.log("externalIdx: ", externalIdx)
+        const isExternalHover = !pos && externalIdx !== null;
 
-        if (!pos) { // No mouse: reset proximity state, but do not touch clipping.
+
+        if (!pos && !isExternalHover) { // No mouse: reset proximity state, but do not touch clipping.
             this._resetProximity(chart);
             return;
         }
+
 
         const R = opts.radius;
         const CR = opts.clickRadius;
@@ -151,7 +162,9 @@ const chartInteractionPlugin = {
         let closestDatasetMinD2 = Infinity;
         let anyNear = false;
 
-        this._interaction.closestDatasetIdx = null;
+        if (!isExternalHover) {
+            this._interaction.closestDatasetIdx = null;
+        }
 
         /* Single loop: find nearest point, closest dataset, apply proximity effects */
         chart.data.datasets.forEach((ds, i) => {
@@ -164,6 +177,25 @@ const chartInteractionPlugin = {
             // Initialize colors once
             ds._full = ds._full || { border: ds.borderColor, bg: ds.backgroundColor };
             ds._faded = ds._faded || this._fade(ds._full.border, opts.fadeAlpha);
+
+            if (isExternalHover) {
+                // Highlight this dataset only
+                const isTarget = i === externalIdx;
+
+                console.log("isTarget: ", isTarget)
+                ds.borderColor = isTarget ? ds._full.border : ds._faded;
+                ds.backgroundColor = isTarget ? ds._full.bg : ds._faded;
+                ds._isNear = isTarget;
+                ds._isHover = false;
+
+                const meta = chart.getDatasetMeta(i);
+                meta?.data?.forEach(p => {
+                    p.options.backgroundColor = ds.backgroundColor;
+                    p.options.borderColor = ds.borderColor;
+                });
+
+                return
+            }
 
             // Find nearest point and closest dataset in same pass
             let datasetClosestD2 = Infinity;
@@ -219,11 +251,14 @@ const chartInteractionPlugin = {
             });
         });
 
-        if (!anyNear) {
+        if (!anyNear && !isExternalHover) {
             this._resetProximity(chart);
             return;
         }
 
+        if (!pos) {
+            return;
+        }
         // Store nearest info for tooltip positioning
         this._interaction.nearest = nearest;
 
@@ -377,6 +412,9 @@ const chartInteractionPlugin = {
     _drawLabels(chart, opts) {
         const ctx = chart.ctx;
         const labels = [];
+        const pos = this._interaction.mouse;
+        const externalIdx = this._interaction.closestDatasetIdx;
+        const isExternalHover = !pos && externalIdx != null;
 
         /* Build label list */
         chart.data.datasets.forEach((ds, i) => {
@@ -494,7 +532,6 @@ const chartInteractionPlugin = {
             !chart._defaultVisibleLabels && 
             timeSinceLastCollision >= this._collisionCooldown;
 
-        console.log("Run Collision Detection?", shouldRunCollisionDetection)
         if (shouldRunCollisionDetection) {
             // Update timestamp before running collision detection
             this._lastCollisionTime = now;
@@ -512,7 +549,6 @@ const chartInteractionPlugin = {
             let unblockedLabelPool = unpinnedLabels.filter((l) => {
                 for (var b = 0; b < blockedIntervals.length; b++) {
                     if (l.box.top > blockedIntervals[b][0] && l.box.top < blockedIntervals[b][1]) {
-                        console.log(l.box.top, " in ", blockedIntervals[b])
                         blockCount++
                         return false;
                     }
@@ -523,12 +559,9 @@ const chartInteractionPlugin = {
                 };
                 return true;
             });
-            console.log("blockCount: ", blockCount)
-            console.log("Initial Unblocked Label Pool: ", unblockedLabelPool)
             // Select a Random Label and Remove the Others it Obstructs
             let count = 0
             while (unblockedLabelPool.length > 0 && count < 15) {
-                console.log(count)
                 count++
                 let randomIndex = Math.floor(Math.random() * unblockedLabelPool.length);
                 let randomLabel = unblockedLabelPool[randomIndex];
@@ -567,7 +600,9 @@ const chartInteractionPlugin = {
         labels.forEach((l, i) => {
             // Determine opacity based on interaction state
             let alpha, reason;
-            if (this._interaction.closestDatasetIdx !== null && this._interaction.mouse) {
+            if (isExternalHover) {
+                alpha = l.idx === externalIdx ? 1 : opts.occludedAlpha;
+            } else if (this._interaction.closestDatasetIdx !== null && this._interaction.mouse) {
                 // Mouse interaction: highlight closest, fade others
                 alpha = l.idx === this._interaction.closestDatasetIdx ? 1 : opts.occludedAlpha;
                 reason = `mouse interaction: ${l.idx === this._interaction.closestDatasetIdx ? 'closest' : 'not closest'}`;
