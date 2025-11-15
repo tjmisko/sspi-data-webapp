@@ -1044,7 +1044,7 @@ class SSPIMetadata(MongoWrapper):
         if not organization_details:
             return []
         clean_details = []
-        for d in clean_details:
+        for d in organization_details:
             meta_dict = d.get("Metadata")
             if isinstance(meta_dict, dict):
                 clean_details.append(meta_dict)
