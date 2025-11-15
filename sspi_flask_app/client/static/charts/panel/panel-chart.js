@@ -78,6 +78,18 @@ class PanelChart {
 <details class="select-countries-options chart-options-details">
     <summary class="select-countries-summary">Select Countries</summary>
     <div class="view-options-suboption-container">
+        <div class="chart-view-subheader">Pinned Countries</div>
+        <div class="legend-title-bar-buttons">
+            <div class="pin-actions-box">
+                <button class="hideunpinned-button">Hide Unpinned</button>
+                <button class="clearpins-button">Clear Pins</button>
+                <button class="add-country-button">Search Country</button>
+            </div>
+            <div class="country-search-results-window"></div>
+        </div>
+        <legend class="dynamic-line-legend">
+            <div class="legend-items"></div>
+        </legend>
         <div class="chart-view-subheader">Country Groups</div>
         <div class="chart-view-option">
             <select class="country-group-selector"></select>
@@ -92,18 +104,6 @@ class PanelChart {
                 <button class="show-in-group-button">Show All in Group</button>
             </div>
         </div>
-        <div class="chart-view-subheader">Pinned Countries</div>
-        <div class="legend-title-bar-buttons">
-            <div class="pin-actions-box">
-                <button class="hideunpinned-button">Hide Unpinned</button>
-                <button class="clearpins-button">Clear Pins</button>
-                <button class="add-country-button">Search Country</button>
-            </div>
-            <div class="country-search-results-window"></div>
-        </div>
-        <legend class="dynamic-line-legend">
-            <div class="legend-items"></div>
-        </legend>
         <div class="chart-view-subheader">Missing Countries</div>
         <div class="missing-countries-container">
             <div class="missing-countries-list"></div>
@@ -462,7 +462,6 @@ class PanelChart {
         const startIndex = this.startYear - 2000;
         let endIndex = this.endYear - 2000;
         const yearScreen = dataset.score.slice(startIndex, endIndex)
-        console.log(yearScreen)
         const dataEndYear = this.startYear + yearScreen.length - 1;
         const avgScore = ( yearScreen.reduce((a, b) => a + b) / yearScreen.length )
         const minScore = Math.min(...yearScreen) 
@@ -698,7 +697,6 @@ class PanelChart {
             this.chartOptions.querySelector('.item-data-link-button')?.remove()
             this.chartOptions.querySelector('.item-metadata-link-button')?.remove()
             const hrefCandidate = "/data/" + this.itemType.toLowerCase() + "/" + itemCode
-            console.log(window.location.href)
             if (itemCode !== "SSPI" && !window.location.href.includes(hrefCandidate)) {
                 const dataLink = document.createElement('a');
                 dataLink.innerText = itemCode + " Data Page";
@@ -781,7 +779,6 @@ class PanelChart {
         
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
-        console.log("Data Labels:", this.chart.data.labels)
         if (this.pinnedOnly) {
             this.hideUnpinned()
         } else {

@@ -144,7 +144,6 @@ const chartInteractionPlugin = {
         // 3. Now do interaction logic; but DO NOT early-return before datasets draw
         const pos = this._interaction.mouse;
         const externalIdx = this._interaction.closestDatasetIdx;
-        console.log("externalIdx: ", externalIdx)
         const isExternalHover = !pos && externalIdx !== null;
 
 
@@ -183,7 +182,6 @@ const chartInteractionPlugin = {
                 // Highlight this dataset only
                 const isTarget = i === externalIdx;
 
-                console.log("isTarget: ", isTarget)
                 ds.borderColor = isTarget ? ds._full.border : ds._faded;
                 ds.backgroundColor = isTarget ? ds._full.bg : ds._faded;
                 ds._isNear = isTarget;
@@ -637,7 +635,6 @@ const chartInteractionPlugin = {
         if (shouldRunCollisionDetection) {
             // Update timestamp before running collision detection
             this._lastCollisionTime = now;
-            console.log(`[Chart Plugin] Running collision detection at ${now} (${labels.length} labels)`);
             const spacing = opts.defaultLabelSpacing;
 
             // Reset occlusion flags
