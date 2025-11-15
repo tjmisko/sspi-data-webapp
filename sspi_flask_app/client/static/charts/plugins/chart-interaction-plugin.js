@@ -45,7 +45,7 @@ const chartInteractionPlugin = {
         // Label settings
         labelField: 'CCode',
         showDefaultLabels: true,
-        defaultLabelSpacing: 5,
+        defaultLabelSpacing: 0,
         occludedAlpha: 0.10,
         animAlpha: 0.50,
 
@@ -494,6 +494,7 @@ const chartInteractionPlugin = {
             !chart._defaultVisibleLabels && 
             timeSinceLastCollision >= this._collisionCooldown;
 
+        console.log("Run Collision Detection?", shouldRunCollisionDetection)
         if (shouldRunCollisionDetection) {
             // Update timestamp before running collision detection
             this._lastCollisionTime = now;
@@ -504,23 +505,28 @@ const chartInteractionPlugin = {
             labels.forEach((label, lIndex) => { label.occluded = false; label.lIndex = lIndex; });
             const pinnedLabels = labels.filter((l) => l.isPinned);
             const unpinnedLabels = labels.filter((l) => !l.isPinned);
-            console.log("PinnedLabels: ", pinnedLabels)
             // Initial Sort: Always Show Pinned Labels
             let blockedIntervals = pinnedLabels.map((l) => [l.box.top - spacing, l.box.bottom + spacing])
             let visibleLabelsSet = new Set(pinnedLabels.map((l) => l.lIndex));
+            let blockCount = 0;
             let unblockedLabelPool = unpinnedLabels.filter((l) => {
                 for (var b = 0; b < blockedIntervals.length; b++) {
                     if (l.box.top > blockedIntervals[b][0] && l.box.top < blockedIntervals[b][1]) {
+                        console.log(l.box.top, " in ", blockedIntervals[b])
+                        blockCount++
                         return false;
                     }
                     if (l.box.bottom > blockedIntervals[b][0] && l.box.bottom < blockedIntervals[b][1]) {
+                        blockCount++
                         return false;
                     } 
-                }
-                return true
+                };
+                return true;
             });
+            console.log("blockCount: ", blockCount)
+            console.log("Initial Unblocked Label Pool: ", unblockedLabelPool)
             // Select a Random Label and Remove the Others it Obstructs
-            count = 0
+            let count = 0
             while (unblockedLabelPool.length > 0 && count < 15) {
                 console.log(count)
                 count++
@@ -532,7 +538,7 @@ const chartInteractionPlugin = {
                     if (l.idx == randomLabel.idx) {
                         return false; // must remove the randomly drawn label itself from the unblockedList
                     }
-                    if (l.box.top - spacing > newBlockInterval[0] && l.box.top - spacing < newBlockInterval[1]) {
+                    if (l.box.top > newBlockInterval[0] && l.box.top < newBlockInterval[1]) {
                         l.occluded = true;
                         return false;
                     }
