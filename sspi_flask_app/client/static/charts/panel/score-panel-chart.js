@@ -103,7 +103,7 @@ class ScorePanelChart extends PanelChart {
             type: 'line',
             plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
             options: {
-                // animation: false,
+                animation: false,
                 responsive: true,
                 hover: {
                     mode: null
@@ -138,7 +138,7 @@ class ScorePanelChart extends PanelChart {
                         tooltipFg: this.titleColor,
                         labelField: 'CCode',
                         showDefaultLabels: true,
-                        defaultLabelSpacing: 5,
+                        defaultLabelSpacing: 0,
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.activeCountry = dataset;

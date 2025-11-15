@@ -222,7 +222,7 @@ class IndicatorPanelChart extends PanelChart {
             type: 'line',
             plugins: [this.chartInteractionPlugin, this.extrapolateBackwardPlugin],
             options: {
-                // animation: false,
+                animation: false,
                 responsive: true,
                 hover: {
                     mode: null
