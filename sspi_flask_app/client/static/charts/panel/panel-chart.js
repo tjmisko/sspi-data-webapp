@@ -455,13 +455,18 @@ class PanelChart {
             return ds.CCode === this.activeCountry.CCode
         })
         const startIndex = this.startYear - 2000;
-        const endIndex = this.endYear - 2000 + 1;
+        let endIndex = this.endYear - 2000;
         const yearScreen = dataset.score.slice(startIndex, endIndex)
+        console.log(yearScreen)
+        const dataEndYear = this.startYear + yearScreen.length - 1;
         const avgScore = ( yearScreen.reduce((a, b) => a + b) / yearScreen.length )
         const minScore = Math.min(...yearScreen) 
         const maxScore = Math.max(...yearScreen)
-        const minScoreYear = yearScreen.findIndex((el) => el === minScore) + this.startYear
-        const maxScoreYear = yearScreen.findIndex((el) => el === maxScore) + this.startYear
+        const minScoreIndex = yearScreen.findIndex((el) => el === minScore) 
+        const maxScoreIndex = yearScreen.findIndex((el) => el === maxScore) 
+        const minScoreYear = minScoreIndex === -1 ? "Error" : minScoreIndex + this.startYear
+        const maxScoreYear = maxScoreIndex === -1 ? "Error" : maxScoreIndex + this.startYear
+        const chgScore = (yearScreen[yearScreen.length - 1] - yearScreen[0]) / yearScreen[0] * 100
         this.countryInformationBox.innerHTML = `
 <div id="#active-country-information" class="country-details-info">
 <h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3>
@@ -469,7 +474,12 @@ class PanelChart {
     <div class="summary-stat-line">
         <span class="summary-stat-label">Average:</span> 
         <span class="summary-stat-score">${avgScore.toFixed(3)}</span>
-        <span class="summary-stat-year">${this.startYear}-${this.endYear}</span>
+        <span class="summary-stat-year">${this.startYear}-${dataEndYear}</span>
+    </div>
+    <div class="summary-stat-line">
+        <span class="summary-stat-label">Change:</span>
+        <span class="summary-stat-score">${chgScore.toFixed(2)}%</span>
+        <span class="summary-stat-year">${this.startYear}-${dataEndYear}</span>
     </div>
     <div class="summary-stat-line">
         <span class="summary-stat-label">Minimum:</span>
@@ -664,13 +674,24 @@ class PanelChart {
             itemCode = this.itemCode;
         }
         if (itemCode) {
+            this.chartOptions.querySelector('.item-data-link-button')?.remove()
             this.chartOptions.querySelector('.item-metadata-link-button')?.remove()
+            const hrefCandidate = "/data/" + this.itemType.toLowerCase() + "/" + itemCode
+            console.log(window.location.href)
+            if (itemCode !== "SSPI" && !window.location.href.includes(hrefCandidate)) {
+                const dataLink = document.createElement('a');
+                dataLink.innerText = itemCode + " Data Page";
+                dataLink.classList.add("view-all-data-link", "item-data-link-button")
+                dataLink.href = hrefCandidate
+                dbox.parentElement.appendChild(dataLink)
+            }
             const metadataLink = document.createElement('a');
-            metadataLink.innerText = "View " + itemCode + " Metadata";
             metadataLink.classList.add("view-all-data-link", "item-metadata-link-button")
             if (itemCode === "SSPI") {
+                metadataLink.innerText = itemCode + " Indicator Table";
                 metadataLink.href = "/indicators"
             } else {
+                metadataLink.innerText = itemCode + " in Indicator Table";
                 metadataLink.href = "/indicators?viewItem=" + itemCode + "#" + itemCode
             }
             dbox.parentElement.appendChild(metadataLink)
