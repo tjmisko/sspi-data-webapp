@@ -384,35 +384,40 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 0.1em;
+  margin-top: ;
+  margin: 0.1em 0.25em;
+  box-sizing: border-box;
 }
 
 .legend-item {
   display: flex;
   flex: 1 1 0;
   flex-direction: row;
-  align-self: stretch;
-  align-items: center;
-  justify-content: space-between;
   font-size: 0.85em;
   font-weight: 500;
   padding: 0.2em 1em;
   border-radius: 20px;
   border-width: 1.5px;
   border-style: solid;
-  max-width: 220px;
-  margin: 0.2em;
+  width: 100%;
+  margin: 0.25em 0;
+  box-sizing: border-box;
 }
 
 .legend-item span {
+  display: inline-block;
+  align-self: stretch;
+  min-width: 0;
+  flex: 1 1 auto;
   line-height: 1;
 }
 
-.legend-item {
+.legend-item:hover {
   cursor: pointer;
 }
 
 .legend-item button {
+  flex: 0 0 auto;
   background-color: transparent;
 }
 

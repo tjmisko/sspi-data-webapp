@@ -563,9 +563,10 @@ class PanelChart {
         }
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
         removeButtons.forEach((button) => {
-            let CountryCode = button.id.split('-')[0]
+            let countryCode = button.id.split('-')[0]
             button.addEventListener('click', () => {
-                this.unpinCountryByCode(CountryCode, true)
+                this.unpinCountryByCode(countryCode, true)
+                this.handleChartCountryHighlight(countryCode)
             })
         })
     }

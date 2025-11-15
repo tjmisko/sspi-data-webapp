@@ -629,8 +629,7 @@ this.textInput.focus()
 this.textInput.addEventListener("keydown",()=>{if(event.key==="ArrowDown"&&this.searchSelectorIndex<this.resultsWindow.children.length-1){this.searchSelectorIndex++
 this.highlightSelectedIndex()}else if(event.key=="ArrowUp"&&this.searchSelectorIndex>-1){this.searchSelectorIndex--
 this.highlightSelectedIndex()}})
-this.textInput.addEventListener("focusout",(event)=>{setTimeout(()=>{console.log("Teardown!")
-this.parentElement.innerHTML=this.buttonHTML;this.closeResults();},100);})
+this.textInput.addEventListener("focusout",(event)=>{setTimeout(()=>{this.parentElement.innerHTML=this.buttonHTML;this.closeResults();},0);})
 this.textInput.addEventListener("input",()=>this.runSearch())
 this.formElement=this.parentElement.querySelector("form")
 this.formElement.addEventListener("submit",(event)=>{event.preventDefault()
@@ -655,9 +654,10 @@ resultElement.classList.add('add-country-pin-result')
 resultElement.id=option.CCode+'-add-country-pin-result'
 const resultSpan=document.createElement('span')
 resultSpan.classList.add('add-country-pin-button')
-resultSpan.innerHTML=option.CName+' (<b style="color:'+option.borderColor+'">'+option.CCode+'</b>)';resultSpan.addEventListener('click',(event)=>{this.selectResultClick(option)
+resultSpan.innerHTML=option.CName+' (<b style="color:'+option.borderColor+'">'+option.CCode+'</b>)';resultElement.appendChild(resultSpan)
+resultElement.addEventListener('mousedown',(event)=>{console.log(event)
+this.selectResultClick(option)
 this.closeResults()})
-resultElement.appendChild(resultSpan)
 this.resultsWindow.appendChild(resultElement)})
 this.highlightSelectedIndex();}
 selectResultClick(option){this.parentChart.pinCountryByCode(option.CCode)}
@@ -1255,8 +1255,9 @@ newPin.addEventListener('mouseenter',(event)=>this.handleChartCountryHighlight(e
 this.legendItems.appendChild(newPin)
 this.legendItems.addEventListener('mouseleave',(event)=>this.handleChartCountryHighlight(null))})}
 let removeButtons=this.legendItems.querySelectorAll('.remove-button-legend-item')
-removeButtons.forEach((button)=>{let CountryCode=button.id.split('-')[0]
-button.addEventListener('click',()=>{this.unpinCountryByCode(CountryCode,true)})})}
+removeButtons.forEach((button)=>{let countryCode=button.id.split('-')[0]
+button.addEventListener('click',()=>{this.unpinCountryByCode(countryCode,true)
+this.handleChartCountryHighlight(countryCode)})})}
 updateMissingCountries(){const missingCountriesList=this.chartOptions.querySelector('.missing-countries-list')
 const missingCountriesSummary=this.chartOptions.querySelector('.missing-countries-summary')
 if(!missingCountriesList||!missingCountriesSummary){return}

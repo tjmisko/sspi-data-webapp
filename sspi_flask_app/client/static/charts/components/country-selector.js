@@ -35,10 +35,9 @@ class CountrySelector {
         this.textInput.addEventListener("focusout", (event) => {
             // teardown on focusout
             setTimeout(() => {
-                console.log("Teardown!")
                 this.parentElement.innerHTML = this.buttonHTML;
                 this.closeResults();
-            }, 100);
+            }, 0);
         })
         this.textInput.addEventListener("input", () => this.runSearch())
         this.formElement = this.parentElement.querySelector("form")
@@ -91,11 +90,12 @@ class CountrySelector {
             const resultSpan = document.createElement('span')
             resultSpan.classList.add('add-country-pin-button')
             resultSpan.innerHTML = option.CName + ' (<b style="color:' + option.borderColor + '">' + option.CCode + '</b>)';
-            resultSpan.addEventListener('click', (event) => {
+            resultElement.appendChild(resultSpan)
+            resultElement.addEventListener('mousedown', (event) => {
+                console.log(event)
                 this.selectResultClick(option)
                 this.closeResults()
             })
-            resultElement.appendChild(resultSpan)
             this.resultsWindow.appendChild(resultElement)
         })
         this.highlightSelectedIndex();
