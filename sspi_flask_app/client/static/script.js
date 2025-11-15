@@ -1225,13 +1225,17 @@ this.legend=this.chartOptions.querySelector('.dynamic-line-legend')
 this.legendItems=this.legend.querySelector('.legend-items')}
 updateCountryInformation(){if(!this.activeCountry)return;this.countryInformationBox.dataset.unpopulated=false
 const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";let dataset=this.chart.data.datasets.find((ds)=>{return ds.CCode===this.activeCountry.CCode})
-const startIndex=this.startYear-2000;const endIndex=this.endYear-2000+1;const yearScreen=dataset.score.slice(startIndex,endIndex)
-const avgScore=(yearScreen.reduce((a,b)=>a+b)/yearScreen.length)
+const startIndex=this.startYear-2000;let endIndex=this.endYear-2000;const yearScreen=dataset.score.slice(startIndex,endIndex)
+console.log(yearScreen)
+const dataEndYear=this.startYear+yearScreen.length-1;const avgScore=(yearScreen.reduce((a,b)=>a+b)/yearScreen.length)
 const minScore=Math.min(...yearScreen)
 const maxScore=Math.max(...yearScreen)
-const minScoreYear=yearScreen.findIndex((el)=>el===minScore)+this.startYear
-const maxScoreYear=yearScreen.findIndex((el)=>el===maxScore)+this.startYear
-this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"><div class="summary-stat-line"><span class="summary-stat-label">Average:</span><span class="summary-stat-score">${avgScore.toFixed(3)}</span><span class="summary-stat-year">${this.startYear}-${this.endYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Minimum:</span><span class="summary-stat-score">${minScore.toFixed(3)}</span><span class="summary-stat-year">${minScoreYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Maximum:</span><span class="summary-stat-score">${maxScore.toFixed(3)}</span><span class="summary-stat-year">${maxScoreYear}</span></div></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
+const minScoreIndex=yearScreen.findIndex((el)=>el===minScore)
+const maxScoreIndex=yearScreen.findIndex((el)=>el===maxScore)
+const minScoreYear=minScoreIndex===-1?"Error":minScoreIndex+this.startYear
+const maxScoreYear=maxScoreIndex===-1?"Error":maxScoreIndex+this.startYear
+const chgScore=(yearScreen[yearScreen.length-1]-yearScreen[0])/yearScreen[0]*100
+this.countryInformationBox.innerHTML=`<div id="#active-country-information"class="country-details-info"><h3 class="country-details-header"><span class="country-name">${this.activeCountry.CFlag}\u0020${this.activeCountry.CName}\u0020(${this.activeCountry.CCode})</span></h3><div class="country-details-score-container"><div class="summary-stat-line"><span class="summary-stat-label">Average:</span><span class="summary-stat-score">${avgScore.toFixed(3)}</span><span class="summary-stat-year">${this.startYear}-${dataEndYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Change:</span><span class="summary-stat-score">${chgScore.toFixed(2)}%</span><span class="summary-stat-year">${this.startYear}-${dataEndYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Minimum:</span><span class="summary-stat-score">${minScore.toFixed(3)}</span><span class="summary-stat-year">${minScoreYear}</span></div><div class="summary-stat-line"><span class="summary-stat-label">Maximum:</span><span class="summary-stat-score">${maxScore.toFixed(3)}</span><span class="summary-stat-year">${maxScoreYear}</span></div></div><div class="country-details-actions"><button class="${pinButtonClass}"data-country-code="${this.activeCountry.CCode}">${pinButtonText}</button><a class="view-all-data-link"href="/data/country/${this.activeCountry.CCode}">View All Data</a></div></div>`;const pinButton=this.countryInformationBox.querySelector('.pin-country-button, .unpin-country-button');if(pinButton){pinButton.addEventListener('click',(e)=>{const countryCode=e.target.dataset.countryCode;const dataset=this.chart.data.datasets.find(d=>d.CCode===countryCode);if(dataset){this.togglePin(dataset);this.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
 this.updateCountryInformation();}});}}
 updateLegend(){function generateListener(countryCode,PanelChartObject){function listener(){let dataset=PanelChartObject.chart.data.datasets.find((d)=>d.CCode===countryCode);if(dataset){PanelChartObject.activeCountry=dataset;window.observableStorage.setItem('activeCountry',dataset)
 PanelChartObject.countryInformationBox.dataset.unpopulated=false;PanelChartObject.updateCountryInformation();}else{console.log("Country "+countryCode+" Not Found in Datasets!")}}
@@ -1292,9 +1296,15 @@ this.endYearInput.classList.remove("invalid-year-input")}
 updateDescription(description){const dbox=this.chartOptions.querySelector('.dynamic-item-description')
 dbox.innerHTML='<p><b>Description: </b> '+description+'</p>'
 var itemCode;if(this.activeItemCode){itemCode=this.activeItemCode;}else if(this.itemCode){itemCode=this.itemCode;}
-if(itemCode){this.chartOptions.querySelector('.item-metadata-link-button')?.remove()
-const metadataLink=document.createElement('a');metadataLink.innerText="View "+itemCode+" Metadata";metadataLink.classList.add("view-all-data-link","item-metadata-link-button")
-if(itemCode==="SSPI"){metadataLink.href="/indicators"}else{metadataLink.href="/indicators?viewItem="+itemCode+"#"+itemCode}
+if(itemCode){this.chartOptions.querySelector('.item-data-link-button')?.remove()
+this.chartOptions.querySelector('.item-metadata-link-button')?.remove()
+const hrefCandidate="/data/"+this.itemType.toLowerCase()+"/"+itemCode
+console.log(window.location.href)
+if(itemCode!=="SSPI"&&!window.location.href.includes(hrefCandidate)){const dataLink=document.createElement('a');dataLink.innerText=itemCode+" Data Page";dataLink.classList.add("view-all-data-link","item-data-link-button")
+dataLink.href=hrefCandidate
+dbox.parentElement.appendChild(dataLink)}
+const metadataLink=document.createElement('a');metadataLink.classList.add("view-all-data-link","item-metadata-link-button")
+if(itemCode==="SSPI"){metadataLink.innerText=itemCode+" Indicator Table";metadataLink.href="/indicators"}else{metadataLink.innerText=itemCode+" in Indicator Table";metadataLink.href="/indicators?viewItem="+itemCode+"#"+itemCode}
 dbox.parentElement.appendChild(metadataLink)}}
 updateItemDropdown(options){const default_item=this.window.location.href.split('/')[-1]
 for(const option of options){const opt=document.createElement('option')
