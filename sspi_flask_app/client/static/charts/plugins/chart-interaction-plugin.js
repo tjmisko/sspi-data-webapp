@@ -46,7 +46,7 @@ const chartInteractionPlugin = {
         labelField: 'CCode',
         showDefaultLabels: true,
         defaultLabelSpacing: 5,
-        occludedAlpha: 0.15,
+        occludedAlpha: 0.10,
         animAlpha: 0.50,
 
         // Callbacks
@@ -441,7 +441,6 @@ const chartInteractionPlugin = {
         if (!chart._labelRandDone) {
             const pinnedIndices = labels.filter(l => l.isPinned).map(l => l.idx);
             const unpinnedIndices = labels.filter(l => !l.isPinned).map(l => l.idx);
-
             // Shuffle unpinned labels only
             for (let i = unpinnedIndices.length - 1; i > 0; --i) {
                 const k = Math.floor(Math.random() * (i + 1));
@@ -462,15 +461,12 @@ const chartInteractionPlugin = {
 
         /* Build default visible set with priority-based collision handling */
         labels.sort((a, b) => a.order - b.order); // Sort by random order (priority)
-
         // Track dataset count to detect data structure changes
         const currentDatasetCount = labels.length;
-
         if (chart._lastDatasetCount !== currentDatasetCount) {
             chart._defaultVisibleLabels = null; // Clear stale cache
             chart._lastDatasetCount = currentDatasetCount;
         }
-
         // Additional safety check: validate cached indices are still valid
         if (chart._defaultVisibleLabels && chart._defaultVisibleLabels.size > 0) {
             const cachedIndices = Array.from(chart._defaultVisibleLabels);
@@ -490,7 +486,7 @@ const chartInteractionPlugin = {
             chart._defaultVisibleLabels = null;
             chart._needsLabelRebuild = false;
         }
-
+        //
         // Throttle collision detection - only run if cooldown period has elapsed
         const now = Date.now();
         const timeSinceLastCollision = now - this._lastCollisionTime;
@@ -503,50 +499,54 @@ const chartInteractionPlugin = {
             this._lastCollisionTime = now;
             console.log(`[Chart Plugin] Running collision detection at ${now} (${labels.length} labels)`);
             const spacing = opts.defaultLabelSpacing;
-            const defaultVisible = new Set();
 
             // Reset occlusion flags
-            labels.forEach(label => { label.occluded = false; });
-
-            // Priority-based collision detection (lower order = higher priority)
-            labels.forEach((label, labelIndex) => {
-                let hasCollision = false;
-                let collisionWith = [];
-
-                // Pinned countries always get added regardless of collision
-                if (label.isPinned) {
-                    defaultVisible.add(labelIndex);
-                    return; // Skip collision detection for pinned labels
-                }
-
-                // Check against already processed higher-priority labels
-                for (const higherPriorityIdx of defaultVisible) {
-                    const higherPriority = labels[higherPriorityIdx];
-                    const horizontalOverlap = label.box.right + spacing >= higherPriority.box.left - spacing &&
-                        label.box.left - spacing <= higherPriority.box.right + spacing;
-                    const verticalOverlap = label.box.bottom + spacing >= higherPriority.box.top - spacing &&
-                        label.box.top - spacing <= higherPriority.box.bottom + spacing;
-
-                    if (horizontalOverlap && verticalOverlap) {
-                        hasCollision = true;
-                        collisionWith.push(`${higherPriority.text}${higherPriority.isPinned ? ' (pinned)' : ''}`);
-                        break; // Higher priority wins, this label is occluded
+            labels.forEach((label, lIndex) => { label.occluded = false; label.lIndex = lIndex; });
+            const pinnedLabels = labels.filter((l) => l.isPinned);
+            const unpinnedLabels = labels.filter((l) => !l.isPinned);
+            console.log("PinnedLabels: ", pinnedLabels)
+            // Initial Sort: Always Show Pinned Labels
+            let blockedIntervals = pinnedLabels.map((l) => [l.box.top - spacing, l.box.bottom + spacing])
+            let visibleLabelsSet = new Set(pinnedLabels.map((l) => l.lIndex));
+            let unblockedLabelPool = unpinnedLabels.filter((l) => {
+                for (var b = 0; b < blockedIntervals.length; b++) {
+                    if (l.box.top > blockedIntervals[b][0] && l.box.top < blockedIntervals[b][1]) {
+                        return false;
                     }
+                    if (l.box.bottom > blockedIntervals[b][0] && l.box.bottom < blockedIntervals[b][1]) {
+                        return false;
+                    } 
                 }
-
-                if (!hasCollision) {
-                    // No collision with higher priority labels, add to visible set
-                    defaultVisible.add(labelIndex);
-                } else {
-                    // Mark as occluded by higher priority label
-                    label.occluded = true;
-                }
+                return true
             });
-
-            chart._defaultVisibleLabels = defaultVisible;
+            // Select a Random Label and Remove the Others it Obstructs
+            count = 0
+            while (unblockedLabelPool.length > 0 && count < 15) {
+                console.log(count)
+                count++
+                let randomIndex = Math.floor(Math.random() * unblockedLabelPool.length);
+                let randomLabel = unblockedLabelPool[randomIndex];
+                visibleLabelsSet.add(randomLabel.lIndex)
+                let newBlockInterval = [randomLabel.box.top - spacing, randomLabel.box.bottom + spacing]
+                unblockedLabelPool = unblockedLabelPool.filter((l) => {
+                    if (l.idx == randomLabel.idx) {
+                        return false; // must remove the randomly drawn label itself from the unblockedList
+                    }
+                    if (l.box.top - spacing > newBlockInterval[0] && l.box.top - spacing < newBlockInterval[1]) {
+                        l.occluded = true;
+                        return false;
+                    }
+                    if (l.box.bottom > newBlockInterval[0] && l.box.bottom < newBlockInterval[1]) {
+                        l.occluded = true;
+                        return false;
+                    } 
+                    return true;
+                });
+            }
+            chart._defaultVisibleLabels = visibleLabelsSet;
 
             // Reorder datasets so those with visible labels are drawn on top
-            this._reorderDatasetsForVisibility(chart, labels, defaultVisible);
+            // this._reorderDatasetsForVisibility(chart, labels, visibleLabelsSet);
         } else if (opts.showDefaultLabels && !chart._defaultVisibleLabels) {
             // We're in cooldown period but cache is missing - skip collision detection for now
             // Labels will be drawn with default opacity until cooldown expires

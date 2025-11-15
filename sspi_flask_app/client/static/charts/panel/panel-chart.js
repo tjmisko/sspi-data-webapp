@@ -12,6 +12,7 @@ class PanelChart {
         this.argDefaultStartYear = startYear
         this.argDefaultEndYear = endYear
         this.yBeginAtZero = yBeginAtZero
+        this.hoverRadius = window.observableStorage.getItem('hoverRadius') || 15
         let cachedStartYear = window.observableStorage.getItem('startYear')
         if (cachedStartYear && favorCachedTimePeriod) {
             startYear = cachedStartYear
@@ -143,6 +144,13 @@ class PanelChart {
                 <input type="number" class="random-country-sample" id="random-country-sample" step="1" value="10"/>
             </div>
         </div>
+        <div class="chart-view-subheader">Chart Interaction</div>
+        <div class="chart-view-option">
+            <div class="randomization-options">
+                <label class="title-bar-label">Hover Radius:</label>
+                <input type="number" class="hover-radius" step="1" value="15" min="1" max="25"/>
+            </div>
+        </div>
     </div>
 </details>
 <details class="download-data-details chart-options-details">
@@ -227,9 +235,7 @@ class PanelChart {
         })
         this.startYearInput = this.chartOptions.querySelector('.start-year')
         this.startYearInput.addEventListener('change', (event) => {
-            if (this.startYearInput.value < this.startYearInput.min) {
-                this.startYearInput.classList.add("invalid-year-input")
-            } else if (this.startYearInput.value > this.startYearInput.max) {
+            if (this.startYearInput.value < this.startYearInput.min || this.startYearInput.value > this.startYearInput.max) {
                 this.startYearInput.classList.add("invalid-year-input")
             } else {
                 this.startYearInput.classList.remove("invalid-year-input")
@@ -238,9 +244,7 @@ class PanelChart {
         })
         this.endYearInput = this.chartOptions.querySelector('.end-year')
         this.endYearInput.addEventListener('change', (event) => {
-            if (this.endYearInput.value < this.endYearInput.min) {
-                this.endYearInput.classList.add("invalid-year-input")
-            } else if (this.endYearInput.value > this.endYearInput.max) {
+            if (this.endYearInput.value < this.endYearInput.min || this.endYearInput.value > this.endYearInput.max) {
                 this.endYearInput.classList.add("invalid-year-input")
             } else {
                 this.endYearInput.classList.remove("invalid-year-input")
@@ -251,6 +255,19 @@ class PanelChart {
         this.randomNumberField.value = this.randomN
         this.randomNumberField.addEventListener('input', (event) => {
             this.updateRandomN(this.randomNumberField.value)
+        })
+        this.hoverRadiusInput = this.chartOptions.querySelector('.hover-radius')
+        this.hoverRadiusInput.value = this.hoverRadius
+        this.hoverRadiusInput.addEventListener('change', (event) => {
+            let radius = this.hoverRadiusInput.value
+            if (radius > 50 || radius < 5) {
+                this.hoverRadiusInput.classList.add("invalid-year-input")
+                radius = 15;
+            } else {
+                this.endYearInput.classList.remove("invalid-year-input")
+            }
+            this.updateHoverRadius(radius)
+            window.observableStorage.setItem('hoverRadius', radius)
         })
 
 
@@ -328,7 +345,7 @@ class PanelChart {
                     },
                     chartInteractionPlugin: {
                         enabled: true,
-                        radius: 20,
+                        radius: this.hoverRadius,
                         clickRadius: 4,
                         tooltipBg: this.headerBackgroundColor,
                         tooltipFg: this.titleColor,
@@ -336,7 +353,7 @@ class PanelChart {
                         guideColor: this.tickColor,
                         labelField: 'CCode',
                         showDefaultLabels: true,
-                        defaultLabelSpacing: 5,
+                        defaultLabelSpacing: 0,
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.activeCountry = dataset;
@@ -586,6 +603,11 @@ class PanelChart {
             missingCountriesList.innerHTML = countryElements
             missingCountriesSummary.innerHTML = filteredMissing.length + ' of ' + totalCountriesInGroup + ' countries in ' + this.countryGroup + ' missing data'
         }
+    }
+
+    updateHoverRadius(radius) {
+        this.chart.options.plugins.chartInteractionPlugin.radius = radius;
+        this.updateChartPreservingYAxis();
     }
 
     updateYearRange({ startYear = this.startYear, endYear = this.endYear } = {}) {
