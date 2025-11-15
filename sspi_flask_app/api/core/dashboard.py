@@ -1007,6 +1007,10 @@ def build_indicators_data():
     """
     try:
         all_items = sspi_metadata.item_details()
+        source_organization_lookup = {
+            source["OrganizationCode"]: source
+            for source in sspi_metadata.organization_details()
+        }
         if not all_items:
             return {"pillars": [], "error": "No metadata items found"}
         all_datasets = sspi_metadata.dataset_details()
@@ -1034,7 +1038,6 @@ def build_indicators_data():
                 "categories": [],
             }
             category_codes = pillar_item.get("CategoryCodes", [])
-            print(category_codes)
             for category_code in category_codes:
                 category_item = items_by_code.get(category_code)
                 if not category_item:
@@ -1055,6 +1058,10 @@ def build_indicators_data():
                     for dataset_code in dataset_codes:
                         dataset = datasets_by_code.get(dataset_code)
                         if dataset:
+                            org_code = dataset.get("Source", {}).get("OrganizationCode", "")
+                            print(org_code)
+                            org_detail = source_organization_lookup.get(org_code)
+                            print(org_detail)
                             datasets.append(
                                 {
                                     "dataset_code": dataset_code,
@@ -1063,6 +1070,7 @@ def build_indicators_data():
                                     ),
                                     "description": dataset.get("Description", ""),
                                     "source": dataset.get("Source", {}),
+                                    "organization_detail": org_detail,
                                     "organization_code": dataset.get("Source", {}).get(
                                         "OrganizationCode", ""
                                     ),

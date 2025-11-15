@@ -1,9 +1,152 @@
 [
     {
+        "OrganizationCode": "CABLE",
+        "OrganizationName": "Cable.co.uk",
+        "HomePage": "https://www.cable.co.uk/",
+        "DataPage": "https://www.cable.co.uk/broadband/speed/worldwide-speed-league/"
+    },
+    {
+        "OrganizationCode": "CIA",
+        "OrganizationName": "Central Intelligence Agency",
+        "HomePage": "https://www.cia.gov/",
+        "DataPage": "https://www.cia.gov/the-world-factbook/"
+    },
+    {
+        "OrganizationCode": "EPI",
+        "OrganizationName": "Environmental Performance Index",
+        "HomePage": "https://epi.yale.edu/",
+        "DataPage": "https://epi.yale.edu/measure/2024/EPI"
+    },
+    {
+        "OrganizationCode": "FPI",
+        "OrganizationName": "Global Footprint Network",
+        "HomePage": "https://www.footprintnetwork.org/",
+        "DataPage": "https://data.footprintnetwork.org/"
+    },
+    {
+        "OrganizationCode": "FSI",
+        "OrganizationName": "The Fund for Peace",
+        "HomePage": "https://fundforpeace.org/",
+        "DataPage": "https://fragilestatesindex.org/global-data/"
+    },
+    {
+        "OrganizationCode": "IEA",
+        "OrganizationName": "International Energy Agency",
+        "HomePage": "https://www.iea.org/",
+        "DataPage": "https://www.iea.org/data-and-statistics"
+    },
+    {
+        "OrganizationCode": "ILO",
+        "OrganizationName": "International Labour Organization",
+        "HomePage": "https://www.ilo.org/",
+        "DataPage": "https://ilostat.ilo.org/"
+    },
+    {
+        "OrganizationCode": "IMF",
+        "OrganizationName": "International Monetary Fund",
+        "HomePage": "https://www.imf.org/",
+        "DataPage": "https://data.imf.org/"
+    },
+    {
+        "OrganizationCode": "IPU",
+        "OrganizationName": "Inter-Parliamentary Union",
+        "HomePage": "https://www.ipu.org/",
+        "DataPage": "https://data.ipu.org/"
+    },
+    {
+        "OrganizationCode": "ITU",
+        "OrganizationName": "International Telecommunication Union",
+        "HomePage": "https://www.itu.int/",
+        "DataPage": "https://www.itu.int/en/ITU-D/Statistics/Pages/default.aspx"
+    },
+    {
+        "OrganizationCode": "OECD",
+        "OrganizationName": "Organisation for Economic Co-operation and Development",
+        "HomePage": "https://www.oecd.org/",
+        "DataPage": "https://stats.oecd.org/"
+    },
+    {
+        "OrganizationCode": "SIPRI",
+        "OrganizationName": "Stockholm International Peace Research Institute",
+        "HomePage": "https://www.sipri.org/",
+        "DataPage": "https://www.sipri.org/databases"
+    },
+    {
+        "OrganizationCode": "TF",
+        "OrganizationName": "Tax Foundation",
+        "HomePage": "https://taxfoundation.org/",
+        "DataPage": "https://taxfoundation.org/data/"
+    },
+    {
+        "OrganizationCode": "UIS",
+        "OrganizationName": "UNESCO Institute for Statistics",
+        "HomePage": "https://uis.unesco.org/",
+        "DataPage": "https://data.uis.unesco.org/"
+    },
+    {
+        "OrganizationCode": "UNFAO",
+        "OrganizationName": "United Nations Food and Agriculture Organization",
+        "HomePage": "https://www.fao.org/",
+        "DataPage": "https://www.fao.org/faostat/"
+    },
+    {
+        "OrganizationCode": "UNODC",
+        "OrganizationName": "United Nations Office on Drugs and Crime",
+        "HomePage": "https://www.unodc.org/",
+        "DataPage": "https://dataunodc.un.org/"
+    },
+    {
         "OrganizationCode": "UNSDG",
         "OrganizationName": "United Nations Sustainable Development Goals",
-        "HomePage": "https://unsdg.un.org//",
-        "DataPage": "https://uninfo.org/" 
+        "HomePage": "https://unstats.un.org/sdgs/",
+        "DataPage": "https://unstats.un.org/sdgs/dataportal"
+    },
+    {
+        "OrganizationCode": "VDEM",
+        "OrganizationName": "Varieties of Democracy Institute",
+        "HomePage": "https://www.v-dem.net/",
+        "DataPage": "https://www.v-dem.net/data/dataset/"
+    },
+    {
+        "OrganizationCode": "WB",
+        "OrganizationName": "World Bank",
+        "HomePage": "https://www.worldbank.org/",
+        "DataPage": "https://data.worldbank.org/"
+    },
+    {
+        "OrganizationCode": "WBL",
+        "OrganizationName": "World Bank - Women, Business and the Law",
+        "HomePage": "https://www.worldbank.org/",
+        "DataPage": "https://wbl.worldbank.org/en/wbl-data"
+    },
+    {
+        "OrganizationCode": "WEF",
+        "OrganizationName": "World Economic Forum",
+        "HomePage": "https://www.weforum.org/",
+        "DataPage": "https://www.weforum.org/data/"
+    },
+    {
+        "OrganizationCode": "WGI",
+        "OrganizationName": "World Bank - Worldwide Governance Indicators",
+        "HomePage": "https://www.worldbank.org/",
+        "DataPage": "https://info.worldbank.org/governance/wgi/"
+    },
+    {
+        "OrganizationCode": "WHO",
+        "OrganizationName": "World Health Organization",
+        "HomePage": "https://www.who.int/",
+        "DataPage": "https://www.who.int/data"
+    },
+    {
+        "OrganizationCode": "WID",
+        "OrganizationName": "World Inequality Database",
+        "HomePage": "https://wid.world/",
+        "DataPage": "https://wid.world/data/"
+    },
+    {
+        "OrganizationCode": "WPB",
+        "OrganizationName": "World Prison Brief",
+        "HomePage": "https://www.prisonstudies.org/",
+        "DataPage": "https://www.prisonstudies.org/world-prison-brief-data"
     }
-
 ]

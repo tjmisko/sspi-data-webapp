@@ -115,7 +115,10 @@
                                                                     <details class="dataset-source">
                                                                         <summary><span class="source-label">Source:</span><span class="source-org">{{ dataset.source.OrganizationCode }}</span></summary>
                                                                         <div class="dataset-source-link-container">
-                                                                            <a class="view-data-btn" href="{{ dataset.source.Homepage }}" title="View Dataset Values"> {{ dataset.source.OrganizationCode }} Homepage </a>
+                                                                            <a class="view-data-btn" href="{{ dataset.organization_detail.HomePage }}" title="Go to Source Organization Homepage" target="_blank"> {{ dataset.source.OrganizationCode }} Homepage </a>
+                                                                            {% if dataset.organization_detail.DataPage %}
+                                                                                <a class="view-data-btn" href="{{ dataset.organization_detail.DataPage }}" title="Go to Source Organization Data Portal" target="_blank"> {{ dataset.source.OrganizationCode }} Data Portal </a>
+                                                                            {% endif %}
                                                                             <a class="view-data-btn" href="https://github.com/tjmisko/sspi-data-webapp/blob/main/sspi_flask_app/api/datasource/{{ dataset.source.OrganizationCode | lower }}.py" target="_blank" >{{ dataset.source.OrganizationCode }} API Collector Utility (GitHub)</a>
                                                                             <a class="view-data-btn" href="https://github.com/tjmisko/sspi-data-webapp/blob/main/sspi_flask_app/api/core/datasets/{{ dataset.source.OrganizationCode | lower }}/{{ dataset.dataset_code | lower }}.py" target="_blank" > {{ dataset.dataset_code }} Collector Call (GitHub)</a>
                                                                         </div>
