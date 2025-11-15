@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Rail Network Intensity
 DatasetCode: WB_RAILLN
 Description: The total length of rail line in the country operated for passenger transport, goods transport, or both (in kilometers).
+Unit: Kilometers
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.TOTL.KM

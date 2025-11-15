@@ -7,6 +7,7 @@ Description: |
   WUE at the national level is the sum of the efficiencies in the major economic sectors
   weighted according to the proportion of water withdrawn by each sector over the
   total withdrawals'
+Unit: USD/m3
 Source:
   OrganizationCode: UNSDG
   QueryCode: 6.4.1

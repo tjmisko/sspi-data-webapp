@@ -2,6 +2,7 @@
 ItemType: Indicator
 ItemCode: CHMPOL
 ItemName: Chemical Pollution Convention Compliance
+Policy: Chemical Waste Management
 Description: Compliance with three treaties
 Footnote: null
 Indicator: Chemical Pollution Convention Compliance
@@ -12,7 +13,14 @@ DatasetCodes:
   - UNSDG_MONTRL
   - UNSDG_MINMAT
   - UNSDG_ROTDAM
-Policy: Chemical Waste Management
+ScoreFunction: >
+    Score = average(
+        goalpost(UNSDG_STKHLM, 0, 1),
+        goalpost(UNSDG_BASELA, 0, 1),
+        goalpost(UNSDG_MONTRL, 0, 1),
+        goalpost(UNSDG_MINMAT, 0, 1),
+        goalpost(UNSDG_ROTDAM, 0, 1)
+    )
 LowerGoalpost: 0.0
 UpperGoalpost: 100.0
 ---

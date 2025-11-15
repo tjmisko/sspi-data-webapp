@@ -1079,6 +1079,8 @@ def build_indicators_data():
                         "description": indicator_item.get("Description", ""),
                         "datasets": datasets,
                         "dataset_codes": dataset_codes,
+                        "policy": indicator_item.get("Policy", ""),
+                        "score_function": indicator_item.get("ScoreFunction", ""),
                         "lower_goalpost": indicator_item.get("LowerGoalpost"),
                         "upper_goalpost": indicator_item.get("UpperGoalpost"),
                         "inverted": indicator_item.get("Inverted", False),

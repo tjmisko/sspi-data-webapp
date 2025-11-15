@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Rotterdam Convention Compliance
 DatasetCode: UNSDG_ROTDAM
 Description: The Rotterdam Convention on the prior informed consent procedure for certain hazardous chemicals and pesticides in international trade.
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1

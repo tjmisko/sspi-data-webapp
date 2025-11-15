@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Rail Goods Transported
 DatasetCode: WB_RAILGT
 Description: Goods transported by railway are the volume of goods transported by railway, measured in metric tons times kilometers traveled.
+Unit: Ton-Kilometers (million)
 Source:
   OrganizationCode: WB
   OrganizationSeriesCode: IS.RRS.GOOD.MT.K6

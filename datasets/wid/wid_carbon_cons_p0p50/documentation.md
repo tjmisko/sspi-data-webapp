@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Personal Carbon Footprint - Consumption (Bottom 50%)
 DatasetCode: WID_CARBON_CONS_P0P50
 Description: Average per capita carbon emissions from consumption across bottom 50% income percentiles. Represents emissions from individual consumption and government collective expenditures. Excludes investment-related emissions. Provides critical data for understanding consumption-based carbon inequality across income distribution.
+Unit: >
+    tCO2 equivalent/cap; percentile p0p50; lcfghgi999
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Population Above Statutory Pensionable Age Receiving Pension
 DatasetCode: UNSDG_BENFTS_PENSN
 Description: Proportion of population above statutory pensionable age receiving a pension, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

@@ -4,6 +4,7 @@ DatasetName: Stockholm Convention Compliance
 DatasetCode: UNSDG_STKHLM
 Description: >
     Stockholm Convention on Persistent Organic Pollutants
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1

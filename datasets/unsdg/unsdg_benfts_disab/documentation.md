@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Population with Severe Disabilities Receiving Disability Cash Benefit
 DatasetCode: UNSDG_BENFTS_DISAB
 Description: Proportion of population with severe disabilities receiving disability cash benefit, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

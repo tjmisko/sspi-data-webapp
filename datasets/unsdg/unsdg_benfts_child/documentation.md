@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Children/Households Receiving Child/Family Cash Benefit
 DatasetCode: UNSDG_BENFTS_CHILD
 Description: Proportion of children/households receiving child/family cash benefit, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

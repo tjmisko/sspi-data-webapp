@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetCode: UNSDG_FRSHWT
 DatasetName: Freshwater Areas Protected
 Description: Percentage of important sites covered by protected areas, freshwater
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 15.1.2

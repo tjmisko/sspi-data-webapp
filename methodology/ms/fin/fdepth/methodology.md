@@ -2,14 +2,13 @@
 ItemType: Indicator
 ItemCode: FDEPTH
 ItemName: Financial Depth
-Description: >
-    This measure is an aggregation using the simple mean of the following
-    measures: 
-    
-    1) The financial resources provided to the private sector by financial\
-    corporations as a percentage of GDP. 
-    2) Deposited money in banks and other financial\
-    institutions as a percentage of GDP.
+Policy: Access to and Engagement with the Formal Financial Sector
+Description: |
+  Arithmetic average of the following measures: <br>
+  1. The financial resources provided to the private sector by financial
+  corporations as a percentage of GDP
+  2. Deposited money in banks and other financial
+  institutions as a percentage of GDP.
 Footnote: null
 Indicator: Depth
 IndicatorCode: FDEPTH
@@ -17,13 +16,16 @@ DatasetCodes:
   - WB_CREDIT
   - WB_DPOSIT
 Inverted: false
-LowerGoalpost: null
-Policy: >
-    Access to and Engagement with the Formal Financial Sector
+LowerGoalpost: 0
+UpperGoalpost: 200
+ScoreFunction: >
+    Score = average(
+        goalpost(WB_CREDIT, 0, 200), 
+        goalpost(WB_DPOSIT, 0, 100)
+    )
 SourceOrganization: World Bank
 SourceOrganizationIndicatorCode: null
 SourceOrganizationURL: https://databank.worldbank.org/
-UpperGoalpost: null
 ---
 
 ### The Government's Role in Encouraging the Depth of Finanical Markets

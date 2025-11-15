@@ -1,6 +1,17 @@
 ---
 ItemType: Indicator
 ItemCode: COALPW
+ItemName: Energy From Coal
+Policy: Fossil Fuel and Air Pollution
+Description: >
+  Percentage of a country's total energy supply generated from coal and
+  coal derived sources, computed as the ratio of coal energy to total energy
+  supply.
+Footnote: >
+  Computed as IEA_TLCOAL / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP +
+  IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL)
+Indicator: Energy From Coal
+IndicatorCode: COALPW
 DatasetCodes:
   - IEA_TLCOAL
   - IEA_NATGAS
@@ -9,19 +20,14 @@ DatasetCodes:
   - IEA_GEOPWR
   - IEA_BIOWAS
   - IEA_FSLOIL
-ItemName: Energy From Coal
-Description: Percentage of a country's total energy supply generated from coal and
-  coal derived sources, computed as the ratio of coal energy to total energy supply.
-Footnote: Computed as IEA_TLCOAL / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL)
-Indicator: Energy From Coal
-IndicatorCode: COALPW
 Inverted: true
-LowerGoalpost: 0.40
-Policy: Fossil Fuel and Air Pollution
+LowerGoalpost: 0.4
+UpperGoalpost: 0
+ScoreFunction: >
+    Score = goalpost(IEA_TLCOAL / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL), 0.4, 0)
 SourceOrganization: IEA
 SourceOrganizationIndicatorCode: TESbySource
 SourceOrganizationURL: https://www.iea.org/data-and-statistics/data-tools/energy-statistics-data-browser?country=WORLD&fuel=Energy%20supply&indicator=TESbySource
-UpperGoalpost: 0.0
 ---
 The COALPW indicator is computed by taking the ratio of coal energy
 (IEA_TLCOAL) to the total energy supply, where total energy supply is the sum

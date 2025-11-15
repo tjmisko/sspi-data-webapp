@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Employed Population Covered in Event of Work Injury
 DatasetCode: UNSDG_BENFTS_WRKINJ
 Description: Proportion of employed population covered in the event of work injury, by sex (%)
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 1.3.1

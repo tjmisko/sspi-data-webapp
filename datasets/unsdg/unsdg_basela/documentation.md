@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Basel Accord Compliance
 DatasetCode: UNSDG_BASELA
 Description: The Basel Convention on the Control of Transboundary Movements of Hazardous Wastes and their Disposal.
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 12.4.1

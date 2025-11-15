@@ -6,6 +6,7 @@ Description: >
   The estimated percentage of children aged 12–23 months who received three
   doses of the combined diphtheria, tetanus toxoid and pertussis vaccine time before
   the survey.
+Unit: Percent
 Source:
   OrganizationCode: WHO
   QueryCode: WHS4_100

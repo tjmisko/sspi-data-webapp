@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Personal Carbon Footprint - Consumption (Full Distribution)
 DatasetCode: WID_CARBON_CONS_P0P100
 Description: Average per capita carbon emissions from consumption across full income distribution. Represents emissions from individual consumption and government collective expenditures. Excludes investment-related emissions. Provides comprehensive view of consumption-based carbon inequality across all income percentiles.
+Unit: >
+    tCO2 equivalent/cap; percentile p0p100; lcfghgi999
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

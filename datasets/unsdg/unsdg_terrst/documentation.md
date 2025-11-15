@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Terresterial Areas Protected
 DatasetCode: UNSDG_TERRST
 Description: Percentage of important sites covered by protected areas, terrestrial
+Unit: PERCENT
 Source:
   OrganizationCode: UNSDG
   OrganizationSeriesCode: 15.1.2

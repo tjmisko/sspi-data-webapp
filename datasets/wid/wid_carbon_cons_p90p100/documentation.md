@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Personal Carbon Footprint - Consumption (Top 10%)
 DatasetCode: WID_CARBON_CONS_P90P100
 Description: Average per capita carbon emissions from consumption across top 10% income percentiles. Represents emissions from individual consumption and government collective expenditures. Excludes investment-related emissions. Essential for analyzing high-income consumption patterns and carbon inequality.
+Unit: >
+    tCO2 equivalent/cap; percentile p90p100; lcfghgi999
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

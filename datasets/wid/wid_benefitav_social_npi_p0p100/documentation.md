@@ -3,6 +3,8 @@ DatasetType: Intermediate
 DatasetName: Social Benefits Averages (NPI) - Full Population
 DatasetCode: WID_BENEFITAV_SOCIAL_NPI_P0P100
 Description: Average social benefits other than social transfers in kind across all population percentiles for NPI (Net Primary Income) groups. Social benefits represent government transfers to individuals and households, excluding in-kind transfers. Shows the average benefit distribution patterns across net primary income groups.
+Unit: >
+    VEF; percentile p0p100; assbnpi992
 Source:
   OrganizationCode: WID
   QueryCode: wid_all_data

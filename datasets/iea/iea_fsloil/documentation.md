@@ -3,6 +3,7 @@ DatasetType: Intermediate
 DatasetName: Energy from Fossil Oil
 DatasetCode: IEA_FSLOIL
 Description: Percentage of total final energy consumption generated from Fossil Oil
+Unit: TJ
 Source:
   OrganizationCode: IEA
   QueryCode: TESbySource
