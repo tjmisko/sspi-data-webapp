@@ -735,12 +735,16 @@ def metadata_to_structure(metadata_items: list) -> list:
             category = items_by_code.get(category_code, {})
             pillar = items_by_code.get(pillar_code, {})
             
-            # Convert datasets to frontend format
+            # Convert datasets to frontend format using enriched DatasetDetails
             datasets = []
-            dataset_codes = item.get('DatasetCodes', [])
-            for dataset_code in dataset_codes:
+            dataset_details = item.get('DatasetDetails', [])
+            for detail in dataset_details:
                 datasets.append({
-                    'code': dataset_code,
+                    'code': detail.get('dataset_code'),
+                    'name': detail.get('dataset_name'),
+                    'description': detail.get('description'),
+                    'organization': detail.get('organization'),
+                    'dataset_type': detail.get('dataset_type'),
                     'weight': 1.0  # Default weight
                 })
             
@@ -852,16 +856,49 @@ def get_default_structure():
     try:
         # Get all item details directly - this includes SSPI, Pillars, Categories, and Indicators
         all_items = sspi_metadata.item_details()
-        
+
         if not all_items:
             return jsonify({
                 "success": False,
                 "error": "No items found in metadata"
             }), 404
-        
-        # The items are already in the correct metadata format with proper Children fields
+
+        # Get dataset details and create lookup map
+        dataset_details_map = {}
+        all_datasets = sspi_metadata.dataset_details()
+        for dataset in all_datasets:
+            dataset_code = dataset.get('DatasetCode')
+            if dataset_code:
+                dataset_details_map[dataset_code] = {
+                    'dataset_code': dataset_code,
+                    'dataset_name': dataset.get('DatasetName', dataset_code),
+                    'description': dataset.get('Description', ''),
+                    'organization': dataset_code.split('_')[0] if '_' in dataset_code else '',
+                    'dataset_type': dataset.get('DatasetType', 'Unknown')
+                }
+
+        # Enrich indicators with dataset details
         metadata_items = all_items
-        
+        for item in metadata_items:
+            if item.get('ItemType') == 'Indicator':
+                dataset_codes = item.get('DatasetCodes', [])
+                item['DatasetDetails'] = []
+                for code in dataset_codes:
+                    if code in dataset_details_map:
+                        item['DatasetDetails'].append(dataset_details_map[code])
+                    else:
+                        # Include code even if details not found
+                        item['DatasetDetails'].append({
+                            'dataset_code': code,
+                            'dataset_name': code,
+                            'description': '',
+                            'organization': '',
+                            'dataset_type': 'Unknown'
+                        })
+
+                # Log dataset details and score function for debugging
+                logger.info(f"Indicator {item.get('ItemCode')}: {len(item['DatasetDetails'])} datasets, ScoreFunction: {'Yes' if item.get('ScoreFunction') else 'No'}")
+
         # Convert to frontend structure format
         structure_items = metadata_to_structure(metadata_items)
         
@@ -1047,21 +1084,16 @@ def score_custom_structure():
     try:
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
-        
         data = request.get_json()
         country_code = data.get("country_code", "").upper()
         year = data.get("year", 2023)
-        
         if not country_code:
             return jsonify({"error": "country_code is required"}), 400
-        
         # Get metadata format - from direct metadata, structure, or config
         metadata_items = None
-        
         if "metadata" in data:
             metadata_items = data["metadata"]
         elif "structure" in data:
-            # Transform structure to metadata
             structure_data = data["structure"]
             validation_result = validate_custom_structure(structure_data)
             if not validation_result["valid"]:

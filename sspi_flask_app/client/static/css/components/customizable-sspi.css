@@ -294,11 +294,11 @@
     word-wrap: break-word;
 }
 
-.dataset-selection, .scoring-function, .goalposts-section {
+.dataset-selection, .score-function, .goalposts-section {
     margin-bottom: var(--theme-gap);
 }
 
-.dataset-selection legend, .scoring-function legend {
+.dataset-selection legend, .score-function legend {
     font-weight: bold;
     font-size: 0.9em;
     padding: 0 0.3em;
@@ -306,17 +306,13 @@
     font-family: var(--header-font-family);
 }
 
-.dataset-selection label, .scoring-function label {
+.dataset-selection label, .score-function label {
     display: block;
     font-weight: bold;
     margin-bottom: 0.5em;
     color: var(--header-text-color);
     font-family: var(--header-font-family);
     cursor: pointer;
-}
-
-.dataset-selection label:hover, .scoring-function label:hover {
-    color: var(--green-accent, #8BA342);
 }
 
 .selected-datasets {
@@ -359,23 +355,24 @@
   min-width: 0;
 }
 
-.dataset-code {
+.customizable-sspi .dataset-code {
   font-family: monospace;
   font-weight: bold;
   color: var(--pg-color);
   font-size: 0.85em;
 }
 
-.dataset-name {
+.customizable-sspi .dataset-name {
   font-family: var(--body-font-family);
   font-size: 0.75em;
   color: var(--body-text-color);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: wrap;
+  text-wrap: wrap;
+  white-space: wrap;
 }
 
-.remove-dataset {
+.customizable-sspi .remove-dataset {
   color: var(--low-importance-font-color);
   border: none;
   width: 28px;
@@ -388,7 +385,7 @@
   transition: color 0.2s;
 }
 
-.remove-dataset:hover {
+.customizable-sspi .remove-dataset:hover {
   color: var(--green-accent);
 }
 
