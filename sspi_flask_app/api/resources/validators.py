@@ -6,23 +6,30 @@ import re
 def validate_data_query(raw_query_input:dict):
     """
     Returns the raw_query_input iff the query is valid. Raises InvalidQueryError if the query is invalid.
+
+    Validates query parameters including:
+    - SeriesCodes, IndicatorCode: Series or indicator codes
+    - CountryCode, CountryGroup: Country filters
+    - Year, TimePeriod: Time filters
+    - YearRangeStart, YearRangeEnd: Year range filters
     """
-        
+
     def _is_safe(query_string):
         """
         Returns True if the query_string meets the sanitization criteria.
 
-        Fairly restrictive sanitization that allows only alphanumeric characters, ampersands, and underscores
+        Fairly restrictive sanitization that allows only alphanumeric characters,
+        ampersands, underscores, and hyphens (for time periods like "2000-2004")
         """
         if query_string is None:
             return True
-        safe_pattern = r"^[\w\d&]*$"
+        safe_pattern = r"^[\w\d&-]*$"
         return bool(re.match(safe_pattern, str(query_string)))
 
     def validate_query_safety(raw_query_input):
         """
         Uses _is_safe to check that the query parameters are safe
-        """ 
+        """
         if len(raw_query_input.keys()) > 200:
             raise InvalidQueryError("Invalid Query: Too many parameters passed")
         for key, value in enumerate(raw_query_input):

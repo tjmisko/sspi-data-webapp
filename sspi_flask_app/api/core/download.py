@@ -1,8 +1,12 @@
 from io import BytesIO
-from flask import Blueprint, request, send_file
+from flask import Blueprint, request, send_file, jsonify
 import pandas as pd
-from ..resources.utilities import lookup_database, parse_json
+from pymongo.errors import OperationFailure
+
+from ..resources.utilities import lookup_database, parse_json, public_databases
+from ..resources.query_builder import get_query_params
 from sspi_flask_app.models.database import sspidb, sspi_metadata
+from sspi_flask_app.models.errors import InvalidDatabaseError, InvalidQueryError
 import json
 
 
@@ -13,168 +17,165 @@ download_bp = Blueprint(
     url_prefix="/download"
 )
 
-# Only allow downloading from specific databases
-allowed_databases = [
-    {   
-        'name': 'sspi_item_data',
-        'description': 'Contains score data for SSPI Indicators, Categories, Pillars, and Scores. Includes imputations.'
-    },
-    {
-        'name': 'sspi_indicator_data',
-        'description': 'Contains score data for SSPI Indicators and their underlying Datasets. Does not include imputations.'
-    },
-    {
-        'name': 'sspi_imputed_indicator_data',
-        'description': 'The complement to sspi_indicator_data, containing only indicator imputations and their underlying datasets.'
-    },
-    {
-        'name': 'sspi_clean_api_data',
-        'description': 'Contains datasets processed from source data APIs. In series format.'
-    },
-    {
-        'name': 'sspi_raw_api_data',
-        'description': 'Contains unprocessed results of raw API calls. For replication purposes only.'
-    },
-    {
-        'name': 'sspi_static_data_2018',
-        'description': 'Contains the dataset used to produce the 2018 SSPI'
-    }
-]
-db_choices = [db for db in allowed_databases if db in sspidb.list_collection_names()]
+# Filter public databases to only those that exist in the database
+db_choices = [db for db in public_databases if db['name'] in sspidb.list_collection_names()]
 ic_choices = sspi_metadata.indicator_codes()
 cg_choices = sspi_metadata.country_groups()
 
 
-def get_all_indicator_descendants(item_code):
-    """
-    Recursively get all indicator codes that descend from a given item code.
-    
-    Args:
-        item_code (str): The item code to expand (SSPI, Pillar, Category, or Indicator)
-        
-    Returns:
-        set: Set of indicator codes that are descendants of the given item
-    """
-    try:
-        item_detail = sspi_metadata.get_item_detail(item_code)
-        item_type = item_detail.get('ItemType', 'Unknown')
-        
-        if item_type == 'Indicator':
-            return {item_code}
-        
-        # For SSPI, Pillar, or Category, recursively get all indicators
-        indicator_codes = set()
-        children_codes = item_detail.get('Children', [])
-        
-        for child_code in children_codes:
-            child_indicators = get_all_indicator_descendants(child_code)
-            indicator_codes.update(child_indicators)
-        
-        return indicator_codes
-        
-    except Exception as e:
-        # If there's an error getting item detail, assume it's an indicator
-        return {item_code}
-
-
-def expand_codes_to_indicators(codes):
-    """
-    Expand mixed codes (SSPI, pillar, category, indicator) to indicator codes only.
-    
-    Args:
-        codes (list): List of mixed item codes
-        
-    Returns:
-        list: List of indicator codes only
-    """
-    if not codes:
-        return []
-    
-    indicator_codes = set()
-    
-    for code in codes:
-        if not code:  # Skip empty strings
-            continue
-            
-        # Get all indicator descendants of this code
-        descendants = get_all_indicator_descendants(code)
-        indicator_codes.update(descendants)
-    
-    return list(indicator_codes)
-
-
 def fetch_data_for_download(request_args):
     """
-    request_args has type ImmutableMultiDict
+    Fetches data for download using the shared query builder.
+    Unsupported parameters for the selected database are silently ignored.
+
+    Args:
+        request_args: Flask request.args (ImmutableMultiDict)
+
+    Returns:
+        list: List of documents matching the query
+
+    Raises:
+        InvalidDatabaseError: If the requested database is not allowed
+        InvalidQueryError: If query parameters are invalid
+        OperationFailure: If database operation fails
     """
-    mongo_query = {}
-    if request_args.getlist('IndicatorCode'):
-        # Expand mixed codes to indicator codes only
-        mixed_codes = request.args.getlist('IndicatorCode')
-        indicator_codes = expand_codes_to_indicators(mixed_codes)
-        mongo_query["IndicatorCode"] = {
-            "$in": indicator_codes}
-    if request_args.get('CountryGroup'):
-        group = request.args.get('CountryGroup')
-        if not group:
-            return []
-        group_countries = sspi_metadata.country_group(group)
-        mongo_query['CountryCode'] = {
-            "$in": group_countries
-        }
-    elif request_args.getlist('CountryCode'):
-        mongo_query["CountryCode"] = {
-            "$in": request.args.getlist('CountryCode')
-        }
-    if request_args.getlist('Year'):
-        mongo_query["Year"] = {
-            "$in": [int(year) for year in request.args.getlist('Year')]
-        }
-    elif request_args.getlist('timePeriod'):
-        mongo_query["Year"] = {
-            "$in": [int(year) for year in request.args.getlist('timePeriod')]
-        }
+    # Get and validate database name
     database_name = request_args.get("database", default="sspi_static_data_2018")
-    
-    # Validate that requested database is allowed
-    if database_name not in allowed_databases:
-        return []
-    
+    allowed_db_names = [db['name'] for db in public_databases]
+
+    if database_name not in allowed_db_names:
+        raise InvalidDatabaseError(
+            f"Database '{database_name}' is not allowed for download. "
+            f"Allowed databases: {', '.join(allowed_db_names)}"
+        )
+
+    # Lookup database collection
     database = lookup_database(database_name)
-    data_to_download = parse_json(database.find(mongo_query))
+
+    # Build query using shared query builder
+    # The query builder will handle database-specific schemas and ignore unsupported parameters
+    mongo_query = get_query_params(request, database)
+
+    # Execute query and return results
+    data_to_download = parse_json(database.find(mongo_query, options={"_id": 0}))
     return data_to_download
+
+
+@download_bp.route("/databases")
+def list_databases():
+    """
+    List all available databases with their supported parameters.
+
+    Returns:
+        JSON response with database information
+    """
+    return jsonify({
+        "databases": [
+            {
+                "name": db['name'],
+                "description": db['description'],
+                "supported_parameters": db['supports'],
+                "schema_type": db['schema_type']
+            }
+            for db in db_choices
+        ]
+    })
 
 
 @download_bp.route("/csv")
 def download_csv():
     """
-    Download the data from the database in csv format
+    Download the data from the database in CSV format.
+
+    Query Parameters:
+        - database: Database name (default: sspi_static_data_2018)
+        - SeriesCode / IndicatorCode: Series/indicator codes to filter
+        - DatasetCode: Dataset codes to filter (for clean/raw data)
+        - CountryCode: Country codes to filter
+        - CountryGroup: Country group name to filter
+        - Year: Individual years to include
+        - timePeriod: Time period labels to expand (e.g., "2000-2004")
+        - YearRangeStart / YearRangeEnd: Year range to include
+
+    Note: Not all parameters are supported by all databases. Use /download/databases
+    to see which parameters are supported by each database.
+
+    Returns:
+        CSV file download or JSON error message
     """
-    data_to_download = fetch_data_for_download(request.args)
-    df = pd.DataFrame(data_to_download).to_csv()
-    mem = BytesIO()
-    mem.write(df.encode('utf-8'))
-    mem.seek(0)
-    return send_file(
-        mem,
-        mimetype='text/csv',
-        download_name='SSPIData.csv',
-        as_attachment=True
-    )
+    try:
+        data_to_download = fetch_data_for_download(request.args)
+
+        if not data_to_download:
+            return jsonify({
+                "warning": "No data matched your query criteria",
+                "hint": "Try broadening your search parameters or use /download/databases to see supported parameters"
+            }), 404
+
+        df = pd.DataFrame(data_to_download).to_csv()
+        mem = BytesIO()
+        mem.write(df.encode('utf-8'))
+        mem.seek(0)
+        return send_file(
+            mem,
+            mimetype='text/csv',
+            download_name='SSPIData.csv',
+            as_attachment=True
+        )
+    except InvalidDatabaseError as e:
+        return jsonify({"error": str(e)}), 400
+    except InvalidQueryError as e:
+        return jsonify({"error": str(e)}), 400
+    except OperationFailure as e:
+        return jsonify({"error": "Database Operation Failed: " + str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Unexpected Error: " + str(e)}), 500
 
 
 @download_bp.route("/json")
 def download_json():
     """
-    Download data from the database in json format
+    Download data from the database in JSON format.
+
+    Query Parameters:
+        - database: Database name (default: sspi_static_data_2018)
+        - SeriesCode / IndicatorCode: Series/indicator codes to filter
+        - DatasetCode: Dataset codes to filter (for clean/raw data)
+        - CountryCode: Country codes to filter
+        - CountryGroup: Country group name to filter
+        - Year: Individual years to include
+        - timePeriod: Time period labels to expand (e.g., "2000-2004")
+        - YearRangeStart / YearRangeEnd: Year range to include
+
+    Note: Not all parameters are supported by all databases. Use /download/databases
+    to see which parameters are supported by each database.
+
+    Returns:
+        JSON file download or JSON error message
     """
-    data_to_download = fetch_data_for_download(request.args)
-    mem = BytesIO()
-    mem.write(json.dumps(data_to_download).encode('utf-8'))
-    mem.seek(0)
-    return send_file(
-        mem,
-        mimetype='application/json',
-        download_name='SSPIData.json',
-        as_attachment=True
-    )
+    try:
+        data_to_download = fetch_data_for_download(request.args)
+
+        if not data_to_download:
+            return jsonify({
+                "warning": "No data matched your query criteria",
+                "hint": "Try broadening your search parameters or use /download/databases to see supported parameters"
+            }), 404
+
+        mem = BytesIO()
+        mem.write(json.dumps(data_to_download).encode('utf-8'))
+        mem.seek(0)
+        return send_file(
+            mem,
+            mimetype='application/json',
+            download_name='SSPIData.json',
+            as_attachment=True
+        )
+    except InvalidDatabaseError as e:
+        return jsonify({"error": str(e)}), 400
+    except InvalidQueryError as e:
+        return jsonify({"error": str(e)}), 400
+    except OperationFailure as e:
+        return jsonify({"error": "Database Operation Failed: " + str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Unexpected Error: " + str(e)}), 500

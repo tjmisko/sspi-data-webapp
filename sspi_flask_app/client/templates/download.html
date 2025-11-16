@@ -16,12 +16,28 @@
                 <form id="download-form" class="download-form">
                     <div class="form-section">
                         <h2>Select Database</h2>
+                        <p class="form-help">Select the database from which to download data.</p>
                         <select name="database" id="database-select" class="form-control">
-                            <option value="sspi_item_data" selected></option>
                             {% for db in databases %}
-                            <option value="{{ db.name }}">{{ db.name }}: {{ db.description }}</option>
+                            <option value="{{ db.name }}"
+                                    title="{{ db.description }}"
+                                    data-description="{{ db.description }}"
+                                    data-nice-name="{{ db.nice_name }}"
+                                    data-supports="{{ db.supports|join(',') }}">
+                                {{ db.nice_name }} ({{ db.name }})
+                            </option>
                             {% endfor %}
                         </select>
+                        <div class="database-description-box"><p></p></div>
+                        <script>
+                            const databaseSelector = document.getElementById('database-select')
+                            databaseSelector.addEventListener('change', (event) => {
+                                const databaseDescriptionPar = document.querySelector('.database-description-box')
+                                const selectedOption = databaseSelector.options[databaseSelector.selectedIndex];
+                                databaseDescriptionPar.innerHTML = selectedOption.dataset.description;
+                            });
+                            databaseSelector.dispatchEvent(new Event('change'))
+                        </script>
                     </div>
 
                     <div class="form-section">
@@ -32,8 +48,8 @@
                             <div class="error-message">
                                 <p>Error loading indicator tree: {{ indicator_tree.error }}</p>
                                 <p>Falling back to basic indicator selection.</p>
-                                <select name="IndicatorCode" id="indicator-select-fallback" class="form-control" multiple size="10">
-                                    <option value="">All Indicators</option>
+                                <select name="SeriesCode" id="indicator-select-fallback" class="form-control" multiple size="10">
+                                    <option value="">All Series</option>
                                 </select>
                             </div>
                         {% else %}
@@ -44,7 +60,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section" id="countries-section">
                         <h2>Select Countries</h2>
                         <div class="country-selection-toggle">
                             <div class="toggle-switch">
@@ -81,7 +97,7 @@
                         </div>
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section" id="years-section">
                         <h2>Select Years</h2>
                         <p class="form-help">Select one or more years</p>
                         <div class="years-controls">
@@ -132,8 +148,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update hidden form inputs for form submission
                     const hiddenContainer = document.querySelector('.selected-codes-container');
                     if (hiddenContainer) {
-                        hiddenContainer.innerHTML = selectedCodes.map(code => 
-                            `<input type="hidden" name="IndicatorCode" value="${code}">`
+                        hiddenContainer.innerHTML = selectedCodes.map(code =>
+                            `<input type="hidden" name="SeriesCode" value="${code}">`
                         ).join('');
                     }
                 }

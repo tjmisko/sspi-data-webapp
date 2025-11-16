@@ -181,6 +181,7 @@
 .download-scope-option {
   display: block;
   padding: 0.15em 0;
+  line-height: 1.25;
   cursor: pointer;
 }
 

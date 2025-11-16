@@ -4,7 +4,7 @@ from markdown import markdown
 from flask_login import login_required
 import re
 import pycountry
-from sspi_flask_app.api.resources.utilities import parse_json
+from sspi_flask_app.api.resources.utilities import parse_json, public_databases
 from sspi_flask_app.models.database import sspi_metadata, sspidb
 from sspi_flask_app.api.core.dashboard import build_indicators_data, build_download_tree_structure, build_indicators_data_static
 
@@ -197,33 +197,8 @@ def analysis_page(analysis_code):
 
 @client_bp.route('/download')
 def download():
-    allowed_databases = [
-        {   
-            'name': 'sspi_item_data',
-            'description': 'Contains score data for SSPI Indicators, Categories, Pillars, and Scores. Includes imputations.'
-        },
-        {
-            'name': 'sspi_indicator_data',
-            'description': 'Contains score data for SSPI Indicators and their underlying Datasets. Does not include imputations.'
-        },
-        {
-            'name': 'sspi_imputed_indicator_data',
-            'description': 'The complement to sspi_indicator_data, containing only indicator imputations and their underlying datasets.'
-        },
-        {
-            'name': 'sspi_clean_api_data',
-            'description': 'Contains datasets processed from source data APIs. In series format.'
-        },
-        {
-            'name': 'sspi_raw_api_data',
-            'description': 'Contains unprocessed results of raw API calls. For replication purposes only.'
-        },
-        {
-            'name': 'sspi_static_data_2018',
-            'description': 'Contains the dataset used to produce the 2018 SSPI'
-        }
-    ]
-    databases = [db for db in allowed_databases if db["name"] in sspidb.list_collection_names()]
+    # Filter public databases to only those that exist in the database
+    databases = [db for db in public_databases if db["name"] in sspidb.list_collection_names()]
     indicator_tree = build_download_tree_structure()
     country_groups = sspi_metadata.country_groups()
     countries = []
@@ -236,17 +211,17 @@ def download():
                     'code': code,
                     'name': country.name
                 })
-        except:
+        except Exception:
             countries.append({
                 'code': code,
                 'name': code
             })
     countries.sort(key=lambda x: x['name'])
     return render_template('download.html', 
-                         databases=databases,
-                         indicator_tree=indicator_tree,
-                         countries=countries,
-                         country_groups=country_groups)
+                           databases=databases,
+                           indicator_tree=indicator_tree,
+                           countries=countries,
+                           country_groups=country_groups)
 
 ###############################
 # SSPI 2018 STATIC DATA PAGES #
@@ -336,7 +311,7 @@ def compare_custom():
         if name is not None:
             country_names.append(name)
     comparison_list = [{'code': code, 'name': name}
-                       for code, name in zip(country_codes, country_names)]
+        for code, name in zip(country_codes, country_names)]
     print(comparison_list)
     return parse_json({
         "html": render_template("static/compare/2018-comparison-result.html", comparison_list=comparison_list),
