@@ -69,6 +69,8 @@
   --theme-header-box-shadow: 0px 0px 3px #999;
   --caution-background-color:  rgba(230,230,230,0.95);
   --ocean-color: #0b2d51;
+  --info-background: #e8f4f8;
+  --info-border: #2196f3;
 }
 
 .dark-theme {
@@ -98,4 +100,6 @@
   --theme-header-box-shadow: 0px 0px 3px #222;
   --caution-background-color:  rgba(20,20,20,0.95);
   --ocean-color: #0b2131;
+  --info-background: #2196f322;
+  --info-border: #2196f3;
 }

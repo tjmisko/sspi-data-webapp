@@ -30,16 +30,21 @@ class HierarchicalIndicatorSelector {
             this.container.innerHTML = '<div class="error-message">No tree data provided</div>';
             return;
         }
-        
+
         this.treeData = treeData;
-        
-        // Set initial expanded state
+
+        // Set initial expanded state - expand SSPI and pillars to show categories
         if (this.options.expandFirstLevel && this.treeData.children) {
+            // First, expand the SSPI root node so pillars are visible
+            this.expandedNodes.add(this.treeData.itemCode);
+
+            // Then expand each pillar so categories are visible
             this.treeData.children.forEach(pillar => {
                 this.expandedNodes.add(pillar.itemCode);
+                // Do NOT expand categories - we want indicators to remain hidden
             });
         }
-        
+
         this.render();
         this.bindEvents();
     }

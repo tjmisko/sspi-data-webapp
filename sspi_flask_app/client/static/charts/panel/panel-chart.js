@@ -178,7 +178,7 @@ class PanelChart {
         this.showChartOptions.title = "Show Chart Options"
         this.showChartOptions.innerHTML = `
 <svg class="svg-button show-chart-options-svg" width="24" height="24">
-    <use href="#icon-menu" />
+    <use href="#icon-settings" />
 </svg>
 `;
         this.titleActions.appendChild(this.showChartOptions)
@@ -1111,14 +1111,23 @@ class PanelChart {
                 return []
             }
             
-            return dataset.data.map((_, i) => ({
-                "ItemCode": dataset.ICode || '',
-                "CountryCode": dataset.CCode || '',
-                "CountryName": dataset.CName || '',
-                "Score": scores[i] ?? null,
-                "Value": values[i] ?? null,
-                "Year": years[i] ?? null
-            }));
+            return dataset.data.map((_, i) => {
+                const year = years[i]
+                // Filter by year range if year is available
+                if (year !== null && year !== undefined) {
+                    if (year < this.startYear || year > this.endYear) {
+                        return null // Skip this observation
+                    }
+                }
+                return {
+                    "ItemCode": dataset.ICode || '',
+                    "CountryCode": dataset.CCode || '',
+                    "CountryName": dataset.CName || '',
+                    "Score": scores[i] ?? null,
+                    "Value": values[i] ?? null,
+                    "Year": year ?? null
+                }
+            }).filter(obs => obs !== null); // Remove filtered observations
         }).flat();
         console.log('Total observations to download:', observations.length)
         if (observations.length === 0) {
@@ -1130,7 +1139,10 @@ class PanelChart {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'item-panel-data.json';
+        const today = new Date().toISOString().split('T')[0];
+        const title = this.title.innerText || 'item-panel-data';
+        const itemCode = this.activeItemCode || this.itemCode;
+        a.download = today + ' - ' + title + (itemCode ? ' - ' + itemCode : '') + '.json';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1154,14 +1166,23 @@ class PanelChart {
                 return []
             }
             
-            return dataset.data.map((_, i) => ({
-                "ItemCode": dataset.ICode || '',
-                "CountryCode": dataset.CCode || '',
-                "CountryName": dataset.CName || '',
-                "Score": scores[i]?.toString() || '',
-                "Value": values[i]?.toString() || '',
-                "Year": years[i]?.toString() || ''
-            }));
+            return dataset.data.map((_, i) => {
+                const year = years[i]
+                // Filter by year range if year is available
+                if (year !== null && year !== undefined) {
+                    if (year < this.startYear || year > this.endYear) {
+                        return null // Skip this observation
+                    }
+                }
+                return {
+                    "ItemCode": dataset.ICode || '',
+                    "CountryCode": dataset.CCode || '',
+                    "CountryName": dataset.CName || '',
+                    "Score": scores[i]?.toString() || '',
+                    "Value": values[i]?.toString() || '',
+                    "Year": year?.toString() || ''
+                }
+            }).filter(obs => obs !== null); // Remove filtered observations
         }).flat();
         if (observations.length === 0) {
             alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
@@ -1173,7 +1194,10 @@ class PanelChart {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'item-panel-data.csv';
+        const today = new Date().toISOString().split('T')[0];
+        const title = this.title.innerText || 'item-panel-data';
+        const itemCode = this.activeItemCode || this.itemCode;
+        a.download = today + ' - ' + title + (itemCode ? ' - ' + itemCode : '') + '.csv';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1235,12 +1259,13 @@ class PanelChart {
         const formData = new FormData(this.downloadForm)
         const scope = formData.get('scope')
         const format = formData.get('format')
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         if (!scope || !format) {
             console.error('Missing scope or format in form data')
             alert('Please select both scope and format options')
             return
         }
-        
+
         if (format === 'json') {
             console.log('Calling dumpChartDataJSON with scope:', scope)
             this.dumpChartDataJSON(scope)

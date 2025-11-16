@@ -1089,4 +1089,3 @@ class SSPIMetadata(MongoWrapper):
         if not detail:
             return {}
         return detail
-

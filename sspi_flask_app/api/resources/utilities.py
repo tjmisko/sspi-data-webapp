@@ -35,6 +35,68 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
 
+# Public databases available for download and querying
+# This is the single source of truth for database configurations
+public_databases = [
+    {
+        'name': 'sspi_item_data',
+        'nice_name': 'SSPI Item Data',
+        'description': 'Contains score data for SSPI all SSPI Items (Indicators, Categories, Pillars, and SSPI Overall). Includes imputations. Excludes datasets.',
+        'supports': ['SeriesCode', 'CountryCode', 'CountryGroup', 'Year', 'timePeriod', 'YearRangeStart', 'YearRangeEnd'],
+        'schema_type': 'item',
+        'note': 'Supports SSPI, Pillar, Category, and Indicator codes via SeriesCode'
+    },
+    {
+        'name': 'sspi_indicator_data',
+        'nice_name': 'SSPI Indicator Data',
+        'description': 'Contains score data for SSPI Indicators and corresponding Datasets. Does not include imputations. Excludes non-Indicator SSPI Items (Categories, Pillars, and SSPI Overall Scores)',
+        'supports': ['SeriesCode', 'CountryCode', 'CountryGroup', 'Year', 'timePeriod', 'YearRangeStart', 'YearRangeEnd'],
+        'schema_type': 'indicator',
+        'note': 'Supports Indicator codes via SeriesCode'
+    },
+    {
+        'name': 'sspi_imputed_indicator_data',
+        'nice_name': 'SSPI Imputed Indicator Data',
+        'description': 'The complement to sspi_indicator_data, containing only indicator imputations and their underlying datasets.',
+        'supports': ['SeriesCode', 'CountryCode', 'CountryGroup', 'Year', 'timePeriod', 'YearRangeStart', 'YearRangeEnd'],
+        'schema_type': 'indicator',
+        'note': 'Supports Indicator codes via SeriesCode'
+    },
+    {
+        'name': 'sspi_clean_api_data',
+        'nice_name': 'SSPI Clean API Data',
+        'description': 'Contains datasets processed from source data APIs in SSPI Series format.',
+        'supports': ['SeriesCode', 'CountryCode', 'CountryGroup', 'Year', 'timePeriod', 'YearRangeStart', 'YearRangeEnd'],
+        'schema_type': 'clean',
+        'note': 'SeriesCode resolves to DatasetCodes - can accept any code that has dataset dependencies'
+    },
+    {
+        'name': 'sspi_raw_api_data',
+        'nice_name': 'SSPI Raw API Data',
+        'description': 'Contains unprocessed results of raw API calls. For replication purposes only.',
+        'supports': ['SeriesCode'],
+        'schema_type': 'raw',
+        'note': 'SeriesCode resolves to Source queries - no filtering by country/year available'
+    },
+    {
+        'name': 'sspi_static_data_2018',
+        'nice_name': 'SSPI Static Data 2018',
+        'description': 'Contains the dataset used to produce the 2018 SSPI',
+        'supports': ['SeriesCode', 'CountryCode', 'CountryGroup', 'Year', 'timePeriod'],
+        'schema_type': 'static',
+        'note': 'Supports Indicator codes via SeriesCode'
+    },
+    {
+        'name': 'sspi_metadata',
+        'nice_name': 'SSPI Metadata',
+        'description': 'Contains comprehensive metadata for the SSPI system including item details (SSPI, Pillars, Categories, Indicators), dataset information, country details and groups, organization information, source mappings, analysis records, time period definitions, and various lookup tables. This is the central configuration and reference database for the SSPI.',
+        'supports': [],
+        'schema_type': 'metadata',
+        'note': 'No filtering available - downloads entire metadata collection'
+    }
+]
+
+
 def format_m49_as_string(input):
     """
     Utility function ensuring that all M49 data is correctly formatted as a

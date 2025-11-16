@@ -253,24 +253,43 @@ hasChangesFromBaseline(){if(!this.baselineMetadata)return false;const diff=this.
 getChangeCount(){if(!this.baselineMetadata)return 0;const diff=this.generateDiff();return diff.summary?diff.summary.totalChanges:0;}
 async fetch(url,options={}){const response=await window.fetch(url,options);if(!response.ok){throw new Error(`HTTP error!status:${response.status}`);}
 return await response.json();}}
-class DownloadForm{constructor(formElement){this.form=formElement;this.initializeEventListeners();}
-initializeEventListeners(){const countryTypeRadios=this.form.querySelectorAll('input[name="country-type"]');countryTypeRadios.forEach(radio=>{radio.addEventListener('change',(e)=>this.handleCountryTypeChange(e));});const csvBtn=this.form.querySelector('.csv-btn');const jsonBtn=this.form.querySelector('.json-btn');if(csvBtn){csvBtn.addEventListener('click',()=>this.downloadData('csv'));}
+class DownloadForm{constructor(formElement){this.form=formElement;this.databaseCapabilities=this.loadDatabaseCapabilities();this.initializeEventListeners();}
+loadDatabaseCapabilities(){const dbSelect=this.form.querySelector('#database-select');const capabilities={};if(dbSelect){Array.from(dbSelect.options).forEach(option=>{const supports=option.dataset.supports;capabilities[option.value]=supports?supports.split(','):[];});}
+return capabilities;}
+initializeEventListeners(){const dbSelect=this.form.querySelector('#database-select');if(dbSelect){dbSelect.addEventListener('change',()=>this.handleDatabaseChange());this.handleDatabaseChange();}
+const countryTypeRadios=this.form.querySelectorAll('input[name="country-type"]');countryTypeRadios.forEach(radio=>{radio.addEventListener('change',(e)=>this.handleCountryTypeChange(e));});this.initializeCountrySelection();const csvBtn=this.form.querySelector('.csv-btn');const jsonBtn=this.form.querySelector('.json-btn');if(csvBtn){csvBtn.addEventListener('click',()=>this.downloadData('csv'));}
 if(jsonBtn){jsonBtn.addEventListener('click',()=>this.downloadData('json'));}}
+initializeCountrySelection(){const checkedRadio=this.form.querySelector('input[name="country-type"]:checked');if(checkedRadio){this.handleCountryTypeChange({target:checkedRadio});}}
+handleDatabaseChange(){const dbSelect=this.form.querySelector('#database-select');if(!dbSelect)return;const selectedDb=dbSelect.value;const supports=this.databaseCapabilities[selectedDb]||[];const indicatorsSection=this.form.querySelector('.form-section:has(.hierarchical-selector-container)');const supportsSeriesCode=supports.includes('SeriesCode');if(indicatorsSection){if(supportsSeriesCode){indicatorsSection.style.display='block';indicatorsSection.classList.remove('disabled-section');}else{indicatorsSection.style.display='none';indicatorsSection.classList.add('disabled-section');}}
+const countriesSection=this.form.querySelector('#countries-section');const supportsCountries=supports.includes('CountryCode')||supports.includes('CountryGroup');if(countriesSection){if(supportsCountries){countriesSection.style.display='block';countriesSection.classList.remove('disabled-section');}else{countriesSection.style.display='none';countriesSection.classList.add('disabled-section');this.clearCountrySelections();}}
+const yearsSection=this.form.querySelector('#years-section');const supportsYears=supports.includes('Year')||supports.includes('timePeriod');if(yearsSection){if(supportsYears){yearsSection.style.display='block';yearsSection.classList.remove('disabled-section');}else{yearsSection.style.display='none';yearsSection.classList.add('disabled-section');this.clearYearSelections();}}
+const csvBtn=this.form.querySelector('.csv-btn');if(csvBtn){if(selectedDb==='sspi_raw_api_data'||selectedDb==='sspi_metadata'){csvBtn.disabled=true;csvBtn.title=selectedDb==='sspi_metadata'?'CSV format not available for metadata':'CSV format not available for raw API data';}else{csvBtn.disabled=false;csvBtn.title='';}}}
+clearCountrySelections(){const countryRadios=this.form.querySelectorAll('input[name="country-type"]');countryRadios.forEach(radio=>radio.checked=false);const countryCheckboxes=this.form.querySelectorAll('input[name="CountryCode"]');countryCheckboxes.forEach(checkbox=>checkbox.checked=false);const groupCheckboxes=this.form.querySelectorAll('input[name="CountryGroup"]');groupCheckboxes.forEach(checkbox=>checkbox.checked=false);}
+clearYearSelections(){const yearCheckboxes=this.form.querySelectorAll('input[name="Year"]');yearCheckboxes.forEach(checkbox=>checkbox.checked=false);}
 handleCountryTypeChange(event){const individualSection=document.getElementById('individual-countries');const groupSection=document.getElementById('country-groups');const countrySelect=document.getElementById('country-select');const groupSelect=document.getElementById('country-group-select');if(event.target.value==='individual'){individualSection.style.display='block';groupSection.style.display='none';if(groupSelect){groupSelect.value='';}}else{individualSection.style.display='none';groupSection.style.display='block';if(countrySelect){Array.from(countrySelect.options).forEach(option=>{option.selected=false;});}}}
 buildQueryParams(){const formData=new FormData(this.form);const params=new URLSearchParams();const database=formData.get('database');if(database){params.append('database',database);}
-let indicators=[];if(window.hierarchicalSelector){indicators=window.hierarchicalSelector.getSelectedCodes();}else{indicators=formData.getAll('IndicatorCode');}
-indicators.forEach(indicator=>{if(indicator){params.append('IndicatorCode',indicator);}});const countryType=this.form.querySelector('input[name="country-type"]:checked');if(countryType&&countryType.value==='individual'){const countries=formData.getAll('CountryCode');countries.forEach(country=>{if(country){params.append('CountryCode',country);}});}else{const countryGroup=formData.get('CountryGroup');if(countryGroup){params.append('CountryGroup',countryGroup);}}
+let seriesCodes=[];if(window.hierarchicalSelector){seriesCodes=window.hierarchicalSelector.getSelectedCodes();}else{seriesCodes=formData.getAll('SeriesCode')||formData.getAll('IndicatorCode');}
+seriesCodes.forEach(code=>{if(code){params.append('SeriesCode',code);}});const countryType=this.form.querySelector('input[name="country-type"]:checked');if(countryType&&countryType.value==='individual'){const countries=formData.getAll('CountryCode');countries.forEach(country=>{if(country){params.append('CountryCode',country);}});}else{const countryGroup=formData.get('CountryGroup');if(countryGroup){params.append('CountryGroup',countryGroup);}}
 const years=formData.getAll('Year');years.forEach(year=>{if(year){params.append('Year',year);}});return params;}
-downloadData(format){if(!this.validateForm()){return;}
-const params=this.buildQueryParams();const downloadUrl=`/api/v1/download/${format}?${params.toString()}`;window.location.href=downloadUrl;}
+async downloadData(format){if(!this.validateForm()){return;}
+this.clearErrorMessage();this.setLoadingState(true,format);const params=this.buildQueryParams();const downloadUrl=`/api/v1/download/${format}?${params.toString()}`;try{const response=await fetch(downloadUrl);if(!response.ok){const errorData=await response.json();const errorMessage=errorData.error||'Download failed. Please try again.';this.showErrorMessage(errorMessage);this.setLoadingState(false,format);return;}
+const blob=await response.blob();const url=window.URL.createObjectURL(blob);const a=document.createElement('a');a.style.display='none';a.href=url;const today=new Date().toISOString().split('T')[0];const formData=new FormData(this.form);const databaseName=formData.get('database')||'sspi_data';a.download=`${today}-${databaseName}.${format}`;document.body.appendChild(a);a.click();window.URL.revokeObjectURL(url);document.body.removeChild(a);this.showSuccessMessage('Download started successfully!');this.setLoadingState(false,format);}catch(error){console.error('Download error:',error);this.showErrorMessage('Network error: Unable to download data. Please check your connection and try again.');this.setLoadingState(false,format);}}
+showErrorMessage(message){const errorContainer=this.getOrCreateMessageContainer();errorContainer.className='download-message error-message';errorContainer.innerHTML=`<span class="message-content"><strong>Error:</strong>${message}</span><button class="close-message"onclick="this.parentElement.remove()">×</button>`;errorContainer.style.display='flex';errorContainer.scrollIntoView({behavior:'smooth',block:'nearest'});}
+showSuccessMessage(message){const messageContainer=this.getOrCreateMessageContainer();messageContainer.className='download-message success-message';messageContainer.innerHTML=`<span class="message-content"><strong>Success:</strong>${message}</span><button class="close-message"onclick="this.parentElement.remove()">×</button>`;messageContainer.style.display='flex';setTimeout(()=>{messageContainer.remove();},5000);}
+clearErrorMessage(){const existingMessage=this.form.querySelector('.download-message');if(existingMessage){existingMessage.remove();}}
+getOrCreateMessageContainer(){let container=this.form.querySelector('.download-message');if(!container){container=document.createElement('div');container.className='download-message';this.form.insertBefore(container,this.form.firstChild);}
+return container;}
+setLoadingState(isLoading,format){const csvBtn=this.form.querySelector('.csv-btn');const jsonBtn=this.form.querySelector('.json-btn');if(isLoading){if(format==='csv'&&csvBtn){csvBtn.disabled=true;csvBtn.dataset.originalText=csvBtn.textContent;csvBtn.textContent='Downloading...';}else if(format==='json'&&jsonBtn){jsonBtn.disabled=true;jsonBtn.dataset.originalText=jsonBtn.textContent;jsonBtn.textContent='Downloading...';}}else{if(csvBtn){csvBtn.disabled=false;if(csvBtn.dataset.originalText){csvBtn.textContent=csvBtn.dataset.originalText;}}
+if(jsonBtn){jsonBtn.disabled=false;if(jsonBtn.dataset.originalText){jsonBtn.textContent=jsonBtn.dataset.originalText;}}}}
 clearSelections(){const selects=this.form.querySelectorAll('select');selects.forEach(select=>{if(select.multiple){Array.from(select.options).forEach(option=>{option.selected=false;});}else{select.selectedIndex=0;}});const individualRadio=this.form.querySelector('input[name="country-type"][value="individual"]');if(individualRadio){individualRadio.checked=true;this.handleCountryTypeChange({target:individualRadio});}}
-validateForm(){const params=this.buildQueryParams();let hasIndicators=false;if(window.hierarchicalSelector){hasIndicators=window.hierarchicalSelector.getSelectedCodes().length>0;}else{const formData=new FormData(this.form);hasIndicators=formData.getAll('IndicatorCode').some(code=>code);}
-if(!hasIndicators){alert('Please select at least one indicator, category, or pillar before downloading.');return false;}
+validateForm(){const params=this.buildQueryParams();const formData=new FormData(this.form);const selectedDb=formData.get('database');if(selectedDb==='sspi_metadata'){return true;}
+let hasSeriesCodes=false;if(window.hierarchicalSelector){hasSeriesCodes=window.hierarchicalSelector.getSelectedCodes().length>0;}else{const codes=formData.getAll('SeriesCode')||formData.getAll('IndicatorCode');hasSeriesCodes=codes.some(code=>code);}
+if(!hasSeriesCodes){alert('Please select at least one indicator, category, pillar, or dataset before downloading.');return false;}
 return true;}}
 class HierarchicalIndicatorSelector{constructor(container,options={}){if(!(container instanceof HTMLElement)){throw new Error('Container must be a valid HTMLElement');}
 this.container=container;this.options={onSelectionChange:null,initialExpanded:['SSPI'],enableSearch:true,enableControls:true,expandFirstLevel:true,...options};this.treeData=null;this.selectedCodes=new Set();this.expandedNodes=new Set();this.searchTerm='';this.container.innerHTML='';this.container.className='hierarchical-selector';}
 initialize(treeData){if(!treeData){this.container.innerHTML='<div class="error-message">No tree data provided</div>';return;}
-this.treeData=treeData;if(this.options.expandFirstLevel&&this.treeData.children){this.treeData.children.forEach(pillar=>{this.expandedNodes.add(pillar.itemCode);});}
+this.treeData=treeData;if(this.options.expandFirstLevel&&this.treeData.children){this.expandedNodes.add(this.treeData.itemCode);this.treeData.children.forEach(pillar=>{this.expandedNodes.add(pillar.itemCode);});}
 this.render();this.bindEvents();}
 render(){if(!this.treeData)return;const html=`${this.options.enableControls?this.createControlsHTML():''}<div class="tree-container">${this.renderNode(this.treeData)}</div>`;this.container.innerHTML=html;this.updateIndeterminateStates();}
 renderTreeOnly(){if(!this.treeData)return;const treeContainer=this.container.querySelector('.tree-container');if(treeContainer){treeContainer.innerHTML=this.renderNode(this.treeData);this.updateIndeterminateStates();}}
@@ -1143,7 +1162,7 @@ this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button cl
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
-this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-menu"/></svg>`;this.titleActions.appendChild(this.showChartOptions)
+this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"><use href="#icon-settings"/></svg>`;this.titleActions.appendChild(this.showChartOptions)
 this.overlay=document.createElement('div')
 this.overlay.classList.add('chart-options-overlay')
 this.overlay.addEventListener('click',()=>{this.closeChartOptionsSidebar()})
@@ -1467,19 +1486,23 @@ const values=dataset.values||dataset.value||[]
 const years=dataset.years||dataset.year||this.chart.data.labels||[]
 if(!dataset.data||!Array.isArray(dataset.data)){console.warn(`Dataset ${dataset.CCode}has no data array`)
 return[]}
-return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]??null,"Value":values[i]??null,"Year":years[i]??null}));}).flat();console.log('Total observations to download:',observations.length)
+return dataset.data.map((_,i)=>{const year=years[i]
+if(year!==null&&year!==undefined){if(year<this.startYear||year>this.endYear){return null}}
+return{"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]??null,"Value":values[i]??null,"Year":year??null}}).filter(obs=>obs!==null);}).flat();console.log('Total observations to download:',observations.length)
 if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
 return}
-const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);console.log('JSON download initiated')}
+const jsonString=JSON.stringify(observations,null,2);const blob=new Blob([jsonString],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;const today=new Date().toISOString().split('T')[0];const title=this.title.innerText||'item-panel-data';const itemCode=this.activeItemCode||this.itemCode;a.download=today+' - '+title+(itemCode?' - '+itemCode:'')+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);console.log('JSON download initiated')}
 dumpChartDataCSV(scope='visible'){const observations=this.chart.data.datasets.map(dataset=>{if(!this.shouldIncludeDataset(dataset,scope)){return[]}
 const scores=dataset.scores||dataset.score||[]
 const values=dataset.values||dataset.value||[]
 const years=dataset.years||dataset.year||this.chart.data.labels||[]
 if(!dataset.data||!Array.isArray(dataset.data)){console.warn(`Dataset ${dataset.CCode}has no data array`)
 return[]}
-return dataset.data.map((_,i)=>({"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]?.toString()||'',"Value":values[i]?.toString()||'',"Year":years[i]?.toString()||''}));}).flat();if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
+return dataset.data.map((_,i)=>{const year=years[i]
+if(year!==null&&year!==undefined){if(year<this.startYear||year>this.endYear){return null}}
+return{"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]?.toString()||'',"Value":values[i]?.toString()||'',"Year":year?.toString()||''}}).filter(obs=>obs!==null);}).flat();if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
 return}
-const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='item-panel-data.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;const today=new Date().toISOString().split('T')[0];const title=this.title.innerText||'item-panel-data';const itemCode=this.activeItemCode||this.itemCode;a.download=today+' - '+title+(itemCode?' - '+itemCode:'')+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
 rigPinChangeListener(){window.observableStorage.onChange("pinnedCountries",()=>{this.getPins()
 console.log("Pin change detected!")})}
 rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
@@ -1498,7 +1521,7 @@ return false})}}
 handleDownloadRequest(){const formData=new FormData(this.downloadForm)
 const scope=formData.get('scope')
 const format=formData.get('format')
-if(!scope||!format){console.error('Missing scope or format in form data')
+const today=new Date().toISOString().split('T')[0];if(!scope||!format){console.error('Missing scope or format in form data')
 alert('Please select both scope and format options')
 return}
 if(format==='json'){console.log('Calling dumpChartDataJSON with scope:',scope)

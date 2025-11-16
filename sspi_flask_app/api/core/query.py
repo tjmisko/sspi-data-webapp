@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, request
 from pymongo.errors import OperationFailure
 
 from sspi_flask_app.api.resources.utilities import lookup_database, parse_json
-from sspi_flask_app.api.resources.validators import validate_data_query
-from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
+from sspi_flask_app.api.resources.query_builder import get_query_params
+from sspi_flask_app.models.database import sspi_metadata
 from sspi_flask_app.models.errors import InvalidDatabaseError, InvalidQueryError
 
 query_bp = Blueprint(
@@ -30,103 +30,6 @@ def query_database(database_string):
         return jsonify({"error": str(e)}), 400
     except OperationFailure as e:
         return jsonify({"error": "Database Operation Failed: " + str(e)}), 400
-
-
-def get_query_params(request, database=None):
-    """
-    Implements the logic of query parameters and raises an
-    InvalidQueryError for invalid queries.
-
-    In Flask, request.args is a MultiDict object of query parameters, but
-    I wanted the function to work for simple dictionaries as well so we can
-    use it easily internally
-
-    Sanitizes User Input and returns a MongoDB query dictionary.
-
-    Should always be implemented inside of a try except block
-    with an except that returns a 404 error with the error message.
-
-    requires_database determines whether the query
-    """
-    raw_query_input = {
-        "SeriesCodes": request.args.getlist("SeriesCode"),
-        "CountryCode": request.args.getlist("CountryCode"),
-        "CountryGroup": request.args.get("CountryGroup"),
-        "Year": request.args.getlist("Year"),
-        "YearRangeStart": request.args.get("YearRangeStart"),
-        "YearRangeEnd": request.args.get("YearRangeEnd"),
-    }
-    validated_query_input = validate_data_query(raw_query_input)
-    return build_mongo_query(validated_query_input, database)
-
-
-def build_mongo_query(raw_query_input, database=None):
-    """
-    Given a safe and logically valid query input, build a mongo query
-
-    The MongoQuery takes in raw_query_input, which is a dictionary
-    with keys:
-    - SeriesCodes: List of series codes to query
-    - CountryCode: List of country codes to filter by
-    - CountryGroup: A single country group to filter by
-    - Year: List of years to filter by
-    - YearRangeStart: Start of a year range to filter by
-    """
-    mongo_query = {}  # Empty query returns all documents
-    if raw_query_input["SeriesCodes"]:
-        item_codes = raw_query_input["SeriesCodes"]
-        dataset_codes = []
-        for sc in raw_query_input["SeriesCodes"]:
-            dataset_codes += sspi_metadata.get_dataset_dependencies(sc)
-        dataset_codes = list(set(dataset_codes))
-        # Special handling for raw data queries - use Source fields
-        if database is sspi_raw_api_data:
-            source_queries = []
-            for dataset_code in dataset_codes:
-                source_info = sspi_metadata.get_source_info(dataset_code)
-                source_queries.append(
-                    {
-                        "Source.OrganizationCode": source_info["OrganizationCode"],
-                        "Source.QueryCode": source_info["QueryCode"],
-                    }
-                )
-            mongo_query = {"$or": source_queries}
-            if not source_queries:
-                raise InvalidQueryError(
-                    "Invalid Query: No valid source queries found for raw data."
-                    "The provided SeriesCodes did not resolve to valid datasets."
-                )
-        else:
-            mongo_query = {
-                "$or": [
-                    {"ItemCode": {"$in": item_codes}},
-                    {"DatasetCode": {"$in": dataset_codes}},
-                    {"IndicatorCode": {"$in": item_codes}},
-                    {"CategoryCode": {"$in": item_codes}},
-                    {"PillarCode": {"$in": item_codes}},
-                ]
-            }
-    # Don't apply CountryCode and Year filters to raw data - it doesn't have these fields
-    if database is not sspi_raw_api_data:
-        country_codes = set()
-        if raw_query_input["CountryGroup"]:
-            country_codes.update(
-                sspi_metadata.country_group(raw_query_input["CountryGroup"])
-            )
-        if raw_query_input["CountryCode"]:
-            country_codes.update(raw_query_input["CountryCode"])
-        if country_codes:
-            mongo_query["CountryCode"] = {"$in": list(country_codes)}
-        years = set()
-        if raw_query_input["Year"]:
-            years.update([int(y) for y in raw_query_input["Year"]])
-        if raw_query_input["YearRangeStart"] and raw_query_input["YearRangeEnd"]:
-            start_year = int(raw_query_input["YearRangeStart"])
-            end_year = int(raw_query_input["YearRangeEnd"])
-            years.update(range(start_year, end_year + 1))
-        if years:
-            mongo_query["Year"] = {"$in": list(years)}
-    return mongo_query
 
 
 @query_bp.route("/metadata/country_groups", methods=["GET"])
@@ -211,6 +114,9 @@ def query_item_details():
 def query_item_detail(item_code):
     return parse_json(sspi_metadata.get_item_detail(item_code))
 
+@query_bp.route("/metadata/country_detail/<country_code>", methods=["GET"])
+def query_country_detail(country_code):
+    return jsonify(sspi_metadata.get_country_detail(country_code))
 
 @query_bp.route("/metadata/series_detail/<series_code>", methods=["GET"])
 def query_series_detail(series_code):
