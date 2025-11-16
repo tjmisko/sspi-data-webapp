@@ -755,7 +755,6 @@ def finalize_sspi_dynamic_score():
 
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
     sspi_item_data.delete_many({})
-
     # Filter to only complete indicators to avoid scoring incomplete categories
     if country_codes is None:
         country_codes = sspi_metadata.country_group("SSPI67")
@@ -848,18 +847,14 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
     documents = []
     count = 0
     total_documents_inserted = 0
-
     # Process cursor without loading everything into memory
     for group in grouped_data_cursor:
         country_code = group["CountryCode"]
         year = group["Year"]
         indicator_data = group["Data"]
-
         count += 1
-        if count % 25 == 0:
+        if count % 100 == 0:
             yield f"Scoring {country_code} ({year}) - Group {count}\n"
-
-        # Create SSPI object and compute scores for this country-year
         sspi = SSPI(details_for_scoring, indicator_data)
         scores = sspi.to_score_documents(country_code)
 

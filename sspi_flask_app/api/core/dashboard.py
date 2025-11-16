@@ -18,13 +18,14 @@ from flask import (
     render_template,
     current_app as app,
 )
-from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.sspi import SSPI, FastSSPI
 from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_static_data_2018,
     sspi_item_data,
     sspi_metadata,
+    sspi_indicator_data,
     sspi_panel_data,
     sspi_static_rank_data,
     sspi_static_metadata,
@@ -1353,3 +1354,69 @@ def item_coverage_data(ItemCode, CountryGroup):
 @dashboard_bp.route("/globe")
 def globe_data():
     return sspi_globe_data.find({})[0]
+
+
+@dashboard_bp.route("/fast_score")
+def fast_score():
+    items = sspi_metadata.item_details()
+    country_codes = ["USA"]
+    coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
+    complete_indicators = coverage.complete()
+    details_for_scoring = sspi_metadata.item_details(indicator_filter=complete_indicators)
+    pipeline = [
+        {
+            "$match": {
+                "CountryCode": {"$in": country_codes},
+                "IndicatorCode": {"$in": complete_indicators},
+                "Year": {"$gte": 2023, "$lte": 2023}
+            }
+        },
+        {
+            "$unionWith": {
+                "coll": "sspi_imputed_data",
+                "pipeline": [
+                    {
+                        "$match": {
+                            "CountryCode": {"$in": country_codes},
+                            "IndicatorCode": {"$in": complete_indicators},
+                            "Year": {"$gte": 2000, "$lte": 2023}
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "CountryCode": "$CountryCode",
+                    "Year": "$Year"
+                },
+                "Data": {
+                    "$push": {
+                        "CountryCode": "$CountryCode",
+                        "IndicatorCode": "$IndicatorCode",
+                        "Score": "$Score",
+                        "Year": "$Year",
+                        "Unit": "$Unit",
+                        "Datasets": "$Datasets"
+                    }
+                }
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "CountryCode": "$_id.CountryCode",
+                "Year": "$_id.Year",
+                "Data": 1
+            }
+        },
+        {
+            "$sort": {"CountryCode": 1, "Year": 1}
+        }
+    ]
+    indicator_data = sspi_indicator_data.aggregate(pipeline)
+    print(indicator_data)
+    sspi_score_matrix = FastSSPI(item_details=details_for_scoring, indicator_scores=indicator_data).score_matrix
+    print(sspi_score_matrix)
+    return parse_json(indicator_data)
