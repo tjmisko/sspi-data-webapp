@@ -1,6 +1,136 @@
 // customizable-sspi.js
 // SSPI Tree UI implementing full specification (three-column layout)
 
+/**
+ * UndoRedoManager - Manages undo/redo history for the customizable SSPI
+ */
+class UndoRedoManager {
+    constructor(sspiInstance) {
+        this.sspi = sspiInstance;
+        this.history = [];
+        this.currentIndex = -1;
+        this.maxHistorySize = 50;
+    }
+
+    /**
+     * Record an action in the history
+     * @param {Object} action - Action object with type, message, undo, and redo functions
+     */
+    recordAction(action) {
+        // Remove any actions after the current index (when undoing then doing a new action)
+        this.history = this.history.slice(0, this.currentIndex + 1);
+
+        // Add the new action
+        this.history.push({
+            ...action,
+            timestamp: Date.now()
+        });
+
+        // Move to the new action
+        this.currentIndex++;
+
+        // Limit history size
+        if (this.history.length > this.maxHistorySize) {
+            this.history.shift();
+            this.currentIndex--;
+        }
+
+        console.log('Recorded action:', action.message, '(History size:', this.history.length, ')');
+    }
+
+    /**
+     * Undo the last action
+     */
+    undo() {
+        if (!this.canUndo()) {
+            this.sspi.showNotification('Nothing\u0020to\u0020undo', 'info', 2000);
+            return false;
+        }
+
+        const action = this.history[this.currentIndex];
+
+        try {
+            // Execute the undo function
+            action.undo();
+            this.currentIndex--;
+
+            // Show notification
+            this.sspi.showNotification(`↶\u0020Undo:\u0020${action.message}`, 'info', 2500);
+
+            console.log('Undid action:', action.message);
+            return true;
+        } catch (error) {
+            console.error('Error during undo:', error);
+            this.sspi.showNotification('Error\u0020during\u0020undo', 'error', 3000);
+            return false;
+        }
+    }
+
+    /**
+     * Redo the next action
+     */
+    redo() {
+        if (!this.canRedo()) {
+            this.sspi.showNotification('Nothing\u0020to\u0020redo', 'info', 2000);
+            return false;
+        }
+
+        const action = this.history[this.currentIndex + 1];
+
+        try {
+            // Execute the redo function
+            action.redo();
+            this.currentIndex++;
+
+            // Show notification
+            this.sspi.showNotification(`↷\u0020Redo:\u0020${action.message}`, 'info', 2500);
+
+            console.log('Redid action:', action.message);
+            return true;
+        } catch (error) {
+            console.error('Error during redo:', error);
+            this.sspi.showNotification('Error\u0020during\u0020redo', 'error', 3000);
+            return false;
+        }
+    }
+
+    /**
+     * Check if undo is available
+     */
+    canUndo() {
+        return this.currentIndex >= 0;
+    }
+
+    /**
+     * Check if redo is available
+     */
+    canRedo() {
+        return this.currentIndex < this.history.length - 1;
+    }
+
+    /**
+     * Clear the history
+     */
+    clear() {
+        this.history = [];
+        this.currentIndex = -1;
+        console.log('Cleared undo/redo history');
+    }
+
+    /**
+     * Get current history info for debugging
+     */
+    getInfo() {
+        return {
+            historySize: this.history.length,
+            currentIndex: this.currentIndex,
+            canUndo: this.canUndo(),
+            canRedo: this.canRedo(),
+            recentActions: this.history.slice(-5).map(a => a.message)
+        };
+    }
+}
+
 class CustomizableSSPIStructure {
     constructor(parentElement, options = {}) {
         const {
@@ -30,13 +160,22 @@ class CustomizableSSPIStructure {
         this.currentChart = null;
         this.currentConfigId = null;
 
+        // Dataset details storage (maps dataset code to full details)
+        this.datasetDetails = {};
+
+        // Initialize undo/redo manager
+        this.undoRedoManager = new UndoRedoManager(this);
+
         this.injectStyles();
         this.initToolbar();
         this.initVisualizationSection();
         this.initRoot();
         this.addEventListeners();
+        this.setupKeyboardShortcuts();
         this.loadConfigurationsList();
+        this.loadDatasetDetails();
         this.setupCacheSync();
+        this.rigUnloadListener();
         
         // Auto-load cached modifications or default metadata if enabled
         if (this.autoLoad) {
@@ -150,6 +289,13 @@ class CustomizableSSPIStructure {
             await this.saveConfiguration();
         });
 
+        const resetViewBtn = document.createElement('button');
+        resetViewBtn.textContent = 'Reset View';
+        resetViewBtn.title = 'Collapse all indicators, expand all categories';
+        resetViewBtn.addEventListener('click', () => {
+            this.resetView();
+        });
+
         const expandAllBtn = document.createElement('button');
         expandAllBtn.textContent = 'Expand All';
         expandAllBtn.addEventListener('click', () => {
@@ -190,7 +336,7 @@ class CustomizableSSPIStructure {
             await this.scoreAndVisualize();
         });
 
-        toolbar.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, this.discardButton, expandAllBtn, collapseAllBtn);
+        toolbar.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, this.discardButton, resetViewBtn, expandAllBtn, collapseAllBtn);
         this.parentElement.appendChild(toolbar);
     }
 
@@ -322,6 +468,17 @@ class CustomizableSSPIStructure {
             })
         );
 
+        // Collapse toggle buttons
+        this.container.addEventListener('click', e => {
+            const toggleBtn = e.target.closest('.collapse-toggle-btn');
+            if (toggleBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleToggle(toggleBtn);
+                return;
+            }
+        });
+
         // Add Category / Indicator
         this.container.addEventListener('click', e => {
             if (e.target.classList.contains('add-category')) {
@@ -345,8 +502,20 @@ class CustomizableSSPIStructure {
 
         // Drag & Drop with preview clone
         this.container.addEventListener('dragstart', e => {
+            // Only allow dragging from headers (category-header or indicator-header)
+            // Since only headers have draggable="true", this should be the case
+            const isDraggingFromHeader = e.target.closest('.customization-category-header') ||
+                                        e.target.closest('.customization-indicator-header');
+
+            if (!isDraggingFromHeader) {
+                e.preventDefault();
+                return;
+            }
+
+            // Find the parent draggable item (category-box or indicator-card)
             const el = e.target.closest('.draggable-item');
             if (!el) return;
+
             this.draggedEl = el;
             this.origin = { parent: el.parentNode, next: el.nextSibling };
             this.dropped = false;
@@ -403,13 +572,24 @@ class CustomizableSSPIStructure {
             e.preventDefault();
             z.classList.remove('drag-over');
 
+            // Capture state for undo/redo
+            const movedElement = this.draggedEl;
+            const fromParent = this.origin.parent;
+            const fromNextSibling = this.origin.next;
+            let toNextSibling = null;
+
             const indicator = z.querySelector('.insertion-indicator');
             if (indicator) {
+                toNextSibling = indicator;
                 z.insertBefore(this.draggedEl, indicator);
                 indicator.remove();
             } else if (z.dataset.accept === this.draggedEl.dataset.type) {
                 z.appendChild(this.draggedEl);
+                toNextSibling = null;
             }
+
+            const toParent = z;
+
             this.dropped = true;
             this.draggedEl.classList.remove('dragging');
             this.validate(z);
@@ -418,6 +598,43 @@ class CustomizableSSPIStructure {
             this.markInvalidNestedCategories();
             const order = Array.from(z.children).map(c => c.id);
             console.log('New order:', order);
+
+            // Record the move action for undo/redo
+            const elementType = movedElement.dataset.type || 'item';
+            const elementName = this.getElementName(movedElement);
+            const fromLocation = this.getLocationName(fromParent);
+            const toLocation = this.getLocationName(toParent);
+
+            this.undoRedoManager.recordAction({
+                type: 'move',
+                message: `Moved\u0020${elementType}\u0020"${elementName}"\u0020from\u0020${fromLocation}\u0020to\u0020${toLocation}`,
+                undo: () => {
+                    // Move it back to original position
+                    if (fromNextSibling && fromNextSibling.parentNode) {
+                        fromParent.insertBefore(movedElement, fromNextSibling);
+                    } else {
+                        fromParent.appendChild(movedElement);
+                    }
+                    this.validate(fromParent);
+                    this.validate(toParent);
+                    this.markInvalidIndicatorPlacements();
+                    this.markInvalidNestedCategories();
+                    this.flagUnsaved();
+                },
+                redo: () => {
+                    // Move it to the new position
+                    if (toNextSibling && toNextSibling.parentNode) {
+                        toParent.insertBefore(movedElement, toNextSibling);
+                    } else {
+                        toParent.appendChild(movedElement);
+                    }
+                    this.validate(fromParent);
+                    this.validate(toParent);
+                    this.markInvalidIndicatorPlacements();
+                    this.markInvalidNestedCategories();
+                    this.flagUnsaved();
+                }
+            });
         });
 
         // Context menu & keyboard
@@ -451,19 +668,75 @@ class CustomizableSSPIStructure {
             }
         }, true);
 
-        // Custom collapse button handling
-        this.container.addEventListener('click', e => {
-            // Handle collapse toggle button clicks
-            if (e.target.closest('.collapse-toggle-btn')) {
-                const toggleBtn = e.target.closest('.collapse-toggle-btn');
-                const collapsible = toggleBtn.closest('[data-expanded]');
-                if (collapsible) {
-                    const isExpanded = collapsible.dataset.expanded === 'true';
-                    collapsible.dataset.expanded = (!isExpanded).toString();
-                    console.log('Toggled collapsible:', collapsible, 'new state:', collapsible.dataset.expanded);
+        // Track contenteditable changes for undo/redo
+        let editingElement = null;
+        let originalValue = null;
+
+        this.container.addEventListener('focus', e => {
+            const editableElement = e.target;
+            if (editableElement.isContentEditable &&
+                (editableElement.classList.contains('indicator-name') ||
+                 editableElement.classList.contains('customization-category-header-title') ||
+                 editableElement.classList.contains('pillar-name'))) {
+                editingElement = editableElement;
+                originalValue = editableElement.textContent.trim();
+            }
+        }, true);
+
+        this.container.addEventListener('blur', e => {
+            const editableElement = e.target;
+            if (editableElement === editingElement && originalValue !== null) {
+                const newValue = editableElement.textContent.trim();
+
+                // Only record if the value actually changed and it's not empty
+                if (newValue !== originalValue && newValue !== '' && originalValue !== '') {
+                    const elementType = editableElement.classList.contains('indicator-name') ? 'indicator' :
+                                      editableElement.classList.contains('customization-category-header-title') ? 'category' :
+                                      editableElement.classList.contains('pillar-name') ? 'pillar' : 'item';
+
+                    this.undoRedoManager.recordAction({
+                        type: 'rename',
+                        message: `Renamed\u0020${elementType}\u0020from\u0020"${originalValue}"\u0020to\u0020"${newValue}"`,
+                        undo: () => {
+                            editableElement.textContent = originalValue;
+                            this.flagUnsaved();
+                        },
+                        redo: () => {
+                            editableElement.textContent = newValue;
+                            this.flagUnsaved();
+                        }
+                    });
                 }
+
+                editingElement = null;
+                originalValue = null;
+            }
+        }, true);
+    }
+
+    setupKeyboardShortcuts() {
+        // Set up keyboard shortcuts for undo/redo
+        document.addEventListener('keydown', (e) => {
+            // Check if we're in an input field or contenteditable element
+            const isInInput = e.target.tagName === 'INPUT' ||
+                            e.target.tagName === 'TEXTAREA' ||
+                            e.target.isContentEditable;
+
+            // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !isInInput) {
+                e.preventDefault();
+                this.undoRedoManager.undo();
+            }
+
+            // Redo: Ctrl+Y or Ctrl+Shift+Z (Windows/Linux) or Cmd+Y or Cmd+Shift+Z (Mac)
+            if ((((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
+                 ((e.ctrlKey || e.metaKey) && e.key === 'y')) && !isInInput) {
+                e.preventDefault();
+                this.undoRedoManager.redo();
             }
         });
+
+        console.log('Keyboard shortcuts registered: Ctrl+Z (undo), Ctrl+Y or Ctrl+Shift+Z (redo)');
     }
 
     flagUnsaved() {
@@ -509,19 +782,19 @@ class CustomizableSSPIStructure {
     createCategoryElement() {
         const cat = document.createElement('div');
         cat.classList.add('category-box','draggable-item');
-        cat.setAttribute('draggable','true');
+        // Don't set draggable on the entire box - only on the header
         cat.setAttribute('role','group');
         cat.dataset.type='category';
         cat.innerHTML = `
 <div class="category-collapsible" data-expanded="true">
-    <div class="customization-category-header">
+    <div class="customization-category-header" draggable="true">
         <button class="collapse-toggle-btn category-toggle" type="button">
             <span class="collapse-icon">▼</span>
         </button>
         <h4 class="customization-category-header-title" contenteditable="true">New Category</h4>
         <div class="category-code-section">
             <label class="code-label">Code:</label>
-            <input type="text" class="category-code-input" maxlength="3" placeholder="CAT" 
+            <input type="text" class="category-code-input" maxlength="3" placeholder="CAT"
                    pattern="[A-Z]{3}" title="Exactly 3 uppercase letters required">
             <span class="code-validation-message"></span>
         </div>
@@ -540,53 +813,32 @@ class CustomizableSSPIStructure {
     createIndicatorElement() {
         const ind = document.createElement('div');
         ind.classList.add('indicator-card','draggable-item');
-        ind.setAttribute('draggable','true');
+        // Don't set draggable on the entire card - only on the header
         ind.setAttribute('role','treeitem');
         ind.dataset.type='indicator';
         ind.innerHTML = `
 <div class="indicator-collapsible" data-expanded="false">
-    <div class="customization-indicator-header">
+    <div class="customization-indicator-header" draggable="true">
         <button class="collapse-toggle-btn indicator-toggle" type="button">
             <span class="collapse-icon">▼</span>
         </button>
         <h5 class="indicator-name" contenteditable="true">New Indicator</h5>
         <div class="indicator-code-section">
             <label class="code-label">Code:</label>
-            <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1" 
+            <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1"
                    pattern="[A-Z0-9]{6}" title="Exactly 6 uppercase letters/numbers required">
             <span class="code-validation-message"></span>
         </div>
     </div>
     <div class="indicator-config">
     <div class="dataset-selection">
-        <label>Datasets (max 5):</label>
+        <label>Datasets</label>
         <div class="selected-datasets"></div>
         <button class="add-dataset-btn" type="button">+ Add Dataset</button>
     </div>
     <div class="scoring-function">
-        <label>Scoring Function:</label>
-        <select class="scoring-function-select">
-            <option value="average">Average</option>
-            <option value="weighted_average">Weighted Average</option>
-            <option value="sum">Sum</option>
-            <option value="min">Minimum</option>
-            <option value="max">Maximum</option>
-        </select>
-    </div>
-    <div class="goalposts-section">
-        <div class="goalpost-input">
-            <label>Lower Goalpost:</label>
-            <input type="number" class="lower-goalpost" value="0" step="0.1">
-        </div>
-        <div class="goalpost-input">
-            <label>Upper Goalpost:</label>
-            <input type="number" class="upper-goalpost" value="100" step="0.1">
-        </div>
-        <div class="indicator-options">
-            <label>
-                <input type="checkbox" class="inverted-checkbox"> Inverted (lower is better)
-            </label>
-        </div>
+        <label>Score Function</label>
+        <pre class="editable-score-function" contenteditable="true" spellcheck="false" data-default-score-function="">Score = </pre>
     </div>
 </div>
 </div>
@@ -626,10 +878,27 @@ class CustomizableSSPIStructure {
         // No need for additional JavaScript event handling since CSS handles it
     }
 
+    resetView() {
+        // Collapse all indicators
+        const indicators = this.container.querySelectorAll('.indicator-collapsible');
+        indicators.forEach(collapsible => {
+            collapsible.dataset.expanded = 'false';
+            this.applyExpansionState(collapsible, false);
+        });
+
+        // Expand all categories
+        const categories = this.container.querySelectorAll('.category-collapsible');
+        categories.forEach(collapsible => {
+            collapsible.dataset.expanded = 'true';
+            this.applyExpansionState(collapsible, true);
+        });
+    }
+
     expandAll() {
         const allCollapsibles = this.container.querySelectorAll('[data-expanded]');
         allCollapsibles.forEach(collapsible => {
             collapsible.dataset.expanded = 'true';
+            this.applyExpansionState(collapsible, true);
         });
     }
 
@@ -637,6 +906,7 @@ class CustomizableSSPIStructure {
         const allCollapsibles = this.container.querySelectorAll('[data-expanded]');
         allCollapsibles.forEach(collapsible => {
             collapsible.dataset.expanded = 'false';
+            this.applyExpansionState(collapsible, false);
         });
     }
 
@@ -684,20 +954,26 @@ class CustomizableSSPIStructure {
     addExistingIndicator(indicatorsContainer, indicator) {
         // Create indicator element with pre-filled data
         const ind = this.createIndicatorElement();
-        
+
         // Fill in the indicator data
         const indicatorName = ind.querySelector('.indicator-name');
         const indicatorCodeInput = ind.querySelector('.indicator-code-input');
         const lowerGoalpost = ind.querySelector('.lower-goalpost');
         const upperGoalpost = ind.querySelector('.upper-goalpost');
         const invertedCheckbox = ind.querySelector('.inverted-checkbox');
-        
+        const scoreFunctionEl = ind.querySelector('.editable-score-function');
+
         if (indicatorName) indicatorName.textContent = indicator.indicator_name || '';
         if (indicatorCodeInput) indicatorCodeInput.value = indicator.indicator_code || '';
         if (lowerGoalpost) lowerGoalpost.value = indicator.lower_goalpost || 0;
         if (upperGoalpost) upperGoalpost.value = indicator.upper_goalpost || 100;
         if (invertedCheckbox) invertedCheckbox.checked = indicator.inverted || false;
-        
+
+        // Populate score function if present
+        if (scoreFunctionEl && indicator.score_function) {
+            scoreFunctionEl.textContent = indicator.score_function;
+        }
+
         // Add datasets if present
         if (indicator.dataset_codes && indicator.dataset_codes.length > 0) {
             const selectedDatasetsDiv = ind.querySelector('.selected-datasets');
@@ -720,12 +996,20 @@ class CustomizableSSPIStructure {
         m.style.position = 'absolute';
         m.style.top = `${y}px`;
         m.style.left = `${x}px`;
-        [
-            { name: 'Move to Pillar', handler: () => this.promptMove(target) },
+
+        // Build menu items based on target type
+        const menuItems = [
+            { name: 'Move to', handler: () => this.promptMove(target) },
             { name: 'Rename', handler: () => this.renameItem(target) },
-            { name: 'Delete', handler: () => this.deleteItem(target) },
-            { name: 'Set Goalposts', handler: () => this.editGoalposts(target) }
-        ].forEach(a => {
+            { name: 'Delete', handler: () => this.deleteItem(target) }
+        ];
+
+        // Only show "Edit Score Function" for indicators
+        if (target.dataset.type === 'indicator') {
+            menuItems.push({ name: 'Edit Score Function', handler: () => this.editScoreFunction(target) });
+        }
+
+        menuItems.forEach(a => {
             const i = document.createElement('li');
             i.textContent = a.name;
             i.tabIndex = 0;
@@ -922,14 +1206,35 @@ class CustomizableSSPIStructure {
         if (confirm('Delete this item?')) el.remove();
     }
 
-    editGoalposts(t) {
-        const l = prompt('Lower Goalpost:', '0');
-        const u = prompt('Upper Goalpost:', '100');
-        const s = t.querySelector('.goal-slider');
-        if (s) {
-            s.min = l;
-            s.max = u;
-            s.value = Math.min(Math.max(s.value, l), u);
+    editScoreFunction(indicatorCard) {
+        // Find the collapsible section
+        const collapsible = indicatorCard.querySelector('.indicator-collapsible');
+        if (!collapsible) return;
+
+        // Expand the indicator if it's collapsed
+        if (collapsible.dataset.expanded !== 'true') {
+            collapsible.dataset.expanded = 'true';
+            this.applyExpansionState(collapsible, true);
+        }
+
+        // Find and focus the score function editor
+        const scoreFunctionEl = indicatorCard.querySelector('.editable-score-function');
+        if (scoreFunctionEl) {
+            // Use setTimeout to ensure the expansion animation completes
+            setTimeout(() => {
+                scoreFunctionEl.focus();
+
+                // Place cursor at the end of the content
+                const range = document.createRange();
+                const selection = window.getSelection();
+                range.selectNodeContents(scoreFunctionEl);
+                range.collapse(false); // false means collapse to end
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // Scroll into view if needed
+                scoreFunctionEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
     }
 
@@ -1569,6 +1874,171 @@ class CustomizableSSPIStructure {
         return notification;
     }
 
+    // Helper methods for undo/redo
+    getElementName(element) {
+        if (!element) return 'Unknown';
+
+        // Try to get name from indicator, category, or pillar
+        const indicatorName = element.querySelector('.indicator-name');
+        if (indicatorName) return indicatorName.textContent.trim() || 'Unnamed\u0020Indicator';
+
+        const categoryName = element.querySelector('.customization-category-header-title');
+        if (categoryName) return categoryName.textContent.trim() || 'Unnamed\u0020Category';
+
+        const pillarName = element.querySelector('.pillar-name');
+        if (pillarName) return pillarName.textContent.trim() || 'Unnamed\u0020Pillar';
+
+        return 'Unnamed\u0020Item';
+    }
+
+    getLocationName(container) {
+        if (!container) return 'Unknown\u0020Location';
+
+        // Check if it's a pillar's categories container
+        const pillarColumn = container.closest('.pillar-column');
+        if (pillarColumn && container.classList.contains('categories-container')) {
+            const pillarName = pillarColumn.querySelector('.pillar-name');
+            return pillarName ? `"${pillarName.textContent.trim()}"\u0020pillar` : 'Pillar';
+        }
+
+        // Check if it's inside a category
+        const categoryBox = container.closest('.category-box');
+        if (categoryBox && container.classList.contains('indicators-container')) {
+            const categoryName = categoryBox.querySelector('.customization-category-header-title');
+            return categoryName ? `category\u0020"${categoryName.textContent.trim()}"` : 'Category';
+        }
+
+        return 'Container';
+    }
+
+    rigUnloadListener() {
+        window.addEventListener('beforeunload', () => {
+            let stateLookup = {};
+
+            // Save indicator expansion states
+            const indicators = this.container.querySelectorAll('.indicator-card');
+            indicators.forEach((indicator) => {
+                const collapsible = indicator.querySelector('.indicator-collapsible');
+                const codeInput = indicator.querySelector('.indicator-code-input');
+                const code = codeInput ? codeInput.value.trim() : '';
+
+                if (code && collapsible) {
+                    stateLookup[`ind_${code}`] = collapsible.dataset.expanded;
+                }
+            });
+
+            // Save category expansion states
+            const categories = this.container.querySelectorAll('.category-box');
+            categories.forEach((category) => {
+                const collapsible = category.querySelector('.category-collapsible');
+                const codeInput = category.querySelector('.category-code-input');
+                const code = codeInput ? codeInput.value.trim() : '';
+
+                if (code && collapsible) {
+                    stateLookup[`cat_${code}`] = collapsible.dataset.expanded;
+                }
+            });
+
+            window.observableStorage.setItem('customizableSSPIExpansionState', stateLookup);
+
+            // Save scroll position
+            window.observableStorage.setItem('customizableSSPIScrollX', window.scrollX);
+            window.observableStorage.setItem('customizableSSPIScrollY', window.scrollY);
+        });
+    }
+
+    restoreExpansionState() {
+        const cachedStateObject = window.observableStorage.getItem('customizableSSPIExpansionState');
+        if (!cachedStateObject) return;
+
+        // Restore indicator expansion states
+        const indicators = this.container.querySelectorAll('.indicator-card');
+        indicators.forEach((indicator) => {
+            const collapsible = indicator.querySelector('.indicator-collapsible');
+            const codeInput = indicator.querySelector('.indicator-code-input');
+            const code = codeInput ? codeInput.value.trim() : '';
+
+            if (code && collapsible) {
+                const key = `ind_${code}`;
+                if (cachedStateObject.hasOwnProperty(key)) {
+                    const cachedState = cachedStateObject[key] === 'true';
+                    this.applyExpansionState(collapsible, cachedState);
+                }
+            }
+        });
+
+        // Restore category expansion states
+        const categories = this.container.querySelectorAll('.category-box');
+        categories.forEach((category) => {
+            const collapsible = category.querySelector('.category-collapsible');
+            const codeInput = category.querySelector('.category-code-input');
+            const code = codeInput ? codeInput.value.trim() : '';
+
+            if (code && collapsible) {
+                const key = `cat_${code}`;
+                if (cachedStateObject.hasOwnProperty(key)) {
+                    const cachedState = cachedStateObject[key] === 'true';
+                    this.applyExpansionState(collapsible, cachedState);
+                }
+            }
+        });
+    }
+
+    applyExpansionState(collapsible, isExpanded) {
+        collapsible.dataset.expanded = isExpanded.toString();
+
+        // Update visual state
+        const content = collapsible.querySelector('.indicator-config, .category-content');
+        if (content) {
+            if (isExpanded) {
+                content.style.display = '';
+                content.style.maxHeight = '';
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
+        // Update toggle icon
+        const toggleBtn = collapsible.querySelector('.collapse-toggle-btn');
+        if (toggleBtn) {
+            const icon = toggleBtn.querySelector('.collapse-icon');
+            if (icon) {
+                if (isExpanded) {
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    icon.style.transform = 'rotate(-90deg)';
+                }
+            }
+        }
+    }
+
+    restoreScrollPosition() {
+        const scrollX = window.observableStorage.getItem('customizableSSPIScrollX');
+        const scrollY = window.observableStorage.getItem('customizableSSPIScrollY');
+
+        if (scrollX !== null && scrollY !== null) {
+            // Use requestAnimationFrame to ensure DOM is fully rendered
+            requestAnimationFrame(() => {
+                window.scrollTo(parseInt(scrollX), parseInt(scrollY));
+            });
+        }
+    }
+
+    handleToggle(toggleBtn) {
+        // Find the collapsible section (indicator-collapsible or category-collapsible)
+        const collapsible = toggleBtn.closest('.indicator-collapsible, .category-collapsible');
+        if (!collapsible) return;
+
+        const isCurrentlyExpanded = collapsible.dataset.expanded === 'true';
+        const newExpandedState = !isCurrentlyExpanded;
+
+        // Update the data attribute
+        collapsible.dataset.expanded = newExpandedState.toString();
+
+        // Apply the visual state
+        this.applyExpansionState(collapsible, newExpandedState);
+    }
+
     // Hierarchy management methods
     updateHierarchyOnAdd(element, elementType) {
         this.flagUnsaved();
@@ -1731,15 +2201,19 @@ class CustomizableSSPIStructure {
                 const loaded = await this.loadCachedState();
                 if (loaded) {
                     this.showCacheRestoredIndicator();
+                    this.restoreExpansionState();
+                    this.restoreScrollPosition();
                     return;
                 }
             } catch (error) {
                 console.warn('Failed to load cached modifications, falling back to default:', error);
             }
         }
-        
+
         // Fall back to loading default metadata
         await this.loadDefaultMetadata();
+        this.restoreExpansionState();
+        this.restoreScrollPosition();
     }
     
     showCacheRestoredIndicator() {
@@ -1806,23 +2280,23 @@ class CustomizableSSPIStructure {
             console.log('Already loading metadata, skipping...');
             return;
         }
-        
+
         try {
             this.showLoadingState('Loading default SSPI metadata...');
-            
+
             const response = await this.fetch('/api/v1/customize/default-structure');
-            
+
             if (response.success) {
                 console.log('Auto-loading default SSPI metadata:', response.stats);
-                
+
                 // Import the metadata efficiently
                 await this.importDataAsync(response.metadata);
-                
+
                 this.hideLoadingState();
-                
+
                 // Don't flag as unsaved for auto-loaded default metadata
                 this.clearUnsavedState();
-                
+
                 console.log('Default SSPI metadata loaded successfully');
             } else {
                 this.handleLoadError('Failed to load default metadata: ' + response.error);
@@ -1830,6 +2304,34 @@ class CustomizableSSPIStructure {
         } catch (error) {
             console.error('Error auto-loading default metadata:', error);
             this.handleLoadError('Network error loading default metadata');
+        }
+    }
+
+    async loadDatasetDetails() {
+        try {
+            console.log('Loading dataset details from API...');
+            const response = await this.fetch('/api/v1/customize/datasets?limit=1000');
+
+            if (response.success && response.datasets) {
+                // Store datasets in a map for quick lookup by code
+                response.datasets.forEach(dataset => {
+                    this.datasetDetails[dataset.dataset_code] = {
+                        code: dataset.dataset_code,
+                        name: dataset.dataset_name,
+                        description: dataset.description,
+                        organization: dataset.organization,
+                        type: dataset.dataset_type
+                    };
+                });
+
+                console.log(`Loaded ${response.datasets.length} dataset details`);
+            } else {
+                console.warn('Failed to load dataset details:', response.error || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Error loading dataset details:', error);
+            // Don't fail initialization if dataset details can't be loaded
+            // The app will still work with just dataset codes
         }
     }
 
@@ -2054,13 +2556,19 @@ class CustomizableSSPIStructure {
                         const lowerGoalpost = indEl.querySelector('.lower-goalpost');
                         const upperGoalpost = indEl.querySelector('.upper-goalpost');
                         const invertedCheckbox = indEl.querySelector('.inverted-checkbox');
-                        
+                        const scoreFunctionEl = indEl.querySelector('.editable-score-function');
+
                         if (indicatorName) indicatorName.textContent = indicatorItem.ItemName || '';
                         if (indicatorCodeInput) indicatorCodeInput.value = indicatorItem.ItemCode || '';
                         if (lowerGoalpost) lowerGoalpost.value = indicatorItem.LowerGoalpost || 0;
                         if (upperGoalpost) upperGoalpost.value = indicatorItem.UpperGoalpost || 100;
                         if (invertedCheckbox) invertedCheckbox.checked = indicatorItem.Inverted || false;
-                        
+
+                        // Populate score function if present
+                        if (scoreFunctionEl && indicatorItem.ScoreFunction) {
+                            scoreFunctionEl.textContent = indicatorItem.ScoreFunction;
+                        }
+
                         // Add datasets if present
                         const datasetCodes = indicatorItem.DatasetCodes || [];
                         if (datasetCodes.length > 0) {
@@ -2188,7 +2696,13 @@ class CustomizableSSPIStructure {
                     if (scoringSelect && item.scoring_function && item.scoring_function.type) {
                         scoringSelect.value = item.scoring_function.type;
                     }
-                    
+
+                    // Populate editable score function if present
+                    const scoreFunctionEl = indEl.querySelector('.editable-score-function');
+                    if (scoreFunctionEl && item.ScoreFunction) {
+                        scoreFunctionEl.textContent = item.ScoreFunction;
+                    }
+
                     // Set datasets if available
                     if (item.datasets && Array.isArray(item.datasets)) {
                         const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
@@ -2211,6 +2725,10 @@ class CustomizableSSPIStructure {
         this.markInvalidIndicatorPlacements();
         // Mark any nested categories
         this.markInvalidNestedCategories();
+
+        // Restore expansion state and scroll position after import
+        this.restoreExpansionState();
+        this.restoreScrollPosition();
     }
 
     autoGenerateMissingCodes() {
@@ -2661,38 +3179,72 @@ class CustomizableSSPIStructure {
             return;
         }
 
+        // Get dataset details from the loaded dataset map
+        const datasetDetail = this.datasetDetails[datasetCode];
+        const datasetName = datasetDetail ? datasetDetail.name : 'Unknown Dataset';
+        const datasetTitle = datasetDetail ? `${datasetDetail.description}\n\nOrganization: ${datasetDetail.organization}\nType: ${datasetDetail.type}` : datasetCode;
+
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
         datasetItem.dataset.weight = weight;
-        
+        datasetItem.title = datasetTitle;
+
         datasetItem.innerHTML = `
-            <span class="dataset-code">${datasetCode}</span>
+            <div class="dataset-info">
+                <span class="dataset-code">${datasetCode}</span>
+                <span class="dataset-name">${datasetName}</span>
+            </div>
             <div class="dataset-actions">
-                <button class="dataset-menu-btn" type="button" title="Dataset options">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <circle cx="8" cy="2" r="1.5"/>
-                        <circle cx="8" cy="8" r="1.5"/>
-                        <circle cx="8" cy="14" r="1.5"/>
-                    </svg>
-                </button>
                 <button class="remove-dataset" type="button" title="Remove dataset">×</button>
             </div>
         `;
 
-        const menuBtn = datasetItem.querySelector('.dataset-menu-btn');
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showDatasetOptionsMenu(menuBtn, datasetCode);
-        });
-
         datasetItem.querySelector('.remove-dataset').addEventListener('click', () => {
+            // Record removal action for undo/redo
+            const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
+            const indicatorName = this.getElementName(indicatorCard);
+
+            this.undoRedoManager.recordAction({
+                type: 'remove-dataset',
+                message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
+                undo: () => {
+                    // Re-add the dataset
+                    selectedDatasetsDiv.appendChild(datasetItem);
+                    this.updateHierarchyOnAdd(datasetItem, 'dataset');
+                },
+                redo: () => {
+                    // Remove it again
+                    datasetItem.remove();
+                    this.updateHierarchyOnRemove(datasetItem, 'dataset');
+                }
+            });
+
             datasetItem.remove();
             this.updateHierarchyOnRemove(datasetItem, 'dataset');
         });
 
         selectedDatasetsDiv.appendChild(datasetItem);
         this.updateHierarchyOnAdd(datasetItem, 'dataset');
+
+        // Record add action for undo/redo
+        const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
+        const indicatorName = this.getElementName(indicatorCard);
+
+        this.undoRedoManager.recordAction({
+            type: 'add-dataset',
+            message: `Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,
+            undo: () => {
+                // Remove the dataset
+                datasetItem.remove();
+                this.updateHierarchyOnRemove(datasetItem, 'dataset');
+            },
+            redo: () => {
+                // Re-add the dataset
+                selectedDatasetsDiv.appendChild(datasetItem);
+                this.updateHierarchyOnAdd(datasetItem, 'dataset');
+            }
+        });
     }
 
     showDatasetOptionsMenu(buttonElement, datasetCode) {
@@ -3122,10 +3674,8 @@ class CustomizableSSPIStructure {
                 }
             }
         }
-        
         // Calculate summary statistics
         changes.summary.totalChanges = changes.added.length + changes.removed.length + changes.modified.length + changes.moved.length;
-        
         // Count affected items by type
         const affectedTypes = new Set();
         [...changes.added, ...changes.removed, ...changes.modified, ...changes.moved].forEach(change => {
