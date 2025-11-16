@@ -19,6 +19,10 @@
   box-sizing: border-box;
 }
 
+.preview-modal-body .panel-chart-root-container, .preview-modal-body .panel-chart-container { /* Allow Smaller Sizes in Preview Windows */
+  height: clamp(350px, 100%, 80vh);
+}
+
 .panel-chart-title-container {
   display: flex;
   flex-direction: row;

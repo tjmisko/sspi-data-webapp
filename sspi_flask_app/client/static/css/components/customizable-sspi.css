@@ -244,19 +244,35 @@
 
 /* Removed obsolete webkit details marker styles */
 
-.indicator-name {
-    margin: 0;
+.indicator-name-wrapper {
     flex: 999 1 0%;
     min-width: 0;
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.indicator-name-wrapper:focus-within {
+    overflow-x: auto;
+}
+
+.indicator-name {
+    margin: 0;
+    width: 100%;
     color: var(--header-text-color);
     box-sizing: border-box;
     font-family: var(--body-font-family);
     font-size: 0.8rem;
     font-weight: 500;
+    line-height: 1.3;
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
-    line-height: 1.3;
+}
+
+.indicator-name:focus {
+    white-space: nowrap;
+    width: max-content;
 }
 
 .indicator-code-section {
@@ -334,10 +350,11 @@
   flex-direction: row;
 }
 
-.dataset-info {
+.customizable-sspi .dataset-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.2em;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-right: 1em;
   flex: 1;
   min-width: 0;
 }
@@ -671,18 +688,34 @@
   line-height: 1.2;
 }
 
+.category-name-wrapper {
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.category-name-wrapper:focus-within {
+  overflow-x: auto;
+}
+
 .customization-category-header-title {
   color: var(--header-text-color);
   font-family: var(--header-font-family);
   line-height: 0.8;
   margin: 0;
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   font-size: 0.9rem;
   font-weight: 600;
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+}
+
+.customization-category-header-title:focus {
+  white-space: nowrap;
+  width: max-content;
 }
 
 .category-code-section {
@@ -1685,8 +1718,11 @@ to {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   width: 90%;
   max-width: 450px;
+  max-height: 80vh;
   animation: slideInScale 0.3s ease-out;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes slideInScale {
@@ -1707,6 +1743,7 @@ to {
   padding: 1.5rem;
   border-bottom: 1px solid var(--subtle-line-color);
   background: var(--region-background-color);
+  flex-shrink: 0;
 }
 
 .move-pillar-header h3 {
@@ -1740,6 +1777,11 @@ to {
 
 .move-pillar-body {
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .move-pillar-body p {
@@ -1747,6 +1789,7 @@ to {
   font-family: var(--body-font-family);
   color: var(--body-text-color);
   font-size: 0.95rem;
+  flex-shrink: 0;
 }
 
 .pillar-options-list {
@@ -1755,6 +1798,10 @@ to {
   border-radius: var(--border-radius);
   padding: 0.5rem;
   margin-bottom: 1rem;
+  overflow-y: auto;
+  max-height: 300px;
+  flex-shrink: 1;
+  min-height: 0;
 }
 
 .pillar-options-list:last-child {
@@ -1810,6 +1857,7 @@ to {
   font-size: 1rem;
   transition: border-color 0.2s ease;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .move-pillar-input:focus {
@@ -1829,6 +1877,7 @@ to {
   padding: 1rem 1.5rem;
   background: var(--region-background-color);
   border-top: 1px solid var(--subtle-line-color);
+  flex-shrink: 0;
 }
 
 .modal-cancel-btn,

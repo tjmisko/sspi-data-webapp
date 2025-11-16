@@ -246,6 +246,74 @@ class CustomizableSSPIStructure {
     flex-direction: column;
     gap: 1rem;
 }
+
+/* Preview Modal Styles */
+.preview-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 2rem;
+    box-sizing: border-box !important;
+}
+
+.preview-modal,
+.preview-modal * {
+    box-sizing: border-box !important;
+}
+
+.preview-modal {
+    background: var(--page-background-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    width: 90vw;
+    height: 85vh;
+    max-width: 1800px;
+    max-height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.preview-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--subtle-line-color);
+    background: var(--box-background-color);
+    flex-shrink: 0;
+}
+
+.preview-modal-header h3 {
+    margin: 0;
+    font-family: var(--header-font-family);
+    color: var(--header-text-color);
+    font-size: 1.2rem;
+}
+
+.preview-modal-body {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 1rem;
+    background: var(--region-background-color);
+    min-height: 0;
+    position: relative;
+}
+
+#preview-chart-container {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    max-width: 100%;
+    position: relative;
+}
 `;
         document.head.appendChild(style);
     }
@@ -361,14 +429,15 @@ class CustomizableSSPIStructure {
             const defaultCode = defaultCodes[index] || 'PIL';
 
             const header = document.createElement('div');
-            header.classList.add('customization-pillar-header');
+            header.classList.add('customization-pillar-header', 'draggable-item');
             header.setAttribute('role', 'treeitem');
+            header.dataset.type = 'pillar';
             header.innerHTML = `
                 <div class="customization-pillar-header-content">
                     <div class="pillar-name" contenteditable="true" spellcheck="false" tabindex="0">${name}</div>
                     <div class="pillar-code-section">
                         <label class="code-label">Code:</label>
-                        <input type="text" class="pillar-code-input" maxlength="3" placeholder="${defaultCode}" 
+                        <input type="text" class="pillar-code-input" maxlength="3" placeholder="${defaultCode}"
                                pattern="[A-Z]{2,3}" title="2-3 uppercase letters required" value="${defaultCode}">
                         <span class="code-validation-message"></span>
                     </div>
@@ -639,8 +708,25 @@ class CustomizableSSPIStructure {
 
         // Context menu & keyboard
         this.container.addEventListener('contextmenu', e => {
-            const t = e.target.closest('.draggable-item'); if (!t) return; e.preventDefault();
-            this.showContextMenu(e.pageX, e.pageY, t);
+            // Check for dataset first (highest priority)
+            const datasetItem = e.target.closest('.dataset-item');
+            if (datasetItem) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.showContextMenu(e.pageX, e.pageY, datasetItem);
+                return;
+            }
+
+            // Check for draggable items (indicators, categories, pillars)
+            const draggableItem = e.target.closest('.draggable-item');
+            if (!draggableItem) return;
+
+            // Don't show indicator menu if clicking inside dataset selection area
+            const isInDatasetArea = e.target.closest('.selected-datasets, .dataset-selection');
+            if (isInDatasetArea) return;
+
+            e.preventDefault();
+            this.showContextMenu(e.pageX, e.pageY, draggableItem);
         });
         this.container.addEventListener('keydown', e => {
             if ((e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) && e.target.closest('.draggable-item')) {
@@ -791,7 +877,9 @@ class CustomizableSSPIStructure {
         <button class="collapse-toggle-btn category-toggle" type="button">
             <span class="collapse-icon">▼</span>
         </button>
-        <h4 class="customization-category-header-title" contenteditable="true">New Category</h4>
+        <div class="category-name-wrapper">
+            <h4 class="customization-category-header-title" contenteditable="true">New Category</h4>
+        </div>
         <div class="category-code-section">
             <label class="code-label">Code:</label>
             <input type="text" class="category-code-input" maxlength="3" placeholder="CAT"
@@ -822,7 +910,9 @@ class CustomizableSSPIStructure {
         <button class="collapse-toggle-btn indicator-toggle" type="button">
             <span class="collapse-icon">▼</span>
         </button>
-        <h5 class="indicator-name" contenteditable="true">New Indicator</h5>
+        <div class="indicator-name-wrapper">
+            <h5 class="indicator-name" contenteditable="true">New Indicator</h5>
+        </div>
         <div class="indicator-code-section">
             <label class="code-label">Code:</label>
             <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1"
@@ -997,16 +1087,42 @@ class CustomizableSSPIStructure {
         m.style.top = `${y}px`;
         m.style.left = `${x}px`;
 
-        // Build menu items based on target type
-        const menuItems = [
-            { name: 'Move to', handler: () => this.promptMove(target) },
-            { name: 'Rename', handler: () => this.renameItem(target) },
-            { name: 'Delete', handler: () => this.deleteItem(target) }
-        ];
+        // Check if target is a dataset
+        const isDataset = target.classList.contains('dataset-item');
+        const isPillar = target.dataset.type === 'pillar';
 
-        // Only show "Edit Score Function" for indicators
-        if (target.dataset.type === 'indicator') {
-            menuItems.push({ name: 'Edit Score Function', handler: () => this.editScoreFunction(target) });
+        let menuItems;
+
+        if (isDataset) {
+            // Special menu for datasets
+            menuItems = [
+                { name: 'Preview', handler: () => this.showDatasetPreviewModal(target) },
+                { name: 'Delete', handler: () => {
+                    if (confirm('Remove this dataset from the indicator?')) {
+                        target.remove();
+                        this.flagUnsaved();
+                    }
+                }}
+            ];
+        } else if (isPillar) {
+            // Special menu for pillars (no move or delete)
+            menuItems = [
+                { name: 'Preview', handler: () => this.showPreviewModal(target) },
+                { name: 'Rename', handler: () => this.renameItem(target) }
+            ];
+        } else {
+            // Standard menu for indicators and categories
+            menuItems = [
+                { name: 'Preview', handler: () => this.showPreviewModal(target) },
+                { name: 'Move to', handler: () => this.promptMove(target) },
+                { name: 'Rename', handler: () => this.renameItem(target) },
+                { name: 'Delete', handler: () => this.deleteItem(target) }
+            ];
+
+            // Only show "Edit Score Function" for indicators
+            if (target.dataset.type === 'indicator') {
+                menuItems.push({ name: 'Edit Score Function', handler: () => this.editScoreFunction(target) });
+            }
         }
 
         menuItems.forEach(a => {
@@ -1021,8 +1137,8 @@ class CustomizableSSPIStructure {
     }
 
     promptMove(el) {
-        // Create styled modal instead of native prompt
-        const modal = this.createMoveToPillarModal(el);
+        // Create styled modal for moving items
+        const modal = this.createMoveToModal(el);
         document.body.appendChild(modal);
 
         // Focus on the input
@@ -1032,39 +1148,62 @@ class CustomizableSSPIStructure {
         }, 100);
     }
 
-    createMoveToPillarModal(element) {
+    createMoveToModal(element) {
         const overlay = document.createElement('div');
         overlay.className = 'move-pillar-overlay';
 
-        // Get pillar info for display
-        const pillarInfo = this.container.querySelectorAll('.pillar-column');
-        const pillarOptions = Array.from(pillarInfo).map(col => {
-            const name = col.dataset.pillar;
-            const codeInput = col.querySelector('.pillar-code-input');
-            const code = codeInput ? codeInput.value.trim() : '';
-            return { name, code };
-        }).filter(p => p.name && p.code);
+        const elementType = element.dataset.type;
+        const isIndicator = elementType === 'indicator';
+        const isCategory = elementType === 'category';
 
-        const optionsHtml = pillarOptions.map(p =>
-            `<button class="pillar-option clickable" type="button" data-pillar-name="${p.name}" data-pillar-code="${p.code}">
-                <strong>${p.code}</strong> - ${p.name}
+        let destinationOptions = [];
+        let destinationType = '';
+        let instructionText = '';
+        let titleText = '';
+
+        if (isCategory) {
+            // Categories move to pillars
+            destinationType = 'pillar';
+            titleText = 'Move\u0020Category\u0020to\u0020Pillar';
+            instructionText = 'Select\u0020destination\u0020pillar\u0020or\u0020enter\u0020pillar\u0020name/code:';
+
+            const pillarInfo = this.container.querySelectorAll('.pillar-column');
+            destinationOptions = Array.from(pillarInfo).map(col => {
+                const name = col.dataset.pillar;
+                const codeInput = col.querySelector('.pillar-code-input');
+                const code = codeInput ? codeInput.value.trim() : '';
+                return { name, code, element: col };
+            }).filter(p => p.name && p.code);
+        } else if (isIndicator) {
+            // Indicators move to categories
+            destinationType = 'category';
+            titleText = 'Move\u0020Indicator\u0020to\u0020Category';
+            instructionText = 'Select\u0020destination\u0020category\u0020or\u0020enter\u0020category\u0020name/code:';
+
+            const categoryBoxes = this.container.querySelectorAll('.category-box');
+            destinationOptions = Array.from(categoryBoxes).map(cat => {
+                const codeInput = cat.querySelector('.category-code-input');
+                const nameEl = cat.querySelector('.customization-category-header-title');
+                const code = codeInput ? codeInput.value.trim() : '';
+                const name = nameEl ? nameEl.textContent.trim() : '';
+                return { name, code, element: cat };
+            }).filter(c => c.name && c.code);
+        }
+
+        const optionsHtml = destinationOptions.map(opt =>
+            `<button class="pillar-option\u0020clickable" type="button" data-dest-name="${opt.name}" data-dest-code="${opt.code}">
+                <strong>${opt.code}</strong>\u0020-\u0020${opt.name}
             </button>`
         ).join('');
 
-        const elementType = element.dataset.type;
-        const isIndicator = elementType === 'indicator';
-        const instructionText = isIndicator
-            ? 'Select destination pillar (indicator will be moved to pillar bottom):'
-            : 'Select destination pillar or enter pillar name/code:';
-
-        // Create dynamic placeholder from available pillar codes
-        const placeholderCodes = pillarOptions.slice(0, 3).map(p => p.code).join(', ');
-        const placeholder = placeholderCodes ? `Enter pillar name or code (e.g., ${placeholderCodes})` : 'Enter pillar name or code';
+        // Create dynamic placeholder from available codes
+        const placeholderCodes = destinationOptions.slice(0, 3).map(p => p.code).join(',\u0020');
+        const placeholder = placeholderCodes ? `Enter\u0020${destinationType}\u0020name\u0020or\u0020code\u0020(e.g.,\u0020${placeholderCodes})` : `Enter\u0020${destinationType}\u0020name\u0020or\u0020code`;
 
         overlay.innerHTML = `
             <div class="move-pillar-modal">
                 <div class="move-pillar-header">
-                    <h3>Move ${elementType === 'category' ? 'Category' : 'Indicator'} to Pillar</h3>
+                    <h3>${titleText}</h3>
                     <button class="modal-close-btn" type="button">×</button>
                 </div>
                 <div class="move-pillar-body">
@@ -1086,13 +1225,13 @@ class CustomizableSSPIStructure {
         const confirmBtn = overlay.querySelector('.modal-confirm-btn');
         const cancelBtn = overlay.querySelector('.modal-cancel-btn');
         const closeBtn = overlay.querySelector('.modal-close-btn');
-        const pillarOptionButtons = overlay.querySelectorAll('.pillar-option.clickable');
+        const optionButtons = overlay.querySelectorAll('.pillar-option.clickable');
 
-        // Add click handlers to pillar option buttons
-        pillarOptionButtons.forEach(btn => {
+        // Add click handlers to destination option buttons
+        optionButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                const pillarCode = btn.dataset.pillarCode;
-                input.value = pillarCode;
+                const destCode = btn.dataset.destCode;
+                input.value = destCode;
                 input.focus();
             });
         });
@@ -1104,63 +1243,38 @@ class CustomizableSSPIStructure {
                 return;
             }
 
-            // Find pillar column by name or code (case-insensitive)
-            const col = Array.from(this.container.querySelectorAll('.pillar-column'))
-                .find(c => {
-                    const pillarName = c.dataset.pillar;
-                    const codeInput = c.querySelector('.pillar-code-input');
-                    const pillarCode = codeInput ? codeInput.value.trim() : '';
+            // Find destination by name or code (case-insensitive)
+            const destination = destinationOptions.find(opt => {
+                return opt.name.toLowerCase() === userInput.toLowerCase() ||
+                       opt.code.toLowerCase() === userInput.toLowerCase();
+            });
 
-                    return pillarName.toLowerCase() === userInput.toLowerCase() ||
-                           pillarCode.toLowerCase() === userInput.toLowerCase();
-                });
-
-            if (col) {
-                const elementType = element.dataset.type;
-
-                if (elementType === 'category') {
+            if (destination) {
+                if (isCategory) {
                     // Move category to pillar's categories-container
-                    const targetContainer = col.querySelector('.categories-container');
+                    const targetContainer = destination.element.querySelector('.categories-container');
                     if (targetContainer) {
                         targetContainer.appendChild(element);
                         this.flagUnsaved();
                         overlay.remove();
-                        console.log(`Category moved to pillar: ${userInput}`);
+                        console.log(`Category\u0020moved\u0020to\u0020pillar:\u0020${userInput}`);
                     } else {
-                        alert('Error: Could not find categories container in the target pillar');
+                        alert('Error:\u0020Could\u0020not\u0020find\u0020categories\u0020container\u0020in\u0020the\u0020target\u0020pillar');
                     }
-                } else if (elementType === 'indicator') {
-                    // Move indicator to bottom of categories-container (outside any specific category)
-                    // This creates an invalid state but keeps it in the proper drop zone
-                    // This allows users to temporarily move indicators between pillars
-                    // before assigning them to a specific category
-
-                    // Append to the categories-container at the bottom
-                    const categoriesContainer = col.querySelector('.categories-container');
-                    if (categoriesContainer) {
-                        categoriesContainer.appendChild(element);
+                } else if (isIndicator) {
+                    // Move indicator to category's indicators-container
+                    const targetContainer = destination.element.querySelector('.indicators-container');
+                    if (targetContainer) {
+                        targetContainer.appendChild(element);
+                        this.flagUnsaved();
+                        overlay.remove();
+                        console.log(`Indicator\u0020moved\u0020to\u0020category:\u0020${userInput}`);
                     } else {
-                        // Fallback: insert before Add Category button
-                        const addCategoryBtn = col.querySelector('.add-category');
-                        if (addCategoryBtn) {
-                            col.insertBefore(element, addCategoryBtn);
-                        } else {
-                            col.appendChild(element);
-                        }
+                        alert('Error:\u0020Could\u0020not\u0020find\u0020indicators\u0020container\u0020in\u0020the\u0020target\u0020category');
                     }
-
-                    this.flagUnsaved();
-                    overlay.remove();
-                    console.log(`Indicator moved to categories-container bottom (invalid state): ${userInput}`);
-
-                    // Add visual indicator that this is an invalid state
-                    element.classList.add('temporary-invalid-placement');
-                    element.title = 'This indicator needs to be moved into a category';
-                } else {
-                    alert(`Cannot move this ${elementType} to a pillar`);
                 }
             } else {
-                alert(`Pillar "${userInput}" not found. Please use a valid pillar name or code.`);
+                alert(`${destinationType.charAt(0).toUpperCase() + destinationType.slice(1)}\u0020"${userInput}"\u0020not\u0020found.\u0020Please\u0020use\u0020a\u0020valid\u0020${destinationType}\u0020name\u0020or\u0020code.`);
             }
         };
 
@@ -1236,6 +1350,220 @@ class CustomizableSSPIStructure {
                 scoreFunctionEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
         }
+    }
+
+    showPreviewModal(target) {
+        const itemType = target.dataset.type;
+        let itemCode = '';
+        let itemName = '';
+
+        // Extract code and name based on type
+        if (itemType === 'indicator') {
+            const codeInput = target.querySelector('.indicator-code-input');
+            const nameEl = target.querySelector('.indicator-name');
+            itemCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+            itemName = nameEl ? nameEl.textContent.trim() : 'Indicator';
+        } else if (itemType === 'category') {
+            const codeInput = target.querySelector('.category-code-input');
+            const nameEl = target.querySelector('.customization-category-header-title');
+            itemCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+            itemName = nameEl ? nameEl.textContent.trim() : 'Category';
+        } else if (itemType === 'pillar') {
+            const codeInput = target.querySelector('.pillar-code-input');
+            const nameEl = target.querySelector('.pillar-name');
+            itemCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+            itemName = nameEl ? nameEl.textContent.trim() : 'Pillar';
+        }
+
+        // Validate we have a code
+        if (!itemCode) {
+            alert('Cannot\u0020preview:\u0020No\u0020code\u0020assigned\u0020to\u0020this\u0020item\u0020yet.');
+            return;
+        }
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'preview-modal-overlay';
+
+        overlay.innerHTML = `
+            <div class="preview-modal">
+                <div class="preview-modal-header">
+                    <h3>\u0020${itemName}\u0020(${itemCode})</h3>
+                    <button class="modal-close-btn" type="button">×</button>
+                </div>
+                <div class="preview-modal-body">
+                    <div id="preview-chart-container"></div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const modal = overlay.querySelector('.preview-modal');
+        const closeBtn = overlay.querySelector('.modal-close-btn');
+        const chartContainer = overlay.querySelector('#preview-chart-container');
+
+        // Store chart reference for cleanup
+        let chartInstance = null;
+
+        // Instantiate appropriate chart
+        try {
+            if (itemType === 'indicator') {
+                chartInstance = new IndicatorPanelChart(chartContainer, itemCode);
+            } else {
+                chartInstance = new ScorePanelChart(chartContainer, itemCode);
+            }
+
+            // Add to global charts array for tracking
+            if (window.SSPICharts) {
+                window.SSPICharts.push(chartInstance);
+            }
+        } catch (error) {
+            console.error('Error creating preview chart:', error);
+            chartContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--error-color);">
+                <p>Error\u0020loading\u0020preview\u0020chart.</p>
+                <p>${error.message}</p>
+            </div>`;
+        }
+
+        // Close handler
+        const closeModal = () => {
+            // Destroy chart if it exists
+            if (chartInstance && typeof chartInstance.destroy === 'function') {
+                try {
+                    chartInstance.destroy();
+                } catch (error) {
+                    console.error('Error destroying chart:', error);
+                }
+            }
+
+            // Remove from global charts array
+            if (window.SSPICharts && chartInstance) {
+                const index = window.SSPICharts.indexOf(chartInstance);
+                if (index > -1) {
+                    window.SSPICharts.splice(index, 1);
+                }
+            }
+
+            // Remove overlay
+            overlay.remove();
+        };
+
+        // Event listeners for closing
+        closeBtn.addEventListener('click', closeModal);
+
+        // Close on escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+
+        // Close on click outside modal
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
+    }
+
+    showDatasetPreviewModal(datasetItem) {
+        // Extract dataset code from the data attribute
+        const datasetCode = datasetItem.dataset.datasetCode;
+
+        if (!datasetCode) {
+            alert('Cannot\u0020preview:\u0020No\u0020dataset\u0020code\u0020found.');
+            return;
+        }
+
+        // Get dataset name from the UI
+        const datasetNameEl = datasetItem.querySelector('.dataset-name');
+        const datasetName = datasetNameEl ? datasetNameEl.textContent.trim() : datasetCode;
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'preview-modal-overlay';
+
+        overlay.innerHTML = `
+            <div class="preview-modal">
+                <div class="preview-modal-header">
+                    <h3>Dataset\u0020:\u0020${datasetName}\u0020(${datasetCode})</h3>
+                    <button class="modal-close-btn" type="button">×</button>
+                </div>
+                <div class="preview-modal-body">
+                    <div id="preview-chart-container"></div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const modal = overlay.querySelector('.preview-modal');
+        const closeBtn = overlay.querySelector('.modal-close-btn');
+        const chartContainer = overlay.querySelector('#preview-chart-container');
+
+        // Store chart reference for cleanup
+        let chartInstance = null;
+
+        // Instantiate DatasetPanelChart
+        try {
+            chartInstance = new DatasetPanelChart(chartContainer, datasetCode);
+
+            // Add to global charts array for tracking
+            if (window.SSPICharts) {
+                window.SSPICharts.push(chartInstance);
+            }
+        } catch (error) {
+            console.error('Error creating dataset preview chart:', error);
+            chartContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--error-color);">
+                <p>Error\u0020loading\u0020dataset\u0020preview\u0020chart.</p>
+                <p>${error.message}</p>
+            </div>`;
+        }
+
+        // Close handler
+        const closeModal = () => {
+            // Destroy chart if it exists
+            if (chartInstance && typeof chartInstance.destroy === 'function') {
+                try {
+                    chartInstance.destroy();
+                } catch (error) {
+                    console.error('Error destroying chart:', error);
+                }
+            }
+
+            // Remove from global charts array
+            if (window.SSPICharts && chartInstance) {
+                const index = window.SSPICharts.indexOf(chartInstance);
+                if (index > -1) {
+                    window.SSPICharts.splice(index, 1);
+                }
+            }
+
+            // Remove overlay
+            overlay.remove();
+        };
+
+        // Event listeners for closing
+        closeBtn.addEventListener('click', closeModal);
+
+        // Close on escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+
+        // Close on click outside modal
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
     }
 
     markInvalidIndicatorPlacements() {
@@ -3192,8 +3520,8 @@ class CustomizableSSPIStructure {
 
         datasetItem.innerHTML = `
             <div class="dataset-info">
-                <span class="dataset-code">${datasetCode}</span>
                 <span class="dataset-name">${datasetName}</span>
+                <span class="dataset-code">${datasetCode}</span>
             </div>
             <div class="dataset-actions">
                 <button class="remove-dataset" type="button" title="Remove dataset">×</button>
