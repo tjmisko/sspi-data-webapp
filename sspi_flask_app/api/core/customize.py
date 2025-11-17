@@ -30,8 +30,28 @@ def list_datasets():
     try:
         search_term = request.args.get("search", "").strip().lower()
         limit = int(request.args.get("limit", 100))
+
+        # Build organization code-to-name lookup table (code is the key)
+        org_details = sspi_metadata.organization_details()
+        org_code_to_name = {
+            org.get("OrganizationCode"): org.get("OrganizationName", "")
+            for org in org_details
+        }
+
         # Get all dataset details from metadata
         all_datasets = sspi_metadata.dataset_details()
+
+        # Enrich each dataset with full organization name from lookup
+        for dataset in all_datasets:
+            org_code = dataset.get("Source", {}).get("OrganizationCode", "")
+            # If we have a code and can look up the full name, enrich it
+            if org_code and org_code in org_code_to_name:
+                full_org_name = org_code_to_name[org_code]
+                # Ensure Source.OrganizationName is set to the full name
+                if "Source" not in dataset:
+                    dataset["Source"] = {}
+                dataset["Source"]["OrganizationName"] = full_org_name
+
         if search_term:
             filtered = [
                 d for d in all_datasets
@@ -118,23 +138,58 @@ def validate_custom_metadata(metadata_items: list) -> dict:
 def get_default_structure():
     """
     Load the complete default SSPI structure with proper hierarchy.
-    Returns metadata items directly without enrichment.
+    Enriches indicators with full dataset details and includes all available datasets.
+    Enriches organization names using organization code lookup.
 
     Returns:
     {
         "success": true,
-        "metadata": [...]  // Complete SSPI metadata (SSPI, Pillars, Categories, Indicators)
+        "metadata": [...],  // Complete SSPI metadata with DatasetDetails included
+        "all_datasets": [...]  // All available dataset details with enriched organization info
     }
-
-    Note: Frontend can query /datasets/<code> for dataset details as needed.
-    This reduces payload size by ~60-70% by avoiding duplicate dataset information.
     """
     try:
         metadata_items = sspi_metadata.item_details()
-        logger.info(f"Loaded default SSPI structure with {len(metadata_items)} items")
+
+        # Build organization code-to-name lookup table (code is the key)
+        org_details = sspi_metadata.organization_details()
+        org_code_to_name = {
+            org.get("OrganizationCode"): org.get("OrganizationName", "")
+            for org in org_details
+        }
+        logger.info(f"Built organization lookup with {len(org_code_to_name)} organizations")
+
+        # Get all available datasets - they already have OrganizationCode in Source
+        all_datasets_list = sspi_metadata.dataset_details()
+
+        # Enrich each dataset with full organization name from lookup
+        for dataset in all_datasets_list:
+            org_code = dataset.get("Source", {}).get("OrganizationCode", "")
+            # If we have a code and can look up the full name, enrich it
+            if org_code and org_code in org_code_to_name:
+                full_org_name = org_code_to_name[org_code]
+                # Ensure Source.OrganizationName is set to the full name
+                if "Source" not in dataset:
+                    dataset["Source"] = {}
+                dataset["Source"]["OrganizationName"] = full_org_name
+
+        all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
+
+        # Enrich indicators with full dataset details
+        for item in metadata_items:
+            if item.get("ItemType") == "Indicator" and "DatasetCodes" in item:
+                dataset_codes = item.get("DatasetCodes", [])
+                # Build DatasetDetails array with full dataset objects
+                item["DatasetDetails"] = [
+                    all_datasets.get(code, {"DatasetCode": code, "DatasetName": code})
+                    for code in dataset_codes
+                ]
+
+        logger.info(f"Loaded default SSPI structure with {len(metadata_items)} items and {len(all_datasets_list)} datasets")
         return jsonify({
             "success": True,
-            "metadata": metadata_items  # Return metadata as-is, no enrichment
+            "metadata": metadata_items,
+            "all_datasets": all_datasets_list
         })
     except Exception as e:
         logger.error(f"Error loading default structure: {str(e)}")

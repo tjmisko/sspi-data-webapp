@@ -1,7 +1,7 @@
 class DatasetSelector {
     constructor(options = {}) {
         this.options = {
-            maxSelections: 5,
+            maxSelections: 10,
             multiSelect: true,
             showOrganizations: true,
             showTypes: true,
@@ -9,32 +9,50 @@ class DatasetSelector {
             enableSearch: true,
             onSelectionChange: null,
             apiEndpoint: '/api/v1/customize/datasets',
+            preloadedDatasets: null,  // Optional: pre-loaded datasets to avoid API call
             ...options
         }
-        
+
         this.datasets = []
         this.filteredDatasets = []
         this.selectedDatasets = []
         this.currentFilters = {
             search: '',
-            organization: '',
-            type: '',
-            category: ''
+            organization: ''
         }
-        
+
         this.modal = null
     }
-    
+
     async initialize() {
-        await this.loadDatasets()
-        this.applyFilters()
+        // Use preloaded datasets if available, otherwise fetch from API
+        if (this.options.preloadedDatasets && Array.isArray(this.options.preloadedDatasets)) {
+            console.log('Using preloaded datasets:', this.options.preloadedDatasets.length);
+            this.datasets = this.normalizeDatasets(this.options.preloadedDatasets);
+        } else {
+            await this.loadDatasets();
+        }
+        this.applyFilters();
     }
-    
+
+    normalizeDatasets(datasets) {
+        // Normalize dataset format to ensure consistent field names
+        return datasets.map(d => ({
+            dataset_code: d.DatasetCode || d.dataset_code,
+            dataset_name: d.DatasetName || d.dataset_name,
+            description: d.Description || d.description || '',
+            organization: d.Source?.OrganizationName || d.organization || 'Unknown',
+            organizationCode: d.Source?.OrganizationCode || d.OrganizationCode || d.organizationCode || '',
+            dataset_type: d.DatasetType || d.dataset_type || 'Unknown',
+            topic_category: d.TopicCategory || d.topic_category || 'General'
+        }));
+    }
+
     async loadDatasets() {
         try {
-            const response = await fetch(`${this.options.apiEndpoint}?limit=300`)
+            const response = await fetch(`${this.options.apiEndpoint}?limit=1000`)
             const data = await response.json()
-            this.datasets = data.datasets || []
+            this.datasets = this.normalizeDatasets(data.datasets || [])
         } catch (error) {
             console.error('Error loading datasets:', error)
             this.datasets = []
@@ -101,34 +119,27 @@ class DatasetSelector {
     }
     
     createFiltersHTML() {
-        const organizations = [...new Set(this.datasets.map(d => d.organization))].sort()
-        const types = [...new Set(this.datasets.map(d => d.dataset_type))].sort()
-        const categories = [...new Set(this.datasets.map(d => d.topic_category))].sort()
-        
-        const orgOptions = organizations.map(org => '<option value="' + org + '">' + org + '</option>').join('')
-        const typeOptions = types.map(type => '<option value="' + type + '">' + type + '</option>').join('')
-        const catOptions = categories.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('')
-        
+        // Build unique organization list with codes
+        const orgMap = new Map()
+        this.datasets.forEach(d => {
+            if (!orgMap.has(d.organization)) {
+                orgMap.set(d.organization, d.organizationCode)
+            }
+        })
+
+        // Sort organizations by name and create options with "Name (Code)" format
+        const organizations = Array.from(orgMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+        const orgOptions = organizations.map(([orgName, orgCode]) => {
+            const displayText = orgCode ? orgName + ' (' + orgCode + ')' : orgName
+            return '<option value="' + orgName + '">' + displayText + '</option>'
+        }).join('')
+
         return '<div class="dataset-filters-container">' +
                '<div class="filter-group">' +
                '<label for="org-filter">Organization:</label>' +
                '<select id="org-filter" class="filter-select">' +
                '<option value="">All Organizations</option>' +
                orgOptions +
-               '</select>' +
-               '</div>' +
-               '<div class="filter-group">' +
-               '<label for="type-filter">Type:</label>' +
-               '<select id="type-filter" class="filter-select">' +
-               '<option value="">All Types</option>' +
-               typeOptions +
-               '</select>' +
-               '</div>' +
-               '<div class="filter-group">' +
-               '<label for="category-filter">Category:</label>' +
-               '<select id="category-filter" class="filter-select">' +
-               '<option value="">All Categories</option>' +
-               catOptions +
                '</select>' +
                '</div>' +
                '<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>' +
@@ -143,23 +154,17 @@ class DatasetSelector {
     
     applyFilters() {
         this.filteredDatasets = this.datasets.filter(dataset => {
-            const matchesSearch = !this.currentFilters.search || 
+            const matchesSearch = !this.currentFilters.search ||
                 dataset.dataset_code.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
                 dataset.dataset_name.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
                 (dataset.description && dataset.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
-            
-            const matchesOrg = !this.currentFilters.organization || 
+
+            const matchesOrg = !this.currentFilters.organization ||
                 dataset.organization === this.currentFilters.organization
-            
-            const matchesType = !this.currentFilters.type || 
-                dataset.dataset_type === this.currentFilters.type
-            
-            const matchesCategory = !this.currentFilters.category || 
-                dataset.topic_category === this.currentFilters.category
-            
-            return matchesSearch && matchesOrg && matchesType && matchesCategory
+
+            return matchesSearch && matchesOrg
         })
-        
+
         this.updateResultsCount()
     }
     
@@ -192,12 +197,13 @@ class DatasetSelector {
             
             let badges = ''
             if (this.options.showOrganizations) {
-                badges += '<span class="dataset-organization-badge ' + dataset.organization.toLowerCase() + '">' + dataset.organization + '</span>'
+                // Show only the organization code if available, otherwise the full name
+                const orgDisplay = dataset.organizationCode || dataset.organization
+                badges += '<span class="dataset-organization-badge ' + dataset.organization.toLowerCase().replace(/\s+/g, '-') + '">' + orgDisplay + '</span>'
             }
             if (this.options.showTypes) {
                 badges += '<span class="dataset-type-badge ' + dataset.dataset_type.toLowerCase() + '">' + dataset.dataset_type + '</span>'
             }
-            badges += '<span class="dataset-category-badge ' + dataset.topic_category.toLowerCase() + '">' + dataset.topic_category + '</span>'
             
             let actions = ''
             if (isSelected) {
@@ -249,10 +255,8 @@ class DatasetSelector {
         // Filter functionality
         if (this.options.enableFilters) {
             const orgFilter = this.modal.querySelector('#org-filter')
-            const typeFilter = this.modal.querySelector('#type-filter')
-            const categoryFilter = this.modal.querySelector('#category-filter')
             const clearButton = this.modal.querySelector('#clear-filters')
-            
+
             if (orgFilter) {
                 orgFilter.addEventListener('change', (e) => {
                     this.currentFilters.organization = e.target.value
@@ -260,23 +264,7 @@ class DatasetSelector {
                     this.renderDatasetList()
                 })
             }
-            
-            if (typeFilter) {
-                typeFilter.addEventListener('change', (e) => {
-                    this.currentFilters.type = e.target.value
-                    this.applyFilters()
-                    this.renderDatasetList()
-                })
-            }
-            
-            if (categoryFilter) {
-                categoryFilter.addEventListener('change', (e) => {
-                    this.currentFilters.category = e.target.value
-                    this.applyFilters()
-                    this.renderDatasetList()
-                })
-            }
-            
+
             if (clearButton) {
                 clearButton.addEventListener('click', () => {
                     this.clearFilters()
@@ -313,6 +301,14 @@ class DatasetSelector {
                 this.close()
             }
         })
+
+        // Close on ESC key press
+        this.escapeHandler = (e) => {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                this.close()
+            }
+        }
+        document.addEventListener('keydown', this.escapeHandler)
     }
     
     bindDatasetEvents() {
@@ -342,29 +338,36 @@ class DatasetSelector {
     addDataset(datasetCode) {
         if (this.selectedDatasets.length >= this.options.maxSelections) return
         if (this.selectedDatasets.includes(datasetCode)) return
-        
+
         this.selectedDatasets.push(datasetCode)
-        
-        // Immediately notify parent but keep modal open
+
+        // Immediately notify parent with full dataset objects
         if (this.options.onSelectionChange) {
-            this.options.onSelectionChange(this.selectedDatasets)
+            this.options.onSelectionChange(this.getSelectedDatasetObjects())
         }
-        
+
         // Update the display to reflect the change
         this.renderDatasetList()
         this.updateSelectionCounter()
     }
-    
+
     removeDataset(datasetCode) {
         this.selectedDatasets = this.selectedDatasets.filter(code => code !== datasetCode)
-        
-        // Immediately notify parent
+
+        // Immediately notify parent with full dataset objects
         if (this.options.onSelectionChange) {
-            this.options.onSelectionChange(this.selectedDatasets)
+            this.options.onSelectionChange(this.getSelectedDatasetObjects())
         }
-        
+
         this.renderDatasetList()
         this.updateSelectionCounter()
+    }
+
+    getSelectedDatasetObjects() {
+        // Return full dataset objects for selected codes, preserving all details
+        return this.selectedDatasets.map(code => {
+            return this.datasets.find(d => d.dataset_code === code)
+        }).filter(d => d) // Filter out any undefined entries
     }
     
     clearAll() {
@@ -376,25 +379,18 @@ class DatasetSelector {
     clearFilters() {
         this.currentFilters = {
             search: '',
-            organization: '',
-            type: '',
-            category: ''
+            organization: ''
         }
-        
+
         if (!this.modal) return
-        
+
         // Reset form inputs
         const searchInput = this.modal.querySelector('#dataset-search')
         if (searchInput) searchInput.value = ''
-        
+
         const orgFilter = this.modal.querySelector('#org-filter')
-        const typeFilter = this.modal.querySelector('#type-filter')
-        const categoryFilter = this.modal.querySelector('#category-filter')
-        
         if (orgFilter) orgFilter.value = ''
-        if (typeFilter) typeFilter.value = ''
-        if (categoryFilter) categoryFilter.value = ''
-        
+
         this.applyFilters()
         this.renderDatasetList()
     }
@@ -415,12 +411,18 @@ class DatasetSelector {
     
     confirm() {
         if (this.options.onSelectionChange) {
-            this.options.onSelectionChange(this.selectedDatasets)
+            this.options.onSelectionChange(this.getSelectedDatasetObjects())
         }
         this.close()
     }
     
     close() {
+        // Remove escape key handler
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler)
+            this.escapeHandler = null
+        }
+
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
