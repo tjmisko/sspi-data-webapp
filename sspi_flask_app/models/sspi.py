@@ -9,17 +9,11 @@ import logging
 log = logging.getLogger(__name__)
 
 class FastSSPI:
-    def __init__(self, item_details: list[dict], indicator_scores: list[dict], strict_year: bool = True, score_matrix = None, item_details_sorted: list[dict]|None = None):
-        if item_details_sorted:
-            self.item_details_sorted = item_details_sorted
-        else:
-            self.item_details_sorted = sorted(item_details, key=lambda d: tuple(d["TreeIndex"]))
-            
-        if not score_matrix: 
-            score_matrix = self.build_matrix()
-        self.score_matrix = score_matrix
+    def __init__(self, item_details: list[dict],):
+        self.item_details_sorted = sorted(item_details, key=lambda d: tuple(d["TreeIndex"]))
+        self.score_matrix = self.build_score_matrix()
 
-    def build_matrix(self):
+    def build_score_matrix(self):
         n_indicators = sum(1 for item in self.item_details_sorted if item["ItemType"] == "Indicator")
         print(n_indicators)
         n_categories = sum(1 for item in self.item_details_sorted if item["ItemType"] == "Category")
@@ -28,21 +22,26 @@ class FastSSPI:
         print(n_pillars)
         score_matrix = np.zeros((n_indicators, n_categories + n_pillars + 1), dtype=float)
         sspi_multiple = 1
-        pillar_multiple, pillar_index = 1, -1
-        category_multiple, category_index = 1, -1
+        pillar_multiple, pillar_index, pillar_current = 1, -1, ""
+        category_multiple, category_index, category_current = 1, -1, ""
         indicator_index = 0
+        item_list = ["" for i in range(n_categories + n_pillars)]
+        item_list.append("SSPI")
+        item_codes = [d["ItemCode"] for d in self.item_details_sorted]
         for item in self.item_details_sorted:
             item_type = item['ItemType']
-            multiple = len(item['Children'])
+            multiple = len([c for c in item['Children'] if c in item_codes])
             item["TreeIndex"]
             if item_type == "SSPI": ## Fill the last column with the overall SSPI weight
                 sspi_multiple = multiple 
             elif item_type == "Pillar":
                 pillar_multiple = multiple
                 pillar_index += 1
+                pillar_current = item["PillarCode"]
             elif item_type == "Category":
                 category_multiple = multiple
                 category_index += 1
+                category_current = item["CategoryCode"]
             elif item_type == "Indicator":  ## Only set on encountering an indicator (now we can fill a row)
                 sspi_weight = 1 / (category_multiple * pillar_multiple * sspi_multiple)
                 pillar_weight = 1 / (category_multiple * pillar_multiple )
@@ -50,9 +49,17 @@ class FastSSPI:
                 assert category_index != -1
                 assert pillar_index != -1
                 score_matrix[indicator_index, category_index] = category_weight
+                if not item_list[category_index]:
+                    item_list[category_index] = category_current
+                assert category_current == item_list[category_index], f"{category_current} != {item_list[category_index]}"
                 score_matrix[indicator_index, n_categories + pillar_index] = pillar_weight
+                if not item_list[n_categories + pillar_index]:
+                    item_list[n_categories + pillar_index] = pillar_current
+                assert pillar_current == item_list[n_categories + pillar_index]
                 score_matrix[indicator_index, n_categories + n_pillars] = sspi_weight
                 indicator_index += 1
+        self.item_list = item_list
+        assert all(item_list)
         return score_matrix
 
     def get_sorted_item_details(self):
