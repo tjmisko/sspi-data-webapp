@@ -6,7 +6,7 @@ from sspi_flask_app.models.database import sspi_country_characteristics
 
 
 # @collect_bp.route("/characteristic/POPULN", methods=['GET'])
-# @login_required
+# @admin_required
 # def unpopl():
 #     def collect_iterator(**kwargs):
 #         # insert UN population data into sspi_country_characteristics database
