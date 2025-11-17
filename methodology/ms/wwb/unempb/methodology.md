@@ -13,6 +13,5 @@ LowerGoalpost: 0
 UpperGoalpost: 100
 ScoreFunction: >
     Score = goalpost(UNSDG_BENFTS_UNEMP, 0, 100)
-Inverted: false
 ---
 

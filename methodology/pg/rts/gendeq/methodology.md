@@ -18,12 +18,8 @@ DatasetCodes:
   - WBL_WMMOBL
   - WBL_WMMARR
   - WBL_WMFNMN
-Inverted: false
 LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: Not available (computed from multiple weighted datasets)
-SourceOrganization: '[IPU, WB-WBL]'
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: '[https://data.ipu.org/women-ranking, https://wbl.worldbank.org/en/wbl-data]'
 ---
 

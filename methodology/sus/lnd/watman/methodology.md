@@ -26,11 +26,7 @@ ScoreFunction: >
         goalpost(UNSDG_CWUEFF, -20, 50),
         goalpost(UNSDG_WTSTRS, 100, 0)
     )
-Inverted: false
 LowerGoalpost: null
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 UpperGoalpost: null
 ---
 

@@ -11,13 +11,9 @@ Description: >
 Footnote: null
 Indicator: Arms Transfers
 IndicatorCode: ARMEXP
-Inverted: true
 LowerGoalpost: 500
 UpperGoalpost: 0
 ScoreFunction: >
   Score = goalpost(SIPRI_ARMEXP, 500, 0)
-SourceOrganization: SIPRI
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.sipri.org/databases
 ---
 

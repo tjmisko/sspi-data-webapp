@@ -15,12 +15,8 @@ Footnote: >
   data set and view the 2018 "Estimate" data in "Government Effectiveness".
 Indicator: Quality of Public Services & Governance
 IndicatorCode: PUBSRV
-Inverted: false
 LowerGoalpost: -2.5
 UpperGoalpost: 2.5
 ScoreFunction: Not available (computed from WGI_PUBSRV)
-SourceOrganization: World Bank (WGI)
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://info.worldbank.org/governance/wgi/
 ---
 

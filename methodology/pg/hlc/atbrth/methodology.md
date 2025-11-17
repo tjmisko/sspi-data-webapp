@@ -9,13 +9,9 @@ Indicator: Attended Births by Skilled Personnel
 IndicatorCode: ATBRTH
 DatasetCodes:
   - WHO_ATBRTH
-Inverted: false
 LowerGoalpost: 80
 UpperGoalpost: 100
 ScoreFunction: >
     Score = goalpost(WHO_ATBRTH, 80, 100)
-SourceOrganization: WHO
-SourceOrganizationIndicatorCode: MDG_0000000025
-SourceOrganizationURL: https://apps.who.int/gho/data/node.main.SKILLEDBIRTHATTENDANTS?lang=en
 ---
 

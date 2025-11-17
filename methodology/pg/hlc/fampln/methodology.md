@@ -12,13 +12,9 @@ Description: >
 Footnote: null
 Indicator: Family Planning
 IndicatorCode: FAMPLN
-Inverted: false
 LowerGoalpost: 20
 UpperGoalpost: 100
 ScoreFunction: >
   Score = goalpost(UNSDG_FAMPLN, 20, 100)
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: 3.7.1
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

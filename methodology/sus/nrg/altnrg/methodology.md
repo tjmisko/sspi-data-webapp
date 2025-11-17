@@ -23,9 +23,5 @@ DatasetCodes:
   - IEA_GEOPWR
   - IEA_BIOWAS
   - IEA_FSLOIL
-Inverted: false
-SourceOrganization: IEA
-SourceOrganizationIndicatorCode: TESbySource
-SourceOrganizationURL: https://www.iea.org/
 ---
 

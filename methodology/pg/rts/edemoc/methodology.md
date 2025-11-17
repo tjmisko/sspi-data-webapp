@@ -13,7 +13,6 @@ Footnote: >
   and view the column "v2x_polyarchy".
 Indicator: Electoral Democracy Index
 IndicatorCode: EDEMOC
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 1
 ScoreFunction: >

@@ -19,9 +19,5 @@ DatasetCodes:
   - WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100
   - WID_NINCSH_PRETAX_P0P50
   - WID_NINCSH_PRETAX_P90P100
-Inverted: false
-SourceOrganization: World Inequality Database
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://wid.world/
 ---
 

@@ -12,7 +12,6 @@ Description: >
 Footnote: null
 Indicator: Adoption of Key UN Conventions
 IndicatorCode: UNCONV
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 10
 ScoreFunction: Not available (computed from UNSDG_UNCONV)

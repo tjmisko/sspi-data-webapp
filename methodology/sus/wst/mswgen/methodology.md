@@ -13,13 +13,9 @@ Indicator: Municipal Solid Waste Generation
 IndicatorCode: MSWGEN
 DatasetCodes:
   - EPI_MSWGEN
-Inverted: true
 LowerGoalpost: 100
 UpperGoalpost: 0
 ScoreFunction: >
   Score = goalpost(EPI_MSWGEN, 100, 0)
-SourceOrganization: Environmental Performance Index
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://epi.yale.edu/
 ---
 Current goalposts are set to take in index data from EPI. TODO: Pull Raw EPI Data for Indicators to Get Actual Values.

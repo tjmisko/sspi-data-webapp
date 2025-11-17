@@ -11,13 +11,9 @@ IndicatorCode: DEFRST
 DatasetCodes:
   - UNFAO_FRSTLV
   - UNFAO_FRSTAV
-Inverted: false
 LowerGoalpost: -20.0
 UpperGoalpost: 40.0
 ScoreFunction: >
     Score = goalpost((UNFAO_FRSTLV - UNFAO_FRSTAV) / UNFAO_FRSTAV, -20, 40)
-SourceOrganization: UN FAO
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.fao.org/faostat/en/#data/RL
 ---
 

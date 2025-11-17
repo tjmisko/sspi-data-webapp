@@ -11,7 +11,6 @@ Indicator: Incarceration Rates
 IndicatorCode: PRISON
 DatasetCodes:
   - UNODC_PRIPOP
-Inverted: true
 LowerGoalpost: 540
 UpperGoalpost: 40
 ScoreFunction: >

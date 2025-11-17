@@ -12,13 +12,9 @@ Indicator: Recycling Rate
 IndicatorCode: RECYCL
 DatasetCodes:
   - WB_RECYCL
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 100
 ScoreFunction: >
   Score = goalpost(WB_RECYCL, 0, 100)
-SourceOrganization: World Bank
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://databank.worldbank.org/
 ---
 

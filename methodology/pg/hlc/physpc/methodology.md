@@ -11,13 +11,9 @@ Indicator: Physicians per 10,000
 IndicatorCode: PHYSPC
 DatasetCodes:
   - WHO_PHYSPC
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 70
 ScoreFunction: >
     Score = goalpost(WHO_PHYSPC, 0, 70)
-SourceOrganization: WHO
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.who.int/data/gho
 ---
 

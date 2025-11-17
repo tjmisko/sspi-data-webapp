@@ -11,13 +11,9 @@ Indicator: Lower Secondary Net Enrollment
 IndicatorCode: ENRSEC
 DatasetCodes:
   - UIS_ENRSEC
-Inverted: false
 LowerGoalpost: 70
 UpperGoalpost: 100
 ScoreFunction: >
     Score = goalpost(UIS_ENRSEC, 70, 100)
-SourceOrganization: UIS
-SourceOrganizationIndicatorCode: NERT.2.CP
-SourceOrganizationURL: https://databrowser.uis.unesco.org/
 ---
 

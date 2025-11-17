@@ -11,7 +11,6 @@ Description: >
 Footnote: null
 Indicator: Basic Sanitation Services
 IndicatorCode: SANSRV
-Inverted: false
 LowerGoalpost: 50
 UpperGoalpost: 100
 ScoreFunction: >

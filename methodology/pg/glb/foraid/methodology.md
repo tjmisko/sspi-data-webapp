@@ -18,7 +18,6 @@ DatasetCodes:
   - OECD_TONREC
   - WB_POPULN
   - WB_GDPMKT
-Inverted: false
 LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
@@ -26,8 +25,5 @@ ScoreFunction: >
         goalpost(TOTDON * 10**8 / GDPMKT, 0, 1),
         goalpost(TOTREC * 10**6 / POPULN, 0, 500)
     )
-SourceOrganization: OECD
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://stats.oecd.org/Index.aspx?DataSetCode=CPA#
 ---
 

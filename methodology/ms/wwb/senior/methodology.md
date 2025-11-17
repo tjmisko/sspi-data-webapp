@@ -24,9 +24,5 @@ ScoreFunction: >
       ),
       goalpost(SENPVT, 0, 50)
   )
-Inverted: true
-SourceOrganization: OECD
-SourceOrganizationIndicatorCode: PAG
-SourceOrganizationURL: https://stats.oecd.org/
 ---
 

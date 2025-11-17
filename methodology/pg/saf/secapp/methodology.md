@@ -13,13 +13,9 @@ Description: >
 Footnote: null
 Indicator: Security Apparatus
 IndicatorCode: SECAPP
-Inverted: true
 LowerGoalpost: 10
 UpperGoalpost: 0
 ScoreFunction: >
     Score = goalpost(FSI_SECAPP, 10, 0)
-SourceOrganization: The Fund for Peace
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://fragilestatesindex.org/global-data/
 ---
 

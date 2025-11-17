@@ -14,7 +14,6 @@ UpperGoalpost: 1
 ScoreFunction: >
     Score = goalpost(UNSDG_REDLST, 0, 1)
 IndicatorCode: REDLST
-Inverted: false
 Policy: Endangered Species Protection
 ---
 

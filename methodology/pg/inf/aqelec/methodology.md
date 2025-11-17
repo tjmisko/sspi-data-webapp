@@ -13,7 +13,6 @@ IndicatorCode: AQELEC
 DatasetCodes:
   - WB_AVELEC
   - WEF_QUELEC
-Inverted: false
 LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
@@ -21,8 +20,5 @@ ScoreFunction: >
       goalpost(WB_AVELEC, 0, 100),
       goalpost(WEF_QUELEC, 1, 7)
   )
-SourceOrganization: World Bank
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: '[https://databank.worldbank.org/, https://prosperitydata360.worldbank.org/en/indicator/WEF+GCIHH+EOSQ064]'
 ---
 
