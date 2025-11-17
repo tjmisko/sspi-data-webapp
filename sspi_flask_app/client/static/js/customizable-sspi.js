@@ -2461,7 +2461,11 @@ class CustomizableSSPIStructure {
 
     // Auto-loading functionality
     async loadInitialData() {
-        // First, check if we have cached modifications
+        // CRITICAL: Always load available datasets first (before metadata)
+        // This ensures dataset selector has complete list, regardless of cache
+        await this.loadAvailableDatasets();
+
+        // Then check if we have cached modifications for structure
         if (this.hasCachedModifications()) {
             try {
                 const loaded = await this.loadCachedState();
@@ -2555,10 +2559,17 @@ class CustomizableSSPIStructure {
             if (response.success) {
                 console.log('Auto-loading default SSPI metadata:', response.stats);
 
-                // Store all available dataset details for dynamic selection
+                // Fallback: Load dataset details if loadAvailableDatasets failed
+                // (datasetDetails should already be populated from separate cache/API call)
                 if (response.all_datasets && Array.isArray(response.all_datasets)) {
-                    this.populateDatasetDetails(response.all_datasets);
-                    console.log(`Loaded ${response.all_datasets.length} dataset details for selection`);
+                    const currentCount = Object.keys(this.datasetDetails).length;
+                    if (currentCount === 0) {
+                        console.log('Dataset details not yet loaded, using all_datasets from default-structure as fallback');
+                        this.populateDatasetDetails(response.all_datasets);
+                        console.log(`Loaded ${response.all_datasets.length} dataset details for selection (fallback)`);
+                    } else {
+                        console.log(`Dataset details already loaded (${currentCount} datasets), skipping redundant load from all_datasets`);
+                    }
                 }
 
                 // Import the metadata efficiently
@@ -2759,9 +2770,15 @@ class CustomizableSSPIStructure {
     async importDataAsync(metadataItems) {
         console.log('Importing', metadataItems.length, 'metadata items asynchronously');
 
-        // Extract and store dataset details from metadata as fallback
-        // This ensures dataset details are available even if all_datasets wasn't loaded
-        this.extractDatasetDetailsFromMetadata(metadataItems);
+        // Extract dataset details from metadata ONLY as fallback if not already loaded
+        // (Available datasets should be loaded separately via loadAvailableDatasets)
+        const currentCount = Object.keys(this.datasetDetails).length;
+        if (currentCount === 0) {
+            console.log('Dataset details not loaded, extracting from metadata as fallback');
+            this.extractDatasetDetailsFromMetadata(metadataItems);
+        } else {
+            console.log(`Dataset details already loaded (${currentCount} datasets), skipping metadata extraction`);
+        }
 
         // Set importing flag to suppress validation warnings during bulk import
         this.isImporting = true;
@@ -3505,6 +3522,11 @@ class CustomizableSSPIStructure {
             // Use addDatasetToIndicatorWithDetails to pass full details directly
             this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, datasetDetail);
         });
+
+        // IMPORTANT: Always flag unsaved and update cache after dataset selection changes
+        // This ensures changes are cached even when removing all datasets
+        this.flagUnsaved();
+        this.debouncedCacheState();
     }
 
 
@@ -3799,28 +3821,80 @@ class CustomizableSSPIStructure {
     }
 
     // Cache management methods
-    
+
+    /**
+     * Enrich metadata with full dataset details for caching.
+     * This ensures dataset assignments can be fully restored from cache.
+     * Uses Dataset Codes as keys to lookup full details from this.datasetDetails.
+     *
+     * @param {Array} metadata - SSPI metadata items with DatasetCodes arrays
+     * @returns {Array} - Enriched metadata with DatasetDetails arrays
+     */
+    enrichMetadataWithDatasetDetails(metadata) {
+        // Clone metadata to avoid mutating the original
+        const enriched = JSON.parse(JSON.stringify(metadata));
+
+        // Enrich each indicator with DatasetDetails
+        enriched.forEach(item => {
+            if (item.ItemType === 'Indicator' && item.DatasetCodes) {
+                item.DatasetDetails = item.DatasetCodes.map(code => {
+                    const details = this.datasetDetails[code];
+                    if (details) {
+                        // Return full dataset object matching API format
+                        return {
+                            DatasetCode: code,
+                            DatasetName: details.name,
+                            Description: details.description,
+                            Source: {
+                                OrganizationName: details.organization,
+                                OrganizationCode: details.organizationCode || ''
+                            },
+                            DatasetType: details.type
+                        };
+                    }
+                    // Fallback if details not found in datasetDetails map
+                    console.warn(`Dataset details not found for code: ${code}, using minimal fallback`);
+                    return {
+                        DatasetCode: code,
+                        DatasetName: code,
+                        Description: '',
+                        Source: {
+                            OrganizationName: '',
+                            OrganizationCode: ''
+                        },
+                        DatasetType: ''
+                    };
+                });
+            }
+        });
+
+        return enriched;
+    }
+
     cacheCurrentState() {
         try {
+            const metadata = this.exportData();
+            const enrichedMetadata = this.enrichMetadataWithDatasetDetails(metadata);
+
             const cacheData = {
                 hasModifications: this.unsavedChanges,
                 lastModified: Date.now(),
-                metadata: this.exportData(),
+                metadata: enrichedMetadata,  // Use enriched version with DatasetDetails
                 version: this.CACHE_VERSION
             };
-            
+
             // Check cache size (rough estimate)
             const cacheSize = JSON.stringify(cacheData).length;
             if (cacheSize > 5 * 1024 * 1024) { // 5MB limit
                 console.warn('Cache data is too large (>5MB), skipping cache');
                 return;
             }
-            
+
             window.observableStorage.setItem("sspi-custom-modifications", cacheData);
-            console.log('SSPI modifications cached successfully');
+            console.log('SSPI modifications cached successfully with dataset details');
         } catch (error) {
             console.warn('Failed to cache SSPI modifications:', error);
-            
+
             // Handle specific localStorage errors
             if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                 this.handleStorageQuotaExceeded();
@@ -3975,7 +4049,93 @@ class CustomizableSSPIStructure {
         }
         return true;
     }
-    
+
+    // Available Datasets Cache Management
+    // Separate from metadata cache to ensure dataset selector always has fresh options
+
+    /**
+     * Load available datasets from cache or backend.
+     * Uses separate cache with 24-hour TTL to ensure dataset selector has fresh data.
+     */
+    async loadAvailableDatasets() {
+        // Try to load from cache first
+        const cached = this.getCachedAvailableDatasets();
+        if (cached) {
+            this.populateDatasetDetails(cached);
+            console.log(`Loaded ${cached.length} available datasets from cache`);
+            return;
+        }
+
+        // Cache miss or stale - fetch from backend
+        try {
+            const response = await this.fetch('/api/v1/customize/datasets?limit=0');
+            if (response.success && response.datasets) {
+                this.populateDatasetDetails(response.datasets);
+                this.cacheAvailableDatasets(response.datasets);
+                console.log(`Loaded ${response.datasets.length} available datasets from backend`);
+            } else {
+                console.warn('Failed to load available datasets from backend');
+            }
+        } catch (error) {
+            console.error('Error loading available datasets:', error);
+        }
+    }
+
+    /**
+     * Cache available datasets separately from metadata
+     */
+    cacheAvailableDatasets(datasets) {
+        try {
+            const cacheData = {
+                datasets: datasets,
+                cachedAt: Date.now(),
+                version: this.CACHE_VERSION
+            };
+            window.observableStorage.setItem('sspi-available-datasets', cacheData);
+            console.log('Cached available datasets');
+        } catch (error) {
+            console.warn('Failed to cache available datasets:', error);
+        }
+    }
+
+    /**
+     * Get cached available datasets if valid (not stale)
+     * @returns {Array|null} - Cached datasets or null if invalid/stale
+     */
+    getCachedAvailableDatasets() {
+        try {
+            const cacheData = window.observableStorage.getItem('sspi-available-datasets');
+            if (!cacheData || typeof cacheData !== 'object') {
+                return null;
+            }
+
+            // Validate structure
+            if (!Array.isArray(cacheData.datasets) || typeof cacheData.cachedAt !== 'number') {
+                console.warn('Invalid available datasets cache structure');
+                return null;
+            }
+
+            // Check version
+            if (cacheData.version !== this.CACHE_VERSION) {
+                console.warn('Available datasets cache version mismatch');
+                return null;
+            }
+
+            // Check freshness (24 hours)
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+            const age = Date.now() - cacheData.cachedAt;
+            if (age > maxAge) {
+                console.log('Available datasets cache is stale (>24 hours), will refresh');
+                return null;
+            }
+
+            return cacheData.datasets;
+        } catch (error) {
+            console.warn('Error reading available datasets cache:', error);
+            return null;
+        }
+    }
+
     debouncedCacheState() {
         // Clear existing timeout
         if (this.cacheTimeout) {

@@ -22,6 +22,7 @@ class DatasetSelector {
         }
 
         this.modal = null
+        this.highlightedIndex = -1  // For keyboard navigation (independent of mouse)
     }
 
     async initialize() {
@@ -64,18 +65,27 @@ class DatasetSelector {
             if (!this.datasets.length) {
                 await this.initialize()
             }
-            
+
             this.selectedDatasets = [...currentSelections]
             this.createModal()
-            
+
             if (!this.modal) {
                 console.error('Failed to create modal')
                 return
             }
-            
+
             this.renderModal()
             this.bindEvents()
             document.body.appendChild(this.modal)
+
+            // Autofocus search input for immediate typing
+            if (this.options.enableSearch) {
+                const searchInput = this.modal.querySelector('#dataset-search')
+                if (searchInput) {
+                    // Small delay to ensure modal is fully rendered
+                    setTimeout(() => searchInput.focus(), 100)
+                }
+            }
         } catch (error) {
             console.error('Error showing dataset selector:', error)
         }
@@ -84,11 +94,11 @@ class DatasetSelector {
     createModal() {
         this.modal = document.createElement('div')
         this.modal.className = 'dataset-modal-overlay'
-        
+
         const modalContent = document.createElement('div')
         modalContent.className = 'dataset-modal-content enhanced'
-        
-        modalContent.innerHTML = 
+
+        modalContent.innerHTML =
             '<div class="dataset-modal-header">' +
             '<h3 class="dataset-modal-title">Select Dataset</h3>' +
             '<div class="dataset-selection-counter">' +
@@ -97,6 +107,7 @@ class DatasetSelector {
             '</div>' +
             '</div>' +
             (this.options.enableSearch ? this.createSearchHTML() : '') +
+            this.createSelectedDatasetsHTML() +
             (this.options.enableFilters ? this.createFiltersHTML() : '') +
             '<div class="dataset-list-container">' +
             '<div id="dataset-list" class="dataset-list enhanced">' +
@@ -106,7 +117,7 @@ class DatasetSelector {
             '<div class="dataset-modal-actions">' +
             '<button id="modal-cancel" class="dataset-modal-cancel">Close</button>' +
             '</div>'
-        
+
         this.modal.appendChild(modalContent)
     }
     
@@ -135,19 +146,23 @@ class DatasetSelector {
         }).join('')
 
         return '<div class="dataset-filters-container">' +
-               '<div class="filter-group">' +
-               '<label for="org-filter">Organization:</label>' +
+               '<label for="org-filter" class="visually-hidden">Organization:</label>' +
                '<select id="org-filter" class="filter-select">' +
                '<option value="">All Organizations</option>' +
                orgOptions +
                '</select>' +
-               '</div>' +
-               '<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>' +
                '</div>';
     }
-    
+
+    createSelectedDatasetsHTML() {
+        return '<div class="selected-datasets-container" id="selected-datasets-container">' +
+               '<div class="selected-datasets-list" id="selected-datasets-list"></div>' +
+               '</div>';
+    }
+
     renderModal() {
         this.applyFilters()
+        this.renderSelectedDatasets()
         this.renderDatasetList()
         this.updateSelectionCounter()
     }
@@ -167,7 +182,48 @@ class DatasetSelector {
 
         this.updateResultsCount()
     }
-    
+
+    renderSelectedDatasets() {
+        if (!this.modal) return
+        const container = this.modal.querySelector('#selected-datasets-list')
+        if (!container) return
+        // Clear existing content
+        container.innerHTML = ''
+        if (this.selectedDatasets.length === 0) {
+            return
+        }
+        // Create bubbles for each selected dataset
+        const bubbles = this.selectedDatasets.map(datasetCode => {
+            const dataset = this.datasets.find(d => d.dataset_code === datasetCode)
+            if (!dataset) return ''
+
+            return '<div class="selected-dataset-bubble" data-dataset-code="' + datasetCode + '">' +
+                   '<span class="bubble-text">' + datasetCode + '</span>' +
+                   '<button class="bubble-remove-btn" data-dataset-code="' + datasetCode + '" title="Remove ' + datasetCode + '">' +
+                   '&times;' +
+                   '</button>' +
+                   '</div>'
+        }).filter(html => html !== '').join('')
+
+        container.innerHTML = bubbles
+
+        // Bind click events to remove buttons
+        this.bindSelectedDatasetEvents()
+    }
+
+    bindSelectedDatasetEvents() {
+        if (!this.modal) return
+
+        const removeButtons = this.modal.querySelectorAll('.bubble-remove-btn')
+        removeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation()
+                const datasetCode = button.dataset.datasetCode
+                this.removeDataset(datasetCode)
+            })
+        })
+    }
+
     renderDatasetList() {
         if (!this.modal) {
             console.error('Modal not found in renderDatasetList')
@@ -201,10 +257,6 @@ class DatasetSelector {
                 const orgDisplay = dataset.organizationCode || dataset.organization
                 badges += '<span class="dataset-organization-badge ' + dataset.organization.toLowerCase().replace(/\s+/g, '-') + '">' + orgDisplay + '</span>'
             }
-            if (this.options.showTypes) {
-                badges += '<span class="dataset-type-badge ' + dataset.dataset_type.toLowerCase() + '">' + dataset.dataset_type + '</span>'
-            }
-            
             let actions = ''
             if (isSelected) {
                 actions = '<button class="dataset-remove-btn">Remove</button>'
@@ -222,7 +274,6 @@ class DatasetSelector {
                 '<div class="' + cssClasses + ' compact" data-dataset-code="' + dataset.dataset_code + '">' +
                 '<div class="dataset-compact-header">' +
                 '<div class="dataset-compact-code">' + dataset.dataset_code + '</div>' +
-                '<div class="dataset-compact-badges">' + badges + '</div>' +
                 '</div>' +
                 '<div class="dataset-compact-name">' + dataset.dataset_name + '</div>' +
                 '<div class="dataset-compact-description">' + description + '</div>' +
@@ -246,28 +297,51 @@ class DatasetSelector {
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     this.currentFilters.search = e.target.value
+                    this.highlightedIndex = -1  // Reset on search
                     this.applyFilters()
                     this.renderDatasetList()
                 })
+
+                // Keyboard navigation on search input
+                searchInput.addEventListener('keydown', (e) => {
+                    // Handle Escape explicitly to close modal immediately
+                    if (e.key === 'Escape') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.stopImmediatePropagation()
+                        this.close()
+                        return
+                    }
+
+                    this.handleKeyboardNavigation(e)
+                    // Prevent event from bubbling to avoid double-handling
+                    const navKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageUp', 'PageDown', 'Enter', ' ']
+                    if (navKeys.includes(e.key)) {
+                        e.stopPropagation()
+                    }
+                })
             }
         }
+
+        // Global keyboard navigation (backup for when search is not focused)
+        // Only handles navigation keys, not text input
+        this.keyboardHandler = (e) => {
+            const navKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageUp', 'PageDown', 'Enter', ' ']
+            if (navKeys.includes(e.key)) {
+                this.handleKeyboardNavigation(e)
+            }
+        }
+        document.addEventListener('keydown', this.keyboardHandler)
         
         // Filter functionality
         if (this.options.enableFilters) {
             const orgFilter = this.modal.querySelector('#org-filter')
-            const clearButton = this.modal.querySelector('#clear-filters')
 
             if (orgFilter) {
                 orgFilter.addEventListener('change', (e) => {
                     this.currentFilters.organization = e.target.value
                     this.applyFilters()
                     this.renderDatasetList()
-                })
-            }
-
-            if (clearButton) {
-                clearButton.addEventListener('click', () => {
-                    this.clearFilters()
                 })
             }
         }
@@ -302,9 +376,10 @@ class DatasetSelector {
             }
         })
 
-        // Close on ESC key press
+        // Close on ESC key press (document-level fallback)
         this.escapeHandler = (e) => {
-            if (e.key === 'Escape' || e.keyCode === 27) {
+            if ((e.key === 'Escape' || e.keyCode === 27) && this.modal) {
+                e.preventDefault()
                 this.close()
             }
         }
@@ -347,6 +422,7 @@ class DatasetSelector {
         }
 
         // Update the display to reflect the change
+        this.renderSelectedDatasets()
         this.renderDatasetList()
         this.updateSelectionCounter()
     }
@@ -359,6 +435,7 @@ class DatasetSelector {
             this.options.onSelectionChange(this.getSelectedDatasetObjects())
         }
 
+        this.renderSelectedDatasets()
         this.renderDatasetList()
         this.updateSelectionCounter()
     }
@@ -372,6 +449,7 @@ class DatasetSelector {
     
     clearAll() {
         this.selectedDatasets = []
+        this.renderSelectedDatasets()
         this.renderDatasetList()
         this.updateSelectionCounter()
     }
@@ -405,7 +483,7 @@ class DatasetSelector {
         if (!this.modal) return
         const resultsCount = this.modal.querySelector('.search-results-count')
         if (resultsCount) {
-            resultsCount.textContent = this.filteredDatasets.length + ' dataset' + (this.filteredDatasets.length !== 1 ? 's' : '') + ' found'
+            resultsCount.textContent = this.filteredDatasets.length + '/' + this.datasets.length
         }
     }
     
@@ -423,6 +501,12 @@ class DatasetSelector {
             this.escapeHandler = null
         }
 
+        // Remove keyboard navigation handler
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler)
+            this.keyboardHandler = null
+        }
+
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
@@ -432,7 +516,148 @@ class DatasetSelector {
     hide() {
         this.close()
     }
-    
+
+    // Keyboard Navigation Methods
+
+    handleKeyboardNavigation(e) {
+        if (!this.modal) return
+
+        const datasetList = this.modal.querySelector('#dataset-list')
+        if (!datasetList) return
+
+        const items = datasetList.querySelectorAll('.dataset-option')
+        if (items.length === 0) return
+
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault()
+                if (this.highlightedIndex < items.length - 1) {
+                    this.highlightedIndex++
+                    this.highlightSelectedIndex()
+                    this.scrollHighlightedIntoView()
+                }
+                break
+
+            case 'ArrowUp':
+                e.preventDefault()
+                if (this.highlightedIndex > -1) {
+                    this.highlightedIndex--
+                    this.highlightSelectedIndex()
+                    this.scrollHighlightedIntoView()
+                }
+                break
+
+            case 'Home':
+                e.preventDefault()
+                this.highlightedIndex = 0
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'End':
+                e.preventDefault()
+                this.highlightedIndex = items.length - 1
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'PageUp':
+                e.preventDefault()
+                this.highlightedIndex = Math.max(0, this.highlightedIndex - 10)
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'PageDown':
+                e.preventDefault()
+                this.highlightedIndex = Math.min(items.length - 1, this.highlightedIndex + 10)
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'Enter':
+            case ' ':  // Space key
+                // Only toggle if there's a highlighted item
+                if (this.highlightedIndex >= 0) {
+                    e.preventDefault()
+                    this.toggleHighlightedDataset()
+                }
+                // Otherwise, allow space to be typed normally in the search input
+                break
+        }
+
+        // Keep search input focused
+        if (this.options.enableSearch) {
+            const searchInput = this.modal.querySelector('#dataset-search')
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.focus()
+            }
+        }
+    }
+
+    highlightSelectedIndex() {
+        if (!this.modal) return
+
+        const datasetList = this.modal.querySelector('#dataset-list')
+        if (!datasetList) return
+
+        const items = datasetList.querySelectorAll('.dataset-option')
+
+        // Clamp highlightedIndex to valid range
+        if (this.highlightedIndex > items.length - 1) {
+            this.highlightedIndex = items.length - 1
+        }
+
+        // Update visual highlight
+        items.forEach((item, index) => {
+            if (index === this.highlightedIndex) {
+                item.classList.add('keyboard-highlighted')
+            } else {
+                item.classList.remove('keyboard-highlighted')
+            }
+        })
+    }
+
+    scrollHighlightedIntoView() {
+        if (!this.modal || this.highlightedIndex === -1) return
+
+        const datasetList = this.modal.querySelector('#dataset-list')
+        if (!datasetList) return
+
+        const items = datasetList.querySelectorAll('.dataset-option')
+        const highlightedItem = items[this.highlightedIndex]
+
+        if (highlightedItem) {
+            highlightedItem.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth'
+            })
+        }
+    }
+
+    toggleHighlightedDataset() {
+        if (!this.modal || this.highlightedIndex === -1) return
+
+        const datasetList = this.modal.querySelector('#dataset-list')
+        if (!datasetList) return
+
+        const items = datasetList.querySelectorAll('.dataset-option')
+        const highlightedItem = items[this.highlightedIndex]
+
+        if (highlightedItem) {
+            // Get the dataset code from the element
+            const datasetCode = highlightedItem.dataset.datasetCode
+            if (datasetCode) {
+                // Toggle selection
+                if (this.selectedDatasets.includes(datasetCode)) {
+                    this.removeDataset(datasetCode)
+                } else {
+                    this.addDataset(datasetCode)
+                }
+            }
+        }
+    }
+
     getSelectedDatasets() {
         return this.selectedDatasets
     }

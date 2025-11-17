@@ -186,12 +186,12 @@ if(result.warnings.length>0){message+=`Warnings(${result.warnings.length}):\n`;r
 if(result.errors.length===0&&result.warnings.length===0){message+='Metadata is valid! ✓';}
 alert(message);}
 getMetadataStats(){return{pillars:this.container.querySelectorAll('.pillar-column').length,categories:this.container.querySelectorAll('.category-box').length,indicators:this.container.querySelectorAll('.indicator-card').length,datasets:this.container.querySelectorAll('.dataset-item').length};}
-async loadInitialData(){if(this.hasCachedModifications()){try{const loaded=await this.loadCachedState();if(loaded){this.showCacheRestoredIndicator();this.restoreExpansionState();this.restoreScrollPosition();return;}}catch(error){console.warn('Failed to load cached modifications, falling back to default:',error);}}
+async loadInitialData(){await this.loadAvailableDatasets();if(this.hasCachedModifications()){try{const loaded=await this.loadCachedState();if(loaded){this.showCacheRestoredIndicator();this.restoreExpansionState();this.restoreScrollPosition();return;}}catch(error){console.warn('Failed to load cached modifications, falling back to default:',error);}}
 await this.loadDefaultMetadata();this.restoreExpansionState();this.restoreScrollPosition();}
 showCacheRestoredIndicator(){const indicator=document.createElement('div');indicator.className='cache-restored-indicator';indicator.style.cssText=`position:fixed;top:20px;right:20px;background:var(--green-accent);color:white;padding:10px 15px;border-radius:5px;z-index:1000;animation:slideInRight 0.3s ease-out;`;indicator.textContent='✓ Restored from previous session';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},3000);}
 async discardChanges(){try{this.clearCache();this.showLoadingState('Discarding changes...');this.clearUnsavedState();setTimeout(()=>{this.hideLoadingState();setTimeout(()=>{window.location.reload();},100);},400);}catch(error){this.hideLoadingState();console.error('Error discarding changes:',error);alert('Error discarding changes. Please try again.');}}
 async loadDefaultMetadata(){if(this.isLoading){console.log('Already loading metadata, skipping...');return;}
-try{this.showLoadingState('Loading default SSPI metadata...');const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Auto-loading default SSPI metadata:',response.stats);if(response.all_datasets&&Array.isArray(response.all_datasets)){this.populateDatasetDetails(response.all_datasets);console.log(`Loaded ${response.all_datasets.length}dataset details for selection`);}
+try{this.showLoadingState('Loading default SSPI metadata...');const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Auto-loading default SSPI metadata:',response.stats);if(response.all_datasets&&Array.isArray(response.all_datasets)){const currentCount=Object.keys(this.datasetDetails).length;if(currentCount===0){console.log('Dataset details not yet loaded, using all_datasets from default-structure as fallback');this.populateDatasetDetails(response.all_datasets);console.log(`Loaded ${response.all_datasets.length}dataset details for selection(fallback)`);}else{console.log(`Dataset details already loaded(${currentCount}datasets),skipping redundant load from all_datasets`);}}
 await this.importDataAsync(response.metadata);this.hideLoadingState();this.clearUnsavedState();console.log('Default SSPI metadata loaded successfully');}else{this.handleLoadError('Failed to load default metadata: '+response.error);}}catch(error){console.error('Error auto-loading default metadata:',error);this.handleLoadError('Network error loading default metadata');}}
 populateDatasetDetails(datasets){if(!Array.isArray(datasets)){console.warn('populateDatasetDetails called with non-array:',datasets);return;}
 datasets.forEach(dataset=>{if(dataset.DatasetCode){this.datasetDetails[dataset.DatasetCode]={code:dataset.DatasetCode,name:dataset.DatasetName||dataset.DatasetCode,description:dataset.Description||'',organization:dataset.Source?.OrganizationName||dataset.organization||'Unknown',organizationCode:dataset.Source?.OrganizationCode||dataset.OrganizationCode||'',type:dataset.DatasetType||dataset.dataset_type||'Unknown'};}});console.log(`Populated ${Object.keys(this.datasetDetails).length}dataset details in map`);}
@@ -204,7 +204,8 @@ handleLoadError(errorMessage){this.isLoading=false;const loadingDiv=this.parentE
 const errorDiv=document.createElement('div');errorDiv.classList.add('sspi-error');errorDiv.id='sspi-error-indicator';const errorText=document.createElement('div');errorText.textContent=errorMessage;const retryBtn=document.createElement('button');retryBtn.textContent='Load Default Metadata';retryBtn.addEventListener('click',()=>{errorDiv.remove();this.loadDefaultMetadata();});errorDiv.appendChild(errorText);errorDiv.appendChild(retryBtn);this.parentElement.appendChild(errorDiv);this.container.style.display='';this.setToolbarDisabled(false);console.error('SSPI metadata loading failed:',errorMessage);}
 setToolbarDisabled(disabled){const toolbar=this.parentElement.querySelector('.sspi-toolbar');if(toolbar){const buttons=toolbar.querySelectorAll('button');buttons.forEach(btn=>{btn.disabled=disabled;if(disabled){btn.style.opacity='0.5';btn.style.cursor='not-allowed';}else{btn.style.opacity='';btn.style.cursor='';}});}}
 buildHierarchyTree(metadataItems){const itemsById={};const hierarchy={sspi:null,pillars:{},categories:{},indicators:{}};metadataItems.forEach(item=>{itemsById[item.ItemCode]=item;});metadataItems.forEach(item=>{switch(item.ItemType){case'SSPI':hierarchy.sspi=item;break;case'Pillar':hierarchy.pillars[item.ItemCode]=item;break;case'Category':hierarchy.categories[item.ItemCode]=item;break;case'Indicator':hierarchy.indicators[item.ItemCode]=item;break;}});return{hierarchy,itemsById};}
-async importDataAsync(metadataItems){console.log('Importing',metadataItems.length,'metadata items asynchronously');this.extractDatasetDetailsFromMetadata(metadataItems);this.isImporting=true;this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const{hierarchy,itemsById}=this.buildHierarchyTree(metadataItems);if(!hierarchy.sspi){console.error('No SSPI root item found in metadata');return;}
+async importDataAsync(metadataItems){console.log('Importing',metadataItems.length,'metadata items asynchronously');const currentCount=Object.keys(this.datasetDetails).length;if(currentCount===0){console.log('Dataset details not loaded, extracting from metadata as fallback');this.extractDatasetDetailsFromMetadata(metadataItems);}else{console.log(`Dataset details already loaded(${currentCount}datasets),skipping metadata extraction`);}
+this.isImporting=true;this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const{hierarchy,itemsById}=this.buildHierarchyTree(metadataItems);if(!hierarchy.sspi){console.error('No SSPI root item found in metadata');return;}
 const pillarCodes=hierarchy.sspi.Children||[];for(let i=0;i<pillarCodes.length;i++){const pillarCode=pillarCodes[i];const pillarItem=hierarchy.pillars[pillarCode];if(pillarItem){await this.processPillarFromMetadata(pillarItem,hierarchy);}
 if(i<pillarCodes.length-1){await new Promise(resolve=>setTimeout(resolve,0));}}
 console.log('Async metadata import completed');this.isImporting=false;this.undoRedoManager.clear();console.log('Cleared undo/redo history after initial metadata import');this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();const validation=this.validateHierarchy();if(validation.errors&&validation.errors.length>0){console.error('Hierarchy errors after import:',validation.errors);}
@@ -255,7 +256,7 @@ setupDatasetSelection(indicatorElement){const addDatasetBtn=indicatorElement.que
 async showDatasetSelector(selectedDatasetsDiv){try{const currentDatasets=selectedDatasetsDiv.querySelectorAll('.dataset-item');if(currentDatasets.length>=10){alert('Maximum of 10 datasets allowed per indicator');return;}
 this.showDatasetSelectionModal(selectedDatasetsDiv);}catch(error){console.error('Error showing dataset selector:',error);alert('Error loading datasets. Please try again.');}}
 async showDatasetSelectionModal(selectedDatasetsDiv){const currentSelections=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item')).map(item=>item.dataset.datasetCode);const preloadedDatasets=Object.values(this.datasetDetails).map(d=>({DatasetCode:d.code,DatasetName:d.name,Description:d.description,organization:d.organization,organizationCode:d.organizationCode||'',dataset_type:d.type,TopicCategory:d.category||'General'}));const selector=new DatasetSelector({maxSelections:10,multiSelect:true,enableSearch:true,enableFilters:true,showOrganizations:true,showTypes:true,preloadedDatasets:preloadedDatasets.length>0?preloadedDatasets:null,onSelectionChange:(selectedDatasets)=>{this.updateDatasetSelection(selectedDatasetsDiv,selectedDatasets);}});await selector.show(currentSelections);}
-updateDatasetSelection(selectedDatasetsDiv,selectedDatasets){selectedDatasetsDiv.innerHTML='';selectedDatasets.forEach(dataset=>{const datasetDetail={DatasetCode:dataset.dataset_code,DatasetName:dataset.dataset_name,Description:dataset.description,Source:{OrganizationName:dataset.organization,OrganizationCode:dataset.organizationCode},DatasetType:dataset.dataset_type};this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv,datasetDetail);});}
+updateDatasetSelection(selectedDatasetsDiv,selectedDatasets){selectedDatasetsDiv.innerHTML='';selectedDatasets.forEach(dataset=>{const datasetDetail={DatasetCode:dataset.dataset_code,DatasetName:dataset.dataset_name,Description:dataset.description,Source:{OrganizationName:dataset.organization,OrganizationCode:dataset.organizationCode},DatasetType:dataset.dataset_type};this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv,datasetDetail);});this.flagUnsaved();this.debouncedCacheState();}
 findSelectedDatasetsDiv(modal){const indicators=document.querySelectorAll('.indicator-card');return indicators[indicators.length-1]?.querySelector('.selected-datasets');}
 addDatasetToIndicator(selectedDatasetsDiv,datasetCode){const existing=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(existing){alert('Dataset already added');return;}
 const datasetDetail=this.datasetDetails[datasetCode];const datasetName=datasetDetail?datasetDetail.name:'Unknown Dataset';const datasetTitle=datasetDetail?`${datasetDetail.description}`:datasetCode;const datasetItem=document.createElement('div');datasetItem.classList.add('dataset-item');datasetItem.dataset.datasetCode=datasetCode;datasetItem.title=datasetTitle;datasetItem.innerHTML=`<div class="dataset-info"><span class="dataset-name">${datasetName}</span><span class="dataset-code">${datasetCode}</span></div><div class="dataset-actions"><button class="remove-dataset"type="button"title="Remove dataset">×</button></div>`;datasetItem.querySelector('.remove-dataset').addEventListener('click',()=>{const indicatorCard=selectedDatasetsDiv.closest('.indicator-card');const indicatorName=this.getElementName(indicatorCard);this.undoRedoManager.recordAction({type:'remove-dataset',message:`Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,undo:()=>{selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');},redo:()=>{datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');}});datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');});selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');const indicatorCard=selectedDatasetsDiv.closest('.indicator-card');const indicatorName=this.getElementName(indicatorCard);this.undoRedoManager.recordAction({type:'add-dataset',message:`Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,undo:()=>{datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');},redo:()=>{selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');}});}
@@ -266,8 +267,10 @@ const datasetName=datasetDetail.DatasetName||'Unknown Dataset';const datasetTitl
 showDatasetOptionsMenu(buttonElement,datasetCode){const existingMenu=document.querySelector('.dataset-options-menu');if(existingMenu){existingMenu.remove();}
 const menu=document.createElement('div');menu.className='dataset-options-menu';menu.innerHTML=`<div class="menu-item"data-action="rename"><span>Rename</span></div><div class="menu-item"data-action="duplicate"><span>Duplicate</span></div><div class="menu-item"data-action="info"><span>View Info</span></div>`;const rect=buttonElement.getBoundingClientRect();menu.style.position='fixed';menu.style.top=rect.bottom+5+'px';menu.style.left=rect.left+'px';menu.style.zIndex='1000';document.body.appendChild(menu);menu.addEventListener('click',(e)=>{const action=e.target.closest('.menu-item')?.dataset.action;if(action){this.handleDatasetMenuAction(action,datasetCode);menu.remove();}});const closeMenu=(e)=>{if(!menu.contains(e.target)&&e.target!==buttonElement){menu.remove();document.removeEventListener('click',closeMenu);}};setTimeout(()=>document.addEventListener('click',closeMenu),0);}
 handleDatasetMenuAction(action,datasetCode){switch(action){case'rename':alert('Rename functionality - placeholder');break;case'duplicate':alert('Duplicate functionality - placeholder');break;case'info':alert('Dataset info functionality - placeholder');break;}}
-cacheCurrentState(){try{const cacheData={hasModifications:this.unsavedChanges,lastModified:Date.now(),metadata:this.exportData(),version:this.CACHE_VERSION};const cacheSize=JSON.stringify(cacheData).length;if(cacheSize>5*1024*1024){console.warn('Cache data is too large (>5MB), skipping cache');return;}
-window.observableStorage.setItem("sspi-custom-modifications",cacheData);console.log('SSPI modifications cached successfully');}catch(error){console.warn('Failed to cache SSPI modifications:',error);if(error.name==='QuotaExceededError'||error.name==='NS_ERROR_DOM_QUOTA_REACHED'){this.handleStorageQuotaExceeded();}}}
+enrichMetadataWithDatasetDetails(metadata){const enriched=JSON.parse(JSON.stringify(metadata));enriched.forEach(item=>{if(item.ItemType==='Indicator'&&item.DatasetCodes){item.DatasetDetails=item.DatasetCodes.map(code=>{const details=this.datasetDetails[code];if(details){return{DatasetCode:code,DatasetName:details.name,Description:details.description,Source:{OrganizationName:details.organization,OrganizationCode:details.organizationCode||''},DatasetType:details.type};}
+console.warn(`Dataset details not found for code:${code},using minimal fallback`);return{DatasetCode:code,DatasetName:code,Description:'',Source:{OrganizationName:'',OrganizationCode:''},DatasetType:''};});}});return enriched;}
+cacheCurrentState(){try{const metadata=this.exportData();const enrichedMetadata=this.enrichMetadataWithDatasetDetails(metadata);const cacheData={hasModifications:this.unsavedChanges,lastModified:Date.now(),metadata:enrichedMetadata,version:this.CACHE_VERSION};const cacheSize=JSON.stringify(cacheData).length;if(cacheSize>5*1024*1024){console.warn('Cache data is too large (>5MB), skipping cache');return;}
+window.observableStorage.setItem("sspi-custom-modifications",cacheData);console.log('SSPI modifications cached successfully with dataset details');}catch(error){console.warn('Failed to cache SSPI modifications:',error);if(error.name==='QuotaExceededError'||error.name==='NS_ERROR_DOM_QUOTA_REACHED'){this.handleStorageQuotaExceeded();}}}
 handleStorageQuotaExceeded(){console.warn('localStorage quota exceeded, attempting to free space');try{const allKeys=[];for(let i=0;i<localStorage.length;i++){allKeys.push(localStorage.key(i));}
 allKeys.forEach(key=>{if(key&&key.startsWith('sspi-')&&key!=='sspi-custom-modifications'){try{localStorage.removeItem(key);console.log('Removed old cache entry:',key);}catch(e){}}});const indicator=document.createElement('div');indicator.style.cssText=`position:fixed;top:20px;right:20px;background:#ff9500;color:white;padding:10px 15px;border-radius:5px;z-index:1000;max-width:300px;animation:slideInRight 0.3s ease-out;`;indicator.textContent='⚠ Storage limit reached. Changes may not be cached across sessions.';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},5000);}catch(e){console.error('Error handling storage quota exceeded:',e);}}
 async loadCachedState(){try{const cacheData=window.observableStorage.getItem("sspi-custom-modifications");if(!cacheData||!this.isValidCacheData(cacheData)){return false;}
@@ -284,6 +287,14 @@ if(cacheData.version!==this.CACHE_VERSION){console.warn(`Cache version mismatch:
 const maxAge=30*24*60*60*1000;const age=Date.now()-cacheData.lastModified;if(age>maxAge){console.warn('Cache data is too old (>7 days), discarding');return false;}
 if(cacheData.metadata.length>0){const firstItem=cacheData.metadata[0];if(!firstItem||typeof firstItem!=='object'||!firstItem.ItemType){console.warn('Invalid cache data: metadata items have invalid structure');return false;}}
 return true;}
+async loadAvailableDatasets(){const cached=this.getCachedAvailableDatasets();if(cached){this.populateDatasetDetails(cached);console.log(`Loaded ${cached.length}available datasets from cache`);return;}
+try{const response=await this.fetch('/api/v1/customize/datasets?limit=0');if(response.success&&response.datasets){this.populateDatasetDetails(response.datasets);this.cacheAvailableDatasets(response.datasets);console.log(`Loaded ${response.datasets.length}available datasets from backend`);}else{console.warn('Failed to load available datasets from backend');}}catch(error){console.error('Error loading available datasets:',error);}}
+cacheAvailableDatasets(datasets){try{const cacheData={datasets:datasets,cachedAt:Date.now(),version:this.CACHE_VERSION};window.observableStorage.setItem('sspi-available-datasets',cacheData);console.log('Cached available datasets');}catch(error){console.warn('Failed to cache available datasets:',error);}}
+getCachedAvailableDatasets(){try{const cacheData=window.observableStorage.getItem('sspi-available-datasets');if(!cacheData||typeof cacheData!=='object'){return null;}
+if(!Array.isArray(cacheData.datasets)||typeof cacheData.cachedAt!=='number'){console.warn('Invalid available datasets cache structure');return null;}
+if(cacheData.version!==this.CACHE_VERSION){console.warn('Available datasets cache version mismatch');return null;}
+const maxAge=24*60*60*1000;const age=Date.now()-cacheData.cachedAt;if(age>maxAge){console.log('Available datasets cache is stale (>24 hours), will refresh');return null;}
+return cacheData.datasets;}catch(error){console.warn('Error reading available datasets cache:',error);return null;}}
 debouncedCacheState(){if(this.cacheTimeout){clearTimeout(this.cacheTimeout);}
 this.cacheTimeout=setTimeout(()=>{this.cacheCurrentState();},500);}
 setupCacheSync(){window.observableStorage.onChange("sspi-custom-modifications",async(oldValue,newValue)=>{console.log('Cache change detected from another tab');if(!this.unsavedChanges){if(newValue&&this.isValidCacheData(newValue)&&newValue.hasModifications){console.log('Syncing modifications from another tab');await this.importDataAsync(newValue.metadata);this.setUnsavedState(newValue.hasModifications);this.showSyncIndicator();}else if(!newValue){console.log('Cache cleared in another tab, reloading default');await this.loadDefaultMetadata();}}});}
@@ -754,7 +765,8 @@ this.datasets=[]
 this.filteredDatasets=[]
 this.selectedDatasets=[]
 this.currentFilters={search:'',organization:''}
-this.modal=null}
+this.modal=null
+this.highlightedIndex=-1}
 async initialize(){if(this.options.preloadedDatasets&&Array.isArray(this.options.preloadedDatasets)){console.log('Using preloaded datasets:',this.options.preloadedDatasets.length);this.datasets=this.normalizeDatasets(this.options.preloadedDatasets);}else{await this.loadDatasets();}
 this.applyFilters();}
 normalizeDatasets(datasets){return datasets.map(d=>({dataset_code:d.DatasetCode||d.dataset_code,dataset_name:d.DatasetName||d.dataset_name,description:d.Description||d.description||'',organization:d.Source?.OrganizationName||d.organization||'Unknown',organizationCode:d.Source?.OrganizationCode||d.OrganizationCode||d.organizationCode||'',dataset_type:d.DatasetType||d.dataset_type||'Unknown',topic_category:d.TopicCategory||d.topic_category||'General'}));}
@@ -769,7 +781,9 @@ if(!this.modal){console.error('Failed to create modal')
 return}
 this.renderModal()
 this.bindEvents()
-document.body.appendChild(this.modal)}catch(error){console.error('Error showing dataset selector:',error)}}
+document.body.appendChild(this.modal)
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#dataset-search')
+if(searchInput){setTimeout(()=>searchInput.focus(),100)}}}catch(error){console.error('Error showing dataset selector:',error)}}
 createModal(){this.modal=document.createElement('div')
 this.modal.className='dataset-modal-overlay'
 const modalContent=document.createElement('div')
@@ -782,6 +796,7 @@ modalContent.innerHTML='<div class="dataset-modal-header">'+
 '</div>'+
 '</div>'+
 (this.options.enableSearch?this.createSearchHTML():'')+
+this.createSelectedDatasetsHTML()+
 (this.options.enableFilters?this.createFiltersHTML():'')+
 '<div class="dataset-list-container">'+
 '<div id="dataset-list" class="dataset-list enhanced">'+
@@ -803,22 +818,43 @@ const organizations=Array.from(orgMap.entries()).sort((a,b)=>a[0].localeCompare(
 const orgOptions=organizations.map(([orgName,orgCode])=>{const displayText=orgCode?orgName+' ('+orgCode+')':orgName
 return'<option value="'+orgName+'">'+displayText+'</option>'}).join('')
 return'<div class="dataset-filters-container">'+
-'<div class="filter-group">'+
-'<label for="org-filter">Organization:</label>'+
+'<label for="org-filter" class="visually-hidden">Organization:</label>'+
 '<select id="org-filter" class="filter-select">'+
 '<option value="">All Organizations</option>'+
 orgOptions+
 '</select>'+
-'</div>'+
-'<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>'+
+'</div>';}
+createSelectedDatasetsHTML(){return'<div class="selected-datasets-container" id="selected-datasets-container">'+
+'<div class="selected-datasets-list" id="selected-datasets-list"></div>'+
 '</div>';}
 renderModal(){this.applyFilters()
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
 applyFilters(){this.filteredDatasets=this.datasets.filter(dataset=>{const matchesSearch=!this.currentFilters.search||dataset.dataset_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||dataset.dataset_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(dataset.description&&dataset.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
 const matchesOrg=!this.currentFilters.organization||dataset.organization===this.currentFilters.organization
 return matchesSearch&&matchesOrg})
 this.updateResultsCount()}
+renderSelectedDatasets(){if(!this.modal)return
+const container=this.modal.querySelector('#selected-datasets-list')
+if(!container)return
+container.innerHTML=''
+if(this.selectedDatasets.length===0){return}
+const bubbles=this.selectedDatasets.map(datasetCode=>{const dataset=this.datasets.find(d=>d.dataset_code===datasetCode)
+if(!dataset)return''
+return'<div class="selected-dataset-bubble" data-dataset-code="'+datasetCode+'">'+
+'<span class="bubble-text">'+datasetCode+'</span>'+
+'<button class="bubble-remove-btn" data-dataset-code="'+datasetCode+'" title="Remove '+datasetCode+'">'+
+'&times;'+
+'</button>'+
+'</div>'}).filter(html=>html!=='').join('')
+container.innerHTML=bubbles
+this.bindSelectedDatasetEvents()}
+bindSelectedDatasetEvents(){if(!this.modal)return
+const removeButtons=this.modal.querySelectorAll('.bubble-remove-btn')
+removeButtons.forEach(button=>{button.addEventListener('click',(e)=>{e.stopPropagation()
+const datasetCode=button.dataset.datasetCode
+this.removeDataset(datasetCode)})})}
 renderDatasetList(){if(!this.modal){console.error('Modal not found in renderDatasetList')
 return}
 const datasetList=this.modal.querySelector('#dataset-list')
@@ -835,7 +871,6 @@ if(isDisabled)cssClasses+=' disabled'
 let badges=''
 if(this.options.showOrganizations){const orgDisplay=dataset.organizationCode||dataset.organization
 badges+='<span class="dataset-organization-badge '+dataset.organization.toLowerCase().replace(/\s+/g,'-')+'">'+orgDisplay+'</span>'}
-if(this.options.showTypes){badges+='<span class="dataset-type-badge '+dataset.dataset_type.toLowerCase()+'">'+dataset.dataset_type+'</span>'}
 let actions=''
 if(isSelected){actions='<button class="dataset-remove-btn">Remove</button>'}else{actions='<button class="dataset-add-btn"'+(isDisabled?' disabled':'')+'>Add Dataset</button>'}
 if(isDisabled&&!isSelected){actions+='<div class="dataset-limit-note">Selection limit reached</div>'}
@@ -844,7 +879,6 @@ const organization=dataset.organization_name||dataset.organization||''
 htmlParts.push('<div class="'+cssClasses+' compact" data-dataset-code="'+dataset.dataset_code+'">'+
 '<div class="dataset-compact-header">'+
 '<div class="dataset-compact-code">'+dataset.dataset_code+'</div>'+
-'<div class="dataset-compact-badges">'+badges+'</div>'+
 '</div>'+
 '<div class="dataset-compact-name">'+dataset.dataset_name+'</div>'+
 '<div class="dataset-compact-description">'+description+'</div>'+
@@ -855,14 +889,24 @@ bindEvents(){if(!this.modal){console.error('Modal not found in bindEvents')
 return}
 if(this.options.enableSearch){const searchInput=this.modal.querySelector('#dataset-search')
 if(searchInput){searchInput.addEventListener('input',(e)=>{this.currentFilters.search=e.target.value
+this.highlightedIndex=-1
 this.applyFilters()
-this.renderDatasetList()})}}
+this.renderDatasetList()})
+searchInput.addEventListener('keydown',(e)=>{if(e.key==='Escape'){e.preventDefault()
+e.stopPropagation()
+e.stopImmediatePropagation()
+this.close()
+return}
+this.handleKeyboardNavigation(e)
+const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){e.stopPropagation()}})}}
+this.keyboardHandler=(e)=>{const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){this.handleKeyboardNavigation(e)}}
+document.addEventListener('keydown',this.keyboardHandler)
 if(this.options.enableFilters){const orgFilter=this.modal.querySelector('#org-filter')
-const clearButton=this.modal.querySelector('#clear-filters')
 if(orgFilter){orgFilter.addEventListener('change',(e)=>{this.currentFilters.organization=e.target.value
 this.applyFilters()
-this.renderDatasetList()})}
-if(clearButton){clearButton.addEventListener('click',()=>{this.clearFilters()})}}
+this.renderDatasetList()})}}
 const cancelButton=this.modal.querySelector('#modal-cancel')
 const confirmButton=this.modal.querySelector('#modal-confirm')
 const clearButton=this.modal.querySelector('#modal-clear')
@@ -870,7 +914,8 @@ if(cancelButton){cancelButton.addEventListener('click',()=>{this.close()})}
 if(confirmButton){confirmButton.addEventListener('click',()=>{this.confirm()})}
 if(clearButton){clearButton.addEventListener('click',()=>{this.clearAll()})}
 this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})
-this.escapeHandler=(e)=>{if(e.key==='Escape'||e.keyCode===27){this.close()}}
+this.escapeHandler=(e)=>{if((e.key==='Escape'||e.keyCode===27)&&this.modal){e.preventDefault()
+this.close()}}
 document.addEventListener('keydown',this.escapeHandler)}
 bindDatasetEvents(){if(!this.modal)return
 this.modal.querySelectorAll('.dataset-option').forEach(option=>{const datasetCode=option.dataset.datasetCode
@@ -883,14 +928,17 @@ addDataset(datasetCode){if(this.selectedDatasets.length>=this.options.maxSelecti
 if(this.selectedDatasets.includes(datasetCode))return
 this.selectedDatasets.push(datasetCode)
 if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedDatasetObjects())}
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
 removeDataset(datasetCode){this.selectedDatasets=this.selectedDatasets.filter(code=>code!==datasetCode)
 if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedDatasetObjects())}
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
 getSelectedDatasetObjects(){return this.selectedDatasets.map(code=>{return this.datasets.find(d=>d.dataset_code===code)}).filter(d=>d)}
 clearAll(){this.selectedDatasets=[]
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
 clearFilters(){this.currentFilters={search:'',organization:''}
@@ -906,14 +954,75 @@ const counter=this.modal.querySelector('.selected-count')
 if(counter)counter.textContent=this.selectedDatasets.length}
 updateResultsCount(){if(!this.modal)return
 const resultsCount=this.modal.querySelector('.search-results-count')
-if(resultsCount){resultsCount.textContent=this.filteredDatasets.length+' dataset'+(this.filteredDatasets.length!==1?'s':'')+' found'}}
+if(resultsCount){resultsCount.textContent=this.filteredDatasets.length+'/'+this.datasets.length}}
 confirm(){if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedDatasetObjects())}
 this.close()}
 close(){if(this.escapeHandler){document.removeEventListener('keydown',this.escapeHandler)
 this.escapeHandler=null}
+if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHandler)
+this.keyboardHandler=null}
 if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
 this.modal=null}
 hide(){this.close()}
+handleKeyboardNavigation(e){if(!this.modal)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+if(items.length===0)return
+switch(e.key){case'ArrowDown':e.preventDefault()
+if(this.highlightedIndex<items.length-1){this.highlightedIndex++
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'ArrowUp':e.preventDefault()
+if(this.highlightedIndex>-1){this.highlightedIndex--
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'Home':e.preventDefault()
+this.highlightedIndex=0
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'End':e.preventDefault()
+this.highlightedIndex=items.length-1
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageUp':e.preventDefault()
+this.highlightedIndex=Math.max(0,this.highlightedIndex-10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageDown':e.preventDefault()
+this.highlightedIndex=Math.min(items.length-1,this.highlightedIndex+10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'Enter':case' ':if(this.highlightedIndex>=0){e.preventDefault()
+this.toggleHighlightedDataset()}
+break}
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#dataset-search')
+if(searchInput&&document.activeElement!==searchInput){searchInput.focus()}}}
+highlightSelectedIndex(){if(!this.modal)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+if(this.highlightedIndex>items.length-1){this.highlightedIndex=items.length-1}
+items.forEach((item,index)=>{if(index===this.highlightedIndex){item.classList.add('keyboard-highlighted')}else{item.classList.remove('keyboard-highlighted')}})}
+scrollHighlightedIntoView(){if(!this.modal||this.highlightedIndex===-1)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){highlightedItem.scrollIntoView({block:'nearest',behavior:'smooth'})}}
+toggleHighlightedDataset(){if(!this.modal||this.highlightedIndex===-1)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){const datasetCode=highlightedItem.dataset.datasetCode
+if(datasetCode){if(this.selectedDatasets.includes(datasetCode)){this.removeDataset(datasetCode)}else{this.addDataset(datasetCode)}}}}
 getSelectedDatasets(){return this.selectedDatasets}}
 class IndicatorSelector{constructor(options={}){this.options={maxSelections:1,multiSelect:false,showCategories:true,showPillars:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/indicators',...options}
 this.indicators=[]
@@ -1648,6 +1757,7 @@ this.chart.data=data
 this.chart.data.labels=data.labels
 console.log("Data Labels:",this.chart.data.labels)
 this.chart.data.datasets=data.data
+this.title.innerText=data.title
 this.chart.options.plugins.title=data.title
 this.groupOptions=data.groupOptions
 this.missingCountries=[]
