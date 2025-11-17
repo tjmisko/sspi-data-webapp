@@ -1,9 +1,0 @@
-#!/bin/bash
-source env/bin/activate
-cp /home/tjmisko/wsgi.py /var/www/sspi.world
-echo "Starting Application to Build Assets"
-flask run &
-sleep 5
-pkill flask
-rm /var/www/sspi.world/wsgi.py
-sudo systemctl restart apache2
