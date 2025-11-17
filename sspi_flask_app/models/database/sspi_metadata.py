@@ -971,6 +971,7 @@ class SSPIMetadata(MongoWrapper):
                 contained_indicators = [i for i in c["IndicatorCodes"] if i in indicator_filter]
                 if len(contained_indicators) > 0:
                     c["IndicatorCodes"] = contained_indicators
+                    c["Children"] = contained_indicators
                     categories_filtered.append(c)
             pillars_filtered = []
             for p in pillars:
@@ -978,9 +979,11 @@ class SSPIMetadata(MongoWrapper):
                 contained_categories = [c for c in p["CategoryCodes"] if c in implied_category_filter]
                 if len(contained_categories) > 0:
                     p["CategoryCodes"] = contained_categories
+                    p["Children"] = contained_categories 
                     pillars_filtered.append(p)
             implied_pillar_filter = [p["PillarCode"] for p in pillars_filtered]
             sspi["PillarCodes"] = implied_pillar_filter
+            sspi["Children"] = implied_pillar_filter
             return [ sspi ] + pillars_filtered + categories_filtered + indicators_filtered
         return [ sspi ] + pillars + categories + indicators
 
