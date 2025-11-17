@@ -285,17 +285,26 @@ class CustomizableSSPIStructure {
         importBtn.addEventListener('click', async () => {
             try {
                 this.showLoadingState('Loading default SSPI metadata...');
-                
-                // Clear cache when explicitly loading default metadata
+
+                // Clear ALL caches when explicitly loading default metadata
                 this.clearCache();
-                
+
+                // Reload available datasets from server (fresh, no cache)
+                await this.loadAvailableDatasets();
+
                 const response = await this.fetch('/api/v1/customize/default-structure');
                 if (response.success) {
                     console.log('Loading default SSPI metadata with', response.stats);
-                    
+
+                    // Populate dataset details from all_datasets field if available
+                    if (response.all_datasets && Array.isArray(response.all_datasets)) {
+                        this.populateDatasetDetails(response.all_datasets);
+                        console.log(`Populated ${response.all_datasets.length} dataset details from default-structure`);
+                    }
+
                     // Use async import for better performance with large metadata
                     await this.importDataAsync(response.metadata);
-                    
+
                     this.hideLoadingState();
                     this.flagUnsaved();
                 } else {
@@ -863,7 +872,7 @@ class CustomizableSSPIStructure {
     </div>
     <div class="category-content">
         <div class="indicators-container drop-zone" data-accept="indicator" role="group"></div>
-        <button class="add-indicator" aria-label="Add Indicator">+ Add Indicator</button>
+        <button class="add-indicator" aria-label="Add Indicator">+\u0020Add\u0020Indicator</button>
     </div>
 </div>
 `;
@@ -898,7 +907,7 @@ class CustomizableSSPIStructure {
     <div class="dataset-selection">
         <label>Datasets</label>
         <div class="selected-datasets"></div>
-        <button class="add-dataset-btn" type="button">+ Add Dataset</button>
+        <button class="add-dataset-btn" type="button">+\u0020Add\u0020Dataset</button>
     </div>
     <div class="score-function">
         <label>Score Function</label>
@@ -1063,7 +1072,24 @@ class CustomizableSSPIStructure {
 
         if (isDataset) {
             // Special menu for datasets
+            const isExpanded = target.dataset.expanded === 'true';
+            const toggleText = isExpanded ? 'Hide Details' : 'Show Details';
+
             menuItems = [
+                { name: toggleText, handler: () => {
+                    // Toggle expansion state
+                    const newState = target.dataset.expanded !== 'true';
+                    target.dataset.expanded = newState.toString();
+
+                    const slideout = target.querySelector('.dataset-details-slideout');
+                    if (slideout) {
+                        if (newState) {
+                            slideout.style.maxHeight = slideout.scrollHeight + 'px';
+                        } else {
+                            slideout.style.maxHeight = '0';
+                        }
+                    }
+                }},
                 { name: 'Preview', handler: () => this.showDatasetPreviewModal(target) },
                 { name: 'Delete', handler: () => {
                     if (confirm('Remove this dataset from the indicator?')) {
@@ -3550,22 +3576,62 @@ class CustomizableSSPIStructure {
         const datasetName = datasetDetail ? datasetDetail.name : 'Unknown Dataset';
         const datasetTitle = datasetDetail ? `${datasetDetail.description}` : datasetCode;
 
+        // Debug: Log dataset details
+        if (!datasetDetail) {
+            console.warn(`No dataset details found for ${datasetCode}. Available datasets:`, Object.keys(this.datasetDetails).length);
+        }
+
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
-        datasetItem.title = datasetTitle;
 
+        const datasetDescription = datasetDetail?.description || 'No description available';
+        const datasetOrg = datasetDetail?.organization || 'N/A';
+        const datasetOrgCode = datasetDetail?.organizationCode || '';
+        const datasetType = datasetDetail?.type || 'N/A';
+
+        datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
-            <div class="dataset-info">
-                <span class="dataset-name">${datasetName}</span>
-                <span class="dataset-code">${datasetCode}</span>
+            <div class="dataset-item-header">
+                <div class="dataset-info">
+                    <span class="dataset-name">${datasetName}</span>
+                    <span class="dataset-code">${datasetCode}</span>
+                </div>
+                <div class="dataset-actions">
+                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+                </div>
             </div>
-            <div class="dataset-actions">
-                <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+            <div class="dataset-details-slideout">
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span class="detail-value">${datasetDescription}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Organization:</span>
+                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type:</span>
+                    <span class="detail-value">${datasetType}</span>
+                </div>
             </div>
         `;
 
-        datasetItem.querySelector('.remove-dataset').addEventListener('click', () => {
+        // Add click handler to entire dataset-item for expand/collapse
+        datasetItem.addEventListener('click', (e) => {
+            const isExpanded = datasetItem.dataset.expanded === 'true';
+            datasetItem.dataset.expanded = (!isExpanded).toString();
+
+            const slideout = datasetItem.querySelector('.dataset-details-slideout');
+            if (!isExpanded) {
+                slideout.style.maxHeight = slideout.scrollHeight + 'px';
+            } else {
+                slideout.style.maxHeight = '0';
+            }
+        });
+
+        datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent toggle when clicking remove button
             // Record removal action for undo/redo
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
@@ -3629,19 +3695,54 @@ class CustomizableSSPIStructure {
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
-        datasetItem.title = datasetTitle;
 
+        const datasetDescription = datasetDetail?.description || 'No description available';
+        const datasetOrg = datasetDetail?.organization || 'N/A';
+        const datasetOrgCode = datasetDetail?.organizationCode || '';
+        const datasetType = datasetDetail?.type || 'N/A';
+
+        datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
-            <div class="dataset-info">
-                <span class="dataset-name">${datasetName}</span>
-                <span class="dataset-code">${datasetCode}</span>
+            <div class="dataset-item-header">
+                <div class="dataset-info">
+                    <span class="dataset-name">${datasetName}</span>
+                    <span class="dataset-code">${datasetCode}</span>
+                </div>
+                <div class="dataset-actions">
+                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+                </div>
             </div>
-            <div class="dataset-actions">
-                <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+            <div class="dataset-details-slideout">
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span class="detail-value">${datasetDescription}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Organization:</span>
+                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type:</span>
+                    <span class="detail-value">${datasetType}</span>
+                </div>
             </div>
         `;
 
-        datasetItem.querySelector('.remove-dataset').addEventListener('click', () => {
+        // Add click handler to entire dataset-item for expand/collapse
+        datasetItem.addEventListener('click', (e) => {
+            const isExpanded = datasetItem.dataset.expanded === 'true';
+            datasetItem.dataset.expanded = (!isExpanded).toString();
+
+            const slideout = datasetItem.querySelector('.dataset-details-slideout');
+            if (!isExpanded) {
+                slideout.style.maxHeight = slideout.scrollHeight + 'px';
+            } else {
+                slideout.style.maxHeight = '0';
+            }
+        });
+
+        datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent toggle when clicking remove button
             // Record removal action for undo/redo
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
@@ -3712,19 +3813,54 @@ class CustomizableSSPIStructure {
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
-        datasetItem.title = datasetTitle;
 
+        const datasetDescription = datasetDetail?.description || 'No description available';
+        const datasetOrg = datasetDetail?.organization || 'N/A';
+        const datasetOrgCode = datasetDetail?.organizationCode || '';
+        const datasetType = datasetDetail?.type || 'N/A';
+
+        datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
-            <div class="dataset-info">
-                <span class="dataset-name">${datasetName}</span>
-                <span class="dataset-code">${datasetCode}</span>
+            <div class="dataset-item-header">
+                <div class="dataset-info">
+                    <span class="dataset-name">${datasetName}</span>
+                    <span class="dataset-code">${datasetCode}</span>
+                </div>
+                <div class="dataset-actions">
+                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+                </div>
             </div>
-            <div class="dataset-actions">
-                <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+            <div class="dataset-details-slideout">
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span class="detail-value">${datasetDescription}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Organization:</span>
+                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type:</span>
+                    <span class="detail-value">${datasetType}</span>
+                </div>
             </div>
         `;
 
-        datasetItem.querySelector('.remove-dataset').addEventListener('click', () => {
+        // Add click handler to entire dataset-item for expand/collapse
+        datasetItem.addEventListener('click', (e) => {
+            const isExpanded = datasetItem.dataset.expanded === 'true';
+            datasetItem.dataset.expanded = (!isExpanded).toString();
+
+            const slideout = datasetItem.querySelector('.dataset-details-slideout');
+            if (!isExpanded) {
+                slideout.style.maxHeight = slideout.scrollHeight + 'px';
+            } else {
+                slideout.style.maxHeight = '0';
+            }
+        });
+
+        datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent toggle when clicking remove button
             // Record removal action for undo/redo (user action)
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
@@ -3980,9 +4116,10 @@ class CustomizableSSPIStructure {
     clearCache() {
         try {
             window.observableStorage.removeItem("sspi-custom-modifications");
-            console.log('SSPI modifications cache cleared');
+            window.observableStorage.removeItem("sspi-available-datasets");
+            console.log('SSPI modifications and dataset cache cleared');
         } catch (error) {
-            console.warn('Failed to clear SSPI modifications cache:', error);
+            console.warn('Failed to clear SSPI cache:', error);
         }
     }
     
