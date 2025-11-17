@@ -21,24 +21,21 @@ def reload(remote: bool):
     click.echo(result.text)
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Delete Request Failed with Status Code {
-                result.status_code}"
+            f"Error! Delete Request Failed with Status Code {result.status_code}"
         )
     url = "/api/v1/load/sspi_metadata"
     result = connector.call(url, method="GET", remote=remote)
     click.echo(result.text)
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Load Request Failed with Status Code {
-                result.status_code}"
+            f"Error! Load Request Failed with Status Code {result.status_code}"
         )
 
 
 @metadata.command(help="Get Pillar Metadata from the SSPI Database")
 @click.argument("pillar_code", type=str, required=False)
 def pillar(pillar_code):
-    """Get SSPI Pillar Metadata
-    """
+    """Get SSPI Pillar Metadata"""
     connector = SSPIDatabaseConnector()
     pillar_code = pillar_code.upper() if pillar_code else None
     if not pillar_code:
@@ -51,16 +48,14 @@ def pillar(pillar_code):
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Pillar Query Failed with Status Code {
-                result.status_code}"
+            f"Error! Pillar Query Failed with Status Code {result.status_code}"
         )
 
 
 @metadata.command(help="Get Category Metadata from the SSPI Database")
 @click.argument("category_code", type=str, required=False)
 def category(category_code):
-    """Get SSPI Category Metadata
-    """
+    """Get SSPI Category Metadata"""
     connector = SSPIDatabaseConnector()
     category_code = category_code.upper() if category_code else None
     if not category_code:
@@ -75,14 +70,12 @@ def category(category_code):
         raise click.ClickException(
             f"Error! Category Query Failed with Status Code {result.status_code}"
         )
-    
 
 
 @metadata.command(help="Get SSPI Indicator Metadata")
 @click.argument("indicator_code", type=str, required=False)
 def indicator(indicator_code):
-    """Get SSPI Indicator Metadata
-    """
+    """Get SSPI Indicator Metadata"""
     connector = SSPIDatabaseConnector()
     indicator_code = indicator_code.upper() if indicator_code else None
     if not indicator_code:
@@ -104,8 +97,7 @@ def indicator(indicator_code):
 @metadata.command(help="Get SSPI Dataset Metadata")
 @click.argument("dataset_code", type=str, required=False)
 def dataset(dataset_code):
-    """Get SSPI Dataset Metadata
-    """
+    """Get SSPI Dataset Metadata"""
     connector = SSPIDatabaseConnector()
     dataset_code = dataset_code.upper() if dataset_code else None
     if not dataset_code:
@@ -118,8 +110,7 @@ def dataset(dataset_code):
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Dataset Query Failed with Status Code {
-                result.status_code}"
+            f"Error! Dataset Query Failed with Status Code {result.status_code}"
         )
         echo_pretty(result.header)
         echo_pretty(result.text)
@@ -128,8 +119,7 @@ def dataset(dataset_code):
 @metadata.command(help="Get SSPI Item Metadata")
 @click.argument("item_code", type=str, required=False)
 def item(item_code):
-    """Get SSPI Item Metadata
-    """
+    """Get SSPI Item Metadata"""
     connector = SSPIDatabaseConnector()
     item_code = item_code.upper() if item_code else None
     if not item_code:
@@ -142,8 +132,7 @@ def item(item_code):
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Item Query Failed with Status Code {
-                result.status_code}"
+            f"Error! Item Query Failed with Status Code {result.status_code}"
         )
         echo_pretty(result.header)
         echo_pretty(result.text)
@@ -156,7 +145,9 @@ def country():
 
 @country.command(help="Get SSPI Country Group Names and Members")
 @click.argument("group_code", type=str, required=False)
-@click.option("--remote", "-r", is_flag=True, help="Send the request to the remote server")
+@click.option(
+    "--remote", "-r", is_flag=True, help="Send the request to the remote server"
+)
 def group(group_code=None, remote=False):
     connector = SSPIDatabaseConnector()
     group_code = group_code.upper() if group_code else None
@@ -170,8 +161,7 @@ def group(group_code=None, remote=False):
     click.echo(json.dumps(result.json()))
     if result.status_code != 200:
         raise click.ClickException(
-            f"Error! Country Group Query Failed with Status Code {
-                result.status_code}"
+            f"Error! Country Group Query Failed with Status Code {result.status_code}"
         )
         echo_pretty(result.header)
         echo_pretty(result.text)
