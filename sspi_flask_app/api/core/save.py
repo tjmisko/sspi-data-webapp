@@ -9,6 +9,7 @@ from sspi_flask_app.models.database import sspidb, sspi_raw_api_data
 import logging
 
 log = logging.getLogger(__name__)
+from sspi_flask_app.auth.decorators import admin_required
 
 save_bp = Blueprint(
     "save_bp",
@@ -19,7 +20,7 @@ save_bp = Blueprint(
 
 
 @save_bp.route("/save/<database_name>", methods=["GET"])
-@login_required
+@admin_required
 def save_database(database_name):
     """
     Creates a local snapshot of a SSPI database
@@ -33,7 +34,7 @@ def save_database(database_name):
 
 
 @save_bp.route("/save", methods=["GET"])
-@login_required
+@admin_required
 def save_all():
     """
     Creates a local snapshot of all SSPI databases

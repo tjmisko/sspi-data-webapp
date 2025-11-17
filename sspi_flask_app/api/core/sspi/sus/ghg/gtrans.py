@@ -6,8 +6,9 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_metadata,
-    sspi_imputed_data
-)
+    sspi_imputed_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
@@ -19,7 +20,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/GTRANS", methods=["POST"])
-@login_required
+@admin_required
 def compute_gtrans():
     app.logger.info("Running /api/v1/compute/GTRANS")
     sspi_indicator_data.delete_many({"IndicatorCode": "GTRANS"})
@@ -39,7 +40,7 @@ def compute_gtrans():
     return parse_json(clean_list)
 
 @impute_bp.route("/GTRANS", methods=["POST"])
-@login_required
+@admin_required
 def impute_gtrans():
     mongo_query = {"IndicatorCode": "GTRANS", "Year": {"$gte": 2000, "$lte": 2023}}
     sspi_imputed_data.delete_many(mongo_query)

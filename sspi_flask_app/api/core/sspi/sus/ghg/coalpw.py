@@ -6,8 +6,9 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
@@ -22,7 +23,7 @@ import json
 
 
 @compute_bp.route("/COALPW", methods=["POST"])
-@login_required
+@admin_required
 def compute_coalpw():
     lg, ug = sspi_metadata.get_goalposts("COALPW")
     def score_coalpw(IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL):
@@ -45,7 +46,7 @@ def compute_coalpw():
 
 
 @impute_bp.route("/COALPW", methods=["POST"])
-@login_required
+@admin_required
 def impute_coalpw():
     mongo_query = {"IndicatorCode": "COALPW"}
     sspi_imputed_data.delete_many(mongo_query)

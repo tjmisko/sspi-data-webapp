@@ -13,8 +13,9 @@ client_bp = Blueprint(
     'client_bp', __name__,
     template_folder='templates',
     static_folder='static',
-    static_url_path='/client/static'
-)
+    static_url_path='/client/static')
+
+from sspi_flask_app.auth.decorators import admin_required
 
 ###########################
 # SSPI DYNAMIC DATA PAGES #
@@ -340,7 +341,7 @@ def outcome():
 
 
 @client_bp.route('/2018/resources')
-@login_required
+@admin_required
 def paper_resources():
     return render_template("/static/2018-paper-resources.html")
 

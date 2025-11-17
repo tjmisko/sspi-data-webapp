@@ -7,8 +7,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -18,7 +19,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/YRSEDU", methods=['POST'])
-@login_required
+@admin_required
 def compute_yrsedu():
     app.logger.info("Running /api/v1/compute/YRSEDU")
     sspi_indicator_data.delete_many({"IndicatorCode": "YRSEDU"})
@@ -34,7 +35,7 @@ def compute_yrsedu():
 
 
 @impute_bp.route("/YRSEDU", methods=["POST"])
-@login_required
+@admin_required
 def impute_yrsedu():
     sspi_imputed_data.delete_many({"IndicatorCode": "YRSEDU"})
     clean_data = sspi_clean_api_data.find({"DatasetCode": "UIS_YRSEDU"})

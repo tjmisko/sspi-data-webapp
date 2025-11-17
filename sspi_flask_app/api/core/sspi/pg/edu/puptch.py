@@ -7,8 +7,9 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost,
     extrapolate_forward,
     extrapolate_backward,
-    interpolate_linear
-)
+    interpolate_linear)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -18,7 +19,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/PUPTCH", methods=['POST'])
-@login_required
+@admin_required
 def compute_puptch():
     app.logger.info("Running /api/v1/compute/PUPTCH")
     sspi_indicator_data.delete_many({"IndicatorCode": "PUPTCH"})
@@ -33,7 +34,7 @@ def compute_puptch():
     return parse_json(scored_list)
 
 @impute_bp.route("/PUPTCH", methods=['POST'])
-@login_required
+@admin_required
 def impute_puptch():
     sspi_imputed_data.delete_many({"IndicatorCode": "PUPTCH"})
     puptch_clean = sspi_clean_api_data.find({"DatasetCode": "WB_PUPTCH"})

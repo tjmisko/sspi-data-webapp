@@ -8,8 +8,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    impute_reference_class_average
-)
+    impute_reference_class_average)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
@@ -20,7 +21,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/ARMEXP", methods=['POST'])
-@login_required
+@admin_required
 def compute_armexp():
     app.logger.info("Running /api/v1/compute/ARMEXP")
     sspi_indicator_data.delete_many({"IndicatorCode": "ARMEXP"})
@@ -36,7 +37,7 @@ def compute_armexp():
 
 
 @impute_bp.route("/ARMEXP", methods=['POST'])
-@login_required
+@admin_required
 def impute_armexp():
     app.logger.info("Running /api/v1/impute/ARMEXP")
     sspi_imputed_data.delete_many({"IndicatorCode": "ARMEXP"})

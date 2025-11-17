@@ -14,12 +14,13 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     extrapolate_backward,
     interpolate_linear,
-    impute_reference_class_average
-)
+    impute_reference_class_average)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/ENRSEC", methods=['POST'])
-@login_required
+@admin_required
 def compute_enrsec():
     app.logger.info("Running /api/v1/compute/ENRSEC")
     sspi_indicator_data.delete_many({"IndicatorCode": "ENRSEC"})
@@ -35,7 +36,7 @@ def compute_enrsec():
 
 
 @impute_bp.route("/ENRSEC", methods=['POST'])
-@login_required
+@admin_required
 def impute_enrsec():
     app.logger.info("Running /api/v1/impute/ENRSEC")
     sspi_imputed_data.delete_many({"IndicatorCode": "ENRSEC"})

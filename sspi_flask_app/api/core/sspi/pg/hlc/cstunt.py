@@ -14,12 +14,13 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    regression_imputation
-)
+    regression_imputation)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/CSTUNT", methods=['POST'])
-@login_required
+@admin_required
 def compute_cstunt():
     """
     UNSDG Reports Two Different Kinds of Series:
@@ -44,7 +45,7 @@ def compute_cstunt():
 
 
 @impute_bp.route("/CSTUNT", methods=['POST'])
-@login_required
+@admin_required
 def impute_cstunt():
     sspi_imputed_data.delete_many({"IndicatorCode": "CSTUNT"})
     clean_cstunt = sspi_indicator_data.find({"IndicatorCode": "CSTUNT"})

@@ -10,8 +10,9 @@ from sspi_flask_app.api.resources.utilities import (
     interpolate_linear,
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -21,7 +22,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/ENRPRI", methods=['POST'])
-@login_required
+@admin_required
 def compute_enrpri():
     app.logger.info("Running /api/v1/compute/ENRPRI")
     sspi_indicator_data.delete_many({"IndicatorCode": "ENRPRI"})
@@ -37,7 +38,7 @@ def compute_enrpri():
 
 
 @impute_bp.route("/ENRPRI", methods=['POST'])
-@login_required
+@admin_required
 def impute_enrpri():
     app.logger.info("Running /api/v1/impute/ENRPRI")
     sspi_imputed_data.delete_many({"IndicatorCode": "ENRPRI"})

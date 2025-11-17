@@ -10,8 +10,9 @@ from sspi_flask_app.api.resources.utilities import (
     impute_reference_class_average,
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -21,7 +22,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/TAXREV", methods=["POST"])
-@login_required
+@admin_required
 def compute_taxrev():
     app.logger.info("Running /api/v1/compute/TAXREV")
     sspi_indicator_data.delete_many({"IndicatorCode": "TAXREV"})
@@ -38,7 +39,7 @@ def compute_taxrev():
 
 
 @impute_bp.route("/TAXREV", methods=['POST'])
-@login_required
+@admin_required
 def impute_taxrev():
     app.logger.info("Running /api/v1/impute/TAXREV")
     sspi_imputed_data.delete_many({"IndicatorCode": "TAXREV"})

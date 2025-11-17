@@ -10,6 +10,7 @@ from sspi_flask_app.models.database import (
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
 )
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
@@ -24,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 @compute_bp.route("/BIODIV", methods=["POST"])
-@login_required
+@admin_required
 def compute_biodiv():
     def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
         frshwt = goalpost(UNSDG_FRSHWT, 0, 100)
@@ -49,7 +50,7 @@ def compute_biodiv():
 
 
 @impute_bp.route("/BIODIV", methods=["POST"])
-@login_required
+@admin_required
 def impute_biodiv():
     def score_biodiv(UNSDG_MARINE, UNSDG_TERRST, UNSDG_FRSHWT):
         return (UNSDG_MARINE + UNSDG_TERRST + UNSDG_FRSHWT) / 3 / 100

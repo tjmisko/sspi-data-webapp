@@ -5,8 +5,9 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
     sspi_imputed_data,
-    sspi_incomplete_indicator_data
-)
+    sspi_incomplete_indicator_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -20,7 +21,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/RDFUND", methods=['POST'])
-@login_required
+@admin_required
 def compute_rdfund():
     def score_rdfund(UNSDG_RDPGDP, UNSDG_NRSRCH):
         unsdg_edurdp_score = goalpost(UNSDG_RDPGDP, 0, 4)
@@ -40,7 +41,7 @@ def compute_rdfund():
     return parse_json(clean_list)
 
 @impute_bp.route("/RDFUND", methods=['POST'])
-@login_required
+@admin_required
 def impute_rdfund():
     def score_rdfund(UNSDG_RDPGDP, UNSDG_NRSRCH):
         unsdg_edurdp_score = goalpost(UNSDG_RDPGDP, 0, 4)
@@ -115,7 +116,7 @@ def impute_rdfund():
 
 
 # @compute_bp.route("/RDFUND", methods=['GET'])
-# @login_required
+# @admin_required
 # def compute_rdfund():
 #     """
 #     metadata_map = {

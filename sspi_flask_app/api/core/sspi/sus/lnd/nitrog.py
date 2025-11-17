@@ -5,8 +5,9 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -19,7 +20,7 @@ import json
 
 
 @compute_bp.route("/NITROG", methods=['POST'])
-@login_required
+@admin_required
 def compute_nitrog():
     sspi_indicator_data.delete_many({"IndicatorCode": "NITROG"})
     obs_list = sspi_clean_api_data.find({"DatasetCode": "EPI_NITROG"})

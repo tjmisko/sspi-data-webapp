@@ -6,8 +6,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
@@ -17,7 +18,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/NRGINT", methods=['POST'])
-@login_required
+@admin_required
 def compute_nrgint():
     app.logger.info("Running /api/v1/compute/NRGINT")
     sspi_indicator_data.delete_many({"IndicatorCode": "NRGINT"})
@@ -34,7 +35,7 @@ def compute_nrgint():
 
 
 @impute_bp.route("/NRGINT", methods=["POST"])
-@login_required
+@admin_required
 def impute_nrgint():
     sspi_imputed_data.delete_many({"IndicatorCode": "NRGINT"})
     clean_data = sspi_indicator_data.find({"IndicatorCode": "NRGINT"})

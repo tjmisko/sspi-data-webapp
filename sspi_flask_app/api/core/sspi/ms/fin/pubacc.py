@@ -4,8 +4,9 @@ from flask import current_app as app
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -14,7 +15,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 # @collect_bp.route("/PUBACC", methods=['POST'])
-# @login_required
+# @admin_required
 # def pubacc():
 #     def collect_iterator(**kwargs):
 #         yield from collect_wb_data("FX.OWN.TOTL.ZS", "PUBACC", **kwargs)
@@ -22,7 +23,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/PUBACC", methods=['POST'])
-@login_required
+@admin_required
 def compute_pubacc():
     app.logger.info("Running /api/v1/compute/PUBACC")
     sspi_indicator_data.delete_many({"IndicatorCode": "PUBACC"})

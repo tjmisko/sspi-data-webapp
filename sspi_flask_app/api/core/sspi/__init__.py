@@ -2,6 +2,7 @@ import time
 from flask import Blueprint, current_app, Response, session
 from flask_login import login_required, current_user, login_user
 from sspi_flask_app.models.database import sspi_metadata
+from sspi_flask_app.auth.decorators import admin_required
 
 compute_bp = Blueprint(
     "compute_bp",
@@ -60,7 +61,7 @@ def _call_internal(fn, path, make_ctx, user_obj, user_id):
     """
     Safely call another Flask route function:
       - use a fresh request context via the bound make_ctx
-      - rehydrate authentication for @login_required routes
+      - rehydrate authentication for @admin_required routes
     """
     with make_ctx(path, method="POST"):
         # Prefer logging in the captured user object; fall back to seeding session.
@@ -96,7 +97,7 @@ def call_impute(indicator_code, make_ctx, user_obj, user_id):
 # ============================================================
 
 @compute_bp.route("/<series_code>", methods=["POST"])
-@login_required
+@admin_required
 def compute_series(series_code):
     # Build registries while request/app context is alive.
     _build_registries_via(current_app)
@@ -124,7 +125,7 @@ def compute_series(series_code):
 
 
 @impute_bp.route("/<series_code>", methods=["POST"])
-@login_required
+@admin_required
 def impute_all(series_code):
     print("Registry State Initialized?", _REGISTRY_INITIALIZED)
     _build_registries_via(current_app)

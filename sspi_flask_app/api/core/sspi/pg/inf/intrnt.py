@@ -8,12 +8,13 @@ from sspi_flask_app.models.database import (
 from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
-    score_indicator,
-)
+    score_indicator)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 # @collect_bp.route("/INTRNT", methods=['POST'])
-# @login_required
+# @admin_required
 # def intrnt():
 #     def collect_iterator(**kwargs):
 #         yield from collect_wb_data("IT.NET.USER.ZS", "INTRNT", IntermediateCode="AVINTR", **kwargs)
@@ -22,7 +23,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/INTRNT", methods=['POST'])
-@login_required
+@admin_required
 def compute_intrnt():
     app.logger.info("Running /api/v1/compute/INTRNT")
     sspi_indicator_data.delete_many({"IndicatorCode": "INTRNT"})

@@ -19,8 +19,9 @@ delete_bp = Blueprint(
     "delete_bp", __name__,
     template_folder="templates",
     static_folder="static",
-    url_prefix="/delete"
-)
+    url_prefix="/delete")
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 def sort_db(choice):
@@ -68,7 +69,7 @@ class ClearDatabaseForm(FlaskForm):
 
 
 @delete_bp.route('/')
-@login_required
+@admin_required
 def get_delete_page():
     delete_indicator_form = DeleteIndicatorForm(request.form)
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
@@ -78,7 +79,7 @@ def get_delete_page():
 
 
 @delete_bp.route("/indicator", methods=["POST"])
-@login_required
+@admin_required
 def delete_indicator_data():
     delete_indicator_form = DeleteIndicatorForm(request.form)
     if delete_indicator_form.validate_on_submit():
@@ -93,7 +94,7 @@ def delete_indicator_data():
 
 
 @delete_bp.route("/duplicates", methods=["POST"])
-@login_required
+@admin_required
 def delete_duplicates():
     remove_duplicates_form = RemoveDuplicatesForm(request.form)
     database = lookup_database(request.form.get("database"))
@@ -109,7 +110,7 @@ def delete_duplicates():
 
 
 @delete_bp.route("/loose", methods=["POST"])
-@login_required
+@admin_required
 def remove_loose_data():
     remove_loose_data_form = RemoveLooseDataForm(request.form)
     database = lookup_database(request.form.get("database"))
@@ -123,7 +124,7 @@ def remove_loose_data():
 
 
 @delete_bp.route("/clear", methods=["POST"])
-@login_required
+@admin_required
 def clear_db():
     clear_database_form = ClearDatabaseForm(request.form)
     if clear_database_form.validate_on_submit():
@@ -139,7 +140,7 @@ def clear_db():
 
 
 @delete_bp.route("/series/<database_name>/<series_code>", methods=["DELETE"])
-@login_required
+@admin_required
 def delete_series(database_name, series_code):
     database = lookup_database(database_name)
     dataset_codes = sspi_metadata.get_dataset_dependencies(series_code)
@@ -168,7 +169,7 @@ def delete_series(database_name, series_code):
 
 
 @delete_bp.route("/indicator/<database_name>/<IndicatorCode>", methods=["DELETE"])
-@login_required
+@admin_required
 def delete_database_indicator(database_name, IndicatorCode):
     database = lookup_database(database_name)
     count = database.delete_many({"IndicatorCode": IndicatorCode})
@@ -181,7 +182,7 @@ def delete_database_indicator(database_name, IndicatorCode):
 
 
 @delete_bp.route("/clear/<database_name>", methods=["DELETE"])
-@login_required
+@admin_required
 def delete_clear_database(database_name):
     database = lookup_database(database_name)
     # Dump a temporary copy to the system's temporary directory
@@ -199,7 +200,7 @@ def delete_clear_database(database_name):
     return msg
 
 @delete_bp.route("/loose/<database_name>", methods=["DELETE"])
-@login_required
+@admin_required
 def delete_loose_data(database_name):
     database = lookup_database(database_name)
     if database.name == "sspi_raw_api_data":
@@ -221,7 +222,7 @@ def delete_loose_data(database_name):
     return msg
 
 @delete_bp.route("/raw/<raw_delete_code>", methods=["DELETE"])
-@login_required
+@admin_required
 def delete_raw_data(raw_delete_code):
     if ":" in raw_delete_code:
         split_list = raw_delete_code.split(":")

@@ -2,8 +2,9 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from flask import current_app as app, Response
 from flask_login import login_required, current_user
 from sspi_flask_app.api.datasource.oecdstat import (
-    collect_oecd_sdmx_data_foraid
-)
+    collect_oecd_sdmx_data_foraid)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.datasource.worldbank import (
     collect_wb_data,
     clean_wb_data,
@@ -23,7 +24,7 @@ from sspi_flask_app.models.database import (
 
 
 # @collect_bp.route("/FORAID", methods=["POST"])
-# @login_required
+# @admin_required
 # def foraid():
 #     def collect_iterator(**kwargs):
 #         metadata_url = "https://sdmx.oecd.org/public/rest/dataflow/OECD.DCD.FSD/DSD_DAC2@DF_DAC2A/?references=all"
@@ -47,7 +48,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/FORAID", methods=["POST"])
-@login_required
+@admin_required
 def compute_foraid():
     app.logger.info("Running /api/v1/compute/FORAID")
     sspi_clean_api_data.delete_many({"IndicatorCode": "FORAID"})

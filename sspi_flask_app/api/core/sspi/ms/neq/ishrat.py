@@ -6,12 +6,13 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_incomplete_indicator_data
-)
+    sspi_incomplete_indicator_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/ISHRAT", methods=["POST"])
-@login_required
+@admin_required
 def compute_ishrat():
     app.logger.info("Running /api/v1/compute/ISHRAT")
     sspi_indicator_data.delete_many({"IndicatorCode": "ISHRAT"})

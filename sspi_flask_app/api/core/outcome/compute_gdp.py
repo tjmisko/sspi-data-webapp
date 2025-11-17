@@ -1,15 +1,16 @@
 from flask_login import login_required
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.models.database import (
-    sspi_raw_outcome_data,
-)
+    sspi_raw_outcome_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
 )
 
 
 # @compute_bp.route("/outcome/GDPMER", methods=['POST'])
-# @login_required
+# @admin_required
 # def compute_gdpmer():
 #     app.logger.info("Running /api/v1/compute/outcome/GDPMER")
 #     sspi_clean_outcome_data.delete_many({"IndicatorCode": "GDPMER"})
@@ -34,7 +35,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 # @compute_bp.route("/outcome/GDPPPP", methods=['POST'])
-# @login_required
+# @admin_required
 # def compute_gdpppp():
 #     app.logger.info("Running /api/v1/compute/INTRNT")
 #     sspi_clean_api_data.delete_many({"IndicatorCode": "INTRNT"})

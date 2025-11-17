@@ -6,8 +6,9 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
-    sspi_imputed_data
-)
+    sspi_imputed_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -22,7 +23,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/WATMAN", methods=['POST'])
-@login_required
+@admin_required
 def compute_watman():
     def score_watman(UNSDG_CWUEFF, UNSDG_WTSTRS) -> float:
         """
@@ -47,7 +48,7 @@ def compute_watman():
     return parse_json(clean_list)
 
 @impute_bp.route("/WATMAN", methods=["POST"])
-@login_required
+@admin_required
 def impute_watman():
     def score_watman(UNSDG_CWUEFF, UNSDG_WTSTRS) -> float:
         """

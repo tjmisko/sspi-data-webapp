@@ -6,8 +6,9 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
@@ -19,7 +20,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 # @collect_bp.route("/BEEFMK", methods=["POST"])
-# @login_required
+# @admin_required
 # def beefmk():
 #     def collect_iterator(**kwargs):
 #         # yield from collect_unfao_data("2312%2C2313", "1806%2C1746", "QCL", "BEEFMK", **kwargs)
@@ -34,7 +35,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/BEEFMK", methods=["POST"])
-@login_required
+@admin_required
 def compute_beefmk():
     app.logger.info("Running /api/v1/compute/BEEFMK")
     sspi_indicator_data.delete_many({"IndicatorCode": "BEEFMK"})
@@ -69,7 +70,7 @@ def compute_beefmk():
 
 
 @impute_bp.route("/BEEFMK", methods=["POST"])
-@login_required
+@admin_required
 def impute_beefmk():
     mongo_query = {"IndicatorCode": "BEEFMK"}
     sspi_imputed_data.delete_many(mongo_query)

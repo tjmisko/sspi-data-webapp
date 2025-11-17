@@ -14,12 +14,13 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     extrapolate_backward,
     interpolate_linear,
-    impute_reference_class_average
-)
+    impute_reference_class_average)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/ATBRTH", methods=["POST"])
-@login_required
+@admin_required
 def compute_atbrth():
     app.logger.info("Running /api/v1/compute/ATBRTH")
     sspi_indicator_data.delete_many({"IndicatorCode": "ATBRTH"})
@@ -35,7 +36,7 @@ def compute_atbrth():
 
 
 @impute_bp.route("/ATBRTH", methods=["POST"])
-@login_required
+@admin_required
 def impute_atbrth():
     sspi_imputed_data.delete_many({"IndicatorCode": "ATBRTH"})
     atbrth_clean = sspi_clean_api_data.find({"DatasetCode": "WHO_ATBRTH"})

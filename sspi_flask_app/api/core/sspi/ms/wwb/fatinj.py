@@ -4,8 +4,9 @@ from flask_login import login_required, current_user
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -14,7 +15,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 # @collect_bp.route("/FATINJ")
-# @login_required
+# @admin_required
 # def fatinj():
 #     def collect_iterator(**kwargs):
 #         yield from collect_ilo_data("DF_SDG_F881_SEX_MIG_RT", "FATINJ", **kwargs)
@@ -24,7 +25,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/FATINJ", methods=["POST"])
-@login_required
+@admin_required
 def compute_fatinj():
     app.logger.info("Running /api/v1/compute/FATINJ")
     sspi_indicator_data.delete_many({"IndicatorCode": "FATINJ"})

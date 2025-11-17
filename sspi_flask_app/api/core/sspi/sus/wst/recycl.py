@@ -5,8 +5,9 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
     sspi_imputed_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -18,7 +19,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/RECYCL", methods=["POST"])
-@login_required
+@admin_required
 def compute_recycl():
     app.logger.info("Running /api/v1/compute/RECYCL")
     sspi_indicator_data.delete_many({"IndicatorCode": "RECYCL"})
@@ -37,7 +38,7 @@ def compute_recycl():
 
 
 @impute_bp.route("/RECYCL", methods=["POST"])
-@login_required
+@admin_required
 def impute_recycl():
     mongo_query = {"IndicatorCode": "RECYCL"}
     sspi_imputed_data.delete_many(mongo_query)

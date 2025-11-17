@@ -11,12 +11,13 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
     goalpost,
-    extrapolate_forward
-)
+    extrapolate_forward)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 # @collect_bp.route("/EDEMOC", methods=['POST'])
-# @login_required
+# @admin_required
 # def edemoc():
 #     def collect_iterator(**kwargs):
 #         yield from collectVDEMData("v2x_polyarchy", "EDEMOC", **kwargs)
@@ -24,7 +25,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/EDEMOC", methods=['POST'])
-@login_required
+@admin_required
 def compute_edemoc():
     app.logger.info("Running /api/v1/compute/EDEMOC")
     sspi_indicator_data.delete_many({"IndicatorCode": "EDEMOC"})

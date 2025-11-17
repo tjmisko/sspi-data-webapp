@@ -6,8 +6,9 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     goalpost,
@@ -20,7 +21,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/DEFRST", methods=['POST'])
-@login_required
+@admin_required
 def compute_defrst():
     lg, ug = sspi_metadata.get_goalposts("DEFRST")
     def score_defrst(UNFAO_FRSTLV, UNFAO_FRSTAV) -> float: 
@@ -56,7 +57,7 @@ def compute_defrst():
 
 
 @impute_bp.route("/DEFRST", methods=["POST"])
-@login_required
+@admin_required
 def impute_defrst():
     mongo_query = {"IndicatorCode": "DEFRST"}
     sspi_imputed_data.delete_many(mongo_query)
