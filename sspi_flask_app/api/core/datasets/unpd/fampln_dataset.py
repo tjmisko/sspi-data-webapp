@@ -24,3 +24,4 @@ def clean_fampln():
     sspi_clean_api_data.insert_many(intermediate_document_list)
     sspi_metadata.record_dataset_range(intermediate_document_list, "UNPD_FAMPLN")
     return parse_json(intermediate_document_list)
+    
