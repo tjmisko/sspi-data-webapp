@@ -12,10 +12,13 @@ Indicator: Internet Access and Quality
 IndicatorCode: INTRNT
 DatasetCodes:
   - UNSDG_AVINTR
-  - CABLE_CABLE_QUINTR
+  - CABLE_QUINTR
 LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
-  Score = (WB_INTRNT + UNSDG_INTRNT) / 2
+    Score = average(
+        goalpost(UNSDG_INTRNT, 0, 100),
+        goalpost(WB_INTRNT, 0, 100)
+    )
 ---
 

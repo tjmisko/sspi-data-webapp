@@ -175,21 +175,13 @@ def get_default_structure():
 
         all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
 
-        # Enrich indicators with full dataset details
-        for item in metadata_items:
-            if item.get("ItemType") == "Indicator" and "DatasetCodes" in item:
-                dataset_codes = item.get("DatasetCodes", [])
-                # Build DatasetDetails array with full dataset objects
-                item["DatasetDetails"] = [
-                    all_datasets.get(code, {"DatasetCode": code, "DatasetName": code})
-                    for code in dataset_codes
-                ]
-
+        # No longer enriching indicators with DatasetDetails - frontend will lookup from map
         logger.info(f"Loaded default SSPI structure with {len(metadata_items)} items and {len(all_datasets_list)} datasets")
         return jsonify({
             "success": True,
             "metadata": metadata_items,
-            "all_datasets": all_datasets_list
+            "datasetDetailsMap": all_datasets,  # Map of DatasetCode -> full dataset object
+            "all_datasets": all_datasets_list  # Keep for backwards compatibility
         })
     except Exception as e:
         logger.error(f"Error loading default structure: {str(e)}")
@@ -598,7 +590,21 @@ def export_configuration(config_id):
 
 
 @customize_bp.route("/score/<config_id>", methods=["GET"])
-def score_custom_configuration():
-    scores_data = []
-    return parse_json(scores_data)
+@owner_or_admin_required
+def score_custom_configuration(config_id):
+    user_id = request.user_id
+    custom_configuration = sspi_custom_user_structure.find_one({
+        "ConfigurationID": config_id,
+        "User": user_id
+    })
+    if not custom_configuration:
+        return jsonify({"error": f"Missing Configuration Id {config_id} for user {user_id}"}), 400
+    change_list = custom_configuration["changeLog"]
+    score_function_only_changes = [
+        c for c in change_list if "scoreFunctionChange" in c["changeType"] and "datasetChange" not in c["changeType"]
+    ]
+    score_function_changes = [
+        c for c in change_list if "scoreFunctionChange" in c["changeType"]
+    ]
+    return parse_json([])
 

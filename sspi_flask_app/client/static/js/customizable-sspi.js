@@ -103,7 +103,7 @@ class CustomizableSSPIStructure {
         this.loadingDelay = loadingDelay;
 
         // Cache version - increment when data structure changes
-        this.CACHE_VERSION = '2.1.0'; // v2.1: All dataset details included in initial load, no separate API call needed
+        this.CACHE_VERSION = '2.2.0'; // v2.2: Dataset details stored in separate map, not embedded in indicators
         this.unsavedChanges = false;
         this.isImporting = false; // Flag to suppress validation during bulk import
         this.draggedEl = null;
@@ -296,10 +296,17 @@ class CustomizableSSPIStructure {
                 if (response.success) {
                     console.log('Loading default SSPI metadata with', response.stats);
 
-                    // Populate dataset details from all_datasets field if available
-                    if (response.all_datasets && Array.isArray(response.all_datasets)) {
-                        this.populateDatasetDetails(response.all_datasets);
-                        console.log(`Populated ${response.all_datasets.length} dataset details from default-structure`);
+                    // Use datasetDetailsMap directly from backend (no transformation!)
+                    if (response.datasetDetailsMap) {
+                        this.datasetDetails = response.datasetDetailsMap;
+                        console.log(`Loaded ${Object.keys(this.datasetDetails).length} dataset details from map`);
+                    } else if (response.all_datasets && Array.isArray(response.all_datasets)) {
+                        // Fallback for backwards compatibility
+                        this.datasetDetails = {};
+                        response.all_datasets.forEach(ds => {
+                            this.datasetDetails[ds.DatasetCode] = ds;
+                        });
+                        console.log(`Populated ${response.all_datasets.length} dataset details from array`);
                     }
 
                     // Use async import for better performance with large metadata
@@ -2589,12 +2596,14 @@ class CustomizableSSPIStructure {
                 // (datasetDetails should already be populated from separate cache/API call)
                 if (response.all_datasets && Array.isArray(response.all_datasets)) {
                     const currentCount = Object.keys(this.datasetDetails).length;
-                    if (currentCount === 0) {
-                        console.log('Dataset details not yet loaded, using all_datasets from default-structure as fallback');
-                        this.populateDatasetDetails(response.all_datasets);
+                    if (currentCount === 0 && response.all_datasets) {
+                        console.log('Dataset details not yet loaded, building map from all_datasets as fallback');
+                        response.all_datasets.forEach(ds => {
+                            this.datasetDetails[ds.DatasetCode] = ds;
+                        });
                         console.log(`Loaded ${response.all_datasets.length} dataset details for selection (fallback)`);
                     } else {
-                        console.log(`Dataset details already loaded (${currentCount} datasets), skipping redundant load from all_datasets`);
+                        console.log(`Dataset details already loaded (${currentCount} datasets)`);
                     }
                 }
 
@@ -2613,61 +2622,6 @@ class CustomizableSSPIStructure {
         } catch (error) {
             console.error('Error auto-loading default metadata:', error);
             this.handleLoadError('Network error loading default metadata');
-        }
-    }
-
-    populateDatasetDetails(datasets) {
-        // Store datasets in a map for quick lookup by code
-        // This is used by addDatasetToIndicator() for dynamic dataset additions
-        if (!Array.isArray(datasets)) {
-            console.warn('populateDatasetDetails called with non-array:', datasets);
-            return;
-        }
-
-        datasets.forEach(dataset => {
-            if (dataset.DatasetCode) {
-                this.datasetDetails[dataset.DatasetCode] = {
-                    code: dataset.DatasetCode,
-                    name: dataset.DatasetName || dataset.DatasetCode,
-                    description: dataset.Description || '',
-                    organization: dataset.Source?.OrganizationName || dataset.organization || 'Unknown',
-                    organizationCode: dataset.Source?.OrganizationCode || dataset.OrganizationCode || '',
-                    type: dataset.DatasetType || dataset.dataset_type || 'Unknown'
-                };
-            }
-        });
-
-        console.log(`Populated ${Object.keys(this.datasetDetails).length} dataset details in map`);
-    }
-
-    extractDatasetDetailsFromMetadata(metadataItems) {
-        // Extract dataset details from DatasetDetails fields in indicators
-        // This serves as a fallback to populate datasetDetails map
-        if (!Array.isArray(metadataItems)) {
-            return;
-        }
-
-        let extractedCount = 0;
-        metadataItems.forEach(item => {
-            if (item.ItemType === 'Indicator' && item.DatasetDetails && Array.isArray(item.DatasetDetails)) {
-                item.DatasetDetails.forEach(dataset => {
-                    if (dataset.DatasetCode && !this.datasetDetails[dataset.DatasetCode]) {
-                        this.datasetDetails[dataset.DatasetCode] = {
-                            code: dataset.DatasetCode,
-                            name: dataset.DatasetName || dataset.DatasetCode,
-                            description: dataset.Description || '',
-                            organization: dataset.Source?.OrganizationName || dataset.organization || 'Unknown',
-                            organizationCode: dataset.Source?.OrganizationCode || dataset.OrganizationCode || '',
-                            type: dataset.DatasetType || dataset.dataset_type || 'Unknown'
-                        };
-                        extractedCount++;
-                    }
-                });
-            }
-        });
-
-        if (extractedCount > 0) {
-            console.log(`Extracted ${extractedCount} dataset details from metadata`);
         }
     }
 
@@ -2795,16 +2749,7 @@ class CustomizableSSPIStructure {
     // Optimized async import method for metadata
     async importDataAsync(metadataItems) {
         console.log('Importing', metadataItems.length, 'metadata items asynchronously');
-
-        // Extract dataset details from metadata ONLY as fallback if not already loaded
-        // (Available datasets should be loaded separately via loadAvailableDatasets)
-        const currentCount = Object.keys(this.datasetDetails).length;
-        if (currentCount === 0) {
-            console.log('Dataset details not loaded, extracting from metadata as fallback');
-            this.extractDatasetDetailsFromMetadata(metadataItems);
-        } else {
-            console.log(`Dataset details already loaded (${currentCount} datasets), skipping metadata extraction`);
-        }
+        console.log(`Using ${Object.keys(this.datasetDetails).length} dataset details from map`);
 
         // Set importing flag to suppress validation warnings during bulk import
         this.isImporting = true;
@@ -2939,30 +2884,33 @@ class CustomizableSSPIStructure {
                             }
                         }
 
-                        // Add datasets if present - use silent method to avoid undo/redo tracking
-                        const datasetDetails = indicatorItem.DatasetDetails || [];
+                        // Add datasets if present - lookup from DatasetCodes using the map
+                        const datasetCodes = indicatorItem.DatasetCodes || [];
                         if (!this.isImporting) {
-                            console.log(`Processing ${indicatorItem.ItemCode}: ${datasetDetails.length} datasets`);
+                            console.log(`Processing ${indicatorItem.ItemCode}: ${datasetCodes.length} dataset codes`);
                         }
 
-                        if (datasetDetails.length > 0) {
+                        if (datasetCodes.length > 0) {
                             const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
 
                             if (!selectedDatasetsDiv) {
                                 console.error(`No .selected-datasets div found for indicator ${indicatorItem.ItemCode}`);
                             } else {
                                 if (!this.isImporting) {
-                                    console.log(`Found .selected-datasets div for ${indicatorItem.ItemCode}, adding ${datasetDetails.length} datasets`);
+                                    console.log(`Found .selected-datasets div for ${indicatorItem.ItemCode}, adding ${datasetCodes.length} datasets`);
                                 }
 
-                                datasetDetails.forEach((datasetDetail, idx) => {
-                                    if (!datasetDetail || !datasetDetail.DatasetCode) {
-                                        console.error(`Invalid dataset detail at index ${idx}:`, datasetDetail);
+                                datasetCodes.forEach((datasetCode, idx) => {
+                                    // Lookup dataset details from map
+                                    const datasetDetail = this.datasetDetails[datasetCode];
+
+                                    if (!datasetDetail) {
+                                        console.warn(`Dataset ${datasetCode} not found in datasetDetails map for indicator ${indicatorItem.ItemCode}`);
                                         return;
                                     }
 
                                     if (!this.isImporting) {
-                                        console.log(`Adding dataset ${datasetDetail.DatasetCode} to ${indicatorItem.ItemCode}`);
+                                        console.log(`Adding dataset ${datasetCode} to ${indicatorItem.ItemCode}`);
                                     }
                                     this.addDatasetToIndicatorSilent(
                                         selectedDatasetsDiv,
@@ -3696,10 +3644,23 @@ class CustomizableSSPIStructure {
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
 
-        const datasetDescription = datasetDetail?.description || 'No description available';
-        const datasetOrg = datasetDetail?.organization || 'N/A';
-        const datasetOrgCode = datasetDetail?.organizationCode || '';
-        const datasetType = datasetDetail?.type || 'N/A';
+        // Use exact backend field names
+        const datasetDescription = datasetDetail.Description || 'No description available';
+        const datasetOrg = datasetDetail.Source?.OrganizationName || 'N/A';
+        const datasetOrgCode = datasetDetail.Source?.OrganizationCode || '';
+        const formatNumber = (num) => {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+        const unitHtml = datasetDetail.Unit ? `
+                <div class="detail-row">
+                    <span class="detail-label">Unit</span>
+                    <span class="detail-value">${datasetDetail.Unit}</span>
+                </div>` : '';
+        const rangeHtml = datasetDetail.Range ? `
+                <div class="detail-row">
+                    <span class="detail-label">Range</span>
+                    <span class="detail-value">${formatNumber(datasetDetail.Range.yMin)} – ${formatNumber(datasetDetail.Range.yMax)}</span>
+                </div>` : '';
 
         datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
@@ -3714,17 +3675,13 @@ class CustomizableSSPIStructure {
             </div>
             <div class="dataset-details-slideout">
                 <div class="detail-row">
-                    <span class="detail-label">Description:</span>
+                    <span class="detail-label">Description</span>
                     <span class="detail-value">${datasetDescription}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Organization:</span>
+                    <span class="detail-label">Organization</span>
                     <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Type:</span>
-                    <span class="detail-value">${datasetType}</span>
-                </div>
+                </div>${unitHtml}${rangeHtml}
             </div>
         `;
 
@@ -3814,10 +3771,23 @@ class CustomizableSSPIStructure {
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
 
-        const datasetDescription = datasetDetail?.description || 'No description available';
-        const datasetOrg = datasetDetail?.organization || 'N/A';
-        const datasetOrgCode = datasetDetail?.organizationCode || '';
-        const datasetType = datasetDetail?.type || 'N/A';
+        // Use exact backend field names
+        const datasetDescription = datasetDetail.Description || 'No description available';
+        const datasetOrg = datasetDetail.Source?.OrganizationName || 'N/A';
+        const datasetOrgCode = datasetDetail.Source?.OrganizationCode || '';
+        const formatNumber = (num) => {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+        const unitHtml = datasetDetail.Unit ? `
+                <div class="detail-row">
+                    <span class="detail-label">Unit</span>
+                    <span class="detail-value">${datasetDetail.Unit}</span>
+                </div>` : '';
+        const rangeHtml = datasetDetail.Range ? `
+                <div class="detail-row">
+                    <span class="detail-label">Range</span>
+                    <span class="detail-value">${formatNumber(datasetDetail.Range.yMin)} – ${formatNumber(datasetDetail.Range.yMax)}</span>
+                </div>` : '';
 
         datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
@@ -3832,17 +3802,13 @@ class CustomizableSSPIStructure {
             </div>
             <div class="dataset-details-slideout">
                 <div class="detail-row">
-                    <span class="detail-label">Description:</span>
+                    <span class="detail-label">Description</span>
                     <span class="detail-value">${datasetDescription}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Organization:</span>
+                    <span class="detail-label">Organization</span>
                     <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Type:</span>
-                    <span class="detail-value">${datasetType}</span>
-                </div>
+                </div>${unitHtml}${rangeHtml}
             </div>
         `;
 
@@ -3966,56 +3932,15 @@ class CustomizableSSPIStructure {
      * @param {Array} metadata - SSPI metadata items with DatasetCodes arrays
      * @returns {Array} - Enriched metadata with DatasetDetails arrays
      */
-    enrichMetadataWithDatasetDetails(metadata) {
-        // Clone metadata to avoid mutating the original
-        const enriched = JSON.parse(JSON.stringify(metadata));
-
-        // Enrich each indicator with DatasetDetails
-        enriched.forEach(item => {
-            if (item.ItemType === 'Indicator' && item.DatasetCodes) {
-                item.DatasetDetails = item.DatasetCodes.map(code => {
-                    const details = this.datasetDetails[code];
-                    if (details) {
-                        // Return full dataset object matching API format
-                        return {
-                            DatasetCode: code,
-                            DatasetName: details.name,
-                            Description: details.description,
-                            Source: {
-                                OrganizationName: details.organization,
-                                OrganizationCode: details.organizationCode || ''
-                            },
-                            DatasetType: details.type
-                        };
-                    }
-                    // Fallback if details not found in datasetDetails map
-                    console.warn(`Dataset details not found for code: ${code}, using minimal fallback`);
-                    return {
-                        DatasetCode: code,
-                        DatasetName: code,
-                        Description: '',
-                        Source: {
-                            OrganizationName: '',
-                            OrganizationCode: ''
-                        },
-                        DatasetType: ''
-                    };
-                });
-            }
-        });
-
-        return enriched;
-    }
-
     cacheCurrentState() {
         try {
             const metadata = this.exportData();
-            const enrichedMetadata = this.enrichMetadataWithDatasetDetails(metadata);
-
+            // No enrichment! Store only DatasetCodes in metadata
             const cacheData = {
                 hasModifications: this.unsavedChanges,
                 lastModified: Date.now(),
-                metadata: enrichedMetadata,  // Use enriched version with DatasetDetails
+                metadata: metadata,  // Only DatasetCodes, no DatasetDetails
+                datasetDetailsMap: this.datasetDetails,  // Store map separately
                 version: this.CACHE_VERSION
             };
 
@@ -4101,6 +4026,13 @@ class CustomizableSSPIStructure {
                 return false;
             }
             console.log('Loading cached SSPI modifications from:', new Date(cacheData.lastModified));
+
+            // Restore dataset details map
+            if (cacheData.datasetDetailsMap) {
+                this.datasetDetails = cacheData.datasetDetailsMap;
+                console.log(`Restored ${Object.keys(this.datasetDetails).length} dataset details from cache map`);
+            }
+
             // Import the cached metadata using async method
             await this.importDataAsync(cacheData.metadata);
             // Set unsaved state based on cache
@@ -4198,7 +4130,9 @@ class CustomizableSSPIStructure {
         // Try to load from cache first
         const cached = this.getCachedAvailableDatasets();
         if (cached) {
-            this.populateDatasetDetails(cached);
+            cached.forEach(ds => {
+                this.datasetDetails[ds.DatasetCode] = ds;
+            });
             console.log(`Loaded ${cached.length} available datasets from cache`);
             return;
         }
@@ -4207,7 +4141,9 @@ class CustomizableSSPIStructure {
         try {
             const response = await this.fetch('/api/v1/customize/datasets?limit=0');
             if (response.success && response.datasets) {
-                this.populateDatasetDetails(response.datasets);
+                response.datasets.forEach(ds => {
+                    this.datasetDetails[ds.DatasetCode] = ds;
+                });
                 this.cacheAvailableDatasets(response.datasets);
                 console.log(`Loaded ${response.datasets.length} available datasets from backend`);
             } else {
