@@ -1,0 +1,12 @@
+---
+DatasetType: Indicator
+DatasetCode: ILO_EMPLOY_TO_POP_MALE
+DatasetName: Employment-to-Population Ratio, Males Age 15-64
+Description: >
+    Total number of men aged 15-64 employed divided by the total population of men aged 15-64
+Unit: Rate
+Source:
+  OrganizationCode: ILO
+  QueryCode: "Indicator=DF_EMP_DWAP_SEX_AGE_RT;Parameters=.A..SEX_M.AGE_YTHADULT_Y15-64"
+DatasetProcessorFile: sspi_flask_app/api/core/datasets/ilo/ilo_employ_to_pop_male.py
+---
