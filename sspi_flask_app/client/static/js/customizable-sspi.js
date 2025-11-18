@@ -904,10 +904,12 @@ class CustomizableSSPIStructure {
             <h5 class="indicator-name" contenteditable="true" spellcheck="false">New Indicator</h5>
         </div>
         <div class="indicator-code-section">
-            <label class="code-label">Code:</label>
-            <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1"
+            <div class="code-validation-message"></div>
+            <div class="code-input-container">
+                <label class="code-label">Code:</label>
+                <input type="text" class="indicator-code-input" maxlength="6" placeholder="INDIC1"
                    pattern="[A-Z0-9]{6}" title="Exactly 6 uppercase letters/numbers required">
-            <span class="code-validation-message"></span>
+            </div>
         </div>
     </div>
     <div class="indicator-config">
@@ -1019,6 +1021,33 @@ class CustomizableSSPIStructure {
         indicatorsContainer.appendChild(ind);
         this.validate(indicatorsContainer);
         this.updateHierarchyOnAdd(ind, 'indicator');
+
+        // Expand the indicator and focus on the name input
+        const collapsible = ind.querySelector('.indicator-collapsible');
+        if (collapsible) {
+            // Expand the indicator
+            collapsible.dataset.expanded = 'true';
+            this.applyExpansionState(collapsible, true);
+
+            // Focus on the indicator name
+            const nameElement = ind.querySelector('.indicator-name');
+            if (nameElement) {
+                // Use setTimeout to ensure the expansion animation completes
+                setTimeout(() => {
+                    nameElement.focus();
+
+                    // Select all text in the name field so user can immediately start typing
+                    const range = document.createRange();
+                    const selection = window.getSelection();
+                    range.selectNodeContents(nameElement);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    // Scroll into view if needed
+                    nameElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
     }
 
     showIndicatorSelector(indicatorsContainer) {
@@ -1033,32 +1062,55 @@ class CustomizableSSPIStructure {
     addExistingIndicator(indicatorsContainer, indicator) {
         // Create indicator element with pre-filled data
         const ind = this.createIndicatorElement();
-        // Fill in the indicator data
+        // Fill in the indicator data using backend field names
         const indicatorName = ind.querySelector('.indicator-name');
         const indicatorCodeInput = ind.querySelector('.indicator-code-input');
         const lowerGoalpost = ind.querySelector('.lower-goalpost');
         const upperGoalpost = ind.querySelector('.upper-goalpost');
         const invertedCheckbox = ind.querySelector('.inverted-checkbox');
         const scoreFunctionEl = ind.querySelector('.editable-score-function');
-        if (indicatorName) indicatorName.textContent = indicator.indicator_name || '';
-        if (indicatorCodeInput) indicatorCodeInput.value = indicator.indicator_code || '';
-        if (lowerGoalpost) lowerGoalpost.value = indicator.lower_goalpost || 0;
-        if (upperGoalpost) upperGoalpost.value = indicator.upper_goalpost || 100;
-        if (invertedCheckbox) invertedCheckbox.checked = indicator.inverted || false;
+
+        // Use backend field names (IndicatorCode, Indicator/ItemName, etc.)
+        if (indicatorName) indicatorName.textContent = indicator.Indicator || indicator.ItemName || '';
+        if (indicatorCodeInput) indicatorCodeInput.value = indicator.IndicatorCode || '';
+        if (lowerGoalpost) lowerGoalpost.value = indicator.LowerGoalpost || 0;
+        if (upperGoalpost) upperGoalpost.value = indicator.UpperGoalpost || 100;
+        if (invertedCheckbox) invertedCheckbox.checked = indicator.Inverted || false;
+
         // Populate score function if present
-        if (scoreFunctionEl && indicator.score_function) {
-            scoreFunctionEl.textContent = indicator.score_function;
+        if (scoreFunctionEl && indicator.ScoreFunction) {
+            scoreFunctionEl.textContent = indicator.ScoreFunction;
         }
-        // Add datasets if present
-        if (indicator.dataset_codes && indicator.dataset_codes.length > 0) {
+
+        // Add datasets if present (using backend field DatasetCodes)
+        if (indicator.DatasetCodes && indicator.DatasetCodes.length > 0) {
             const selectedDatasetsDiv = ind.querySelector('.selected-datasets');
-            indicator.dataset_codes.forEach(datasetCode => {
-                this.addDatasetToIndicator(selectedDatasetsDiv, datasetCode);
+            indicator.DatasetCodes.forEach(datasetCode => {
+                // Look up full dataset details if available
+                const datasetDetail = this.datasetDetails && this.datasetDetails[datasetCode];
+                if (datasetDetail) {
+                    this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, datasetDetail);
+                } else {
+                    this.addDatasetToIndicator(selectedDatasetsDiv, datasetCode);
+                }
             });
         }
+
         indicatorsContainer.appendChild(ind);
         this.validate(indicatorsContainer);
         this.updateHierarchyOnAdd(ind, 'indicator');
+
+        // Expand the indicator to show all populated data
+        const collapsible = ind.querySelector('.indicator-collapsible');
+        if (collapsible) {
+            collapsible.dataset.expanded = 'true';
+            this.applyExpansionState(collapsible, true);
+
+            // Scroll into view after a short delay
+            setTimeout(() => {
+                ind.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
     }
 
     showContextMenu(x,y,target) {
@@ -3266,26 +3318,21 @@ class CustomizableSSPIStructure {
 
     setupCodeValidation(input, type) {
         if (!input) return;
-        
-        const validationMessage = input.nextElementSibling;
-        
+        const validationMessage = input.parentElement.previousElementSibling;
         input.addEventListener('input', (e) => {
             let value = e.target.value.toUpperCase();
             e.target.value = value;
-            
             const isValid = this.validateCode(value, type);
             const isUnique = this.isCodeUnique(value, type, input);
-            
             if (!value) {
-                this.showValidationMessage(validationMessage, '', '');
+                this.flashValidationMessage(validationMessage, input, '', '');
             } else if (!isValid) {
-                this.showValidationMessage(validationMessage, 'Invalid format', 'error');
+                this.flashValidationMessage(validationMessage, input, 'Invalid format', 'error');
             } else if (!isUnique) {
-                this.showValidationMessage(validationMessage, 'Code already used', 'error');
+                this.flashValidationMessage(validationMessage, input, 'Code reserved', 'error');
             } else {
-                this.showValidationMessage(validationMessage, 'Valid', 'success');
+                this.flashValidationMessage(validationMessage, input, 'Valid', 'success');
             }
-            
             this.flagUnsaved();
         });
         
@@ -3298,7 +3345,7 @@ class CustomizableSSPIStructure {
                         const generatedCode = this.generateCodeFromName(name, type);
                         if (this.isCodeUnique(generatedCode, type, input)) {
                             input.value = generatedCode;
-                            this.showValidationMessage(validationMessage, 'Generated', 'success');
+                            this.flashValidationMessage(validationMessage, input, 'Generated', 'success');
                         }
                     }
                 }
@@ -3339,17 +3386,24 @@ class CustomizableSSPIStructure {
         return true;
     }
 
-    showValidationMessage(element, message, type) {
+    flashValidationMessage(element, input, message, type) {
         if (!element) return;
-        
         element.textContent = message;
         element.className = 'code-validation-message';
-        
         if (type === 'error') {
             element.classList.add('error');
         } else if (type === 'success') {
             element.classList.add('success');
         }
+        input.addEventListener('blur', (event) => {
+            if (type) {
+                input.classList.add('input-error')
+            } else {
+                input.classList.remove('input-error')
+            }
+            element.textContent = '';
+            element.classList.remove('error', 'success');
+        })
     }
 
     getNameForCodeInput(input, type) {
@@ -3445,16 +3499,8 @@ class CustomizableSSPIStructure {
         const currentSelections = Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'))
             .map(item => item.dataset.datasetCode);
 
-        // Convert datasetDetails map to array for DatasetSelector
-        const preloadedDatasets = Object.values(this.datasetDetails).map(d => ({
-            DatasetCode: d.code,
-            DatasetName: d.name,
-            Description: d.description,
-            organization: d.organization,
-            organizationCode: d.organizationCode || '',
-            dataset_type: d.type,
-            TopicCategory: d.category || 'General'
-        }));
+        // Pass dataset details directly - no mapping needed
+        const preloadedDatasets = Object.values(this.datasetDetails);
 
         // Create and configure enhanced dataset selector with preloaded data
         const selector = new DatasetSelector({
@@ -3479,22 +3525,10 @@ class CustomizableSSPIStructure {
         selectedDatasetsDiv.innerHTML = '';
 
         // Add new selections using full dataset objects
-        // This preserves all dataset details without needing to look them up again
+        // Datasets are already in the backend format - no conversion needed
         selectedDatasets.forEach(dataset => {
-            // Convert normalized dataset format to the format expected by addDatasetToIndicator
-            const datasetDetail = {
-                DatasetCode: dataset.dataset_code,
-                DatasetName: dataset.dataset_name,
-                Description: dataset.description,
-                Source: {
-                    OrganizationName: dataset.organization,
-                    OrganizationCode: dataset.organizationCode
-                },
-                DatasetType: dataset.dataset_type
-            };
-
             // Use addDatasetToIndicatorWithDetails to pass full details directly
-            this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, datasetDetail);
+            this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, dataset);
         });
 
         // IMPORTANT: Always flag unsaved and update cache after dataset selection changes
@@ -4287,20 +4321,16 @@ class CustomizableSSPIStructure {
         }
         try {
             const currentMetadata = this.exportData();
-            
             // Use cached diff if current state hasn't changed
             if (this.diffCache && this.areMetadataEqual(this.diffCache.currentSnapshot, currentMetadata)) {
                 return this.diffCache.diff;
             }
-            
             const diff = this.compareMetadata(this.baselineMetadata, currentMetadata);
-            
             // Cache the diff result
             this.diffCache = {
                 currentSnapshot: JSON.parse(JSON.stringify(currentMetadata)),
                 diff: diff
             };
-            
             return diff;
         } catch (error) {
             console.error('Error generating diff:', error);

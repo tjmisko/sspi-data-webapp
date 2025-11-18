@@ -14,6 +14,14 @@ class IndicatorSelectionMenu {
         this.createModal()
         this.bindEvents()
         document.body.appendChild(this.modal)
+
+        // Auto-focus the first button for keyboard navigation
+        setTimeout(() => {
+            const createNewBtn = this.modal?.querySelector('#create-new-indicator')
+            if (createNewBtn) {
+                createNewBtn.focus()
+            }
+        }, 100)
     }
     
     createModal() {
@@ -90,13 +98,46 @@ class IndicatorSelectionMenu {
             }
         })
         
-        // Close on escape key
-        document.addEventListener('keydown', this.handleKeyDown.bind(this))
+        // Close on escape key and handle keyboard navigation
+        this.keydownHandler = this.handleKeyDown.bind(this)
+        document.addEventListener('keydown', this.keydownHandler)
     }
-    
+
     handleKeyDown(e) {
-        if (e.key === 'Escape' && this.modal) {
+        if (!this.modal) return
+
+        if (e.key === 'Escape') {
+            e.preventDefault()
             this.close()
+            return
+        }
+
+        // Arrow key navigation between buttons
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault()
+            const createNewBtn = this.modal.querySelector('#create-new-indicator')
+            const addExistingBtn = this.modal.querySelector('#add-existing-indicator')
+            const cancelBtn = this.modal.querySelector('#menu-cancel')
+
+            const focusedElement = document.activeElement
+
+            if (e.key === 'ArrowDown') {
+                if (focusedElement === createNewBtn) {
+                    addExistingBtn?.focus()
+                } else if (focusedElement === addExistingBtn) {
+                    cancelBtn?.focus()
+                } else {
+                    createNewBtn?.focus()
+                }
+            } else { // ArrowUp
+                if (focusedElement === cancelBtn) {
+                    addExistingBtn?.focus()
+                } else if (focusedElement === addExistingBtn) {
+                    createNewBtn?.focus()
+                } else {
+                    cancelBtn?.focus()
+                }
+            }
         }
     }
     
@@ -104,7 +145,10 @@ class IndicatorSelectionMenu {
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
-        document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler)
+            this.keydownHandler = null
+        }
         this.modal = null
     }
 }

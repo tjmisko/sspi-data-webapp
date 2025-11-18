@@ -29,31 +29,18 @@ class DatasetSelector {
         // Use preloaded datasets if available, otherwise fetch from API
         if (this.options.preloadedDatasets && Array.isArray(this.options.preloadedDatasets)) {
             console.log('Using preloaded datasets:', this.options.preloadedDatasets.length);
-            this.datasets = this.normalizeDatasets(this.options.preloadedDatasets);
+            this.datasets = this.options.preloadedDatasets;
         } else {
             await this.loadDatasets();
         }
         this.applyFilters();
     }
 
-    normalizeDatasets(datasets) {
-        // Normalize dataset format to ensure consistent field names
-        return datasets.map(d => ({
-            dataset_code: d.DatasetCode || d.dataset_code,
-            dataset_name: d.DatasetName || d.dataset_name,
-            description: d.Description || d.description || '',
-            organization: d.Source?.OrganizationName || d.organization || 'Unknown',
-            organizationCode: d.Source?.OrganizationCode || d.OrganizationCode || d.organizationCode || '',
-            dataset_type: d.DatasetType || d.dataset_type || 'Unknown',
-            topic_category: d.TopicCategory || d.topic_category || 'General'
-        }));
-    }
-
     async loadDatasets() {
         try {
             const response = await fetch(`${this.options.apiEndpoint}?limit=1000`)
             const data = await response.json()
-            this.datasets = this.normalizeDatasets(data.datasets || [])
+            this.datasets = data.datasets || []
         } catch (error) {
             console.error('Error loading datasets:', error)
             this.datasets = []
@@ -133,8 +120,10 @@ class DatasetSelector {
         // Build unique organization list with codes
         const orgMap = new Map()
         this.datasets.forEach(d => {
-            if (!orgMap.has(d.organization)) {
-                orgMap.set(d.organization, d.organizationCode)
+            const orgName = d.Source?.OrganizationName || 'Unknown';
+            const orgCode = d.Source?.OrganizationCode || '';
+            if (!orgMap.has(orgName)) {
+                orgMap.set(orgName, orgCode)
             }
         })
 
@@ -170,12 +159,13 @@ class DatasetSelector {
     applyFilters() {
         this.filteredDatasets = this.datasets.filter(dataset => {
             const matchesSearch = !this.currentFilters.search ||
-                dataset.dataset_code.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
-                dataset.dataset_name.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
-                (dataset.description && dataset.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+                dataset.DatasetCode.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
+                dataset.DatasetName.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
+                (dataset.Description && dataset.Description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
 
+            const orgName = dataset.Source?.OrganizationName || 'Unknown';
             const matchesOrg = !this.currentFilters.organization ||
-                dataset.organization === this.currentFilters.organization
+                orgName === this.currentFilters.organization
 
             return matchesSearch && matchesOrg
         })
@@ -194,7 +184,7 @@ class DatasetSelector {
         }
         // Create bubbles for each selected dataset
         const bubbles = this.selectedDatasets.map(datasetCode => {
-            const dataset = this.datasets.find(d => d.dataset_code === datasetCode)
+            const dataset = this.datasets.find(d => d.DatasetCode === datasetCode)
             if (!dataset) return ''
 
             return '<div class="selected-dataset-bubble" data-dataset-code="' + datasetCode + '">' +
@@ -229,33 +219,35 @@ class DatasetSelector {
             console.error('Modal not found in renderDatasetList')
             return
         }
-        
+
         const datasetList = this.modal.querySelector('#dataset-list')
         if (!datasetList) {
             console.error('Dataset list element not found')
             return
         }
-        
+
         if (this.filteredDatasets.length === 0) {
             datasetList.innerHTML = '<div class="dataset-no-results">No datasets found matching your criteria.</div>'
             return
         }
-        
+
         const htmlParts = []
-        
+
         this.filteredDatasets.forEach(dataset => {
-            const isSelected = this.selectedDatasets.includes(dataset.dataset_code)
+            const isSelected = this.selectedDatasets.includes(dataset.DatasetCode)
             const isDisabled = !isSelected && this.selectedDatasets.length >= this.options.maxSelections
-            
+
             let cssClasses = 'dataset-option enhanced'
             if (isSelected) cssClasses += ' selected'
             if (isDisabled) cssClasses += ' disabled'
-            
+
             let badges = ''
             if (this.options.showOrganizations) {
                 // Show only the organization code if available, otherwise the full name
-                const orgDisplay = dataset.organizationCode || dataset.organization
-                badges += '<span class="dataset-organization-badge ' + dataset.organization.toLowerCase().replace(/\s+/g, '-') + '">' + orgDisplay + '</span>'
+                const orgName = dataset.Source?.OrganizationName || 'Unknown';
+                const orgCode = dataset.Source?.OrganizationCode || '';
+                const orgDisplay = orgCode || orgName
+                badges += '<span class="dataset-organization-badge ' + orgName.toLowerCase().replace(/\s+/g, '-') + '">' + orgDisplay + '</span>'
             }
             let actions = ''
             if (isSelected) {
@@ -266,21 +258,20 @@ class DatasetSelector {
             if (isDisabled && !isSelected) {
                 actions += '<div class="dataset-limit-note">Selection limit reached</div>'
             }
-            
-            const description = dataset.description_short || dataset.description || ''
-            const organization = dataset.organization_name || dataset.organization || ''
-            
+
+            const description = dataset.Description || ''
+
             htmlParts.push(
-                '<div class="' + cssClasses + ' compact" data-dataset-code="' + dataset.dataset_code + '">' +
+                '<div class="' + cssClasses + ' compact" data-dataset-code="' + dataset.DatasetCode + '">' +
                 '<div class="dataset-compact-header">' +
-                '<div class="dataset-compact-code">' + dataset.dataset_code + '</div>' +
+                '<div class="dataset-compact-code">' + dataset.DatasetCode + '</div>' +
                 '</div>' +
-                '<div class="dataset-compact-name">' + dataset.dataset_name + '</div>' +
+                '<div class="dataset-compact-name">' + dataset.DatasetName + '</div>' +
                 '<div class="dataset-compact-description">' + description + '</div>' +
                 '</div>'
             )
         })
-        
+
         datasetList.innerHTML = htmlParts.join('')
         this.bindDatasetEvents()
     }
@@ -443,7 +434,7 @@ class DatasetSelector {
     getSelectedDatasetObjects() {
         // Return full dataset objects for selected codes, preserving all details
         return this.selectedDatasets.map(code => {
-            return this.datasets.find(d => d.dataset_code === code)
+            return this.datasets.find(d => d.DatasetCode === code)
         }).filter(d => d) // Filter out any undefined entries
     }
     

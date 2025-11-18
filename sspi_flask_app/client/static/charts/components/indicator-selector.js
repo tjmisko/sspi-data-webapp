@@ -9,9 +9,10 @@ class IndicatorSelector {
             enableSearch: true,
             onSelectionChange: null,
             apiEndpoint: '/api/v1/customize/indicators',
+            preloadedIndicators: null,  // Optional: pre-loaded indicators to avoid API call
             ...options
         }
-        
+
         this.indicators = []
         this.filteredIndicators = []
         this.selectedIndicator = null
@@ -20,18 +21,25 @@ class IndicatorSelector {
             category: '',
             pillar: ''
         }
-        
+
         this.modal = null
+        this.highlightedIndex = -1  // For keyboard navigation (independent of mouse)
     }
-    
+
     async initialize() {
-        await this.loadIndicators()
-        this.applyFilters()
+        // Use preloaded indicators if available, otherwise fetch from API
+        if (this.options.preloadedIndicators && Array.isArray(this.options.preloadedIndicators)) {
+            console.log('Using preloaded indicators:', this.options.preloadedIndicators.length);
+            this.indicators = this.options.preloadedIndicators;
+        } else {
+            await this.loadIndicators();
+        }
+        this.applyFilters();
     }
     
     async loadIndicators() {
         try {
-            const response = await fetch(`${this.options.apiEndpoint}?limit=300`)
+            const response = await fetch(`${this.options.apiEndpoint}?limit=1000`)
             const data = await response.json()
             this.indicators = data.indicators || []
         } catch (error) {
@@ -39,24 +47,33 @@ class IndicatorSelector {
             this.indicators = []
         }
     }
-    
+
     async show(currentSelection = null) {
         try {
             if (!this.indicators.length) {
                 await this.initialize()
             }
-            
+
             this.selectedIndicator = currentSelection
             this.createModal()
-            
+
             if (!this.modal) {
                 console.error('Failed to create modal')
                 return
             }
-            
+
             this.renderModal()
             this.bindEvents()
             document.body.appendChild(this.modal)
+
+            // Autofocus search input for immediate typing
+            if (this.options.enableSearch) {
+                const searchInput = this.modal.querySelector('#indicator-search')
+                if (searchInput) {
+                    // Small delay to ensure modal is fully rendered
+                    setTimeout(() => searchInput.focus(), 100)
+                }
+            }
         } catch (error) {
             console.error('Error showing indicator selector:', error)
         }
@@ -69,7 +86,7 @@ class IndicatorSelector {
         const modalContent = document.createElement('div')
         modalContent.className = 'dataset-modal-content enhanced'
         
-        modalContent.innerHTML = 
+        modalContent.innerHTML =
             '<div class="dataset-modal-header">' +
             '<h3 class="dataset-modal-title">Select Existing Indicator</h3>' +
             '<div class="dataset-selection-counter">' +
@@ -85,7 +102,7 @@ class IndicatorSelector {
             '</div>' +
             '<div class="dataset-modal-actions">' +
             '<button id="modal-cancel" class="dataset-modal-cancel">Cancel</button>' +
-            '<button id="modal-confirm" class="dataset-modal-confirm" ' + 
+            '<button id="modal-confirm" class="dataset-modal-confirm" ' +
             (this.selectedIndicator ? '' : 'disabled') + '>Add Indicator</button>' +
             '</div>'
         
@@ -99,30 +116,35 @@ class IndicatorSelector {
                '<div class="search-results-count"></div>' +
                '</div>';
     }
-    
+
     createFiltersHTML() {
-        const categories = [...new Set(this.indicators.map(i => i.category_name).filter(Boolean))].sort()
-        const pillars = [...new Set(this.indicators.map(i => i.pillar_name).filter(Boolean))].sort()
-        
+        // Parse TreePath to extract unique pillars and categories
+        const pillarSet = new Set()
+        const categorySet = new Set()
+
+        this.indicators.forEach(i => {
+            if (i.TreePath) {
+                const pathParts = i.TreePath.split('/')
+                if (pathParts.length > 1) pillarSet.add(pathParts[1].toUpperCase())
+                if (pathParts.length > 2) categorySet.add(pathParts[2].toUpperCase())
+            }
+        })
+
+        const pillars = Array.from(pillarSet).sort()
+        const categories = Array.from(categorySet).sort()
+
         const catOptions = categories.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('')
         const pillarOptions = pillars.map(pillar => '<option value="' + pillar + '">' + pillar + '</option>').join('')
-        
+
         return '<div class="dataset-filters-container">' +
-               '<div class="filter-group">' +
-               '<label for="pillar-filter">Pillar:</label>' +
-               '<select id="pillar-filter" class="filter-select">' +
-               '<option value="">All Pillars</option>' +
+               '<select id="pillar-filter" class="filter-select pillar-select">' +
+               '<option value="" class="default-option">All Pillars</option>' +
                pillarOptions +
                '</select>' +
-               '</div>' +
-               '<div class="filter-group">' +
-               '<label for="category-filter">Category:</label>' +
-               '<select id="category-filter" class="filter-select">' +
-               '<option value="">All Categories</option>' +
+               '<select id="category-filter" class="filter-select category-select">' +
+               '<option value="" class="default-option">All Categories</option>' +
                catOptions +
                '</select>' +
-               '</div>' +
-               '<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>' +
                '</div>';
     }
     
@@ -131,23 +153,29 @@ class IndicatorSelector {
         this.renderIndicatorList()
         this.updateSelectionCounter()
     }
-    
+
     applyFilters() {
         this.filteredIndicators = this.indicators.filter(indicator => {
-            const matchesSearch = !this.currentFilters.search || 
-                indicator.indicator_code.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
-                indicator.indicator_name.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
-                (indicator.description && indicator.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
-            
-            const matchesCategory = !this.currentFilters.category || 
-                indicator.category_name === this.currentFilters.category
-            
-            const matchesPillar = !this.currentFilters.pillar || 
-                indicator.pillar_name === this.currentFilters.pillar
-            
+            const matchesSearch = !this.currentFilters.search ||
+                indicator.IndicatorCode.toLowerCase().includes(this.currentFilters.search.toLowerCase()) ||
+                (indicator.Indicator && indicator.Indicator.toLowerCase().includes(this.currentFilters.search.toLowerCase())) ||
+                (indicator.ItemName && indicator.ItemName.toLowerCase().includes(this.currentFilters.search.toLowerCase())) ||
+                (indicator.Description && indicator.Description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+
+            // Parse TreePath for category and pillar (e.g., "sspi/sus/eco/biodiv" -> pillar="sus", category="eco")
+            const pathParts = indicator.TreePath ? indicator.TreePath.split('/') : []
+            const pillar = pathParts.length > 1 ? pathParts[1].toUpperCase() : ''
+            const category = pathParts.length > 2 ? pathParts[2].toUpperCase() : ''
+
+            const matchesCategory = !this.currentFilters.category ||
+                category === this.currentFilters.category
+
+            const matchesPillar = !this.currentFilters.pillar ||
+                pillar === this.currentFilters.pillar
+
             return matchesSearch && matchesCategory && matchesPillar
         })
-        
+
         this.updateResultsCount()
     }
     
@@ -156,48 +184,56 @@ class IndicatorSelector {
             console.error('Modal not found in renderIndicatorList')
             return
         }
-        
+
         const indicatorList = this.modal.querySelector('#indicator-list')
         if (!indicatorList) {
             console.error('Indicator list element not found')
             return
         }
-        
+
         if (this.filteredIndicators.length === 0) {
             indicatorList.innerHTML = '<div class="dataset-no-results">No indicators found matching your criteria.</div>'
             return
         }
-        
+
         const htmlParts = []
-        
+
         this.filteredIndicators.forEach(indicator => {
-            const isSelected = this.selectedIndicator === indicator.indicator_code
-            
+            const isSelected = this.selectedIndicator === indicator.IndicatorCode
+
             let cssClasses = 'dataset-option enhanced'
             if (isSelected) cssClasses += ' selected'
-            
+
             let badges = ''
-            if (this.options.showPillars && indicator.pillar_name) {
-                badges += '<span class="dataset-organization-badge ' + indicator.pillar_code.toLowerCase() + '">' + indicator.pillar_name + '</span>'
+            if (this.options.showPillars || this.options.showCategories) {
+                // Parse TreePath for pillar/category display
+                const pathParts = indicator.TreePath ? indicator.TreePath.split('/') : []
+                const pillar = pathParts.length > 1 ? pathParts[1].toUpperCase() : ''
+                const category = pathParts.length > 2 ? pathParts[2].toUpperCase() : ''
+
+                if (this.options.showPillars && pillar) {
+                    badges += '<span class="dataset-organization-badge ' + pillar.toLowerCase() + '">' + pillar + '</span>'
+                }
+                if (this.options.showCategories && category) {
+                    badges += '<span class="dataset-category-badge ' + category.toLowerCase() + '">' + category + '</span>'
+                }
             }
-            if (this.options.showCategories && indicator.category_name) {
-                badges += '<span class="dataset-category-badge ' + indicator.category_code.toLowerCase() + '">' + indicator.category_name + '</span>'
-            }
-            
-            const description = indicator.description || ''
-            
+
+            const description = indicator.Description || ''
+            const indicatorName = indicator.Indicator || indicator.ItemName || indicator.IndicatorCode
+
             htmlParts.push(
-                '<div class="' + cssClasses + ' compact" data-indicator-code="' + indicator.indicator_code + '">' +
+                '<div class="' + cssClasses + ' compact" data-indicator-code="' + indicator.IndicatorCode + '">' +
                 '<div class="dataset-compact-header">' +
-                '<div class="dataset-compact-code">' + indicator.indicator_code + '</div>' +
+                '<div class="dataset-compact-code">' + indicator.IndicatorCode + '</div>' +
                 '<div class="dataset-compact-badges">' + badges + '</div>' +
                 '</div>' +
-                '<div class="dataset-compact-name">' + indicator.indicator_name + '</div>' +
+                '<div class="dataset-compact-name">' + indicatorName + '</div>' +
                 '<div class="dataset-compact-description">' + description + '</div>' +
                 '</div>'
             )
         })
-        
+
         indicatorList.innerHTML = htmlParts.join('')
         this.bindIndicatorEvents()
     }
@@ -207,25 +243,54 @@ class IndicatorSelector {
             console.error('Modal not found in bindEvents')
             return
         }
-        
+
         // Search functionality
         if (this.options.enableSearch) {
             const searchInput = this.modal.querySelector('#indicator-search')
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     this.currentFilters.search = e.target.value
+                    this.highlightedIndex = -1  // Reset on search
                     this.applyFilters()
                     this.renderIndicatorList()
                 })
+
+                // Keyboard navigation on search input
+                searchInput.addEventListener('keydown', (e) => {
+                    // Handle Escape explicitly to close modal immediately
+                    if (e.key === 'Escape') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.stopImmediatePropagation()
+                        this.close()
+                        return
+                    }
+
+                    this.handleKeyboardNavigation(e)
+                    // Prevent event from bubbling to avoid double-handling
+                    const navKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageUp', 'PageDown', 'Enter', ' ']
+                    if (navKeys.includes(e.key)) {
+                        e.stopPropagation()
+                    }
+                })
             }
         }
-        
+
+        // Global keyboard navigation (backup for when search is not focused)
+        // Only handles navigation keys, not text input
+        this.keyboardHandler = (e) => {
+            const navKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageUp', 'PageDown', 'Enter', ' ']
+            if (navKeys.includes(e.key)) {
+                this.handleKeyboardNavigation(e)
+            }
+        }
+        document.addEventListener('keydown', this.keyboardHandler)
+
         // Filter functionality
         if (this.options.enableFilters) {
             const pillarFilter = this.modal.querySelector('#pillar-filter')
             const categoryFilter = this.modal.querySelector('#category-filter')
-            const clearButton = this.modal.querySelector('#clear-filters')
-            
+
             if (pillarFilter) {
                 pillarFilter.addEventListener('change', (e) => {
                     this.currentFilters.pillar = e.target.value
@@ -233,7 +298,7 @@ class IndicatorSelector {
                     this.renderIndicatorList()
                 })
             }
-            
+
             if (categoryFilter) {
                 categoryFilter.addEventListener('change', (e) => {
                     this.currentFilters.category = e.target.value
@@ -241,36 +306,39 @@ class IndicatorSelector {
                     this.renderIndicatorList()
                 })
             }
-            
-            if (clearButton) {
-                clearButton.addEventListener('click', () => {
-                    this.clearFilters()
-                })
-            }
         }
-        
+
         // Modal action buttons
         const cancelButton = this.modal.querySelector('#modal-cancel')
         const confirmButton = this.modal.querySelector('#modal-confirm')
-        
+
         if (cancelButton) {
             cancelButton.addEventListener('click', () => {
                 this.close()
             })
         }
-        
+
         if (confirmButton) {
             confirmButton.addEventListener('click', () => {
                 this.confirm()
             })
         }
-        
+
         // Close on overlay click
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.close()
             }
         })
+
+        // Close on ESC key press (document-level fallback)
+        this.escapeHandler = (e) => {
+            if ((e.key === 'Escape' || e.keyCode === 27) && this.modal) {
+                e.preventDefault()
+                this.close()
+            }
+        }
+        document.addEventListener('keydown', this.escapeHandler)
     }
     
     bindIndicatorEvents() {
@@ -341,22 +409,9 @@ class IndicatorSelector {
     
     async confirm() {
         if (this.selectedIndicator && this.options.onSelectionChange) {
-            // Fetch the full indicator details from the API to get complete information
-            try {
-                const response = await fetch(`/api/v1/customize/indicators/${this.selectedIndicator}`)
-                const data = await response.json()
-
-                if (data.success && data.indicator) {
-                    this.options.onSelectionChange(data.indicator)
-                } else {
-                    // Fallback to basic info if API call fails
-                    const indicator = this.indicators.find(i => i.indicator_code === this.selectedIndicator)
-                    this.options.onSelectionChange(indicator)
-                }
-            } catch (error) {
-                console.error('Error fetching indicator details:', error)
-                // Fallback to basic info from the list
-                const indicator = this.indicators.find(i => i.indicator_code === this.selectedIndicator)
+            // Find the full indicator object from the loaded list
+            const indicator = this.indicators.find(i => i.IndicatorCode === this.selectedIndicator)
+            if (indicator) {
                 this.options.onSelectionChange(indicator)
             }
         }
@@ -364,16 +419,165 @@ class IndicatorSelector {
     }
     
     close() {
+        // Remove escape key handler
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler)
+            this.escapeHandler = null
+        }
+
+        // Remove keyboard navigation handler
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler)
+            this.keyboardHandler = null
+        }
+
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
         this.modal = null
     }
-    
+
     hide() {
         this.close()
     }
-    
+
+    // Keyboard Navigation Methods
+
+    handleKeyboardNavigation(e) {
+        if (!this.modal) return
+
+        const indicatorList = this.modal.querySelector('#indicator-list')
+        if (!indicatorList) return
+
+        const items = indicatorList.querySelectorAll('.dataset-option')
+        if (items.length === 0) return
+
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault()
+                if (this.highlightedIndex < items.length - 1) {
+                    this.highlightedIndex++
+                    this.highlightSelectedIndex()
+                    this.scrollHighlightedIntoView()
+                }
+                break
+
+            case 'ArrowUp':
+                e.preventDefault()
+                if (this.highlightedIndex > -1) {
+                    this.highlightedIndex--
+                    this.highlightSelectedIndex()
+                    this.scrollHighlightedIntoView()
+                }
+                break
+
+            case 'Home':
+                e.preventDefault()
+                this.highlightedIndex = 0
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'End':
+                e.preventDefault()
+                this.highlightedIndex = items.length - 1
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'PageUp':
+                e.preventDefault()
+                this.highlightedIndex = Math.max(0, this.highlightedIndex - 10)
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'PageDown':
+                e.preventDefault()
+                this.highlightedIndex = Math.min(items.length - 1, this.highlightedIndex + 10)
+                this.highlightSelectedIndex()
+                this.scrollHighlightedIntoView()
+                break
+
+            case 'Enter':
+            case ' ':  // Space key
+                // Only toggle if there's a highlighted item
+                if (this.highlightedIndex >= 0) {
+                    e.preventDefault()
+                    this.toggleHighlightedIndicator()
+                }
+                // Otherwise, allow space to be typed normally in the search input
+                break
+        }
+
+        // Keep search input focused
+        if (this.options.enableSearch) {
+            const searchInput = this.modal.querySelector('#indicator-search')
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.focus()
+            }
+        }
+    }
+
+    highlightSelectedIndex() {
+        if (!this.modal) return
+
+        const indicatorList = this.modal.querySelector('#indicator-list')
+        if (!indicatorList) return
+
+        const items = indicatorList.querySelectorAll('.dataset-option')
+
+        // Clamp highlightedIndex to valid range
+        if (this.highlightedIndex > items.length - 1) {
+            this.highlightedIndex = items.length - 1
+        }
+
+        // Update visual highlight
+        items.forEach((item, index) => {
+            if (index === this.highlightedIndex) {
+                item.classList.add('keyboard-highlighted')
+            } else {
+                item.classList.remove('keyboard-highlighted')
+            }
+        })
+    }
+
+    scrollHighlightedIntoView() {
+        if (!this.modal || this.highlightedIndex === -1) return
+
+        const indicatorList = this.modal.querySelector('#indicator-list')
+        if (!indicatorList) return
+
+        const items = indicatorList.querySelectorAll('.dataset-option')
+        const highlightedItem = items[this.highlightedIndex]
+
+        if (highlightedItem) {
+            highlightedItem.scrollIntoView({
+                block: 'nearest',
+                behavior: 'smooth'
+            })
+        }
+    }
+
+    toggleHighlightedIndicator() {
+        if (!this.modal || this.highlightedIndex === -1) return
+
+        const indicatorList = this.modal.querySelector('#indicator-list')
+        if (!indicatorList) return
+
+        const items = indicatorList.querySelectorAll('.dataset-option')
+        const highlightedItem = items[this.highlightedIndex]
+
+        if (highlightedItem) {
+            // Get the indicator code from the element
+            const indicatorCode = highlightedItem.dataset.indicatorCode
+            if (indicatorCode) {
+                // Set as selected (single selection)
+                this.selectIndicator(indicatorCode)
+            }
+        }
+    }
+
     getSelectedIndicator() {
         return this.selectedIndicator
     }

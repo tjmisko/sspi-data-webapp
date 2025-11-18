@@ -193,8 +193,13 @@
 }
 
 .code-validation-message {
-  font-size: 0.65em;
-  margin-left: 0.3em;
+  padding-right: 0.3em;
+  font-size: 0.55em;
+  margin-bottom: 0.25rem;
+  margin-left: auto;
+  width: 77px;
+  text-align: center;
+  line-height: 1;
   font-weight: bold;
   flex: 0 0 auto;
   min-width: 0;
@@ -313,12 +318,20 @@
 
 .indicator-code-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
   flex: 0 0 auto;
-  width: 125px;
-  max-width: 125px;
+  width: 120px;
+  max-width: 120px;
   box-sizing: border-box;
+}
+
+.code-input-container {
+  display: flex;
+  gap: 0.25rem;
+  flex-direction: row;
+  align-items: flex-end;
+  width: 100%;
 }
 
 .indicator-config {
@@ -859,8 +872,6 @@
 .dataset-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid var(--subtle-line-color);
-  border-radius: var(--border-radius);
   background: var(--region-background-color);
 }
 
@@ -935,7 +946,6 @@
 }
 
 .dataset-modal-actions {
-  margin-top: 1rem;
   text-align: right;
 }
 
@@ -1101,7 +1111,9 @@
 
 /* Enhanced Dataset List */
 .dataset-list-container {
-  margin-bottom: 1rem;
+  padding: 0.5em;
+  border: 1px solid var(--subtle-line-color);
+  border-radius: var(--border-radius);
 }
 
 .dataset-list.enhanced {
@@ -1303,9 +1315,6 @@
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--subtle-line-color);
 }
 
 .dataset-modal-clear {
@@ -2659,4 +2668,50 @@ to {
     margin-left: 0;
     font-size: 0.8rem;
   }
+}
+
+/* Enhanced Filter Styling for Indicator Selector */
+.dataset-filters-container {
+  gap: 0.75rem !important;
+}
+
+/* Enhanced Filter Styling for Indicator Selector - No Labels */
+.dataset-filters-container {
+  display: flex !important;
+  gap: 0.5rem !important;
+  padding: 0 !important;
+  margin-bottom: 0.5rem !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  align-items: stretch !important;
+  box-sizing: border-box !important;
+}
+
+.filter-select {
+  flex: 1;
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.85rem !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box !important;
+  min-width: 0;
+}
+
+.filter-select:hover {
+  border-color: var(--green-accent);
+  background-color: color-mix(in srgb, var(--green-accent) 5%, var(--input-background-color));
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--green-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green-accent) 20%, transparent);
+}
+
+/* Specific styling for pillar and category selects - uppercase only for actual values */
+.pillar-select option:not(.default-option),
+.category-select option:not(.default-option) {
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }

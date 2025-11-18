@@ -100,8 +100,8 @@ setUnsavedState(hasChanges){this.unsavedChanges=hasChanges;if(hasChanges){this.s
 clearIndicators(scope){const parent=scope||this.container;parent.querySelectorAll('.insertion-indicator').forEach(node=>node.remove());}
 createCategoryElement(){const cat=document.createElement('div');cat.classList.add('category-box','draggable-item');cat.setAttribute('role','group');cat.dataset.type='category';cat.innerHTML=`<div class="category-collapsible"data-expanded="true"><div class="customization-category-header"draggable="true"><button class="collapse-toggle-btn category-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="category-name-wrapper"><h4 class="customization-category-header-title"contenteditable="true"spellcheck="false">New Category</h4></div><div class="category-code-section"><label class="code-label">Code:</label><input type="text"class="category-code-input"maxlength="3"placeholder="CAT"
 pattern="[A-Z]{3}"title="Exactly 3 uppercase letters required"><span class="code-validation-message"></span></div></div><div class="category-content"><div class="indicators-container drop-zone"data-accept="indicator"role="group"></div><button class="add-indicator"aria-label="Add Indicator">+\u0020Add\u0020Indicator</button></div></div>`;this.setupCodeValidation(cat.querySelector('.category-code-input'),'category');this.setupCollapsibleHandlers(cat);return cat;}
-createIndicatorElement(){const ind=document.createElement('div');ind.classList.add('indicator-card','draggable-item');ind.setAttribute('role','treeitem');ind.dataset.type='indicator';ind.innerHTML=`<div class="indicator-collapsible"data-expanded="false"><div class="customization-indicator-header"draggable="true"><button class="collapse-toggle-btn indicator-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="indicator-name-wrapper"><h5 class="indicator-name"contenteditable="true"spellcheck="false">New Indicator</h5></div><div class="indicator-code-section"><label class="code-label">Code:</label><input type="text"class="indicator-code-input"maxlength="6"placeholder="INDIC1"
-pattern="[A-Z0-9]{6}"title="Exactly 6 uppercase letters/numbers required"><span class="code-validation-message"></span></div></div><div class="indicator-config"><div class="dataset-selection"><label>Datasets</label><div class="selected-datasets"></div><button class="add-dataset-btn"type="button">+\u0020Add\u0020Dataset</button></div><div class="score-function"><label>Score Function</label><pre class="editable-score-function"contenteditable="true"spellcheck="false"data-default-score-function="">Score=</pre></div></div></div>`;this.setupCodeValidation(ind.querySelector('.indicator-code-input'),'indicator');this.setupDatasetSelection(ind);this.setupIndicatorChangeListeners(ind);this.setupCollapsibleHandlers(ind);return ind;}
+createIndicatorElement(){const ind=document.createElement('div');ind.classList.add('indicator-card','draggable-item');ind.setAttribute('role','treeitem');ind.dataset.type='indicator';ind.innerHTML=`<div class="indicator-collapsible"data-expanded="false"><div class="customization-indicator-header"draggable="true"><button class="collapse-toggle-btn indicator-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="indicator-name-wrapper"><h5 class="indicator-name"contenteditable="true"spellcheck="false">New Indicator</h5></div><div class="indicator-code-section"><div class="code-validation-message"></div><div class="code-input-container"><label class="code-label">Code:</label><input type="text"class="indicator-code-input"maxlength="6"placeholder="INDIC1"
+pattern="[A-Z0-9]{6}"title="Exactly 6 uppercase letters/numbers required"></div></div></div><div class="indicator-config"><div class="dataset-selection"><label>Datasets</label><div class="selected-datasets"></div><button class="add-dataset-btn"type="button">+\u0020Add\u0020Dataset</button></div><div class="score-function"><label>Score Function</label><pre class="editable-score-function"contenteditable="true"spellcheck="false"data-default-score-function="">Score=</pre></div></div></div>`;this.setupCodeValidation(ind.querySelector('.indicator-code-input'),'indicator');this.setupDatasetSelection(ind);this.setupIndicatorChangeListeners(ind);this.setupCollapsibleHandlers(ind);return ind;}
 setupIndicatorChangeListeners(indicatorElement){const inputs=indicatorElement.querySelectorAll('input, select');inputs.forEach(input=>{input.addEventListener('change',()=>this.flagUnsaved());input.addEventListener('input',()=>this.flagUnsaved());});}
 setupCollapsibleHandlers(element){const collapseIcons=element.querySelectorAll('.category-collapse-icon, .indicator-collapse-icon');collapseIcons.forEach(icon=>{icon.addEventListener('click',(e)=>{e.stopPropagation();const details=icon.closest('details');if(details){details.open=!details.open;}});});}
 resetView(){const indicators=this.container.querySelectorAll('.indicator-collapsible');indicators.forEach(collapsible=>{collapsible.dataset.expanded='false';this.applyExpansionState(collapsible,false);});const categories=this.container.querySelectorAll('.category-collapsible');categories.forEach(collapsible=>{collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);});}
@@ -109,11 +109,11 @@ expandAll(){const allCollapsibles=this.container.querySelectorAll('[data-expande
 collapseAll(){const allCollapsibles=this.container.querySelectorAll('[data-expanded]');allCollapsibles.forEach(collapsible=>{collapsible.dataset.expanded='false';this.applyExpansionState(collapsible,false);});}
 flagUnsaved(){this.unsavedChanges=true;this.saveButton.classList.add('unsaved-changes');this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';this.debouncedCacheState();}
 showIndicatorSelectionMenu(indicatorsContainer){const menu=new IndicatorSelectionMenu({onCreateNew:(container)=>{this.createNewIndicator(container);},onAddExisting:(container)=>{this.showIndicatorSelector(container);}});menu.show(indicatorsContainer);}
-createNewIndicator(indicatorsContainer){const ind=this.createIndicatorElement();indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');}
+createNewIndicator(indicatorsContainer){const ind=this.createIndicatorElement();indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');const collapsible=ind.querySelector('.indicator-collapsible');if(collapsible){collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);const nameElement=ind.querySelector('.indicator-name');if(nameElement){setTimeout(()=>{nameElement.focus();const range=document.createRange();const selection=window.getSelection();range.selectNodeContents(nameElement);selection.removeAllRanges();selection.addRange(range);nameElement.scrollIntoView({behavior:'smooth',block:'center'});},100);}}}
 showIndicatorSelector(indicatorsContainer){const selector=new IndicatorSelector({onSelectionChange:(indicator)=>{this.addExistingIndicator(indicatorsContainer,indicator);}});selector.show();}
-addExistingIndicator(indicatorsContainer,indicator){const ind=this.createIndicatorElement();const indicatorName=ind.querySelector('.indicator-name');const indicatorCodeInput=ind.querySelector('.indicator-code-input');const lowerGoalpost=ind.querySelector('.lower-goalpost');const upperGoalpost=ind.querySelector('.upper-goalpost');const invertedCheckbox=ind.querySelector('.inverted-checkbox');const scoreFunctionEl=ind.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicator.indicator_name||'';if(indicatorCodeInput)indicatorCodeInput.value=indicator.indicator_code||'';if(lowerGoalpost)lowerGoalpost.value=indicator.lower_goalpost||0;if(upperGoalpost)upperGoalpost.value=indicator.upper_goalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicator.inverted||false;if(scoreFunctionEl&&indicator.score_function){scoreFunctionEl.textContent=indicator.score_function;}
-if(indicator.dataset_codes&&indicator.dataset_codes.length>0){const selectedDatasetsDiv=ind.querySelector('.selected-datasets');indicator.dataset_codes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode);});}
-indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');}
+addExistingIndicator(indicatorsContainer,indicator){const ind=this.createIndicatorElement();const indicatorName=ind.querySelector('.indicator-name');const indicatorCodeInput=ind.querySelector('.indicator-code-input');const lowerGoalpost=ind.querySelector('.lower-goalpost');const upperGoalpost=ind.querySelector('.upper-goalpost');const invertedCheckbox=ind.querySelector('.inverted-checkbox');const scoreFunctionEl=ind.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicator.Indicator||indicator.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicator.IndicatorCode||'';if(lowerGoalpost)lowerGoalpost.value=indicator.LowerGoalpost||0;if(upperGoalpost)upperGoalpost.value=indicator.UpperGoalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicator.Inverted||false;if(scoreFunctionEl&&indicator.ScoreFunction){scoreFunctionEl.textContent=indicator.ScoreFunction;}
+if(indicator.DatasetCodes&&indicator.DatasetCodes.length>0){const selectedDatasetsDiv=ind.querySelector('.selected-datasets');indicator.DatasetCodes.forEach(datasetCode=>{const datasetDetail=this.datasetDetails&&this.datasetDetails[datasetCode];if(datasetDetail){this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv,datasetDetail);}else{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode);}});}
+indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');const collapsible=ind.querySelector('.indicator-collapsible');if(collapsible){collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);setTimeout(()=>{ind.scrollIntoView({behavior:'smooth',block:'center'});},100);}}
 showContextMenu(x,y,target){let m=document.getElementById('sspi-context-menu');if(m)m.remove();m=document.createElement('ul');m.id='sspi-context-menu';m.className='context-menu';m.style.position='absolute';m.style.top=`${y}px`;m.style.left=`${x}px`;const isDataset=target.classList.contains('dataset-item');const isPillar=target.dataset.type==='pillar';let menuItems;if(isDataset){const isExpanded=target.dataset.expanded==='true';const toggleText=isExpanded?'Hide Details':'Show Details';menuItems=[{name:toggleText,handler:()=>{const newState=target.dataset.expanded!=='true';target.dataset.expanded=newState.toString();const slideout=target.querySelector('.dataset-details-slideout');if(slideout){if(newState){slideout.style.maxHeight=slideout.scrollHeight+'px';}else{slideout.style.maxHeight='0';}}}},{name:'Preview',handler:()=>this.showDatasetPreviewModal(target)},{name:'Delete',handler:()=>{if(confirm('Remove this dataset from the indicator?')){target.remove();this.flagUnsaved();}}}];}else if(isPillar){menuItems=[{name:'Preview',handler:()=>this.showPreviewModal(target)},{name:'Rename',handler:()=>this.renameItem(target)}];}else{menuItems=[{name:'Preview',handler:()=>this.showPreviewModal(target)},{name:'Move to',handler:()=>this.promptMove(target)},{name:'Rename',handler:()=>this.renameItem(target)},{name:'Delete',handler:()=>this.deleteItem(target)}];if(target.dataset.type==='indicator'){menuItems.push({name:'Edit Score Function',handler:()=>this.editScoreFunction(target)});}}
 menuItems.forEach(a=>{const i=document.createElement('li');i.textContent=a.name;i.tabIndex=0;i.addEventListener('click',()=>{a.handler();m.remove();});m.appendChild(i);});document.body.appendChild(m);document.addEventListener('click',()=>m.remove(),{once:true});}
 promptMove(el){const modal=this.createMoveToModal(el);document.body.appendChild(modal);setTimeout(()=>{const input=modal.querySelector('.move-pillar-input');if(input)input.focus();},100);}
@@ -235,12 +235,14 @@ updateConfigurationsDropdown(configurations){const existingDropdown=this.parentE
 if(configurations.length===0)return;const selectorContainer=document.createElement('div');selectorContainer.classList.add('config-selector');selectorContainer.style.marginBottom='1rem';const label=document.createElement('label');label.textContent='Load Configuration: ';label.style.marginRight='0.5rem';const select=document.createElement('select');select.style.marginRight='0.5rem';const defaultOption=document.createElement('option');defaultOption.value='';defaultOption.textContent='Select a configuration...';select.appendChild(defaultOption);configurations.forEach(config=>{const option=document.createElement('option');option.value=config.config_id;option.textContent=config.name;select.appendChild(option);});const loadButton=document.createElement('button');loadButton.textContent='Load';loadButton.addEventListener('click',async()=>{const configId=select.value;if(configId){await this.loadConfiguration(configId);}});const deleteButton=document.createElement('button');deleteButton.textContent='Delete';deleteButton.style.marginLeft='0.5rem';deleteButton.addEventListener('click',async()=>{const configId=select.value;if(configId){const selectedOption=select.options[select.selectedIndex];const configName=selectedOption.textContent;if(confirm(`Are you sure you want to delete"${configName}"?`)){await this.deleteConfiguration(configId);}}});selectorContainer.append(label,select,loadButton,deleteButton);this.parentElement.insertBefore(selectorContainer,this.parentElement.firstChild);}
 async loadConfiguration(configId){try{const response=await this.fetch('/api/v1/customize/load/'+configId);if(response.success&&response.configuration){this.clearCache();this.importData(response.configuration.metadata);this.clearUnsavedState();this.showNotification('Configuration "'+response.configuration.name+'" loaded successfully!','success',3000);}else{this.showNotification('Error loading configuration: '+response.error,'error',5000);}}catch(error){console.error('Error loading configuration:',error);this.showNotification('Error loading configuration. Please try again.','error',5000);}}
 async deleteConfiguration(configId){try{const response=await this.fetch('/api/v1/customize/delete/'+configId,{method:'DELETE'});if(response.success){this.showNotification('Configuration deleted successfully!','success',3000);this.loadConfigurationsList();}else{this.showNotification('Error deleting configuration: '+response.error,'error',5000);}}catch(error){console.error('Error deleting configuration:',error);this.showNotification('Error deleting configuration. Please try again.','error',5000);}}
-setupCodeValidation(input,type){if(!input)return;const validationMessage=input.nextElementSibling;input.addEventListener('input',(e)=>{let value=e.target.value.toUpperCase();e.target.value=value;const isValid=this.validateCode(value,type);const isUnique=this.isCodeUnique(value,type,input);if(!value){this.showValidationMessage(validationMessage,'','');}else if(!isValid){this.showValidationMessage(validationMessage,'Invalid format','error');}else if(!isUnique){this.showValidationMessage(validationMessage,'Code already used','error');}else{this.showValidationMessage(validationMessage,'Valid','success');}
-this.flagUnsaved();});input.addEventListener('blur',()=>{if(input.value&&this.validateCode(input.value,type)&&this.isCodeUnique(input.value,type,input)){if(!input.value){const name=this.getNameForCodeInput(input,type);if(name){const generatedCode=this.generateCodeFromName(name,type);if(this.isCodeUnique(generatedCode,type,input)){input.value=generatedCode;this.showValidationMessage(validationMessage,'Generated','success');}}}}});}
+setupCodeValidation(input,type){if(!input)return;const validationMessage=input.parentElement.previousElementSibling;input.addEventListener('input',(e)=>{let value=e.target.value.toUpperCase();e.target.value=value;const isValid=this.validateCode(value,type);const isUnique=this.isCodeUnique(value,type,input);if(!value){this.flashValidationMessage(validationMessage,input,'','');}else if(!isValid){this.flashValidationMessage(validationMessage,input,'Invalid format','error');}else if(!isUnique){this.flashValidationMessage(validationMessage,input,'Code reserved','error');}else{this.flashValidationMessage(validationMessage,input,'Valid','success');}
+this.flagUnsaved();});input.addEventListener('blur',()=>{if(input.value&&this.validateCode(input.value,type)&&this.isCodeUnique(input.value,type,input)){if(!input.value){const name=this.getNameForCodeInput(input,type);if(name){const generatedCode=this.generateCodeFromName(name,type);if(this.isCodeUnique(generatedCode,type,input)){input.value=generatedCode;this.flashValidationMessage(validationMessage,input,'Generated','success');}}}}});}
 validateCode(code,type){if(!code)return false;switch(type){case'pillar':return /^[A-Z]{2,3}$/.test(code);case'category':return /^[A-Z]{3}$/.test(code);case'indicator':return /^[A-Z0-9]{6}$/.test(code);default:return false;}}
 isCodeUnique(code,type,currentInput){if(!code)return true;const selector=type==='pillar'?'.pillar-code-input':type==='category'?'.category-code-input':'.indicator-code-input';const allInputs=this.container.querySelectorAll(selector);for(const input of allInputs){if(input!==currentInput&&input.value===code){return false;}}
 return true;}
-showValidationMessage(element,message,type){if(!element)return;element.textContent=message;element.className='code-validation-message';if(type==='error'){element.classList.add('error');}else if(type==='success'){element.classList.add('success');}}
+flashValidationMessage(element,input,message,type){if(!element)return;element.textContent=message;element.className='code-validation-message';if(type==='error'){element.classList.add('error');}else if(type==='success'){element.classList.add('success');}
+input.addEventListener('blur',(event)=>{if(type){input.classList.add('input-error')}else{input.classList.remove('input-error')}
+element.textContent='';element.classList.remove('error','success');})}
 getNameForCodeInput(input,type){const container=input.closest(type==='pillar'?'.customization-pillar-header':type==='category'?'.category-box':'.indicator-card');if(type==='pillar'){return container.querySelector('.pillar-name').textContent.trim();}else if(type==='category'){return container.querySelector('.customization-category-header-title').textContent.trim();}else if(type==='indicator'){return container.querySelector('.indicator-name').textContent.trim();}
 return'';}
 generateCodeFromName(name,type){if(!name)return'';const cleanName=name.toUpperCase().replace(/\b(THE|AND|OR|OF|FOR|IN|ON|AT|TO|A|AN)\b/g,'').replace(/[^A-Z0-9]/g,'');const maxLength=type==='indicator'?6:3;if(cleanName.length<=maxLength){return cleanName.padEnd(maxLength,'1');}
@@ -251,8 +253,8 @@ return code.substring(0,maxLength);}
 setupDatasetSelection(indicatorElement){const addDatasetBtn=indicatorElement.querySelector('.add-dataset-btn');const selectedDatasetsDiv=indicatorElement.querySelector('.selected-datasets');addDatasetBtn.addEventListener('click',async()=>{await this.showDatasetSelector(selectedDatasetsDiv);});}
 async showDatasetSelector(selectedDatasetsDiv){try{const currentDatasets=selectedDatasetsDiv.querySelectorAll('.dataset-item');if(currentDatasets.length>=10){alert('Maximum of 10 datasets allowed per indicator');return;}
 this.showDatasetSelectionModal(selectedDatasetsDiv);}catch(error){console.error('Error showing dataset selector:',error);alert('Error loading datasets. Please try again.');}}
-async showDatasetSelectionModal(selectedDatasetsDiv){const currentSelections=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item')).map(item=>item.dataset.datasetCode);const preloadedDatasets=Object.values(this.datasetDetails).map(d=>({DatasetCode:d.code,DatasetName:d.name,Description:d.description,organization:d.organization,organizationCode:d.organizationCode||'',dataset_type:d.type,TopicCategory:d.category||'General'}));const selector=new DatasetSelector({maxSelections:10,multiSelect:true,enableSearch:true,enableFilters:true,showOrganizations:true,showTypes:true,preloadedDatasets:preloadedDatasets.length>0?preloadedDatasets:null,onSelectionChange:(selectedDatasets)=>{this.updateDatasetSelection(selectedDatasetsDiv,selectedDatasets);}});await selector.show(currentSelections);}
-updateDatasetSelection(selectedDatasetsDiv,selectedDatasets){selectedDatasetsDiv.innerHTML='';selectedDatasets.forEach(dataset=>{const datasetDetail={DatasetCode:dataset.dataset_code,DatasetName:dataset.dataset_name,Description:dataset.description,Source:{OrganizationName:dataset.organization,OrganizationCode:dataset.organizationCode},DatasetType:dataset.dataset_type};this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv,datasetDetail);});this.flagUnsaved();this.debouncedCacheState();}
+async showDatasetSelectionModal(selectedDatasetsDiv){const currentSelections=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item')).map(item=>item.dataset.datasetCode);const preloadedDatasets=Object.values(this.datasetDetails);const selector=new DatasetSelector({maxSelections:10,multiSelect:true,enableSearch:true,enableFilters:true,showOrganizations:true,showTypes:true,preloadedDatasets:preloadedDatasets.length>0?preloadedDatasets:null,onSelectionChange:(selectedDatasets)=>{this.updateDatasetSelection(selectedDatasetsDiv,selectedDatasets);}});await selector.show(currentSelections);}
+updateDatasetSelection(selectedDatasetsDiv,selectedDatasets){selectedDatasetsDiv.innerHTML='';selectedDatasets.forEach(dataset=>{this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv,dataset);});this.flagUnsaved();this.debouncedCacheState();}
 findSelectedDatasetsDiv(modal){const indicators=document.querySelectorAll('.indicator-card');return indicators[indicators.length-1]?.querySelector('.selected-datasets');}
 addDatasetToIndicator(selectedDatasetsDiv,datasetCode){const existing=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(existing){alert('Dataset already added');return;}
 const datasetDetail=this.datasetDetails[datasetCode];const datasetName=datasetDetail?datasetDetail.name:'Unknown Dataset';const datasetTitle=datasetDetail?`${datasetDetail.description}`:datasetCode;if(!datasetDetail){console.warn(`No dataset details found for ${datasetCode}.Available datasets:`,Object.keys(this.datasetDetails).length);}
@@ -416,7 +418,9 @@ this.modal=null}
 show(indicatorsContainer){this.indicatorsContainer=indicatorsContainer
 this.createModal()
 this.bindEvents()
-document.body.appendChild(this.modal)}
+document.body.appendChild(this.modal)
+setTimeout(()=>{const createNewBtn=this.modal?.querySelector('#create-new-indicator')
+if(createNewBtn){createNewBtn.focus()}},100)}
 createModal(){this.modal=document.createElement('div')
 this.modal.className='indicator-selection-overlay'
 const modalContent=document.createElement('div')
@@ -485,13 +489,46 @@ modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicato
             }
         })
         
-        // Close on escape key
-        document.addEventListener('keydown', this.handleKeyDown.bind(this))
+        // Close on escape key and handle keyboard navigation
+        this.keydownHandler = this.handleKeyDown.bind(this)
+        document.addEventListener('keydown', this.keydownHandler)
     }
-    
+
     handleKeyDown(e) {
-        if (e.key === 'Escape' && this.modal) {
+        if (!this.modal) return
+
+        if (e.key === 'Escape') {
+            e.preventDefault()
             this.close()
+            return
+        }
+
+        // Arrow key navigation between buttons
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault()
+            const createNewBtn = this.modal.querySelector('#create-new-indicator')
+            const addExistingBtn = this.modal.querySelector('#add-existing-indicator')
+            const cancelBtn = this.modal.querySelector('#menu-cancel')
+
+            const focusedElement = document.activeElement
+
+            if (e.key === 'ArrowDown') {
+                if (focusedElement === createNewBtn) {
+                    addExistingBtn?.focus()
+                } else if (focusedElement === addExistingBtn) {
+                    cancelBtn?.focus()
+                } else {
+                    createNewBtn?.focus()
+                }
+            } else { // ArrowUp
+                if (focusedElement === cancelBtn) {
+                    addExistingBtn?.focus()
+                } else if (focusedElement === addExistingBtn) {
+                    createNewBtn?.focus()
+                } else {
+                    cancelBtn?.focus()
+                }
+            }
         }
     }
     
@@ -499,7 +536,10 @@ modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicato
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
-        document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler)
+            this.keydownHandler = null
+        }
         this.modal = null
     }
 }
@@ -763,12 +803,11 @@ this.selectedDatasets=[]
 this.currentFilters={search:'',organization:''}
 this.modal=null
 this.highlightedIndex=-1}
-async initialize(){if(this.options.preloadedDatasets&&Array.isArray(this.options.preloadedDatasets)){console.log('Using preloaded datasets:',this.options.preloadedDatasets.length);this.datasets=this.normalizeDatasets(this.options.preloadedDatasets);}else{await this.loadDatasets();}
+async initialize(){if(this.options.preloadedDatasets&&Array.isArray(this.options.preloadedDatasets)){console.log('Using preloaded datasets:',this.options.preloadedDatasets.length);this.datasets=this.options.preloadedDatasets;}else{await this.loadDatasets();}
 this.applyFilters();}
-normalizeDatasets(datasets){return datasets.map(d=>({dataset_code:d.DatasetCode||d.dataset_code,dataset_name:d.DatasetName||d.dataset_name,description:d.Description||d.description||'',organization:d.Source?.OrganizationName||d.organization||'Unknown',organizationCode:d.Source?.OrganizationCode||d.OrganizationCode||d.organizationCode||'',dataset_type:d.DatasetType||d.dataset_type||'Unknown',topic_category:d.TopicCategory||d.topic_category||'General'}));}
 async loadDatasets(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=1000`)
 const data=await response.json()
-this.datasets=this.normalizeDatasets(data.datasets||[])}catch(error){console.error('Error loading datasets:',error)
+this.datasets=data.datasets||[]}catch(error){console.error('Error loading datasets:',error)
 this.datasets=[]}}
 async show(currentSelections=[]){try{if(!this.datasets.length){await this.initialize()}
 this.selectedDatasets=[...currentSelections]
@@ -809,7 +848,7 @@ createSearchHTML(){return'<div class="dataset-search-container">'+
 '<div class="search-results-count"></div>'+
 '</div>';}
 createFiltersHTML(){const orgMap=new Map()
-this.datasets.forEach(d=>{if(!orgMap.has(d.organization)){orgMap.set(d.organization,d.organizationCode)}})
+this.datasets.forEach(d=>{const orgName=d.Source?.OrganizationName||'Unknown';const orgCode=d.Source?.OrganizationCode||'';if(!orgMap.has(orgName)){orgMap.set(orgName,orgCode)}})
 const organizations=Array.from(orgMap.entries()).sort((a,b)=>a[0].localeCompare(b[0]))
 const orgOptions=organizations.map(([orgName,orgCode])=>{const displayText=orgCode?orgName+' ('+orgCode+')':orgName
 return'<option value="'+orgName+'">'+displayText+'</option>'}).join('')
@@ -827,8 +866,8 @@ renderModal(){this.applyFilters()
 this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
-applyFilters(){this.filteredDatasets=this.datasets.filter(dataset=>{const matchesSearch=!this.currentFilters.search||dataset.dataset_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||dataset.dataset_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(dataset.description&&dataset.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
-const matchesOrg=!this.currentFilters.organization||dataset.organization===this.currentFilters.organization
+applyFilters(){this.filteredDatasets=this.datasets.filter(dataset=>{const matchesSearch=!this.currentFilters.search||dataset.DatasetCode.toLowerCase().includes(this.currentFilters.search.toLowerCase())||dataset.DatasetName.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(dataset.Description&&dataset.Description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+const orgName=dataset.Source?.OrganizationName||'Unknown';const matchesOrg=!this.currentFilters.organization||orgName===this.currentFilters.organization
 return matchesSearch&&matchesOrg})
 this.updateResultsCount()}
 renderSelectedDatasets(){if(!this.modal)return
@@ -836,7 +875,7 @@ const container=this.modal.querySelector('#selected-datasets-list')
 if(!container)return
 container.innerHTML=''
 if(this.selectedDatasets.length===0){return}
-const bubbles=this.selectedDatasets.map(datasetCode=>{const dataset=this.datasets.find(d=>d.dataset_code===datasetCode)
+const bubbles=this.selectedDatasets.map(datasetCode=>{const dataset=this.datasets.find(d=>d.DatasetCode===datasetCode)
 if(!dataset)return''
 return'<div class="selected-dataset-bubble" data-dataset-code="'+datasetCode+'">'+
 '<span class="bubble-text">'+datasetCode+'</span>'+
@@ -859,24 +898,23 @@ return}
 if(this.filteredDatasets.length===0){datasetList.innerHTML='<div class="dataset-no-results">No datasets found matching your criteria.</div>'
 return}
 const htmlParts=[]
-this.filteredDatasets.forEach(dataset=>{const isSelected=this.selectedDatasets.includes(dataset.dataset_code)
+this.filteredDatasets.forEach(dataset=>{const isSelected=this.selectedDatasets.includes(dataset.DatasetCode)
 const isDisabled=!isSelected&&this.selectedDatasets.length>=this.options.maxSelections
 let cssClasses='dataset-option enhanced'
 if(isSelected)cssClasses+=' selected'
 if(isDisabled)cssClasses+=' disabled'
 let badges=''
-if(this.options.showOrganizations){const orgDisplay=dataset.organizationCode||dataset.organization
-badges+='<span class="dataset-organization-badge '+dataset.organization.toLowerCase().replace(/\s+/g,'-')+'">'+orgDisplay+'</span>'}
+if(this.options.showOrganizations){const orgName=dataset.Source?.OrganizationName||'Unknown';const orgCode=dataset.Source?.OrganizationCode||'';const orgDisplay=orgCode||orgName
+badges+='<span class="dataset-organization-badge '+orgName.toLowerCase().replace(/\s+/g,'-')+'">'+orgDisplay+'</span>'}
 let actions=''
 if(isSelected){actions='<button class="dataset-remove-btn">Remove</button>'}else{actions='<button class="dataset-add-btn"'+(isDisabled?' disabled':'')+'>Add Dataset</button>'}
 if(isDisabled&&!isSelected){actions+='<div class="dataset-limit-note">Selection limit reached</div>'}
-const description=dataset.description_short||dataset.description||''
-const organization=dataset.organization_name||dataset.organization||''
-htmlParts.push('<div class="'+cssClasses+' compact" data-dataset-code="'+dataset.dataset_code+'">'+
+const description=dataset.Description||''
+htmlParts.push('<div class="'+cssClasses+' compact" data-dataset-code="'+dataset.DatasetCode+'">'+
 '<div class="dataset-compact-header">'+
-'<div class="dataset-compact-code">'+dataset.dataset_code+'</div>'+
+'<div class="dataset-compact-code">'+dataset.DatasetCode+'</div>'+
 '</div>'+
-'<div class="dataset-compact-name">'+dataset.dataset_name+'</div>'+
+'<div class="dataset-compact-name">'+dataset.DatasetName+'</div>'+
 '<div class="dataset-compact-description">'+description+'</div>'+
 '</div>')})
 datasetList.innerHTML=htmlParts.join('')
@@ -932,7 +970,7 @@ if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelect
 this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
-getSelectedDatasetObjects(){return this.selectedDatasets.map(code=>{return this.datasets.find(d=>d.dataset_code===code)}).filter(d=>d)}
+getSelectedDatasetObjects(){return this.selectedDatasets.map(code=>{return this.datasets.find(d=>d.DatasetCode===code)}).filter(d=>d)}
 clearAll(){this.selectedDatasets=[]
 this.renderSelectedDatasets()
 this.renderDatasetList()
@@ -1020,15 +1058,16 @@ const highlightedItem=items[this.highlightedIndex]
 if(highlightedItem){const datasetCode=highlightedItem.dataset.datasetCode
 if(datasetCode){if(this.selectedDatasets.includes(datasetCode)){this.removeDataset(datasetCode)}else{this.addDataset(datasetCode)}}}}
 getSelectedDatasets(){return this.selectedDatasets}}
-class IndicatorSelector{constructor(options={}){this.options={maxSelections:1,multiSelect:false,showCategories:true,showPillars:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/indicators',...options}
+class IndicatorSelector{constructor(options={}){this.options={maxSelections:1,multiSelect:false,showCategories:true,showPillars:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/indicators',preloadedIndicators:null,...options}
 this.indicators=[]
 this.filteredIndicators=[]
 this.selectedIndicator=null
 this.currentFilters={search:'',category:'',pillar:''}
-this.modal=null}
-async initialize(){await this.loadIndicators()
-this.applyFilters()}
-async loadIndicators(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=300`)
+this.modal=null
+this.highlightedIndex=-1}
+async initialize(){if(this.options.preloadedIndicators&&Array.isArray(this.options.preloadedIndicators)){console.log('Using preloaded indicators:',this.options.preloadedIndicators.length);this.indicators=this.options.preloadedIndicators;}else{await this.loadIndicators();}
+this.applyFilters();}
+async loadIndicators(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=1000`)
 const data=await response.json()
 this.indicators=data.indicators||[]}catch(error){console.error('Error loading indicators:',error)
 this.indicators=[]}}
@@ -1039,7 +1078,9 @@ if(!this.modal){console.error('Failed to create modal')
 return}
 this.renderModal()
 this.bindEvents()
-document.body.appendChild(this.modal)}catch(error){console.error('Error showing indicator selector:',error)}}
+document.body.appendChild(this.modal)
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#indicator-search')
+if(searchInput){setTimeout(()=>searchInput.focus(),100)}}}catch(error){console.error('Error showing indicator selector:',error)}}
 createModal(){this.modal=document.createElement('div')
 this.modal.className='dataset-modal-overlay'
 const modalContent=document.createElement('div')
@@ -1068,33 +1109,34 @@ createSearchHTML(){return'<div class="dataset-search-container">'+
 'placeholder="Search indicators by code, name, or description...">'+
 '<div class="search-results-count"></div>'+
 '</div>';}
-createFiltersHTML(){const categories=[...new Set(this.indicators.map(i=>i.category_name).filter(Boolean))].sort()
-const pillars=[...new Set(this.indicators.map(i=>i.pillar_name).filter(Boolean))].sort()
+createFiltersHTML(){const pillarSet=new Set()
+const categorySet=new Set()
+this.indicators.forEach(i=>{if(i.TreePath){const pathParts=i.TreePath.split('/')
+if(pathParts.length>1)pillarSet.add(pathParts[1].toUpperCase())
+if(pathParts.length>2)categorySet.add(pathParts[2].toUpperCase())}})
+const pillars=Array.from(pillarSet).sort()
+const categories=Array.from(categorySet).sort()
 const catOptions=categories.map(cat=>'<option value="'+cat+'">'+cat+'</option>').join('')
 const pillarOptions=pillars.map(pillar=>'<option value="'+pillar+'">'+pillar+'</option>').join('')
 return'<div class="dataset-filters-container">'+
-'<div class="filter-group">'+
-'<label for="pillar-filter">Pillar:</label>'+
-'<select id="pillar-filter" class="filter-select">'+
-'<option value="">All Pillars</option>'+
+'<select id="pillar-filter" class="filter-select pillar-select">'+
+'<option value="" class="default-option">All Pillars</option>'+
 pillarOptions+
 '</select>'+
-'</div>'+
-'<div class="filter-group">'+
-'<label for="category-filter">Category:</label>'+
-'<select id="category-filter" class="filter-select">'+
-'<option value="">All Categories</option>'+
+'<select id="category-filter" class="filter-select category-select">'+
+'<option value="" class="default-option">All Categories</option>'+
 catOptions+
 '</select>'+
-'</div>'+
-'<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>'+
 '</div>';}
 renderModal(){this.applyFilters()
 this.renderIndicatorList()
 this.updateSelectionCounter()}
-applyFilters(){this.filteredIndicators=this.indicators.filter(indicator=>{const matchesSearch=!this.currentFilters.search||indicator.indicator_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||indicator.indicator_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(indicator.description&&indicator.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
-const matchesCategory=!this.currentFilters.category||indicator.category_name===this.currentFilters.category
-const matchesPillar=!this.currentFilters.pillar||indicator.pillar_name===this.currentFilters.pillar
+applyFilters(){this.filteredIndicators=this.indicators.filter(indicator=>{const matchesSearch=!this.currentFilters.search||indicator.IndicatorCode.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(indicator.Indicator&&indicator.Indicator.toLowerCase().includes(this.currentFilters.search.toLowerCase()))||(indicator.ItemName&&indicator.ItemName.toLowerCase().includes(this.currentFilters.search.toLowerCase()))||(indicator.Description&&indicator.Description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+const pathParts=indicator.TreePath?indicator.TreePath.split('/'):[]
+const pillar=pathParts.length>1?pathParts[1].toUpperCase():''
+const category=pathParts.length>2?pathParts[2].toUpperCase():''
+const matchesCategory=!this.currentFilters.category||category===this.currentFilters.category
+const matchesPillar=!this.currentFilters.pillar||pillar===this.currentFilters.pillar
 return matchesSearch&&matchesCategory&&matchesPillar})
 this.updateResultsCount()}
 renderIndicatorList(){if(!this.modal){console.error('Modal not found in renderIndicatorList')
@@ -1105,19 +1147,23 @@ return}
 if(this.filteredIndicators.length===0){indicatorList.innerHTML='<div class="dataset-no-results">No indicators found matching your criteria.</div>'
 return}
 const htmlParts=[]
-this.filteredIndicators.forEach(indicator=>{const isSelected=this.selectedIndicator===indicator.indicator_code
+this.filteredIndicators.forEach(indicator=>{const isSelected=this.selectedIndicator===indicator.IndicatorCode
 let cssClasses='dataset-option enhanced'
 if(isSelected)cssClasses+=' selected'
 let badges=''
-if(this.options.showPillars&&indicator.pillar_name){badges+='<span class="dataset-organization-badge '+indicator.pillar_code.toLowerCase()+'">'+indicator.pillar_name+'</span>'}
-if(this.options.showCategories&&indicator.category_name){badges+='<span class="dataset-category-badge '+indicator.category_code.toLowerCase()+'">'+indicator.category_name+'</span>'}
-const description=indicator.description||''
-htmlParts.push('<div class="'+cssClasses+' compact" data-indicator-code="'+indicator.indicator_code+'">'+
+if(this.options.showPillars||this.options.showCategories){const pathParts=indicator.TreePath?indicator.TreePath.split('/'):[]
+const pillar=pathParts.length>1?pathParts[1].toUpperCase():''
+const category=pathParts.length>2?pathParts[2].toUpperCase():''
+if(this.options.showPillars&&pillar){badges+='<span class="dataset-organization-badge '+pillar.toLowerCase()+'">'+pillar+'</span>'}
+if(this.options.showCategories&&category){badges+='<span class="dataset-category-badge '+category.toLowerCase()+'">'+category+'</span>'}}
+const description=indicator.Description||''
+const indicatorName=indicator.Indicator||indicator.ItemName||indicator.IndicatorCode
+htmlParts.push('<div class="'+cssClasses+' compact" data-indicator-code="'+indicator.IndicatorCode+'">'+
 '<div class="dataset-compact-header">'+
-'<div class="dataset-compact-code">'+indicator.indicator_code+'</div>'+
+'<div class="dataset-compact-code">'+indicator.IndicatorCode+'</div>'+
 '<div class="dataset-compact-badges">'+badges+'</div>'+
 '</div>'+
-'<div class="dataset-compact-name">'+indicator.indicator_name+'</div>'+
+'<div class="dataset-compact-name">'+indicatorName+'</div>'+
 '<div class="dataset-compact-description">'+description+'</div>'+
 '</div>')})
 indicatorList.innerHTML=htmlParts.join('')
@@ -1126,23 +1172,36 @@ bindEvents(){if(!this.modal){console.error('Modal not found in bindEvents')
 return}
 if(this.options.enableSearch){const searchInput=this.modal.querySelector('#indicator-search')
 if(searchInput){searchInput.addEventListener('input',(e)=>{this.currentFilters.search=e.target.value
+this.highlightedIndex=-1
 this.applyFilters()
-this.renderIndicatorList()})}}
+this.renderIndicatorList()})
+searchInput.addEventListener('keydown',(e)=>{if(e.key==='Escape'){e.preventDefault()
+e.stopPropagation()
+e.stopImmediatePropagation()
+this.close()
+return}
+this.handleKeyboardNavigation(e)
+const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){e.stopPropagation()}})}}
+this.keyboardHandler=(e)=>{const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){this.handleKeyboardNavigation(e)}}
+document.addEventListener('keydown',this.keyboardHandler)
 if(this.options.enableFilters){const pillarFilter=this.modal.querySelector('#pillar-filter')
 const categoryFilter=this.modal.querySelector('#category-filter')
-const clearButton=this.modal.querySelector('#clear-filters')
 if(pillarFilter){pillarFilter.addEventListener('change',(e)=>{this.currentFilters.pillar=e.target.value
 this.applyFilters()
 this.renderIndicatorList()})}
 if(categoryFilter){categoryFilter.addEventListener('change',(e)=>{this.currentFilters.category=e.target.value
 this.applyFilters()
-this.renderIndicatorList()})}
-if(clearButton){clearButton.addEventListener('click',()=>{this.clearFilters()})}}
+this.renderIndicatorList()})}}
 const cancelButton=this.modal.querySelector('#modal-cancel')
 const confirmButton=this.modal.querySelector('#modal-confirm')
 if(cancelButton){cancelButton.addEventListener('click',()=>{this.close()})}
 if(confirmButton){confirmButton.addEventListener('click',()=>{this.confirm()})}
-this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})}
+this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})
+this.escapeHandler=(e)=>{if((e.key==='Escape'||e.keyCode===27)&&this.modal){e.preventDefault()
+this.close()}}
+document.addEventListener('keydown',this.escapeHandler)}
 bindIndicatorEvents(){if(!this.modal)return
 this.modal.querySelectorAll('.dataset-option').forEach(option=>{const indicatorCode=option.dataset.indicatorCode
 option.style.cursor='pointer'
@@ -1171,16 +1230,75 @@ if(counter)counter.textContent=this.selectedIndicator?1:0}
 updateResultsCount(){if(!this.modal)return
 const resultsCount=this.modal.querySelector('.search-results-count')
 if(resultsCount){resultsCount.textContent=this.filteredIndicators.length+' indicator'+(this.filteredIndicators.length!==1?'s':'')+' found'}}
-async confirm(){if(this.selectedIndicator&&this.options.onSelectionChange){try{const response=await fetch(`/api/v1/customize/indicators/${this.selectedIndicator}`)
-const data=await response.json()
-if(data.success&&data.indicator){this.options.onSelectionChange(data.indicator)}else{const indicator=this.indicators.find(i=>i.indicator_code===this.selectedIndicator)
-this.options.onSelectionChange(indicator)}}catch(error){console.error('Error fetching indicator details:',error)
-const indicator=this.indicators.find(i=>i.indicator_code===this.selectedIndicator)
-this.options.onSelectionChange(indicator)}}
+async confirm(){if(this.selectedIndicator&&this.options.onSelectionChange){const indicator=this.indicators.find(i=>i.IndicatorCode===this.selectedIndicator)
+if(indicator){this.options.onSelectionChange(indicator)}}
 this.close()}
-close(){if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
+close(){if(this.escapeHandler){document.removeEventListener('keydown',this.escapeHandler)
+this.escapeHandler=null}
+if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHandler)
+this.keyboardHandler=null}
+if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
 this.modal=null}
 hide(){this.close()}
+handleKeyboardNavigation(e){if(!this.modal)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+if(items.length===0)return
+switch(e.key){case'ArrowDown':e.preventDefault()
+if(this.highlightedIndex<items.length-1){this.highlightedIndex++
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'ArrowUp':e.preventDefault()
+if(this.highlightedIndex>-1){this.highlightedIndex--
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'Home':e.preventDefault()
+this.highlightedIndex=0
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'End':e.preventDefault()
+this.highlightedIndex=items.length-1
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageUp':e.preventDefault()
+this.highlightedIndex=Math.max(0,this.highlightedIndex-10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageDown':e.preventDefault()
+this.highlightedIndex=Math.min(items.length-1,this.highlightedIndex+10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'Enter':case' ':if(this.highlightedIndex>=0){e.preventDefault()
+this.toggleHighlightedIndicator()}
+break}
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#indicator-search')
+if(searchInput&&document.activeElement!==searchInput){searchInput.focus()}}}
+highlightSelectedIndex(){if(!this.modal)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+if(this.highlightedIndex>items.length-1){this.highlightedIndex=items.length-1}
+items.forEach((item,index)=>{if(index===this.highlightedIndex){item.classList.add('keyboard-highlighted')}else{item.classList.remove('keyboard-highlighted')}})}
+scrollHighlightedIntoView(){if(!this.modal||this.highlightedIndex===-1)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){highlightedItem.scrollIntoView({block:'nearest',behavior:'smooth'})}}
+toggleHighlightedIndicator(){if(!this.modal||this.highlightedIndex===-1)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){const indicatorCode=highlightedItem.dataset.indicatorCode
+if(indicatorCode){this.selectIndicator(indicatorCode)}}}
 getSelectedIndicator(){return this.selectedIndicator}}
 class ObservableStorage{constructor(){this.listeners={};this.store={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);this.store[key]=this._parse(localStorage.getItem(key));}}
 setItem(key,value){const oldValue=this.store[key];const stringValue=JSON.stringify(value);localStorage.setItem(key,stringValue);this.store[key]=value;this._emit(key,oldValue,value);}
