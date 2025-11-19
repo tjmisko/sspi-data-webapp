@@ -27,8 +27,13 @@
   font-family: var(--body-font-family);
   margin-top: 0.15em;
 }
+
 .customization-home-box p {
   padding: 0 var(--theme-gap);
+}
+
+.customization-home-box ul {
+  padding-left: 2.5em;
 }
 
 :root {
@@ -3004,35 +3009,14 @@ to {
 /* Individual change item */
 .change-item {
   position: relative;
-  padding-left: 2.5rem !important; /* Space for timeline indicator */
-  margin-bottom: 1rem;
-  transition: all 0.2s ease;
+  padding: 0.5rem 0.75rem !important;
+  margin-bottom: 0.5rem;
   background-color: var(--box-background-color);
   border-left: 3px solid var(--subtle-line-color);
 }
 
-.change-item:hover {
-  border-left-color: var(--green-accent);
-  box-shadow: var(--shadow-md);
-  transform: translateX(2px);
-}
-
 .change-item:last-child {
   margin-bottom: 0;
-}
-
-/* Timeline indicator (dot) */
-.change-timeline-indicator {
-  position: absolute;
-  left: -1px;
-  top: 1.2rem;
-  width: 12px;
-  height: 12px;
-  background-color: var(--green-accent);
-  border: 2px solid var(--box-background-color);
-  border-radius: 50%;
-  z-index: 1;
-  box-shadow: 0 0 0 2px var(--green-accent-20);
 }
 
 /* Item header */
@@ -3041,12 +3025,12 @@ to {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 /* Timestamp */
 .change-timestamp {
-  font-size: 0.75rem !important;
+  font-size: 0.7rem !important;
   color: var(--low-importance-font-color) !important;
   font-family: var(--monospace-font-family) !important;
   font-weight: 500 !important;
@@ -3055,12 +3039,12 @@ to {
 /* Type badge */
 .change-type-badge {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-radius: 4px;
+  letter-spacing: 0.3px;
+  border-radius: 3px;
   white-space: nowrap;
 }
 
@@ -3097,44 +3081,50 @@ to {
 
 /* Change message */
 .change-message {
-  font-size: 0.9rem !important;
+  font-size: 0.85rem !important;
   color: var(--text-color) !important;
-  line-height: 1.4;
-  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  margin-bottom: 0.25rem;
 }
 
-/* Details container */
-.change-details-container {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+/* Item reference (Name and Code) */
+.change-item-reference {
+  font-size: 0.75rem !important;
+  color: var(--low-importance-font-color) !important;
+  font-family: var(--monospace-font-family) !important;
+  margin-bottom: 0.35rem;
+}
+
+/* HTML details element */
+.change-details {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--subtle-line-color);
 }
 
-/* Details toggle button */
-.change-details-toggle {
-  background: none;
-  border: none;
-  color: var(--link-color);
-  font-size: 0.8rem;
+/* Summary (clickable toggle) */
+.change-details-summary {
+  color: var(--text-color);
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  padding: 0.2rem 0.4rem;
+  list-style: none;
   font-family: var(--body-font-family);
+  display: inline-block;
 }
 
-.change-details-toggle:hover {
-  background-color: color-mix(in srgb, var(--link-color) 10%, transparent);
-  text-decoration: underline;
+.change-details-summary:focus {
+  outline: none;
 }
 
-.change-details-toggle:focus {
-  outline: 2px solid var(--link-color);
-  outline-offset: 2px;
+/* Hide default disclosure triangle */
+.change-details-summary::-webkit-details-marker {
+  display: none;
 }
 
-.change-details-toggle::before {
+/* Custom arrow */
+.change-details-summary::before {
   content: '▶';
   display: inline-block;
   margin-right: 0.4rem;
@@ -3142,32 +3132,24 @@ to {
   font-size: 0.7rem;
 }
 
-.change-details-content.expanded ~ .change-details-toggle::before,
-.change-details-toggle:hover::before {
+/* Rotate arrow when open */
+.change-details[open] > .change-details-summary::before {
   transform: rotate(90deg);
 }
 
 /* Details content */
 .change-details-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-  padding: 0;
-}
-
-.change-details-content.expanded {
-  max-height: 500px;
-  padding: 0.75rem 0 0 0;
+  padding: 0.5rem 0 0 0;
 }
 
 /* Delta key-value list */
 .change-delta-list {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 0.5rem 1rem;
-  font-size: 0.85rem;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.75rem;
   margin: 0;
-  padding: 0.75rem;
+  padding: 0.5rem 0.65rem;
   background-color: var(--region-background-color);
   border-radius: var(--border-radius);
   border: 1px solid var(--subtle-line-color);
@@ -3177,16 +3159,16 @@ to {
   font-weight: 600;
   color: var(--header-text-color);
   margin: 0;
-  padding: 0.25rem 0;
+  padding: 0.15rem 0;
 }
 
 .change-delta-list dd {
   color: var(--body-text-color);
   margin: 0;
-  padding: 0.25rem 0;
+  padding: 0.15rem 0;
   word-break: break-word;
   font-family: var(--monospace-font-family);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
 }
 
 /* Empty state message */

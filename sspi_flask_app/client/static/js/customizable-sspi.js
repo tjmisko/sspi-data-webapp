@@ -6016,12 +6016,26 @@ class CustomizableSSPIStructure {
     cacheCurrentState() {
         try {
             const metadata = this.exportMetadata();
-            // No enrichment! Store only DatasetCodes in metadata
+            // Export action history (without undo/redo functions)
+            const actionHistory = {
+                actions: this.actionHistory.actions.map(action => ({
+                    actionId: action.actionId,
+                    timestamp: action.timestamp,
+                    type: action.type,
+                    message: action.message,
+                    delta: action.delta
+                    // Exclude undo/redo functions - can't serialize functions
+                })),
+                currentIndex: this.actionHistory.currentIndex,
+                baseline: this.actionHistory.baseline
+            };
+
             const cacheData = {
                 hasModifications: this.unsavedChanges,
                 lastModified: Date.now(),
                 metadata: metadata,  // Only DatasetCodes, no DatasetDetails
                 datasetDetailsMap: this.datasetDetails,  // Store map separately
+                actionHistory: actionHistory,  // Store action history
                 version: this.CACHE_VERSION
             };
 
@@ -6116,6 +6130,15 @@ class CustomizableSSPIStructure {
 
             // Import the cached metadata using async method
             await this.importDataAsync(cacheData.metadata);
+
+            // Restore action history
+            if (cacheData.actionHistory) {
+                this.actionHistory.actions = cacheData.actionHistory.actions || [];
+                this.actionHistory.currentIndex = cacheData.actionHistory.currentIndex ?? -1;
+                this.actionHistory.baseline = cacheData.actionHistory.baseline || null;
+                console.log(`Restored ${this.actionHistory.actions.length} actions from cache`);
+            }
+
             // Set unsaved state based on cache
             this.setUnsavedState(cacheData.hasModifications);
             return true;
