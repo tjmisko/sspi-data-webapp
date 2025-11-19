@@ -79,20 +79,24 @@ def data_overview():
 
 
 @client_bp.route('/customize')
-def customize():
-    return render_template('customize.html')
+def customize_configuration_builder():
+    return render_template('customize/customize.html')
+
+@client_bp.route('/customize/home')
+def customize_home():
+    return render_template('customize/customize-home.html')
 
 
 @client_bp.route('/customize/visualize/<config_id>')
 def custom_visualization(config_id):
     """Production visualization page for custom SSPI configurations"""
-    return render_template('custom_visualization.html', config_id=config_id)
+    return render_template('customize/custom_visualization.html', config_id=config_id)
 
 
 @client_bp.route('/customize/test-chart')
 def test_custom_chart():
     """Test page for custom SSPI chart development and debugging"""
-    return render_template('test_custom_chart.html')
+    return render_template('customize/test_custom_chart.html')
 
 
 @client_bp.route('/data/country/<country_code>')

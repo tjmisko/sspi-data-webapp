@@ -17,4 +17,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {% block javascript %}
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+<script src="{{ url_for('client_bp.static', filename='charts/components/changes-history-modal.js') }}"></script>
 {% endblock %}
