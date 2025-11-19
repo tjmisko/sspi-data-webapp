@@ -1,42 +1,101 @@
 // customizable-sspi.js
 // SSPI Tree UI implementing full specification (three-column layout)
 
+// ========== SECTION 1: ActionHistory Class ==========
+
 /**
- * UndoRedoManager - Manages undo/redo history for the customizable SSPI
+ * ActionHistory - Manages action history with undo/redo and cumulative change tracking
+ *
+ * Replaces UndoRedoManager with enhanced functionality:
+ * - Baseline capture (default SSPI structure)
+ * - Delta-based action recording
+ * - Cumulative action log from baseline
+ * - Export functionality for backend processing
  */
-class UndoRedoManager {
+class ActionHistory {
     constructor(sspiInstance) {
         this.sspi = sspiInstance;
-        this.history = [];
+        this.baseline = null;              // Snapshot of default SSPI metadata
+        this.actions = [];                 // Cumulative action log
+        this.currentIndex = -1;            // Undo/redo pointer
+        this.maxHistorySize = 100;         // Increased from 50
+    }
+
+    /**
+     * Capture baseline metadata when default SSPI is loaded
+     * @param {Array} metadata - Array of metadata items (SSPI, Pillars, Categories, Indicators)
+     */
+    captureBaseline(metadata) {
+        this.baseline = JSON.parse(JSON.stringify(metadata));
+        this.actions = [];
         this.currentIndex = -1;
-        this.maxHistorySize = 50;
+        console.log('Captured baseline with', metadata.length, 'metadata items');
     }
 
-    recordAction(action) {
-        this.history = this.history.slice(0, this.currentIndex + 1);
-        this.history.push({
-            ...action,
-            timestamp: Date.now()
-        });
-        this.currentIndex++;
-        if (this.history.length > this.maxHistorySize) {
-            this.history.shift();
-            this.currentIndex--;
+    /**
+     * Record an action with both undo/redo functions AND delta information
+     * @param {Object} actionConfig - Action configuration
+     * @param {string} actionConfig.type - Action type (e.g., 'add-indicator', 'move-category')
+     * @param {string} actionConfig.message - Human-readable description
+     * @param {Object} actionConfig.delta - Delta object with change details
+     * @param {Function} actionConfig.undo - Function to undo the action
+     * @param {Function} actionConfig.redo - Function to redo the action
+     * @returns {Object} The recorded action
+     */
+    recordAction(actionConfig) {
+        // Validate required fields
+        if (!actionConfig.type || !actionConfig.message || !actionConfig.undo || !actionConfig.redo) {
+            console.error('Invalid action config:', actionConfig);
+            throw new Error('Action must have type, message, undo, and redo');
         }
-        console.log('Recorded action:', action.message, '(History size:', this.history.length, ')');
+
+        // Truncate any actions after currentIndex (branching timeline)
+        if (this.currentIndex < this.actions.length - 1) {
+            this.actions = this.actions.slice(0, this.currentIndex + 1);
+        }
+
+        // Create action with unique ID and timestamp
+        const action = {
+            actionId: this.generateUUID(),
+            timestamp: Date.now(),
+            type: actionConfig.type,
+            message: actionConfig.message,
+            delta: actionConfig.delta || null,
+            undo: actionConfig.undo,
+            redo: actionConfig.redo
+        };
+
+        // Add to history
+        this.actions.push(action);
+        this.currentIndex++;
+
+        // Enforce max size
+        if (this.actions.length > this.maxHistorySize) {
+            const overflow = this.actions.length - this.maxHistorySize;
+            this.actions = this.actions.slice(overflow);
+            this.currentIndex -= overflow;
+        }
+
+        console.log('Recorded action:', action.type, '-', action.message, '(History size:', this.actions.length, ')');
+        return action;
     }
 
+    /**
+     * Undo the most recent action
+     * @returns {boolean} Success status
+     */
     undo() {
         if (!this.canUndo()) {
             this.sspi.showNotification('Nothing\u0020to\u0020undo', 'info', 2000);
             return false;
         }
-        const action = this.history[this.currentIndex];
+
+        const action = this.actions[this.currentIndex];
         try {
             action.undo();
             this.currentIndex--;
             this.sspi.showNotification(`↶\u0020Undo:\u0020${action.message}`, 'info', 2500);
-            console.log('Undid action:', action.message);
+            console.log('Undid action:', action.type, '-', action.message);
             return true;
         } catch (error) {
             console.error('Error during undo:', error);
@@ -45,17 +104,22 @@ class UndoRedoManager {
         }
     }
 
+    /**
+     * Redo the next action
+     * @returns {boolean} Success status
+     */
     redo() {
         if (!this.canRedo()) {
             this.sspi.showNotification('Nothing\u0020to\u0020redo', 'info', 2000);
             return false;
         }
-        const action = this.history[this.currentIndex + 1];
+
+        const action = this.actions[this.currentIndex + 1];
         try {
             action.redo();
             this.currentIndex++;
             this.sspi.showNotification(`↷\u0020Redo:\u0020${action.message}`, 'info', 2500);
-            console.log('Redid action:', action.message);
+            console.log('Redid action:', action.type, '-', action.message);
             return true;
         } catch (error) {
             console.error('Error during redo:', error);
@@ -64,28 +128,82 @@ class UndoRedoManager {
         }
     }
 
+    /**
+     * Check if undo is available
+     * @returns {boolean}
+     */
     canUndo() {
         return this.currentIndex >= 0;
     }
 
+    /**
+     * Check if redo is available
+     * @returns {boolean}
+     */
     canRedo() {
-        return this.currentIndex < this.history.length - 1;
+        return this.currentIndex < this.actions.length - 1;
     }
 
+    /**
+     * Get cumulative actions from baseline to current state
+     * @returns {Array} Array of actions up to current index
+     */
+    getCumulativeActions() {
+        return this.actions.slice(0, this.currentIndex + 1);
+    }
+
+    /**
+     * Clear all action history
+     */
     clear() {
-        this.history = [];
+        this.actions = [];
         this.currentIndex = -1;
-        console.log('Cleared undo/redo history');
+        console.log('Cleared action history');
     }
 
+    /**
+     * Export action log for backend processing (without undo/redo functions)
+     * @returns {Array} Array of action objects with actionId, type, timestamp, message, delta
+     */
+    exportActionLog() {
+        return this.getCumulativeActions().map(action => ({
+            actionId: action.actionId,
+            type: action.type,
+            timestamp: action.timestamp,
+            message: action.message,
+            delta: action.delta
+        }));
+    }
+
+    /**
+     * Get info about current history state
+     * @returns {Object} History information
+     */
     getInfo() {
         return {
-            historySize: this.history.length,
+            historySize: this.actions.length,
             currentIndex: this.currentIndex,
             canUndo: this.canUndo(),
             canRedo: this.canRedo(),
-            recentActions: this.history.slice(-5).map(a => a.message)
+            hasBaseline: this.baseline !== null,
+            baselineItems: this.baseline ? this.baseline.length : 0,
+            recentActions: this.actions.slice(-5).map(a => ({
+                type: a.type,
+                message: a.message
+            }))
         };
+    }
+
+    /**
+     * Generate a UUID v4 string
+     * @returns {string} UUID
+     */
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
 }
 
@@ -99,6 +217,8 @@ class CustomizableSSPIStructure {
 
         this.parentElement = parentElement;
         this.pillars = pillars;
+        this.changeLog = [];
+
         this.autoLoad = autoLoad;
         this.loadingDelay = loadingDelay;
 
@@ -121,9 +241,8 @@ class CustomizableSSPIStructure {
         this.currentConfigId = null;
         // Dataset details storage (maps dataset code to full details)
         this.datasetDetails = {};
-        // Initialize undo/redo manager
-        this.undoRedoManager = new UndoRedoManager(this);
-        this.injectStyles();
+        // Initialize action history system
+        this.actionHistory = new ActionHistory(this);
         this.initToolbar();
         this.initVisualizationSection();
         this.initRoot();
@@ -142,138 +261,6 @@ class CustomizableSSPIStructure {
                 this.loadInitialData();
             }, this.loadingDelay);
         }
-    }
-
-    injectStyles() {
-        const style = document.createElement('style');
-        style.textContent = `
-.insertion-indicator {
-    height: 5px;
-    background: var(--green-accent);
-    margin: 4px 0;
-}
-.drag-over {
-    outline: 2px dashed var(--green-accent);
-}
-.unsaved-changes {
-    background: var(--ms-color);
-    color: white;
-}
-.draggable-item {
-    cursor: grab;
-}
-.draggable-item.dragging {
-    visibility: hidden;
-}
-.sspi-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    color: var(--text-color);
-    font-size: 1.1rem;
-}
-.sspi-loading::before {
-    content: '';
-    width: 20px;
-    height: 20px;
-    margin-right: 10px;
-    border: 2px solid var(--subtle-line-color);
-    border-top-color: var(--green-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideOutRight {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-.sspi-error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    color: var(--sus-color);
-    font-size: 1rem;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-/* Preview Modal Styles */
-.preview-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 2rem;
-    box-sizing: border-box !important;
-}
-
-.preview-modal,
-.preview-modal * {
-    box-sizing: border-box !important;
-}
-
-.preview-modal {
-    background: var(--page-background-color);
-    border-radius: var(--border-radius);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    width: 90vw;
-    height: 85vh;
-    max-width: 1800px;
-    max-height: calc(100vh - 4rem);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.preview-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--subtle-line-color);
-    background: var(--box-background-color);
-    flex-shrink: 0;
-}
-
-.preview-modal-header h3 {
-    margin: 0;
-    font-family: var(--header-font-family);
-    color: var(--header-text-color);
-    font-size: 1.2rem;
-}
-
-.preview-modal-body {
-    flex: 1 1 auto;
-    overflow: auto;
-    padding: 1rem;
-    background: var(--box-background-color);
-    min-height: 0;
-    position: relative;
-}
-
-#preview-chart-container {
-    width: 100%;
-    height: 100%;
-    min-height: 500px;
-    max-width: 100%;
-    position: relative;
-}
-`;
-        document.head.appendChild(style);
     }
 
     initToolbar() {
@@ -311,6 +298,9 @@ class CustomizableSSPIStructure {
 
                     // Use async import for better performance with large metadata
                     await this.importDataAsync(response.metadata);
+
+                    // Capture baseline for action history tracking
+                    this.actionHistory.captureBaseline(response.metadata);
 
                     this.hideLoadingState();
                     this.flagUnsaved();
@@ -353,6 +343,16 @@ class CustomizableSSPIStructure {
             this.showHierarchyStatus();
         });
 
+        // View Changes button with badge
+        const viewChangesBtn = document.createElement('button');
+        viewChangesBtn.textContent = 'View Changes';
+        viewChangesBtn.title = 'View history of all changes made to the SSPI structure';
+        viewChangesBtn.id = 'view-changes-btn';
+        viewChangesBtn.addEventListener('click', () => {
+            this.showChangesHistory();
+        });
+        this.viewChangesButton = viewChangesBtn;
+
         this.discardButton = document.createElement('button');
         this.discardButton.textContent = 'Discard Changes';
         this.discardButton.style.opacity = '0.5';
@@ -375,7 +375,7 @@ class CustomizableSSPIStructure {
             await this.scoreAndVisualize();
         });
 
-        toolbar.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, this.discardButton, resetViewBtn, expandAllBtn, collapseAllBtn);
+        toolbar.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, viewChangesBtn, this.discardButton, resetViewBtn, expandAllBtn, collapseAllBtn);
         this.parentElement.appendChild(toolbar);
     }
 
@@ -559,13 +559,38 @@ class CustomizableSSPIStructure {
             this.draggedEl = el;
             this.origin = { parent: el.parentNode, next: el.nextSibling };
             this.dropped = false;
+
+            // Check if element is expanded and store state
+            const collapsibleEl = el.querySelector('[data-expanded]');
+            this.wasExpanded = collapsibleEl && collapsibleEl.dataset.expanded === 'true';
+
+            // Collapse element if expanded (for smoother dragging)
+            if (this.wasExpanded && collapsibleEl) {
+                collapsibleEl.dataset.expanded = 'false';
+            }
+
+            // Add dragging class (makes original invisible via opacity: 0)
             el.classList.add('dragging');
+
+            // Create and style the drag ghost
             const clone = el.cloneNode(true);
-            clone.style.position = 'absolute'
+            clone.style.position = 'absolute';
+            clone.style.top = '-9999px';
+            clone.style.left = '-9999px';
+            clone.classList.add('drag-ghost');
+            clone.classList.remove('dragging'); // Remove dragging class from clone
             document.body.appendChild(clone);
+
             const rect = el.getBoundingClientRect();
             e.dataTransfer.setDragImage(clone, rect.width/2, rect.height/2);
-            setTimeout(() => document.body.removeChild(clone), 0);
+
+            // Keep clone a bit longer to ensure proper rendering
+            setTimeout(() => {
+                if (clone.parentNode) {
+                    document.body.removeChild(clone);
+                }
+            }, 50);
+
             if (!el.id) el.id = `id-${Math.random().toString(36).substr(2,9)}`;
             e.dataTransfer.setData('text/plain', el.id);
             e.dataTransfer.effectAllowed = 'move';
@@ -575,10 +600,23 @@ class CustomizableSSPIStructure {
             if (!this.dropped && this.origin && this.draggedEl) {
                 this.origin.parent.insertBefore(this.draggedEl, this.origin.next);
             }
+
+            // Re-expand element if it was previously expanded
+            if (this.draggedEl && this.wasExpanded) {
+                const collapsibleEl = this.draggedEl.querySelector('[data-expanded]');
+                if (collapsibleEl) {
+                    // Small delay to allow smooth transition after drop
+                    setTimeout(() => {
+                        collapsibleEl.dataset.expanded = 'true';
+                    }, 100);
+                }
+            }
+
             if (this.draggedEl) this.draggedEl.classList.remove('dragging');
             this.draggedEl = null;
             this.origin = null;
             this.dropped = false;
+            this.wasExpanded = false;
             this.clearIndicators();
         });
 
@@ -588,13 +626,42 @@ class CustomizableSSPIStructure {
             e.preventDefault();
             z.classList.add('drag-over');
             this.clearIndicators(z);
-            const overItem = e.target.closest('.draggable-item');
-            if (overItem && overItem.parentNode === z) {
-                const { top, height } = overItem.getBoundingClientRect();
-                const before = (e.clientY - top) < (height / 2);
+
+            // Get all draggable items in this drop zone (excluding the dragged element)
+            const items = Array.from(z.querySelectorAll('.draggable-item')).filter(item => item !== this.draggedEl);
+
+            if (items.length === 0) {
+                // Empty drop zone - show indicator at the top
                 const indicator = document.createElement('div');
                 indicator.className = 'insertion-indicator';
-                z.insertBefore(indicator, before ? overItem : overItem.nextSibling);
+                z.insertBefore(indicator, z.firstChild);
+            } else {
+                // Find the correct insertion point based on mouse Y position
+                let insertBeforeItem = null;
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const rect = item.getBoundingClientRect();
+                    const itemMiddle = rect.top + rect.height / 2;
+
+                    if (e.clientY < itemMiddle) {
+                        // Mouse is above the middle of this item
+                        insertBeforeItem = item;
+                        break;
+                    }
+                }
+
+                // Create and insert the indicator
+                const indicator = document.createElement('div');
+                indicator.className = 'insertion-indicator';
+
+                if (insertBeforeItem) {
+                    // Insert before the found item (could be at top or middle)
+                    z.insertBefore(indicator, insertBeforeItem);
+                } else {
+                    // Mouse is below all items - insert at end
+                    z.appendChild(indicator);
+                }
             }
         });
 
@@ -632,6 +699,18 @@ class CustomizableSSPIStructure {
 
             this.dropped = true;
             this.draggedEl.classList.remove('dragging');
+
+            // Re-expand element if it was previously expanded
+            if (this.wasExpanded) {
+                const collapsibleEl = this.draggedEl.querySelector('[data-expanded]');
+                if (collapsibleEl) {
+                    // Small delay to allow smooth transition after drop
+                    setTimeout(() => {
+                        collapsibleEl.dataset.expanded = 'true';
+                    }, 100);
+                }
+            }
+
             this.validate(z);
             this.flagUnsaved();
             this.markInvalidIndicatorPlacements();
@@ -639,15 +718,50 @@ class CustomizableSSPIStructure {
             const order = Array.from(z.children).map(c => c.id);
             console.log('New order:', order);
 
-            // Record the move action for undo/redo
+            // Record the move action with proper action type
             const elementType = movedElement.dataset.type || 'item';
+            const itemType = movedElement.dataset.itemType;
             const elementName = this.getElementName(movedElement);
             const fromLocation = this.getLocationName(fromParent);
             const toLocation = this.getLocationName(toParent);
 
-            this.undoRedoManager.recordAction({
-                type: 'move',
+            // Determine action type based on item type
+            let actionType = 'move'; // fallback for unknown types
+            if (itemType === 'Indicator') {
+                actionType = 'move-indicator';
+            } else if (itemType === 'Category') {
+                actionType = 'move-category';
+            }
+
+            // Create delta with proper structure
+            const delta = {
+                type: actionType,
+                itemType: itemType
+            };
+
+            // Add type-specific delta fields
+            if (itemType === 'Indicator') {
+                const indicatorCode = movedElement.dataset.indicatorCode;
+                const fromParentCode = this.getParentCode(movedElement) || fromLocation;
+                const toParentCode = toLocation; // Will be set after move completes
+
+                delta.indicatorCode = indicatorCode;
+                delta.fromParentCode = fromParentCode;
+                delta.toParentCode = toParentCode;
+            } else if (itemType === 'Category') {
+                const categoryCode = movedElement.dataset.categoryCode;
+                const fromPillarCode = fromLocation;
+                const toPillarCode = toLocation;
+
+                delta.categoryCode = categoryCode;
+                delta.fromPillarCode = fromPillarCode;
+                delta.toPillarCode = toPillarCode;
+            }
+
+            this.actionHistory.recordAction({
+                type: actionType,
                 message: `Moved\u0020${elementType}\u0020"${elementName}"\u0020from\u0020${fromLocation}\u0020to\u0020${toLocation}`,
+                delta: delta,
                 undo: () => {
                     // Move it back to original position
                     if (fromNextSibling && fromNextSibling.parentNode) {
@@ -676,6 +790,24 @@ class CustomizableSSPIStructure {
                 }
             });
         });
+
+        // Prevent contenteditable elements from accepting drops during drag operations
+        this.container.addEventListener('dragover', e => {
+            const contentEditableEl = e.target.closest('[contenteditable="true"]');
+            if (contentEditableEl && this.draggedEl) {
+                // Prevent contenteditable from becoming a drop target
+                e.stopPropagation();
+            }
+        }, true); // Use capture phase to intercept before other handlers
+
+        this.container.addEventListener('drop', e => {
+            const contentEditableEl = e.target.closest('[contenteditable="true"]');
+            if (contentEditableEl && this.draggedEl) {
+                // Prevent text insertion into contenteditable elements
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true); // Use capture phase to intercept before other handlers
 
         // Context menu & keyboard
         this.container.addEventListener('contextmenu', e => {
@@ -734,7 +866,8 @@ class CustomizableSSPIStructure {
             if (editableElement.isContentEditable &&
                 (editableElement.classList.contains('indicator-name') ||
                  editableElement.classList.contains('customization-category-header-title') ||
-                 editableElement.classList.contains('pillar-name'))) {
+                 editableElement.classList.contains('pillar-name') ||
+                 editableElement.classList.contains('editable-score-function'))) {
                 editingElement = editableElement;
                 originalValue = editableElement.textContent.trim();
             }
@@ -747,22 +880,251 @@ class CustomizableSSPIStructure {
 
                 // Only record if the value actually changed and it's not empty
                 if (newValue !== originalValue && newValue !== '' && originalValue !== '') {
-                    const elementType = editableElement.classList.contains('indicator-name') ? 'indicator' :
-                                      editableElement.classList.contains('customization-category-header-title') ? 'category' :
-                                      editableElement.classList.contains('pillar-name') ? 'pillar' : 'item';
+                    // IMPORTANT: Create local copies to capture in closures
+                    // The outer originalValue/newValue are shared and will be overwritten
+                    const capturedOriginalValue = originalValue;
+                    const capturedNewValue = newValue;
 
-                    this.undoRedoManager.recordAction({
-                        type: 'rename',
-                        message: `Renamed\u0020${elementType}\u0020from\u0020"${originalValue}"\u0020to\u0020"${newValue}"`,
-                        undo: () => {
-                            editableElement.textContent = originalValue;
-                            this.flagUnsaved();
-                        },
-                        redo: () => {
-                            editableElement.textContent = newValue;
-                            this.flagUnsaved();
+                    let elementType, actionType, itemCode, message;
+
+                    // Determine element type and action
+                    if (editableElement.classList.contains('indicator-name')) {
+                        elementType = 'indicator';
+                        actionType = 'set-indicator-name';
+                        const indicatorCard = editableElement.closest('[data-indicator-code]');
+                        itemCode = indicatorCard?.dataset.indicatorCode;
+                        message = `Changed\u0020indicator\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;
+                    } else if (editableElement.classList.contains('customization-category-header-title')) {
+                        elementType = 'category';
+                        actionType = 'set-category-name';
+                        const categoryBox = editableElement.closest('[data-category-code]');
+                        itemCode = categoryBox?.dataset.categoryCode;
+                        message = `Changed\u0020category\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;
+                    } else if (editableElement.classList.contains('pillar-name')) {
+                        elementType = 'pillar';
+                        actionType = 'set-pillar-name';
+                        const pillarCol = editableElement.closest('[data-pillar-code]');
+                        itemCode = pillarCol?.dataset.pillarCode;
+                        message = `Changed\u0020pillar\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;
+                    } else if (editableElement.classList.contains('editable-score-function')) {
+                        elementType = 'score-function';
+                        actionType = 'set-score-function';
+                        const indicatorCard = editableElement.closest('[data-indicator-code]');
+                        itemCode = indicatorCard?.dataset.indicatorCode;
+                        message = `Changed\u0020score\u0020function\u0020for\u0020indicator\u0020${itemCode || 'unknown'}`;
+                        console.log('[Score Function Edit] Recording action:', {
+                            itemCode,
+                            indicatorId: indicatorCard?.id,
+                            capturedOriginalValue,
+                            capturedNewValue,
+                            elementExists: !!editableElement
+                        });
+                    } else {
+                        elementType = 'item';
+                        actionType = 'rename';
+                        itemCode = null;
+                        message = `Renamed\u0020${elementType}\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;
+                    }
+
+                    // Create delta with proper structure
+                    const delta = {
+                        type: actionType,
+                        from: capturedOriginalValue,
+                        to: capturedNewValue
+                    };
+
+                    // Add code-specific fields
+                    if (elementType === 'indicator' && itemCode) {
+                        delta.indicatorCode = itemCode;
+                    } else if (elementType === 'category' && itemCode) {
+                        delta.categoryCode = itemCode;
+                    } else if (elementType === 'pillar' && itemCode) {
+                        delta.pillarCode = itemCode;
+                    } else if (elementType === 'score-function' && itemCode) {
+                        delta.indicatorCode = itemCode;
+                        delta.scoreFunction = capturedNewValue; // Include the new score function
+                    }
+
+                    // Create undo/redo functions that find elements by code for reliability
+                    let undoFn, redoFn;
+
+                    if (elementType === 'score-function') {
+                        // Score function: find by indicator code (if available), otherwise use element ID
+                        const indicatorCard = editableElement.closest('[data-indicator-code]');
+
+                        // Ensure indicator has an ID for fallback
+                        if (!indicatorCard.id) {
+                            indicatorCard.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
                         }
+                        const elementId = indicatorCard.id;
+
+                        console.log('[Score Function] Setup undo/redo:', {
+                            itemCode,
+                            elementId,
+                            hasCode: !!itemCode,
+                            hasId: !!elementId
+                        });
+
+                        undoFn = () => {
+                            console.log('[Score Function UNDO] Starting:', {
+                                itemCode,
+                                elementId,
+                                capturedOriginalValue
+                            });
+
+                            let indicator;
+                            if (itemCode) {
+                                // Try finding by code first
+                                indicator = this.findElementByCode(itemCode, 'Indicator');
+                                console.log('[Score Function UNDO] Found by code:', !!indicator);
+                            }
+                            if (!indicator && elementId) {
+                                // Fallback to finding by ID
+                                indicator = document.getElementById(elementId);
+                                console.log('[Score Function UNDO] Found by ID:', !!indicator);
+                            }
+
+                            const scoreFn = indicator?.querySelector('.editable-score-function');
+                            console.log('[Score Function UNDO] Found scoreFn element:', !!scoreFn);
+
+                            if (scoreFn) {
+                                console.log('[Score Function UNDO] Setting textContent to:', capturedOriginalValue);
+                                scoreFn.textContent = capturedOriginalValue;
+                                console.log('[Score Function UNDO] After set, textContent is:', scoreFn.textContent);
+                            } else {
+                                console.warn('[Score Function UNDO] Could not find score function element!');
+                            }
+                            this.flagUnsaved();
+                        };
+                        redoFn = () => {
+                            console.log('[Score Function REDO] Starting:', {
+                                itemCode,
+                                elementId,
+                                capturedNewValue
+                            });
+
+                            let indicator;
+                            if (itemCode) {
+                                indicator = this.findElementByCode(itemCode, 'Indicator');
+                                console.log('[Score Function REDO] Found by code:', !!indicator);
+                            }
+                            if (!indicator && elementId) {
+                                indicator = document.getElementById(elementId);
+                                console.log('[Score Function REDO] Found by ID:', !!indicator);
+                            }
+
+                            const scoreFn = indicator?.querySelector('.editable-score-function');
+                            console.log('[Score Function REDO] Found scoreFn element:', !!scoreFn);
+
+                            if (scoreFn) {
+                                console.log('[Score Function REDO] Setting textContent to:', capturedNewValue);
+                                scoreFn.textContent = capturedNewValue;
+                                console.log('[Score Function REDO] After set, textContent is:', scoreFn.textContent);
+                            } else {
+                                console.warn('[Score Function REDO] Could not find score function element!');
+                            }
+                            this.flagUnsaved();
+                        };
+                    } else if (elementType === 'indicator') {
+                        // Indicator name: find by code (if available), otherwise use element ID
+                        const indicatorCard = editableElement.closest('[data-indicator-code]');
+                        if (!indicatorCard.id) {
+                            indicatorCard.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
+                        }
+                        const elementId = indicatorCard.id;
+
+                        undoFn = () => {
+                            let indicator;
+                            if (itemCode) {
+                                indicator = this.findElementByCode(itemCode, 'Indicator');
+                            }
+                            if (!indicator && elementId) {
+                                indicator = document.getElementById(elementId);
+                            }
+                            const nameEl = indicator?.querySelector('.indicator-name');
+                            if (nameEl) nameEl.textContent = capturedOriginalValue;
+                            this.flagUnsaved();
+                        };
+                        redoFn = () => {
+                            let indicator;
+                            if (itemCode) {
+                                indicator = this.findElementByCode(itemCode, 'Indicator');
+                            }
+                            if (!indicator && elementId) {
+                                indicator = document.getElementById(elementId);
+                            }
+                            const nameEl = indicator?.querySelector('.indicator-name');
+                            if (nameEl) nameEl.textContent = capturedNewValue;
+                            this.flagUnsaved();
+                        };
+                    } else if (elementType === 'category') {
+                        // Category name: find by code (if available), otherwise use element ID
+                        const categoryBox = editableElement.closest('[data-category-code]');
+                        if (!categoryBox.id) {
+                            categoryBox.id = `category-${Math.random().toString(36).substr(2,9)}`;
+                        }
+                        const elementId = categoryBox.id;
+
+                        undoFn = () => {
+                            let category;
+                            if (itemCode) {
+                                category = this.findElementByCode(itemCode, 'Category');
+                            }
+                            if (!category && elementId) {
+                                category = document.getElementById(elementId);
+                            }
+                            const nameEl = category?.querySelector('.customization-category-header-title');
+                            if (nameEl) nameEl.textContent = capturedOriginalValue;
+                            this.flagUnsaved();
+                        };
+                        redoFn = () => {
+                            let category;
+                            if (itemCode) {
+                                category = this.findElementByCode(itemCode, 'Category');
+                            }
+                            if (!category && elementId) {
+                                category = document.getElementById(elementId);
+                            }
+                            const nameEl = category?.querySelector('.customization-category-header-title');
+                            if (nameEl) nameEl.textContent = capturedNewValue;
+                            this.flagUnsaved();
+                        };
+                    } else if (elementType === 'pillar' && itemCode) {
+                        // Pillar name: find by code (pillar codes should always be set)
+                        undoFn = () => {
+                            const pillar = this.findElementByCode(itemCode, 'Pillar');
+                            const nameEl = pillar?.querySelector('.pillar-name');
+                            if (nameEl) nameEl.textContent = capturedOriginalValue;
+                            this.flagUnsaved();
+                        };
+                        redoFn = () => {
+                            const pillar = this.findElementByCode(itemCode, 'Pillar');
+                            const nameEl = pillar?.querySelector('.pillar-name');
+                            if (nameEl) nameEl.textContent = capturedNewValue;
+                            this.flagUnsaved();
+                        };
+                    } else {
+                        // Fallback: direct element reference (less reliable)
+                        undoFn = () => {
+                            editableElement.textContent = capturedOriginalValue;
+                            this.flagUnsaved();
+                        };
+                        redoFn = () => {
+                            editableElement.textContent = capturedNewValue;
+                            this.flagUnsaved();
+                        };
+                    }
+
+                    this.actionHistory.recordAction({
+                        type: actionType,
+                        message: message,
+                        delta: delta,
+                        undo: undoFn,
+                        redo: redoFn
                     });
+
+                    // Flag unsaved to trigger cache update
+                    this.flagUnsaved();
                 }
 
                 editingElement = null;
@@ -801,14 +1163,14 @@ class CustomizableSSPIStructure {
             // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !isInInput) {
                 e.preventDefault();
-                this.undoRedoManager.undo();
+                this.actionHistory.undo();
             }
 
             // Redo: Ctrl+Y or Ctrl+Shift+Z (Windows/Linux) or Cmd+Y or Cmd+Shift+Z (Mac)
             if ((((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
                  ((e.ctrlKey || e.metaKey) && e.key === 'y')) && !isInInput) {
                 e.preventDefault();
-                this.undoRedoManager.redo();
+                this.actionHistory.redo();
             }
         });
 
@@ -855,12 +1217,1490 @@ class CustomizableSSPIStructure {
         parent.querySelectorAll('.insertion-indicator').forEach(node => node.remove());
     }
 
+    // ========== SECTION 3: Helper Methods ==========
+
+    /**
+     * Find element by code using data attributes
+     * @param {string} itemCode - The item code to search for
+     * @param {string} itemType - The item type ('Indicator', 'Category', or 'Pillar')
+     * @returns {HTMLElement|null} The found element or null
+     */
+    findElementByCode(itemCode, itemType) {
+        if (!itemCode || !itemType) {
+            console.warn('findElementByCode: itemCode and itemType are required');
+            return null;
+        }
+
+        const selectors = {
+            'Indicator': `[data-indicator-code="${itemCode}"]`,
+            'Category': `[data-category-code="${itemCode}"]`,
+            'Pillar': `[data-pillar-code="${itemCode}"]`
+        };
+
+        const selector = selectors[itemType];
+        if (!selector) {
+            console.warn('findElementByCode: Unknown itemType:', itemType);
+            return null;
+        }
+
+        return this.container.querySelector(selector);
+    }
+
+    /**
+     * Get parent code from element using DOM traversal
+     * @param {HTMLElement} element - The element to find parent for
+     * @returns {string|null} The parent code or null
+     */
+    getParentCode(element) {
+        if (!element) return null;
+
+        // For category: traverse to parent pillar
+        if (element.dataset.itemType === 'Category') {
+            const pillarCol = element.closest('[data-pillar-code]');
+            return pillarCol?.dataset.pillarCode || null;
+        }
+
+        // For indicator: traverse to parent category or pillar
+        if (element.dataset.itemType === 'Indicator') {
+            const parent = element.closest('[data-category-code], [data-pillar-code]');
+            return parent?.dataset.categoryCode || parent?.dataset.pillarCode || null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get parent type from element using DOM traversal
+     * @param {HTMLElement} element - The element to find parent type for
+     * @returns {string|null} The parent type ('Pillar' or 'Category') or null
+     */
+    getParentType(element) {
+        if (!element) return null;
+
+        // For category: parent is always pillar
+        if (element.dataset.itemType === 'Category') {
+            return 'Pillar';
+        }
+
+        // For indicator: parent is category or pillar
+        if (element.dataset.itemType === 'Indicator') {
+            const parent = element.closest('[data-category-code], [data-pillar-code]');
+            return parent?.dataset.itemType || null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get item type from element data attribute
+     * @param {HTMLElement} element - The element
+     * @returns {string|null} The item type or null
+     */
+    getItemType(element) {
+        return element?.dataset.itemType || null;
+    }
+
+    /**
+     * Get position of element in parent's children of same type
+     * @param {HTMLElement} element - The element
+     * @returns {number} The zero-based index, or -1 if not found
+     */
+    getPositionInParent(element) {
+        if (!element) return -1;
+
+        const parent = element.parentElement;
+        if (!parent) return -1;
+
+        const itemType = element.dataset.itemType;
+        const siblings = Array.from(parent.children)
+            .filter(el => el.dataset.itemType === itemType);
+
+        return siblings.indexOf(element);
+    }
+
+    /**
+     * Update element's code data attributes when code changes
+     * @param {HTMLElement} element - The element to update
+     * @param {string} newCode - The new code value
+     */
+    updateElementCode(element, newCode) {
+        if (!element || !newCode) return;
+
+        const itemType = element.dataset.itemType;
+        element.dataset.itemCode = newCode;
+
+        if (itemType === 'Indicator') {
+            element.dataset.indicatorCode = newCode;
+        } else if (itemType === 'Category') {
+            element.dataset.categoryCode = newCode;
+        } else if (itemType === 'Pillar') {
+            element.dataset.pillarCode = newCode;
+        }
+    }
+
+    // ========== SECTION 4: API Methods - Indicators ==========
+
+    /**
+     * Set score function for an indicator
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options object
+     * @param {string} options.scoreFunction - The new score function
+     * @returns {Object} Result with success status and action
+     */
+    setScoreFunction(indicatorCode, { scoreFunction } = {}) {
+        // Validate inputs
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!scoreFunction) {
+            return { success: false, error: 'Score function is required' };
+        }
+
+        // Find indicator element
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Find score function element
+        const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
+        if (!scoreFunctionEl) {
+            return { success: false, error: 'Score function element not found' };
+        }
+
+        // Capture old value
+        const oldScoreFunction = scoreFunctionEl.textContent;
+
+        // Don't record if no change
+        if (oldScoreFunction === scoreFunction) {
+            return { success: true, message: 'No change needed' };
+        }
+
+        // Apply change
+        scoreFunctionEl.textContent = scoreFunction;
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'set-score-function',
+            message: `Updated score function for indicator "${indicatorCode}"`,
+            delta: {
+                type: 'set-score-function',
+                indicatorCode: indicatorCode,
+                from: oldScoreFunction,
+                to: scoreFunction
+            },
+            undo: () => {
+                scoreFunctionEl.textContent = oldScoreFunction;
+                this.validate();
+            },
+            redo: () => {
+                scoreFunctionEl.textContent = scoreFunction;
+                this.validate();
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Set code for an indicator
+     * @param {HTMLElement} indicatorElement - The indicator element
+     * @param {Object} options - Options object
+     * @param {string} options.newCode - The new code value
+     * @returns {Object} Result with success status and action
+     */
+    setIndicatorCode(indicatorElement, { newCode } = {}) {
+        // Validate element
+        if (!(indicatorElement instanceof HTMLElement)) {
+            return { success: false, error: 'Indicator element is required' };
+        }
+
+        // Validate new code
+        if (!newCode) {
+            return { success: false, error: 'New code is required' };
+        }
+
+        // Validate code format
+        if (!this.validateCode(newCode, 'indicator')) {
+            return { success: false, error: 'Invalid indicator code format (must be 6 uppercase letters/numbers)' };
+        }
+
+        // Ensure element has a stable ID for undo/redo
+        if (!indicatorElement.id) {
+            indicatorElement.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
+        }
+        const elementId = indicatorElement.id;
+
+        // Get old code from element's data attribute
+        const oldCode = indicatorElement.dataset.indicatorCode || '';
+
+        // Check if code is unique (excluding current element)
+        const codeInput = indicatorElement.querySelector('.indicator-code-input');
+        if (!this.isCodeUnique(newCode, 'indicator', codeInput)) {
+            return { success: false, error: 'Code already in use' };
+        }
+
+        // Don't record if no change
+        if (oldCode === newCode) {
+            return { success: true, message: 'No change needed' };
+        }
+
+        // Apply change - update data attributes
+        this.updateElementCode(indicatorElement, newCode);
+
+        // Update input field
+        if (codeInput) {
+            codeInput.value = newCode;
+        }
+
+        // Record action with ID-based undo/redo (codes change, but IDs are stable)
+        const action = this.actionHistory.recordAction({
+            type: 'set-indicator-code',
+            message: oldCode
+                ? `Changed indicator code from "${oldCode}" to "${newCode}"`
+                : `Set indicator code to "${newCode}"`,
+            delta: {
+                type: 'set-indicator-code',
+                indicatorCode: newCode,  // New code for backend reference
+                from: oldCode,
+                to: newCode
+            },
+            undo: () => {
+                // Find by stable ID (not by code which has changed)
+                const el = document.getElementById(elementId);
+                if (el) {
+                    this.updateElementCode(el, oldCode);
+                    const input = el.querySelector('.indicator-code-input');
+                    if (input) input.value = oldCode;
+                    this.validate();
+                }
+            },
+            redo: () => {
+                // Find by stable ID (not by code which has changed)
+                const el = document.getElementById(elementId);
+                if (el) {
+                    this.updateElementCode(el, newCode);
+                    const input = el.querySelector('.indicator-code-input');
+                    if (input) input.value = newCode;
+                    this.validate();
+                }
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Add dataset to an indicator
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options object
+     * @param {string} options.datasetCode - The dataset code to add
+     * @param {Object} options.datasetDetails - The dataset details object (optional, will fetch if not provided)
+     * @returns {Object} Result with success status and action
+     */
+    addDataset(indicatorCode, { datasetCode, datasetDetails } = {}) {
+        // Validate inputs
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!datasetCode) {
+            return { success: false, error: 'Dataset code is required' };
+        }
+
+        // Find indicator element
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Find selected datasets container
+        const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
+        if (!selectedDatasetsDiv) {
+            return { success: false, error: 'Selected datasets container not found' };
+        }
+
+        // Check for duplicates
+        const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
+        if (existing) {
+            return { success: false, error: 'Dataset already added to this indicator' };
+        }
+
+        // Get dataset details if not provided
+        let details = datasetDetails;
+        if (!details) {
+            details = this.datasetDetails[datasetCode];
+            if (!details) {
+                return { success: false, error: `Dataset ${datasetCode} not found in datasetDetails` };
+            }
+        }
+
+        // Get position before adding
+        const position = selectedDatasetsDiv.querySelectorAll('.dataset-item').length;
+
+        // Create dataset item using existing method
+        // (We'll call addDatasetToIndicatorWithDetails but capture the element)
+        const datasetName = details.DatasetName || 'Unknown Dataset';
+        const datasetDescription = details.Description || 'No description available';
+        const datasetOrg = details.Source?.OrganizationName || 'N/A';
+        const datasetOrgCode = details.Source?.OrganizationCode || '';
+
+        const formatNumber = (num) => {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        };
+
+        const unitHtml = details.Unit ? `
+            <div class="detail-row">
+                <span class="detail-label">Unit</span>
+                <span class="detail-value">${details.Unit}</span>
+            </div>` : '';
+
+        const rangeHtml = details.Range ? `
+            <div class="detail-row">
+                <span class="detail-label">Range</span>
+                <span class="detail-value">${formatNumber(details.Range.yMin)} – ${formatNumber(details.Range.yMax)}</span>
+            </div>` : '';
+
+        const datasetItem = document.createElement('div');
+        datasetItem.classList.add('dataset-item');
+        datasetItem.dataset.datasetCode = datasetCode;
+        datasetItem.dataset.expanded = 'false';
+        datasetItem.innerHTML = `
+            <div class="dataset-item-header">
+                <div class="dataset-info">
+                    <span class="dataset-name">${datasetName}</span>
+                    <span class="dataset-code">${datasetCode}</span>
+                </div>
+                <div class="dataset-actions">
+                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+                </div>
+            </div>
+            <div class="dataset-details-slideout">
+                <div class="detail-row">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">${datasetDescription}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Organization</span>
+                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
+                </div>${unitHtml}${rangeHtml}
+            </div>
+        `;
+
+        // Add toggle functionality
+        const header = datasetItem.querySelector('.dataset-item-header');
+        header.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('remove-dataset')) {
+                const isExpanded = datasetItem.dataset.expanded === 'true';
+                datasetItem.dataset.expanded = (!isExpanded).toString();
+            }
+        });
+
+        // Add to DOM
+        selectedDatasetsDiv.appendChild(datasetItem);
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'add-dataset',
+            message: `Added dataset "${datasetCode}" to indicator "${indicatorCode}"`,
+            delta: {
+                type: 'add-dataset',
+                indicatorCode: indicatorCode,
+                datasetCode: datasetCode,
+                datasetDetails: details,
+                position: position
+            },
+            undo: () => {
+                datasetItem.remove();
+                this.validate();
+            },
+            redo: () => {
+                selectedDatasetsDiv.appendChild(datasetItem);
+                this.validate();
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Remove dataset from an indicator
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options object
+     * @param {string} options.datasetCode - The dataset code to remove
+     * @returns {Object} Result with success status and action
+     */
+    removeDataset(indicatorCode, { datasetCode } = {}) {
+        // Validate inputs
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!datasetCode) {
+            return { success: false, error: 'Dataset code is required' };
+        }
+
+        // Find indicator element
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Find selected datasets container
+        const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
+        if (!selectedDatasetsDiv) {
+            return { success: false, error: 'Selected datasets container not found' };
+        }
+
+        // Find dataset item
+        const datasetItem = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
+        if (!datasetItem) {
+            return { success: false, error: `Dataset ${datasetCode} not found in indicator` };
+        }
+
+        // Get position before removing
+        const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+
+        // Get dataset details for undo
+        const details = this.datasetDetails[datasetCode];
+
+        // Remove from DOM
+        datasetItem.remove();
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'remove-dataset',
+            message: `Removed dataset "${datasetCode}" from indicator "${indicatorCode}"`,
+            delta: {
+                type: 'remove-dataset',
+                indicatorCode: indicatorCode,
+                datasetCode: datasetCode,
+                datasetDetails: details,
+                position: position
+            },
+            undo: () => {
+                // Re-add at same position
+                const siblings = Array.from(selectedDatasetsDiv.children);
+                if (position >= siblings.length) {
+                    selectedDatasetsDiv.appendChild(datasetItem);
+                } else {
+                    selectedDatasetsDiv.insertBefore(datasetItem, siblings[position]);
+                }
+                this.validate();
+            },
+            redo: () => {
+                datasetItem.remove();
+                this.validate();
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Add new indicator to a category or pillar
+     * @param {string} parentCode - The parent category or pillar code
+     * @param {Object} options - Options object
+     * @param {string} options.indicatorCode - The indicator code (required)
+     * @param {string} options.indicatorName - The indicator name (optional, defaults to "New Indicator")
+     * @param {Array<string>} options.datasetCodes - Array of dataset codes (optional, defaults to [])
+     * @param {string} options.scoreFunction - The score function (optional, defaults to "Score = 0")
+     * @returns {Object} Result with success, action, and element
+     */
+    addIndicator(parentCode, { indicatorCode, indicatorName = 'New Indicator', datasetCodes = [], scoreFunction = 'Score = 0' } = {}) {
+        // Validate inputs
+        if (!parentCode) {
+            return { success: false, error: 'Parent code is required' };
+        }
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+
+        // Find parent (category or pillar)
+        let parentEl = this.findElementByCode(parentCode, 'Category');
+        if (!parentEl) {
+            parentEl = this.findElementByCode(parentCode, 'Pillar');
+        }
+        if (!parentEl) {
+            return { success: false, error: `Parent ${parentCode} not found` };
+        }
+
+        const parentType = this.getItemType(parentEl);
+
+        // Find indicators container
+        const indicatorsContainer = parentEl.querySelector('.indicators-container');
+        if (!indicatorsContainer) {
+            return { success: false, error: 'Indicators container not found in parent' };
+        }
+
+        // Check for duplicate code
+        const existing = this.findElementByCode(indicatorCode, 'Indicator');
+        if (existing) {
+            return { success: false, error: `Indicator code ${indicatorCode} already exists` };
+        }
+
+        // Get position
+        const position = indicatorsContainer.querySelectorAll('.indicator-card').length;
+
+        // Create indicator element
+        const indEl = this.createIndicatorElement();
+
+        // Set indicator details
+        const indicatorNameEl = indEl.querySelector('.indicator-name');
+        const indicatorCodeInput = indEl.querySelector('.indicator-code-input');
+        const scoreFunctionEl = indEl.querySelector('.editable-score-function');
+
+        if (indicatorNameEl) indicatorNameEl.textContent = indicatorName;
+        if (indicatorCodeInput) indicatorCodeInput.value = indicatorCode;
+        if (scoreFunctionEl) scoreFunctionEl.textContent = scoreFunction;
+
+        // Set data attributes
+        indEl.dataset.indicatorCode = indicatorCode;
+        indEl.dataset.itemCode = indicatorCode;
+
+        // Add datasets
+        if (datasetCodes.length > 0) {
+            const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
+            if (selectedDatasetsDiv) {
+                datasetCodes.forEach(datasetCode => {
+                    const details = this.datasetDetails[datasetCode];
+                    if (details) {
+                        this.addDataset(indicatorCode, { datasetCode, datasetDetails: details });
+                    }
+                });
+            }
+        }
+
+        // Add to DOM
+        indicatorsContainer.appendChild(indEl);
+
+        // Capture full indicator metadata for undo
+        const indicatorMetadata = {
+            ItemType: 'Indicator',
+            ItemCode: indicatorCode,
+            ItemName: indicatorName,
+            DatasetCodes: datasetCodes,
+            ScoreFunction: scoreFunction,
+            Children: []
+        };
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'add-indicator',
+            message: `Added indicator "${indicatorCode}" to ${parentType} "${parentCode}"`,
+            delta: {
+                type: 'add-indicator',
+                indicatorCode: indicatorCode,
+                parentCode: parentCode,
+                parentType: parentType,
+                indicatorMetadata: indicatorMetadata,
+                position: position
+            },
+            undo: () => {
+                indEl.remove();
+                this.validate();
+            },
+            redo: () => {
+                indicatorsContainer.appendChild(indEl);
+                this.validate();
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action, element: indEl };
+    }
+
+    /**
+     * Remove indicator
+     * @param {string} indicatorCode - The indicator code
+     * @returns {Object} Result with success, action, and metadata
+     */
+    removeIndicator(indicatorCode) {
+        // Validate input
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+
+        // Find indicator element
+        const indEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Get parent info
+        const parentCode = this.getParentCode(indEl);
+        const parentType = this.getParentType(indEl);
+        const position = this.getPositionInParent(indEl);
+
+        // Capture indicator metadata for undo
+        const indicatorNameEl = indEl.querySelector('.indicator-name');
+        const scoreFunctionEl = indEl.querySelector('.editable-score-function');
+        const datasetItems = indEl.querySelectorAll('.dataset-item');
+
+        const indicatorMetadata = {
+            ItemType: 'Indicator',
+            ItemCode: indicatorCode,
+            ItemName: indicatorNameEl?.textContent || '',
+            DatasetCodes: Array.from(datasetItems).map(item => item.dataset.datasetCode),
+            ScoreFunction: scoreFunctionEl?.textContent || 'Score = 0',
+            Children: []
+        };
+
+        // Get parent element for undo/redo
+        const parentEl = indEl.parentElement;
+
+        // Remove from DOM
+        indEl.remove();
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'remove-indicator',
+            message: `Removed indicator "${indicatorCode}" from ${parentType} "${parentCode}"`,
+            delta: {
+                type: 'remove-indicator',
+                indicatorCode: indicatorCode,
+                parentCode: parentCode,
+                parentType: parentType,
+                indicatorMetadata: indicatorMetadata,
+                position: position
+            },
+            undo: () => {
+                // Re-add at same position
+                const siblings = Array.from(parentEl.children).filter(el => el.classList.contains('indicator-card'));
+                if (position >= siblings.length) {
+                    parentEl.appendChild(indEl);
+                } else {
+                    parentEl.insertBefore(indEl, siblings[position]);
+                }
+                this.validate();
+            },
+            redo: () => {
+                indEl.remove();
+                this.validate();
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action, metadata: indicatorMetadata };
+    }
+
+    /**
+     * Move indicator to different category or pillar
+     * @param {string} indicatorCode - The indicator code
+     * @param {string} targetParentCode - The target parent code (category or pillar)
+     * @returns {Object} Result with success and action
+     */
+    moveIndicator(indicatorCode, targetParentCode) {
+        // Validate inputs
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!targetParentCode) {
+            return { success: false, error: 'Target parent code is required' };
+        }
+
+        // Find indicator element
+        const indEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Get current parent info
+        const fromParentCode = this.getParentCode(indEl);
+        const fromParentType = this.getParentType(indEl);
+        const fromPosition = this.getPositionInParent(indEl);
+
+        // Find target parent
+        let targetParentEl = this.findElementByCode(targetParentCode, 'Category');
+        if (!targetParentEl) {
+            targetParentEl = this.findElementByCode(targetParentCode, 'Pillar');
+        }
+        if (!targetParentEl) {
+            return { success: false, error: `Target parent ${targetParentCode} not found` };
+        }
+
+        const toParentType = this.getItemType(targetParentEl);
+
+        // Don't move if already in target
+        if (fromParentCode === targetParentCode) {
+            return { success: false, error: 'Indicator is already in target parent' };
+        }
+
+        // Find target indicators container
+        const targetContainer = targetParentEl.querySelector('.indicators-container');
+        if (!targetContainer) {
+            return { success: false, error: 'Indicators container not found in target parent' };
+        }
+
+        // Get new position
+        const toPosition = targetContainer.querySelectorAll('.indicator-card').length;
+
+        // Get current parent element for undo
+        const fromParentEl = indEl.parentElement;
+
+        // Move to target
+        targetContainer.appendChild(indEl);
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'move-indicator',
+            message: `Moved indicator "${indicatorCode}" from ${fromParentType} "${fromParentCode}" to ${toParentType} "${targetParentCode}"`,
+            delta: {
+                type: 'move-indicator',
+                indicatorCode: indicatorCode,
+                fromParentCode: fromParentCode,
+                fromParentType: fromParentType,
+                fromPosition: fromPosition,
+                toParentCode: targetParentCode,
+                toParentType: toParentType,
+                toPosition: toPosition
+            },
+            undo: () => {
+                // Move back to original position
+                const siblings = Array.from(fromParentEl.children).filter(el => el.classList.contains('indicator-card'));
+                if (fromPosition >= siblings.length) {
+                    fromParentEl.appendChild(indEl);
+                } else {
+                    fromParentEl.insertBefore(indEl, siblings[fromPosition]);
+                }
+                this.validate();
+            },
+            redo: () => {
+                targetContainer.appendChild(indEl);
+                this.validate();
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Set indicator name
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options object
+     * @param {string} options.indicatorName - The new indicator name
+     * @returns {Object} Result with success and action
+     */
+    setIndicatorName(indicatorCode, { indicatorName } = {}) {
+        // Validate inputs
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+        if (!indicatorName) {
+            return { success: false, error: 'Indicator name is required' };
+        }
+
+        // Find indicator element
+        const indEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Find indicator name element
+        const indicatorNameEl = indEl.querySelector('.indicator-name');
+        if (!indicatorNameEl) {
+            return { success: false, error: 'Indicator name element not found' };
+        }
+
+        // Capture old value
+        const oldName = indicatorNameEl.textContent;
+
+        // Don't record if no change
+        if (oldName === indicatorName) {
+            return { success: true, message: 'No change needed' };
+        }
+
+        // Apply change
+        indicatorNameEl.textContent = indicatorName;
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'set-indicator-name',
+            message: `Updated indicator name from "${oldName}" to "${indicatorName}"`,
+            delta: {
+                type: 'set-indicator-name',
+                indicatorCode: indicatorCode,
+                from: oldName,
+                to: indicatorName
+            },
+            undo: () => {
+                indicatorNameEl.textContent = oldName;
+            },
+            redo: () => {
+                indicatorNameEl.textContent = indicatorName;
+            }
+        });
+
+        // Flag unsaved
+        this.flagUnsaved();
+
+        return { success: true, action: action };
+    }
+    // ========== SECTION 5: API Methods - Categories ==========
+
+    /**
+     * Add a new category to a pillar
+     * @param {string} pillarCode - Parent pillar code
+     * @param {Object} options
+     * @param {string} options.categoryCode - Category code (3 chars)
+     * @param {string} options.categoryName - Category name
+     * @returns {Object} Result with success status and action
+     */
+    addCategory(pillarCode, { categoryCode, categoryName }) {
+        // Validate inputs
+        if (!pillarCode || typeof pillarCode !== 'string') {
+            return { success: false, error: 'Invalid pillarCode' };
+        }
+        if (!categoryCode || !/^[A-Z]{3}$/.test(categoryCode)) {
+            return { success: false, error: 'categoryCode must be 3 uppercase letters' };
+        }
+        if (!categoryName || typeof categoryName !== 'string') {
+            return { success: false, error: 'Invalid categoryName' };
+        }
+
+        // Find pillar column
+        const pillarCol = this.findElementByCode(pillarCode, 'Pillar');
+        if (!pillarCol) {
+            return { success: false, error: `Pillar ${pillarCode} not found` };
+        }
+
+        // Check for duplicate category code
+        const existing = this.findElementByCode(categoryCode, 'Category');
+        if (existing) {
+            return { success: false, error: `Category ${categoryCode} already exists` };
+        }
+
+        // Find container for categories in pillar
+        const categoriesContainer = pillarCol.querySelector('.categories-container');
+        if (!categoriesContainer) {
+            return { success: false, error: 'Categories container not found in pillar' };
+        }
+
+        // Create new category element
+        const categoryEl = this.createCategoryElement();
+        categoryEl.dataset.categoryCode = categoryCode;
+        categoryEl.dataset.itemCode = categoryCode;
+
+        // Set category name
+        const nameEl = categoryEl.querySelector('.customization-category-header-title');
+        if (nameEl) nameEl.textContent = categoryName;
+
+        // Set category code input
+        const codeInput = categoryEl.querySelector('.category-code-input');
+        if (codeInput) codeInput.value = categoryCode;
+
+        // Calculate position
+        const position = this.getPositionInParent(categoriesContainer.lastElementChild || categoriesContainer);
+
+        // Capture metadata for action
+        const categoryMetadata = {
+            ItemType: 'Category',
+            ItemCode: categoryCode,
+            ItemName: categoryName,
+            CategoryCode: categoryCode,
+            PillarCode: pillarCode,
+            Children: [],
+            IndicatorCodes: [],
+            DocumentType: 'CategoryDetail',
+            TreePath: `sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}`
+        };
+
+        // Add to DOM
+        categoriesContainer.appendChild(categoryEl);
+
+        // Setup handlers
+        this.setupCategoryHandlers(categoryEl);
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'add-category',
+            message: `Added category "${categoryName}" (${categoryCode}) to pillar ${pillarCode}`,
+            delta: {
+                type: 'add-category',
+                categoryCode: categoryCode,
+                pillarCode: pillarCode,
+                categoryMetadata: categoryMetadata,
+                position: position
+            },
+            undo: () => {
+                const el = this.findElementByCode(categoryCode, 'Category');
+                if (el) el.remove();
+            },
+            redo: () => {
+                const pillar = this.findElementByCode(pillarCode, 'Pillar');
+                const container = pillar?.querySelector('.categories-container');
+                if (container) {
+                    const newEl = this.createCategoryElement();
+                    newEl.dataset.categoryCode = categoryCode;
+                    newEl.dataset.itemCode = categoryCode;
+                    const name = newEl.querySelector('.customization-category-header-title');
+                    if (name) name.textContent = categoryName;
+                    const code = newEl.querySelector('.category-code-input');
+                    if (code) code.value = categoryCode;
+                    container.appendChild(newEl);
+                    this.setupCategoryHandlers(newEl);
+                }
+            }
+        });
+
+        this.hasUnsavedChanges = true;
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Set code for a category
+     * @param {HTMLElement} categoryElement - The category element
+     * @param {Object} options - Options object
+     * @param {string} options.newCode - The new code value
+     * @returns {Object} Result with success status and action
+     */
+    setCategoryCode(categoryElement, { newCode } = {}) {
+        // Validate element
+        if (!(categoryElement instanceof HTMLElement)) {
+            return { success: false, error: 'Category element is required' };
+        }
+
+        // Validate new code
+        if (!newCode) {
+            return { success: false, error: 'New code is required' };
+        }
+
+        // Validate code format
+        if (!this.validateCode(newCode, 'category')) {
+            return { success: false, error: 'Invalid category code format (must be 3 uppercase letters)' };
+        }
+
+        // Ensure element has a stable ID for undo/redo
+        if (!categoryElement.id) {
+            categoryElement.id = `category-${Math.random().toString(36).substr(2,9)}`;
+        }
+        const elementId = categoryElement.id;
+
+        // Get old code from element's data attribute
+        const oldCode = categoryElement.dataset.categoryCode || '';
+
+        // Check if code is unique (excluding current element)
+        const codeInput = categoryElement.querySelector('.category-code-input');
+        if (!this.isCodeUnique(newCode, 'category', codeInput)) {
+            return { success: false, error: 'Code already in use' };
+        }
+
+        // Don't record if no change
+        if (oldCode === newCode) {
+            return { success: true, message: 'No change needed' };
+        }
+
+        // Apply change - update data attributes
+        this.updateElementCode(categoryElement, newCode);
+
+        // Update input field
+        if (codeInput) {
+            codeInput.value = newCode;
+        }
+
+        // Record action with ID-based undo/redo (codes change, but IDs are stable)
+        const action = this.actionHistory.recordAction({
+            type: 'set-category-code',
+            message: oldCode
+                ? `Changed category code from "${oldCode}" to "${newCode}"`
+                : `Set category code to "${newCode}"`,
+            delta: {
+                type: 'set-category-code',
+                categoryCode: newCode,  // New code for backend reference
+                from: oldCode,
+                to: newCode
+            },
+            undo: () => {
+                // Find by stable ID (not by code which has changed)
+                const el = document.getElementById(elementId);
+                if (el) {
+                    this.updateElementCode(el, oldCode);
+                    const input = el.querySelector('.category-code-input');
+                    if (input) input.value = oldCode;
+                    this.validate();
+                }
+            },
+            redo: () => {
+                // Find by stable ID (not by code which has changed)
+                const el = document.getElementById(elementId);
+                if (el) {
+                    this.updateElementCode(el, newCode);
+                    const input = el.querySelector('.category-code-input');
+                    if (input) input.value = newCode;
+                    this.validate();
+                }
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Remove a category (optionally cascading to remove nested indicators)
+     * @param {string} categoryCode - Category code to remove
+     * @param {Object} options
+     * @param {boolean} options.cascade - If true, remove nested indicators (default: true)
+     * @returns {Object} Result with success status and actions
+     */
+    removeCategory(categoryCode, { cascade = true } = {}) {
+        // Validate input
+        if (!categoryCode || typeof categoryCode !== 'string') {
+            return { success: false, error: 'Invalid categoryCode' };
+        }
+        const categoryEl = this.findElementByCode(categoryCode, 'Category');
+        if (!categoryEl) {
+            return { success: false, error: `Category ${categoryCode} not found` };
+        }
+        const pillarCode = this.getParentCode(categoryEl);
+        if (!pillarCode) {
+            return { success: false, error: 'Could not determine parent pillar' };
+        }
+        const position = this.getPositionInParent(categoryEl);
+        const categoryName = categoryEl.querySelector('.customization-category-header-title')?.textContent || '';
+        const indicatorsContainer = categoryEl.querySelector('.indicators-container');
+        const indicatorEls = indicatorsContainer ? Array.from(indicatorsContainer.querySelectorAll('[data-indicator-code]')) : [];
+        const indicatorCodes = indicatorEls.map(el => el.dataset.indicatorCode);
+        const categoryMetadata = {
+            ItemType: 'Category',
+            ItemCode: categoryCode,
+            ItemName: categoryName,
+            CategoryCode: categoryCode,
+            PillarCode: pillarCode,
+            Children: indicatorCodes,
+            IndicatorCodes: indicatorCodes,
+            DocumentType: 'CategoryDetail'
+        };
+        // Store full state for undo
+        const categoryHTML = categoryEl.outerHTML;
+        // Remove from DOM
+        categoryEl.remove();
+        // Record main action
+        const mainAction = this.actionHistory.recordAction({
+            type: 'remove-category',
+            message: `Removed category "${categoryName}" (${categoryCode}) from pillar ${pillarCode}`,
+            delta: {
+                type: 'remove-category',
+                categoryCode: categoryCode,
+                pillarCode: pillarCode,
+                categoryMetadata: categoryMetadata,
+                position: position,
+                cascadedIndicators: cascade ? indicatorCodes : []
+            },
+            undo: () => {
+                const pillar = this.findElementByCode(pillarCode, 'Pillar');
+                const container = pillar?.querySelector('.categories-container');
+                if (container) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = categoryHTML;
+                    const restored = temp.firstElementChild;
+                    container.appendChild(restored);
+                    this.setupCategoryHandlers(restored);
+                }
+            },
+            redo: () => {
+                const el = this.findElementByCode(categoryCode, 'Category');
+                if (el) el.remove();
+            }
+        });
+        const actions = [mainAction];
+        // If cascade, record remove-indicator actions for each nested indicator
+        if (cascade && indicatorCodes.length > 0) {
+            for (const indicatorCode of indicatorCodes) {
+                // Note: These indicators are already removed from DOM,
+                // so we're just recording the actions for backend processing
+                const indicatorAction = this.actionHistory.recordAction({
+                    type: 'remove-indicator',
+                    message: `Cascaded removal of indicator ${indicatorCode}`,
+                    delta: {
+                        type: 'remove-indicator',
+                        indicatorCode: indicatorCode,
+                        parentCode: categoryCode,
+                        parentType: 'Category',
+                        cascaded: true
+                    },
+                    undo: () => {
+                        // Undo handled by parent category restoration
+                    },
+                    redo: () => {
+                        // Redo handled by parent category removal
+                    }
+                });
+                actions.push(indicatorAction);
+            }
+        }
+        this.hasUnsavedChanges = true;
+        this.validate();
+        return { success: true, actions: actions };
+    }
+
+    /**
+     * Move a category to a different pillar
+     * IMPORTANT: This only changes the DOM position and pillar's CategoryCodes arrays.
+     * The category metadata itself is UNCHANGED. Nested indicators are UNCHANGED.
+     * @param {string} categoryCode - Category code to move
+     * @param {string} targetPillarCode - Target pillar code
+     * @returns {Object} Result with success status and action
+     */
+    moveCategory(categoryCode, targetPillarCode) {
+        // Validate inputs
+        if (!categoryCode || typeof categoryCode !== 'string') {
+            return { success: false, error: 'Invalid categoryCode' };
+        }
+        if (!targetPillarCode || typeof targetPillarCode !== 'string') {
+            return { success: false, error: 'Invalid targetPillarCode' };
+        }
+        // Find category element
+        const categoryEl = this.findElementByCode(categoryCode, 'Category');
+        if (!categoryEl) {
+            return { success: false, error: `Category ${categoryCode} not found` };
+        }
+
+        // Find source pillar
+        const fromPillarCode = this.getParentCode(categoryEl);
+        if (!fromPillarCode) {
+            return { success: false, error: 'Could not determine source pillar' };
+        }
+
+        // Check if already in target pillar
+        if (fromPillarCode === targetPillarCode) {
+            return { success: false, error: 'Category already in target pillar' };
+        }
+
+        // Find target pillar
+        const targetPillar = this.findElementByCode(targetPillarCode, 'Pillar');
+        if (!targetPillar) {
+            return { success: false, error: `Target pillar ${targetPillarCode} not found` };
+        }
+
+        // Find target container
+        const targetContainer = targetPillar.querySelector('.categories-container');
+        if (!targetContainer) {
+            return { success: false, error: 'Target categories container not found' };
+        }
+
+        // Capture positions
+        const fromPosition = this.getPositionInParent(categoryEl);
+
+        // Move to target (DOM only)
+        targetContainer.appendChild(categoryEl);
+
+        const toPosition = this.getPositionInParent(categoryEl);
+
+        // Record action
+        // IMPORTANT: Only 1 action created, type='move-category'
+        // No indicator actions created - indicators move with category but metadata unchanged
+        const action = this.actionHistory.recordAction({
+            type: 'move-category',
+            message: `Moved category ${categoryCode} from pillar ${fromPillarCode} to ${targetPillarCode}`,
+            delta: {
+                type: 'move-category',
+                categoryCode: categoryCode,
+                fromPillarCode: fromPillarCode,
+                fromPosition: fromPosition,
+                toPillarCode: targetPillarCode,
+                toPosition: toPosition
+                // NOTE: Category metadata UNCHANGED (including PillarCode field)
+                // NOTE: Nested indicators UNCHANGED
+            },
+            undo: () => {
+                const el = this.findElementByCode(categoryCode, 'Category');
+                if (el) {
+                    const sourcePillar = this.findElementByCode(fromPillarCode, 'Pillar');
+                    const sourceContainer = sourcePillar?.querySelector('.categories-container');
+                    if (sourceContainer) {
+                        sourceContainer.appendChild(el);
+                    }
+                }
+            },
+            redo: () => {
+                const el = this.findElementByCode(categoryCode, 'Category');
+                if (el) {
+                    const tgtPillar = this.findElementByCode(targetPillarCode, 'Pillar');
+                    const tgtContainer = tgtPillar?.querySelector('.categories-container');
+                    if (tgtContainer) {
+                        tgtContainer.appendChild(el);
+                    }
+                }
+            }
+        });
+
+        this.hasUnsavedChanges = true;
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Set category name
+     * @param {string} categoryCode - Category code
+     * @param {Object} options
+     * @param {string} options.categoryName - New category name
+     * @returns {Object} Result with success status and action
+     */
+    setCategoryName(categoryCode, { categoryName }) {
+        // Validate inputs
+        if (!categoryCode || typeof categoryCode !== 'string') {
+            return { success: false, error: 'Invalid categoryCode' };
+        }
+        if (!categoryName || typeof categoryName !== 'string') {
+            return { success: false, error: 'Invalid categoryName' };
+        }
+
+        // Find category element
+        const categoryEl = this.findElementByCode(categoryCode, 'Category');
+        if (!categoryEl) {
+            return { success: false, error: `Category ${categoryCode} not found` };
+        }
+
+        // Find name element
+        const nameEl = categoryEl.querySelector('.customization-category-header-title');
+        if (!nameEl) {
+            return { success: false, error: 'Category name element not found' };
+        }
+
+        // Capture old name
+        const oldName = nameEl.textContent;
+
+        // Check if name actually changed
+        if (oldName === categoryName) {
+            return { success: false, error: 'New name is same as current name' };
+        }
+
+        // Update name
+        nameEl.textContent = categoryName;
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'set-category-name',
+            message: `Changed category ${categoryCode} name from "${oldName}" to "${categoryName}"`,
+            delta: {
+                type: 'set-category-name',
+                categoryCode: categoryCode,
+                from: oldName,
+                to: categoryName
+            },
+            undo: () => {
+                const el = this.findElementByCode(categoryCode, 'Category');
+                const name = el?.querySelector('.customization-category-header-title');
+                if (name) name.textContent = oldName;
+            },
+            redo: () => {
+                const el = this.findElementByCode(categoryCode, 'Category');
+                const name = el?.querySelector('.customization-category-header-title');
+                if (name) name.textContent = categoryName;
+            }
+        });
+
+        this.hasUnsavedChanges = true;
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    // ========== SECTION 6: API Methods - Pillars ==========
+
+    /**
+     * Set pillar name
+     * Note: Pillar codes are fixed (SUS, MS, PG) and cannot be changed
+     * @param {string} pillarCode - Pillar code
+     * @param {Object} options
+     * @param {string} options.pillarName - New pillar name
+     * @returns {Object} Result with success status and action
+     */
+    setPillarName(pillarCode, { pillarName }) {
+        // Validate inputs
+        if (!pillarCode || typeof pillarCode !== 'string') {
+            return { success: false, error: 'Invalid pillarCode' };
+        }
+        if (!pillarName || typeof pillarName !== 'string') {
+            return { success: false, error: 'Invalid pillarName' };
+        }
+
+        // Find pillar column
+        const pillarCol = this.findElementByCode(pillarCode, 'Pillar');
+        if (!pillarCol) {
+            return { success: false, error: `Pillar ${pillarCode} not found` };
+        }
+
+        // Find pillar name element
+        const nameEl = pillarCol.querySelector('.pillar-name');
+        if (!nameEl) {
+            return { success: false, error: 'Pillar name element not found' };
+        }
+
+        // Capture old name
+        const oldName = nameEl.textContent;
+
+        // Check if name actually changed
+        if (oldName === pillarName) {
+            return { success: false, error: 'New name is same as current name' };
+        }
+
+        // Update name
+        nameEl.textContent = pillarName;
+
+        // Record action
+        const action = this.actionHistory.recordAction({
+            type: 'set-pillar-name',
+            message: `Changed pillar ${pillarCode} name from "${oldName}" to "${pillarName}"`,
+            delta: {
+                type: 'set-pillar-name',
+                pillarCode: pillarCode,
+                from: oldName,
+                to: pillarName
+            },
+            undo: () => {
+                const el = this.findElementByCode(pillarCode, 'Pillar');
+                const name = el?.querySelector('.pillar-name');
+                if (name) name.textContent = oldName;
+            },
+            redo: () => {
+                const el = this.findElementByCode(pillarCode, 'Pillar');
+                const name = el?.querySelector('.pillar-name');
+                if (name) name.textContent = pillarName;
+            }
+        });
+
+        this.hasUnsavedChanges = true;
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
+    /**
+     * Set code for a pillar
+     * @param {HTMLElement} pillarElement - The pillar element
+     * @param {Object} options - Options object
+     * @param {string} options.newCode - The new code value
+     * @returns {Object} Result with success status and action
+     */
+    setPillarCode(pillarElement, { newCode } = {}) {
+        // Validate element
+        if (!(pillarElement instanceof HTMLElement)) {
+            return { success: false, error: 'Pillar element is required' };
+        }
+
+        // Validate new code
+        if (!newCode) {
+            return { success: false, error: 'New code is required' };
+        }
+
+        // Validate code format
+        if (!this.validateCode(newCode, 'pillar')) {
+            return { success: false, error: 'Invalid pillar code format (must be 2-3 uppercase letters)' };
+        }
+
+        // Ensure element has a stable ID for undo/redo
+        if (!pillarElement.id) {
+            pillarElement.id = `pillar-${Math.random().toString(36).substr(2,9)}`;
+        }
+        const elementId = pillarElement.id;
+
+        // Get old code from element's data attribute
+        const oldCode = pillarElement.dataset.pillarCode || '';
+
+        // Check if code is unique (excluding current element)
+        const codeInput = pillarElement.querySelector('.pillar-code-input');
+        if (!this.isCodeUnique(newCode, 'pillar', codeInput)) {
+            return { success: false, error: 'Code already in use' };
+        }
+
+        // Don't record if no change
+        if (oldCode === newCode) {
+            return { success: true, message: 'No change needed' };
+        }
+
+        // Apply change - update data attributes
+        this.updateElementCode(pillarElement, newCode);
+
+        // Update input field
+        if (codeInput) {
+            codeInput.value = newCode;
+        }
+
+        // Record action with ID-based undo/redo (codes change, but IDs are stable)
+        const action = this.actionHistory.recordAction({
+            type: 'set-pillar-code',
+            message: oldCode
+                ? `Changed pillar code from "${oldCode}" to "${newCode}"`
+                : `Set pillar code to "${newCode}"`,
+            delta: {
+                type: 'set-pillar-code',
+                pillarCode: newCode,  // New code for backend reference
+                from: oldCode,
+                to: newCode
+            },
+            undo: () => {
+                // Find by stable ID (not by code which has changed)
+                const el = document.getElementById(elementId);
+                if (el) {
+                    this.updateElementCode(el, oldCode);
+                    const input = el.querySelector('.pillar-code-input');
+                    if (input) input.value = oldCode;
+                    this.validate();
+                }
+            },
+            redo: () => {
+                // Find by stable ID (not by code which has changed)
+                const el = document.getElementById(elementId);
+                if (el) {
+                    this.updateElementCode(el, newCode);
+                    const input = el.querySelector('.pillar-code-input');
+                    if (input) input.value = newCode;
+                    this.validate();
+                }
+            }
+        });
+
+        // Flag unsaved and validate
+        this.flagUnsaved();
+        this.validate();
+
+        return { success: true, action: action };
+    }
+
     createCategoryElement() {
         const cat = document.createElement('div');
         cat.classList.add('category-box','draggable-item');
+        // Assign stable ID for reliable element tracking (especially for undo/redo)
+        cat.id = `category-${Math.random().toString(36).substr(2,9)}`;
         // Don't set draggable on the entire box - only on the header
         cat.setAttribute('role','group');
         cat.dataset.type='category';
+        // Add data attributes for efficient querying
+        cat.dataset.itemType = 'Category';
+        cat.dataset.categoryCode = '';  // Will be set when code is entered
+        cat.dataset.itemCode = '';  // Will be set when code is entered
         cat.innerHTML = `
 <div class="category-collapsible" data-expanded="true">
     <div class="customization-category-header" draggable="true">
@@ -891,9 +2731,15 @@ class CustomizableSSPIStructure {
     createIndicatorElement() {
         const ind = document.createElement('div');
         ind.classList.add('indicator-card','draggable-item');
+        // Assign stable ID for reliable element tracking (especially for undo/redo)
+        ind.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
         // Don't set draggable on the entire card - only on the header
         ind.setAttribute('role','treeitem');
         ind.dataset.type='indicator';
+        // Add data attributes for efficient querying
+        ind.dataset.itemType = 'Indicator';
+        ind.dataset.indicatorCode = '';  // Will be set when code is entered
+        ind.dataset.itemCode = '';  // Will be set when code is entered
         ind.innerHTML = `
 <div class="indicator-collapsible" data-expanded="false">
     <div class="customization-indicator-header" draggable="true">
@@ -1369,7 +3215,50 @@ class CustomizableSSPIStructure {
     }
 
     deleteItem(el) {
-        if (confirm('Delete this item?')) el.remove();
+        if (!confirm('Delete this item?')) return;
+
+        // Determine item type and code
+        const itemType = el.dataset.itemType;
+
+        if (itemType === 'Indicator') {
+            const indicatorCode = el.dataset.indicatorCode;
+            if (indicatorCode) {
+                // Use API method which handles removal and action recording
+                const result = this.removeIndicator(indicatorCode);
+                if (!result.success) {
+                    console.warn('Failed to remove indicator:', result.error);
+                    el.remove(); // Fallback to direct removal
+                }
+            } else {
+                // No code set yet - just remove from DOM
+                el.remove();
+            }
+        } else if (itemType === 'Category') {
+            const categoryCode = el.dataset.categoryCode;
+            if (categoryCode) {
+                // Confirm cascade removal of nested indicators
+                const indicatorsContainer = el.querySelector('.indicators-container');
+                const indicatorCount = indicatorsContainer ? indicatorsContainer.querySelectorAll('[data-indicator-code]').length : 0;
+
+                let cascade = true;
+                if (indicatorCount > 0) {
+                    cascade = confirm(`This category contains ${indicatorCount} indicator(s). Remove them as well?`);
+                }
+
+                // Use API method
+                const result = this.removeCategory(categoryCode, { cascade });
+                if (!result.success) {
+                    console.warn('Failed to remove category:', result.error);
+                    el.remove(); // Fallback to direct removal
+                }
+            } else {
+                // No code set yet - just remove from DOM
+                el.remove();
+            }
+        } else {
+            // Unknown type - fallback to direct removal
+            el.remove();
+        }
     }
 
     editScoreFunction(indicatorCard) {
@@ -1712,6 +3601,12 @@ class CustomizableSSPIStructure {
     }
 
     validate(z) {
+        // If no specific zone provided, validate all drop zones
+        if (!z) {
+            this.container.querySelectorAll('.drop-zone').forEach(zone => this.validate(zone));
+            return;
+        }
+
         const selector = z.dataset.accept === 'indicator' ? '.indicator-card' : '.category-box';
         const items = z.querySelectorAll(selector);
         const ok = items.length >= 1 && items.length <= 10;
@@ -1723,12 +3618,7 @@ class CustomizableSSPIStructure {
         }
     }
 
-    exportData() {
-        return this.exportMetadataFormat();
-    }
-
-
-    exportMetadataFormat() {
+    exportMetadata() {
         const metadataItems = [];
         const pillars = {};
         const categories = {};
@@ -1887,7 +3777,7 @@ class CustomizableSSPIStructure {
      * @returns {Object} Structure data with metadata for scoring
      */
     exportForScoring() {
-        const metadata = this.exportData();
+        const metadata = this.exportMetadata();
         const structureData = this.convertMetadataToStructure(metadata);
         
         return {
@@ -2390,16 +4280,18 @@ class CustomizableSSPIStructure {
     // Hierarchy management methods
     updateHierarchyOnAdd(element, elementType) {
         this.flagUnsaved();
-
         // Skip logging and validation during bulk import to reduce noise
         if (!this.isImporting) {
             console.log(`Added ${elementType}:`, element);
-
             const errors = this.validateHierarchy();
             if (errors.length > 0) {
                 console.warn('Hierarchy validation errors after add:', errors);
             }
         }
+        this.changeLog.push({ 
+            changeType: "Added" + elementType,
+            element: element,
+        })
     }
 
     updateHierarchyOnRemove(element, elementType) {
@@ -2535,6 +4427,25 @@ class CustomizableSSPIStructure {
         alert(message);
     }
 
+    /**
+     * Show the changes history modal
+     */
+    showChangesHistory() {
+        if (!window.ChangesHistoryModal) {
+            console.error('ChangesHistoryModal class not loaded');
+            alert('Changes history feature is not available. Please refresh the page.');
+            return;
+        }
+
+        // Create and show modal
+        const modal = new ChangesHistoryModal({
+            actionHistory: this.actionHistory,
+            mode: 'modal'
+        });
+
+        modal.show();
+    }
+
     getMetadataStats() {
         return {
             pillars: this.container.querySelectorAll('.pillar-column').length,
@@ -2661,6 +4572,9 @@ class CustomizableSSPIStructure {
 
                 // Import the metadata efficiently
                 await this.importDataAsync(response.metadata);
+
+                // Capture baseline for action history tracking
+                this.actionHistory.captureBaseline(response.metadata);
 
                 this.hideLoadingState();
 
@@ -2841,7 +4755,7 @@ class CustomizableSSPIStructure {
 
         // Clear undo/redo history after initial import
         // This ensures dataset additions during load are not in history
-        this.undoRedoManager.clear();
+        this.actionHistory.clear();
         console.log('Cleared undo/redo history after initial metadata import');
 
         // Mark any indicators that are outside categories
@@ -2874,13 +4788,18 @@ class CustomizableSSPIStructure {
         if (pillarCodeInput) {
             pillarCodeInput.value = pillarItem.ItemCode;
         }
-        
+
+        // Set data attributes for efficient querying
+        col.dataset.pillarCode = pillarItem.ItemCode;
+        col.dataset.itemCode = pillarItem.ItemCode;
+        col.dataset.itemType = 'Pillar';
+
         // Update pillar name
         const pillarNameEl = col.querySelector('.pillar-name');
         if (pillarNameEl) {
             pillarNameEl.textContent = pillarItem.ItemName;
         }
-        
+
         const categoriesContainer = col.querySelector('.categories-container');
         if (!categoriesContainer) return;
         
@@ -2895,14 +4814,18 @@ class CustomizableSSPIStructure {
             
             if (categoryItem) {
                 const catEl = this.createCategoryElement();
-                
+
                 // Set category details
                 const categoryHeader = catEl.querySelector('.customization-category-header-title');
                 const categoryCodeInput = catEl.querySelector('.category-code-input');
-                
+
                 if (categoryHeader) categoryHeader.textContent = categoryItem.ItemName;
                 if (categoryCodeInput) categoryCodeInput.value = categoryItem.ItemCode;
-                
+
+                // Set data attributes for efficient querying
+                catEl.dataset.categoryCode = categoryItem.ItemCode;
+                catEl.dataset.itemCode = categoryItem.ItemCode;
+
                 // Add indicators to this category
                 const indicatorsContainer = catEl.querySelector('.indicators-container');
                 const indicatorCodes = categoryItem.Children || [];
@@ -2923,6 +4846,10 @@ class CustomizableSSPIStructure {
 
                         if (indicatorName) indicatorName.textContent = indicatorItem.ItemName || '';
                         if (indicatorCodeInput) indicatorCodeInput.value = indicatorItem.ItemCode || '';
+
+                        // Set data attributes for efficient querying
+                        indEl.dataset.indicatorCode = indicatorItem.ItemCode;
+                        indEl.dataset.itemCode = indicatorItem.ItemCode;
 
                         // Populate score function if present
                         if (scoreFunctionEl) {
@@ -3175,7 +5102,7 @@ class CustomizableSSPIStructure {
             const name = prompt('Enter a name for this configuration:');
             if (!name) return;
 
-            const metadata = this.exportData();
+            const metadata = this.exportMetadata();
 
             const response = await this.fetch('/api/v1/customize/save', {
                 method: 'POST',
@@ -3318,7 +5245,10 @@ class CustomizableSSPIStructure {
 
     setupCodeValidation(input, type) {
         if (!input) return;
-        const validationMessage = input.parentElement.previousElementSibling;
+        // Find validation message - structure differs between types
+        // Indicators: inside parent's previous sibling | Categories/Pillars: next sibling
+        const validationMessage = input.closest('.category-code-section, .indicator-code-section, .customization-pillar-header')
+            ?.querySelector('.code-validation-message');
         input.addEventListener('input', (e) => {
             let value = e.target.value.toUpperCase();
             e.target.value = value;
@@ -3337,20 +5267,93 @@ class CustomizableSSPIStructure {
         });
         
         input.addEventListener('blur', () => {
-            if (input.value && this.validateCode(input.value, type) && this.isCodeUnique(input.value, type, input)) {
-                // Generate code from name if empty
-                if (!input.value) {
-                    const name = this.getNameForCodeInput(input, type);
-                    if (name) {
-                        const generatedCode = this.generateCodeFromName(name, type);
-                        if (this.isCodeUnique(generatedCode, type, input)) {
-                            input.value = generatedCode;
-                            this.flashValidationMessage(validationMessage, input, 'Generated', 'success');
-                        }
+            const newCode = input.value.trim();
+
+            // If no code entered, try to generate one from name
+            if (!newCode) {
+                const name = this.getNameForCodeInput(input, type);
+                if (name) {
+                    const generatedCode = this.generateCodeFromName(name, type);
+                    if (this.isCodeUnique(generatedCode, type, input)) {
+                        input.value = generatedCode;
+                        this.flashValidationMessage(validationMessage, input, 'Generated', 'success');
+                        // Continue to process the generated code
+                        this.processCodeChange(input, generatedCode, type);
                     }
                 }
+                return;
             }
+
+            // Validate the entered code
+            if (!this.validateCode(newCode, type)) {
+                return; // Validation message already shown by input handler
+            }
+
+            if (!this.isCodeUnique(newCode, type, input)) {
+                return; // Validation message already shown by input handler
+            }
+
+            // Process the code change
+            this.processCodeChange(input, newCode, type);
         });
+    }
+
+    /**
+     * Process a code change from an input field
+     * Calls the appropriate API method to update the code and record the action
+     * @param {HTMLInputElement} input - The code input element
+     * @param {string} newCode - The new code value
+     * @param {string} type - Item type ('indicator', 'category', or 'pillar')
+     */
+    processCodeChange(input, newCode, type) {
+        // Find the parent element (indicator card, category box, or pillar column)
+        let element;
+        if (type === 'indicator') {
+            element = input.closest('.indicator-card');
+        } else if (type === 'category') {
+            element = input.closest('.category-box');
+        } else if (type === 'pillar') {
+            element = input.closest('[data-pillar-code]');
+        }
+
+        if (!element) {
+            console.warn(`Could not find ${type} element for code input`);
+            return;
+        }
+
+        // Get the old code from data attribute
+        const oldCode = type === 'indicator' ? element.dataset.indicatorCode :
+                       type === 'category' ? element.dataset.categoryCode :
+                       element.dataset.pillarCode;
+
+        // Don't process if code hasn't changed
+        if (oldCode === newCode) {
+            return;
+        }
+
+        // Call the appropriate API method
+        let result;
+        try {
+            if (type === 'indicator') {
+                result = this.setIndicatorCode(element, { newCode });
+            } else if (type === 'category') {
+                result = this.setCategoryCode(element, { newCode });
+            } else if (type === 'pillar') {
+                result = this.setPillarCode(element, { newCode });
+            }
+
+            if (result && !result.success) {
+                console.error(`Failed to set ${type} code:`, result.error);
+                this.showNotification(`Error: ${result.error}`, 'error', 3000);
+                // Revert input to old code
+                input.value = oldCode || '';
+            }
+        } catch (error) {
+            console.error(`Error setting ${type} code:`, error);
+            this.showNotification(`Error updating code`, 'error', 3000);
+            // Revert input to old code
+            input.value = oldCode || '';
+        }
     }
 
     validateCode(code, type) {
@@ -3614,13 +5617,24 @@ class CustomizableSSPIStructure {
 
         datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent toggle when clicking remove button
-            // Record removal action for undo/redo
+            // Record removal action with proper delta structure
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
+            const indicatorCode = indicatorCard?.dataset.indicatorCode;
 
-            this.undoRedoManager.recordAction({
+            // Get position in dataset list
+            const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+
+            this.actionHistory.recordAction({
                 type: 'remove-dataset',
                 message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
+                delta: {
+                    type: 'remove-dataset',
+                    indicatorCode: indicatorCode,
+                    datasetCode: datasetCode,
+                    datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
+                    position: position
+                },
                 undo: () => {
                     // Re-add the dataset
                     selectedDatasetsDiv.appendChild(datasetItem);
@@ -3640,13 +5654,24 @@ class CustomizableSSPIStructure {
         selectedDatasetsDiv.appendChild(datasetItem);
         this.updateHierarchyOnAdd(datasetItem, 'dataset');
 
-        // Record add action for undo/redo
+        // Record add action with proper delta structure
         const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
         const indicatorName = this.getElementName(indicatorCard);
+        const indicatorCode = indicatorCard?.dataset.indicatorCode;
 
-        this.undoRedoManager.recordAction({
+        // Get position in dataset list
+        const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+
+        this.actionHistory.recordAction({
             type: 'add-dataset',
             message: `Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,
+            delta: {
+                type: 'add-dataset',
+                indicatorCode: indicatorCode,
+                datasetCode: datasetCode,
+                datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
+                position: position
+            },
             undo: () => {
                 // Remove the dataset
                 datasetItem.remove();
@@ -3734,13 +5759,24 @@ class CustomizableSSPIStructure {
 
         datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent toggle when clicking remove button
-            // Record removal action for undo/redo
+            // Record removal action with proper delta structure
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
+            const indicatorCode = indicatorCard?.dataset.indicatorCode;
 
-            this.undoRedoManager.recordAction({
+            // Get position in dataset list
+            const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+
+            this.actionHistory.recordAction({
                 type: 'remove-dataset',
                 message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
+                delta: {
+                    type: 'remove-dataset',
+                    indicatorCode: indicatorCode,
+                    datasetCode: datasetCode,
+                    datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
+                    position: position
+                },
                 undo: () => {
                     // Re-add the dataset
                     selectedDatasetsDiv.appendChild(datasetItem);
@@ -3760,13 +5796,24 @@ class CustomizableSSPIStructure {
         selectedDatasetsDiv.appendChild(datasetItem);
         this.updateHierarchyOnAdd(datasetItem, 'dataset');
 
-        // Record add action for undo/redo
+        // Record add action with proper delta structure
         const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
         const indicatorName = this.getElementName(indicatorCard);
+        const indicatorCode = indicatorCard?.dataset.indicatorCode;
 
-        this.undoRedoManager.recordAction({
+        // Get position in dataset list
+        const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+
+        this.actionHistory.recordAction({
             type: 'add-dataset',
             message: `Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,
+            delta: {
+                type: 'add-dataset',
+                indicatorCode: indicatorCode,
+                datasetCode: datasetCode,
+                datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
+                position: position
+            },
             undo: () => {
                 // Remove the dataset
                 datasetItem.remove();
@@ -3865,7 +5912,7 @@ class CustomizableSSPIStructure {
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
 
-            this.undoRedoManager.recordAction({
+            this.actionHistory.recordAction({
                 type: 'remove-dataset',
                 message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
                 undo: () => {
@@ -3968,7 +6015,7 @@ class CustomizableSSPIStructure {
      */
     cacheCurrentState() {
         try {
-            const metadata = this.exportData();
+            const metadata = this.exportMetadata();
             // No enrichment! Store only DatasetCodes in metadata
             const cacheData = {
                 hasModifications: this.unsavedChanges,
@@ -4307,7 +6354,7 @@ class CustomizableSSPIStructure {
     
     captureBaseline() {
         try {
-            this.baselineMetadata = this.exportData();
+            this.baselineMetadata = this.exportMetadata();
             this.diffCache = null; // Clear diff cache
             console.log('Baseline captured with', this.baselineMetadata.length, 'items');
         } catch (error) {
@@ -4320,7 +6367,7 @@ class CustomizableSSPIStructure {
             return { error: 'No baseline available for comparison' };
         }
         try {
-            const currentMetadata = this.exportData();
+            const currentMetadata = this.exportMetadata();
             // Use cached diff if current state hasn't changed
             if (this.diffCache && this.areMetadataEqual(this.diffCache.currentSnapshot, currentMetadata)) {
                 return this.diffCache.diff;
