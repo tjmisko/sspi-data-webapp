@@ -1,5 +1,36 @@
 /* Enhanced Customizable SSPI Styles - Merged with drag-and-drop functionality */
 
+.customization-home-box {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 0.5em;
+  width: 100%;
+  max-width: 85ch;
+  margin: 0 auto;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  box-sizing: border-box;
+}
+
+.customization-home-box h2 {
+  font-size: 1.4em;
+  line-height: 1.15;
+  padding: 0 var(--theme-gap);
+  margin: 0 0 0.6em 0;
+}
+
+.customization-home-box ul, .customization-home-box p {
+  font-family: var(--body-font-family);
+  margin-top: 0.15em;
+}
+.customization-home-box p {
+  padding: 0 var(--theme-gap);
+}
+
 :root {
   --theme-gap: 1rem;
 }
@@ -299,6 +330,7 @@
 
 .customizable-sspi .indicator-name {
   margin: 0;
+  flex: none;
   color: var(--header-text-color);
   box-sizing: border-box;
   font-family: var(--body-font-family);
@@ -309,6 +341,8 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .indicator-name:focus {
@@ -336,7 +370,7 @@
 
 .indicator-config {
   padding: 1em;
-  background: var(--region-background-color);
+  background: var(--box-background-color);
   border-radius: 0 0 var(--border-radius) var(--border-radius);
   max-width: 100%;
   overflow: hidden;
@@ -386,6 +420,7 @@
 .selected-datasets:empty::before {
   content: "No datasets selected. Click 'Add Dataset' to select a dataset.";
   color: var(--low-importance-font-color);
+  background-color: var(--region-background-color);
   font-style: italic;
   display: block;
   text-align: center;
@@ -653,18 +688,150 @@
 /* Drag and Drop Functionality */
 .draggable-item {
   cursor: grab;
+  transition: opacity 0.2s ease;
 }
 
 .draggable-item:active {
   cursor: grabbing;
 }
 
-.drop-zone.drag-over {
-  background-color: green;
+.draggable-item.dragging {
+  opacity: 0;
+}
+
+.drag-ghost {
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.insertion-indicator {
+  height: 5px;
+  background: var(--green-accent);
+  margin: 4px 0;
+}
+
+.drag-over {
+  outline: 2px dashed var(--green-accent);
 }
 
 .unsaved-changes {
-  background-color: red;
+  background: var(--ms-color);
+  color: white;
+}
+
+/* Loading and Error States */
+.sspi-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-color);
+  font-size: 1.1rem;
+}
+
+.sspi-loading::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  border: 2px solid var(--subtle-line-color);
+  border-top-color: var(--green-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.sspi-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--sus-color);
+  font-size: 1rem;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Preview Modal Styles */
+.preview-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 2rem;
+  box-sizing: border-box !important;
+}
+
+.preview-modal,
+.preview-modal * {
+  box-sizing: border-box !important;
+}
+
+.preview-modal {
+  background: var(--page-background-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  width: 90vw;
+  height: 85vh;
+  max-width: 1800px;
+  max-height: calc(100vh - 4rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--subtle-line-color);
+  background: var(--box-background-color);
+  flex-shrink: 0;
+}
+
+.preview-modal-header h3 {
+  margin: 0;
+  font-family: var(--header-font-family);
+  color: var(--header-text-color);
+  font-size: 1.2rem;
+}
+
+.preview-modal-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 1rem;
+  background: var(--box-background-color);
+  min-height: 0;
+  position: relative;
+}
+
+#preview-chart-container {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  max-width: 100%;
+  position: relative;
 }
 
 /* Enhanced category styles */
@@ -872,7 +1039,6 @@
 .dataset-list {
   max-height: 300px;
   overflow-y: auto;
-  background: var(--region-background-color);
 }
 
 .dataset-option {
@@ -909,6 +1075,33 @@
   font-size: 0.6rem;
   font-weight: bold;
   z-index: 1;
+}
+
+/* Disable hover effects when in keyboard mode (but preserve keyboard highlights AND selection state) */
+.dataset-list.keyboard-mode .dataset-option:hover:not(.keyboard-highlighted):not(.selected),
+#indicator-list.keyboard-mode .dataset-option:hover:not(.keyboard-highlighted):not(.selected) {
+  background: var(--box-background-color) !important;
+}
+
+.dataset-list.keyboard-mode .dataset-option.enhanced:hover:not(.disabled):not(.keyboard-highlighted):not(.selected),
+#indicator-list.keyboard-mode .dataset-option.enhanced:hover:not(.disabled):not(.keyboard-highlighted):not(.selected) {
+  background: var(--box-background-color) !important;
+  border-color: var(--subtle-line-color) !important;
+  transform: none !important;
+}
+
+.dataset-list.keyboard-mode .dataset-option.compact:hover:not(.keyboard-highlighted):not(.selected),
+#indicator-list.keyboard-mode .dataset-option.compact:hover:not(.keyboard-highlighted):not(.selected) {
+  background: var(--box-background-color) !important;
+  border-color: var(--subtle-line-color) !important;
+}
+
+/* Ensure keyboard highlighting is always visible in keyboard mode, even when hovering */
+.dataset-list.keyboard-mode .dataset-option.keyboard-highlighted:hover,
+#indicator-list.keyboard-mode .dataset-option.keyboard-highlighted:hover {
+  outline: 2px solid var(--pg-color) !important;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px var(--pg-color), 0 0 0 1px var(--pg-color) !important;
 }
 
 .dataset-option-code {
@@ -990,7 +1183,8 @@
 
 /* Selected Datasets Container */
 .selected-datasets-container {
-  padding: 0.5rem 0;
+  padding: 0;
+  padding-bottom: 0.5em;
   min-height: auto;
 }
 
@@ -1114,6 +1308,7 @@
   padding: 0.5em;
   border: 1px solid var(--subtle-line-color);
   border-radius: var(--border-radius);
+  min-height: 150px;
 }
 
 .dataset-list.enhanced {
@@ -1126,6 +1321,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  overflow: visible;
 }
 
 .dataset-option.enhanced:last-child {
@@ -1140,6 +1336,13 @@
   background: color-mix(in srgb, var(--green-accent) 20%, var(--box-background-color));
   border-left: 4px solid var(--green-accent);
   position: relative;
+}
+
+/* Hover on selected items - use scale instead of changing background */
+.dataset-option.enhanced.selected:hover {
+  background: color-mix(in srgb, var(--green-accent) 20%, var(--box-background-color));
+  transform: scale(1.005);
+  transition: transform 0.1s ease;
 }
 
 /* Checkmark for selected items */
@@ -1356,6 +1559,7 @@
   background: var(--box-background-color);
   transition: all 0.15s ease;
   cursor: pointer;
+  overflow: visible;
 }
 
 .dataset-option.compact:hover {
@@ -1368,6 +1572,13 @@
   border-color: var(--green-accent);
   border-width: 2px;
   position: relative;
+}
+
+/* Hover on selected compact items - use scale instead of changing background */
+.dataset-option.compact.selected:hover {
+  background: color-mix(in srgb, var(--green-accent) 20%, var(--box-background-color));
+  transform: scale(1.005);
+  transition: transform 0.1s ease;
 }
 
 /* Checkmark for selected compact items */
@@ -2708,10 +2919,364 @@ to {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--green-accent) 20%, transparent);
 }
 
+/* Dataset/Indicator Selector Modal Header Enhancements */
+.dataset-modal-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 0; /* Vertical padding for proper height */
+  border-bottom: 1px solid var(--subtle-line-color);
+  min-height: 2.5rem; /* Ensure consistent header height */
+}
+
+.dataset-modal-title {
+  margin: 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Expand to fill space */
+}
+
+.dataset-selection-counter {
+  font-size: 0.9rem;
+  color: var(--body-text-color);
+  font-family: var(--body-font-family);
+  flex-shrink: 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* Proper spacing between counter elements */
+  margin-right: 1rem; /* Padding before close button */
+}
+
+/* Close button as flex child in header */
+.dataset-modal-header .modal-close-btn {
+  margin: 0;
+  margin-left: auto; /* Push to far right */
+  flex-shrink: 0;
+}
+
 /* Specific styling for pillar and category selects - uppercase only for actual values */
 .pillar-select option:not(.default-option),
 .category-select option:not(.default-option) {
   text-transform: uppercase;
   font-weight: 500;
   letter-spacing: 0.5px;
+}
+
+/* ========== Changes History Modal Styles ========== */
+
+/* Modal overlay - reuses dataset modal styles with specific overrides */
+.changes-modal-overlay {
+  /* Inherits from .dataset-modal-overlay */
+}
+
+.changes-modal-content {
+  max-width: 900px;
+  width: 95%;
+  max-height: 85vh;
+}
+
+/* Page mode (no overlay) */
+.changes-page-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: var(--box-background-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Changes list container */
+.changes-list-container {
+  min-height: 200px;
+  max-height: none; /* Allow full scrolling in modal */
+}
+
+.changes-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+/* Individual change item */
+.change-item {
+  position: relative;
+  padding-left: 2.5rem !important; /* Space for timeline indicator */
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+  background-color: var(--box-background-color);
+  border-left: 3px solid var(--subtle-line-color);
+}
+
+.change-item:hover {
+  border-left-color: var(--green-accent);
+  box-shadow: var(--shadow-md);
+  transform: translateX(2px);
+}
+
+.change-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Timeline indicator (dot) */
+.change-timeline-indicator {
+  position: absolute;
+  left: -1px;
+  top: 1.2rem;
+  width: 12px;
+  height: 12px;
+  background-color: var(--green-accent);
+  border: 2px solid var(--box-background-color);
+  border-radius: 50%;
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--green-accent-20);
+}
+
+/* Item header */
+.change-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Timestamp */
+.change-timestamp {
+  font-size: 0.75rem !important;
+  color: var(--low-importance-font-color) !important;
+  font-family: var(--monospace-font-family) !important;
+  font-weight: 500 !important;
+}
+
+/* Type badge */
+.change-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Badge colors by category */
+.change-type-badge[data-change-type="add"] {
+  background-color: color-mix(in srgb, var(--sus-color) 20%, transparent);
+  color: var(--sus-color);
+  border: 1px solid var(--sus-color);
+}
+
+.change-type-badge[data-change-type="remove"] {
+  background-color: color-mix(in srgb, #dc2626 20%, transparent);
+  color: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.change-type-badge[data-change-type="move"] {
+  background-color: color-mix(in srgb, var(--pg-color) 20%, transparent);
+  color: var(--pg-color);
+  border: 1px solid var(--pg-color);
+}
+
+.change-type-badge[data-change-type="rename"] {
+  background-color: color-mix(in srgb, var(--sspi-color) 20%, transparent);
+  color: #d97706;
+  border: 1px solid var(--sspi-color);
+}
+
+.change-type-badge[data-change-type="other"] {
+  background-color: color-mix(in srgb, var(--body-text-color) 20%, transparent);
+  color: var(--body-text-color);
+  border: 1px solid var(--subtle-line-color);
+}
+
+/* Change message */
+.change-message {
+  font-size: 0.9rem !important;
+  color: var(--text-color) !important;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+/* Details container */
+.change-details-container {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--subtle-line-color);
+}
+
+/* Details toggle button */
+.change-details-toggle {
+  background: none;
+  border: none;
+  color: var(--link-color);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-family: var(--body-font-family);
+}
+
+.change-details-toggle:hover {
+  background-color: color-mix(in srgb, var(--link-color) 10%, transparent);
+  text-decoration: underline;
+}
+
+.change-details-toggle:focus {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+.change-details-toggle::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: 0.4rem;
+  transition: transform 0.2s ease;
+  font-size: 0.7rem;
+}
+
+.change-details-content.expanded ~ .change-details-toggle::before,
+.change-details-toggle:hover::before {
+  transform: rotate(90deg);
+}
+
+/* Details content */
+.change-details-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding: 0;
+}
+
+.change-details-content.expanded {
+  max-height: 500px;
+  padding: 0.75rem 0 0 0;
+}
+
+/* Delta key-value list */
+.change-delta-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  font-size: 0.85rem;
+  margin: 0;
+  padding: 0.75rem;
+  background-color: var(--region-background-color);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--subtle-line-color);
+}
+
+.change-delta-list dt {
+  font-weight: 600;
+  color: var(--header-text-color);
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.change-delta-list dd {
+  color: var(--body-text-color);
+  margin: 0;
+  padding: 0.25rem 0;
+  word-break: break-word;
+  font-family: var(--monospace-font-family);
+  font-size: 0.8rem;
+}
+
+/* Empty state message */
+.changes-empty-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--low-importance-font-color);
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* Modal footer */
+.changes-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 0 0 0;
+  border-top: 1px solid var(--subtle-line-color);
+  margin-top: 1rem;
+}
+
+.changes-action-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--subtle-line-color);
+  background-color: var(--input-background-color);
+  color: var(--text-color);
+  font-family: var(--body-font-family);
+}
+
+.changes-action-btn:hover {
+  background-color: var(--green-accent);
+  color: white;
+  border-color: var(--green-accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.changes-action-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .changes-modal-content {
+    width: 98%;
+    max-height: 90vh;
+  }
+
+  .change-item {
+    padding-left: 2rem !important;
+  }
+
+  .change-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .change-delta-list {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .change-delta-list dt {
+    font-weight: 700;
+    margin-top: 0.5rem;
+  }
+
+  .change-delta-list dt:first-child {
+    margin-top: 0;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .change-timeline-indicator {
+    background-color: var(--green-accent);
+    border-color: var(--box-background-color);
+  }
+
+  .change-type-badge[data-change-type="remove"] {
+    color: #f87171;
+    border-color: #f87171;
+  }
+
+  .change-type-badge[data-change-type="rename"] {
+    color: #fbbf24;
+  }
 }

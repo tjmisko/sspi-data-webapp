@@ -89,20 +89,20 @@ class DatasetSelector {
             '<div class="dataset-modal-header">' +
             '<h3 class="dataset-modal-title">Select Dataset</h3>' +
             '<div class="dataset-selection-counter">' +
-            '<span class="selected-count">' + this.selectedDatasets.length + '</span> of ' +
-            '<span class="max-count">' + this.options.maxSelections + '</span> selected' +
+            '<span class="selected-count">' + this.selectedDatasets.length + '</span>' +
+            '<span>of</span>' +
+            '<span class="max-count">' + this.options.maxSelections + '</span>' +
+            '<span>selected</span>' +
             '</div>' +
+            '<button class="modal-close-btn" id="modal-close-btn" aria-label="Close" tabindex="0">&times;</button>' +
             '</div>' +
             (this.options.enableSearch ? this.createSearchHTML() : '') +
             this.createSelectedDatasetsHTML() +
             (this.options.enableFilters ? this.createFiltersHTML() : '') +
-            '<div class="dataset-list-container">' +
+            '<div class="dataset-list-container" tabindex="0">' +
             '<div id="dataset-list" class="dataset-list enhanced">' +
             '<div class="dataset-loading-message">Loading datasets...</div>' +
             '</div>' +
-            '</div>' +
-            '<div class="dataset-modal-actions">' +
-            '<button id="modal-cancel" class="dataset-modal-cancel">Close</button>' +
             '</div>'
 
         this.modal.appendChild(modalContent)
@@ -338,13 +338,19 @@ class DatasetSelector {
         }
         
         // Modal action buttons
-        const cancelButton = this.modal.querySelector('#modal-cancel')
+        const closeButton = this.modal.querySelector('#modal-close-btn')
         const confirmButton = this.modal.querySelector('#modal-confirm')
         const clearButton = this.modal.querySelector('#modal-clear')
-        
-        if (cancelButton) {
-            cancelButton.addEventListener('click', () => {
+
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
                 this.close()
+            })
+            closeButton.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    this.close()
+                }
             })
         }
         
@@ -375,16 +381,51 @@ class DatasetSelector {
             }
         }
         document.addEventListener('keydown', this.escapeHandler)
+
+        // Focus trap - prevent tabbing out of modal
+        this.focusTrapHandler = (e) => {
+            if (e.key !== 'Tab' || !this.modal) return
+
+            const focusableElements = this.modal.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+            )
+            const focusableArray = Array.from(focusableElements)
+            const firstElement = focusableArray[0]
+            const lastElement = focusableArray[focusableArray.length - 1]
+
+            if (e.shiftKey) {
+                // Shift+Tab: if on first element, go to last
+                if (document.activeElement === firstElement) {
+                    e.preventDefault()
+                    lastElement.focus()
+                }
+            } else {
+                // Tab: if on last element, go to first
+                if (document.activeElement === lastElement) {
+                    e.preventDefault()
+                    firstElement.focus()
+                }
+            }
+        }
+        document.addEventListener('keydown', this.focusTrapHandler)
     }
     
     bindDatasetEvents() {
         if (!this.modal) return
-        
+
         this.modal.querySelectorAll('.dataset-option').forEach(option => {
             const datasetCode = option.dataset.datasetCode
             const isSelected = this.selectedDatasets.includes(datasetCode)
             const isDisabled = !isSelected && this.selectedDatasets.length >= this.options.maxSelections
-            
+
+            // Switch to mouse mode on mouseenter
+            option.addEventListener('mouseenter', () => {
+                if (this.inputMode !== 'mouse') {
+                    this.inputMode = 'mouse'
+                    this.updateInputModeClass()
+                }
+            })
+
             if (!isDisabled) {
                 option.style.cursor = 'pointer'
                 option.addEventListener('click', (e) => {
@@ -498,6 +539,12 @@ class DatasetSelector {
             this.keyboardHandler = null
         }
 
+        // Remove focus trap handler
+        if (this.focusTrapHandler) {
+            document.removeEventListener('keydown', this.focusTrapHandler)
+            this.focusTrapHandler = null
+        }
+
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
@@ -518,6 +565,12 @@ class DatasetSelector {
 
         const items = datasetList.querySelectorAll('.dataset-option')
         if (items.length === 0) return
+
+        // Switch to keyboard mode on any keyboard navigation
+        if (this.inputMode !== 'keyboard') {
+            this.inputMode = 'keyboard'
+            this.updateInputModeClass()
+        }
 
         switch(e.key) {
             case 'ArrowDown':
@@ -568,19 +621,32 @@ class DatasetSelector {
 
             case 'Enter':
             case ' ':  // Space key
-                // Only toggle if there's a highlighted item
-                if (this.highlightedIndex >= 0) {
+                // Only process if search input or list container is focused (not buttons/dropdowns)
+                const searchInput = this.modal.querySelector('#dataset-search')
+                const listContainer = this.modal.querySelector('.dataset-list-container')
+                const isFocusedOnInput = document.activeElement === searchInput || document.activeElement === listContainer
+
+                // Only toggle if there's a highlighted item AND we're focused on the right element
+                if (this.highlightedIndex >= 0 && isFocusedOnInput) {
                     e.preventDefault()
                     this.toggleHighlightedDataset()
                 }
-                // Otherwise, allow space to be typed normally in the search input
+                // Otherwise, allow default behavior (space in search, button clicks, etc.)
                 break
         }
 
-        // Keep search input focused
-        if (this.options.enableSearch) {
+        // Keep search input focused ONLY for navigation keys (arrows, page up/down)
+        // Don't refocus if user is on a button (Space/Enter on buttons should work)
+        const isNavigationKey = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.key)
+        const isOnButton = document.activeElement && document.activeElement.tagName === 'BUTTON'
+        const isOnSelect = document.activeElement && document.activeElement.tagName === 'SELECT'
+
+        if (this.options.enableSearch && isNavigationKey && !isOnButton) {
             const searchInput = this.modal.querySelector('#dataset-search')
-            if (searchInput && document.activeElement !== searchInput) {
+            const listContainer = this.modal.querySelector('.dataset-list-container')
+
+            // Refocus if we're on the list container OR a dropdown/select (navigating from filter)
+            if (searchInput && (document.activeElement === listContainer || isOnSelect)) {
                 searchInput.focus()
             }
         }
@@ -651,5 +717,31 @@ class DatasetSelector {
 
     getSelectedDatasets() {
         return this.selectedDatasets
+    }
+
+    updateInputModeClass() {
+        if (!this.modal) return
+
+        const datasetList = this.modal.querySelector('#dataset-list')
+        if (!datasetList) return
+
+        if (this.inputMode === 'keyboard') {
+            datasetList.classList.add('keyboard-mode')
+
+            // Restore visual highlight at current index when entering keyboard mode
+            if (this.highlightedIndex >= 0) {
+                this.highlightSelectedIndex()
+            }
+        } else {
+            // Mouse mode: remove keyboard-mode class and clear visual keyboard highlights
+            datasetList.classList.remove('keyboard-mode')
+
+            // Remove keyboard highlighting from all options (visual only)
+            const items = datasetList.querySelectorAll('.dataset-option.keyboard-highlighted')
+            items.forEach(item => item.classList.remove('keyboard-highlighted'))
+
+            // Keep highlightedIndex - don't reset it!
+            // This allows returning to the same position when switching back to keyboard mode
+        }
     }
 }

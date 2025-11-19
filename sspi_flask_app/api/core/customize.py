@@ -236,10 +236,17 @@ def list_indicators():
             filtered.append(ind)  # Return full metadata
         if limit > 0:
             filtered = filtered[:limit]
+
+        # Get pillar and category details for dropdown building
+        pillar_options = sspi_metadata.pillar_details()
+        category_options = sspi_metadata.category_details()
+
         return jsonify({
             "success": True,
             "indicators": filtered,
-            "total_count": len(filtered)
+            "total_count": len(filtered),
+            "pillars": pillar_options,
+            "categories": category_options
         })
     except Exception as e:
         logger.error(f"Error listing indicators: {str(e)}")

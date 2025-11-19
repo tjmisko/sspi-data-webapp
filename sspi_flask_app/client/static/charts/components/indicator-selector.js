@@ -16,6 +16,8 @@ class IndicatorSelector {
         this.indicators = []
         this.filteredIndicators = []
         this.selectedIndicator = null
+        this.pillarOptions = []
+        this.categoryOptions = []
         this.currentFilters = {
             search: '',
             category: '',
@@ -24,6 +26,7 @@ class IndicatorSelector {
 
         this.modal = null
         this.highlightedIndex = -1  // For keyboard navigation (independent of mouse)
+        this.inputMode = 'mouse'  // Track current input mode: 'mouse' or 'keyboard'
     }
 
     async initialize() {
@@ -42,9 +45,13 @@ class IndicatorSelector {
             const response = await fetch(`${this.options.apiEndpoint}?limit=1000`)
             const data = await response.json()
             this.indicators = data.indicators || []
+            this.pillarOptions = data.pillars || []
+            this.categoryOptions = data.categories || []
         } catch (error) {
             console.error('Error loading indicators:', error)
             this.indicators = []
+            this.pillarOptions = []
+            this.categoryOptions = []
         }
     }
 
@@ -90,18 +97,21 @@ class IndicatorSelector {
             '<div class="dataset-modal-header">' +
             '<h3 class="dataset-modal-title">Select Existing Indicator</h3>' +
             '<div class="dataset-selection-counter">' +
-            '<span class="selected-count">' + (this.selectedIndicator ? 1 : 0) + '</span> of 1 selected' +
+            '<span class="selected-count">' + (this.selectedIndicator ? 1 : 0) + '</span>' +
+            '<span>of</span>' +
+            '<span>1</span>' +
+            '<span>selected</span>' +
             '</div>' +
+            '<button class="modal-close-btn" id="modal-close-btn" aria-label="Close" tabindex="0">&times;</button>' +
             '</div>' +
             (this.options.enableSearch ? this.createSearchHTML() : '') +
             (this.options.enableFilters ? this.createFiltersHTML() : '') +
-            '<div class="dataset-list-container">' +
+            '<div class="dataset-list-container" tabindex="0">' +
             '<div id="indicator-list" class="dataset-list enhanced">' +
             '<div class="dataset-loading-message">Loading indicators...</div>' +
             '</div>' +
             '</div>' +
             '<div class="dataset-modal-actions">' +
-            '<button id="modal-cancel" class="dataset-modal-cancel">Cancel</button>' +
             '<button id="modal-confirm" class="dataset-modal-confirm" ' +
             (this.selectedIndicator ? '' : 'disabled') + '>Add Indicator</button>' +
             '</div>'
@@ -118,23 +128,23 @@ class IndicatorSelector {
     }
 
     createFiltersHTML() {
-        // Parse TreePath to extract unique pillars and categories
-        const pillarSet = new Set()
-        const categorySet = new Set()
+        // Build pillar options from API data with format: "Name (CODE)"
+        const pillarOptions = this.pillarOptions
+            .map(p => {
+                const code = p.PillarCode || p.ItemCode
+                const name = p.Pillar || p.ItemName || code
+                return '<option value="' + code + '">' + name + '\u0020(' + code + ')</option>'
+            })
+            .join('')
 
-        this.indicators.forEach(i => {
-            if (i.TreePath) {
-                const pathParts = i.TreePath.split('/')
-                if (pathParts.length > 1) pillarSet.add(pathParts[1].toUpperCase())
-                if (pathParts.length > 2) categorySet.add(pathParts[2].toUpperCase())
-            }
-        })
-
-        const pillars = Array.from(pillarSet).sort()
-        const categories = Array.from(categorySet).sort()
-
-        const catOptions = categories.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('')
-        const pillarOptions = pillars.map(pillar => '<option value="' + pillar + '">' + pillar + '</option>').join('')
+        // Build category options from API data with format: "Name (CODE)"
+        const categoryOptions = this.categoryOptions
+            .map(c => {
+                const code = c.CategoryCode || c.ItemCode
+                const name = c.Category || c.ItemName || code
+                return '<option value="' + code + '">' + name + '\u0020(' + code + ')</option>'
+            })
+            .join('')
 
         return '<div class="dataset-filters-container">' +
                '<select id="pillar-filter" class="filter-select pillar-select">' +
@@ -143,7 +153,7 @@ class IndicatorSelector {
                '</select>' +
                '<select id="category-filter" class="filter-select category-select">' +
                '<option value="" class="default-option">All Categories</option>' +
-               catOptions +
+               categoryOptions +
                '</select>' +
                '</div>';
     }
@@ -204,20 +214,11 @@ class IndicatorSelector {
             let cssClasses = 'dataset-option enhanced'
             if (isSelected) cssClasses += ' selected'
 
-            let badges = ''
-            if (this.options.showPillars || this.options.showCategories) {
-                // Parse TreePath for pillar/category display
-                const pathParts = indicator.TreePath ? indicator.TreePath.split('/') : []
-                const pillar = pathParts.length > 1 ? pathParts[1].toUpperCase() : ''
-                const category = pathParts.length > 2 ? pathParts[2].toUpperCase() : ''
-
-                if (this.options.showPillars && pillar) {
-                    badges += '<span class="dataset-organization-badge ' + pillar.toLowerCase() + '">' + pillar + '</span>'
-                }
-                if (this.options.showCategories && category) {
-                    badges += '<span class="dataset-category-badge ' + category.toLowerCase() + '">' + category + '</span>'
-                }
-            }
+            // Parse TreePath for breadcrumb display (PillarCode > CategoryCode > IndicatorCode)
+            const pathParts = indicator.TreePath ? indicator.TreePath.split('/') : []
+            const pillar = pathParts.length > 1 ? pathParts[1].toUpperCase() : ''
+            const category = pathParts.length > 2 ? pathParts[2].toUpperCase() : ''
+            const breadcrumb = pillar + '\u0020>\u0020' + category + '\u0020>\u0020' + indicator.IndicatorCode
 
             const description = indicator.Description || ''
             const indicatorName = indicator.Indicator || indicator.ItemName || indicator.IndicatorCode
@@ -225,8 +226,7 @@ class IndicatorSelector {
             htmlParts.push(
                 '<div class="' + cssClasses + ' compact" data-indicator-code="' + indicator.IndicatorCode + '">' +
                 '<div class="dataset-compact-header">' +
-                '<div class="dataset-compact-code">' + indicator.IndicatorCode + '</div>' +
-                '<div class="dataset-compact-badges">' + badges + '</div>' +
+                '<div class="dataset-compact-code">' + breadcrumb + '</div>' +
                 '</div>' +
                 '<div class="dataset-compact-name">' + indicatorName + '</div>' +
                 '<div class="dataset-compact-description">' + description + '</div>' +
@@ -309,12 +309,18 @@ class IndicatorSelector {
         }
 
         // Modal action buttons
-        const cancelButton = this.modal.querySelector('#modal-cancel')
+        const closeButton = this.modal.querySelector('#modal-close-btn')
         const confirmButton = this.modal.querySelector('#modal-confirm')
 
-        if (cancelButton) {
-            cancelButton.addEventListener('click', () => {
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
                 this.close()
+            })
+            closeButton.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    this.close()
+                }
             })
         }
 
@@ -339,14 +345,60 @@ class IndicatorSelector {
             }
         }
         document.addEventListener('keydown', this.escapeHandler)
+
+        // Focus trap - prevent tabbing out of modal
+        this.focusTrapHandler = (e) => {
+            if (e.key !== 'Tab' || !this.modal) return
+
+            const focusableElements = this.modal.querySelectorAll(
+                'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+            )
+            const focusableArray = Array.from(focusableElements)
+            const firstElement = focusableArray[0]
+            const lastElement = focusableArray[focusableArray.length - 1]
+
+            if (e.shiftKey) {
+                // Shift+Tab: if on first element, go to last
+                if (document.activeElement === firstElement) {
+                    e.preventDefault()
+                    lastElement.focus()
+                }
+            } else {
+                // Tab: if on last element, go to first
+                if (document.activeElement === lastElement) {
+                    e.preventDefault()
+                    firstElement.focus()
+                }
+            }
+        }
+        document.addEventListener('keydown', this.focusTrapHandler)
+
+        // Track mouse movement to switch back to mouse mode
+        const indicatorList = this.modal.querySelector('#dataset-list')
+        if (indicatorList) {
+            indicatorList.addEventListener('mousemove', () => {
+                if (this.inputMode !== 'mouse') {
+                    this.inputMode = 'mouse'
+                    this.updateInputModeClass()
+                }
+            })
+        }
     }
     
     bindIndicatorEvents() {
         if (!this.modal) return
-        
+
         this.modal.querySelectorAll('.dataset-option').forEach(option => {
             const indicatorCode = option.dataset.indicatorCode
-            
+
+            // Switch to mouse mode on mouseenter
+            option.addEventListener('mouseenter', () => {
+                if (this.inputMode !== 'mouse') {
+                    this.inputMode = 'mouse'
+                    this.updateInputModeClass()
+                }
+            })
+
             option.style.cursor = 'pointer'
             option.addEventListener('click', (e) => {
                 e.stopPropagation()
@@ -431,6 +483,12 @@ class IndicatorSelector {
             this.keyboardHandler = null
         }
 
+        // Remove focus trap handler
+        if (this.focusTrapHandler) {
+            document.removeEventListener('keydown', this.focusTrapHandler)
+            this.focusTrapHandler = null
+        }
+
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
@@ -451,6 +509,12 @@ class IndicatorSelector {
 
         const items = indicatorList.querySelectorAll('.dataset-option')
         if (items.length === 0) return
+
+        // Switch to keyboard mode on any keyboard navigation
+        if (this.inputMode !== 'keyboard') {
+            this.inputMode = 'keyboard'
+            this.updateInputModeClass()
+        }
 
         switch(e.key) {
             case 'ArrowDown':
@@ -499,21 +563,63 @@ class IndicatorSelector {
                 this.scrollHighlightedIntoView()
                 break
 
-            case 'Enter':
-            case ' ':  // Space key
-                // Only toggle if there's a highlighted item
-                if (this.highlightedIndex >= 0) {
+            case 'Enter': {
+                // Only process if search input or list container is focused (not buttons/dropdowns)
+                const searchInput = this.modal.querySelector('#indicator-search')
+                const listContainer = this.modal.querySelector('.dataset-list-container')
+                const isFocusedOnInput = document.activeElement === searchInput || document.activeElement === listContainer
+
+                if (this.highlightedIndex >= 0 && isFocusedOnInput) {
+                    e.preventDefault()
+
+                    // Get the currently highlighted indicator's code
+                    const indicatorList = this.modal.querySelector('#indicator-list')
+                    const items = indicatorList ? indicatorList.querySelectorAll('.dataset-option') : []
+                    const highlightedItem = items[this.highlightedIndex]
+                    const highlightedCode = highlightedItem ? highlightedItem.dataset.indicatorCode : null
+
+                    // Check if the highlighted indicator is already selected
+                    const isAlreadySelected = this.selectedIndicator === highlightedCode
+
+                    if (isAlreadySelected) {
+                        // If already selected and Enter pressed again, submit and close
+                        this.confirm()
+                    } else {
+                        // Otherwise, just toggle (select) the indicator
+                        this.toggleHighlightedIndicator()
+                    }
+                }
+                break
+            }
+
+            case ' ': {  // Space key
+                // Only process if search input or list container is focused (not buttons/dropdowns)
+                const searchInput = this.modal.querySelector('#indicator-search')
+                const listContainer = this.modal.querySelector('.dataset-list-container')
+                const isFocusedOnInput = document.activeElement === searchInput || document.activeElement === listContainer
+
+                // Space should ONLY toggle, never submit
+                if (this.highlightedIndex >= 0 && isFocusedOnInput) {
                     e.preventDefault()
                     this.toggleHighlightedIndicator()
                 }
-                // Otherwise, allow space to be typed normally in the search input
+                // Otherwise, allow default behavior (space in search, button clicks, etc.)
                 break
+            }
         }
 
-        // Keep search input focused
-        if (this.options.enableSearch) {
+        // Keep search input focused ONLY for navigation keys (arrows, page up/down)
+        // Don't refocus if user is on a button (Space/Enter on buttons should work)
+        const isNavigationKey = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(e.key)
+        const isOnButton = document.activeElement && document.activeElement.tagName === 'BUTTON'
+        const isOnSelect = document.activeElement && document.activeElement.tagName === 'SELECT'
+
+        if (this.options.enableSearch && isNavigationKey && !isOnButton) {
             const searchInput = this.modal.querySelector('#indicator-search')
-            if (searchInput && document.activeElement !== searchInput) {
+            const listContainer = this.modal.querySelector('.dataset-list-container')
+
+            // Refocus if we're on the list container OR a dropdown/select (navigating from filter)
+            if (searchInput && (document.activeElement === listContainer || isOnSelect)) {
                 searchInput.focus()
             }
         }
@@ -580,5 +686,31 @@ class IndicatorSelector {
 
     getSelectedIndicator() {
         return this.selectedIndicator
+    }
+
+    updateInputModeClass() {
+        if (!this.modal) return
+
+        const indicatorList = this.modal.querySelector('#indicator-list')
+        if (!indicatorList) return
+
+        if (this.inputMode === 'keyboard') {
+            indicatorList.classList.add('keyboard-mode')
+
+            // Restore visual highlight at current index when entering keyboard mode
+            if (this.highlightedIndex >= 0) {
+                this.highlightSelectedIndex()
+            }
+        } else {
+            // Mouse mode: remove keyboard-mode class and clear visual keyboard highlights
+            indicatorList.classList.remove('keyboard-mode')
+
+            // Remove keyboard highlighting from all options (visual only)
+            const items = indicatorList.querySelectorAll('.dataset-option.keyboard-highlighted')
+            items.forEach(item => item.classList.remove('keyboard-highlighted'))
+
+            // Keep highlightedIndex - don't reset it!
+            // This allows returning to the same position when switching back to keyboard mode
+        }
     }
 }
