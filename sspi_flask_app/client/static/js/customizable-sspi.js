@@ -1,178 +1,6 @@
 // customizable-sspi.js
 // SSPI Tree UI implementing full specification (three-column layout)
 
-// ========== SECTION 1: ActionHistory Class ==========
-
-/**
- * ActionHistory - Manages action history with undo/redo and cumulative change tracking
- * - Baseline capture (default SSPI structure)
- * - Delta-based action recording
- * - Cumulative action log from baseline
- * - Export functionality for backend processing
- */
-class ActionHistory {
-    constructor(sspiInstance) {
-        this.sspi = sspiInstance;
-        this.baseline = null;              // Snapshot of default SSPI metadata
-        this.actions = [];                 // Cumulative action log
-        this.currentIndex = -1;            // Undo/redo pointer
-        this.maxHistorySize = 100;         // Increased from 50
-    }
-
-    /**
-     * Capture baseline metadata when default SSPI is loaded
-     * @param {Array} metadata - Array of metadata items (SSPI, Pillars, Categories, Indicators)
-     */
-    captureBaseline(metadata) {
-        this.baseline = JSON.parse(JSON.stringify(metadata));
-        this.actions = [];
-        this.currentIndex = -1;
-        console.log('Captured baseline with', metadata.length, 'metadata items');
-    }
-
-    /**
-     * Record an action with both undo/redo functions AND delta information
-     * @param {Object} actionConfig - Action configuration
-     * @param {string} actionConfig.type - Action type (e.g., 'add-indicator', 'move-category')
-     * @param {string} actionConfig.message - Human-readable description
-     * @param {Object} actionConfig.delta - Delta object with change details
-     * @param {Function} actionConfig.undo - Function to undo the action
-     * @param {Function} actionConfig.redo - Function to redo the action
-     * @returns {Object} The recorded action
-     */
-    recordAction(actionConfig) {
-        // Validate required fields
-        if (!actionConfig.type || !actionConfig.message || !actionConfig.undo || !actionConfig.redo) {
-            console.error('Invalid action config:', actionConfig);
-            throw new Error('Action must have type, message, undo, and redo');
-        }
-        // Create action with unique ID and timestamp
-        const action = {
-            actionId: this.generateUUID(),
-            timestamp: Date.now(),
-            type: actionConfig.type,
-            message: actionConfig.message,
-            delta: actionConfig.delta || null,
-            undo: actionConfig.undo,
-            redo: actionConfig.redo
-        };
-        // If in batch mode, add to batch instead of main history
-        // Normal recording (not in batch mode)
-        // Truncate any actions after currentIndex (branching timeline)
-        if (this.currentIndex < this.actions.length - 1) {
-            this.actions = this.actions.slice(0, this.currentIndex + 1);
-        }
-        // Add to history
-        this.actions.push(action);
-        this.currentIndex++;
-        if (this.actions.length > this.maxHistorySize) {
-            const overflow = this.actions.length - this.maxHistorySize;
-            this.actions = this.actions.slice(overflow);
-            this.currentIndex -= overflow;
-        }
-        console.log('Recorded action:', action.type, '-', action.message, '(History size:', this.actions.length, ')');
-        return action;
-    }
-
-    /**
-     * Undo the most recent action
-     * @returns {boolean} Success status
-     */
-    undo() {
-        if (!this.canUndo()) {
-            this.sspi.showNotification('Nothing\u0020to\u0020undo', 'info', 2000);
-            return false;
-        }
-
-        const action = this.actions[this.currentIndex];
-        try {
-            action.undo();
-            this.currentIndex--;
-            this.sspi.showNotification(`↶\u0020Undo:\u0020${action.message}`, 'info', 2500);
-            console.log('Undid action:', action.type, '-', action.message);
-            return true;
-        } catch (error) {
-            console.error('Error during undo:', error);
-            this.sspi.showNotification('Error\u0020during\u0020undo', 'error', 3000);
-            return false;
-        }
-    }
-
-    /**
-     * Redo the next action
-     * @returns {boolean} Success status
-     */
-    redo() {
-        if (!this.canRedo()) {
-            this.sspi.showNotification('Nothing\u0020to\u0020redo', 'info', 2000);
-            return false;
-        }
-
-        const action = this.actions[this.currentIndex + 1];
-        try {
-            action.redo();
-            this.currentIndex++;
-            this.sspi.showNotification(`↷\u0020Redo:\u0020${action.message}`, 'info', 2500);
-            console.log('Redid action:', action.type, '-', action.message);
-            return true;
-        } catch (error) {
-            console.error('Error during redo:', error);
-            this.sspi.showNotification('Error\u0020during\u0020redo', 'error', 3000);
-            return false;
-        }
-    }
-
-    canUndo() {
-        return this.currentIndex >= 0;
-    }
-
-    canRedo() {
-        return this.currentIndex < this.actions.length - 1;
-    }
-
-    getCumulativeActions() {
-        return this.actions.slice(0, this.currentIndex + 1);
-    }
-
-    clear() {
-        this.actions = [];
-        this.currentIndex = -1;
-        console.log('Cleared action history');
-    }
-
-    exportActionLog() {
-        return this.getCumulativeActions().map(action => ({
-            actionId: action.actionId,
-            type: action.type,
-            timestamp: action.timestamp,
-            message: action.message,
-            delta: action.delta
-        }));
-    }
-
-    getInfo() {
-        return {
-            historySize: this.actions.length,
-            currentIndex: this.currentIndex,
-            canUndo: this.canUndo(),
-            canRedo: this.canRedo(),
-            hasBaseline: this.baseline !== null,
-            baselineItems: this.baseline ? this.baseline.length : 0,
-            recentActions: this.actions.slice(-5).map(a => ({
-                type: a.type,
-                message: a.message
-            }))
-        };
-    }
-
-    generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-}
 
 class CustomizableSSPIStructure {
     constructor(parentElement, options = {}) {
@@ -189,8 +17,6 @@ class CustomizableSSPIStructure {
         this.pillars = pillars;
         this.autoLoad = autoLoad;
         this.loadingDelay = loadingDelay;
-        // Cache version - increment when data structure changes
-        this.CACHE_VERSION = '2.2.0'; // v2.2: Dataset details stored in separate map, not embedded in indicators
         this.unsavedChanges = false;
         this.isImporting = false; // Flag to suppress validation during bulk import
         this.draggedEl = null;
@@ -198,20 +24,12 @@ class CustomizableSSPIStructure {
         this.dropped = false;
         this.isLoading = false;
         this.cacheTimeout = null;
-        // Initialize changelog system
-        this.baselineMetadata = null;
-        this.diffCache = null;
-        // Visualization section state
-        this.visualizationSection = null;
-        this.isVisualizationOpen = false;
-        this.currentChart = null;
-        this.currentConfigId = null;
-        // Dataset details storage (maps dataset code to full details)
-        this.datasetDetails = {};
-        // Initialize action history system
-        this.actionHistory = new ActionHistory(this);
+        this.datasetDetails = {};// Dataset details storage (maps dataset code to full details)
+        this.actionHistory = new CustomizableActionHistory(this);
         this.initToolbar();
         this.initRoot();
+        this.rigPillarRename();
+        this.rigCategoryIndicatorListeners(); 
         this.rigDragStructureListeners();
         this.setupKeyboardShortcuts();
         // NOTE: Dataset details are loaded as part of default-structure API response (all_datasets field)
@@ -236,31 +54,14 @@ class CustomizableSSPIStructure {
         importBtn.addEventListener('click', async () => {
             try {
                 this.showLoadingState('Loading default SSPI metadata...');
-                // Clear ALL caches when explicitly loading default metadata
-                this.clearCache();
+                this.clearCache(); // Clear ALL caches when explicitly loading default metadata
                 // Reload available datasets from server (fresh, no cache)
-                await this.loadAvailableDatasets();
                 const response = await this.fetch('/api/v1/customize/default-structure');
                 if (response.success) {
                     console.log('Loading default SSPI metadata with', response.stats);
-                    // Use datasetDetailsMap directly from backend (no transformation!)
-                    if (response.datasetDetailsMap) {
-                        this.datasetDetails = response.datasetDetailsMap;
-                        console.log(`Loaded ${Object.keys(this.datasetDetails).length} dataset details from map`);
-                    } else if (response.all_datasets && Array.isArray(response.all_datasets)) {
-                        // Fallback for backwards compatibility //REMOVE ME?
-                        this.datasetDetails = {};
-                        response.all_datasets.forEach(ds => {
-                            this.datasetDetails[ds.DatasetCode] = ds;
-                        });
-                        console.log(`Populated ${response.all_datasets.length} dataset details from array`);
-                    }
-                    // Use async import for better performance with large metadata
+                    this.datasetDetails = response.datasetDetailsMap;
                     await this.importDataAsync(response.metadata);
-                    // Capture baseline for action history tracking
-                    this.actionHistory.captureBaseline(response.metadata);
                     this.hideLoadingState();
-                    this.flagUnsaved();
                 } else {
                     this.hideLoadingState();
                     alert('Error loading default metadata: ' + response.error);
@@ -274,7 +75,7 @@ class CustomizableSSPIStructure {
         this.saveButton = document.createElement('button');
         this.saveButton.textContent = 'Save';
         this.saveButton.addEventListener('click', async () => {
-            await this.saveConfiguration();
+            console.log('Not Implemented')
         });
         const resetViewBtn = document.createElement('button');
         resetViewBtn.textContent = 'Reset View';
@@ -368,13 +169,16 @@ class CustomizableSSPIStructure {
         this.parentElement.appendChild(this.container);
     }
 
-    rigDragStructureListeners() {
+    rigPillarRename() {
         // Pillar rename
         this.container.querySelectorAll('.customization-pillar-header').forEach(h =>
             h.addEventListener('keydown', e => {
                 if (e.key === 'Enter') { e.preventDefault(); h.blur(); }
             })
         );
+    }
+
+    rigCategoryIndicatorListeners() {
         // Collapse toggle buttons
         this.container.addEventListener('click', e => {
             const toggleBtn = e.target.closest('.collapse-toggle-btn');
@@ -405,6 +209,9 @@ class CustomizableSSPIStructure {
                 }
             }
         });
+    }
+
+    rigDragStructureListeners() {
         // Drag & Drop with preview clone
         this.container.addEventListener('dragstart', e => {
             // Only allow dragging from headers (category-header or indicator-header)
@@ -516,7 +323,6 @@ class CustomizableSSPIStructure {
                 this.clearDraggingVisuals(z);
             }
         });
-
         this.container.addEventListener('drop', e => {
             const z = e.target.closest('.drop-zone');
             if (!z || !this.draggedEl) return;
@@ -585,12 +391,10 @@ class CustomizableSSPIStructure {
                 const categoryCode = movedElement.dataset.categoryCode;
                 const fromPillarCode = fromLocation;
                 const toPillarCode = toLocation;
-
                 delta.categoryCode = categoryCode;
                 delta.fromPillarCode = fromPillarCode;
                 delta.toPillarCode = toPillarCode;
             }
-
             this.actionHistory.recordAction({
                 type: actionType,
                 message: `Moved\u0020${elementType}\u0020"${elementName}"\u0020from\u0020${fromLocation}\u0020to\u0020${toLocation}`,
@@ -623,7 +427,6 @@ class CustomizableSSPIStructure {
                 }
             });
         });
-
         // Prevent contenteditable elements from accepting drops during drag operations
         this.container.addEventListener('dragover', e => {
             const contentEditableEl = e.target.closest('[contenteditable="true"]');
@@ -632,7 +435,6 @@ class CustomizableSSPIStructure {
                 e.stopPropagation();
             }
         }, true); // Use capture phase to intercept before other handlers
-
         this.container.addEventListener('drop', e => {
             const contentEditableEl = e.target.closest('[contenteditable="true"]');
             if (contentEditableEl && this.draggedEl) {
@@ -641,7 +443,6 @@ class CustomizableSSPIStructure {
                 e.stopPropagation();
             }
         }, true); // Use capture phase to intercept before other handlers
-
         // Context menu & keyboard
         this.container.addEventListener('contextmenu', e => {
             // Check for dataset first (highest priority)
@@ -652,15 +453,12 @@ class CustomizableSSPIStructure {
                 this.showContextMenu(e.pageX, e.pageY, datasetItem);
                 return;
             }
-
             // Check for draggable items (indicators, categories, pillars)
             const draggableItem = e.target.closest('.draggable-item');
             if (!draggableItem) return;
-
             // Don't show indicator menu if clicking inside dataset selection area
             const isInDatasetArea = e.target.closest('.selected-datasets, .dataset-selection');
             if (isInDatasetArea) return;
-
             e.preventDefault();
             this.showContextMenu(e.pageX, e.pageY, draggableItem);
         });
@@ -670,7 +468,6 @@ class CustomizableSSPIStructure {
                 this.showContextMenu(r.right, r.bottom, e.target);
             }
         });
-
         // Indicator name placeholder clearing
         this.container.addEventListener('focus', e => {
             if (e.target.classList.contains('indicator-name')) {
@@ -680,7 +477,6 @@ class CustomizableSSPIStructure {
                 }
             }
         }, true);
-
         this.container.addEventListener('blur', e => {
             if (e.target.classList.contains('indicator-name')) {
                 const indicatorName = e.target;
@@ -689,11 +485,9 @@ class CustomizableSSPIStructure {
                 }
             }
         }, true);
-
         // Track contenteditable changes for undo/redo
         let editingElement = null;
         let originalValue = null;
-
         this.container.addEventListener('focus', e => {
             const editableElement = e.target;
             if (editableElement.isContentEditable &&
@@ -705,21 +499,17 @@ class CustomizableSSPIStructure {
                 originalValue = editableElement.textContent.trim();
             }
         }, true);
-
         this.container.addEventListener('blur', e => {
             const editableElement = e.target;
             if (editableElement === editingElement && originalValue !== null) {
                 const newValue = editableElement.textContent.trim();
-
                 // Only record if the value actually changed and it's not empty
                 if (newValue !== originalValue && newValue !== '' && originalValue !== '') {
                     // IMPORTANT: Create local copies to capture in closures
                     // The outer originalValue/newValue are shared and will be overwritten
                     const capturedOriginalValue = originalValue;
                     const capturedNewValue = newValue;
-
                     let elementType, actionType, itemCode, message;
-
                     // Determine element type and action
                     if (editableElement.classList.contains('indicator-name')) {
                         elementType = 'indicator';
@@ -758,14 +548,12 @@ class CustomizableSSPIStructure {
                         itemCode = null;
                         message = `Renamed\u0020${elementType}\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;
                     }
-
                     // Create delta with proper structure
                     const delta = {
                         type: actionType,
                         from: capturedOriginalValue,
                         to: capturedNewValue
                     };
-
                     // Add code-specific fields
                     if (elementType === 'indicator' && itemCode) {
                         delta.indicatorCode = itemCode;
@@ -777,34 +565,28 @@ class CustomizableSSPIStructure {
                         delta.indicatorCode = itemCode;
                         delta.scoreFunction = capturedNewValue; // Include the new score function
                     }
-
                     // Create undo/redo functions that find elements by code for reliability
                     let undoFn, redoFn;
-
                     if (elementType === 'score-function') {
                         // Score function: find by indicator code (if available), otherwise use element ID
                         const indicatorCard = editableElement.closest('[data-indicator-code]');
-
                         // Ensure indicator has an ID for fallback
                         if (!indicatorCard.id) {
                             indicatorCard.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
                         }
                         const elementId = indicatorCard.id;
-
                         console.log('[Score Function] Setup undo/redo:', {
                             itemCode,
                             elementId,
                             hasCode: !!itemCode,
                             hasId: !!elementId
                         });
-
                         undoFn = () => {
                             console.log('[Score Function UNDO] Starting:', {
                                 itemCode,
                                 elementId,
                                 capturedOriginalValue
                             });
-
                             let indicator;
                             if (itemCode) {
                                 // Try finding by code first
@@ -816,10 +598,8 @@ class CustomizableSSPIStructure {
                                 indicator = document.getElementById(elementId);
                                 console.log('[Score Function UNDO] Found by ID:', !!indicator);
                             }
-
                             const scoreFn = indicator?.querySelector('.editable-score-function');
                             console.log('[Score Function UNDO] Found scoreFn element:', !!scoreFn);
-
                             if (scoreFn) {
                                 console.log('[Score Function UNDO] Setting textContent to:', capturedOriginalValue);
                                 scoreFn.textContent = capturedOriginalValue;
@@ -835,7 +615,6 @@ class CustomizableSSPIStructure {
                                 elementId,
                                 capturedNewValue
                             });
-
                             let indicator;
                             if (itemCode) {
                                 indicator = this.findElementByCode(itemCode, 'Indicator');
@@ -845,10 +624,8 @@ class CustomizableSSPIStructure {
                                 indicator = document.getElementById(elementId);
                                 console.log('[Score Function REDO] Found by ID:', !!indicator);
                             }
-
                             const scoreFn = indicator?.querySelector('.editable-score-function');
                             console.log('[Score Function REDO] Found scoreFn element:', !!scoreFn);
-
                             if (scoreFn) {
                                 console.log('[Score Function REDO] Setting textContent to:', capturedNewValue);
                                 scoreFn.textContent = capturedNewValue;
@@ -865,7 +642,6 @@ class CustomizableSSPIStructure {
                             indicatorCard.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
                         }
                         const elementId = indicatorCard.id;
-
                         undoFn = () => {
                             let indicator;
                             if (itemCode) {
@@ -897,7 +673,6 @@ class CustomizableSSPIStructure {
                             categoryBox.id = `category-${Math.random().toString(36).substr(2,9)}`;
                         }
                         const elementId = categoryBox.id;
-
                         undoFn = () => {
                             let category;
                             if (itemCode) {
@@ -947,7 +722,6 @@ class CustomizableSSPIStructure {
                             this.flagUnsaved();
                         };
                     }
-
                     this.actionHistory.recordAction({
                         type: actionType,
                         message: message,
@@ -955,16 +729,13 @@ class CustomizableSSPIStructure {
                         undo: undoFn,
                         redo: redoFn
                     });
-
                     // Flag unsaved to trigger cache update
                     this.flagUnsaved();
                 }
-
                 editingElement = null;
                 originalValue = null;
             }
         }, true);
-
         // Double-click to select all text in contenteditable fields
         this.container.addEventListener('dblclick', e => {
             const editableElement = e.target;
@@ -972,9 +743,7 @@ class CustomizableSSPIStructure {
                 (editableElement.classList.contains('indicator-name') ||
                  editableElement.classList.contains('customization-category-header-title') ||
                  editableElement.classList.contains('pillar-name'))) {
-
                 e.preventDefault();
-
                 // Select all text in the element
                 const range = document.createRange();
                 range.selectNodeContents(editableElement);
@@ -992,13 +761,11 @@ class CustomizableSSPIStructure {
             const isInInput = e.target.tagName === 'INPUT' ||
                             e.target.tagName === 'TEXTAREA' ||
                             e.target.isContentEditable;
-
             // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !isInInput) {
                 e.preventDefault();
                 this.actionHistory.undo();
             }
-
             // Redo: Ctrl+Y or Ctrl+Shift+Z (Windows/Linux) or Cmd+Y or Cmd+Shift+Z (Mac)
             if ((((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') ||
                  ((e.ctrlKey || e.metaKey) && e.key === 'y')) && !isInInput) {
@@ -1006,8 +773,6 @@ class CustomizableSSPIStructure {
                 this.actionHistory.redo();
             }
         });
-
-        console.log('Keyboard shortcuts registered: Ctrl+Z (undo), Ctrl+Y or Ctrl+Shift+Z (redo)');
     }
 
     flagUnsaved() {
@@ -1121,14 +886,11 @@ class CustomizableSSPIStructure {
      */
     getPositionInParent(element) {
         if (!element) return -1;
-
         const parent = element.parentElement;
         if (!parent) return -1;
-
         const itemType = element.dataset.itemType;
         const siblings = Array.from(parent.children)
             .filter(el => el.dataset.itemType === itemType);
-
         return siblings.indexOf(element);
     }
 
@@ -1139,10 +901,8 @@ class CustomizableSSPIStructure {
      */
     updateElementCode(element, newCode) {
         if (!element || !newCode) return;
-
         const itemType = element.dataset.itemType;
         element.dataset.itemCode = newCode;
-
         if (itemType === 'Indicator') {
             element.dataset.indicatorCode = newCode;
         } else if (itemType === 'Category') {
@@ -1161,38 +921,28 @@ class CustomizableSSPIStructure {
      * @param {string} options.scoreFunction - The new score function
      * @returns {Object} Result with success status and action
      */
-    setScoreFunction(indicatorCode, { scoreFunction } = {}) {
-        // Validate inputs
+    setScoreFunction(indicatorCode, scoreFunction) {
         if (!indicatorCode) {
             return { success: false, error: 'Indicator code is required' };
         }
         if (!scoreFunction) {
             return { success: false, error: 'Score function is required' };
         }
-
-        // Find indicator element
         const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
         if (!indicatorEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-
         // Find score function element
         const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
         if (!scoreFunctionEl) {
             return { success: false, error: 'Score function element not found' };
         }
-
         // Capture old value
         const oldScoreFunction = scoreFunctionEl.textContent;
-
-        // Don't record if no change
         if (oldScoreFunction === scoreFunction) {
             return { success: true, message: 'No change needed' };
         }
-
-        // Apply change
         scoreFunctionEl.textContent = scoreFunction;
-
         // Record action
         const action = this.actionHistory.recordAction({
             type: 'set-score-function',
@@ -1212,11 +962,8 @@ class CustomizableSSPIStructure {
                 this.validate();
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -1227,79 +974,61 @@ class CustomizableSSPIStructure {
      * @param {string} options.newCode - The new code value
      * @returns {Object} Result with success status and action
      */
-    setIndicatorCode(indicatorElement, { newCode } = {}) {
-        // Validate element
+    setIndicatorCode(indicatorElement, newCode) {
         if (!(indicatorElement instanceof HTMLElement)) {
             return { success: false, error: 'Indicator element is required' };
         }
-
-        // Validate new code
         if (!newCode) {
             return { success: false, error: 'New code is required' };
         }
-
-        // Validate code format
         if (!this.validateCode(newCode, 'indicator')) {
             return { success: false, error: 'Invalid indicator code format (must be 6 uppercase letters/numbers)' };
         }
-
-        // Ensure element has a stable ID for undo/redo
         if (!indicatorElement.id) {
             indicatorElement.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
         }
         const elementId = indicatorElement.id;
-
-        // Get old code from element's data attribute
         const oldCode = indicatorElement.dataset.indicatorCode || '';
-
-        // Check if code is unique (excluding current element)
         const codeInput = indicatorElement.querySelector('.indicator-code-input');
         if (!this.isCodeUnique(newCode, 'indicator', codeInput)) {
             return { success: false, error: 'Code already in use' };
         }
-
-        // Don't record if no change
         if (oldCode === newCode) {
             return { success: true, message: 'No change needed' };
         }
-
-        // Apply change - update data attributes
         this.updateElementCode(indicatorElement, newCode);
-
-        // Update input field
         if (codeInput) {
             codeInput.value = newCode;
         }
-
-        // Detect new indicator creation: if oldCode is empty, this is a new indicator
         const isNewIndicator = !oldCode || oldCode === '';
-
-        // Start batch for new indicator creation
         if (isNewIndicator) {
-            // Get indicator name for better message
             const nameElement = indicatorElement.querySelector('.indicator-name-input');
             const indicatorName = nameElement ? nameElement.value : 'New Indicator';
-
-            // Get parent category info
             const parentCategory = indicatorElement.closest('[data-category-code]');
             const categoryCode = parentCategory ? parentCategory.dataset.categoryCode : '';
             const categoryNameEl = parentCategory ? parentCategory.querySelector('.category-name') : null;
             const categoryName = categoryNameEl ? categoryNameEl.textContent : '';
-
-            // Start batch with informative metadata
-            this.actionHistory.startBatch({
-                type: 'create-indicator',
-                message: `Created indicator "${indicatorName}" (${newCode})` +
-                         (categoryName ? ` in category "${categoryName}"` : ''),
+            this.actionHistory.recordAction({
+                type: 'add-indicator',
+                message: `Added indicator "${newCode}" to ${categoryName} "${categoryCode}"`,
                 delta: {
-                    indicatorCode: newCode,
-                    indicatorName: indicatorName,
-                    categoryCode: categoryCode,
-                    categoryName: categoryName
+                    type: 'add-indicator',
+                    indicatorCode: indicatorCode,
+                    parentCode: parentCode,
+                    parentType: parentType,
+                    indicatorMetadata: indicatorMetadata,
+                    position: position
+                },
+                undo: () => {
+                    indEl.remove();
+                    this.validate();
+                },
+                redo: () => {
+                    indicatorsContainer.appendChild(indEl);
+                    this.validate();
                 }
-            }, 10000); // 10 second auto-complete window
+            });
         }
-
         // Record action with ID-based undo/redo (codes change, but IDs are stable)
         const action = this.actionHistory.recordAction({
             type: 'set-indicator-code',
@@ -1333,11 +1062,9 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-
         // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -1349,95 +1076,76 @@ class CustomizableSSPIStructure {
      * @param {Object} options.datasetDetails - The dataset details object (optional, will fetch if not provided)
      * @returns {Object} Result with success status and action
      */
-    addDataset(indicatorCode, { datasetCode, datasetDetails } = {}) {
-        // Validate inputs
+    addDataset(datasetCode, indicatorCode) {
         if (!indicatorCode) {
             return { success: false, error: 'Indicator code is required' };
         }
         if (!datasetCode) {
             return { success: false, error: 'Dataset code is required' };
         }
-
-        // Find indicator element
         const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
         if (!indicatorEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-
-        // Find selected datasets container
         const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
         if (!selectedDatasetsDiv) {
             return { success: false, error: 'Selected datasets container not found' };
         }
-
-        // Check for duplicates
         const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
         if (existing) {
             return { success: false, error: 'Dataset already added to this indicator' };
         }
-
-        // Get dataset details if not provided
-        let details = datasetDetails;
+        details = this.datasetDetails[datasetCode];
         if (!details) {
-            details = this.datasetDetails[datasetCode];
-            if (!details) {
-                return { success: false, error: `Dataset ${datasetCode} not found in datasetDetails` };
-            }
+            return { success: false, error: `Dataset\u0020${datasetCode}\u0020not found in datasetDetails` };
         }
-
-        // Get position before adding
         const position = selectedDatasetsDiv.querySelectorAll('.dataset-item').length;
-
         // Create dataset item using existing method
         // (We'll call addDatasetToIndicatorWithDetails but capture the element)
-        const datasetName = details.DatasetName || 'Unknown Dataset';
-        const datasetDescription = details.Description || 'No description available';
-        const datasetOrg = details.Source?.OrganizationName || 'N/A';
-        const datasetOrgCode = details.Source?.OrganizationCode || '';
-
         const formatNumber = (num) => {
             return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         };
-
-        const unitHtml = details.Unit ? `
-            <div class="detail-row">
-                <span class="detail-label">Unit</span>
-                <span class="detail-value">${details.Unit}</span>
-            </div>` : '';
-
-        const rangeHtml = details.Range ? `
-            <div class="detail-row">
-                <span class="detail-label">Range</span>
-                <span class="detail-value">${formatNumber(details.Range.yMin)}\u0020–\u0020${formatNumber(details.Range.yMax)}</span>
-            </div>` : '';
-
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
         datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
-            <div class="dataset-item-header">
-                <div class="dataset-info">
-                    <span class="dataset-name">${datasetName}</span>
-                    <span class="dataset-code">${datasetCode}</span>
-                </div>
-                <div class="dataset-actions">
-                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
-                </div>
-            </div>
-            <div class="dataset-details-slideout">
-                <div class="detail-row">
-                    <span class="detail-label">Description</span>
-                    <span class="detail-value">${datasetDescription}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Organization</span>
-                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
-                </div>${unitHtml}${rangeHtml}
-            </div>
-        `;
-
-        // Add toggle functionality
+<div class="dataset-item-header">
+    <div class="dataset-info">
+        <span class="dataset-name">${details.DatasetName || 'Unknown Dataset'}</span>
+        <span class="dataset-code">${datasetCode}</span>
+    </div>
+    <div class="dataset-actions">
+        <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+    </div>
+</div>
+<div class="dataset-details-slideout">
+    <div class="detail-row">
+        <span class="detail-label">Description</span>
+        <span class="detail-value">${details.Description || 'No description available'}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">Organization</span>
+        <span class="detail-value">${details.Source?.OrganizationName || 'N/A'}\u0020(${details.Source.OrganizationCode})</span>
+    </div>${unitHtml}${rangeHtml}
+</div>
+`;
+        if (details.Unit) {
+            datasetItem.innerHTML += `
+<div class="detail-row">
+    <span class="detail-label">Unit</span>
+    <span class="detail-value">${details.Unit}</span>
+</div>
+`; 
+        }
+        if (details.Range) {
+        datasetItem.innerHTML += `
+<div class="detail-row">
+    <span class="detail-label">Range</span>
+    <span class="detail-value">${formatNumber(details.Range.yMin)}\u0020–\u0020${formatNumber(details.Range.yMax)}</span>
+</div>
+`;
+        }
         const header = datasetItem.querySelector('.dataset-item-header');
         header.addEventListener('click', (e) => {
             if (!e.target.classList.contains('remove-dataset')) {
@@ -1445,20 +1153,14 @@ class CustomizableSSPIStructure {
                 datasetItem.dataset.expanded = (!isExpanded).toString();
             }
         });
-
-        // Add to DOM
         selectedDatasetsDiv.appendChild(datasetItem);
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'add-dataset',
-            message: `Added dataset "${datasetCode}" to indicator "${indicatorCode}"`,
+            message: `Added dataset ${datasetCode} to indicator ${indicatorCode}`,
             delta: {
                 type: 'add-dataset',
                 indicatorCode: indicatorCode,
                 datasetCode: datasetCode,
-                datasetDetails: details,
-                position: position
             },
             undo: () => {
                 datasetItem.remove();
@@ -1469,11 +1171,8 @@ class CustomizableSSPIStructure {
                 this.validate();
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -1484,43 +1183,28 @@ class CustomizableSSPIStructure {
      * @param {string} options.datasetCode - The dataset code to remove
      * @returns {Object} Result with success status and action
      */
-    removeDataset(indicatorCode, { datasetCode } = {}) {
-        // Validate inputs
+    removeDataset(datasetCode, indicatorCode) {
         if (!indicatorCode) {
             return { success: false, error: 'Indicator code is required' };
         }
         if (!datasetCode) {
             return { success: false, error: 'Dataset code is required' };
         }
-
-        // Find indicator element
         const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
         if (!indicatorEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-
-        // Find selected datasets container
         const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
         if (!selectedDatasetsDiv) {
             return { success: false, error: 'Selected datasets container not found' };
         }
-
-        // Find dataset item
         const datasetItem = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
         if (!datasetItem) {
             return { success: false, error: `Dataset ${datasetCode} not found in indicator` };
         }
-
-        // Get position before removing
         const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
-
-        // Get dataset details for undo
         const details = this.datasetDetails[datasetCode];
-
-        // Remove from DOM
         datasetItem.remove();
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'remove-dataset',
             message: `Removed dataset "${datasetCode}" from indicator "${indicatorCode}"`,
@@ -1546,11 +1230,8 @@ class CustomizableSSPIStructure {
                 this.validate();
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -1564,16 +1245,10 @@ class CustomizableSSPIStructure {
      * @param {string} options.scoreFunction - The score function (optional, defaults to "Score = 0")
      * @returns {Object} Result with success, action, and element
      */
-    addIndicator(parentCode, { indicatorCode, indicatorName = 'New Indicator', datasetCodes = [], scoreFunction = 'Score = 0' } = {}) {
-        // Validate inputs
+    addIndicator(parentCode, { indicatorCode = "", indicatorName = 'New Indicator', datasetCodes = [], scoreFunction = 'Score = ' } = {}) {
         if (!parentCode) {
             return { success: false, error: 'Parent code is required' };
         }
-        if (!indicatorCode) {
-            return { success: false, error: 'Indicator code is required' };
-        }
-
-        // Find parent (category or pillar)
         let parentEl = this.findElementByCode(parentCode, 'Category');
         if (!parentEl) {
             parentEl = this.findElementByCode(parentCode, 'Pillar');
@@ -1581,57 +1256,37 @@ class CustomizableSSPIStructure {
         if (!parentEl) {
             return { success: false, error: `Parent ${parentCode} not found` };
         }
-
         const parentType = this.getItemType(parentEl);
-
-        // Find indicators container
         const indicatorsContainer = parentEl.querySelector('.indicators-container');
         if (!indicatorsContainer) {
             return { success: false, error: 'Indicators container not found in parent' };
         }
-
-        // Check for duplicate code
         const existing = this.findElementByCode(indicatorCode, 'Indicator');
         if (existing) {
             return { success: false, error: `Indicator code ${indicatorCode} already exists` };
         }
-
-        // Get position
         const position = indicatorsContainer.querySelectorAll('.indicator-card').length;
-
-        // Create indicator element
         const indEl = this.createIndicatorElement();
-
-        // Set indicator details
         const indicatorNameEl = indEl.querySelector('.indicator-name');
         const indicatorCodeInput = indEl.querySelector('.indicator-code-input');
         const scoreFunctionEl = indEl.querySelector('.editable-score-function');
-
         if (indicatorNameEl) indicatorNameEl.textContent = indicatorName;
         if (indicatorCodeInput) indicatorCodeInput.value = indicatorCode;
         if (scoreFunctionEl) scoreFunctionEl.textContent = scoreFunction;
-
-        // Set data attributes
         indEl.dataset.indicatorCode = indicatorCode;
         indEl.dataset.itemCode = indicatorCode;
-
-        // Add datasets
         if (datasetCodes.length > 0) {
             const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
             if (selectedDatasetsDiv) {
                 datasetCodes.forEach(datasetCode => {
                     const details = this.datasetDetails[datasetCode];
                     if (details) {
-                        this.addDataset(indicatorCode, { datasetCode, datasetDetails: details });
+                        this.addDataset(datasetCode, indicatorCode {datasetDetails: details });
                     }
                 });
             }
         }
-
-        // Add to DOM
         indicatorsContainer.appendChild(indEl);
-
-        // Capture full indicator metadata for undo
         const indicatorMetadata = {
             ItemType: 'Indicator',
             ItemCode: indicatorCode,
@@ -1640,8 +1295,6 @@ class CustomizableSSPIStructure {
             ScoreFunction: scoreFunction,
             Children: []
         };
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'add-indicator',
             message: `Added indicator "${indicatorCode}" to ${parentType} "${parentCode}"`,
@@ -1662,11 +1315,8 @@ class CustomizableSSPIStructure {
                 this.validate();
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action, element: indEl };
     }
 
@@ -1676,27 +1326,19 @@ class CustomizableSSPIStructure {
      * @returns {Object} Result with success, action, and metadata
      */
     removeIndicator(indicatorCode) {
-        // Validate input
         if (!indicatorCode) {
             return { success: false, error: 'Indicator code is required' };
         }
-
-        // Find indicator element
         const indEl = this.findElementByCode(indicatorCode, 'Indicator');
         if (!indEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-
-        // Get parent info
         const parentCode = this.getParentCode(indEl);
         const parentType = this.getParentType(indEl);
         const position = this.getPositionInParent(indEl);
-
-        // Capture indicator metadata for undo
         const indicatorNameEl = indEl.querySelector('.indicator-name');
         const scoreFunctionEl = indEl.querySelector('.editable-score-function');
         const datasetItems = indEl.querySelectorAll('.dataset-item');
-
         const indicatorMetadata = {
             ItemType: 'Indicator',
             ItemCode: indicatorCode,
@@ -1705,14 +1347,8 @@ class CustomizableSSPIStructure {
             ScoreFunction: scoreFunctionEl?.textContent || 'Score = 0',
             Children: []
         };
-
-        // Get parent element for undo/redo
         const parentEl = indEl.parentElement;
-
-        // Remove from DOM
         indEl.remove();
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'remove-indicator',
             message: `Removed indicator "${indicatorCode}" from ${parentType} "${parentCode}"`,
@@ -1739,11 +1375,9 @@ class CustomizableSSPIStructure {
                 this.validate();
             }
         });
-
         // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action, metadata: indicatorMetadata };
     }
 
@@ -1754,26 +1388,19 @@ class CustomizableSSPIStructure {
      * @returns {Object} Result with success and action
      */
     moveIndicator(indicatorCode, targetParentCode) {
-        // Validate inputs
         if (!indicatorCode) {
             return { success: false, error: 'Indicator code is required' };
         }
         if (!targetParentCode) {
             return { success: false, error: 'Target parent code is required' };
         }
-
-        // Find indicator element
         const indEl = this.findElementByCode(indicatorCode, 'Indicator');
         if (!indEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-
-        // Get current parent info
         const fromParentCode = this.getParentCode(indEl);
         const fromParentType = this.getParentType(indEl);
         const fromPosition = this.getPositionInParent(indEl);
-
-        // Find target parent
         let targetParentEl = this.findElementByCode(targetParentCode, 'Category');
         if (!targetParentEl) {
             targetParentEl = this.findElementByCode(targetParentCode, 'Pillar');
@@ -1781,30 +1408,17 @@ class CustomizableSSPIStructure {
         if (!targetParentEl) {
             return { success: false, error: `Target parent ${targetParentCode} not found` };
         }
-
         const toParentType = this.getItemType(targetParentEl);
-
-        // Don't move if already in target
         if (fromParentCode === targetParentCode) {
             return { success: false, error: 'Indicator is already in target parent' };
         }
-
-        // Find target indicators container
         const targetContainer = targetParentEl.querySelector('.indicators-container');
         if (!targetContainer) {
             return { success: false, error: 'Indicators container not found in target parent' };
         }
-
-        // Get new position
         const toPosition = targetContainer.querySelectorAll('.indicator-card').length;
-
-        // Get current parent element for undo
         const fromParentEl = indEl.parentElement;
-
-        // Move to target
         targetContainer.appendChild(indEl);
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'move-indicator',
             message: `Moved indicator "${indicatorCode}" from ${fromParentType} "${fromParentCode}" to ${toParentType} "${targetParentCode}"`,
@@ -1833,11 +1447,8 @@ class CustomizableSSPIStructure {
                 this.validate();
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -1856,31 +1467,21 @@ class CustomizableSSPIStructure {
         if (!indicatorName) {
             return { success: false, error: 'Indicator name is required' };
         }
-
         // Find indicator element
         const indEl = this.findElementByCode(indicatorCode, 'Indicator');
         if (!indEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-
         // Find indicator name element
         const indicatorNameEl = indEl.querySelector('.indicator-name');
         if (!indicatorNameEl) {
             return { success: false, error: 'Indicator name element not found' };
         }
-
-        // Capture old value
         const oldName = indicatorNameEl.textContent;
-
-        // Don't record if no change
         if (oldName === indicatorName) {
             return { success: true, message: 'No change needed' };
         }
-
-        // Apply change
         indicatorNameEl.textContent = indicatorName;
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'set-indicator-name',
             message: `Updated indicator name from "${oldName}" to "${indicatorName}"`,
@@ -1910,10 +1511,10 @@ class CustomizableSSPIStructure {
      * @param {string} pillarCode - Parent pillar code
      * @param {Object} options
      * @param {string} options.categoryCode - Category code (3 chars)
-     * @param {string} options.categoryName - Category name
+     * @param {string} options.categoryName - Category name (optional)
      * @returns {Object} Result with success status and action
      */
-    addCategory(pillarCode, { categoryCode, categoryName }) {
+    addCategory(categoryCode, pillarCode, { categoryName = "", logAction = true } = {}) {
         // Validate inputs
         if (!pillarCode || typeof pillarCode !== 'string') {
             return { success: false, error: 'Invalid pillarCode' };
@@ -1921,44 +1522,33 @@ class CustomizableSSPIStructure {
         if (!categoryCode || !/^[A-Z]{3}$/.test(categoryCode)) {
             return { success: false, error: 'categoryCode must be 3 uppercase letters' };
         }
-        if (!categoryName || typeof categoryName !== 'string') {
-            return { success: false, error: 'Invalid categoryName' };
-        }
-
         // Find pillar column
         const pillarCol = this.findElementByCode(pillarCode, 'Pillar');
         if (!pillarCol) {
             return { success: false, error: `Pillar ${pillarCode} not found` };
         }
-
         // Check for duplicate category code
         const existing = this.findElementByCode(categoryCode, 'Category');
         if (existing) {
             return { success: false, error: `Category ${categoryCode} already exists` };
         }
-
         // Find container for categories in pillar
         const categoriesContainer = pillarCol.querySelector('.categories-container');
         if (!categoriesContainer) {
             return { success: false, error: 'Categories container not found in pillar' };
         }
-
         // Create new category element
         const categoryEl = this.createCategoryElement();
         categoryEl.dataset.categoryCode = categoryCode;
         categoryEl.dataset.itemCode = categoryCode;
-
         // Set category name
         const nameEl = categoryEl.querySelector('.customization-category-header-title');
         if (nameEl) nameEl.textContent = categoryName;
-
         // Set category code input
         const codeInput = categoryEl.querySelector('.category-code-input');
         if (codeInput) codeInput.value = categoryCode;
-
         // Calculate position
         const position = this.getPositionInParent(categoriesContainer.lastElementChild || categoriesContainer);
-
         // Capture metadata for action
         const categoryMetadata = {
             ItemType: 'Category',
@@ -1971,49 +1561,44 @@ class CustomizableSSPIStructure {
             DocumentType: 'CategoryDetail',
             TreePath: `sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}`
         };
-
         // Add to DOM
         categoriesContainer.appendChild(categoryEl);
-
-        // Setup handlers
         this.setupCategoryHandlers(categoryEl);
-
-        // Record action
-        const action = this.actionHistory.recordAction({
-            type: 'add-category',
-            message: `Added category "${categoryName}" (${categoryCode}) to pillar ${pillarCode}`,
-            delta: {
+        let action;
+        if (logAction) {
+            action = this.actionHistory.recordAction({
                 type: 'add-category',
-                categoryCode: categoryCode,
-                pillarCode: pillarCode,
-                categoryMetadata: categoryMetadata,
-                position: position
-            },
-            undo: () => {
-                const el = this.findElementByCode(categoryCode, 'Category');
-                if (el) el.remove();
-            },
-            redo: () => {
-                const pillar = this.findElementByCode(pillarCode, 'Pillar');
-                const container = pillar?.querySelector('.categories-container');
-                if (container) {
-                    const newEl = this.createCategoryElement();
-                    newEl.dataset.categoryCode = categoryCode;
-                    newEl.dataset.itemCode = categoryCode;
-                    const name = newEl.querySelector('.customization-category-header-title');
-                    if (name) name.textContent = categoryName;
-                    const code = newEl.querySelector('.category-code-input');
-                    if (code) code.value = categoryCode;
-                    container.appendChild(newEl);
-                    this.setupCategoryHandlers(newEl);
+                message: `Added category "${categoryName}" (${categoryCode}) to pillar ${pillarCode}`,
+                delta: {
+                    type: 'add-category',
+                    categoryCode: categoryCode,
+                    pillarCode: pillarCode,
+                    categoryName: categoryName ?? ""
+                },
+                undo: () => {
+                    const el = this.findElementByCode(categoryCode, 'Category');
+                    if (el) el.remove();
+                },
+                redo: () => {
+                    const pillar = this.findElementByCode(pillarCode, 'Pillar');
+                    const container = pillar?.querySelector('.categories-container');
+                    if (container) {
+                        const newEl = this.createCategoryElement();
+                        newEl.dataset.categoryCode = categoryCode;
+                        newEl.dataset.itemCode = categoryCode;
+                        const name = newEl.querySelector('.customization-category-header-title');
+                        if (name) name.textContent = categoryName;
+                        const code = newEl.querySelector('.category-code-input');
+                        if (code) code.value = categoryCode;
+                        container.appendChild(newEl);
+                        this.setupCategoryHandlers(newEl);
+                    }
                 }
-            }
-        });
-
+            });
+        }
         this.hasUnsavedChanges = true;
         this.validate();
-
-        return { success: true, action: action };
+        return { success: true, action: action ?? "Action not recorded" };
     }
 
     /**
@@ -2024,50 +1609,31 @@ class CustomizableSSPIStructure {
      * @returns {Object} Result with success status and action
      */
     setCategoryCode(categoryElement, { newCode } = {}) {
-        // Validate element
         if (!(categoryElement instanceof HTMLElement)) {
             return { success: false, error: 'Category element is required' };
         }
-
-        // Validate new code
         if (!newCode) {
             return { success: false, error: 'New code is required' };
         }
-
-        // Validate code format
         if (!this.validateCode(newCode, 'category')) {
             return { success: false, error: 'Invalid category code format (must be 3 uppercase letters)' };
         }
-
-        // Ensure element has a stable ID for undo/redo
         if (!categoryElement.id) {
             categoryElement.id = `category-${Math.random().toString(36).substr(2,9)}`;
         }
         const elementId = categoryElement.id;
-
-        // Get old code from element's data attribute
         const oldCode = categoryElement.dataset.categoryCode || '';
-
-        // Check if code is unique (excluding current element)
         const codeInput = categoryElement.querySelector('.category-code-input');
         if (!this.isCodeUnique(newCode, 'category', codeInput)) {
             return { success: false, error: 'Code already in use' };
         }
-
-        // Don't record if no change
         if (oldCode === newCode) {
             return { success: true, message: 'No change needed' };
         }
-
-        // Apply change - update data attributes
         this.updateElementCode(categoryElement, newCode);
-
-        // Update input field
         if (codeInput) {
             codeInput.value = newCode;
         }
-
-        // Record action with ID-based undo/redo (codes change, but IDs are stable)
         const action = this.actionHistory.recordAction({
             type: 'set-category-code',
             message: oldCode
@@ -2100,11 +1666,8 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -2227,38 +1790,29 @@ class CustomizableSSPIStructure {
         if (!categoryEl) {
             return { success: false, error: `Category ${categoryCode} not found` };
         }
-
         // Find source pillar
         const fromPillarCode = this.getParentCode(categoryEl);
         if (!fromPillarCode) {
             return { success: false, error: 'Could not determine source pillar' };
         }
-
         // Check if already in target pillar
         if (fromPillarCode === targetPillarCode) {
             return { success: false, error: 'Category already in target pillar' };
         }
-
         // Find target pillar
         const targetPillar = this.findElementByCode(targetPillarCode, 'Pillar');
         if (!targetPillar) {
             return { success: false, error: `Target pillar ${targetPillarCode} not found` };
         }
-
         // Find target container
         const targetContainer = targetPillar.querySelector('.categories-container');
         if (!targetContainer) {
             return { success: false, error: 'Target categories container not found' };
         }
-
         // Capture positions
         const fromPosition = this.getPositionInParent(categoryEl);
-
-        // Move to target (DOM only)
         targetContainer.appendChild(categoryEl);
-
         const toPosition = this.getPositionInParent(categoryEl);
-
         // Record action
         // IMPORTANT: Only 1 action created, type='move-category'
         // No indicator actions created - indicators move with category but metadata unchanged
@@ -2296,10 +1850,8 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-
         this.hasUnsavedChanges = true;
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -2310,39 +1862,26 @@ class CustomizableSSPIStructure {
      * @param {string} options.categoryName - New category name
      * @returns {Object} Result with success status and action
      */
-    setCategoryName(categoryCode, { categoryName }) {
-        // Validate inputs
+    setCategoryName(categoryCode, categoryName) {
         if (!categoryCode || typeof categoryCode !== 'string') {
             return { success: false, error: 'Invalid categoryCode' };
         }
         if (!categoryName || typeof categoryName !== 'string') {
             return { success: false, error: 'Invalid categoryName' };
         }
-
-        // Find category element
         const categoryEl = this.findElementByCode(categoryCode, 'Category');
         if (!categoryEl) {
             return { success: false, error: `Category ${categoryCode} not found` };
         }
-
-        // Find name element
         const nameEl = categoryEl.querySelector('.customization-category-header-title');
         if (!nameEl) {
             return { success: false, error: 'Category name element not found' };
         }
-
-        // Capture old name
         const oldName = nameEl.textContent;
-
-        // Check if name actually changed
         if (oldName === categoryName) {
             return { success: false, error: 'New name is same as current name' };
         }
-
-        // Update name
         nameEl.textContent = categoryName;
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'set-category-name',
             message: `Changed category ${categoryCode} name from "${oldName}" to "${categoryName}"`,
@@ -2363,15 +1902,12 @@ class CustomizableSSPIStructure {
                 if (name) name.textContent = categoryName;
             }
         });
-
         this.hasUnsavedChanges = true;
         this.validate();
-
         return { success: true, action: action };
     }
 
     // ========== SECTION 6: API Methods - Pillars ==========
-
     /**
      * Set pillar name
      * Note: Pillar codes are fixed (SUS, MS, PG) and cannot be changed
@@ -2380,39 +1916,26 @@ class CustomizableSSPIStructure {
      * @param {string} options.pillarName - New pillar name
      * @returns {Object} Result with success status and action
      */
-    setPillarName(pillarCode, { pillarName }) {
-        // Validate inputs
+    setPillarName(pillarCode, pillarName ) {
         if (!pillarCode || typeof pillarCode !== 'string') {
             return { success: false, error: 'Invalid pillarCode' };
         }
         if (!pillarName || typeof pillarName !== 'string') {
             return { success: false, error: 'Invalid pillarName' };
         }
-
-        // Find pillar column
         const pillarCol = this.findElementByCode(pillarCode, 'Pillar');
         if (!pillarCol) {
             return { success: false, error: `Pillar ${pillarCode} not found` };
         }
-
-        // Find pillar name element
         const nameEl = pillarCol.querySelector('.pillar-name');
         if (!nameEl) {
             return { success: false, error: 'Pillar name element not found' };
         }
-
-        // Capture old name
         const oldName = nameEl.textContent;
-
-        // Check if name actually changed
         if (oldName === pillarName) {
             return { success: false, error: 'New name is same as current name' };
         }
-
-        // Update name
         nameEl.textContent = pillarName;
-
-        // Record action
         const action = this.actionHistory.recordAction({
             type: 'set-pillar-name',
             message: `Changed pillar ${pillarCode} name from "${oldName}" to "${pillarName}"`,
@@ -2433,10 +1956,8 @@ class CustomizableSSPIStructure {
                 if (name) name.textContent = pillarName;
             }
         });
-
         this.hasUnsavedChanges = true;
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -2447,51 +1968,32 @@ class CustomizableSSPIStructure {
      * @param {string} options.newCode - The new code value
      * @returns {Object} Result with success status and action
      */
-    setPillarCode(pillarElement, { newCode } = {}) {
-        // Validate element
+    setPillarCode(pillarElement, newCode ) {
         if (!(pillarElement instanceof HTMLElement)) {
             return { success: false, error: 'Pillar element is required' };
         }
-
-        // Validate new code
         if (!newCode) {
             return { success: false, error: 'New code is required' };
         }
-
-        // Validate code format
         if (!this.validateCode(newCode, 'pillar')) {
             return { success: false, error: 'Invalid pillar code format (must be 2-3 uppercase letters)' };
         }
-
-        // Ensure element has a stable ID for undo/redo
         if (!pillarElement.id) {
             pillarElement.id = `pillar-${Math.random().toString(36).substr(2,9)}`;
         }
         const elementId = pillarElement.id;
-
-        // Get old code from element's data attribute
         const oldCode = pillarElement.dataset.pillarCode || '';
-
-        // Check if code is unique (excluding current element)
         const codeInput = pillarElement.querySelector('.pillar-code-input');
         if (!this.isCodeUnique(newCode, 'pillar', codeInput)) {
             return { success: false, error: 'Code already in use' };
         }
-
-        // Don't record if no change
         if (oldCode === newCode) {
             return { success: true, message: 'No change needed' };
         }
-
-        // Apply change - update data attributes
         this.updateElementCode(pillarElement, newCode);
-
-        // Update input field
         if (codeInput) {
             codeInput.value = newCode;
         }
-
-        // Record action with ID-based undo/redo (codes change, but IDs are stable)
         const action = this.actionHistory.recordAction({
             type: 'set-pillar-code',
             message: oldCode
@@ -2524,11 +2026,8 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-
-        // Flag unsaved and validate
         this.flagUnsaved();
         this.validate();
-
         return { success: true, action: action };
     }
 
@@ -3488,7 +2987,6 @@ class CustomizableSSPIStructure {
                 ItemOrder: 0
             });
         }
-        // Create pillar items
         Object.values(pillars).forEach(pillar => {
             metadataItems.push({
                 DocumentType: "PillarDetail",
@@ -3504,8 +3002,6 @@ class CustomizableSSPIStructure {
                 ItemOrder: pillar.itemOrder
             });
         });
-
-        // Create category items
         Object.values(categories).forEach(category => {
             metadataItems.push({
                 DocumentType: "CategoryDetail",
@@ -3516,14 +3012,11 @@ class CustomizableSSPIStructure {
                 IndicatorCodes: category.indicators,
                 Category: category.name,
                 CategoryCode: category.code,
-                Divisor: category.indicators.length,
                 TreeIndex: [0, category.pillarIdx, category.catIdx, -1],
                 TreePath: `sspi/${category.pillarCode.toLowerCase()}/${category.code.toLowerCase()}`,
                 ItemOrder: category.itemOrder
             });
         });
-
-        // Create indicator items
         Object.values(indicators).forEach(indicator => {
             metadataItems.push({
                 DocumentType: "IndicatorDetail",
@@ -3534,16 +3027,12 @@ class CustomizableSSPIStructure {
                 DatasetCodes: indicator.datasetCodes,
                 Indicator: indicator.name,
                 IndicatorCode: indicator.code,
-                Divisor: 1,
-                Footnote: null,
                 ScoreFunction: indicator.scoreFunction,
                 TreeIndex: [0, indicator.pillarIdx, indicator.catIdx, indicator.indIdx],
                 TreePath: `sspi/${indicator.pillarCode.toLowerCase()}/${indicator.categoryCode.toLowerCase()}/${indicator.code.toLowerCase()}`,
                 ItemOrder: indicator.itemOrder
             });
         });
-
-        console.log(metadataItems)
         return metadataItems;
     }
 
@@ -3551,14 +3040,18 @@ class CustomizableSSPIStructure {
      * Export data in format suitable for scoring pipeline
      * @returns {Object} Structure data with metadata for scoring
      */
-    exportForScoring() {
-        const metadata = this.exportMetadata();
-        return {
-            metadata: metadata,
-            exportedAt: new Date().toISOString(),
-            totalItems: metadata.length,
-            hasUnsavedChanges: this.unsavedChanges
-        };
+    async exportForScoring() {
+        let res = await this.fetch("/api/v1/customize/score", {
+            method: "POST",
+            body: JSON.stringify({
+                metadata: this.exportMetadata(),
+                changes: this.actionHistory.exportActionLog()
+            }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+        console.log(res)
     }
 
     /**
@@ -3795,45 +3288,36 @@ class CustomizableSSPIStructure {
                 warnings.push('Pillar ' + pillarName + " (" + pillarCode + ") has no categories");
             }
         });
-        
         // Check that all categories have at least one indicator
         this.container.querySelectorAll('.category-box').forEach(category => {
             const categoryName = category.querySelector('.customization-category-header-title').textContent.trim();
             const categoryCode = category.querySelector('.category-code-input').value.trim();
             const indicators = category.querySelectorAll('.indicator-card');
-            
             if (indicators.length === 0) {
-                warnings.push(`Category "${categoryName}" (${categoryCode}) has no indicators`);
+                warnings.push('Category '+ categoryName + ' (' + categoryCode + ') has no indicators');
             }
         });
-        
         // Check that all indicators have at least one dataset
         this.container.querySelectorAll('.indicator-card').forEach(indicator => {
             const indicatorName = indicator.querySelector('.indicator-name').textContent.trim();
             const indicatorCode = indicator.querySelector('.indicator-code-input').value.trim();
             const datasets = indicator.querySelectorAll('.dataset-item');
-
             if (datasets.length === 0) {
                 warnings.push(`Indicator "${indicatorName}" (${indicatorCode}) has no datasets`);
             }
         });
-
         // Check for nested categories (categories inside categories)
         this.container.querySelectorAll('.category-box').forEach(category => {
             const categoryName = category.querySelector('.customization-category-header-title').textContent.trim();
             const categoryCode = category.querySelector('.category-code-input').value.trim();
             const nestedCategories = category.querySelectorAll('.category-box');
-
             if (nestedCategories.length > 0) {
-                errors.push(`Category "${categoryName}" (${categoryCode}) contains nested categories. Nested categories are not allowed.`);
+                errors.push(`Category\u0020${categoryName}\u0020(${categoryCode})\u0020contains\u0020nested\u0020categories.\u0020Nested\u0020categories\u0020are\u0020not\u0020allowed.`);
             }
         });
-
-        // Check for duplicate codes
         const pillarCodes = new Set();
         const categoryCodes = new Set();
         const indicatorCodes = new Set();
-        
         this.container.querySelectorAll('.pillar-code-input').forEach(input => {
             const code = input.value.trim().toUpperCase();
             if (code) {
@@ -3844,7 +3328,6 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-        
         this.container.querySelectorAll('.category-code-input').forEach(input => {
             const code = input.value.trim().toUpperCase();
             if (code) {
@@ -3855,7 +3338,6 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-        
         this.container.querySelectorAll('.indicator-code-input').forEach(input => {
             const code = input.value.trim().toUpperCase();
             if (code) {
@@ -3866,12 +3348,9 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-        
-        // Log results
         if (warnings.length > 0) {
             console.warn('Hierarchy warnings:', warnings);
         }
-        
         return { errors, warnings };
     }
 
@@ -3935,14 +3414,12 @@ class CustomizableSSPIStructure {
     async loadInitialData() {
         // CRITICAL: Always load available datasets first (before metadata)
         // This ensures dataset selector has complete list, regardless of cache
-        await this.loadAvailableDatasets();
-
         // Then check if we have cached modifications for structure
         if (this.hasCachedModifications()) {
             try {
                 const loaded = await this.loadCachedState();
                 if (loaded) {
-                    this.showCacheRestoredIndicator();
+                    this.showNotification("✓ Restored from previous session");
                     this.restoreExpansionState();
                     this.restoreScrollPosition();
                     return;
@@ -3958,50 +3435,11 @@ class CustomizableSSPIStructure {
         this.restoreScrollPosition();
     }
     
-    showCacheRestoredIndicator() {
-        // Create a temporary indicator showing cached data was restored
-        const indicator = document.createElement('div');
-        indicator.className = 'cache-restored-indicator';
-        indicator.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--green-accent);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            z-index: 1000;
-            animation: slideInRight 0.3s ease-out;
-        `;
-        indicator.textContent = '✓ Restored from previous session';
-        
-        document.body.appendChild(indicator);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            if (indicator.parentNode) {
-                indicator.style.animation = 'slideOutRight 0.3s ease-in';
-                setTimeout(() => {
-                    if (indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                    }
-                }, 300);
-            }
-        }, 3000);
-    }
-    
     async discardChanges() {
         try {
-            // Clear the cache first
             this.clearCache();
-            
-            // Show loading state briefly
             this.showLoadingState('Discarding changes...');
-            
-            // Clear unsaved state
             this.clearUnsavedState();
-            
-            // Brief delay to show the loading state, then hide it and reload
             setTimeout(() => {
                 this.hideLoadingState();
                 // Small additional delay to ensure UI updates are processed
@@ -4022,17 +3460,11 @@ class CustomizableSSPIStructure {
             console.log('Already loading metadata, skipping...');
             return;
         }
-
         try {
             this.showLoadingState('Loading default SSPI metadata...');
-
             const response = await this.fetch('/api/v1/customize/default-structure');
-
             if (response.success) {
                 console.log('Auto-loading default SSPI metadata:', response.stats);
-
-                // Fallback: Load dataset details if loadAvailableDatasets failed
-                // (datasetDetails should already be populated from separate cache/API call)
                 if (response.all_datasets && Array.isArray(response.all_datasets)) {
                     const currentCount = Object.keys(this.datasetDetails).length;
                     if (currentCount === 0 && response.all_datasets) {
@@ -4045,18 +3477,9 @@ class CustomizableSSPIStructure {
                         console.log(`Dataset details already loaded (${currentCount} datasets)`);
                     }
                 }
-
-                // Import the metadata efficiently
                 await this.importDataAsync(response.metadata);
-
-                // Capture baseline for action history tracking
-                this.actionHistory.captureBaseline(response.metadata);
-
                 this.hideLoadingState();
-
-                // Don't flag as unsaved for auto-loaded default metadata
                 this.clearUnsavedState();
-
                 console.log('Default SSPI metadata loaded successfully');
             } else {
                 this.handleLoadError('Failed to load default metadata: ' + response.error);
@@ -4069,8 +3492,6 @@ class CustomizableSSPIStructure {
 
     showLoadingState(message = 'Loading...') {
         this.isLoading = true;
-        
-        // Create loading indicator
         const loadingDiv = document.createElement('div');
         loadingDiv.classList.add('sspi-loading');
         loadingDiv.textContent = message;
@@ -4086,15 +3507,11 @@ class CustomizableSSPIStructure {
 
     hideLoadingState() {
         this.isLoading = false;
-        
-        // Remove loading indicator
         const loadingDiv = this.parentElement.querySelector('#sspi-loading-indicator');
         if (loadingDiv) {
             loadingDiv.remove();
         }
-        // Show the main container
         this.container.style.display = '';
-        // Enable toolbar buttons
         this.setToolbarDisabled(false);
     }
 
@@ -4174,19 +3591,15 @@ class CustomizableSSPIStructure {
                     break;
             }
         });
-        
         return { hierarchy, itemsById };
     }
     
     // Optimized async import method for metadata
     async importDataAsync(metadataItems) {
         console.log('Importing', metadataItems.length, 'metadata items asynchronously');
-        console.log(`Using ${Object.keys(this.datasetDetails).length} dataset details from map`);
-        // Set importing flag to suppress validation warnings during bulk import
+        console.log('Using', Object.keys(this.datasetDetails).length, 'dataset details from datasetDetailsMap');
         this.isImporting = true;
-        // Clear existing content
         this.container.querySelectorAll('.category-box, .indicator-card').forEach(e => e.remove());
-        // Build hierarchy tree
         const { hierarchy, itemsById } = this.buildHierarchyTree(metadataItems);
         if (!hierarchy.sspi) {
             console.error('No SSPI root item found in metadata');
@@ -4194,15 +3607,12 @@ class CustomizableSSPIStructure {
         }
         // Process each pillar from the SSPI's Children list
         const pillarCodes = hierarchy.sspi.Children || [];
-        
         for (let i = 0; i < pillarCodes.length; i++) {
             const pillarCode = pillarCodes[i];
             const pillarItem = hierarchy.pillars[pillarCode];
-            
             if (pillarItem) {
                 await this.processPillarFromMetadata(pillarItem, hierarchy);
             }
-            
             // Yield control to browser between pillars
             if (i < pillarCodes.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 0));
@@ -4210,15 +3620,10 @@ class CustomizableSSPIStructure {
         }
         console.log('Async metadata import completed');
         this.isImporting = false;
-        // Clear undo/redo history after initial import
-        // This ensures dataset additions during load are not in history
         this.actionHistory.clear();
         console.log('Cleared undo/redo history after initial metadata import');
-        // Mark any indicators that are outside categories
         this.markInvalidIndicatorPlacements();
-        // Mark any nested categories
         this.markInvalidNestedCategories();
-        // Validate hierarchy once at the end of import
         const validation = this.validateHierarchy();
         if (validation.errors && validation.errors.length > 0) {
             console.error('Hierarchy errors after import:', validation.errors);
@@ -4241,54 +3646,40 @@ class CustomizableSSPIStructure {
         if (pillarCodeInput) {
             pillarCodeInput.value = pillarItem.ItemCode;
         }
-
         // Set data attributes for efficient querying
         col.dataset.pillarCode = pillarItem.ItemCode;
         col.dataset.itemCode = pillarItem.ItemCode;
         col.dataset.itemType = 'Pillar';
-
         // Update pillar name
         const pillarNameEl = col.querySelector('.pillar-name');
         if (pillarNameEl) {
             pillarNameEl.textContent = pillarItem.ItemName;
         }
-
         const categoriesContainer = col.querySelector('.categories-container');
         if (!categoriesContainer) return;
-        
         // Create document fragment for efficient DOM building
         const fragment = document.createDocumentFragment();
-        
         // Process categories from pillar's Children list
         const categoryCodes = pillarItem.Children || [];
-        
         for (const categoryCode of categoryCodes) {
             const categoryItem = hierarchy.categories[categoryCode];
-            
             if (categoryItem) {
                 const catEl = this.createCategoryElement();
-
                 // Set category details
                 const categoryHeader = catEl.querySelector('.customization-category-header-title');
                 const categoryCodeInput = catEl.querySelector('.category-code-input');
-
                 if (categoryHeader) categoryHeader.textContent = categoryItem.ItemName;
                 if (categoryCodeInput) categoryCodeInput.value = categoryItem.ItemCode;
-
                 // Set data attributes for efficient querying
                 catEl.dataset.categoryCode = categoryItem.ItemCode;
                 catEl.dataset.itemCode = categoryItem.ItemCode;
-
                 // Add indicators to this category
                 const indicatorsContainer = catEl.querySelector('.indicators-container');
                 const indicatorCodes = categoryItem.Children || [];
-                
                 indicatorCodes.forEach(indicatorCode => {
                     const indicatorItem = hierarchy.indicators[indicatorCode];
-                    
                     if (indicatorItem) {
                         const indEl = this.createIndicatorElement();
-                        
                         // Populate indicator fields
                         const indicatorName = indEl.querySelector('.indicator-name');
                         const indicatorCodeInput = indEl.querySelector('.indicator-code-input');
@@ -4296,14 +3687,11 @@ class CustomizableSSPIStructure {
                         const upperGoalpost = indEl.querySelector('.upper-goalpost');
                         const invertedCheckbox = indEl.querySelector('.inverted-checkbox');
                         const scoreFunctionEl = indEl.querySelector('.editable-score-function');
-
                         if (indicatorName) indicatorName.textContent = indicatorItem.ItemName || '';
                         if (indicatorCodeInput) indicatorCodeInput.value = indicatorItem.ItemCode || '';
-
                         // Set data attributes for efficient querying
                         indEl.dataset.indicatorCode = indicatorItem.ItemCode;
                         indEl.dataset.itemCode = indicatorItem.ItemCode;
-
                         // Populate score function if present
                         if (scoreFunctionEl) {
                             if (indicatorItem.ScoreFunction) {
@@ -4315,32 +3703,26 @@ class CustomizableSSPIStructure {
                                 console.log(`No ScoreFunction for ${indicatorItem.ItemCode}`);
                             }
                         }
-
                         // Add datasets if present - lookup from DatasetCodes using the map
                         const datasetCodes = indicatorItem.DatasetCodes || [];
                         if (!this.isImporting) {
                             console.log(`Processing ${indicatorItem.ItemCode}: ${datasetCodes.length} dataset codes`);
                         }
-
                         if (datasetCodes.length > 0) {
                             const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
-
                             if (!selectedDatasetsDiv) {
                                 console.error(`No .selected-datasets div found for indicator ${indicatorItem.ItemCode}`);
                             } else {
                                 if (!this.isImporting) {
                                     console.log(`Found .selected-datasets div for ${indicatorItem.ItemCode}, adding ${datasetCodes.length} datasets`);
                                 }
-
                                 datasetCodes.forEach((datasetCode, idx) => {
                                     // Lookup dataset details from map
                                     const datasetDetail = this.datasetDetails[datasetCode];
-
                                     if (!datasetDetail) {
                                         console.warn(`Dataset ${datasetCode} not found in datasetDetails map for indicator ${indicatorItem.ItemCode}`);
                                         return;
                                     }
-
                                     if (!this.isImporting) {
                                         console.log(`Adding dataset ${datasetCode} to ${indicatorItem.ItemCode}`);
                                     }
@@ -4350,7 +3732,6 @@ class CustomizableSSPIStructure {
                                         1.0  // Default weight
                                     );
                                 });
-
                                 // Verify datasets were added
                                 if (!this.isImporting) {
                                     const addedDatasets = selectedDatasetsDiv.querySelectorAll('.dataset-item');
@@ -4360,228 +3741,15 @@ class CustomizableSSPIStructure {
                         } else if (!this.isImporting) {
                             console.log(`No datasets to add for ${indicatorItem.ItemCode}`);
                         }
-                        
                         indicatorsContainer.appendChild(indEl);
                     }
                 });
-                
                 fragment.appendChild(catEl);
             }
         }
-        
         // Single DOM append for all categories in this pillar
         categoriesContainer.appendChild(fragment);
         this.validate(categoriesContainer);
-    }
-
-    importData(data) {
-        console.log('Importing data:', data);
-        this.container.querySelectorAll('.category-box, .indicator-card').forEach(e => e.remove());
-
-        const grouping = {};
-        const pillarCodes = {};
-        const categoryOrders = {};  // Track category ItemOrder for sorting
-
-        data.forEach(item => {
-            const { Pillar, Category, CategoryCode, PillarCode, ItemOrder, ItemType } = item;
-
-            // Store pillar codes
-            if (PillarCode) {
-                pillarCodes[Pillar] = PillarCode;
-            }
-
-            grouping[Pillar] = grouping[Pillar] || {};
-            grouping[Pillar][Category] = grouping[Pillar][Category] || {
-                CategoryCode: CategoryCode || '',
-                items: []
-            };
-            grouping[Pillar][Category].items.push(item);
-
-            // Store category order (from Category items in metadata)
-            if (ItemType === 'Category' && CategoryCode) {
-                const key = `${Pillar}:${Category}`;
-                categoryOrders[key] = ItemOrder || 999;
-            }
-        });
-        
-        this.pillars.forEach(p => {
-            const col = Array.from(this.container.querySelectorAll('.pillar-column'))
-                .find(c => c.dataset.pillar === p);
-            if (!col) return;
-            
-            // Set pillar code if available
-            const pillarCodeInput = col.querySelector('.pillar-code-input');
-            if (pillarCodeInput && pillarCodes[p]) {
-                pillarCodeInput.value = pillarCodes[p];
-            }
-            
-            if (!grouping[p]) return;
-
-            const zone = col.querySelector('.categories-container');
-
-            // Sort categories by ItemOrder before creating them
-            const categoriesArray = Object.entries(grouping[p]);
-            categoriesArray.sort((a, b) => {
-                const keyA = `${p}:${a[0]}`;
-                const keyB = `${p}:${b[0]}`;
-                const orderA = categoryOrders[keyA] || 999;
-                const orderB = categoryOrders[keyB] || 999;
-                return orderA - orderB;
-            });
-
-            categoriesArray.forEach(([catName, info]) => {
-                const catEl = this.createCategoryElement();
-                catEl.querySelector('.customization-category-header-title').textContent = catName;
-                
-                // Set category code
-                const categoryCodeInput = catEl.querySelector('.category-code-input');
-                if (categoryCodeInput && info.CategoryCode) {
-                    categoryCodeInput.value = info.CategoryCode;
-                }
-                zone.appendChild(catEl);
-                info.items.sort((a, b) => a.ItemOrder - b.ItemOrder).forEach(item => {
-                    const indEl = this.createIndicatorElement();
-                    indEl.querySelector('.indicator-name').textContent = item.Indicator || 'New Indicator';
-                    const indicatorCodeInput = indEl.querySelector('.indicator-code-input');
-                    if (indicatorCodeInput && item.IndicatorCode) {
-                        indicatorCodeInput.value = item.IndicatorCode;
-                    }
-                    indEl.title = item.Description || '';
-                    const scoreFunctionEl = indEl.querySelector('.editable-score-function');
-                    if (scoreFunctionEl && item.ScoreFunction) {
-                        scoreFunctionEl.textContent = item.ScoreFunction;
-                    }
-                    if (item.datasets && Array.isArray(item.datasets)) {
-                        const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
-                        item.datasets.forEach(dataset => {
-                            this.addDatasetToIndicator(
-                                selectedDatasetsDiv, 
-                                dataset.dataset_code, 
-                                dataset.weight || 1.0
-                            );
-                        });
-                    }
-                    catEl.querySelector('.indicators-container').appendChild(indEl);
-                });
-                this.validate(catEl.querySelector('.indicators-container'));
-            });
-        });
-        this.markInvalidIndicatorPlacements();// Mark any indicators that are outside categories
-        this.markInvalidNestedCategories();// Mark any nested categories
-        this.restoreExpansionState(); // Restore expansion state and scroll position after import
-        this.restoreScrollPosition();
-    }
-
-    autoGenerateMissingCodes() {
-        // Auto-generate missing pillar codes
-        this.container.querySelectorAll('.pillar-column').forEach(pillarCol => {
-            const pillarCodeInput = pillarCol.querySelector('.pillar-code-input');
-            const pillarName = pillarCol.querySelector('.pillar-name').textContent.trim();
-
-            if (pillarCodeInput && !pillarCodeInput.value.trim() && pillarName) {
-                let generatedCode = this.generateCodeFromName(pillarName, 'pillar');
-                let attempt = 1;
-
-                // If code is not unique, try adding numbers
-                while (generatedCode && !this.isCodeUnique(generatedCode, 'pillar', pillarCodeInput) && attempt < 10) {
-                    generatedCode = this.generateCodeFromName(pillarName, 'pillar').substring(0, 2) + attempt;
-                    attempt++;
-                }
-
-                if (generatedCode && this.isCodeUnique(generatedCode, 'pillar', pillarCodeInput)) {
-                    pillarCodeInput.value = generatedCode;
-                }
-            }
-        });
-
-        // Auto-generate missing category codes
-        this.container.querySelectorAll('.category-box').forEach(catBox => {
-            const categoryCodeInput = catBox.querySelector('.category-code-input');
-            const categoryName = catBox.querySelector('.customization-category-header-title').textContent.trim();
-
-            if (categoryCodeInput && !categoryCodeInput.value.trim() && categoryName) {
-                let generatedCode = this.generateCodeFromName(categoryName, 'category');
-                let attempt = 1;
-
-                // If code is not unique, try adding numbers
-                while (generatedCode && !this.isCodeUnique(generatedCode, 'category', categoryCodeInput) && attempt < 10) {
-                    generatedCode = this.generateCodeFromName(categoryName, 'category').substring(0, 2) + attempt;
-                    attempt++;
-                }
-
-                if (generatedCode && this.isCodeUnique(generatedCode, 'category', categoryCodeInput)) {
-                    categoryCodeInput.value = generatedCode;
-                }
-            }
-        });
-
-        // Auto-generate missing indicator codes
-        this.container.querySelectorAll('.indicator-card').forEach(indCard => {
-            const indicatorCodeInput = indCard.querySelector('.indicator-code-input');
-            const indicatorName = indCard.querySelector('.indicator-name').textContent.trim();
-
-            if (indicatorCodeInput && !indicatorCodeInput.value.trim() && indicatorName) {
-                let generatedCode = this.generateCodeFromName(indicatorName, 'indicator');
-                let attempt = 1;
-
-                // If code is not unique, try adding numbers
-                while (generatedCode && !this.isCodeUnique(generatedCode, 'indicator', indicatorCodeInput) && attempt < 100) {
-                    const baseCode = this.generateCodeFromName(indicatorName, 'indicator').substring(0, 4);
-                    generatedCode = baseCode + ('0' + attempt).slice(-2);
-                    attempt++;
-                }
-
-                if (generatedCode && this.isCodeUnique(generatedCode, 'indicator', indicatorCodeInput)) {
-                    indicatorCodeInput.value = generatedCode;
-                }
-            }
-        });
-    }
-
-    async saveConfiguration() {
-        try {
-            // Auto-generate missing codes before saving
-            this.autoGenerateMissingCodes();
-
-            // Validate before saving
-            const validation = this.validateHierarchy();
-            if (validation.errors.length > 0) {
-                let errorMessage = 'Cannot save configuration due to validation errors:\n\n';
-                validation.errors.forEach(error => errorMessage += `• ${error}\n`);
-                alert(errorMessage);
-                return;
-            }
-
-            const name = prompt('Enter a name for this configuration:');
-            if (!name) return;
-
-            const metadata = this.exportMetadata();
-
-            const response = await this.fetch('/api/v1/customize/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: name,
-                    metadata: metadata
-                })
-            });
-
-            if (response.success) {
-                this.clearUnsavedState();
-
-                // Update cache with saved state instead of clearing it
-                this.cacheCurrentState();
-
-                this.showNotification('Configuration "' + name + '" saved successfully!', 'success', 3000);
-            } else {
-                this.showNotification('Error saving configuration: ' + response.error, 'error', 5000);
-            }
-        } catch (error) {
-            console.error('Error saving configuration:', error);
-            this.showNotification('Error saving configuration. Please try again.', 'error', 5000);
-        }
     }
 
     setupCodeValidation(input, type) {
@@ -4606,35 +3774,14 @@ class CustomizableSSPIStructure {
             }
             this.flagUnsaved();
         });
-        
         input.addEventListener('blur', () => {
             const newCode = input.value.trim();
-
-            // If no code entered, try to generate one from name
-            if (!newCode) {
-                const name = this.getNameForCodeInput(input, type);
-                if (name) {
-                    const generatedCode = this.generateCodeFromName(name, type);
-                    if (this.isCodeUnique(generatedCode, type, input)) {
-                        input.value = generatedCode;
-                        this.flashValidationMessage(validationMessage, input, 'Generated', 'success');
-                        // Continue to process the generated code
-                        this.processCodeChange(input, generatedCode, type);
-                    }
-                }
-                return;
-            }
-
-            // Validate the entered code
             if (!this.validateCode(newCode, type)) {
                 return; // Validation message already shown by input handler
             }
-
             if (!this.isCodeUnique(newCode, type, input)) {
                 return; // Validation message already shown by input handler
             }
-
-            // Process the code change
             this.processCodeChange(input, newCode, type);
         });
     }
@@ -4656,37 +3803,29 @@ class CustomizableSSPIStructure {
         } else if (type === 'pillar') {
             element = input.closest('[data-pillar-code]');
         }
-
         if (!element) {
             console.warn(`Could not find ${type} element for code input`);
             return;
         }
-
-        // Get the old code from data attribute
         const oldCode = type === 'indicator' ? element.dataset.indicatorCode :
                        type === 'category' ? element.dataset.categoryCode :
-                       element.dataset.pillarCode;
-
-        // Don't process if code hasn't changed
+                       element.dataset.pillarCode; // it's an older code, sir, but it checks out
         if (oldCode === newCode) {
-            return;
+            return; // it's an older code, sir, but it checks out
         }
-
         // Call the appropriate API method
         let result;
         try {
             if (type === 'indicator') {
-                result = this.setIndicatorCode(element, { newCode });
+                result = this.setIndicatorCode(element, newCode);
             } else if (type === 'category') {
-                result = this.setCategoryCode(element, { newCode });
+                result = this.setCategoryCode(element, newCode);
             } else if (type === 'pillar') {
-                result = this.setPillarCode(element, { newCode });
+                result = this.setPillarCode(element, newCode);
             }
-
             if (result && !result.success) {
                 console.error(`Failed to set ${type} code:`, result.error);
                 this.showNotification(`Error: ${result.error}`, 'error', 3000);
-                // Revert input to old code
                 input.value = oldCode || '';
             }
         } catch (error) {
@@ -4699,7 +3838,6 @@ class CustomizableSSPIStructure {
 
     validateCode(code, type) {
         if (!code) return false;
-        
         switch (type) {
             case 'pillar':
                 return /^[A-Z]{2,3}$/.test(code);
@@ -4714,19 +3852,15 @@ class CustomizableSSPIStructure {
 
     isCodeUnique(code, type, currentInput) {
         if (!code) return true;
-        
         const selector = type === 'pillar' ? '.pillar-code-input' : 
                         type === 'category' ? '.category-code-input' : 
                         '.indicator-code-input';
-        
         const allInputs = this.container.querySelectorAll(selector);
-        
         for (const input of allInputs) {
             if (input !== currentInput && input.value === code) {
                 return false;
             }
         }
-        
         return true;
     }
 
@@ -4738,9 +3872,10 @@ class CustomizableSSPIStructure {
             element.classList.add('error');
         } else if (type === 'success') {
             element.classList.add('success');
+            input.classList.remove('input-error')
         }
         input.addEventListener('blur', (event) => {
-            if (type) {
+            if (type !== 'success') {
                 input.classList.add('input-error')
             } else {
                 input.classList.remove('input-error')
@@ -4750,72 +3885,9 @@ class CustomizableSSPIStructure {
         })
     }
 
-    getNameForCodeInput(input, type) {
-        const container = input.closest(type === 'pillar' ? '.customization-pillar-header' : 
-                                      type === 'category' ? '.category-box' : 
-                                      '.indicator-card');
-        
-        if (type === 'pillar') {
-            return container.querySelector('.pillar-name').textContent.trim();
-        } else if (type === 'category') {
-            return container.querySelector('.customization-category-header-title').textContent.trim();
-        } else if (type === 'indicator') {
-            return container.querySelector('.indicator-name').textContent.trim();
-        }
-        
-        return '';
-    }
-
-    generateCodeFromName(name, type) {
-        if (!name) return '';
-        
-        // Remove common words and clean the name
-        const cleanName = name.toUpperCase()
-            .replace(/\b(THE|AND|OR|OF|FOR|IN|ON|AT|TO|A|AN)\b/g, '')
-            .replace(/[^A-Z0-9]/g, '');
-        
-        const maxLength = type === 'indicator' ? 6 : 3;
-        
-        if (cleanName.length <= maxLength) {
-            return cleanName.padEnd(maxLength, '1');
-        }
-        
-        // Take first letters of words, then fill with characters
-        const words = name.split(/\s+/);
-        let code = '';
-        
-        // Get first letter of each word
-        for (const word of words) {
-            if (code.length < maxLength) {
-                const firstChar = word.replace(/[^A-Z0-9]/gi, '').charAt(0).toUpperCase();
-                if (firstChar && /[A-Z0-9]/.test(firstChar)) {
-                    code += firstChar;
-                }
-            }
-        }
-        
-        // Fill remaining with characters from the original name
-        if (code.length < maxLength) {
-            for (const char of cleanName) {
-                if (code.length >= maxLength) break;
-                if (!code.includes(char) && /[A-Z0-9]/.test(char)) {
-                    code += char;
-                }
-            }
-        }
-        
-        // Pad with numbers if still too short
-        while (code.length < maxLength) {
-            code += '1';
-        }
-        
-        return code.substring(0, maxLength);
-    }
-
     setupDatasetSelection(indicatorElement) {
         const addDatasetBtn = indicatorElement.querySelector('.add-dataset-btn');
         const selectedDatasetsDiv = indicatorElement.querySelector('.selected-datasets');
-        
         addDatasetBtn.addEventListener('click', async () => {
             await this.showDatasetSelector(selectedDatasetsDiv);
         });
@@ -4829,7 +3901,6 @@ class CustomizableSSPIStructure {
                 alert('Maximum of 10 datasets allowed per indicator');
                 return;
             }
-
             // Show dataset selection modal
             this.showDatasetSelectionModal(selectedDatasetsDiv);
         } catch (error) {
@@ -4842,10 +3913,8 @@ class CustomizableSSPIStructure {
         // Get currently selected datasets
         const currentSelections = Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'))
             .map(item => item.dataset.datasetCode);
-
         // Pass dataset details directly - no mapping needed
         const preloadedDatasets = Object.values(this.datasetDetails);
-
         // Create and configure enhanced dataset selector with preloaded data
         const selector = new DatasetSelector({
             maxSelections: 10,
@@ -4859,22 +3928,17 @@ class CustomizableSSPIStructure {
                 this.updateDatasetSelection(selectedDatasetsDiv, selectedDatasets);
             }
         });
-
-        // Show the enhanced selector
         await selector.show(currentSelections);
     }
     
     updateDatasetSelection(selectedDatasetsDiv, selectedDatasets) {
         // Clear existing selections
         selectedDatasetsDiv.innerHTML = '';
-
         // Add new selections using full dataset objects
         // Datasets are already in the backend format - no conversion needed
         selectedDatasets.forEach(dataset => {
-            // Use addDatasetToIndicatorWithDetails to pass full details directly
             this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, dataset);
         });
-
         // IMPORTANT: Always flag unsaved and update cache after dataset selection changes
         // This ensures changes are cached even when removing all datasets
         this.flagUnsaved();
@@ -5029,22 +4093,17 @@ class CustomizableSSPIStructure {
     addDatasetToIndicatorWithDetails(selectedDatasetsDiv, datasetDetail) {
         // Add dataset using full details passed directly (no lookup needed)
         const datasetCode = datasetDetail.DatasetCode;
-
         // Check for duplicates
         const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
         if (existing) {
             alert('Dataset already added');
             return;
         }
-
         const datasetName = datasetDetail.DatasetName || 'Unknown Dataset';
         const datasetTitle = datasetDetail.Description || datasetCode;
-
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
-
-        // Use exact backend field names
         const datasetDescription = datasetDetail.Description || 'No description available';
         const datasetOrg = datasetDetail.Source?.OrganizationName || 'N/A';
         const datasetOrgCode = datasetDetail.Source?.OrganizationCode || '';
@@ -5178,21 +4237,16 @@ class CustomizableSSPIStructure {
      */
     addDatasetToIndicatorSilent(selectedDatasetsDiv, datasetDetail) {
         const datasetCode = datasetDetail.DatasetCode;
-
-        // Check for duplicates
         const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
         if (existing) {
             console.warn('Dataset already added:', datasetCode);
             return;
         }
-
         const datasetName = datasetDetail.DatasetName || 'Unknown Dataset';
         const datasetTitle = datasetDetail.Description || datasetCode;
-
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
-
         // Use exact backend field names
         const datasetDescription = datasetDetail.Description || 'No description available';
         const datasetOrg = datasetDetail.Source?.OrganizationName || 'N/A';
@@ -5225,7 +4279,7 @@ class CustomizableSSPIStructure {
             <div class="dataset-details-slideout">
                 <div class="detail-row">
                     <span class="detail-label">Description</span>
-                    <span class="detail-value">${datasetDescription}</span>
+                    <span class="detail-value">${datasetDetail.Description}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Organization</span>
@@ -5233,12 +4287,9 @@ class CustomizableSSPIStructure {
                 </div>${unitHtml}${rangeHtml}
             </div>
         `;
-
-        // Add click handler to entire dataset-item for expand/collapse
-        datasetItem.addEventListener('click', (e) => {
+        datasetItem.addEventListener('click', (e) => { // Add click handler to entire dataset-item for expand/collapse
             const isExpanded = datasetItem.dataset.expanded === 'true';
             datasetItem.dataset.expanded = (!isExpanded).toString();
-
             const slideout = datasetItem.querySelector('.dataset-details-slideout');
             if (!isExpanded) {
                 slideout.style.maxHeight = slideout.scrollHeight + 'px';
@@ -5246,13 +4297,11 @@ class CustomizableSSPIStructure {
                 slideout.style.maxHeight = '0';
             }
         });
-
         datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent toggle when clicking remove button
             // Record removal action for undo/redo (user action)
             const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
             const indicatorName = this.getElementName(indicatorCard);
-
             this.actionHistory.recordAction({
                 type: 'remove-dataset',
                 message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
@@ -5267,84 +4316,15 @@ class CustomizableSSPIStructure {
                     this.updateHierarchyOnRemove(datasetItem, 'dataset');
                 }
             });
-
             datasetItem.remove();
             this.updateHierarchyOnRemove(datasetItem, 'dataset');
         });
-
         selectedDatasetsDiv.appendChild(datasetItem);
         this.updateHierarchyOnAdd(datasetItem, 'dataset');
-
         // NOTE: We do NOT record the add action in undo/redo history
         // This method is only used during initial metadata import
     }
 
-    showDatasetOptionsMenu(buttonElement, datasetCode) {
-        // Remove any existing menu
-        const existingMenu = document.querySelector('.dataset-options-menu');
-        if (existingMenu) {
-            existingMenu.remove();
-        }
-
-        // Create menu
-        const menu = document.createElement('div');
-        menu.className = 'dataset-options-menu';
-        menu.innerHTML = `
-            <div class="menu-item" data-action="rename">
-                <span>Rename</span>
-            </div>
-            <div class="menu-item" data-action="duplicate">
-                <span>Duplicate</span>
-            </div>
-            <div class="menu-item" data-action="info">
-                <span>View Info</span>
-            </div>
-        `;
-
-        // Position menu
-        const rect = buttonElement.getBoundingClientRect();
-        menu.style.position = 'fixed';
-        menu.style.top = rect.bottom + 5 + 'px';
-        menu.style.left = rect.left + 'px';
-        menu.style.zIndex = '1000';
-
-        // Add menu to document
-        document.body.appendChild(menu);
-
-        // Handle menu clicks
-        menu.addEventListener('click', (e) => {
-            const action = e.target.closest('.menu-item')?.dataset.action;
-            if (action) {
-                this.handleDatasetMenuAction(action, datasetCode);
-                menu.remove();
-            }
-        });
-
-        // Close menu when clicking outside
-        const closeMenu = (e) => {
-            if (!menu.contains(e.target) && e.target !== buttonElement) {
-                menu.remove();
-                document.removeEventListener('click', closeMenu);
-            }
-        };
-        setTimeout(() => document.addEventListener('click', closeMenu), 0);
-    }
-
-    handleDatasetMenuAction(action, datasetCode) {
-        switch (action) {
-            case 'rename':
-                alert('Rename functionality - placeholder');
-                break;
-            case 'duplicate':
-                alert('Duplicate functionality - placeholder');
-                break;
-            case 'info':
-                alert('Dataset info functionality - placeholder');
-                break;
-        }
-    }
-
-    // Cache management methods
     /**
      * Enrich metadata with full dataset details for caching.
      * This ensures dataset assignments can be fully restored from cache.
@@ -5356,7 +4336,6 @@ class CustomizableSSPIStructure {
     cacheCurrentState() {
         try {
             const metadata = this.exportMetadata();
-            // Export action history (without undo/redo functions)
             const actionHistory = {
                 actions: this.actionHistory.actions.map(action => ({
                     actionId: action.actionId,
@@ -5372,107 +4351,42 @@ class CustomizableSSPIStructure {
             const cacheData = {
                 hasModifications: this.unsavedChanges,
                 lastModified: Date.now(),
-                metadata: metadata,  // Only DatasetCodes, no DatasetDetails
-                datasetDetailsMap: this.datasetDetails,  // Store map separately
-                actionHistory: actionHistory,  // Store action history
-                version: this.CACHE_VERSION
+                metadata: metadata, 
+                datasetDetailsMap: this.datasetDetails,
+                actionHistory: actionHistory,
             };
-            // Check cache size (rough estimate)
             const cacheSize = JSON.stringify(cacheData).length;
+            console.log('Approximate cache size:', parseFloat((cacheSize / 1024 / 1024).toFixed(2)), 'MB');
             if (cacheSize > 5 * 1024 * 1024) { // 5MB limit
                 console.warn('Cache data is too large (>5MB), skipping cache');
                 return;
             }
-            window.observableStorage.setItem("sspi-custom-modifications", cacheData);
+            window.observableStorage.setItem("customSSPICachedModifications", cacheData);
             console.log('SSPI modifications cached successfully with dataset details');
         } catch (error) {
             console.warn('Failed to cache SSPI modifications:', error);
-            // Handle specific localStorage errors
-            if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                this.handleStorageQuotaExceeded();
-            }
-        }
-    }
-    
-    handleStorageQuotaExceeded() {
-        console.warn('localStorage quota exceeded, attempting to free space');
-        
-        try {
-            // Clear any old cache data
-            const allKeys = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                allKeys.push(localStorage.key(i));
-            }
-            
-            // Remove old SSPI cache entries if any exist
-            allKeys.forEach(key => {
-                if (key && key.startsWith('sspi-') && key !== 'sspi-custom-modifications') {
-                    try {
-                        localStorage.removeItem(key);
-                        console.log('Removed old cache entry:', key);
-                    } catch (e) {
-                        // Ignore errors when removing individual items
-                    }
-                }
-            });
-            
-            // Show user notification
-            const indicator = document.createElement('div');
-            indicator.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #ff9500;
-                color: white;
-                padding: 10px 15px;
-                border-radius: 5px;
-                z-index: 1000;
-                max-width: 300px;
-                animation: slideInRight 0.3s ease-out;
-            `;
-            indicator.textContent = '⚠ Storage limit reached. Changes may not be cached across sessions.';
-            
-            document.body.appendChild(indicator);
-            
-            setTimeout(() => {
-                if (indicator.parentNode) {
-                    indicator.style.animation = 'slideOutRight 0.3s ease-in';
-                    setTimeout(() => {
-                        if (indicator.parentNode) {
-                            indicator.parentNode.removeChild(indicator);
-                        }
-                    }, 300);
-                }
-            }, 5000);
-            
-        } catch (e) {
-            console.error('Error handling storage quota exceeded:', e);
         }
     }
     
     async loadCachedState() {
         try {
-            const cacheData = window.observableStorage.getItem("sspi-custom-modifications");
+            const cacheData = window.observableStorage.getItem("customSSPICachedModifications");
             if (!cacheData || !this.isValidCacheData(cacheData)) {
                 return false;
             }
             console.log('Loading cached SSPI modifications from:', new Date(cacheData.lastModified));
-            // Restore dataset details map
-            if (cacheData.datasetDetailsMap) {
+            if (cacheData.datasetDetailsMap) { // Restore dataset details map
                 this.datasetDetails = cacheData.datasetDetailsMap;
-                console.log(`Restored ${Object.keys(this.datasetDetails).length} dataset details from cache map`);
+                console.log('Restored', Object.keys(this.datasetDetails).length, 'dataset details from cache map');
             }
-            // Import the cached metadata using async method
             await this.importDataAsync(cacheData.metadata);
-            // Restore action history
-            if (cacheData.actionHistory) {
+            if (cacheData.actionHistory) { // Restore action history
                 this.actionHistory.actions = cacheData.actionHistory.actions || [];
                 this.actionHistory.currentIndex = cacheData.actionHistory.currentIndex ?? -1;
                 this.actionHistory.baseline = cacheData.actionHistory.baseline || null;
-                console.log(`Restored ${this.actionHistory.actions.length} actions from cache`);
+                console.log('Restored', this.actionHistory.actions.length, 'actions from cache');
             }
-            // Set unsaved state based on cache
-            this.setUnsavedState(cacheData.hasModifications);
+            this.setUnsavedState(cacheData.hasModifications); // Set unsaved state based on cache
             return true;
         } catch (error) {
             console.warn('Failed to load cached SSPI modifications:', error);
@@ -5483,8 +4397,7 @@ class CustomizableSSPIStructure {
     
     clearCache() {
         try {
-            window.observableStorage.removeItem("sspi-custom-modifications");
-            window.observableStorage.removeItem("sspi-available-datasets");
+            window.observableStorage.removeItem("sspiCustomModifications");
             console.log('SSPI modifications and dataset cache cleared');
         } catch (error) {
             console.warn('Failed to clear SSPI cache:', error);
@@ -5493,7 +4406,7 @@ class CustomizableSSPIStructure {
     
     hasCachedModifications() {
         try {
-            const cacheData = window.observableStorage.getItem("sspi-custom-modifications");
+            const cacheData = window.observableStorage.getItem("customSSPICachedModifications");
             return cacheData && this.isValidCacheData(cacheData) && cacheData.hasModifications;
         } catch (error) {
             console.warn('Error checking for cached modifications:', error);
@@ -5505,15 +4418,13 @@ class CustomizableSSPIStructure {
         if (!cacheData || typeof cacheData !== 'object') {
             return false;
         }
-        // Check required fields
-        const requiredFields = ['hasModifications', 'lastModified', 'metadata', 'version'];
+        const requiredFields = ['hasModifications', 'lastModified', 'metadata'];
         for (const field of requiredFields) {
             if (!(field in cacheData)) {
                 console.warn(`Invalid cache data: missing field '${field}'`);
                 return false;
             }
         }
-        // Validate cache field types
         if (typeof cacheData.hasModifications !== 'boolean') {
             console.warn('Invalid cache data: hasModifications must be boolean');
             return false;
@@ -5526,23 +4437,12 @@ class CustomizableSSPIStructure {
             console.warn('Invalid cache data: metadata must be an array');
             return false;
         }
-        if (typeof cacheData.version !== 'string') {
-            console.warn('Invalid cache data: version must be a string');
-            return false;
-        }
-        // Check cache version matches current version
-        if (cacheData.version !== this.CACHE_VERSION) {
-            console.warn(`Cache version mismatch: cache=${cacheData.version}, current=${this.CACHE_VERSION}. Invalidating cache.`);
-            return false;
-        }
-        // Check if cache is not too old (30 days max)
-        const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        const maxAge = 7 * 24 * 60 * 60 * 1000;
         const age = Date.now() - cacheData.lastModified;
         if (age > maxAge) {
             console.warn('Cache data is too old (>7 days), discarding');
             return false;
         }
-        // Basic metadata validation
         if (cacheData.metadata.length > 0) {
             const firstItem = cacheData.metadata[0];
             if (!firstItem || typeof firstItem !== 'object' || !firstItem.ItemType) {
@@ -5551,91 +4451,6 @@ class CustomizableSSPIStructure {
             }
         }
         return true;
-    }
-
-    // Available Datasets Cache Management
-    // Separate from metadata cache to ensure dataset selector always has fresh options
-    /**
-     * Load available datasets from cache or backend.
-     * Uses separate cache with 24-hour TTL to ensure dataset selector has fresh data.
-     */
-    async loadAvailableDatasets() {
-        // Try to load from cache first
-        const cached = this.getCachedAvailableDatasets();
-        if (cached) {
-            cached.forEach(ds => {
-                this.datasetDetails[ds.DatasetCode] = ds;
-            });
-            console.log(`Loaded ${cached.length} available datasets from cache`);
-            return;
-        }
-
-        // Cache miss or stale - fetch from backend
-        try {
-            const response = await this.fetch('/api/v1/customize/datasets?limit=0');
-            if (response.success && response.datasets) {
-                response.datasets.forEach(ds => {
-                    this.datasetDetails[ds.DatasetCode] = ds;
-                });
-                this.cacheAvailableDatasets(response.datasets);
-                console.log(`Loaded ${response.datasets.length} available datasets from backend`);
-            } else {
-                console.warn('Failed to load available datasets from backend');
-            }
-        } catch (error) {
-            console.error('Error loading available datasets:', error);
-        }
-    }
-
-    /**
-     * Cache available datasets separately from metadata
-     */
-    cacheAvailableDatasets(datasets) {
-        try {
-            const cacheData = {
-                datasets: datasets,
-                cachedAt: Date.now(),
-                version: this.CACHE_VERSION
-            };
-            window.observableStorage.setItem('sspi-available-datasets', cacheData);
-            console.log('Cached available datasets');
-        } catch (error) {
-            console.warn('Failed to cache available datasets:', error);
-        }
-    }
-
-    /**
-     * Get cached available datasets if valid (not stale)
-     * @returns {Array|null} - Cached datasets or null if invalid/stale
-     */
-    getCachedAvailableDatasets() {
-        try {
-            const cacheData = window.observableStorage.getItem('sspi-available-datasets');
-            if (!cacheData || typeof cacheData !== 'object') {
-                return null;
-            }
-            // Validate structure
-            if (!Array.isArray(cacheData.datasets) || typeof cacheData.cachedAt !== 'number') {
-                console.warn('Invalid available datasets cache structure');
-                return null;
-            }
-            // Check version
-            if (cacheData.version !== this.CACHE_VERSION) {
-                console.warn('Available datasets cache version mismatch');
-                return null;
-            }
-            // Check freshness (24 hours)
-            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-            const age = Date.now() - cacheData.cachedAt;
-            if (age > maxAge) {
-                console.log('Available datasets cache is stale (>24 hours), will refresh');
-                return null;
-            }
-            return cacheData.datasets;
-        } catch (error) {
-            console.warn('Error reading available datasets cache:', error);
-            return null;
-        }
     }
 
     debouncedCacheState() {
@@ -5651,110 +4466,23 @@ class CustomizableSSPIStructure {
     
     setupCacheSync() {
         // Listen for cache changes from other tabs
-        window.observableStorage.onChange("sspi-custom-modifications", async (oldValue, newValue) => {
-            console.log('Cache change detected from another tab');
-            // Only sync if we don't have unsaved changes in current tab
-            if (!this.unsavedChanges) {
+        window.observableStorage.onChange("customSSPICachedModifications", async (oldValue, newValue) => {
+            console.log('Cache change detected!');
+            if (!this.unsavedChanges) { // Only sync if we don't have unsaved changes in current tab
                 if (newValue && this.isValidCacheData(newValue) && newValue.hasModifications) {
-                    console.log('Syncing modifications from another tab');
+                    console.log('Syncing cache modifications from another session');
                     await this.importDataAsync(newValue.metadata);
                     this.setUnsavedState(newValue.hasModifications);
                 } else if (!newValue) {
                     // Cache was cleared in another tab, reload default if no local changes
-                    console.log('Cache cleared in another tab, reloading default');
+                    console.log('Cache cleared in another session, reloading default');
                     await this.loadDefaultMetadata();
                 }
             }
         });
     }
     
-    createItemMap(metadata) {
-        const map = new Map();
-        metadata.forEach(item => {
-            map.set(item.ItemCode, item);
-        });
-        return map;
-    }
-    
-    compareItems(baselineItem, currentItem) {
-        const changes = {};
-        // Compare basic properties
-        // Compare indicator-specific properties
-        if (baselineItem.ItemType === 'Indicator') {
-            if (!this.arraysEqual(baselineItem.DatasetCodes || [], currentItem.DatasetCodes || [])) {
-                changes.datasets = {
-                    from: baselineItem.DatasetCodes || [],
-                    to: currentItem.DatasetCodes || []
-                };
-            }
-            
-            if (baselineItem.ScoreFunction !== currentItem.ScoreFunction) {
-                changes.ScoreFunction = { 
-                    from: baselineItem.ScoreFunction, 
-                    to: currentItem.ScoreFunction 
-                };
-            }
-        }
-        if (baselineItem.ItemName !== currentItem.ItemName) {
-            changes.name = { from: baselineItem.ItemName, to: currentItem.ItemName };
-        }
-        // Compare children arrays
-        if (!this.arraysEqual(baselineItem.Children || [], currentItem.Children || [])) {
-            changes.children = { 
-                from: baselineItem.Children || [], 
-                to: currentItem.Children || [] 
-            };
-        }
-        if (baselineItem.PillarCode !== currentItem.PillarCode) {
-            changes.pillar = { 
-                from: baselineItem.PillarCode, 
-                to: currentItem.PillarCode 
-            };
-        }
-        if (baselineItem.CategoryCode !== currentItem.CategoryCode) {
-            changes.category = { 
-                from: baselineItem.CategoryCode, 
-                to: currentItem.CategoryCode 
-            };
-        }
-        return Object.keys(changes).length > 0 ? changes : null;
-    }
-    
-    arraysEqual(arr1, arr2) {
-        if (arr1.length !== arr2.length) return false;
-        return arr1.every((item, index) => item === arr2[index]);
-    }
-    
-    areMetadataEqual(metadata1, metadata2) {
-        if (!metadata1 || !metadata2) return false;
-        if (metadata1.length !== metadata2.length) return false;
-        
-        return JSON.stringify(metadata1) === JSON.stringify(metadata2);
-    }
-    
-    hasChangesFromBaseline() {
-        if (!this.baselineMetadata) return false;
-        
-        const diff = this.generateDiff();
-        return diff.summary && diff.summary.totalChanges > 0;
-    }
-    
-    getChangeCount() {
-        if (!this.baselineMetadata) return 0;
-        
-        const diff = this.generateDiff();
-        return diff.summary ? diff.summary.totalChanges : 0;
-    }
-
-    async fetch(url, options = {}) {
-        const response = await window.fetch(url, options);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json();
-    }
 }
-
 // Usage example:
 // const root = document.getElementById('sspi-root');
 // new CustomizableSSPIStructure(root);

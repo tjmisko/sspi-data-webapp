@@ -1,5 +1,4 @@
 /* Enhanced Customizable SSPI Styles - Merged with drag-and-drop functionality */
-
 .customization-home-box {
   display: flex;
   flex-direction: column;
@@ -371,6 +370,10 @@
   flex-direction: row;
   align-items: flex-end;
   width: 100%;
+}
+
+.input-error {
+  background-color: color-mix(in srgb, #ff0000 50%, var(--input-background-color) 50%)
 }
 
 .indicator-config {
@@ -2717,54 +2720,6 @@ to {
   font-size: 1rem;
 }
 
-.visualization-error {
-  padding: 2rem;
-  text-align: center;
-  color: #dc3545;
-  font-family: var(--body-font-family);
-}
-
-.visualization-error-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.visualization-error-message {
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.visualization-error-details {
-  font-size: 0.9rem;
-  color: var(--body-text-color);
-  margin-top: 0.5rem;
-}
-
-.visualization-empty-state {
-  padding: 3rem 2rem;
-  text-align: center;
-  color: var(--low-importance-font-color);
-  font-family: var(--body-font-family);
-}
-
-.visualization-empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.visualization-empty-message {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: var(--body-text-color);
-}
-
-.visualization-empty-instructions {
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
 /* Dataset item styling */
 .dataset-item-header {
   display: flex;
@@ -2844,47 +2799,6 @@ to {
   }
 }
 
-/* Mobile adjustments for visualization section */
-@media (max-width: var(--small-tablet-break-width)) {
-  .visualization-header {
-    padding: 0.75rem 1rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .collapse-viz-btn {
-    margin-right: 0.5rem;
-    font-size: 0.9rem;
-  }
-
-  .visualization-title {
-    flex: 1 1 auto;
-    min-width: 150px;
-  }
-
-  .visualization-title h2 {
-    font-size: 0.95rem;
-  }
-
-  .visualization-controls {
-    flex: 0 1 auto;
-  }
-
-  .visualization-controls button {
-    font-size: 0.75em;
-    padding: 0.3em 0.6em;
-  }
-
-  .visualization-chart-container {
-    padding: 1rem;
-    min-height: 300px;
-  }
-
-  .visualization-subtitle {
-    margin-left: 0;
-    font-size: 0.8rem;
-  }
-}
 
 /* Enhanced Filter Styling for Indicator Selector */
 .dataset-filters-container {
@@ -3039,13 +2953,14 @@ to {
 /* Type badge */
 .change-type-badge {
   display: inline-block;
-  padding: 0.2rem 0.4rem;
+  padding: 0.1em 0.4rem;
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   border-radius: 3px;
   white-space: nowrap;
+  line-height: 1.1;
 }
 
 /* Badge colors by category */
@@ -3243,22 +3158,5 @@ to {
 
   .change-delta-list dt:first-child {
     margin-top: 0;
-  }
-}
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .change-timeline-indicator {
-    background-color: var(--green-accent);
-    border-color: var(--box-background-color);
-  }
-
-  .change-type-badge[data-change-type="remove"] {
-    color: #f87171;
-    border-color: #f87171;
-  }
-
-  .change-type-badge[data-change-type="rename"] {
-    color: #fbbf24;
   }
 }

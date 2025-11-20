@@ -111,25 +111,19 @@ class ChangesHistoryModal {
     createHeader() {
         const header = document.createElement('div');
         header.className = 'dataset-modal-header';
-
         const title = document.createElement('h3');
         title.className = 'dataset-modal-title';
         title.textContent = 'Changes History';
-
         const counter = document.createElement('div');
         counter.className = 'dataset-selection-counter';
-
         const changes = this.getFilteredChanges();
         const countSpan = document.createElement('span');
         countSpan.className = 'selected-count';
         countSpan.textContent = changes.length;
-
         const textSpan = document.createElement('span');
         textSpan.textContent = changes.length === 1 ? ' change from baseline' : ' changes from baseline';
-
         counter.appendChild(countSpan);
         counter.appendChild(textSpan);
-
         // Close button (only in modal mode)
         if (this.mode === 'modal') {
             const closeBtn = document.createElement('button');
@@ -138,7 +132,6 @@ class ChangesHistoryModal {
             closeBtn.setAttribute('aria-label', 'Close');
             closeBtn.setAttribute('tabindex', '0');
             closeBtn.innerHTML = '&times;';
-
             header.appendChild(title);
             header.appendChild(counter);
             header.appendChild(closeBtn);
@@ -146,99 +139,16 @@ class ChangesHistoryModal {
             header.appendChild(title);
             header.appendChild(counter);
         }
-
         return header;
     }
 
-    /**
-     * Create search container
-     */
-    createSearchContainer() {
-        const container = document.createElement('div');
-        container.className = 'dataset-search-container';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'changes-search';
-        input.className = 'dataset-search-input';
-        input.placeholder = 'Search changes by description...';
-        input.value = this.searchTerm;
-
-        const resultsCount = document.createElement('div');
-        resultsCount.className = 'search-results-count';
-        resultsCount.id = 'changes-results-count';
-        resultsCount.textContent = this.getResultsCountText();
-
-        container.appendChild(input);
-        container.appendChild(resultsCount);
-
-        return container;
-    }
-
-    /**
-     * Create filters container
-     */
-    createFiltersContainer() {
-        const container = document.createElement('div');
-        container.className = 'dataset-filters-container';
-
-        const label = document.createElement('label');
-        label.setAttribute('for', 'action-type-filter');
-        label.className = 'visually-hidden';
-        label.textContent = 'Action Type:';
-
-        const select = document.createElement('select');
-        select.id = 'action-type-filter';
-        select.className = 'filter-select';
-
-        // Action type options grouped by category
-        const options = [
-            { value: '', label: 'All Action Types' },
-            { value: 'add-indicator', label: '➕ Add Indicator' },
-            { value: 'add-category', label: '➕ Add Category' },
-            { value: 'add-dataset', label: '➕ Add Dataset' },
-            { value: 'remove-indicator', label: '➖ Remove Indicator' },
-            { value: 'remove-category', label: '➖ Remove Category' },
-            { value: 'remove-dataset', label: '➖ Remove Dataset' },
-            { value: 'move-indicator', label: '↔️ Move Indicator' },
-            { value: 'move-category', label: '↔️ Move Category' },
-            { value: 'set-indicator-name', label: '✏️ Rename Indicator' },
-            { value: 'set-category-name', label: '✏️ Rename Category' },
-            { value: 'set-pillar-name', label: '✏️ Rename Pillar' },
-            { value: 'set-score-function', label: '⚙️ Change Score Function' },
-            { value: 'set-indicator-code', label: '🔖 Change Indicator Code' },
-            { value: 'set-category-code', label: '🔖 Change Category Code' },
-            { value: 'set-pillar-code', label: '🔖 Change Pillar Code' }
-        ];
-
-        options.forEach(opt => {
-            const option = document.createElement('option');
-            option.value = opt.value;
-            option.textContent = opt.label;
-            if (opt.value === this.filterType) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
-
-        container.appendChild(label);
-        container.appendChild(select);
-
-        return container;
-    }
-
-    /**
-     * Create list container with changes
-     */
     createListContainer() {
         const container = document.createElement('div');
-        container.className = 'dataset-list-container changes-list-container';
+        container.className = 'changes-list-container';
         container.setAttribute('tabindex', '0');
-
         const list = document.createElement('div');
         list.id = 'changes-list';
-        list.className = 'dataset-list enhanced changes-list';
-
+        list.className = 'changes-list';
         const changes = this.getFilteredChanges();
 
         if (changes.length === 0) {
@@ -335,26 +245,58 @@ class ChangesHistoryModal {
         const content = document.createElement('div');
         content.className = 'change-details-content';
 
-        // Format delta as readable key-value pairs
         const delta = action.delta;
-        const dl = document.createElement('dl');
-        dl.className = 'change-delta-list';
 
-        Object.entries(delta).forEach(([key, value]) => {
-            // Skip the 'type' field as it's shown in the badge
-            if (key === 'type') return;
+        // Check if this is a composite action
+        if (delta.type === 'composite' && delta.subActions && Array.isArray(delta.subActions)) {
+            // Render sub-actions as a list
+            const subActionsList = document.createElement('ul');
+            subActionsList.className = 'change-sub-actions-list';
 
-            const dt = document.createElement('dt');
-            dt.textContent = this.formatDeltaKey(key);
+            delta.subActions.forEach((subDelta, index) => {
+                const li = document.createElement('li');
+                li.className = 'change-sub-action-item';
 
-            const dd = document.createElement('dd');
-            dd.textContent = this.formatDeltaValue(key, value);
+                // Format sub-action type
+                const typeSpan = document.createElement('span');
+                typeSpan.className = 'sub-action-type';
+                typeSpan.textContent = this.formatActionType(subDelta.type || 'change');
+                li.appendChild(typeSpan);
 
-            dl.appendChild(dt);
-            dl.appendChild(dd);
-        });
+                // Format sub-action details
+                const detailsSpan = document.createElement('span');
+                detailsSpan.className = 'sub-action-details';
+                detailsSpan.textContent = this.formatSubActionDetails(subDelta);
+                li.appendChild(detailsSpan);
 
-        content.appendChild(dl);
+                subActionsList.appendChild(li);
+            });
+
+            content.appendChild(subActionsList);
+        } else {
+            // Normal delta rendering (non-composite action)
+            const dl = document.createElement('dl');
+            dl.className = 'change-delta-list';
+
+            Object.entries(delta).forEach(([key, value]) => {
+                // Skip the 'type' field as it's shown in the badge
+                if (key === 'type') return;
+                // Skip subActions as they're handled above
+                if (key === 'subActions') return;
+
+                const dt = document.createElement('dt');
+                dt.textContent = this.formatDeltaKey(key);
+
+                const dd = document.createElement('dd');
+                dd.textContent = this.formatDeltaValue(key, value);
+
+                dl.appendChild(dt);
+                dl.appendChild(dd);
+            });
+
+            content.appendChild(dl);
+        }
+
         details.appendChild(content);
 
         return details;
@@ -481,17 +423,30 @@ class ChangesHistoryModal {
         }
 
         // Extract name from various sources
-        if (delta.to && typeof delta.to === 'string' && !delta.to.includes('Score =')) {
+        // For composite actions, check for indicatorName, categoryName, etc.
+        if (delta.indicatorName) {
+            name = delta.indicatorName;
+        } else if (delta.categoryName) {
+            name = delta.categoryName;
+        } else if (delta.pillarName) {
+            name = delta.pillarName;
+        } else if (delta.to && typeof delta.to === 'string' && !delta.to.includes('Score =')) {
             name = delta.to;
         } else if (delta.name) {
             name = delta.name;
         }
 
+        // For composite actions, also add category context if available
+        let categoryContext = '';
+        if (delta.type === 'composite' && delta.categoryName) {
+            categoryContext = ` in ${delta.categoryName}`;
+        }
+
         // Format as "Name (CODE)" if we have both, or just the code if no name
         if (name && code) {
-            return `${name} (${code})`;
+            return `${name} (${code})${categoryContext}`;
         } else if (code) {
-            return `(${code})`;
+            return `(${code})${categoryContext}`;
         }
 
         return null;
@@ -515,6 +470,8 @@ class ChangesHistoryModal {
         if (type.startsWith('remove-')) return 'remove';
         if (type.startsWith('move-')) return 'move';
         if (type.startsWith('set-')) return 'rename';
+        if (type.startsWith('create-')) return 'add'; // Composite create actions styled like add
+        if (type === 'composite') return 'other';
         return 'other';
     }
 
@@ -554,6 +511,56 @@ class ChangesHistoryModal {
         }
 
         return String(value);
+    }
+
+    /**
+     * Format sub-action details for display in composite actions
+     * @param {Object} subDelta - The delta object from a sub-action
+     * @returns {string} Formatted details string
+     */
+    formatSubActionDetails(subDelta) {
+        if (!subDelta) return '';
+
+        const type = subDelta.type;
+
+        // Format based on action type
+        switch (type) {
+            case 'set-indicator-code':
+                if (subDelta.from) {
+                    return `: Changed code from "${subDelta.from}" to "${subDelta.to}"`;
+                } else {
+                    return `: Set code to "${subDelta.to}"`;
+                }
+
+            case 'add-dataset':
+                return `: Added dataset "${subDelta.datasetCode}"`;
+
+            case 'set-score-function':
+                return `: Set score function to "${subDelta.to}"`;
+
+            case 'set-indicator-name':
+                if (subDelta.from) {
+                    return `: Renamed from "${subDelta.from}" to "${subDelta.to}"`;
+                } else {
+                    return `: Set name to "${subDelta.to}"`;
+                }
+
+            case 'move-indicator':
+                return `: Moved from ${subDelta.fromParentCode} to ${subDelta.toParentCode}`;
+
+            case 'remove-dataset':
+                return `: Removed dataset "${subDelta.datasetCode}"`;
+
+            default:
+                // Generic formatting: try to show from/to if available
+                if (subDelta.from && subDelta.to) {
+                    return `: Changed from "${subDelta.from}" to "${subDelta.to}"`;
+                } else if (subDelta.to) {
+                    return `: ${subDelta.to}`;
+                } else {
+                    return '';
+                }
+        }
     }
 
     /**
