@@ -5,8 +5,6 @@
 
 /**
  * ActionHistory - Manages action history with undo/redo and cumulative change tracking
- *
- * Replaces UndoRedoManager with enhanced functionality:
  * - Baseline capture (default SSPI structure)
  * - Delta-based action recording
  * - Cumulative action log from baseline
@@ -48,12 +46,6 @@ class ActionHistory {
             console.error('Invalid action config:', actionConfig);
             throw new Error('Action must have type, message, undo, and redo');
         }
-
-        // Truncate any actions after currentIndex (branching timeline)
-        if (this.currentIndex < this.actions.length - 1) {
-            this.actions = this.actions.slice(0, this.currentIndex + 1);
-        }
-
         // Create action with unique ID and timestamp
         const action = {
             actionId: this.generateUUID(),
@@ -64,18 +56,20 @@ class ActionHistory {
             undo: actionConfig.undo,
             redo: actionConfig.redo
         };
-
+        // If in batch mode, add to batch instead of main history
+        // Normal recording (not in batch mode)
+        // Truncate any actions after currentIndex (branching timeline)
+        if (this.currentIndex < this.actions.length - 1) {
+            this.actions = this.actions.slice(0, this.currentIndex + 1);
+        }
         // Add to history
         this.actions.push(action);
         this.currentIndex++;
-
-        // Enforce max size
         if (this.actions.length > this.maxHistorySize) {
             const overflow = this.actions.length - this.maxHistorySize;
             this.actions = this.actions.slice(overflow);
             this.currentIndex -= overflow;
         }
-
         console.log('Recorded action:', action.type, '-', action.message, '(History size:', this.actions.length, ')');
         return action;
     }
@@ -128,43 +122,24 @@ class ActionHistory {
         }
     }
 
-    /**
-     * Check if undo is available
-     * @returns {boolean}
-     */
     canUndo() {
         return this.currentIndex >= 0;
     }
 
-    /**
-     * Check if redo is available
-     * @returns {boolean}
-     */
     canRedo() {
         return this.currentIndex < this.actions.length - 1;
     }
 
-    /**
-     * Get cumulative actions from baseline to current state
-     * @returns {Array} Array of actions up to current index
-     */
     getCumulativeActions() {
         return this.actions.slice(0, this.currentIndex + 1);
     }
 
-    /**
-     * Clear all action history
-     */
     clear() {
         this.actions = [];
         this.currentIndex = -1;
         console.log('Cleared action history');
     }
 
-    /**
-     * Export action log for backend processing (without undo/redo functions)
-     * @returns {Array} Array of action objects with actionId, type, timestamp, message, delta
-     */
     exportActionLog() {
         return this.getCumulativeActions().map(action => ({
             actionId: action.actionId,
@@ -175,10 +150,6 @@ class ActionHistory {
         }));
     }
 
-    /**
-     * Get info about current history state
-     * @returns {Object} History information
-     */
     getInfo() {
         return {
             historySize: this.actions.length,
@@ -194,10 +165,6 @@ class ActionHistory {
         };
     }
 
-    /**
-     * Generate a UUID v4 string
-     * @returns {string} UUID
-     */
     generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             const r = Math.random() * 16 | 0;
@@ -210,18 +177,18 @@ class ActionHistory {
 class CustomizableSSPIStructure {
     constructor(parentElement, options = {}) {
         const {
-            pillars = ['Sustainability', 'Market Structure', 'Public Goods'],
+            pillars = [
+                { ItemName: 'Sustainability', ItemCode: 'SUS' },
+                { ItemName: 'Market Structure', ItemCode: 'MS' },
+                { ItemName: 'Public Goods', ItemCode: 'PG' }
+            ],
             autoLoad = true,
             loadingDelay = 100
         } = options;
-
         this.parentElement = parentElement;
         this.pillars = pillars;
-        this.changeLog = [];
-
         this.autoLoad = autoLoad;
         this.loadingDelay = loadingDelay;
-
         // Cache version - increment when data structure changes
         this.CACHE_VERSION = '2.2.0'; // v2.2: Dataset details stored in separate map, not embedded in indicators
         this.unsavedChanges = false;
@@ -244,64 +211,54 @@ class CustomizableSSPIStructure {
         // Initialize action history system
         this.actionHistory = new ActionHistory(this);
         this.initToolbar();
-        this.initVisualizationSection();
         this.initRoot();
-        this.addEventListeners();
+        this.rigDragStructureListeners();
         this.setupKeyboardShortcuts();
-        this.loadConfigurationsList();
         // NOTE: Dataset details are loaded as part of default-structure API response (all_datasets field)
         // This eliminates the need for a separate API call to /api/v1/customize/datasets
         this.setupCacheSync();
         this.rigUnloadListener();
-        
         // Auto-load cached modifications or default metadata if enabled
         if (this.autoLoad) {
-            // Small delay to ensure DOM is ready
-            setTimeout(() => {
+            setTimeout(() => { // delay ensures DOM is ready
                 this.loadInitialData();
             }, this.loadingDelay);
         }
     }
 
     initToolbar() {
-        const toolbar = document.createElement('div');
-        toolbar.classList.add('sspi-toolbar');
-
+        const toolbarTop = document.createElement('div');
+        toolbarTop.classList.add('sspi-toolbar');
+        const toolbarBottom = document.createElement('div');
+        toolbarBottom.classList.add('sspi-toolbar');
         const importBtn = document.createElement('button');
         importBtn.textContent = 'Load Default SSPI';
         importBtn.addEventListener('click', async () => {
             try {
                 this.showLoadingState('Loading default SSPI metadata...');
-
                 // Clear ALL caches when explicitly loading default metadata
                 this.clearCache();
-
                 // Reload available datasets from server (fresh, no cache)
                 await this.loadAvailableDatasets();
-
                 const response = await this.fetch('/api/v1/customize/default-structure');
                 if (response.success) {
                     console.log('Loading default SSPI metadata with', response.stats);
-
                     // Use datasetDetailsMap directly from backend (no transformation!)
                     if (response.datasetDetailsMap) {
                         this.datasetDetails = response.datasetDetailsMap;
                         console.log(`Loaded ${Object.keys(this.datasetDetails).length} dataset details from map`);
                     } else if (response.all_datasets && Array.isArray(response.all_datasets)) {
-                        // Fallback for backwards compatibility
+                        // Fallback for backwards compatibility //REMOVE ME?
                         this.datasetDetails = {};
                         response.all_datasets.forEach(ds => {
                             this.datasetDetails[ds.DatasetCode] = ds;
                         });
                         console.log(`Populated ${response.all_datasets.length} dataset details from array`);
                     }
-
                     // Use async import for better performance with large metadata
                     await this.importDataAsync(response.metadata);
-
                     // Capture baseline for action history tracking
                     this.actionHistory.captureBaseline(response.metadata);
-
                     this.hideLoadingState();
                     this.flagUnsaved();
                 } else {
@@ -330,20 +287,16 @@ class CustomizableSSPIStructure {
         expandAllBtn.addEventListener('click', () => {
             this.expandAll();
         });
-
         const collapseAllBtn = document.createElement('button');
         collapseAllBtn.textContent = 'Collapse All';
         collapseAllBtn.addEventListener('click', () => {
             this.collapseAll();
         });
-
         const validateBtn = document.createElement('button');
         validateBtn.textContent = 'Validate';
         validateBtn.addEventListener('click', () => {
             this.showHierarchyStatus();
         });
-
-        // View Changes button with badge
         const viewChangesBtn = document.createElement('button');
         viewChangesBtn.textContent = 'View Changes';
         viewChangesBtn.title = 'View history of all changes made to the SSPI structure';
@@ -352,31 +305,24 @@ class CustomizableSSPIStructure {
             this.showChangesHistory();
         });
         this.viewChangesButton = viewChangesBtn;
-
         this.discardButton = document.createElement('button');
         this.discardButton.textContent = 'Discard Changes';
-        this.discardButton.style.opacity = '0.5';
-        this.discardButton.style.cursor = 'not-allowed';
         this.discardButton.disabled = true;
         this.discardButton.addEventListener('click', async () => {
             if (this.unsavedChanges && confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')) {
                 await this.discardChanges();
             }
         });
-
-        // Add "Score & Visualize" button
         const scoreVisualizeBtn = document.createElement('button');
         scoreVisualizeBtn.textContent = 'Score & Visualize';
         scoreVisualizeBtn.title = 'Generate scores and visualize this custom SSPI structure';
-        scoreVisualizeBtn.style.backgroundColor = '#4CAF50';
-        scoreVisualizeBtn.style.color = 'white';
-        scoreVisualizeBtn.style.fontWeight = 'bold';
         scoreVisualizeBtn.addEventListener('click', async () => {
             await this.scoreAndVisualize();
         });
-
-        toolbar.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, viewChangesBtn, this.discardButton, resetViewBtn, expandAllBtn, collapseAllBtn);
-        this.parentElement.appendChild(toolbar);
+        toolbarTop.append(resetViewBtn, expandAllBtn, collapseAllBtn)
+        toolbarBottom.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, viewChangesBtn, this.discardButton);
+        this.parentElement.appendChild(toolbarTop);
+        this.parentElement.appendChild(toolbarBottom);
     }
 
     async fetch(url) {
@@ -389,125 +335,46 @@ class CustomizableSSPIStructure {
         this.container = document.createElement('div');
         this.container.classList.add('pillars-container', 'pillars-grid');
         this.container.setAttribute('role', 'tree');
-        this.pillars.forEach((name, index) => {
+        this.pillars.forEach((item, index) => {
             const col = document.createElement('div');
             col.classList.add('pillar-column');
-            col.dataset.pillar = name;
-            col.setAttribute('aria-label', name + ' pillar');
-
-            // Set default pillar codes
-            const defaultCodes = ['SUS', 'MS', 'PG'];
-            const defaultCode = defaultCodes[index] || 'PIL';
-
-            const header = document.createElement('div');
-            header.classList.add('customization-pillar-header', 'draggable-item');
-            header.setAttribute('role', 'treeitem');
-            header.dataset.type = 'pillar';
-            header.innerHTML = `
-                <div class="customization-pillar-header-content">
-                    <div class="pillar-name" contenteditable="true" spellcheck="false" tabindex="0">${name}</div>
-                    <div class="pillar-code-section">
-                        <label class="code-label">Code:</label>
-                        <input type="text" class="pillar-code-input" maxlength="3" placeholder="${defaultCode}"
-                               pattern="[A-Z]{2,3}" title="2-3 uppercase letters required" value="${defaultCode}">
-                        <span class="code-validation-message"></span>
-                    </div>
-                </div>
+            col.dataset.pillar = item.ItemName;
+            col.setAttribute('aria-label', item.ItemName + ' pillar');
+            col.innerHTML = `
+<div role="treeitem" class="customization-pillar-header draggable-item" dataset-type="pillar">
+    <div class="customization-pillar-header-content">
+        <div class="pillar-name" contenteditable="true" spellcheck="false" tabindex="0">${name}</div>
+        <div class="pillar-code-section">
+            <label class="code-label">Code:</label>
+            <input type="text" class="pillar-code-input" maxlength="3" placeholder="${item.ItemCode}"
+                   pattern="[A-Z]{2,3}" title="2-3 uppercase letters required" value="${item.ItemCode}">
+            <span class="code-validation-message"></span>
+        </div>
+    </div>
+</div>
             `;
-            col.appendChild(header);
-            this.setupCodeValidation(header.querySelector('.pillar-code-input'), 'pillar');
-
+            this.setupCodeValidation(col.querySelector('.pillar-code-input'), 'pillar');
             const categories = document.createElement('div');
             categories.classList.add('categories-container', 'drop-zone');
             categories.dataset.accept = 'category';
             col.appendChild(categories);
-
             const addCat = document.createElement('button');
             addCat.classList.add('add-category');
             addCat.textContent = '+ Add Category';
             addCat.setAttribute('aria-label', 'Add Category to ' + name);
             col.appendChild(addCat);
-
             this.container.appendChild(col);
         });
         this.parentElement.appendChild(this.container);
     }
 
-    initVisualizationSection() {
-        // Create the visualization section container
-        this.visualizationSection = document.createElement('div');
-        this.visualizationSection.classList.add('visualization-section');
-        this.visualizationSection.style.display = 'none';
-
-        // Create header
-        const header = document.createElement('div');
-        header.classList.add('visualization-header');
-
-        // Collapse button (disclosure triangle on left)
-        const collapseBtn = document.createElement('button');
-        collapseBtn.classList.add('collapse-viz-btn');
-        collapseBtn.innerHTML = '▼'; // Down arrow, will rotate when collapsed
-        collapseBtn.title = 'Toggle visualization';
-        collapseBtn.setAttribute('aria-label', 'Toggle visualization');
-        collapseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleVisualizationCollapse();
-        });
-
-        const titleContainer = document.createElement('div');
-        titleContainer.classList.add('visualization-title');
-        titleContainer.innerHTML = `<h2>Scored Results</h2>`;
-
-        const controls = document.createElement('div');
-        controls.classList.add('visualization-controls');
-
-        // Refresh button
-        const refreshBtn = document.createElement('button');
-        refreshBtn.classList.add('refresh-viz-btn');
-        refreshBtn.textContent = 'Refresh';
-        refreshBtn.title = 'Re-score with current structure';
-        refreshBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.refreshVisualization();
-        });
-
-        // Close button
-        const closeBtn = document.createElement('button');
-        closeBtn.classList.add('close-viz-btn');
-        closeBtn.textContent = '✕';
-        closeBtn.title = 'Close visualization';
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.closeVisualization();
-        });
-
-        controls.append(refreshBtn, closeBtn);
-        header.append(collapseBtn, titleContainer, controls);
-
-        // Make header clickable to toggle collapse (except when clicking buttons)
-        header.addEventListener('click', (e) => {
-            // Only toggle if clicking header itself, not the control buttons
-            if (!e.target.closest('.visualization-controls')) {
-                this.toggleVisualizationCollapse();
-            }
-        });
-
-        // Create chart container
-        const chartContainer = document.createElement('div');
-        chartContainer.classList.add('visualization-chart-container');
-
-        this.visualizationSection.append(header, chartContainer);
-        this.parentElement.appendChild(this.visualizationSection);
-    }
-
-    addEventListeners() {
+    rigDragStructureListeners() {
         // Pillar rename
         this.container.querySelectorAll('.customization-pillar-header').forEach(h =>
             h.addEventListener('keydown', e => {
                 if (e.key === 'Enter') { e.preventDefault(); h.blur(); }
             })
         );
-
         // Collapse toggle buttons
         this.container.addEventListener('click', e => {
             const toggleBtn = e.target.closest('.collapse-toggle-btn');
@@ -518,7 +385,6 @@ class CustomizableSSPIStructure {
                 return;
             }
         });
-
         // Add Category / Indicator
         this.container.addEventListener('click', e => {
             if (e.target.classList.contains('add-category')) {
@@ -539,39 +405,31 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-
         // Drag & Drop with preview clone
         this.container.addEventListener('dragstart', e => {
             // Only allow dragging from headers (category-header or indicator-header)
             // Since only headers have draggable="true", this should be the case
             const isDraggingFromHeader = e.target.closest('.customization-category-header') ||
                                         e.target.closest('.customization-indicator-header');
-
             if (!isDraggingFromHeader) {
                 e.preventDefault();
                 return;
             }
-
             // Find the parent draggable item (category-box or indicator-card)
             const el = e.target.closest('.draggable-item');
             if (!el) return;
-
             this.draggedEl = el;
             this.origin = { parent: el.parentNode, next: el.nextSibling };
             this.dropped = false;
-
             // Check if element is expanded and store state
             const collapsibleEl = el.querySelector('[data-expanded]');
             this.wasExpanded = collapsibleEl && collapsibleEl.dataset.expanded === 'true';
-
             // Collapse element if expanded (for smoother dragging)
             if (this.wasExpanded && collapsibleEl) {
                 collapsibleEl.dataset.expanded = 'false';
             }
-
             // Add dragging class (makes original invisible via opacity: 0)
             el.classList.add('dragging');
-
             // Create and style the drag ghost
             const clone = el.cloneNode(true);
             clone.style.position = 'absolute';
@@ -580,27 +438,22 @@ class CustomizableSSPIStructure {
             clone.classList.add('drag-ghost');
             clone.classList.remove('dragging'); // Remove dragging class from clone
             document.body.appendChild(clone);
-
             const rect = el.getBoundingClientRect();
             e.dataTransfer.setDragImage(clone, rect.width/2, rect.height/2);
-
             // Keep clone a bit longer to ensure proper rendering
             setTimeout(() => {
                 if (clone.parentNode) {
                     document.body.removeChild(clone);
                 }
             }, 50);
-
             if (!el.id) el.id = `id-${Math.random().toString(36).substr(2,9)}`;
             e.dataTransfer.setData('text/plain', el.id);
             e.dataTransfer.effectAllowed = 'move';
         });
-
         this.container.addEventListener('dragend', () => {
             if (!this.dropped && this.origin && this.draggedEl) {
                 this.origin.parent.insertBefore(this.draggedEl, this.origin.next);
             }
-
             // Re-expand element if it was previously expanded
             if (this.draggedEl && this.wasExpanded) {
                 const collapsibleEl = this.draggedEl.querySelector('[data-expanded]');
@@ -611,25 +464,21 @@ class CustomizableSSPIStructure {
                     }, 100);
                 }
             }
-
             if (this.draggedEl) this.draggedEl.classList.remove('dragging');
             this.draggedEl = null;
             this.origin = null;
             this.dropped = false;
             this.wasExpanded = false;
-            this.clearIndicators();
+            this.clearDraggingVisuals();
         });
-
         this.container.addEventListener('dragover', e => {
             const z = e.target.closest('.drop-zone');
             if (!z || !this.draggedEl) return;
             e.preventDefault();
             z.classList.add('drag-over');
-            this.clearIndicators(z);
-
+            this.clearDraggingVisuals(z);
             // Get all draggable items in this drop zone (excluding the dragged element)
             const items = Array.from(z.querySelectorAll('.draggable-item')).filter(item => item !== this.draggedEl);
-
             if (items.length === 0) {
                 // Empty drop zone - show indicator at the top
                 const indicator = document.createElement('div');
@@ -638,23 +487,19 @@ class CustomizableSSPIStructure {
             } else {
                 // Find the correct insertion point based on mouse Y position
                 let insertBeforeItem = null;
-
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
                     const rect = item.getBoundingClientRect();
                     const itemMiddle = rect.top + rect.height / 2;
-
                     if (e.clientY < itemMiddle) {
                         // Mouse is above the middle of this item
                         insertBeforeItem = item;
                         break;
                     }
                 }
-
                 // Create and insert the indicator
                 const indicator = document.createElement('div');
                 indicator.className = 'insertion-indicator';
-
                 if (insertBeforeItem) {
                     // Insert before the found item (could be at top or middle)
                     z.insertBefore(indicator, insertBeforeItem);
@@ -664,12 +509,11 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-
         this.container.addEventListener('dragleave', e => {
             const z = e.target.closest('.drop-zone');
             if (z) {
                 z.classList.remove('drag-over');
-                this.clearIndicators(z);
+                this.clearDraggingVisuals(z);
             }
         });
 
@@ -678,13 +522,11 @@ class CustomizableSSPIStructure {
             if (!z || !this.draggedEl) return;
             e.preventDefault();
             z.classList.remove('drag-over');
-
             // Capture state for undo/redo
             const movedElement = this.draggedEl;
             const fromParent = this.origin.parent;
             const fromNextSibling = this.origin.next;
             let toNextSibling = null;
-
             const indicator = z.querySelector('.insertion-indicator');
             if (indicator) {
                 toNextSibling = indicator;
@@ -694,12 +536,9 @@ class CustomizableSSPIStructure {
                 z.appendChild(this.draggedEl);
                 toNextSibling = null;
             }
-
             const toParent = z;
-
             this.dropped = true;
             this.draggedEl.classList.remove('dragging');
-
             // Re-expand element if it was previously expanded
             if (this.wasExpanded) {
                 const collapsibleEl = this.draggedEl.querySelector('[data-expanded]');
@@ -710,21 +549,18 @@ class CustomizableSSPIStructure {
                     }, 100);
                 }
             }
-
             this.validate(z);
             this.flagUnsaved();
             this.markInvalidIndicatorPlacements();
             this.markInvalidNestedCategories();
             const order = Array.from(z.children).map(c => c.id);
             console.log('New order:', order);
-
             // Record the move action with proper action type
             const elementType = movedElement.dataset.type || 'item';
             const itemType = movedElement.dataset.itemType;
             const elementName = this.getElementName(movedElement);
             const fromLocation = this.getLocationName(fromParent);
             const toLocation = this.getLocationName(toParent);
-
             // Determine action type based on item type
             let actionType = 'move'; // fallback for unknown types
             if (itemType === 'Indicator') {
@@ -732,19 +568,16 @@ class CustomizableSSPIStructure {
             } else if (itemType === 'Category') {
                 actionType = 'move-category';
             }
-
             // Create delta with proper structure
             const delta = {
                 type: actionType,
                 itemType: itemType
             };
-
             // Add type-specific delta fields
             if (itemType === 'Indicator') {
                 const indicatorCode = movedElement.dataset.indicatorCode;
                 const fromParentCode = this.getParentCode(movedElement) || fromLocation;
                 const toParentCode = toLocation; // Will be set after move completes
-
                 delta.indicatorCode = indicatorCode;
                 delta.fromParentCode = fromParentCode;
                 delta.toParentCode = toParentCode;
@@ -1180,21 +1013,15 @@ class CustomizableSSPIStructure {
     flagUnsaved() {
         this.saveButton.classList.add('unsaved-changes');
         this.unsavedChanges = true;
-        
-        // Enable the discard button
         this.discardButton.disabled = false;
         this.discardButton.style.opacity = '1';
         this.discardButton.style.cursor = 'pointer';
-        
-        // Cache the current state with debouncing
         this.debouncedCacheState();
     }
     
     clearUnsavedState() {
         this.unsavedChanges = false;
         this.saveButton.classList.remove('unsaved-changes');
-        
-        // Disable the discard button
         this.discardButton.disabled = true;
         this.discardButton.style.opacity = '0.5';
         this.discardButton.style.cursor = 'not-allowed';
@@ -1212,12 +1039,10 @@ class CustomizableSSPIStructure {
         }
     }
 
-    clearIndicators(scope) {
+    clearDraggingVisuals(scope) {
         const parent = scope || this.container;
         parent.querySelectorAll('.insertion-indicator').forEach(node => node.remove());
     }
-
-    // ========== SECTION 3: Helper Methods ==========
 
     /**
      * Find element by code using data attributes
@@ -1230,19 +1055,16 @@ class CustomizableSSPIStructure {
             console.warn('findElementByCode: itemCode and itemType are required');
             return null;
         }
-
         const selectors = {
             'Indicator': `[data-indicator-code="${itemCode}"]`,
             'Category': `[data-category-code="${itemCode}"]`,
             'Pillar': `[data-pillar-code="${itemCode}"]`
         };
-
         const selector = selectors[itemType];
         if (!selector) {
             console.warn('findElementByCode: Unknown itemType:', itemType);
             return null;
         }
-
         return this.container.querySelector(selector);
     }
 
@@ -1253,19 +1075,16 @@ class CustomizableSSPIStructure {
      */
     getParentCode(element) {
         if (!element) return null;
-
         // For category: traverse to parent pillar
         if (element.dataset.itemType === 'Category') {
             const pillarCol = element.closest('[data-pillar-code]');
             return pillarCol?.dataset.pillarCode || null;
         }
-
         // For indicator: traverse to parent category or pillar
         if (element.dataset.itemType === 'Indicator') {
             const parent = element.closest('[data-category-code], [data-pillar-code]');
             return parent?.dataset.categoryCode || parent?.dataset.pillarCode || null;
         }
-
         return null;
     }
 
@@ -1276,18 +1095,13 @@ class CustomizableSSPIStructure {
      */
     getParentType(element) {
         if (!element) return null;
-
-        // For category: parent is always pillar
         if (element.dataset.itemType === 'Category') {
             return 'Pillar';
         }
-
-        // For indicator: parent is category or pillar
         if (element.dataset.itemType === 'Indicator') {
             const parent = element.closest('[data-category-code], [data-pillar-code]');
             return parent?.dataset.itemType || null;
         }
-
         return null;
     }
 
@@ -1457,6 +1271,35 @@ class CustomizableSSPIStructure {
             codeInput.value = newCode;
         }
 
+        // Detect new indicator creation: if oldCode is empty, this is a new indicator
+        const isNewIndicator = !oldCode || oldCode === '';
+
+        // Start batch for new indicator creation
+        if (isNewIndicator) {
+            // Get indicator name for better message
+            const nameElement = indicatorElement.querySelector('.indicator-name-input');
+            const indicatorName = nameElement ? nameElement.value : 'New Indicator';
+
+            // Get parent category info
+            const parentCategory = indicatorElement.closest('[data-category-code]');
+            const categoryCode = parentCategory ? parentCategory.dataset.categoryCode : '';
+            const categoryNameEl = parentCategory ? parentCategory.querySelector('.category-name') : null;
+            const categoryName = categoryNameEl ? categoryNameEl.textContent : '';
+
+            // Start batch with informative metadata
+            this.actionHistory.startBatch({
+                type: 'create-indicator',
+                message: `Created indicator "${indicatorName}" (${newCode})` +
+                         (categoryName ? ` in category "${categoryName}"` : ''),
+                delta: {
+                    indicatorCode: newCode,
+                    indicatorName: indicatorName,
+                    categoryCode: categoryCode,
+                    categoryName: categoryName
+                }
+            }, 10000); // 10 second auto-complete window
+        }
+
         // Record action with ID-based undo/redo (codes change, but IDs are stable)
         const action = this.actionHistory.recordAction({
             type: 'set-indicator-code',
@@ -1565,7 +1408,7 @@ class CustomizableSSPIStructure {
         const rangeHtml = details.Range ? `
             <div class="detail-row">
                 <span class="detail-label">Range</span>
-                <span class="detail-value">${formatNumber(details.Range.yMin)} – ${formatNumber(details.Range.yMax)}</span>
+                <span class="detail-value">${formatNumber(details.Range.yMin)}\u0020–\u0020${formatNumber(details.Range.yMax)}</span>
             </div>` : '';
 
         const datasetItem = document.createElement('div');
@@ -2840,12 +2683,10 @@ class CustomizableSSPIStructure {
     flagUnsaved() {
         this.unsavedChanges = true;
         this.saveButton.classList.add('unsaved-changes');
-        
         // Enable the discard button
         this.discardButton.disabled = false;
         this.discardButton.style.opacity = '1';
         this.discardButton.style.cursor = 'pointer';
-        
         // Cache the current state with debouncing
         this.debouncedCacheState();
     }
@@ -2867,28 +2708,24 @@ class CustomizableSSPIStructure {
         indicatorsContainer.appendChild(ind);
         this.validate(indicatorsContainer);
         this.updateHierarchyOnAdd(ind, 'indicator');
-
         // Expand the indicator and focus on the name input
         const collapsible = ind.querySelector('.indicator-collapsible');
         if (collapsible) {
             // Expand the indicator
             collapsible.dataset.expanded = 'true';
             this.applyExpansionState(collapsible, true);
-
             // Focus on the indicator name
             const nameElement = ind.querySelector('.indicator-name');
             if (nameElement) {
                 // Use setTimeout to ensure the expansion animation completes
                 setTimeout(() => {
                     nameElement.focus();
-
                     // Select all text in the name field so user can immediately start typing
                     const range = document.createRange();
                     const selection = window.getSelection();
                     range.selectNodeContents(nameElement);
                     selection.removeAllRanges();
                     selection.addRange(range);
-
                     // Scroll into view if needed
                     nameElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 100);
@@ -3297,8 +3134,6 @@ class CustomizableSSPIStructure {
         const itemType = target.dataset.type;
         let itemCode = '';
         let itemName = '';
-
-        // Extract code and name based on type
         if (itemType === 'indicator') {
             const codeInput = target.querySelector('.indicator-code-input');
             const nameEl = target.querySelector('.indicator-name');
@@ -3315,17 +3150,12 @@ class CustomizableSSPIStructure {
             itemCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
             itemName = nameEl ? nameEl.textContent.trim() : 'Pillar';
         }
-
-        // Validate we have a code
         if (!itemCode) {
             alert('Cannot\u0020preview:\u0020No\u0020code\u0020assigned\u0020to\u0020this\u0020item\u0020yet.');
             return;
         }
-
-        // Create overlay
         const overlay = document.createElement('div');
         overlay.className = 'preview-modal-overlay';
-
         overlay.innerHTML = `
             <div class="preview-modal">
                 <div class="preview-modal-header">
@@ -3337,25 +3167,17 @@ class CustomizableSSPIStructure {
                 </div>
             </div>
         `;
-
         document.body.appendChild(overlay);
-
         const modal = overlay.querySelector('.preview-modal');
         const closeBtn = overlay.querySelector('.modal-close-btn');
         const chartContainer = overlay.querySelector('#preview-chart-container');
-
-        // Store chart reference for cleanup
         let chartInstance = null;
-
-        // Instantiate appropriate chart
         try {
             if (itemType === 'indicator') {
                 chartInstance = new IndicatorPanelChart(chartContainer, itemCode);
             } else {
                 chartInstance = new ScorePanelChart(chartContainer, itemCode);
             }
-
-            // Add to global charts array for tracking
             if (window.SSPICharts) {
                 window.SSPICharts.push(chartInstance);
             }
@@ -3366,10 +3188,7 @@ class CustomizableSSPIStructure {
                 <p>${error.message}</p>
             </div>`;
         }
-
-        // Close handler
         const closeModal = () => {
-            // Destroy chart if it exists
             if (chartInstance && typeof chartInstance.destroy === 'function') {
                 try {
                     chartInstance.destroy();
@@ -3377,23 +3196,15 @@ class CustomizableSSPIStructure {
                     console.error('Error destroying chart:', error);
                 }
             }
-
-            // Remove from global charts array
             if (window.SSPICharts && chartInstance) {
                 const index = window.SSPICharts.indexOf(chartInstance);
                 if (index > -1) {
                     window.SSPICharts.splice(index, 1);
                 }
             }
-
-            // Remove overlay
             overlay.remove();
         };
-
-        // Event listeners for closing
         closeBtn.addEventListener('click', closeModal);
-
-        // Close on escape key
         const escapeHandler = (e) => {
             if (e.key === 'Escape') {
                 closeModal();
@@ -3401,8 +3212,6 @@ class CustomizableSSPIStructure {
             }
         };
         document.addEventListener('keydown', escapeHandler);
-
-        // Close on click outside modal
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
                 closeModal();
@@ -3413,20 +3222,16 @@ class CustomizableSSPIStructure {
     showDatasetPreviewModal(datasetItem) {
         // Extract dataset code from the data attribute
         const datasetCode = datasetItem.dataset.datasetCode;
-
         if (!datasetCode) {
             alert('Cannot\u0020preview:\u0020No\u0020dataset\u0020code\u0020found.');
             return;
         }
-
         // Get dataset name from the UI
         const datasetNameEl = datasetItem.querySelector('.dataset-name');
         const datasetName = datasetNameEl ? datasetNameEl.textContent.trim() : datasetCode;
-
         // Create overlay
         const overlay = document.createElement('div');
         overlay.className = 'preview-modal-overlay';
-
         overlay.innerHTML = `
             <div class="preview-modal">
                 <div class="preview-modal-header">
@@ -3438,20 +3243,15 @@ class CustomizableSSPIStructure {
                 </div>
             </div>
         `;
-
         document.body.appendChild(overlay);
-
         const modal = overlay.querySelector('.preview-modal');
         const closeBtn = overlay.querySelector('.modal-close-btn');
         const chartContainer = overlay.querySelector('#preview-chart-container');
-
         // Store chart reference for cleanup
         let chartInstance = null;
-
         // Instantiate DatasetPanelChart
         try {
             chartInstance = new DatasetPanelChart(chartContainer, datasetCode);
-
             // Add to global charts array for tracking
             if (window.SSPICharts) {
                 window.SSPICharts.push(chartInstance);
@@ -3463,8 +3263,6 @@ class CustomizableSSPIStructure {
                 <p>${error.message}</p>
             </div>`;
         }
-
-        // Close handler
         const closeModal = () => {
             // Destroy chart if it exists
             if (chartInstance && typeof chartInstance.destroy === 'function') {
@@ -3474,7 +3272,6 @@ class CustomizableSSPIStructure {
                     console.error('Error destroying chart:', error);
                 }
             }
-
             // Remove from global charts array
             if (window.SSPICharts && chartInstance) {
                 const index = window.SSPICharts.indexOf(chartInstance);
@@ -3482,14 +3279,11 @@ class CustomizableSSPIStructure {
                     window.SSPICharts.splice(index, 1);
                 }
             }
-
             // Remove overlay
             overlay.remove();
         };
-
         // Event listeners for closing
         closeBtn.addEventListener('click', closeModal);
-
         // Close on escape key
         const escapeHandler = (e) => {
             if (e.key === 'Escape') {
@@ -3498,7 +3292,6 @@ class CustomizableSSPIStructure {
             }
         };
         document.addEventListener('keydown', escapeHandler);
-
         // Close on click outside modal
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
@@ -3515,7 +3308,6 @@ class CustomizableSSPIStructure {
          * moved into a category.
          */
         const pillarColumns = this.container.querySelectorAll('.pillar-column');
-
         pillarColumns.forEach(col => {
             // Check direct children of pillar column
             Array.from(col.children).forEach(child => {
@@ -3533,7 +3325,6 @@ class CustomizableSSPIStructure {
                     }
                 }
             });
-
             // Check direct children of categories-container
             const categoriesContainer = col.querySelector('.categories-container');
             if (categoriesContainer) {
@@ -3552,7 +3343,6 @@ class CustomizableSSPIStructure {
                     }
                 });
             }
-
             // Remove invalid class from indicators that ARE properly in categories
             const categoriesInPillar = col.querySelectorAll('.category-box');
             categoriesInPillar.forEach(category => {
@@ -3573,7 +3363,6 @@ class CustomizableSSPIStructure {
          * as temporarily invalid. This provides visual feedback that nested
          * categories are not allowed.
          */
-
         // First, remove all nested category warnings
         this.container.querySelectorAll('.category-box').forEach(category => {
             category.classList.remove('nested-category-invalid');
@@ -3581,16 +3370,12 @@ class CustomizableSSPIStructure {
                 category.removeAttribute('title');
             }
         });
-
-        // Check all categories for nested categories
         this.container.querySelectorAll('.category-box').forEach(category => {
             const nestedCategories = category.querySelectorAll('.category-box');
-
             if (nestedCategories.length > 0) {
                 // Mark this category as invalid
                 category.classList.add('nested-category-invalid');
                 category.title = 'This category contains nested categories - please move them out';
-
                 // Also mark each nested category as invalid
                 nestedCategories.forEach(nested => {
                     nested.classList.add('nested-category-invalid');
@@ -3606,7 +3391,6 @@ class CustomizableSSPIStructure {
             this.container.querySelectorAll('.drop-zone').forEach(zone => this.validate(zone));
             return;
         }
-
         const selector = z.dataset.accept === 'indicator' ? '.indicator-card' : '.category-box';
         const items = z.querySelectorAll(selector);
         const ok = items.length >= 1 && items.length <= 10;
@@ -3623,12 +3407,10 @@ class CustomizableSSPIStructure {
         const pillars = {};
         const categories = {};
         const indicators = {};
-
         // Track indices for TreeIndex construction
         const pillarIndexMap = {};
         const categoryIndexMap = {};
         const indicatorIndexMap = {};
-
         // Collect all items from the DOM
         this.container.querySelectorAll('.pillar-column').forEach((pillarCol, pillarIdx) => {
             const pillarName = pillarCol.querySelector('.pillar-name').textContent.trim();
@@ -3642,7 +3424,6 @@ class CustomizableSSPIStructure {
                     itemOrder: pillarIdx,  // Start from 0
                     pillarIdx: pillarIdx
                 };
-
                 pillarCol.querySelectorAll('.category-box').forEach((catBox, catIdx) => {
                     const categoryName = catBox.querySelector('.customization-category-header-title').textContent.trim();
                     const categoryCode = catBox.querySelector('.category-code-input').value.trim();
@@ -3658,14 +3439,12 @@ class CustomizableSSPIStructure {
                             pillarIdx: pillarIdx,
                             catIdx: catIdx
                         };
-
                         catBox.querySelectorAll('.indicator-card').forEach((indCard, indIdx) => {
                             const indicatorName = indCard.querySelector('.indicator-name').textContent.trim();
                             const indicatorCode = indCard.querySelector('.indicator-code-input').value.trim();
                             if (indicatorCode) {
                                 categories[categoryCode].indicators.push(indicatorCode);
                                 indicatorIndexMap[indicatorCode] = { pillarIdx, catIdx, indIdx };
-
                                 const datasetCodes = [];
                                 indCard.querySelectorAll('.dataset-item').forEach(item => {
                                     const datasetCode = item.dataset.datasetCode;
@@ -3673,11 +3452,9 @@ class CustomizableSSPIStructure {
                                         datasetCodes.push(datasetCode);
                                     }
                                 });
-
                                 // Read score function from contenteditable element
                                 const scoreFunctionEl = indCard.querySelector('.editable-score-function');
                                 const scoreFunction = scoreFunctionEl?.textContent?.trim() || '';
-
                                 indicators[indicatorCode] = {
                                     code: indicatorCode,
                                     name: indicatorName,
@@ -3696,7 +3473,6 @@ class CustomizableSSPIStructure {
                 });
             }
         });
-
         // Create root SSPI item
         const pillarCodes = Object.keys(pillars).sort();
         if (pillarCodes.length > 0) {
@@ -3712,7 +3488,6 @@ class CustomizableSSPIStructure {
                 ItemOrder: 0
             });
         }
-
         // Create pillar items
         Object.values(pillars).forEach(pillar => {
             metadataItems.push({
@@ -3778,296 +3553,12 @@ class CustomizableSSPIStructure {
      */
     exportForScoring() {
         const metadata = this.exportMetadata();
-        const structureData = this.convertMetadataToStructure(metadata);
-        
         return {
             metadata: metadata,
-            structure: structureData,
             exportedAt: new Date().toISOString(),
             totalItems: metadata.length,
             hasUnsavedChanges: this.unsavedChanges
         };
-    }
-
-    /**
-     * Convert metadata format to frontend structure format for compatibility
-     * @param {Array} metadata - SSPI metadata items
-     * @returns {Array} Structure items for frontend consumption
-     */
-    convertMetadataToStructure(metadata) {
-        const structure = [];
-        
-        // Find all indicators and build structure from them
-        const indicators = metadata.filter(item => item.ItemType === 'Indicator');
-        
-        indicators.forEach(indicator => {
-            // Find related pillar and category
-            const pillar = metadata.find(item => 
-                item.ItemType === 'Pillar' && 
-                item.ItemCode === indicator.PillarCode
-            );
-            const category = metadata.find(item => 
-                item.ItemType === 'Category' && 
-                item.ItemCode === indicator.CategoryCode
-            );
-            
-            // Convert datasets to expected format
-            const datasets = (indicator.DatasetCodes || []).map(code => ({
-                code: code
-            }));
-            
-            structure.push({
-                Indicator: indicator.ItemName || indicator.Indicator || indicator.ItemCode,
-                IndicatorCode: indicator.ItemCode,
-                Category: category ? (category.ItemName || category.Category || category.ItemCode) : 'Unknown',
-                CategoryCode: indicator.CategoryCode,
-                Pillar: pillar ? (pillar.ItemName || pillar.Pillar || pillar.ItemCode) : 'Unknown',
-                PillarCode: indicator.PillarCode,
-                ItemOrder: indicator.ItemOrder || 1,  // Default to 1 if not set (must be positive)
-                datasets: datasets
-            });
-        });
-        
-        // Sort by item order and codes
-        structure.sort((a, b) => {
-            if (a.ItemOrder !== b.ItemOrder) {
-                return a.ItemOrder - b.ItemOrder;
-            }
-            return a.IndicatorCode.localeCompare(b.IndicatorCode);
-        });
-        
-        return structure;
-    }
-
-    /**
-     * Toggle the collapse state of the visualization section
-     */
-    toggleVisualizationCollapse() {
-        const section = this.visualizationSection;
-
-        // Toggle collapsed state - arrow rotation handled by CSS
-        section.classList.toggle('collapsed');
-    }
-
-    /**
-     * Refresh the visualization by re-scoring the current structure
-     */
-    async refreshVisualization() {
-        if (!this.isVisualizationOpen) return;
-
-        // Show confirmation if there are unsaved changes
-        if (this.unsavedChanges) {
-            const proceed = confirm('You have unsaved changes to the structure. Would you like to score the current (unsaved) structure?');
-            if (!proceed) return;
-        }
-
-        // Re-run the scoring process
-        await this.scoreAndVisualize();
-    }
-
-    /**
-     * Close the visualization section
-     */
-    closeVisualization() {
-        if (!this.visualizationSection) return;
-
-        // Destroy chart instance if exists
-        if (this.currentChart && typeof this.currentChart.destroy === 'function') {
-            this.currentChart.destroy();
-            this.currentChart = null;
-        }
-
-        // Hide the section
-        this.visualizationSection.style.display = 'none';
-        this.isVisualizationOpen = false;
-        this.currentConfigId = null;
-
-        // Update button text back to original
-        const scoreBtn = document.querySelector('.sspi-toolbar button[title*="Generate scores"]');
-        if (scoreBtn) {
-            scoreBtn.textContent = 'Score & Visualize';
-        }
-    }
-
-    /**
-     * Show the visualization section with loading state
-     */
-    showVisualizationSection() {
-        if (!this.visualizationSection) return;
-
-        this.visualizationSection.style.display = 'block';
-        this.isVisualizationOpen = true;
-
-        // Ensure not collapsed (arrow rotation handled by CSS)
-        this.visualizationSection.classList.remove('collapsed');
-
-        // Update button text
-        const scoreBtn = document.querySelector('.sspi-toolbar button[title*="Generate scores"]');
-        if (scoreBtn) {
-            scoreBtn.textContent = 'Update Visualization';
-        }
-    }
-
-    /**
-     * Show loading state in visualization container
-     */
-    showVisualizationLoading(message = 'Scoring structure...') {
-        const chartContainer = this.visualizationSection.querySelector('.visualization-chart-container');
-        chartContainer.classList.add('loading');
-        chartContainer.innerHTML = `
-            <div class="visualization-loading-spinner"></div>
-            <div class="visualization-loading-text">${message}</div>
-        `;
-    }
-
-    /**
-     * Show error state in visualization container
-     */
-    showVisualizationError(message, details = '') {
-        const chartContainer = this.visualizationSection.querySelector('.visualization-chart-container');
-        chartContainer.classList.remove('loading');
-        chartContainer.innerHTML = `
-            <div class="visualization-error">
-                <div class="visualization-error-icon">⚠️</div>
-                <div class="visualization-error-message">${message}</div>
-                ${details ? `<div class="visualization-error-details">${details}</div>` : ''}
-            </div>
-        `;
-    }
-
-    /**
-     * Score the current structure and display visualization inline
-     */
-    async scoreAndVisualize() {
-        try {
-            // Validate current structure
-            const validationErrors = this.validateHierarchy();
-            if (validationErrors.length > 0) {
-                const proceed = confirm(
-                    `The current structure is invalid:\n${validationErrors.join('\n')}`
-                );
-                return;
-            }
-            this.showLoadingState('Preparing structure for scoring...');
-            const exportData = this.exportForScoring();
-            if (!exportData.structure || exportData.structure.length === 0) {
-                this.hideLoadingState();
-                alert('No indicators found in the current structure. Please add some indicators before scoring.');
-                return;
-            }
-            // Check if we should save first, or save if no config ID exists yet
-            let configId = null;
-            if (this.unsavedChanges) {
-                const shouldSave = confirm('You have unsaved changes. Would you like to save this configuration before scoring?');
-                if (shouldSave) {
-                    configId = await this.saveConfiguration();
-                    exportData.hasUnsavedChanges = false;
-                }
-            } else {
-                // Try to find existing config ID if this was loaded from a saved config
-                const selector = document.querySelector('.config-selector select');
-                if (selector && selector.value) {
-                    configId = selector.value;
-                }
-            }
-            // Show visualization section with loading state
-            this.showVisualizationSection();
-            this.showVisualizationLoading('Scoring structure...');
-            this.hideLoadingState();
-            // If no config ID, require saving first
-            if (!configId) {
-                this.showVisualizationError(
-                    'Configuration Not Saved',
-                    'Please save your configuration before scoring. Use the "Save" button in the toolbar.'
-                );
-                return;
-            }
-            this.currentConfigId = configId;
-            this.showVisualizationLoading('Computing scores across years and countries...');
-            const scoreResponse = await fetch(`/api/v1/customize/score-dynamic/${configId}`, {
-                method: 'POST'
-            });
-            if (!scoreResponse.ok) {
-                const errorData = await scoreResponse.json();
-                throw new Error(errorData.error || `Scoring failed: ${scoreResponse.statusText}`);
-            }
-            const scoreResult = await scoreResponse.json();
-            if (!scoreResult.success) {
-                throw new Error(scoreResult.error || 'Scoring failed');
-            }
-            console.log(`Scored ${scoreResult.documents_scored} documents for ${scoreResult.countries_count} countries`);
-            // Initialize chart with scored data
-            this.showVisualizationLoading('Loading visualization...');
-            await this.initializeInlineChart(configId, scoreResult);
-            // Show success notification
-            this.showNotification(
-                '✓ Visualization loaded successfully!',
-                'success',
-                3000
-            );
-        } catch (error) {
-            this.hideLoadingState();
-            console.error('Error in scoreAndVisualize:', error);
-            // Show error in visualization section if it's open
-            if (this.isVisualizationOpen) {
-                this.showVisualizationError(
-                    'Scoring Error',
-                    error.message || 'An unexpected error occurred while scoring the structure.'
-                );
-            } else {
-                alert(`Error preparing visualization: ${error.message}`);
-            }
-        }
-    }
-
-    /**
-     * Initialize the inline chart with scored data
-     * @param {string} configId - The configuration ID
-     * @param {object} scoreResult - The scoring result from the API
-     */
-    async initializeInlineChart(configId, scoreResult) {
-        const chartContainer = this.visualizationSection.querySelector('.visualization-chart-container');
-        chartContainer.classList.remove('loading');
-        chartContainer.innerHTML = '';
-        try {
-            // Check if CustomSSPIPanelChart is available
-            if (typeof CustomSSPIPanelChart === 'undefined') {
-                throw new Error('CustomSSPIPanelChart class not loaded. Please ensure the script is included.');
-            }
-
-            // Destroy existing chart if present
-            if (this.currentChart) {
-                if (typeof this.currentChart.destroy === 'function') {
-                    this.currentChart.destroy();
-                }
-                this.currentChart = null;
-            }
-
-            // Create a container div for the chart
-            const chartDiv = document.createElement('div');
-            chartDiv.id = `custom-sspi-chart-${configId}`;
-            chartDiv.style.width = '100%';
-            chartDiv.style.minHeight = '400px';
-            chartContainer.appendChild(chartDiv);
-
-            // Initialize the panel chart
-            this.currentChart = new CustomSSPIPanelChart(chartDiv, {
-                configId: configId,
-                initialData: scoreResult.data || null,
-                inlineMode: true,
-                autoLoad: true
-            });
-            // Wait for chart to initialize
-            await new Promise(resolve => setTimeout(resolve, 100));
-            console.log('Inline chart initialized successfully');
-        } catch (error) {
-            console.error('Error initializing inline chart:', error);
-            this.showVisualizationError(
-                'Chart Initialization Error',
-                error.message || 'Failed to load the visualization component.'
-            );
-            throw error;
-        }
     }
 
     /**
@@ -4093,7 +3584,6 @@ class CustomizableSSPIStructure {
             word-wrap: break-word;
             line-height: 1.4;
         `;
-        
         // Set background color based on type
         switch(type) {
             case 'success':
@@ -4108,10 +3598,8 @@ class CustomizableSSPIStructure {
             default:
                 notification.style.backgroundColor = '#2196F3';
         }
-        
         notification.textContent = message;
         document.body.appendChild(notification);
-        
         // Auto-remove after duration
         setTimeout(() => {
             if (notification.parentNode) {
@@ -4123,24 +3611,19 @@ class CustomizableSSPIStructure {
                 }, 300);
             }
         }, duration);
-        
         return notification;
     }
 
     // Helper methods for undo/redo
     getElementName(element) {
         if (!element) return 'Unknown';
-
         // Try to get name from indicator, category, or pillar
         const indicatorName = element.querySelector('.indicator-name');
         if (indicatorName) return indicatorName.textContent.trim() || 'Unnamed\u0020Indicator';
-
         const categoryName = element.querySelector('.customization-category-header-title');
         if (categoryName) return categoryName.textContent.trim() || 'Unnamed\u0020Category';
-
         const pillarName = element.querySelector('.pillar-name');
         if (pillarName) return pillarName.textContent.trim() || 'Unnamed\u0020Pillar';
-
         return 'Unnamed\u0020Item';
     }
 
@@ -4167,7 +3650,6 @@ class CustomizableSSPIStructure {
     rigUnloadListener() {
         window.addEventListener('beforeunload', () => {
             let stateLookup = {};
-
             // Save indicator expansion states
             const indicators = this.container.querySelectorAll('.indicator-card');
             indicators.forEach((indicator) => {
@@ -4179,7 +3661,6 @@ class CustomizableSSPIStructure {
                     stateLookup[`ind_${code}`] = collapsible.dataset.expanded;
                 }
             });
-
             // Save category expansion states
             const categories = this.container.querySelectorAll('.category-box');
             categories.forEach((category) => {
@@ -4191,7 +3672,6 @@ class CustomizableSSPIStructure {
                     stateLookup[`cat_${code}`] = collapsible.dataset.expanded;
                 }
             });
-
             window.observableStorage.setItem('customizableSSPIExpansionState', stateLookup);
             // Save scroll position
             window.observableStorage.setItem('customizableSSPIScrollX', window.scrollX);
@@ -4288,10 +3768,6 @@ class CustomizableSSPIStructure {
                 console.warn('Hierarchy validation errors after add:', errors);
             }
         }
-        this.changeLog.push({ 
-            changeType: "Added" + elementType,
-            element: element,
-        })
     }
 
     updateHierarchyOnRemove(element, elementType) {
@@ -4616,42 +4092,34 @@ class CustomizableSSPIStructure {
         if (loadingDiv) {
             loadingDiv.remove();
         }
-        
         // Show the main container
         this.container.style.display = '';
-        
         // Enable toolbar buttons
         this.setToolbarDisabled(false);
     }
 
     handleLoadError(errorMessage) {
         this.isLoading = false;
-        
         // Remove loading indicator
         const loadingDiv = this.parentElement.querySelector('#sspi-loading-indicator');
         if (loadingDiv) {
             loadingDiv.remove();
         }
-        
         // Show error state
         const errorDiv = document.createElement('div');
         errorDiv.classList.add('sspi-error');
         errorDiv.id = 'sspi-error-indicator';
-        
         const errorText = document.createElement('div');
         errorText.textContent = errorMessage;
-        
         const retryBtn = document.createElement('button');
         retryBtn.textContent = 'Load Default Metadata';
         retryBtn.addEventListener('click', () => {
             errorDiv.remove();
             this.loadDefaultMetadata();
         });
-        
         errorDiv.appendChild(errorText);
         errorDiv.appendChild(retryBtn);
         this.parentElement.appendChild(errorDiv);
-        
         // Show the main container in case user wants to build manually
         this.container.style.display = '';
         this.setToolbarDisabled(false);
@@ -4685,12 +4153,10 @@ class CustomizableSSPIStructure {
             categories: {},
             indicators: {}
         };
-        
         // Index all items by their ItemCode
         metadataItems.forEach(item => {
             itemsById[item.ItemCode] = item;
         });
-        
         // Build hierarchy structure
         metadataItems.forEach(item => {
             switch (item.ItemType) {
@@ -4716,21 +4182,16 @@ class CustomizableSSPIStructure {
     async importDataAsync(metadataItems) {
         console.log('Importing', metadataItems.length, 'metadata items asynchronously');
         console.log(`Using ${Object.keys(this.datasetDetails).length} dataset details from map`);
-
         // Set importing flag to suppress validation warnings during bulk import
         this.isImporting = true;
-
         // Clear existing content
         this.container.querySelectorAll('.category-box, .indicator-card').forEach(e => e.remove());
-
         // Build hierarchy tree
         const { hierarchy, itemsById } = this.buildHierarchyTree(metadataItems);
-        
         if (!hierarchy.sspi) {
             console.error('No SSPI root item found in metadata');
             return;
         }
-        
         // Process each pillar from the SSPI's Children list
         const pillarCodes = hierarchy.sspi.Children || [];
         
@@ -4747,22 +4208,16 @@ class CustomizableSSPIStructure {
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
-
         console.log('Async metadata import completed');
-
-        // Clear importing flag
         this.isImporting = false;
-
         // Clear undo/redo history after initial import
         // This ensures dataset additions during load are not in history
         this.actionHistory.clear();
         console.log('Cleared undo/redo history after initial metadata import');
-
         // Mark any indicators that are outside categories
         this.markInvalidIndicatorPlacements();
         // Mark any nested categories
         this.markInvalidNestedCategories();
-
         // Validate hierarchy once at the end of import
         const validation = this.validateHierarchy();
         if (validation.errors && validation.errors.length > 0) {
@@ -4777,12 +4232,10 @@ class CustomizableSSPIStructure {
         // Find the corresponding pillar column in the UI
         const col = Array.from(this.container.querySelectorAll('.pillar-column'))
             .find(c => c.dataset.pillar === pillarItem.ItemName);
-        
         if (!col) {
             console.warn(`No UI column found for pillar: ${pillarItem.ItemName}`);
             return;
         }
-        
         // Update pillar code
         const pillarCodeInput = col.querySelector('.pillar-code-input');
         if (pillarCodeInput) {
@@ -5122,124 +4575,12 @@ class CustomizableSSPIStructure {
                 this.cacheCurrentState();
 
                 this.showNotification('Configuration "' + name + '" saved successfully!', 'success', 3000);
-                this.loadConfigurationsList(); // Refresh the list
             } else {
                 this.showNotification('Error saving configuration: ' + response.error, 'error', 5000);
             }
         } catch (error) {
             console.error('Error saving configuration:', error);
             this.showNotification('Error saving configuration. Please try again.', 'error', 5000);
-        }
-    }
-
-    async loadConfigurationsList() {
-        try {
-            const response = await this.fetch('/api/v1/customize/list');
-            if (response.success && response.configurations) {
-                this.updateConfigurationsDropdown(response.configurations);
-            }
-        } catch (error) {
-            console.error('Error loading configurations list:', error);
-        }
-    }
-
-    updateConfigurationsDropdown(configurations) {
-        // Remove existing dropdown if it exists
-        const existingDropdown = this.parentElement.querySelector('.config-selector');
-        if (existingDropdown) {
-            existingDropdown.remove();
-        }
-
-        if (configurations.length === 0) return;
-
-        // Create configuration selector dropdown
-        const selectorContainer = document.createElement('div');
-        selectorContainer.classList.add('config-selector');
-        selectorContainer.style.marginBottom = '1rem';
-
-        const label = document.createElement('label');
-        label.textContent = 'Load Configuration: ';
-        label.style.marginRight = '0.5rem';
-
-        const select = document.createElement('select');
-        select.style.marginRight = '0.5rem';
-
-        // Add default option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = 'Select a configuration...';
-        select.appendChild(defaultOption);
-
-        // Add configuration options
-        configurations.forEach(config => {
-            const option = document.createElement('option');
-            option.value = config.config_id;
-            option.textContent = config.name;
-            select.appendChild(option);
-        });
-
-        const loadButton = document.createElement('button');
-        loadButton.textContent = 'Load';
-        loadButton.addEventListener('click', async () => {
-            const configId = select.value;
-            if (configId) {
-                await this.loadConfiguration(configId);
-            }
-        });
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        deleteButton.style.marginLeft = '0.5rem';
-        deleteButton.addEventListener('click', async () => {
-            const configId = select.value;
-            if (configId) {
-                const selectedOption = select.options[select.selectedIndex];
-                const configName = selectedOption.textContent;
-                if (confirm(`Are you sure you want to delete "${configName}"?`)) {
-                    await this.deleteConfiguration(configId);
-                }
-            }
-        });
-
-        selectorContainer.append(label, select, loadButton, deleteButton);
-        this.parentElement.insertBefore(selectorContainer, this.parentElement.firstChild);
-    }
-
-    async loadConfiguration(configId) {
-        try {
-            const response = await this.fetch('/api/v1/customize/load/' + configId);
-
-            if (response.success && response.configuration) {
-                // Clear cache before loading saved configuration
-                this.clearCache();
-
-                this.importData(response.configuration.metadata);
-                this.clearUnsavedState();
-                this.showNotification('Configuration "' + response.configuration.name + '" loaded successfully!', 'success', 3000);
-            } else {
-                this.showNotification('Error loading configuration: ' + response.error, 'error', 5000);
-            }
-        } catch (error) {
-            console.error('Error loading configuration:', error);
-            this.showNotification('Error loading configuration. Please try again.', 'error', 5000);
-        }
-    }
-
-    async deleteConfiguration(configId) {
-        try {
-            const response = await this.fetch('/api/v1/customize/delete/' + configId, {
-                method: 'DELETE'
-            });
-
-            if (response.success) {
-                this.showNotification('Configuration deleted successfully!', 'success', 3000);
-                this.loadConfigurationsList(); // Refresh the list
-            } else {
-                this.showNotification('Error deleting configuration: ' + response.error, 'error', 5000);
-            }
-        } catch (error) {
-            console.error('Error deleting configuration:', error);
-            this.showNotification('Error deleting configuration. Please try again.', 'error', 5000);
         }
     }
 
@@ -6004,7 +5345,6 @@ class CustomizableSSPIStructure {
     }
 
     // Cache management methods
-
     /**
      * Enrich metadata with full dataset details for caching.
      * This ensures dataset assignments can be fully restored from cache.
@@ -6029,7 +5369,6 @@ class CustomizableSSPIStructure {
                 currentIndex: this.actionHistory.currentIndex,
                 baseline: this.actionHistory.baseline
             };
-
             const cacheData = {
                 hasModifications: this.unsavedChanges,
                 lastModified: Date.now(),
@@ -6038,19 +5377,16 @@ class CustomizableSSPIStructure {
                 actionHistory: actionHistory,  // Store action history
                 version: this.CACHE_VERSION
             };
-
             // Check cache size (rough estimate)
             const cacheSize = JSON.stringify(cacheData).length;
             if (cacheSize > 5 * 1024 * 1024) { // 5MB limit
                 console.warn('Cache data is too large (>5MB), skipping cache');
                 return;
             }
-
             window.observableStorage.setItem("sspi-custom-modifications", cacheData);
             console.log('SSPI modifications cached successfully with dataset details');
         } catch (error) {
             console.warn('Failed to cache SSPI modifications:', error);
-
             // Handle specific localStorage errors
             if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
                 this.handleStorageQuotaExceeded();
@@ -6121,16 +5457,13 @@ class CustomizableSSPIStructure {
                 return false;
             }
             console.log('Loading cached SSPI modifications from:', new Date(cacheData.lastModified));
-
             // Restore dataset details map
             if (cacheData.datasetDetailsMap) {
                 this.datasetDetails = cacheData.datasetDetailsMap;
                 console.log(`Restored ${Object.keys(this.datasetDetails).length} dataset details from cache map`);
             }
-
             // Import the cached metadata using async method
             await this.importDataAsync(cacheData.metadata);
-
             // Restore action history
             if (cacheData.actionHistory) {
                 this.actionHistory.actions = cacheData.actionHistory.actions || [];
@@ -6138,7 +5471,6 @@ class CustomizableSSPIStructure {
                 this.actionHistory.baseline = cacheData.actionHistory.baseline || null;
                 console.log(`Restored ${this.actionHistory.actions.length} actions from cache`);
             }
-
             // Set unsaved state based on cache
             this.setUnsavedState(cacheData.hasModifications);
             return true;
@@ -6198,13 +5530,11 @@ class CustomizableSSPIStructure {
             console.warn('Invalid cache data: version must be a string');
             return false;
         }
-
         // Check cache version matches current version
         if (cacheData.version !== this.CACHE_VERSION) {
             console.warn(`Cache version mismatch: cache=${cacheData.version}, current=${this.CACHE_VERSION}. Invalidating cache.`);
             return false;
         }
-
         // Check if cache is not too old (30 days max)
         const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
         const age = Date.now() - cacheData.lastModified;
@@ -6225,7 +5555,6 @@ class CustomizableSSPIStructure {
 
     // Available Datasets Cache Management
     // Separate from metadata cache to ensure dataset selector always has fresh options
-
     /**
      * Load available datasets from cache or backend.
      * Uses separate cache with 24-hour TTL to ensure dataset selector has fresh data.
@@ -6285,19 +5614,16 @@ class CustomizableSSPIStructure {
             if (!cacheData || typeof cacheData !== 'object') {
                 return null;
             }
-
             // Validate structure
             if (!Array.isArray(cacheData.datasets) || typeof cacheData.cachedAt !== 'number') {
                 console.warn('Invalid available datasets cache structure');
                 return null;
             }
-
             // Check version
             if (cacheData.version !== this.CACHE_VERSION) {
                 console.warn('Available datasets cache version mismatch');
                 return null;
             }
-
             // Check freshness (24 hours)
             const maxAge = 24 * 60 * 60 * 1000; // 24 hours
             const age = Date.now() - cacheData.cachedAt;
@@ -6305,7 +5631,6 @@ class CustomizableSSPIStructure {
                 console.log('Available datasets cache is stale (>24 hours), will refresh');
                 return null;
             }
-
             return cacheData.datasets;
         } catch (error) {
             console.warn('Error reading available datasets cache:', error);
@@ -6334,9 +5659,6 @@ class CustomizableSSPIStructure {
                     console.log('Syncing modifications from another tab');
                     await this.importDataAsync(newValue.metadata);
                     this.setUnsavedState(newValue.hasModifications);
-                    
-                    // Show indicator
-                    this.showSyncIndicator();
                 } else if (!newValue) {
                     // Cache was cleared in another tab, reload default if no local changes
                     console.log('Cache cleared in another tab, reloading default');
@@ -6344,149 +5666,6 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-    }
-    
-    showSyncIndicator() {
-        const indicator = document.createElement('div');
-        indicator.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--ms-color);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            z-index: 1000;
-            animation: slideInRight 0.3s ease-out;
-        `;
-        indicator.textContent = '⟲ Synced from another tab';
-        document.body.appendChild(indicator);
-        setTimeout(() => {
-            if (indicator.parentNode) {
-                indicator.style.animation = 'slideOutRight 0.3s ease-in';
-                setTimeout(() => {
-                    if (indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                    }
-                }, 300);
-            }
-        }, 2000);
-    }
-    
-    // Changelog and Diff System
-    
-    captureBaseline() {
-        try {
-            this.baselineMetadata = this.exportMetadata();
-            this.diffCache = null; // Clear diff cache
-            console.log('Baseline captured with', this.baselineMetadata.length, 'items');
-        } catch (error) {
-            console.warn('Failed to capture baseline:', error);
-        }
-    }
-    
-    generateDiff() {
-        if (!this.baselineMetadata) {
-            return { error: 'No baseline available for comparison' };
-        }
-        try {
-            const currentMetadata = this.exportMetadata();
-            // Use cached diff if current state hasn't changed
-            if (this.diffCache && this.areMetadataEqual(this.diffCache.currentSnapshot, currentMetadata)) {
-                return this.diffCache.diff;
-            }
-            const diff = this.compareMetadata(this.baselineMetadata, currentMetadata);
-            // Cache the diff result
-            this.diffCache = {
-                currentSnapshot: JSON.parse(JSON.stringify(currentMetadata)),
-                diff: diff
-            };
-            return diff;
-        } catch (error) {
-            console.error('Error generating diff:', error);
-            return { error: 'Failed to generate diff: ' + error.message };
-        }
-    }
-    
-    compareMetadata(baseline, current) {
-        const baselineMap = this.createItemMap(baseline);
-        const currentMap = this.createItemMap(current);
-        const changes = {
-            summary: {
-                totalChanges: 0,
-                pillarsAffected: 0,
-                categoriesAffected: 0,
-                indicatorsAffected: 0
-            },
-            added: [],
-            removed: [],
-            modified: [],
-            moved: [],
-            unchanged: []
-        };
-        // Find removed items (in baseline but not in current)
-        for (const [code, baselineItem] of baselineMap) {
-            if (!currentMap.has(code)) {
-                changes.removed.push({
-                    type: baselineItem.ItemType,
-                    code: code,
-                    name: baselineItem.ItemName,
-                    item: baselineItem
-                });
-            }
-        }
-        // Find added and modified items
-        for (const [code, currentItem] of currentMap) {
-            if (!baselineMap.has(code)) {
-                // Item was added
-                changes.added.push({
-                    type: currentItem.ItemType,
-                    code: code,
-                    name: currentItem.ItemName,
-                    item: currentItem
-                });
-            } else {
-                // Item exists in both, check for modifications
-                const baselineItem = baselineMap.get(code);
-                const itemChanges = this.compareItems(baselineItem, currentItem);
-                
-                if (itemChanges) {
-                    changes.modified.push({
-                        type: currentItem.ItemType,
-                        code: code,
-                        name: currentItem.ItemName,
-                        changes: itemChanges,
-                        before: baselineItem,
-                        after: currentItem
-                    });
-                } else {
-                    changes.unchanged.push({
-                        type: currentItem.ItemType,
-                        code: code,
-                        name: currentItem.ItemName
-                    });
-                }
-            }
-        }
-        // Calculate summary statistics
-        changes.summary.totalChanges = changes.added.length + changes.removed.length + changes.modified.length + changes.moved.length;
-        // Count affected items by type
-        const affectedTypes = new Set();
-        [...changes.added, ...changes.removed, ...changes.modified, ...changes.moved].forEach(change => {
-            affectedTypes.add(change.type);
-            switch (change.type) {
-                case 'Pillar':
-                    changes.summary.pillarsAffected++;
-                    break;
-                case 'Category':
-                    changes.summary.categoriesAffected++;
-                    break;
-                case 'Indicator':
-                    changes.summary.indicatorsAffected++;
-                    break;
-            }
-        });
-        return changes;
     }
     
     createItemMap(metadata) {
