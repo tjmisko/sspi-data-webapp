@@ -24,7 +24,11 @@
                         </p>
 
                         <div class="portal-section-inline-auth">
-                            <a href="/customize/builder" class="btn-primary aside-link">Go to Customization Builder</a>
+                            {% if current_user.is_authenticated %}
+                                <a href="/customize/builder" class="btn-primary aside-link">Go to Customization Builder</a>
+                            {% else %}
+                                <a href="/customize/load" class="btn-primary aside-link">Browse Configurations</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

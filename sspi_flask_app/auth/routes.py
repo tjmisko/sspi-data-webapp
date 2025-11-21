@@ -255,9 +255,14 @@ def apikey_web():
 
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
-@login_required
 def logout():
     """Logout route - requires authentication"""
+    # Check if user is authenticated
+    if not current_user.is_authenticated:
+        flash("You are not logged in.")
+        app.logger.warning("Unauthenticated user attempted to access logout page")
+        return redirect(url_for("client_bp.customize_home"))
+
     try:
         current_username = current_user.username
         app.logger.info(f"Processing logout request for {current_username}")

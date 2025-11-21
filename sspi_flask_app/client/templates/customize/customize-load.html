@@ -3,6 +3,7 @@
 <style>
 .load-container {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.25em;
 }
 
@@ -12,7 +13,7 @@
 }
 
 .active-session-banner {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ff1111 0%, #dd3222 100%);
     color: white;
     padding: 1.5rem;
     border-radius: 12px;
@@ -22,7 +23,7 @@
 
 .active-session-banner h3 {
     margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
+    line-height: 1.15;
 }
 
 .active-session-banner p {
@@ -57,6 +58,7 @@
 
 .config-section {
   flex: 1 1 0;
+  min-width: 400px;
 }
 
 .config-section h2 {
@@ -65,64 +67,69 @@
  color: var(--text-primary);
 }
 
-.config-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
+.config-flex-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .config-card {
     background: var(--box-background-color);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    cursor: pointer;
+    border-radius: var(--border-radius);
+    padding: 0.875rem 1rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .config-card:hover {
+    box-shadow: var(--shadow-sm);
     border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
 }
 
 .config-card-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.375rem;
+    gap: 0.5rem;
 }
 
 .config-name {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--text-primary);
     margin: 0;
+    color: var(--text-color);
+    font-family: var(--header-font-family);
 }
 
 .config-badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.375rem;
     border-radius: 4px;
     background: var(--primary-color);
     color: white;
     white-space: nowrap;
+    font-weight: 500;
 }
 
 .config-description {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    margin-bottom: 1rem;
-    line-height: 1.5;
+    font-size: 0.8125rem;
+    margin: 0.4rem 0;
+    line-height: 1.4;
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
 }
 
 .config-meta {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    font-size: 0.85rem;
-    color: var(--text-tertiary);
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.625rem;
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
 }
 
 .config-meta-item {
@@ -133,7 +140,7 @@
 
 .config-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .btn-load {
@@ -141,36 +148,39 @@
     background: var(--primary-color);
     color: white;
     border: none;
-    padding: 0.75rem;
-    border-radius: 6px;
-    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 0.875rem;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    font-family: var(--body-font-family);
 }
 
 .btn-load:hover {
-    background: var(--primary-hover-color);
+    opacity: 0.9;
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    background: var(--box-background-color);
     border: 1px solid var(--border-color);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
     cursor: pointer;
     transition: all 0.2s ease;
+    font-size: 0.875rem;
 }
 
 .btn-secondary:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
 }
 
 .loading-message, .empty-message, .error-message {
     text-align: center;
     padding: 3rem;
-    color: var(--text-secondary);
     font-style: italic;
 }
 
@@ -180,80 +190,87 @@
 </style>
 <article class="page-content">
     <section class="page-section">
-        <div class="content-container">
-            <div class="load-container">
-                <div class="bounded-content-box config-section">
-                    <h2>Load Prebuilt Configuration</h2>
-                    <p class="functionality-explainer">Choose a pre-built SSPI configuration or load one of your saved customizations.</p>
-
-                    <div class="config-grid">
-                        {% for config in prebuilt_configurations %}
-                            <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
-                                <div class="config-card-header">
-                                    <h3 class="config-name">{{ config.name }}</h3>
-                                    {% if config.recommended %}
-                                    <span class="config-badge">Recommended</span>
-                                    {% endif %}
-                                </div>
-                                <p class="config-description">{{ config.description }}</p>
-                                <div class="config-meta">
-                                    <span class="config-meta-item">{{ config.pillars }} Pillars</span>
-                                    <span class="config-meta-item">{{ config.categories }} Categories</span>
-                                    <span class="config-meta-item">{{ config.indicators }} Indicators</span>
-                                </div>
-                                <div class="config-actions">
-                                    <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'prebuilt')">Load</button>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <!-- Saved Configurations -->
-                <div class="bounded-content-box config-section">
-                    {% if active_session %}
-                    <div class="active-session-banner">
-                        <h3>You have an active editing session</h3>
-                        <p>{{ active_session.name }} - Last activity: {{ active_session.last_activity }}</p>
-                        <button class="resume-button" onclick="window.location.href='/customize/builder'">
-                            Resume Session
-                        </button>
-                    </div>
-                    {% endif %}
-                    <h2>Your Saved Configurations</h2>
-                    <div class="config-grid">
-                        {% if not is_authenticated %}
-                            <!-- Authentication Required Message -->
-                            <div class="auth-required-message" style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
-                                <h3 style="color: #6c757d; margin-bottom: 1rem;">Log In to View Saved Configurations</h3>
-                                <p style="color: #868e96; margin-bottom: 1.5rem;">Sign in to access your saved custom SSPI structures</p>
-                                <div>
-                                    <a href="/login" class="btn btn-primary" style="margin-right: 1rem;">Log In</a>
-                                    <a href="/register" class="btn btn-secondary">Create Free Account</a>
-                                </div>
-                            </div>
-                        {% elif saved_configurations|length == 0 %}
-                            <!-- Empty State -->
-                            <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
-                        {% else %}
-                            <!-- Render Saved Configuration Cards -->
-                            {% for config in saved_configurations %}
-                            <div class="config-card" data-config-id="{{ config.id }}">
-                                <div class="config-card-header">
-                                    <h3 class="config-name">{{ config.name or 'Unnamed Configuration' }}</h3>
-                                </div>
-                                <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
-                                {% if config.updated_at %}
-                                <div class="config-meta">
-                                    <span class="config-meta-item">{{ config.updated_at }}</span>
-                                </div>
+        <div class="load-container">
+            <div class="bounded-content-box config-section">
+                <h3>Load Prebuilt Configuration</h3>
+                <p class="functionality-explainer">
+                    Choose a preset SSPI configuration to start from. Useful for comparing
+                    a series of changes to the original SSPI.
+                </p>
+                <div class="config-flex-container">
+                    {% for config in prebuilt_configurations %}
+                        <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
+                            <div class="config-card-header">
+                                <h3 class="config-name">{{ config.name }}</h3>
+                                {% if config.recommended %}
+                                <span class="config-badge">Recommended</span>
                                 {% endif %}
-                                <div class="config-actions">
-                                    <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'saved')">Load</button>
-                                    <button class="btn-secondary" onclick="deleteConfiguration('{{ config.id }}')">🗑️</button>
-                                </div>
                             </div>
-                            {% endfor %}
-                        {% endif %}
+                            <p class="config-description">{{ config.description }}</p>
+                            <div class="config-meta">
+                                <span class="config-meta-item">{{ config.pillars }} Pillars</span>
+                                <span class="config-meta-item">{{ config.categories }} Categories</span>
+                                <span class="config-meta-item">{{ config.indicators }} Indicators</span>
+                                <span class="config-meta-item">{{ config.datasets }} Datasets</span>
+                            </div>
+                            <div class="config-actions">
+                                <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'prebuilt')">Load</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <!-- Saved Configurations -->
+            <div class="bounded-content-box config-section">
+                <!-- Active session banner (inserted by JavaScript if session exists) -->
+                <div id="active-session-banner-container"></div>
+                <h3>Saved Configurations</h3>
+                <p class="functionality-explainer">
+                    Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
+                </p>
+                <div class="config-flex-container">
+                    {% if not is_authenticated %}
+                        {% include 'components/login-box.html' with context %}
+                    {% elif saved_configurations | length == 0 %}
+                        <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
+                    {% else %}
+                        {% for config in saved_configurations %}
+                        <div class="config-card" data-config-id="{{ config.id }}">
+                            <div class="config-card-header">
+                                <h3 class="config-name">{{ config.name }}</h3>
+                            </div>
+                            <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
+                            {% if config.updated_at %}
+                            <div class="config-meta">
+                                <span class="config-meta-item">{{ config.updated_at }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="config-actions">
+                                <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'saved')">Load</button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="bounded-content-box config-section">
+                <h3>New Configuration</h3>
+                <p class="functionality-explainer">
+                    Begin from an empty template, designing your own
+                    data-driven policy index from the datasets up.
+                </p>
+                <div class="config-flex-container">
+                    <div class="config-card">
+                        <div class="config-card-header">
+                            <h3 class="config-name">Blank Configuration</h3>
+                        </div>
+                        <p class="config-description">
+                            Start with an empty template and build your custom policy index
+                            from scratch, selecting your own datasets, indicators, and scoring methods.
+                        </p>
+                        <div class="config-actions">
+                            <button class="btn-load" onclick="createBlankConfiguration()">Start Building</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -261,63 +278,200 @@
     </section>
 </article>
 <script>
-    // CSRF token from backend - used by bundled csrf.js utility
-    window.csrfToken = {{ csrf_token|tojson|safe }};
+window.csrfToken = {{ csrf_token|tojson|safe }};
 
-    // Load configuration and start editing session
-    async function loadConfiguration(configId, type) {
-        try {
-            const endpoint = type === 'prebuilt'
-                ? `/api/v1/customize/prebuilt/${configId}`
-                : `/api/v1/customize/load/${configId}`;
+// Initialize ObservableStorage if not already initialized
+if (typeof window.storage === 'undefined') {
+    window.storage = new ObservableStorage();
+}
 
-            const response = await fetch(endpoint);
-            const data = await response.json();
+// Check for active session on page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkForActiveSession();
+});
 
-            if (data.success && data.metadata) {
-                // Start a new session with this configuration
-                await window.csrf.fetchWithCSRF('/api/v1/customize/session/start', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        config_id: configId,
-                        name: data.metadata[0]?.name || 'SSPI',
-                        metadata: data.metadata
-                    })
-                });
-
-                // Redirect to builder
-                window.location.href = '/customize/builder';
-            } else {
-                alert('Error loading configuration: ' + (data.error || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error loading configuration:', error);
-            alert('Error loading configuration. Please try again.');
+function checkForActiveSession() {
+    try {
+        const activeSession = window.storage.getItem('sspi_active_session');
+        // Only show banner if session exists, isn't expired, AND has unsaved changes
+        if (activeSession && !isSessionExpired(activeSession) && activeSession.hasUnsaved) {
+            displayResumeBanner(activeSession);
         }
+    } catch (error) {
+        console.error('Error checking for active session:', error);
     }
+}
 
-    async function deleteConfiguration(configId) {
-        if (!confirm('Are you sure you want to delete this configuration?')) {
-            return;
+function isSessionExpired(session) {
+    if (!session || !session.last_activity) return true;
+    const lastActivity = new Date(session.last_activity);
+    const now = new Date();
+    const daysSinceActivity = (now - lastActivity) / (1000 * 60 * 60 * 24);
+    return daysSinceActivity > 30;  // 30-day expiry
+}
+
+function displayResumeBanner(session) {
+    const container = document.getElementById('active-session-banner-container');
+    if (!container) return;
+
+    const lastActivity = new Date(session.last_activity);
+    const formattedDate = lastActivity.toLocaleString();
+
+    container.innerHTML = `
+        <div class="active-session-banner">
+            <h3>You have an active editing session with unsaved changes</h3>
+            <p>${session.config_name || 'Configuration'} - Last activity: ${formattedDate}</p>
+            <button class="resume-button" onclick="window.location.href='/customize/builder'">
+                Resume Session
+            </button>
+        </div>
+    `;
+}
+
+function abandonActiveSession() {
+    // Clear all unsaved state and cached modifications
+    try {
+        const username = window.sspiUsername || '';
+
+        // Clear cached modifications
+        if (username) {
+            window.observableStorage.removeItem(`customSSPI_${username}_cachedModifications`);
+            window.observableStorage.removeItem(`customSSPI_${username}_hasUnsaved`);
         }
 
-        try {
-            const response = await window.csrf.fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
-                method: 'DELETE'
+        // Update session to mark as no longer unsaved
+        const session = window.storage.getItem('sspi_active_session');
+        if (session) {
+            session.hasUnsaved = false;
+            window.storage.setItem('sspi_active_session', session);
+        }
+    } catch (error) {
+        console.error('Error abandoning active session:', error);
+    }
+}
+
+async function loadConfiguration(configId, type) {
+    // Check for unsaved changes before loading
+    try {
+        const activeSession = window.storage.getItem('sspi_active_session');
+        if (activeSession && activeSession.hasUnsaved) {
+            const confirmed = confirm(
+                'You have unsaved changes in your current editing session.\n\n' +
+                'Loading this configuration will discard those changes.\n\n' +
+                'Do you want to continue?'
+            );
+            if (!confirmed) {
+                return; // User cancelled, abort load
+            }
+            // User confirmed, abandon the current session
+            abandonActiveSession();
+        }
+    } catch (error) {
+        console.error('Error checking for unsaved changes:', error);
+    }
+    try {
+        const endpoint = type === 'prebuilt'
+            ? `/api/v1/customize/prebuilt/${configId}`
+            : `/api/v1/customize/load/${configId}`;  // Authentication checked server-side
+
+        const response = await fetch(endpoint);
+        const data = await response.json();
+
+        if (data.success && data.metadata) {
+            // Determine config name from response or metadata
+            const configName = data.name || data.metadata.find(item => item.ItemType === 'SSPI')?.ItemName || 'SSPI';
+
+            // Store editing session in localStorage
+            window.storage.setItem('sspi_active_session', {
+                config_id: configId,
+                config_name: configName,
+                config_type: type,
+                started_at: new Date().toISOString(),
+                last_activity: new Date().toISOString(),
+                hasUnsaved: false  // Initialize as saved when first loaded
             });
-            const data = await response.json();
 
-            if (data.success) {
-                // Reload page to show updated list
-                window.location.reload();
-            } else {
-                alert('Error deleting configuration: ' + (data.error || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error deleting configuration:', error);
-            alert('Error deleting configuration. Please try again.');
+            // Store pending configuration for builder to load (including actions for history)
+            window.storage.setItem('sspi_pending_config', {
+                metadata: data.metadata,
+                datasetDetailsMap: data.datasetDetailsMap,
+                actions: data.actions || []  // Include action history if available
+            });
+
+            // Redirect to builder
+            window.location.href = '/customize/builder';
+        } else {
+            alert('Error loading configuration: ' + (data.error || 'Unknown error'));
         }
+    } catch (error) {
+        console.error('Error loading configuration:', error);
+        alert('Error loading configuration. Please try again.');
     }
+}
+
+function createBlankConfiguration() {
+    // Check for unsaved changes before creating blank configuration
+    try {
+        const activeSession = window.storage.getItem('sspi_active_session');
+        if (activeSession && activeSession.hasUnsaved) {
+            const confirmed = confirm(
+                'You have unsaved changes in your current editing session.\n\n' +
+                'Creating a new blank configuration will discard those changes.\n\n' +
+                'Do you want to continue?'
+            );
+            if (!confirmed) {
+                return; // User cancelled, abort
+            }
+            // User confirmed, abandon the current session
+            abandonActiveSession();
+        }
+    } catch (error) {
+        console.error('Error checking for unsaved changes:', error);
+    }
+
+    try {
+        // Clear any existing pending configuration
+        window.storage.removeItem('sspi_pending_config');
+
+        // Create new blank session
+        window.storage.setItem('sspi_active_session', {
+            config_id: null,
+            config_name: 'New Configuration',
+            config_type: 'blank',
+            started_at: new Date().toISOString(),
+            last_activity: new Date().toISOString(),
+            hasUnsaved: false  // Initialize as saved when first created
+        });
+
+        // Redirect to builder with blank slate
+        window.location.href = '/customize/builder';
+    } catch (error) {
+        console.error('Error creating blank configuration:', error);
+        alert('Error creating blank configuration. Please try again.');
+    }
+}
+
+async function deleteConfiguration(configId) {
+    if (!confirm('Are you sure you want to delete this configuration?')) {
+        return;
+    }
+
+    try {
+        const response = await window.csrf.fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload page to show updated list
+            window.location.reload();
+        } else {
+            alert('Error deleting configuration: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error deleting configuration:', error);
+        alert('Error deleting configuration. Please try again.');
+    }
+}
 </script>
 {% endblock %}

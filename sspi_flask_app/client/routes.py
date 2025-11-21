@@ -1,15 +1,25 @@
-from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
+import logging
 import os
-from markdown import markdown
-from flask_login import login_required, current_user
-from flask_wtf.csrf import generate_csrf
 import re
-import pycountry
-from sspi_flask_app.api.resources.utilities import parse_json, public_databases
-from sspi_flask_app.models.database import sspi_metadata, sspidb
-from sspi_flask_app.api.core.dashboard import build_indicators_data, build_download_tree_structure, build_indicators_data_static
-from sspi_flask_app.utils import session_manager
 
+import pycountry
+from flask import Blueprint, redirect, render_template, request, url_for
+from flask import current_app as app
+from flask_login import current_user, login_required
+from flask_wtf.csrf import generate_csrf
+from markdown import markdown
+
+from sspi_flask_app.api.core.dashboard import (
+    build_download_tree_structure,
+    build_indicators_data,
+    build_indicators_data_static,
+)
+from sspi_flask_app.api.resources.utilities import parse_json, public_databases
+from sspi_flask_app.models.database import (
+    sspi_custom_user_structure,
+    sspi_metadata,
+    sspidb,
+)
 
 client_bp = Blueprint(
     'client_bp', __name__,
@@ -93,22 +103,13 @@ def customize_load():
     """
     Load page for customization feature.
     Shows pre-built and saved configurations.
-    If user has an active session, displays resume banner.
+    Client-side JavaScript checks localStorage for active editing session.
     Works for both authenticated and anonymous users.
-    Server-renders all configurations (no AJAX needed).
     """
-    from flask_login import current_user
-    from sspi_flask_app.models.database import sspi_custom_user_structure
-    import logging
-
     logger = logging.getLogger(__name__)
-
     # Check if user is authenticated
     is_authenticated = current_user.is_authenticated
-
-    active_session = None
     saved_configurations = []
-
     # Define prebuilt configurations
     prebuilt_configurations = [
         {
@@ -121,11 +122,8 @@ def customize_load():
             'recommended': True
         }
     ]
-
     if is_authenticated:
-        active_session = session_manager.get_active_session()
-
-        # Fetch saved configurations from database
+        # Fetch saved configurations from database (authentication required)
         try:
             saved_configurations = sspi_custom_user_structure.list_config_names(
                 username=current_user.username
@@ -134,32 +132,27 @@ def customize_load():
         except Exception as e:
             logger.error(f"Error fetching configurations for user {current_user.username}: {e}")
             saved_configurations = []
-
     csrf_token = generate_csrf()
-    return render_template('customize/customize-load.html',
-                         active_session=active_session,
-                         is_authenticated=is_authenticated,
-                         prebuilt_configurations=prebuilt_configurations,
-                         saved_configurations=saved_configurations,
-                         csrf_token=csrf_token)
+    return render_template(
+        'customize/customize-load.html',
+        is_authenticated=is_authenticated,
+        prebuilt_configurations=prebuilt_configurations,
+        saved_configurations=saved_configurations,
+        csrf_token=csrf_token,
+        title="Sign in to save custom configurations",
+        subtitle=""
+    )
 
 
 @client_bp.route('/customize/builder')
-@login_required
 def customize_configuration_builder():
     """
     Main customization builder interface.
-    Redirects to load page if no active session exists.
+    Client-side JavaScript checks localStorage for active editing session.
+    Accessible to all users (authentication only required for saving).
     """
-    active_session = session_manager.get_active_session()
-
-    # If no active session, redirect to load page
-    if not active_session:
-        return redirect(url_for('client_bp.customize_load'))
-
     csrf_token = generate_csrf()
     return render_template('customize/customization-builder.html',
-                         active_session=active_session,
                          csrf_token=csrf_token)
 
 

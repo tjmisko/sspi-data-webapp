@@ -11,7 +11,6 @@ from flask import Blueprint, jsonify, request, current_app as app
 from flask_login import login_required
 
 from sspi_flask_app.auth.decorators import owner_or_admin_required
-from sspi_flask_app.utils import session_manager
 from sspi_flask_app.api.resources.utilities import parse_json
 from sspi_flask_app.models.database import (
     sspi_custom_user_data,
@@ -240,7 +239,9 @@ def save_configuration():
         logger.error(f"Validation error saving configuration: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
+        import traceback
         logger.error(f"Error saving configuration: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 @customize_bp.route("/list", methods=["GET"])
@@ -941,128 +942,8 @@ def get_chart_data(config_id):
 
 
 # ============================================================================
-# Session Management Endpoints
+# Session Management Endpoints - REMOVED
 # ============================================================================
-
-@customize_bp.route("/session/start", methods=["POST"])
-@login_required
-def start_session():
-    """
-    Create a new editing session from a configuration.
-    Clears any existing session and starts a new one.
-    """
-    try:
-        data = parse_json(request.get_json())
-        config_id = data.get("config_id")
-        config_name = data.get("name", "Unnamed Configuration")
-        metadata = data.get("metadata")
-
-        if not config_id:
-            return jsonify({"success": False, "error": "config_id is required"}), 400
-
-        # Create/update session
-        session_data = session_manager.set_active_session(
-            config_id=config_id,
-            config_name=config_name,
-            metadata=metadata
-        )
-
-        logger.info(f"Started editing session for config {config_id}")
-
-        return jsonify({
-            "success": True,
-            "session": session_data
-        })
-
-    except Exception as e:
-        logger.error(f"Error starting session: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to start session"}), 500
-
-
-@customize_bp.route("/session/current", methods=["GET"])
-@login_required
-def get_current_session():
-    """
-    Get the current active editing session.
-    """
-    try:
-        active_session = session_manager.get_active_session()
-
-        if not active_session:
-            return jsonify({
-                "success": True,
-                "session": None
-            })
-
-        return jsonify({
-            "success": True,
-            "session": active_session
-        })
-
-    except Exception as e:
-        logger.error(f"Error getting current session: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to get session"}), 500
-
-
-@customize_bp.route("/session/clear", methods=["POST"])
-@login_required
-def clear_session():
-    """
-    End the current editing session.
-    """
-    try:
-        session_manager.clear_active_session()
-
-        logger.info("Cleared editing session")
-
-        return jsonify({
-            "success": True,
-            "message": "Session cleared"
-        })
-
-    except Exception as e:
-        logger.error(f"Error clearing session: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to clear session"}), 500
-
-
-@customize_bp.route("/session/heartbeat", methods=["POST"])
-@login_required
-def session_heartbeat():
-    """
-    Update last activity timestamp to prevent session expiry.
-    Should be called periodically during active editing (every 5 minutes).
-    """
-    try:
-        session_manager.update_last_activity()
-
-        return jsonify({
-            "success": True,
-            "message": "Session activity updated"
-        })
-
-    except Exception as e:
-        logger.error(f"Error updating session heartbeat: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to update heartbeat"}), 500
-
-
-@customize_bp.route("/session/mark-unsaved", methods=["POST"])
-@login_required
-def mark_session_unsaved():
-    """
-    Mark the current session as having unsaved changes.
-    """
-    try:
-        data = parse_json(request.get_json())
-        has_unsaved = data.get("has_unsaved", True)
-
-        session_manager.mark_unsaved_changes(has_unsaved)
-
-        return jsonify({
-            "success": True,
-            "has_unsaved": has_unsaved
-        })
-
-    except Exception as e:
-        logger.error(f"Error marking session unsaved: {str(e)}")
-        return jsonify({"success": False, "error": "Failed to mark session"}), 500
+# Session management migrated to client-side localStorage.
+# See REFACTOR_SESSION_TO_LOCALSTORAGE.md for details.
 
