@@ -1,40 +1,15 @@
 {% extends 'layout.html' %}
 
-{% block stylesheet %}
-<meta name="csrf-token" content="{{ csrf_token }}">
-{% endblock %}
-
 {% block content %}
-<div class="customizable-sspi" id="sspi-root"
-     data-username="{{ current_user.username }}"
-     data-active-session="{{ active_session|tojson if active_session else '{}' }}">
-</div>
+<div id="sspi-root" class="customizable-sspi"></div>
 
 <script>
-if (!window.csrf) {
-    window.csrf = {
-        getToken: function() {
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            return metaTag ? metaTag.getAttribute('content') : null;
-        },
-        fetchWithCSRF: async function(url, options = {}) {
-            const csrfToken = this.getToken();
-            const method = (options.method || 'GET').toUpperCase();
-            const needsCSRF = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
-
-            if (needsCSRF && csrfToken) {
-                options.headers = {
-                    ...options.headers,
-                    'X-CSRFToken': csrfToken
-                };
-            }
-
-            return fetch(url, options);
-        }
-    };
-}
-window.sspiUsername = "{{ current_user.username }}";
+// Backend data - csrf.js utility automatically uses window.csrfToken
+window.csrfToken = {{ csrf_token|tojson|safe }};
+window.sspiUsername = {{ current_user.username|tojson|safe }};
 window.sspiActiveSession = {{ active_session|tojson|safe if active_session else 'null' }};
+
+// Initialize customization builder
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('sspi-root');
     window.SSPICharts.push(
@@ -43,10 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeSession: window.sspiActiveSession
         })
     );
-    window.customSSPI = SSPICharts[0];
+    window.customSSPI = window.SSPICharts[0];
 });
 </script>
-{% endblock %}
-
-{% block javascript %}
 {% endblock %}

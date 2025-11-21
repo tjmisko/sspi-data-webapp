@@ -95,20 +95,52 @@ def customize_load():
     Shows pre-built and saved configurations.
     If user has an active session, displays resume banner.
     Works for both authenticated and anonymous users.
+    Server-renders all configurations (no AJAX needed).
     """
     from flask_login import current_user
+    from sspi_flask_app.models.database import sspi_custom_user_structure
+    import logging
+
+    logger = logging.getLogger(__name__)
 
     # Check if user is authenticated
     is_authenticated = current_user.is_authenticated
 
     active_session = None
+    saved_configurations = []
+
+    # Define prebuilt configurations
+    prebuilt_configurations = [
+        {
+            'id': 'default',
+            'name': 'Standard SSPI',
+            'description': 'Standard SSPI structure with all 54 indicators across sustainability, material security, and public goods.',
+            'pillars': 3,
+            'categories': 18,
+            'indicators': 54,
+            'recommended': True
+        }
+    ]
+
     if is_authenticated:
         active_session = session_manager.get_active_session()
+
+        # Fetch saved configurations from database
+        try:
+            saved_configurations = sspi_custom_user_structure.list_config_names(
+                username=current_user.username
+            )
+            logger.info(f"Loaded {len(saved_configurations)} configurations for user {current_user.username}")
+        except Exception as e:
+            logger.error(f"Error fetching configurations for user {current_user.username}: {e}")
+            saved_configurations = []
 
     csrf_token = generate_csrf()
     return render_template('customize/customize-load.html',
                          active_session=active_session,
                          is_authenticated=is_authenticated,
+                         prebuilt_configurations=prebuilt_configurations,
+                         saved_configurations=saved_configurations,
                          csrf_token=csrf_token)
 
 

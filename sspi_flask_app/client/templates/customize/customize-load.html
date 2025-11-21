@@ -2,8 +2,8 @@
 {% block content %}
 <style>
 .load-container {
-    display: flex;
-    gap: 1.25em;
+  display: flex;
+  gap: 1.25em;
 }
 
 .functionality-explainer {
@@ -55,15 +55,14 @@
   box-sizing: border-box;
 }
 
-.config-section h2 {
-    font-size: 1.75rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-primary);
+.config-section {
+  flex: 1 1 0;
 }
 
-.config-section p {
-    color: var(--text-secondary);
-    margin-bottom: 1.5rem;
+.config-section h2 {
+ font-size: 1.75rem;
+ margin-bottom: 0.5rem;
+ color: var(--text-primary);
 }
 
 .config-grid {
@@ -183,36 +182,34 @@
     <section class="page-section">
         <div class="content-container">
             <div class="load-container">
-                <div class="config-section">
+                <div class="bounded-content-box config-section">
                     <h2>Load Prebuilt Configuration</h2>
                     <p class="functionality-explainer">Choose a pre-built SSPI configuration or load one of your saved customizations.</p>
 
                     <div class="config-grid">
                         {% for config in prebuilt_configurations %}
-                            <div class="config-card" data-config-id="default" data-config-type="prebuilt">
+                            <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
                                 <div class="config-card-header">
-                                <h3 class="config-name">{{ config.name }}</h3>
+                                    <h3 class="config-name">{{ config.name }}</h3>
                                     {% if config.recommended %}
                                     <span class="config-badge">Recommended</span>
                                     {% endif %}
                                 </div>
-                                <p class="config-description">
-                                    Standard SSPI structure with all 54 indicators across sustainability, material security, and public goods.
-                                </p>
+                                <p class="config-description">{{ config.description }}</p>
                                 <div class="config-meta">
-                                    <span class="config-meta-item">📊 3 Pillars</span>
-                                    <span class="config-meta-item">📁 18 Categories</span>
-                                    <span class="config-meta-item">📈 54 Indicators</span>
+                                    <span class="config-meta-item">{{ config.pillars }} Pillars</span>
+                                    <span class="config-meta-item">{{ config.categories }} Categories</span>
+                                    <span class="config-meta-item">{{ config.indicators }} Indicators</span>
                                 </div>
                                 <div class="config-actions">
-                                    <button class="btn-load" onclick="loadConfiguration('default', 'prebuilt')">Load</button>
+                                    <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'prebuilt')">Load</button>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 </div>
                 <!-- Saved Configurations -->
-                <div class="config-section">
+                <div class="bounded-content-box config-section">
                     {% if active_session %}
                     <div class="active-session-banner">
                         <h3>You have an active editing session</h3>
@@ -223,8 +220,40 @@
                     </div>
                     {% endif %}
                     <h2>Your Saved Configurations</h2>
-                    <div id="saved-configs-container" class="config-grid">
-                        <div class="loading-message">Loading saved configurations...</div>
+                    <div class="config-grid">
+                        {% if not is_authenticated %}
+                            <!-- Authentication Required Message -->
+                            <div class="auth-required-message" style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
+                                <h3 style="color: #6c757d; margin-bottom: 1rem;">Log In to View Saved Configurations</h3>
+                                <p style="color: #868e96; margin-bottom: 1.5rem;">Sign in to access your saved custom SSPI structures</p>
+                                <div>
+                                    <a href="/login" class="btn btn-primary" style="margin-right: 1rem;">Log In</a>
+                                    <a href="/register" class="btn btn-secondary">Create Free Account</a>
+                                </div>
+                            </div>
+                        {% elif saved_configurations|length == 0 %}
+                            <!-- Empty State -->
+                            <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
+                        {% else %}
+                            <!-- Render Saved Configuration Cards -->
+                            {% for config in saved_configurations %}
+                            <div class="config-card" data-config-id="{{ config.id }}">
+                                <div class="config-card-header">
+                                    <h3 class="config-name">{{ config.name or 'Unnamed Configuration' }}</h3>
+                                </div>
+                                <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
+                                {% if config.updated_at %}
+                                <div class="config-meta">
+                                    <span class="config-meta-item">{{ config.updated_at }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="config-actions">
+                                    <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'saved')">Load</button>
+                                    <button class="btn-secondary" onclick="deleteConfiguration('{{ config.id }}')">🗑️</button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -232,92 +261,10 @@
     </section>
 </article>
 <script>
-    // CSRF Token Helper (inlined)
-    function getCSRFToken() {
-        const metaTag = document.querySelector('meta[name="csrf-token"]');
-        return metaTag ? metaTag.getAttribute('content') : null;
-    }
+    // CSRF token from backend - used by bundled csrf.js utility
+    window.csrfToken = {{ csrf_token|tojson|safe }};
 
-    async function fetchWithCSRF(url, options = {}) {
-        const csrfToken = getCSRFToken();
-        const method = (options.method || 'GET').toUpperCase();
-        const needsCSRF = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
-
-        if (needsCSRF && csrfToken) {
-            options.headers = {
-                ...options.headers,
-                'X-CSRFToken': csrfToken
-            };
-        }
-
-        return fetch(url, options);
-    }
-
-    // Load saved configurations on page load
-    async function loadSavedConfigurations() {
-        const container = document.getElementById('saved-configs-container');
-
-        // Check if user is authenticated before making request
-        const isAuthenticated = {{ 'true' if is_authenticated else 'false' }};
-
-        if (!isAuthenticated) {
-            // Show login prompt instead of making request
-            container.innerHTML = `
-                <div class="auth-required-message" style="text-align: center; padding: 3rem; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
-                    <h3 style="color: #6c757d; margin-bottom: 1rem;">🔒 Log In to View Saved Configurations</h3>
-                    <p style="color: #868e96; margin-bottom: 1.5rem;">Sign in to access your saved custom SSPI structures</p>
-                    <div>
-                        <a href="/login" class="btn btn-primary" style="margin-right: 1rem;">Log In</a>
-                        <a href="/register" class="btn btn-secondary">Create Free Account</a>
-                    </div>
-                </div>
-            `;
-            return;
-        }
-
-        // User is authenticated - proceed with request
-        try {
-            const response = await fetch('/api/v1/customize/list');
-            const data = await response.json();
-
-            if (data.success && data.configurations && data.configurations.length > 0) {
-                container.innerHTML = '';
-                data.configurations.forEach(config => {
-                    const card = createConfigCard(config, 'saved');
-                    container.appendChild(card);
-                });
-            } else {
-                container.innerHTML = '<div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>';
-            }
-        } catch (error) {
-            console.error('Error loading saved configurations:', error);
-            container.innerHTML = '<div class="error-message">Error loading saved configurations.</div>';
-        }
-    }
-
-    function createConfigCard(config, type) {
-        const card = document.createElement('div');
-        card.className = 'config-card';
-        card.dataset.configId = config.id;
-        card.dataset.configType = type;
-
-        const date = config.updated_at ? new Date(config.updated_at).toLocaleDateString() : '';
-
-        card.innerHTML = `
-            <div class="config-card-header">
-                <h3 class="config-name">${config.name || 'Unnamed Configuration'}</h3>
-            </div>
-            <p class="config-description">${config.description || 'Custom SSPI configuration'}</p>
-            ${date ? `<div class="config-meta"><span class="config-meta-item">📅 ${date}</span></div>` : ''}
-            <div class="config-actions">
-                <button class="btn-load" onclick="loadConfiguration('${config.id}', '${type}')">Load</button>
-                <button class="btn-secondary" onclick="deleteConfiguration('${config.id}')">🗑️</button>
-            </div>
-        `;
-
-        return card;
-    }
-
+    // Load configuration and start editing session
     async function loadConfiguration(configId, type) {
         try {
             const endpoint = type === 'prebuilt'
@@ -329,7 +276,7 @@
 
             if (data.success && data.metadata) {
                 // Start a new session with this configuration
-                await fetchWithCSRF('/api/v1/customize/session/start', {
+                await window.csrf.fetchWithCSRF('/api/v1/customize/session/start', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -356,14 +303,14 @@
         }
 
         try {
-            const response = await fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
+            const response = await window.csrf.fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
                 method: 'DELETE'
             });
             const data = await response.json();
 
             if (data.success) {
-                // Reload saved configurations
-                loadSavedConfigurations();
+                // Reload page to show updated list
+                window.location.reload();
             } else {
                 alert('Error deleting configuration: ' + (data.error || 'Unknown error'));
             }
@@ -372,8 +319,5 @@
             alert('Error deleting configuration. Please try again.');
         }
     }
-
-    // Load saved configurations when page loads
-    document.addEventListener('DOMContentLoaded', loadSavedConfigurations);
 </script>
 {% endblock %}
