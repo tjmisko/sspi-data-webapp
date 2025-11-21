@@ -1,12 +1,18 @@
 from security import get_route_rules
 
 EXEMPT_ENDPOINTS_GET = {
-    'auth_bp.login',
+    'auth_bp.user_login',  # Public login page (renamed from login)
+    'auth_bp.admin_login', # Public admin login page
+    'auth_bp.register',    # Public registration page
     'auth_bp.apikey_web'
 }
 EXEMPT_ENDPOINTS_POST = {
-    'auth_bp.login',
-    'auth_bp.apikey_web'
+    'auth_bp.user_login',  # Public login submission
+    'auth_bp.admin_login', # Public admin login submission
+    'auth_bp.register',    # Public registration submission
+    'auth_bp.apikey_web',
+    'auth_bp.check_username',  # Public API endpoint for username validation
+    'auth_bp.check_email'      # Public API endpoint for email validation
 }
 EXEMPT_PREFIXES_GET = (
     'auth_bp.static',

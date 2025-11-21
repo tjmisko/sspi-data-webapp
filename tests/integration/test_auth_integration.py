@@ -307,12 +307,12 @@ class TestAuthenticationRouteIntegration:
             assert response.status_code == 200
             assert response.data.decode('utf-8') == test_user['user'].apikey
     
-    def test_register_route_requires_fresh_login(self, app, client, mock_auth_data):
-        """Test that register route requires fresh login."""
+    def test_register_route_is_public(self, app, client, mock_auth_data):
+        """Test that register route is publicly accessible for user registration."""
         with app.test_request_context():
             response = client.get('/register')
-            # Should be redirected to login or return 401
-            assert response.status_code in [302, 401]
+            # Should return 200 (public access) - registration page is now public
+            assert response.status_code == 200
     
     def test_bearer_token_authentication(self, app, client, admin_user, mock_auth_data):
         """Test Bearer token authentication for API access (admin-only routes)."""

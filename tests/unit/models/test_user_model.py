@@ -46,7 +46,8 @@ def sample_user_doc():
         "username": "testuser",
         "password": "$2b$12$KIXTqXFgLCJHE5lZ2IxY2OHN6rN8wZr4gQdN1TlRfV9rK.2NzY3Jm",
         "apikey": "a" * 128,
-        "secretkey": "b" * 64
+        "secretkey": "b" * 64,
+        "roles": ["user"]
     }
 
 
@@ -59,21 +60,24 @@ def sample_user_docs():
             "username": "user1",
             "password": "$2b$12$yHFh700tJ.4BxUs1/0b2cec0dfaBtNxt1lEsciJrGJUx9W4k7yc4q",  # Valid bcrypt hash
             "apikey": "a" * 128,
-            "secretkey": "b" * 64
+            "secretkey": "b" * 64,
+            "roles": ["user"]
         },
         {
             "_id": ObjectId(),
-            "username": "user2", 
+            "username": "user2",
             "password": "$2b$12$6ptOjmr52NjjHF0vhh5puua4gE6UO4GjwthW47rwToT1HFBOTj5YC",  # Valid bcrypt hash
             "apikey": "c" * 128,
-            "secretkey": "d" * 64
+            "secretkey": "d" * 64,
+            "roles": ["user"]
         },
         {
             "_id": ObjectId(),
             "username": "user3",
             "password": "$2b$12$ZWxaFzpcl9bUCl9pEUGsUemeoU8VmwxdyiulrtIj3GidZ1hAQzpsK",  # Valid bcrypt hash
             "apikey": "e" * 128,
-            "secretkey": "f" * 64
+            "secretkey": "f" * 64,
+            "roles": ["user"]
         }
     ]
 
@@ -117,8 +121,9 @@ class TestUserModelStaticMethods:
         mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         
         user = User.find_by_username(sample_user_doc["username"])
@@ -137,8 +142,9 @@ class TestUserModelStaticMethods:
         mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         
         user = User.find_by_api_key(sample_user_doc["apikey"])
@@ -157,8 +163,9 @@ class TestUserModelStaticMethods:
         user_id = mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         
         user = User.find_by_id(user_id)
@@ -177,8 +184,8 @@ class TestUserModelStaticMethods:
         password_hash = "$2b$12$KIXTqXFgLCJHE5lZ2IxY2OHN6rN8wZr4gQdN1TlRfV9rK.2NzY3Jm"  # Valid bcrypt hash
         api_key = "a" * 128
         secret_key = "b" * 64
-        
-        user = User.create_user(username, password_hash, api_key, secret_key)
+
+        user = User.create_user(username, password_hash, email=None, api_key=api_key, secret_key=secret_key)
         assert user is not None
         assert isinstance(user, User)
         assert user.username == username
@@ -206,8 +213,9 @@ class TestUserModelStaticMethods:
         mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         
         assert User.username_exists(sample_user_doc["username"]) is True
@@ -222,7 +230,7 @@ class TestUserModelStaticMethods:
         for doc in sample_user_docs:
             mock_sspi_user_data.create_user(
                 doc["username"], doc["password"],
-                doc["apikey"], doc["secretkey"]
+                email=None, api_key=doc["apikey"], secret_key=doc["secretkey"]
             )
         
         users = User.get_all_users()
@@ -243,8 +251,9 @@ class TestUserModelInstanceMethods:
         user_id = mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         user = User.find_by_id(user_id)
         
@@ -271,8 +280,9 @@ class TestUserModelInstanceMethods:
         user_id = mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         user = User.find_by_id(user_id)
         original_api_key = user.apikey
@@ -302,8 +312,9 @@ class TestUserModelInstanceMethods:
         user_id = mock_sspi_user_data.create_user(
             sample_user_doc["username"],
             sample_user_doc["password"],
-            sample_user_doc["apikey"],
-            sample_user_doc["secretkey"]
+            email=None,
+            api_key=sample_user_doc["apikey"],
+            secret_key=sample_user_doc["secretkey"]
         )
         user = User.find_by_id(user_id)
         

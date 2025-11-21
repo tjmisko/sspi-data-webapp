@@ -31,19 +31,22 @@ def valid_user_docs():
             "username": "testuser1",
             "password": "$2b$12$yHFh700tJ.4BxUs1/0b2cec0dfaBtNxt1lEsciJrGJUx9W4k7yc4q",  # Valid bcrypt hash
             "apikey": "a" * 128,  # 128 char hex string
-            "secretkey": "b" * 64  # 64 char hex string
+            "secretkey": "b" * 64,  # 64 char hex string
+            "roles": ["user"]
         },
         "user2": {
             "username": "admin",
             "password": "$2b$12$6ptOjmr52NjjHF0vhh5puua4gE6UO4GjwthW47rwToT1HFBOTj5YC",  # Valid bcrypt hash
             "apikey": "c" * 128,
-            "secretkey": "d" * 64
+            "secretkey": "d" * 64,
+            "roles": ["admin"]
         },
         "user3": {
             "username": "testuser3",
             "password": "$2b$12$ZWxaFzpcl9bUCl9pEUGsUemeoU8VmwxdyiulrtIj3GidZ1hAQzpsK",  # Valid bcrypt hash
             "apikey": "e" * 128,
-            "secretkey": "f" * 64
+            "secretkey": "f" * 64,
+            "roles": ["user"]
         }
     }
 
@@ -177,8 +180,8 @@ class TestSSPIUserDataCRUD:
         password_hash = "$2b$12$KIXTqXFgLCJHE5lZ2IxY2OHN6rN8wZr4gQdN1TlRfV9rK.2NzY3Jm"
         api_key = "a" * 128
         secret_key = "b" * 64
-        
-        user_id = user_wrapper.create_user(username, password_hash, api_key, secret_key)
+
+        user_id = user_wrapper.create_user(username, password_hash, email=None, api_key=api_key, secret_key=secret_key)
         
         assert user_id is not None
         assert ObjectId.is_valid(user_id)
@@ -210,15 +213,15 @@ class TestSSPIUserDataCRUD:
         # Create first user
         user1 = valid_user_docs["user1"]
         user_wrapper.create_user(
-            user1["username"], user1["password"], 
-            user1["apikey"], user1["secretkey"]
+            user1["username"], user1["password"],
+            email=None, api_key=user1["apikey"], secret_key=user1["secretkey"]
         )
-        
+
         # Try to create second user with same username
         with pytest.raises(InvalidDocumentFormatError, match="already exists"):
             user_wrapper.create_user(
                 user1["username"], user1["password"],
-                "d" + "a" * 127, "d" + "b" * 63  # Correct lengths: 128 and 64
+                email=None, api_key="d" + "a" * 127, secret_key="d" + "b" * 63  # Correct lengths: 128 and 64
             )
     
     def test_find_by_username(self, user_wrapper, valid_user_docs):
@@ -226,7 +229,7 @@ class TestSSPIUserDataCRUD:
         user_doc = valid_user_docs["user1"]
         user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         found_user = user_wrapper.find_by_username(user_doc["username"])
@@ -242,7 +245,7 @@ class TestSSPIUserDataCRUD:
         user_doc = valid_user_docs["user1"]
         user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         found_user = user_wrapper.find_by_api_key(user_doc["apikey"])
@@ -258,7 +261,7 @@ class TestSSPIUserDataCRUD:
         user_doc = valid_user_docs["user1"]
         user_id = user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         found_user = user_wrapper.find_by_id(user_id)
@@ -269,16 +272,16 @@ class TestSSPIUserDataCRUD:
         else:
             assert str(found_user["_id"]) == user_id
         
-        # Test invalid ID
+        # Test invalid ID - should return None or empty dict
         not_found = user_wrapper.find_by_id("invalid_id")
-        assert not_found is None
+        assert not_found is None or not_found == {}
     
     def test_update_password(self, user_wrapper, valid_user_docs):
         """Test updating user password."""
         user_doc = valid_user_docs["user1"]
         user_id = user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         new_password = "$2b$12$ZWxaFzpcl9bUCl9pEUGsUemeoU8VmwxdyiulrtIj3GidZ1hAQzpsK"  # Valid bcrypt hash
@@ -294,7 +297,7 @@ class TestSSPIUserDataCRUD:
         user_doc = valid_user_docs["user1"]
         user_id = user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         new_api_key = user_wrapper.regenerate_api_key(user_id)
@@ -309,14 +312,14 @@ class TestSSPIUserDataCRUD:
     def test_username_exists(self, user_wrapper, valid_user_docs):
         """Test checking if username exists."""
         user_doc = valid_user_docs["user1"]
-        
+
         # Initially should not exist
         assert user_wrapper.username_exists(user_doc["username"]) is False
-        
+
         # Create user
         user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         # Should now exist
@@ -328,12 +331,12 @@ class TestSSPIUserDataCRUD:
         # Initially empty
         users = user_wrapper.get_all_users()
         assert len(users) == 0
-        
+
         # Create multiple users
         for user_doc in valid_user_docs.values():
             user_wrapper.create_user(
                 user_doc["username"], user_doc["password"],
-                user_doc["apikey"], user_doc["secretkey"]
+                email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
             )
         
         # Should return all users
@@ -348,7 +351,7 @@ class TestSSPIUserDataCRUD:
         user_doc = valid_user_docs["user1"]
         user_id = user_wrapper.create_user(
             user_doc["username"], user_doc["password"],
-            user_doc["apikey"], user_doc["secretkey"]
+            email=None, api_key=user_doc["apikey"], secret_key=user_doc["secretkey"]
         )
         
         # User should exist

@@ -255,21 +255,16 @@ def apikey_web():
 
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
+@login_required
 def logout():
-    """Logout route - works for both authenticated and unauthenticated users"""
-    if current_user.is_authenticated:
-        try:
-            current_username = current_user.username
-            app.logger.info(f"Processing logout request for {current_username}")
-            logout_user()
-            app.logger.info(f"User {current_username} logged out")
-        except AttributeError:
-            # User is authenticated but username not available - still logout
-            app.logger.warning("Authenticated user without username attempted logout")
-            logout_user()
-    else:
-        # Anonymous user trying to logout - just clear session
-        app.logger.debug("Anonymous user accessed logout route")
+    """Logout route - requires authentication"""
+    try:
+        current_username = current_user.username
+        app.logger.info(f"Processing logout request for {current_username}")
+        logout_user()
+        app.logger.info(f"User {current_username} logged out")
+    except AttributeError:
+        app.logger.warning("Authenticated user without username attempted logout")
         logout_user()
 
     flash("You have been logged out successfully.")
