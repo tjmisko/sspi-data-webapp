@@ -26,9 +26,14 @@ class CustomizableSSPIStructure {
         this.cacheTimeout = null;
         this.datasetDetails = {};// Dataset details storage (maps dataset code to full details)
         this.actionHistory = new CustomizableActionHistory(this);
+
         this.initToolbar();
         this.initRoot();
         this.rigPillarRename();
+
+        // Progress tracking - initialize AFTER initRoot() creates this.container
+        this.progressState = this.loadProgressState();
+        this.initProgressTracker();
         this.rigCategoryIndicatorListeners(); 
         this.rigDragStructureListeners();
         this.setupKeyboardShortcuts();
@@ -45,10 +50,10 @@ class CustomizableSSPIStructure {
     }
 
     initToolbar() {
-        const toolbarTop = document.createElement('div');
-        toolbarTop.classList.add('sspi-toolbar');
-        const toolbarBottom = document.createElement('div');
-        toolbarBottom.classList.add('sspi-toolbar');
+        this.toolbarTop = document.createElement('div');
+        this.toolbarTop.classList.add('sspi-toolbar');
+        this.toolbarBottom = document.createElement('div');
+        this.toolbarBottom.classList.add('sspi-toolbar');
         const importBtn = document.createElement('button');
         importBtn.textContent = 'Load Default SSPI';
         importBtn.addEventListener('click', async () => {
@@ -64,12 +69,12 @@ class CustomizableSSPIStructure {
                     this.hideLoadingState();
                 } else {
                     this.hideLoadingState();
-                    alert('Error loading default metadata: ' + response.error);
+                    notifications.error('Error loading default metadata: ' + response.error);
                 }
             } catch (err) {
                 this.hideLoadingState();
                 console.error('Error loading default metadata:', err);
-                alert('Error loading default metadata. Please try again.');
+                notifications.error('Error loading default metadata. Please try again.');
             }
         });
         this.saveButton = document.createElement('button');
@@ -120,10 +125,14 @@ class CustomizableSSPIStructure {
         scoreVisualizeBtn.addEventListener('click', async () => {
             await this.scoreAndVisualize();
         });
-        toolbarTop.append(resetViewBtn, expandAllBtn, collapseAllBtn)
-        toolbarBottom.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, viewChangesBtn, this.discardButton);
-        this.parentElement.appendChild(toolbarTop);
-        this.parentElement.appendChild(toolbarBottom);
+        this.toolbarTop.append(resetViewBtn, expandAllBtn, collapseAllBtn)
+        this.toolbarBottom.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, viewChangesBtn, this.discardButton);
+        this.parentElement.appendChild(this.toolbarTop);
+        this.parentElement.appendChild(this.toolbarBottom);
+
+        // Initially hide toolbars (they'll be shown only in Build stage)
+        this.toolbarTop.style.display = 'none';
+        this.toolbarBottom.style.display = 'none';
     }
 
     async fetch(url) {
@@ -176,6 +185,123 @@ class CustomizableSSPIStructure {
                 if (e.key === 'Enter') { e.preventDefault(); h.blur(); }
             })
         );
+    }
+
+    // ========== Progress Tracking Methods ==========
+
+    initProgressTracker() {
+        // Create progress stepper container at the top
+        const stepperContainer = document.createElement('div');
+        stepperContainer.id = 'progress-stepper-container';
+        stepperContainer.classList.add('progress-stepper-container');
+        this.parentElement.insertBefore(stepperContainer, this.parentElement.firstChild);
+
+        // Create stage content container
+        const stageContainer = document.createElement('div');
+        stageContainer.id = 'stage-content-container';
+        stageContainer.classList.add('stage-content-container');
+        this.parentElement.appendChild(stageContainer);
+
+        // Initialize progress stepper
+        this.progressStepper = new ProgressStepper(stepperContainer, {
+            currentStage: this.progressState.currentStage,
+            completedStages: this.progressState.completedStages,
+            onStageClick: (stageId) => this.navigateToStage(stageId)
+        });
+
+        // Initialize stage manager
+        this.stageManager = new StageManager(stageContainer, this, {
+            currentStage: this.progressState.currentStage,
+            onStageComplete: (stageId) => this.handleStageComplete(stageId),
+            onStageChange: (stageId) => this.handleStageChange(stageId)
+        });
+
+        // Render initial stage
+        this.stageManager.setStage(this.progressState.currentStage);
+    }
+
+    loadProgressState() {
+        try {
+            const cached = localStorage.getItem('sspi-progress-state');
+            if (cached) {
+                return JSON.parse(cached);
+            }
+        } catch (error) {
+            console.error('Error loading progress state:', error);
+        }
+
+        // Default state
+        return {
+            currentStage: 0,
+            completedStages: []
+        };
+    }
+
+    saveProgressState() {
+        try {
+            const state = {
+                currentStage: this.progressState.currentStage,
+                completedStages: this.progressState.completedStages
+            };
+            localStorage.setItem('sspi-progress-state', JSON.stringify(state));
+        } catch (error) {
+            console.error('Error saving progress state:', error);
+        }
+    }
+
+    navigateToStage(stageId) {
+        // Only allow navigation to completed stages or previous stages
+        const canNavigate = this.progressState.completedStages.includes(stageId) ||
+                          stageId < this.progressState.currentStage;
+
+        if (canNavigate || stageId === this.progressState.currentStage) {
+            this.progressState.currentStage = stageId;
+            this.progressStepper.setCurrentStage(stageId);
+            this.stageManager.setStage(stageId);
+            this.saveProgressState();
+        }
+    }
+
+    handleStageComplete(stageId) {
+        // Mark stage as completed
+        if (!this.progressState.completedStages.includes(stageId)) {
+            this.progressState.completedStages.push(stageId);
+            this.progressStepper.markStageCompleted(stageId);
+        }
+
+        // Move to next stage
+        if (stageId < 4) {
+            this.progressState.currentStage = stageId + 1;
+            this.progressStepper.setCurrentStage(stageId + 1);
+            this.stageManager.setStage(stageId + 1);
+            this.saveProgressState();
+        }
+    }
+
+    handleStageChange(stageId) {
+        // Update UI based on current stage
+        // Hide/show SSPI container and toolbars based on stage
+        if (stageId === 1) {
+            // Build stage - show customization UI and toolbars
+            this.container.style.display = 'block';
+            this.toolbarTop.style.display = 'flex';
+            this.toolbarBottom.style.display = 'flex';
+        } else {
+            // Other stages - hide customization UI and toolbars (stage manager handles its own UI)
+            this.container.style.display = 'none';
+            this.toolbarTop.style.display = 'none';
+            this.toolbarBottom.style.display = 'none';
+        }
+    }
+
+    resetProgress() {
+        this.progressState = {
+            currentStage: 0,
+            completedStages: []
+        };
+        this.progressStepper.resetProgress();
+        this.stageManager.setStage(0);
+        this.saveProgressState();
     }
 
     rigCategoryIndicatorListeners() {
@@ -912,268 +1038,229 @@ class CustomizableSSPIStructure {
         }
     }
 
+    /**
+     * Private helper: Setup event handlers for a dataset element
+     * Used when restoring dataset elements during undo/redo
+     * @param {HTMLElement} datasetItem - The dataset item element
+     * @param {HTMLElement} selectedDatasetsDiv - The container for datasets
+     * @param {string} indicatorCode - The parent indicator code
+     * @param {boolean} recordRemovalAction - Whether to record action when removing
+     * @private
+     */
+    _setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, recordRemovalAction) {
+        const datasetCode = datasetItem.dataset.datasetCode;
+
+        // Expansion toggle
+        const existingExpandHandler = datasetItem._expandHandler;
+        if (!existingExpandHandler) {
+            const expandHandler = (e) => {
+                const isExpanded = datasetItem.dataset.expanded === 'true';
+                datasetItem.dataset.expanded = (!isExpanded).toString();
+                const slideout = datasetItem.querySelector('.dataset-details-slideout');
+                if (!isExpanded && slideout) {
+                    slideout.style.maxHeight = slideout.scrollHeight + 'px';
+                } else if (slideout) {
+                    slideout.style.maxHeight = '0';
+                }
+            };
+            datasetItem.addEventListener('click', expandHandler);
+            datasetItem._expandHandler = expandHandler; // Store reference to prevent duplicate listeners
+        }
+
+        // Remove button
+        const removeBtn = datasetItem.querySelector('.remove-dataset');
+        if (removeBtn) {
+            // Remove any existing listeners
+            const oldBtn = removeBtn.cloneNode(true);
+            removeBtn.parentNode.replaceChild(oldBtn, removeBtn);
+
+            oldBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                if (recordRemovalAction) {
+                    const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
+                    const datasetDetails = this.datasetDetails[datasetCode];
+
+                    this.actionHistory.recordAction({
+                        type: 'remove-dataset',
+                        message: `Removed dataset "${datasetCode}" from indicator "${indicatorCode}"`,
+                        delta: {
+                            type: 'remove-dataset',
+                            indicatorCode,
+                            datasetCode,
+                            datasetDetails,
+                            position
+                        },
+                        undo: () => {
+                            const items = Array.from(selectedDatasetsDiv.children);
+                            if (position >= items.length) {
+                                selectedDatasetsDiv.appendChild(datasetItem);
+                            } else {
+                                selectedDatasetsDiv.insertBefore(datasetItem, items[position]);
+                            }
+                            this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, true);
+                            this.flagUnsaved();
+                            this.validate();
+                        },
+                        redo: () => {
+                            datasetItem.remove();
+                            this.flagUnsaved();
+                            this.validate();
+                        }
+                    });
+                }
+
+                datasetItem.remove();
+                this.flagUnsaved();
+                this.validate();
+            });
+        }
+    }
+
     // ========== SECTION 4: API Methods - Indicators ==========
 
     /**
-     * Set score function for an indicator
-     * @param {string} indicatorCode - The indicator code
-     * @param {Object} options - Options object
-     * @param {string} options.scoreFunction - The new score function
-     * @returns {Object} Result with success status and action
-     */
-    setScoreFunction(indicatorCode, scoreFunction) {
-        if (!indicatorCode) {
-            return { success: false, error: 'Indicator code is required' };
-        }
-        if (!scoreFunction) {
-            return { success: false, error: 'Score function is required' };
-        }
-        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
-        if (!indicatorEl) {
-            return { success: false, error: `Indicator ${indicatorCode} not found` };
-        }
-        // Find score function element
-        const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
-        if (!scoreFunctionEl) {
-            return { success: false, error: 'Score function element not found' };
-        }
-        // Capture old value
-        const oldScoreFunction = scoreFunctionEl.textContent;
-        if (oldScoreFunction === scoreFunction) {
-            return { success: true, message: 'No change needed' };
-        }
-        scoreFunctionEl.textContent = scoreFunction;
-        // Record action
-        const action = this.actionHistory.recordAction({
-            type: 'set-score-function',
-            message: `Updated score function for indicator "${indicatorCode}"`,
-            delta: {
-                type: 'set-score-function',
-                indicatorCode: indicatorCode,
-                from: oldScoreFunction,
-                to: scoreFunction
-            },
-            undo: () => {
-                scoreFunctionEl.textContent = oldScoreFunction;
-                this.validate();
-            },
-            redo: () => {
-                scoreFunctionEl.textContent = scoreFunction;
-                this.validate();
-            }
-        });
-        this.flagUnsaved();
-        this.validate();
-        return { success: true, action: action };
-    }
-
-    /**
-     * Set code for an indicator
+     * Private method: Add dataset to an indicator element (may or may not be in DOM yet)
+     * @private
+     * @param {string} datasetCode - The dataset code to add
      * @param {HTMLElement} indicatorElement - The indicator element
-     * @param {Object} options - Options object
-     * @param {string} options.newCode - The new code value
-     * @returns {Object} Result with success status and action
+     * @param {string} indicatorCode - The indicator code (for action history messages)
+     * @param {Object} options - Options
+     * @param {boolean} [options.record=true] - Whether to record this action in undo/redo history
+     * @returns {Object} Result with success status, action, and element
      */
-    setIndicatorCode(indicatorElement, newCode) {
-        if (!(indicatorElement instanceof HTMLElement)) {
-            return { success: false, error: 'Indicator element is required' };
-        }
-        if (!newCode) {
-            return { success: false, error: 'New code is required' };
-        }
-        if (!this.validateCode(newCode, 'indicator')) {
-            return { success: false, error: 'Invalid indicator code format (must be 6 uppercase letters/numbers)' };
-        }
-        if (!indicatorElement.id) {
-            indicatorElement.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
-        }
-        const elementId = indicatorElement.id;
-        const oldCode = indicatorElement.dataset.indicatorCode || '';
-        const codeInput = indicatorElement.querySelector('.indicator-code-input');
-        if (!this.isCodeUnique(newCode, 'indicator', codeInput)) {
-            return { success: false, error: 'Code already in use' };
-        }
-        if (oldCode === newCode) {
-            return { success: true, message: 'No change needed' };
-        }
-        this.updateElementCode(indicatorElement, newCode);
-        if (codeInput) {
-            codeInput.value = newCode;
-        }
-        const isNewIndicator = !oldCode || oldCode === '';
-        if (isNewIndicator) {
-            const nameElement = indicatorElement.querySelector('.indicator-name-input');
-            const indicatorName = nameElement ? nameElement.value : 'New Indicator';
-            const parentCategory = indicatorElement.closest('[data-category-code]');
-            const categoryCode = parentCategory ? parentCategory.dataset.categoryCode : '';
-            const categoryNameEl = parentCategory ? parentCategory.querySelector('.category-name') : null;
-            const categoryName = categoryNameEl ? categoryNameEl.textContent : '';
-            this.actionHistory.recordAction({
-                type: 'add-indicator',
-                message: `Added indicator "${newCode}" to ${categoryName} "${categoryCode}"`,
-                delta: {
-                    type: 'add-indicator',
-                    indicatorCode: indicatorCode,
-                    parentCode: parentCode,
-                    parentType: parentType,
-                    indicatorMetadata: indicatorMetadata,
-                    position: position
-                },
-                undo: () => {
-                    indEl.remove();
-                    this.validate();
-                },
-                redo: () => {
-                    indicatorsContainer.appendChild(indEl);
-                    this.validate();
-                }
-            });
-        }
-        // Record action with ID-based undo/redo (codes change, but IDs are stable)
-        const action = this.actionHistory.recordAction({
-            type: 'set-indicator-code',
-            message: oldCode
-                ? `Changed indicator code from "${oldCode}" to "${newCode}"`
-                : `Set indicator code to "${newCode}"`,
-            delta: {
-                type: 'set-indicator-code',
-                indicatorCode: newCode,  // New code for backend reference
-                from: oldCode,
-                to: newCode
-            },
-            undo: () => {
-                // Find by stable ID (not by code which has changed)
-                const el = document.getElementById(elementId);
-                if (el) {
-                    this.updateElementCode(el, oldCode);
-                    const input = el.querySelector('.indicator-code-input');
-                    if (input) input.value = oldCode;
-                    this.validate();
-                }
-            },
-            redo: () => {
-                // Find by stable ID (not by code which has changed)
-                const el = document.getElementById(elementId);
-                if (el) {
-                    this.updateElementCode(el, newCode);
-                    const input = el.querySelector('.indicator-code-input');
-                    if (input) input.value = newCode;
-                    this.validate();
-                }
-            }
-        });
-        // Flag unsaved and validate
-        this.flagUnsaved();
-        this.validate();
-        return { success: true, action: action };
-    }
-
-    /**
-     * Add dataset to an indicator
-     * @param {string} indicatorCode - The indicator code
-     * @param {Object} options - Options object
-     * @param {string} options.datasetCode - The dataset code to add
-     * @param {Object} options.datasetDetails - The dataset details object (optional, will fetch if not provided)
-     * @returns {Object} Result with success status and action
-     */
-    addDataset(datasetCode, indicatorCode) {
-        if (!indicatorCode) {
-            return { success: false, error: 'Indicator code is required' };
-        }
-        if (!datasetCode) {
-            return { success: false, error: 'Dataset code is required' };
-        }
-        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
-        if (!indicatorEl) {
-            return { success: false, error: `Indicator ${indicatorCode} not found` };
-        }
-        const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
+    _addDatasetToIndicatorElement(datasetCode, indicatorElement, indicatorCode, { record = true } = {}) {
+        const selectedDatasetsDiv = indicatorElement.querySelector('.selected-datasets');
         if (!selectedDatasetsDiv) {
             return { success: false, error: 'Selected datasets container not found' };
         }
+
+        // Check for duplicates
         const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
         if (existing) {
             return { success: false, error: 'Dataset already added to this indicator' };
         }
-        details = this.datasetDetails[datasetCode];
+
+        // Lookup dataset details (always from this.datasetDetails)
+        const details = this.datasetDetails[datasetCode];
         if (!details) {
-            return { success: false, error: `Dataset\u0020${datasetCode}\u0020not found in datasetDetails` };
+            return { success: false, error: `Dataset ${datasetCode} not found in datasetDetails` };
         }
-        const position = selectedDatasetsDiv.querySelectorAll('.dataset-item').length;
-        // Create dataset item using existing method
-        // (We'll call addDatasetToIndicatorWithDetails but capture the element)
-        const formatNumber = (num) => {
-            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        };
+
+        // Create dataset item element
+        const formatNumber = (num) => num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        const unitHtml = details.Unit ? `
+            <div class="detail-row">
+                <span class="detail-label">Unit</span>
+                <span class="detail-value">${details.Unit}</span>
+            </div>` : '';
+
+        const rangeHtml = details.Range ? `
+            <div class="detail-row">
+                <span class="detail-label">Range</span>
+                <span class="detail-value">${formatNumber(details.Range.yMin)} – ${formatNumber(details.Range.yMax)}</span>
+            </div>` : '';
+
         const datasetItem = document.createElement('div');
         datasetItem.classList.add('dataset-item');
         datasetItem.dataset.datasetCode = datasetCode;
         datasetItem.dataset.expanded = 'false';
         datasetItem.innerHTML = `
-<div class="dataset-item-header">
-    <div class="dataset-info">
-        <span class="dataset-name">${details.DatasetName || 'Unknown Dataset'}</span>
-        <span class="dataset-code">${datasetCode}</span>
-    </div>
-    <div class="dataset-actions">
-        <button class="remove-dataset" type="button" title="Remove dataset">×</button>
-    </div>
-</div>
-<div class="dataset-details-slideout">
-    <div class="detail-row">
-        <span class="detail-label">Description</span>
-        <span class="detail-value">${details.Description || 'No description available'}</span>
-    </div>
-    <div class="detail-row">
-        <span class="detail-label">Organization</span>
-        <span class="detail-value">${details.Source?.OrganizationName || 'N/A'}\u0020(${details.Source.OrganizationCode})</span>
-    </div>${unitHtml}${rangeHtml}
-</div>
-`;
-        if (details.Unit) {
-            datasetItem.innerHTML += `
-<div class="detail-row">
-    <span class="detail-label">Unit</span>
-    <span class="detail-value">${details.Unit}</span>
-</div>
-`; 
-        }
-        if (details.Range) {
-        datasetItem.innerHTML += `
-<div class="detail-row">
-    <span class="detail-label">Range</span>
-    <span class="detail-value">${formatNumber(details.Range.yMin)}\u0020–\u0020${formatNumber(details.Range.yMax)}</span>
-</div>
-`;
-        }
-        const header = datasetItem.querySelector('.dataset-item-header');
-        header.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('remove-dataset')) {
-                const isExpanded = datasetItem.dataset.expanded === 'true';
-                datasetItem.dataset.expanded = (!isExpanded).toString();
-            }
-        });
+            <div class="dataset-item-header">
+                <div class="dataset-info">
+                    <span class="dataset-name">${details.DatasetName || 'Unknown Dataset'}</span>
+                    <span class="dataset-code">${datasetCode}</span>
+                </div>
+                <div class="dataset-actions">
+                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
+                </div>
+            </div>
+            <div class="dataset-details-slideout">
+                <div class="detail-row">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">${details.Description || 'No description available'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Organization</span>
+                    <span class="detail-value">${details.Source?.OrganizationName || 'N/A'}${details.Source?.OrganizationCode ? ' (' + details.Source.OrganizationCode + ')' : ''}</span>
+                </div>
+                ${unitHtml}
+                ${rangeHtml}
+            </div>
+        `;
+
+        // Setup event handlers
+        this._setupDatasetHandlers(datasetItem, selectedDatasetsDiv, indicatorCode, record);
+
+        // Get position before adding
+        const position = selectedDatasetsDiv.querySelectorAll('.dataset-item').length;
+
+        // Add to DOM
         selectedDatasetsDiv.appendChild(datasetItem);
-        const action = this.actionHistory.recordAction({
-            type: 'add-dataset',
-            message: `Added dataset ${datasetCode} to indicator ${indicatorCode}`,
-            delta: {
+
+        // Record action conditionally
+        let action = null;
+        if (record) {
+            action = this.actionHistory.recordAction({
                 type: 'add-dataset',
-                indicatorCode: indicatorCode,
-                datasetCode: datasetCode,
-            },
-            undo: () => {
-                datasetItem.remove();
-                this.validate();
-            },
-            redo: () => {
-                selectedDatasetsDiv.appendChild(datasetItem);
-                this.validate();
-            }
-        });
+                message: `Added dataset "${datasetCode}" to indicator "${indicatorCode}"`,
+                delta: {
+                    type: 'add-dataset',
+                    indicatorCode: indicatorCode,
+                    datasetCode: datasetCode,
+                    position: position
+                },
+                undo: () => {
+                    datasetItem.remove();
+                    this.flagUnsaved();
+                    this.validate();
+                },
+                redo: () => {
+                    const items = Array.from(selectedDatasetsDiv.children);
+                    if (position >= items.length) {
+                        selectedDatasetsDiv.appendChild(datasetItem);
+                    } else {
+                        selectedDatasetsDiv.insertBefore(datasetItem, items[position]);
+                    }
+                    this.flagUnsaved();
+                    this.validate();
+                }
+            });
+        }
+
+        // Update state
         this.flagUnsaved();
         this.validate();
-        return { success: true, action: action };
+
+        return { success: true, action, element: datasetItem };
+    }
+
+    /**
+     * Add dataset to an indicator (code-based public API)
+     * @param {string} datasetCode - The dataset code to add
+     * @param {string} indicatorCode - The indicator code
+     * @param {Object} options - Options
+     * @param {boolean} [options.record=true] - Whether to record this action in undo/redo history
+     * @returns {Object} Result with success status, action, and element
+     */
+    addDataset(datasetCode, indicatorCode, { record = true } = {}) {
+        // Validate inputs
+        if (!datasetCode) {
+            return { success: false, error: 'Dataset code is required' };
+        }
+        if (!indicatorCode) {
+            return { success: false, error: 'Indicator code is required' };
+        }
+
+        // Find indicator element in DOM
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
+            return { success: false, error: `Indicator ${indicatorCode} not found` };
+        }
+
+        // Delegate to private method
+        return this._addDatasetToIndicatorElement(datasetCode, indicatorEl, indicatorCode, { record });
     }
 
     /**
@@ -1281,7 +1368,7 @@ class CustomizableSSPIStructure {
                 datasetCodes.forEach(datasetCode => {
                     const details = this.datasetDetails[datasetCode];
                     if (details) {
-                        this.addDataset(datasetCode, indicatorCode {datasetDetails: details });
+                        this.addDataset(datasetCode, indicatorCode, {datasetDetails: details });
                     }
                 });
             }
@@ -1459,51 +1546,301 @@ class CustomizableSSPIStructure {
      * @param {string} options.indicatorName - The new indicator name
      * @returns {Object} Result with success and action
      */
-    setIndicatorName(indicatorCode, { indicatorName } = {}) {
-        // Validate inputs
-        if (!indicatorCode) {
-            return { success: false, error: 'Indicator code is required' };
+    /**
+     * Modify multiple properties of an indicator in a single call
+     * Records separate actions for each property changed (granular undo/redo)
+     * @param {string} indicatorCode - The indicator code to modify
+     * @param {Object} changes - Object containing properties to change
+     * @param {string} [changes.newIndicatorCode] - New indicator code
+     * @param {string} [changes.indicatorName] - New indicator name
+     * @param {string} [changes.scoreFunction] - New score function
+     * @param {Array<string>} [changes.datasetCodes] - Array of dataset codes (replaces all existing)
+     * @param {boolean} [changes.record=true] - Whether to record actions
+     * @returns {Object} Result with success status, actions array, and error if applicable
+     */
+    modifyIndicator(indicatorCode, { newIndicatorCode, indicatorName, scoreFunction, datasetCodes, record = true } = {}) {
+        // Validate at least one change is specified
+        if (newIndicatorCode === undefined && indicatorName === undefined &&
+            scoreFunction === undefined && datasetCodes === undefined) {
+            return { success: false, error: 'No changes specified' };
         }
-        if (!indicatorName) {
-            return { success: false, error: 'Indicator name is required' };
-        }
+
         // Find indicator element
-        const indEl = this.findElementByCode(indicatorCode, 'Indicator');
-        if (!indEl) {
+        const indicatorEl = this.findElementByCode(indicatorCode, 'Indicator');
+        if (!indicatorEl) {
             return { success: false, error: `Indicator ${indicatorCode} not found` };
         }
-        // Find indicator name element
-        const indicatorNameEl = indEl.querySelector('.indicator-name');
-        if (!indicatorNameEl) {
-            return { success: false, error: 'Indicator name element not found' };
+
+        // Ensure element has stable ID for undo/redo
+        if (!indicatorEl.id) {
+            indicatorEl.id = `indicator-${Math.random().toString(36).substr(2,9)}`;
         }
-        const oldName = indicatorNameEl.textContent;
-        if (oldName === indicatorName) {
-            return { success: true, message: 'No change needed' };
-        }
-        indicatorNameEl.textContent = indicatorName;
-        const action = this.actionHistory.recordAction({
-            type: 'set-indicator-name',
-            message: `Updated indicator name from "${oldName}" to "${indicatorName}"`,
-            delta: {
-                type: 'set-indicator-name',
-                indicatorCode: indicatorCode,
-                from: oldName,
-                to: indicatorName
-            },
-            undo: () => {
-                indicatorNameEl.textContent = oldName;
-            },
-            redo: () => {
-                indicatorNameEl.textContent = indicatorName;
+        const elementId = indicatorEl.id;
+
+        const actions = [];
+        let currentCode = indicatorCode; // Track code changes for subsequent operations
+
+        // 1. Handle indicator code change
+        if (newIndicatorCode !== undefined) {
+            // Validate new code
+            if (!this.validateCode(newIndicatorCode, 'indicator')) {
+                return { success: false, error: `Invalid indicator code format: ${newIndicatorCode} (must be 6 uppercase letters/numbers)` };
             }
-        });
 
-        // Flag unsaved
-        this.flagUnsaved();
+            const codeInput = indicatorEl.querySelector('.indicator-code-input');
+            if (!this.isCodeUnique(newIndicatorCode, 'indicator', codeInput)) {
+                return { success: false, error: `Code "${newIndicatorCode}" is already in use` };
+            }
 
-        return { success: true, action: action };
+            const oldCode = indicatorEl.dataset.indicatorCode || '';
+
+            if (oldCode !== newIndicatorCode) {
+                // Update DOM
+                this.updateElementCode(indicatorEl, newIndicatorCode);
+                if (codeInput) {
+                    codeInput.value = newIndicatorCode;
+                }
+
+                // Record action
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'set-code',
+                        message: oldCode
+                            ? `Changed indicator code from "${oldCode}" to "${newIndicatorCode}"`
+                            : `Set indicator code to "${newIndicatorCode}"`,
+                        delta: {
+                            type: 'set-code',
+                            indicatorCode: newIndicatorCode,
+                            from: oldCode,
+                            to: newIndicatorCode
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                this.updateElementCode(el, oldCode);
+                                const input = el.querySelector('.indicator-code-input');
+                                if (input) input.value = oldCode;
+                                this.validate();
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                this.updateElementCode(el, newIndicatorCode);
+                                const input = el.querySelector('.indicator-code-input');
+                                if (input) input.value = newIndicatorCode;
+                                this.validate();
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+
+                currentCode = newIndicatorCode; // Update for subsequent operations
+            }
+        }
+
+        // 2. Handle indicator name change
+        if (indicatorName !== undefined) {
+            const indicatorNameEl = indicatorEl.querySelector('.indicator-name');
+            if (!indicatorNameEl) {
+                return { success: false, error: 'Indicator name element not found' };
+            }
+
+            const oldName = indicatorNameEl.textContent.trim();
+
+            if (oldName !== indicatorName) {
+                // Update DOM
+                indicatorNameEl.textContent = indicatorName;
+
+                // Record action
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'set-name',
+                        message: `Changed indicator name from "${oldName}" to "${indicatorName}"`,
+                        delta: {
+                            type: 'set-name',
+                            indicatorCode: currentCode,
+                            from: oldName,
+                            to: indicatorName
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const nameEl = el.querySelector('.indicator-name');
+                                if (nameEl) nameEl.textContent = oldName;
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const nameEl = el.querySelector('.indicator-name');
+                                if (nameEl) nameEl.textContent = indicatorName;
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+            }
+        }
+
+        // 3. Handle score function change
+        if (scoreFunction !== undefined) {
+            const scoreFunctionEl = indicatorEl.querySelector('.editable-score-function');
+            if (!scoreFunctionEl) {
+                return { success: false, error: 'Score function element not found' };
+            }
+
+            const oldScoreFunction = scoreFunctionEl.textContent.trim();
+
+            if (oldScoreFunction !== scoreFunction) {
+                // Update DOM
+                scoreFunctionEl.textContent = scoreFunction;
+
+                // Record action
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'set-score-function',
+                        message: `Updated score function for indicator "${currentCode}"`,
+                        delta: {
+                            type: 'set-score-function',
+                            indicatorCode: currentCode,
+                            from: oldScoreFunction,
+                            to: scoreFunction
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const sfEl = el.querySelector('.editable-score-function');
+                                if (sfEl) sfEl.textContent = oldScoreFunction;
+                                this.validate();
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const sfEl = el.querySelector('.editable-score-function');
+                                if (sfEl) sfEl.textContent = scoreFunction;
+                                this.validate();
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+            }
+        }
+
+        // 4. Handle dataset replacement
+        if (datasetCodes !== undefined) {
+            if (!Array.isArray(datasetCodes)) {
+                return { success: false, error: 'datasetCodes must be an array' };
+            }
+
+            const selectedDatasetsDiv = indicatorEl.querySelector('.selected-datasets');
+            if (!selectedDatasetsDiv) {
+                return { success: false, error: 'Selected datasets container not found' };
+            }
+
+            // Get current datasets
+            const currentDatasetItems = Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'));
+            const currentDatasetCodes = currentDatasetItems.map(item => item.dataset.datasetCode);
+
+            // Only proceed if there's a difference
+            const hasChanged = JSON.stringify(currentDatasetCodes.sort()) !== JSON.stringify([...datasetCodes].sort());
+
+            if (hasChanged) {
+                // Store current datasets HTML for undo
+                const oldDatasetsHTML = selectedDatasetsDiv.innerHTML;
+
+                // Remove all existing datasets
+                currentDatasetItems.forEach(item => item.remove());
+
+                // Add new datasets
+                const newDatasetElements = [];
+                for (const datasetCode of datasetCodes) {
+                    const datasetDetails = this.datasetDetails[datasetCode];
+                    if (!datasetDetails) {
+                        console.warn(`Dataset ${datasetCode} not found in datasetDetails`);
+                        continue;
+                    }
+
+                    // Use existing method to add dataset without recording individual actions
+                    const result = this.addDataset(datasetCode, currentCode, {
+                        datasetDetails,
+                        record: false // Don't record individual add actions
+                    });
+
+                    if (result.success && result.element) {
+                        newDatasetElements.push(result.element);
+                    }
+                }
+
+                // Record single action for dataset replacement
+                if (record) {
+                    const action = this.actionHistory.recordAction({
+                        type: 'modify-indicator',
+                        subtype: 'replace-datasets',
+                        message: `Replaced datasets for indicator "${currentCode}" (${datasetCodes.length} datasets)`,
+                        delta: {
+                            type: 'replace-datasets',
+                            indicatorCode: currentCode,
+                            from: currentDatasetCodes,
+                            to: datasetCodes
+                        },
+                        undo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const dsDiv = el.querySelector('.selected-datasets');
+                                if (dsDiv) {
+                                    dsDiv.innerHTML = oldDatasetsHTML;
+                                    // Re-attach event handlers
+                                    dsDiv.querySelectorAll('.dataset-item').forEach(item => {
+                                        this._setupDatasetHandlers(item, dsDiv, currentCode, true);
+                                    });
+                                }
+                                this.validate();
+                            }
+                        },
+                        redo: () => {
+                            const el = document.getElementById(elementId);
+                            if (el) {
+                                const dsDiv = el.querySelector('.selected-datasets');
+                                if (dsDiv) {
+                                    // Clear and re-add
+                                    Array.from(dsDiv.children).forEach(child => child.remove());
+                                    newDatasetElements.forEach(dsEl => {
+                                        dsDiv.appendChild(dsEl.cloneNode(true));
+                                    });
+                                    // Re-attach event handlers
+                                    dsDiv.querySelectorAll('.dataset-item').forEach(item => {
+                                        this._setupDatasetHandlers(item, dsDiv, currentCode, true);
+                                    });
+                                }
+                                this.validate();
+                            }
+                        }
+                    });
+                    actions.push(action);
+                }
+            }
+        }
+
+        // Flag unsaved and validate if any changes were made
+        if (actions.length > 0 || !record) {
+            this.flagUnsaved();
+            this.validate();
+        }
+
+        return {
+            success: true,
+            actions: actions,
+            message: actions.length === 0 ? 'No changes made' : `Made ${actions.length} change(s) to indicator "${currentCode}"`
+        };
     }
+
     // ========== SECTION 5: API Methods - Categories ==========
 
     /**
@@ -2266,15 +2603,10 @@ class CustomizableSSPIStructure {
 
         // Add datasets if present (using backend field DatasetCodes)
         if (indicator.DatasetCodes && indicator.DatasetCodes.length > 0) {
-            const selectedDatasetsDiv = ind.querySelector('.selected-datasets');
+            const indicatorCode = indicator.IndicatorCode || '';
             indicator.DatasetCodes.forEach(datasetCode => {
-                // Look up full dataset details if available
-                const datasetDetail = this.datasetDetails && this.datasetDetails[datasetCode];
-                if (datasetDetail) {
-                    this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, datasetDetail);
-                } else {
-                    this.addDatasetToIndicator(selectedDatasetsDiv, datasetCode);
-                }
+                // Use private method - element not in DOM yet
+                this._addDatasetToIndicatorElement(datasetCode, ind, indicatorCode, { record: false });
             });
         }
 
@@ -2493,7 +2825,7 @@ class CustomizableSSPIStructure {
                         overlay.remove();
                         console.log(`Category\u0020moved\u0020to\u0020pillar:\u0020${userInput}`);
                     } else {
-                        alert('Error:\u0020Could\u0020not\u0020find\u0020categories\u0020container\u0020in\u0020the\u0020target\u0020pillar');
+                        notifications.error('Error:\u0020Could\u0020not\u0020find\u0020categories\u0020container\u0020in\u0020the\u0020target\u0020pillar');
                     }
                 } else if (isIndicator) {
                     // Move indicator to category's indicators-container
@@ -2504,11 +2836,11 @@ class CustomizableSSPIStructure {
                         overlay.remove();
                         console.log(`Indicator\u0020moved\u0020to\u0020category:\u0020${userInput}`);
                     } else {
-                        alert('Error:\u0020Could\u0020not\u0020find\u0020indicators\u0020container\u0020in\u0020the\u0020target\u0020category');
+                        notifications.error('Error:\u0020Could\u0020not\u0020find\u0020indicators\u0020container\u0020in\u0020the\u0020target\u0020category');
                     }
                 }
             } else {
-                alert(`${destinationType.charAt(0).toUpperCase() + destinationType.slice(1)}\u0020"${userInput}"\u0020not\u0020found.\u0020Please\u0020use\u0020a\u0020valid\u0020${destinationType}\u0020name\u0020or\u0020code.`);
+                notifications.warning(`${destinationType.charAt(0).toUpperCase() + destinationType.slice(1)}\u0020"${userInput}"\u0020not\u0020found.\u0020Please\u0020use\u0020a\u0020valid\u0020${destinationType}\u0020name\u0020or\u0020code.`);
             }
         };
 
@@ -2650,7 +2982,7 @@ class CustomizableSSPIStructure {
             itemName = nameEl ? nameEl.textContent.trim() : 'Pillar';
         }
         if (!itemCode) {
-            alert('Cannot\u0020preview:\u0020No\u0020code\u0020assigned\u0020to\u0020this\u0020item\u0020yet.');
+            notifications.warning('Cannot\u0020preview:\u0020No\u0020code\u0020assigned\u0020to\u0020this\u0020item\u0020yet.');
             return;
         }
         const overlay = document.createElement('div');
@@ -2722,7 +3054,7 @@ class CustomizableSSPIStructure {
         // Extract dataset code from the data attribute
         const datasetCode = datasetItem.dataset.datasetCode;
         if (!datasetCode) {
-            alert('Cannot\u0020preview:\u0020No\u0020dataset\u0020code\u0020found.');
+            notifications.warning('Cannot\u0020preview:\u0020No\u0020dataset\u0020code\u0020found.');
             return;
         }
         // Get dataset name from the UI
@@ -3061,50 +3393,8 @@ class CustomizableSSPIStructure {
      * @param {number} duration - Duration in milliseconds (default: 3000)
      */
     showNotification(message, type = 'info', duration = 3000) {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 5px;
-            color: white;
-            font-weight: normal;
-            z-index: 10000;
-            max-width: 450px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            animation: slideInRight 0.3s ease-out;
-            word-wrap: break-word;
-            line-height: 1.4;
-        `;
-        // Set background color based on type
-        switch(type) {
-            case 'success':
-                notification.style.backgroundColor = '#4CAF50';
-                break;
-            case 'error':
-                notification.style.backgroundColor = '#f44336';
-                break;
-            case 'warning':
-                notification.style.backgroundColor = '#ff9800';
-                break;
-            default:
-                notification.style.backgroundColor = '#2196F3';
-        }
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        // Auto-remove after duration
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.style.animation = 'slideOutRight 0.3s ease-in';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }
-        }, duration);
-        return notification;
+        // Delegate to global notification manager
+        return notifications.show(message, type, duration);
     }
 
     // Helper methods for undo/redo
@@ -3378,8 +3668,15 @@ class CustomizableSSPIStructure {
         if (result.errors.length === 0 && result.warnings.length === 0) {
             message += 'Metadata is valid! ✓';
         }
-        
-        alert(message);
+
+        // Show appropriate notification based on validation results
+        if (result.errors.length > 0) {
+            notifications.error(message, 10000); // Longer duration for errors
+        } else if (result.warnings.length > 0) {
+            notifications.warning(message, 8000);
+        } else {
+            notifications.success(message);
+        }
     }
 
     /**
@@ -3388,7 +3685,7 @@ class CustomizableSSPIStructure {
     showChangesHistory() {
         if (!window.ChangesHistoryModal) {
             console.error('ChangesHistoryModal class not loaded');
-            alert('Changes history feature is not available. Please refresh the page.');
+            notifications.error('Changes history feature is not available. Please refresh the page.');
             return;
         }
 
@@ -3451,7 +3748,7 @@ class CustomizableSSPIStructure {
         } catch (error) {
             this.hideLoadingState();
             console.error('Error discarding changes:', error);
-            alert('Error discarding changes. Please try again.');
+            notifications.error('Error discarding changes. Please try again.');
         }
     }
 
@@ -3703,40 +4000,32 @@ class CustomizableSSPIStructure {
                                 console.log(`No ScoreFunction for ${indicatorItem.ItemCode}`);
                             }
                         }
-                        // Add datasets if present - lookup from DatasetCodes using the map
+                        // Add datasets if present - use private method since element isn't in DOM yet
                         const datasetCodes = indicatorItem.DatasetCodes || [];
                         if (!this.isImporting) {
                             console.log(`Processing ${indicatorItem.ItemCode}: ${datasetCodes.length} dataset codes`);
                         }
                         if (datasetCodes.length > 0) {
-                            const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
-                            if (!selectedDatasetsDiv) {
-                                console.error(`No .selected-datasets div found for indicator ${indicatorItem.ItemCode}`);
-                            } else {
+                            datasetCodes.forEach((datasetCode, idx) => {
                                 if (!this.isImporting) {
-                                    console.log(`Found .selected-datasets div for ${indicatorItem.ItemCode}, adding ${datasetCodes.length} datasets`);
+                                    console.log(`Adding dataset ${datasetCode} to ${indicatorItem.ItemCode}`);
                                 }
-                                datasetCodes.forEach((datasetCode, idx) => {
-                                    // Lookup dataset details from map
-                                    const datasetDetail = this.datasetDetails[datasetCode];
-                                    if (!datasetDetail) {
-                                        console.warn(`Dataset ${datasetCode} not found in datasetDetails map for indicator ${indicatorItem.ItemCode}`);
-                                        return;
-                                    }
-                                    if (!this.isImporting) {
-                                        console.log(`Adding dataset ${datasetCode} to ${indicatorItem.ItemCode}`);
-                                    }
-                                    this.addDatasetToIndicatorSilent(
-                                        selectedDatasetsDiv,
-                                        datasetDetail,
-                                        1.0  // Default weight
-                                    );
-                                });
-                                // Verify datasets were added
-                                if (!this.isImporting) {
-                                    const addedDatasets = selectedDatasetsDiv.querySelectorAll('.dataset-item');
-                                    console.log(`After adding: ${addedDatasets.length} dataset items in DOM for ${indicatorItem.ItemCode}`);
+                                // Use private method - element not in DOM yet, can't use code-based addDataset()
+                                const result = this._addDatasetToIndicatorElement(
+                                    datasetCode,
+                                    indEl,
+                                    indicatorItem.ItemCode,
+                                    { record: false }
+                                );
+                                if (!result.success) {
+                                    console.warn(`Failed to add dataset ${datasetCode}: ${result.error}`);
                                 }
+                            });
+                            // Verify datasets were added
+                            if (!this.isImporting) {
+                                const selectedDatasetsDiv = indEl.querySelector('.selected-datasets');
+                                const addedDatasets = selectedDatasetsDiv?.querySelectorAll('.dataset-item') || [];
+                                console.log(`After adding: ${addedDatasets.length} dataset items in DOM for ${indicatorItem.ItemCode}`);
                             }
                         } else if (!this.isImporting) {
                             console.log(`No datasets to add for ${indicatorItem.ItemCode}`);
@@ -3750,6 +4039,121 @@ class CustomizableSSPIStructure {
         // Single DOM append for all categories in this pillar
         categoriesContainer.appendChild(fragment);
         this.validate(categoriesContainer);
+    }
+
+    exportData() {
+        // Export current SSPI structure as metadata array
+        const metadataItems = [];
+
+        // Add SSPI root item
+        const pillarCodes = [];
+        const pillarColumns = this.container.querySelectorAll('.pillar-column');
+
+        pillarColumns.forEach(col => {
+            const pillarCode = col.dataset.pillarCode || col.dataset.itemCode;
+            if (pillarCode) {
+                pillarCodes.push(pillarCode);
+            }
+        });
+
+        metadataItems.push({
+            ItemType: 'SSPI',
+            ItemCode: 'sspi',
+            ItemName: 'Sustainable and Shared Prosperity Policy Index',
+            Children: pillarCodes,
+            DocumentType: 'ItemDetail'
+        });
+
+        // Process each pillar
+        pillarColumns.forEach(col => {
+            const pillarCode = col.dataset.pillarCode || col.dataset.itemCode;
+            const pillarName = col.querySelector('.pillar-name')?.textContent || '';
+            const categoryCodes = [];
+
+            // Get all categories in this pillar
+            const categories = col.querySelectorAll('.category-box');
+            categories.forEach(catEl => {
+                const categoryCode = catEl.dataset.categoryCode || catEl.dataset.itemCode;
+                if (categoryCode) {
+                    categoryCodes.push(categoryCode);
+                }
+            });
+
+            // Add pillar item
+            metadataItems.push({
+                ItemType: 'Pillar',
+                ItemCode: pillarCode,
+                ItemName: pillarName,
+                PillarCode: pillarCode,
+                Children: categoryCodes,
+                CategoryCodes: categoryCodes,
+                DocumentType: 'PillarDetail',
+                TreePath: `sspi/${pillarCode.toLowerCase()}`
+            });
+
+            // Process each category
+            categories.forEach(catEl => {
+                const categoryCode = catEl.dataset.categoryCode || catEl.dataset.itemCode;
+                const categoryName = catEl.querySelector('.customization-category-header-title')?.textContent || '';
+                const indicatorCodes = [];
+
+                // Get all indicators in this category
+                const indicators = catEl.querySelectorAll('.indicator-card');
+                indicators.forEach(indEl => {
+                    const indicatorCode = indEl.dataset.indicatorCode || indEl.dataset.itemCode;
+                    if (indicatorCode) {
+                        indicatorCodes.push(indicatorCode);
+                    }
+                });
+
+                // Add category item
+                metadataItems.push({
+                    ItemType: 'Category',
+                    ItemCode: categoryCode,
+                    ItemName: categoryName,
+                    CategoryCode: categoryCode,
+                    PillarCode: pillarCode,
+                    Children: indicatorCodes,
+                    IndicatorCodes: indicatorCodes,
+                    DocumentType: 'CategoryDetail',
+                    TreePath: `sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}`
+                });
+
+                // Process each indicator
+                indicators.forEach(indEl => {
+                    const indicatorCode = indEl.dataset.indicatorCode || indEl.dataset.itemCode;
+                    const indicatorName = indEl.querySelector('.indicator-name')?.textContent || '';
+                    const scoreFunction = indEl.querySelector('.editable-score-function')?.textContent || 'Score = 0';
+
+                    // Get dataset codes
+                    const datasetCodes = [];
+                    const datasetItems = indEl.querySelectorAll('.dataset-item');
+                    datasetItems.forEach(dsEl => {
+                        const datasetCode = dsEl.dataset.datasetCode;
+                        if (datasetCode) {
+                            datasetCodes.push(datasetCode);
+                        }
+                    });
+
+                    // Add indicator item
+                    metadataItems.push({
+                        ItemType: 'Indicator',
+                        ItemCode: indicatorCode,
+                        ItemName: indicatorName,
+                        IndicatorCode: indicatorCode,
+                        CategoryCode: categoryCode,
+                        PillarCode: pillarCode,
+                        ScoreFunction: scoreFunction,
+                        DatasetCodes: datasetCodes,
+                        Children: [],
+                        DocumentType: 'IndicatorDetail',
+                        TreePath: `sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}/${indicatorCode.toLowerCase()}`
+                    });
+                });
+            });
+        });
+
+        return metadataItems;
     }
 
     setupCodeValidation(input, type) {
@@ -3817,7 +4221,8 @@ class CustomizableSSPIStructure {
         let result;
         try {
             if (type === 'indicator') {
-                result = this.setIndicatorCode(element, newCode);
+                // Use new modifyIndicator() method
+                result = this.modifyIndicator(oldCode, { newIndicatorCode: newCode });
             } else if (type === 'category') {
                 result = this.setCategoryCode(element, newCode);
             } else if (type === 'pillar') {
@@ -3898,14 +4303,14 @@ class CustomizableSSPIStructure {
             // Check if we've already reached the limit
             const currentDatasets = selectedDatasetsDiv.querySelectorAll('.dataset-item');
             if (currentDatasets.length >= 10) {
-                alert('Maximum of 10 datasets allowed per indicator');
+                notifications.warning('Maximum of 10 datasets allowed per indicator');
                 return;
             }
             // Show dataset selection modal
             this.showDatasetSelectionModal(selectedDatasetsDiv);
         } catch (error) {
             console.error('Error showing dataset selector:', error);
-            alert('Error loading datasets. Please try again.');
+            notifications.error('Error loading datasets. Please try again.');
         }
     }
 
@@ -3932,13 +4337,27 @@ class CustomizableSSPIStructure {
     }
     
     updateDatasetSelection(selectedDatasetsDiv, selectedDatasets) {
+        // Get indicator code from parent indicator card
+        const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
+        const indicatorCode = indicatorCard ? indicatorCard.dataset.indicatorCode : null;
+
+        if (!indicatorCode) {
+            console.error('Could not find indicator code for dataset selection');
+            return;
+        }
+
         // Clear existing selections
         selectedDatasetsDiv.innerHTML = '';
-        // Add new selections using full dataset objects
+
+        // Add new selections using unified addDataset method
         // Datasets are already in the backend format - no conversion needed
         selectedDatasets.forEach(dataset => {
-            this.addDatasetToIndicatorWithDetails(selectedDatasetsDiv, dataset);
+            const result = this.addDataset(dataset.DatasetCode, indicatorCode);
+            if (!result.success) {
+                console.warn(`Failed to add dataset ${dataset.DatasetCode}: ${result.error}`);
+            }
         });
+
         // IMPORTANT: Always flag unsaved and update cache after dataset selection changes
         // This ensures changes are cached even when removing all datasets
         this.flagUnsaved();
@@ -3953,377 +4372,6 @@ class CustomizableSSPIStructure {
         return indicators[indicators.length - 1]?.querySelector('.selected-datasets');
     }
 
-    addDatasetToIndicator(selectedDatasetsDiv, datasetCode) {
-        // Check for duplicates
-        const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
-        if (existing) {
-            alert('Dataset already added');
-            return;
-        }
-
-        // Get dataset details from the loaded dataset map
-        const datasetDetail = this.datasetDetails[datasetCode];
-        const datasetName = datasetDetail ? datasetDetail.name : 'Unknown Dataset';
-        const datasetTitle = datasetDetail ? `${datasetDetail.description}` : datasetCode;
-
-        // Debug: Log dataset details
-        if (!datasetDetail) {
-            console.warn(`No dataset details found for ${datasetCode}. Available datasets:`, Object.keys(this.datasetDetails).length);
-        }
-
-        const datasetItem = document.createElement('div');
-        datasetItem.classList.add('dataset-item');
-        datasetItem.dataset.datasetCode = datasetCode;
-
-        const datasetDescription = datasetDetail?.description || 'No description available';
-        const datasetOrg = datasetDetail?.organization || 'N/A';
-        const datasetOrgCode = datasetDetail?.organizationCode || '';
-        const datasetType = datasetDetail?.type || 'N/A';
-
-        datasetItem.dataset.expanded = 'false';
-        datasetItem.innerHTML = `
-            <div class="dataset-item-header">
-                <div class="dataset-info">
-                    <span class="dataset-name">${datasetName}</span>
-                    <span class="dataset-code">${datasetCode}</span>
-                </div>
-                <div class="dataset-actions">
-                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
-                </div>
-            </div>
-            <div class="dataset-details-slideout">
-                <div class="detail-row">
-                    <span class="detail-label">Description:</span>
-                    <span class="detail-value">${datasetDescription}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Organization:</span>
-                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Type:</span>
-                    <span class="detail-value">${datasetType}</span>
-                </div>
-            </div>
-        `;
-
-        // Add click handler to entire dataset-item for expand/collapse
-        datasetItem.addEventListener('click', (e) => {
-            const isExpanded = datasetItem.dataset.expanded === 'true';
-            datasetItem.dataset.expanded = (!isExpanded).toString();
-
-            const slideout = datasetItem.querySelector('.dataset-details-slideout');
-            if (!isExpanded) {
-                slideout.style.maxHeight = slideout.scrollHeight + 'px';
-            } else {
-                slideout.style.maxHeight = '0';
-            }
-        });
-
-        datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent toggle when clicking remove button
-            // Record removal action with proper delta structure
-            const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
-            const indicatorName = this.getElementName(indicatorCard);
-            const indicatorCode = indicatorCard?.dataset.indicatorCode;
-
-            // Get position in dataset list
-            const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
-
-            this.actionHistory.recordAction({
-                type: 'remove-dataset',
-                message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
-                delta: {
-                    type: 'remove-dataset',
-                    indicatorCode: indicatorCode,
-                    datasetCode: datasetCode,
-                    datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
-                    position: position
-                },
-                undo: () => {
-                    // Re-add the dataset
-                    selectedDatasetsDiv.appendChild(datasetItem);
-                    this.updateHierarchyOnAdd(datasetItem, 'dataset');
-                },
-                redo: () => {
-                    // Remove it again
-                    datasetItem.remove();
-                    this.updateHierarchyOnRemove(datasetItem, 'dataset');
-                }
-            });
-
-            datasetItem.remove();
-            this.updateHierarchyOnRemove(datasetItem, 'dataset');
-        });
-
-        selectedDatasetsDiv.appendChild(datasetItem);
-        this.updateHierarchyOnAdd(datasetItem, 'dataset');
-
-        // Record add action with proper delta structure
-        const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
-        const indicatorName = this.getElementName(indicatorCard);
-        const indicatorCode = indicatorCard?.dataset.indicatorCode;
-
-        // Get position in dataset list
-        const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
-
-        this.actionHistory.recordAction({
-            type: 'add-dataset',
-            message: `Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,
-            delta: {
-                type: 'add-dataset',
-                indicatorCode: indicatorCode,
-                datasetCode: datasetCode,
-                datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
-                position: position
-            },
-            undo: () => {
-                // Remove the dataset
-                datasetItem.remove();
-                this.updateHierarchyOnRemove(datasetItem, 'dataset');
-            },
-            redo: () => {
-                // Re-add the dataset
-                selectedDatasetsDiv.appendChild(datasetItem);
-                this.updateHierarchyOnAdd(datasetItem, 'dataset');
-            }
-        });
-    }
-
-    addDatasetToIndicatorWithDetails(selectedDatasetsDiv, datasetDetail) {
-        // Add dataset using full details passed directly (no lookup needed)
-        const datasetCode = datasetDetail.DatasetCode;
-        // Check for duplicates
-        const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
-        if (existing) {
-            alert('Dataset already added');
-            return;
-        }
-        const datasetName = datasetDetail.DatasetName || 'Unknown Dataset';
-        const datasetTitle = datasetDetail.Description || datasetCode;
-        const datasetItem = document.createElement('div');
-        datasetItem.classList.add('dataset-item');
-        datasetItem.dataset.datasetCode = datasetCode;
-        const datasetDescription = datasetDetail.Description || 'No description available';
-        const datasetOrg = datasetDetail.Source?.OrganizationName || 'N/A';
-        const datasetOrgCode = datasetDetail.Source?.OrganizationCode || '';
-        const formatNumber = (num) => {
-            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        };
-        const unitHtml = datasetDetail.Unit ? `
-                <div class="detail-row">
-                    <span class="detail-label">Unit</span>
-                    <span class="detail-value">${datasetDetail.Unit}</span>
-                </div>` : '';
-        const rangeHtml = datasetDetail.Range ? `
-                <div class="detail-row">
-                    <span class="detail-label">Range</span>
-                    <span class="detail-value">${formatNumber(datasetDetail.Range.yMin)} – ${formatNumber(datasetDetail.Range.yMax)}</span>
-                </div>` : '';
-
-        datasetItem.dataset.expanded = 'false';
-        datasetItem.innerHTML = `
-            <div class="dataset-item-header">
-                <div class="dataset-info">
-                    <span class="dataset-name">${datasetName}</span>
-                    <span class="dataset-code">${datasetCode}</span>
-                </div>
-                <div class="dataset-actions">
-                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
-                </div>
-            </div>
-            <div class="dataset-details-slideout">
-                <div class="detail-row">
-                    <span class="detail-label">Description</span>
-                    <span class="detail-value">${datasetDescription}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Organization</span>
-                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
-                </div>${unitHtml}${rangeHtml}
-            </div>
-        `;
-
-        // Add click handler to entire dataset-item for expand/collapse
-        datasetItem.addEventListener('click', (e) => {
-            const isExpanded = datasetItem.dataset.expanded === 'true';
-            datasetItem.dataset.expanded = (!isExpanded).toString();
-
-            const slideout = datasetItem.querySelector('.dataset-details-slideout');
-            if (!isExpanded) {
-                slideout.style.maxHeight = slideout.scrollHeight + 'px';
-            } else {
-                slideout.style.maxHeight = '0';
-            }
-        });
-
-        datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent toggle when clicking remove button
-            // Record removal action with proper delta structure
-            const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
-            const indicatorName = this.getElementName(indicatorCard);
-            const indicatorCode = indicatorCard?.dataset.indicatorCode;
-
-            // Get position in dataset list
-            const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
-
-            this.actionHistory.recordAction({
-                type: 'remove-dataset',
-                message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
-                delta: {
-                    type: 'remove-dataset',
-                    indicatorCode: indicatorCode,
-                    datasetCode: datasetCode,
-                    datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
-                    position: position
-                },
-                undo: () => {
-                    // Re-add the dataset
-                    selectedDatasetsDiv.appendChild(datasetItem);
-                    this.updateHierarchyOnAdd(datasetItem, 'dataset');
-                },
-                redo: () => {
-                    // Remove it again
-                    datasetItem.remove();
-                    this.updateHierarchyOnRemove(datasetItem, 'dataset');
-                }
-            });
-
-            datasetItem.remove();
-            this.updateHierarchyOnRemove(datasetItem, 'dataset');
-        });
-
-        selectedDatasetsDiv.appendChild(datasetItem);
-        this.updateHierarchyOnAdd(datasetItem, 'dataset');
-
-        // Record add action with proper delta structure
-        const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
-        const indicatorName = this.getElementName(indicatorCard);
-        const indicatorCode = indicatorCard?.dataset.indicatorCode;
-
-        // Get position in dataset list
-        const position = Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);
-
-        this.actionHistory.recordAction({
-            type: 'add-dataset',
-            message: `Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,
-            delta: {
-                type: 'add-dataset',
-                indicatorCode: indicatorCode,
-                datasetCode: datasetCode,
-                datasetDetails: datasetDetail || this.datasetDetails[datasetCode],
-                position: position
-            },
-            undo: () => {
-                // Remove the dataset
-                datasetItem.remove();
-                this.updateHierarchyOnRemove(datasetItem, 'dataset');
-            },
-            redo: () => {
-                // Re-add the dataset
-                selectedDatasetsDiv.appendChild(datasetItem);
-                this.updateHierarchyOnAdd(datasetItem, 'dataset');
-            }
-        });
-    }
-
-    /**
-     * Add a dataset to an indicator without recording undo/redo history for the addition.
-     * Used during initial metadata import to avoid polluting history.
-     * Dataset removal by user will still be tracked in undo/redo.
-     *
-     * @param {HTMLElement} selectedDatasetsDiv - Container for datasets
-     * @param {Object} datasetDetail - Dataset detail object from backend
-     */
-    addDatasetToIndicatorSilent(selectedDatasetsDiv, datasetDetail) {
-        const datasetCode = datasetDetail.DatasetCode;
-        const existing = selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);
-        if (existing) {
-            console.warn('Dataset already added:', datasetCode);
-            return;
-        }
-        const datasetName = datasetDetail.DatasetName || 'Unknown Dataset';
-        const datasetTitle = datasetDetail.Description || datasetCode;
-        const datasetItem = document.createElement('div');
-        datasetItem.classList.add('dataset-item');
-        datasetItem.dataset.datasetCode = datasetCode;
-        // Use exact backend field names
-        const datasetDescription = datasetDetail.Description || 'No description available';
-        const datasetOrg = datasetDetail.Source?.OrganizationName || 'N/A';
-        const datasetOrgCode = datasetDetail.Source?.OrganizationCode || '';
-        const formatNumber = (num) => {
-            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        };
-        const unitHtml = datasetDetail.Unit ? `
-                <div class="detail-row">
-                    <span class="detail-label">Unit</span>
-                    <span class="detail-value">${datasetDetail.Unit}</span>
-                </div>` : '';
-        const rangeHtml = datasetDetail.Range ? `
-                <div class="detail-row">
-                    <span class="detail-label">Range</span>
-                    <span class="detail-value">${formatNumber(datasetDetail.Range.yMin)} – ${formatNumber(datasetDetail.Range.yMax)}</span>
-                </div>` : '';
-
-        datasetItem.dataset.expanded = 'false';
-        datasetItem.innerHTML = `
-            <div class="dataset-item-header">
-                <div class="dataset-info">
-                    <span class="dataset-name">${datasetName}</span>
-                    <span class="dataset-code">${datasetCode}</span>
-                </div>
-                <div class="dataset-actions">
-                    <button class="remove-dataset" type="button" title="Remove dataset">×</button>
-                </div>
-            </div>
-            <div class="dataset-details-slideout">
-                <div class="detail-row">
-                    <span class="detail-label">Description</span>
-                    <span class="detail-value">${datasetDetail.Description}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Organization</span>
-                    <span class="detail-value">${datasetOrg}${datasetOrgCode ? ' (' + datasetOrgCode + ')' : ''}</span>
-                </div>${unitHtml}${rangeHtml}
-            </div>
-        `;
-        datasetItem.addEventListener('click', (e) => { // Add click handler to entire dataset-item for expand/collapse
-            const isExpanded = datasetItem.dataset.expanded === 'true';
-            datasetItem.dataset.expanded = (!isExpanded).toString();
-            const slideout = datasetItem.querySelector('.dataset-details-slideout');
-            if (!isExpanded) {
-                slideout.style.maxHeight = slideout.scrollHeight + 'px';
-            } else {
-                slideout.style.maxHeight = '0';
-            }
-        });
-        datasetItem.querySelector('.remove-dataset').addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent toggle when clicking remove button
-            // Record removal action for undo/redo (user action)
-            const indicatorCard = selectedDatasetsDiv.closest('.indicator-card');
-            const indicatorName = this.getElementName(indicatorCard);
-            this.actionHistory.recordAction({
-                type: 'remove-dataset',
-                message: `Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,
-                undo: () => {
-                    // Re-add the dataset
-                    selectedDatasetsDiv.appendChild(datasetItem);
-                    this.updateHierarchyOnAdd(datasetItem, 'dataset');
-                },
-                redo: () => {
-                    // Remove it again
-                    datasetItem.remove();
-                    this.updateHierarchyOnRemove(datasetItem, 'dataset');
-                }
-            });
-            datasetItem.remove();
-            this.updateHierarchyOnRemove(datasetItem, 'dataset');
-        });
-        selectedDatasetsDiv.appendChild(datasetItem);
-        this.updateHierarchyOnAdd(datasetItem, 'dataset');
-        // NOTE: We do NOT record the add action in undo/redo history
-        // This method is only used during initial metadata import
-    }
 
     /**
      * Enrich metadata with full dataset details for caching.

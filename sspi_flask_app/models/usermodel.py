@@ -10,19 +10,20 @@ class User(UserMixin):
     def __init__(self, user_doc):
         """
         Initialize User from MongoDB document.
-        
+
         Args:
             user_doc: Dictionary containing user data from MongoDB
         """
         if user_doc is None:
             raise ValueError("User document cannot be None")
-            
+
         # Handle ObjectId format from json_util.dumps
         if isinstance(user_doc['_id'], dict) and '$oid' in user_doc['_id']:
             self.id = user_doc['_id']['$oid']
         else:
             self.id = str(user_doc['_id'])
         self.username = user_doc['username']
+        self.email = user_doc.get('email', None)  # Optional field for backwards compatibility
         self.password = user_doc['password']
         self.secretkey = user_doc['secretkey']
         self.roles = user_doc['roles']
@@ -47,14 +48,18 @@ class User(UserMixin):
         return User(user_doc) if user_doc else None
     
     @staticmethod
-    def create_user(username, password_hash, api_key=None, secret_key=None, roles=None):
-        user_id = sspi_user_data.create_user(username, password_hash, api_key, secret_key, roles)
+    def create_user(username, password_hash, email=None, api_key=None, secret_key=None, roles=None):
+        user_id = sspi_user_data.create_user(username, password_hash, email, api_key, secret_key, roles)
         user_doc = sspi_user_data.find_by_id(user_id)
         return User(user_doc)
     
     @staticmethod
     def username_exists(username):
         return sspi_user_data.username_exists(username)
+
+    @staticmethod
+    def email_exists(email):
+        return sspi_user_data.email_exists(email)
     
     def update_password(self, new_password_hash):
         success = sspi_user_data.update_password(self.id, new_password_hash)

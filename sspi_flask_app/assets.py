@@ -17,6 +17,7 @@ def compile_static_assets(assets):
     home_js_bundle = Bundle(
         'client_bp/dist/*.js',
         'client_bp/js/*.js',
+        'client_bp/js/components/*.js',
         'client_bp/charts/plugins/extrapolate-backward-plugin.js',
         'client_bp/charts/plugins/chart-interaction-plugin.js',
         'client_bp/charts/plugins/pillar-breakdown-interaction-plugin.js',

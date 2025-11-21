@@ -187,7 +187,7 @@ class CustomSSPIPanelChart extends SSPIPanelChart {
 
     editConfiguration() {
         // Navigate to the configuration editor
-        const editUrl = `/customize?config=${this.configId}`;
+        const editUrl = `/customize/builder?config=${this.configId}`;
         window.open(editUrl, '_blank');
     }
 

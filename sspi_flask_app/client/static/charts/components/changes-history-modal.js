@@ -177,6 +177,9 @@ class ChangesHistoryModal {
         item.className = 'dataset-option enhanced compact change-item';
         item.dataset.actionId = action.actionId;
         item.dataset.actionType = action.type;
+        if (action.subtype) {
+            item.dataset.actionSubtype = action.subtype;
+        }
 
         // Header with type badge and timestamp (badge first, timestamp second)
         const header = document.createElement('div');
@@ -184,8 +187,15 @@ class ChangesHistoryModal {
 
         const badge = document.createElement('span');
         badge.className = 'change-type-badge';
-        badge.dataset.changeType = this.getChangeCategory(action.type);
-        badge.textContent = this.formatActionType(action.type);
+        badge.dataset.changeType = this.getChangeCategory(action.type, action.subtype);
+
+        // Show type with subtype if available
+        if (action.subtype) {
+            badge.textContent = `${this.formatActionType(action.type)}: ${this.formatActionType(action.subtype)}`;
+            badge.title = `${this.formatActionType(action.type)} - ${this.formatActionType(action.subtype)}`;
+        } else {
+            badge.textContent = this.formatActionType(action.type);
+        }
 
         const timestamp = document.createElement('div');
         timestamp.className = 'dataset-compact-code change-timestamp';
@@ -465,13 +475,21 @@ class ChangesHistoryModal {
     /**
      * Get change category for styling
      */
-    getChangeCategory(type) {
+    getChangeCategory(type, subtype) {
+        // Handle modify-indicator with subtypes
+        if (type === 'modify-indicator' && subtype) {
+            if (subtype === 'set-code' || subtype === 'set-name') return 'rename';
+            if (subtype === 'set-score-function') return 'other';
+            if (subtype === 'replace-datasets') return 'other';
+        }
+
         if (type.startsWith('add-')) return 'add';
         if (type.startsWith('remove-')) return 'remove';
         if (type.startsWith('move-')) return 'move';
         if (type.startsWith('set-')) return 'rename';
         if (type.startsWith('create-')) return 'add'; // Composite create actions styled like add
         if (type === 'composite') return 'other';
+        if (type === 'modify-indicator') return 'other'; // Default for modify without subtype
         return 'other';
     }
 

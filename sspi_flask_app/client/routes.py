@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
 import os
 from markdown import markdown
-from flask_login import login_required
+from flask_login import login_required, current_user
 import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json, public_databases
@@ -79,12 +79,20 @@ def data_overview():
 
 
 @client_bp.route('/customize')
-def customize_configuration_builder():
-    return render_template('customize/customize.html')
-
-@client_bp.route('/customize/home')
 def customize_home():
+    """
+    Landing page for customization feature.
+    Shows information and directs users to login/register or builder based on auth status.
+    """
     return render_template('customize/customize-home.html')
+
+@client_bp.route('/customize/builder')
+def customize_configuration_builder():
+    """
+    Main customization builder interface.
+    Users can build configurations without authentication, but will need to login to score.
+    """
+    return render_template('customize/customization-builder.html')
 
 
 @client_bp.route('/customize/visualize/<config_id>')

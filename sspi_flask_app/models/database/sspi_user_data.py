@@ -161,13 +161,14 @@ class SSPIUserData(MongoWrapper):
         except Exception:
             return {}
     
-    def create_user(self, username: str, password_hash: str, api_key: str|None = None, secret_key: str|None = None, roles: list|None = None) -> str:
+    def create_user(self, username: str, password_hash: str, email: str|None = None, api_key: str|None = None, secret_key: str|None = None, roles: list|None = None) -> str:
         """
         Create a new user with validation.
 
         Args:
             username: Unique username
             password_hash: Bcrypt hashed password
+            email: Optional email address
             api_key: Optional API key (generates if not provided)
             secret_key: Optional secret key (generates if not provided)
             roles: Optional roles list (defaults to ["user"])
@@ -189,6 +190,7 @@ class SSPIUserData(MongoWrapper):
         user_doc = {
             "username": username,
             "password": password_hash,
+            "email": email,
             "apikey": api_key,
             "secretkey": secret_key,
             "roles": roles
@@ -227,7 +229,13 @@ class SSPIUserData(MongoWrapper):
     
     def username_exists(self, username: str) -> bool:
         return self.count_documents({"username": username}) > 0
-    
+
+    def email_exists(self, email: str) -> bool:
+        """Check if an email already exists in the database"""
+        if email is None:
+            return False
+        return self.count_documents({"email": email}) > 0
+
     def get_all_users(self) -> list:
         return self.find({}, options={})  # Include _id
     

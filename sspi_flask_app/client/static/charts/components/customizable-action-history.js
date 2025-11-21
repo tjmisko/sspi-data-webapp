@@ -14,6 +14,7 @@ class CustomizableActionHistory {
      * Record an action with both undo/redo functions AND delta information
      * @param {Object} actionConfig - Action configuration
      * @param {string} actionConfig.type - Action type (e.g., 'add-indicator', 'move-category')
+     * @param {string} [actionConfig.subtype] - Optional subtype for more specific action categorization
      * @param {string} actionConfig.message - Human-readable description
      * @param {Object} actionConfig.delta - Delta object with change details
      * @param {Function} actionConfig.undo - Function to undo the action
@@ -30,6 +31,7 @@ class CustomizableActionHistory {
             actionId: this.generateUUID(),
             timestamp: Date.now(),
             type: actionConfig.type,
+            subtype: actionConfig.subtype || null,
             message: actionConfig.message,
             delta: actionConfig.delta || null,
             undo: actionConfig.undo,
@@ -103,14 +105,23 @@ class CustomizableActionHistory {
     }
 
     exportActionLog() {
-        const actionList = this.actions.slice(0, this.currentIndex + 1)
-        return actoionList.map(action => ({
+        const actionList = this.actions.slice(0, this.currentIndex + 1);
+        return actionList.map(action => ({
             actionId: action.actionId,
             type: action.type,
+            subtype: action.subtype,
             timestamp: action.timestamp,
             message: action.message,
             delta: action.delta
         }));
+    }
+
+    /**
+     * Get cumulative actions up to current index (for changes history modal)
+     * @returns {Array} Array of actions with their deltas
+     */
+    getCumulativeActions() {
+        return this.actions.slice(0, this.currentIndex + 1);
     }
 
     generateUUID() {

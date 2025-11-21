@@ -1,83 +1,244 @@
 {% extends 'layout.html' %}
 
 {% block stylesheet %}
+<style>
+    .customization-home-box {
+        background-color: var(--box-background-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        padding: 1.5rem;
+        box-sizing: border-box;
+        font-family: var(--body-font-family);
+    }
+
+    .customization-home-box h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1.3;
+        margin: 0 0 1rem 0;
+        color: var(--header-font-color);
+        font-family: var(--header-font-family);
+    }
+
+    .customization-home-box p {
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        color: var(--body-text-color);
+        font-size: 0.95rem;
+    }
+
+    .customization-home-box ul {
+        line-height: 1.6;
+        color: var(--body-text-color);
+        font-size: 0.95rem;
+        margin: 1rem 0;
+        padding-left: 1.5rem;
+    }
+
+    .customization-home-box li {
+        margin-bottom: 0.75rem;
+    }
+
+    .portal-section-inline-auth {
+        padding: 0.5em 0;
+        text-align: center;
+    }
+
+    .user-portal-section {
+        text-align: center;
+    }
+
+    .user-portal-section p {
+        margin-bottom: 0.75rem;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 0.65rem 1.5rem;
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+        display: inline-block;
+        font-size: 0.95rem;
+        text-align: center;
+        min-width: 140px;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        border: 1px solid var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: color-mix(in srgb, var(--primary-color) 85%, black);
+        border-color: color-mix(in srgb, var(--primary-color) 85%, black);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+        color: var(--primary-color);
+        border: 1px solid color-mix(in srgb, var(--primary-color) 30%, transparent);
+    }
+
+    .btn-secondary:hover {
+        background-color: color-mix(in srgb, var(--primary-color) 20%, transparent);
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .customization-hero-box {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        align-items: flex-start;
+    }
+
+    .customization-main-content {
+        flex: 2 1 600px;
+        min-width: min(100%, 600px);
+    }
+
+    .customization-sidebar {
+        flex: 1 1 350px;
+        min-width: min(100%, 350px);
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .feature-highlight {
+        padding: 1rem;
+        background-color: color-mix(in srgb, var(--primary-color) 5%, transparent);
+        border-left: 3px solid var(--primary-color);
+        border-radius: var(--border-radius);
+        margin: 1rem 0;
+    }
+
+    .feature-highlight h3 {
+        font-size: 1.1rem;
+        color: var(--header-font-color);
+        margin: 0 0 0.5rem 0;
+        font-family: var(--header-font-family);
+        font-weight: 600;
+    }
+
+    .feature-highlight p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--body-text-color);
+    }
+
+    @media (max-width: 767px) {
+        .customization-home-box {
+            padding: 1rem;
+        }
+
+        .customization-home-box h2 {
+            font-size: 1.3rem;
+        }
+
+        .customization-home-box p,
+        .customization-home-box ul {
+            font-size: 0.9rem;
+        }
+
+        .auth-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+        }
+
+        .customization-hero-box {
+            flex-direction: column;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <article class="page-content">
     <section class="page-section">
         <div class="content-container">
-            <div class="customization-home-box">
-                <h2>How would you measure policy according to your values?</h2>
-                <p> The Sustainable and Shared-Prospertiy Policy Index puts shared values first, then
-                    measures how well policy across countries aligns with those
-                    values. In foregrounding values, however, we recognize
-                    that different people, different communities, different
-                    countries, and different cultures have different values, so 
-                    they may evaluate policy differently than we do.
-                </p>
-                <p> Our customization tool provides a framework for applying the 
-                    SSPI methodology beginning from your own values. It allows 
-                    individuals to modify how policies are scored and grouped 
-                    and to explore how those changes affect the scores and 
-                    conclusions at all levels of the analysis.
-                </p>
+            <div class="customization-hero-box">
+                <div class="customization-main-content">
+                    <div class="customization-home-box">
+                        <h2>How would you measure policy according to your values?</h2>
+                        <p>The Sustainable and Shared-Prosperity Policy Index puts shared values first, then
+                            measures how well policy across countries aligns with those
+                            values. In foregrounding values, however, we recognize
+                            that different people, different communities, different
+                            countries, and different cultures have different values, so
+                            they may evaluate policy differently than we do.
+                        </p>
+                        <p>Our customization tool provides a framework for applying the
+                            SSPI methodology beginning from your own values. It allows
+                            individuals to modify how policies are scored and grouped
+                            and to explore how those changes affect the scores and
+                            conclusions at all levels of the analysis.
+                        </p>
+
+                        <div class="portal-section-inline-auth">
+                            <a href="{{ url_for('client_bp.customize_configuration_builder') }}" class="btn-primary">Go to Customization Builder</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="customization-sidebar">
+                    <div class="customization-home-box">
+                        <h2>Getting Started</h2>
+                        <p>To generate custom scores, create a free account. Scoring is computationally intensive, so we limit requests to ten per day per user.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
-    <section class="page-section">
-        <div class="content-container">
-            <div class="user-portal-section customization-home-box">
-                <h2>Customization Portal</h2>
-                <a href="/customize">Go to Customization Page</a>
-                <p> Login to Access Previously Saved Configurations</p>
-            </div>
-        </div>
-    </section>
+
     <section class="page-section">
         <div class="content-container">
             <div class="customization-home-box">
                 <h2>Using the Customization Tool</h2>
-                <p> The customization tool allows you to modify the 
-                    the organization and scoring of the SSPI and to see
-                    how those changes affect the overall scores. Use the tool to:
-                    <ul>
-                        <li>
-                            Adjust how indicators are scored by adjusting their
-                            underlying datasets, the numerical values of
-                            Goalposts, and the functional form of the Score
-                            Function for each indicator.
-                        </li>
-                        <li>
-                            Create custom policy indicators with access to the
-                            full database of underlying datasets prepared for
-                            the SSPI, or with your own custom data uploaded
-                            through the data upload portal.
-                        </li>
-                        <li> 
-                            Change how indicators, categories, and pillars are 
-                            grouped, scored, and named to create your own custom,
-                            data-driven policy index.
-                        </li>
-                        <li> 
-                            Compare your each of your changes <i>ceteris paribus</i> 
-                            with the canonical SSPI to explore how differences in 
-                            values change the conclusions about the quality of national
-                            policies.
-                        </li>
-                        <li> 
-                            Save and share your customized configuration of the SSPI,
-                            its scores, and the summary report.
-                        </li>
-                    </ul>
-
-                </p>
-                <p> To generate custom scores, we require that you create a
-                    free account for saving your configuration and protecting 
-                    our API. Scoring is a computationally intensive operation
-                    involving large volumes of data; we therefore limit the
-                    number of score requests you can make to ten per day.
-                </p>
+                <p>The customization tool allows you to modify the
+                    organization and scoring of the SSPI and to see
+                    how those changes affect the overall scores. Use the tool to:</p>
+                <ul>
+                    <li>
+                        <strong>Adjust indicator scoring:</strong> Modify underlying datasets, goalpost values,
+                        and score function parameters for each indicator.
+                    </li>
+                    <li>
+                        <strong>Create custom indicators:</strong> Build new policy indicators using the full
+                        database of SSPI datasets or upload your own data.
+                    </li>
+                    <li>
+                        <strong>Reorganize the index:</strong> Change how indicators, categories, and pillars are
+                        grouped, scored, and named to create your own custom policy index.
+                    </li>
+                    <li>
+                        <strong>Compare with canonical SSPI:</strong> Explore how differences in values change
+                        conclusions about policy quality using <em>ceteris paribus</em> comparisons.
+                    </li>
+                    <li>
+                        <strong>Save and share:</strong> Export your customized configuration, scores,
+                        and summary reports.
+                    </li>
+                </ul>
             </div>
         </div>
     </section>

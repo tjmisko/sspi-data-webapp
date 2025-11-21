@@ -13,8 +13,27 @@
             document.documentElement.classList.add("dark-theme")
             localStorage.setItem("theme", "dark")
         }
+
+        // Function to clear all customization data on logout
+        window.clearCustomizationData = function() {
+            // Clear all localStorage except theme
+            const theme = localStorage.getItem("theme");
+            localStorage.clear();
+            if (theme) {
+                localStorage.setItem("theme", theme);
+            }
+            console.log('Customization data cleared from localStorage');
+        };
     </script>
     <script type="text/javascript" src="{{ url_for('client_bp.static', filename = 'script.js') }}"></script>
+    <script>
+        // Initialize observableStorage if not already initialized and clear it on logout
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof ObservableStorage !== 'undefined' && !window.observableStorage) {
+                window.observableStorage = new ObservableStorage();
+            }
+        });
+    </script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('client_bp.static', filename = 'style.css') }}"/>
     {% block javascript %}{% endblock %}
     {% block stylesheet %}{% endblock %}
@@ -22,15 +41,51 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Baskerville:wght@400;700&family=REM:wght@100;300;400;600&display=swap" rel="stylesheet">
+    <style>
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slideOutRight {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+    </style>
   </head>
 
   <body>
     {% include 'symbols.html' %} <!-- Include SVG symbols for use in the document -->
     {% include 'header.html' %}
     {% block subheader %}{% endblock %} <!-- Optional custom subheader -->
-        <main>
-            {% block content %}{% endblock %}
-        </main>
+
+    <!-- Flash Messages (converted to NotificationManager) -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+              window.notifications.info('{{ message | safe }}');
+            {% endfor %}
+          });
+        </script>
+      {% endif %}
+    {% endwith %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
     {% include 'footer.html' %}
     {% block static_css %}{% endblock %} <!-- Optional styling to remove the default site header -->
   </body>
