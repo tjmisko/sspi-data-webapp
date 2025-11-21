@@ -11,18 +11,23 @@ class CustomizableSSPIStructure {
                 { ItemName: 'Public Goods', ItemCode: 'PG' }
             ],
             autoLoad = true,
-            loadingDelay = 100
+            loadingDelay = 100,
+            username = '',
+            activeSession = null
         } = options;
         this.parentElement = parentElement;
         this.pillars = pillars;
         this.autoLoad = autoLoad;
         this.loadingDelay = loadingDelay;
+        this.username = username || window.sspiUsername || '';
+        this.activeSession = activeSession || window.sspiActiveSession || null;
         this.unsavedChanges = false;
         this.isImporting = false; // Flag to suppress validation during bulk import
         this.draggedEl = null;
         this.origin = null;
         this.dropped = false;
         this.isLoading = false;
+        this.heartbeatInterval = null; // Timer for session heartbeat
         this.cacheTimeout = null;
         this.datasetDetails = {};// Dataset details storage (maps dataset code to full details)
         this.actionHistory = new CustomizableActionHistory(this);
@@ -41,6 +46,9 @@ class CustomizableSSPIStructure {
         // This eliminates the need for a separate API call to /api/v1/customize/datasets
         this.setupCacheSync();
         this.rigUnloadListener();
+        // Setup session management
+        this.startHeartbeat();
+        this.setupUnsavedChangesWarning();
         // Auto-load cached modifications or default metadata if enabled
         if (this.autoLoad) {
             setTimeout(() => { // delay ensures DOM is ready
@@ -270,7 +278,7 @@ class CustomizableSSPIStructure {
         }
 
         // Move to next stage
-        if (stageId < 4) {
+        if (stageId < 3) {
             this.progressState.currentStage = stageId + 1;
             this.progressStepper.setCurrentStage(stageId + 1);
             this.stageManager.setStage(stageId + 1);
@@ -281,8 +289,8 @@ class CustomizableSSPIStructure {
     handleStageChange(stageId) {
         // Update UI based on current stage
         // Hide/show SSPI container and toolbars based on stage
-        if (stageId === 1) {
-            // Build stage - show customization UI and toolbars
+        if (stageId === 0) {
+            // Structure stage - show customization UI and toolbars
             this.container.style.display = 'block';
             this.toolbarTop.style.display = 'flex';
             this.toolbarBottom.style.display = 'flex';
@@ -919,13 +927,14 @@ class CustomizableSSPIStructure {
     }
     
     setUnsavedState(hasChanges) {
-        this.unsavedChanges = hasChanges;
         if (hasChanges) {
+            this.markUnsaved();
             this.saveButton.classList.add('unsaved-changes');
             this.discardButton.disabled = false;
             this.discardButton.style.opacity = '1';
             this.discardButton.style.cursor = 'pointer';
         } else {
+            this.markSaved();
             this.clearUnsavedState();
         }
     }
@@ -3397,6 +3406,88 @@ class CustomizableSSPIStructure {
         return notifications.show(message, type, duration);
     }
 
+    // Session Management Helper Methods
+    getStorageKey(key) {
+        // Namespace storage keys with username for user isolation
+        return `customSSPI_${this.username}_${key}`;
+    }
+
+    setStorage(key, value) {
+        const namespacedKey = this.getStorageKey(key);
+        window.observableStorage.setItem(namespacedKey, value);
+    }
+
+    getStorage(key) {
+        const namespacedKey = this.getStorageKey(key);
+        return window.observableStorage.getItem(namespacedKey);
+    }
+
+    markUnsaved() {
+        this.unsavedChanges = true;
+        this.setStorage('hasUnsaved', true);
+
+        // Mark session as unsaved on server
+        if (window.csrf && window.csrf.fetchWithCSRF) {
+            window.csrf.fetchWithCSRF('/api/v1/customize/session/mark-unsaved', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ has_unsaved: true })
+            }).catch(err => console.error('Failed to mark session unsaved:', err));
+        }
+    }
+
+    markSaved() {
+        this.unsavedChanges = false;
+        this.setStorage('hasUnsaved', false);
+
+        // Mark session as saved on server
+        if (window.csrf && window.csrf.fetchWithCSRF) {
+            window.csrf.fetchWithCSRF('/api/v1/customize/session/mark-unsaved', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ has_unsaved: false })
+            }).catch(err => console.error('Failed to mark session saved:', err));
+        }
+    }
+
+    startHeartbeat() {
+        // Send heartbeat every 5 minutes to keep session alive
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+        }
+
+        this.heartbeatInterval = setInterval(async () => {
+            if (window.csrf && window.csrf.fetchWithCSRF) {
+                try {
+                    await window.csrf.fetchWithCSRF('/api/v1/customize/session/heartbeat', {
+                        method: 'POST'
+                    });
+                    console.log('Session heartbeat sent');
+                } catch (err) {
+                    console.error('Failed to send session heartbeat:', err);
+                }
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+
+    stopHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+    }
+
+    setupUnsavedChangesWarning() {
+        // Warn before leaving page with unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (this.unsavedChanges) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+    }
+
     // Helper methods for undo/redo
     getElementName(element) {
         if (!element) return 'Unknown';
@@ -3455,15 +3546,15 @@ class CustomizableSSPIStructure {
                     stateLookup[`cat_${code}`] = collapsible.dataset.expanded;
                 }
             });
-            window.observableStorage.setItem('customizableSSPIExpansionState', stateLookup);
+            this.setStorage('expansionState', stateLookup);
             // Save scroll position
-            window.observableStorage.setItem('customizableSSPIScrollX', window.scrollX);
-            window.observableStorage.setItem('customizableSSPIScrollY', window.scrollY);
+            this.setStorage('scrollX', window.scrollX);
+            this.setStorage('scrollY', window.scrollY);
         });
     }
 
     restoreExpansionState() {
-        const cachedStateObject = window.observableStorage.getItem('customizableSSPIExpansionState');
+        const cachedStateObject = this.getStorage('expansionState');
         if (!cachedStateObject) return;
         // Restore indicator expansion states
         const indicators = this.container.querySelectorAll('.indicator-card');
@@ -3521,8 +3612,8 @@ class CustomizableSSPIStructure {
     }
 
     restoreScrollPosition() {
-        const scrollX = window.observableStorage.getItem('customizableSSPIScrollX');
-        const scrollY = window.observableStorage.getItem('customizableSSPIScrollY');
+        const scrollX = this.getStorage('scrollX');
+        const scrollY = this.getStorage('scrollY');
         if (scrollX !== null && scrollY !== null) {
             requestAnimationFrame(() => {  // Use requestAnimationFrame to ensure DOM is fully rendered
                 window.scrollTo(parseInt(scrollX), parseInt(scrollY));
@@ -4409,16 +4500,16 @@ class CustomizableSSPIStructure {
                 console.warn('Cache data is too large (>5MB), skipping cache');
                 return;
             }
-            window.observableStorage.setItem("customSSPICachedModifications", cacheData);
+            this.setStorage("cachedModifications", cacheData);
             console.log('SSPI modifications cached successfully with dataset details');
         } catch (error) {
             console.warn('Failed to cache SSPI modifications:', error);
         }
     }
-    
+
     async loadCachedState() {
         try {
-            const cacheData = window.observableStorage.getItem("customSSPICachedModifications");
+            const cacheData = this.getStorage("cachedModifications");
             if (!cacheData || !this.isValidCacheData(cacheData)) {
                 return false;
             }
@@ -4445,7 +4536,8 @@ class CustomizableSSPIStructure {
     
     clearCache() {
         try {
-            window.observableStorage.removeItem("sspiCustomModifications");
+            const cacheKey = this.getStorageKey("cachedModifications");
+            window.observableStorage.removeItem(cacheKey);
             console.log('SSPI modifications and dataset cache cleared');
         } catch (error) {
             console.warn('Failed to clear SSPI cache:', error);
@@ -4454,7 +4546,7 @@ class CustomizableSSPIStructure {
     
     hasCachedModifications() {
         try {
-            const cacheData = window.observableStorage.getItem("customSSPICachedModifications");
+            const cacheData = this.getStorage("cachedModifications");
             return cacheData && this.isValidCacheData(cacheData) && cacheData.hasModifications;
         } catch (error) {
             console.warn('Error checking for cached modifications:', error);
@@ -4513,8 +4605,9 @@ class CustomizableSSPIStructure {
     }
     
     setupCacheSync() {
-        // Listen for cache changes from other tabs
-        window.observableStorage.onChange("customSSPICachedModifications", async (oldValue, newValue) => {
+        // Listen for cache changes from other tabs (user-scoped)
+        const cacheKey = this.getStorageKey("cachedModifications");
+        window.observableStorage.onChange(cacheKey, async (oldValue, newValue) => {
             console.log('Cache change detected!');
             if (!this.unsavedChanges) { // Only sync if we don't have unsaved changes in current tab
                 if (newValue && this.isValidCacheData(newValue) && newValue.hasModifications) {

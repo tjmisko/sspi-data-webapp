@@ -9,11 +9,10 @@ class ProgressStepper {
         this.onStageClick = options.onStageClick || (() => {});
 
         this.stages = [
-            { id: 0, name: 'Load', number: '1' },
-            { id: 1, name: 'Build', number: '2' },
-            { id: 2, name: 'Review', number: '3' },
-            { id: 3, name: 'Score', number: '4' },
-            { id: 4, name: 'Explore', number: '5' }
+            { id: 0, name: 'Structure', number: '1' },
+            { id: 1, name: 'View Changes', number: '2' },
+            { id: 2, name: 'Score', number: '3' },
+            { id: 3, name: 'Compare', number: '4' }
         ];
 
         this.render();

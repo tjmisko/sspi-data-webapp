@@ -1,26 +1,4 @@
 /* Unified page container system */
-.page-section {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-sizing: border-box;
-  margin-bottom: 2rem;
-}
-
-.page-section:last-of-type {
-  margin-bottom: 0;
-}
-
-.content-container {
-  width: 100%;
-  max-width: 1280px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-  padding: 0 1rem;
-}
-
 /* Hero Section */
 .hero-box {
   font-size: 0.85em;
@@ -38,13 +16,13 @@
 
 .hero-textbox {
   flex: 2 1 600px;
+  align-self: stretch;
   min-width: min(100%, 600px);
   background-color: var(--box-background-color);
   padding: 1.25rem;
   border-radius: var(--border-radius-lg);
-  align-self: stretch;
-  box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
   box-sizing: border-box;
 }
 

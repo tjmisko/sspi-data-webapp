@@ -69,9 +69,31 @@
 
 <script>
     (function() {
-        // Clear all localStorage except theme
+        // Preserve theme setting
         const theme = localStorage.getItem("theme");
-        localStorage.clear();
+
+        // Clear all user-scoped customSSPI keys
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('customSSPI_')) {
+                keysToRemove.push(key);
+            }
+        }
+
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log('Cleared:', key);
+        });
+
+        // Also clear legacy keys for backwards compatibility
+        localStorage.removeItem('customizableSSPIExpansionState');
+        localStorage.removeItem('customizableSSPIScrollX');
+        localStorage.removeItem('customizableSSPIScrollY');
+        localStorage.removeItem('customSSPICachedModifications');
+        localStorage.removeItem('sspi-progress-state');
+
+        // Restore theme
         if (theme) {
             localStorage.setItem("theme", theme);
         }

@@ -162,6 +162,12 @@ def owner_or_admin_required(f):
     @wraps(f)
     @login_required  # First, ensure user is logged in
     def decorated_function(*args, **kwargs):
+        # Check if user is authenticated (API requests need explicit check)
+        if not current_user.is_authenticated:
+            return jsonify({
+                "error": "Authentication required. Please log in or create a free account to generate scores."
+            }), 401
+
         # Get authenticated user info
         user_id = current_user.username
         is_admin = current_user.is_admin()

@@ -2,11 +2,13 @@ from flask import Blueprint, render_template, request, current_app as app, redir
 import os
 from markdown import markdown
 from flask_login import login_required, current_user
+from flask_wtf.csrf import generate_csrf
 import re
 import pycountry
 from sspi_flask_app.api.resources.utilities import parse_json, public_databases
 from sspi_flask_app.models.database import sspi_metadata, sspidb
 from sspi_flask_app.api.core.dashboard import build_indicators_data, build_download_tree_structure, build_indicators_data_static
+from sspi_flask_app.utils import session_manager
 
 
 client_bp = Blueprint(
@@ -86,13 +88,47 @@ def customize_home():
     """
     return render_template('customize/customize-home.html')
 
+@client_bp.route('/customize/load')
+def customize_load():
+    """
+    Load page for customization feature.
+    Shows pre-built and saved configurations.
+    If user has an active session, displays resume banner.
+    Works for both authenticated and anonymous users.
+    """
+    from flask_login import current_user
+
+    # Check if user is authenticated
+    is_authenticated = current_user.is_authenticated
+
+    active_session = None
+    if is_authenticated:
+        active_session = session_manager.get_active_session()
+
+    csrf_token = generate_csrf()
+    return render_template('customize/customize-load.html',
+                         active_session=active_session,
+                         is_authenticated=is_authenticated,
+                         csrf_token=csrf_token)
+
+
 @client_bp.route('/customize/builder')
+@login_required
 def customize_configuration_builder():
     """
     Main customization builder interface.
-    Users can build configurations without authentication, but will need to login to score.
+    Redirects to load page if no active session exists.
     """
-    return render_template('customize/customization-builder.html')
+    active_session = session_manager.get_active_session()
+
+    # If no active session, redirect to load page
+    if not active_session:
+        return redirect(url_for('client_bp.customize_load'))
+
+    csrf_token = generate_csrf()
+    return render_template('customize/customization-builder.html',
+                         active_session=active_session,
+                         csrf_token=csrf_token)
 
 
 @client_bp.route('/customize/visualize/<config_id>')

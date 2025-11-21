@@ -68,6 +68,30 @@ a {
   text-decoration: none;
   color: var(--text-color);
 }
+
 a:hover {
   color: var(--green-accent, green);
 }
+
+.page-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  margin-bottom: 2rem;
+}
+
+.page-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.content-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding: 0 1rem;
+}
+

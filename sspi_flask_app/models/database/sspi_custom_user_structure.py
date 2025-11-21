@@ -38,24 +38,143 @@ class SSPICustomUserStructure(MongoWrapper):
         self.validate_timestamps(document, document_number)
 
     def validate_config_id(self, document: dict, document_number: int = 0):
-        pass
+        """Validate config_id field format."""
+        if "config_id" not in document:
+            raise InvalidDocumentFormatError(
+                f"'config_id' is required (document {document_number})"
+            )
+
+        config_id = document["config_id"]
+        if not isinstance(config_id, str):
+            raise InvalidDocumentFormatError(
+                f"'config_id' must be a string (document {document_number})"
+            )
+
+        if not (6 <= len(config_id) <= 64):
+            raise InvalidDocumentFormatError(
+                f"'config_id' must be 6-64 characters (document {document_number})"
+            )
+
+        if not re.match(r'^[a-zA-Z0-9_-]+$', config_id):
+            raise InvalidDocumentFormatError(
+                f"'config_id' can only contain letters, numbers, underscores, and hyphens (document {document_number})"
+            )
 
     def validate_config_name(self, document: dict, document_number: int = 0):
-        pass
+        """Validate name field."""
+        if "name" not in document:
+            raise InvalidDocumentFormatError(
+                f"'name' is required (document {document_number})"
+            )
+
+        name = document["name"]
+        if not isinstance(name, str):
+            raise InvalidDocumentFormatError(
+                f"'name' must be a string (document {document_number})"
+            )
+
+        if len(name.strip()) == 0:
+            raise InvalidDocumentFormatError(
+                f"'name' cannot be empty (document {document_number})"
+            )
+
+        if len(name) > 200:
+            raise InvalidDocumentFormatError(
+                f"'name' cannot exceed 200 characters (document {document_number})"
+            )
 
     def validate_username(self, document: dict, document_number: int = 0):
-        pass
+        """Validate username field (REQUIRED for ownership)."""
+        if "username" not in document:
+            raise InvalidDocumentFormatError(
+                f"'username' is required (document {document_number})"
+            )
+
+        username = document["username"]
+        if not isinstance(username, str):
+            raise InvalidDocumentFormatError(
+                f"'username' must be a string (document {document_number})"
+            )
+
+        if len(username.strip()) == 0:
+            raise InvalidDocumentFormatError(
+                f"'username' cannot be empty (document {document_number})"
+            )
 
     def validate_metadata(self, document: dict, document_number: int = 0):
-        pass # think hard about how to implement! Format provided by SSPI Metadata Item Details
+        """Validate metadata field structure."""
+        if "metadata" not in document:
+            raise InvalidDocumentFormatError(
+                f"'metadata' is required (document {document_number})"
+            )
+
+        metadata = document["metadata"]
+        if not isinstance(metadata, list):
+            raise InvalidDocumentFormatError(
+                f"'metadata' must be a list (document {document_number})"
+            )
+
+        # Basic structure validation - each item should be a dict with ItemType
+        for i, item in enumerate(metadata):
+            if not isinstance(item, dict):
+                raise InvalidDocumentFormatError(
+                    f"'metadata[{i}]' must be a dict (document {document_number})"
+                )
+
+            if "ItemType" not in item:
+                raise InvalidDocumentFormatError(
+                    f"'metadata[{i}]' must have 'ItemType' field (document {document_number})"
+                )
+
+            valid_types = ["SSPI", "Pillar", "Category", "Indicator"]
+            if item["ItemType"] not in valid_types:
+                raise InvalidDocumentFormatError(
+                    f"'metadata[{i}].ItemType' must be one of {valid_types} (document {document_number})"
+                )
 
     def validate_timestamps(self, document: dict, document_number: int = 0):
-        pass
+        """Validate timestamp fields."""
+        required_timestamps = ["created_at", "updated_at"]
+
+        for field in required_timestamps:
+            if field not in document:
+                raise InvalidDocumentFormatError(
+                    f"'{field}' is required (document {document_number})"
+                )
+
+            timestamp = document[field]
+            if not isinstance(timestamp, str):
+                raise InvalidDocumentFormatError(
+                    f"'{field}' must be an ISO datetime string (document {document_number})"
+                )
+
+            try:
+                datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            except ValueError:
+                raise InvalidDocumentFormatError(
+                    f"'{field}' must be a valid ISO datetime string (document {document_number})"
+                )
 
     def generate_config_id(self) -> str:
-        pass # hash the metadata with username
-        # fail if that configuration id already exists (user has already saved the exact same metadata) 
-        # return a helpful message 
+        """
+        Generate a unique configuration ID.
+
+        Uses secrets.token_hex for cryptographically strong random ID.
+        Checks for duplicates (extremely rare) and retries if needed.
+
+        Returns:
+            32-character hexadecimal string
+        """
+        max_attempts = 10
+        for _ in range(max_attempts):
+            config_id = secrets.token_hex(16)  # 32 hex characters
+
+            # Check for duplicate (extremely unlikely)
+            if not self.config_exists(config_id):
+                return config_id
+
+        # If we somehow get 10 collisions, something is very wrong
+        raise RuntimeError("Failed to generate unique config_id after 10 attempts") 
 
 
     def config_exists(self, config_id: str) -> bool:
@@ -78,7 +197,7 @@ class SSPICustomUserStructure(MongoWrapper):
         return self.count_documents({"config_id": config_id, "username": username}) > 0
 
     # CRUD operations with user isolation
-    def create_config(self, name: str, metadata: list, username: str) -> str:
+    def create_config(self, name: str, metadata: list, username: str, actions: list = None) -> str:
         """
         Create a new custom configuration.
 
@@ -86,6 +205,7 @@ class SSPICustomUserStructure(MongoWrapper):
             name: Human-readable name for the configuration
             metadata: Array of SSPI metadata items (SSPI, Pillars, Categories, Indicators)
             username: User identifier (REQUIRED)
+            actions: Array of action history items (optional, defaults to empty list)
 
         Returns:
             The generated config_id
@@ -97,9 +217,12 @@ class SSPICustomUserStructure(MongoWrapper):
         if not username:
             raise ValueError("username is required to create a configuration")
 
+        if actions is None:
+            actions = []
+
         config_id = self.generate_config_id()
 
-        # Ensure unique config_id
+        # Ensure unique config_id (generate_config_id already checks, but double-check)
         while self.config_exists(config_id):
             config_id = self.generate_config_id()
 
@@ -110,6 +233,7 @@ class SSPICustomUserStructure(MongoWrapper):
             "name": name,
             "username": username,
             "metadata": metadata,
+            "actions": actions,
             "created_at": now,
             "updated_at": now
         }
@@ -292,11 +416,12 @@ class SSPICustomUserStructure(MongoWrapper):
                 f"User {username} does not have permission to access configuration {config_id}"
             )
 
-        # Create new config with same metadata, owned by the requesting user
+        # Create new config with same metadata and actions, owned by the requesting user
         return self.create_config(
             name=new_name,
             metadata=source_config["metadata"],
-            username=username
+            username=username,
+            actions=source_config.get("actions", [])  # Include actions if present
         )
 
 

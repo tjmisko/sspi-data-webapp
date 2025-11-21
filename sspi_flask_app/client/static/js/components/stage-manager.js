@@ -10,11 +10,10 @@ class StageManager {
         this.onStageChange = options.onStageChange || (() => {});
 
         this.stageViews = {
-            0: this.renderLoadStage.bind(this),
-            1: this.renderBuildStage.bind(this),
-            2: this.renderReviewStage.bind(this),
-            3: this.renderScoreStage.bind(this),
-            4: this.renderExploreStage.bind(this)
+            0: this.renderStructureStage.bind(this),
+            1: this.renderViewChangesStage.bind(this),
+            2: this.renderScoreStage.bind(this),
+            3: this.renderCompareStage.bind(this)
         };
 
         this.currentView = null;
@@ -35,154 +34,13 @@ class StageManager {
         }
     }
 
-    // Stage 0: Load Configuration
-    renderLoadStage() {
+    // Stage 0: Structure (existing UI)
+    renderStructureStage() {
         const container = document.createElement('div');
-        container.classList.add('stage-view', 'load-stage');
+        container.classList.add('stage-view', 'structure-stage');
 
         const header = document.createElement('h2');
-        header.textContent = 'Load Configuration';
-        container.appendChild(header);
-
-        const description = document.createElement('p');
-        description.textContent = 'Choose a pre-built SSPI configuration or load one of your saved customizations.';
-        description.classList.add('stage-description');
-        container.appendChild(description);
-
-        // Pre-built configurations section
-        const prebuiltSection = document.createElement('div');
-        prebuiltSection.classList.add('config-section');
-
-        const prebuiltTitle = document.createElement('h3');
-        prebuiltTitle.textContent = 'Pre-built Configurations';
-        prebuiltSection.appendChild(prebuiltTitle);
-
-        const prebuiltConfigs = [
-            { id: 'default', name: 'Default SSPI', description: 'Standard SSPI structure with all indicators' },
-            { id: 'environment', name: 'Environment Focus', description: 'Emphasis on environmental sustainability indicators' },
-            { id: 'economy', name: 'Economy Focus', description: 'Emphasis on economic prosperity indicators' }
-        ];
-
-        prebuiltConfigs.forEach(config => {
-            const configCard = this.createConfigCard(config, 'prebuilt');
-            prebuiltSection.appendChild(configCard);
-        });
-
-        container.appendChild(prebuiltSection);
-
-        // User saved configurations section
-        const savedSection = document.createElement('div');
-        savedSection.classList.add('config-section');
-
-        const savedTitle = document.createElement('h3');
-        savedTitle.textContent = 'Your Saved Configurations';
-        savedSection.appendChild(savedTitle);
-
-        const savedList = document.createElement('div');
-        savedList.classList.add('saved-configs-list');
-        savedList.id = 'saved-configs-list';
-        savedList.innerHTML = '<p class="loading-message">Loading saved configurations...</p>';
-        savedSection.appendChild(savedList);
-
-        container.appendChild(savedSection);
-
-        // Navigation buttons
-        const nav = this.createNavButtons({ showBack: false, showNext: false, showSkip: true });
-        container.appendChild(nav);
-
-        // Clear parent and append
-        this.parentElement.innerHTML = '';
-        this.parentElement.appendChild(container);
-
-        // Load saved configurations
-        this.loadSavedConfigurations();
-
-        return container;
-    }
-
-    createConfigCard(config, type) {
-        const card = document.createElement('div');
-        card.classList.add('config-card');
-        card.dataset.configId = config.id;
-        card.dataset.configType = type;
-
-        const cardName = document.createElement('div');
-        cardName.classList.add('config-name');
-        cardName.textContent = config.name;
-
-        const cardDesc = document.createElement('div');
-        cardDesc.classList.add('config-description');
-        cardDesc.textContent = config.description || 'No description available';
-
-        const loadBtn = document.createElement('button');
-        loadBtn.textContent = 'Load';
-        loadBtn.classList.add('btn-primary');
-        loadBtn.addEventListener('click', () => this.loadConfiguration(config.id, type));
-
-        card.appendChild(cardName);
-        card.appendChild(cardDesc);
-        card.appendChild(loadBtn);
-
-        return card;
-    }
-
-    async loadSavedConfigurations() {
-        const listEl = document.getElementById('saved-configs-list');
-        try {
-            const response = await fetch('/api/v1/customize/list');
-            const data = await response.json();
-
-            if (data.success && data.configurations && data.configurations.length > 0) {
-                listEl.innerHTML = '';
-                data.configurations.forEach(config => {
-                    const card = this.createConfigCard(config, 'saved');
-                    listEl.appendChild(card);
-                });
-            } else {
-                listEl.innerHTML = '<p class="empty-message">No saved configurations yet. Start by building a custom SSPI!</p>';
-            }
-        } catch (error) {
-            console.error('Error loading saved configurations:', error);
-            listEl.innerHTML = '<p class="error-message">Error loading saved configurations.</p>';
-        }
-    }
-
-    async loadConfiguration(configId, type) {
-        this.sspiStructure.showLoadingState(`Loading configuration "${configId}"...`);
-
-        try {
-            let endpoint = type === 'prebuilt'
-                ? `/api/v1/customize/prebuilt/${configId}`
-                : `/api/v1/customize/load/${configId}`;
-
-            const response = await fetch(endpoint);
-            const data = await response.json();
-
-            if (data.success && data.metadata) {
-                await this.sspiStructure.importDataAsync(data.metadata);
-                if (data.datasetDetailsMap) {
-                    this.sspiStructure.datasetDetails = data.datasetDetailsMap;
-                }
-                this.sspiStructure.hideLoadingState();
-                this.completeStage(0);
-            } else {
-                this.sspiStructure.hideLoadingState();
-                notifications.error('Error loading configuration: ' + (data.error || 'Unknown error'));
-            }
-        } catch (error) {
-            this.sspiStructure.hideLoadingState();
-            console.error('Error loading configuration:', error);
-            notifications.error('Error loading configuration. Please try again.');
-        }
-    }
-
-    // Stage 1: Build (existing UI)
-    renderBuildStage() {
-        const container = document.createElement('div');
-        container.classList.add('stage-view', 'build-stage');
-
-        const header = document.createElement('h2');
-        header.textContent = 'Build Your Custom SSPI';
+        header.textContent = 'Structure Your Custom SSPI';
         container.appendChild(header);
 
         const description = document.createElement('p');
@@ -197,7 +55,7 @@ class StageManager {
         container.appendChild(sspiContainer);
 
         // Navigation buttons
-        const nav = this.createNavButtons({ showBack: true, showNext: true, nextLabel: 'Review Changes' });
+        const nav = this.createNavButtons({ showBack: false, showNext: true, nextLabel: 'View Changes' });
         container.appendChild(nav);
 
         this.parentElement.innerHTML = '';
@@ -206,13 +64,13 @@ class StageManager {
         return container;
     }
 
-    // Stage 2: Review Changes
-    renderReviewStage() {
+    // Stage 1: View Changes
+    renderViewChangesStage() {
         const container = document.createElement('div');
-        container.classList.add('stage-view', 'review-stage');
+        container.classList.add('stage-view', 'view-changes-stage');
 
         const header = document.createElement('h2');
-        header.textContent = 'Review Your Changes';
+        header.textContent = 'View Your Changes';
         container.appendChild(header);
 
         const description = document.createElement('p');
@@ -229,7 +87,7 @@ class StageManager {
             showBack: true,
             showNext: true,
             nextLabel: 'Submit for Scoring',
-            backLabel: 'Back to Build'
+            backLabel: 'Back to Structure'
         });
         container.appendChild(nav);
 
@@ -375,6 +233,30 @@ class StageManager {
                 body: JSON.stringify({ metadata, actions })
             });
 
+            // Handle authentication error (401)
+            if (response.status === 401) {
+                const errorData = await response.json();
+                const errorMessage = errorData.error || 'Authentication required';
+
+                // Show authentication required message to user
+                if (this.progressBar) {
+                    this.progressBar.style.display = 'none';
+                }
+                if (this.statusMessage) {
+                    this.statusMessage.innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <h3 style="color: #e74c3c; margin-bottom: 1rem;">🔒 Authentication Required</h3>
+                            <p style="margin-bottom: 1.5rem;">${errorMessage}</p>
+                            <div>
+                                <a href="/login" class="btn btn-primary" style="margin-right: 1rem;">Log In</a>
+                                <a href="/register" class="btn btn-secondary">Create Free Account</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                return; // Don't throw error, just show message
+            }
+
             if (!response.ok) {
                 throw new Error('Failed to start scoring');
             }
@@ -450,13 +332,13 @@ class StageManager {
         notifications.error('Error during scoring: ' + (error.message || 'Unknown error'));
     }
 
-    // Stage 4: Explore (placeholder)
-    renderExploreStage() {
+    // Stage 3: Compare (placeholder)
+    renderCompareStage() {
         const container = document.createElement('div');
-        container.classList.add('stage-view', 'explore-stage');
+        container.classList.add('stage-view', 'compare-stage');
 
         const header = document.createElement('h2');
-        header.textContent = 'Explore Your Results';
+        header.textContent = 'Compare Your Results';
         container.appendChild(header);
 
         const placeholder = document.createElement('div');
@@ -464,7 +346,7 @@ class StageManager {
         placeholder.innerHTML = `
             <div class="placeholder-icon">🎉</div>
             <h3>Results Ready!</h3>
-            <p>The exploration interface is coming soon. For now, you can view your results in the main SSPI visualization page.</p>
+            <p>The comparison interface is coming soon. For now, you can view your results in the main SSPI visualization page.</p>
             <button class="btn-primary" onclick="window.location.href='/'">View Main Dashboard</button>
         `;
         container.appendChild(placeholder);
@@ -526,18 +408,16 @@ class StageManager {
 
     validateStageCompletion(stageId) {
         switch (stageId) {
-            case 0: // Load
-                return true; // Always can proceed from Load
-            case 1: // Build
+            case 0: // Structure
                 // Check if any changes were made or structure is valid
                 return this.sspiStructure.container !== null;
-            case 2: // Review
+            case 1: // View Changes
                 // Can proceed if user has reviewed changes
                 return true;
-            case 3: // Score
+            case 2: // Score
                 // Scoring must complete before proceeding
                 return false; // Auto-advances when complete
-            case 4: // Explore
+            case 3: // Compare
                 return false; // Final stage
             default:
                 return false;

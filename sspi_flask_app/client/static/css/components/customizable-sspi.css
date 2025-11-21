@@ -3304,14 +3304,14 @@ to {
   padding: 0 1rem 2rem;
 }
 
-/* Build stage should expand to full width to accommodate three-pillar grid */
-.stage-content-container:has(.build-stage) {
+/* Structure stage should expand to full width to accommodate three-pillar grid */
+.stage-content-container:has(.structure-stage) {
   max-width: none;
   width: 100%;
   padding: 0;
 }
 
-.build-stage {
+.structure-stage {
   padding: 1rem;
   background: transparent;
 }
@@ -3337,81 +3337,23 @@ to {
   font-size: 1rem;
 }
 
-/* Load Stage */
-.load-stage .config-section {
-  margin-bottom: 2rem;
-}
-
-.load-stage .config-section h3 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-}
-
-.config-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  transition: all 0.2s ease;
-}
-
-.config-card:hover {
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.config-name {
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-}
-
-.config-description {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  flex: 1;
-}
-
-.saved-configs-list {
-  min-height: 100px;
-}
-
-.loading-message,
-.empty-message,
-.error-message {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.error-message {
-  color: var(--error-color);
-}
-
-/* Build Stage */
-.build-stage {
+/* Structure Stage */
+.structure-stage {
   padding: 0;
   background: transparent;
   box-shadow: none;
 }
 
-.build-stage h2 {
+.structure-stage h2 {
   padding: 0 2rem;
   margin-bottom: 1rem;
 }
 
-.build-stage .stage-description {
+.structure-stage .stage-description {
   padding: 0 2rem;
 }
 
-/* Review Stage */
+/* View Changes Stage */
 .changes-summary {
   display: flex;
   flex-direction: column;
@@ -3512,7 +3454,7 @@ to {
   border-bottom: none;
 }
 
-/* Explore Stage */
+/* Compare Stage */
 .placeholder-content {
   text-align: center;
   padding: 3rem 2rem;
