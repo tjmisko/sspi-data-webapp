@@ -2,43 +2,19 @@
 
 {% block content %}
 <div id="sspi-root" class="customizable-sspi"></div>
-
 <script>
 // Backend data - csrf.js utility automatically uses window.csrfToken
 window.csrfToken = {{ csrf_token|tojson|safe }};
 window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else 'null' }};
-
-// Initialize ObservableStorage if not already initialized
-if (typeof window.storage === 'undefined') {
-    window.storage = new ObservableStorage();
-}
-
-function isSessionExpired(session) {
-    if (!session || !session.last_activity) return true;
-    const lastActivity = new Date(session.last_activity);
-    const now = new Date();
-    const daysSinceActivity = (now - lastActivity) / (1000 * 60 * 60 * 24);
-    return daysSinceActivity > 30;  // 30-day expiry
-}
+window.sspiBaseConfig = {{ base_config|tojson|safe }};
 
 // Initialize customization builder
 document.addEventListener('DOMContentLoaded', () => {
-    // Check for active session in localStorage
-    const activeSession = window.storage.getItem('sspi_active_session');
-    
-    // If no active session or expired, redirect to load page
-    if (!activeSession || isSessionExpired(activeSession)) {
-        console.log('No active session found, redirecting to load page');
-        window.location.href = '/customize/load';
-        return;
-    }
-    
-    // Initialize builder
     const root = document.getElementById('sspi-root');
     window.SSPICharts.push(
         new CustomizableSSPIStructure(root, {
-            username: window.sspiUsername
-            // activeSession is now read from localStorage within the class
+            username: window.sspiUsername,
+            baseConfig: window.sspiBaseConfig
         })
     );
     window.customSSPI = window.SSPICharts[0];

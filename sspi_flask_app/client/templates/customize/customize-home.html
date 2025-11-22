@@ -24,11 +24,8 @@
                         </p>
 
                         <div class="portal-section-inline-auth">
-                            {% if current_user.is_authenticated %}
-                                <a href="/customize/builder" class="btn-primary aside-link">Go to Customization Builder</a>
-                            {% else %}
-                                <a href="/customize/load" class="btn-primary aside-link">Browse Configurations</a>
-                            {% endif %}
+                            <a href="/customize/builder?base_config=sspi" class="btn-primary aside-link">Go to Customization Builder</a>
+                            <a href="/customize/load" class="btn-secondary aside-link">Browse Saved Configurations</a>
                         </div>
                     </div>
                 </div>

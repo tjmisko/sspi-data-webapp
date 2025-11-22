@@ -10,13 +10,14 @@ class CustomizableSSPIStructure {
                 { ItemName: 'Market Structure', ItemCode: 'MS' },
                 { ItemName: 'Public Goods', ItemCode: 'PG' }
             ],
-            autoLoad = true,
             loadingDelay = 100,
-            username = ''
+            username = '',
+            baseConfig = 'sspi'  // NEW: base config from URL
         } = options;
+
+        this.baseConfig = baseConfig;
         this.parentElement = parentElement;
         this.pillars = pillars;
-        this.autoLoad = autoLoad;
         this.loadingDelay = loadingDelay;
         this.username = username || window.sspiUsername || '';
         this.unsavedChanges = false;
@@ -43,55 +44,30 @@ class CustomizableSSPIStructure {
         this.rigCategoryIndicatorListeners();
         this.rigDragStructureListeners();
         this.setupKeyboardShortcuts();
-        // NOTE: Dataset details are loaded as part of default-structure API response (all_datasets field)
+        // NOTE: Dataset details are loaded as part of default-structure API response (datasetDetailsMap field)
         // This eliminates the need for a separate API call to /api/v1/customize/datasets
         this.setupCacheSync();
         this.rigUnloadListener();
         // Setup unsaved changes warning (uses client-side flag)
         this.setupUnsavedChangesWarning();
         // Auto-load cached modifications or default metadata if enabled
-        if (this.autoLoad) {
-            setTimeout(() => { // delay ensures DOM is ready
-                this.loadInitialData();
-            }, this.loadingDelay);
-        }
+        setTimeout(() => { // delay ensures DOM is ready
+            this.loadInitialData();
+        }, this.loadingDelay);
     }
 
     initToolbar() {
-        this.toolbarTop = document.createElement('div');
-        this.toolbarTop.classList.add('sspi-toolbar');
-        this.toolbarBottom = document.createElement('div');
-        this.toolbarBottom.classList.add('sspi-toolbar');
-        const importBtn = document.createElement('button');
-        importBtn.textContent = 'Load Default SSPI';
-        importBtn.addEventListener('click', async () => {
-            try {
-                this.showLoadingState('Loading default SSPI metadata...');
-                this.clearCache(); // Clear ALL caches when explicitly loading default metadata
-                // Reload available datasets from server (fresh, no cache)
-                const response = await this.fetch('/api/v1/customize/default-structure');
-                if (response.success) {
-                    console.log('Loading default SSPI metadata with', response.stats);
-                    this.datasetDetails = response.datasetDetailsMap;
-                    await this.importDataAsync(response.metadata);
-                    this.hideLoadingState();
-                } else {
-                    this.hideLoadingState();
-                    notifications.error('Error loading default metadata: ' + response.error);
-                }
-            } catch (err) {
-                this.hideLoadingState();
-                console.error('Error loading default metadata:', err);
-                notifications.error('Error loading default metadata. Please try again.');
-            }
-        });
+        this.toolbarLeft = document.createElement('div');
+        this.toolbarLeft.classList.add('sspi-toolbar');
+        this.toolbarRight = document.createElement('div');
+        this.toolbarRight.classList.add('sspi-toolbar');
         this.saveButton = document.createElement('button');
         this.saveButton.textContent = 'Save';
         this.saveButton.addEventListener('click', async () => {
             await this.handleSave();
         });
         const resetViewBtn = document.createElement('button');
-        resetViewBtn.textContent = 'Reset View';
+        resetViewBtn.textContent = 'Default View';
         resetViewBtn.title = 'Collapse all indicators, expand all categories';
         resetViewBtn.addEventListener('click', () => {
             this.resetView();
@@ -128,19 +104,17 @@ class CustomizableSSPIStructure {
             }
         });
         const scoreVisualizeBtn = document.createElement('button');
-        scoreVisualizeBtn.textContent = 'Score & Visualize';
-        scoreVisualizeBtn.title = 'Generate scores and visualize this custom SSPI structure';
-        scoreVisualizeBtn.addEventListener('click', async () => {
-            await this.scoreAndVisualize();
-        });
-        this.toolbarTop.append(resetViewBtn, expandAllBtn, collapseAllBtn)
-        this.toolbarBottom.append(importBtn, this.saveButton, scoreVisualizeBtn, validateBtn, viewChangesBtn, this.discardButton);
-        this.parentElement.appendChild(this.toolbarTop);
-        this.parentElement.appendChild(this.toolbarBottom);
+        this.toolbarLeft.append(this.saveButton, validateBtn, viewChangesBtn, this.discardButton);
+        this.toolbarRight.append(resetViewBtn, expandAllBtn, collapseAllBtn)
+        this.parentElement.appendChild(this.toolbarLeft);
+        this.parentElement.appendChild(this.toolbarRight);
+
+        // Set initial save button state based on login status
+        this.updateSaveButtonState();
 
         // Initially hide toolbars (they'll be shown only in Build stage)
-        this.toolbarTop.style.display = 'none';
-        this.toolbarBottom.style.display = 'none';
+        this.toolbarLeft.style.display = 'none';
+        this.toolbarRight.style.display = 'none';
     }
 
     async fetch(url, options = {}) {
@@ -169,20 +143,23 @@ class CustomizableSSPIStructure {
             // Check if user is authenticated
             if (!window.sspiUsername) {
                 notifications.error('Please log in to save configurations');
-                window.location.href = '/auth/login?next=/customize/builder';
+                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                 return;
             }
 
-            // Get current session info
-            const session = window.storage.getItem('sspi_active_session');
-            const configId = session?.config_id || this.currentConfigId;
+            // Protected configs cannot be overwritten
+            const protectedConfigs = ['sspi', 'blank', 'default'];
 
-            if (configId && configId !== 'adhoc' && !configId.startsWith('adhoc_')) {
-                // Update existing configuration
-                await this.updateConfiguration(configId);
-            } else {
-                // Save as new configuration
+            if (protectedConfigs.includes(this.baseConfig)) {
+                // Always save as new when editing protected configs
                 await this.saveNewConfiguration();
+            } else {
+                // Can update existing saved config
+                if (this.currentConfigId === this.baseConfig) {
+                    await this.updateConfiguration(this.baseConfig);
+                } else {
+                    await this.saveNewConfiguration();
+                }
             }
         } catch (error) {
             console.error('Error in handleSave:', error);
@@ -229,21 +206,19 @@ class CustomizableSSPIStructure {
                 this.currentConfigId = response.config_id;
                 this.currentConfigName = name;
 
-                // Update session
-                const session = window.storage.getItem('sspi_active_session') || {};
-                session.config_id = response.config_id;
-                session.config_name = name;
-                session.config_type = 'saved';
-                window.storage.setItem('sspi_active_session', session);
-
-                // Clear unsaved state
+                // Clear unsaved state and cache
                 this.clearUnsavedState();
-                this.clearCache(); // Clear local cache since it's now saved
+                this.clearCache();
 
-                // Update save button
+                // Update UI
                 this.updateSaveButtonState();
 
-                notifications.success('Configuration saved successfully');
+                // Show success with link to edit the newly saved config
+                const editLink = `/customize/builder?base_config=${response.config_id}`;
+                notifications.success(
+                    `Configuration saved successfully! <a href="${editLink}" style="color: white; text-decoration: underline;">Edit this config</a>`,
+                    8000
+                );
             } else {
                 throw new Error(response.error || 'Unknown error');
             }
@@ -371,14 +346,35 @@ class CustomizableSSPIStructure {
     }
 
     updateSaveButtonState() {
+        // Check if user is logged in (handle both undefined and empty string)
+        const isLoggedIn = !!(window.sspiUsername && window.sspiUsername.trim());
+
+        if (!isLoggedIn) {
+            // Use same styling as Discard button when disabled
+            this.saveButton.classList.remove('unsaved-changes');
+            this.saveButton.textContent = 'Save';
+            this.saveButton.disabled = true;
+            this.saveButton.style.opacity = '0.5';
+            this.saveButton.style.cursor = 'not-allowed';
+            this.saveButton.title = 'You must be logged in to save configurations';
+            return;
+        }
+
+        // User is logged in - enable save functionality
         if (this.unsavedChanges) {
             this.saveButton.classList.add('unsaved-changes');
             this.saveButton.textContent = this.currentConfigId ? 'Update' : 'Save';
             this.saveButton.disabled = false;
+            this.saveButton.style.opacity = '1';
+            this.saveButton.style.cursor = 'pointer';
+            this.saveButton.title = this.currentConfigId ? 'Update the current configuration' : 'Save as new configuration';
         } else {
             this.saveButton.classList.remove('unsaved-changes');
             this.saveButton.textContent = 'Saved';
             this.saveButton.disabled = false;
+            this.saveButton.style.opacity = '1';
+            this.saveButton.style.cursor = 'pointer';
+            this.saveButton.title = 'No unsaved changes';
         }
     }
 
@@ -525,13 +521,13 @@ class CustomizableSSPIStructure {
         if (stageId === 0) {
             // Structure stage - show customization UI and toolbars
             this.container.style.display = 'block';
-            this.toolbarTop.style.display = 'flex';
-            this.toolbarBottom.style.display = 'flex';
+            this.toolbarLeft.style.display = 'flex';
+            this.toolbarRight.style.display = 'flex';
         } else {
             // Other stages - hide customization UI and toolbars (stage manager handles its own UI)
             this.container.style.display = 'none';
-            this.toolbarTop.style.display = 'none';
-            this.toolbarBottom.style.display = 'none';
+            this.toolbarLeft.style.display = 'none';
+            this.toolbarRight.style.display = 'none';
         }
     }
 
@@ -1471,8 +1467,10 @@ class CustomizableSSPIStructure {
             });
         }
 
-        // Update state
-        this.flagUnsaved();
+        // Update state (only flag unsaved if recording this action)
+        if (record) {
+            this.flagUnsaved();
+        }
         this.validate();
 
         return { success: true, action, element: datasetItem };
@@ -3639,9 +3637,58 @@ class CustomizableSSPIStructure {
         return notifications.show(message, type, duration);
     }
 
-    // Session Management Helper Methods
+    // Cache Management Helper Methods
+    /**
+     * Get the cache key for the current base configuration
+     * Single cache key per user per base config
+     */
+    getCacheKey() {
+        const username = this.username || 'anonymous';
+        return `customSSPI_${username}_${this.baseConfig}`;
+    }
+
+    /**
+     * Save data to cache
+     */
+    setCache(data) {
+        const cacheKey = this.getCacheKey();
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+        } catch (error) {
+            console.error('Error saving cache:', error);
+        }
+    }
+
+    /**
+     * Load data from cache
+     */
+    getCache() {
+        const cacheKey = this.getCacheKey();
+        try {
+            const data = localStorage.getItem(cacheKey);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error('Error loading cache:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Clear cache for current base config
+     */
+    clearCache() {
+        const cacheKey = this.getCacheKey();
+        try {
+            localStorage.removeItem(cacheKey);
+            console.log(`Cleared cache for ${this.baseConfig}`);
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+        }
+    }
+
+    // Legacy storage methods (kept for backwards compatibility during migration)
     getStorageKey(key) {
-        // Namespace storage keys with username for user isolation
+        // OLD: Namespace storage keys with username for user isolation
         return `customSSPI_${this.username}_${key}`;
     }
 
@@ -3657,33 +3704,14 @@ class CustomizableSSPIStructure {
 
     markUnsaved() {
         this.unsavedChanges = true;
+        // Legacy: still set old storage flag for backwards compatibility
         this.setStorage('hasUnsaved', true);
-        // Update session activity timestamp and unsaved flag in localStorage
-        this.updateSessionActivity(true);
     }
 
     markSaved() {
         this.unsavedChanges = false;
+        // Legacy: still clear old storage flag for backwards compatibility
         this.setStorage('hasUnsaved', false);
-        // Update session to clear unsaved flag
-        this.updateSessionActivity(false);
-    }
-
-    updateSessionActivity(hasUnsaved = null) {
-        // Update last_activity timestamp and optionally hasUnsaved flag in localStorage session
-        try {
-            const session = window.storage.getItem('sspi_active_session');
-            if (session) {
-                session.last_activity = new Date().toISOString();
-                // Update hasUnsaved flag if explicitly provided
-                if (hasUnsaved !== null) {
-                    session.hasUnsaved = hasUnsaved;
-                }
-                window.storage.setItem('sspi_active_session', session);
-            }
-        } catch (error) {
-            console.error('Failed to update session activity:', error);
-        }
     }
 
     setupUnsavedChangesWarning() {
@@ -4009,64 +4037,164 @@ class CustomizableSSPIStructure {
 
     // Auto-loading functionality
     async loadInitialData() {
-        // PRIORITY 1: Check for pending config from load page
-        const pendingConfig = window.storage.getItem('sspi_pending_config');
-        if (pendingConfig && pendingConfig.metadata) {
-            console.log('Loading pending configuration from load page');
-            this.datasetDetails = pendingConfig.datasetDetailsMap || {};
+        console.log(`Loading initial data for base_config: ${this.baseConfig}`);
 
-            // Set configuration tracking based on session
-            const session = window.storage.getItem('sspi_active_session');
-            if (session) {
-                this.currentConfigId = session.config_id;
-                this.currentConfigName = session.config_name;
-                console.log('Loaded config:', this.currentConfigId, this.currentConfigName);
-            }
+        // Check and migrate legacy data first
+        await this.checkLegacyData();
 
-            await this.importDataAsync(pendingConfig.metadata);
-
-            // Load action history if available
-            if (pendingConfig.actions && Array.isArray(pendingConfig.actions)) {
-                console.log('Restoring action history with', pendingConfig.actions.length, 'actions');
-                // Clear existing history
-                this.actionHistory.clear();
-                // Import actions (they don't have undo/redo functions, just deltas)
-                pendingConfig.actions.forEach(action => {
-                    this.actionHistory.actions.push({
-                        ...action,
-                        undo: () => {}, // Placeholder - can't undo loaded actions
-                        redo: () => {}  // Placeholder - can't redo loaded actions
-                    });
-                });
-                this.actionHistory.currentIndex = this.actionHistory.actions.length - 1;
-            }
-
-            window.storage.removeItem('sspi_pending_config'); // Clean up after loading
-            this.clearUnsavedState(); // Clear unsaved state for freshly loaded config
-            this.restoreExpansionState();
-            this.restoreScrollPosition();
-            return;
-        }
-
-        // PRIORITY 2: Check for cached modifications from previous session
-        if (this.hasCachedModifications()) {
+        // STEP 1: Try to load from cache
+        const cachedState = this.getCache();
+        if (cachedState && cachedState.hasModifications) {
+            console.log('Restoring from cached state');
             try {
-                const loaded = await this.loadCachedState();
-                if (loaded) {
-                    this.showNotification("✓ Restored from previous session");
-                    this.restoreExpansionState();
-                    this.restoreScrollPosition();
-                    return;
-                }
+                await this.restoreFromCache(cachedState);
+                this.showNotification("✓ Restored from previous session");
+                this.restoreExpansionState();
+                this.restoreScrollPosition();
+                return;
             } catch (error) {
-                console.warn('Failed to load cached modifications, falling back to default:', error);
+                console.warn('Failed to restore cache, loading from server:', error);
+                this.clearCache();
             }
         }
 
-        // PRIORITY 3: Fall back to loading default metadata
-        await this.loadDefaultMetadata();
+        // STEP 2: Load fresh from server based on base_config
+        await this.loadFromServer();
         this.restoreExpansionState();
         this.restoreScrollPosition();
+    }
+
+    /**
+     * Load configuration from server based on base_config
+     */
+    async loadFromServer() {
+        try {
+            this.showLoadingState('Loading configuration...');
+
+            let endpoint;
+            let configName;
+
+            // Determine endpoint based on base_config
+            if (this.baseConfig === 'sspi' || this.baseConfig === 'default') {
+                endpoint = '/api/v1/customize/default-structure';
+                configName = 'Standard SSPI';
+            } else if (this.baseConfig === 'blank') {
+                endpoint = '/api/v1/customize/empty-structure';
+                configName = 'Blank Configuration';
+            } else {
+                // Assume it's a saved config ID
+                endpoint = `/api/v1/customize/load/${this.baseConfig}`;
+                configName = null; // Will be set from response
+            }
+
+            const response = await this.fetch(endpoint);
+
+            if (response.success) {
+                // Store dataset details
+                if (response.datasetDetailsMap) {
+                    this.datasetDetails = response.datasetDetailsMap;
+                }
+
+                // Import metadata
+                await this.importDataAsync(response.metadata);
+
+                // Restore action history if available
+                if (response.actions && Array.isArray(response.actions)) {
+                    console.log('Restoring action history with', response.actions.length, 'actions');
+                    this.actionHistory.clear();
+                    response.actions.forEach(action => {
+                        this.actionHistory.actions.push({
+                            ...action,
+                            undo: () => {},
+                            redo: () => {}
+                        });
+                    });
+                    this.actionHistory.currentIndex = this.actionHistory.actions.length - 1;
+                }
+
+                // Set config name
+                if (response.name) {
+                    configName = response.name;
+                }
+                this.currentConfigName = configName;
+
+                // Clear unsaved state for freshly loaded config
+                this.clearUnsavedState();
+
+                this.hideLoadingState();
+                console.log(`Loaded ${configName} successfully`);
+            } else {
+                this.handleLoadError('Failed to load configuration: ' + (response.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error loading from server:', error);
+            this.handleLoadError('Network error loading configuration');
+        }
+    }
+
+    /**
+     * Restore configuration from cached state
+     */
+    async restoreFromCache(cachedState) {
+        console.log('Restoring from cache:', cachedState);
+
+        // Restore dataset details
+        if (cachedState.datasetDetailsMap) {
+            this.datasetDetails = cachedState.datasetDetailsMap;
+        }
+
+        // Import metadata
+        if (cachedState.metadata) {
+            await this.importDataAsync(cachedState.metadata);
+        }
+
+        // Restore action history
+        if (cachedState.actions && Array.isArray(cachedState.actions)) {
+            this.actionHistory.clear();
+            cachedState.actions.forEach(action => {
+                this.actionHistory.actions.push({
+                    ...action,
+                    undo: () => {},
+                    redo: () => {}
+                });
+            });
+            this.actionHistory.currentIndex = this.actionHistory.actions.length - 1;
+        }
+
+        // Mark as having unsaved changes
+        this.flagUnsaved();
+    }
+
+    /**
+     * Check for and migrate legacy session/cache data
+     */
+    async checkLegacyData() {
+        // Check for old sspi_active_session
+        const oldSession = window.observableStorage?.getItem('sspi_active_session');
+        if (oldSession) {
+            console.log('Found legacy session, cleaning up...');
+            window.observableStorage.removeItem('sspi_active_session');
+            window.observableStorage.removeItem('sspi_pending_config');
+        }
+
+        // Migrate old cache if exists
+        const oldCacheKey = `customSSPI_${this.username}_cachedModifications`;
+        const oldCache = localStorage.getItem(oldCacheKey);
+
+        if (oldCache && this.baseConfig === 'sspi') {
+            console.log('Migrating legacy cache to new format');
+            try {
+                const data = JSON.parse(oldCache);
+                const newCacheKey = this.getCacheKey();
+                localStorage.setItem(newCacheKey, oldCache);
+                localStorage.removeItem(oldCacheKey);
+                // Also remove old hasUnsaved flag
+                localStorage.removeItem(`customSSPI_${this.username}_hasUnsaved`);
+                console.log('Migration complete');
+            } catch (error) {
+                console.error('Failed to migrate cache:', error);
+            }
+        }
     }
     
     async discardChanges() {
@@ -4099,14 +4227,12 @@ class CustomizableSSPIStructure {
             const response = await this.fetch('/api/v1/customize/default-structure');
             if (response.success) {
                 console.log('Auto-loading default SSPI metadata:', response.stats);
-                if (response.all_datasets && Array.isArray(response.all_datasets)) {
+                if (response.datasetDetailsMap) {
                     const currentCount = Object.keys(this.datasetDetails).length;
-                    if (currentCount === 0 && response.all_datasets) {
-                        console.log('Dataset details not yet loaded, building map from all_datasets as fallback');
-                        response.all_datasets.forEach(ds => {
-                            this.datasetDetails[ds.DatasetCode] = ds;
-                        });
-                        console.log(`Loaded ${response.all_datasets.length} dataset details for selection (fallback)`);
+                    if (currentCount === 0) {
+                        console.log('Dataset details not yet loaded, loading from datasetDetailsMap');
+                        this.datasetDetails = response.datasetDetailsMap;
+                        console.log(`Loaded ${Object.keys(this.datasetDetails).length} dataset details for selection`);
                     } else {
                         console.log(`Dataset details already loaded (${currentCount} datasets)`);
                     }
@@ -4735,19 +4861,21 @@ class CustomizableSSPIStructure {
             };
             const cacheData = {
                 hasModifications: this.unsavedChanges,
-                lastModified: Date.now(),
-                metadata: metadata, 
+                timestamp: Date.now(),
+                metadata: metadata,
                 datasetDetailsMap: this.datasetDetails,
-                actionHistory: actionHistory,
+                actions: actionHistory.actions,
+                baseConfig: this.baseConfig
             };
             const cacheSize = JSON.stringify(cacheData).length;
             console.log('Approximate cache size:', parseFloat((cacheSize / 1024 / 1024).toFixed(2)), 'MB');
             if (cacheSize > 5 * 1024 * 1024) { // 5MB limit
                 console.warn('Cache data is too large (>5MB), skipping cache');
+                notifications.warning('Configuration too large to cache locally. Please save to server.');
                 return;
             }
-            this.setStorage("cachedModifications", cacheData);
-            console.log('SSPI modifications cached successfully with dataset details');
+            this.setCache(cacheData);
+            console.log('SSPI modifications cached successfully');
         } catch (error) {
             console.warn('Failed to cache SSPI modifications:', error);
         }
@@ -4851,19 +4979,13 @@ class CustomizableSSPIStructure {
     }
     
     setupCacheSync() {
-        // Listen for cache changes from other tabs (user-scoped)
-        const cacheKey = this.getStorageKey("cachedModifications");
-        window.observableStorage.onChange(cacheKey, async (oldValue, newValue) => {
-            console.log('Cache change detected!');
-            if (!this.unsavedChanges) { // Only sync if we don't have unsaved changes in current tab
-                if (newValue && this.isValidCacheData(newValue) && newValue.hasModifications) {
-                    console.log('Syncing cache modifications from another session');
-                    await this.importDataAsync(newValue.metadata);
-                    this.setUnsavedState(newValue.hasModifications);
-                } else if (!newValue) {
-                    // Cache was cleared in another tab, reload default if no local changes
-                    console.log('Cache cleared in another session, reloading default');
-                    await this.loadDefaultMetadata();
+        // Listen for storage events from other tabs
+        window.addEventListener('storage', (e) => {
+            const myCacheKey = this.getCacheKey();
+            if (e.key === myCacheKey && e.newValue !== e.oldValue) {
+                console.log('Cache updated in another tab');
+                if (confirm('Configuration updated in another tab. Reload to see changes?')) {
+                    window.location.reload();
                 }
             }
         });

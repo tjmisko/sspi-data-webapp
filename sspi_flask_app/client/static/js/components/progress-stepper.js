@@ -23,23 +23,15 @@ class ProgressStepper {
         stepper.classList.add('progress-stepper');
         stepper.setAttribute('role', 'navigation');
         stepper.setAttribute('aria-label', 'Progress steps');
-
-        // Create the steps container
         const stepsContainer = document.createElement('div');
         stepsContainer.classList.add('progress-stepper-steps');
-
-        // Create progress fill bar
         const progressFill = document.createElement('div');
         progressFill.classList.add('progress-bar-fill');
-
-        // Calculate progress fill width based on current stage
         let fillPercentage = 0;
         if (this.currentStage > 0) {
             fillPercentage = (this.currentStage / (this.stages.length - 1)) * 100;
         }
-        // Set width, ensuring it never goes negative (0% when at first stage)
         progressFill.style.width = fillPercentage === 0 ? '0' : `${fillPercentage}%`;
-
         this.stages.forEach((stage, index) => {
             // Create step container
             const stepContainer = document.createElement('div');
@@ -52,12 +44,10 @@ class ProgressStepper {
             step.setAttribute('role', 'button');
             step.setAttribute('tabindex', '0');
             step.setAttribute('aria-label', `${stage.name} stage`);
-
             // Determine step state
             const isCompleted = this.completedStages.includes(stage.id);
             const isCurrent = stage.id === this.currentStage;
             const isClickable = isCompleted || stage.id < this.currentStage;
-
             if (isCompleted) {
                 step.classList.add('completed');
                 step.setAttribute('aria-current', 'false');
@@ -70,7 +60,6 @@ class ProgressStepper {
                 step.classList.add('locked');
                 step.setAttribute('aria-disabled', 'true');
             }
-
             // Step content (number or checkmark)
             const stepIcon = document.createElement('span');
             stepIcon.classList.add('step-icon');
@@ -81,7 +70,6 @@ class ProgressStepper {
                 stepIcon.textContent = stage.number;
             }
             step.appendChild(stepIcon);
-
             // Step label
             const stepLabel = document.createElement('div');
             stepLabel.classList.add('step-label');
@@ -98,17 +86,13 @@ class ProgressStepper {
                     }
                 });
             }
-
             stepContainer.appendChild(step);
             stepContainer.appendChild(stepLabel);
             stepsContainer.appendChild(stepContainer);
         });
-
         // Assemble stepper
         stepper.appendChild(progressFill);
         stepper.appendChild(stepsContainer);
-
-        // Clear parent and append stepper
         this.parentElement.innerHTML = '';
         this.parentElement.appendChild(stepper);
     }

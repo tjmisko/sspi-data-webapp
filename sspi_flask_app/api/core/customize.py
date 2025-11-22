@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import Blueprint, jsonify, request, current_app as app
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from sspi_flask_app.auth.decorators import owner_or_admin_required
 from sspi_flask_app.api.resources.utilities import parse_json
@@ -203,7 +203,7 @@ def list_indicators():
 def save_configuration():
     """Save a custom SSPI configuration for the current user."""
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
         data = request.get_json()
 
         if not data or 'metadata' not in data:
@@ -249,7 +249,7 @@ def save_configuration():
 def list_configurations():
     """List all saved configurations for the current user."""
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
 
         # Fetch configurations from database
         configurations = sspi_custom_user_structure.list_config_names(username=user_id)
@@ -269,7 +269,7 @@ def list_configurations():
 def load_configuration(config_id):
     """Load a specific saved configuration."""
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
 
         # Fetch configuration from database (verify ownership)
         config = sspi_custom_user_structure.find_by_config_id(config_id, username=user_id)
@@ -471,7 +471,7 @@ def update_configuration(config_id):
         JSON with success status
     """
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
         updates = request.get_json()
 
         if not updates:
@@ -533,7 +533,7 @@ def duplicate_configuration(config_id):
         JSON with new config_id
     """
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
         data = request.get_json()
 
         if not data or 'new_name' not in data:
@@ -581,7 +581,7 @@ def delete_configuration(config_id):
         JSON with success status
     """
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
 
         # Delete configuration (verifies ownership internally)
         deleted = sspi_custom_user_structure.delete_config(
@@ -627,7 +627,7 @@ def export_configuration(config_id):
         JSON file download with configuration data
     """
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
 
         # Fetch configuration (verify ownership)
         config = sspi_custom_user_structure.find_by_config_id(config_id, username=user_id)
@@ -728,7 +728,7 @@ def score_custom_configuration():
     """
     try:
         # Get authenticated user_id (decorator ensures user is logged in)
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
         json_data = request.get_json()
 
         if not json_data:
@@ -805,7 +805,7 @@ def get_results_summary(config_id):
         JSON with has_results flag and statistics about cached results
     """
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
 
         # Verify config exists and user owns it
         config = sspi_custom_user_structure.find_by_config_id(config_id, username=user_id)
@@ -860,7 +860,7 @@ def get_chart_data(config_id):
         JSON with time series data formatted for sspi-panel-chart.js
     """
     try:
-        user_id = request.__getattribute__("user_id")
+        user_id = current_user.username
 
         # Verify config exists and user owns it
         config = sspi_custom_user_structure.find_by_config_id(config_id, username=user_id)

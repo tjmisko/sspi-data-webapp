@@ -148,12 +148,47 @@ def customize_load():
 def customize_configuration_builder():
     """
     Main customization builder interface.
-    Client-side JavaScript checks localStorage for active editing session.
+    Loads configuration based on base_config query parameter.
+
+    Query parameters:
+    - base_config: Configuration to load (default: 'sspi')
+      - 'sspi': Default SSPI structure
+      - 'blank': Empty template
+      - <config_id>: Saved configuration ID
+
     Accessible to all users (authentication only required for saving).
     """
+    logger = logging.getLogger(__name__)
+    base_config = request.args.get('base_config', 'sspi')
+
+    # Validate base_config parameter
+    valid_prebuilt = ['sspi', 'blank', 'default']
+    if base_config not in valid_prebuilt:
+        # Check if it's a valid saved config (requires authentication)
+        if current_user.is_authenticated:
+            try:
+                config = sspi_custom_user_structure.find_by_config_id(
+                    base_config,
+                    username=current_user.username
+                )
+                if not config:
+                    # Invalid config_id, redirect to default
+                    logger.warning(f"Invalid base_config '{base_config}' for user {current_user.username}, redirecting to default")
+                    return redirect(url_for('client_bp.customize_configuration_builder', base_config='sspi'))
+            except Exception as e:
+                logger.error(f"Error validating base_config: {e}")
+                return redirect(url_for('client_bp.customize_configuration_builder', base_config='sspi'))
+        else:
+            # Anonymous user with invalid base_config
+            logger.warning(f"Anonymous user attempted invalid base_config '{base_config}', redirecting to default")
+            return redirect(url_for('client_bp.customize_configuration_builder', base_config='sspi'))
+
     csrf_token = generate_csrf()
-    return render_template('customize/customization-builder.html',
-                         csrf_token=csrf_token)
+    return render_template(
+        'customize/customization-builder.html',
+        csrf_token=csrf_token,
+        base_config=base_config
+    )
 
 
 @client_bp.route('/customize/visualize/<config_id>')

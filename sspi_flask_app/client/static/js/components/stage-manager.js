@@ -1,6 +1,4 @@
-// stage-manager.js
 // Manages stage view switching and rendering for customizable SSPI workflow
-
 class StageManager {
     constructor(parentElement, sspiStructure, options = {}) {
         this.parentElement = parentElement;
@@ -34,18 +32,18 @@ class StageManager {
         }
     }
 
-    // Stage 0: Structure (existing UI)
+    // Stage 0: Structure
     renderStructureStage() {
         const container = document.createElement('div');
         container.classList.add('stage-view', 'structure-stage');
 
         const header = document.createElement('h2');
-        header.textContent = 'Structure Your Custom SSPI';
+        header.textContent = 'Customize SSPI Structure';
         container.appendChild(header);
 
         const description = document.createElement('p');
-        description.textContent = 'Customize the SSPI structure by adding, removing, or reorganizing indicators and categories.';
-        description.classList.add('stage-description');
+        description.textContent = 'Customize the SSPI structure by adding, removing, modifying, or reorganizing indicators and categories.';
+        description.classList.add('functionality-explainer');
         container.appendChild(description);
 
         // The actual customization UI (pillars container) is already rendered by sspiStructure
@@ -224,8 +222,9 @@ class StageManager {
         const actions = this.sspiStructure.actionHistory.actions.map(a => a.delta);
 
         try {
-            // Submit the scoring request via POST
-            const response = await fetch('/api/v1/customize/score', {
+            // Submit the scoring request via POST (using sspiStructure.fetch for CSRF token)
+            // Note: this.sspiStructure.fetch() automatically adds CSRF token and returns JSON
+            const result = await this.sspiStructure.fetch('/api/v1/customize/score', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -233,36 +232,7 @@ class StageManager {
                 body: JSON.stringify({ metadata, actions })
             });
 
-            // Handle authentication error (401)
-            if (response.status === 401) {
-                const errorData = await response.json();
-                const errorMessage = errorData.error || 'Authentication required';
-
-                // Show authentication required message to user
-                if (this.progressBar) {
-                    this.progressBar.style.display = 'none';
-                }
-                if (this.statusMessage) {
-                    this.statusMessage.innerHTML = `
-                        <div style="text-align: center; padding: 2rem;">
-                            <h3 style="color: #e74c3c; margin-bottom: 1rem;">🔒 Authentication Required</h3>
-                            <p style="margin-bottom: 1.5rem;">${errorMessage}</p>
-                            <div>
-                                <a href="/login" class="btn btn-primary" style="margin-right: 1rem;">Log In</a>
-                                <a href="/register" class="btn btn-secondary">Create Free Account</a>
-                            </div>
-                        </div>
-                    `;
-                }
-                return; // Don't throw error, just show message
-            }
-
-            if (!response.ok) {
-                throw new Error('Failed to start scoring');
-            }
-
-            const result = await response.json();
-
+            // Check if scoring was successfully initiated
             if (!result.success) {
                 throw new Error(result.error || 'Failed to initiate scoring');
             }
@@ -288,7 +258,28 @@ class StageManager {
 
         } catch (error) {
             console.error('Error starting scoring:', error);
-            this.scoringError(error);
+
+            // Check if it's an authentication error (401)
+            if (error.message && error.message.includes('401')) {
+                // Show authentication required message
+                if (this.progressBar) {
+                    this.progressBar.style.display = 'none';
+                }
+                if (this.statusMessage) {
+                    this.statusMessage.innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <h3 style="color: #e74c3c; margin-bottom: 1rem;">🔒 Authentication Required</h3>
+                            <p style="margin-bottom: 1.5rem;">You must be logged in to generate custom SSPI scores.</p>
+                            <div>
+                                <a href="/auth/login?next=${encodeURIComponent(window.location.pathname)}" class="btn btn-primary" style="margin-right: 1rem;">Log In</a>
+                                <a href="/auth/register?next=${encodeURIComponent(window.location.pathname)}" class="btn btn-secondary">Create Free Account</a>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                this.scoringError(error);
+            }
         }
     }
 

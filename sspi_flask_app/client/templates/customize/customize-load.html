@@ -12,38 +12,40 @@
   font-family: var(--body-font-family);
 }
 
-.active-session-banner {
-    background: linear-gradient(135deg, #ff1111 0%, #dd3222 100%);
+/* Unsaved warnings styling */
+.unsaved-warnings-section {
+    margin-bottom: 1.5rem;
+}
+
+.unsaved-warning-banner {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
     color: white;
     padding: 1.5rem;
     border-radius: 12px;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.active-session-banner h3 {
+.unsaved-warning-banner h4 {
     margin: 0 0 0.5rem 0;
-    line-height: 1.15;
+    font-size: 1.125rem;
 }
 
-.active-session-banner p {
+.unsaved-warning-banner p {
     margin: 0 0 1rem 0;
     opacity: 0.9;
+    font-size: 0.875rem;
 }
 
-.resume-button {
-    background: white;
-    color: #667eea;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease;
+.warning-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
-.resume-button:hover {
-    transform: translateY(-2px);
+.warning-actions .btn-primary,
+.warning-actions .btn-secondary {
+    text-decoration: none;
+    display: inline-block;
 }
 
 .bounded-content-box {
@@ -190,6 +192,9 @@
 </style>
 <article class="page-content">
     <section class="page-section">
+        <!-- Unsaved warnings will be injected here by JavaScript -->
+        <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
+
         <div class="load-container">
             <div class="bounded-content-box config-section">
                 <h3>Load Prebuilt Configuration</h3>
@@ -214,7 +219,7 @@
                                 <span class="config-meta-item">{{ config.datasets }} Datasets</span>
                             </div>
                             <div class="config-actions">
-                                <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'prebuilt')">Load</button>
+                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -222,8 +227,8 @@
             </div>
             <!-- Saved Configurations -->
             <div class="bounded-content-box config-section">
-                <!-- Active session banner (inserted by JavaScript if session exists) -->
-                <div id="active-session-banner-container"></div>
+                <!-- Unsaved warnings (inserted by JavaScript if unsaved changes exist) -->
+                <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
                 <h3>Saved Configurations</h3>
                 <p class="functionality-explainer">
                     Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
@@ -246,7 +251,7 @@
                             </div>
                             {% endif %}
                             <div class="config-actions">
-                                <button class="btn-load" onclick="loadConfiguration('{{ config.id }}', 'saved')">Load</button>
+                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
                             </div>
                         </div>
                         {% endfor %}
@@ -269,7 +274,7 @@
                             from scratch, selecting your own datasets, indicators, and scoring methods.
                         </p>
                         <div class="config-actions">
-                            <button class="btn-load" onclick="createBlankConfiguration()">Start Building</button>
+                            <a href="/customize/builder?base_config=blank" class="btn-load">Start Building</a>
                         </div>
                     </div>
                 </div>
@@ -279,175 +284,101 @@
 </article>
 <script>
 window.csrfToken = {{ csrf_token|tojson|safe }};
+window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else '""' }};
 
-// Initialize ObservableStorage if not already initialized
-if (typeof window.storage === 'undefined') {
-    window.storage = new ObservableStorage();
-}
-
-// Check for active session on page load
+// Check for unsaved changes on page load
 document.addEventListener('DOMContentLoaded', () => {
-    checkForActiveSession();
+    checkForUnsavedChanges();
 });
 
-function checkForActiveSession() {
+/**
+ * Check localStorage for any cached configurations with unsaved changes
+ * and display warning banners for each one
+ */
+function checkForUnsavedChanges() {
+    if (!window.sspiUsername) return;
+
     try {
-        const activeSession = window.storage.getItem('sspi_active_session');
-        // Only show banner if session exists, isn't expired, AND has unsaved changes
-        if (activeSession && !isSessionExpired(activeSession) && activeSession.hasUnsaved) {
-            displayResumeBanner(activeSession);
+        const userCachePattern = `customSSPI_${window.sspiUsername}_`;
+        const unsavedConfigs = [];
+
+        // Scan all localStorage keys for user's cached configs
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(userCachePattern)) {
+                const cacheData = JSON.parse(localStorage.getItem(key));
+                if (cacheData && cacheData.hasModifications) {
+                    const baseConfig = key.replace(userCachePattern, '');
+                    unsavedConfigs.push({
+                        baseConfig: baseConfig,
+                        lastModified: cacheData.timestamp,
+                        configName: getConfigName(baseConfig)
+                    });
+                }
+            }
+        }
+
+        if (unsavedConfigs.length > 0) {
+            displayUnsavedWarnings(unsavedConfigs);
         }
     } catch (error) {
-        console.error('Error checking for active session:', error);
+        console.error('Error checking for unsaved changes:', error);
     }
 }
 
-function isSessionExpired(session) {
-    if (!session || !session.last_activity) return true;
-    const lastActivity = new Date(session.last_activity);
-    const now = new Date();
-    const daysSinceActivity = (now - lastActivity) / (1000 * 60 * 60 * 24);
-    return daysSinceActivity > 30;  // 30-day expiry
+/**
+ * Get a human-readable name for a base_config ID
+ */
+function getConfigName(baseConfig) {
+    const prebuiltNames = {
+        'sspi': 'Standard SSPI',
+        'blank': 'Blank Configuration',
+        'default': 'Default SSPI'
+    };
+    return prebuiltNames[baseConfig] || `Configuration ${baseConfig}`;
 }
 
-function displayResumeBanner(session) {
-    const container = document.getElementById('active-session-banner-container');
+/**
+ * Display warning banners for configurations with unsaved changes
+ */
+function displayUnsavedWarnings(unsavedConfigs) {
+    const container = document.getElementById('unsaved-warnings-container');
     if (!container) return;
 
-    const lastActivity = new Date(session.last_activity);
-    const formattedDate = lastActivity.toLocaleString();
-
-    container.innerHTML = `
-        <div class="active-session-banner">
-            <h3>You have an active editing session with unsaved changes</h3>
-            <p>${session.config_name || 'Configuration'} - Last activity: ${formattedDate}</p>
-            <button class="resume-button" onclick="window.location.href='/customize/builder'">
-                Resume Session
-            </button>
+    const html = unsavedConfigs.map(config => `
+        <div class="unsaved-warning-banner">
+            <h4>Unsaved Changes in ${config.configName}</h4>
+            <p>Last modified: ${new Date(config.lastModified).toLocaleString()}</p>
+            <div class="warning-actions">
+                <a href="/customize/builder?base_config=${config.baseConfig}" class="btn-primary">
+                    Resume Editing
+                </a>
+                <button class="btn-secondary" onclick="discardCache('${config.baseConfig}')">
+                    Discard Changes
+                </button>
+            </div>
         </div>
-    `;
+    `).join('');
+
+    container.innerHTML = html;
 }
 
-function abandonActiveSession() {
-    // Clear all unsaved state and cached modifications
-    try {
-        const username = window.sspiUsername || '';
-
-        // Clear cached modifications
-        if (username) {
-            window.observableStorage.removeItem(`customSSPI_${username}_cachedModifications`);
-            window.observableStorage.removeItem(`customSSPI_${username}_hasUnsaved`);
-        }
-
-        // Update session to mark as no longer unsaved
-        const session = window.storage.getItem('sspi_active_session');
-        if (session) {
-            session.hasUnsaved = false;
-            window.storage.setItem('sspi_active_session', session);
-        }
-    } catch (error) {
-        console.error('Error abandoning active session:', error);
-    }
-}
-
-async function loadConfiguration(configId, type) {
-    // Check for unsaved changes before loading
-    try {
-        const activeSession = window.storage.getItem('sspi_active_session');
-        if (activeSession && activeSession.hasUnsaved) {
-            const confirmed = confirm(
-                'You have unsaved changes in your current editing session.\n\n' +
-                'Loading this configuration will discard those changes.\n\n' +
-                'Do you want to continue?'
-            );
-            if (!confirmed) {
-                return; // User cancelled, abort load
-            }
-            // User confirmed, abandon the current session
-            abandonActiveSession();
-        }
-    } catch (error) {
-        console.error('Error checking for unsaved changes:', error);
-    }
-    try {
-        const endpoint = type === 'prebuilt'
-            ? `/api/v1/customize/prebuilt/${configId}`
-            : `/api/v1/customize/load/${configId}`;  // Authentication checked server-side
-
-        const response = await fetch(endpoint);
-        const data = await response.json();
-
-        if (data.success && data.metadata) {
-            // Determine config name from response or metadata
-            const configName = data.name || data.metadata.find(item => item.ItemType === 'SSPI')?.ItemName || 'SSPI';
-
-            // Store editing session in localStorage
-            window.storage.setItem('sspi_active_session', {
-                config_id: configId,
-                config_name: configName,
-                config_type: type,
-                started_at: new Date().toISOString(),
-                last_activity: new Date().toISOString(),
-                hasUnsaved: false  // Initialize as saved when first loaded
-            });
-
-            // Store pending configuration for builder to load (including actions for history)
-            window.storage.setItem('sspi_pending_config', {
-                metadata: data.metadata,
-                datasetDetailsMap: data.datasetDetailsMap,
-                actions: data.actions || []  // Include action history if available
-            });
-
-            // Redirect to builder
-            window.location.href = '/customize/builder';
-        } else {
-            alert('Error loading configuration: ' + (data.error || 'Unknown error'));
-        }
-    } catch (error) {
-        console.error('Error loading configuration:', error);
-        alert('Error loading configuration. Please try again.');
-    }
-}
-
-function createBlankConfiguration() {
-    // Check for unsaved changes before creating blank configuration
-    try {
-        const activeSession = window.storage.getItem('sspi_active_session');
-        if (activeSession && activeSession.hasUnsaved) {
-            const confirmed = confirm(
-                'You have unsaved changes in your current editing session.\n\n' +
-                'Creating a new blank configuration will discard those changes.\n\n' +
-                'Do you want to continue?'
-            );
-            if (!confirmed) {
-                return; // User cancelled, abort
-            }
-            // User confirmed, abandon the current session
-            abandonActiveSession();
-        }
-    } catch (error) {
-        console.error('Error checking for unsaved changes:', error);
+/**
+ * Discard cached changes for a specific base_config
+ */
+function discardCache(baseConfig) {
+    if (!confirm(`Discard all unsaved changes to ${getConfigName(baseConfig)}?`)) {
+        return;
     }
 
     try {
-        // Clear any existing pending configuration
-        window.storage.removeItem('sspi_pending_config');
-
-        // Create new blank session
-        window.storage.setItem('sspi_active_session', {
-            config_id: null,
-            config_name: 'New Configuration',
-            config_type: 'blank',
-            started_at: new Date().toISOString(),
-            last_activity: new Date().toISOString(),
-            hasUnsaved: false  // Initialize as saved when first created
-        });
-
-        // Redirect to builder with blank slate
-        window.location.href = '/customize/builder';
+        const username = window.sspiUsername;
+        const cacheKey = `customSSPI_${username}_${baseConfig}`;
+        localStorage.removeItem(cacheKey);
+        window.location.reload();
     } catch (error) {
-        console.error('Error creating blank configuration:', error);
-        alert('Error creating blank configuration. Please try again.');
+        console.error('Error discarding cache:', error);
+        alert('Error discarding changes. Please try again.');
     }
 }
 
