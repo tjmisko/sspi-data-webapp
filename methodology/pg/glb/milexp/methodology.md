@@ -11,13 +11,9 @@ Description: >
 Footnote: null
 Indicator: Military Expenditure
 IndicatorCode: MILEXP
-Inverted: true
 LowerGoalpost: 5
 UpperGoalpost: 0
 ScoreFunction: >
   Score = goalpost(SIPRI_MILEXP, 5, 0)
-SourceOrganization: SIPRI
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.sipri.org/databases
 ---
 

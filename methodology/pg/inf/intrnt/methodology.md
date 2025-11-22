@@ -12,14 +12,13 @@ Indicator: Internet Access and Quality
 IndicatorCode: INTRNT
 DatasetCodes:
   - UNSDG_AVINTR
-  - CABLE_CABLE_QUINTR
-Inverted: false
+  - CABLE_QUINTR
 LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
-  Score = (WB_INTRNT + UNSDG_INTRNT) / 2
-SourceOrganization: "[World Bank, UN SDG]"
-SourceOrganizationIndicatorCode: '["IT.NET.USER.ZS", "17.6.1"]'
-SourceOrganizationURL: '[https://databank.worldbank.org/, https://unstats.un.org/sdgapi/swagger/]'
+    Score = average(
+        goalpost(UNSDG_INTRNT, 0, 100),
+        goalpost(WB_INTRNT, 0, 100)
+    )
 ---
 

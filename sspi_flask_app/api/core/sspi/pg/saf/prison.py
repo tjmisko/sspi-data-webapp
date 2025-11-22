@@ -10,8 +10,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    impute_reference_class_average
-)
+    impute_reference_class_average)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -21,7 +22,7 @@ from sspi_flask_app.models.database import (
 )
 
 @compute_bp.route("/PRISON", methods=["POST"])
-@login_required
+@admin_required
 def compute_prison():
     app.logger.info("Running /api/v1/compute/PRISON")
     sspi_indicator_data.delete_many({"IndicatorCode": "PRISON"})
@@ -38,7 +39,7 @@ def compute_prison():
     return parse_json(clean_list)
 
 @impute_bp.route("/PRISON", methods=["POST"])
-@login_required
+@admin_required
 def impute_prison():
     app.logger.info("Running /api/v1/impute/PRISON")
     sspi_imputed_data.delete_many({"IndicatorCode": "PRISON"})

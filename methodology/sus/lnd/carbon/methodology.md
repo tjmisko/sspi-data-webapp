@@ -16,8 +16,5 @@ LowerGoalpost: -5
 UpperGoalpost: 50
 ScoreFunction: >
     Score = goalpost((UNFAO_CRBNLV - UNFAO_CRBNAV) / UNFAO_CRBNAV * 100, -5, 50)
-SourceOrganization: UN FAO
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.fao.org/faostat/en/#data/RL
 ---
 

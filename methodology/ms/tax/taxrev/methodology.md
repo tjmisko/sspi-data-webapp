@@ -13,9 +13,5 @@ LowerGoalpost: 0
 UpperGoalpost: 50
 ScoreFunction: >
     Score = goalpost(WB_TAXREV, 0, 50)
-Inverted: false
-SourceOrganization: World Bank
-SourceOrganizationIndicatorCode: GC.TAX.TOTL.GD.ZS
-SourceOrganizationURL: https://databank.worldbank.org/
 ---
 

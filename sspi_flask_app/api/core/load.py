@@ -4,8 +4,10 @@ from sspi_flask_app.api.resources.utilities import lookup_database
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_metadata,
-    sspi_static_data_2018
-)
+    sspi_static_data_2018)
+from sspi_flask_app import csrf
+
+from sspi_flask_app.auth.decorators import admin_required
 
 load_bp = Blueprint(
     "load_bp", __name__,
@@ -16,10 +18,14 @@ load_bp = Blueprint(
 
 
 @load_bp.route("/<database_name>", methods=["POST"])
-@login_required
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
+@admin_required
 def load(database_name):
     """
-    Utility function that handles loading data from the API into the database
+    Utility function that handles loading data from the API into the database.
+    This is a programmatic API endpoint accessed via CLI/scripts, not browser forms.
+    CSRF exemption is appropriate here since it uses admin authentication and
+    is not subject to browser-based CSRF attacks.
     """
     database = lookup_database(database_name)
     observations_list = json.loads(request.get_json())
@@ -30,14 +36,14 @@ def load(database_name):
 
 
 @load_bp.route("/sspi_static_data_2018", methods=['GET'])
-@login_required
+@admin_required
 def load_maindata():
     count = sspi_static_data_2018.load()
     return f"Inserted {count} main data documents into database."
 
 
 @load_bp.route("/sspi_metadata", methods=['GET'])
-@login_required
+@admin_required
 def load_metadata():
     count = sspi_metadata.load()
     return f"Inserted {count} metadata documents into database."

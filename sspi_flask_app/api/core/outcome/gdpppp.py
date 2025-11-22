@@ -6,8 +6,9 @@ import time
 from sspi_flask_app.models.database import sspi_raw_outcome_data
 
 
-# @collect_bp.route("/outcome/GDPMER", methods=['GET'])
-# @login_required
+# @collect_bp.route("/outcome/GDPMER", methods=['GET']
+from sspi_flask_app.auth.decorators import admin_required
+# @admin_required
 # def gdpmek():
 #     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
 #     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):

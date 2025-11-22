@@ -16,19 +16,21 @@ class SSPIUserData(MongoWrapper):
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
         Validates user document format with authentication-specific requirements.
-        
+
         Expected document format:
         {
             "username": "admin",          # str, 4-20 chars, alphanumeric + underscore
             "password": "hashed_password", # str, bcrypt hash
-            "apikey": "api_key_string",   # str, 64 chars hex
-            "secretkey": "secret_string"  # str, 32 chars hex
+            "apikey": "api_key_string",   # str, 128 chars hex
+            "secretkey": "secret_string",  # str, 64 chars hex
+            "roles": ["user"]             # list of str, valid roles: "user", "admin"
         }
         """
         self.validate_username(document, document_number)
         self.validate_password_hash(document, document_number)
         self.validate_api_key(document, document_number)
         self.validate_secret_key(document, document_number)
+        self.validate_roles(document, document_number)
     
     def validate_username(self, document: dict, document_number: int = 0):
         """Validates username format and requirements."""
@@ -101,75 +103,79 @@ class SSPIUserData(MongoWrapper):
             raise InvalidDocumentFormatError(
                 f"'secretkey' is a required field (document {document_number})"
             )
-        
+
         secretkey = document["secretkey"]
         if not isinstance(secretkey, str):
             raise InvalidDocumentFormatError(
                 f"'secretkey' must be a string (document {document_number})"
             )
-        
+
         if len(secretkey) != 64:  # 32 bytes as hex = 64 chars
             raise InvalidDocumentFormatError(
                 f"'secretkey' must be 64 characters long (document {document_number})"
             )
-        
+
         if not re.match(r'^[a-f0-9]+$', secretkey):
             raise InvalidDocumentFormatError(
                 f"'secretkey' must be a valid hexadecimal string (document {document_number})"
             )
-    
+
+    def validate_roles(self, document: dict, document_number: int = 0):
+        """Validates roles format and requirements."""
+        if "roles" not in document.keys():
+            raise InvalidDocumentFormatError(
+                f"'roles' is a required field (document {document_number})"
+            )
+
+        roles = document["roles"]
+        if not isinstance(roles, list):
+            raise InvalidDocumentFormatError(
+                f"'roles' must be a list (document {document_number})"
+            )
+
+        if len(roles) == 0:
+            raise InvalidDocumentFormatError(
+                f"'roles' cannot be empty (document {document_number})"
+            )
+
+        valid_roles = ["user", "admin"]
+        for role in roles:
+            if not isinstance(role, str):
+                raise InvalidDocumentFormatError(
+                    f"Each role must be a string (document {document_number})"
+                )
+            if role not in valid_roles:
+                raise InvalidDocumentFormatError(
+                    f"Invalid role '{role}'. Valid roles are: {', '.join(valid_roles)} (document {document_number})"
+                )
+
     def find_by_username(self, username: str) -> dict:
-        """
-        Find user by username.
-        
-        Args:
-            username: The username to search for
-            
-        Returns:
-            User document dict or None if not found
-        """
         return self.find_one({"username": username}, options={})  # Include _id
     
     def find_by_api_key(self, api_key: str) -> dict:
-        """
-        Find user by API key.
-        
-        Args:
-            api_key: The API key to search for
-            
-        Returns:
-            User document dict or None if not found
-        """
         return self.find_one({"apikey": api_key}, options={})  # Include _id
     
     def find_by_id(self, user_id: str) -> dict:
-        """
-        Find user by MongoDB ObjectId.
-        
-        Args:
-            user_id: String representation of ObjectId
-            
-        Returns:
-            User document dict or None if not found
-        """
         try:
             return self.find_one({"_id": ObjectId(user_id)}, options={})  # Include _id
         except Exception:
-            return None
+            return {}
     
-    def create_user(self, username: str, password_hash: str, api_key: str = None, secret_key: str = None) -> str:
+    def create_user(self, username: str, password_hash: str, email: str|None = None, api_key: str|None = None, secret_key: str|None = None, roles: list|None = None) -> str:
         """
         Create a new user with validation.
-        
+
         Args:
             username: Unique username
             password_hash: Bcrypt hashed password
+            email: Optional email address
             api_key: Optional API key (generates if not provided)
             secret_key: Optional secret key (generates if not provided)
-            
+            roles: Optional roles list (defaults to ["user"])
+
         Returns:
             String representation of created user's ObjectId
-            
+
         Raises:
             InvalidDocumentFormatError: If validation fails
             DuplicateKeyError: If username already exists
@@ -179,40 +185,27 @@ class SSPIUserData(MongoWrapper):
             api_key = secrets.token_hex(64)
         if secret_key is None:
             secret_key = secrets.token_hex(32)
-        
+        if roles is None:
+            roles = ["user"]
         user_doc = {
             "username": username,
             "password": password_hash,
+            "email": email,
             "apikey": api_key,
-            "secretkey": secret_key
+            "secretkey": secret_key,
+            "roles": roles
         }
-        
-        # Validate document format
         self.validate_document_format(user_doc)
-        
-        # Check for existing username
         existing_user = self.find_by_username(username)
         if existing_user:
             raise InvalidDocumentFormatError(f"Username '{username}' already exists")
-        
-        # Insert user
         result = self._mongo_database.insert_one(user_doc)
         return str(result.inserted_id)
     
     def update_password(self, user_id: str, new_password_hash: str) -> bool:
-        """
-        Update user's password hash.
-        
-        Args:
-            user_id: String representation of ObjectId
-            new_password_hash: New bcrypt hashed password
-            
-        Returns:
-            True if update successful, False otherwise
-        """
         try:
             # Validate password hash format
-            temp_doc = {"password": new_password_hash, "username": "temp", "apikey": "a"*128, "secretkey": "b"*64}
+            temp_doc = {"password": new_password_hash, "username": "temp", "apikey": "a"*128, "secretkey": "b"*64, "roles": ["user"]}
             self.validate_password_hash(temp_doc)
             
             result = self._mongo_database.update_one(
@@ -224,68 +217,123 @@ class SSPIUserData(MongoWrapper):
             return False
     
     def regenerate_api_key(self, user_id: str) -> str:
-        """
-        Generate and update user's API key.
-        
-        Args:
-            user_id: String representation of ObjectId
-            
-        Returns:
-            New API key string, or None if update failed
-        """
         try:
             new_api_key = secrets.token_hex(64)
             result = self._mongo_database.update_one(
                 {"_id": ObjectId(user_id)},
                 {"$set": {"apikey": new_api_key}}
             )
-            return new_api_key if result.modified_count > 0 else None
+            return new_api_key if result.modified_count > 0 else ""
         except Exception:
-            return None
+            return ""
     
     def username_exists(self, username: str) -> bool:
-        """
-        Check if username already exists.
-        
-        Args:
-            username: Username to check
-            
-        Returns:
-            True if username exists, False otherwise
-        """
         return self.count_documents({"username": username}) > 0
-    
+
+    def email_exists(self, email: str) -> bool:
+        """Check if an email already exists in the database"""
+        if email is None:
+            return False
+        return self.count_documents({"email": email}) > 0
+
     def get_all_users(self) -> list:
-        """
-        Get all users (for admin purposes).
-        
-        Returns:
-            List of user documents
-        """
         return self.find({}, options={})  # Include _id
     
     def delete_user(self, user_id: str) -> bool:
-        """
-        Delete user by ID.
-        
-        Args:
-            user_id: String representation of ObjectId
-            
-        Returns:
-            True if deletion successful, False otherwise
-        """
         try:
             result = self._mongo_database.delete_one({"_id": ObjectId(user_id)})
             return result.deleted_count > 0
         except Exception:
             return False
-    
+
+    def get_user_roles(self, user_id: str) -> list:
+        """
+        Get the roles for a specific user.
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            List of role strings (e.g., ["user"] or ["admin", "user"])
+            Returns empty list if user not found
+        """
+        try:
+            user = self.find_by_id(user_id)
+            return user.get("roles", []) if user else []
+        except Exception:
+            return []
+
+    def add_role(self, user_id: str, role: str) -> bool:
+        """
+        Add a role to a user (if they don't already have it).
+
+        Args:
+            user_id: User identifier
+            role: Role to add (must be "user" or "admin")
+
+        Returns:
+            True if role was added, False otherwise
+        """
+        valid_roles = ["user", "admin"]
+        if role not in valid_roles:
+            return False
+
+        try:
+            result = self._mongo_database.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$addToSet": {"roles": role}}  # $addToSet prevents duplicates
+            )
+            return result.modified_count > 0
+        except Exception:
+            return False
+
+    def remove_role(self, user_id: str, role: str) -> bool:
+        """
+        Remove a role from a user.
+
+        Args:
+            user_id: User identifier
+            role: Role to remove
+
+        Returns:
+            True if role was removed, False otherwise
+        """
+        try:
+            result = self._mongo_database.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$pull": {"roles": role}}
+            )
+            return result.modified_count > 0
+        except Exception:
+            return False
+
+    def set_roles(self, user_id: str, roles: list) -> bool:
+        """
+        Replace a user's roles entirely.
+
+        Args:
+            user_id: User identifier
+            roles: List of roles to set (e.g., ["admin", "user"])
+
+        Returns:
+            True if roles were updated, False otherwise
+        """
+        # Validate roles format
+        temp_doc = {"username": "temp", "password": "$2b$" + "0" * 57, "apikey": "a"*128, "secretkey": "b"*64, "roles": roles}
+        try:
+            self.validate_roles(temp_doc)
+        except InvalidDocumentFormatError:
+            return False
+
+        try:
+            result = self._mongo_database.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"roles": roles}}
+            )
+            return result.modified_count > 0
+        except Exception:
+            return False
+
     def create_indexes(self):
-        """
-        Create database indexes for performance and uniqueness.
-        Should be called during application initialization.
-        """
         # Unique index on username
         self._mongo_database.create_index("username", unique=True)
-        # Index on apikey for fast lookups
-        self._mongo_database.create_index("apikey")

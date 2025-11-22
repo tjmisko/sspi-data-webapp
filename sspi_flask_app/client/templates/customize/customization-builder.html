@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div id="sspi-root" class="customizable-sspi"></div>
+<script>
+// Backend data - csrf.js utility automatically uses window.csrfToken
+window.csrfToken = {{ csrf_token|tojson|safe }};
+window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else 'null' }};
+window.sspiBaseConfig = {{ base_config|tojson|safe }};
+
+// Initialize customization builder
+document.addEventListener('DOMContentLoaded', () => {
+    const root = document.getElementById('sspi-root');
+    window.SSPICharts.push(
+        new CustomizableSSPIStructure(root, {
+            username: window.sspiUsername,
+            baseConfig: window.sspiBaseConfig
+        })
+    );
+    window.customSSPI = window.SSPICharts[0];
+});
+</script>
+{% endblock %}

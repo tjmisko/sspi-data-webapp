@@ -1,0 +1,504 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>{{ title }}</title>
+{% endblock %}
+
+{% block javascript %}
+<script>
+// Debounce function to limit API calls
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Check username availability
+async function checkUsername() {
+  const usernameInput = document.getElementById('username');
+  const message = document.getElementById('username-message');
+  const username = usernameInput.value.trim();
+
+  if (!username) {
+    usernameInput.className = '';
+    message.textContent = '';
+    message.className = 'validation-message';
+    return;
+  }
+
+  usernameInput.className = 'input-checking';
+  message.textContent = 'Checking...';
+  message.className = 'validation-message checking';
+
+  try {
+    const response = await fetch('/auth/check-username', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username: username })
+    });
+
+    const data = await response.json();
+
+    if (data.available) {
+      usernameInput.className = 'input-valid';
+      message.textContent = data.message;
+      message.className = 'validation-message valid';
+    } else {
+      usernameInput.className = 'input-invalid';
+      message.textContent = data.message;
+      message.className = 'validation-message invalid';
+    }
+  } catch (error) {
+    usernameInput.className = '';
+    message.textContent = '';
+    message.className = 'validation-message';
+  }
+}
+
+// Email validation removed - no need to check if email is already registered
+
+// Check password match
+function checkPasswordMatch() {
+  const password = document.getElementById('password').value;
+  const confirmPasswordInput = document.getElementById('confirm_password');
+  const confirmPassword = confirmPasswordInput.value;
+  const message = document.getElementById('password-match-message');
+
+  if (!confirmPassword) {
+    confirmPasswordInput.className = '';
+    message.textContent = '';
+    message.className = 'validation-message';
+    return;
+  }
+
+  if (password === confirmPassword) {
+    confirmPasswordInput.className = 'input-valid';
+    message.textContent = 'Passwords match';
+    message.className = 'validation-message valid';
+  } else {
+    confirmPasswordInput.className = 'input-invalid';
+    message.textContent = 'Passwords do not match';
+    message.className = 'validation-message invalid';
+  }
+}
+
+// Debounced version
+const debouncedCheckUsername = debounce(checkUsername, 500);
+
+// Add event listeners when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
+  const confirmPasswordInput = document.getElementById('confirm_password');
+
+  if (usernameInput) {
+    usernameInput.addEventListener('input', debouncedCheckUsername);
+  }
+
+  if (passwordInput && confirmPasswordInput) {
+    passwordInput.addEventListener('input', checkPasswordMatch);
+    confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+  }
+
+  // Handle form validation errors on page load
+  const validationErrors = document.querySelector('.validation-errors');
+  if (validationErrors) {
+    const errorItems = validationErrors.querySelectorAll('li');
+    const errorMap = new Map();
+
+    // Map error messages to form fields
+    errorItems.forEach(item => {
+      const text = item.textContent.toLowerCase();
+
+      if (text.includes('username')) {
+        if (!errorMap.has('username')) errorMap.set('username', []);
+        errorMap.get('username').push(item.textContent);
+      } else if (text.includes('email')) {
+        if (!errorMap.has('email')) errorMap.set('email', []);
+        errorMap.get('email').push(item.textContent);
+      } else if (text.includes('password') && !text.includes('confirm')) {
+        if (!errorMap.has('password')) errorMap.set('password', []);
+        errorMap.get('password').push(item.textContent);
+      } else if (text.includes('password') && text.includes('match')) {
+        if (!errorMap.has('confirm_password')) errorMap.set('confirm_password', []);
+        errorMap.get('confirm_password').push(item.textContent);
+      }
+    });
+
+    // Apply error styling and scroll to first error
+    let firstErrorField = null;
+    errorMap.forEach((messages, fieldId) => {
+      const input = document.getElementById(fieldId);
+      const messageSpan = document.getElementById(fieldId + '-message') ||
+                          document.getElementById('password-match-message');
+
+      if (input) {
+        input.className = 'input-invalid';
+        if (!firstErrorField) firstErrorField = input;
+
+        if (messageSpan && messages.length > 0) {
+          messageSpan.textContent = messages[0];
+          messageSpan.className = 'validation-message invalid';
+        }
+      }
+    });
+
+    // Scroll first error into view
+    if (firstErrorField) {
+      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstErrorField.focus();
+    }
+  }
+});
+</script>
+{% endblock %}
+
+{% block stylesheet %}
+<style>
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 200px);
+  padding: 1.5rem;
+}
+
+.register-box {
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1.75rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+.register-title {
+  font-family: var(--title-font-family);
+  font-size: 1.5rem;
+  color: var(--header-text-color);
+  margin: 0 0 0.25rem 0;
+  text-align: center;
+}
+
+.register-subtitle {
+  font-family: var(--body-font-family);
+  font-size: 0.875rem;
+  color: var(--body-text-color);
+  margin: 0 0 1.25rem 0;
+  text-align: center;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.validation-message {
+  font-family: var(--body-font-family);
+  font-size: 0.75rem;
+  text-align: right;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.validation-message:empty {
+  display: none;
+}
+
+.validation-message.valid {
+  color: var(--sus-color, #28A745);
+}
+
+.validation-message.invalid {
+  color: #dc3545;
+}
+
+.validation-message.checking {
+  color: var(--ms-color, #FF851B);
+}
+
+/* Input validation border colors */
+.form-group input.input-valid {
+  border-color: var(--sus-color, #28A745);
+}
+
+.form-group input.input-invalid {
+  border-color: #dc3545;
+}
+
+.form-group input.input-checking {
+  border-color: var(--ms-color, #FF851B);
+}
+
+.form-group label {
+  font-family: var(--body-font-family);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--header-text-color);
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="email"] {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--subtle-line-color);
+  border-radius: 3px;
+  background-color: var(--input-background-color);
+  color: var(--input-text-color);
+  font-family: var(--body-font-family);
+  font-size: 0.9375rem;
+  transition: border-color 0.15s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus,
+.form-group input[type="email"]:focus {
+  outline: none;
+  border-color: var(--green-accent);
+}
+
+.password-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.password-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background-color: var(--info-border, #2196f3);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: bold;
+  cursor: help;
+  user-select: none;
+}
+
+.password-requirements {
+  display: none;
+  background-color: var(--info-background, #e8f4f8);
+  border-left: 3px solid var(--info-border, #2196f3);
+  border-radius: 3px;
+  padding: 0.625rem;
+  margin-top: 0.35rem;
+}
+
+.password-info-icon:hover ~ .password-requirements,
+.password-requirements:hover {
+  display: block;
+}
+
+.password-requirements h4 {
+  font-family: var(--header-font-family);
+  font-size: 0.8rem;
+  margin: 0 0 0.375rem 0;
+  color: var(--header-text-color);
+}
+
+.password-requirements ul {
+  font-family: var(--body-font-family);
+  font-size: 0.75rem;
+  color: var(--body-text-color);
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+
+.password-requirements li {
+  margin-bottom: 0.125rem;
+}
+
+.submit-button {
+  padding: 0.75rem;
+  background-color: var(--green-accent);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--header-font-family);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  margin-top: 0.25rem;
+}
+
+.submit-button:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 85%, black);
+}
+
+.error-message {
+  background-color: color-mix(in srgb, #dc3545 15%, var(--box-background-color));
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 3px;
+  padding: 0.625rem;
+  margin-bottom: 0.875rem;
+  font-family: var(--body-font-family);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.flash-message {
+  background-color: var(--info-background);
+  color: var(--info-border);
+  border: 1px solid var(--info-border);
+  border-radius: 3px;
+  padding: 0.625rem;
+  margin-bottom: 0.875rem;
+  font-family: var(--body-font-family);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 0.875rem;
+  font-family: var(--body-font-family);
+  font-size: 0.875rem;
+  color: var(--body-text-color);
+}
+
+.login-link a {
+  color: var(--green-accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.login-link a:hover {
+  color: color-mix(in srgb, var(--green-accent) 85%, black);
+  text-decoration: underline;
+}
+
+.validation-errors {
+  background-color: color-mix(in srgb, #dc3545 15%, var(--box-background-color));
+  border: 1px solid #dc3545;
+  border-radius: 3px;
+  padding: 0.625rem;
+  margin-bottom: 0.875rem;
+}
+
+.validation-errors ul {
+  font-family: var(--body-font-family);
+  font-size: 0.8rem;
+  color: #dc3545;
+  margin: 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.validation-errors li {
+  margin-bottom: 0.125rem;
+}
+
+@media (max-width: 600px) {
+  .register-box {
+    padding: 1.5rem;
+  }
+
+  .register-title {
+    font-size: 1.35rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+  <div class="register-box">
+    <h1 class="register-title">Create Your Account</h1>
+    <p class="register-subtitle">Join SSPI to customize your own policy index</p>
+
+    {% if error %}
+      <div class="error-message">{{ error }}</div>
+    {% endif %}
+
+    {% if form.errors %}
+      <div class="validation-errors">
+        <ul>
+          {% for field_name, errors in form.errors.items() %}
+            {% for error in errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form action="" method="POST" class="register-form">
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        <div class="label-row">
+          {{ form.username.label }}
+          <span id="username-message" class="validation-message"></span>
+        </div>
+        {{ form.username(id="username", autofocus=True) }}
+      </div>
+
+      <div class="form-group">
+        {{ form.email.label }}
+        {{ form.email(id="email") }}
+      </div>
+
+      <div class="form-group">
+        <div class="password-label-wrapper">
+          {{ form.password.label }}
+          <span class="password-info-icon">i</span>
+        </div>
+        {{ form.password(id="password") }}
+        <div class="password-requirements">
+          <h4>Password Requirements:</h4>
+          <ul>
+            <li>Minimum 8 characters, maximum 32 characters</li>
+            <li>At least one uppercase letter (A-Z)</li>
+            <li>At least one lowercase letter (a-z)</li>
+            <li>At least one digit (0-9)</li>
+            <li>At least one special character (!@#$%^&*()-_+)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          {{ form.confirm_password.label }}
+          <span id="password-match-message" class="validation-message"></span>
+        </div>
+        {{ form.confirm_password(id="confirm_password") }}
+      </div>
+
+      {{ form.submit(class="submit-button") }}
+    </form>
+
+    <div class="login-link">
+      Already have an account? <a href="{{ url_for('auth_bp.user_login') }}">Log in here</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

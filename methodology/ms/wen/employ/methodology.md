@@ -14,7 +14,5 @@ LowerGoalpost: 50
 UpperGoalpost: 95
 ScoreFunction: >
     Score = goalpost(ILO_EMPLOY_TO_POP, 50, 95)
-Inverted: false
-SourceOrganization: ILO
 ---
 

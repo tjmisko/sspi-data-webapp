@@ -14,13 +14,9 @@ Footnote: >
   the column "v2x_rule".
 Indicator: Rule of Law Index
 IndicatorCode: RULELW
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 1
 ScoreFunction: >
   Score = goalpost(VDEM_RULELW, 0, 1)
-SourceOrganization: V-Dem
-SourceOrganizationIndicatorCode: 'v2x_rule '
-SourceOrganizationURL: https://www.v-dem.net/data/the-v-dem-dataset/country-year-v-dem-fullothers-v13/
 ---
 

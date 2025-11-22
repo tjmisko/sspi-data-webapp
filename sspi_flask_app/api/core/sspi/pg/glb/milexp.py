@@ -8,8 +8,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    impute_dataset_value
-)
+    impute_dataset_value)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -19,7 +20,7 @@ from sspi_flask_app.models.database import (
 import json
 
 @compute_bp.route("/MILEXP", methods=['POST'])
-@login_required
+@admin_required
 def compute_milexp():
     sspi_indicator_data.delete_many({"IndicatorCode": "MILEXP"})
     sipri_milexp_clean = sspi_clean_api_data.find({"DatasetCode": "SIPRI_MILEXP"})
@@ -33,7 +34,7 @@ def compute_milexp():
     return parse_json(scored_list)
 
 @impute_bp.route("/MILEXP", methods=['POST'])
-@login_required
+@admin_required
 def impute_milexp():
     sspi_imputed_data.delete_many({"IndicatorCode": "MILEXP"})
     clean_milexp = sspi_clean_api_data.find({"DatasetCode": "SIPRI_MILEXP"})

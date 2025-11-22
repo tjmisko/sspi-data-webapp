@@ -284,6 +284,18 @@ class SSPIMetadata(MongoWrapper):
             raise MethodologyFileError(
                 f"Expected detail for {missing_code} but found empty dictionary in sorted details"
             )
+        details_lookup = {d["ItemCode"]: d for d in details}
+        tree_root = details_lookup["SSPI"]
+        tree_root["TreeIndex"] = [0, -1, -1, -1]
+        for i, pillar_code in enumerate(tree_root["PillarCodes"]):
+            pillar = details_lookup.get(pillar_code, {})
+            pillar["TreeIndex"] = [0, i, -1, -1]
+            for j, category_code in enumerate(pillar["CategoryCodes"]):
+                category = details_lookup.get(category_code, {})
+                category["TreeIndex"] = [0, i, j, -1]
+                for k, indicator_code in enumerate(category["IndicatorCodes"]):
+                    indicator = details_lookup.get(indicator_code, {})
+                    indicator["TreeIndex"] = [0, i, j, k]
         packaged_details = []
         for detail in sorted_details:
             packaged_details.append({
@@ -347,27 +359,19 @@ class SSPIMetadata(MongoWrapper):
         """
         for detail in item_details:
             item_type = detail.get("ItemType")
-            
             if item_type == "SSPI":
-                # Children should be PillarCodes in the specified order
                 detail["Children"] = detail.get("PillarCodes", [])
             elif item_type == "Pillar":
-                # Children should be CategoryCodes in the specified order
                 detail["Children"] = detail.get("CategoryCodes", [])
             elif item_type == "Category":
-                # Children should be IndicatorCodes in the specified order
                 detail["Children"] = detail.get("IndicatorCodes", [])
             elif item_type == "Indicator":
-                # Indicators have no children
                 detail["Children"] = []
             else:
-                # For other types, keep empty children
                 detail["Children"] = []
-            
             # Remove temporary directory names field
             if "_temp_dirnames" in detail:
                 del detail["_temp_dirnames"]
-            
             # Validate the detail format now that Children is properly set
             self.validate_item_detail_format(detail)
         
@@ -967,6 +971,7 @@ class SSPIMetadata(MongoWrapper):
                 contained_indicators = [i for i in c["IndicatorCodes"] if i in indicator_filter]
                 if len(contained_indicators) > 0:
                     c["IndicatorCodes"] = contained_indicators
+                    c["Children"] = contained_indicators
                     categories_filtered.append(c)
             pillars_filtered = []
             for p in pillars:
@@ -974,9 +979,11 @@ class SSPIMetadata(MongoWrapper):
                 contained_categories = [c for c in p["CategoryCodes"] if c in implied_category_filter]
                 if len(contained_categories) > 0:
                     p["CategoryCodes"] = contained_categories
+                    p["Children"] = contained_categories 
                     pillars_filtered.append(p)
             implied_pillar_filter = [p["PillarCode"] for p in pillars_filtered]
             sspi["PillarCodes"] = implied_pillar_filter
+            sspi["Children"] = implied_pillar_filter
             return [ sspi ] + pillars_filtered + categories_filtered + indicators_filtered
         return [ sspi ] + pillars + categories + indicators
 

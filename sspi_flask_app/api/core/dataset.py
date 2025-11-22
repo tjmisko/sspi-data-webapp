@@ -4,8 +4,9 @@ from flask_login import current_user, login_required
 
 from sspi_flask_app.api.core.datasets import (
     dataset_cleaner_registry,
-    dataset_collector_registry,
-)
+    dataset_collector_registry)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     check_raw_document_set_coverage,
     parse_json,
@@ -23,7 +24,7 @@ dataset_bp = Blueprint(
 )
 
 @dataset_bp.route("/collect/<series_code>", methods=["GET", "POST"])
-@login_required
+@admin_required
 def collect(series_code: str):
     """
     Collect fetches data from external sources by series code
@@ -105,7 +106,7 @@ def collect_iterator(dataset_list, **kwargs):
 
 
 @dataset_bp.route("/clean/<series_code>", methods=["GET"])        
-@login_required
+@admin_required
 def clean_series_code(series_code: str):
     dataset_list = sspi_metadata.get_dataset_dependencies(series_code)
     if len(dataset_list) == 1:

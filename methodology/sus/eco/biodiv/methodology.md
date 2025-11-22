@@ -19,12 +19,8 @@ ScoreFunction: >
         goalpost(UNSDG_TERRST, 0, 100),
         goalpost(UNSDG_FRSHWT, 0, 100)
     )
-Inverted: false
 LowerGoalpost: null
 Policy: "Protection of Biodiversity"
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 UpperGoalpost: null
 ---
 

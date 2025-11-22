@@ -6,8 +6,9 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_incomplete_indicator_data,
     sspi_imputed_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     goalpost,
@@ -18,7 +19,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/CARBON", methods=['POST'])
-@login_required
+@admin_required
 def compute_carbon():
     lg, ug = sspi_metadata.get_goalposts("CARBON")
     def score_carbon(UNFAO_CRBNLV, UNFAO_CRBNAV) -> float: 
@@ -50,7 +51,7 @@ def compute_carbon():
 
 
 @impute_bp.route("/CARBON", methods=["POST"])
-@login_required
+@admin_required
 def impute_carbon():
     lg, ug = sspi_metadata.get_goalposts("CARBON")
     def score_carbon(UNFAO_CRBNLV, UNFAO_CRBNAV) -> float: 

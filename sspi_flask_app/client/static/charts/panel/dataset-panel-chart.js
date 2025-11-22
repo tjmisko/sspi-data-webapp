@@ -100,6 +100,7 @@ class DatasetPanelChart extends PanelChart {
         this.chart.data.labels = data.labels
         console.log("Data Labels:", this.chart.data.labels)
         this.chart.data.datasets = data.data
+        this.title.innerText = data.title
         this.chart.options.plugins.title = data.title
         this.groupOptions = data.groupOptions
         this.missingCountries = [] // Initialize as empty, will be populated asynchronously

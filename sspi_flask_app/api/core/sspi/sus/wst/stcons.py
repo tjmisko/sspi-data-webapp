@@ -9,8 +9,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     extrapolate_backward,
     interpolate_linear,
-    impute_reference_class_average
-)
+    impute_reference_class_average)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_raw_api_data,
     sspi_clean_api_data,
@@ -22,7 +23,7 @@ from sspi_flask_app.models.database import (
 log = logging.getLogger(__name__)
 
 @compute_bp.route("/STCONS", methods=['POST'])
-@login_required
+@admin_required
 def compute_stcons():
     lg, ug = sspi_metadata.get_goalposts("STCONS")
     def stcons_score_function(WID_CARBON_TOT_P90P100, WID_CARBON_TOT_P0P100, FPI_ECOFPT_PER_CAP):
@@ -42,7 +43,7 @@ def compute_stcons():
 
 
 @impute_bp.route("/STCONS", methods=["POST"])
-@login_required
+@admin_required
 def impute_stcons():
     mongo_query = {"IndicatorCode": "STCONS"}
     sspi_imputed_data.delete_many(mongo_query)

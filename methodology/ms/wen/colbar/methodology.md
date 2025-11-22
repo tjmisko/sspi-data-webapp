@@ -14,10 +14,6 @@ LowerGoalpost: 0
 UpperGoalpost: 100
 ScoreFunction: >
     Score = goalpost(ILO_COLBAR, 0, 100)
-Inverted: false
-SourceOrganization: ILO
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://ilostat.ilo.org/
 ---
 
 ## Imputations

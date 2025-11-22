@@ -6,12 +6,13 @@ from sspi_flask_app.models.database import (
     sspi_metadata,
     sspi_clean_api_data,
     sspi_indicator_data,
-    sspi_incomplete_indicator_data
-)
+    sspi_incomplete_indicator_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/TXRDST", methods=["POST"])
-@login_required
+@admin_required
 def compute_txrdst():
     lg, ug = sspi_metadata.get_goalposts("TXRDST")
     def score_txrdst(WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50, WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100, WID_NINCSH_PRETAX_P0P50, WID_NINCSH_PRETAX_P90P100): 

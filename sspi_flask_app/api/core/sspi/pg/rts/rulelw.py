@@ -11,12 +11,13 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
     goalpost,
-    extrapolate_forward
-)
+    extrapolate_forward)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/RULELW", methods=['POST'])
-@login_required
+@admin_required
 def compute_rulelw():
     app.logger.info("Running /api/v1/compute/RULELW")
     sspi_indicator_data.delete_many({"IndicatorCode": "RULELW"})

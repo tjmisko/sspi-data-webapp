@@ -9,12 +9,13 @@ from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 # @collect_bp.route("/SECAPP", methods=['GET'])
-# @login_required
+# @admin_required
 # def secapp():
 #     def collect_iterator(**kwargs):
 #         yield from collectFSIdata("SECAPP", **kwargs)
@@ -22,7 +23,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/SECAPP", methods=["POST"])
-@login_required
+@admin_required
 def compute_secapp():
     app.logger.info("Running /api/v1/compute/SECAPP")
     sspi_indicator_data.delete_many({"IndicatorCode": "SECAPP"})

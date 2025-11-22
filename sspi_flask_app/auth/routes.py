@@ -24,7 +24,7 @@ from flask_login import (
 )
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import InputRequired, Length, ValidationError, Regexp
+from wtforms.validators import InputRequired, Length, ValidationError, Regexp, Email
 from urllib.parse import urljoin, urlparse
 
 
@@ -36,7 +36,7 @@ auth_bp = Blueprint(
     static_url_path="/auth/static",
 )
 
-login_manager.login_view = "auth_bp.login"
+login_manager.login_view = "auth_bp.user_login"
 
 
 @login_manager.user_loader
@@ -78,6 +78,15 @@ class RegisterForm(FlaskForm):
     username = StringField(
         validators=[InputRequired(), Length(min=6, max=20)],
         render_kw={"placeholder": "Username"},
+        label="Username",
+    )
+    email = StringField(
+        validators=[
+            InputRequired(),
+            Email(message="Please enter a valid email address.")
+        ],
+        render_kw={"placeholder": "Email Address"},
+        label="Email",
     )
     password = PasswordField(
         validators=[
@@ -92,6 +101,15 @@ class RegisterForm(FlaskForm):
             ),
         ],
         render_kw={"placeholder": "Password"},
+        label="Password",
+    )
+    confirm_password = PasswordField(
+        validators=[
+            InputRequired(),
+            Length(min=8, max=32),
+        ],
+        render_kw={"placeholder": "Confirm Password"},
+        label="Confirm Password",
     )
     submit = SubmitField("Register")
 
@@ -99,6 +117,11 @@ class RegisterForm(FlaskForm):
         # Check if username is already taken using MongoDB
         if User.username_exists(username.data):
             raise ValidationError("That username is already taken!")
+
+    def validate_confirm_password(self, confirm_password):
+        # Check if passwords match
+        if confirm_password.data != self.password.data:
+            raise ValidationError("Passwords must match!")
 
 
 class LoginForm(FlaskForm):
@@ -116,14 +139,66 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Login as Administrator")
 
 
+class UserLoginForm(FlaskForm):
+    username = StringField(
+        validators=[InputRequired(), Length(min=4, max=20)],
+        render_kw={"placeholder": "Username"},
+        label="Username",
+    )
+    password = PasswordField(
+        validators=[InputRequired(), Length(min=4, max=20)],
+        render_kw={"placeholder": "Password"},
+        label="Password",
+    )
+    remember_me = BooleanField(default=False, label="Remember me for 30 days")
+    submit = SubmitField("Login")
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
-def login():
+def user_login():
+    next_url = request.args.get("next", None)
+    if current_user.is_authenticated:
+        return redirect(url_for("client_bp.customize_home"))
+    login_form = UserLoginForm()
+    if not login_form.validate_on_submit():
+        return render_template("user-login.html", form=login_form, title="Login")
+    user = User.find_by_username(login_form.username.data)
+    if user is None or not flask_bcrypt.check_password_hash(
+        user.password, login_form.password.data
+    ):
+        flash("Invalid username or password")
+        return render_template(
+            "user-login.html",
+            form=login_form,
+            error="Invalid username or password",
+            title="Login",
+        )
+    login_user(
+        user,
+        remember=bool(login_form.remember_me),
+        duration=app.config["REMEMBER_COOKIE_DURATION"],
+    )
+
+    # Show welcome message for users
+    flash(f"Welcome, {user.username}! You can now customize your own SSPI configuration.")
+    app.logger.info(f"User {user.username} successful login")
+
+    # Redirect to customize builder for user-level users
+    if not next_url:
+        return redirect(url_for("client_bp.customize_configuration_builder"))
+    if not is_safe_url(next_url):
+        return Response("Invalid next URL", status=400, mimetype="text/plain")
+    return redirect(urljoin(request.host_url, next_url))
+
+
+@auth_bp.route("/admin", methods=["GET", "POST"])
+def admin_login():
     next_url = request.args.get("next", None)
     if current_user.is_authenticated:
         return redirect(url_for("client_bp.data"))
     login_form = LoginForm()
     if not login_form.validate_on_submit():
-        return render_template("login.html", form=login_form, title="Login")
+        return render_template("login.html", form=login_form, title="Admin Login")
     user = User.find_by_username(login_form.username.data)
     if user is None or not flask_bcrypt.check_password_hash(
         user.password, login_form.password.data
@@ -133,7 +208,17 @@ def login():
             "login.html",
             form=login_form,
             error="Invalid username or password",
-            title="Login",
+            title="Admin Login",
+        )
+    # Check if user has admin role
+    if not user.is_admin():
+        flash("Access denied. Admin privileges required.")
+        app.logger.warning(f"Non-admin user {user.username} attempted admin login")
+        return render_template(
+            "login.html",
+            form=login_form,
+            error="Access denied. Admin privileges required.",
+            title="Admin Login",
         )
     login_user(
         user,
@@ -145,7 +230,7 @@ def login():
     if not is_safe_url(next_url):
         return Response("Invalid next URL", status=400, mimetype="text/plain")
     flash("Login Successful! Redirecting...")
-    app.logger.info(f"User {user.username} successful login")
+    app.logger.info(f"Admin user {user.username} successful login")
     return redirect(urljoin(request.host_url, next_url))
 
 
@@ -170,22 +255,34 @@ def apikey_web():
 
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
-@login_required
 def logout():
+    """Logout route - requires authentication"""
+    # Check if user is authenticated
+    if not current_user.is_authenticated:
+        flash("You are not logged in.")
+        app.logger.warning("Unauthenticated user attempted to access logout page")
+        return redirect(url_for("client_bp.customize_home"))
+
     try:
         current_username = current_user.username
+        app.logger.info(f"Processing logout request for {current_username}")
+        logout_user()
+        app.logger.info(f"User {current_username} logged out")
     except AttributeError:
-        app.logger.warning("Anonymous user attempted to log out")
-        return Response("Error retrieving current user username", status=500)
-    app.logger.info(f"Processing logout request for {current_username}")
-    logout_user()
-    app.logger.info(f"User {current_username} logged out")
-    return redirect(url_for("client_bp.home"))
+        app.logger.warning("Authenticated user without username attempted logout")
+        logout_user()
+
+    flash("You have been logged out successfully.")
+    # Render a page that clears localStorage/observableStorage before redirecting
+    return render_template("auth/logout_redirect.html")
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
-@fresh_login_required
 def register():
+    """Public user registration - creates users with 'user' role by default"""
+    if current_user.is_authenticated:
+        return redirect(url_for("client_bp.customize_configuration_builder"))
+
     register_form = RegisterForm()
     if register_form.validate_on_submit():
         try:
@@ -194,14 +291,80 @@ def register():
             ).decode('utf-8')
             User.create_user(
                 username=register_form.username.data,
+                email=register_form.email.data,
+                password_hash=hashed_password,
+                api_key=secrets.token_hex(64),
+                secret_key=secrets.token_hex(32),
+                roles=["user"]  # Explicitly set user role for public registration
+            )
+            flash("Registration successful! Please log in to continue.")
+            app.logger.info(f"New user registered: {register_form.username.data}")
+            return redirect(url_for("auth_bp.user_login", next=url_for("client_bp.customize_configuration_builder")))
+        except InvalidDocumentFormatError as e:
+            flash(f"Registration failed: {str(e)}")
+            app.logger.error(f"Registration failed for {register_form.username.data}: {str(e)}")
+    return render_template("user-register.html", form=register_form, title="Register")
+
+
+@auth_bp.route("/auth/register-admin", methods=["GET", "POST"])
+@fresh_login_required
+def register_admin():
+    """Admin-only registration - can create users with any role"""
+    register_form = RegisterForm()
+    if register_form.validate_on_submit():
+        try:
+            hashed_password = flask_bcrypt.generate_password_hash(
+                register_form.password.data
+            ).decode('utf-8')
+            User.create_user(
+                username=register_form.username.data,
+                email=None,  # Admin registration doesn't require email
                 password_hash=hashed_password,
                 api_key=secrets.token_hex(64),
                 secret_key=secrets.token_hex(32)
             )
-            return redirect(url_for("auth_bp.login"))
+            flash("User created successfully!")
+            return redirect(url_for("auth_bp.admin_login"))
         except InvalidDocumentFormatError as e:
             flash(f"Registration failed: {str(e)}")
-    return render_template("register.html", form=register_form, title="Register")
+    return render_template("register.html", form=register_form, title="Admin Register")
+
+
+@auth_bp.route("/auth/check-username", methods=["POST"])
+def check_username():
+    """API endpoint to check if username is available"""
+    username = request.json.get("username", "").strip()
+
+    if not username:
+        return jsonify({"available": False, "message": "Username is required"})
+
+    if len(username) < 6 or len(username) > 20:
+        return jsonify({"available": False, "message": "Username must be 6-20 characters"})
+
+    if User.username_exists(username):
+        return jsonify({"available": False, "message": "Username already taken"})
+
+    return jsonify({"available": True, "message": "Username available"})
+
+
+@auth_bp.route("/auth/check-email", methods=["POST"])
+def check_email():
+    """API endpoint to check if email is available"""
+    email = request.json.get("email", "").strip()
+
+    if not email:
+        return jsonify({"available": False, "message": "Email is required"})
+
+    # Basic email format check
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return jsonify({"available": False, "message": "Invalid email format"})
+
+    if User.email_exists(email):
+        return jsonify({"available": False, "message": "Email already registered"})
+
+    return jsonify({"available": True, "message": "Email available"})
 
 
 @auth_bp.route("/auth/clear", methods=["GET"])

@@ -9,7 +9,6 @@ Description: Estimated prevalence of stunting in children under 5 (%).
 Footnote: null
 Indicator: Child Stunting
 IndicatorCode: CSTUNT
-Inverted: true
 LowerGoalpost: 50
 UpperGoalpost: 0
 ScoreFunction: >

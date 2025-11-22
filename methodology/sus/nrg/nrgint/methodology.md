@@ -15,9 +15,5 @@ Indicator: Energy Intensity
 IndicatorCode: NRGINT
 DatasetCodes:
   - UNSDG_NRGINT
-Inverted: true
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: 7.3.1
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

@@ -1,0 +1,75 @@
+{% extends 'layout.html' %}
+
+
+{% block content %}
+<article class="page-content">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="customization-hero-box">
+                <div class="customization-main-content">
+                    <div class="customization-home-box">
+                        <h2>How would you measure policy according to your values?</h2>
+                        <p>The Sustainable and Shared-Prosperity Policy Index puts shared values first, then
+                            measures how well policy across countries aligns with those
+                            values. In foregrounding values, however, we recognize
+                            that different people, different communities, different
+                            countries, and different cultures have different values, so
+                            they may evaluate policy differently than we do.
+                        </p>
+                        <p>Our customization tool provides a framework for applying the
+                            SSPI methodology beginning from your own values. It allows
+                            individuals to modify how policies are scored and grouped
+                            and to explore how those changes affect the scores and
+                            conclusions at all levels of the analysis.
+                        </p>
+
+                        <div class="portal-section-inline-auth">
+                            <a href="/customize/builder?base_config=sspi" class="btn-primary aside-link">Go to Customization Builder</a>
+                            <a href="/customize/load" class="btn-secondary aside-link">Browse Saved Configurations</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section">
+        <div class="content-container">
+            <div class="customization-home-box">
+                <h2>Using the Customization Tool</h2>
+                <p>The customization tool allows you to modify the
+                    organization and scoring of the SSPI and to see
+                    how those changes affect the overall scores. Use the tool to:</p>
+                <ul>
+                    <li>
+                        <strong>Adjust indicator scoring:</strong> Modify underlying datasets, goalpost values,
+                        and score function parameters for each indicator.
+                    </li>
+                    <li>
+                        <strong>Create custom indicators:</strong> Build new policy indicators using the full
+                        database of SSPI datasets or upload your own data.
+                    </li>
+                    <li>
+                        <strong>Reorganize the index:</strong> Change how indicators, categories, and pillars are
+                        grouped, scored, and named to create your own custom policy index.
+                    </li>
+                    <li>
+                        <strong>Compare with canonical SSPI:</strong> Explore how differences in values change
+                        conclusions about policy quality using <em>ceteris paribus</em> comparisons.
+                    </li>
+                    <li>
+                        <strong>Save and share:</strong> Export your customized configuration, scores,
+                        and summary reports.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</article>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}
+
+{% block stylesheet %}
+{% endblock %}

@@ -15,9 +15,5 @@ Indicator: Urban Air Pollution
 IndicatorCode: AIRPOL
 DatasetCodes:
   - UNSDG_AIRPOL
-Inverted: true
-SourceOrganization: UN SDG
-SourceOrganizationIndicatorCode: 11.6.2
-SourceOrganizationURL: https://unstats.un.org/sdgapi/swagger/
 ---
 

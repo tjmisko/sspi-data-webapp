@@ -10,8 +10,9 @@ from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
     slice_dataset,
-    filter_imputations
-)
+    filter_imputations)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_imputed_data,
@@ -22,7 +23,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/ALTNRG", methods=["POST"])
-@login_required
+@admin_required
 def compute_altnrg():
     lg, ug = sspi_metadata.get_goalposts("ALTNRG")
     def score_altnrg(IEA_TLCOAL, IEA_NATGAS, IEA_NCLEAR, IEA_HYDROP, IEA_GEOPWR, IEA_BIOWAS, IEA_FSLOIL):
@@ -60,7 +61,7 @@ def compute_altnrg():
 
 
 @impute_bp.route("/ALTNRG", methods=["POST"])
-@login_required
+@admin_required
 def impute_altnrg():
     app.logger.info("Running /api/v1/impute/ALTNRG")
     mongo_query = {"IndicatorCode": "ALTNRG"}

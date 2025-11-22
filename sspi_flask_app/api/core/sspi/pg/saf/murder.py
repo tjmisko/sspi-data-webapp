@@ -14,12 +14,13 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost,
     interpolate_linear,
     extrapolate_backward,
-    extrapolate_forward
-)
+    extrapolate_forward)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/MURDER", methods=['POST'])
-@login_required
+@admin_required
 def compute_murder():
     app.logger.info("Running /api/v1/compute/MURDER")
     sspi_indicator_data.delete_many({"IndicatorCode": "MURDER"})

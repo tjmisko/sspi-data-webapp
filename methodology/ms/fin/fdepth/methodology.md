@@ -15,7 +15,6 @@ IndicatorCode: FDEPTH
 DatasetCodes:
   - WB_CREDIT
   - WB_DPOSIT
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 200
 ScoreFunction: >
@@ -23,9 +22,6 @@ ScoreFunction: >
         goalpost(WB_CREDIT, 0, 200), 
         goalpost(WB_DPOSIT, 0, 100)
     )
-SourceOrganization: World Bank
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://databank.worldbank.org/
 ---
 
 ### The Government's Role in Encouraging the Depth of Finanical Markets

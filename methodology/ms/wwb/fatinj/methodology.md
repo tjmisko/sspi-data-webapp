@@ -13,9 +13,5 @@ LowerGoalpost: 25
 UpperGoalpost: 0
 ScoreFunction: >
     Score = goalpost(ILO_FATINJ, 25, 0)
-Inverted: true
-SourceOrganization: ILO
-SourceOrganizationIndicatorCode: DF_SDG_F881_SEX_MIG_RT
-SourceOrganizationURL: https://ilostat.ilo.org/
 ---
 

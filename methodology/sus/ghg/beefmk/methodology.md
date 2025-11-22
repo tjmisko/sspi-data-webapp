@@ -14,7 +14,6 @@ DatasetCodes:
   - UNFAO_BFPROD
   - UNFAO_BFCONS
   - WB_POPULN
-Inverted: true
 LowerGoalpost: 50
 UpperGoalpost: 0
 ScoreFunction: >
@@ -22,8 +21,5 @@ ScoreFunction: >
         goalpost(UNFAO_BFPROD / WB_POPULN, 50, 0),
         goalpost(UNFAO_BFCONS, 50, 0)
     )
-SourceOrganization: UN FAO
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://www.fao.org/faostat/en/#home
 ---
 

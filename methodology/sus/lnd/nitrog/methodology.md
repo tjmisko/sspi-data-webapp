@@ -13,15 +13,11 @@ Description: >
   performance of agricultural production. The 2022 EPI uses the SNMI as a proxy for
   agricultural drivers of environmental damage.
 Footnote: null
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 100
 ScoreFunction: >
     Score = goalpost(EPI_NITROG, 0, 100)
 Indicator: Sustainable Nitrogen Management
 IndicatorCode: NITROG
-SourceOrganization: EPI
-SourceOrganizationIndicatorCode: SNM
-SourceOrganizationURL: https://sedac.ciesin.columbia.edu/data/set/epi-environmental-performance-index-2022/data-download
 ---
 

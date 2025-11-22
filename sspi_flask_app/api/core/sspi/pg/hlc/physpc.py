@@ -13,11 +13,12 @@ from sspi_flask_app.api.resources.utilities import (
     goalpost,
     extrapolate_forward,
     extrapolate_backward,
-    interpolate_linear
-)
+    interpolate_linear)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 @compute_bp.route("/PHYSPC", methods=["POST"])
-@login_required
+@admin_required
 def compute_physpc():
     app.logger.info("Running /api/v1/compute/PHYSPC")
     sspi_indicator_data.delete_many({"IndicatorCode": "PHYSPC"})
@@ -32,7 +33,7 @@ def compute_physpc():
     return parse_json(scored_list)
 
 @impute_bp.route("/PHYSPC", methods=["POST"])
-@login_required
+@admin_required
 def impute_physpc():
     sspi_imputed_data.delete_many({"IndicatorCode": "PHYSPC"})
     physpc_clean = sspi_clean_api_data.find({"DatasetCode": "WHO_PHYSPC"})

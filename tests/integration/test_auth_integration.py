@@ -37,10 +37,10 @@ def mock_auth_data(test_auth_db):
     """Mock sspi_user_data to use test database for auth routes."""
     with patch('sspi_flask_app.models.usermodel.sspi_user_data') as mock_user_data, \
          patch('sspi_flask_app.auth.routes.sspi_user_data') as mock_auth_routes:
-        
+
         from sspi_flask_app.models.database.sspi_user_data import SSPIUserData
         test_wrapper = SSPIUserData(test_auth_db)
-        
+
         # Mock both imports to use the same test wrapper
         for mock in [mock_user_data, mock_auth_routes]:
             mock.find_by_username = test_wrapper.find_by_username
@@ -53,19 +53,41 @@ def mock_auth_data(test_auth_db):
             mock.get_all_users = test_wrapper.get_all_users
             mock.delete_user = test_wrapper.delete_user
             mock.delete_many = test_wrapper.delete_many
-        
+            # Add role management methods
+            mock.get_user_roles = test_wrapper.get_user_roles
+            mock.add_role = test_wrapper.add_role
+            mock.remove_role = test_wrapper.remove_role
+            mock.set_roles = test_wrapper.set_roles
+
         yield test_wrapper
 
 
 @pytest.fixture(scope="function")
 def test_user(mock_auth_data):
-    """Create a test user for authentication tests."""
+    """Create a test user (regular user with 'user' role) for authentication tests."""
     bcrypt = Bcrypt()
     username = "testuser"
     password = "testpassword123"
     password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-    
-    user = User.create_user(username, password_hash)
+
+    user = User.create_user(username, password_hash, roles=["user"])
+    return {
+        'user': user,
+        'username': username,
+        'password': password,
+        'password_hash': password_hash
+    }
+
+
+@pytest.fixture(scope="function")
+def admin_user(mock_auth_data):
+    """Create an admin user for testing admin-only routes."""
+    bcrypt = Bcrypt()
+    username = "adminuser"
+    password = "adminpass123"
+    password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    user = User.create_user(username, password_hash, roles=["admin", "user"])
     return {
         'user': user,
         'username': username,
@@ -285,29 +307,39 @@ class TestAuthenticationRouteIntegration:
             assert response.status_code == 200
             assert response.data.decode('utf-8') == test_user['user'].apikey
     
-    def test_register_route_requires_fresh_login(self, app, client, mock_auth_data):
-        """Test that register route requires fresh login."""
+    def test_register_route_is_public(self, app, client, mock_auth_data):
+        """Test that register route is publicly accessible for user registration."""
         with app.test_request_context():
             response = client.get('/register')
-            # Should be redirected to login or return 401
-            assert response.status_code in [302, 401]
+            # Should return 200 (public access) - registration page is now public
+            assert response.status_code == 200
     
-    def test_bearer_token_authentication(self, app, client, test_user, mock_auth_data):
-        """Test Bearer token authentication for API access."""
+    def test_bearer_token_authentication(self, app, client, admin_user, mock_auth_data):
+        """Test Bearer token authentication for API access (admin-only routes)."""
         with app.test_request_context():
-            # Access protected route with Bearer token
-            headers = {'Authorization': f'Bearer {test_user["user"].apikey}'}
+            # Access protected admin route with Bearer token
+            headers = {'Authorization': f'Bearer {admin_user["user"].apikey}'}
             response = client.get('/api/v1/', headers=headers)
-            
+
             # Should be successful (or at least not unauthorized)
             assert response.status_code != 401
-    
+
+    def test_regular_user_bearer_token_rejected_on_admin_route(self, app, client, test_user, mock_auth_data):
+        """Test that regular user Bearer token is rejected on admin-only routes."""
+        with app.test_request_context():
+            # Regular user tries to access admin route
+            headers = {'Authorization': f'Bearer {test_user["user"].apikey}'}
+            response = client.get('/api/v1/production/finalize', headers=headers)
+
+            # Should be forbidden (403) because user is not admin
+            assert response.status_code == 403
+
     def test_invalid_bearer_token(self, app, client, mock_auth_data):
         """Test invalid Bearer token is rejected."""
         with app.test_request_context():
             headers = {'Authorization': 'Bearer invalidtoken'}
             response = client.get('/api/v1/production/finalize', headers=headers)
-            
+
             # Should be unauthorized
             assert response.status_code == 401
 

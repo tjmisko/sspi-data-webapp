@@ -13,7 +13,6 @@ IndicatorCode: RDFUND
 DatasetCodes:
   - UNSDG_RDPGDP
   - UNSDG_NRSRCH
-Inverted: false
 LowerGoalpost: 0
 UpperGoalpost: 4
 ScoreFunction: >

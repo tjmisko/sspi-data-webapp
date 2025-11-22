@@ -5,6 +5,7 @@ from flask_limiter.util import get_remote_address
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from flask_bcrypt import Bcrypt
 from flask_assets import Environment
+from flask_wtf.csrf import CSRFProtect
 from sspi_flask_app.assets import compile_static_assets
 from sspi_flask_app.logging import configure_logging
 from sspi_flask_app.models.database import (
@@ -75,6 +76,7 @@ import sspi_flask_app.api.core.sspi.pg.saf.secapp
 
 login_manager = LoginManager()
 flask_bcrypt = Bcrypt()
+csrf = CSRFProtect()
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200000 per day", "50000 per hour"],
@@ -94,6 +96,7 @@ def init_app(Config):
     # )
     flask_bcrypt.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
     limiter.init_app(app)
     assets.init_app(app)
 

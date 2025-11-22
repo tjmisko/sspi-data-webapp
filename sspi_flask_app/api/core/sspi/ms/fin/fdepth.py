@@ -11,8 +11,9 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_backward,
     extrapolate_forward,
     interpolate_linear,
-    impute_reference_class_average
-)
+    impute_reference_class_average)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -23,7 +24,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/FDEPTH", methods=['POST'])
-@login_required
+@admin_required
 def compute_fdepth():
     def score_fdepth(WB_CREDIT, WB_DPOSIT): 
         return goalpost(WB_CREDIT, 0, 200) / 2 + goalpost(WB_DPOSIT, 0, 100) / 2
@@ -45,7 +46,7 @@ def compute_fdepth():
 
 
 @impute_bp.route("/FDEPTH", methods=['POST'])
-@login_required
+@admin_required
 def impute_fdepth():
     """
     Steps to Impute

@@ -14,10 +14,11 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward
 )
 from flask_login import login_required, current_user
+from sspi_flask_app.auth.decorators import admin_required
 
 
 @compute_bp.route("/SANSRV", methods=["POST"])
-@login_required
+@admin_required
 def compute_sansrv():
     app.logger.info("Running /api/v1/compute/SANSRV")
     sspi_indicator_data.delete_many({"IndicatorCode": "SANSRV"})
@@ -33,7 +34,7 @@ def compute_sansrv():
 
 
 @impute_bp.route("/SANSRV", methods=["POST"])
-@login_required
+@admin_required
 def impute_sansrv():
     app.logger.info("Running /api/v1/impute/SANSRV")
     sspi_imputed_data.delete_many({"IndicatorCode": "SANSRV"})

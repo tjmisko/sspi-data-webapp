@@ -8,8 +8,9 @@ from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.api.datasource.unsdg import (
     collect_sdg_indicator_data,
     extract_sdg,
-    filter_sdg,
-)
+    filter_sdg)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import goalpost, parse_json, score_indicator
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
@@ -19,7 +20,7 @@ from sspi_flask_app.models.database import (
 )
 
 @compute_bp.route("/MSWGEN", methods=['POST'])
-@login_required
+@admin_required
 def compute_mswgen():
     sspi_indicator_data.delete_many({"IndicatorCode": "MSWGEN"})
     dataset_list = sspi_clean_api_data.find({"DatasetCode": "EPI_MSWGEN"})

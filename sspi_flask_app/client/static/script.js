@@ -59,48 +59,208 @@ this.gradients.SUS={10:"#28a745",9:"#3db058",8:"#52b96b",7:"#67c27e",6:"#7ccb91"
 this.gradients.MS={10:"#ff851b",9:"#ff9132",8:"#ff9d49",7:"#ffa960",6:"#ffb577",5:"#ffc18e",4:"#ffcda5",3:"#ffd9bc",2:"#ffe5d3",1:"#fff1ea",0:"#fefefe"}
 this.gradients.PG={10:"#007bff",9:"#1988ff",8:"#3295ff",7:"#4ba2ff",6:"#64afff",5:"#7dbcff",4:"#96c9ff",3:"#afd6ff",2:"#c8e3ff",1:"#e1f0ff",0:"#fefefe"}}}
 const SSPIColors=new ColorMap(customCountryColors)
-class UndoRedoManager{constructor(sspiInstance){this.sspi=sspiInstance;this.history=[];this.currentIndex=-1;this.maxHistorySize=50;}
-recordAction(action){this.history=this.history.slice(0,this.currentIndex+1);this.history.push({...action,timestamp:Date.now()});this.currentIndex++;if(this.history.length>this.maxHistorySize){this.history.shift();this.currentIndex--;}
-console.log('Recorded action:',action.message,'(History size:',this.history.length,')');}
-undo(){if(!this.canUndo()){this.sspi.showNotification('Nothing\u0020to\u0020undo','info',2000);return false;}
-const action=this.history[this.currentIndex];try{action.undo();this.currentIndex--;this.sspi.showNotification(`↶\u0020Undo:\u0020${action.message}`,'info',2500);console.log('Undid action:',action.message);return true;}catch(error){console.error('Error during undo:',error);this.sspi.showNotification('Error\u0020during\u0020undo','error',3000);return false;}}
-redo(){if(!this.canRedo()){this.sspi.showNotification('Nothing\u0020to\u0020redo','info',2000);return false;}
-const action=this.history[this.currentIndex+1];try{action.redo();this.currentIndex++;this.sspi.showNotification(`↷\u0020Redo:\u0020${action.message}`,'info',2500);console.log('Redid action:',action.message);return true;}catch(error){console.error('Error during redo:',error);this.sspi.showNotification('Error\u0020during\u0020redo','error',3000);return false;}}
-canUndo(){return this.currentIndex>=0;}
-canRedo(){return this.currentIndex<this.history.length-1;}
-clear(){this.history=[];this.currentIndex=-1;console.log('Cleared undo/redo history');}
-getInfo(){return{historySize:this.history.length,currentIndex:this.currentIndex,canUndo:this.canUndo(),canRedo:this.canRedo(),recentActions:this.history.slice(-5).map(a=>a.message)};}}
-class CustomizableSSPIStructure{constructor(parentElement,options={}){const{pillars=['Sustainability','Market Structure','Public Goods'],autoLoad=true,loadingDelay=100}=options;this.parentElement=parentElement;this.pillars=pillars;this.autoLoad=autoLoad;this.loadingDelay=loadingDelay;this.unsavedChanges=false;this.draggedEl=null;this.origin=null;this.dropped=false;this.isLoading=false;this.cacheTimeout=null;this.baselineMetadata=null;this.diffCache=null;this.visualizationSection=null;this.isVisualizationOpen=false;this.currentChart=null;this.currentConfigId=null;this.datasetDetails={};this.undoRedoManager=new UndoRedoManager(this);this.injectStyles();this.initToolbar();this.initVisualizationSection();this.initRoot();this.addEventListeners();this.setupKeyboardShortcuts();this.loadConfigurationsList();this.loadDatasetDetails();this.setupCacheSync();this.rigUnloadListener();if(this.autoLoad){setTimeout(()=>{this.loadInitialData();},this.loadingDelay);}}
-injectStyles(){const style=document.createElement('style');style.textContent=`.insertion-indicator{height:5px;background:var(--green-accent);margin:4px 0;}.drag-over{outline:2px dashed var(--green-accent);}.unsaved-changes{background:var(--ms-color);color:white;}.draggable-item{cursor:grab;}.draggable-item.dragging{visibility:hidden;}.sspi-loading{display:flex;align-items:center;justify-content:center;padding:2rem;color:var(--text-color);font-size:1.1rem;}.sspi-loading::before{content:'';width:20px;height:20px;margin-right:10px;border:2px solid var(--subtle-line-color);border-top-color:var(--green-accent);border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}@keyframes slideInRight{from{transform:translateX(100%);opacity:0;}
-to{transform:translateX(0);opacity:1;}}@keyframes slideOutRight{from{transform:translateX(0);opacity:1;}
-to{transform:translateX(100%);opacity:0;}}.sspi-error{display:flex;align-items:center;justify-content:center;padding:2rem;color:var(--sus-color);font-size:1rem;flex-direction:column;gap:1rem;}
-.preview-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;padding:2rem;box-sizing:border-box!important;}.preview-modal,.preview-modal*{box-sizing:border-box!important;}.preview-modal{background:var(--page-background-color);border-radius:var(--border-radius);box-shadow:0 10px 40px rgba(0,0,0,0.3);width:90vw;height:85vh;max-width:1800px;max-height:calc(100vh-4rem);display:flex;flex-direction:column;overflow:hidden;}.preview-modal-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--subtle-line-color);background:var(--box-background-color);flex-shrink:0;}.preview-modal-header h3{margin:0;font-family:var(--header-font-family);color:var(--header-text-color);font-size:1.2rem;}.preview-modal-body{flex:1 1 auto;overflow:auto;padding:1rem;background:var(--region-background-color);min-height:0;position:relative;}#preview-chart-container{width:100%;height:100%;min-height:500px;max-width:100%;position:relative;}`;document.head.appendChild(style);}
-initToolbar(){const toolbar=document.createElement('div');toolbar.classList.add('sspi-toolbar');const importBtn=document.createElement('button');importBtn.textContent='Load Default SSPI';importBtn.addEventListener('click',async()=>{try{this.showLoadingState('Loading default SSPI metadata...');this.clearCache();const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Loading default SSPI metadata with',response.stats);await this.importDataAsync(response.metadata);this.hideLoadingState();this.flagUnsaved();}else{this.hideLoadingState();alert('Error loading default metadata: '+response.error);}}catch(err){this.hideLoadingState();console.error('Error loading default metadata:',err);alert('Error loading default metadata. Please try again.');}});this.saveButton=document.createElement('button');this.saveButton.textContent='Save';this.saveButton.addEventListener('click',async()=>{await this.saveConfiguration();});const resetViewBtn=document.createElement('button');resetViewBtn.textContent='Reset View';resetViewBtn.title='Collapse all indicators, expand all categories';resetViewBtn.addEventListener('click',()=>{this.resetView();});const expandAllBtn=document.createElement('button');expandAllBtn.textContent='Expand All';expandAllBtn.addEventListener('click',()=>{this.expandAll();});const collapseAllBtn=document.createElement('button');collapseAllBtn.textContent='Collapse All';collapseAllBtn.addEventListener('click',()=>{this.collapseAll();});const validateBtn=document.createElement('button');validateBtn.textContent='Validate';validateBtn.addEventListener('click',()=>{this.showHierarchyStatus();});this.discardButton=document.createElement('button');this.discardButton.textContent='Discard Changes';this.discardButton.style.opacity='0.5';this.discardButton.style.cursor='not-allowed';this.discardButton.disabled=true;this.discardButton.addEventListener('click',async()=>{if(this.unsavedChanges&&confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')){await this.discardChanges();}});const scoreVisualizeBtn=document.createElement('button');scoreVisualizeBtn.textContent='Score & Visualize';scoreVisualizeBtn.title='Generate scores and visualize this custom SSPI structure';scoreVisualizeBtn.style.backgroundColor='#4CAF50';scoreVisualizeBtn.style.color='white';scoreVisualizeBtn.style.fontWeight='bold';scoreVisualizeBtn.addEventListener('click',async()=>{await this.scoreAndVisualize();});toolbar.append(importBtn,this.saveButton,scoreVisualizeBtn,validateBtn,this.discardButton,resetViewBtn,expandAllBtn,collapseAllBtn);this.parentElement.appendChild(toolbar);}
-async fetch(url){const res=await window.fetch(url);if(!res.ok)throw new Error('Network response was not ok');return await res.json();}
-initRoot(){this.container=document.createElement('div');this.container.classList.add('pillars-container','pillars-grid');this.container.setAttribute('role','tree');this.pillars.forEach((name,index)=>{const col=document.createElement('div');col.classList.add('pillar-column');col.dataset.pillar=name;col.setAttribute('aria-label',name+' pillar');const defaultCodes=['SUS','MS','PG'];const defaultCode=defaultCodes[index]||'PIL';const header=document.createElement('div');header.classList.add('customization-pillar-header','draggable-item');header.setAttribute('role','treeitem');header.dataset.type='pillar';header.innerHTML=`<div class="customization-pillar-header-content"><div class="pillar-name"contenteditable="true"spellcheck="false"tabindex="0">${name}</div><div class="pillar-code-section"><label class="code-label">Code:</label><input type="text"class="pillar-code-input"maxlength="3"placeholder="${defaultCode}"
-pattern="[A-Z]{2,3}"title="2-3 uppercase letters required"value="${defaultCode}"><span class="code-validation-message"></span></div></div>`;col.appendChild(header);this.setupCodeValidation(header.querySelector('.pillar-code-input'),'pillar');const categories=document.createElement('div');categories.classList.add('categories-container','drop-zone');categories.dataset.accept='category';col.appendChild(categories);const addCat=document.createElement('button');addCat.classList.add('add-category');addCat.textContent='+ Add Category';addCat.setAttribute('aria-label','Add Category to '+name);col.appendChild(addCat);this.container.appendChild(col);});this.parentElement.appendChild(this.container);}
-initVisualizationSection(){this.visualizationSection=document.createElement('div');this.visualizationSection.classList.add('visualization-section');this.visualizationSection.style.display='none';const header=document.createElement('div');header.classList.add('visualization-header');const collapseBtn=document.createElement('button');collapseBtn.classList.add('collapse-viz-btn');collapseBtn.innerHTML='▼';collapseBtn.title='Toggle visualization';collapseBtn.setAttribute('aria-label','Toggle visualization');collapseBtn.addEventListener('click',(e)=>{e.stopPropagation();this.toggleVisualizationCollapse();});const titleContainer=document.createElement('div');titleContainer.classList.add('visualization-title');titleContainer.innerHTML=`<h2>Scored Results</h2>`;const controls=document.createElement('div');controls.classList.add('visualization-controls');const refreshBtn=document.createElement('button');refreshBtn.classList.add('refresh-viz-btn');refreshBtn.textContent='Refresh';refreshBtn.title='Re-score with current structure';refreshBtn.addEventListener('click',(e)=>{e.stopPropagation();this.refreshVisualization();});const closeBtn=document.createElement('button');closeBtn.classList.add('close-viz-btn');closeBtn.textContent='✕';closeBtn.title='Close visualization';closeBtn.addEventListener('click',(e)=>{e.stopPropagation();this.closeVisualization();});controls.append(refreshBtn,closeBtn);header.append(collapseBtn,titleContainer,controls);header.addEventListener('click',(e)=>{if(!e.target.closest('.visualization-controls')){this.toggleVisualizationCollapse();}});const chartContainer=document.createElement('div');chartContainer.classList.add('visualization-chart-container');this.visualizationSection.append(header,chartContainer);this.parentElement.appendChild(this.visualizationSection);}
-addEventListeners(){this.container.querySelectorAll('.customization-pillar-header').forEach(h=>h.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();h.blur();}}));this.container.addEventListener('click',e=>{const toggleBtn=e.target.closest('.collapse-toggle-btn');if(toggleBtn){e.preventDefault();e.stopPropagation();this.handleToggle(toggleBtn);return;}});this.container.addEventListener('click',e=>{if(e.target.classList.contains('add-category')){const zone=e.target.previousElementSibling;const cat=this.createCategoryElement();zone.appendChild(cat);this.validate(zone);this.updateHierarchyOnAdd(cat,'category');}
+class CustomizableSSPIStructure{constructor(parentElement,options={}){const{pillars=[{ItemName:'Sustainability',ItemCode:'SUS'},{ItemName:'Market Structure',ItemCode:'MS'},{ItemName:'Public Goods',ItemCode:'PG'}],loadingDelay=100,username='',baseConfig='sspi'}=options;this.baseConfig=baseConfig;this.parentElement=parentElement;this.pillars=pillars;this.loadingDelay=loadingDelay;this.username=username||window.sspiUsername||'';this.unsavedChanges=false;this.isImporting=false;this.draggedEl=null;this.origin=null;this.dropped=false;this.isLoading=false;this.cacheTimeout=null;this.datasetDetails={};this.actionHistory=new CustomizableActionHistory(this);this.currentConfigId=null;this.currentConfigName=null;this.initToolbar();this.initRoot();this.rigPillarRename();this.progressState=this.loadProgressState();this.initProgressTracker();this.rigCategoryIndicatorListeners();this.rigDragStructureListeners();this.setupKeyboardShortcuts();this.setupCacheSync();this.rigUnloadListener();this.setupUnsavedChangesWarning();setTimeout(()=>{this.loadInitialData();},this.loadingDelay);}
+initToolbar(){this.toolbarLeft=document.createElement('div');this.toolbarLeft.classList.add('sspi-toolbar');this.toolbarRight=document.createElement('div');this.toolbarRight.classList.add('sspi-toolbar');this.saveButton=document.createElement('button');this.saveButton.textContent='Save';this.saveButton.addEventListener('click',async()=>{await this.handleSave();});const resetViewBtn=document.createElement('button');resetViewBtn.textContent='Default View';resetViewBtn.title='Collapse all indicators, expand all categories';resetViewBtn.addEventListener('click',()=>{this.resetView();});const expandAllBtn=document.createElement('button');expandAllBtn.textContent='Expand All';expandAllBtn.addEventListener('click',()=>{this.expandAll();});const collapseAllBtn=document.createElement('button');collapseAllBtn.textContent='Collapse All';collapseAllBtn.addEventListener('click',()=>{this.collapseAll();});const validateBtn=document.createElement('button');validateBtn.textContent='Validate';validateBtn.addEventListener('click',()=>{this.showHierarchyStatus();});const viewChangesBtn=document.createElement('button');viewChangesBtn.textContent='View Changes';viewChangesBtn.title='View history of all changes made to the SSPI structure';viewChangesBtn.id='view-changes-btn';viewChangesBtn.addEventListener('click',()=>{this.showChangesHistory();});this.viewChangesButton=viewChangesBtn;this.discardButton=document.createElement('button');this.discardButton.textContent='Discard Changes';this.discardButton.disabled=true;this.discardButton.addEventListener('click',async()=>{if(this.unsavedChanges&&confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')){await this.discardChanges();}});const scoreVisualizeBtn=document.createElement('button');this.toolbarLeft.append(this.saveButton,validateBtn,viewChangesBtn,this.discardButton);this.toolbarRight.append(resetViewBtn,expandAllBtn,collapseAllBtn)
+this.parentElement.appendChild(this.toolbarLeft);this.parentElement.appendChild(this.toolbarRight);this.updateSaveButtonState();this.toolbarLeft.style.display='none';this.toolbarRight.style.display='none';}
+async fetch(url,options={}){if(options.method&&options.method!=='GET'){const headers=options.headers||{};if(window.csrfToken){headers['X-CSRFToken']=window.csrfToken;}
+options.headers=headers;}
+const res=await window.fetch(url,options);if(!res.ok){const errorText=await res.text();throw new Error(`HTTP ${res.status}:${errorText}`);}
+return await res.json();}
+async handleSave(){try{if(!window.sspiUsername){notifications.error('Please log in to save configurations');window.location.href='/auth/login?next='+encodeURIComponent(window.location.pathname+window.location.search);return;}
+const protectedConfigs=['sspi','blank','default'];if(protectedConfigs.includes(this.baseConfig)){await this.saveNewConfiguration();}else{if(this.currentConfigId===this.baseConfig){await this.updateConfiguration(this.baseConfig);}else{await this.saveNewConfiguration();}}}catch(error){console.error('Error in handleSave:',error);notifications.error('Failed to save configuration: '+error.message);}}
+async saveNewConfiguration(){const name=await this.promptConfigName();if(!name)return;try{this.showLoadingState('Saving configuration...');const metadata=this.exportMetadata();const actions=this.actionHistory.exportActionLog();const payload={name:name,metadata:metadata,actions:actions};console.log('Saving configuration:',{name:name,metadataCount:metadata.length,actionsCount:actions.length,payloadSize:JSON.stringify(payload).length});const response=await this.fetch('/api/v1/customize/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});this.hideLoadingState();if(response.success){this.currentConfigId=response.config_id;this.currentConfigName=name;this.clearUnsavedState();this.clearCache();this.updateSaveButtonState();const editLink=`/customize/builder?base_config=${response.config_id}`;notifications.success(`Configuration saved successfully!<a href="${editLink}"style="color: white; text-decoration: underline;">Edit this config</a>`,8000);}else{throw new Error(response.error||'Unknown error');}}catch(error){this.hideLoadingState();throw error;}}
+async updateConfiguration(configId){try{this.showLoadingState('Updating configuration...');const payload={name:this.currentConfigName||'Custom SSPI',metadata:this.exportMetadata(),actions:this.actionHistory.exportActionLog()};const response=await this.fetch(`/api/v1/customize/update/${configId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});this.hideLoadingState();if(response.success){this.clearUnsavedState();this.clearCache();this.updateSaveButtonState();notifications.success('Configuration updated successfully');}else{throw new Error(response.error||'Update failed');}}catch(error){this.hideLoadingState();throw error;}}
+async promptConfigName(defaultName=''){return new Promise((resolve)=>{const modal=document.createElement('div');modal.className='modal-overlay';modal.style.cssText=`position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;`;const dialog=document.createElement('div');dialog.className='modal-dialog';dialog.style.cssText=`background:var(--box-background-color);border-radius:8px;padding:24px;max-width:400px;width:90%;box-shadow:0 4px 6px rgba(0,0,0,0.1);`;dialog.innerHTML=`<h3 style="margin: 0 0 16px 0;">Save Configuration</h3><label style="display: block; margin-bottom: 8px;">Configuration Name:</label><input type="text"id="config-name-input"
+value="${defaultName || 'My Custom SSPI'}"
+style="width: 100%; padding: 8px; margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 4px;"
+maxlength="200"><div style="display: flex; gap: 8px; justify-content: flex-end;"><button id="cancel-btn"style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 4px; cursor: pointer;">Cancel</button><button id="save-btn"style="padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Save</button></div>`;modal.appendChild(dialog);document.body.appendChild(modal);const input=dialog.querySelector('#config-name-input');const saveBtn=dialog.querySelector('#save-btn');const cancelBtn=dialog.querySelector('#cancel-btn');input.focus();input.select();const cleanup=()=>{modal.remove();};const handleSave=()=>{const name=input.value.trim();if(!name){input.style.borderColor='red';return;}
+cleanup();resolve(name);};const handleCancel=()=>{cleanup();resolve(null);};saveBtn.addEventListener('click',handleSave);cancelBtn.addEventListener('click',handleCancel);input.addEventListener('keypress',(e)=>{if(e.key==='Enter')handleSave();if(e.key==='Escape')handleCancel();});modal.addEventListener('click',(e)=>{if(e.target===modal)handleCancel();});});}
+updateSaveButtonState(){const isLoggedIn=!!(window.sspiUsername&&window.sspiUsername.trim());if(!isLoggedIn){this.saveButton.classList.remove('unsaved-changes');this.saveButton.textContent='Save';this.saveButton.disabled=true;this.saveButton.style.opacity='0.5';this.saveButton.style.cursor='not-allowed';this.saveButton.title='You must be logged in to save configurations';return;}
+if(this.unsavedChanges){this.saveButton.classList.add('unsaved-changes');this.saveButton.textContent=this.currentConfigId?'Update':'Save';this.saveButton.disabled=false;this.saveButton.style.opacity='1';this.saveButton.style.cursor='pointer';this.saveButton.title=this.currentConfigId?'Update the current configuration':'Save as new configuration';}else{this.saveButton.classList.remove('unsaved-changes');this.saveButton.textContent='Saved';this.saveButton.disabled=false;this.saveButton.style.opacity='1';this.saveButton.style.cursor='pointer';this.saveButton.title='No unsaved changes';}}
+initRoot(){this.container=document.createElement('div');this.container.classList.add('pillars-container','pillars-grid');this.container.setAttribute('role','tree');this.pillars.forEach((item,index)=>{const col=document.createElement('div');col.classList.add('pillar-column');col.dataset.pillar=item.ItemName;col.setAttribute('aria-label',item.ItemName+' pillar');col.innerHTML=`<div role="treeitem"class="customization-pillar-header draggable-item"dataset-type="pillar"><div class="customization-pillar-header-content"><div class="pillar-name"contenteditable="true"spellcheck="false"tabindex="0">${name}</div><div class="pillar-code-section"><label class="code-label">Code:</label><input type="text"class="pillar-code-input"maxlength="3"placeholder="${item.ItemCode}"
+pattern="[A-Z]{2,3}"title="2-3 uppercase letters required"value="${item.ItemCode}"><span class="code-validation-message"></span></div></div></div>`;this.setupCodeValidation(col.querySelector('.pillar-code-input'),'pillar');const categories=document.createElement('div');categories.classList.add('categories-container','drop-zone');categories.dataset.accept='category';col.appendChild(categories);const addCat=document.createElement('button');addCat.classList.add('add-category');addCat.textContent='+ Add Category';addCat.setAttribute('aria-label','Add Category to '+name);col.appendChild(addCat);this.container.appendChild(col);});this.parentElement.appendChild(this.container);}
+rigPillarRename(){this.container.querySelectorAll('.customization-pillar-header').forEach(h=>h.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();h.blur();}}));}
+initProgressTracker(){const stepperContainer=document.createElement('div');stepperContainer.id='progress-stepper-container';stepperContainer.classList.add('progress-stepper-container');this.parentElement.insertBefore(stepperContainer,this.parentElement.firstChild);const stageContainer=document.createElement('div');stageContainer.id='stage-content-container';stageContainer.classList.add('stage-content-container');this.parentElement.appendChild(stageContainer);this.progressStepper=new ProgressStepper(stepperContainer,{currentStage:this.progressState.currentStage,completedStages:this.progressState.completedStages,onStageClick:(stageId)=>this.navigateToStage(stageId)});this.stageManager=new StageManager(stageContainer,this,{currentStage:this.progressState.currentStage,onStageComplete:(stageId)=>this.handleStageComplete(stageId),onStageChange:(stageId)=>this.handleStageChange(stageId)});this.stageManager.setStage(this.progressState.currentStage);}
+loadProgressState(){try{const cached=localStorage.getItem('sspi-progress-state');if(cached){return JSON.parse(cached);}}catch(error){console.error('Error loading progress state:',error);}
+return{currentStage:0,completedStages:[]};}
+saveProgressState(){try{const state={currentStage:this.progressState.currentStage,completedStages:this.progressState.completedStages};localStorage.setItem('sspi-progress-state',JSON.stringify(state));}catch(error){console.error('Error saving progress state:',error);}}
+navigateToStage(stageId){const canNavigate=this.progressState.completedStages.includes(stageId)||stageId<this.progressState.currentStage;if(canNavigate||stageId===this.progressState.currentStage){this.progressState.currentStage=stageId;this.progressStepper.setCurrentStage(stageId);this.stageManager.setStage(stageId);this.saveProgressState();}}
+handleStageComplete(stageId){if(!this.progressState.completedStages.includes(stageId)){this.progressState.completedStages.push(stageId);this.progressStepper.markStageCompleted(stageId);}
+if(stageId<3){this.progressState.currentStage=stageId+1;this.progressStepper.setCurrentStage(stageId+1);this.stageManager.setStage(stageId+1);this.saveProgressState();}}
+handleStageChange(stageId){if(stageId===0){this.container.style.display='block';this.toolbarLeft.style.display='flex';this.toolbarRight.style.display='flex';}else{this.container.style.display='none';this.toolbarLeft.style.display='none';this.toolbarRight.style.display='none';}}
+resetProgress(){this.progressState={currentStage:0,completedStages:[]};this.progressStepper.resetProgress();this.stageManager.setStage(0);this.saveProgressState();}
+rigCategoryIndicatorListeners(){this.container.addEventListener('click',e=>{const toggleBtn=e.target.closest('.collapse-toggle-btn');if(toggleBtn){e.preventDefault();e.stopPropagation();this.handleToggle(toggleBtn);return;}});this.container.addEventListener('click',e=>{if(e.target.classList.contains('add-category')){const zone=e.target.previousElementSibling;const cat=this.createCategoryElement();zone.appendChild(cat);this.validate(zone);this.updateHierarchyOnAdd(cat,'category');}
 if(e.target.classList.contains('add-indicator')){let list=e.target.previousElementSibling;if(!list||!list.classList.contains('indicators-container')){list=e.target.parentElement.querySelector('.indicators-container');}
-if(list){this.showIndicatorSelectionMenu(list);}}});this.container.addEventListener('dragstart',e=>{const isDraggingFromHeader=e.target.closest('.customization-category-header')||e.target.closest('.customization-indicator-header');if(!isDraggingFromHeader){e.preventDefault();return;}
-const el=e.target.closest('.draggable-item');if(!el)return;this.draggedEl=el;this.origin={parent:el.parentNode,next:el.nextSibling};this.dropped=false;el.classList.add('dragging');const clone=el.cloneNode(true);clone.style.position='absolute'
-document.body.appendChild(clone);const rect=el.getBoundingClientRect();e.dataTransfer.setDragImage(clone,rect.width/2,rect.height/2);setTimeout(()=>document.body.removeChild(clone),0);if(!el.id)el.id=`id-${Math.random().toString(36).substr(2,9)}`;e.dataTransfer.setData('text/plain',el.id);e.dataTransfer.effectAllowed='move';});this.container.addEventListener('dragend',()=>{if(!this.dropped&&this.origin&&this.draggedEl){this.origin.parent.insertBefore(this.draggedEl,this.origin.next);}
-if(this.draggedEl)this.draggedEl.classList.remove('dragging');this.draggedEl=null;this.origin=null;this.dropped=false;this.clearIndicators();});this.container.addEventListener('dragover',e=>{const z=e.target.closest('.drop-zone');if(!z||!this.draggedEl)return;e.preventDefault();z.classList.add('drag-over');this.clearIndicators(z);const overItem=e.target.closest('.draggable-item');if(overItem&&overItem.parentNode===z){const{top,height}=overItem.getBoundingClientRect();const before=(e.clientY-top)<(height/2);const indicator=document.createElement('div');indicator.className='insertion-indicator';z.insertBefore(indicator,before?overItem:overItem.nextSibling);}});this.container.addEventListener('dragleave',e=>{const z=e.target.closest('.drop-zone');if(z){z.classList.remove('drag-over');this.clearIndicators(z);}});this.container.addEventListener('drop',e=>{const z=e.target.closest('.drop-zone');if(!z||!this.draggedEl)return;e.preventDefault();z.classList.remove('drag-over');const movedElement=this.draggedEl;const fromParent=this.origin.parent;const fromNextSibling=this.origin.next;let toNextSibling=null;const indicator=z.querySelector('.insertion-indicator');if(indicator){toNextSibling=indicator;z.insertBefore(this.draggedEl,indicator);indicator.remove();}else if(z.dataset.accept===this.draggedEl.dataset.type){z.appendChild(this.draggedEl);toNextSibling=null;}
-const toParent=z;this.dropped=true;this.draggedEl.classList.remove('dragging');this.validate(z);this.flagUnsaved();this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();const order=Array.from(z.children).map(c=>c.id);console.log('New order:',order);const elementType=movedElement.dataset.type||'item';const elementName=this.getElementName(movedElement);const fromLocation=this.getLocationName(fromParent);const toLocation=this.getLocationName(toParent);this.undoRedoManager.recordAction({type:'move',message:`Moved\u0020${elementType}\u0020"${elementName}"\u0020from\u0020${fromLocation}\u0020to\u0020${toLocation}`,undo:()=>{if(fromNextSibling&&fromNextSibling.parentNode){fromParent.insertBefore(movedElement,fromNextSibling);}else{fromParent.appendChild(movedElement);}
+if(list){this.showIndicatorSelectionMenu(list);}}});}
+rigDragStructureListeners(){this.container.addEventListener('dragstart',e=>{const isDraggingFromHeader=e.target.closest('.customization-category-header')||e.target.closest('.customization-indicator-header');if(!isDraggingFromHeader){e.preventDefault();return;}
+const el=e.target.closest('.draggable-item');if(!el)return;this.draggedEl=el;this.origin={parent:el.parentNode,next:el.nextSibling};this.dropped=false;const collapsibleEl=el.querySelector('[data-expanded]');this.wasExpanded=collapsibleEl&&collapsibleEl.dataset.expanded==='true';if(this.wasExpanded&&collapsibleEl){collapsibleEl.dataset.expanded='false';}
+el.classList.add('dragging');const clone=el.cloneNode(true);clone.style.position='absolute';clone.style.top='-9999px';clone.style.left='-9999px';clone.classList.add('drag-ghost');clone.classList.remove('dragging');document.body.appendChild(clone);const rect=el.getBoundingClientRect();e.dataTransfer.setDragImage(clone,rect.width/2,rect.height/2);setTimeout(()=>{if(clone.parentNode){document.body.removeChild(clone);}},50);if(!el.id)el.id=`id-${Math.random().toString(36).substr(2,9)}`;e.dataTransfer.setData('text/plain',el.id);e.dataTransfer.effectAllowed='move';});this.container.addEventListener('dragend',()=>{if(!this.dropped&&this.origin&&this.draggedEl){this.origin.parent.insertBefore(this.draggedEl,this.origin.next);}
+if(this.draggedEl&&this.wasExpanded){const collapsibleEl=this.draggedEl.querySelector('[data-expanded]');if(collapsibleEl){setTimeout(()=>{collapsibleEl.dataset.expanded='true';},100);}}
+if(this.draggedEl)this.draggedEl.classList.remove('dragging');this.draggedEl=null;this.origin=null;this.dropped=false;this.wasExpanded=false;this.clearDraggingVisuals();});this.container.addEventListener('dragover',e=>{const z=e.target.closest('.drop-zone');if(!z||!this.draggedEl)return;e.preventDefault();z.classList.add('drag-over');this.clearDraggingVisuals(z);const items=Array.from(z.querySelectorAll('.draggable-item')).filter(item=>item!==this.draggedEl);if(items.length===0){const indicator=document.createElement('div');indicator.className='insertion-indicator';z.insertBefore(indicator,z.firstChild);}else{let insertBeforeItem=null;for(let i=0;i<items.length;i++){const item=items[i];const rect=item.getBoundingClientRect();const itemMiddle=rect.top+rect.height/2;if(e.clientY<itemMiddle){insertBeforeItem=item;break;}}
+const indicator=document.createElement('div');indicator.className='insertion-indicator';if(insertBeforeItem){z.insertBefore(indicator,insertBeforeItem);}else{z.appendChild(indicator);}}});this.container.addEventListener('dragleave',e=>{const z=e.target.closest('.drop-zone');if(z){z.classList.remove('drag-over');this.clearDraggingVisuals(z);}});this.container.addEventListener('drop',e=>{const z=e.target.closest('.drop-zone');if(!z||!this.draggedEl)return;e.preventDefault();z.classList.remove('drag-over');const movedElement=this.draggedEl;const fromParent=this.origin.parent;const fromNextSibling=this.origin.next;let toNextSibling=null;const indicator=z.querySelector('.insertion-indicator');if(indicator){toNextSibling=indicator;z.insertBefore(this.draggedEl,indicator);indicator.remove();}else if(z.dataset.accept===this.draggedEl.dataset.type){z.appendChild(this.draggedEl);toNextSibling=null;}
+const toParent=z;this.dropped=true;this.draggedEl.classList.remove('dragging');if(this.wasExpanded){const collapsibleEl=this.draggedEl.querySelector('[data-expanded]');if(collapsibleEl){setTimeout(()=>{collapsibleEl.dataset.expanded='true';},100);}}
+this.validate(z);this.flagUnsaved();this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();const order=Array.from(z.children).map(c=>c.id);console.log('New order:',order);const elementType=movedElement.dataset.type||'item';const itemType=movedElement.dataset.itemType;const elementName=this.getElementName(movedElement);const fromLocation=this.getLocationName(fromParent);const toLocation=this.getLocationName(toParent);let actionType='move';if(itemType==='Indicator'){actionType='move-indicator';}else if(itemType==='Category'){actionType='move-category';}
+const delta={type:actionType,itemType:itemType};if(itemType==='Indicator'){const indicatorCode=movedElement.dataset.indicatorCode;const fromParentCode=this.getParentCode(movedElement)||fromLocation;const toParentCode=toLocation;delta.indicatorCode=indicatorCode;delta.fromParentCode=fromParentCode;delta.toParentCode=toParentCode;}else if(itemType==='Category'){const categoryCode=movedElement.dataset.categoryCode;const fromPillarCode=fromLocation;const toPillarCode=toLocation;delta.categoryCode=categoryCode;delta.fromPillarCode=fromPillarCode;delta.toPillarCode=toPillarCode;}
+this.actionHistory.recordAction({type:actionType,message:`Moved\u0020${elementType}\u0020"${elementName}"\u0020from\u0020${fromLocation}\u0020to\u0020${toLocation}`,delta:delta,undo:()=>{if(fromNextSibling&&fromNextSibling.parentNode){fromParent.insertBefore(movedElement,fromNextSibling);}else{fromParent.appendChild(movedElement);}
 this.validate(fromParent);this.validate(toParent);this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();this.flagUnsaved();},redo:()=>{if(toNextSibling&&toNextSibling.parentNode){toParent.insertBefore(movedElement,toNextSibling);}else{toParent.appendChild(movedElement);}
-this.validate(fromParent);this.validate(toParent);this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();this.flagUnsaved();}});});this.container.addEventListener('contextmenu',e=>{const datasetItem=e.target.closest('.dataset-item');if(datasetItem){e.preventDefault();e.stopPropagation();this.showContextMenu(e.pageX,e.pageY,datasetItem);return;}
-const draggableItem=e.target.closest('.draggable-item');if(!draggableItem)return;const isInDatasetArea=e.target.closest('.selected-datasets, .dataset-selection');if(isInDatasetArea)return;e.preventDefault();this.showContextMenu(e.pageX,e.pageY,draggableItem);});this.container.addEventListener('keydown',e=>{if((e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))&&e.target.closest('.draggable-item')){e.preventDefault();const r=e.target.getBoundingClientRect();this.showContextMenu(r.right,r.bottom,e.target);}});this.container.addEventListener('focus',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()==='New Indicator'){indicatorName.textContent='';}}},true);this.container.addEventListener('blur',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()===''){indicatorName.textContent='New Indicator';}}},true);let editingElement=null;let originalValue=null;this.container.addEventListener('focus',e=>{const editableElement=e.target;if(editableElement.isContentEditable&&(editableElement.classList.contains('indicator-name')||editableElement.classList.contains('customization-category-header-title')||editableElement.classList.contains('pillar-name'))){editingElement=editableElement;originalValue=editableElement.textContent.trim();}},true);this.container.addEventListener('blur',e=>{const editableElement=e.target;if(editableElement===editingElement&&originalValue!==null){const newValue=editableElement.textContent.trim();if(newValue!==originalValue&&newValue!==''&&originalValue!==''){const elementType=editableElement.classList.contains('indicator-name')?'indicator':editableElement.classList.contains('customization-category-header-title')?'category':editableElement.classList.contains('pillar-name')?'pillar':'item';this.undoRedoManager.recordAction({type:'rename',message:`Renamed\u0020${elementType}\u0020from\u0020"${originalValue}"\u0020to\u0020"${newValue}"`,undo:()=>{editableElement.textContent=originalValue;this.flagUnsaved();},redo:()=>{editableElement.textContent=newValue;this.flagUnsaved();}});}
-editingElement=null;originalValue=null;}},true);}
-setupKeyboardShortcuts(){document.addEventListener('keydown',(e)=>{const isInInput=e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable;if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey&&!isInInput){e.preventDefault();this.undoRedoManager.undo();}
-if((((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='z')||((e.ctrlKey||e.metaKey)&&e.key==='y'))&&!isInInput){e.preventDefault();this.undoRedoManager.redo();}});console.log('Keyboard shortcuts registered: Ctrl+Z (undo), Ctrl+Y or Ctrl+Shift+Z (redo)');}
-flagUnsaved(){this.saveButton.classList.add('unsaved-changes');this.unsavedChanges=true;this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';this.debouncedCacheState();}
-clearUnsavedState(){this.unsavedChanges=false;this.saveButton.classList.remove('unsaved-changes');this.discardButton.disabled=true;this.discardButton.style.opacity='0.5';this.discardButton.style.cursor='not-allowed';}
-setUnsavedState(hasChanges){this.unsavedChanges=hasChanges;if(hasChanges){this.saveButton.classList.add('unsaved-changes');this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';}else{this.clearUnsavedState();}}
-clearIndicators(scope){const parent=scope||this.container;parent.querySelectorAll('.insertion-indicator').forEach(node=>node.remove());}
-createCategoryElement(){const cat=document.createElement('div');cat.classList.add('category-box','draggable-item');cat.setAttribute('role','group');cat.dataset.type='category';cat.innerHTML=`<div class="category-collapsible"data-expanded="true"><div class="customization-category-header"draggable="true"><button class="collapse-toggle-btn category-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="category-name-wrapper"><h4 class="customization-category-header-title"contenteditable="true">New Category</h4></div><div class="category-code-section"><label class="code-label">Code:</label><input type="text"class="category-code-input"maxlength="3"placeholder="CAT"
-pattern="[A-Z]{3}"title="Exactly 3 uppercase letters required"><span class="code-validation-message"></span></div></div><div class="category-content"><div class="indicators-container drop-zone"data-accept="indicator"role="group"></div><button class="add-indicator"aria-label="Add Indicator">+Add Indicator</button></div></div>`;this.setupCodeValidation(cat.querySelector('.category-code-input'),'category');this.setupCollapsibleHandlers(cat);return cat;}
-createIndicatorElement(){const ind=document.createElement('div');ind.classList.add('indicator-card','draggable-item');ind.setAttribute('role','treeitem');ind.dataset.type='indicator';ind.innerHTML=`<div class="indicator-collapsible"data-expanded="false"><div class="customization-indicator-header"draggable="true"><button class="collapse-toggle-btn indicator-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="indicator-name-wrapper"><h5 class="indicator-name"contenteditable="true">New Indicator</h5></div><div class="indicator-code-section"><label class="code-label">Code:</label><input type="text"class="indicator-code-input"maxlength="6"placeholder="INDIC1"
-pattern="[A-Z0-9]{6}"title="Exactly 6 uppercase letters/numbers required"><span class="code-validation-message"></span></div></div><div class="indicator-config"><div class="dataset-selection"><label>Datasets</label><div class="selected-datasets"></div><button class="add-dataset-btn"type="button">+Add Dataset</button></div><div class="scoring-function"><label>Score Function</label><pre class="editable-score-function"contenteditable="true"spellcheck="false"data-default-score-function="">Score=</pre></div></div></div>`;this.setupCodeValidation(ind.querySelector('.indicator-code-input'),'indicator');this.setupDatasetSelection(ind);this.setupIndicatorChangeListeners(ind);this.setupCollapsibleHandlers(ind);return ind;}
+this.validate(fromParent);this.validate(toParent);this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();this.flagUnsaved();}});});this.container.addEventListener('dragover',e=>{const contentEditableEl=e.target.closest('[contenteditable="true"]');if(contentEditableEl&&this.draggedEl){e.stopPropagation();}},true);this.container.addEventListener('drop',e=>{const contentEditableEl=e.target.closest('[contenteditable="true"]');if(contentEditableEl&&this.draggedEl){e.preventDefault();e.stopPropagation();}},true);this.container.addEventListener('contextmenu',e=>{const datasetItem=e.target.closest('.dataset-item');if(datasetItem){e.preventDefault();e.stopPropagation();this.showContextMenu(e.pageX,e.pageY,datasetItem);return;}
+const draggableItem=e.target.closest('.draggable-item');if(!draggableItem)return;const isInDatasetArea=e.target.closest('.selected-datasets, .dataset-selection');if(isInDatasetArea)return;e.preventDefault();this.showContextMenu(e.pageX,e.pageY,draggableItem);});this.container.addEventListener('keydown',e=>{if((e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10'))&&e.target.closest('.draggable-item')){e.preventDefault();const r=e.target.getBoundingClientRect();this.showContextMenu(r.right,r.bottom,e.target);}});this.container.addEventListener('focus',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()==='New Indicator'){indicatorName.textContent='';}}},true);this.container.addEventListener('blur',e=>{if(e.target.classList.contains('indicator-name')){const indicatorName=e.target;if(indicatorName.textContent.trim()===''){indicatorName.textContent='New Indicator';}}},true);let editingElement=null;let originalValue=null;this.container.addEventListener('focus',e=>{const editableElement=e.target;if(editableElement.isContentEditable&&(editableElement.classList.contains('indicator-name')||editableElement.classList.contains('customization-category-header-title')||editableElement.classList.contains('pillar-name')||editableElement.classList.contains('editable-score-function'))){editingElement=editableElement;originalValue=editableElement.textContent.trim();}},true);this.container.addEventListener('blur',e=>{const editableElement=e.target;if(editableElement===editingElement&&originalValue!==null){const newValue=editableElement.textContent.trim();if(newValue!==originalValue&&newValue!==''&&originalValue!==''){const capturedOriginalValue=originalValue;const capturedNewValue=newValue;let elementType,actionType,itemCode,message;if(editableElement.classList.contains('indicator-name')){elementType='indicator';actionType='set-indicator-name';const indicatorCard=editableElement.closest('[data-indicator-code]');itemCode=indicatorCard?.dataset.indicatorCode;message=`Changed\u0020indicator\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('customization-category-header-title')){elementType='category';actionType='set-category-name';const categoryBox=editableElement.closest('[data-category-code]');itemCode=categoryBox?.dataset.categoryCode;message=`Changed\u0020category\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('pillar-name')){elementType='pillar';actionType='set-pillar-name';const pillarCol=editableElement.closest('[data-pillar-code]');itemCode=pillarCol?.dataset.pillarCode;message=`Changed\u0020pillar\u0020name\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}else if(editableElement.classList.contains('editable-score-function')){elementType='score-function';actionType='set-score-function';const indicatorCard=editableElement.closest('[data-indicator-code]');itemCode=indicatorCard?.dataset.indicatorCode;message=`Changed\u0020score\u0020function\u0020for\u0020indicator\u0020${itemCode||'unknown'}`;console.log('[Score Function Edit] Recording action:',{itemCode,indicatorId:indicatorCard?.id,capturedOriginalValue,capturedNewValue,elementExists:!!editableElement});}else{elementType='item';actionType='rename';itemCode=null;message=`Renamed\u0020${elementType}\u0020from\u0020"${capturedOriginalValue}"\u0020to\u0020"${capturedNewValue}"`;}
+const delta={type:actionType,from:capturedOriginalValue,to:capturedNewValue};if(elementType==='indicator'&&itemCode){delta.indicatorCode=itemCode;}else if(elementType==='category'&&itemCode){delta.categoryCode=itemCode;}else if(elementType==='pillar'&&itemCode){delta.pillarCode=itemCode;}else if(elementType==='score-function'&&itemCode){delta.indicatorCode=itemCode;delta.scoreFunction=capturedNewValue;}
+let undoFn,redoFn;if(elementType==='score-function'){const indicatorCard=editableElement.closest('[data-indicator-code]');if(!indicatorCard.id){indicatorCard.id=`indicator-${Math.random().toString(36).substr(2,9)}`;}
+const elementId=indicatorCard.id;console.log('[Score Function] Setup undo/redo:',{itemCode,elementId,hasCode:!!itemCode,hasId:!!elementId});undoFn=()=>{console.log('[Score Function UNDO] Starting:',{itemCode,elementId,capturedOriginalValue});let indicator;if(itemCode){indicator=this.findElementByCode(itemCode,'Indicator');console.log('[Score Function UNDO] Found by code:',!!indicator);}
+if(!indicator&&elementId){indicator=document.getElementById(elementId);console.log('[Score Function UNDO] Found by ID:',!!indicator);}
+const scoreFn=indicator?.querySelector('.editable-score-function');console.log('[Score Function UNDO] Found scoreFn element:',!!scoreFn);if(scoreFn){console.log('[Score Function UNDO] Setting textContent to:',capturedOriginalValue);scoreFn.textContent=capturedOriginalValue;console.log('[Score Function UNDO] After set, textContent is:',scoreFn.textContent);}else{console.warn('[Score Function UNDO] Could not find score function element!');}
+this.flagUnsaved();};redoFn=()=>{console.log('[Score Function REDO] Starting:',{itemCode,elementId,capturedNewValue});let indicator;if(itemCode){indicator=this.findElementByCode(itemCode,'Indicator');console.log('[Score Function REDO] Found by code:',!!indicator);}
+if(!indicator&&elementId){indicator=document.getElementById(elementId);console.log('[Score Function REDO] Found by ID:',!!indicator);}
+const scoreFn=indicator?.querySelector('.editable-score-function');console.log('[Score Function REDO] Found scoreFn element:',!!scoreFn);if(scoreFn){console.log('[Score Function REDO] Setting textContent to:',capturedNewValue);scoreFn.textContent=capturedNewValue;console.log('[Score Function REDO] After set, textContent is:',scoreFn.textContent);}else{console.warn('[Score Function REDO] Could not find score function element!');}
+this.flagUnsaved();};}else if(elementType==='indicator'){const indicatorCard=editableElement.closest('[data-indicator-code]');if(!indicatorCard.id){indicatorCard.id=`indicator-${Math.random().toString(36).substr(2,9)}`;}
+const elementId=indicatorCard.id;undoFn=()=>{let indicator;if(itemCode){indicator=this.findElementByCode(itemCode,'Indicator');}
+if(!indicator&&elementId){indicator=document.getElementById(elementId);}
+const nameEl=indicator?.querySelector('.indicator-name');if(nameEl)nameEl.textContent=capturedOriginalValue;this.flagUnsaved();};redoFn=()=>{let indicator;if(itemCode){indicator=this.findElementByCode(itemCode,'Indicator');}
+if(!indicator&&elementId){indicator=document.getElementById(elementId);}
+const nameEl=indicator?.querySelector('.indicator-name');if(nameEl)nameEl.textContent=capturedNewValue;this.flagUnsaved();};}else if(elementType==='category'){const categoryBox=editableElement.closest('[data-category-code]');if(!categoryBox.id){categoryBox.id=`category-${Math.random().toString(36).substr(2,9)}`;}
+const elementId=categoryBox.id;undoFn=()=>{let category;if(itemCode){category=this.findElementByCode(itemCode,'Category');}
+if(!category&&elementId){category=document.getElementById(elementId);}
+const nameEl=category?.querySelector('.customization-category-header-title');if(nameEl)nameEl.textContent=capturedOriginalValue;this.flagUnsaved();};redoFn=()=>{let category;if(itemCode){category=this.findElementByCode(itemCode,'Category');}
+if(!category&&elementId){category=document.getElementById(elementId);}
+const nameEl=category?.querySelector('.customization-category-header-title');if(nameEl)nameEl.textContent=capturedNewValue;this.flagUnsaved();};}else if(elementType==='pillar'&&itemCode){undoFn=()=>{const pillar=this.findElementByCode(itemCode,'Pillar');const nameEl=pillar?.querySelector('.pillar-name');if(nameEl)nameEl.textContent=capturedOriginalValue;this.flagUnsaved();};redoFn=()=>{const pillar=this.findElementByCode(itemCode,'Pillar');const nameEl=pillar?.querySelector('.pillar-name');if(nameEl)nameEl.textContent=capturedNewValue;this.flagUnsaved();};}else{undoFn=()=>{editableElement.textContent=capturedOriginalValue;this.flagUnsaved();};redoFn=()=>{editableElement.textContent=capturedNewValue;this.flagUnsaved();};}
+this.actionHistory.recordAction({type:actionType,message:message,delta:delta,undo:undoFn,redo:redoFn});this.flagUnsaved();}
+editingElement=null;originalValue=null;}},true);this.container.addEventListener('dblclick',e=>{const editableElement=e.target;if(editableElement.isContentEditable&&(editableElement.classList.contains('indicator-name')||editableElement.classList.contains('customization-category-header-title')||editableElement.classList.contains('pillar-name'))){e.preventDefault();const range=document.createRange();range.selectNodeContents(editableElement);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);}},true);}
+setupKeyboardShortcuts(){document.addEventListener('keydown',(e)=>{const isInInput=e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable;if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey&&!isInInput){e.preventDefault();this.actionHistory.undo();}
+if((((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='z')||((e.ctrlKey||e.metaKey)&&e.key==='y'))&&!isInInput){e.preventDefault();this.actionHistory.redo();}});}
+flagUnsaved(){this.unsavedChanges=true;this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';this.updateSaveButtonState();this.debouncedCacheState();}
+clearUnsavedState(){this.unsavedChanges=false;this.discardButton.disabled=true;this.discardButton.style.opacity='0.5';this.discardButton.style.cursor='not-allowed';this.updateSaveButtonState();}
+setUnsavedState(hasChanges){if(hasChanges){this.markUnsaved();this.saveButton.classList.add('unsaved-changes');this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';}else{this.markSaved();this.clearUnsavedState();}}
+clearDraggingVisuals(scope){const parent=scope||this.container;parent.querySelectorAll('.insertion-indicator').forEach(node=>node.remove());}
+findElementByCode(itemCode,itemType){if(!itemCode||!itemType){console.warn('findElementByCode: itemCode and itemType are required');return null;}
+const selectors={'Indicator':`[data-indicator-code="${itemCode}"]`,'Category':`[data-category-code="${itemCode}"]`,'Pillar':`[data-pillar-code="${itemCode}"]`};const selector=selectors[itemType];if(!selector){console.warn('findElementByCode: Unknown itemType:',itemType);return null;}
+return this.container.querySelector(selector);}
+getParentCode(element){if(!element)return null;if(element.dataset.itemType==='Category'){const pillarCol=element.closest('[data-pillar-code]');return pillarCol?.dataset.pillarCode||null;}
+if(element.dataset.itemType==='Indicator'){const parent=element.closest('[data-category-code], [data-pillar-code]');return parent?.dataset.categoryCode||parent?.dataset.pillarCode||null;}
+return null;}
+getParentType(element){if(!element)return null;if(element.dataset.itemType==='Category'){return'Pillar';}
+if(element.dataset.itemType==='Indicator'){const parent=element.closest('[data-category-code], [data-pillar-code]');return parent?.dataset.itemType||null;}
+return null;}
+getItemType(element){return element?.dataset.itemType||null;}
+getPositionInParent(element){if(!element)return-1;const parent=element.parentElement;if(!parent)return-1;const itemType=element.dataset.itemType;const siblings=Array.from(parent.children).filter(el=>el.dataset.itemType===itemType);return siblings.indexOf(element);}
+updateElementCode(element,newCode){if(!element||!newCode)return;const itemType=element.dataset.itemType;element.dataset.itemCode=newCode;if(itemType==='Indicator'){element.dataset.indicatorCode=newCode;}else if(itemType==='Category'){element.dataset.categoryCode=newCode;}else if(itemType==='Pillar'){element.dataset.pillarCode=newCode;}}
+_setupDatasetHandlers(datasetItem,selectedDatasetsDiv,indicatorCode,recordRemovalAction){const datasetCode=datasetItem.dataset.datasetCode;const existingExpandHandler=datasetItem._expandHandler;if(!existingExpandHandler){const expandHandler=(e)=>{const isExpanded=datasetItem.dataset.expanded==='true';datasetItem.dataset.expanded=(!isExpanded).toString();const slideout=datasetItem.querySelector('.dataset-details-slideout');if(!isExpanded&&slideout){slideout.style.maxHeight=slideout.scrollHeight+'px';}else if(slideout){slideout.style.maxHeight='0';}};datasetItem.addEventListener('click',expandHandler);datasetItem._expandHandler=expandHandler;}
+const removeBtn=datasetItem.querySelector('.remove-dataset');if(removeBtn){const oldBtn=removeBtn.cloneNode(true);removeBtn.parentNode.replaceChild(oldBtn,removeBtn);oldBtn.addEventListener('click',(e)=>{e.stopPropagation();if(recordRemovalAction){const position=Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);const datasetDetails=this.datasetDetails[datasetCode];this.actionHistory.recordAction({type:'remove-dataset',message:`Removed dataset"${datasetCode}"from indicator"${indicatorCode}"`,delta:{type:'remove-dataset',indicatorCode,datasetCode,datasetDetails,position},undo:()=>{const items=Array.from(selectedDatasetsDiv.children);if(position>=items.length){selectedDatasetsDiv.appendChild(datasetItem);}else{selectedDatasetsDiv.insertBefore(datasetItem,items[position]);}
+this._setupDatasetHandlers(datasetItem,selectedDatasetsDiv,indicatorCode,true);this.flagUnsaved();this.validate();},redo:()=>{datasetItem.remove();this.flagUnsaved();this.validate();}});}
+datasetItem.remove();this.flagUnsaved();this.validate();});}}
+_addDatasetToIndicatorElement(datasetCode,indicatorElement,indicatorCode,{record=true}={}){const selectedDatasetsDiv=indicatorElement.querySelector('.selected-datasets');if(!selectedDatasetsDiv){return{success:false,error:'Selected datasets container not found'};}
+const existing=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(existing){return{success:false,error:'Dataset already added to this indicator'};}
+const details=this.datasetDetails[datasetCode];if(!details){return{success:false,error:`Dataset ${datasetCode}not found in datasetDetails`};}
+const formatNumber=(num)=>num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');const unitHtml=details.Unit?`<div class="detail-row"><span class="detail-label">Unit</span><span class="detail-value">${details.Unit}</span></div>`:'';const rangeHtml=details.Range?`<div class="detail-row"><span class="detail-label">Range</span><span class="detail-value">${formatNumber(details.Range.yMin)}– ${formatNumber(details.Range.yMax)}</span></div>`:'';const datasetItem=document.createElement('div');datasetItem.classList.add('dataset-item');datasetItem.dataset.datasetCode=datasetCode;datasetItem.dataset.expanded='false';datasetItem.innerHTML=`<div class="dataset-item-header"><div class="dataset-info"><span class="dataset-name">${details.DatasetName||'Unknown Dataset'}</span><span class="dataset-code">${datasetCode}</span></div><div class="dataset-actions"><button class="remove-dataset"type="button"title="Remove dataset">×</button></div></div><div class="dataset-details-slideout"><div class="detail-row"><span class="detail-label">Description</span><span class="detail-value">${details.Description||'No description available'}</span></div><div class="detail-row"><span class="detail-label">Organization</span><span class="detail-value">${details.Source?.OrganizationName||'N/A'}${details.Source?.OrganizationCode?' ('+details.Source.OrganizationCode+')':''}</span></div>${unitHtml}
+${rangeHtml}</div>`;this._setupDatasetHandlers(datasetItem,selectedDatasetsDiv,indicatorCode,record);const position=selectedDatasetsDiv.querySelectorAll('.dataset-item').length;selectedDatasetsDiv.appendChild(datasetItem);let action=null;if(record){action=this.actionHistory.recordAction({type:'add-dataset',message:`Added dataset"${datasetCode}"to indicator"${indicatorCode}"`,delta:{type:'add-dataset',indicatorCode:indicatorCode,datasetCode:datasetCode,position:position},undo:()=>{datasetItem.remove();this.flagUnsaved();this.validate();},redo:()=>{const items=Array.from(selectedDatasetsDiv.children);if(position>=items.length){selectedDatasetsDiv.appendChild(datasetItem);}else{selectedDatasetsDiv.insertBefore(datasetItem,items[position]);}
+this.flagUnsaved();this.validate();}});}
+if(record){this.flagUnsaved();}
+this.validate();return{success:true,action,element:datasetItem};}
+addDataset(datasetCode,indicatorCode,{record=true}={}){if(!datasetCode){return{success:false,error:'Dataset code is required'};}
+if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
+const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');if(!indicatorEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
+return this._addDatasetToIndicatorElement(datasetCode,indicatorEl,indicatorCode,{record});}
+removeDataset(datasetCode,indicatorCode){if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
+if(!datasetCode){return{success:false,error:'Dataset code is required'};}
+const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');if(!indicatorEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
+const selectedDatasetsDiv=indicatorEl.querySelector('.selected-datasets');if(!selectedDatasetsDiv){return{success:false,error:'Selected datasets container not found'};}
+const datasetItem=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(!datasetItem){return{success:false,error:`Dataset ${datasetCode}not found in indicator`};}
+const position=Array.from(selectedDatasetsDiv.children).indexOf(datasetItem);const details=this.datasetDetails[datasetCode];datasetItem.remove();const action=this.actionHistory.recordAction({type:'remove-dataset',message:`Removed dataset"${datasetCode}"from indicator"${indicatorCode}"`,delta:{type:'remove-dataset',indicatorCode:indicatorCode,datasetCode:datasetCode,datasetDetails:details,position:position},undo:()=>{const siblings=Array.from(selectedDatasetsDiv.children);if(position>=siblings.length){selectedDatasetsDiv.appendChild(datasetItem);}else{selectedDatasetsDiv.insertBefore(datasetItem,siblings[position]);}
+this.validate();},redo:()=>{datasetItem.remove();this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action};}
+addIndicator(parentCode,{indicatorCode="",indicatorName='New Indicator',datasetCodes=[],scoreFunction='Score = '}={}){if(!parentCode){return{success:false,error:'Parent code is required'};}
+let parentEl=this.findElementByCode(parentCode,'Category');if(!parentEl){parentEl=this.findElementByCode(parentCode,'Pillar');}
+if(!parentEl){return{success:false,error:`Parent ${parentCode}not found`};}
+const parentType=this.getItemType(parentEl);const indicatorsContainer=parentEl.querySelector('.indicators-container');if(!indicatorsContainer){return{success:false,error:'Indicators container not found in parent'};}
+const existing=this.findElementByCode(indicatorCode,'Indicator');if(existing){return{success:false,error:`Indicator code ${indicatorCode}already exists`};}
+const position=indicatorsContainer.querySelectorAll('.indicator-card').length;const indEl=this.createIndicatorElement();const indicatorNameEl=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(indicatorNameEl)indicatorNameEl.textContent=indicatorName;if(indicatorCodeInput)indicatorCodeInput.value=indicatorCode;if(scoreFunctionEl)scoreFunctionEl.textContent=scoreFunction;indEl.dataset.indicatorCode=indicatorCode;indEl.dataset.itemCode=indicatorCode;if(datasetCodes.length>0){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');if(selectedDatasetsDiv){datasetCodes.forEach(datasetCode=>{const details=this.datasetDetails[datasetCode];if(details){this.addDataset(datasetCode,indicatorCode,{datasetDetails:details});}});}}
+indicatorsContainer.appendChild(indEl);const indicatorMetadata={ItemType:'Indicator',ItemCode:indicatorCode,ItemName:indicatorName,DatasetCodes:datasetCodes,ScoreFunction:scoreFunction,Children:[]};const action=this.actionHistory.recordAction({type:'add-indicator',message:`Added indicator"${indicatorCode}"to ${parentType}"${parentCode}"`,delta:{type:'add-indicator',indicatorCode:indicatorCode,parentCode:parentCode,parentType:parentType,indicatorMetadata:indicatorMetadata,position:position},undo:()=>{indEl.remove();this.validate();},redo:()=>{indicatorsContainer.appendChild(indEl);this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action,element:indEl};}
+removeIndicator(indicatorCode){if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
+const indEl=this.findElementByCode(indicatorCode,'Indicator');if(!indEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
+const parentCode=this.getParentCode(indEl);const parentType=this.getParentType(indEl);const position=this.getPositionInParent(indEl);const indicatorNameEl=indEl.querySelector('.indicator-name');const scoreFunctionEl=indEl.querySelector('.editable-score-function');const datasetItems=indEl.querySelectorAll('.dataset-item');const indicatorMetadata={ItemType:'Indicator',ItemCode:indicatorCode,ItemName:indicatorNameEl?.textContent||'',DatasetCodes:Array.from(datasetItems).map(item=>item.dataset.datasetCode),ScoreFunction:scoreFunctionEl?.textContent||'Score = 0',Children:[]};const parentEl=indEl.parentElement;indEl.remove();const action=this.actionHistory.recordAction({type:'remove-indicator',message:`Removed indicator"${indicatorCode}"from ${parentType}"${parentCode}"`,delta:{type:'remove-indicator',indicatorCode:indicatorCode,parentCode:parentCode,parentType:parentType,indicatorMetadata:indicatorMetadata,position:position},undo:()=>{const siblings=Array.from(parentEl.children).filter(el=>el.classList.contains('indicator-card'));if(position>=siblings.length){parentEl.appendChild(indEl);}else{parentEl.insertBefore(indEl,siblings[position]);}
+this.validate();},redo:()=>{indEl.remove();this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action,metadata:indicatorMetadata};}
+moveIndicator(indicatorCode,targetParentCode){if(!indicatorCode){return{success:false,error:'Indicator code is required'};}
+if(!targetParentCode){return{success:false,error:'Target parent code is required'};}
+const indEl=this.findElementByCode(indicatorCode,'Indicator');if(!indEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
+const fromParentCode=this.getParentCode(indEl);const fromParentType=this.getParentType(indEl);const fromPosition=this.getPositionInParent(indEl);let targetParentEl=this.findElementByCode(targetParentCode,'Category');if(!targetParentEl){targetParentEl=this.findElementByCode(targetParentCode,'Pillar');}
+if(!targetParentEl){return{success:false,error:`Target parent ${targetParentCode}not found`};}
+const toParentType=this.getItemType(targetParentEl);if(fromParentCode===targetParentCode){return{success:false,error:'Indicator is already in target parent'};}
+const targetContainer=targetParentEl.querySelector('.indicators-container');if(!targetContainer){return{success:false,error:'Indicators container not found in target parent'};}
+const toPosition=targetContainer.querySelectorAll('.indicator-card').length;const fromParentEl=indEl.parentElement;targetContainer.appendChild(indEl);const action=this.actionHistory.recordAction({type:'move-indicator',message:`Moved indicator"${indicatorCode}"from ${fromParentType}"${fromParentCode}"to ${toParentType}"${targetParentCode}"`,delta:{type:'move-indicator',indicatorCode:indicatorCode,fromParentCode:fromParentCode,fromParentType:fromParentType,fromPosition:fromPosition,toParentCode:targetParentCode,toParentType:toParentType,toPosition:toPosition},undo:()=>{const siblings=Array.from(fromParentEl.children).filter(el=>el.classList.contains('indicator-card'));if(fromPosition>=siblings.length){fromParentEl.appendChild(indEl);}else{fromParentEl.insertBefore(indEl,siblings[fromPosition]);}
+this.validate();},redo:()=>{targetContainer.appendChild(indEl);this.validate();}});this.flagUnsaved();this.validate();return{success:true,action:action};}
+modifyIndicator(indicatorCode,{newIndicatorCode,indicatorName,scoreFunction,datasetCodes,record=true}={}){if(newIndicatorCode===undefined&&indicatorName===undefined&&scoreFunction===undefined&&datasetCodes===undefined){return{success:false,error:'No changes specified'};}
+const indicatorEl=this.findElementByCode(indicatorCode,'Indicator');if(!indicatorEl){return{success:false,error:`Indicator ${indicatorCode}not found`};}
+if(!indicatorEl.id){indicatorEl.id=`indicator-${Math.random().toString(36).substr(2,9)}`;}
+const elementId=indicatorEl.id;const actions=[];let currentCode=indicatorCode;if(newIndicatorCode!==undefined){if(!this.validateCode(newIndicatorCode,'indicator')){return{success:false,error:`Invalid indicator code format:${newIndicatorCode}(must be 6 uppercase letters/numbers)`};}
+const codeInput=indicatorEl.querySelector('.indicator-code-input');if(!this.isCodeUnique(newIndicatorCode,'indicator',codeInput)){return{success:false,error:`Code"${newIndicatorCode}"is already in use`};}
+const oldCode=indicatorEl.dataset.indicatorCode||'';if(oldCode!==newIndicatorCode){this.updateElementCode(indicatorEl,newIndicatorCode);if(codeInput){codeInput.value=newIndicatorCode;}
+if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'set-code',message:oldCode?`Changed indicator code from"${oldCode}"to"${newIndicatorCode}"`:`Set indicator code to"${newIndicatorCode}"`,delta:{type:'set-code',indicatorCode:newIndicatorCode,from:oldCode,to:newIndicatorCode},undo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,oldCode);const input=el.querySelector('.indicator-code-input');if(input)input.value=oldCode;this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,newIndicatorCode);const input=el.querySelector('.indicator-code-input');if(input)input.value=newIndicatorCode;this.validate();}}});actions.push(action);}
+currentCode=newIndicatorCode;}}
+if(indicatorName!==undefined){const indicatorNameEl=indicatorEl.querySelector('.indicator-name');if(!indicatorNameEl){return{success:false,error:'Indicator name element not found'};}
+const oldName=indicatorNameEl.textContent.trim();if(oldName!==indicatorName){indicatorNameEl.textContent=indicatorName;if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'set-name',message:`Changed indicator name from"${oldName}"to"${indicatorName}"`,delta:{type:'set-name',indicatorCode:currentCode,from:oldName,to:indicatorName},undo:()=>{const el=document.getElementById(elementId);if(el){const nameEl=el.querySelector('.indicator-name');if(nameEl)nameEl.textContent=oldName;}},redo:()=>{const el=document.getElementById(elementId);if(el){const nameEl=el.querySelector('.indicator-name');if(nameEl)nameEl.textContent=indicatorName;}}});actions.push(action);}}}
+if(scoreFunction!==undefined){const scoreFunctionEl=indicatorEl.querySelector('.editable-score-function');if(!scoreFunctionEl){return{success:false,error:'Score function element not found'};}
+const oldScoreFunction=scoreFunctionEl.textContent.trim();if(oldScoreFunction!==scoreFunction){scoreFunctionEl.textContent=scoreFunction;if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'set-score-function',message:`Updated score function for indicator"${currentCode}"`,delta:{type:'set-score-function',indicatorCode:currentCode,from:oldScoreFunction,to:scoreFunction},undo:()=>{const el=document.getElementById(elementId);if(el){const sfEl=el.querySelector('.editable-score-function');if(sfEl)sfEl.textContent=oldScoreFunction;this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){const sfEl=el.querySelector('.editable-score-function');if(sfEl)sfEl.textContent=scoreFunction;this.validate();}}});actions.push(action);}}}
+if(datasetCodes!==undefined){if(!Array.isArray(datasetCodes)){return{success:false,error:'datasetCodes must be an array'};}
+const selectedDatasetsDiv=indicatorEl.querySelector('.selected-datasets');if(!selectedDatasetsDiv){return{success:false,error:'Selected datasets container not found'};}
+const currentDatasetItems=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item'));const currentDatasetCodes=currentDatasetItems.map(item=>item.dataset.datasetCode);const hasChanged=JSON.stringify(currentDatasetCodes.sort())!==JSON.stringify([...datasetCodes].sort());if(hasChanged){const oldDatasetsHTML=selectedDatasetsDiv.innerHTML;currentDatasetItems.forEach(item=>item.remove());const newDatasetElements=[];for(const datasetCode of datasetCodes){const datasetDetails=this.datasetDetails[datasetCode];if(!datasetDetails){console.warn(`Dataset ${datasetCode}not found in datasetDetails`);continue;}
+const result=this.addDataset(datasetCode,currentCode,{datasetDetails,record:false});if(result.success&&result.element){newDatasetElements.push(result.element);}}
+if(record){const action=this.actionHistory.recordAction({type:'modify-indicator',subtype:'replace-datasets',message:`Replaced datasets for indicator"${currentCode}"(${datasetCodes.length}datasets)`,delta:{type:'replace-datasets',indicatorCode:currentCode,from:currentDatasetCodes,to:datasetCodes},undo:()=>{const el=document.getElementById(elementId);if(el){const dsDiv=el.querySelector('.selected-datasets');if(dsDiv){dsDiv.innerHTML=oldDatasetsHTML;dsDiv.querySelectorAll('.dataset-item').forEach(item=>{this._setupDatasetHandlers(item,dsDiv,currentCode,true);});}
+this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){const dsDiv=el.querySelector('.selected-datasets');if(dsDiv){Array.from(dsDiv.children).forEach(child=>child.remove());newDatasetElements.forEach(dsEl=>{dsDiv.appendChild(dsEl.cloneNode(true));});dsDiv.querySelectorAll('.dataset-item').forEach(item=>{this._setupDatasetHandlers(item,dsDiv,currentCode,true);});}
+this.validate();}}});actions.push(action);}}}
+if(actions.length>0||!record){this.flagUnsaved();this.validate();}
+return{success:true,actions:actions,message:actions.length===0?'No changes made':`Made ${actions.length}change(s)to indicator"${currentCode}"`};}
+addCategory(categoryCode,pillarCode,{categoryName="",logAction=true}={}){if(!pillarCode||typeof pillarCode!=='string'){return{success:false,error:'Invalid pillarCode'};}
+if(!categoryCode||!/^[A-Z]{3}$/.test(categoryCode)){return{success:false,error:'categoryCode must be 3 uppercase letters'};}
+const pillarCol=this.findElementByCode(pillarCode,'Pillar');if(!pillarCol){return{success:false,error:`Pillar ${pillarCode}not found`};}
+const existing=this.findElementByCode(categoryCode,'Category');if(existing){return{success:false,error:`Category ${categoryCode}already exists`};}
+const categoriesContainer=pillarCol.querySelector('.categories-container');if(!categoriesContainer){return{success:false,error:'Categories container not found in pillar'};}
+const categoryEl=this.createCategoryElement();categoryEl.dataset.categoryCode=categoryCode;categoryEl.dataset.itemCode=categoryCode;const nameEl=categoryEl.querySelector('.customization-category-header-title');if(nameEl)nameEl.textContent=categoryName;const codeInput=categoryEl.querySelector('.category-code-input');if(codeInput)codeInput.value=categoryCode;const position=this.getPositionInParent(categoriesContainer.lastElementChild||categoriesContainer);const categoryMetadata={ItemType:'Category',ItemCode:categoryCode,ItemName:categoryName,CategoryCode:categoryCode,PillarCode:pillarCode,Children:[],IndicatorCodes:[],DocumentType:'CategoryDetail',TreePath:`sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}`};categoriesContainer.appendChild(categoryEl);this.setupCategoryHandlers(categoryEl);let action;if(logAction){action=this.actionHistory.recordAction({type:'add-category',message:`Added category"${categoryName}"(${categoryCode})to pillar ${pillarCode}`,delta:{type:'add-category',categoryCode:categoryCode,pillarCode:pillarCode,categoryName:categoryName??""},undo:()=>{const el=this.findElementByCode(categoryCode,'Category');if(el)el.remove();},redo:()=>{const pillar=this.findElementByCode(pillarCode,'Pillar');const container=pillar?.querySelector('.categories-container');if(container){const newEl=this.createCategoryElement();newEl.dataset.categoryCode=categoryCode;newEl.dataset.itemCode=categoryCode;const name=newEl.querySelector('.customization-category-header-title');if(name)name.textContent=categoryName;const code=newEl.querySelector('.category-code-input');if(code)code.value=categoryCode;container.appendChild(newEl);this.setupCategoryHandlers(newEl);}}});}
+this.hasUnsavedChanges=true;this.validate();return{success:true,action:action??"Action not recorded"};}
+setCategoryCode(categoryElement,{newCode}={}){if(!(categoryElement instanceof HTMLElement)){return{success:false,error:'Category element is required'};}
+if(!newCode){return{success:false,error:'New code is required'};}
+if(!this.validateCode(newCode,'category')){return{success:false,error:'Invalid category code format (must be 3 uppercase letters)'};}
+if(!categoryElement.id){categoryElement.id=`category-${Math.random().toString(36).substr(2,9)}`;}
+const elementId=categoryElement.id;const oldCode=categoryElement.dataset.categoryCode||'';const codeInput=categoryElement.querySelector('.category-code-input');if(!this.isCodeUnique(newCode,'category',codeInput)){return{success:false,error:'Code already in use'};}
+if(oldCode===newCode){return{success:true,message:'No change needed'};}
+this.updateElementCode(categoryElement,newCode);if(codeInput){codeInput.value=newCode;}
+const action=this.actionHistory.recordAction({type:'set-category-code',message:oldCode?`Changed category code from"${oldCode}"to"${newCode}"`:`Set category code to"${newCode}"`,delta:{type:'set-category-code',categoryCode:newCode,from:oldCode,to:newCode},undo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,oldCode);const input=el.querySelector('.category-code-input');if(input)input.value=oldCode;this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,newCode);const input=el.querySelector('.category-code-input');if(input)input.value=newCode;this.validate();}}});this.flagUnsaved();this.validate();return{success:true,action:action};}
+removeCategory(categoryCode,{cascade=true}={}){if(!categoryCode||typeof categoryCode!=='string'){return{success:false,error:'Invalid categoryCode'};}
+const categoryEl=this.findElementByCode(categoryCode,'Category');if(!categoryEl){return{success:false,error:`Category ${categoryCode}not found`};}
+const pillarCode=this.getParentCode(categoryEl);if(!pillarCode){return{success:false,error:'Could not determine parent pillar'};}
+const position=this.getPositionInParent(categoryEl);const categoryName=categoryEl.querySelector('.customization-category-header-title')?.textContent||'';const indicatorsContainer=categoryEl.querySelector('.indicators-container');const indicatorEls=indicatorsContainer?Array.from(indicatorsContainer.querySelectorAll('[data-indicator-code]')):[];const indicatorCodes=indicatorEls.map(el=>el.dataset.indicatorCode);const categoryMetadata={ItemType:'Category',ItemCode:categoryCode,ItemName:categoryName,CategoryCode:categoryCode,PillarCode:pillarCode,Children:indicatorCodes,IndicatorCodes:indicatorCodes,DocumentType:'CategoryDetail'};const categoryHTML=categoryEl.outerHTML;categoryEl.remove();const mainAction=this.actionHistory.recordAction({type:'remove-category',message:`Removed category"${categoryName}"(${categoryCode})from pillar ${pillarCode}`,delta:{type:'remove-category',categoryCode:categoryCode,pillarCode:pillarCode,categoryMetadata:categoryMetadata,position:position,cascadedIndicators:cascade?indicatorCodes:[]},undo:()=>{const pillar=this.findElementByCode(pillarCode,'Pillar');const container=pillar?.querySelector('.categories-container');if(container){const temp=document.createElement('div');temp.innerHTML=categoryHTML;const restored=temp.firstElementChild;container.appendChild(restored);this.setupCategoryHandlers(restored);}},redo:()=>{const el=this.findElementByCode(categoryCode,'Category');if(el)el.remove();}});const actions=[mainAction];if(cascade&&indicatorCodes.length>0){for(const indicatorCode of indicatorCodes){const indicatorAction=this.actionHistory.recordAction({type:'remove-indicator',message:`Cascaded removal of indicator ${indicatorCode}`,delta:{type:'remove-indicator',indicatorCode:indicatorCode,parentCode:categoryCode,parentType:'Category',cascaded:true},undo:()=>{},redo:()=>{}});actions.push(indicatorAction);}}
+this.hasUnsavedChanges=true;this.validate();return{success:true,actions:actions};}
+moveCategory(categoryCode,targetPillarCode){if(!categoryCode||typeof categoryCode!=='string'){return{success:false,error:'Invalid categoryCode'};}
+if(!targetPillarCode||typeof targetPillarCode!=='string'){return{success:false,error:'Invalid targetPillarCode'};}
+const categoryEl=this.findElementByCode(categoryCode,'Category');if(!categoryEl){return{success:false,error:`Category ${categoryCode}not found`};}
+const fromPillarCode=this.getParentCode(categoryEl);if(!fromPillarCode){return{success:false,error:'Could not determine source pillar'};}
+if(fromPillarCode===targetPillarCode){return{success:false,error:'Category already in target pillar'};}
+const targetPillar=this.findElementByCode(targetPillarCode,'Pillar');if(!targetPillar){return{success:false,error:`Target pillar ${targetPillarCode}not found`};}
+const targetContainer=targetPillar.querySelector('.categories-container');if(!targetContainer){return{success:false,error:'Target categories container not found'};}
+const fromPosition=this.getPositionInParent(categoryEl);targetContainer.appendChild(categoryEl);const toPosition=this.getPositionInParent(categoryEl);const action=this.actionHistory.recordAction({type:'move-category',message:`Moved category ${categoryCode}from pillar ${fromPillarCode}to ${targetPillarCode}`,delta:{type:'move-category',categoryCode:categoryCode,fromPillarCode:fromPillarCode,fromPosition:fromPosition,toPillarCode:targetPillarCode,toPosition:toPosition
+},undo:()=>{const el=this.findElementByCode(categoryCode,'Category');if(el){const sourcePillar=this.findElementByCode(fromPillarCode,'Pillar');const sourceContainer=sourcePillar?.querySelector('.categories-container');if(sourceContainer){sourceContainer.appendChild(el);}}},redo:()=>{const el=this.findElementByCode(categoryCode,'Category');if(el){const tgtPillar=this.findElementByCode(targetPillarCode,'Pillar');const tgtContainer=tgtPillar?.querySelector('.categories-container');if(tgtContainer){tgtContainer.appendChild(el);}}}});this.hasUnsavedChanges=true;this.validate();return{success:true,action:action};}
+setCategoryName(categoryCode,categoryName){if(!categoryCode||typeof categoryCode!=='string'){return{success:false,error:'Invalid categoryCode'};}
+if(!categoryName||typeof categoryName!=='string'){return{success:false,error:'Invalid categoryName'};}
+const categoryEl=this.findElementByCode(categoryCode,'Category');if(!categoryEl){return{success:false,error:`Category ${categoryCode}not found`};}
+const nameEl=categoryEl.querySelector('.customization-category-header-title');if(!nameEl){return{success:false,error:'Category name element not found'};}
+const oldName=nameEl.textContent;if(oldName===categoryName){return{success:false,error:'New name is same as current name'};}
+nameEl.textContent=categoryName;const action=this.actionHistory.recordAction({type:'set-category-name',message:`Changed category ${categoryCode}name from"${oldName}"to"${categoryName}"`,delta:{type:'set-category-name',categoryCode:categoryCode,from:oldName,to:categoryName},undo:()=>{const el=this.findElementByCode(categoryCode,'Category');const name=el?.querySelector('.customization-category-header-title');if(name)name.textContent=oldName;},redo:()=>{const el=this.findElementByCode(categoryCode,'Category');const name=el?.querySelector('.customization-category-header-title');if(name)name.textContent=categoryName;}});this.hasUnsavedChanges=true;this.validate();return{success:true,action:action};}
+setPillarName(pillarCode,pillarName){if(!pillarCode||typeof pillarCode!=='string'){return{success:false,error:'Invalid pillarCode'};}
+if(!pillarName||typeof pillarName!=='string'){return{success:false,error:'Invalid pillarName'};}
+const pillarCol=this.findElementByCode(pillarCode,'Pillar');if(!pillarCol){return{success:false,error:`Pillar ${pillarCode}not found`};}
+const nameEl=pillarCol.querySelector('.pillar-name');if(!nameEl){return{success:false,error:'Pillar name element not found'};}
+const oldName=nameEl.textContent;if(oldName===pillarName){return{success:false,error:'New name is same as current name'};}
+nameEl.textContent=pillarName;const action=this.actionHistory.recordAction({type:'set-pillar-name',message:`Changed pillar ${pillarCode}name from"${oldName}"to"${pillarName}"`,delta:{type:'set-pillar-name',pillarCode:pillarCode,from:oldName,to:pillarName},undo:()=>{const el=this.findElementByCode(pillarCode,'Pillar');const name=el?.querySelector('.pillar-name');if(name)name.textContent=oldName;},redo:()=>{const el=this.findElementByCode(pillarCode,'Pillar');const name=el?.querySelector('.pillar-name');if(name)name.textContent=pillarName;}});this.hasUnsavedChanges=true;this.validate();return{success:true,action:action};}
+setPillarCode(pillarElement,newCode){if(!(pillarElement instanceof HTMLElement)){return{success:false,error:'Pillar element is required'};}
+if(!newCode){return{success:false,error:'New code is required'};}
+if(!this.validateCode(newCode,'pillar')){return{success:false,error:'Invalid pillar code format (must be 2-3 uppercase letters)'};}
+if(!pillarElement.id){pillarElement.id=`pillar-${Math.random().toString(36).substr(2,9)}`;}
+const elementId=pillarElement.id;const oldCode=pillarElement.dataset.pillarCode||'';const codeInput=pillarElement.querySelector('.pillar-code-input');if(!this.isCodeUnique(newCode,'pillar',codeInput)){return{success:false,error:'Code already in use'};}
+if(oldCode===newCode){return{success:true,message:'No change needed'};}
+this.updateElementCode(pillarElement,newCode);if(codeInput){codeInput.value=newCode;}
+const action=this.actionHistory.recordAction({type:'set-pillar-code',message:oldCode?`Changed pillar code from"${oldCode}"to"${newCode}"`:`Set pillar code to"${newCode}"`,delta:{type:'set-pillar-code',pillarCode:newCode,from:oldCode,to:newCode},undo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,oldCode);const input=el.querySelector('.pillar-code-input');if(input)input.value=oldCode;this.validate();}},redo:()=>{const el=document.getElementById(elementId);if(el){this.updateElementCode(el,newCode);const input=el.querySelector('.pillar-code-input');if(input)input.value=newCode;this.validate();}}});this.flagUnsaved();this.validate();return{success:true,action:action};}
+createCategoryElement(){const cat=document.createElement('div');cat.classList.add('category-box','draggable-item');cat.id=`category-${Math.random().toString(36).substr(2,9)}`;cat.setAttribute('role','group');cat.dataset.type='category';cat.dataset.itemType='Category';cat.dataset.categoryCode='';cat.dataset.itemCode='';cat.innerHTML=`<div class="category-collapsible"data-expanded="true"><div class="customization-category-header"draggable="true"><button class="collapse-toggle-btn category-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="category-name-wrapper"><h4 class="customization-category-header-title"contenteditable="true"spellcheck="false">New Category</h4></div><div class="category-code-section"><label class="code-label">Code:</label><input type="text"class="category-code-input"maxlength="3"placeholder="CAT"
+pattern="[A-Z]{3}"title="Exactly 3 uppercase letters required"><span class="code-validation-message"></span></div></div><div class="category-content"><div class="indicators-container drop-zone"data-accept="indicator"role="group"></div><button class="add-indicator"aria-label="Add Indicator">+\u0020Add\u0020Indicator</button></div></div>`;this.setupCodeValidation(cat.querySelector('.category-code-input'),'category');this.setupCollapsibleHandlers(cat);return cat;}
+createIndicatorElement(){const ind=document.createElement('div');ind.classList.add('indicator-card','draggable-item');ind.id=`indicator-${Math.random().toString(36).substr(2,9)}`;ind.setAttribute('role','treeitem');ind.dataset.type='indicator';ind.dataset.itemType='Indicator';ind.dataset.indicatorCode='';ind.dataset.itemCode='';ind.innerHTML=`<div class="indicator-collapsible"data-expanded="false"><div class="customization-indicator-header"draggable="true"><button class="collapse-toggle-btn indicator-toggle"type="button"><span class="collapse-icon">▼</span></button><div class="indicator-name-wrapper"><h5 class="indicator-name"contenteditable="true"spellcheck="false">New Indicator</h5></div><div class="indicator-code-section"><div class="code-validation-message"></div><div class="code-input-container"><label class="code-label">Code:</label><input type="text"class="indicator-code-input"maxlength="6"placeholder="INDIC1"
+pattern="[A-Z0-9]{6}"title="Exactly 6 uppercase letters/numbers required"></div></div></div><div class="indicator-config"><div class="dataset-selection"><label>Datasets</label><div class="selected-datasets"></div><button class="add-dataset-btn"type="button">+\u0020Add\u0020Dataset</button></div><div class="score-function"><label>Score Function</label><pre class="editable-score-function"contenteditable="true"spellcheck="false"data-default-score-function="">Score=</pre></div></div></div>`;this.setupCodeValidation(ind.querySelector('.indicator-code-input'),'indicator');this.setupDatasetSelection(ind);this.setupIndicatorChangeListeners(ind);this.setupCollapsibleHandlers(ind);return ind;}
 setupIndicatorChangeListeners(indicatorElement){const inputs=indicatorElement.querySelectorAll('input, select');inputs.forEach(input=>{input.addEventListener('change',()=>this.flagUnsaved());input.addEventListener('input',()=>this.flagUnsaved());});}
 setupCollapsibleHandlers(element){const collapseIcons=element.querySelectorAll('.category-collapse-icon, .indicator-collapse-icon');collapseIcons.forEach(icon=>{icon.addEventListener('click',(e)=>{e.stopPropagation();const details=icon.closest('details');if(details){details.open=!details.open;}});});}
 resetView(){const indicators=this.container.querySelectorAll('.indicator-collapsible');indicators.forEach(collapsible=>{collapsible.dataset.expanded='false';this.applyExpansionState(collapsible,false);});const categories=this.container.querySelectorAll('.category-collapsible');categories.forEach(collapsible=>{collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);});}
@@ -108,29 +268,30 @@ expandAll(){const allCollapsibles=this.container.querySelectorAll('[data-expande
 collapseAll(){const allCollapsibles=this.container.querySelectorAll('[data-expanded]');allCollapsibles.forEach(collapsible=>{collapsible.dataset.expanded='false';this.applyExpansionState(collapsible,false);});}
 flagUnsaved(){this.unsavedChanges=true;this.saveButton.classList.add('unsaved-changes');this.discardButton.disabled=false;this.discardButton.style.opacity='1';this.discardButton.style.cursor='pointer';this.debouncedCacheState();}
 showIndicatorSelectionMenu(indicatorsContainer){const menu=new IndicatorSelectionMenu({onCreateNew:(container)=>{this.createNewIndicator(container);},onAddExisting:(container)=>{this.showIndicatorSelector(container);}});menu.show(indicatorsContainer);}
-createNewIndicator(indicatorsContainer){const ind=this.createIndicatorElement();indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');}
+createNewIndicator(indicatorsContainer){const ind=this.createIndicatorElement();indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');const collapsible=ind.querySelector('.indicator-collapsible');if(collapsible){collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);const nameElement=ind.querySelector('.indicator-name');if(nameElement){setTimeout(()=>{nameElement.focus();const range=document.createRange();const selection=window.getSelection();range.selectNodeContents(nameElement);selection.removeAllRanges();selection.addRange(range);nameElement.scrollIntoView({behavior:'smooth',block:'center'});},100);}}}
 showIndicatorSelector(indicatorsContainer){const selector=new IndicatorSelector({onSelectionChange:(indicator)=>{this.addExistingIndicator(indicatorsContainer,indicator);}});selector.show();}
-addExistingIndicator(indicatorsContainer,indicator){const ind=this.createIndicatorElement();const indicatorName=ind.querySelector('.indicator-name');const indicatorCodeInput=ind.querySelector('.indicator-code-input');const lowerGoalpost=ind.querySelector('.lower-goalpost');const upperGoalpost=ind.querySelector('.upper-goalpost');const invertedCheckbox=ind.querySelector('.inverted-checkbox');const scoreFunctionEl=ind.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicator.indicator_name||'';if(indicatorCodeInput)indicatorCodeInput.value=indicator.indicator_code||'';if(lowerGoalpost)lowerGoalpost.value=indicator.lower_goalpost||0;if(upperGoalpost)upperGoalpost.value=indicator.upper_goalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicator.inverted||false;if(scoreFunctionEl&&indicator.score_function){scoreFunctionEl.textContent=indicator.score_function;}
-if(indicator.dataset_codes&&indicator.dataset_codes.length>0){const selectedDatasetsDiv=ind.querySelector('.selected-datasets');indicator.dataset_codes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode,1.0);});}
-indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');}
-showContextMenu(x,y,target){let m=document.getElementById('sspi-context-menu');if(m)m.remove();m=document.createElement('ul');m.id='sspi-context-menu';m.className='context-menu';m.style.position='absolute';m.style.top=`${y}px`;m.style.left=`${x}px`;const isDataset=target.classList.contains('dataset-item');const isPillar=target.dataset.type==='pillar';let menuItems;if(isDataset){menuItems=[{name:'Preview',handler:()=>this.showDatasetPreviewModal(target)},{name:'Delete',handler:()=>{if(confirm('Remove this dataset from the indicator?')){target.remove();this.flagUnsaved();}}}];}else if(isPillar){menuItems=[{name:'Preview',handler:()=>this.showPreviewModal(target)},{name:'Rename',handler:()=>this.renameItem(target)}];}else{menuItems=[{name:'Preview',handler:()=>this.showPreviewModal(target)},{name:'Move to',handler:()=>this.promptMove(target)},{name:'Rename',handler:()=>this.renameItem(target)},{name:'Delete',handler:()=>this.deleteItem(target)}];if(target.dataset.type==='indicator'){menuItems.push({name:'Edit Score Function',handler:()=>this.editScoreFunction(target)});}}
+addExistingIndicator(indicatorsContainer,indicator){const ind=this.createIndicatorElement();const indicatorName=ind.querySelector('.indicator-name');const indicatorCodeInput=ind.querySelector('.indicator-code-input');const lowerGoalpost=ind.querySelector('.lower-goalpost');const upperGoalpost=ind.querySelector('.upper-goalpost');const invertedCheckbox=ind.querySelector('.inverted-checkbox');const scoreFunctionEl=ind.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicator.Indicator||indicator.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicator.IndicatorCode||'';if(lowerGoalpost)lowerGoalpost.value=indicator.LowerGoalpost||0;if(upperGoalpost)upperGoalpost.value=indicator.UpperGoalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicator.Inverted||false;if(scoreFunctionEl&&indicator.ScoreFunction){scoreFunctionEl.textContent=indicator.ScoreFunction;}
+if(indicator.DatasetCodes&&indicator.DatasetCodes.length>0){const indicatorCode=indicator.IndicatorCode||'';indicator.DatasetCodes.forEach(datasetCode=>{this._addDatasetToIndicatorElement(datasetCode,ind,indicatorCode,{record:false});});}
+indicatorsContainer.appendChild(ind);this.validate(indicatorsContainer);this.updateHierarchyOnAdd(ind,'indicator');const collapsible=ind.querySelector('.indicator-collapsible');if(collapsible){collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);setTimeout(()=>{ind.scrollIntoView({behavior:'smooth',block:'center'});},100);}}
+showContextMenu(x,y,target){let m=document.getElementById('sspi-context-menu');if(m)m.remove();m=document.createElement('ul');m.id='sspi-context-menu';m.className='context-menu';m.style.position='absolute';m.style.top=`${y}px`;m.style.left=`${x}px`;const isDataset=target.classList.contains('dataset-item');const isPillar=target.dataset.type==='pillar';let menuItems;if(isDataset){const isExpanded=target.dataset.expanded==='true';const toggleText=isExpanded?'Hide Details':'Show Details';menuItems=[{name:toggleText,handler:()=>{const newState=target.dataset.expanded!=='true';target.dataset.expanded=newState.toString();const slideout=target.querySelector('.dataset-details-slideout');if(slideout){if(newState){slideout.style.maxHeight=slideout.scrollHeight+'px';}else{slideout.style.maxHeight='0';}}}},{name:'Preview',handler:()=>this.showDatasetPreviewModal(target)},{name:'Delete',handler:()=>{if(confirm('Remove this dataset from the indicator?')){target.remove();this.flagUnsaved();}}}];}else if(isPillar){menuItems=[{name:'Preview',handler:()=>this.showPreviewModal(target)},{name:'Rename',handler:()=>this.renameItem(target)}];}else{menuItems=[{name:'Preview',handler:()=>this.showPreviewModal(target)},{name:'Move to',handler:()=>this.promptMove(target)},{name:'Rename',handler:()=>this.renameItem(target)},{name:'Delete',handler:()=>this.deleteItem(target)}];if(target.dataset.type==='indicator'){menuItems.push({name:'Edit Score Function',handler:()=>this.editScoreFunction(target)});}}
 menuItems.forEach(a=>{const i=document.createElement('li');i.textContent=a.name;i.tabIndex=0;i.addEventListener('click',()=>{a.handler();m.remove();});m.appendChild(i);});document.body.appendChild(m);document.addEventListener('click',()=>m.remove(),{once:true});}
 promptMove(el){const modal=this.createMoveToModal(el);document.body.appendChild(modal);setTimeout(()=>{const input=modal.querySelector('.move-pillar-input');if(input)input.focus();},100);}
 createMoveToModal(element){const overlay=document.createElement('div');overlay.className='move-pillar-overlay';const elementType=element.dataset.type;const isIndicator=elementType==='indicator';const isCategory=elementType==='category';let destinationOptions=[];let destinationType='';let instructionText='';let titleText='';if(isCategory){destinationType='pillar';titleText='Move\u0020Category\u0020to\u0020Pillar';instructionText='Select\u0020destination\u0020pillar\u0020or\u0020enter\u0020pillar\u0020name/code:';const pillarInfo=this.container.querySelectorAll('.pillar-column');destinationOptions=Array.from(pillarInfo).map(col=>{const name=col.dataset.pillar;const codeInput=col.querySelector('.pillar-code-input');const code=codeInput?codeInput.value.trim():'';return{name,code,element:col};}).filter(p=>p.name&&p.code);}else if(isIndicator){destinationType='category';titleText='Move\u0020Indicator\u0020to\u0020Category';instructionText='Select\u0020destination\u0020category\u0020or\u0020enter\u0020category\u0020name/code:';const categoryBoxes=this.container.querySelectorAll('.category-box');destinationOptions=Array.from(categoryBoxes).map(cat=>{const codeInput=cat.querySelector('.category-code-input');const nameEl=cat.querySelector('.customization-category-header-title');const code=codeInput?codeInput.value.trim():'';const name=nameEl?nameEl.textContent.trim():'';return{name,code,element:cat};}).filter(c=>c.name&&c.code);}
 const optionsHtml=destinationOptions.map(opt=>`<button class="pillar-option\u0020clickable"type="button"data-dest-name="${opt.name}"data-dest-code="${opt.code}"><strong>${opt.code}</strong>\u0020-\u0020${opt.name}</button>`).join('');const placeholderCodes=destinationOptions.slice(0,3).map(p=>p.code).join(',\u0020');const placeholder=placeholderCodes?`Enter\u0020${destinationType}\u0020name\u0020or\u0020code\u0020(e.g.,\u0020${placeholderCodes})`:`Enter\u0020${destinationType}\u0020name\u0020or\u0020code`;overlay.innerHTML=`<div class="move-pillar-modal"><div class="move-pillar-header"><h3>${titleText}</h3><button class="modal-close-btn"type="button">×</button></div><div class="move-pillar-body"><p>${instructionText}</p><div class="pillar-options-list">${optionsHtml}</div><input type="text"class="move-pillar-input"placeholder="${placeholder}"></div><div class="move-pillar-actions"><button class="modal-cancel-btn"type="button">Cancel</button><button class="modal-confirm-btn"type="button">Move</button></div></div>`;const modal=overlay.querySelector('.move-pillar-modal');const input=overlay.querySelector('.move-pillar-input');const confirmBtn=overlay.querySelector('.modal-confirm-btn');const cancelBtn=overlay.querySelector('.modal-cancel-btn');const closeBtn=overlay.querySelector('.modal-close-btn');const optionButtons=overlay.querySelectorAll('.pillar-option.clickable');optionButtons.forEach(btn=>{btn.addEventListener('click',()=>{const destCode=btn.dataset.destCode;input.value=destCode;input.focus();});});const handleMove=()=>{const userInput=input.value.trim();if(!userInput){overlay.remove();return;}
-const destination=destinationOptions.find(opt=>{return opt.name.toLowerCase()===userInput.toLowerCase()||opt.code.toLowerCase()===userInput.toLowerCase();});if(destination){if(isCategory){const targetContainer=destination.element.querySelector('.categories-container');if(targetContainer){targetContainer.appendChild(element);this.flagUnsaved();overlay.remove();console.log(`Category\u0020moved\u0020to\u0020pillar:\u0020${userInput}`);}else{alert('Error:\u0020Could\u0020not\u0020find\u0020categories\u0020container\u0020in\u0020the\u0020target\u0020pillar');}}else if(isIndicator){const targetContainer=destination.element.querySelector('.indicators-container');if(targetContainer){targetContainer.appendChild(element);this.flagUnsaved();overlay.remove();console.log(`Indicator\u0020moved\u0020to\u0020category:\u0020${userInput}`);}else{alert('Error:\u0020Could\u0020not\u0020find\u0020indicators\u0020container\u0020in\u0020the\u0020target\u0020category');}}}else{alert(`${destinationType.charAt(0).toUpperCase()+destinationType.slice(1)}\u0020"${userInput}"\u0020not\u0020found.\u0020Please\u0020use\u0020a\u0020valid\u0020${destinationType}\u0020name\u0020or\u0020code.`);}};const handleCancel=()=>{overlay.remove();};confirmBtn.addEventListener('click',handleMove);cancelBtn.addEventListener('click',handleCancel);closeBtn.addEventListener('click',handleCancel);input.addEventListener('keypress',(e)=>{if(e.key==='Enter'){handleMove();}});overlay.addEventListener('keydown',(e)=>{if(e.key==='Escape'){handleCancel();}});overlay.addEventListener('click',(e)=>{if(e.target===overlay){handleCancel();}});return overlay;}
+const destination=destinationOptions.find(opt=>{return opt.name.toLowerCase()===userInput.toLowerCase()||opt.code.toLowerCase()===userInput.toLowerCase();});if(destination){if(isCategory){const targetContainer=destination.element.querySelector('.categories-container');if(targetContainer){targetContainer.appendChild(element);this.flagUnsaved();overlay.remove();console.log(`Category\u0020moved\u0020to\u0020pillar:\u0020${userInput}`);}else{notifications.error('Error:\u0020Could\u0020not\u0020find\u0020categories\u0020container\u0020in\u0020the\u0020target\u0020pillar');}}else if(isIndicator){const targetContainer=destination.element.querySelector('.indicators-container');if(targetContainer){targetContainer.appendChild(element);this.flagUnsaved();overlay.remove();console.log(`Indicator\u0020moved\u0020to\u0020category:\u0020${userInput}`);}else{notifications.error('Error:\u0020Could\u0020not\u0020find\u0020indicators\u0020container\u0020in\u0020the\u0020target\u0020category');}}}else{notifications.warning(`${destinationType.charAt(0).toUpperCase()+destinationType.slice(1)}\u0020"${userInput}"\u0020not\u0020found.\u0020Please\u0020use\u0020a\u0020valid\u0020${destinationType}\u0020name\u0020or\u0020code.`);}};const handleCancel=()=>{overlay.remove();};confirmBtn.addEventListener('click',handleMove);cancelBtn.addEventListener('click',handleCancel);closeBtn.addEventListener('click',handleCancel);input.addEventListener('keypress',(e)=>{if(e.key==='Enter'){handleMove();}});overlay.addEventListener('keydown',(e)=>{if(e.key==='Escape'){handleCancel();}});overlay.addEventListener('click',(e)=>{if(e.target===overlay){handleCancel();}});return overlay;}
 renameItem(el){const ed=el.querySelector('[contenteditable]');if(ed)ed.focus();}
-deleteItem(el){if(confirm('Delete this item?'))el.remove();}
+deleteItem(el){if(!confirm('Delete this item?'))return;const itemType=el.dataset.itemType;if(itemType==='Indicator'){const indicatorCode=el.dataset.indicatorCode;if(indicatorCode){const result=this.removeIndicator(indicatorCode);if(!result.success){console.warn('Failed to remove indicator:',result.error);el.remove();}}else{el.remove();}}else if(itemType==='Category'){const categoryCode=el.dataset.categoryCode;if(categoryCode){const indicatorsContainer=el.querySelector('.indicators-container');const indicatorCount=indicatorsContainer?indicatorsContainer.querySelectorAll('[data-indicator-code]').length:0;let cascade=true;if(indicatorCount>0){cascade=confirm(`This category contains ${indicatorCount}indicator(s).Remove them as well?`);}
+const result=this.removeCategory(categoryCode,{cascade});if(!result.success){console.warn('Failed to remove category:',result.error);el.remove();}}else{el.remove();}}else{el.remove();}}
 editScoreFunction(indicatorCard){const collapsible=indicatorCard.querySelector('.indicator-collapsible');if(!collapsible)return;if(collapsible.dataset.expanded!=='true'){collapsible.dataset.expanded='true';this.applyExpansionState(collapsible,true);}
 const scoreFunctionEl=indicatorCard.querySelector('.editable-score-function');if(scoreFunctionEl){setTimeout(()=>{scoreFunctionEl.focus();const range=document.createRange();const selection=window.getSelection();range.selectNodeContents(scoreFunctionEl);range.collapse(false);selection.removeAllRanges();selection.addRange(range);scoreFunctionEl.scrollIntoView({behavior:'smooth',block:'center'});},100);}}
 showPreviewModal(target){const itemType=target.dataset.type;let itemCode='';let itemName='';if(itemType==='indicator'){const codeInput=target.querySelector('.indicator-code-input');const nameEl=target.querySelector('.indicator-name');itemCode=codeInput?codeInput.value.trim().toUpperCase():'';itemName=nameEl?nameEl.textContent.trim():'Indicator';}else if(itemType==='category'){const codeInput=target.querySelector('.category-code-input');const nameEl=target.querySelector('.customization-category-header-title');itemCode=codeInput?codeInput.value.trim().toUpperCase():'';itemName=nameEl?nameEl.textContent.trim():'Category';}else if(itemType==='pillar'){const codeInput=target.querySelector('.pillar-code-input');const nameEl=target.querySelector('.pillar-name');itemCode=codeInput?codeInput.value.trim().toUpperCase():'';itemName=nameEl?nameEl.textContent.trim():'Pillar';}
-if(!itemCode){alert('Cannot\u0020preview:\u0020No\u0020code\u0020assigned\u0020to\u0020this\u0020item\u0020yet.');return;}
+if(!itemCode){notifications.warning('Cannot\u0020preview:\u0020No\u0020code\u0020assigned\u0020to\u0020this\u0020item\u0020yet.');return;}
 const overlay=document.createElement('div');overlay.className='preview-modal-overlay';overlay.innerHTML=`<div class="preview-modal"><div class="preview-modal-header"><h3>\u0020${itemName}\u0020(${itemCode})</h3><button class="modal-close-btn"type="button">×</button></div><div class="preview-modal-body"><div id="preview-chart-container"></div></div></div>`;document.body.appendChild(overlay);const modal=overlay.querySelector('.preview-modal');const closeBtn=overlay.querySelector('.modal-close-btn');const chartContainer=overlay.querySelector('#preview-chart-container');let chartInstance=null;try{if(itemType==='indicator'){chartInstance=new IndicatorPanelChart(chartContainer,itemCode);}else{chartInstance=new ScorePanelChart(chartContainer,itemCode);}
 if(window.SSPICharts){window.SSPICharts.push(chartInstance);}}catch(error){console.error('Error creating preview chart:',error);chartContainer.innerHTML=`<div style="padding: 2rem; text-align: center; color: var(--error-color);"><p>Error\u0020loading\u0020preview\u0020chart.</p><p>${error.message}</p></div>`;}
 const closeModal=()=>{if(chartInstance&&typeof chartInstance.destroy==='function'){try{chartInstance.destroy();}catch(error){console.error('Error destroying chart:',error);}}
 if(window.SSPICharts&&chartInstance){const index=window.SSPICharts.indexOf(chartInstance);if(index>-1){window.SSPICharts.splice(index,1);}}
 overlay.remove();};closeBtn.addEventListener('click',closeModal);const escapeHandler=(e)=>{if(e.key==='Escape'){closeModal();document.removeEventListener('keydown',escapeHandler);}};document.addEventListener('keydown',escapeHandler);overlay.addEventListener('click',(e)=>{if(e.target===overlay){closeModal();}});}
-showDatasetPreviewModal(datasetItem){const datasetCode=datasetItem.dataset.datasetCode;if(!datasetCode){alert('Cannot\u0020preview:\u0020No\u0020dataset\u0020code\u0020found.');return;}
+showDatasetPreviewModal(datasetItem){const datasetCode=datasetItem.dataset.datasetCode;if(!datasetCode){notifications.warning('Cannot\u0020preview:\u0020No\u0020dataset\u0020code\u0020found.');return;}
 const datasetNameEl=datasetItem.querySelector('.dataset-name');const datasetName=datasetNameEl?datasetNameEl.textContent.trim():datasetCode;const overlay=document.createElement('div');overlay.className='preview-modal-overlay';overlay.innerHTML=`<div class="preview-modal"><div class="preview-modal-header"><h3>Dataset\u0020:\u0020${datasetName}\u0020(${datasetCode})</h3><button class="modal-close-btn"type="button">×</button></div><div class="preview-modal-body"><div id="preview-chart-container"></div></div></div>`;document.body.appendChild(overlay);const modal=overlay.querySelector('.preview-modal');const closeBtn=overlay.querySelector('.modal-close-btn');const chartContainer=overlay.querySelector('#preview-chart-container');let chartInstance=null;try{chartInstance=new DatasetPanelChart(chartContainer,datasetCode);if(window.SSPICharts){window.SSPICharts.push(chartInstance);}}catch(error){console.error('Error creating dataset preview chart:',error);chartContainer.innerHTML=`<div style="padding: 2rem; text-align: center; color: var(--error-color);"><p>Error\u0020loading\u0020dataset\u0020preview\u0020chart.</p><p>${error.message}</p></div>`;}
 const closeModal=()=>{if(chartInstance&&typeof chartInstance.destroy==='function'){try{chartInstance.destroy();}catch(error){console.error('Error destroying chart:',error);}}
 if(window.SSPICharts&&chartInstance){const index=window.SSPICharts.indexOf(chartInstance);if(index>-1){window.SSPICharts.splice(index,1);}}
@@ -138,60 +299,61 @@ overlay.remove();};closeBtn.addEventListener('click',closeModal);const escapeHan
 markInvalidIndicatorPlacements(){const pillarColumns=this.container.querySelectorAll('.pillar-column');pillarColumns.forEach(col=>{Array.from(col.children).forEach(child=>{if(child.classList.contains('indicator-card')){if(!child.classList.contains('temporary-invalid-placement')){child.classList.add('temporary-invalid-placement');child.title='This indicator needs to be moved into a category';}}else if(child.dataset&&child.dataset.type==='indicator'){if(!child.classList.contains('temporary-invalid-placement')){child.classList.add('temporary-invalid-placement');child.title='This indicator needs to be moved into a category';}}});const categoriesContainer=col.querySelector('.categories-container');if(categoriesContainer){Array.from(categoriesContainer.children).forEach(child=>{if(child.classList.contains('indicator-card')&&!child.closest('.category-box')){if(!child.classList.contains('temporary-invalid-placement')){child.classList.add('temporary-invalid-placement');child.title='This indicator needs to be moved into a category';}}else if(child.dataset&&child.dataset.type==='indicator'&&!child.closest('.category-box')){if(!child.classList.contains('temporary-invalid-placement')){child.classList.add('temporary-invalid-placement');child.title='This indicator needs to be moved into a category';}}});}
 const categoriesInPillar=col.querySelectorAll('.category-box');categoriesInPillar.forEach(category=>{const indicatorsInCategory=category.querySelectorAll('.indicator-card');indicatorsInCategory.forEach(indicator=>{indicator.classList.remove('temporary-invalid-placement');if(indicator.title==='This indicator needs to be moved into a category'){indicator.removeAttribute('title');}});});});}
 markInvalidNestedCategories(){this.container.querySelectorAll('.category-box').forEach(category=>{category.classList.remove('nested-category-invalid');if(category.title==='This category contains nested categories - please move them out'){category.removeAttribute('title');}});this.container.querySelectorAll('.category-box').forEach(category=>{const nestedCategories=category.querySelectorAll('.category-box');if(nestedCategories.length>0){category.classList.add('nested-category-invalid');category.title='This category contains nested categories - please move them out';nestedCategories.forEach(nested=>{nested.classList.add('nested-category-invalid');nested.title='This is a nested category - please move it to the pillar level';});}});}
-validate(z){const selector=z.dataset.accept==='indicator'?'.indicator-card':'.category-box';const items=z.querySelectorAll(selector);const ok=items.length>=1&&items.length<=10;z.classList.toggle('invalid',!ok);if(!ok){z.title='Must have 1–10 items';}else{z.removeAttribute('title');}}
-exportData(){return this.exportMetadataFormat();}
-exportMetadataFormat(){const metadataItems=[];const pillars={};const categories={};const indicators={};this.container.querySelectorAll('.pillar-column').forEach((pillarCol,pillarIdx)=>{const pillarName=pillarCol.querySelector('.pillar-name').textContent.trim();const pillarCode=pillarCol.querySelector('.pillar-code-input').value.trim();if(pillarCode){pillars[pillarCode]={code:pillarCode,name:pillarName,categories:[],itemOrder:pillarIdx+1};pillarCol.querySelectorAll('.category-box').forEach((catBox,catIdx)=>{const categoryName=catBox.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=catBox.querySelector('.category-code-input').value.trim();if(categoryCode){pillars[pillarCode].categories.push(categoryCode);categories[categoryCode]={code:categoryCode,name:categoryName,pillarCode:pillarCode,indicators:[],itemOrder:catIdx+1};catBox.querySelectorAll('.indicator-card').forEach((indCard,idx)=>{const indicatorName=indCard.querySelector('.indicator-name').textContent.trim();const indicatorCode=indCard.querySelector('.indicator-code-input').value.trim();if(indicatorCode){categories[categoryCode].indicators.push(indicatorCode);const datasetCodes=[];indCard.querySelectorAll('.dataset-item').forEach(item=>{const datasetCode=item.dataset.datasetCode;if(datasetCode){datasetCodes.push(datasetCode);}});const lowerGoalpost=parseFloat(indCard.querySelector('.lower-goalpost').value)||null;const upperGoalpost=parseFloat(indCard.querySelector('.upper-goalpost').value)||null;const inverted=indCard.querySelector('.inverted-checkbox').checked;indicators[indicatorCode]={code:indicatorCode,name:indicatorName,categoryCode:categoryCode,pillarCode:pillarCode,datasetCodes:datasetCodes,lowerGoalpost:lowerGoalpost,upperGoalpost:upperGoalpost,inverted:inverted,itemOrder:idx+1};}});}});}});const pillarCodes=Object.keys(pillars).sort();if(pillarCodes.length>0){metadataItems.push({ItemType:"SSPI",ItemCode:"SSPI",ItemName:"Custom SSPI",Children:pillarCodes,Description:"Custom SSPI metadata created through the customization interface"});}
-Object.values(pillars).forEach(pillar=>{metadataItems.push({ItemType:"Pillar",ItemCode:pillar.code,ItemName:pillar.name,Children:pillar.categories,Pillar:pillar.name,PillarCode:pillar.code,ItemOrder:pillar.itemOrder});});Object.values(categories).forEach(category=>{metadataItems.push({ItemType:"Category",ItemCode:category.code,ItemName:category.name,Children:category.indicators,Category:category.name,CategoryCode:category.code,Pillar:pillars[category.pillarCode].name,PillarCode:category.pillarCode,ItemOrder:category.itemOrder});});Object.values(indicators).forEach(indicator=>{metadataItems.push({ItemType:"Indicator",ItemCode:indicator.code,ItemName:indicator.name,Children:[],DatasetCodes:indicator.datasetCodes,Indicator:indicator.name,IndicatorCode:indicator.code,Category:categories[indicator.categoryCode].name,CategoryCode:indicator.categoryCode,Pillar:pillars[indicator.pillarCode].name,PillarCode:indicator.pillarCode,LowerGoalpost:indicator.lowerGoalpost,UpperGoalpost:indicator.upperGoalpost,Inverted:indicator.inverted,ItemOrder:indicator.itemOrder});});return metadataItems;}
-exportForScoring(){const metadata=this.exportData();const structureData=this.convertMetadataToStructure(metadata);return{metadata:metadata,structure:structureData,exportedAt:new Date().toISOString(),totalItems:metadata.length,hasUnsavedChanges:this.unsavedChanges};}
-convertMetadataToStructure(metadata){const structure=[];const indicators=metadata.filter(item=>item.ItemType==='Indicator');indicators.forEach(indicator=>{const pillar=metadata.find(item=>item.ItemType==='Pillar'&&item.ItemCode===indicator.PillarCode);const category=metadata.find(item=>item.ItemType==='Category'&&item.ItemCode===indicator.CategoryCode);const datasets=(indicator.DatasetCodes||[]).map(code=>({code:code,weight:1.0}));structure.push({Indicator:indicator.ItemName||indicator.Indicator||indicator.ItemCode,IndicatorCode:indicator.ItemCode,Category:category?(category.ItemName||category.Category||category.ItemCode):'Unknown',CategoryCode:indicator.CategoryCode,Pillar:pillar?(pillar.ItemName||pillar.Pillar||pillar.ItemCode):'Unknown',PillarCode:indicator.PillarCode,LowerGoalpost:indicator.LowerGoalpost,UpperGoalpost:indicator.UpperGoalpost,Inverted:indicator.Inverted||false,ItemOrder:indicator.ItemOrder||1,datasets:datasets});});structure.sort((a,b)=>{if(a.ItemOrder!==b.ItemOrder){return a.ItemOrder-b.ItemOrder;}
-return a.IndicatorCode.localeCompare(b.IndicatorCode);});return structure;}
-toggleVisualizationCollapse(){const section=this.visualizationSection;section.classList.toggle('collapsed');}
-async refreshVisualization(){if(!this.isVisualizationOpen)return;if(this.unsavedChanges){const proceed=confirm('You have unsaved changes to the structure. Would you like to score the current (unsaved) structure?');if(!proceed)return;}
-await this.scoreAndVisualize();}
-closeVisualization(){if(!this.visualizationSection)return;if(this.currentChart&&typeof this.currentChart.destroy==='function'){this.currentChart.destroy();this.currentChart=null;}
-this.visualizationSection.style.display='none';this.isVisualizationOpen=false;this.currentConfigId=null;const scoreBtn=document.querySelector('.sspi-toolbar button[title*="Generate scores"]');if(scoreBtn){scoreBtn.textContent='Score & Visualize';}}
-showVisualizationSection(){if(!this.visualizationSection)return;this.visualizationSection.style.display='block';this.isVisualizationOpen=true;this.visualizationSection.classList.remove('collapsed');const scoreBtn=document.querySelector('.sspi-toolbar button[title*="Generate scores"]');if(scoreBtn){scoreBtn.textContent='Update Visualization';}}
-showVisualizationLoading(message='Scoring structure...'){const chartContainer=this.visualizationSection.querySelector('.visualization-chart-container');chartContainer.classList.add('loading');chartContainer.innerHTML=`<div class="visualization-loading-spinner"></div><div class="visualization-loading-text">${message}</div>`;}
-showVisualizationError(message,details=''){const chartContainer=this.visualizationSection.querySelector('.visualization-chart-container');chartContainer.classList.remove('loading');chartContainer.innerHTML=`<div class="visualization-error"><div class="visualization-error-icon">⚠️</div><div class="visualization-error-message">${message}</div>${details?`<div class="visualization-error-details">${details}</div>`:''}</div>`;}
-async scoreAndVisualize(){try{const validationErrors=this.validateHierarchy();if(validationErrors.length>0){const proceed=confirm(`The current structure has validation issues:\n${validationErrors.join('\n')}\n\nDo you want to continue with scoring anyway?`);if(!proceed){return;}}
-this.showLoadingState('Preparing structure for scoring...');const exportData=this.exportForScoring();if(!exportData.structure||exportData.structure.length===0){this.hideLoadingState();alert('No indicators found in the current structure. Please add some indicators before scoring.');return;}
-let configId=null;if(this.unsavedChanges){const shouldSave=confirm('You have unsaved changes. Would you like to save this configuration before scoring?');if(shouldSave){configId=await this.saveConfiguration();exportData.hasUnsavedChanges=false;}}else{const selector=document.querySelector('.config-selector select');if(selector&&selector.value){configId=selector.value;}}
-this.showVisualizationSection();this.showVisualizationLoading('Scoring structure...');this.hideLoadingState();if(!configId){this.showVisualizationError('Configuration Not Saved','Please save your configuration before scoring. Use the "Save" button in the toolbar.');return;}
-this.currentConfigId=configId;this.showVisualizationLoading('Computing scores across years and countries...');const scoreResponse=await fetch(`/api/v1/customize/score-dynamic/${configId}`,{method:'POST'});if(!scoreResponse.ok){const errorData=await scoreResponse.json();throw new Error(errorData.error||`Scoring failed:${scoreResponse.statusText}`);}
-const scoreResult=await scoreResponse.json();if(!scoreResult.success){throw new Error(scoreResult.error||'Scoring failed');}
-console.log(`Scored ${scoreResult.documents_scored}documents for ${scoreResult.countries_count}countries`);this.showVisualizationLoading('Loading visualization...');await this.initializeInlineChart(configId,scoreResult);this.showNotification('✓ Visualization loaded successfully!','success',3000);}catch(error){this.hideLoadingState();console.error('Error in scoreAndVisualize:',error);if(this.isVisualizationOpen){this.showVisualizationError('Scoring Error',error.message||'An unexpected error occurred while scoring the structure.');}else{alert(`Error preparing visualization:${error.message}`);}}}
-async initializeInlineChart(configId,scoreResult){const chartContainer=this.visualizationSection.querySelector('.visualization-chart-container');chartContainer.classList.remove('loading');chartContainer.innerHTML='';try{if(typeof CustomSSPIPanelChart==='undefined'){throw new Error('CustomSSPIPanelChart class not loaded. Please ensure the script is included.');}
-if(this.currentChart){if(typeof this.currentChart.destroy==='function'){this.currentChart.destroy();}
-this.currentChart=null;}
-const chartDiv=document.createElement('div');chartDiv.id=`custom-sspi-chart-${configId}`;chartDiv.style.width='100%';chartDiv.style.minHeight='400px';chartContainer.appendChild(chartDiv);this.currentChart=new CustomSSPIPanelChart(chartDiv,{configId:configId,initialData:scoreResult.data||null,inlineMode:true,autoLoad:true});await new Promise(resolve=>setTimeout(resolve,100));console.log('Inline chart initialized successfully');}catch(error){console.error('Error initializing inline chart:',error);this.showVisualizationError('Chart Initialization Error',error.message||'Failed to load the visualization component.');throw error;}}
-showNotification(message,type='info',duration=3000){const notification=document.createElement('div');notification.style.cssText=`position:fixed;top:20px;right:20px;padding:15px 20px;border-radius:5px;color:white;font-weight:normal;z-index:10000;max-width:450px;box-shadow:0 4px 6px rgba(0,0,0,0.1);animation:slideInRight 0.3s ease-out;word-wrap:break-word;line-height:1.4;`;switch(type){case'success':notification.style.backgroundColor='#4CAF50';break;case'error':notification.style.backgroundColor='#f44336';break;case'warning':notification.style.backgroundColor='#ff9800';break;default:notification.style.backgroundColor='#2196F3';}
-notification.textContent=message;document.body.appendChild(notification);setTimeout(()=>{if(notification.parentNode){notification.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(notification.parentNode){notification.parentNode.removeChild(notification);}},300);}},duration);return notification;}
+validate(z){if(!z){this.container.querySelectorAll('.drop-zone').forEach(zone=>this.validate(zone));return;}
+const selector=z.dataset.accept==='indicator'?'.indicator-card':'.category-box';const items=z.querySelectorAll(selector);const ok=items.length>=1&&items.length<=10;z.classList.toggle('invalid',!ok);if(!ok){z.title='Must have 1–10 items';}else{z.removeAttribute('title');}}
+exportMetadata(){const metadataItems=[];const pillars={};const categories={};const indicators={};const pillarIndexMap={};const categoryIndexMap={};const indicatorIndexMap={};this.container.querySelectorAll('.pillar-column').forEach((pillarCol,pillarIdx)=>{const pillarName=pillarCol.querySelector('.pillar-name').textContent.trim();const pillarCode=pillarCol.querySelector('.pillar-code-input').value.trim();if(pillarCode){pillarIndexMap[pillarCode]=pillarIdx;pillars[pillarCode]={code:pillarCode,name:pillarName,categories:[],itemOrder:pillarIdx,pillarIdx:pillarIdx};pillarCol.querySelectorAll('.category-box').forEach((catBox,catIdx)=>{const categoryName=catBox.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=catBox.querySelector('.category-code-input').value.trim();if(categoryCode){pillars[pillarCode].categories.push(categoryCode);categoryIndexMap[categoryCode]={pillarIdx,catIdx};categories[categoryCode]={code:categoryCode,name:categoryName,pillarCode:pillarCode,indicators:[],itemOrder:catIdx,pillarIdx:pillarIdx,catIdx:catIdx};catBox.querySelectorAll('.indicator-card').forEach((indCard,indIdx)=>{const indicatorName=indCard.querySelector('.indicator-name').textContent.trim();const indicatorCode=indCard.querySelector('.indicator-code-input').value.trim();if(indicatorCode){categories[categoryCode].indicators.push(indicatorCode);indicatorIndexMap[indicatorCode]={pillarIdx,catIdx,indIdx};const datasetCodes=[];indCard.querySelectorAll('.dataset-item').forEach(item=>{const datasetCode=item.dataset.datasetCode;if(datasetCode){datasetCodes.push(datasetCode);}});const scoreFunctionEl=indCard.querySelector('.editable-score-function');const scoreFunction=scoreFunctionEl?.textContent?.trim()||'';indicators[indicatorCode]={code:indicatorCode,name:indicatorName,categoryCode:categoryCode,pillarCode:pillarCode,datasetCodes:datasetCodes,scoreFunction:scoreFunction,itemOrder:indIdx,pillarIdx:pillarIdx,catIdx:catIdx,indIdx:indIdx};}});}});}});const pillarCodes=Object.keys(pillars).sort();if(pillarCodes.length>0){metadataItems.push({DocumentType:"SSPIDetail",ItemType:"SSPI",ItemCode:"SSPI",ItemName:"Custom SSPI",Children:pillarCodes,PillarCodes:pillarCodes,TreeIndex:[0,-1,-1,-1],TreePath:"sspi",ItemOrder:0});}
+Object.values(pillars).forEach(pillar=>{metadataItems.push({DocumentType:"PillarDetail",ItemType:"Pillar",ItemCode:pillar.code,ItemName:pillar.name,Children:pillar.categories,CategoryCodes:pillar.categories,Pillar:pillar.name,PillarCode:pillar.code,TreeIndex:[0,pillar.pillarIdx,-1,-1],TreePath:`sspi/${pillar.code.toLowerCase()}`,ItemOrder:pillar.itemOrder});});Object.values(categories).forEach(category=>{metadataItems.push({DocumentType:"CategoryDetail",ItemType:"Category",ItemCode:category.code,ItemName:category.name,Children:category.indicators,IndicatorCodes:category.indicators,Category:category.name,CategoryCode:category.code,TreeIndex:[0,category.pillarIdx,category.catIdx,-1],TreePath:`sspi/${category.pillarCode.toLowerCase()}/${category.code.toLowerCase()}`,ItemOrder:category.itemOrder});});Object.values(indicators).forEach(indicator=>{metadataItems.push({DocumentType:"IndicatorDetail",ItemType:"Indicator",ItemCode:indicator.code,ItemName:indicator.name,Children:[],DatasetCodes:indicator.datasetCodes,Indicator:indicator.name,IndicatorCode:indicator.code,ScoreFunction:indicator.scoreFunction,TreeIndex:[0,indicator.pillarIdx,indicator.catIdx,indicator.indIdx],TreePath:`sspi/${indicator.pillarCode.toLowerCase()}/${indicator.categoryCode.toLowerCase()}/${indicator.code.toLowerCase()}`,ItemOrder:indicator.itemOrder});});return metadataItems;}
+async exportForScoring(){let res=await this.fetch("/api/v1/customize/score",{method:"POST",body:JSON.stringify({metadata:this.exportMetadata(),changes:this.actionHistory.exportActionLog()}),headers:{"Content-type":"application/json; charset=UTF-8"}})
+console.log(res)}
+showNotification(message,type='info',duration=3000){return notifications.show(message,type,duration);}
+getCacheKey(){const username=this.username||'anonymous';return`customSSPI_${username}_${this.baseConfig}`;}
+setCache(data){const cacheKey=this.getCacheKey();try{localStorage.setItem(cacheKey,JSON.stringify(data));}catch(error){console.error('Error saving cache:',error);}}
+getCache(){const cacheKey=this.getCacheKey();try{const data=localStorage.getItem(cacheKey);return data?JSON.parse(data):null;}catch(error){console.error('Error loading cache:',error);return null;}}
+clearCache(){const cacheKey=this.getCacheKey();try{localStorage.removeItem(cacheKey);console.log(`Cleared cache for ${this.baseConfig}`);}catch(error){console.error('Error clearing cache:',error);}}
+getStorageKey(key){return`customSSPI_${this.username}_${key}`;}
+setStorage(key,value){const namespacedKey=this.getStorageKey(key);window.observableStorage.setItem(namespacedKey,value);}
+getStorage(key){const namespacedKey=this.getStorageKey(key);return window.observableStorage.getItem(namespacedKey);}
+markUnsaved(){this.unsavedChanges=true;this.setStorage('hasUnsaved',true);}
+markSaved(){this.unsavedChanges=false;this.setStorage('hasUnsaved',false);}
+setupUnsavedChangesWarning(){window.addEventListener('beforeunload',(e)=>{if(this.unsavedChanges){e.preventDefault();e.returnValue='You have unsaved changes. Are you sure you want to leave?';return e.returnValue;}});}
 getElementName(element){if(!element)return'Unknown';const indicatorName=element.querySelector('.indicator-name');if(indicatorName)return indicatorName.textContent.trim()||'Unnamed\u0020Indicator';const categoryName=element.querySelector('.customization-category-header-title');if(categoryName)return categoryName.textContent.trim()||'Unnamed\u0020Category';const pillarName=element.querySelector('.pillar-name');if(pillarName)return pillarName.textContent.trim()||'Unnamed\u0020Pillar';return'Unnamed\u0020Item';}
 getLocationName(container){if(!container)return'Unknown\u0020Location';const pillarColumn=container.closest('.pillar-column');if(pillarColumn&&container.classList.contains('categories-container')){const pillarName=pillarColumn.querySelector('.pillar-name');return pillarName?`"${pillarName.textContent.trim()}"\u0020pillar`:'Pillar';}
 const categoryBox=container.closest('.category-box');if(categoryBox&&container.classList.contains('indicators-container')){const categoryName=categoryBox.querySelector('.customization-category-header-title');return categoryName?`category\u0020"${categoryName.textContent.trim()}"`:'Category';}
 return'Container';}
-rigUnloadListener(){window.addEventListener('beforeunload',()=>{let stateLookup={};const indicators=this.container.querySelectorAll('.indicator-card');indicators.forEach((indicator)=>{const collapsible=indicator.querySelector('.indicator-collapsible');const codeInput=indicator.querySelector('.indicator-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){stateLookup[`ind_${code}`]=collapsible.dataset.expanded;}});const categories=this.container.querySelectorAll('.category-box');categories.forEach((category)=>{const collapsible=category.querySelector('.category-collapsible');const codeInput=category.querySelector('.category-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){stateLookup[`cat_${code}`]=collapsible.dataset.expanded;}});window.observableStorage.setItem('customizableSSPIExpansionState',stateLookup);window.observableStorage.setItem('customizableSSPIScrollX',window.scrollX);window.observableStorage.setItem('customizableSSPIScrollY',window.scrollY);});}
-restoreExpansionState(){const cachedStateObject=window.observableStorage.getItem('customizableSSPIExpansionState');if(!cachedStateObject)return;const indicators=this.container.querySelectorAll('.indicator-card');indicators.forEach((indicator)=>{const collapsible=indicator.querySelector('.indicator-collapsible');const codeInput=indicator.querySelector('.indicator-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){const key=`ind_${code}`;if(cachedStateObject.hasOwnProperty(key)){const cachedState=cachedStateObject[key]==='true';this.applyExpansionState(collapsible,cachedState);}}});const categories=this.container.querySelectorAll('.category-box');categories.forEach((category)=>{const collapsible=category.querySelector('.category-collapsible');const codeInput=category.querySelector('.category-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){const key=`cat_${code}`;if(cachedStateObject.hasOwnProperty(key)){const cachedState=cachedStateObject[key]==='true';this.applyExpansionState(collapsible,cachedState);}}});}
+rigUnloadListener(){window.addEventListener('beforeunload',()=>{let stateLookup={};const indicators=this.container.querySelectorAll('.indicator-card');indicators.forEach((indicator)=>{const collapsible=indicator.querySelector('.indicator-collapsible');const codeInput=indicator.querySelector('.indicator-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){stateLookup[`ind_${code}`]=collapsible.dataset.expanded;}});const categories=this.container.querySelectorAll('.category-box');categories.forEach((category)=>{const collapsible=category.querySelector('.category-collapsible');const codeInput=category.querySelector('.category-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){stateLookup[`cat_${code}`]=collapsible.dataset.expanded;}});this.setStorage('expansionState',stateLookup);this.setStorage('scrollX',window.scrollX);this.setStorage('scrollY',window.scrollY);});}
+restoreExpansionState(){const cachedStateObject=this.getStorage('expansionState');if(!cachedStateObject)return;const indicators=this.container.querySelectorAll('.indicator-card');indicators.forEach((indicator)=>{const collapsible=indicator.querySelector('.indicator-collapsible');const codeInput=indicator.querySelector('.indicator-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){const key=`ind_${code}`;if(cachedStateObject.hasOwnProperty(key)){const cachedState=cachedStateObject[key]==='true';this.applyExpansionState(collapsible,cachedState);}}});const categories=this.container.querySelectorAll('.category-box');categories.forEach((category)=>{const collapsible=category.querySelector('.category-collapsible');const codeInput=category.querySelector('.category-code-input');const code=codeInput?codeInput.value.trim():'';if(code&&collapsible){const key=`cat_${code}`;if(cachedStateObject.hasOwnProperty(key)){const cachedState=cachedStateObject[key]==='true';this.applyExpansionState(collapsible,cachedState);}}});}
 applyExpansionState(collapsible,isExpanded){collapsible.dataset.expanded=isExpanded.toString();const content=collapsible.querySelector('.indicator-config, .category-content');if(content){if(isExpanded){content.style.display='';content.style.maxHeight='';}else{content.style.display='none';}}
 const toggleBtn=collapsible.querySelector('.collapse-toggle-btn');if(toggleBtn){const icon=toggleBtn.querySelector('.collapse-icon');if(icon){if(isExpanded){icon.style.transform='rotate(0deg)';}else{icon.style.transform='rotate(-90deg)';}}}}
-restoreScrollPosition(){const scrollX=window.observableStorage.getItem('customizableSSPIScrollX');const scrollY=window.observableStorage.getItem('customizableSSPIScrollY');if(scrollX!==null&&scrollY!==null){requestAnimationFrame(()=>{window.scrollTo(parseInt(scrollX),parseInt(scrollY));});}}
+restoreScrollPosition(){const scrollX=this.getStorage('scrollX');const scrollY=this.getStorage('scrollY');if(scrollX!==null&&scrollY!==null){requestAnimationFrame(()=>{window.scrollTo(parseInt(scrollX),parseInt(scrollY));});}}
 handleToggle(toggleBtn){const collapsible=toggleBtn.closest('.indicator-collapsible, .category-collapsible');if(!collapsible)return;const isCurrentlyExpanded=collapsible.dataset.expanded==='true';const newExpandedState=!isCurrentlyExpanded;collapsible.dataset.expanded=newExpandedState.toString();this.applyExpansionState(collapsible,newExpandedState);}
-updateHierarchyOnAdd(element,elementType){this.flagUnsaved();console.log(`Added ${elementType}:`,element);const errors=this.validateHierarchy();if(errors.length>0){console.warn('Hierarchy validation errors after add:',errors);}}
-updateHierarchyOnRemove(element,elementType){this.flagUnsaved();console.log(`Removed ${elementType}:`,element);const errors=this.validateHierarchy();if(errors.length>0){console.warn('Hierarchy validation errors after remove:',errors);}}
-validateHierarchy(){const errors=[];const warnings=[];this.container.querySelectorAll('.pillar-column').forEach(pillar=>{const pillarName=pillar.querySelector('.pillar-name').textContent.trim();const pillarCode=pillar.querySelector('.pillar-code-input').value.trim();const categories=pillar.querySelectorAll('.category-box');if(categories.length===0){warnings.push(`Pillar"${pillarName}"(${pillarCode})has no categories`);}});this.container.querySelectorAll('.category-box').forEach(category=>{const categoryName=category.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=category.querySelector('.category-code-input').value.trim();const indicators=category.querySelectorAll('.indicator-card');if(indicators.length===0){warnings.push(`Category"${categoryName}"(${categoryCode})has no indicators`);}});this.container.querySelectorAll('.indicator-card').forEach(indicator=>{const indicatorName=indicator.querySelector('.indicator-name').textContent.trim();const indicatorCode=indicator.querySelector('.indicator-code-input').value.trim();const datasets=indicator.querySelectorAll('.dataset-item');if(datasets.length===0){warnings.push(`Indicator"${indicatorName}"(${indicatorCode})has no datasets`);}});this.container.querySelectorAll('.category-box').forEach(category=>{const categoryName=category.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=category.querySelector('.category-code-input').value.trim();const nestedCategories=category.querySelectorAll('.category-box');if(nestedCategories.length>0){errors.push(`Category"${categoryName}"(${categoryCode})contains nested categories.Nested categories are not allowed.`);}});const pillarCodes=new Set();const categoryCodes=new Set();const indicatorCodes=new Set();this.container.querySelectorAll('.pillar-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(pillarCodes.has(code)){errors.push(`Duplicate pillar code:${code}`);}else{pillarCodes.add(code);}}});this.container.querySelectorAll('.category-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(categoryCodes.has(code)){errors.push(`Duplicate category code:${code}`);}else{categoryCodes.add(code);}}});this.container.querySelectorAll('.indicator-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(indicatorCodes.has(code)){errors.push(`Duplicate indicator code:${code}`);}else{indicatorCodes.add(code);}}});if(warnings.length>0){console.warn('Hierarchy warnings:',warnings);}
+updateHierarchyOnAdd(element,elementType){this.flagUnsaved();if(!this.isImporting){console.log(`Added ${elementType}:`,element);const errors=this.validateHierarchy();if(errors.length>0){console.warn('Hierarchy validation errors after add:',errors);}}}
+updateHierarchyOnRemove(element,elementType){this.flagUnsaved();console.log(`Removed ${elementType}:`,element);if(!this.isImporting){const errors=this.validateHierarchy();if(errors.length>0){console.warn('Hierarchy validation errors after remove:',errors);}}}
+validateHierarchy(){const errors=[];const warnings=[];this.container.querySelectorAll('.pillar-column').forEach(pillar=>{const pillarName=pillar.querySelector('.pillar-name').textContent.trim();const pillarCode=pillar.querySelector('.pillar-code-input').value.trim();const categories=pillar.querySelectorAll('.category-box');if(categories.length===0){warnings.push('Pillar '+pillarName+" ("+pillarCode+") has no categories");}});this.container.querySelectorAll('.category-box').forEach(category=>{const categoryName=category.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=category.querySelector('.category-code-input').value.trim();const indicators=category.querySelectorAll('.indicator-card');if(indicators.length===0){warnings.push('Category '+categoryName+' ('+categoryCode+') has no indicators');}});this.container.querySelectorAll('.indicator-card').forEach(indicator=>{const indicatorName=indicator.querySelector('.indicator-name').textContent.trim();const indicatorCode=indicator.querySelector('.indicator-code-input').value.trim();const datasets=indicator.querySelectorAll('.dataset-item');if(datasets.length===0){warnings.push(`Indicator"${indicatorName}"(${indicatorCode})has no datasets`);}});this.container.querySelectorAll('.category-box').forEach(category=>{const categoryName=category.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=category.querySelector('.category-code-input').value.trim();const nestedCategories=category.querySelectorAll('.category-box');if(nestedCategories.length>0){errors.push(`Category\u0020${categoryName}\u0020(${categoryCode})\u0020contains\u0020nested\u0020categories.\u0020Nested\u0020categories\u0020are\u0020not\u0020allowed.`);}});const pillarCodes=new Set();const categoryCodes=new Set();const indicatorCodes=new Set();this.container.querySelectorAll('.pillar-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(pillarCodes.has(code)){errors.push(`Duplicate pillar code:${code}`);}else{pillarCodes.add(code);}}});this.container.querySelectorAll('.category-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(categoryCodes.has(code)){errors.push(`Duplicate category code:${code}`);}else{categoryCodes.add(code);}}});this.container.querySelectorAll('.indicator-code-input').forEach(input=>{const code=input.value.trim().toUpperCase();if(code){if(indicatorCodes.has(code)){errors.push(`Duplicate indicator code:${code}`);}else{indicatorCodes.add(code);}}});if(warnings.length>0){console.warn('Hierarchy warnings:',warnings);}
 return{errors,warnings};}
 showHierarchyStatus(){const result=this.validateHierarchy();const stats=this.getMetadataStats();let message=`Metadata Stats:\n`;message+=`-Pillars:${stats.pillars}\n`;message+=`-Categories:${stats.categories}\n`;message+=`-Indicators:${stats.indicators}\n`;message+=`-Total Datasets:${stats.datasets}\n\n`;if(result.errors.length>0){message+=`Errors(${result.errors.length}):\n`;result.errors.forEach(error=>message+=`-${error}\n`);message+='\n';}
 if(result.warnings.length>0){message+=`Warnings(${result.warnings.length}):\n`;result.warnings.forEach(warning=>message+=`-${warning}\n`);}
 if(result.errors.length===0&&result.warnings.length===0){message+='Metadata is valid! ✓';}
-alert(message);}
+if(result.errors.length>0){notifications.error(message,10000);}else if(result.warnings.length>0){notifications.warning(message,8000);}else{notifications.success(message);}}
+showChangesHistory(){if(!window.ChangesHistoryModal){console.error('ChangesHistoryModal class not loaded');notifications.error('Changes history feature is not available. Please refresh the page.');return;}
+const modal=new ChangesHistoryModal({actionHistory:this.actionHistory,mode:'modal'});modal.show();}
 getMetadataStats(){return{pillars:this.container.querySelectorAll('.pillar-column').length,categories:this.container.querySelectorAll('.category-box').length,indicators:this.container.querySelectorAll('.indicator-card').length,datasets:this.container.querySelectorAll('.dataset-item').length};}
-async loadInitialData(){if(this.hasCachedModifications()){try{const loaded=await this.loadCachedState();if(loaded){this.showCacheRestoredIndicator();this.restoreExpansionState();this.restoreScrollPosition();return;}}catch(error){console.warn('Failed to load cached modifications, falling back to default:',error);}}
-await this.loadDefaultMetadata();this.restoreExpansionState();this.restoreScrollPosition();}
-showCacheRestoredIndicator(){const indicator=document.createElement('div');indicator.className='cache-restored-indicator';indicator.style.cssText=`position:fixed;top:20px;right:20px;background:var(--green-accent);color:white;padding:10px 15px;border-radius:5px;z-index:1000;animation:slideInRight 0.3s ease-out;`;indicator.textContent='✓ Restored from previous session';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},3000);}
-async discardChanges(){try{this.clearCache();this.showLoadingState('Discarding changes...');this.clearUnsavedState();setTimeout(()=>{this.hideLoadingState();setTimeout(()=>{window.location.reload();},100);},400);}catch(error){this.hideLoadingState();console.error('Error discarding changes:',error);alert('Error discarding changes. Please try again.');}}
+async loadInitialData(){console.log(`Loading initial data for base_config:${this.baseConfig}`);await this.checkLegacyData();const cachedState=this.getCache();if(cachedState&&cachedState.hasModifications){console.log('Restoring from cached state');try{await this.restoreFromCache(cachedState);this.showNotification("✓ Restored from previous session");this.restoreExpansionState();this.restoreScrollPosition();return;}catch(error){console.warn('Failed to restore cache, loading from server:',error);this.clearCache();}}
+await this.loadFromServer();this.restoreExpansionState();this.restoreScrollPosition();}
+async loadFromServer(){try{this.showLoadingState('Loading configuration...');let endpoint;let configName;if(this.baseConfig==='sspi'||this.baseConfig==='default'){endpoint='/api/v1/customize/default-structure';configName='Standard SSPI';}else if(this.baseConfig==='blank'){endpoint='/api/v1/customize/empty-structure';configName='Blank Configuration';}else{endpoint=`/api/v1/customize/load/${this.baseConfig}`;configName=null;}
+const response=await this.fetch(endpoint);if(response.success){if(response.datasetDetailsMap){this.datasetDetails=response.datasetDetailsMap;}
+await this.importDataAsync(response.metadata);if(response.actions&&Array.isArray(response.actions)){console.log('Restoring action history with',response.actions.length,'actions');this.actionHistory.clear();response.actions.forEach(action=>{this.actionHistory.actions.push({...action,undo:()=>{},redo:()=>{}});});this.actionHistory.currentIndex=this.actionHistory.actions.length-1;}
+if(response.name){configName=response.name;}
+this.currentConfigName=configName;this.clearUnsavedState();this.hideLoadingState();console.log(`Loaded ${configName}successfully`);}else{this.handleLoadError('Failed to load configuration: '+(response.error||'Unknown error'));}}catch(error){console.error('Error loading from server:',error);this.handleLoadError('Network error loading configuration');}}
+async restoreFromCache(cachedState){console.log('Restoring from cache:',cachedState);if(cachedState.datasetDetailsMap){this.datasetDetails=cachedState.datasetDetailsMap;}
+if(cachedState.metadata){await this.importDataAsync(cachedState.metadata);}
+if(cachedState.actions&&Array.isArray(cachedState.actions)){this.actionHistory.clear();cachedState.actions.forEach(action=>{this.actionHistory.actions.push({...action,undo:()=>{},redo:()=>{}});});this.actionHistory.currentIndex=this.actionHistory.actions.length-1;}
+this.flagUnsaved();}
+async checkLegacyData(){const oldSession=window.observableStorage?.getItem('sspi_active_session');if(oldSession){console.log('Found legacy session, cleaning up...');window.observableStorage.removeItem('sspi_active_session');window.observableStorage.removeItem('sspi_pending_config');}
+const oldCacheKey=`customSSPI_${this.username}_cachedModifications`;const oldCache=localStorage.getItem(oldCacheKey);if(oldCache&&this.baseConfig==='sspi'){console.log('Migrating legacy cache to new format');try{const data=JSON.parse(oldCache);const newCacheKey=this.getCacheKey();localStorage.setItem(newCacheKey,oldCache);localStorage.removeItem(oldCacheKey);localStorage.removeItem(`customSSPI_${this.username}_hasUnsaved`);console.log('Migration complete');}catch(error){console.error('Failed to migrate cache:',error);}}}
+async discardChanges(){try{this.clearCache();this.showLoadingState('Discarding changes...');this.clearUnsavedState();setTimeout(()=>{this.hideLoadingState();setTimeout(()=>{window.location.reload();},100);},400);}catch(error){this.hideLoadingState();console.error('Error discarding changes:',error);notifications.error('Error discarding changes. Please try again.');}}
 async loadDefaultMetadata(){if(this.isLoading){console.log('Already loading metadata, skipping...');return;}
-try{this.showLoadingState('Loading default SSPI metadata...');const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Auto-loading default SSPI metadata:',response.stats);await this.importDataAsync(response.metadata);this.hideLoadingState();this.clearUnsavedState();console.log('Default SSPI metadata loaded successfully');}else{this.handleLoadError('Failed to load default metadata: '+response.error);}}catch(error){console.error('Error auto-loading default metadata:',error);this.handleLoadError('Network error loading default metadata');}}
-async loadDatasetDetails(){try{console.log('Loading dataset details from API...');const response=await this.fetch('/api/v1/customize/datasets?limit=1000');if(response.success&&response.datasets){response.datasets.forEach(dataset=>{this.datasetDetails[dataset.dataset_code]={code:dataset.dataset_code,name:dataset.dataset_name,description:dataset.description,organization:dataset.organization,type:dataset.dataset_type};});console.log(`Loaded ${response.datasets.length}dataset details`);}else{console.warn('Failed to load dataset details:',response.error||'Unknown error');}}catch(error){console.error('Error loading dataset details:',error);}}
+try{this.showLoadingState('Loading default SSPI metadata...');const response=await this.fetch('/api/v1/customize/default-structure');if(response.success){console.log('Auto-loading default SSPI metadata:',response.stats);if(response.datasetDetailsMap){const currentCount=Object.keys(this.datasetDetails).length;if(currentCount===0){console.log('Dataset details not yet loaded, loading from datasetDetailsMap');this.datasetDetails=response.datasetDetailsMap;console.log(`Loaded ${Object.keys(this.datasetDetails).length}dataset details for selection`);}else{console.log(`Dataset details already loaded(${currentCount}datasets)`);}}
+await this.importDataAsync(response.metadata);this.hideLoadingState();this.clearUnsavedState();console.log('Default SSPI metadata loaded successfully');}else{this.handleLoadError('Failed to load default metadata: '+response.error);}}catch(error){console.error('Error auto-loading default metadata:',error);this.handleLoadError('Network error loading default metadata');}}
 showLoadingState(message='Loading...'){this.isLoading=true;const loadingDiv=document.createElement('div');loadingDiv.classList.add('sspi-loading');loadingDiv.textContent=message;loadingDiv.id='sspi-loading-indicator';this.container.style.display='none';this.parentElement.appendChild(loadingDiv);this.setToolbarDisabled(true);}
 hideLoadingState(){this.isLoading=false;const loadingDiv=this.parentElement.querySelector('#sspi-loading-indicator');if(loadingDiv){loadingDiv.remove();}
 this.container.style.display='';this.setToolbarDisabled(false);}
@@ -199,108 +361,63 @@ handleLoadError(errorMessage){this.isLoading=false;const loadingDiv=this.parentE
 const errorDiv=document.createElement('div');errorDiv.classList.add('sspi-error');errorDiv.id='sspi-error-indicator';const errorText=document.createElement('div');errorText.textContent=errorMessage;const retryBtn=document.createElement('button');retryBtn.textContent='Load Default Metadata';retryBtn.addEventListener('click',()=>{errorDiv.remove();this.loadDefaultMetadata();});errorDiv.appendChild(errorText);errorDiv.appendChild(retryBtn);this.parentElement.appendChild(errorDiv);this.container.style.display='';this.setToolbarDisabled(false);console.error('SSPI metadata loading failed:',errorMessage);}
 setToolbarDisabled(disabled){const toolbar=this.parentElement.querySelector('.sspi-toolbar');if(toolbar){const buttons=toolbar.querySelectorAll('button');buttons.forEach(btn=>{btn.disabled=disabled;if(disabled){btn.style.opacity='0.5';btn.style.cursor='not-allowed';}else{btn.style.opacity='';btn.style.cursor='';}});}}
 buildHierarchyTree(metadataItems){const itemsById={};const hierarchy={sspi:null,pillars:{},categories:{},indicators:{}};metadataItems.forEach(item=>{itemsById[item.ItemCode]=item;});metadataItems.forEach(item=>{switch(item.ItemType){case'SSPI':hierarchy.sspi=item;break;case'Pillar':hierarchy.pillars[item.ItemCode]=item;break;case'Category':hierarchy.categories[item.ItemCode]=item;break;case'Indicator':hierarchy.indicators[item.ItemCode]=item;break;}});return{hierarchy,itemsById};}
-async importDataAsync(metadataItems){console.log('Importing',metadataItems.length,'metadata items asynchronously');this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const{hierarchy,itemsById}=this.buildHierarchyTree(metadataItems);if(!hierarchy.sspi){console.error('No SSPI root item found in metadata');return;}
+async importDataAsync(metadataItems){console.log('Importing',metadataItems.length,'metadata items asynchronously');console.log('Using',Object.keys(this.datasetDetails).length,'dataset details from datasetDetailsMap');this.isImporting=true;this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const{hierarchy,itemsById}=this.buildHierarchyTree(metadataItems);if(!hierarchy.sspi){console.error('No SSPI root item found in metadata');return;}
 const pillarCodes=hierarchy.sspi.Children||[];for(let i=0;i<pillarCodes.length;i++){const pillarCode=pillarCodes[i];const pillarItem=hierarchy.pillars[pillarCode];if(pillarItem){await this.processPillarFromMetadata(pillarItem,hierarchy);}
 if(i<pillarCodes.length-1){await new Promise(resolve=>setTimeout(resolve,0));}}
-console.log('Async metadata import completed');this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();}
+console.log('Async metadata import completed');this.isImporting=false;this.actionHistory.clear();console.log('Cleared undo/redo history after initial metadata import');this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();const validation=this.validateHierarchy();if(validation.errors&&validation.errors.length>0){console.error('Hierarchy errors after import:',validation.errors);}
+if(validation.warnings&&validation.warnings.length>0){console.warn('Hierarchy warnings after import:',validation.warnings);}}
 async processPillarFromMetadata(pillarItem,hierarchy){const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===pillarItem.ItemName);if(!col){console.warn(`No UI column found for pillar:${pillarItem.ItemName}`);return;}
 const pillarCodeInput=col.querySelector('.pillar-code-input');if(pillarCodeInput){pillarCodeInput.value=pillarItem.ItemCode;}
-const pillarNameEl=col.querySelector('.pillar-name');if(pillarNameEl){pillarNameEl.textContent=pillarItem.ItemName;}
-const categoriesContainer=col.querySelector('.categories-container');if(!categoriesContainer)return;const fragment=document.createDocumentFragment();const categoryCodes=pillarItem.Children||[];for(const categoryCode of categoryCodes){const categoryItem=hierarchy.categories[categoryCode];if(categoryItem){const catEl=this.createCategoryElement();const categoryHeader=catEl.querySelector('.customization-category-header-title');const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryHeader)categoryHeader.textContent=categoryItem.ItemName;if(categoryCodeInput)categoryCodeInput.value=categoryItem.ItemCode;const indicatorsContainer=catEl.querySelector('.indicators-container');const indicatorCodes=categoryItem.Children||[];indicatorCodes.forEach(indicatorCode=>{const indicatorItem=hierarchy.indicators[indicatorCode];if(indicatorItem){const indEl=this.createIndicatorElement();const indicatorName=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const lowerGoalpost=indEl.querySelector('.lower-goalpost');const upperGoalpost=indEl.querySelector('.upper-goalpost');const invertedCheckbox=indEl.querySelector('.inverted-checkbox');const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicatorItem.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicatorItem.ItemCode||'';if(lowerGoalpost)lowerGoalpost.value=indicatorItem.LowerGoalpost||0;if(upperGoalpost)upperGoalpost.value=indicatorItem.UpperGoalpost||100;if(invertedCheckbox)invertedCheckbox.checked=indicatorItem.Inverted||false;if(scoreFunctionEl&&indicatorItem.ScoreFunction){scoreFunctionEl.textContent=indicatorItem.ScoreFunction;}
-const datasetCodes=indicatorItem.DatasetCodes||[];if(datasetCodes.length>0){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');datasetCodes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode,1.0);});}
+col.dataset.pillarCode=pillarItem.ItemCode;col.dataset.itemCode=pillarItem.ItemCode;col.dataset.itemType='Pillar';const pillarNameEl=col.querySelector('.pillar-name');if(pillarNameEl){pillarNameEl.textContent=pillarItem.ItemName;}
+const categoriesContainer=col.querySelector('.categories-container');if(!categoriesContainer)return;const fragment=document.createDocumentFragment();const categoryCodes=pillarItem.Children||[];for(const categoryCode of categoryCodes){const categoryItem=hierarchy.categories[categoryCode];if(categoryItem){const catEl=this.createCategoryElement();const categoryHeader=catEl.querySelector('.customization-category-header-title');const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryHeader)categoryHeader.textContent=categoryItem.ItemName;if(categoryCodeInput)categoryCodeInput.value=categoryItem.ItemCode;catEl.dataset.categoryCode=categoryItem.ItemCode;catEl.dataset.itemCode=categoryItem.ItemCode;const indicatorsContainer=catEl.querySelector('.indicators-container');const indicatorCodes=categoryItem.Children||[];indicatorCodes.forEach(indicatorCode=>{const indicatorItem=hierarchy.indicators[indicatorCode];if(indicatorItem){const indEl=this.createIndicatorElement();const indicatorName=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const lowerGoalpost=indEl.querySelector('.lower-goalpost');const upperGoalpost=indEl.querySelector('.upper-goalpost');const invertedCheckbox=indEl.querySelector('.inverted-checkbox');const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicatorItem.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicatorItem.ItemCode||'';indEl.dataset.indicatorCode=indicatorItem.ItemCode;indEl.dataset.itemCode=indicatorItem.ItemCode;if(scoreFunctionEl){if(indicatorItem.ScoreFunction){scoreFunctionEl.textContent=indicatorItem.ScoreFunction;if(!this.isImporting){console.log(`Set score function for ${indicatorItem.ItemCode}:`,indicatorItem.ScoreFunction);}}else if(!this.isImporting){console.log(`No ScoreFunction for ${indicatorItem.ItemCode}`);}}
+const datasetCodes=indicatorItem.DatasetCodes||[];if(!this.isImporting){console.log(`Processing ${indicatorItem.ItemCode}:${datasetCodes.length}dataset codes`);}
+if(datasetCodes.length>0){datasetCodes.forEach((datasetCode,idx)=>{if(!this.isImporting){console.log(`Adding dataset ${datasetCode}to ${indicatorItem.ItemCode}`);}
+const result=this._addDatasetToIndicatorElement(datasetCode,indEl,indicatorItem.ItemCode,{record:false});if(!result.success){console.warn(`Failed to add dataset ${datasetCode}:${result.error}`);}});if(!this.isImporting){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');const addedDatasets=selectedDatasetsDiv?.querySelectorAll('.dataset-item')||[];console.log(`After adding:${addedDatasets.length}dataset items in DOM for ${indicatorItem.ItemCode}`);}}else if(!this.isImporting){console.log(`No datasets to add for ${indicatorItem.ItemCode}`);}
 indicatorsContainer.appendChild(indEl);}});fragment.appendChild(catEl);}}
 categoriesContainer.appendChild(fragment);this.validate(categoriesContainer);}
-importData(data){console.log('Importing data:',data);this.container.querySelectorAll('.category-box, .indicator-card').forEach(e=>e.remove());const grouping={};const pillarCodes={};const categoryOrders={};data.forEach(item=>{const{Pillar,Category,CategoryCode,PillarCode,ItemOrder,ItemType}=item;if(PillarCode){pillarCodes[Pillar]=PillarCode;}
-grouping[Pillar]=grouping[Pillar]||{};grouping[Pillar][Category]=grouping[Pillar][Category]||{CategoryCode:CategoryCode||'',items:[]};grouping[Pillar][Category].items.push(item);if(ItemType==='Category'&&CategoryCode){const key=`${Pillar}:${Category}`;categoryOrders[key]=ItemOrder||999;}});this.pillars.forEach(p=>{const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===p);if(!col)return;const pillarCodeInput=col.querySelector('.pillar-code-input');if(pillarCodeInput&&pillarCodes[p]){pillarCodeInput.value=pillarCodes[p];}
-if(!grouping[p])return;const zone=col.querySelector('.categories-container');const categoriesArray=Object.entries(grouping[p]);categoriesArray.sort((a,b)=>{const keyA=`${p}:${a[0]}`;const keyB=`${p}:${b[0]}`;const orderA=categoryOrders[keyA]||999;const orderB=categoryOrders[keyB]||999;return orderA-orderB;});categoriesArray.forEach(([catName,info])=>{const catEl=this.createCategoryElement();catEl.querySelector('.customization-category-header-title').textContent=catName;const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryCodeInput&&info.CategoryCode){categoryCodeInput.value=info.CategoryCode;}
-zone.appendChild(catEl);info.items.sort((a,b)=>a.ItemOrder-b.ItemOrder).forEach(item=>{const indEl=this.createIndicatorElement();indEl.querySelector('.indicator-name').textContent=item.Indicator||'New Indicator';const indicatorCodeInput=indEl.querySelector('.indicator-code-input');if(indicatorCodeInput&&item.IndicatorCode){indicatorCodeInput.value=item.IndicatorCode;}
-indEl.title=item.Description||'';const lowerGoalpostInput=indEl.querySelector('.lower-goalpost');const upperGoalpostInput=indEl.querySelector('.upper-goalpost');if(lowerGoalpostInput&&item.LowerGoalpost!=null){lowerGoalpostInput.value=item.LowerGoalpost;}
-if(upperGoalpostInput&&item.UpperGoalpost!=null){upperGoalpostInput.value=item.UpperGoalpost;}
-const invertedCheckbox=indEl.querySelector('.inverted-checkbox');if(invertedCheckbox){invertedCheckbox.checked=item.Inverted||false;}
-const scoringSelect=indEl.querySelector('.scoring-function-select');if(scoringSelect&&item.scoring_function&&item.scoring_function.type){scoringSelect.value=item.scoring_function.type;}
-const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(scoreFunctionEl&&item.ScoreFunction){scoreFunctionEl.textContent=item.ScoreFunction;}
-if(item.datasets&&Array.isArray(item.datasets)){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');item.datasets.forEach(dataset=>{this.addDatasetToIndicator(selectedDatasetsDiv,dataset.dataset_code,dataset.weight||1.0);});}
-catEl.querySelector('.indicators-container').appendChild(indEl);});this.validate(catEl.querySelector('.indicators-container'));});});this.markInvalidIndicatorPlacements();this.markInvalidNestedCategories();this.restoreExpansionState();this.restoreScrollPosition();}
-autoGenerateMissingCodes(){this.container.querySelectorAll('.pillar-column').forEach(pillarCol=>{const pillarCodeInput=pillarCol.querySelector('.pillar-code-input');const pillarName=pillarCol.querySelector('.pillar-name').textContent.trim();if(pillarCodeInput&&!pillarCodeInput.value.trim()&&pillarName){let generatedCode=this.generateCodeFromName(pillarName,'pillar');let attempt=1;while(generatedCode&&!this.isCodeUnique(generatedCode,'pillar',pillarCodeInput)&&attempt<10){generatedCode=this.generateCodeFromName(pillarName,'pillar').substring(0,2)+attempt;attempt++;}
-if(generatedCode&&this.isCodeUnique(generatedCode,'pillar',pillarCodeInput)){pillarCodeInput.value=generatedCode;}}});this.container.querySelectorAll('.category-box').forEach(catBox=>{const categoryCodeInput=catBox.querySelector('.category-code-input');const categoryName=catBox.querySelector('.customization-category-header-title').textContent.trim();if(categoryCodeInput&&!categoryCodeInput.value.trim()&&categoryName){let generatedCode=this.generateCodeFromName(categoryName,'category');let attempt=1;while(generatedCode&&!this.isCodeUnique(generatedCode,'category',categoryCodeInput)&&attempt<10){generatedCode=this.generateCodeFromName(categoryName,'category').substring(0,2)+attempt;attempt++;}
-if(generatedCode&&this.isCodeUnique(generatedCode,'category',categoryCodeInput)){categoryCodeInput.value=generatedCode;}}});this.container.querySelectorAll('.indicator-card').forEach(indCard=>{const indicatorCodeInput=indCard.querySelector('.indicator-code-input');const indicatorName=indCard.querySelector('.indicator-name').textContent.trim();if(indicatorCodeInput&&!indicatorCodeInput.value.trim()&&indicatorName){let generatedCode=this.generateCodeFromName(indicatorName,'indicator');let attempt=1;while(generatedCode&&!this.isCodeUnique(generatedCode,'indicator',indicatorCodeInput)&&attempt<100){const baseCode=this.generateCodeFromName(indicatorName,'indicator').substring(0,4);generatedCode=baseCode+('0'+attempt).slice(-2);attempt++;}
-if(generatedCode&&this.isCodeUnique(generatedCode,'indicator',indicatorCodeInput)){indicatorCodeInput.value=generatedCode;}}});}
-async saveConfiguration(){try{this.autoGenerateMissingCodes();const validation=this.validateHierarchy();if(validation.errors.length>0){let errorMessage='Cannot save configuration due to validation errors:\n\n';validation.errors.forEach(error=>errorMessage+=`• ${error}\n`);alert(errorMessage);return;}
-const name=prompt('Enter a name for this configuration:');if(!name)return;const metadata=this.exportData();const response=await this.fetch('/api/v1/customize/save',{method:'POST',headers:{'Content-Type':'application/json',},body:JSON.stringify({name:name,metadata:metadata})});if(response.success){this.clearUnsavedState();this.cacheCurrentState();this.showNotification('Configuration "'+name+'" saved successfully!','success',3000);this.loadConfigurationsList();}else{this.showNotification('Error saving configuration: '+response.error,'error',5000);}}catch(error){console.error('Error saving configuration:',error);this.showNotification('Error saving configuration. Please try again.','error',5000);}}
-async loadConfigurationsList(){try{const response=await this.fetch('/api/v1/customize/list');if(response.success&&response.configurations){this.updateConfigurationsDropdown(response.configurations);}}catch(error){console.error('Error loading configurations list:',error);}}
-updateConfigurationsDropdown(configurations){const existingDropdown=this.parentElement.querySelector('.config-selector');if(existingDropdown){existingDropdown.remove();}
-if(configurations.length===0)return;const selectorContainer=document.createElement('div');selectorContainer.classList.add('config-selector');selectorContainer.style.marginBottom='1rem';const label=document.createElement('label');label.textContent='Load Configuration: ';label.style.marginRight='0.5rem';const select=document.createElement('select');select.style.marginRight='0.5rem';const defaultOption=document.createElement('option');defaultOption.value='';defaultOption.textContent='Select a configuration...';select.appendChild(defaultOption);configurations.forEach(config=>{const option=document.createElement('option');option.value=config.config_id;option.textContent=config.name;select.appendChild(option);});const loadButton=document.createElement('button');loadButton.textContent='Load';loadButton.addEventListener('click',async()=>{const configId=select.value;if(configId){await this.loadConfiguration(configId);}});const deleteButton=document.createElement('button');deleteButton.textContent='Delete';deleteButton.style.marginLeft='0.5rem';deleteButton.addEventListener('click',async()=>{const configId=select.value;if(configId){const selectedOption=select.options[select.selectedIndex];const configName=selectedOption.textContent;if(confirm(`Are you sure you want to delete"${configName}"?`)){await this.deleteConfiguration(configId);}}});selectorContainer.append(label,select,loadButton,deleteButton);this.parentElement.insertBefore(selectorContainer,this.parentElement.firstChild);}
-async loadConfiguration(configId){try{const response=await this.fetch('/api/v1/customize/load/'+configId);if(response.success&&response.configuration){this.clearCache();this.importData(response.configuration.metadata);this.clearUnsavedState();this.showNotification('Configuration "'+response.configuration.name+'" loaded successfully!','success',3000);}else{this.showNotification('Error loading configuration: '+response.error,'error',5000);}}catch(error){console.error('Error loading configuration:',error);this.showNotification('Error loading configuration. Please try again.','error',5000);}}
-async deleteConfiguration(configId){try{const response=await this.fetch('/api/v1/customize/delete/'+configId,{method:'DELETE'});if(response.success){this.showNotification('Configuration deleted successfully!','success',3000);this.loadConfigurationsList();}else{this.showNotification('Error deleting configuration: '+response.error,'error',5000);}}catch(error){console.error('Error deleting configuration:',error);this.showNotification('Error deleting configuration. Please try again.','error',5000);}}
-setupCodeValidation(input,type){if(!input)return;const validationMessage=input.nextElementSibling;input.addEventListener('input',(e)=>{let value=e.target.value.toUpperCase();e.target.value=value;const isValid=this.validateCode(value,type);const isUnique=this.isCodeUnique(value,type,input);if(!value){this.showValidationMessage(validationMessage,'','');}else if(!isValid){this.showValidationMessage(validationMessage,'Invalid format','error');}else if(!isUnique){this.showValidationMessage(validationMessage,'Code already used','error');}else{this.showValidationMessage(validationMessage,'Valid','success');}
-this.flagUnsaved();});input.addEventListener('blur',()=>{if(input.value&&this.validateCode(input.value,type)&&this.isCodeUnique(input.value,type,input)){if(!input.value){const name=this.getNameForCodeInput(input,type);if(name){const generatedCode=this.generateCodeFromName(name,type);if(this.isCodeUnique(generatedCode,type,input)){input.value=generatedCode;this.showValidationMessage(validationMessage,'Generated','success');}}}}});}
+exportData(){const metadataItems=[];const pillarCodes=[];const pillarColumns=this.container.querySelectorAll('.pillar-column');pillarColumns.forEach(col=>{const pillarCode=col.dataset.pillarCode||col.dataset.itemCode;if(pillarCode){pillarCodes.push(pillarCode);}});metadataItems.push({ItemType:'SSPI',ItemCode:'sspi',ItemName:'Sustainable and Shared Prosperity Policy Index',Children:pillarCodes,DocumentType:'ItemDetail'});pillarColumns.forEach(col=>{const pillarCode=col.dataset.pillarCode||col.dataset.itemCode;const pillarName=col.querySelector('.pillar-name')?.textContent||'';const categoryCodes=[];const categories=col.querySelectorAll('.category-box');categories.forEach(catEl=>{const categoryCode=catEl.dataset.categoryCode||catEl.dataset.itemCode;if(categoryCode){categoryCodes.push(categoryCode);}});metadataItems.push({ItemType:'Pillar',ItemCode:pillarCode,ItemName:pillarName,PillarCode:pillarCode,Children:categoryCodes,CategoryCodes:categoryCodes,DocumentType:'PillarDetail',TreePath:`sspi/${pillarCode.toLowerCase()}`});categories.forEach(catEl=>{const categoryCode=catEl.dataset.categoryCode||catEl.dataset.itemCode;const categoryName=catEl.querySelector('.customization-category-header-title')?.textContent||'';const indicatorCodes=[];const indicators=catEl.querySelectorAll('.indicator-card');indicators.forEach(indEl=>{const indicatorCode=indEl.dataset.indicatorCode||indEl.dataset.itemCode;if(indicatorCode){indicatorCodes.push(indicatorCode);}});metadataItems.push({ItemType:'Category',ItemCode:categoryCode,ItemName:categoryName,CategoryCode:categoryCode,PillarCode:pillarCode,Children:indicatorCodes,IndicatorCodes:indicatorCodes,DocumentType:'CategoryDetail',TreePath:`sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}`});indicators.forEach(indEl=>{const indicatorCode=indEl.dataset.indicatorCode||indEl.dataset.itemCode;const indicatorName=indEl.querySelector('.indicator-name')?.textContent||'';const scoreFunction=indEl.querySelector('.editable-score-function')?.textContent||'Score = 0';const datasetCodes=[];const datasetItems=indEl.querySelectorAll('.dataset-item');datasetItems.forEach(dsEl=>{const datasetCode=dsEl.dataset.datasetCode;if(datasetCode){datasetCodes.push(datasetCode);}});metadataItems.push({ItemType:'Indicator',ItemCode:indicatorCode,ItemName:indicatorName,IndicatorCode:indicatorCode,CategoryCode:categoryCode,PillarCode:pillarCode,ScoreFunction:scoreFunction,DatasetCodes:datasetCodes,Children:[],DocumentType:'IndicatorDetail',TreePath:`sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}/${indicatorCode.toLowerCase()}`});});});});return metadataItems;}
+setupCodeValidation(input,type){if(!input)return;const validationMessage=input.closest('.category-code-section, .indicator-code-section, .customization-pillar-header')?.querySelector('.code-validation-message');input.addEventListener('input',(e)=>{let value=e.target.value.toUpperCase();e.target.value=value;const isValid=this.validateCode(value,type);const isUnique=this.isCodeUnique(value,type,input);if(!value){this.flashValidationMessage(validationMessage,input,'','');}else if(!isValid){this.flashValidationMessage(validationMessage,input,'Invalid format','error');}else if(!isUnique){this.flashValidationMessage(validationMessage,input,'Code reserved','error');}else{this.flashValidationMessage(validationMessage,input,'Valid','success');}
+this.flagUnsaved();});input.addEventListener('blur',()=>{const newCode=input.value.trim();if(!this.validateCode(newCode,type)){return;}
+if(!this.isCodeUnique(newCode,type,input)){return;}
+this.processCodeChange(input,newCode,type);});}
+processCodeChange(input,newCode,type){let element;if(type==='indicator'){element=input.closest('.indicator-card');}else if(type==='category'){element=input.closest('.category-box');}else if(type==='pillar'){element=input.closest('[data-pillar-code]');}
+if(!element){console.warn(`Could not find ${type}element for code input`);return;}
+const oldCode=type==='indicator'?element.dataset.indicatorCode:type==='category'?element.dataset.categoryCode:element.dataset.pillarCode;if(oldCode===newCode){return;}
+let result;try{if(type==='indicator'){result=this.modifyIndicator(oldCode,{newIndicatorCode:newCode});}else if(type==='category'){result=this.setCategoryCode(element,newCode);}else if(type==='pillar'){result=this.setPillarCode(element,newCode);}
+if(result&&!result.success){console.error(`Failed to set ${type}code:`,result.error);this.showNotification(`Error:${result.error}`,'error',3000);input.value=oldCode||'';}}catch(error){console.error(`Error setting ${type}code:`,error);this.showNotification(`Error updating code`,'error',3000);input.value=oldCode||'';}}
 validateCode(code,type){if(!code)return false;switch(type){case'pillar':return /^[A-Z]{2,3}$/.test(code);case'category':return /^[A-Z]{3}$/.test(code);case'indicator':return /^[A-Z0-9]{6}$/.test(code);default:return false;}}
 isCodeUnique(code,type,currentInput){if(!code)return true;const selector=type==='pillar'?'.pillar-code-input':type==='category'?'.category-code-input':'.indicator-code-input';const allInputs=this.container.querySelectorAll(selector);for(const input of allInputs){if(input!==currentInput&&input.value===code){return false;}}
 return true;}
-showValidationMessage(element,message,type){if(!element)return;element.textContent=message;element.className='code-validation-message';if(type==='error'){element.classList.add('error');}else if(type==='success'){element.classList.add('success');}}
-getNameForCodeInput(input,type){const container=input.closest(type==='pillar'?'.customization-pillar-header':type==='category'?'.category-box':'.indicator-card');if(type==='pillar'){return container.querySelector('.pillar-name').textContent.trim();}else if(type==='category'){return container.querySelector('.customization-category-header-title').textContent.trim();}else if(type==='indicator'){return container.querySelector('.indicator-name').textContent.trim();}
-return'';}
-generateCodeFromName(name,type){if(!name)return'';const cleanName=name.toUpperCase().replace(/\b(THE|AND|OR|OF|FOR|IN|ON|AT|TO|A|AN)\b/g,'').replace(/[^A-Z0-9]/g,'');const maxLength=type==='indicator'?6:3;if(cleanName.length<=maxLength){return cleanName.padEnd(maxLength,'1');}
-const words=name.split(/\s+/);let code='';for(const word of words){if(code.length<maxLength){const firstChar=word.replace(/[^A-Z0-9]/gi,'').charAt(0).toUpperCase();if(firstChar&&/[A-Z0-9]/.test(firstChar)){code+=firstChar;}}}
-if(code.length<maxLength){for(const char of cleanName){if(code.length>=maxLength)break;if(!code.includes(char)&&/[A-Z0-9]/.test(char)){code+=char;}}}
-while(code.length<maxLength){code+='1';}
-return code.substring(0,maxLength);}
+flashValidationMessage(element,input,message,type){if(!element)return;element.textContent=message;element.className='code-validation-message';if(type==='error'){element.classList.add('error');}else if(type==='success'){element.classList.add('success');input.classList.remove('input-error')}
+input.addEventListener('blur',(event)=>{if(type!=='success'){input.classList.add('input-error')}else{input.classList.remove('input-error')}
+element.textContent='';element.classList.remove('error','success');})}
 setupDatasetSelection(indicatorElement){const addDatasetBtn=indicatorElement.querySelector('.add-dataset-btn');const selectedDatasetsDiv=indicatorElement.querySelector('.selected-datasets');addDatasetBtn.addEventListener('click',async()=>{await this.showDatasetSelector(selectedDatasetsDiv);});}
-async showDatasetSelector(selectedDatasetsDiv){try{const currentDatasets=selectedDatasetsDiv.querySelectorAll('.dataset-item');if(currentDatasets.length>=5){alert('Maximum of 5 datasets allowed per indicator');return;}
-this.showDatasetSelectionModal(selectedDatasetsDiv);}catch(error){console.error('Error showing dataset selector:',error);alert('Error loading datasets. Please try again.');}}
-async showDatasetSelectionModal(selectedDatasetsDiv){const currentSelections=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item')).map(item=>item.dataset.datasetCode);const selector=new DatasetSelector({maxSelections:5,multiSelect:true,enableSearch:true,enableFilters:true,showOrganizations:true,showTypes:true,onSelectionChange:(selectedCodes)=>{this.updateDatasetSelection(selectedDatasetsDiv,selectedCodes);}});await selector.show(currentSelections);}
-updateDatasetSelection(selectedDatasetsDiv,selectedCodes){selectedDatasetsDiv.innerHTML='';selectedCodes.forEach(datasetCode=>{this.addDatasetToIndicator(selectedDatasetsDiv,datasetCode,1.0);});}
+async showDatasetSelector(selectedDatasetsDiv){try{const currentDatasets=selectedDatasetsDiv.querySelectorAll('.dataset-item');if(currentDatasets.length>=10){notifications.warning('Maximum of 10 datasets allowed per indicator');return;}
+this.showDatasetSelectionModal(selectedDatasetsDiv);}catch(error){console.error('Error showing dataset selector:',error);notifications.error('Error loading datasets. Please try again.');}}
+async showDatasetSelectionModal(selectedDatasetsDiv){const currentSelections=Array.from(selectedDatasetsDiv.querySelectorAll('.dataset-item')).map(item=>item.dataset.datasetCode);const preloadedDatasets=Object.values(this.datasetDetails);const selector=new DatasetSelector({maxSelections:10,multiSelect:true,enableSearch:true,enableFilters:true,showOrganizations:true,showTypes:true,preloadedDatasets:preloadedDatasets.length>0?preloadedDatasets:null,onSelectionChange:(selectedDatasets)=>{this.updateDatasetSelection(selectedDatasetsDiv,selectedDatasets);}});await selector.show(currentSelections);}
+updateDatasetSelection(selectedDatasetsDiv,selectedDatasets){const indicatorCard=selectedDatasetsDiv.closest('.indicator-card');const indicatorCode=indicatorCard?indicatorCard.dataset.indicatorCode:null;if(!indicatorCode){console.error('Could not find indicator code for dataset selection');return;}
+selectedDatasetsDiv.innerHTML='';selectedDatasets.forEach(dataset=>{const result=this.addDataset(dataset.DatasetCode,indicatorCode);if(!result.success){console.warn(`Failed to add dataset ${dataset.DatasetCode}:${result.error}`);}});this.flagUnsaved();this.debouncedCacheState();}
 findSelectedDatasetsDiv(modal){const indicators=document.querySelectorAll('.indicator-card');return indicators[indicators.length-1]?.querySelector('.selected-datasets');}
-addDatasetToIndicator(selectedDatasetsDiv,datasetCode,weight=1.0){const existing=selectedDatasetsDiv.querySelector(`[data-dataset-code="${datasetCode}"]`);if(existing){alert('Dataset already added');return;}
-const datasetDetail=this.datasetDetails[datasetCode];const datasetName=datasetDetail?datasetDetail.name:'Unknown Dataset';const datasetTitle=datasetDetail?`${datasetDetail.description}\n\nOrganization:${datasetDetail.organization}\nType:${datasetDetail.type}`:datasetCode;const datasetItem=document.createElement('div');datasetItem.classList.add('dataset-item');datasetItem.dataset.datasetCode=datasetCode;datasetItem.dataset.weight=weight;datasetItem.title=datasetTitle;datasetItem.innerHTML=`<div class="dataset-info"><span class="dataset-name">${datasetName}</span><span class="dataset-code">${datasetCode}</span></div><div class="dataset-actions"><button class="remove-dataset"type="button"title="Remove dataset">×</button></div>`;datasetItem.querySelector('.remove-dataset').addEventListener('click',()=>{const indicatorCard=selectedDatasetsDiv.closest('.indicator-card');const indicatorName=this.getElementName(indicatorCard);this.undoRedoManager.recordAction({type:'remove-dataset',message:`Removed\u0020dataset\u0020"${datasetCode}"\u0020from\u0020indicator\u0020"${indicatorName}"`,undo:()=>{selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');},redo:()=>{datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');}});datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');});selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');const indicatorCard=selectedDatasetsDiv.closest('.indicator-card');const indicatorName=this.getElementName(indicatorCard);this.undoRedoManager.recordAction({type:'add-dataset',message:`Added\u0020dataset\u0020"${datasetCode}"\u0020to\u0020indicator\u0020"${indicatorName}"`,undo:()=>{datasetItem.remove();this.updateHierarchyOnRemove(datasetItem,'dataset');},redo:()=>{selectedDatasetsDiv.appendChild(datasetItem);this.updateHierarchyOnAdd(datasetItem,'dataset');}});}
-showDatasetOptionsMenu(buttonElement,datasetCode){const existingMenu=document.querySelector('.dataset-options-menu');if(existingMenu){existingMenu.remove();}
-const menu=document.createElement('div');menu.className='dataset-options-menu';menu.innerHTML=`<div class="menu-item"data-action="weight"><span>Set Weight</span></div><div class="menu-item"data-action="rename"><span>Rename</span></div><div class="menu-item"data-action="duplicate"><span>Duplicate</span></div><div class="menu-item"data-action="info"><span>View Info</span></div>`;const rect=buttonElement.getBoundingClientRect();menu.style.position='fixed';menu.style.top=rect.bottom+5+'px';menu.style.left=rect.left+'px';menu.style.zIndex='1000';document.body.appendChild(menu);menu.addEventListener('click',(e)=>{const action=e.target.closest('.menu-item')?.dataset.action;if(action){this.handleDatasetMenuAction(action,datasetCode);menu.remove();}});const closeMenu=(e)=>{if(!menu.contains(e.target)&&e.target!==buttonElement){menu.remove();document.removeEventListener('click',closeMenu);}};setTimeout(()=>document.addEventListener('click',closeMenu),0);}
-handleDatasetMenuAction(action,datasetCode){switch(action){case'weight':const currentWeight=document.querySelector(`[data-dataset-code="${datasetCode}"]`)?.dataset.weight||'1.0';const newWeight=prompt('Enter weight (0-10):',currentWeight);if(newWeight!==null&&!isNaN(newWeight)&&newWeight>=0&&newWeight<=10){document.querySelector(`[data-dataset-code="${datasetCode}"]`).dataset.weight=newWeight;this.flagUnsaved();}
-break;case'rename':alert('Rename functionality - placeholder');break;case'duplicate':alert('Duplicate functionality - placeholder');break;case'info':alert('Dataset info functionality - placeholder');break;}}
-cacheCurrentState(){try{const cacheData={hasModifications:this.unsavedChanges,lastModified:Date.now(),metadata:this.exportData(),version:"1.0"};const cacheSize=JSON.stringify(cacheData).length;if(cacheSize>5*1024*1024){console.warn('Cache data is too large (>5MB), skipping cache');return;}
-window.observableStorage.setItem("sspi-custom-modifications",cacheData);console.log('SSPI modifications cached successfully');}catch(error){console.warn('Failed to cache SSPI modifications:',error);if(error.name==='QuotaExceededError'||error.name==='NS_ERROR_DOM_QUOTA_REACHED'){this.handleStorageQuotaExceeded();}}}
-handleStorageQuotaExceeded(){console.warn('localStorage quota exceeded, attempting to free space');try{const allKeys=[];for(let i=0;i<localStorage.length;i++){allKeys.push(localStorage.key(i));}
-allKeys.forEach(key=>{if(key&&key.startsWith('sspi-')&&key!=='sspi-custom-modifications'){try{localStorage.removeItem(key);console.log('Removed old cache entry:',key);}catch(e){}}});const indicator=document.createElement('div');indicator.style.cssText=`position:fixed;top:20px;right:20px;background:#ff9500;color:white;padding:10px 15px;border-radius:5px;z-index:1000;max-width:300px;animation:slideInRight 0.3s ease-out;`;indicator.textContent='⚠ Storage limit reached. Changes may not be cached across sessions.';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},5000);}catch(e){console.error('Error handling storage quota exceeded:',e);}}
-async loadCachedState(){try{const cacheData=window.observableStorage.getItem("sspi-custom-modifications");if(!cacheData||!this.isValidCacheData(cacheData)){return false;}
-console.log('Loading cached SSPI modifications from:',new Date(cacheData.lastModified));await this.importDataAsync(cacheData.metadata);this.setUnsavedState(cacheData.hasModifications);return true;}catch(error){console.warn('Failed to load cached SSPI modifications:',error);this.clearCache();return false;}}
-clearCache(){try{window.observableStorage.removeItem("sspi-custom-modifications");console.log('SSPI modifications cache cleared');}catch(error){console.warn('Failed to clear SSPI modifications cache:',error);}}
-hasCachedModifications(){try{const cacheData=window.observableStorage.getItem("sspi-custom-modifications");return cacheData&&this.isValidCacheData(cacheData)&&cacheData.hasModifications;}catch(error){console.warn('Error checking for cached modifications:',error);return false;}}
+cacheCurrentState(){try{const metadata=this.exportMetadata();const actionHistory={actions:this.actionHistory.actions.map(action=>({actionId:action.actionId,timestamp:action.timestamp,type:action.type,message:action.message,delta:action.delta
+})),currentIndex:this.actionHistory.currentIndex,baseline:this.actionHistory.baseline};const cacheData={hasModifications:this.unsavedChanges,timestamp:Date.now(),metadata:metadata,datasetDetailsMap:this.datasetDetails,actions:actionHistory.actions,baseConfig:this.baseConfig};const cacheSize=JSON.stringify(cacheData).length;console.log('Approximate cache size:',parseFloat((cacheSize/1024/1024).toFixed(2)),'MB');if(cacheSize>5*1024*1024){console.warn('Cache data is too large (>5MB), skipping cache');notifications.warning('Configuration too large to cache locally. Please save to server.');return;}
+this.setCache(cacheData);console.log('SSPI modifications cached successfully');}catch(error){console.warn('Failed to cache SSPI modifications:',error);}}
+async loadCachedState(){try{const cacheData=this.getStorage("cachedModifications");if(!cacheData||!this.isValidCacheData(cacheData)){return false;}
+console.log('Loading cached SSPI modifications from:',new Date(cacheData.lastModified));if(cacheData.datasetDetailsMap){this.datasetDetails=cacheData.datasetDetailsMap;console.log('Restored',Object.keys(this.datasetDetails).length,'dataset details from cache map');}
+await this.importDataAsync(cacheData.metadata);if(cacheData.actionHistory){this.actionHistory.actions=cacheData.actionHistory.actions||[];this.actionHistory.currentIndex=cacheData.actionHistory.currentIndex??-1;this.actionHistory.baseline=cacheData.actionHistory.baseline||null;console.log('Restored',this.actionHistory.actions.length,'actions from cache');}
+this.setUnsavedState(cacheData.hasModifications);return true;}catch(error){console.warn('Failed to load cached SSPI modifications:',error);this.clearCache();return false;}}
+clearCache(){try{const cacheKey=this.getStorageKey("cachedModifications");window.observableStorage.removeItem(cacheKey);console.log('SSPI modifications and dataset cache cleared');}catch(error){console.warn('Failed to clear SSPI cache:',error);}}
+hasCachedModifications(){try{const cacheData=this.getStorage("cachedModifications");return cacheData&&this.isValidCacheData(cacheData)&&cacheData.hasModifications;}catch(error){console.warn('Error checking for cached modifications:',error);return false;}}
 isValidCacheData(cacheData){if(!cacheData||typeof cacheData!=='object'){return false;}
-const requiredFields=['hasModifications','lastModified','metadata','version'];for(const field of requiredFields){if(!(field in cacheData)){console.warn(`Invalid cache data:missing field'${field}'`);return false;}}
+const requiredFields=['hasModifications','lastModified','metadata'];for(const field of requiredFields){if(!(field in cacheData)){console.warn(`Invalid cache data:missing field'${field}'`);return false;}}
 if(typeof cacheData.hasModifications!=='boolean'){console.warn('Invalid cache data: hasModifications must be boolean');return false;}
 if(typeof cacheData.lastModified!=='number'||cacheData.lastModified<=0){console.warn('Invalid cache data: lastModified must be a positive number');return false;}
 if(!Array.isArray(cacheData.metadata)){console.warn('Invalid cache data: metadata must be an array');return false;}
-if(typeof cacheData.version!=='string'){console.warn('Invalid cache data: version must be a string');return false;}
 const maxAge=7*24*60*60*1000;const age=Date.now()-cacheData.lastModified;if(age>maxAge){console.warn('Cache data is too old (>7 days), discarding');return false;}
 if(cacheData.metadata.length>0){const firstItem=cacheData.metadata[0];if(!firstItem||typeof firstItem!=='object'||!firstItem.ItemType){console.warn('Invalid cache data: metadata items have invalid structure');return false;}}
 return true;}
 debouncedCacheState(){if(this.cacheTimeout){clearTimeout(this.cacheTimeout);}
 this.cacheTimeout=setTimeout(()=>{this.cacheCurrentState();},500);}
-setupCacheSync(){window.observableStorage.onChange("sspi-custom-modifications",async(oldValue,newValue)=>{console.log('Cache change detected from another tab');if(!this.unsavedChanges){if(newValue&&this.isValidCacheData(newValue)&&newValue.hasModifications){console.log('Syncing modifications from another tab');await this.importDataAsync(newValue.metadata);this.setUnsavedState(newValue.hasModifications);this.showSyncIndicator();}else if(!newValue){console.log('Cache cleared in another tab, reloading default');await this.loadDefaultMetadata();}}});}
-showSyncIndicator(){const indicator=document.createElement('div');indicator.style.cssText=`position:fixed;top:20px;right:20px;background:var(--ms-color);color:white;padding:10px 15px;border-radius:5px;z-index:1000;animation:slideInRight 0.3s ease-out;`;indicator.textContent='⟲ Synced from another tab';document.body.appendChild(indicator);setTimeout(()=>{if(indicator.parentNode){indicator.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(indicator.parentNode){indicator.parentNode.removeChild(indicator);}},300);}},2000);}
-captureBaseline(){try{this.baselineMetadata=this.exportData();this.diffCache=null;console.log('Baseline captured with',this.baselineMetadata.length,'items');}catch(error){console.warn('Failed to capture baseline:',error);}}
-generateDiff(){if(!this.baselineMetadata){return{error:'No baseline available for comparison'};}
-try{const currentMetadata=this.exportData();if(this.diffCache&&this.areMetadataEqual(this.diffCache.currentSnapshot,currentMetadata)){return this.diffCache.diff;}
-const diff=this.compareMetadata(this.baselineMetadata,currentMetadata);this.diffCache={currentSnapshot:JSON.parse(JSON.stringify(currentMetadata)),diff:diff};return diff;}catch(error){console.error('Error generating diff:',error);return{error:'Failed to generate diff: '+error.message};}}
-compareMetadata(baseline,current){const baselineMap=this.createItemMap(baseline);const currentMap=this.createItemMap(current);const changes={summary:{totalChanges:0,pillarsAffected:0,categoriesAffected:0,indicatorsAffected:0},added:[],removed:[],modified:[],moved:[],unchanged:[]};for(const[code,baselineItem]of baselineMap){if(!currentMap.has(code)){changes.removed.push({type:baselineItem.ItemType,code:code,name:baselineItem.ItemName,item:baselineItem});}}
-for(const[code,currentItem]of currentMap){if(!baselineMap.has(code)){changes.added.push({type:currentItem.ItemType,code:code,name:currentItem.ItemName,item:currentItem});}else{const baselineItem=baselineMap.get(code);const itemChanges=this.compareItems(baselineItem,currentItem);if(itemChanges){changes.modified.push({type:currentItem.ItemType,code:code,name:currentItem.ItemName,changes:itemChanges,before:baselineItem,after:currentItem});}else{changes.unchanged.push({type:currentItem.ItemType,code:code,name:currentItem.ItemName});}}}
-changes.summary.totalChanges=changes.added.length+changes.removed.length+changes.modified.length+changes.moved.length;const affectedTypes=new Set();[...changes.added,...changes.removed,...changes.modified,...changes.moved].forEach(change=>{affectedTypes.add(change.type);switch(change.type){case'Pillar':changes.summary.pillarsAffected++;break;case'Category':changes.summary.categoriesAffected++;break;case'Indicator':changes.summary.indicatorsAffected++;break;}});return changes;}
-createItemMap(metadata){const map=new Map();metadata.forEach(item=>{map.set(item.ItemCode,item);});return map;}
-compareItems(baselineItem,currentItem){const changes={};if(baselineItem.ItemName!==currentItem.ItemName){changes.name={from:baselineItem.ItemName,to:currentItem.ItemName};}
-if(!this.arraysEqual(baselineItem.Children||[],currentItem.Children||[])){changes.children={from:baselineItem.Children||[],to:currentItem.Children||[]};}
-if(baselineItem.ItemType==='Indicator'){if(!this.arraysEqual(baselineItem.DatasetCodes||[],currentItem.DatasetCodes||[])){changes.datasets={from:baselineItem.DatasetCodes||[],to:currentItem.DatasetCodes||[]};}
-if(baselineItem.LowerGoalpost!==currentItem.LowerGoalpost){changes.lowerGoalpost={from:baselineItem.LowerGoalpost,to:currentItem.LowerGoalpost};}
-if(baselineItem.UpperGoalpost!==currentItem.UpperGoalpost){changes.upperGoalpost={from:baselineItem.UpperGoalpost,to:currentItem.UpperGoalpost};}
-if(baselineItem.Inverted!==currentItem.Inverted){changes.inverted={from:baselineItem.Inverted,to:currentItem.Inverted};}}
-if(baselineItem.PillarCode!==currentItem.PillarCode){changes.pillar={from:baselineItem.PillarCode,to:currentItem.PillarCode};}
-if(baselineItem.CategoryCode!==currentItem.CategoryCode){changes.category={from:baselineItem.CategoryCode,to:currentItem.CategoryCode};}
-return Object.keys(changes).length>0?changes:null;}
-arraysEqual(arr1,arr2){if(arr1.length!==arr2.length)return false;return arr1.every((item,index)=>item===arr2[index]);}
-areMetadataEqual(metadata1,metadata2){if(!metadata1||!metadata2)return false;if(metadata1.length!==metadata2.length)return false;return JSON.stringify(metadata1)===JSON.stringify(metadata2);}
-hasChangesFromBaseline(){if(!this.baselineMetadata)return false;const diff=this.generateDiff();return diff.summary&&diff.summary.totalChanges>0;}
-getChangeCount(){if(!this.baselineMetadata)return 0;const diff=this.generateDiff();return diff.summary?diff.summary.totalChanges:0;}
-async fetch(url,options={}){const response=await window.fetch(url,options);if(!response.ok){throw new Error(`HTTP error!status:${response.status}`);}
-return await response.json();}}
+setupCacheSync(){window.addEventListener('storage',(e)=>{const myCacheKey=this.getCacheKey();if(e.key===myCacheKey&&e.newValue!==e.oldValue){console.log('Cache updated in another tab');if(confirm('Configuration updated in another tab. Reload to see changes?')){window.location.reload();}}});}}
 class DownloadForm{constructor(formElement){this.form=formElement;this.databaseCapabilities=this.loadDatabaseCapabilities();this.initializeEventListeners();}
 loadDatabaseCapabilities(){const dbSelect=this.form.querySelector('#database-select');const capabilities={};if(dbSelect){Array.from(dbSelect.options).forEach(option=>{const supports=option.dataset.supports;capabilities[option.value]=supports?supports.split(','):[];});}
 return capabilities;}
@@ -401,7 +518,9 @@ this.modal=null}
 show(indicatorsContainer){this.indicatorsContainer=indicatorsContainer
 this.createModal()
 this.bindEvents()
-document.body.appendChild(this.modal)}
+document.body.appendChild(this.modal)
+setTimeout(()=>{const createNewBtn=this.modal?.querySelector('#create-new-indicator')
+if(createNewBtn){createNewBtn.focus()}},100)}
 createModal(){this.modal=document.createElement('div')
 this.modal.className='indicator-selection-overlay'
 const modalContent=document.createElement('div')
@@ -470,13 +589,46 @@ modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicato
             }
         })
         
-        // Close on escape key
-        document.addEventListener('keydown', this.handleKeyDown.bind(this))
+        // Close on escape key and handle keyboard navigation
+        this.keydownHandler = this.handleKeyDown.bind(this)
+        document.addEventListener('keydown', this.keydownHandler)
     }
-    
+
     handleKeyDown(e) {
-        if (e.key === 'Escape' && this.modal) {
+        if (!this.modal) return
+
+        if (e.key === 'Escape') {
+            e.preventDefault()
             this.close()
+            return
+        }
+
+        // Arrow key navigation between buttons
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault()
+            const createNewBtn = this.modal.querySelector('#create-new-indicator')
+            const addExistingBtn = this.modal.querySelector('#add-existing-indicator')
+            const cancelBtn = this.modal.querySelector('#menu-cancel')
+
+            const focusedElement = document.activeElement
+
+            if (e.key === 'ArrowDown') {
+                if (focusedElement === createNewBtn) {
+                    addExistingBtn?.focus()
+                } else if (focusedElement === addExistingBtn) {
+                    cancelBtn?.focus()
+                } else {
+                    createNewBtn?.focus()
+                }
+            } else { // ArrowUp
+                if (focusedElement === cancelBtn) {
+                    addExistingBtn?.focus()
+                } else if (focusedElement === addExistingBtn) {
+                    createNewBtn?.focus()
+                } else {
+                    cancelBtn?.focus()
+                }
+            }
         }
     }
     
@@ -484,10 +636,14 @@ modalContent.innerHTML=`<div class="indicator-selection-header"><h3>Add Indicato
         if (this.modal && this.modal.parentNode) {
             document.body.removeChild(this.modal)
         }
-        document.removeEventListener('keydown', this.handleKeyDown.bind(this))
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler)
+            this.keydownHandler = null
+        }
         this.modal = null
     }
 }
+
 class IndicatorTable {
     constructor() {
         this.container = document.querySelector('.indicator-table-container');
@@ -636,6 +792,62 @@ updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
 this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
 updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
 getTheme(){return this.currentTheme}}
+class NotificationManager{constructor(){this.notifications=[];this.history=[];this.nextId=0;}
+show(message,type='info',duration=3000){const id=this.nextId++;const notification=document.createElement('div');notification.dataset.notificationId=id;notification.style.cssText=`position:fixed;top:20px;right:20px;padding:15px 20px;border-radius:5px;color:white;font-weight:normal;z-index:10000;max-width:450px;box-shadow:0 4px 6px rgba(0,0,0,0.1);animation:slideInRight 0.3s ease-out;word-wrap:break-word;line-height:1.4;`;switch(type){case'success':notification.style.backgroundColor='#4CAF50';break;case'error':notification.style.backgroundColor='#f44336';break;case'warning':notification.style.backgroundColor='#ff9800';break;default:notification.style.backgroundColor='#2196F3';}
+notification.textContent=message;this._stackNotification(notification);const notificationObj={id,element:notification,message,type,timestamp:Date.now()};this.notifications.push(notificationObj);this.history.push({...notificationObj,dismissed:false});if(duration>0){setTimeout(()=>{this.clear(id);},duration);}
+return notificationObj;}
+_stackNotification(notification){const existingNotifications=document.querySelectorAll('[data-notification-id]');let topOffset=20;existingNotifications.forEach(existing=>{const rect=existing.getBoundingClientRect();topOffset=Math.max(topOffset,rect.bottom-document.documentElement.getBoundingClientRect().top+10);});notification.style.top=topOffset+'px';document.body.appendChild(notification);}
+clear(id){const index=this.notifications.findIndex(n=>n.id===id);if(index===-1)return;const notificationObj=this.notifications[index];const notification=notificationObj.element;if(notification&&notification.parentNode){notification.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(notification.parentNode){notification.parentNode.removeChild(notification);}},300);}
+this.notifications.splice(index,1);const historyEntry=this.history.find(h=>h.id===id);if(historyEntry){historyEntry.dismissed=true;historyEntry.dismissedAt=Date.now();}
+this._restackNotifications();}
+_restackNotifications(){setTimeout(()=>{const existingNotifications=document.querySelectorAll('[data-notification-id]');let topOffset=20;existingNotifications.forEach(notification=>{notification.style.top=topOffset+'px';const rect=notification.getBoundingClientRect();topOffset=rect.bottom-document.documentElement.getBoundingClientRect().top+10;});},50);}
+clearAll(){const ids=this.notifications.map(n=>n.id);ids.forEach(id=>this.clear(id));}
+getHistory(limit=50){return this.history.slice(-limit);}
+clearHistory(){this.history=[];}
+success(message,duration=3000){return this.show(message,'success',duration);}
+error(message,duration=5000){return this.show(message,'error',duration);}
+warning(message,duration=4000){return this.show(message,'warning',duration);}
+info(message,duration=3000){return this.show(message,'info',duration);}}
+window.notifications=new NotificationManager();class ProgressStepper{constructor(parentElement,options={}){this.parentElement=parentElement;this.currentStage=options.currentStage||0;this.completedStages=options.completedStages||[];this.onStageClick=options.onStageClick||(()=>{});this.stages=[{id:0,name:'Structure',number:'1'},{id:1,name:'View Changes',number:'2'},{id:2,name:'Score',number:'3'},{id:3,name:'Compare',number:'4'}];this.render();}
+render(){const stepper=document.createElement('div');stepper.classList.add('progress-stepper');stepper.setAttribute('role','navigation');stepper.setAttribute('aria-label','Progress steps');const stepsContainer=document.createElement('div');stepsContainer.classList.add('progress-stepper-steps');const progressFill=document.createElement('div');progressFill.classList.add('progress-bar-fill');let fillPercentage=0;if(this.currentStage>0){fillPercentage=(this.currentStage/(this.stages.length-1))*100;}
+progressFill.style.width=fillPercentage===0?'0':`${fillPercentage}%`;this.stages.forEach((stage,index)=>{const stepContainer=document.createElement('div');stepContainer.classList.add('step-container');const step=document.createElement('div');step.classList.add('step');step.dataset.stage=stage.id;step.setAttribute('role','button');step.setAttribute('tabindex','0');step.setAttribute('aria-label',`${stage.name}stage`);const isCompleted=this.completedStages.includes(stage.id);const isCurrent=stage.id===this.currentStage;const isClickable=isCompleted||stage.id<this.currentStage;if(isCompleted){step.classList.add('completed');step.setAttribute('aria-current','false');}
+if(isCurrent){step.classList.add('current');step.setAttribute('aria-current','step');}
+if(!isClickable&&!isCurrent){step.classList.add('locked');step.setAttribute('aria-disabled','true');}
+const stepIcon=document.createElement('span');stepIcon.classList.add('step-icon');if(isCompleted&&!isCurrent){stepIcon.textContent='✓';stepIcon.classList.add('checkmark');}else{stepIcon.textContent=stage.number;}
+step.appendChild(stepIcon);const stepLabel=document.createElement('div');stepLabel.classList.add('step-label');stepLabel.textContent=stage.name;if(isClickable||isCurrent){step.style.cursor='pointer';step.addEventListener('click',()=>this.handleStageClick(stage.id));step.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.handleStageClick(stage.id);}});}
+stepContainer.appendChild(step);stepContainer.appendChild(stepLabel);stepsContainer.appendChild(stepContainer);});stepper.appendChild(progressFill);stepper.appendChild(stepsContainer);this.parentElement.innerHTML='';this.parentElement.appendChild(stepper);}
+handleStageClick(stageId){this.onStageClick(stageId);}
+setCurrentStage(stageId){this.currentStage=stageId;this.render();}
+markStageCompleted(stageId){if(!this.completedStages.includes(stageId)){this.completedStages.push(stageId);this.render();}}
+resetProgress(){this.currentStage=0;this.completedStages=[];this.render();}
+getState(){return{currentStage:this.currentStage,completedStages:[...this.completedStages]};}
+setState(state){this.currentStage=state.currentStage||0;this.completedStages=state.completedStages||[];this.render();}}
+class StageManager{constructor(parentElement,sspiStructure,options={}){this.parentElement=parentElement;this.sspiStructure=sspiStructure;this.currentStage=options.currentStage||0;this.onStageComplete=options.onStageComplete||(()=>{});this.onStageChange=options.onStageChange||(()=>{});this.stageViews={0:this.renderStructureStage.bind(this),1:this.renderViewChangesStage.bind(this),2:this.renderScoreStage.bind(this),3:this.renderCompareStage.bind(this)};this.currentView=null;}
+setStage(stageId){this.currentStage=stageId;this.render();this.onStageChange(stageId);}
+render(){const renderFn=this.stageViews[this.currentStage];if(renderFn){this.currentView=renderFn();}else{console.error(`Unknown stage:${this.currentStage}`);}}
+renderStructureStage(){const container=document.createElement('div');container.classList.add('stage-view','structure-stage');const header=document.createElement('h2');header.textContent='Customize SSPI Structure';container.appendChild(header);const description=document.createElement('p');description.textContent='Customize the SSPI structure by adding, removing, modifying, or reorganizing indicators and categories.';description.classList.add('functionality-explainer');container.appendChild(description);const sspiContainer=this.sspiStructure.container;sspiContainer.style.display='block';container.appendChild(sspiContainer);const nav=this.createNavButtons({showBack:false,showNext:true,nextLabel:'View Changes'});container.appendChild(nav);this.parentElement.innerHTML='';this.parentElement.appendChild(container);return container;}
+renderViewChangesStage(){const container=document.createElement('div');container.classList.add('stage-view','view-changes-stage');const header=document.createElement('h2');header.textContent='View Your Changes';container.appendChild(header);const description=document.createElement('p');description.textContent='Review the changes you\'ve made before submitting for scoring.';description.classList.add('stage-description');container.appendChild(description);const summary=this.generateChangesSummary();container.appendChild(summary);const nav=this.createNavButtons({showBack:true,showNext:true,nextLabel:'Submit for Scoring',backLabel:'Back to Structure'});container.appendChild(nav);this.parentElement.innerHTML='';this.parentElement.appendChild(container);return container;}
+generateChangesSummary(){const summaryContainer=document.createElement('div');summaryContainer.classList.add('changes-summary');const actions=this.sspiStructure.actionHistory.actions;if(actions.length===0){const noChanges=document.createElement('p');noChanges.textContent='No changes have been made to the default SSPI structure.';noChanges.classList.add('no-changes-message');summaryContainer.appendChild(noChanges);return summaryContainer;}
+const groupedActions={};actions.forEach(action=>{const type=action.type||'other';if(!groupedActions[type]){groupedActions[type]=[];}
+groupedActions[type].push(action);});Object.entries(groupedActions).forEach(([type,actionsList])=>{const card=document.createElement('div');card.classList.add('summary-card');const cardHeader=document.createElement('div');cardHeader.classList.add('summary-card-header');cardHeader.textContent=`${this.formatActionType(type)}(${actionsList.length})`;const cardBody=document.createElement('div');cardBody.classList.add('summary-card-body');const list=document.createElement('ul');actionsList.forEach(action=>{const item=document.createElement('li');item.textContent=action.message||'Unknown action';list.appendChild(item);});cardBody.appendChild(list);card.appendChild(cardHeader);card.appendChild(cardBody);summaryContainer.appendChild(card);});return summaryContainer;}
+formatActionType(type){const typeMap={'add-indicator':'Indicators Added','remove-indicator':'Indicators Removed','move-indicator':'Indicators Moved','add-category':'Categories Added','remove-category':'Categories Removed','move-category':'Categories Moved','add-dataset':'Datasets Added','remove-dataset':'Datasets Removed','modify-indicator':'Indicators Modified','set-indicator-name':'Indicator Names Changed','set-category-name':'Category Names Changed','set-pillar-name':'Pillar Names Changed'};return typeMap[type]||type.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase());}
+renderScoreStage(){const container=document.createElement('div');container.classList.add('stage-view','score-stage');const header=document.createElement('h2');header.textContent='Scoring in Progress';container.appendChild(header);const description=document.createElement('p');description.textContent='Computing scores for your custom SSPI structure...';description.classList.add('stage-description');container.appendChild(description);const progressContainer=document.createElement('div');progressContainer.classList.add('scoring-progress');const progressBar=document.createElement('div');progressBar.classList.add('progress-bar');const progressFill=document.createElement('div');progressFill.classList.add('progress-fill');progressFill.id='scoring-progress-fill';progressFill.style.width='0%';progressBar.appendChild(progressFill);progressContainer.appendChild(progressBar);const progressText=document.createElement('div');progressText.classList.add('progress-text');progressText.id='scoring-progress-text';progressText.textContent='Initializing...';progressContainer.appendChild(progressText);container.appendChild(progressContainer);const logContainer=document.createElement('div');logContainer.classList.add('scoring-log');logContainer.id='scoring-log';container.appendChild(logContainer);this.parentElement.innerHTML='';this.parentElement.appendChild(container);this.startScoring();return container;}
+async startScoring(){const metadata=this.sspiStructure.exportData();const actions=this.sspiStructure.actionHistory.actions.map(a=>a.delta);try{const result=await this.sspiStructure.fetch('/api/v1/customize/score',{method:'POST',headers:{'Content-Type':'application/json',},body:JSON.stringify({metadata,actions})});if(!result.success){throw new Error(result.error||'Failed to initiate scoring');}
+const eventSource=new EventSource('/api/v1/customize/score-stream');eventSource.onmessage=(event)=>{const data=JSON.parse(event.data);this.updateScoringProgress(data);};eventSource.addEventListener('complete',(event)=>{const data=JSON.parse(event.data);eventSource.close();this.scoringComplete(data);});eventSource.addEventListener('error',(event)=>{eventSource.close();this.scoringError(event);});}catch(error){console.error('Error starting scoring:',error);if(error.message&&error.message.includes('401')){if(this.progressBar){this.progressBar.style.display='none';}
+if(this.statusMessage){this.statusMessage.innerHTML=`<div style="text-align: center; padding: 2rem;"><h3 style="color: #e74c3c; margin-bottom: 1rem;">🔒 Authentication Required</h3><p style="margin-bottom: 1.5rem;">You must be logged in to generate custom SSPI scores.</p><div><a href="/auth/login?next=${encodeURIComponent(window.location.pathname)}"class="btn btn-primary"style="margin-right: 1rem;">Log In</a><a href="/auth/register?next=${encodeURIComponent(window.location.pathname)}"class="btn btn-secondary">Create Free Account</a></div></div>`;}}else{this.scoringError(error);}}}
+updateScoringProgress(data){const progressFill=document.getElementById('scoring-progress-fill');const progressText=document.getElementById('scoring-progress-text');const logContainer=document.getElementById('scoring-log');if(data.progress!==undefined){progressFill.style.width=`${data.progress}%`;}
+if(data.message){progressText.textContent=data.message;const logEntry=document.createElement('div');logEntry.classList.add('log-entry');logEntry.textContent=`[${new Date().toLocaleTimeString()}]${data.message}`;logContainer.appendChild(logEntry);logContainer.scrollTop=logContainer.scrollHeight;}}
+scoringComplete(data){const progressText=document.getElementById('scoring-progress-text');progressText.textContent='Scoring complete!';notifications.success('Scoring completed successfully!');setTimeout(()=>{this.completeStage(3);},1500);}
+scoringError(error){const progressText=document.getElementById('scoring-progress-text');progressText.textContent='Error during scoring';progressText.style.color='var(--error-color)';notifications.error('Error during scoring: '+(error.message||'Unknown error'));}
+renderCompareStage(){const container=document.createElement('div');container.classList.add('stage-view','compare-stage');const header=document.createElement('h2');header.textContent='Compare Your Results';container.appendChild(header);const placeholder=document.createElement('div');placeholder.classList.add('placeholder-content');placeholder.innerHTML=`<div class="placeholder-icon">🎉</div><h3>Results Ready!</h3><p>The comparison interface is coming soon.For now,you can view your results in the main SSPI visualization page.</p><button class="btn-primary"onclick="window.location.href='/'">View Main Dashboard</button>`;container.appendChild(placeholder);const nav=this.createNavButtons({showBack:true,showNext:false});container.appendChild(nav);this.parentElement.innerHTML='';this.parentElement.appendChild(container);return container;}
+createNavButtons({showBack=true,showNext=true,showSkip=false,nextLabel='Next',backLabel='Back'}={}){const nav=document.createElement('div');nav.classList.add('stage-navigation');if(showBack){const backBtn=document.createElement('button');backBtn.textContent=backLabel;backBtn.classList.add('btn-secondary');backBtn.addEventListener('click',()=>this.goBack());nav.appendChild(backBtn);}
+if(showSkip){const skipBtn=document.createElement('button');skipBtn.textContent='Skip to Build';skipBtn.classList.add('btn-secondary');skipBtn.addEventListener('click',()=>this.completeStage(0));nav.appendChild(skipBtn);}
+if(showNext){const nextBtn=document.createElement('button');nextBtn.textContent=nextLabel;nextBtn.classList.add('btn-primary');nextBtn.addEventListener('click',()=>this.goNext());nav.appendChild(nextBtn);}
+return nav;}
+goBack(){if(this.currentStage>0){this.setStage(this.currentStage-1);}}
+goNext(){this.completeStage(this.currentStage);}
+completeStage(stageId){this.onStageComplete(stageId);}
+validateStageCompletion(stageId){switch(stageId){case 0:return this.sspiStructure.container!==null;case 1:return true;case 2:return false;case 3:return false;default:return false;}}}
 const extrapolateBackwardPlugin={id:'extrapolateBackward',hidden:false,toggle(hidden){this.hidden=hidden!==undefined?hidden:!this.hidden;},afterDatasetsDraw(chart){if(this.hidden)return;const{ctx,chartArea:{left}}=chart;for(let i=0;i<chart.data.datasets.length;i++){const dataset=chart.data.datasets[i];if(dataset.hidden)continue;const meta=chart.getDatasetMeta(i);if(!meta||!meta.data||meta.data.length===0)continue;let firstElement=null;for(let j=0;j<meta.data.length;j++){const element=meta.data[j];if(element&&element.parsed&&element.parsed.y!==null){firstElement=element;break;}}
 if(!firstElement)continue;const firstPixelX=firstElement.x;const firstPixelY=firstElement.y;if(firstPixelX>left){ctx.save();ctx.beginPath();ctx.setLineDash([2,4]);ctx.moveTo(left,firstPixelY);ctx.lineTo(firstPixelX,firstPixelY);ctx.strokeStyle=dataset.borderColor??'rgba(0,0,0,0.5)';ctx.lineWidth=1;ctx.stroke();ctx.restore();}}}};const chartInteractionPlugin={id:"chartInteractionPlugin",defaults:{enabled:true,radius:20,clickRadius:5,fadeAlpha:0.1,circleColor:"#bbbbbb",circleWidth:1,guideColor:"#bbbbbb",guideWidth:1,guideDash:[],tooltipBg:"rgba(255,255,255,0.85)",tooltipFg:"#111",tooltipFgAccent:"#AECC53",tooltipFont:"12px sans-serif",tooltipPad:8,tooltipGap:10,colGap:6,labelField:'CCode',showDefaultLabels:true,defaultLabelSpacing:0,occludedAlpha:0.12,animAlpha:0.50,onDatasetClick:null},_interaction:{mouse:null,nearest:null,tooltipItems:null,closestDatasetIdx:null},_lastCollisionTime:0,_collisionCooldown:1000,_LABEL_FONT:'bold 16px Arial',_POINT_SCALE:1.6,setExternalHover(chart,datasetIndex){this._interaction.mouse=null;this._interaction.closestDatasetIdx=datasetIndex;this._interaction.tooltipItems=null;chart.update('none');},beforeUpdate(chart,args,opts){if(args.mode!=='resize'){this._clearLabelState(chart);this._lastCollisionTime=0;}},afterEvent(chart,args){const cfg=chart.options.plugins&&chart.options.plugins.chartInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}else if(ev.type==="click"){const r2=(cfg.clickRadius??this.defaults.clickRadius)**2;const hit=[];chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);if(!meta)return;if(meta.data.some(pt=>{const dx=pt.x-ev.x,dy=pt.y-ev.y;return dx*dx+dy*dy<=r2;}))hit.push(ds);});if(hit.length&&typeof cfg.onDatasetClick==="function"){try{cfg.onDatasetClick(hit,ev,chart);}
 catch(e){console.error("chartInteractionPlugin onDatasetClick:",e);}}}
@@ -682,7 +894,56 @@ if(value==null||isNaN(value))return;const name=ds.IName||ds.ICode||`Item ${i+1}`
 this._updateTooltip(chart,data,opts);},_removeTooltip(){if(this._interaction.tooltipElement){this._interaction.tooltipElement.remove();this._interaction.tooltipElement=null;}},_updateTooltip(chart,data,opts){const canvas=chart.canvas;const area=chart.chartArea;if(!this._interaction.tooltipElement){this._interaction.tooltipElement=document.createElement('div');this._interaction.tooltipElement.className='pillar-breakdown-tooltip';this._interaction.tooltipElement.style.position='absolute';this._interaction.tooltipElement.style.pointerEvents='none';this._interaction.tooltipElement.style.zIndex='1000';canvas.parentElement.style.position='relative';canvas.parentElement.appendChild(this._interaction.tooltipElement);}
 const tooltip=this._interaction.tooltipElement;let scoresHTML='';data.items.forEach(item=>{scoresHTML+=`<div class="pillar-breakdown-score-line"><span class="pillar-breakdown-item-label"style="color: ${item.color}">${item.name}:</span><span class="pillar-breakdown-item-score">${item.value.toFixed(3)}</span></div>`;});if(data.sspi!==null){scoresHTML+=`<div class="pillar-breakdown-score-line sspi-total"><span class="pillar-breakdown-item-label">SSPI:</span><span class="pillar-breakdown-item-score">${data.sspi.toFixed(3)}</span></div>`;}
 let headerHTML='';if(opts.countryName){const flag=opts.countryFlag||'';headerHTML=`<h3><span class="pillar-breakdown-country-name">${flag}\u0020${opts.countryName}</span><span class="pillar-breakdown-year">${data.header}</span></h3>`;}else{headerHTML=`<h3><span class="pillar-breakdown-year">${data.header}</span></h3>`;}
-tooltip.innerHTML=`${headerHTML}<div class="pillar-breakdown-score-container">${scoresHTML}</div>`;const canvasRect=canvas.getBoundingClientRect();const parentRect=canvas.parentElement.getBoundingClientRect();const nearestX=this._interaction.nearest.x;const mouseY=this._interaction.mouse.y;tooltip.style.visibility='hidden';tooltip.style.display='block';const tooltipRect=tooltip.getBoundingClientRect();const tooltipWidth=tooltipRect.width;const tooltipHeight=tooltipRect.height;tooltip.style.visibility='';const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+15:nearestX-15-tooltipWidth;x=Math.max(area.left+2,Math.min(x,area.right-tooltipWidth-2));const above=mouseY>(area.top+area.bottom)/2;let y=above?mouseY-tooltipHeight-opts.radius-5:mouseY+opts.radius+5;y=Math.max(area.top+2,Math.min(y,area.bottom-tooltipHeight-2));const offsetX=canvasRect.left-parentRect.left;const offsetY=canvasRect.top-parentRect.top;tooltip.style.left=(x+offsetX)+'px';tooltip.style.top=(y+offsetY)+'px';},_resetProximity(chart){this._interaction.tooltipData=null;this._removeTooltip();},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
+tooltip.innerHTML=`${headerHTML}<div class="pillar-breakdown-score-container">${scoresHTML}</div>`;const canvasRect=canvas.getBoundingClientRect();const parentRect=canvas.parentElement.getBoundingClientRect();const nearestX=this._interaction.nearest.x;const mouseY=this._interaction.mouse.y;tooltip.style.visibility='hidden';tooltip.style.display='block';const tooltipRect=tooltip.getBoundingClientRect();const tooltipWidth=tooltipRect.width;const tooltipHeight=tooltipRect.height;tooltip.style.visibility='';const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+15:nearestX-15-tooltipWidth;x=Math.max(area.left+2,Math.min(x,area.right-tooltipWidth-2));const above=mouseY>(area.top+area.bottom)/2;let y=above?mouseY-tooltipHeight-opts.radius-5:mouseY+opts.radius+5;y=Math.max(area.top+2,Math.min(y,area.bottom-tooltipHeight-2));const offsetX=canvasRect.left-parentRect.left;const offsetY=canvasRect.top-parentRect.top;tooltip.style.left=(x+offsetX)+'px';tooltip.style.top=(y+offsetY)+'px';},_resetProximity(chart){this._interaction.tooltipData=null;this._removeTooltip();},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};class ChangesHistoryModal{constructor(options={}){this.actionHistory=options.actionHistory;this.mode=options.mode||'modal';this.container=options.container||null;this.modal=null;this.expandedItems=new Set();this.escapeHandler=null;this.keyboardHandler=null;this.focusTrapHandler=null;}
+show(){if(this.mode==='modal'){this.showAsModal();}else{this.showAsPage();}}
+showAsModal(){this.createModal();document.body.appendChild(this.modal);const searchInput=this.modal.querySelector('#changes-search');if(searchInput){setTimeout(()=>searchInput.focus(),100);}}
+showAsPage(){if(!this.container){console.error('Container element required for page mode');return;}
+const content=this.createModalContent();content.classList.remove('dataset-modal-content');content.classList.add('changes-page-container');this.container.innerHTML='';this.container.appendChild(content);this.bindEvents(content);}
+createModal(){this.modal=document.createElement('div');this.modal.className='dataset-modal-overlay changes-modal-overlay';const content=this.createModalContent();this.modal.appendChild(content);this.bindEvents(this.modal);}
+createModalContent(){const content=document.createElement('div');content.className='dataset-modal-content enhanced changes-modal-content';const header=this.createHeader();content.appendChild(header);const listContainer=this.createListContainer();content.appendChild(listContainer);const footer=this.createFooter();content.appendChild(footer);return content;}
+createHeader(){const header=document.createElement('div');header.className='dataset-modal-header';const title=document.createElement('h3');title.className='dataset-modal-title';title.textContent='Changes History';const counter=document.createElement('div');counter.className='dataset-selection-counter';const changes=this.getFilteredChanges();const countSpan=document.createElement('span');countSpan.className='selected-count';countSpan.textContent=changes.length;const textSpan=document.createElement('span');textSpan.textContent=changes.length===1?' change from baseline':' changes from baseline';counter.appendChild(countSpan);counter.appendChild(textSpan);if(this.mode==='modal'){const closeBtn=document.createElement('button');closeBtn.className='modal-close-btn';closeBtn.id='changes-close-btn';closeBtn.setAttribute('aria-label','Close');closeBtn.setAttribute('tabindex','0');closeBtn.innerHTML='&times;';header.appendChild(title);header.appendChild(counter);header.appendChild(closeBtn);}else{header.appendChild(title);header.appendChild(counter);}
+return header;}
+createListContainer(){const container=document.createElement('div');container.className='changes-list-container';container.setAttribute('tabindex','0');const list=document.createElement('div');list.id='changes-list';list.className='changes-list';const changes=this.getFilteredChanges();if(changes.length===0){const emptyMsg=document.createElement('div');emptyMsg.className='changes-empty-message';emptyMsg.textContent=this.actionHistory.actions.length===0?'No changes made yet.':'No changes match your search or filter.';list.appendChild(emptyMsg);}else{changes.forEach((action,index)=>{const item=this.createChangeItem(action,index);list.appendChild(item);});}
+container.appendChild(list);return container;}
+createChangeItem(action,index){const item=document.createElement('div');item.className='dataset-option enhanced compact change-item';item.dataset.actionId=action.actionId;item.dataset.actionType=action.type;if(action.subtype){item.dataset.actionSubtype=action.subtype;}
+const header=document.createElement('div');header.className='dataset-compact-header change-item-header';const badge=document.createElement('span');badge.className='change-type-badge';badge.dataset.changeType=this.getChangeCategory(action.type,action.subtype);if(action.subtype){badge.textContent=`${this.formatActionType(action.type)}:${this.formatActionType(action.subtype)}`;badge.title=`${this.formatActionType(action.type)}-${this.formatActionType(action.subtype)}`;}else{badge.textContent=this.formatActionType(action.type);}
+const timestamp=document.createElement('div');timestamp.className='dataset-compact-code change-timestamp';timestamp.textContent=this.formatTimestamp(action.timestamp);header.appendChild(badge);header.appendChild(timestamp);item.appendChild(header);const message=document.createElement('div');message.className='dataset-compact-name change-message';message.textContent=action.message;item.appendChild(message);const itemRef=this.getItemReference(action);if(itemRef){const refDiv=document.createElement('div');refDiv.className='dataset-compact-description change-item-reference';refDiv.textContent=itemRef;item.appendChild(refDiv);}
+if(action.delta&&Object.keys(action.delta).length>0){const detailsContainer=this.createDetailsContainer(action);item.appendChild(detailsContainer);}
+return item;}
+createDetailsContainer(action){const details=document.createElement('details');details.className='change-details';details.dataset.actionId=action.actionId;const isExpanded=this.expandedItems.has(action.actionId);if(isExpanded){details.open=true;}
+const summary=document.createElement('summary');summary.className='change-details-summary';summary.textContent='Details';details.appendChild(summary);const content=document.createElement('div');content.className='change-details-content';const delta=action.delta;if(delta.type==='composite'&&delta.subActions&&Array.isArray(delta.subActions)){const subActionsList=document.createElement('ul');subActionsList.className='change-sub-actions-list';delta.subActions.forEach((subDelta,index)=>{const li=document.createElement('li');li.className='change-sub-action-item';const typeSpan=document.createElement('span');typeSpan.className='sub-action-type';typeSpan.textContent=this.formatActionType(subDelta.type||'change');li.appendChild(typeSpan);const detailsSpan=document.createElement('span');detailsSpan.className='sub-action-details';detailsSpan.textContent=this.formatSubActionDetails(subDelta);li.appendChild(detailsSpan);subActionsList.appendChild(li);});content.appendChild(subActionsList);}else{const dl=document.createElement('dl');dl.className='change-delta-list';Object.entries(delta).forEach(([key,value])=>{if(key==='type')return;if(key==='subActions')return;const dt=document.createElement('dt');dt.textContent=this.formatDeltaKey(key);const dd=document.createElement('dd');dd.textContent=this.formatDeltaValue(key,value);dl.appendChild(dt);dl.appendChild(dd);});content.appendChild(dl);}
+details.appendChild(content);return details;}
+createFooter(){const footer=document.createElement('div');footer.className='changes-modal-footer';const exportBtn=document.createElement('button');exportBtn.className='changes-action-btn';exportBtn.id='export-changes-btn';exportBtn.textContent='📥 Export Changes';exportBtn.title='Download changes as JSON';footer.appendChild(exportBtn);return footer;}
+bindEvents(container){if(this.mode==='modal'){const closeButton=container.querySelector('#changes-close-btn');if(closeButton){closeButton.addEventListener('click',()=>this.close());closeButton.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this.close();}});}
+container.addEventListener('click',(e)=>{if(e.target===container&&container.classList.contains('changes-modal-overlay')){this.close();}});this.escapeHandler=(e)=>{if((e.key==='Escape'||e.keyCode===27)){e.preventDefault();this.close();}};document.addEventListener('keydown',this.escapeHandler);}
+container.addEventListener('toggle',(e)=>{if(e.target.classList.contains('change-details')){const actionId=e.target.dataset.actionId;if(e.target.open){this.expandedItems.add(actionId);}else{this.expandedItems.delete(actionId);}}},true);const exportBtn=container.querySelector('#export-changes-btn');if(exportBtn){exportBtn.addEventListener('click',()=>this.exportChanges());}}
+getFilteredChanges(){if(!this.actionHistory){return[];}
+const changes=this.actionHistory.getCumulativeActions();return changes.reverse();}
+formatTimestamp(timestamp){const date=new Date(timestamp);const year=date.getFullYear();const month=String(date.getMonth()+1).padStart(2,'0');const day=String(date.getDate()).padStart(2,'0');const hours=String(date.getHours()).padStart(2,'0');const minutes=String(date.getMinutes()).padStart(2,'0');return`${year}-${month}-${day}\u0020${hours}:${minutes}`;}
+getItemReference(action){const delta=action.delta;if(!delta)return null;let name=null;let code=null;code=delta.indicatorCode||delta.categoryCode||delta.pillarCode||delta.datasetCode;if(action.type.startsWith('move-')){code=delta.indicatorCode||delta.categoryCode;}
+if(delta.indicatorName){name=delta.indicatorName;}else if(delta.categoryName){name=delta.categoryName;}else if(delta.pillarName){name=delta.pillarName;}else if(delta.to&&typeof delta.to==='string'&&!delta.to.includes('Score =')){name=delta.to;}else if(delta.name){name=delta.name;}
+let categoryContext='';if(delta.type==='composite'&&delta.categoryName){categoryContext=`in ${delta.categoryName}`;}
+if(name&&code){return`${name}(${code})${categoryContext}`;}else if(code){return`(${code})${categoryContext}`;}
+return null;}
+formatActionType(type){return type.split('-').map(word=>word.charAt(0).toUpperCase()+word.slice(1)).join(' ');}
+getChangeCategory(type,subtype){if(type==='modify-indicator'&&subtype){if(subtype==='set-code'||subtype==='set-name')return'rename';if(subtype==='set-score-function')return'other';if(subtype==='replace-datasets')return'other';}
+if(type.startsWith('add-'))return'add';if(type.startsWith('remove-'))return'remove';if(type.startsWith('move-'))return'move';if(type.startsWith('set-'))return'rename';if(type.startsWith('create-'))return'add';if(type==='composite')return'other';if(type==='modify-indicator')return'other';return'other';}
+formatDeltaKey(key){const keyMap={indicatorCode:'Indicator Code',categoryCode:'Category Code',pillarCode:'Pillar Code',fromParentCode:'From Category',toParentCode:'To Category',fromPillarCode:'From Pillar',toPillarCode:'To Pillar',from:'Previous Value',to:'New Value',name:'Name',scoreFunction:'Score Function',datasetCode:'Dataset Code',position:'Position'};return keyMap[key]||key;}
+formatDeltaValue(key,value){if(value===null||value===undefined){return'(none)';}
+if(typeof value==='object'){return JSON.stringify(value,null,2);}
+return String(value);}
+formatSubActionDetails(subDelta){if(!subDelta)return'';const type=subDelta.type;switch(type){case'set-indicator-code':if(subDelta.from){return`:Changed code from"${subDelta.from}"to"${subDelta.to}"`;}else{return`:Set code to"${subDelta.to}"`;}
+case'add-dataset':return`:Added dataset"${subDelta.datasetCode}"`;case'set-score-function':return`:Set score function to"${subDelta.to}"`;case'set-indicator-name':if(subDelta.from){return`:Renamed from"${subDelta.from}"to"${subDelta.to}"`;}else{return`:Set name to"${subDelta.to}"`;}
+case'move-indicator':return`:Moved from ${subDelta.fromParentCode}to ${subDelta.toParentCode}`;case'remove-dataset':return`:Removed dataset"${subDelta.datasetCode}"`;default:if(subDelta.from&&subDelta.to){return`:Changed from"${subDelta.from}"to"${subDelta.to}"`;}else if(subDelta.to){return`:${subDelta.to}`;}else{return'';}}}
+exportChanges(){if(!this.actionHistory){console.error('No action history available');return;}
+const changes=this.actionHistory.exportActionLog();const json=JSON.stringify(changes,null,2);const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`sspi-changes-${new Date().toISOString().split('T')[0]}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
+refresh(){const container=this.mode==='modal'?this.modal:this.container;if(!container)return;const content=container.querySelector('.changes-modal-content, .changes-page-container');if(!content)return;const newContent=this.createModalContent();newContent.className=content.className;content.replaceWith(newContent);this.bindEvents(this.mode==='modal'?this.modal:newContent);}
+close(){if(this.mode!=='modal')return;if(this.escapeHandler){document.removeEventListener('keydown',this.escapeHandler);this.escapeHandler=null;}
+if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHandler);this.keyboardHandler=null;}
+if(this.focusTrapHandler){document.removeEventListener('keydown',this.focusTrapHandler);this.focusTrapHandler=null;}
+if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal);}
+this.modal=null;}}
+window.ChangesHistoryModal=ChangesHistoryModal;class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
 this.buttonHTML=parentElement.innerHTML
 this.resultsWindow=resultsWindow
 this.datasets=datasets
@@ -741,15 +1002,31 @@ return optionArray}
 closeResults(){this.resultsWindow.innerHTML='';this.resultsWindow.style.display='none';}
 highlightSelectedIndex(){if(this.searchSelectorIndex>this.resultsWindow.children.length-1){this.searchSelectorIndex=this.resultsWindow.children.length-1}
 for(var j=0;j<this.resultsWindow.children.length;j++){if(this.searchSelectorIndex===j){this.resultsWindow.children[this.searchSelectorIndex].classList.add('search-result-index-selected');}else{this.resultsWindow.children[j].classList.remove('search-result-index-selected');}}}}
-class DatasetSelector{constructor(options={}){this.options={maxSelections:5,multiSelect:true,showOrganizations:true,showTypes:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/datasets',...options}
+class CustomizableActionHistory{constructor(sspiInstance){this.sspi=sspiInstance;this.actions=[];this.currentIndex=-1;this.maxHistorySize=100;}
+recordAction(actionConfig){if(!actionConfig.type||!actionConfig.message||!actionConfig.undo||!actionConfig.redo){console.error('Invalid action config:',actionConfig);throw new Error('Action must have type, message, undo, and redo');}
+const action={actionId:this.generateUUID(),timestamp:Date.now(),type:actionConfig.type,subtype:actionConfig.subtype||null,message:actionConfig.message,delta:actionConfig.delta||null,undo:actionConfig.undo,redo:actionConfig.redo};if(this.currentIndex<this.actions.length-1){this.actions=this.actions.slice(0,this.currentIndex+1);}
+this.actions.push(action);this.currentIndex++;if(this.actions.length>this.maxHistorySize){const overflow=this.actions.length-this.maxHistorySize;this.actions=this.actions.slice(overflow);this.currentIndex-=overflow;}
+console.log('Recorded action:',action.type,'-',action.message,'(History size:',this.actions.length,')');return action;}
+undo(){if(!this.canUndo()){this.sspi.showNotification('Nothing\u0020to\u0020undo','info',2000);return false;}
+const action=this.actions[this.currentIndex];try{action.undo();this.currentIndex--;this.sspi.showNotification(`↶\u0020Undo:\u0020${action.message}`,'info',2500);console.log('Undid action:',action.type,'-',action.message);return true;}catch(error){console.error('Error during undo:',error);this.sspi.showNotification('Error\u0020during\u0020undo','error',3000);return false;}}
+redo(){if(!this.canRedo()){this.sspi.showNotification('Nothing\u0020to\u0020redo','info',2000);return false;}
+const action=this.actions[this.currentIndex+1];try{action.redo();this.currentIndex++;this.sspi.showNotification(`↷\u0020Redo:\u0020${action.message}`,'info',2500);console.log('Redid action:',action.type,'-',action.message);return true;}catch(error){console.error('Error during redo:',error);this.sspi.showNotification('Error\u0020during\u0020redo','error',3000);return false;}}
+canUndo(){return this.currentIndex>=0;}
+canRedo(){return this.currentIndex<this.actions.length-1;}
+clear(){this.actions=[];this.currentIndex=-1;console.log('Cleared action history');}
+exportActionLog(){const actionList=this.actions.slice(0,this.currentIndex+1);return actionList.map(action=>({actionId:action.actionId,type:action.type,subtype:action.subtype,timestamp:action.timestamp,message:action.message,delta:action.delta}));}
+getCumulativeActions(){return this.actions.slice(0,this.currentIndex+1);}
+generateUUID(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){const r=Math.random()*16|0;const v=c==='x'?r:(r&0x3|0x8);return v.toString(16);});}}
+class DatasetSelector{constructor(options={}){this.options={maxSelections:10,multiSelect:true,showOrganizations:true,showTypes:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/datasets',preloadedDatasets:null,...options}
 this.datasets=[]
 this.filteredDatasets=[]
 this.selectedDatasets=[]
-this.currentFilters={search:'',organization:'',type:'',category:''}
-this.modal=null}
-async initialize(){await this.loadDatasets()
-this.applyFilters()}
-async loadDatasets(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=300`)
+this.currentFilters={search:'',organization:''}
+this.modal=null
+this.highlightedIndex=-1}
+async initialize(){if(this.options.preloadedDatasets&&Array.isArray(this.options.preloadedDatasets)){console.log('Using preloaded datasets:',this.options.preloadedDatasets.length);this.datasets=this.options.preloadedDatasets;}else{await this.loadDatasets();}
+this.applyFilters();}
+async loadDatasets(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=1000`)
 const data=await response.json()
 this.datasets=data.datasets||[]}catch(error){console.error('Error loading datasets:',error)
 this.datasets=[]}}
@@ -760,7 +1037,9 @@ if(!this.modal){console.error('Failed to create modal')
 return}
 this.renderModal()
 this.bindEvents()
-document.body.appendChild(this.modal)}catch(error){console.error('Error showing dataset selector:',error)}}
+document.body.appendChild(this.modal)
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#dataset-search')
+if(searchInput){setTimeout(()=>searchInput.focus(),100)}}}catch(error){console.error('Error showing dataset selector:',error)}}
 createModal(){this.modal=document.createElement('div')
 this.modal.className='dataset-modal-overlay'
 const modalContent=document.createElement('div')
@@ -768,19 +1047,20 @@ modalContent.className='dataset-modal-content enhanced'
 modalContent.innerHTML='<div class="dataset-modal-header">'+
 '<h3 class="dataset-modal-title">Select Dataset</h3>'+
 '<div class="dataset-selection-counter">'+
-'<span class="selected-count">'+this.selectedDatasets.length+'</span> of '+
-'<span class="max-count">'+this.options.maxSelections+'</span> selected'+
+'<span class="selected-count">'+this.selectedDatasets.length+'</span>'+
+'<span>of</span>'+
+'<span class="max-count">'+this.options.maxSelections+'</span>'+
+'<span>selected</span>'+
 '</div>'+
+'<button class="modal-close-btn" id="modal-close-btn" aria-label="Close" tabindex="0">&times;</button>'+
 '</div>'+
 (this.options.enableSearch?this.createSearchHTML():'')+
+this.createSelectedDatasetsHTML()+
 (this.options.enableFilters?this.createFiltersHTML():'')+
-'<div class="dataset-list-container">'+
+'<div class="dataset-list-container" tabindex="0">'+
 '<div id="dataset-list" class="dataset-list enhanced">'+
 '<div class="dataset-loading-message">Loading datasets...</div>'+
 '</div>'+
-'</div>'+
-'<div class="dataset-modal-actions">'+
-'<button id="modal-cancel" class="dataset-modal-cancel">Close</button>'+
 '</div>'
 this.modal.appendChild(modalContent)}
 createSearchHTML(){return'<div class="dataset-search-container">'+
@@ -788,45 +1068,49 @@ createSearchHTML(){return'<div class="dataset-search-container">'+
 'placeholder="Search datasets by code, name, or description...">'+
 '<div class="search-results-count"></div>'+
 '</div>';}
-createFiltersHTML(){const organizations=[...new Set(this.datasets.map(d=>d.organization))].sort()
-const types=[...new Set(this.datasets.map(d=>d.dataset_type))].sort()
-const categories=[...new Set(this.datasets.map(d=>d.topic_category))].sort()
-const orgOptions=organizations.map(org=>'<option value="'+org+'">'+org+'</option>').join('')
-const typeOptions=types.map(type=>'<option value="'+type+'">'+type+'</option>').join('')
-const catOptions=categories.map(cat=>'<option value="'+cat+'">'+cat+'</option>').join('')
+createFiltersHTML(){const orgMap=new Map()
+this.datasets.forEach(d=>{const orgName=d.Source?.OrganizationName||'Unknown';const orgCode=d.Source?.OrganizationCode||'';if(!orgMap.has(orgName)){orgMap.set(orgName,orgCode)}})
+const organizations=Array.from(orgMap.entries()).sort((a,b)=>a[0].localeCompare(b[0]))
+const orgOptions=organizations.map(([orgName,orgCode])=>{const displayText=orgCode?orgName+' ('+orgCode+')':orgName
+return'<option value="'+orgName+'">'+displayText+'</option>'}).join('')
 return'<div class="dataset-filters-container">'+
-'<div class="filter-group">'+
-'<label for="org-filter">Organization:</label>'+
+'<label for="org-filter" class="visually-hidden">Organization:</label>'+
 '<select id="org-filter" class="filter-select">'+
 '<option value="">All Organizations</option>'+
 orgOptions+
 '</select>'+
-'</div>'+
-'<div class="filter-group">'+
-'<label for="type-filter">Type:</label>'+
-'<select id="type-filter" class="filter-select">'+
-'<option value="">All Types</option>'+
-typeOptions+
-'</select>'+
-'</div>'+
-'<div class="filter-group">'+
-'<label for="category-filter">Category:</label>'+
-'<select id="category-filter" class="filter-select">'+
-'<option value="">All Categories</option>'+
-catOptions+
-'</select>'+
-'</div>'+
-'<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>'+
+'</div>';}
+createSelectedDatasetsHTML(){return'<div class="selected-datasets-container" id="selected-datasets-container">'+
+'<div class="selected-datasets-list" id="selected-datasets-list"></div>'+
 '</div>';}
 renderModal(){this.applyFilters()
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
-applyFilters(){this.filteredDatasets=this.datasets.filter(dataset=>{const matchesSearch=!this.currentFilters.search||dataset.dataset_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||dataset.dataset_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(dataset.description&&dataset.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
-const matchesOrg=!this.currentFilters.organization||dataset.organization===this.currentFilters.organization
-const matchesType=!this.currentFilters.type||dataset.dataset_type===this.currentFilters.type
-const matchesCategory=!this.currentFilters.category||dataset.topic_category===this.currentFilters.category
-return matchesSearch&&matchesOrg&&matchesType&&matchesCategory})
+applyFilters(){this.filteredDatasets=this.datasets.filter(dataset=>{const matchesSearch=!this.currentFilters.search||dataset.DatasetCode.toLowerCase().includes(this.currentFilters.search.toLowerCase())||dataset.DatasetName.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(dataset.Description&&dataset.Description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+const orgName=dataset.Source?.OrganizationName||'Unknown';const matchesOrg=!this.currentFilters.organization||orgName===this.currentFilters.organization
+return matchesSearch&&matchesOrg})
 this.updateResultsCount()}
+renderSelectedDatasets(){if(!this.modal)return
+const container=this.modal.querySelector('#selected-datasets-list')
+if(!container)return
+container.innerHTML=''
+if(this.selectedDatasets.length===0){return}
+const bubbles=this.selectedDatasets.map(datasetCode=>{const dataset=this.datasets.find(d=>d.DatasetCode===datasetCode)
+if(!dataset)return''
+return'<div class="selected-dataset-bubble" data-dataset-code="'+datasetCode+'">'+
+'<span class="bubble-text">'+datasetCode+'</span>'+
+'<button class="bubble-remove-btn" data-dataset-code="'+datasetCode+'" title="Remove '+datasetCode+'">'+
+'&times;'+
+'</button>'+
+'</div>'}).filter(html=>html!=='').join('')
+container.innerHTML=bubbles
+this.bindSelectedDatasetEvents()}
+bindSelectedDatasetEvents(){if(!this.modal)return
+const removeButtons=this.modal.querySelectorAll('.bubble-remove-btn')
+removeButtons.forEach(button=>{button.addEventListener('click',(e)=>{e.stopPropagation()
+const datasetCode=button.dataset.datasetCode
+this.removeDataset(datasetCode)})})}
 renderDatasetList(){if(!this.modal){console.error('Modal not found in renderDatasetList')
 return}
 const datasetList=this.modal.querySelector('#dataset-list')
@@ -835,26 +1119,23 @@ return}
 if(this.filteredDatasets.length===0){datasetList.innerHTML='<div class="dataset-no-results">No datasets found matching your criteria.</div>'
 return}
 const htmlParts=[]
-this.filteredDatasets.forEach(dataset=>{const isSelected=this.selectedDatasets.includes(dataset.dataset_code)
+this.filteredDatasets.forEach(dataset=>{const isSelected=this.selectedDatasets.includes(dataset.DatasetCode)
 const isDisabled=!isSelected&&this.selectedDatasets.length>=this.options.maxSelections
 let cssClasses='dataset-option enhanced'
 if(isSelected)cssClasses+=' selected'
 if(isDisabled)cssClasses+=' disabled'
 let badges=''
-if(this.options.showOrganizations){badges+='<span class="dataset-organization-badge '+dataset.organization.toLowerCase()+'">'+dataset.organization+'</span>'}
-if(this.options.showTypes){badges+='<span class="dataset-type-badge '+dataset.dataset_type.toLowerCase()+'">'+dataset.dataset_type+'</span>'}
-badges+='<span class="dataset-category-badge '+dataset.topic_category.toLowerCase()+'">'+dataset.topic_category+'</span>'
+if(this.options.showOrganizations){const orgName=dataset.Source?.OrganizationName||'Unknown';const orgCode=dataset.Source?.OrganizationCode||'';const orgDisplay=orgCode||orgName
+badges+='<span class="dataset-organization-badge '+orgName.toLowerCase().replace(/\s+/g,'-')+'">'+orgDisplay+'</span>'}
 let actions=''
 if(isSelected){actions='<button class="dataset-remove-btn">Remove</button>'}else{actions='<button class="dataset-add-btn"'+(isDisabled?' disabled':'')+'>Add Dataset</button>'}
 if(isDisabled&&!isSelected){actions+='<div class="dataset-limit-note">Selection limit reached</div>'}
-const description=dataset.description_short||dataset.description||''
-const organization=dataset.organization_name||dataset.organization||''
-htmlParts.push('<div class="'+cssClasses+' compact" data-dataset-code="'+dataset.dataset_code+'">'+
+const description=dataset.Description||''
+htmlParts.push('<div class="'+cssClasses+' compact" data-dataset-code="'+dataset.DatasetCode+'">'+
 '<div class="dataset-compact-header">'+
-'<div class="dataset-compact-code">'+dataset.dataset_code+'</div>'+
-'<div class="dataset-compact-badges">'+badges+'</div>'+
+'<div class="dataset-compact-code">'+dataset.DatasetCode+'</div>'+
 '</div>'+
-'<div class="dataset-compact-name">'+dataset.dataset_name+'</div>'+
+'<div class="dataset-compact-name">'+dataset.DatasetName+'</div>'+
 '<div class="dataset-compact-description">'+description+'</div>'+
 '</div>')})
 datasetList.innerHTML=htmlParts.join('')
@@ -863,59 +1144,77 @@ bindEvents(){if(!this.modal){console.error('Modal not found in bindEvents')
 return}
 if(this.options.enableSearch){const searchInput=this.modal.querySelector('#dataset-search')
 if(searchInput){searchInput.addEventListener('input',(e)=>{this.currentFilters.search=e.target.value
+this.highlightedIndex=-1
 this.applyFilters()
-this.renderDatasetList()})}}
+this.renderDatasetList()})
+searchInput.addEventListener('keydown',(e)=>{if(e.key==='Escape'){e.preventDefault()
+e.stopPropagation()
+e.stopImmediatePropagation()
+this.close()
+return}
+this.handleKeyboardNavigation(e)
+const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){e.stopPropagation()}})}}
+this.keyboardHandler=(e)=>{const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){this.handleKeyboardNavigation(e)}}
+document.addEventListener('keydown',this.keyboardHandler)
 if(this.options.enableFilters){const orgFilter=this.modal.querySelector('#org-filter')
-const typeFilter=this.modal.querySelector('#type-filter')
-const categoryFilter=this.modal.querySelector('#category-filter')
-const clearButton=this.modal.querySelector('#clear-filters')
 if(orgFilter){orgFilter.addEventListener('change',(e)=>{this.currentFilters.organization=e.target.value
 this.applyFilters()
-this.renderDatasetList()})}
-if(typeFilter){typeFilter.addEventListener('change',(e)=>{this.currentFilters.type=e.target.value
-this.applyFilters()
-this.renderDatasetList()})}
-if(categoryFilter){categoryFilter.addEventListener('change',(e)=>{this.currentFilters.category=e.target.value
-this.applyFilters()
-this.renderDatasetList()})}
-if(clearButton){clearButton.addEventListener('click',()=>{this.clearFilters()})}}
-const cancelButton=this.modal.querySelector('#modal-cancel')
+this.renderDatasetList()})}}
+const closeButton=this.modal.querySelector('#modal-close-btn')
 const confirmButton=this.modal.querySelector('#modal-confirm')
 const clearButton=this.modal.querySelector('#modal-clear')
-if(cancelButton){cancelButton.addEventListener('click',()=>{this.close()})}
+if(closeButton){closeButton.addEventListener('click',()=>{this.close()})
+closeButton.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault()
+this.close()}})}
 if(confirmButton){confirmButton.addEventListener('click',()=>{this.confirm()})}
 if(clearButton){clearButton.addEventListener('click',()=>{this.clearAll()})}
-this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})}
+this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})
+this.escapeHandler=(e)=>{if((e.key==='Escape'||e.keyCode===27)&&this.modal){e.preventDefault()
+this.close()}}
+document.addEventListener('keydown',this.escapeHandler)
+this.focusTrapHandler=(e)=>{if(e.key!=='Tab'||!this.modal)return
+const focusableElements=this.modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])')
+const focusableArray=Array.from(focusableElements)
+const firstElement=focusableArray[0]
+const lastElement=focusableArray[focusableArray.length-1]
+if(e.shiftKey){if(document.activeElement===firstElement){e.preventDefault()
+lastElement.focus()}}else{if(document.activeElement===lastElement){e.preventDefault()
+firstElement.focus()}}}
+document.addEventListener('keydown',this.focusTrapHandler)}
 bindDatasetEvents(){if(!this.modal)return
 this.modal.querySelectorAll('.dataset-option').forEach(option=>{const datasetCode=option.dataset.datasetCode
 const isSelected=this.selectedDatasets.includes(datasetCode)
 const isDisabled=!isSelected&&this.selectedDatasets.length>=this.options.maxSelections
+option.addEventListener('mouseenter',()=>{if(this.inputMode!=='mouse'){this.inputMode='mouse'
+this.updateInputModeClass()}})
 if(!isDisabled){option.style.cursor='pointer'
 option.addEventListener('click',(e)=>{e.stopPropagation()
 if(isSelected){this.removeDataset(datasetCode)}else{this.addDataset(datasetCode)}})}else{option.style.cursor='not-allowed'}})}
 addDataset(datasetCode){if(this.selectedDatasets.length>=this.options.maxSelections)return
 if(this.selectedDatasets.includes(datasetCode))return
 this.selectedDatasets.push(datasetCode)
-if(this.options.onSelectionChange){this.options.onSelectionChange(this.selectedDatasets)}
+if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedDatasetObjects())}
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
 removeDataset(datasetCode){this.selectedDatasets=this.selectedDatasets.filter(code=>code!==datasetCode)
-if(this.options.onSelectionChange){this.options.onSelectionChange(this.selectedDatasets)}
+if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedDatasetObjects())}
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
+getSelectedDatasetObjects(){return this.selectedDatasets.map(code=>{return this.datasets.find(d=>d.DatasetCode===code)}).filter(d=>d)}
 clearAll(){this.selectedDatasets=[]
+this.renderSelectedDatasets()
 this.renderDatasetList()
 this.updateSelectionCounter()}
-clearFilters(){this.currentFilters={search:'',organization:'',type:'',category:''}
+clearFilters(){this.currentFilters={search:'',organization:''}
 if(!this.modal)return
 const searchInput=this.modal.querySelector('#dataset-search')
 if(searchInput)searchInput.value=''
 const orgFilter=this.modal.querySelector('#org-filter')
-const typeFilter=this.modal.querySelector('#type-filter')
-const categoryFilter=this.modal.querySelector('#category-filter')
 if(orgFilter)orgFilter.value=''
-if(typeFilter)typeFilter.value=''
-if(categoryFilter)categoryFilter.value=''
 this.applyFilters()
 this.renderDatasetList()}
 updateSelectionCounter(){if(!this.modal)return
@@ -923,25 +1222,115 @@ const counter=this.modal.querySelector('.selected-count')
 if(counter)counter.textContent=this.selectedDatasets.length}
 updateResultsCount(){if(!this.modal)return
 const resultsCount=this.modal.querySelector('.search-results-count')
-if(resultsCount){resultsCount.textContent=this.filteredDatasets.length+' dataset'+(this.filteredDatasets.length!==1?'s':'')+' found'}}
-confirm(){if(this.options.onSelectionChange){this.options.onSelectionChange(this.selectedDatasets)}
+if(resultsCount){resultsCount.textContent=this.filteredDatasets.length+'/'+this.datasets.length}}
+confirm(){if(this.options.onSelectionChange){this.options.onSelectionChange(this.getSelectedDatasetObjects())}
 this.close()}
-close(){if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
+close(){if(this.escapeHandler){document.removeEventListener('keydown',this.escapeHandler)
+this.escapeHandler=null}
+if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHandler)
+this.keyboardHandler=null}
+if(this.focusTrapHandler){document.removeEventListener('keydown',this.focusTrapHandler)
+this.focusTrapHandler=null}
+if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
 this.modal=null}
 hide(){this.close()}
-getSelectedDatasets(){return this.selectedDatasets}}
-class IndicatorSelector{constructor(options={}){this.options={maxSelections:1,multiSelect:false,showCategories:true,showPillars:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/indicators',...options}
+handleKeyboardNavigation(e){if(!this.modal)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+if(items.length===0)return
+if(this.inputMode!=='keyboard'){this.inputMode='keyboard'
+this.updateInputModeClass()}
+switch(e.key){case'ArrowDown':e.preventDefault()
+if(this.highlightedIndex<items.length-1){this.highlightedIndex++
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'ArrowUp':e.preventDefault()
+if(this.highlightedIndex>-1){this.highlightedIndex--
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'Home':e.preventDefault()
+this.highlightedIndex=0
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'End':e.preventDefault()
+this.highlightedIndex=items.length-1
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageUp':e.preventDefault()
+this.highlightedIndex=Math.max(0,this.highlightedIndex-10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageDown':e.preventDefault()
+this.highlightedIndex=Math.min(items.length-1,this.highlightedIndex+10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'Enter':case' ':const searchInput=this.modal.querySelector('#dataset-search')
+const listContainer=this.modal.querySelector('.dataset-list-container')
+const isFocusedOnInput=document.activeElement===searchInput||document.activeElement===listContainer
+if(this.highlightedIndex>=0&&isFocusedOnInput){e.preventDefault()
+this.toggleHighlightedDataset()}
+break}
+const isNavigationKey=['ArrowUp','ArrowDown','PageUp','PageDown'].includes(e.key)
+const isOnButton=document.activeElement&&document.activeElement.tagName==='BUTTON'
+const isOnSelect=document.activeElement&&document.activeElement.tagName==='SELECT'
+if(this.options.enableSearch&&isNavigationKey&&!isOnButton){const searchInput=this.modal.querySelector('#dataset-search')
+const listContainer=this.modal.querySelector('.dataset-list-container')
+if(searchInput&&(document.activeElement===listContainer||isOnSelect)){searchInput.focus()}}}
+highlightSelectedIndex(){if(!this.modal)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+if(this.highlightedIndex>items.length-1){this.highlightedIndex=items.length-1}
+items.forEach((item,index)=>{if(index===this.highlightedIndex){item.classList.add('keyboard-highlighted')}else{item.classList.remove('keyboard-highlighted')}})}
+scrollHighlightedIntoView(){if(!this.modal||this.highlightedIndex===-1)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){highlightedItem.scrollIntoView({block:'nearest',behavior:'smooth'})}}
+toggleHighlightedDataset(){if(!this.modal||this.highlightedIndex===-1)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+const items=datasetList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){const datasetCode=highlightedItem.dataset.datasetCode
+if(datasetCode){if(this.selectedDatasets.includes(datasetCode)){this.removeDataset(datasetCode)}else{this.addDataset(datasetCode)}}}}
+getSelectedDatasets(){return this.selectedDatasets}
+updateInputModeClass(){if(!this.modal)return
+const datasetList=this.modal.querySelector('#dataset-list')
+if(!datasetList)return
+if(this.inputMode==='keyboard'){datasetList.classList.add('keyboard-mode')
+if(this.highlightedIndex>=0){this.highlightSelectedIndex()}}else{datasetList.classList.remove('keyboard-mode')
+const items=datasetList.querySelectorAll('.dataset-option.keyboard-highlighted')
+items.forEach(item=>item.classList.remove('keyboard-highlighted'))
+}}}
+class IndicatorSelector{constructor(options={}){this.options={maxSelections:1,multiSelect:false,showCategories:true,showPillars:true,enableFilters:true,enableSearch:true,onSelectionChange:null,apiEndpoint:'/api/v1/customize/indicators',preloadedIndicators:null,...options}
 this.indicators=[]
 this.filteredIndicators=[]
 this.selectedIndicator=null
+this.pillarOptions=[]
+this.categoryOptions=[]
 this.currentFilters={search:'',category:'',pillar:''}
-this.modal=null}
-async initialize(){await this.loadIndicators()
-this.applyFilters()}
-async loadIndicators(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=300`)
+this.modal=null
+this.highlightedIndex=-1
+this.inputMode='mouse'}
+async initialize(){if(this.options.preloadedIndicators&&Array.isArray(this.options.preloadedIndicators)){console.log('Using preloaded indicators:',this.options.preloadedIndicators.length);this.indicators=this.options.preloadedIndicators;}else{await this.loadIndicators();}
+this.applyFilters();}
+async loadIndicators(){try{const response=await fetch(`${this.options.apiEndpoint}?limit=1000`)
 const data=await response.json()
-this.indicators=data.indicators||[]}catch(error){console.error('Error loading indicators:',error)
-this.indicators=[]}}
+this.indicators=data.indicators||[]
+this.pillarOptions=data.pillars||[]
+this.categoryOptions=data.categories||[]}catch(error){console.error('Error loading indicators:',error)
+this.indicators=[]
+this.pillarOptions=[]
+this.categoryOptions=[]}}
 async show(currentSelection=null){try{if(!this.indicators.length){await this.initialize()}
 this.selectedIndicator=currentSelection
 this.createModal()
@@ -949,7 +1338,9 @@ if(!this.modal){console.error('Failed to create modal')
 return}
 this.renderModal()
 this.bindEvents()
-document.body.appendChild(this.modal)}catch(error){console.error('Error showing indicator selector:',error)}}
+document.body.appendChild(this.modal)
+if(this.options.enableSearch){const searchInput=this.modal.querySelector('#indicator-search')
+if(searchInput){setTimeout(()=>searchInput.focus(),100)}}}catch(error){console.error('Error showing indicator selector:',error)}}
 createModal(){this.modal=document.createElement('div')
 this.modal.className='dataset-modal-overlay'
 const modalContent=document.createElement('div')
@@ -957,18 +1348,21 @@ modalContent.className='dataset-modal-content enhanced'
 modalContent.innerHTML='<div class="dataset-modal-header">'+
 '<h3 class="dataset-modal-title">Select Existing Indicator</h3>'+
 '<div class="dataset-selection-counter">'+
-'<span class="selected-count">'+(this.selectedIndicator?1:0)+'</span> of 1 selected'+
+'<span class="selected-count">'+(this.selectedIndicator?1:0)+'</span>'+
+'<span>of</span>'+
+'<span>1</span>'+
+'<span>selected</span>'+
 '</div>'+
+'<button class="modal-close-btn" id="modal-close-btn" aria-label="Close" tabindex="0">&times;</button>'+
 '</div>'+
 (this.options.enableSearch?this.createSearchHTML():'')+
 (this.options.enableFilters?this.createFiltersHTML():'')+
-'<div class="dataset-list-container">'+
+'<div class="dataset-list-container" tabindex="0">'+
 '<div id="indicator-list" class="dataset-list enhanced">'+
 '<div class="dataset-loading-message">Loading indicators...</div>'+
 '</div>'+
 '</div>'+
 '<div class="dataset-modal-actions">'+
-'<button id="modal-cancel" class="dataset-modal-cancel">Cancel</button>'+
 '<button id="modal-confirm" class="dataset-modal-confirm" '+
 (this.selectedIndicator?'':'disabled')+'>Add Indicator</button>'+
 '</div>'
@@ -978,33 +1372,31 @@ createSearchHTML(){return'<div class="dataset-search-container">'+
 'placeholder="Search indicators by code, name, or description...">'+
 '<div class="search-results-count"></div>'+
 '</div>';}
-createFiltersHTML(){const categories=[...new Set(this.indicators.map(i=>i.category_name).filter(Boolean))].sort()
-const pillars=[...new Set(this.indicators.map(i=>i.pillar_name).filter(Boolean))].sort()
-const catOptions=categories.map(cat=>'<option value="'+cat+'">'+cat+'</option>').join('')
-const pillarOptions=pillars.map(pillar=>'<option value="'+pillar+'">'+pillar+'</option>').join('')
+createFiltersHTML(){const pillarOptions=this.pillarOptions.map(p=>{const code=p.PillarCode||p.ItemCode
+const name=p.Pillar||p.ItemName||code
+return'<option value="'+code+'">'+name+'\u0020('+code+')</option>'}).join('')
+const categoryOptions=this.categoryOptions.map(c=>{const code=c.CategoryCode||c.ItemCode
+const name=c.Category||c.ItemName||code
+return'<option value="'+code+'">'+name+'\u0020('+code+')</option>'}).join('')
 return'<div class="dataset-filters-container">'+
-'<div class="filter-group">'+
-'<label for="pillar-filter">Pillar:</label>'+
-'<select id="pillar-filter" class="filter-select">'+
-'<option value="">All Pillars</option>'+
+'<select id="pillar-filter" class="filter-select pillar-select">'+
+'<option value="" class="default-option">All Pillars</option>'+
 pillarOptions+
 '</select>'+
-'</div>'+
-'<div class="filter-group">'+
-'<label for="category-filter">Category:</label>'+
-'<select id="category-filter" class="filter-select">'+
-'<option value="">All Categories</option>'+
-catOptions+
+'<select id="category-filter" class="filter-select category-select">'+
+'<option value="" class="default-option">All Categories</option>'+
+categoryOptions+
 '</select>'+
-'</div>'+
-'<button id="clear-filters" class="clear-filters-btn">Clear Filters</button>'+
 '</div>';}
 renderModal(){this.applyFilters()
 this.renderIndicatorList()
 this.updateSelectionCounter()}
-applyFilters(){this.filteredIndicators=this.indicators.filter(indicator=>{const matchesSearch=!this.currentFilters.search||indicator.indicator_code.toLowerCase().includes(this.currentFilters.search.toLowerCase())||indicator.indicator_name.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(indicator.description&&indicator.description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
-const matchesCategory=!this.currentFilters.category||indicator.category_name===this.currentFilters.category
-const matchesPillar=!this.currentFilters.pillar||indicator.pillar_name===this.currentFilters.pillar
+applyFilters(){this.filteredIndicators=this.indicators.filter(indicator=>{const matchesSearch=!this.currentFilters.search||indicator.IndicatorCode.toLowerCase().includes(this.currentFilters.search.toLowerCase())||(indicator.Indicator&&indicator.Indicator.toLowerCase().includes(this.currentFilters.search.toLowerCase()))||(indicator.ItemName&&indicator.ItemName.toLowerCase().includes(this.currentFilters.search.toLowerCase()))||(indicator.Description&&indicator.Description.toLowerCase().includes(this.currentFilters.search.toLowerCase()))
+const pathParts=indicator.TreePath?indicator.TreePath.split('/'):[]
+const pillar=pathParts.length>1?pathParts[1].toUpperCase():''
+const category=pathParts.length>2?pathParts[2].toUpperCase():''
+const matchesCategory=!this.currentFilters.category||category===this.currentFilters.category
+const matchesPillar=!this.currentFilters.pillar||pillar===this.currentFilters.pillar
 return matchesSearch&&matchesCategory&&matchesPillar})
 this.updateResultsCount()}
 renderIndicatorList(){if(!this.modal){console.error('Modal not found in renderIndicatorList')
@@ -1015,19 +1407,20 @@ return}
 if(this.filteredIndicators.length===0){indicatorList.innerHTML='<div class="dataset-no-results">No indicators found matching your criteria.</div>'
 return}
 const htmlParts=[]
-this.filteredIndicators.forEach(indicator=>{const isSelected=this.selectedIndicator===indicator.indicator_code
+this.filteredIndicators.forEach(indicator=>{const isSelected=this.selectedIndicator===indicator.IndicatorCode
 let cssClasses='dataset-option enhanced'
 if(isSelected)cssClasses+=' selected'
-let badges=''
-if(this.options.showPillars&&indicator.pillar_name){badges+='<span class="dataset-organization-badge '+indicator.pillar_code.toLowerCase()+'">'+indicator.pillar_name+'</span>'}
-if(this.options.showCategories&&indicator.category_name){badges+='<span class="dataset-category-badge '+indicator.category_code.toLowerCase()+'">'+indicator.category_name+'</span>'}
-const description=indicator.description||''
-htmlParts.push('<div class="'+cssClasses+' compact" data-indicator-code="'+indicator.indicator_code+'">'+
+const pathParts=indicator.TreePath?indicator.TreePath.split('/'):[]
+const pillar=pathParts.length>1?pathParts[1].toUpperCase():''
+const category=pathParts.length>2?pathParts[2].toUpperCase():''
+const breadcrumb=pillar+'\u0020>\u0020'+category+'\u0020>\u0020'+indicator.IndicatorCode
+const description=indicator.Description||''
+const indicatorName=indicator.Indicator||indicator.ItemName||indicator.IndicatorCode
+htmlParts.push('<div class="'+cssClasses+' compact" data-indicator-code="'+indicator.IndicatorCode+'">'+
 '<div class="dataset-compact-header">'+
-'<div class="dataset-compact-code">'+indicator.indicator_code+'</div>'+
-'<div class="dataset-compact-badges">'+badges+'</div>'+
+'<div class="dataset-compact-code">'+breadcrumb+'</div>'+
 '</div>'+
-'<div class="dataset-compact-name">'+indicator.indicator_name+'</div>'+
+'<div class="dataset-compact-name">'+indicatorName+'</div>'+
 '<div class="dataset-compact-description">'+description+'</div>'+
 '</div>')})
 indicatorList.innerHTML=htmlParts.join('')
@@ -1036,25 +1429,54 @@ bindEvents(){if(!this.modal){console.error('Modal not found in bindEvents')
 return}
 if(this.options.enableSearch){const searchInput=this.modal.querySelector('#indicator-search')
 if(searchInput){searchInput.addEventListener('input',(e)=>{this.currentFilters.search=e.target.value
+this.highlightedIndex=-1
 this.applyFilters()
-this.renderIndicatorList()})}}
+this.renderIndicatorList()})
+searchInput.addEventListener('keydown',(e)=>{if(e.key==='Escape'){e.preventDefault()
+e.stopPropagation()
+e.stopImmediatePropagation()
+this.close()
+return}
+this.handleKeyboardNavigation(e)
+const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){e.stopPropagation()}})}}
+this.keyboardHandler=(e)=>{const navKeys=['ArrowDown','ArrowUp','Home','End','PageUp','PageDown','Enter',' ']
+if(navKeys.includes(e.key)){this.handleKeyboardNavigation(e)}}
+document.addEventListener('keydown',this.keyboardHandler)
 if(this.options.enableFilters){const pillarFilter=this.modal.querySelector('#pillar-filter')
 const categoryFilter=this.modal.querySelector('#category-filter')
-const clearButton=this.modal.querySelector('#clear-filters')
 if(pillarFilter){pillarFilter.addEventListener('change',(e)=>{this.currentFilters.pillar=e.target.value
 this.applyFilters()
 this.renderIndicatorList()})}
 if(categoryFilter){categoryFilter.addEventListener('change',(e)=>{this.currentFilters.category=e.target.value
 this.applyFilters()
-this.renderIndicatorList()})}
-if(clearButton){clearButton.addEventListener('click',()=>{this.clearFilters()})}}
-const cancelButton=this.modal.querySelector('#modal-cancel')
+this.renderIndicatorList()})}}
+const closeButton=this.modal.querySelector('#modal-close-btn')
 const confirmButton=this.modal.querySelector('#modal-confirm')
-if(cancelButton){cancelButton.addEventListener('click',()=>{this.close()})}
+if(closeButton){closeButton.addEventListener('click',()=>{this.close()})
+closeButton.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault()
+this.close()}})}
 if(confirmButton){confirmButton.addEventListener('click',()=>{this.confirm()})}
-this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})}
+this.modal.addEventListener('click',(e)=>{if(e.target===this.modal){this.close()}})
+this.escapeHandler=(e)=>{if((e.key==='Escape'||e.keyCode===27)&&this.modal){e.preventDefault()
+this.close()}}
+document.addEventListener('keydown',this.escapeHandler)
+this.focusTrapHandler=(e)=>{if(e.key!=='Tab'||!this.modal)return
+const focusableElements=this.modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])')
+const focusableArray=Array.from(focusableElements)
+const firstElement=focusableArray[0]
+const lastElement=focusableArray[focusableArray.length-1]
+if(e.shiftKey){if(document.activeElement===firstElement){e.preventDefault()
+lastElement.focus()}}else{if(document.activeElement===lastElement){e.preventDefault()
+firstElement.focus()}}}
+document.addEventListener('keydown',this.focusTrapHandler)
+const indicatorList=this.modal.querySelector('#dataset-list')
+if(indicatorList){indicatorList.addEventListener('mousemove',()=>{if(this.inputMode!=='mouse'){this.inputMode='mouse'
+this.updateInputModeClass()}})}}
 bindIndicatorEvents(){if(!this.modal)return
 this.modal.querySelectorAll('.dataset-option').forEach(option=>{const indicatorCode=option.dataset.indicatorCode
+option.addEventListener('mouseenter',()=>{if(this.inputMode!=='mouse'){this.inputMode='mouse'
+this.updateInputModeClass()}})
 option.style.cursor='pointer'
 option.addEventListener('click',(e)=>{e.stopPropagation()
 this.selectIndicator(indicatorCode)})})}
@@ -1081,17 +1503,106 @@ if(counter)counter.textContent=this.selectedIndicator?1:0}
 updateResultsCount(){if(!this.modal)return
 const resultsCount=this.modal.querySelector('.search-results-count')
 if(resultsCount){resultsCount.textContent=this.filteredIndicators.length+' indicator'+(this.filteredIndicators.length!==1?'s':'')+' found'}}
-async confirm(){if(this.selectedIndicator&&this.options.onSelectionChange){try{const response=await fetch(`/api/v1/customize/indicators/${this.selectedIndicator}`)
-const data=await response.json()
-if(data.success&&data.indicator){this.options.onSelectionChange(data.indicator)}else{const indicator=this.indicators.find(i=>i.indicator_code===this.selectedIndicator)
-this.options.onSelectionChange(indicator)}}catch(error){console.error('Error fetching indicator details:',error)
-const indicator=this.indicators.find(i=>i.indicator_code===this.selectedIndicator)
-this.options.onSelectionChange(indicator)}}
+async confirm(){if(this.selectedIndicator&&this.options.onSelectionChange){const indicator=this.indicators.find(i=>i.IndicatorCode===this.selectedIndicator)
+if(indicator){this.options.onSelectionChange(indicator)}}
 this.close()}
-close(){if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
+close(){if(this.escapeHandler){document.removeEventListener('keydown',this.escapeHandler)
+this.escapeHandler=null}
+if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHandler)
+this.keyboardHandler=null}
+if(this.focusTrapHandler){document.removeEventListener('keydown',this.focusTrapHandler)
+this.focusTrapHandler=null}
+if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal)}
 this.modal=null}
 hide(){this.close()}
-getSelectedIndicator(){return this.selectedIndicator}}
+handleKeyboardNavigation(e){if(!this.modal)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+if(items.length===0)return
+if(this.inputMode!=='keyboard'){this.inputMode='keyboard'
+this.updateInputModeClass()}
+switch(e.key){case'ArrowDown':e.preventDefault()
+if(this.highlightedIndex<items.length-1){this.highlightedIndex++
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'ArrowUp':e.preventDefault()
+if(this.highlightedIndex>-1){this.highlightedIndex--
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()}
+break
+case'Home':e.preventDefault()
+this.highlightedIndex=0
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'End':e.preventDefault()
+this.highlightedIndex=items.length-1
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageUp':e.preventDefault()
+this.highlightedIndex=Math.max(0,this.highlightedIndex-10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'PageDown':e.preventDefault()
+this.highlightedIndex=Math.min(items.length-1,this.highlightedIndex+10)
+this.highlightSelectedIndex()
+this.scrollHighlightedIntoView()
+break
+case'Enter':{const searchInput=this.modal.querySelector('#indicator-search')
+const listContainer=this.modal.querySelector('.dataset-list-container')
+const isFocusedOnInput=document.activeElement===searchInput||document.activeElement===listContainer
+if(this.highlightedIndex>=0&&isFocusedOnInput){e.preventDefault()
+const indicatorList=this.modal.querySelector('#indicator-list')
+const items=indicatorList?indicatorList.querySelectorAll('.dataset-option'):[]
+const highlightedItem=items[this.highlightedIndex]
+const highlightedCode=highlightedItem?highlightedItem.dataset.indicatorCode:null
+const isAlreadySelected=this.selectedIndicator===highlightedCode
+if(isAlreadySelected){this.confirm()}else{this.toggleHighlightedIndicator()}}
+break}
+case' ':{const searchInput=this.modal.querySelector('#indicator-search')
+const listContainer=this.modal.querySelector('.dataset-list-container')
+const isFocusedOnInput=document.activeElement===searchInput||document.activeElement===listContainer
+if(this.highlightedIndex>=0&&isFocusedOnInput){e.preventDefault()
+this.toggleHighlightedIndicator()}
+break}}
+const isNavigationKey=['ArrowUp','ArrowDown','PageUp','PageDown'].includes(e.key)
+const isOnButton=document.activeElement&&document.activeElement.tagName==='BUTTON'
+const isOnSelect=document.activeElement&&document.activeElement.tagName==='SELECT'
+if(this.options.enableSearch&&isNavigationKey&&!isOnButton){const searchInput=this.modal.querySelector('#indicator-search')
+const listContainer=this.modal.querySelector('.dataset-list-container')
+if(searchInput&&(document.activeElement===listContainer||isOnSelect)){searchInput.focus()}}}
+highlightSelectedIndex(){if(!this.modal)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+if(this.highlightedIndex>items.length-1){this.highlightedIndex=items.length-1}
+items.forEach((item,index)=>{if(index===this.highlightedIndex){item.classList.add('keyboard-highlighted')}else{item.classList.remove('keyboard-highlighted')}})}
+scrollHighlightedIntoView(){if(!this.modal||this.highlightedIndex===-1)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){highlightedItem.scrollIntoView({block:'nearest',behavior:'smooth'})}}
+toggleHighlightedIndicator(){if(!this.modal||this.highlightedIndex===-1)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+const items=indicatorList.querySelectorAll('.dataset-option')
+const highlightedItem=items[this.highlightedIndex]
+if(highlightedItem){const indicatorCode=highlightedItem.dataset.indicatorCode
+if(indicatorCode){this.selectIndicator(indicatorCode)}}}
+getSelectedIndicator(){return this.selectedIndicator}
+updateInputModeClass(){if(!this.modal)return
+const indicatorList=this.modal.querySelector('#indicator-list')
+if(!indicatorList)return
+if(this.inputMode==='keyboard'){indicatorList.classList.add('keyboard-mode')
+if(this.highlightedIndex>=0){this.highlightSelectedIndex()}}else{indicatorList.classList.remove('keyboard-mode')
+const items=indicatorList.querySelectorAll('.dataset-option.keyboard-highlighted')
+items.forEach(item=>item.classList.remove('keyboard-highlighted'))
+}}}
 class ObservableStorage{constructor(){this.listeners={};this.store={};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);this.store[key]=this._parse(localStorage.getItem(key));}}
 setItem(key,value){const oldValue=this.store[key];const stringValue=JSON.stringify(value);localStorage.setItem(key,stringValue);this.store[key]=value;this._emit(key,oldValue,value);}
 getItem(key){return this.store[key];}
@@ -1663,6 +2174,7 @@ this.chart.data=data
 this.chart.data.labels=data.labels
 console.log("Data Labels:",this.chart.data.labels)
 this.chart.data.datasets=data.data
+this.title.innerText=data.title
 this.chart.options.plugins.title=data.title
 this.groupOptions=data.groupOptions
 this.missingCountries=[]

@@ -5,8 +5,9 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
     sspi_imputed_data,
-    sspi_metadata
-)
+    sspi_metadata)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -18,7 +19,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 # @collect_bp.route("/AIRPOL", methods=['GET'])
-# @login_required
+# @admin_required
 # def airpol():
 #     def collect_iterator(**kwargs):
 #         yield from collect_sdg_indicator_data("11.6.2", "AIRPOL", **kwargs)
@@ -26,7 +27,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/AIRPOL", methods=["POST"])
-@login_required
+@admin_required
 def compute_airpol():
     app.logger.info("Running /api/v1/compute/AIRPOL")
     sspi_indicator_data.delete_many({"IndicatorCode": "AIRPOL"})
@@ -45,7 +46,7 @@ def compute_airpol():
 
 
 @impute_bp.route("/AIRPOL", methods=["POST"])
-@login_required
+@admin_required
 def impute_airpol():
     mongo_query = {"IndicatorCode": "AIRPOL"}
     sspi_imputed_data.delete_many(mongo_query)

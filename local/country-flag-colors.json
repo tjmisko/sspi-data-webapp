@@ -2662,13 +2662,13 @@
     ]
   },
   {
-    "Country": "Türkiye (Turkey)",
-    "CountryCode": "",
-    "OfficialName": "",
-    "CommonName": "",
-    "M49": "",
-    "Alpha2": "",
-    "Flag": "",
+    "Country": "Türkiye",
+    "CountryCode": "TUR",
+    "OfficialName": "Republic of Türkiye",
+    "CommonName": "Turkey",
+    "M49": "792",
+    "Alpha2": "TR",
+    "Flag": "🇹🇷",
     "FlagColors": [
       "#C8102E",
       "#FFFFFF"

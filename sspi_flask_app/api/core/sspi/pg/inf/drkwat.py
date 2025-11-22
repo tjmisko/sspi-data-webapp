@@ -13,8 +13,9 @@ from sspi_flask_app.api.resources.utilities import (
 from flask_login import login_required, current_user
 
 
-# @collect_bp.route("/DRKWAT", methods=['GET'])
-# @login_required
+# @collect_bp.route("/DRKWAT", methods=['GET']
+from sspi_flask_app.auth.decorators import admin_required
+# @admin_required
 # def drkwat():
 #     def collect_iterator(**kwargs):
 #         yield from collect_wb_data("SH.H2O.SMDW.ZS", "DRKWAT", **kwargs)
@@ -22,7 +23,7 @@ from flask_login import login_required, current_user
 
 
 @compute_bp.route("/DRKWAT", methods=["POST"])
-@login_required
+@admin_required
 def compute_drkwat():
     app.logger.info("Running /api/v1/compute/DRKWAT")
     sspi_indicator_data.delete_many({"IndicatorCode": "DRKWAT"})

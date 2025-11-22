@@ -11,13 +11,9 @@ IndicatorCode: ISHRAT
 DatasetCodes:
   - WID_NINCSH_PRETAX_P90P100
   - WID_NINCSH_PRETAX_P0P50
-Inverted: false
 LowerGoalpost: 0.2
 UpperGoalpost: 1.25
 ScoreFunction: >
     Score = goalpost(WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100, 0.2, 1.25)
-SourceOrganization: WID
-SourceOrganizationIndicatorCode: null
-SourceOrganizationURL: https://databank.worldbank.org/
 ---
 

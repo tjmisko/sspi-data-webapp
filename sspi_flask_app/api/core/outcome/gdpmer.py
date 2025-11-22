@@ -1,7 +1,8 @@
 from flask_login import login_required, current_user
 
-# @collect_bp.route("/outcome/GDPMER", methods=['GET'])
-# @login_required
+# @collect_bp.route("/outcome/GDPMER", methods=['GET']
+from sspi_flask_app.auth.decorators import admin_required
+# @admin_required
 # def gdpmek():
 #     """Collect GDP per Capita at Market Exchange Rate from World Bank API"""
 #     def collectWorldBankOutcomeData(WorldBankIndicatorCode, IndicatorCode, **kwargs):

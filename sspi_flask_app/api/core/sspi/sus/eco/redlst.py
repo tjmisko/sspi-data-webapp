@@ -7,6 +7,7 @@ from sspi_flask_app.api.datasource.unsdg import (
     extract_sdg,
     filter_sdg,
 )
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
@@ -22,7 +23,7 @@ from sspi_flask_app.models.database import (
 log = logging.getLogger(__name__)
 
 @compute_bp.route("/REDLST", methods=['POST'])
-@login_required
+@admin_required
 def compute_redlst():
     sspi_indicator_data.delete_many({"IndicatorCode": "REDLST"})
     dataset_list = sspi_clean_api_data.find({"DatasetCode": "UNSDG_REDLST"})

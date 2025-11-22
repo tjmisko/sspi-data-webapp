@@ -1,0 +1,408 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+.load-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25em;
+}
+
+.functionality-explainer {
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+}
+
+/* Unsaved warnings styling */
+.unsaved-warnings-section {
+    margin-bottom: 1.5rem;
+}
+
+.unsaved-warning-banner {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.unsaved-warning-banner h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+}
+
+.unsaved-warning-banner p {
+    margin: 0 0 1rem 0;
+    opacity: 0.9;
+    font-size: 0.875rem;
+}
+
+.warning-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.warning-actions .btn-primary,
+.warning-actions .btn-secondary {
+    text-decoration: none;
+    display: inline-block;
+}
+
+.bounded-content-box {
+  background-color: var(--box-background-color);
+  padding: 1.25rem;
+  background-color: var(--box-background-color);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  box-sizing: border-box;
+}
+
+.config-section {
+  flex: 1 1 0;
+  min-width: 400px;
+}
+
+.config-section h2 {
+ font-size: 1.75rem;
+ margin-bottom: 0.5rem;
+ color: var(--text-primary);
+}
+
+.config-flex-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.config-card {
+    background: var(--box-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.875rem 1rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.config-card:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary-color);
+}
+
+.config-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.375rem;
+    gap: 0.5rem;
+}
+
+.config-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-color);
+    font-family: var(--header-font-family);
+}
+
+.config-badge {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    background: var(--primary-color);
+    color: white;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.config-description {
+    font-size: 0.8125rem;
+    margin: 0.4rem 0;
+    line-height: 1.4;
+    color: var(--body-text-color);
+    font-family: var(--body-font-family);
+}
+
+.config-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.625rem;
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
+}
+
+.config-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.config-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-load {
+    flex: 1;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--body-font-family);
+}
+
+.btn-load:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary {
+    background: var(--box-background-color);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.loading-message, .empty-message, .error-message {
+    text-align: center;
+    padding: 3rem;
+    font-style: italic;
+}
+
+.error-message {
+    color: var(--error-color);
+}
+</style>
+<article class="page-content">
+    <section class="page-section">
+        <!-- Unsaved warnings will be injected here by JavaScript -->
+        <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
+
+        <div class="load-container">
+            <div class="bounded-content-box config-section">
+                <h3>Load Prebuilt Configuration</h3>
+                <p class="functionality-explainer">
+                    Choose a preset SSPI configuration to start from. Useful for comparing
+                    a series of changes to the original SSPI.
+                </p>
+                <div class="config-flex-container">
+                    {% for config in prebuilt_configurations %}
+                        <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
+                            <div class="config-card-header">
+                                <h3 class="config-name">{{ config.name }}</h3>
+                                {% if config.recommended %}
+                                <span class="config-badge">Recommended</span>
+                                {% endif %}
+                            </div>
+                            <p class="config-description">{{ config.description }}</p>
+                            <div class="config-meta">
+                                <span class="config-meta-item">{{ config.pillars }} Pillars</span>
+                                <span class="config-meta-item">{{ config.categories }} Categories</span>
+                                <span class="config-meta-item">{{ config.indicators }} Indicators</span>
+                                <span class="config-meta-item">{{ config.datasets }} Datasets</span>
+                            </div>
+                            <div class="config-actions">
+                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <!-- Saved Configurations -->
+            <div class="bounded-content-box config-section">
+                <!-- Unsaved warnings (inserted by JavaScript if unsaved changes exist) -->
+                <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
+                <h3>Saved Configurations</h3>
+                <p class="functionality-explainer">
+                    Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
+                </p>
+                <div class="config-flex-container">
+                    {% if not is_authenticated %}
+                        {% include 'components/login-box.html' with context %}
+                    {% elif saved_configurations | length == 0 %}
+                        <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
+                    {% else %}
+                        {% for config in saved_configurations %}
+                        <div class="config-card" data-config-id="{{ config.id }}">
+                            <div class="config-card-header">
+                                <h3 class="config-name">{{ config.name }}</h3>
+                            </div>
+                            <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
+                            {% if config.updated_at %}
+                            <div class="config-meta">
+                                <span class="config-meta-item">{{ config.updated_at }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="config-actions">
+                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="bounded-content-box config-section">
+                <h3>New Configuration</h3>
+                <p class="functionality-explainer">
+                    Begin from an empty template, designing your own
+                    data-driven policy index from the datasets up.
+                </p>
+                <div class="config-flex-container">
+                    <div class="config-card">
+                        <div class="config-card-header">
+                            <h3 class="config-name">Blank Configuration</h3>
+                        </div>
+                        <p class="config-description">
+                            Start with an empty template and build your custom policy index
+                            from scratch, selecting your own datasets, indicators, and scoring methods.
+                        </p>
+                        <div class="config-actions">
+                            <a href="/customize/builder?base_config=blank" class="btn-load">Start Building</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</article>
+<script>
+window.csrfToken = {{ csrf_token|tojson|safe }};
+window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else '""' }};
+
+// Check for unsaved changes on page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkForUnsavedChanges();
+});
+
+/**
+ * Check localStorage for any cached configurations with unsaved changes
+ * and display warning banners for each one
+ */
+function checkForUnsavedChanges() {
+    if (!window.sspiUsername) return;
+
+    try {
+        const userCachePattern = `customSSPI_${window.sspiUsername}_`;
+        const unsavedConfigs = [];
+
+        // Scan all localStorage keys for user's cached configs
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(userCachePattern)) {
+                const cacheData = JSON.parse(localStorage.getItem(key));
+                if (cacheData && cacheData.hasModifications) {
+                    const baseConfig = key.replace(userCachePattern, '');
+                    unsavedConfigs.push({
+                        baseConfig: baseConfig,
+                        lastModified: cacheData.timestamp,
+                        configName: getConfigName(baseConfig)
+                    });
+                }
+            }
+        }
+
+        if (unsavedConfigs.length > 0) {
+            displayUnsavedWarnings(unsavedConfigs);
+        }
+    } catch (error) {
+        console.error('Error checking for unsaved changes:', error);
+    }
+}
+
+/**
+ * Get a human-readable name for a base_config ID
+ */
+function getConfigName(baseConfig) {
+    const prebuiltNames = {
+        'sspi': 'Standard SSPI',
+        'blank': 'Blank Configuration',
+        'default': 'Default SSPI'
+    };
+    return prebuiltNames[baseConfig] || `Configuration ${baseConfig}`;
+}
+
+/**
+ * Display warning banners for configurations with unsaved changes
+ */
+function displayUnsavedWarnings(unsavedConfigs) {
+    const container = document.getElementById('unsaved-warnings-container');
+    if (!container) return;
+
+    const html = unsavedConfigs.map(config => `
+        <div class="unsaved-warning-banner">
+            <h4>Unsaved Changes in ${config.configName}</h4>
+            <p>Last modified: ${new Date(config.lastModified).toLocaleString()}</p>
+            <div class="warning-actions">
+                <a href="/customize/builder?base_config=${config.baseConfig}" class="btn-primary">
+                    Resume Editing
+                </a>
+                <button class="btn-secondary" onclick="discardCache('${config.baseConfig}')">
+                    Discard Changes
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = html;
+}
+
+/**
+ * Discard cached changes for a specific base_config
+ */
+function discardCache(baseConfig) {
+    if (!confirm(`Discard all unsaved changes to ${getConfigName(baseConfig)}?`)) {
+        return;
+    }
+
+    try {
+        const username = window.sspiUsername;
+        const cacheKey = `customSSPI_${username}_${baseConfig}`;
+        localStorage.removeItem(cacheKey);
+        window.location.reload();
+    } catch (error) {
+        console.error('Error discarding cache:', error);
+        alert('Error discarding changes. Please try again.');
+    }
+}
+
+async function deleteConfiguration(configId) {
+    if (!confirm('Are you sure you want to delete this configuration?')) {
+        return;
+    }
+
+    try {
+        const response = await window.csrf.fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Reload page to show updated list
+            window.location.reload();
+        } else {
+            alert('Error deleting configuration: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error deleting configuration:', error);
+        alert('Error deleting configuration. Please try again.');
+    }
+}
+</script>
+{% endblock %}

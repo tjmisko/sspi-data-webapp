@@ -8,8 +8,9 @@ from sspi_flask_app.api.resources.utilities import (
     interpolate_linear,
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_indicator_data,
@@ -19,7 +20,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/CRPTAX", methods=["POST"])
-@login_required
+@admin_required
 def compute_crptax():
     app.logger.info("Running /api/v1/compute/CRPTAX")
     sspi_indicator_data.delete_many({"IndicatorCode": "CRPTAX"})
@@ -35,7 +36,7 @@ def compute_crptax():
 
 
 @impute_bp.route("/CRPTAX", methods=['POST'])
-@login_required
+@admin_required
 def impute_crptax():
     app.logger.info("Running /api/v1/impute/CRPTAX")
     sspi_imputed_data.delete_many({"IndicatorCode": "CRPTAX"})

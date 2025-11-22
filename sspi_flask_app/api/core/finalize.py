@@ -18,8 +18,9 @@ from sspi_flask_app.models.database import (
     sspi_globe_data,
     sspi_dynamic_radar_data,
     sspi_dynamic_rank_data,
-    sspi_panel_data
-)
+    sspi_panel_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     country_code_to_name,
     colormap,
@@ -82,7 +83,7 @@ def finalize_iterator(local_path, endpoints):
 
 
 @finalize_bp.route("/production/finalize")
-@login_required
+@admin_required
 def finalize_all_production_data():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     endpoints = [str(r) for r in app.url_map.iter_rules()]
@@ -93,7 +94,7 @@ def finalize_all_production_data():
 
 
 @finalize_bp.route("/finalize/static/rank")
-@login_required
+@admin_required
 def finalize_sspi_static_rank_data():
     """
     Computes the SSPI scores at all levels and stores them in a database
@@ -143,7 +144,7 @@ def finalize_sspi_static_rank_data():
 
 
 @finalize_bp.route("/finalize/static/stack")
-@login_required
+@admin_required
 def finalize_static_overall_stack_data():
     sspi_static_stack_data.delete_many({})
     overall_scores = sspi_static_rank_data.find({"ICode": "SSPI"}, {"_id": 0})
@@ -201,7 +202,7 @@ def finalize_static_overall_stack_data():
 
 
 @finalize_bp.route("/finalize/static/radar")
-@login_required
+@admin_required
 def finalize_sspi_static_radar_data():
     sspi_static_radar_data.delete_many({})
 
@@ -265,7 +266,7 @@ def finalize_sspi_static_radar_data():
 
 
 @finalize_bp.route("/finalize/dynamic/radar")
-@login_required
+@admin_required
 def finalize_sspi_dynamic_radar_data():
     sspi_dynamic_radar_data.delete_many({})
     pillar_codes = sspi_metadata.pillar_codes()
@@ -394,7 +395,7 @@ def finalize_sspi_dynamic_radar_data():
 
 
 @finalize_bp.route("/finalize/dynamic/line")
-@login_required
+@admin_required
 def finalize_dynamic_line_data():
     """
     Prepare the data for a Chart.js line plot
@@ -662,7 +663,7 @@ def finalize_dynamic_line_score_datasets():
 
 
 @finalize_bp.route("/finalize/dynamic/matrix")
-@login_required
+@admin_required
 def finalize_dynamic_matrix_data():
     local_path = os.path.join(os.path.dirname(app.instance_path), "local")
     endpoints = [str(r) for r in app.url_map.iter_rules()]
@@ -736,7 +737,7 @@ def finalize_matrix_iterator(local_path, endpoints):
 
 
 @finalize_bp.route("/finalize/dynamic/score")
-@login_required
+@admin_required
 def finalize_sspi_dynamic_score():
     """
     Prepare the data for a Chart.js line plot
@@ -755,12 +756,12 @@ def finalize_sspi_dynamic_score():
 
 def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_codes: list[str] | None = None):
     sspi_item_data.delete_many({})
-
     # Filter to only complete indicators to avoid scoring incomplete categories
     if country_codes is None:
         country_codes = sspi_metadata.country_group("SSPI67")
     coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
     complete_indicators = coverage.complete()
+    print(complete_indicators)
 
     # Get metadata for scoring - this properly filters to complete indicators
     # and includes the full hierarchy (pillars, categories, indicators, root)
@@ -848,18 +849,14 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
     documents = []
     count = 0
     total_documents_inserted = 0
-
     # Process cursor without loading everything into memory
     for group in grouped_data_cursor:
         country_code = group["CountryCode"]
         year = group["Year"]
         indicator_data = group["Data"]
-
         count += 1
-        if count % 25 == 0:
+        if count % 100 == 0:
             yield f"Scoring {country_code} ({year}) - Group {count}\n"
-
-        # Create SSPI object and compute scores for this country-year
         sspi = SSPI(details_for_scoring, indicator_data)
         scores = sspi.to_score_documents(country_code)
 
@@ -895,7 +892,7 @@ def finalize_sspi_dynamic_score_iterator(indicator_codes: list[str], country_cod
 
 
 @finalize_bp.route("/finalize/globe")
-@login_required
+@admin_required
 def finalize_globe_data():
     sspi_globe_data.delete_many({})
     globe_geojson = sspi_metadata.find_one({"DocumentType": "GlobeGeoJSON"})
@@ -979,7 +976,7 @@ def finalize_globe_data():
 
 
 @finalize_bp.route("/finalize/dynamic/rank")
-@login_required
+@admin_required
 def finalize_dynamic_rank_data():
     return Response(finalize_dynamic_rank_iterator(), mimetype="text/event-stream")
 
@@ -1189,7 +1186,7 @@ def finalize_dynamic_rank_iterator():
 
 
 @finalize_bp.route("/finalize/dataset/range")
-@login_required
+@admin_required
 def finalize_dataset_range():
     dataset_ranges = sspi_clean_api_data.aggregate([
         { "$group": {
@@ -1220,7 +1217,7 @@ def finalize_dataset_range():
 
 
 @finalize_bp.route("/finalize/dataset/panel")
-@login_required
+@admin_required
 def finalize_dataset_panel():
     sspi_panel_data.delete_many({})
     min_year = 2000

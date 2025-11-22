@@ -1,0 +1,114 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>Logging Out - SSPI</title>
+{% endblock %}
+
+{% block stylesheet %}
+<style>
+    .logout-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 2rem;
+    }
+
+    .logout-message {
+        text-align: center;
+        padding: 3rem;
+        background: var(--box-background-color);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .logout-message h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 1rem 0;
+        color: var(--header-font-color);
+        font-family: var(--header-font-family);
+    }
+
+    .logout-message p {
+        color: var(--body-text-color);
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .logout-spinner {
+        margin-top: 1.5rem;
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid var(--border-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="page-content">
+    <div class="logout-container">
+        <div class="logout-message">
+            <h2>Logging out...</h2>
+            <p>Clearing your session data...</p>
+            <div class="logout-spinner"></div>
+        </div>
+    </div>
+</article>
+
+<script>
+    (function() {
+        // Preserve theme setting
+        const theme = localStorage.getItem("theme");
+
+        // Clear all user-scoped customSSPI keys
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('customSSPI_')) {
+                keysToRemove.push(key);
+            }
+        }
+
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log('Cleared:', key);
+        });
+
+        // Also clear legacy keys for backwards compatibility
+        localStorage.removeItem('customizableSSPIExpansionState');
+        localStorage.removeItem('customizableSSPIScrollX');
+        localStorage.removeItem('customizableSSPIScrollY');
+        localStorage.removeItem('customSSPICachedModifications');
+        localStorage.removeItem('sspi-progress-state');
+
+        // Restore theme
+        if (theme) {
+            localStorage.setItem("theme", theme);
+        }
+
+        // Clear observableStorage if it exists
+        if (window.observableStorage && typeof window.observableStorage.clear === 'function') {
+            window.observableStorage.clear();
+        }
+
+        console.log('All customization data cleared on logout');
+
+        // Redirect to home page after a short delay
+        setTimeout(function() {
+            window.location.href = "{{ url_for('client_bp.home') }}";
+        }, 800);
+    })();
+</script>
+{% endblock %}

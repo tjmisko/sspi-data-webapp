@@ -3,8 +3,9 @@ from flask_login import login_required, current_user
 from flask import Response, current_app as app
 from sspi_flask_app.models.database import (
     sspi_indicator_data,
-    sspi_clean_api_data
-)
+    sspi_clean_api_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     score_indicator,
     parse_json,
@@ -12,7 +13,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/CHMPOL", methods=["POST"])
-@login_required
+@admin_required
 def compute_chmpol():
     def score_chmpol(UNSDG_STKHLM, UNSDG_MINMAT, UNSDG_MONTRL, UNSDG_BASELA, UNSDG_ROTDAM):
         return (UNSDG_STKHLM + UNSDG_MINMAT + UNSDG_MONTRL + UNSDG_BASELA + UNSDG_ROTDAM) / 5 / 100

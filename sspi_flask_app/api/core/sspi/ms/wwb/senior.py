@@ -9,8 +9,9 @@ from flask_login import current_user, login_required
 from sspi_flask_app.api.core.sspi import compute_bp, impute_bp
 from sspi_flask_app.api.datasource.oecdstat import (
     collect_oecd_sdmx_data,
-    parse_oecd_observations,
-)
+    parse_oecd_observations)
+
+from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.api.resources.utilities import (
     goalpost,
     parse_json,
@@ -25,7 +26,7 @@ from sspi_flask_app.models.database import (
 
 
 # @collect_bp.route("/SENIOR")
-# @login_required
+# @admin_required
 # def senior():
 #     def collect_iterator(**kwargs):
 #         oecd_code = "OECD.ELS.SPD,DSD_PAG@DF_PAG"
@@ -38,7 +39,7 @@ from sspi_flask_app.models.database import (
 
 
 @compute_bp.route("/SENIOR", methods=['POST'])
-@login_required
+@admin_required
 def compute_senior():
     """
     metadata = raw_data[0]["Metadata"]
@@ -145,7 +146,7 @@ def compute_senior():
 
 
 @impute_bp.route("/SENIOR", methods=["POST"])
-@login_required
+@admin_required
 def impute_senior():
     sspi_imputed_data.delete_many({"IndicatorCode": "SENIOR"})
     clean_data = sspi_clean_api_data.find({"IndicatorCode": "SENIOR"})

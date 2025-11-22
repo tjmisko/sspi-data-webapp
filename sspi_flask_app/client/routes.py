@@ -1,20 +1,33 @@
-from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
+import logging
 import os
-from markdown import markdown
-from flask_login import login_required
 import re
-import pycountry
-from sspi_flask_app.api.resources.utilities import parse_json, public_databases
-from sspi_flask_app.models.database import sspi_metadata, sspidb
-from sspi_flask_app.api.core.dashboard import build_indicators_data, build_download_tree_structure, build_indicators_data_static
 
+import pycountry
+from flask import Blueprint, redirect, render_template, request, url_for
+from flask import current_app as app
+from flask_login import current_user, login_required
+from flask_wtf.csrf import generate_csrf
+from markdown import markdown
+
+from sspi_flask_app.api.core.dashboard import (
+    build_download_tree_structure,
+    build_indicators_data,
+    build_indicators_data_static,
+)
+from sspi_flask_app.api.resources.utilities import parse_json, public_databases
+from sspi_flask_app.models.database import (
+    sspi_custom_user_structure,
+    sspi_metadata,
+    sspidb,
+)
 
 client_bp = Blueprint(
     'client_bp', __name__,
     template_folder='templates',
     static_folder='static',
-    static_url_path='/client/static'
-)
+    static_url_path='/client/static')
+
+from sspi_flask_app.auth.decorators import admin_required
 
 ###########################
 # SSPI DYNAMIC DATA PAGES #
@@ -78,20 +91,116 @@ def data_overview():
 
 
 @client_bp.route('/customize')
-def customize():
-    return render_template('customize.html')
+def customize_home():
+    """
+    Landing page for customization feature.
+    Shows information and directs users to login/register or builder based on auth status.
+    """
+    return render_template('customize/customize-home.html')
+
+@client_bp.route('/customize/load')
+def customize_load():
+    """
+    Load page for customization feature.
+    Shows pre-built and saved configurations.
+    Client-side JavaScript checks localStorage for active editing session.
+    Works for both authenticated and anonymous users.
+    """
+    logger = logging.getLogger(__name__)
+    # Check if user is authenticated
+    is_authenticated = current_user.is_authenticated
+    saved_configurations = []
+    # Define prebuilt configurations
+    prebuilt_configurations = [
+        {
+            'id': 'default',
+            'name': 'Standard SSPI',
+            'description': 'Standard SSPI structure with all 54 indicators across sustainability, material security, and public goods.',
+            'pillars': 3,
+            'categories': 18,
+            'indicators': 54,
+            'recommended': True
+        }
+    ]
+    if is_authenticated:
+        # Fetch saved configurations from database (authentication required)
+        try:
+            saved_configurations = sspi_custom_user_structure.list_config_names(
+                username=current_user.username
+            )
+            logger.info(f"Loaded {len(saved_configurations)} configurations for user {current_user.username}")
+        except Exception as e:
+            logger.error(f"Error fetching configurations for user {current_user.username}: {e}")
+            saved_configurations = []
+    csrf_token = generate_csrf()
+    return render_template(
+        'customize/customize-load.html',
+        is_authenticated=is_authenticated,
+        prebuilt_configurations=prebuilt_configurations,
+        saved_configurations=saved_configurations,
+        csrf_token=csrf_token,
+        title="Sign in to save custom configurations",
+        subtitle=""
+    )
+
+
+@client_bp.route('/customize/builder')
+def customize_configuration_builder():
+    """
+    Main customization builder interface.
+    Loads configuration based on base_config query parameter.
+
+    Query parameters:
+    - base_config: Configuration to load (default: 'sspi')
+      - 'sspi': Default SSPI structure
+      - 'blank': Empty template
+      - <config_id>: Saved configuration ID
+
+    Accessible to all users (authentication only required for saving).
+    """
+    logger = logging.getLogger(__name__)
+    base_config = request.args.get('base_config', 'sspi')
+
+    # Validate base_config parameter
+    valid_prebuilt = ['sspi', 'blank', 'default']
+    if base_config not in valid_prebuilt:
+        # Check if it's a valid saved config (requires authentication)
+        if current_user.is_authenticated:
+            try:
+                config = sspi_custom_user_structure.find_by_config_id(
+                    base_config,
+                    username=current_user.username
+                )
+                if not config:
+                    # Invalid config_id, redirect to default
+                    logger.warning(f"Invalid base_config '{base_config}' for user {current_user.username}, redirecting to default")
+                    return redirect(url_for('client_bp.customize_configuration_builder', base_config='sspi'))
+            except Exception as e:
+                logger.error(f"Error validating base_config: {e}")
+                return redirect(url_for('client_bp.customize_configuration_builder', base_config='sspi'))
+        else:
+            # Anonymous user with invalid base_config
+            logger.warning(f"Anonymous user attempted invalid base_config '{base_config}', redirecting to default")
+            return redirect(url_for('client_bp.customize_configuration_builder', base_config='sspi'))
+
+    csrf_token = generate_csrf()
+    return render_template(
+        'customize/customization-builder.html',
+        csrf_token=csrf_token,
+        base_config=base_config
+    )
 
 
 @client_bp.route('/customize/visualize/<config_id>')
 def custom_visualization(config_id):
     """Production visualization page for custom SSPI configurations"""
-    return render_template('custom_visualization.html', config_id=config_id)
+    return render_template('customize/custom_visualization.html', config_id=config_id)
 
 
 @client_bp.route('/customize/test-chart')
 def test_custom_chart():
     """Test page for custom SSPI chart development and debugging"""
-    return render_template('test_custom_chart.html')
+    return render_template('customize/test_custom_chart.html')
 
 
 @client_bp.route('/data/country/<country_code>')
@@ -340,7 +449,7 @@ def outcome():
 
 
 @client_bp.route('/2018/resources')
-@login_required
+@admin_required
 def paper_resources():
     return render_template("/static/2018-paper-resources.html")
 

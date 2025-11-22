@@ -7,6 +7,7 @@ from sspi_flask_app.api.resources.utilities import (
     interpolate_linear,
     generate_series_levels,
     generate_series_groups,
+    jsonify_df
 )
 import pycountry
 import json
@@ -18,13 +19,14 @@ from flask import (
     render_template,
     current_app as app,
 )
-from sspi_flask_app.models.sspi import SSPI
+from sspi_flask_app.models.sspi import SSPI, FastSSPI
 from sspi_flask_app.models.coverage import DataCoverage
 from flask_login import login_required
 from sspi_flask_app.models.database import (
     sspi_static_data_2018,
     sspi_item_data,
     sspi_metadata,
+    sspi_indicator_data,
     sspi_panel_data,
     sspi_static_rank_data,
     sspi_static_metadata,
@@ -34,12 +36,15 @@ from sspi_flask_app.models.database import (
     sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
     sspi_globe_data,
-    sspi_dynamic_radar_data,
-)
+    sspi_dynamic_radar_data)
+
+from sspi_flask_app.auth.decorators import admin_required
 from datetime import datetime
 import hashlib
 import logging
 import re
+import numpy as np
+import pandas as pd
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +54,7 @@ dashboard_bp = Blueprint(
 
 
 @dashboard_bp.route("/status/database/<database>")
-@login_required
+@admin_required
 def get_database_status(database):
     ndocs = lookup_database(database).count_documents({})
     return render_template("database-status.html", database=database, ndocs=ndocs)
@@ -816,7 +821,7 @@ def prepare_panel_data():
                     "CName": country_code_to_name(cou),
                     "CGroup": group_list,
                     "pinned": False,
-                    "hidden": "SSPI49" not in group_list,
+                    "hidden": "SSPI67" not in group_list,
                     "label": f"{cou} - {country_code_to_name(cou)}",
                     "year": year,
                     "minYear": min_year,
@@ -1085,7 +1090,7 @@ def build_indicators_data():
                             "ItemName", indicator_code
                         ),
                         "description": indicator_item.get("Description", ""),
-                        "datasets": datasets,
+                        "DatasetDetails": datasets,
                         "dataset_codes": dataset_codes,
                         "policy": indicator_item.get("Policy", ""),
                         "score_function": indicator_item.get("ScoreFunction", ""),
@@ -1353,3 +1358,143 @@ def item_coverage_data(ItemCode, CountryGroup):
 @dashboard_bp.route("/globe")
 def globe_data():
     return sspi_globe_data.find({})[0]
+
+
+@dashboard_bp.route("/fast_score")
+def fast_score():
+    items = sspi_metadata.item_details()
+    country_codes = sspi_metadata.country_group("SSPI67")
+    country_codes.sort()
+    coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
+    complete_indicators = coverage.complete()
+    details_for_scoring = sspi_metadata.item_details(indicator_filter=complete_indicators)
+    print(details_for_scoring)
+    indicator_order_map = {d["ItemCode"]: d["ItemOrder"] for d in details_for_scoring if d["ItemType"] == "Indicator"}
+    order_map_literal = {"$literal": indicator_order_map}
+    min_year = 2000
+    max_year = 2023
+    order_map_literal = {"$literal": indicator_order_map}
+    pipeline = [
+        {
+            "$match": {
+                "CountryCode": {"$in": country_codes},
+                "IndicatorCode": {"$in": complete_indicators},
+                "Year": {"$gte": min_year, "$lte": max_year}
+            }
+        },
+        {
+            "$unionWith": {
+                "coll": "sspi_imputed_data",
+                "pipeline": [
+                    {
+                        "$match": {
+                            "CountryCode": {"$in": country_codes},
+                            "IndicatorCode": {"$in": complete_indicators},
+                            "Year": {"$gte": min_year, "$lte": max_year}
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "CountryCode": "$CountryCode",
+                    "Year": "$Year"
+                },
+                "Data": {
+                    "$push": {
+                        "IndicatorCode": "$IndicatorCode",
+                        "Score": "$Score"
+                    }
+                }
+            }
+        },
+        {
+            "$set": {
+                "CountryCode": "$_id.CountryCode",
+                "Year": "$_id.Year"
+            }
+        },
+        { "$unset": "_id" },
+        {
+            "$set": {
+                "Data": {
+                    "$map": {
+                        "input": "$Data",
+                        "as": "d",
+                        "in": {
+                            "$mergeObjects": [
+                                "$$d",
+                                {
+                                    "sortKey": {
+                                        "$let": {
+                                            "vars": {
+                                                "pair": {
+                                                    "$first": {
+                                                        "$filter": {
+                                                            "input": {"$objectToArray": order_map_literal},
+                                                            "as": "kv",
+                                                            "cond": { "$eq": ["$$kv.k", "$$d.IndicatorCode"] }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "in": { "$ifNull": ["$$pair.v", 999999] }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "$set": {
+                "Data": {
+                    "$sortArray": { "input": "$Data", "sortBy": {"sortKey": 1} }
+                }
+            }
+        },
+        {
+            "$project": {
+                "CountryCode": 1,
+                "Year": 1,
+                "ScoreArray": {
+                    "$map": { "input": "$Data", "as": "d", "in": "$$d.Score" }
+                }
+            }
+        },
+        {
+            "$sort": {"CountryCode": 1, "Year": 1}
+        }
+    ]
+    cursor = sspi_indicator_data.aggregate(pipeline)
+    n_countries = len(country_codes)
+    n_years = max_year - min_year + 1
+    indicator_score_matrix = np.zeros((n_countries * n_years, ), dtype=object)  # placeholders for lists
+    row_idx = 0
+    for doc in cursor:
+        # minimal retention: only save score vectors
+        indicator_score_matrix[row_idx] = doc["ScoreArray"]
+        row_idx += 1
+    indicator_score_matrix = np.vstack(indicator_score_matrix).astype(float)  # shape: (rows, k_indicators)
+    fast_sspi = FastSSPI(item_details=details_for_scoring)
+    sspi_score_matrix = fast_sspi.score_matrix  # shape: (k_indicators, k_items)
+    item_codes = fast_sspi.item_list
+    n_items = len(item_codes)
+    scores = indicator_score_matrix @ sspi_score_matrix    # shape: (rows, k_items)
+    score_cube = scores.reshape(n_countries, n_years, n_items)
+    score_cube_T = np.transpose(score_cube, (2, 0, 1))
+    score_list = score_cube_T.reshape(n_items * n_countries, n_years)
+    multi_index = pd.MultiIndex.from_tuples(
+        [(i, c) for i in item_codes for c in country_codes],  # item outer, country inner
+        names=["ItemCode", "CountryCode"]
+    )
+    df = pd.DataFrame(
+        score_list,
+        index=multi_index,
+        columns=np.arange(min_year, max_year + 1)
+    )
+    return parse_json(score_list)

@@ -9,11 +9,12 @@ from flask_login import login_required, current_user
 from sspi_flask_app.api.resources.utilities import (
     parse_json,
     score_indicator,
-    goalpost
-)
+    goalpost)
+
+from sspi_flask_app.auth.decorators import admin_required
 
 # @collect_bp.route("/CYBSEC", methods=['POST'])
-# @login_required
+# @admin_required
 # def cybsec():
 #     def collect_iterator(**kwargs):
 #         yield from load_itu_data_from_local_transcription(**kwargs)
@@ -21,7 +22,7 @@ from sspi_flask_app.api.resources.utilities import (
 
 
 @compute_bp.route("/CYBSEC", methods=['POST'])
-@login_required
+@admin_required
 def compute_cybsec():
     app.logger.info("Running /api/v1/compute/CYBSEC")
     sspi_indicator_data.delete_many({"IndicatorCode": "CYBSEC"})
