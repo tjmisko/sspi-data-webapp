@@ -13,6 +13,7 @@ from sspi_flask_app.api.resources.utilities import (
     reduce_dataset_list,
 )
 from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data
+from sspi_flask_app import csrf
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +25,15 @@ dataset_bp = Blueprint(
 )
 
 @dataset_bp.route("/collect/<series_code>", methods=["GET", "POST"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 @admin_required
 def collect(series_code: str):
     """
     Collect fetches data from external sources by series code
     and stores it in the database. It can handle both datasets and items.
+    This is a programmatic API endpoint accessed via CLI/scripts, not browser forms.
+    CSRF exemption is appropriate here since it uses admin authentication and
+    is not subject to browser-based CSRF attacks.
 
     GET requests will return a collection form specifying which datasets
     are to be collected.
@@ -37,8 +42,8 @@ def collect(series_code: str):
     collection progress updates. By default, POST requests will will collect
     only uncollected datasets. If the `overwriteAll` parameter is set to True,
     all datasets will be collected, even if they have already been collected.
-    If `overwrite` parameters are provided at the dataset level, the 
-    specified datasets will be collected and overwritten in addition to the 
+    If `overwrite` parameters are provided at the dataset level, the
+    specified datasets will be collected and overwritten in addition to the
     uncollected data.
 
     :param series_code: A SeriesCode may be either a DatasetCode or an ItemCode

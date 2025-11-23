@@ -1,0 +1,146 @@
+/* Country Characteristics Summary Component Styles */
+
+.country-characteristics-summary {
+  margin-top: 1rem;
+  padding: 0;
+  background: transparent;
+}
+
+.characteristics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.characteristic-card {
+  padding: 0.875rem 1rem;
+  background: var(--box-background-color);
+  border: var(--theme-border-thin);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.characteristic-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.characteristic-card.characteristic-unavailable {
+  opacity: 0.6;
+  background: var(--region-background-color);
+}
+
+.characteristic-card.characteristic-unavailable:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.characteristic-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--low-importance-font-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.375rem;
+  font-family: var(--body-font-family);
+}
+
+.characteristic-value-container {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.375rem 0;
+}
+
+.characteristic-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1.2;
+  font-family: var(--title-font-family);
+}
+
+.characteristic-rank {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  white-space: nowrap;
+}
+
+.characteristic-unavailable .characteristic-value {
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.characteristic-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: var(--theme-border-thin);
+  font-size: 0.6875rem;
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+}
+
+.characteristic-year {
+  font-weight: 500;
+}
+
+.characteristic-source {
+  font-style: italic;
+}
+
+/* Error State */
+.characteristics-error {
+  padding: 1rem;
+  background: var(--caution-background-color);
+  border: var(--theme-border-thin);
+  border-radius: var(--border-radius);
+  color: var(--body-text-color);
+}
+
+.characteristics-error p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-family: var(--body-font-family);
+}
+
+/* Responsive Breakpoints */
+
+/* Mobile: 1 column */
+@media (max-width: 600px) {
+  .characteristics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .characteristic-value {
+    font-size: 1.15rem;
+  }
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 601px) and (max-width: 900px) {
+  .characteristics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop: 4 columns for 4 cards */
+@media (min-width: 901px) {
+  .characteristics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* When more characteristics are added, use auto-fit layout on large screens */
+@media (min-width: 1200px) {
+  .characteristics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}

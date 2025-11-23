@@ -142,6 +142,11 @@ def init_app(Config):
         api_bp.register_blueprint(save_bp)
         api_bp.register_blueprint(customize_bp)
         app.register_blueprint(api_bp)
+
+        # Exempt CLI-only blueprints from CSRF protection
+        # These blueprints only contain admin-required routes accessed via Bearer token auth
+        csrf.exempt(compute_bp)
+        csrf.exempt(impute_bp)
         app.register_blueprint(client_bp)
         app.register_blueprint(auth_bp)
 
