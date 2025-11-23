@@ -41,6 +41,7 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_rank_data)
 
 from sspi_flask_app.auth.decorators import admin_required
+from sspi_flask_app import csrf
 from datetime import datetime
 import hashlib
 import logging
@@ -621,6 +622,7 @@ def get_static_stacked_sspi():
 
 
 @dashboard_bp.route("/utilities/extrapolate/backward/<int:year>", methods=["POST"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 def do_backward_extrapolate(year: int):
     """
     Extrapolate backward missing data for a given indicator
@@ -641,6 +643,7 @@ def do_backward_extrapolate(year: int):
 
 
 @dashboard_bp.route("/utilities/extrapolate/forward/<int:year>", methods=["POST"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 def do_forward_extrapolate(year: int):
     """
     Extrapolate backward missing data for a given indicator
@@ -661,6 +664,7 @@ def do_forward_extrapolate(year: int):
 
 
 @dashboard_bp.route("/utilities/interpolate/linear", methods=["POST"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 def do_linear_interpolate():
     """
     Extrapolate backward missing data for a given indicator
@@ -678,6 +682,7 @@ def do_linear_interpolate():
 
 
 @dashboard_bp.route("/utilities/panel/levels", methods=["POST"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 def find_panel_levels():
     """
     Prepare panel data for plotting
@@ -708,6 +713,7 @@ def find_panel_levels():
 
 
 @dashboard_bp.route("/utilities/panel/plot", methods=["POST"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 def prepare_panel_data():
     """
     Prepare panel data for plotting
