@@ -1590,6 +1590,41 @@ def get_country_characteristics(country_code):
             "available": False
         })
 
+    # Query land area data (most recent year)
+    land_area_results = sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_LANDAR"
+    })
+    # Sort by year and get most recent
+    land_area_data = None
+    if land_area_results:
+        land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
+        land_area_data = land_area_results_sorted[0] if land_area_results_sorted else None
+
+    if land_area_data:
+        land_area_value = land_area_data.get("Value")
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "value": land_area_value,
+            "year": land_area_data.get("Year"),
+            "unit": "Square Kilometers",
+            "formatted": f"{land_area_value:,.0f} km²" if land_area_value else "N/A",
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "value": None,
+            "year": None,
+            "unit": "Square Kilometers",
+            "formatted": "Data not available",
+            "source": "World Bank",
+            "available": False
+        })
+
     # Query GDP per capita data (most recent year)
     gdp_per_capita_results = sspi_clean_api_data.find({
         "CountryCode": country_code,

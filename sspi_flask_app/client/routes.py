@@ -133,6 +133,33 @@ def get_country_characteristics(country_code):
             "available": False
         })
 
+    # Query land area data
+    land_area_results = list(sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_LANDAR"
+    }))
+
+    if land_area_results:
+        land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
+        land_area_data = land_area_results_sorted[0]
+        land_area_value = land_area_data.get("Value")
+
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "year": land_area_data.get("Year"),
+            "formatted": f"{land_area_value:,.0f} km²" if land_area_value else "N/A",
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "formatted": "Data not available",
+            "available": False
+        })
+
     # Query GDP per capita data
     gdp_per_capita_results = list(sspi_clean_api_data.find({
         "CountryCode": country_code,
@@ -342,7 +369,27 @@ def country_data(country_code):
     country_code = country_code.upper()
     cdetail = sspi_metadata.get_country_detail(country_code)
     characteristics = get_country_characteristics(country_code)
-    return render_template('country-data.html', cdetail=cdetail, characteristics=characteristics)
+
+    # Get SSPI67 country list for dropdown
+    sspi67_countries = sspi_metadata.country_group_details("SSPI67")
+
+    # Deduplicate by country code (keep first occurrence)
+    seen_codes = set()
+    unique_countries = []
+    for country in sspi67_countries:
+        code = country["Metadata"]["CountryCode"]
+        if code not in seen_codes:
+            seen_codes.add(code)
+            unique_countries.append(country)
+
+    unique_countries.sort(key=lambda x: x["Metadata"]["Country"])
+
+    return render_template(
+        'country-data.html',
+        cdetail=cdetail,
+        characteristics=characteristics,
+        country_list=unique_countries
+    )
 
 
 @client_bp.route('/data/dataset/<dataset_code>')
