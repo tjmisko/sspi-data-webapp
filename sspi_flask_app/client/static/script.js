@@ -943,7 +943,19 @@ if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHan
 if(this.focusTrapHandler){document.removeEventListener('keydown',this.focusTrapHandler);this.focusTrapHandler=null;}
 if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal);}
 this.modal=null;}}
-window.ChangesHistoryModal=ChangesHistoryModal;class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
+window.ChangesHistoryModal=ChangesHistoryModal;class CountryCharacteristicsSummary{constructor(parentElement,countryCode,options={}){this.parentElement=parentElement;this.countryCode=countryCode.toUpperCase();this.options=options;this.init();}
+init(){this.initRoot();this.fetchData();}
+initRoot(){this.root=document.createElement('div');this.root.classList.add('country-characteristics-summary');this.parentElement.appendChild(this.root);}
+showErrorState(message){this.root.innerHTML=`<div class="characteristics-error"><p>Unable to load country characteristics:${message}</p></div>`;}
+async fetchData(){try{const response=await fetch(`/api/v1/country/characteristics/${this.countryCode}`);if(!response.ok){throw new Error(`HTTP ${response.status}:${response.statusText}`);}
+const data=await response.json();if(data.error){throw new Error(data.error);}
+this.render(data);}catch(error){console.error('Error fetching country characteristics:',error);this.showErrorState(error.message);}}
+render(data){this.root.innerHTML='';const grid=document.createElement('div');grid.classList.add('characteristics-grid');this.root.appendChild(grid);data.characteristics.forEach(char=>{const card=this.createCharacteristicCard(char);grid.appendChild(card);});}
+createCharacteristicCard(characteristic){const card=document.createElement('div');card.classList.add('characteristic-card');if(!characteristic.available){card.classList.add('characteristic-unavailable');}
+if(characteristic.key==='sspiScore'){const label=document.createElement('div');label.classList.add('characteristic-label');label.textContent=characteristic.label;card.appendChild(label);const valueContainer=document.createElement('div');valueContainer.classList.add('characteristic-value-container');const value=document.createElement('div');value.classList.add('characteristic-value');value.textContent=characteristic.formatted;valueContainer.appendChild(value);if(characteristic.available&&characteristic.rank&&characteristic.totalCountries){const rank=document.createElement('div');rank.classList.add('characteristic-rank');rank.textContent=`#${characteristic.rank}/${characteristic.totalCountries}`;valueContainer.appendChild(rank);}
+card.appendChild(valueContainer);if(characteristic.available){const meta=document.createElement('div');meta.classList.add('characteristic-meta');const year=document.createElement('span');year.classList.add('characteristic-year');year.textContent=characteristic.year;const source=document.createElement('span');source.classList.add('characteristic-source');source.textContent=characteristic.source;meta.appendChild(year);meta.appendChild(source);card.appendChild(meta);}}else{const label=document.createElement('div');label.classList.add('characteristic-label');label.textContent=characteristic.label;card.appendChild(label);const value=document.createElement('div');value.classList.add('characteristic-value');value.textContent=characteristic.formatted;card.appendChild(value);if(characteristic.available){const meta=document.createElement('div');meta.classList.add('characteristic-meta');const year=document.createElement('span');year.classList.add('characteristic-year');year.textContent=characteristic.year;const source=document.createElement('span');source.classList.add('characteristic-source');source.textContent=characteristic.source;meta.appendChild(year);meta.appendChild(source);card.appendChild(meta);}}
+return card;}}
+window.CountryCharacteristicsSummary=CountryCharacteristicsSummary;class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
 this.buttonHTML=parentElement.innerHTML
 this.resultsWindow=resultsWindow
 this.datasets=datasets

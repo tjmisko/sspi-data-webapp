@@ -17,6 +17,7 @@
                 <div class="country-header">
                     <h2 class="country-title">{{ cdetail.Flag }} {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }}) </h2>
                 </div>
+                {% include 'components/country-characteristics-summary.html' %}
             </div>
             <div class="country-overview-box">
                 <h3>Pillar Score Breakdown</h3>
