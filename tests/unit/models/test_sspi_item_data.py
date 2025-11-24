@@ -55,7 +55,7 @@ def sample_hierarchical_data():
             "CountryCode": "USA",
             "Year": 2018,
             "ItemCode": "SSPI",
-            "ItemName": "Sustainable and Shared-Proseperity Policy Index",
+            "ItemName": "Sustainable and Shared-Prosperity Policy Index",
             "Score": 0.8,
             "Children": ["SUS", "MS", "PG"]
         },
