@@ -117,7 +117,6 @@ def get_dynamic_indicator_line_data(indicator_code):
     name = detail.get("ItemName")
     tree_path = detail.get("TreePath", "")
     tree_path_parts = tree_path.split("/")
-
     # Build enriched treepath with itemCodes and itemNames
     enriched_treepath = []
     for itemCode in tree_path_parts:
@@ -127,7 +126,7 @@ def get_dynamic_indicator_line_data(indicator_code):
                 enriched_treepath.append(
                     {
                         "itemCode": itemCode.lower(),
-                        "itemName": "Social Policy and Progress Index",
+                        "itemName": "Sustainable and Shared Prosperity Policy Index",
                     }
                 )
             else:
@@ -146,39 +145,51 @@ def get_dynamic_indicator_line_data(indicator_code):
                     enriched_treepath.append(
                         {"itemCode": itemCode.lower(), "itemName": itemCode.upper()}
                     )
-
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
     query = {"ICode": indicator_code}
     if country_query:
         query["CCode"] = {"$in": country_query}
-    dynamic_score_data = sspi_indicator_dynamic_line_data.find(query)
-    available_datasets = list(dynamic_score_data[0].get("Datasets", []))
+
+    # Convert cursor to list and check if data exists
+    dynamic_score_data = list(sspi_indicator_dynamic_line_data.find(query))
+
+    if not dynamic_score_data:
+        # No chart data available for this indicator
+        print(f"Warning: No dynamic chart data found for indicator {indicator_code}")
+        year_labels = list(range(2000, datetime.now().year + 1))
+        return jsonify({
+            "error": f"No chart data available for indicator {indicator_code}",
+            "data": [],
+            "title": f"{name} Score" if name else indicator_code,
+            "labels": year_labels,
+            "description": description,
+            "groupOptions": sspi_metadata.country_groups(),
+            "countryGroupMap": sspi_metadata.country_group_map(),
+            "itemOptions": item_options,
+            "itemType": doc_type,
+            "itemCode": indicator_code,
+            "datasetOptions": [],
+            "tree": active_schema,
+            "treepath": enriched_treepath,
+        }), 200
+
+    available_datasets = list(dynamic_score_data[0].get("Datasets", {}).keys())
     dataset_options = []
     for dscode in available_datasets:
         detail = sspi_metadata.get_dataset_detail(dscode)
         ds_range = detail.get("Range", {})
-        if ds_range:
-            dataset_options.append(
-                {
-                    "datasetName": detail.get("DatasetName", ""),
-                    "datasetCode": dscode,
-                    "datasetDescription": detail.get("Description", ""),
-                    "unit": detail.get("Unit", ""),
-                    "yMin": ds_range.get("yMin", 0),
-                    "yMax": ds_range.get("yMax", 1),
-                }
-            )
-        else:
-            dataset_options.append(
-                {
-                    "datasetCode": dscode,
-                    "datasetDescription": detail.get("Description", ""),
-                    "unit": detail.get("Unit", ""),
-                    "yMin": 0,
-                    "yMax": 1,
-                }
-            )
+        # Always include datasetName, use datasetCode as fallback
+        dataset_options.append(
+            {
+                "datasetName": detail.get("DatasetName", dscode),
+                "datasetCode": dscode,
+                "datasetDescription": detail.get("Description", ""),
+                "unit": detail.get("Unit", ""),
+                "yMin": ds_range.get("yMin", 0) if ds_range else 0,
+                "yMax": ds_range.get("yMax", 1) if ds_range else 1,
+            }
+        )
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
     chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
@@ -1111,7 +1122,7 @@ def build_indicators_data():
                             "ItemName", indicator_code
                         ),
                         "description": indicator_item.get("Description", ""),
-                        "DatasetDetails": datasets,
+                        "datasets": datasets,
                         "dataset_codes": dataset_codes,
                         "policy": indicator_item.get("Policy", ""),
                         "score_function": indicator_item.get("ScoreFunction", ""),

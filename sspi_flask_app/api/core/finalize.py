@@ -432,16 +432,45 @@ def finalize_dynamic_line_indicator_datasets():
         country: sspi_metadata.get_country_detail(country)
         for country in all_countries
     }
+    # Aggregation pipeline with union of real and imputed data
     pipeline = [
+        # Stage 1: Match real indicator data
         {
             "$match": {
                 "IndicatorCode": {"$in": indicator_codes},
                 "Year": {"$gte": min_year, "$lte": max_year}
             }
         },
+        # Stage 2: Add source field to track data origin
+        {
+            "$addFields": {
+                "source": "real"
+            }
+        },
+        # Stage 3: Union with imputed data
+        {
+            "$unionWith": {
+                "coll": "sspi_imputed_data",
+                "pipeline": [
+                    {
+                        "$match": {
+                            "IndicatorCode": {"$in": indicator_codes},
+                            "Year": {"$gte": min_year, "$lte": max_year}
+                        }
+                    },
+                    {
+                        "$addFields": {
+                            "source": "imputed"
+                        }
+                    }
+                ]
+            }
+        },
+        # Stage 4: Sort by year
         {
             "$sort": {"Year": 1}
         },
+        # Stage 5: Group by indicator and country
         {
             "$group": {
                 "_id": {
@@ -453,12 +482,14 @@ def finalize_dynamic_line_indicator_datasets():
                         "Year": "$Year",
                         "Score": "$Score",
                         "Unit": "$Unit",
-                        "Datasets": "$Datasets"
+                        "Datasets": "$Datasets",
+                        "source": "$source"
                     }
                 },
                 "firstDatasets": {"$first": "$Datasets"} # Store first observation's Datasets
             }
         },
+        # Stage 6: Project final structure
         {
             "$project": {
                 "_id": 0,
@@ -468,6 +499,7 @@ def finalize_dynamic_line_indicator_datasets():
                 "firstDatasets": 1
             }
         },
+        # Stage 7: Sort for consistent processing
         {
             "$sort": {"IndicatorCode": 1, "CountryCode": 1}
         }
@@ -494,15 +526,19 @@ def finalize_dynamic_line_indicator_datasets():
 
         # Build sparse arrays with None values
         years = [None] * len(label_list)
-        scores = [None] * len(label_list)
+        scores = [None] * len(label_list)  # Real data only
+        imputed_scores = [None] * len(label_list)  # Imputed data only
         data = [None] * len(label_list)
 
         # Initialize dataset map from first observation
         sspi_dataset_map = {}
-        for dataset in group.get("firstDatasets", []):
+        first_datasets = group.get("firstDatasets") or []
+        for dataset in first_datasets:
             sspi_dataset_map[dataset["DatasetCode"]] = {
                 "data": [None] * len(label_list)
             }
+
+        # Process observations - ensuring scores and imputed_scores are perfect complements
         for obs in observations:
             try:
                 year_index = label_list.index(obs["Year"])
@@ -510,13 +546,25 @@ def finalize_dynamic_line_indicator_datasets():
                 continue
 
             years[year_index] = obs["Year"]
-            data[year_index] = obs["Score"]
-            scores[year_index] = obs["Score"]
 
-            # Populate dataset values
-            for dataset in obs.get("Datasets", []):
-                if dataset["DatasetCode"] in sspi_dataset_map:
-                    sspi_dataset_map[dataset["DatasetCode"]]["data"][year_index] = dataset["Value"]
+            # Populate appropriate array based on source
+            if obs.get("source") == "real":
+                # Real data goes into scores array
+                scores[year_index] = obs["Score"]
+                data[year_index] = obs["Score"]
+                # Ensure imputed_scores is null for this index (perfect complement)
+                imputed_scores[year_index] = None
+            elif obs.get("source") == "imputed":
+                # Imputed data only goes into imputed_scores if scores is None
+                if scores[year_index] is None:
+                    imputed_scores[year_index] = obs["Score"]
+                # Don't set data or scores for imputed observations
+
+            # Populate dataset values (only for real data)
+            if obs.get("source") == "real":
+                for dataset in obs.get("Datasets", []):
+                    if dataset["DatasetCode"] in sspi_dataset_map:
+                        sspi_dataset_map[dataset["DatasetCode"]]["data"][year_index] = dataset["Value"]
         # Build document
         dataset = {
             "CCode": country_code,
@@ -532,7 +580,8 @@ def finalize_dynamic_line_indicator_datasets():
             "minYear": min_year,
             "maxYear": max_year,
             "data": data,
-            "score": scores,
+            "score": scores,  # Real data only
+            "imputedScore": imputed_scores,  # Imputed data only (perfect complement to score)
             "yAxisMinValue": lg * 0.95 if lg > 0 else lg * 1.05,
             "yAxisMaxValue": ug * 1.05 if ug > 0 else ug * 0.95
         }

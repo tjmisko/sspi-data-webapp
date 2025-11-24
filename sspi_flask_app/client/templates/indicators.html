@@ -150,10 +150,11 @@
     </section>
 </article>
 <script>
-const tableState = window.observableStorage.getItem('indicatorTableState')
-if ("{{ view_item }}".length > 1 && tableState["{{ view_item }}"]) {
-    tableState["{{ view_item }}"] = 'true'
-    window.observableStorage.setItem('indicatorTableState', tableState)
+const viewItem = "{{ view_item or '' }}";
+if (viewItem.length > 0 && viewItem !== "None") {
+    const tableState = window.observableStorage.getItem('indicatorTableState') || {};
+    tableState[viewItem] = 'true';
+    window.observableStorage.setItem('indicatorTableState', tableState);
 }
 let indicatorTable = new IndicatorTable();
 document.addEventListener('DOMContentLoaded', () => {

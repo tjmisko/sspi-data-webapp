@@ -348,6 +348,23 @@
   line-height: 1;
 }
 
+/* Active series description styling */
+.chart-view-subheader.active-series-description {
+  margin-top: 0.4rem;
+}
+
+.chart-view-option.active-series-description-content {
+  font-size: 0.8em;
+  line-height: 1.25;
+  color: var(--text-color);
+  padding: 0.2rem;
+  margin: 0 0 0.4rem 0;
+}
+
+.chart-view-option.active-series-description-content em {
+  color: var(--low-importance-font-color);
+}
+
 .dynamic-item-description {
   font-size: 0.9em;
   line-height: 1.25;

@@ -691,7 +691,8 @@ class IndicatorTable {
         const cachedStateObject = window.observableStorage.getItem('indicatorTableState');
         collapsibleSections.forEach(section => {
             const defaultState = section.dataset.expanded === 'true';
-            const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
+            const cachedValue = cachedStateObject?.[section.dataset.icode];
+            const cachedState = cachedValue !== undefined ? cachedValue === 'true' : defaultState;
             this.updateSectionVisibility(section, cachedState);
             section.dataset.expanded = cachedState.toString();
             const toggleButton = this.findToggleButton(section)
@@ -2311,13 +2312,12 @@ this.currentYMin=0
 this.currentYMax=1
 this.defaultYMin=0
 this.defaultYMax=1
+this.showImputations=window.observableStorage.getItem("showImputations")==="true"
+this.savedExtrapolateBackwardState=null
+this.savedInterpolateState=null
 this.moveBurgerToBreadcrumb()}
 moveBurgerToBreadcrumb(){if(this.showChartOptions&&this.breadcrumbActions){this.breadcrumbActions.appendChild(this.showChartOptions)}}
-updateChartOptions(){let yAxisTitle='Item Value'
-if(this.activeSeries===this.itemCode){yAxisTitle='Indicator Score'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-if(dataset){const baseName="Dataset: "+dataset.datasetName||dataset.datasetCode
-const unit=dataset.unit||dataset.Unit
-yAxisTitle=unit?`${baseName}(${unit})`:baseName}}
+updateChartOptions(){let yAxisTitle='Item\u0020Value';if(this.activeSeries===this.itemCode){yAxisTitle='Indicator\u0020Score';}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries);if(dataset){const datasetName=(dataset.datasetName&&dataset.datasetName.trim())?dataset.datasetName:dataset.datasetCode;const baseName=`Dataset:\u0020${datasetName}`;const unit=dataset.unit||dataset.Unit;yAxisTitle=unit?`${baseName}\u0020(${unit})`:baseName;}}
 this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:this.currentYMin,max:this.currentYMax,title:{display:true,text:yAxisTitle,color:this.axisTitleColor,font:{size:16}}}}}
 updateItemDropdown(options,itemType){let itemTypeCapped=itemType
 if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
@@ -2331,14 +2331,20 @@ opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
 setActiveSeries(series){this.activeSeries=series
 this.updateDefaultsForActiveSeries()
-if(this.activeSeries===this.itemCode){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.score});this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else if(this.datasetOptions&&this.datasetOptions.map(o=>o.datasetCode).includes(this.activeSeries)){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.Datasets[this.activeSeries].data});console.log(`Setting active series to ${this.activeSeries}with yMin:${this.defaultYMin},yMax:${this.defaultYMax}`);this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else{console.warn(`Active series"${this.activeSeries}"not found in dataset options.`);}
+if(this.activeSeries===this.itemCode){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.score});this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else if(this.datasetOptions&&this.datasetOptions.map(o=>o.datasetCode).includes(this.activeSeries)){this.chart.data.datasets.forEach((dataset)=>{dataset.data=this.getDatasetDataSafely(dataset,this.activeSeries);});const missingCount=this.chart.data.datasets.filter(d=>!d.Datasets||!d.Datasets[this.activeSeries]).length;if(missingCount>0){console.warn(`Dataset ${this.activeSeries}:${missingCount}/${this.chart.data.datasets.length}countries missing data`);}
+console.log(`Setting active series to ${this.activeSeries}with yMin:${this.defaultYMin},yMax:${this.defaultYMax}`);this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else{console.warn(`Active series"${this.activeSeries}"not found in dataset options.`);}
 this.updateChartTitle()
 this.updateChartOptions()
 this.updateActiveSeriesDescription()
 this.updateYAxisInputs()
 this.updateRestoreButton()
 this.updateYearRange()
-this.chart.update()}
+this.chart.update()
+this.updateChartData()}
+getDatasetDataSafely(dataset,datasetCode){if(!dataset.Datasets){console.warn(`Dataset ${dataset.CCode}missing Datasets property`);return Array(this.chart.data.labels.length).fill(null);}
+if(!dataset.Datasets[datasetCode]){console.warn(`Dataset ${dataset.CCode}missing ${datasetCode}`);return Array(this.chart.data.labels.length).fill(null);}
+const dataArray=dataset.Datasets[datasetCode].data;if(!dataArray||!Array.isArray(dataArray)){console.warn(`Dataset ${dataset.CCode}.${datasetCode}has invalid data`);return Array(this.chart.data.labels.length).fill(null);}
+return dataArray;}
 setYAxisMinMax(min,max,update=true){this.currentYMin=Math.round(min*100)/100
 this.currentYMax=Math.round(max*100)/100
 this.chart.options.scales.y.min=this.currentYMin
@@ -2346,7 +2352,11 @@ this.chart.options.scales.y.max=this.currentYMax
 if(update){this.chart.update()}
 if(this.yMinInput){this.yMinInput.value=this.currentYMin}
 if(this.yMaxInput){this.yMaxInput.value=this.currentYMax}}
+updateChartData(){if(!this.chart||!this.chart.data||!this.chart.data.datasets){return;}
+if(this.activeSeries!==this.itemCode){return;}
+this.chart.data.datasets.forEach((dataset)=>{if(this.showImputations&&dataset.imputedScore){dataset.data=dataset.score.map((val,i)=>val!==null?val:(dataset.imputedScore[i]!==null?dataset.imputedScore[i]:null));}else{dataset.data=dataset.score;}});this.chart.update();}
 update(data){console.log(data)
+if(data.error||!data.data||data.data.length===0){const errorMessage=data.error||'No chart data available for this indicator';console.warn('Chart data error:',errorMessage);const errorDiv=document.createElement('div');errorDiv.className='chart-error-message';errorDiv.style.cssText='padding: 2rem; text-align: center; color: var(--text-color); background: var(--bg-color);';errorDiv.innerHTML=`<p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">⚠️ No Data Available</p><p style="font-size: 0.95rem; opacity: 0.8;">${errorMessage}</p>`;this.chartContainer.innerHTML='';this.chartContainer.appendChild(errorDiv);return;}
 if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
@@ -2369,10 +2379,18 @@ this.initializeDefaultRanges()
 this.updateSeriesDropdown()
 this.updateChartTitle()
 this.updateActiveSeriesDescription()
-this.chart.update()
-console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
+if(this.isCountryListMode&&data.data&&data.data.length>0){const allScoresNull=data.data.every(dataset=>{const scores=dataset.score||[]
+return scores.length===0||scores.every(val=>val===null||val===undefined)})
+if(allScoresNull&&!this.showImputations){console.log('Country List Mode: All real data is null, auto-enabling imputations')
+this.showImputations=true
+window.observableStorage.setItem("showImputations","true")
+const checkbox=this.chartOptions.querySelector('.show-all-imputations')
+if(checkbox){checkbox.checked=true}
+this.applyShowAllImputationsState(true)}}
+this.updateChartData()
+if(!this.isCountryListMode){console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
 console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
-this.computeMissingCountriesAsync()}
+this.computeMissingCountriesAsync()}else{console.log('Skipping missing countries computation in country list mode')}}
 initChartJSCanvas(){this.chartContainer=document.createElement('div')
 this.chartContainer.classList.add('panel-chart-container')
 this.chartContainer.innerHTML=`<div class="panel-chart-breadcrumb-container"style="display: none;"><nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"></nav><div class="panel-chart-breadcrumb-actions"></div></div><div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
@@ -2394,9 +2412,30 @@ breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span
 buildChartOptions(){super.buildChartOptions()
 const viewOptions=this.chartOptions.querySelector('.chart-view-options')
 if(viewOptions){const existingContainer=viewOptions.querySelector('.view-options-suboption-container')
-if(existingContainer){const seriesControlsHTML=`<div class="chart-view-subheader">Active Series</div><div class="chart-view-option series-selector-container"><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-option active-series-description"style="display: none;"><div class="active-series-description-content"></div></div><div class="chart-view-subheader">Y-Axis Range</div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="0.01"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="0.01"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;existingContainer.insertAdjacentHTML('afterbegin',seriesControlsHTML)}}}
+if(existingContainer){const seriesControlsHTML=`<div class="chart-view-subheader">Active Series</div><div class="chart-view-option series-selector-container"><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-subheader y-axis-range-subheader">Y-Axis Range</div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="0.01"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="0.01"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;existingContainer.insertAdjacentHTML('afterbegin',seriesControlsHTML)
+const imputationOptionsHeader=Array.from(existingContainer.querySelectorAll('.chart-view-subheader')).find(header=>header.textContent.includes('Imputation Options'));if(imputationOptionsHeader){const imputationToggleHTML=`<div class="chart-view-option"><input type="checkbox"class="show-all-imputations"${this.showImputations?'checked':''}/><label class="title-bar-label">Show All Imputations</label></div>`;imputationOptionsHeader.insertAdjacentHTML('afterend',imputationToggleHTML);}}}}
 rigChartOptions(){super.rigChartOptions()
-this.rigViewOptionsControls()}
+this.rigViewOptionsControls()
+this.initializeImputationState()}
+initializeImputationState(){if(this.extrapolateBackwardCheckbox&&this.interpolateCheckbox){this.savedExtrapolateBackwardState=this.extrapolateBackwardCheckbox.checked
+this.savedInterpolateState=this.interpolateCheckbox.checked
+if(this.showImputations){this.applyShowAllImputationsState(true)}}}
+applyShowAllImputationsState(enabled){if(!this.extrapolateBackwardCheckbox||!this.interpolateCheckbox){return}
+if(enabled){this.savedExtrapolateBackwardState=this.extrapolateBackwardCheckbox.checked
+this.savedInterpolateState=this.interpolateCheckbox.checked
+this.extrapolateBackwardCheckbox.checked=true
+this.interpolateCheckbox.checked=true
+this.extrapolateBackwardCheckbox.disabled=true
+this.interpolateCheckbox.disabled=true
+if(!this.extrapolateBackwardPlugin.enabled){this.extrapolateBackwardPlugin.toggle()}
+if(!this.chart.options.datasets.line.spanGaps){this.chart.options.datasets.line.spanGaps=true}}else{this.extrapolateBackwardCheckbox.checked=this.savedExtrapolateBackwardState
+this.interpolateCheckbox.checked=this.savedInterpolateState
+this.extrapolateBackwardCheckbox.disabled=false
+this.interpolateCheckbox.disabled=false
+if(this.extrapolateBackwardPlugin.enabled!==this.savedExtrapolateBackwardState){this.extrapolateBackwardPlugin.toggle()}
+this.chart.options.datasets.line.spanGaps=this.savedInterpolateState}}
+rigUnloadListener(){super.rigUnloadListener()
+window.addEventListener("beforeunload",()=>{window.observableStorage.setItem("showImputations",this.showImputations.toString())})}
 rigViewOptionsControls(){this.seriesSelector=this.chartOptions.querySelector('.series-selector')
 this.yMinInput=this.chartOptions.querySelector('.y-min-input')
 this.yMaxInput=this.chartOptions.querySelector('.y-max-input')
@@ -2416,7 +2455,13 @@ this.yMinInput.addEventListener('blur',handleYAxisChange)}
 if(this.yMaxInput){this.yMaxInput.addEventListener('input',handleYAxisChange)
 this.yMaxInput.addEventListener('blur',handleYAxisChange)}
 if(this.restoreYAxisButton){this.restoreYAxisButton.addEventListener('click',()=>{this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)
-this.updateRestoreButton()})}}
+this.updateRestoreButton()})}
+const showImputationsCheckbox=this.chartOptions.querySelector('.show-all-imputations')
+if(showImputationsCheckbox){showImputationsCheckbox.checked=this.showImputations
+showImputationsCheckbox.addEventListener('change',(e)=>{this.showImputations=e.target.checked
+window.observableStorage.setItem("showImputations",this.showImputations.toString())
+this.applyShowAllImputationsState(this.showImputations)
+this.updateChartData()})}}
 updateRestoreButton(){if(!this.restoreYAxisButton)return
 const hasChanged=(this.currentYMin!==this.defaultYMin||this.currentYMax!==this.defaultYMax)
 this.restoreYAxisButton.style.display=hasChanged?'block':'none'}
@@ -2429,9 +2474,7 @@ updateDefaultsForActiveSeries(){if(this.seriesDefaults&&this.seriesDefaults[this
 this.defaultYMax=this.seriesDefaults[this.activeSeries].yMax}else{this.defaultYMin=this.activeSeries===this.itemCode?0:0
 this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
 updateChartTitle(){if(!this.title)return
-if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
-this.title.innerText=datasetName+' ('+dataset.datasetCode+')'}else{this.title.innerText=this.activeSeries;}
+if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries);if(dataset){const datasetName=(dataset.datasetName&&dataset.datasetName.trim())?dataset.datasetName:dataset.datasetCode;this.title.innerText=`${datasetName}\u0020(${dataset.datasetCode})`;}else{this.title.innerText=`Dataset:\u0020${this.activeSeries}`;}
 this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}
 updateSeriesDropdown(){if(!this.seriesSelector){return}
 this.seriesSelector.innerHTML=''
@@ -2439,23 +2482,17 @@ const indicatorOption=document.createElement('option')
 indicatorOption.value=this.itemCode
 indicatorOption.textContent="Indicator: "+this.itemCode+' Indicator Score'
 this.seriesSelector.appendChild(indicatorOption)
-if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const option=document.createElement('option')
-option.value=dataset.datasetCode
-option.textContent="Dataset: "+dataset.datasetName||dataset.datasetCode
-this.seriesSelector.appendChild(option)})}
+if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const availableCount=this.chart.data.datasets.filter(d=>d.Datasets&&d.Datasets[dataset.datasetCode]&&d.Datasets[dataset.datasetCode].data).length;const totalCount=this.chart.data.datasets.length;const option=document.createElement('option');option.value=dataset.datasetCode;const baseName=(dataset.datasetName&&dataset.datasetName.trim())?dataset.datasetName:dataset.datasetCode;if(availableCount<totalCount){option.textContent=`Dataset:\u0020${baseName}\u0020(${availableCount}/${totalCount}\u0020countries)`;}else{option.textContent=`Dataset:\u0020${baseName}`;}
+this.seriesSelector.appendChild(option);});}
 this.seriesSelector.value=this.activeSeries
 this.updateYAxisInputs()}
-updateActiveSeriesDescription(){const activeSeriesDescription=this.chartOptions.querySelector('.active-series-description')
-if(!activeSeriesDescription){return}
-const contentDiv=activeSeriesDescription.querySelector('.active-series-description-content')
-if(!contentDiv){return}
-if(this.activeSeries===this.itemCode){activeSeriesDescription.style.display='none'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-console.log('Found dataset:',dataset)
-if(dataset&&dataset.description){contentDiv.innerHTML='<strong>Dataset:</strong> '+dataset.description
-activeSeriesDescription.style.display='block'}else if(dataset){contentDiv.innerHTML='<strong>Dataset:</strong> '+(dataset.datasetName||dataset.datasetCode)+' (no description available)'
-activeSeriesDescription.style.display='block'}else{contentDiv.innerHTML='<em>Dataset not found</em>'
-activeSeriesDescription.style.display='block'}}else{contentDiv.innerHTML='<em>No dataset options available</em>'
-activeSeriesDescription.style.display='block'}}}
+updateActiveSeriesDescription(){const yAxisSubheader=this.chartOptions.querySelector('.y-axis-range-subheader');if(!yAxisSubheader){return;}
+const existingSubheader=this.chartOptions.querySelector('.chart-view-subheader.active-series-description');const existingContent=this.chartOptions.querySelector('.chart-view-option.active-series-description-content');if(existingSubheader){existingSubheader.remove();}
+if(existingContent){existingContent.remove();}
+if(this.activeSeries===this.itemCode){return;}
+if(!this.datasetOptions){return;}
+const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries);const subheader=document.createElement('div');subheader.className='chart-view-subheader\u0020active-series-description';subheader.textContent='Dataset\u0020Description';const contentDiv=document.createElement('div');contentDiv.className='chart-view-option\u0020active-series-description-content';if(dataset&&dataset.datasetDescription){contentDiv.textContent=dataset.datasetDescription;}else if(dataset){const unit=dataset.unit?`\u0020(${dataset.unit})`:'';contentDiv.innerHTML=`<em>No\u0020description\u0020available${unit}</em>`;}else{contentDiv.innerHTML='<em>Dataset\u0020not\u0020found</em>';}
+yAxisSubheader.parentNode.insertBefore(contentDiv,yAxisSubheader);yAxisSubheader.parentNode.insertBefore(subheader,contentDiv);}}
 class SSPIPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode
 this.activeItemCode=itemCode}
