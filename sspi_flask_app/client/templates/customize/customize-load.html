@@ -1,76 +1,5 @@
 {% extends 'layout.html' %}
 {% block content %}
-<style>
-.load-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25em;
-}
-
-.functionality-explainer {
-  color: var(--low-importance-font-color);
-  font-family: var(--body-font-family);
-}
-
-/* Unsaved warnings styling */
-.unsaved-warnings-section {
-    margin-bottom: 1.5rem;
-}
-
-.unsaved-warning-banner {
-    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.unsaved-warning-banner h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.125rem;
-}
-
-.unsaved-warning-banner p {
-    margin: 0 0 1rem 0;
-    opacity: 0.9;
-    font-size: 0.875rem;
-}
-
-.warning-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.warning-actions .btn-primary,
-.warning-actions .btn-secondary {
-    text-decoration: none;
-    display: inline-block;
-}
-
-.bounded-content-box {
-  background-color: var(--box-background-color);
-  padding: 1.25rem;
-  background-color: var(--box-background-color);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
-  box-sizing: border-box;
-}
-
-.config-section {
-  flex: 1 1 0;
-  min-width: 400px;
-}
-
-.config-section h2 {
- font-size: 1.75rem;
- margin-bottom: 0.5rem;
- color: var(--text-primary);
-}
-
-/* Config card styles moved to /css/components/config-cards.css */
-</style>
 <article class="page-content">
     <section class="page-section">
         <!-- Unsaved warnings will be injected here by JavaScript -->
@@ -108,8 +37,6 @@
             </div>
             <!-- Saved Configurations -->
             <div class="bounded-content-box config-section">
-                <!-- Unsaved warnings (inserted by JavaScript if unsaved changes exist) -->
-                <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
                 <h3>Saved Configurations</h3>
                 <p class="functionality-explainer">
                     Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.

@@ -73,15 +73,7 @@ class CountryPillarPanelChart {
                         labelField: 'ICode'
                     },
                     tooltip: {
-                        mode: 'index',
-                    }
-                },
-                layout: {
-                    padding: {
-                        right: 40
-                    },
-                    tooltip: {
-                        enabled: false,
+                        enabled: false
                     },
                     pillarBreakdownInteractionPlugin: {
                         enabled: true,
@@ -90,7 +82,7 @@ class CountryPillarPanelChart {
                         showTotal: true,
                         countryName: null,
                         countryFlag: null
-                    },
+                    }
                 },
                 layout: {
                     padding: {
@@ -210,8 +202,9 @@ class CountryPillarPanelChart {
         this.itemType = data.itemType
         if (data.countryDetails) {
             this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryName = data.countryDetails.CName;
-            this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryFlag = data.countryDetails.CFlag;
         }
+        // Pass country code to plugin
+        this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryCode = this.countryCode;
         this.updateChartColors()
         this.chart.options.scales.y.min = 0
         this.chart.options.scales.y.max = 1

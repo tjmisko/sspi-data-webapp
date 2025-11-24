@@ -691,7 +691,8 @@ class IndicatorTable {
         const cachedStateObject = window.observableStorage.getItem('indicatorTableState');
         collapsibleSections.forEach(section => {
             const defaultState = section.dataset.expanded === 'true';
-            const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
+            const cachedValue = cachedStateObject?.[section.dataset.icode];
+            const cachedState = cachedValue !== undefined ? cachedValue === 'true' : defaultState;
             this.updateSectionVisibility(section, cachedState);
             section.dataset.expanded = cachedState.toString();
             const toggleButton = this.findToggleButton(section)
@@ -941,17 +942,16 @@ const x=xScale.getPixelForValue(i);const y=yScale.getPixelForValue(value);if(isN
 if(!pathStarted){ctx.moveTo(x,y);pathStarted=true;}else{ctx.lineTo(x,y);}}
 if(pathStarted){ctx.stroke();}
 ctx.restore();});},_setupCanvas(ctx,font,color,alpha=1){ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.textAlign='left';},_fade(col,a){if(col.startsWith("rgba"))return col.replace(/, *[^,]+\)$/,`,${a})`);if(col.startsWith("rgb"))return col.replace("rgb","rgba").replace(")",`,${a})`);if(col[0]==="#"&&col.length===7)
-return col+Math.round(a*255).toString(16).padStart(2,"0");return col;},_yearText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const pillarBreakdownInteractionPlugin={id:"pillarBreakdownInteractionPlugin",defaults:{enabled:true,radius:30,guideColor:"#bbbbbb",guideWidth:1,showTotal:true,countryName:null,countryFlag:null},_interaction:{mouse:null,nearest:null,tooltipData:null,tooltipElement:null},afterEvent(chart,args){const cfg=chart.options.plugins?.pillarBreakdownInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}
+return col+Math.round(a*255).toString(16).padStart(2,"0");return col;},_yearText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const pillarBreakdownInteractionPlugin={id:"pillarBreakdownInteractionPlugin",defaults:{enabled:true,radius:30,guideColor:"#bbbbbb",guideWidth:1,showTotal:true,countryName:null,countryFlag:null,countryCode:null},_interaction:{mouse:null,nearest:null,tooltipData:null,tooltipElement:null},afterEvent(chart,args){const cfg=chart.options.plugins?.pillarBreakdownInteractionPlugin;if(!cfg||!cfg.enabled)return;const ev=args.event;if(!ev)return;if(ev.type==="mousemove"){this._interaction.mouse={x:ev.x,y:ev.y};}else if(ev.type==="mouseout"){this._interaction.mouse=null;}
 chart.draw();},beforeDatasetsDraw(chart,_args,opts){if(!opts||!opts.enabled){this._resetProximity(chart);return;}
 const pos=this._interaction.mouse;if(!pos){this._resetProximity(chart);return;}
 const R=opts.radius;const ctx=chart.ctx;const area=chart.chartArea;let nearest={d2:Infinity,x:null,idx:null,valX:null};chart.data.datasets.forEach((ds,i)=>{const meta=chart.getDatasetMeta(i);if(ds.hidden||!meta?.data?.length){return;}
 meta.data.forEach((pt,colIdx)=>{if(!pt)return;const dx=pt.x-pos.x;const dy=pt.y-pos.y;const d2=dx*dx+dy*dy;if(d2<nearest.d2){nearest={d2,x:pt.x,idx:colIdx,valX:pt.parsed?.x??colIdx};}});});if(nearest.d2===Infinity){this._resetProximity(chart);return;}
 this._interaction.nearest=nearest;ctx.save();ctx.beginPath();ctx.moveTo(nearest.x,area.top);ctx.lineTo(nearest.x,area.bottom);ctx.strokeStyle=opts.guideColor;ctx.lineWidth=opts.guideWidth;ctx.setLineDash([]);ctx.stroke();ctx.restore();const items=[];let sumOfScores=0;chart.data.datasets.forEach((ds,i)=>{if(ds.hidden)return;const meta=chart.getDatasetMeta(i);const el=meta.data[nearest.idx];let value;if(ds.scores&&ds.scores[nearest.idx]!=null){value=ds.scores[nearest.idx];}else if(ds.score&&ds.score[nearest.idx]!=null){value=ds.score[nearest.idx];}else if(ds.data&&ds.data[nearest.idx]!=null){value=ds.data[nearest.idx];}else{value=el?.parsed?.y??el?.raw;}
-if(value==null||isNaN(value))return;const name=ds.IName||ds.ICode||`Item ${i+1}`;items.push({name,value,color:ds._full?ds._full.border:ds.borderColor,near:ds._isNear});sumOfScores+=value;});items.sort((a,b)=>b.value-a.value);const sspiScore=items.length>0?sumOfScores/items.length:0;this._interaction.tooltipData={header:this._headerText(chart,nearest.valX),items,sspi:opts.showTotal?sspiScore:null};},afterDraw(chart,_args,opts){if(!opts?.enabled)return;const data=this._interaction.tooltipData;if(!data||!data.items.length){this._removeTooltip();return;}
+if(value==null||isNaN(value))return;const name=ds.IName||ds.ICode||`Item ${i+1}`;const code=ds.ICode;items.push({name,code,value,color:ds._full?ds._full.border:ds.borderColor,near:ds._isNear});sumOfScores+=value;});const pillarOrder={'SUS':0,'MS':1,'PG':2};items.sort((a,b)=>{const orderA=pillarOrder[a.code]??999;const orderB=pillarOrder[b.code]??999;return orderA-orderB;});const sspiScore=items.length>0?sumOfScores/items.length:0;this._interaction.tooltipData={header:this._headerText(chart,nearest.valX),items,sspi:opts.showTotal?sspiScore:null};},afterDraw(chart,_args,opts){if(!opts?.enabled)return;const data=this._interaction.tooltipData;if(!data||!data.items.length){this._removeTooltip();return;}
 this._updateTooltip(chart,data,opts);},_removeTooltip(){if(this._interaction.tooltipElement){this._interaction.tooltipElement.remove();this._interaction.tooltipElement=null;}},_updateTooltip(chart,data,opts){const canvas=chart.canvas;const area=chart.chartArea;if(!this._interaction.tooltipElement){this._interaction.tooltipElement=document.createElement('div');this._interaction.tooltipElement.className='pillar-breakdown-tooltip';this._interaction.tooltipElement.style.position='absolute';this._interaction.tooltipElement.style.pointerEvents='none';this._interaction.tooltipElement.style.zIndex='1000';canvas.parentElement.style.position='relative';canvas.parentElement.appendChild(this._interaction.tooltipElement);}
 const tooltip=this._interaction.tooltipElement;let scoresHTML='';data.items.forEach(item=>{scoresHTML+=`<div class="pillar-breakdown-score-line"><span class="pillar-breakdown-item-label"style="color: ${item.color}">${item.name}:</span><span class="pillar-breakdown-item-score">${item.value.toFixed(3)}</span></div>`;});if(data.sspi!==null){scoresHTML+=`<div class="pillar-breakdown-score-line sspi-total"><span class="pillar-breakdown-item-label">SSPI:</span><span class="pillar-breakdown-item-score">${data.sspi.toFixed(3)}</span></div>`;}
-let headerHTML='';if(opts.countryName){const flag=opts.countryFlag||'';headerHTML=`<h3><span class="pillar-breakdown-country-name">${flag}\u0020${opts.countryName}</span><span class="pillar-breakdown-year">${data.header}</span></h3>`;}else{headerHTML=`<h3><span class="pillar-breakdown-year">${data.header}</span></h3>`;}
-tooltip.innerHTML=`${headerHTML}<div class="pillar-breakdown-score-container">${scoresHTML}</div>`;const canvasRect=canvas.getBoundingClientRect();const parentRect=canvas.parentElement.getBoundingClientRect();const nearestX=this._interaction.nearest.x;const mouseY=this._interaction.mouse.y;tooltip.style.visibility='hidden';tooltip.style.display='block';const tooltipRect=tooltip.getBoundingClientRect();const tooltipWidth=tooltipRect.width;const tooltipHeight=tooltipRect.height;tooltip.style.visibility='';const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+15:nearestX-15-tooltipWidth;x=Math.max(area.left+2,Math.min(x,area.right-tooltipWidth-2));const above=mouseY>(area.top+area.bottom)/2;let y=above?mouseY-tooltipHeight-opts.radius-5:mouseY+opts.radius+5;y=Math.max(area.top+2,Math.min(y,area.bottom-tooltipHeight-2));const offsetX=canvasRect.left-parentRect.left;const offsetY=canvasRect.top-parentRect.top;tooltip.style.left=(x+offsetX)+'px';tooltip.style.top=(y+offsetY)+'px';},_resetProximity(chart){this._interaction.tooltipData=null;this._removeTooltip();},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const seriesCorrelationTooltip={id:'seriesCorrelationTooltip',defaults:{enabled:true,tooltipBg:'rgba(255,255,255,0.95)',tooltipFg:'#111',tooltipFgAccent:'#8BA342',tooltipBorder:'rgba(0,0,0,0.25)',tooltipFont:'12px sans-serif',tooltipBoldFont:'bold 12px sans-serif',tooltipMonoFont:'bold 12px "Courier New", monospace',tooltipHeaderFont:'bold 13px sans-serif',tooltipPad:10,tooltipGap:15,hoverRadius:10,lineHeight:16},_mouse:null,_hoveredPoint:null,_chartInstance:null,afterEvent(chart,args,opts){if(!opts||!opts.enabled)return;const event=args.event;if(!event)return;if(event.type==='mousemove'){this._mouse={x:event.x,y:event.y};this._hoveredPoint=this._findNearestPoint(chart,event,opts);chart.draw();}else if(event.type==='mouseout'){this._mouse=null;this._hoveredPoint=null;chart.draw();}},_findNearestPoint(chart,event,opts){const radius=opts.hoverRadius||this.defaults.hoverRadius;const r2=radius*radius;let nearest=null;let minD2=Infinity;chart.data.datasets.forEach((dataset,datasetIndex)=>{if(dataset.hidden)return;const meta=chart.getDatasetMeta(datasetIndex);if(!meta||!meta.data)return;meta.data.forEach((point,pointIndex)=>{if(!point)return;const dx=point.x-event.x;const dy=point.y-event.y;const d2=dx*dx+dy*dy;if(d2<=r2&&d2<minD2){minD2=d2;nearest={datasetIndex,pointIndex,point,data:dataset.data[pointIndex]};}});});return nearest;},afterDraw(chart,args,opts){if(!opts||!opts.enabled)return;if(!this._mouse||!this._hoveredPoint)return;const ctx=chart.ctx;const hovered=this._hoveredPoint;const raw=hovered.data;const seriesX=opts.seriesX;const seriesY=opts.seriesY;const choropleth=opts.choropleth;const colorProvider=opts.colorProvider;if(!seriesX||!seriesY)return;const tooltipData=this._prepareTooltipData(raw,seriesX,seriesY,choropleth,colorProvider);this._renderTooltip(chart,ctx,tooltipData,opts);},_prepareTooltipData(raw,seriesX,seriesY,choropleth,colorProvider){const xLabel=`${seriesX.name}\u0020(${seriesX.code}):`;const yLabel=`${seriesY.name}\u0020(${seriesY.code}):`;const xValue=raw.x.toFixed(3);const yValue=raw.y.toFixed(3);return{country:raw.CName,code:raw.CCode,year:raw.year,rows:[{label:xLabel,value:xValue},{label:yLabel,value:yValue},{label:'Year:',value:String(raw.year)}],color:(choropleth&&colorProvider)?colorProvider.get(raw.CCode):null};},_renderTooltip(chart,ctx,data,opts){const pad=opts.tooltipPad;const lh=opts.lineHeight;ctx.font=opts.tooltipHeaderFont;const countryNameText=`${data.country}\u0020`;const openParen='(';const countryCodeText=data.code;const closeParen=')';const countryWidth=ctx.measureText(countryNameText).width+
+let headerHTML='';const countryCode=opts.countryCode||'';headerHTML=`<h3><span class="pillar-breakdown-country-code">${countryCode}</span><span class="pillar-breakdown-year">${data.header}</span></h3>`;tooltip.innerHTML=`${headerHTML}<div class="pillar-breakdown-score-container">${scoresHTML}</div>`;const canvasRect=canvas.getBoundingClientRect();const parentRect=canvas.parentElement.getBoundingClientRect();const nearestX=this._interaction.nearest.x;const mouseY=this._interaction.mouse.y;tooltip.style.visibility='hidden';tooltip.style.display='block';const tooltipRect=tooltip.getBoundingClientRect();const tooltipWidth=tooltipRect.width;const tooltipHeight=tooltipRect.height;tooltip.style.visibility='';const right=nearestX<(area.left+area.right)/2;let x=right?nearestX+15:nearestX-15-tooltipWidth;x=Math.max(area.left+2,Math.min(x,area.right-tooltipWidth-2));const above=mouseY>(area.top+area.bottom)/2;let y=above?mouseY-tooltipHeight-opts.radius-5:mouseY+opts.radius+5;y=Math.max(area.top+2,Math.min(y,area.bottom-tooltipHeight-2));const offsetX=canvasRect.left-parentRect.left;const offsetY=canvasRect.top-parentRect.top;tooltip.style.left=(x+offsetX)+'px';tooltip.style.top=(y+offsetY)+'px';},_resetProximity(chart){this._interaction.tooltipData=null;this._removeTooltip();},_headerText(chart,v){const xs=chart.scales?.x;if(xs?.getLabelForValue)return String(xs.getLabelForValue(v));const lbls=chart.data?.labels;if(lbls&&v>=0&&v<lbls.length)return String(lbls[v]);return String(v);}};const seriesCorrelationTooltip={id:'seriesCorrelationTooltip',defaults:{enabled:true,tooltipBg:'rgba(255,255,255,0.95)',tooltipFg:'#111',tooltipFgAccent:'#8BA342',tooltipBorder:'rgba(0,0,0,0.25)',tooltipFont:'12px sans-serif',tooltipBoldFont:'bold 12px sans-serif',tooltipMonoFont:'bold 12px "Courier New", monospace',tooltipHeaderFont:'bold 13px sans-serif',tooltipPad:10,tooltipGap:15,hoverRadius:10,lineHeight:16},_mouse:null,_hoveredPoint:null,_chartInstance:null,afterEvent(chart,args,opts){if(!opts||!opts.enabled)return;const event=args.event;if(!event)return;if(event.type==='mousemove'){this._mouse={x:event.x,y:event.y};this._hoveredPoint=this._findNearestPoint(chart,event,opts);chart.draw();}else if(event.type==='mouseout'){this._mouse=null;this._hoveredPoint=null;chart.draw();}},_findNearestPoint(chart,event,opts){const radius=opts.hoverRadius||this.defaults.hoverRadius;const r2=radius*radius;let nearest=null;let minD2=Infinity;chart.data.datasets.forEach((dataset,datasetIndex)=>{if(dataset.hidden)return;const meta=chart.getDatasetMeta(datasetIndex);if(!meta||!meta.data)return;meta.data.forEach((point,pointIndex)=>{if(!point)return;const dx=point.x-event.x;const dy=point.y-event.y;const d2=dx*dx+dy*dy;if(d2<=r2&&d2<minD2){minD2=d2;nearest={datasetIndex,pointIndex,point,data:dataset.data[pointIndex]};}});});return nearest;},afterDraw(chart,args,opts){if(!opts||!opts.enabled)return;if(!this._mouse||!this._hoveredPoint)return;const ctx=chart.ctx;const hovered=this._hoveredPoint;const raw=hovered.data;const seriesX=opts.seriesX;const seriesY=opts.seriesY;const choropleth=opts.choropleth;const colorProvider=opts.colorProvider;if(!seriesX||!seriesY)return;const tooltipData=this._prepareTooltipData(raw,seriesX,seriesY,choropleth,colorProvider);this._renderTooltip(chart,ctx,tooltipData,opts);},_prepareTooltipData(raw,seriesX,seriesY,choropleth,colorProvider){const xLabel=`${seriesX.name}\u0020(${seriesX.code}):`;const yLabel=`${seriesY.name}\u0020(${seriesY.code}):`;const xValue=raw.x.toFixed(3);const yValue=raw.y.toFixed(3);return{country:raw.CName,code:raw.CCode,year:raw.year,rows:[{label:xLabel,value:xValue},{label:yLabel,value:yValue},{label:'Year:',value:String(raw.year)}],color:(choropleth&&colorProvider)?colorProvider.get(raw.CCode):null};},_renderTooltip(chart,ctx,data,opts){const pad=opts.tooltipPad;const lh=opts.lineHeight;ctx.font=opts.tooltipHeaderFont;const countryNameText=`${data.country}\u0020`;const openParen='(';const countryCodeText=data.code;const closeParen=')';const countryWidth=ctx.measureText(countryNameText).width+
 ctx.measureText(openParen).width+
 ctx.measureText(countryCodeText).width+
 ctx.measureText(closeParen).width;const yearText=String(data.year);const yearWidth=ctx.measureText(yearText).width;const headerGap=20;const headerWidth=countryWidth+headerGap+yearWidth;ctx.font=opts.tooltipFont;let maxLabelWidth=0;data.rows.forEach(row=>{const w=ctx.measureText(row.label).width;maxLabelWidth=Math.max(maxLabelWidth,w);});ctx.font=opts.tooltipMonoFont;let maxValueWidth=0;data.rows.forEach(row=>{const w=ctx.measureText(row.value).width;maxValueWidth=Math.max(maxValueWidth,w);});const colGap=12;const bodyWidth=maxLabelWidth+colGap+maxValueWidth;const width=Math.max(headerWidth,bodyWidth)+pad*2;const seriesRowCount=data.rows.filter(row=>row.label!=='Year:').length;const height=(seriesRowCount+1)*lh+pad*2;const pos=this._positionTooltip(chart,this._mouse,width,height,opts);ctx.save();ctx.fillStyle=opts.tooltipBg||this.defaults.tooltipBg;ctx.strokeStyle=opts.tooltipBorder||this.defaults.tooltipBorder;ctx.lineWidth=1;ctx.beginPath();ctx.rect(pos.x,pos.y,width,height);ctx.fill();ctx.stroke();const headerY=pos.y+pad+0.75*lh;ctx.font=opts.tooltipHeaderFont||this.defaults.tooltipHeaderFont;ctx.textAlign='left';let xPos=pos.x+pad;ctx.fillStyle=opts.tooltipFg||this.defaults.tooltipFg;ctx.fillText(countryNameText,xPos,headerY);xPos+=ctx.measureText(countryNameText).width;ctx.fillText(openParen,xPos,headerY);xPos+=ctx.measureText(openParen).width;ctx.fillStyle=data.color||(opts.tooltipFg||this.defaults.tooltipFg);ctx.fillText(countryCodeText,xPos,headerY);xPos+=ctx.measureText(countryCodeText).width;ctx.fillStyle=opts.tooltipFg||this.defaults.tooltipFg;ctx.fillText(closeParen,xPos,headerY);ctx.fillStyle=opts.tooltipFgAccent||this.defaults.tooltipFgAccent;ctx.textAlign='right';ctx.fillText(yearText,pos.x+width-pad,headerY);const rowStartY=pos.y+pad+lh;const seriesRows=data.rows.filter(row=>row.label!=='Year:');seriesRows.forEach((row,i)=>{const rowY=rowStartY+(i+0.75)*lh;ctx.font=opts.tooltipFont||this.defaults.tooltipFont;ctx.fillStyle=opts.tooltipFg||this.defaults.tooltipFg;ctx.textAlign='left';ctx.fillText(row.label,pos.x+pad,rowY);ctx.font=opts.tooltipMonoFont||this.defaults.tooltipMonoFont;ctx.textAlign='right';ctx.fillText(row.value,pos.x+width-pad,rowY);});ctx.restore();},_positionTooltip(chart,mouse,width,height,opts){const area=chart.chartArea;const gap=opts.tooltipGap;const margin=5;const preferRight=mouse.x<(area.left+area.right)/2;let x=preferRight?mouse.x+gap:mouse.x-gap-width;x=Math.max(area.left+margin,Math.min(x,area.right-width-margin));const preferBelow=mouse.y<(area.top+area.bottom)/2;let y=preferBelow?mouse.y+gap:mouse.y-gap-height;y=Math.max(area.top+margin,Math.min(y,area.bottom-height-margin));return{x,y};}};class ChangesHistoryModal{constructor(options={}){this.actionHistory=options.actionHistory;this.mode=options.mode||'modal';this.container=options.container||null;this.modal=null;this.expandedItems=new Set();this.escapeHandler=null;this.keyboardHandler=null;this.focusTrapHandler=null;}
@@ -1003,7 +1003,50 @@ if(this.keyboardHandler){document.removeEventListener('keydown',this.keyboardHan
 if(this.focusTrapHandler){document.removeEventListener('keydown',this.focusTrapHandler);this.focusTrapHandler=null;}
 if(this.modal&&this.modal.parentNode){document.body.removeChild(this.modal);}
 this.modal=null;}}
-window.ChangesHistoryModal=ChangesHistoryModal;class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
+window.ChangesHistoryModal=ChangesHistoryModal;class CountryRankingsPanel{constructor(parentElement,countryCode,itemLevel,options={}){this.parentElement=parentElement;this.countryCode=countryCode;this.itemLevel=itemLevel;this.options=options;this.data=null;this.selectedTimePeriod=null;this.totalCountries=null;this.init();}
+async init(){await this.fetchData();this.render();}
+async fetchData(){try{const response=await fetch(`/api/v1/country/rankings/${this.countryCode}/${this.itemLevel}`);if(!response.ok){throw new Error(`HTTP\u0020error!\u0020status:\u0020${response.status}`);}
+const result=await response.json();this.data=result;this.totalCountries=result.totalCountries||67;if(this.data.timePeriods){if(this.data.timePeriods['Overall']&&this.data.timePeriods['Overall'].length>0){this.selectedTimePeriod=this.data.timePeriods['Overall'][0];}else if(this.data.timePeriods['Single Year']){const years=this.data.timePeriods['Single Year'];this.selectedTimePeriod=years[years.length-1];}else{const firstType=Object.keys(this.data.timePeriods)[0];this.selectedTimePeriod=this.data.timePeriods[firstType][0];}}}catch(error){console.error('Error fetching rankings data:',error);this.renderError(error.message);}}
+render(){if(!this.data){return;}
+const dropdownHTML=this.buildDropdownOptions();const isSingleYear=this.isSingleYearPeriod(this.selectedTimePeriod);const layoutClass=isSingleYear?'single-year':'intervals';this.parentElement.innerHTML=`<div class="rankings-panel"><div class="rankings-panel-header"><h3>Time Period</h3><select class="time-period-selector">${dropdownHTML}</select></div><!--Absolute Performance Section--><div class="rankings-section"><div class="rankings-section-header"><h4>Absolute Indicator Performance\u0020(Score-Based)</h4><p class="rankings-section-description">Policy indicators of note when comparing with the set of all indicators for ${this.countryCode}.</p></div><div class="rankings-panel-content ${layoutClass}"><div class="rankings-column"><h5>Highest Scores</h5><div class="rankings-cards"id="absolute-highest-cards"></div></div><div class="rankings-column"><h5>Lowest Scores</h5><div class="rankings-cards"id="absolute-lowest-cards"></div></div>${!isSingleYear?`<div class="rankings-column"><h5>Most Improved Scores</h5><div class="rankings-cards"id="absolute-improved-cards"></div></div><div class="rankings-column"><h5>Biggest Score Declines</h5><div class="rankings-cards"id="absolute-declined-cards"></div></div>`:''}</div></div><!--Relative Performance Section--><div class="rankings-section"><div class="rankings-section-header"><h4>Relative Indicator Performance(Rank-Based)</h4><p class="rankings-section-description">Policy indicators on which ${this.countryCode}ranks best/worst compared to other countries.</p></div><div class="rankings-panel-content ${layoutClass}"><div class="rankings-column"><h5>Best Ranks</h5><div class="rankings-cards"id="relative-strongest-cards"></div></div><div class="rankings-column"><h5>Worst Ranks</h5><div class="rankings-cards"id="relative-weakest-cards"></div></div>${!isSingleYear?`<div class="rankings-column"><h5>Most Improved Ranks</h5><div class="rankings-cards"id="relative-improved-cards"></div></div><div class="rankings-column"><h5>Biggest Rank Declines</h5><div class="rankings-cards"id="relative-declined-cards"></div></div>`:''}</div></div></div>`;const selector=this.parentElement.querySelector('.time-period-selector');selector.addEventListener('change',(e)=>{this.selectedTimePeriod=e.target.value;this.render();});this.updateCards();}
+buildDropdownOptions(){if(!this.data.timePeriods){return'<option>No time periods available</option>';}
+const typeOrder=['Overall','Year-to-Present','Ten Year Interval','Five Year Interval','Single Year'];let html='';for(const type of typeOrder){if(this.data.timePeriods[type]){const periods=this.data.timePeriods[type];html+=`<optgroup label="${type}">`;const orderedPeriods=type==='Single Year'?[...periods].reverse():periods;for(const period of orderedPeriods){const selected=period===this.selectedTimePeriod?'selected':'';html+=`<option value="${period}"${selected}>${period}</option>`;}
+html+='</optgroup>';}}
+return html;}
+isSingleYearPeriod(period){return this.data.timePeriods['Single Year']&&this.data.timePeriods['Single Year'].includes(period);}
+updateCards(){const filteredData=this.filterDataByTimePeriod(this.selectedTimePeriod);const isSingleYear=this.isSingleYearPeriod(this.selectedTimePeriod);const highestScores=this.getHighestScores(filteredData,5);const lowestScores=this.getLowestScores(filteredData,5);this.renderCards('absolute-highest-cards',highestScores,'absolute-high');this.renderCards('absolute-lowest-cards',lowestScores,'absolute-low');if(!isSingleYear){const mostImprovedScores=this.getMostImprovedScores(filteredData,5);const biggestScoreDeclines=this.getBiggestScoreDeclines(filteredData,5);this.renderCards('absolute-improved-cards',mostImprovedScores,'absolute-improved');this.renderCards('absolute-declined-cards',biggestScoreDeclines,'absolute-declined');}
+const bestRanks=this.getBestRanks(filteredData,5);const worstRanks=this.getWorstRanks(filteredData,5);this.renderCards('relative-strongest-cards',bestRanks,'relative-strong');this.renderCards('relative-weakest-cards',worstRanks,'relative-weak');if(!isSingleYear){const mostImprovedRanks=this.getMostImprovedRanks(filteredData,5);const biggestRankDeclines=this.getBiggestRankDeclines(filteredData,5);this.renderCards('relative-improved-cards',mostImprovedRanks,'relative-improved');this.renderCards('relative-declined-cards',biggestRankDeclines,'relative-declined');}}
+filterDataByTimePeriod(timePeriod){return this.data.data.filter(d=>d.TimePeriod===timePeriod);}
+getHighestScores(data,limit){return data.map(d=>({...d,sortValue:this.getScoreValue(d,'avg')})).filter(d=>d.sortValue!==null).sort((a,b)=>b.sortValue-a.sortValue).slice(0,limit);}
+getLowestScores(data,limit){return data.map(d=>({...d,sortValue:this.getScoreValue(d,'avg')})).filter(d=>d.sortValue!==null).sort((a,b)=>a.sortValue-b.sortValue).slice(0,limit);}
+getMostImprovedScores(data,limit){return data.map(d=>({...d,sortValue:this.getScoreValue(d,'chg')})).filter(d=>d.sortValue!==null&&d.sortValue>0).sort((a,b)=>b.sortValue-a.sortValue).slice(0,limit);}
+getBiggestScoreDeclines(data,limit){return data.map(d=>({...d,sortValue:this.getScoreValue(d,'chg')})).filter(d=>d.sortValue!==null&&d.sortValue<0).sort((a,b)=>a.sortValue-b.sortValue).slice(0,limit);}
+getBestRanks(data,limit){return data.map(d=>({...d,sortValue:this.getRankValue(d,'avg')})).filter(d=>d.sortValue!==null).sort((a,b)=>a.sortValue-b.sortValue).slice(0,limit);}
+getWorstRanks(data,limit){return data.map(d=>({...d,sortValue:this.getRankValue(d,'avg')})).filter(d=>d.sortValue!==null).sort((a,b)=>b.sortValue-a.sortValue).slice(0,limit);}
+getMostImprovedRanks(data,limit){return data.map(d=>({...d,sortValue:this.getRankValue(d,'chg')})).filter(d=>d.sortValue!==null&&d.sortValue>0).sort((a,b)=>b.sortValue-a.sortValue).slice(0,limit);}
+getBiggestRankDeclines(data,limit){return data.map(d=>({...d,sortValue:this.getRankValue(d,'chg')})).filter(d=>d.sortValue!==null&&d.sortValue<0).sort((a,b)=>a.sortValue-b.sortValue).slice(0,limit);}
+getRankValue(item,metric){if(item.TimePeriodType==='Single Year'){return metric==='avg'?item.Rank:null;}else{return item.Ranks?item.Ranks[metric]:null;}}
+getScoreValue(item,metric){if(item.TimePeriodType==='Single Year'){return metric==='avg'?item.Score:null;}else{return item.Scores?item.Scores[metric]:null;}}
+renderCards(containerId,items,type){const container=this.parentElement.querySelector(`#${containerId}`);if(!container){return;}
+if(!items||items.length===0){container.innerHTML='<div class="no-data-message">No data available</div>';return;}
+container.innerHTML=items.map(item=>this.createCard(item,type)).join('');const isSingleYear=items.length>0&&this.isSingleYearPeriod(items[0].TimePeriod);if(!isSingleYear){container.querySelectorAll('.ranking-card').forEach(card=>{card.style.cursor='pointer';card.addEventListener('click',(e)=>{this.showPreviewModal(card);});});}}
+createCard(item,type){const rank=this.getRankValue(item,'avg');const score=this.getScoreValue(item,'avg');const scoreChange=this.getScoreValue(item,'chg');const rankChange=this.getRankValue(item,'chg');const isAbsolute=type.startsWith('absolute');const isChangeCard=type.includes('improved')||type.includes('declined');const change=isAbsolute?scoreChange:rankChange;let changeHtml='';if(isChangeCard&&change!==null&&change!==undefined){const changeSign=change>0?'+':'';const changeClass=change>0?'positive-change':'negative-change';changeHtml=`<span class="rank-change ${changeClass}">${changeSign}${change.toFixed(isAbsolute?3:0)}</span>`;}
+return`<div class="ranking-card ${type}"data-item-code="${item.ItemCode}"data-time-period="${item.TimePeriod}"data-item-name="${item.ItemName || item.ItemCode}"><div class="card-header"><span class="item-name">${item.ItemName||item.ItemCode}</span>${rank?`<span class="rank-badge">#\u0020${rank}\u0020/\u0020${this.totalCountries}</span>`:''}</div><div class="card-body"><div class="score-row"><span class="score-display">Score:\u0020${score!==null?score.toFixed(3):'N/A'}</span>${changeHtml}</div></div><div class="card-footer"><span class="time-period">${item.TimePeriod}</span></div></div>`;}
+renderError(message){this.parentElement.innerHTML=`<div class="rankings-panel-error"><p>Error\u0020loading\u0020rankings\u0020data:\u0020${message}</p></div>`;}
+parseTimePeriod(timePeriod){if(!timePeriod){return{startYear:2000,endYear:2023};}
+const match=timePeriod.match(/(\d{4})(?:-(\d{4}))?/);if(match){const startYear=parseInt(match[1],10);const endYear=match[2]?parseInt(match[2],10):startYear;return{startYear,endYear};}
+return{startYear:2000,endYear:2023};}
+showPreviewModal(card){const itemCode=card.dataset.itemCode;const itemName=card.dataset.itemName;const timePeriod=card.dataset.timePeriod;if(!itemCode){console.warn('Cannot preview: No item code found on card');return;}
+if(this.isSingleYearPeriod(timePeriod)){return;}
+const{startYear,endYear}=this.parseTimePeriod(timePeriod);const overlay=document.createElement('div');overlay.className='preview-modal-overlay';overlay.innerHTML=`<div class="preview-modal"><div class="preview-modal-header"><h3>${itemName}(${itemCode})-${this.countryCode}</h3><button class="modal-close-btn"type="button">×</button></div><div class="preview-modal-body"><div id="preview-chart-container"></div></div></div>`;document.body.appendChild(overlay);const modal=overlay.querySelector('.preview-modal');const closeBtn=overlay.querySelector('.modal-close-btn');const chartContainer=overlay.querySelector('#preview-chart-container');let chartInstance=null;try{chartInstance=new IndicatorPanelChart(chartContainer,itemCode,{CountryList:[this.countryCode]});if(chartInstance){chartInstance.startYear=startYear;chartInstance.endYear=endYear;if(chartInstance.chart&&chartInstance.chart.options&&chartInstance.chart.options.scales&&chartInstance.chart.options.scales.x){chartInstance.chart.options.scales.x.min=startYear;chartInstance.chart.options.scales.x.max=endYear;}
+if(chartInstance.startYearInput){chartInstance.startYearInput.value=startYear;}
+if(chartInstance.endYearInput){chartInstance.endYearInput.value=endYear;}
+if(chartInstance.chart){chartInstance.chart.update();}}
+if(window.SSPICharts){window.SSPICharts.push(chartInstance);}}catch(error){console.error('Error creating preview chart:',error);chartContainer.innerHTML=`<div style="padding: 2rem; text-align: center; color: var(--error-color);"><p>Error loading preview chart.</p><p>${error.message}</p></div>`;}
+const closeModal=()=>{if(chartInstance&&typeof chartInstance.destroy==='function'){try{chartInstance.destroy();}catch(error){console.error('Error destroying chart:',error);}}
+if(window.SSPICharts&&chartInstance){const index=window.SSPICharts.indexOf(chartInstance);if(index>-1){window.SSPICharts.splice(index,1);}}
+overlay.remove();};closeBtn.addEventListener('click',closeModal);const escapeHandler=(e)=>{if(e.key==='Escape'){closeModal();document.removeEventListener('keydown',escapeHandler);}};document.addEventListener('keydown',escapeHandler);overlay.addEventListener('click',(e)=>{if(e.target===overlay){closeModal();}});}}
+class CountrySelector{constructor(parentElement,resultsWindow,datasets,parentChart){this.parentElement=parentElement
 this.buttonHTML=parentElement.innerHTML
 this.resultsWindow=resultsWindow
 this.datasets=datasets
@@ -1862,7 +1905,8 @@ this.countryGroupSelector=this.chartOptions.querySelector('.country-group-select
 this.countryGroupSelector.addEventListener('change',(event)=>{this.showGroup(event.target.value)})
 this.hideUnpinnedButton=this.chartOptions.querySelector('.hideunpinned-button')
 this.hideUnpinnedButton.addEventListener('click',()=>{this.hideUnpinned()})}
-updateCountryGroups(){const groupOptionDefault=window.observableStorage.getItem("countryGroup")||"SSPI67"
+updateCountryGroups(){if(this.isCountryListMode||!this.countryGroupSelector){return;}
+const groupOptionDefault=window.observableStorage.getItem("countryGroup")||"SSPI67"
 this.countryGroupSelector.innerHTML=''
 this.groupOptions.forEach((option,index)=>{const opt=document.createElement('option');opt.value=option;opt.textContent=option;if(option===groupOptionDefault){opt.selected=true;}
 this.countryGroupSelector.appendChild(opt);});}
@@ -2317,13 +2361,12 @@ this.currentYMin=0
 this.currentYMax=1
 this.defaultYMin=0
 this.defaultYMax=1
+this.showImputations=window.observableStorage.getItem("showImputations")==="true"
+this.savedExtrapolateBackwardState=null
+this.savedInterpolateState=null
 this.moveBurgerToBreadcrumb()}
 moveBurgerToBreadcrumb(){if(this.showChartOptions&&this.breadcrumbActions){this.breadcrumbActions.appendChild(this.showChartOptions)}}
-updateChartOptions(){let yAxisTitle='Item Value'
-if(this.activeSeries===this.itemCode){yAxisTitle='Indicator Score'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-if(dataset){const baseName="Dataset: "+dataset.datasetName||dataset.datasetCode
-const unit=dataset.unit||dataset.Unit
-yAxisTitle=unit?`${baseName}(${unit})`:baseName}}
+updateChartOptions(){let yAxisTitle='Item\u0020Value';if(this.activeSeries===this.itemCode){yAxisTitle='Indicator\u0020Score';}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries);if(dataset){const datasetName=(dataset.datasetName&&dataset.datasetName.trim())?dataset.datasetName:dataset.datasetCode;const baseName=`Dataset:\u0020${datasetName}`;const unit=dataset.unit||dataset.Unit;yAxisTitle=unit?`${baseName}\u0020(${unit})`:baseName;}}
 this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{ticks:{color:this.tickColor,},beginAtZero:true,min:this.currentYMin,max:this.currentYMax,title:{display:true,text:yAxisTitle,color:this.axisTitleColor,font:{size:16}}}}}
 updateItemDropdown(options,itemType){let itemTypeCapped=itemType
 if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
@@ -2337,14 +2380,20 @@ opt.textContent=option.Text;this.itemDropdown.appendChild(opt)}
 this.itemDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})}
 setActiveSeries(series){this.activeSeries=series
 this.updateDefaultsForActiveSeries()
-if(this.activeSeries===this.itemCode){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.score});this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else if(this.datasetOptions&&this.datasetOptions.map(o=>o.datasetCode).includes(this.activeSeries)){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.Datasets[this.activeSeries].data});console.log(`Setting active series to ${this.activeSeries}with yMin:${this.defaultYMin},yMax:${this.defaultYMax}`);this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else{console.warn(`Active series"${this.activeSeries}"not found in dataset options.`);}
+if(this.activeSeries===this.itemCode){this.chart.data.datasets.forEach((dataset)=>{dataset.data=dataset.score});this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else if(this.datasetOptions&&this.datasetOptions.map(o=>o.datasetCode).includes(this.activeSeries)){this.chart.data.datasets.forEach((dataset)=>{dataset.data=this.getDatasetDataSafely(dataset,this.activeSeries);});const missingCount=this.chart.data.datasets.filter(d=>!d.Datasets||!d.Datasets[this.activeSeries]).length;if(missingCount>0){console.warn(`Dataset ${this.activeSeries}:${missingCount}/${this.chart.data.datasets.length}countries missing data`);}
+console.log(`Setting active series to ${this.activeSeries}with yMin:${this.defaultYMin},yMax:${this.defaultYMax}`);this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)}else{console.warn(`Active series"${this.activeSeries}"not found in dataset options.`);}
 this.updateChartTitle()
 this.updateChartOptions()
 this.updateActiveSeriesDescription()
 this.updateYAxisInputs()
 this.updateRestoreButton()
 this.updateYearRange()
-this.chart.update()}
+this.chart.update()
+this.updateChartData()}
+getDatasetDataSafely(dataset,datasetCode){if(!dataset.Datasets){console.warn(`Dataset ${dataset.CCode}missing Datasets property`);return Array(this.chart.data.labels.length).fill(null);}
+if(!dataset.Datasets[datasetCode]){console.warn(`Dataset ${dataset.CCode}missing ${datasetCode}`);return Array(this.chart.data.labels.length).fill(null);}
+const dataArray=dataset.Datasets[datasetCode].data;if(!dataArray||!Array.isArray(dataArray)){console.warn(`Dataset ${dataset.CCode}.${datasetCode}has invalid data`);return Array(this.chart.data.labels.length).fill(null);}
+return dataArray;}
 setYAxisMinMax(min,max,update=true){this.currentYMin=Math.round(min*100)/100
 this.currentYMax=Math.round(max*100)/100
 this.chart.options.scales.y.min=this.currentYMin
@@ -2352,7 +2401,11 @@ this.chart.options.scales.y.max=this.currentYMax
 if(update){this.chart.update()}
 if(this.yMinInput){this.yMinInput.value=this.currentYMin}
 if(this.yMaxInput){this.yMaxInput.value=this.currentYMax}}
+updateChartData(){if(!this.chart||!this.chart.data||!this.chart.data.datasets){return;}
+if(this.activeSeries!==this.itemCode){return;}
+this.chart.data.datasets.forEach((dataset)=>{if(this.showImputations&&dataset.imputedScore){dataset.data=dataset.score.map((val,i)=>val!==null?val:(dataset.imputedScore[i]!==null?dataset.imputedScore[i]:null));}else{dataset.data=dataset.score;}});this.chart.update();}
 update(data){console.log(data)
+if(data.error||!data.data||data.data.length===0){const errorMessage=data.error||'No chart data available for this indicator';console.warn('Chart data error:',errorMessage);const errorDiv=document.createElement('div');errorDiv.className='chart-error-message';errorDiv.style.cssText='padding: 2rem; text-align: center; color: var(--text-color); background: var(--bg-color);';errorDiv.innerHTML=`<p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">⚠️ No Data Available</p><p style="font-size: 0.95rem; opacity: 0.8;">${errorMessage}</p>`;this.chartContainer.innerHTML='';this.chartContainer.appendChild(errorDiv);return;}
 if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
@@ -2375,10 +2428,18 @@ this.initializeDefaultRanges()
 this.updateSeriesDropdown()
 this.updateChartTitle()
 this.updateActiveSeriesDescription()
-this.chart.update()
-console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
+if(this.isCountryListMode&&data.data&&data.data.length>0){const allScoresNull=data.data.every(dataset=>{const scores=dataset.score||[]
+return scores.length===0||scores.every(val=>val===null||val===undefined)})
+if(allScoresNull&&!this.showImputations){console.log('Country List Mode: All real data is null, auto-enabling imputations')
+this.showImputations=true
+window.observableStorage.setItem("showImputations","true")
+const checkbox=this.chartOptions.querySelector('.show-all-imputations')
+if(checkbox){checkbox.checked=true}
+this.applyShowAllImputationsState(true)}}
+this.updateChartData()
+if(!this.isCountryListMode){console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
 console.log('countryGroupMap available?',!!this.countryGroupMap,Object.keys(this.countryGroupMap||{}).length,'countries')
-this.computeMissingCountriesAsync()}
+this.computeMissingCountriesAsync()}else{console.log('Skipping missing countries computation in country list mode')}}
 initChartJSCanvas(){this.chartContainer=document.createElement('div')
 this.chartContainer.classList.add('panel-chart-container')
 this.chartContainer.innerHTML=`<div class="panel-chart-breadcrumb-container"style="display: none;"><nav class="panel-chart-breadcrumb"aria-label="Hierarchy navigation"></nav><div class="panel-chart-breadcrumb-actions"></div></div><div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2><div class="panel-chart-title-actions"></div></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
@@ -2400,9 +2461,30 @@ breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span
 buildChartOptions(){super.buildChartOptions()
 const viewOptions=this.chartOptions.querySelector('.chart-view-options')
 if(viewOptions){const existingContainer=viewOptions.querySelector('.view-options-suboption-container')
-if(existingContainer){const seriesControlsHTML=`<div class="chart-view-subheader">Active Series</div><div class="chart-view-option series-selector-container"><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-option active-series-description"style="display: none;"><div class="active-series-description-content"></div></div><div class="chart-view-subheader">Y-Axis Range</div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="0.01"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="0.01"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;existingContainer.insertAdjacentHTML('afterbegin',seriesControlsHTML)}}}
+if(existingContainer){const seriesControlsHTML=`<div class="chart-view-subheader">Active Series</div><div class="chart-view-option series-selector-container"><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-subheader y-axis-range-subheader">Y-Axis Range</div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="0.01"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="0.01"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;existingContainer.insertAdjacentHTML('afterbegin',seriesControlsHTML)
+const imputationOptionsHeader=Array.from(existingContainer.querySelectorAll('.chart-view-subheader')).find(header=>header.textContent.includes('Imputation Options'));if(imputationOptionsHeader){const imputationToggleHTML=`<div class="chart-view-option"><input type="checkbox"class="show-all-imputations"${this.showImputations?'checked':''}/><label class="title-bar-label">Show All Imputations</label></div>`;imputationOptionsHeader.insertAdjacentHTML('afterend',imputationToggleHTML);}}}}
 rigChartOptions(){super.rigChartOptions()
-this.rigViewOptionsControls()}
+this.rigViewOptionsControls()
+this.initializeImputationState()}
+initializeImputationState(){if(this.extrapolateBackwardCheckbox&&this.interpolateCheckbox){this.savedExtrapolateBackwardState=this.extrapolateBackwardCheckbox.checked
+this.savedInterpolateState=this.interpolateCheckbox.checked
+if(this.showImputations){this.applyShowAllImputationsState(true)}}}
+applyShowAllImputationsState(enabled){if(!this.extrapolateBackwardCheckbox||!this.interpolateCheckbox){return}
+if(enabled){this.savedExtrapolateBackwardState=this.extrapolateBackwardCheckbox.checked
+this.savedInterpolateState=this.interpolateCheckbox.checked
+this.extrapolateBackwardCheckbox.checked=true
+this.interpolateCheckbox.checked=true
+this.extrapolateBackwardCheckbox.disabled=true
+this.interpolateCheckbox.disabled=true
+if(!this.extrapolateBackwardPlugin.enabled){this.extrapolateBackwardPlugin.toggle()}
+if(!this.chart.options.datasets.line.spanGaps){this.chart.options.datasets.line.spanGaps=true}}else{this.extrapolateBackwardCheckbox.checked=this.savedExtrapolateBackwardState
+this.interpolateCheckbox.checked=this.savedInterpolateState
+this.extrapolateBackwardCheckbox.disabled=false
+this.interpolateCheckbox.disabled=false
+if(this.extrapolateBackwardPlugin.enabled!==this.savedExtrapolateBackwardState){this.extrapolateBackwardPlugin.toggle()}
+this.chart.options.datasets.line.spanGaps=this.savedInterpolateState}}
+rigUnloadListener(){super.rigUnloadListener()
+window.addEventListener("beforeunload",()=>{window.observableStorage.setItem("showImputations",this.showImputations.toString())})}
 rigViewOptionsControls(){this.seriesSelector=this.chartOptions.querySelector('.series-selector')
 this.yMinInput=this.chartOptions.querySelector('.y-min-input')
 this.yMaxInput=this.chartOptions.querySelector('.y-max-input')
@@ -2422,7 +2504,13 @@ this.yMinInput.addEventListener('blur',handleYAxisChange)}
 if(this.yMaxInput){this.yMaxInput.addEventListener('input',handleYAxisChange)
 this.yMaxInput.addEventListener('blur',handleYAxisChange)}
 if(this.restoreYAxisButton){this.restoreYAxisButton.addEventListener('click',()=>{this.setYAxisMinMax(this.defaultYMin,this.defaultYMax)
-this.updateRestoreButton()})}}
+this.updateRestoreButton()})}
+const showImputationsCheckbox=this.chartOptions.querySelector('.show-all-imputations')
+if(showImputationsCheckbox){showImputationsCheckbox.checked=this.showImputations
+showImputationsCheckbox.addEventListener('change',(e)=>{this.showImputations=e.target.checked
+window.observableStorage.setItem("showImputations",this.showImputations.toString())
+this.applyShowAllImputationsState(this.showImputations)
+this.updateChartData()})}}
 updateRestoreButton(){if(!this.restoreYAxisButton)return
 const hasChanged=(this.currentYMin!==this.defaultYMin||this.currentYMax!==this.defaultYMax)
 this.restoreYAxisButton.style.display=hasChanged?'block':'none'}
@@ -2435,9 +2523,7 @@ updateDefaultsForActiveSeries(){if(this.seriesDefaults&&this.seriesDefaults[this
 this.defaultYMax=this.seriesDefaults[this.activeSeries].yMax}else{this.defaultYMin=this.activeSeries===this.itemCode?0:0
 this.defaultYMax=this.activeSeries===this.itemCode?1:100}}
 updateChartTitle(){if(!this.title)return
-if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-if(dataset){const datasetName=dataset.datasetName||dataset.datasetCode
-this.title.innerText=datasetName+' ('+dataset.datasetCode+')'}else{this.title.innerText=this.activeSeries;}
+if(this.activeSeries===this.itemCode){if(this.treepath&&this.itemType==="Indicator"){this.renderBreadcrumb(this.treepath,this.originalTitle||'Indicator Chart',this.itemCode,this.itemType);}else{this.title.innerText=this.originalTitle||'Indicator Chart';this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries);if(dataset){const datasetName=(dataset.datasetName&&dataset.datasetName.trim())?dataset.datasetName:dataset.datasetCode;this.title.innerText=`${datasetName}\u0020(${dataset.datasetCode})`;}else{this.title.innerText=`Dataset:\u0020${this.activeSeries}`;}
 this.chartContainer.querySelector('.panel-chart-title-container').style.display='flex';if(this.breadcrumbContainer){this.breadcrumbContainer.style.display='none';}}}
 updateSeriesDropdown(){if(!this.seriesSelector){return}
 this.seriesSelector.innerHTML=''
@@ -2445,23 +2531,17 @@ const indicatorOption=document.createElement('option')
 indicatorOption.value=this.itemCode
 indicatorOption.textContent="Indicator: "+this.itemCode+' Indicator Score'
 this.seriesSelector.appendChild(indicatorOption)
-if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const option=document.createElement('option')
-option.value=dataset.datasetCode
-option.textContent="Dataset: "+dataset.datasetName||dataset.datasetCode
-this.seriesSelector.appendChild(option)})}
+if(this.datasetOptions){this.datasetOptions.forEach(dataset=>{const availableCount=this.chart.data.datasets.filter(d=>d.Datasets&&d.Datasets[dataset.datasetCode]&&d.Datasets[dataset.datasetCode].data).length;const totalCount=this.chart.data.datasets.length;const option=document.createElement('option');option.value=dataset.datasetCode;const baseName=(dataset.datasetName&&dataset.datasetName.trim())?dataset.datasetName:dataset.datasetCode;if(availableCount<totalCount){option.textContent=`Dataset:\u0020${baseName}\u0020(${availableCount}/${totalCount}\u0020countries)`;}else{option.textContent=`Dataset:\u0020${baseName}`;}
+this.seriesSelector.appendChild(option);});}
 this.seriesSelector.value=this.activeSeries
 this.updateYAxisInputs()}
-updateActiveSeriesDescription(){const activeSeriesDescription=this.chartOptions.querySelector('.active-series-description')
-if(!activeSeriesDescription){return}
-const contentDiv=activeSeriesDescription.querySelector('.active-series-description-content')
-if(!contentDiv){return}
-if(this.activeSeries===this.itemCode){activeSeriesDescription.style.display='none'}else if(this.datasetOptions){const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries)
-console.log('Found dataset:',dataset)
-if(dataset&&dataset.description){contentDiv.innerHTML='<strong>Dataset:</strong> '+dataset.description
-activeSeriesDescription.style.display='block'}else if(dataset){contentDiv.innerHTML='<strong>Dataset:</strong> '+(dataset.datasetName||dataset.datasetCode)+' (no description available)'
-activeSeriesDescription.style.display='block'}else{contentDiv.innerHTML='<em>Dataset not found</em>'
-activeSeriesDescription.style.display='block'}}else{contentDiv.innerHTML='<em>No dataset options available</em>'
-activeSeriesDescription.style.display='block'}}}
+updateActiveSeriesDescription(){const yAxisSubheader=this.chartOptions.querySelector('.y-axis-range-subheader');if(!yAxisSubheader){return;}
+const existingSubheader=this.chartOptions.querySelector('.chart-view-subheader.active-series-description');const existingContent=this.chartOptions.querySelector('.chart-view-option.active-series-description-content');if(existingSubheader){existingSubheader.remove();}
+if(existingContent){existingContent.remove();}
+if(this.activeSeries===this.itemCode){return;}
+if(!this.datasetOptions){return;}
+const dataset=this.datasetOptions.find(d=>d.datasetCode===this.activeSeries);const subheader=document.createElement('div');subheader.className='chart-view-subheader\u0020active-series-description';subheader.textContent='Dataset\u0020Description';const contentDiv=document.createElement('div');contentDiv.className='chart-view-option\u0020active-series-description-content';if(dataset&&dataset.datasetDescription){contentDiv.textContent=dataset.datasetDescription;}else if(dataset){const unit=dataset.unit?`\u0020(${dataset.unit})`:'';contentDiv.innerHTML=`<em>No\u0020description\u0020available${unit}</em>`;}else{contentDiv.innerHTML='<em>Dataset\u0020not\u0020found</em>';}
+yAxisSubheader.parentNode.insertBefore(contentDiv,yAxisSubheader);yAxisSubheader.parentNode.insertBefore(subheader,contentDiv);}}
 class SSPIPanelChart extends PanelChart{constructor(parentElement,itemCode,{CountryList=[],width=600,height=600}={}){super(parentElement,{CountryList:CountryList,endpointURL:`/api/v1/panel/score/${itemCode}`,width:width,height:height})
 this.itemCode=itemCode
 this.activeItemCode=itemCode}
@@ -2602,15 +2682,7 @@ class CountryPillarPanelChart {
                         labelField: 'ICode'
                     },
                     tooltip: {
-                        mode: 'index',
-                    }
-                },
-                layout: {
-                    padding: {
-                        right: 40
-                    },
-                    tooltip: {
-                        enabled: false,
+                        enabled: false
                     },
                     pillarBreakdownInteractionPlugin: {
                         enabled: true,
@@ -2619,7 +2691,7 @@ class CountryPillarPanelChart {
                         showTotal: true,
                         countryName: null,
                         countryFlag: null
-                    },
+                    }
                 },
                 layout: {
                     padding: {
@@ -2739,8 +2811,9 @@ class CountryPillarPanelChart {
         this.itemType = data.itemType
         if (data.countryDetails) {
             this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryName = data.countryDetails.CName;
-            this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryFlag = data.countryDetails.CFlag;
         }
+        // Pass country code to plugin
+        this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryCode = this.countryCode;
         this.updateChartColors()
         this.chart.options.scales.y.min = 0
         this.chart.options.scales.y.max = 1

@@ -38,7 +38,8 @@ from sspi_flask_app.models.database import (
     sspi_globe_data,
     sspi_dynamic_radar_data,
     sspi_clean_api_data,
-    sspi_dynamic_rank_data)
+    sspi_dynamic_rank_data
+)
 
 from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app import csrf
@@ -116,7 +117,6 @@ def get_dynamic_indicator_line_data(indicator_code):
     name = detail.get("ItemName")
     tree_path = detail.get("TreePath", "")
     tree_path_parts = tree_path.split("/")
-
     # Build enriched treepath with itemCodes and itemNames
     enriched_treepath = []
     for itemCode in tree_path_parts:
@@ -145,39 +145,51 @@ def get_dynamic_indicator_line_data(indicator_code):
                     enriched_treepath.append(
                         {"itemCode": itemCode.lower(), "itemName": itemCode.upper()}
                     )
-
     description = detail.get("Description", "")
     country_query = request.args.getlist("CountryCode")
     query = {"ICode": indicator_code}
     if country_query:
         query["CCode"] = {"$in": country_query}
-    dynamic_score_data = sspi_indicator_dynamic_line_data.find(query)
-    available_datasets = list(dynamic_score_data[0].get("Datasets", []))
+
+    # Convert cursor to list and check if data exists
+    dynamic_score_data = list(sspi_indicator_dynamic_line_data.find(query))
+
+    if not dynamic_score_data:
+        # No chart data available for this indicator
+        print(f"Warning: No dynamic chart data found for indicator {indicator_code}")
+        year_labels = list(range(2000, datetime.now().year + 1))
+        return jsonify({
+            "error": f"No chart data available for indicator {indicator_code}",
+            "data": [],
+            "title": f"{name} Score" if name else indicator_code,
+            "labels": year_labels,
+            "description": description,
+            "groupOptions": sspi_metadata.country_groups(),
+            "countryGroupMap": sspi_metadata.country_group_map(),
+            "itemOptions": item_options,
+            "itemType": doc_type,
+            "itemCode": indicator_code,
+            "datasetOptions": [],
+            "tree": active_schema,
+            "treepath": enriched_treepath,
+        }), 200
+
+    available_datasets = list(dynamic_score_data[0].get("Datasets", {}).keys())
     dataset_options = []
     for dscode in available_datasets:
         detail = sspi_metadata.get_dataset_detail(dscode)
         ds_range = detail.get("Range", {})
-        if ds_range:
-            dataset_options.append(
-                {
-                    "datasetName": detail.get("DatasetName", ""),
-                    "datasetCode": dscode,
-                    "datasetDescription": detail.get("Description", ""),
-                    "unit": detail.get("Unit", ""),
-                    "yMin": ds_range.get("yMin", 0),
-                    "yMax": ds_range.get("yMax", 1),
-                }
-            )
-        else:
-            dataset_options.append(
-                {
-                    "datasetCode": dscode,
-                    "datasetDescription": detail.get("Description", ""),
-                    "unit": detail.get("Unit", ""),
-                    "yMin": 0,
-                    "yMax": 1,
-                }
-            )
+        # Always include datasetName, use datasetCode as fallback
+        dataset_options.append(
+            {
+                "datasetName": detail.get("DatasetName", dscode),
+                "datasetCode": dscode,
+                "datasetDescription": detail.get("Description", ""),
+                "unit": detail.get("Unit", ""),
+                "yMin": ds_range.get("yMin", 0) if ds_range else 0,
+                "yMax": ds_range.get("yMax", 1) if ds_range else 1,
+            }
+        )
     year_labels = list(range(2000, datetime.now().year + 1))  # Default to 2000-present
     chart_title = f"{name} Score"
     group_options = sspi_metadata.country_groups()
@@ -984,9 +996,21 @@ def dynamic_stack_data(country_code, root_item_code):
         "ICode": {"$in": child_codes + [root_item_code]},
     }
     data = sspi_item_dynamic_line_data.find(mongo_query)
-    data.sort(
-        key=lambda x: ([root_item_code] + child_codes).index(x["Detail"]["ItemCode"])
-    )
+
+    # Define explicit pillar order for consistent stacking
+    # In stacked charts, last dataset appears at TOP of stack
+    # So we reverse: PG (bottom), MS (middle), SUS (top)
+    pillar_order = {"PG": 0, "MS": 1, "SUS": 2}
+
+    def sort_key(doc):
+        item_code = doc["Detail"]["ItemCode"]
+        # Root item (SSPI) should be first (hidden anyway)
+        if item_code == root_item_code:
+            return -1
+        # Use pillar order if available, otherwise use position in child_codes
+        return pillar_order.get(item_code, child_codes.index(item_code) + 100)
+
+    data.sort(key=sort_key)
     year_labels = list(range(2000, datetime.now().year + 1))
     for document in data:
         if document["ICode"] == root_item_code:
@@ -1098,7 +1122,7 @@ def build_indicators_data():
                             "ItemName", indicator_code
                         ),
                         "description": indicator_item.get("Description", ""),
-                        "DatasetDetails": datasets,
+                        "datasets": datasets,
                         "dataset_codes": dataset_codes,
                         "policy": indicator_item.get("Policy", ""),
                         "score_function": indicator_item.get("ScoreFunction", ""),
@@ -1725,6 +1749,83 @@ def fast_score():
     return parse_json(score_list)
 
 
+@dashboard_bp.route("/country/rankings/<country_code>/<item_level>")
+def get_country_rankings(country_code, item_level):
+    """
+    Get all ranking data for a country at a specific item level across all time periods.
+
+    Args:
+        country_code: ISO 3-letter country code
+        item_level: One of "indicator", "category", "pillar", or "sspi"
+
+    Returns:
+        JSON response with:
+        - data: All ranking documents for the country/item_level combination
+        - metadata: Item names and time period information
+    """
+    # Validate item_level
+    valid_levels = ["indicator", "category", "pillar", "sspi"]
+    if item_level.lower() not in valid_levels:
+        return jsonify({
+            "error": f"Invalid item_level. Must be one of: {', '.join(valid_levels)}"
+        }), 400
+    # Query all ranking data for this country and item level
+    query = {"CountryCode": country_code}
+    # Get all ranking documents
+    ranking_data = parse_json(sspi_dynamic_rank_data.find(query, {"_id": 0}))
+    if not ranking_data:
+        return jsonify({
+            "error": f"No ranking data found for country {country_code}"
+        }), 404
+    # Get item metadata to include item names
+    item_details = sspi_metadata.item_details()
+    item_name_map = {item["ItemCode"]: item["ItemName"] for item in item_details}
+    # Filter by item level and enrich with item names
+    filtered_data = []
+    for doc in ranking_data:
+        item_code = doc.get("ItemCode")
+        if not item_code:
+            continue
+        # Get item detail to check item type
+        item_detail = next((item for item in item_details if item["ItemCode"] == item_code), None)
+        if not item_detail:
+            continue
+        item_type = item_detail.get("ItemType", "").lower()
+        # Filter by requested item level
+        if item_level.lower() == "sspi" and item_code.lower() == "sspi":
+            doc["ItemName"] = "Social Policy and Progress Index"
+            filtered_data.append(doc)
+        elif item_level.lower() == item_type:
+            doc["ItemName"] = item_name_map.get(item_code, item_code)
+            filtered_data.append(doc)
+    # Build time period structure organized by type
+    time_periods_by_type = {}
+    for doc in filtered_data:
+        period_type = doc.get("TimePeriodType")
+        period_label = doc.get("TimePeriod")
+        if period_type and period_label:
+            if period_type not in time_periods_by_type:
+                time_periods_by_type[period_type] = set()
+            time_periods_by_type[period_type].add(period_label)
+
+    # Convert sets to sorted lists
+    time_periods = {}
+    for period_type, periods in time_periods_by_type.items():
+        time_periods[period_type] = sorted(list(periods))
+
+    # Get total number of countries in SSPI67 for rank context
+    total_countries = len(sspi_metadata.country_group("SSPI67"))
+
+    return jsonify({
+        "countryCode": country_code,
+        "itemLevel": item_level,
+        "data": filtered_data,
+        "timePeriods": time_periods,
+        "itemCount": len(set(doc.get("ItemCode") for doc in filtered_data)),
+        "totalCountries": total_countries
+    })
+
+            
 @dashboard_bp.route("/country/characteristics/<country_code>")
 def get_country_characteristics(country_code):
     """

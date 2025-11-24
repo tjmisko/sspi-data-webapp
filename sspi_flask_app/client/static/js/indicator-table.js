@@ -45,7 +45,8 @@ class IndicatorTable {
         const cachedStateObject = window.observableStorage.getItem('indicatorTableState');
         collapsibleSections.forEach(section => {
             const defaultState = section.dataset.expanded === 'true';
-            const cachedState = cachedStateObject?.[section.dataset.icode] === 'true' ?? defaultState
+            const cachedValue = cachedStateObject?.[section.dataset.icode];
+            const cachedState = cachedValue !== undefined ? cachedValue === 'true' : defaultState;
             this.updateSectionVisibility(section, cachedState);
             section.dataset.expanded = cachedState.toString();
             const toggleButton = this.findToggleButton(section)

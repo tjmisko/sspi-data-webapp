@@ -8,6 +8,15 @@ class IndicatorPanelChart extends PanelChart {
         this.currentYMax = 1
         this.defaultYMin = 0
         this.defaultYMax = 1
+
+        // Initialize showImputations from storage with proper boolean conversion
+        this.showImputations = window.observableStorage.getItem("showImputations") === "true"
+
+        // Store previous states of other imputation toggles
+        // These will be populated after parent constructor runs and checkboxes exist
+        this.savedExtrapolateBackwardState = null
+        this.savedInterpolateState = null
+
         this.moveBurgerToBreadcrumb()
     }
 
@@ -20,15 +29,16 @@ class IndicatorPanelChart extends PanelChart {
 
     updateChartOptions() {
         // Get Y-axis title based on active series
-        let yAxisTitle = 'Item Value'  // Default fallback
+        let yAxisTitle = 'Item\u0020Value';  // Default fallback
         if (this.activeSeries === this.itemCode) {
-            yAxisTitle = 'Indicator Score'
+            yAxisTitle = 'Indicator\u0020Score';
         } else if (this.datasetOptions) {
-            const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries)
+            const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries);
             if (dataset) {
-                const baseName = "Dataset: " + dataset.datasetName || dataset.datasetCode
-                const unit = dataset.unit || dataset.Unit
-                yAxisTitle = unit ? `${baseName} (${unit})` : baseName
+                const datasetName = (dataset.datasetName && dataset.datasetName.trim()) ? dataset.datasetName : dataset.datasetCode;
+                const baseName = `Dataset:\u0020${datasetName}`;
+                const unit = dataset.unit || dataset.Unit;
+                yAxisTitle = unit ? `${baseName}\u0020(${unit})` : baseName;
             }
         }
         
@@ -105,8 +115,17 @@ class IndicatorPanelChart extends PanelChart {
             this.setYAxisMinMax(this.defaultYMin, this.defaultYMax)
         } else if (this.datasetOptions && this.datasetOptions.map(o => o.datasetCode).includes(this.activeSeries)) {
             this.chart.data.datasets.forEach((dataset) => {
-                dataset.data = dataset.Datasets[this.activeSeries].data
+                dataset.data = this.getDatasetDataSafely(dataset, this.activeSeries);
             });
+
+            // Log summary of availability
+            const missingCount = this.chart.data.datasets.filter(d =>
+                !d.Datasets || !d.Datasets[this.activeSeries]
+            ).length;
+            if (missingCount > 0) {
+                console.warn(`Dataset ${this.activeSeries}: ${missingCount}/${this.chart.data.datasets.length} countries missing data`);
+            }
+
             console.log(`Setting active series to ${this.activeSeries} with yMin: ${this.defaultYMin}, yMax: ${this.defaultYMax}`);
             this.setYAxisMinMax(this.defaultYMin, this.defaultYMax)
         } else {
@@ -120,7 +139,41 @@ class IndicatorPanelChart extends PanelChart {
         this.updateYAxisInputs()
         this.updateRestoreButton()
         this.updateYearRange()
+
+        // Force chart to re-render with new data
         this.chart.update()
+
+        // Apply imputation settings and update chart
+        this.updateChartData()
+    }
+
+    /**
+     * Safely retrieve dataset data with fallback to null array
+     * @param {Object} dataset - Chart.js dataset object
+     * @param {string} datasetCode - Dataset code to retrieve
+     * @returns {Array} Dataset data array or null-filled array
+     */
+    getDatasetDataSafely(dataset, datasetCode) {
+        // Check if Datasets property exists
+        if (!dataset.Datasets) {
+            console.warn(`Dataset ${dataset.CCode} missing Datasets property`);
+            return Array(this.chart.data.labels.length).fill(null);
+        }
+
+        // Check if specific dataset exists
+        if (!dataset.Datasets[datasetCode]) {
+            console.warn(`Dataset ${dataset.CCode} missing ${datasetCode}`);
+            return Array(this.chart.data.labels.length).fill(null);
+        }
+
+        // Check if data array exists
+        const dataArray = dataset.Datasets[datasetCode].data;
+        if (!dataArray || !Array.isArray(dataArray)) {
+            console.warn(`Dataset ${dataset.CCode}.${datasetCode} has invalid data`);
+            return Array(this.chart.data.labels.length).fill(null);
+        }
+
+        return dataArray;
     }
 
     setYAxisMinMax(min, max, update = true) {
@@ -141,14 +194,67 @@ class IndicatorPanelChart extends PanelChart {
         }
     }
 
+    updateChartData() {
+        // Merge score and imputedScore arrays based on toggle state
+        // This creates perfect complement behavior: where score exists, use it;
+        // where score is null and showImputations is on, use imputedScore
+        // NOTE: Only applies when viewing indicator scores, not datasets
+        if (!this.chart || !this.chart.data || !this.chart.data.datasets) {
+            return;
+        }
+
+        // Only update data if we're viewing the indicator score, not a dataset
+        if (this.activeSeries !== this.itemCode) {
+            // We're viewing a dataset, not the indicator score
+            // Don't modify the data arrays
+            return;
+        }
+
+        this.chart.data.datasets.forEach((dataset) => {
+            if (this.showImputations && dataset.imputedScore) {
+                // Merge: use score where available, fill with imputedScore where score is null
+                dataset.data = dataset.score.map((val, i) =>
+                    val !== null ? val : (dataset.imputedScore[i] !== null ? dataset.imputedScore[i] : null)
+                );
+            } else {
+                // Show real data only
+                dataset.data = dataset.score;
+            }
+        });
+
+        this.chart.update();
+    }
+
     update(data) {
         console.log(data)
-        
+
+        // Check if data has an error or empty datasets
+        if (data.error || !data.data || data.data.length === 0) {
+            // Display error message in chart container
+            const errorMessage = data.error || 'No chart data available for this indicator';
+            console.warn('Chart data error:', errorMessage);
+
+            // Create error display
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'chart-error-message';
+            errorDiv.style.cssText = 'padding: 2rem; text-align: center; color: var(--text-color); background: var(--bg-color);';
+            errorDiv.innerHTML = `
+                <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">⚠️ No Data Available</p>
+                <p style="font-size: 0.95rem; opacity: 0.8;">${errorMessage}</p>
+            `;
+
+            // Replace chart container with error message
+            this.chartContainer.innerHTML = '';
+            this.chartContainer.appendChild(errorDiv);
+
+            return; // Exit early
+        }
+
         // Force refresh of chart interaction plugin labels when data changes
         if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
             this.chartInteractionPlugin._forceRefreshLabels(this.chart)
         }
-        
+
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
         if (this.pinnedOnly) {
@@ -186,12 +292,41 @@ class IndicatorPanelChart extends PanelChart {
         this.updateSeriesDropdown()
         this.updateChartTitle()  // Set initial title based on active series
         this.updateActiveSeriesDescription()  // Set initial active series description
-        this.chart.update()
-        
-        // Compute missing countries asynchronously after chart rendering
-        console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
-        console.log('countryGroupMap available?', !!this.countryGroupMap, Object.keys(this.countryGroupMap || {}).length, 'countries')
-        this.computeMissingCountriesAsync()
+
+        // Auto-enable imputation in country list mode if all real data is null
+        if (this.isCountryListMode && data.data && data.data.length > 0) {
+            const allScoresNull = data.data.every(dataset => {
+                const scores = dataset.score || []
+                return scores.length === 0 || scores.every(val => val === null || val === undefined)
+            })
+
+            if (allScoresNull && !this.showImputations) {
+                console.log('Country List Mode: All real data is null, auto-enabling imputations')
+                this.showImputations = true
+                window.observableStorage.setItem("showImputations", "true")
+
+                // Update checkbox if it exists
+                const checkbox = this.chartOptions.querySelector('.show-all-imputations')
+                if (checkbox) {
+                    checkbox.checked = true
+                }
+
+                // Apply the state (disable other toggles, force them on)
+                this.applyShowAllImputationsState(true)
+            }
+        }
+
+        // Apply imputation settings and update chart
+        this.updateChartData()
+
+        // Compute missing countries asynchronously (skip in country list mode)
+        if (!this.isCountryListMode) {
+            console.log('=== IndicatorPanelChart about to call computeMissingCountriesAsync ===')
+            console.log('countryGroupMap available?', !!this.countryGroupMap, Object.keys(this.countryGroupMap || {}).length, 'countries')
+            this.computeMissingCountriesAsync()
+        } else {
+            console.log('Skipping missing countries computation in country list mode')
+        }
     }
 
     initChartJSCanvas() {
@@ -375,10 +510,7 @@ class IndicatorPanelChart extends PanelChart {
                             <option value="` + this.itemCode + `" selected>` + this.itemCode + ` Indicator Score</option>
                         </select>
                     </div>
-                    <div class="chart-view-option active-series-description" style="display: none;">
-                        <div class="active-series-description-content"></div>
-                    </div>
-                    <div class="chart-view-subheader">Y-Axis Range</div>
+                    <div class="chart-view-subheader y-axis-range-subheader">Y-Axis Range</div>
                     <div class="chart-view-option y-axis-controls">
                         <div class="y-axis-input-group">
                             <label class="title-bar-label" for="y-min-input">Y Min:</label>
@@ -393,6 +525,20 @@ class IndicatorPanelChart extends PanelChart {
                 `;
                 // Insert at the beginning so Imputation Options stay at the bottom
                 existingContainer.insertAdjacentHTML('afterbegin', seriesControlsHTML)
+
+                // Add Show All Imputations toggle to existing Imputation Options section
+                const imputationOptionsHeader = Array.from(existingContainer.querySelectorAll('.chart-view-subheader'))
+                    .find(header => header.textContent.includes('Imputation Options'));
+                if (imputationOptionsHeader) {
+                    const imputationToggleHTML = `
+                        <div class="chart-view-option">
+                            <input type="checkbox" class="show-all-imputations" ${this.showImputations ? 'checked' : ''}/>
+                            <label class="title-bar-label">Show All Imputations</label>
+                        </div>
+                    `;
+                    // Insert after the Imputation Options header
+                    imputationOptionsHeader.insertAdjacentHTML('afterend', imputationToggleHTML);
+                }
             }
         }
     }
@@ -400,9 +546,76 @@ class IndicatorPanelChart extends PanelChart {
     rigChartOptions() {
         // Call parent method first
         super.rigChartOptions()
-        
+
         // Wire up our custom controls
         this.rigViewOptionsControls()
+
+        // Initialize imputation state after checkboxes exist
+        this.initializeImputationState()
+    }
+
+    initializeImputationState() {
+        // This is called after parent setup, so checkboxes exist
+        if (this.extrapolateBackwardCheckbox && this.interpolateCheckbox) {
+            // Store initial states
+            this.savedExtrapolateBackwardState = this.extrapolateBackwardCheckbox.checked
+            this.savedInterpolateState = this.interpolateCheckbox.checked
+
+            // If showImputations is already on (from storage), apply it immediately
+            if (this.showImputations) {
+                this.applyShowAllImputationsState(true)
+            }
+        }
+    }
+
+    applyShowAllImputationsState(enabled) {
+        if (!this.extrapolateBackwardCheckbox || !this.interpolateCheckbox) {
+            return
+        }
+
+        if (enabled) {
+            // Save current states before overriding
+            this.savedExtrapolateBackwardState = this.extrapolateBackwardCheckbox.checked
+            this.savedInterpolateState = this.interpolateCheckbox.checked
+
+            // Force both toggles ON and DISABLE them
+            this.extrapolateBackwardCheckbox.checked = true
+            this.interpolateCheckbox.checked = true
+            this.extrapolateBackwardCheckbox.disabled = true
+            this.interpolateCheckbox.disabled = true
+
+            // Apply the toggle states to the chart
+            // Ensure backward extrapolation is active
+            if (!this.extrapolateBackwardPlugin.enabled) {
+                this.extrapolateBackwardPlugin.toggle()
+            }
+            // Ensure linear interpolation is active (spanGaps = true)
+            if (!this.chart.options.datasets.line.spanGaps) {
+                this.chart.options.datasets.line.spanGaps = true
+            }
+        } else {
+            // Restore previous states
+            this.extrapolateBackwardCheckbox.checked = this.savedExtrapolateBackwardState
+            this.interpolateCheckbox.checked = this.savedInterpolateState
+            this.extrapolateBackwardCheckbox.disabled = false
+            this.interpolateCheckbox.disabled = false
+
+            // Apply the restored states to the chart
+            if (this.extrapolateBackwardPlugin.enabled !== this.savedExtrapolateBackwardState) {
+                this.extrapolateBackwardPlugin.toggle()
+            }
+            this.chart.options.datasets.line.spanGaps = this.savedInterpolateState
+        }
+    }
+
+    rigUnloadListener() {
+        // Call parent method first
+        super.rigUnloadListener()
+
+        // Add our own beforeunload listener for showImputations state
+        window.addEventListener("beforeunload", () => {
+            window.observableStorage.setItem("showImputations", this.showImputations.toString())
+        })
     }
 
     rigViewOptionsControls() {
@@ -458,6 +671,24 @@ class IndicatorPanelChart extends PanelChart {
                 this.updateRestoreButton()
             })
         }
+
+        // Wire up show all imputations toggle
+        const showImputationsCheckbox = this.chartOptions.querySelector('.show-all-imputations')
+        if (showImputationsCheckbox) {
+            // Ensure checkbox reflects current state on load
+            showImputationsCheckbox.checked = this.showImputations
+
+            showImputationsCheckbox.addEventListener('change', (e) => {
+                this.showImputations = e.target.checked
+                window.observableStorage.setItem("showImputations", this.showImputations.toString())
+
+                // Apply state to other toggles
+                this.applyShowAllImputationsState(this.showImputations)
+
+                // Update chart data
+                this.updateChartData()
+            })
+        }
     }
 
     updateRestoreButton() {
@@ -509,7 +740,7 @@ class IndicatorPanelChart extends PanelChart {
 
     updateChartTitle() {
         if (!this.title) return
-        
+
         if (this.activeSeries === this.itemCode) {
             // For indicator score, show breadcrumb if we have treepath data
             if (this.treepath && this.itemType === "Indicator") {
@@ -523,13 +754,15 @@ class IndicatorPanelChart extends PanelChart {
                 }
             }
         } else if (this.datasetOptions) {
-            // For datasets, use simple title (no breadcrumb)
-            const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries)
+            // For datasets, use format: "Dataset Name (DATASET_CODE)"
+            const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries);
             if (dataset) {
-                const datasetName = dataset.datasetName || dataset.datasetCode
-                this.title.innerText = datasetName + ' (' + dataset.datasetCode + ')'
+                // Use datasetName if available and non-empty, otherwise use datasetCode
+                const datasetName = (dataset.datasetName && dataset.datasetName.trim()) ? dataset.datasetName : dataset.datasetCode;
+                this.title.innerText = `${datasetName}\u0020(${dataset.datasetCode})`;
             } else {
-                this.title.innerText = this.activeSeries;
+                // Fallback if dataset not found in options
+                this.title.innerText = `Dataset:\u0020${this.activeSeries}`;
             }
             this.chartContainer.querySelector('.panel-chart-title-container').style.display = 'flex';
             if (this.breadcrumbContainer) {
@@ -552,11 +785,28 @@ class IndicatorPanelChart extends PanelChart {
         // Add dataset options if available
         if (this.datasetOptions) {
             this.datasetOptions.forEach(dataset => {
-                const option = document.createElement('option')
-                option.value = dataset.datasetCode
-                option.textContent = "Dataset: " + dataset.datasetName || dataset.datasetCode
-                this.seriesSelector.appendChild(option)
-            })
+                // Count how many countries have this dataset
+                const availableCount = this.chart.data.datasets.filter(d =>
+                    d.Datasets && d.Datasets[dataset.datasetCode] &&
+                    d.Datasets[dataset.datasetCode].data
+                ).length;
+                const totalCount = this.chart.data.datasets.length;
+
+                const option = document.createElement('option');
+                option.value = dataset.datasetCode;
+
+                // Build descriptive label with explicit spaces
+                const baseName = (dataset.datasetName && dataset.datasetName.trim()) ? dataset.datasetName : dataset.datasetCode;
+                if (availableCount < totalCount) {
+                    // Show availability info for partial datasets
+                    option.textContent = `Dataset:\u0020${baseName}\u0020(${availableCount}/${totalCount}\u0020countries)`;
+                } else {
+                    // Clean name for fully available datasets
+                    option.textContent = `Dataset:\u0020${baseName}`;
+                }
+
+                this.seriesSelector.appendChild(option);
+            });
         }
         // Set the current active series as selected
         this.seriesSelector.value = this.activeSeries
@@ -565,34 +815,58 @@ class IndicatorPanelChart extends PanelChart {
     }
 
     updateActiveSeriesDescription() {
-        const activeSeriesDescription = this.chartOptions.querySelector('.active-series-description')
-        if (!activeSeriesDescription) {
-            return
+        // Find the Y-Axis Range subheader to insert before it
+        const yAxisSubheader = this.chartOptions.querySelector('.y-axis-range-subheader');
+        if (!yAxisSubheader) {
+            return;
         }
-        const contentDiv = activeSeriesDescription.querySelector('.active-series-description-content')
-        if (!contentDiv) {
-            return
+
+        // Remove existing description elements if they exist
+        const existingSubheader = this.chartOptions.querySelector('.chart-view-subheader.active-series-description');
+        const existingContent = this.chartOptions.querySelector('.chart-view-option.active-series-description-content');
+        if (existingSubheader) {
+            existingSubheader.remove();
         }
+        if (existingContent) {
+            existingContent.remove();
+        }
+
+        // Only add description when viewing a dataset (not the indicator score)
         if (this.activeSeries === this.itemCode) {
-            // Hide for indicator score - it already has its own description
-            activeSeriesDescription.style.display = 'none'
-        } else if (this.datasetOptions) {
-            // Show dataset description for dataset series
-            const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries)
-            console.log('Found dataset:', dataset)
-            if (dataset && dataset.description) {
-                contentDiv.innerHTML = '<strong>Dataset:</strong> ' + dataset.description
-                activeSeriesDescription.style.display = 'block'
-            } else if (dataset) {
-                contentDiv.innerHTML = '<strong>Dataset:</strong> ' + (dataset.datasetName || dataset.datasetCode) + ' (no description available)'
-                activeSeriesDescription.style.display = 'block'
-            } else {
-                contentDiv.innerHTML = '<em>Dataset not found</em>'
-                activeSeriesDescription.style.display = 'block'
-            }
-        } else {
-            contentDiv.innerHTML = '<em>No dataset options available</em>'
-            activeSeriesDescription.style.display = 'block'
+            // Viewing indicator score - no dataset description needed
+            return;
         }
+
+        if (!this.datasetOptions) {
+            return;
+        }
+
+        // Find the dataset in options
+        const dataset = this.datasetOptions.find(d => d.datasetCode === this.activeSeries);
+
+        // Create the subheader (uses standard chart-view-subheader class)
+        const subheader = document.createElement('div');
+        subheader.className = 'chart-view-subheader\u0020active-series-description';
+        subheader.textContent = 'Dataset\u0020Description';
+
+        // Create the content div (uses standard chart-view-option class)
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'chart-view-option\u0020active-series-description-content';
+
+        if (dataset && dataset.datasetDescription) {
+            // Display description text
+            contentDiv.textContent = dataset.datasetDescription;
+        } else if (dataset) {
+            // Dataset found but no description available
+            const unit = dataset.unit ? `\u0020(${dataset.unit})` : '';
+            contentDiv.innerHTML = `<em>No\u0020description\u0020available${unit}</em>`;
+        } else {
+            // Dataset not found in options
+            contentDiv.innerHTML = '<em>Dataset\u0020not\u0020found</em>';
+        }
+
+        // Insert before the Y-Axis Range subheader (content first, then subheader before it)
+        yAxisSubheader.parentNode.insertBefore(contentDiv, yAxisSubheader);
+        yAxisSubheader.parentNode.insertBefore(subheader, contentDiv);
     }
 }

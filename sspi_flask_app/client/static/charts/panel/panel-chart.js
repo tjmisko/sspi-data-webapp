@@ -502,6 +502,11 @@ class PanelChart {
     }
 
     updateCountryGroups() {
+        // Skip if in country list mode (selector doesn't exist)
+        if (this.isCountryListMode || !this.countryGroupSelector) {
+            return;
+        }
+
         const groupOptionDefault = window.observableStorage.getItem("countryGroup") || "SSPI67"
         this.countryGroupSelector.innerHTML = ''
         this.groupOptions.forEach((option, index) => {

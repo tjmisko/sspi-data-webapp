@@ -31,7 +31,7 @@
             </div>
             <div class="country-overview-box">
                 <h3>Pillar Score Breakdown</h3>
-                <p> The overall SSPI score is computed as the arithmetic
+                <p class="functionality-explainer"> The overall SSPI score is computed as the arithmetic
                 average of the Sustainability, Market Structure, and Public
                 Goods Pillars. The Pillar Score Breakdown below shows the
                 relative contributions of the three pillars to the overall score
@@ -40,24 +40,35 @@
             </div>
             <div class="country-overview-box">
                 <h3>Category Score Breakdown</h3>
-                <p> The Category Score Breakdown shows the
-                category scores for a given year. Use the year
-                slider below to scrub through years of
-                interest.</p>
+                <p class="functionality-explainer"> 
+                    The Category Score Breakdown shows the
+                    category scores for a given year. Use the year
+                    slider below to scrub through years of
+                    interest.
+                </p>
                 <div id="category-radar-chart"></div>
             </div>
             <div class="country-overview-box">
                 <h3>Indicator Performance</h3>
+                <p class="functionality-explainer">
+                    Select a time period of interest to view a summary of
+                    indicators of note for {{ cdetail.Country }}, including their
+                    strongest and weakest indicators. All ranks are computed
+                    relative to the 66 countries of Country Group SSPI67 scores
+                </p>
+                <div id="country-rankings-panel"></div>
                 <p></p>
                 <div id="category-radar-chart"></div>
             </div>
             <div class="country-overview-box">
                 <h3>Data Coverage and Imputations</h3>
-            <p>The SSPI uses the best available data to generate
-                policy scores. Where data availability presents
-                challenges, we use imputations and data modelling
-                to make scores as commensurable across countries
-                and years as possible. </p>
+                <p class="functionality-explainer">
+                    The SSPI uses the best available data to generate
+                    policy scores. Where data availability presents
+                    challenges, we use imputations and data modelling
+                    to make scores as commensurable across countries
+                    and years as possible. 
+                </p>
                 <div id="category-radar-chart"></div>
             </div>
         </div>
@@ -84,6 +95,13 @@
 
             window.SSPICharts.push(
                 new CategoryRadarDynamic("{{ cdetail.CountryCode | upper}}", document.getElementById("category-radar-chart"))
+            );
+
+            // Initialize Country Rankings Panel
+            new CountryRankingsPanel(
+                document.getElementById("country-rankings-panel"),
+                "{{ cdetail.CountryCode | upper}}",
+                "indicator"
             );
 
             const x = window.observableStorage.getItem('windowX');
