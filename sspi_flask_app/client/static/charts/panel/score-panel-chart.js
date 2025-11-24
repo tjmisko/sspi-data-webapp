@@ -1,6 +1,10 @@
 class ScorePanelChart extends PanelChart {
-    constructor(parentElement, itemCode, { CountryList = [] } = {} ) {
-        super(parentElement, { CountryList: CountryList, endpointURL: `/api/v1/panel/score/${itemCode}`})
+    constructor(parentElement, itemCode, { CountryList = [], enableComparisonSeries = false } = {} ) {
+        super(parentElement, {
+            CountryList: CountryList,
+            endpointURL: `/api/v1/panel/score/${itemCode}`,
+            enableComparisonSeries: enableComparisonSeries
+        })
         this.itemCode = itemCode
         this.moveBurgerToBreadcrumb()
     }
@@ -139,6 +143,11 @@ class ScorePanelChart extends PanelChart {
                         labelField: 'CCode',
                         showDefaultLabels: true,
                         defaultLabelSpacing: 0,
+                        comparisonEnabled: false,
+                        comparisonOpacity: 0.35,
+                        comparisonDashPattern: [6, 4],
+                        comparisonLineWidth: 1.5,
+                        comparisonDataField: 'comparisonScores',
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.activeCountry = dataset;

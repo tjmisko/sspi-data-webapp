@@ -21,10 +21,13 @@
     <section class="chart-section" id="dynamic-data-section"></section>
     <script>
     window.addEventListener("load", (event) => {
+        // Pass country list from backend to frontend
+        const countryList = {{ CountryList | tojson | safe }};
+
         {% if PanelItemType == "Indicator" %}
-            window.SSPICharts.push(new IndicatorPanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"))
+            window.SSPICharts.push(new IndicatorPanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}", { CountryList: countryList }))
         {% else %}
-            window.SSPICharts.push(new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}"))
+            window.SSPICharts.push(new ScorePanelChart(document.getElementById("dynamic-data-section"), "{{ PanelItemCode | upper }}", { CountryList: countryList }))
         {% endif %}
 
         const x = window.observableStorage.getItem('windowX');

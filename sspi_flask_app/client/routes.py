@@ -191,6 +191,33 @@ def get_country_characteristics(country_code):
 
 
 ###########################
+# HELPER FUNCTIONS        #
+###########################
+
+def validate_country_codes(codes):
+    """
+    Validate and normalize country codes to 3-character uppercase strings.
+
+    Args:
+        codes: List of country code strings from query parameters
+
+    Returns:
+        List of validated 3-character uppercase country codes
+
+    Example:
+        >>> validate_country_codes(['usa', 'CAN', 'MEX'])
+        ['USA', 'CAN', 'MEX']
+        >>> validate_country_codes(['usa', 'USAA', 'ca'])
+        ['USA']
+    """
+    validated = []
+    for code in codes:
+        normalized = code.strip().upper()
+        if len(normalized) == 3 and normalized.isalpha():
+            validated.append(normalized)
+    return validated
+
+###########################
 # SSPI DYNAMIC DATA PAGES #
 ###########################
 
@@ -403,17 +430,24 @@ def dataset_data(dataset_code):
 @client_bp.route('/data/indicator/<indicator_code>')
 def indicator_data(indicator_code):
     indicator_code = indicator_code.upper()
+
+    # Parse and validate country codes from query parameters
+    country_codes = request.args.getlist('countryCode')
+    validated_codes = validate_country_codes(country_codes)
+
     if indicator_code not in sspi_metadata.indicator_codes():
         return render_template(
             'score-panel-data.html',
             PanelItemCode=indicator_code,
             PanelItemType='Indicator',
+            CountryList=[],
             error=True
         )
     return render_template(
         'score-panel-data.html',
         PanelItemCode=indicator_code,
         PanelItemType='Indicator',
+        CountryList=validated_codes,
         methodology=sspi_metadata.get_item_methodology_html(indicator_code),
         error=False
     )
@@ -422,17 +456,24 @@ def indicator_data(indicator_code):
 @client_bp.route('/data/category/<category_code>')
 def category_data(category_code):
     category_code = category_code.upper()
+
+    # Parse and validate country codes from query parameters
+    country_codes = request.args.getlist('countryCode')
+    validated_codes = validate_country_codes(country_codes)
+
     if category_code not in sspi_metadata.category_codes():
         return render_template(
             'score-panel-data.html',
             PanelItemCode=category_code,
             PanelItemType='Category',
+            CountryList=[],
             error=True
         )
     return render_template(
         'score-panel-data.html',
         PanelItemCode=category_code,
         PanelItemType='Category',
+        CountryList=validated_codes,
         methodology=sspi_metadata.get_item_methodology_html(category_code),
         error=False
     )
@@ -441,11 +482,17 @@ def category_data(category_code):
 @client_bp.route('/data/pillar/<pillar_code>')
 def pillar_data(pillar_code):
     pillar_code = pillar_code.upper()
+
+    # Parse and validate country codes from query parameters
+    country_codes = request.args.getlist('countryCode')
+    validated_codes = validate_country_codes(country_codes)
+
     if pillar_code not in sspi_metadata.pillar_codes():
         return render_template(
             'score-panel-data.html',
             PanelItemCode=pillar_code,
             PanelItemType='Pillar',
+            CountryList=[],
             medhodology=sspi_metadata.get_item_methodology_html(pillar_code),
             error=True
         )
@@ -453,6 +500,7 @@ def pillar_data(pillar_code):
         'score-panel-data.html',
         PanelItemCode=pillar_code,
         PanelItemType='Pillar',
+        CountryList=validated_codes,
         error=False
     )
 
@@ -644,6 +692,12 @@ def world_map_page():
 @client_bp.route('/globe')
 def globe_tree():
     return render_template("globe.html")
+
+
+@client_bp.route('/test/comparison-series')
+def test_comparison_series():
+    """Test page for comparison series plugin with live panel chart data"""
+    return render_template("test-comparison-series.html")
 
 
 # @client_bp.route('/history')
