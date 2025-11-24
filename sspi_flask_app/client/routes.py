@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from datetime import datetime
 
 import pycountry
 from flask import Blueprint, redirect, render_template, request, url_for
@@ -453,6 +454,86 @@ def indicator_data(indicator_code):
     )
 
 
+@client_bp.route('/analysis/regressions')
+def regressions():
+    """
+    Render regressions analysis page with dynamic series selection.
+
+    Query parameters:
+    - seriesX: First series code (default: SSPI)
+    - seriesY: Second series code (default: WB_GDP_PERCAP_CURPRICE_USD)
+
+    Returns:
+        Rendered template with series options and initial selection
+    """
+    # Get URL parameters or use defaults
+    series_x = request.args.get('seriesX', 'SSPI').upper()
+    series_y = request.args.get('seriesY', 'WB_GDP_PERCAP_CURPRICE_USD').upper()
+
+    # Build grouped series options for dropdowns
+    series_options = {
+        'Indicators': [
+            {
+                'code': indicator['ItemCode'],
+                'name': indicator['ItemName'],
+                'type': 'Indicator'
+            } for indicator in sspi_metadata.indicator_details()
+        ],
+        'Categories': [
+            {
+                'code': category['ItemCode'],
+                'name': category['ItemName'],
+                'type': 'Category'
+            } for category in sspi_metadata.category_details()
+        ],
+        'Pillars': [
+            {
+                'code': pillar['ItemCode'],
+                'name': pillar['ItemName'],
+                'type': 'Pillar'
+            } for pillar in sspi_metadata.pillar_details()
+        ],
+        'Datasets': [
+            {
+                'code': dataset['DatasetCode'],
+                'name': dataset['DatasetName'],
+                'type': 'Dataset'
+            } for dataset in sspi_metadata.dataset_details()
+        ]
+    }
+
+    # Add SSPI to the options (it's the root item)
+    series_options['Index'] = [
+        {
+            'code': 'SSPI',
+            'name': 'Sustainable and Shared-Prosperity Policy Index',
+            'type': 'SSPI'
+        }
+    ]
+
+    return render_template(
+        'regressions.html',
+        series_options=series_options,
+        initial_series_x=series_x,
+        initial_series_y=series_y
+    )
+
+
+@client_bp.route('/analysis/correlation/<series_x>/<series_y>')
+def correlation_chart(series_x, series_y):
+    """
+    Legacy route - redirects to new regressions page.
+
+    Args:
+        series_x (str): First series code
+        series_y (str): Second series code
+
+    Returns:
+        Redirect to regressions page
+    """
+    return redirect(url_for('client_bp.regressions', seriesX=series_x.upper(), seriesY=series_y.upper()))
+
+
 @client_bp.route('/data/category/<category_code>')
 def category_data(category_code):
     category_code = category_code.upper()
@@ -513,7 +594,27 @@ def indicators():
 
 @client_bp.route('/analysis')
 def analysis():
-    return render_template('analysis.html')
+    # Fetch all analysis details from metadata
+    analysis_docs = sspi_metadata.find({"DocumentType": "AnalysisDetail"})
+
+    # Extract metadata and build analyses list
+    analyses = []
+    for doc in analysis_docs:
+        meta = doc.get("Metadata", {})
+        if meta:
+            analyses.append(meta)
+
+    # Sort by date descending (most recent first)
+    def parse_date(analysis):
+        date_str = analysis.get("Date", "")
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            return datetime.min
+
+    analyses.sort(key=parse_date, reverse=True)
+
+    return render_template('analysis.html', analyses=analyses)
 
 @client_bp.route('/analysis/<analysis_code>')
 def analysis_page(analysis_code):

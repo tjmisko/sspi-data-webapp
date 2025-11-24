@@ -2,6 +2,57 @@
 
 {% block content %}
 <article class="print-style-article">
-<h2> Analysis</h2>
+    <!-- Core Analysis Section -->
+    <section class="analysis-section">
+        <h2>Core Analysis</h2>
+        <p class="functionality-explainer">
+            Answer key questions about the SSPI using the tools below.
+        </p>
+        <div class="config-flex-container">
+            <a href="/analysis/regressions" class="config-card core-analysis-card">
+                <div class="config-card-header">
+                    <h3 class="config-name">Series Correlation Analysis</h3>
+                </div>
+                <p class="config-description">
+                    Simple linear regressions quantifying the statistical relationship between SSPI pillars, categories, indicators and other datasets of interest.
+                </p>
+            </a>
+            <!-- Sensitivity Testing Card -->
+            <a href="/customize/load" class="config-card core-analysis-card">
+                <div class="config-card-header">
+                    <h3 class="config-name">Sensitivity Testing</h3>
+                </div>
+                <p class="config-description">
+                    Quantify the effect of changes to the SSPI's structure affect the SSPI overall.
+                </p>
+            </a>
+        </div>
+    </section>
 
+    <!-- Analysis Articles Section -->
+    <section class="analysis-section">
+        <h2>Analysis Articles</h2>
+        <p class="functionality-explainer">In-depth research articles and analytical studies exploring specific aspects of sustainable and shared prosperity policy.</p>
+        <div class="config-flex-container">
+            {% if analyses | length == 0 %}
+                <div class="empty-message">No articles yet.</div>
+            {% else %}
+                {% for analysis in analyses %}
+                <a href="/analysis/{{ analysis.AnalysisCode | lower }}" class="config-card analysis-article-card">
+                    <div class="config-card-header">
+                        <h3 class="config-name">{{ analysis.AnalysisTitle }}</h3>
+                        <span class="config-meta-item">{{ analysis.Date }}</span>
+                    </div>
+                    <p class="config-description">{{ analysis.AnalysisSubtitle or 'Research article' }}</p>
+                    {% if analysis.Authors %}
+                    <div class="article-authors">
+                        <strong>{{ analysis.Authors | join(', ') }}</strong>
+                    </div>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </section>
+</article>
 {% endblock %}
