@@ -23,6 +23,19 @@
   --shadow-sm: 0 2px 4px -1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+
+  /* Ranking Badge Colors */
+  --badge-positive-color: rgba(40, 167, 69, 0.75); /* Green for high scores/best ranks */
+  --badge-negative-color: rgba(239, 68, 68, 0.75); /* Red for low scores/worst ranks */
+  --badge-improved-color: rgba(0, 123, 255, 0.75); /* Blue for improvements */
+  --badge-declined-color: rgba(255, 133, 27, 0.75); /* Orange for declines */
+  --badge-default-color: rgba(59, 130, 246, 0.75); /* Default blue */
+
+  /* Ranking Card Background Tints */
+  --card-tint-positive: rgba(40, 167, 69, 0.03); /* Green tint */
+  --card-tint-negative: rgba(239, 68, 68, 0.03); /* Red tint */
+  --card-tint-improved: rgba(0, 123, 255, 0.03); /* Blue tint */
+  --card-tint-declined: rgba(255, 133, 27, 0.03); /* Orange tint */
 }
 
 @media (min-width: 600px) {

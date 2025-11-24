@@ -1009,12 +1009,24 @@ def finalize_dynamic_rank_iterator():
     count = sspi_dynamic_rank_data.insert_many(dynamic_ranks_years)
     yield f"Successfully inserted {count} documents for Single Year Dynamic Ranks\n"
     yield "Computing Time Period Ranks\n"
-    dynamic_ranks_intervals = sspi_item_data.aggregate([
+
+    # New approach: Start with single-year ranks, then aggregate those ranks
+    # This produces semantically correct statistics on actual year-by-year performance
+    dynamic_ranks_intervals = sspi_dynamic_rank_data.aggregate([
+        # Start with single-year rank data
         {
-            "$set": {
-                "timePeriods": time_period_intervals 
+            "$match": {
+                "TimePeriodType": "Single Year"
             }
         },
+        # Add time period information to each document
+        {
+            "$set": {
+                "timePeriods": time_period_intervals,
+                "Year": {"$toInt": "$TimePeriod"}  # Convert "2000" to 2000
+            }
+        },
+        # Find which multi-year periods this year belongs to
         {
             "$set": {
                 "matchingPeriods": {
@@ -1026,7 +1038,11 @@ def finalize_dynamic_rank_iterator():
                 }
             }
         },
+        # Unwind to create one document per matching period
         {"$unwind": "$matchingPeriods"},
+        # Sort by year to ensure correct first/last ordering
+        {"$sort": {"Year": 1}},
+        # Group by period + country + item, collecting ranks and scores
         {
             "$group": {
                 "_id": {
@@ -1035,13 +1051,12 @@ def finalize_dynamic_rank_iterator():
                     "CountryCode": "$CountryCode",
                     "ItemCode": "$ItemCode"
                 },
-                "begScore": {"$first": "$Score"},
-                "endScore": {"$last": "$Score"},
-                "minScore": {"$min": "$Score"},
-                "maxScore": {"$max": "$Score"},
-                "avgScore": {"$avg": "$Score"}
+                "ranks": {"$push": "$Rank"},
+                "scores": {"$push": "$Score"},
+                "years": {"$push": "$Year"}
             }
         },
+        # Compute statistics on the collected ranks and scores
         {
             "$project": {
                 "_id": 0,
@@ -1049,135 +1064,24 @@ def finalize_dynamic_rank_iterator():
                 "TimePeriodType": "$_id.TimePeriodType",
                 "CountryCode": "$_id.CountryCode",
                 "ItemCode": "$_id.ItemCode",
-                "begScore": 1,
-                "endScore": 1,
-                "chgScore": { "$subtract": ["$endScore", "$begScore"] },
-                "minScore": 1,
-                "maxScore": 1,
-                "rngScore": { "$subtract": ["$maxScore", "$minScore"] },
-                "avgScore": 1
-            }
-        },
-
-        # --- Rank by avgScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"avgScore": -1},
-                "output": {"avgRank": {"$rank": {}}}
-            }
-        },
-        # --- Rank by begScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"begScore": -1},
-                "output": {"begRank": {"$rank": {}}}
-            }
-        },
-        # --- Rank by endScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"endScore": -1},
-                "output": {"endRank": {"$rank": {}}}
-            }
-        },
-        # --- Rank by chgScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"chgScore": -1},
-                "output": {"chgRank": {"$rank": {}}}
-            }
-        },
-        # --- Rank by minScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"minScore": -1},
-                "output": {"minRank": {"$rank": {}}}
-            }
-        },
-        # --- Rank by maxScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"maxScore": -1},
-                "output": {"maxRank": {"$rank": {}}}
-            }
-        },
-        # --- Rank by rngScore ---
-        {
-            "$setWindowFields": {
-                "partitionBy": {
-                    "TimePeriod": "$TimePeriod",
-                    "TimePeriodType": "$TimePeriodType",
-                    "ItemCode": "$ItemCode"
-                },
-                "sortBy": {"rngScore": -1},
-                "output": {"rngRank": {"$rank": {}}}
-            }
-        },
-        {
-            "$set": {
                 "Ranks": {
-                    "avg": "$avgRank",
-                    "beg": "$begRank",
-                    "end": "$endRank",
-                    "chg": "$chgRank",
-                    "min": "$minRank",
-                    "max": "$maxRank",
-                    "rng": "$rngRank"
-                }
-            }
-        },
-        {
-            "$set": {
+                    "avg": {"$toInt": {"$round": [{"$avg": "$ranks"}, 0]}},  # Round and convert to integer
+                    "beg": {"$first": "$ranks"},
+                    "end": {"$last": "$ranks"},
+                    "min": {"$max": "$ranks"},  # Worst rank (highest number)
+                    "max": {"$min": "$ranks"},  # Best rank (lowest number)
+                    "chg": {"$subtract": [{"$last": "$ranks"}, {"$first": "$ranks"}]},
+                    "rng": {"$subtract": [{"$max": "$ranks"}, {"$min": "$ranks"}]}
+                },
                 "Scores": {
-                    "avg": "$avgScore",
-                    "beg": "$begScore",
-                    "end": "$endScore",
-                    "chg": "$chgScore",
-                    "min": "$minScore",
-                    "max": "$maxScore",
-                    "rng": "$rngScore"
+                    "avg": {"$avg": "$scores"},
+                    "beg": {"$first": "$scores"},
+                    "end": {"$last": "$scores"},
+                    "min": {"$min": "$scores"},
+                    "max": {"$max": "$scores"},
+                    "chg": {"$subtract": [{"$last": "$scores"}, {"$first": "$scores"}]},
+                    "rng": {"$subtract": [{"$max": "$scores"}, {"$min": "$scores"}]}
                 }
-            }
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "TimePeriod": 1,
-                "TimePeriodType": 1,
-                "CountryCode": 1,
-                "ItemCode": 1,
-                "Scores": 1,
-                "Ranks": 1
             }
         }
     ])

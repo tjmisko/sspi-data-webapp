@@ -44,3 +44,334 @@
     font-size: 1.3rem;
   }
 }
+
+/* Rankings Panel Styles */
+.rankings-panel {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.rankings-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5em;
+}
+
+.rankings-panel-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.15;
+  color: var(--header-font-color);
+  font-family: var(--header-font-family);
+}
+
+/* Section Styling */
+.rankings-section {
+  margin-bottom: 0.5rem;
+  padding: 1.25rem;
+  background-color: color-mix(in srgb, var(--page-background) 75%, var(--box-background-color) 25%);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.rankings-section:last-child {
+  margin-bottom: 0;
+}
+
+.rankings-section-header {
+  margin-bottom: 1.5rem;
+}
+
+.rankings-section-header h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--header-font-color);
+  font-family: var(--header-font-family);
+}
+
+.rankings-section-description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--low-importance-font-color);
+  font-style: italic;
+}
+
+.time-period-selector {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--box-background-color);
+  color: var(--body-text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.time-period-selector:hover {
+  border-color: var(--primary-color);
+}
+
+.time-period-selector:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.time-period-selector optgroup {
+  font-weight: bold;
+  font-style: normal;
+  color: var(--header-font-color);
+  background-color: var(--box-background-color);
+  padding: 0.25rem 0;
+}
+
+.time-period-selector option {
+  font-weight: normal;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Grid layouts for different time period types */
+.rankings-panel-content.intervals {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.rankings-panel-content.single-year {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.rankings-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.rankings-column h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--header-font-color);
+  font-family: var(--header-font-family);
+  text-align: center;
+}
+
+.rankings-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ranking-card {
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.4rem 0.6rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.ranking-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Absolute Performance Cards (Score-based) */
+.ranking-card.absolute-high {
+  border-left: 3px solid var(--sus-color);
+  background-color: var(--card-tint-positive);
+}
+
+.ranking-card.absolute-low {
+  border-left: 3px solid #ef4444;
+  background-color: var(--card-tint-negative);
+}
+
+.ranking-card.absolute-improved {
+  border-left: 3px solid var(--pg-color);
+  background-color: var(--card-tint-improved);
+}
+
+.ranking-card.absolute-declined {
+  border-left: 3px solid var(--ms-color);
+  background-color: var(--card-tint-declined);
+}
+
+/* Relative Performance Cards (Rank-based) - same styling as absolute */
+.ranking-card.relative-strong {
+  border-left: 3px solid var(--sus-color);
+  background-color: var(--card-tint-positive);
+}
+
+.ranking-card.relative-weak {
+  border-left: 3px solid #ef4444;
+  background-color: var(--card-tint-negative);
+}
+
+.ranking-card.relative-improved {
+  border-left: 3px solid var(--pg-color);
+  background-color: var(--card-tint-improved);
+}
+
+.ranking-card.relative-declined {
+  border-left: 3px solid var(--ms-color);
+  background-color: var(--card-tint-declined);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.item-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-color);
+  flex: 1;
+  line-height: 1.2;
+}
+
+.rank-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  color: white;
+  border-radius: var(--border-radius);
+  white-space: nowrap;
+}
+
+/* Default badge color */
+.ranking-card .rank-badge {
+  background-color: var(--badge-default-color);
+}
+
+/* Theme-specific badge colors */
+.ranking-card.absolute-high .rank-badge,
+.ranking-card.relative-strong .rank-badge {
+  background-color: var(--badge-positive-color);
+}
+
+.ranking-card.absolute-low .rank-badge,
+.ranking-card.relative-weak .rank-badge {
+  background-color: var(--badge-negative-color);
+}
+
+.ranking-card.absolute-improved .rank-badge,
+.ranking-card.relative-improved .rank-badge {
+  background-color: var(--badge-improved-color);
+}
+
+.ranking-card.absolute-declined .rank-badge,
+.ranking-card.relative-declined .rank-badge {
+  background-color: var(--badge-declined-color);
+}
+
+.card-body {
+  margin-bottom: 0.3rem;
+  box-sizing: border-box;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.score-display {
+  font-size: 0.7rem;
+  color: var(--low-importance-font-color);
+  padding: 0.1rem 0;
+  box-sizing: border-box;
+}
+
+.rank-change {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--border-radius);
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.rank-change.positive-change {
+  color: var(--sus-color);
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.rank-change.negative-change {
+  color: var(--ms-color);
+  background-color: rgba(255, 133, 27, 0.1);
+}
+
+.card-footer {
+  padding-top: 0.21rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.time-period {
+  font-size: 0.55rem;
+  color: var(--low-importance-font-color);
+  line-height: 1.1;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--low-importance-font-color);
+  font-size: 0.9rem;
+}
+
+.rankings-panel-error {
+  padding: 2rem;
+  text-align: center;
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  border-radius: var(--border-radius);
+}
+
+/* Responsive adjustments for rankings panel */
+@media (max-width: 1200px) {
+  .rankings-panel-content.intervals {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Single year layout stays 2 columns on tablets */
+}
+
+@media (max-width: 767px) {
+  .rankings-panel-content.intervals,
+  .rankings-panel-content.single-year {
+    grid-template-columns: 1fr;
+  }
+
+  .rankings-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .time-period-selector {
+    width: 100%;
+  }
+
+  .rankings-section {
+    padding: 1rem;
+  }
+
+  .rankings-section-header h4 {
+    font-size: 1rem;
+  }
+
+  .rankings-section-description {
+    font-size: 0.8rem;
+  }
+}

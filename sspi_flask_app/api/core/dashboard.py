@@ -36,7 +36,8 @@ from sspi_flask_app.models.database import (
     sspi_item_dynamic_line_data,
     sspi_dynamic_matrix_data,
     sspi_globe_data,
-    sspi_dynamic_radar_data)
+    sspi_dynamic_radar_data,
+    sspi_dynamic_rank_data)
 
 from sspi_flask_app.auth.decorators import admin_required
 from datetime import datetime
@@ -1498,3 +1499,80 @@ def fast_score():
         columns=np.arange(min_year, max_year + 1)
     )
     return parse_json(score_list)
+
+
+@dashboard_bp.route("/country/rankings/<country_code>/<item_level>")
+def get_country_rankings(country_code, item_level):
+    """
+    Get all ranking data for a country at a specific item level across all time periods.
+
+    Args:
+        country_code: ISO 3-letter country code
+        item_level: One of "indicator", "category", "pillar", or "sspi"
+
+    Returns:
+        JSON response with:
+        - data: All ranking documents for the country/item_level combination
+        - metadata: Item names and time period information
+    """
+    # Validate item_level
+    valid_levels = ["indicator", "category", "pillar", "sspi"]
+    if item_level.lower() not in valid_levels:
+        return jsonify({
+            "error": f"Invalid item_level. Must be one of: {', '.join(valid_levels)}"
+        }), 400
+    # Query all ranking data for this country and item level
+    query = {"CountryCode": country_code}
+    # Get all ranking documents
+    ranking_data = parse_json(sspi_dynamic_rank_data.find(query, {"_id": 0}))
+    if not ranking_data:
+        return jsonify({
+            "error": f"No ranking data found for country {country_code}"
+        }), 404
+    # Get item metadata to include item names
+    item_details = sspi_metadata.item_details()
+    item_name_map = {item["ItemCode"]: item["ItemName"] for item in item_details}
+    # Filter by item level and enrich with item names
+    filtered_data = []
+    for doc in ranking_data:
+        item_code = doc.get("ItemCode")
+        if not item_code:
+            continue
+        # Get item detail to check item type
+        item_detail = next((item for item in item_details if item["ItemCode"] == item_code), None)
+        if not item_detail:
+            continue
+        item_type = item_detail.get("ItemType", "").lower()
+        # Filter by requested item level
+        if item_level.lower() == "sspi" and item_code.lower() == "sspi":
+            doc["ItemName"] = "Social Policy and Progress Index"
+            filtered_data.append(doc)
+        elif item_level.lower() == item_type:
+            doc["ItemName"] = item_name_map.get(item_code, item_code)
+            filtered_data.append(doc)
+    # Build time period structure organized by type
+    time_periods_by_type = {}
+    for doc in filtered_data:
+        period_type = doc.get("TimePeriodType")
+        period_label = doc.get("TimePeriod")
+        if period_type and period_label:
+            if period_type not in time_periods_by_type:
+                time_periods_by_type[period_type] = set()
+            time_periods_by_type[period_type].add(period_label)
+
+    # Convert sets to sorted lists
+    time_periods = {}
+    for period_type, periods in time_periods_by_type.items():
+        time_periods[period_type] = sorted(list(periods))
+
+    # Get total number of countries in SSPI67 for rank context
+    total_countries = len(sspi_metadata.country_group("SSPI67"))
+
+    return jsonify({
+        "countryCode": country_code,
+        "itemLevel": item_level,
+        "data": filtered_data,
+        "timePeriods": time_periods,
+        "itemCount": len(set(doc.get("ItemCode") for doc in filtered_data)),
+        "totalCountries": total_countries
+    })
