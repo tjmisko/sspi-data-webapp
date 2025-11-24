@@ -694,12 +694,6 @@ def globe_tree():
     return render_template("globe.html")
 
 
-@client_bp.route('/test/comparison-series')
-def test_comparison_series():
-    """Test page for comparison series plugin with live panel chart data"""
-    return render_template("test-comparison-series.html")
-
-
 # @client_bp.route('/history')
 # def project_history():
 #     return render_template("history.html")
