@@ -16,7 +16,9 @@
 }
 
 .portal-section-inline-auth {
+  font-size: 2rem;
   display: flex;
+  gap: 2em;
   justify-content: center;
   margin: 0.5em 0;
 }
