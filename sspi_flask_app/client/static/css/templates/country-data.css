@@ -11,11 +11,14 @@
   margin-bottom: 2em;
 }
 
+.country-overview-box .panel-chart-root-container, .country-overview-box .panel-chart-container {
+  height: clamp(450px, 50vh, 50vh);
+}
+
 .country-overview-box p {
   color: var(--low-importance-font-color);
   font-family: var(--body-font-family);
 }
-
 
 .country-header {
   margin-bottom: 1rem;
@@ -37,7 +40,6 @@
 
 .country-selector {
   width: 100%;
-  max-width: 600px;
   padding: 0.75rem 0;
   font-size: 1.5rem;
   font-weight: 600;
@@ -224,11 +226,13 @@
   padding: 0.4rem 0.6rem;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
 .ranking-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
+  border-color: var(--link-color);
 }
 
 /* Absolute Performance Cards (Score-based) */
