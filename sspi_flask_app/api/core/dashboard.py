@@ -985,9 +985,21 @@ def dynamic_stack_data(country_code, root_item_code):
         "ICode": {"$in": child_codes + [root_item_code]},
     }
     data = sspi_item_dynamic_line_data.find(mongo_query)
-    data.sort(
-        key=lambda x: ([root_item_code] + child_codes).index(x["Detail"]["ItemCode"])
-    )
+
+    # Define explicit pillar order for consistent stacking
+    # In stacked charts, last dataset appears at TOP of stack
+    # So we reverse: PG (bottom), MS (middle), SUS (top)
+    pillar_order = {"PG": 0, "MS": 1, "SUS": 2}
+
+    def sort_key(doc):
+        item_code = doc["Detail"]["ItemCode"]
+        # Root item (SSPI) should be first (hidden anyway)
+        if item_code == root_item_code:
+            return -1
+        # Use pillar order if available, otherwise use position in child_codes
+        return pillar_order.get(item_code, child_codes.index(item_code) + 100)
+
+    data.sort(key=sort_key)
     year_labels = list(range(2000, datetime.now().year + 1))
     for document in data:
         if document["ICode"] == root_item_code:

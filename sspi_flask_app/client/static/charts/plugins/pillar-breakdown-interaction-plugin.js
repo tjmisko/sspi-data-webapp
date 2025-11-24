@@ -39,7 +39,8 @@ const pillarBreakdownInteractionPlugin = {
 
     // Country details
     countryName: null,
-    countryFlag: null
+    countryFlag: null,
+    countryCode: null
   },
 
   // Internal state
@@ -157,11 +158,13 @@ const pillarBreakdownInteractionPlugin = {
 
       if (value == null || isNaN(value)) return;
 
-      // Get item name (try IName, then ICode, then generic)
+      // Get item name and code
       const name = ds.IName || ds.ICode || `Item ${i + 1}`;
+      const code = ds.ICode;
 
       items.push({
         name,
+        code,
         value,
         color: ds._full ? ds._full.border : ds.borderColor,
         near: ds._isNear
@@ -170,8 +173,13 @@ const pillarBreakdownInteractionPlugin = {
       sumOfScores += value;
     });
 
-    // Sort items by value (largest first)
-    items.sort((a, b) => b.value - a.value);
+    // Sort items by pillar order: SUS, MS, PG
+    const pillarOrder = { 'SUS': 0, 'MS': 1, 'PG': 2 };
+    items.sort((a, b) => {
+      const orderA = pillarOrder[a.code] ?? 999;
+      const orderB = pillarOrder[b.code] ?? 999;
+      return orderA - orderB;
+    });
 
     // SSPI is the arithmetic mean (average) of the pillar scores
     // The chart height shows this average, which is sum/count
@@ -245,15 +253,10 @@ const pillarBreakdownInteractionPlugin = {
       `;
     }
 
-    // Follow exact structure from globe.js
-    // Build header with country info if available
+    // Build header with country code (left) and year (right)
     let headerHTML = '';
-    if (opts.countryName) {
-      const flag = opts.countryFlag || '';
-      headerHTML = `<h3><span class="pillar-breakdown-country-name">${flag}\u0020${opts.countryName}</span><span class="pillar-breakdown-year">${data.header}</span></h3>`;
-    } else {
-      headerHTML = `<h3><span class="pillar-breakdown-year">${data.header}</span></h3>`;
-    }
+    const countryCode = opts.countryCode || '';
+    headerHTML = `<h3><span class="pillar-breakdown-country-code">${countryCode}</span><span class="pillar-breakdown-year">${data.header}</span></h3>`;
 
     tooltip.innerHTML = `
 ${headerHTML}
