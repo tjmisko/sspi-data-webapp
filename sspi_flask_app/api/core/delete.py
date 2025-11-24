@@ -14,6 +14,7 @@ from wtforms.validators import DataRequired
 
 from sspi_flask_app.api.resources.utilities import lookup_database
 from sspi_flask_app.models.database import sspi_metadata, sspi_raw_api_data, sspidb
+from sspi_flask_app import csrf
 
 delete_bp = Blueprint(
     "delete_bp", __name__,
@@ -140,6 +141,7 @@ def clear_db():
 
 
 @delete_bp.route("/series/<database_name>/<series_code>", methods=["DELETE"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 @admin_required
 def delete_series(database_name, series_code):
     database = lookup_database(database_name)
@@ -169,6 +171,7 @@ def delete_series(database_name, series_code):
 
 
 @delete_bp.route("/indicator/<database_name>/<IndicatorCode>", methods=["DELETE"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 @admin_required
 def delete_database_indicator(database_name, IndicatorCode):
     database = lookup_database(database_name)
@@ -182,6 +185,7 @@ def delete_database_indicator(database_name, IndicatorCode):
 
 
 @delete_bp.route("/clear/<database_name>", methods=["DELETE"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 @admin_required
 def delete_clear_database(database_name):
     database = lookup_database(database_name)
@@ -200,6 +204,7 @@ def delete_clear_database(database_name):
     return msg
 
 @delete_bp.route("/loose/<database_name>", methods=["DELETE"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 @admin_required
 def delete_loose_data(database_name):
     database = lookup_database(database_name)
@@ -222,6 +227,7 @@ def delete_loose_data(database_name):
     return msg
 
 @delete_bp.route("/raw/<raw_delete_code>", methods=["DELETE"])
+@csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
 @admin_required
 def delete_raw_data(raw_delete_code):
     if ":" in raw_delete_code:
