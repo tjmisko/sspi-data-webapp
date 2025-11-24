@@ -1,6 +1,5 @@
 from flask_assets import Bundle
 
-
 def compile_static_assets(assets):
     """Configure bundle building and minification of css and js"""
     print("Rebuilding Static Assets")
