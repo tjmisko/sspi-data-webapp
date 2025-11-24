@@ -30,6 +30,46 @@
   font-family: var(--header-font-family);
 }
 
+/* Country Selector Dropdown */
+.country-selector-container {
+  margin-bottom: 0.75rem;
+}
+
+.country-selector {
+  width: 100%;
+  max-width: 600px;
+  padding: 0.75rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  font-family: var(--header-font-family);
+  color: var(--header-font-color);
+  background-color: var(--box-background-color);
+  border: var(--theme-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.country-selector:hover {
+  border-color: var(--sspi-primary-color);
+  box-shadow: var(--shadow-md);
+}
+
+.country-selector:focus {
+  outline: none;
+  border-color: var(--sspi-primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--sspi-primary-color-rgb), 0.1);
+}
+
+.country-selector option {
+  padding: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .country-pillar-chart-container {
   margin-top: 1rem;
 }
@@ -42,6 +82,17 @@
 
   .country-title {
     font-size: 1.3rem;
+  }
+
+  .country-selector {
+    max-width: 100%;
+    width: 100%;
+    font-size: 1.3rem;
+    padding: 0.625rem 0;
+  }
+
+  .country-selector option {
+    font-size: 1rem;
   }
 }
 

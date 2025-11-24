@@ -1,0 +1,37 @@
+{# Country Characteristics Summary Component #}
+{#
+  Usage: {% include 'components/country-characteristics-summary.html' %}
+  Required context: characteristics (list of characteristic dicts)
+#}
+
+<div class="country-characteristics-summary">
+    <div class="characteristics-grid">
+        {% for char in characteristics %}
+        <div class="characteristic-card{% if not char.available %} characteristic-unavailable{% endif %}">
+            {# Label #}
+            <div class="characteristic-label">{{ char.label }}</div>
+
+            {% if char.key == 'sspiScore' %}
+                {# Special layout for SSPI Score with rank #}
+                <div class="characteristic-value-container">
+                    <div class="characteristic-value">{{ char.formatted }}</div>
+                    {% if char.available and char.rank and char.totalCountries %}
+                    <div class="characteristic-rank"># {{ char.rank }} / {{ char.totalCountries }}</div>
+                    {% endif %}
+                </div>
+            {% else %}
+                {# Standard value display #}
+                <div class="characteristic-value">{{ char.formatted }}</div>
+            {% endif %}
+
+            {# Metadata (year and source) - only if available #}
+            {% if char.available %}
+            <div class="characteristic-meta">
+                <span class="characteristic-year">{{ char.year }}</span>
+                <span class="characteristic-source">{{ char.source }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>

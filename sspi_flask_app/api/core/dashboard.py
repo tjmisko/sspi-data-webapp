@@ -37,7 +37,9 @@ from sspi_flask_app.models.database import (
     sspi_dynamic_matrix_data,
     sspi_globe_data,
     sspi_dynamic_radar_data,
-    sspi_dynamic_rank_data)
+    sspi_clean_api_data,
+    sspi_dynamic_rank_data
+)
 
 from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app import csrf
@@ -1581,4 +1583,226 @@ def get_country_rankings(country_code, item_level):
         "timePeriods": time_periods,
         "itemCount": len(set(doc.get("ItemCode") for doc in filtered_data)),
         "totalCountries": total_countries
+    })
+
+            
+@dashboard_bp.route("/country/characteristics/<country_code>")
+def get_country_characteristics(country_code):
+    """
+    Get key country characteristics (population, GDP per capita, total GDP)
+    for the most recent available year.
+
+    Returns extensible array structure to allow easy addition of new
+    characteristics (e.g., land area, landlocked status) in the future.
+    """
+    country_code = country_code.upper()
+
+    # Get country details
+    country_detail = sspi_metadata.get_country_detail(country_code)
+    if not country_detail:
+        return jsonify({"error": f"Country {country_code} not found"}), 404
+
+    characteristics = []
+
+    # Helper function to format large numbers
+    def format_number(value, num_type="number"):
+        """Format large numbers with appropriate units"""
+        if value is None:
+            return "N/A"
+
+        abs_val = abs(value)
+
+        if num_type == "currency":
+            # Format currency
+            if abs_val >= 1_000_000_000_000:  # Trillions
+                return f"${value / 1_000_000_000_000:.1f} trillion"
+            elif abs_val >= 1_000_000_000:  # Billions
+                return f"${value / 1_000_000_000:.1f} billion"
+            elif abs_val >= 1_000_000:  # Millions
+                return f"${value / 1_000_000:.1f} million"
+            else:
+                return f"${value:,.0f}"
+        else:
+            # Format population or other numbers
+            if abs_val >= 1_000_000_000:  # Billions
+                return f"{value / 1_000_000_000:.1f} billion"
+            elif abs_val >= 1_000_000:  # Millions
+                return f"{value / 1_000_000:.1f} million"
+            elif abs_val >= 1_000:  # Thousands
+                return f"{value / 1_000:.1f} thousand"
+            else:
+                return f"{value:,.0f}"
+
+    # Query population data (most recent year)
+    population_results = sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_POPULN"
+    })
+    # Sort by year and get most recent
+    population_data = None
+    if population_results:
+        population_results_sorted = sorted(population_results, key=lambda x: x.get("Year", 0), reverse=True)
+        population_data = population_results_sorted[0] if population_results_sorted else None
+
+    if population_data:
+        pop_value = population_data.get("Value")
+        characteristics.append({
+            "key": "population",
+            "label": "Population",
+            "value": pop_value,
+            "year": population_data.get("Year"),
+            "unit": "people",
+            "formatted": format_number(pop_value),
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "population",
+            "label": "Population",
+            "value": None,
+            "year": None,
+            "unit": "people",
+            "formatted": "Data not available",
+            "source": "World Bank",
+            "available": False
+        })
+
+    # Query land area data (most recent year)
+    land_area_results = sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_LANDAR"
+    })
+    # Sort by year and get most recent
+    land_area_data = None
+    if land_area_results:
+        land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
+        land_area_data = land_area_results_sorted[0] if land_area_results_sorted else None
+
+    if land_area_data:
+        land_area_value = land_area_data.get("Value")
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "value": land_area_value,
+            "year": land_area_data.get("Year"),
+            "unit": "Square Kilometers",
+            "formatted": f"{land_area_value:,.0f} km²" if land_area_value else "N/A",
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "value": None,
+            "year": None,
+            "unit": "Square Kilometers",
+            "formatted": "Data not available",
+            "source": "World Bank",
+            "available": False
+        })
+
+    # Query GDP per capita data (most recent year)
+    gdp_per_capita_results = sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_GDP_PERCAP_CURPRICE_USD"
+    })
+    # Sort by year and get most recent
+    gdp_per_capita_data = None
+    if gdp_per_capita_results:
+        gdp_per_capita_results_sorted = sorted(gdp_per_capita_results, key=lambda x: x.get("Year", 0), reverse=True)
+        gdp_per_capita_data = gdp_per_capita_results_sorted[0] if gdp_per_capita_results_sorted else None
+
+    if gdp_per_capita_data:
+        gdp_pc_value = gdp_per_capita_data.get("Value")
+        characteristics.append({
+            "key": "gdpPerCapita",
+            "label": "GDP per Capita",
+            "value": gdp_pc_value,
+            "year": gdp_per_capita_data.get("Year"),
+            "unit": "USD (current)",
+            "formatted": format_number(gdp_pc_value, "currency"),
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "gdpPerCapita",
+            "label": "GDP per Capita",
+            "value": None,
+            "year": None,
+            "unit": "USD (current)",
+            "formatted": "Data not available",
+            "source": "World Bank",
+            "available": False
+        })
+
+    # Query SSPI rank and score (most recent year)
+    sspi_rank_results = sspi_dynamic_rank_data.find({
+        "CountryCode": country_code,
+        "ItemCode": "SSPI",
+        "TimePeriodType": "Single Year"
+    })
+    # Sort by TimePeriod (year) and get most recent
+    sspi_rank_data = None
+    if sspi_rank_results:
+        sspi_rank_results_sorted = sorted(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"), reverse=True)
+        sspi_rank_data = sspi_rank_results_sorted[0] if sspi_rank_results_sorted else None
+
+    if sspi_rank_data:
+        rank = sspi_rank_data.get("Rank")
+        score = sspi_rank_data.get("Score")
+        year = sspi_rank_data.get("TimePeriod")
+
+        # Get total number of countries for this year
+        total_countries_results = sspi_dynamic_rank_data.find({
+            "ItemCode": "SSPI",
+            "TimePeriod": year,
+            "TimePeriodType": "Single Year"
+        })
+        total_countries = len(list(total_countries_results)) if total_countries_results else None
+
+        # Format rank with ordinal suffix
+        def ordinal(n):
+            if 10 <= n % 100 <= 20:
+                suffix = 'th'
+            else:
+                suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+            return f"{n}{suffix}"
+
+        # Insert SSPI characteristics at the beginning
+        characteristics.insert(0, {
+            "key": "sspiScore",
+            "label": "SSPI Score",
+            "value": score,
+            "year": year,
+            "rank": rank,
+            "totalCountries": total_countries,
+            "unit": "score (0-1)",
+            "formatted": f"{score:.3f}",
+            "source": "SSPI",
+            "available": True
+        })
+    else:
+        # Insert unavailable SSPI at the beginning
+        characteristics.insert(0, {
+            "key": "sspiScore",
+            "label": "SSPI Score",
+            "value": None,
+            "year": None,
+            "rank": None,
+            "totalCountries": None,
+            "unit": "score (0-1)",
+            "formatted": "Data not available",
+            "source": "SSPI",
+            "available": False
+        })
+
+
+    return jsonify({
+        "CountryCode": country_code,
+        "CountryName": country_detail.get("Country"),
+        "Flag": country_detail.get("Flag"),
+        "characteristics": characteristics
     })

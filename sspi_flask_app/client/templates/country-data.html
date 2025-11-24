@@ -15,8 +15,19 @@
         <div class="content-container">
             <div class="country-overview-box">
                 <div class="country-header">
-                    <h2 class="country-title">{{ cdetail.Flag }} {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }}) </h2>
+                    <div class="country-selector-container">
+                        <select id="country-selector" class="country-selector">
+                            {% for country in country_list %}
+                            <option
+                                value="{{ country.Metadata.CountryCode }}"
+                                {% if country.Metadata.CountryCode == cdetail.CountryCode %}selected{% endif %}>
+                                {{ country.Metadata.Flag }} {{ country.Metadata.Country }} ({{ country.Metadata.CountryCode }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
+                {% include 'components/country-characteristics-summary.html' %}
             </div>
             <div class="country-overview-box">
                 <h3>Pillar Score Breakdown</h3>
@@ -46,6 +57,8 @@
                     relative to the 66 countries of Country Group SSPI67 scores
                 </p>
                 <div id="country-rankings-panel"></div>
+                <p></p>
+                <div id="category-radar-chart"></div>
             </div>
             <div class="country-overview-box">
                 <h3>Data Coverage and Imputations</h3>
@@ -67,6 +80,15 @@
             "CCode": "{{ cdetail.CountryCode }}"
         };
         window.addEventListener("load", (event) => {
+            // Country selector navigation
+            const countrySelector = document.getElementById('country-selector');
+            if (countrySelector) {
+                countrySelector.addEventListener('change', (e) => {
+                    const selectedCountryCode = e.target.value;
+                    window.location.href = `/data/country/${selectedCountryCode}`;
+                });
+            }
+
             window.SSPICharts.push(
                 new CountryPillarPanelChart(document.getElementById("pillar-breakdown-chart"), "{{ cdetail.CountryCode | upper}}", "SSPI", { colorProvider: SSPIColors }, countryDetail)
             );
