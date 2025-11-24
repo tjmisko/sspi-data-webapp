@@ -1079,7 +1079,7 @@ def finalize_dynamic_rank_iterator():
                     "end": {"$last": "$ranks"},
                     "min": {"$max": "$ranks"},  # Worst rank (highest number)
                     "max": {"$min": "$ranks"},  # Best rank (lowest number)
-                    "chg": {"$subtract": [{"$last": "$ranks"}, {"$first": "$ranks"}]},
+                    "chg": {"$subtract": [{"$first": "$ranks"}, {"$last": "$ranks"}]},  # BEG - END: positive = improvement
                     "rng": {"$subtract": [{"$max": "$ranks"}, {"$min": "$ranks"}]}
                 },
                 "Scores": {

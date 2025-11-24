@@ -137,7 +137,7 @@ class CountryRankingsPanel {
             return '<option>No time periods available</option>';
         }
 
-        const typeOrder = ['Overall', 'Ten Year Interval', 'Five Year Interval', 'Single Year'];
+        const typeOrder = ['Overall', 'Year-to-Present', 'Ten Year Interval', 'Five Year Interval', 'Single Year'];
         let html = '';
 
         for (const type of typeOrder) {
@@ -336,6 +336,19 @@ class CountryRankingsPanel {
         }
 
         container.innerHTML = items.map(item => this.createCard(item, type)).join('');
+
+        // Add click event listeners only to non-single-year cards
+        // Single year periods don't have time series data to visualize
+        const isSingleYear = items.length > 0 && this.isSingleYearPeriod(items[0].TimePeriod);
+
+        if (!isSingleYear) {
+            container.querySelectorAll('.ranking-card').forEach(card => {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', (e) => {
+                    this.showPreviewModal(card);
+                });
+            });
+        }
     }
 
     createCard(item, type) {
@@ -355,7 +368,7 @@ class CountryRankingsPanel {
             changeHtml = `<span class="rank-change ${changeClass}">${changeSign}${change.toFixed(isAbsolute ? 3 : 0)}</span>`;
         }
         return `
-            <div class="ranking-card ${type}">
+            <div class="ranking-card ${type}" data-item-code="${item.ItemCode}" data-time-period="${item.TimePeriod}" data-item-name="${item.ItemName || item.ItemCode}">
                 <div class="card-header">
                     <span class="item-name">${item.ItemName || item.ItemCode}</span>
                     ${rank ? `<span class="rank-badge">#\u0020${rank}\u0020/\u0020${this.totalCountries}</span>` : ''}
@@ -379,5 +392,165 @@ class CountryRankingsPanel {
                 <p>Error\u0020loading\u0020rankings\u0020data:\u0020${message}</p>
             </div>
         `;
+    }
+
+    /**
+     * Parse time period string to extract start and end years
+     * Examples: "2000-2023", "2020-2025", "2015", "2010-2015", "2005-2010"
+     * @param {string} timePeriod - The time period string
+     * @returns {{startYear: number, endYear: number}} Object with startYear and endYear
+     */
+    parseTimePeriod(timePeriod) {
+        if (!timePeriod) {
+            return { startYear: 2000, endYear: 2023 }; // Default fallback
+        }
+
+        // Match pattern like "2000-2023" or "2015"
+        const match = timePeriod.match(/(\d{4})(?:-(\d{4}))?/);
+
+        if (match) {
+            const startYear = parseInt(match[1], 10);
+            const endYear = match[2] ? parseInt(match[2], 10) : startYear;
+            return { startYear, endYear };
+        }
+
+        // Fallback to defaults if parsing fails
+        return { startYear: 2000, endYear: 2023 };
+    }
+
+    /**
+     * Show preview modal for a ranking card
+     * Opens a modal with a chart showing the indicator data for the current country
+     * over the selected time period
+     * @param {HTMLElement} card - The ranking card element that was clicked
+     */
+    showPreviewModal(card) {
+        // Extract data from the card
+        const itemCode = card.dataset.itemCode;
+        const itemName = card.dataset.itemName;
+        const timePeriod = card.dataset.timePeriod;
+
+        if (!itemCode) {
+            console.warn('Cannot preview: No item code found on card');
+            return;
+        }
+
+        // Disable preview for single year periods (no time series to visualize)
+        if (this.isSingleYearPeriod(timePeriod)) {
+            return;
+        }
+
+        // Parse the time period to get start and end years
+        const { startYear, endYear } = this.parseTimePeriod(timePeriod);
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'preview-modal-overlay';
+        overlay.innerHTML = `
+            <div class="preview-modal">
+                <div class="preview-modal-header">
+                    <h3>${itemName} (${itemCode}) - ${this.countryCode}</h3>
+                    <button class="modal-close-btn" type="button">×</button>
+                </div>
+                <div class="preview-modal-body">
+                    <div id="preview-chart-container"></div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const modal = overlay.querySelector('.preview-modal');
+        const closeBtn = overlay.querySelector('.modal-close-btn');
+        const chartContainer = overlay.querySelector('#preview-chart-container');
+
+        // Store chart reference for cleanup
+        let chartInstance = null;
+
+        // Create the chart with country list mode
+        try {
+            chartInstance = new IndicatorPanelChart(chartContainer, itemCode, {
+                CountryList: [this.countryCode]
+            });
+
+            // Set year range after chart creation
+            // We need to set the properties directly and update the chart
+            // because IndicatorPanelChart doesn't forward year parameters to parent constructor
+            if (chartInstance) {
+                chartInstance.startYear = startYear;
+                chartInstance.endYear = endYear;
+
+                // Update the chart's x-axis scale to reflect the new year range
+                if (chartInstance.chart && chartInstance.chart.options && chartInstance.chart.options.scales && chartInstance.chart.options.scales.x) {
+                    chartInstance.chart.options.scales.x.min = startYear;
+                    chartInstance.chart.options.scales.x.max = endYear;
+                }
+
+                // Update year input values if they exist (they might not in modal context)
+                if (chartInstance.startYearInput) {
+                    chartInstance.startYearInput.value = startYear;
+                }
+                if (chartInstance.endYearInput) {
+                    chartInstance.endYearInput.value = endYear;
+                }
+
+                // Trigger chart update to apply the year range
+                if (chartInstance.chart) {
+                    chartInstance.chart.update();
+                }
+            }
+
+            // Add to global charts array for tracking
+            if (window.SSPICharts) {
+                window.SSPICharts.push(chartInstance);
+            }
+        } catch (error) {
+            console.error('Error creating preview chart:', error);
+            chartContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--error-color);">
+                <p>Error loading preview chart.</p>
+                <p>${error.message}</p>
+            </div>`;
+        }
+
+        const closeModal = () => {
+            // Destroy chart if it exists
+            if (chartInstance && typeof chartInstance.destroy === 'function') {
+                try {
+                    chartInstance.destroy();
+                } catch (error) {
+                    console.error('Error destroying chart:', error);
+                }
+            }
+
+            // Remove from global charts array
+            if (window.SSPICharts && chartInstance) {
+                const index = window.SSPICharts.indexOf(chartInstance);
+                if (index > -1) {
+                    window.SSPICharts.splice(index, 1);
+                }
+            }
+
+            // Remove overlay
+            overlay.remove();
+        };
+
+        // Event listeners for closing
+        closeBtn.addEventListener('click', closeModal);
+
+        // Close on escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+
+        // Close on click outside modal
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
     }
 }
