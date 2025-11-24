@@ -1,7 +1,8 @@
 class PanelChart {
-    constructor(parentElement, { CountryList = [], endpointURL = '', colorProvider = SSPIColors, startYear = 2000, endYear = 2025, favorCachedTimePeriod = true, yBeginAtZero = true} ) {
+    constructor(parentElement, { CountryList = [], endpointURL = '', colorProvider = SSPIColors, startYear = 2000, endYear = 2025, favorCachedTimePeriod = true, yBeginAtZero = true, enableComparisonSeries = false} ) {
         this.parentElement = parentElement// ParentElement is the element to attach the canvas to
         this.CountryList = CountryList// CountryList is an array of CountryCodes (empty array means all countries)
+        this.isCountryListMode = CountryList.length > 0  // Detect country list filtering mode
         this.endpointURL = endpointURL// endpointURL is the URL to fetch data from
         this.pins = new Set() // pins contains a list of pinned countries
         this.missingCountries = [] // Array of countries with no data, populated from API response
@@ -9,6 +10,7 @@ class PanelChart {
         this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
         this.chartInteractionPlugin = chartInteractionPlugin
         this.favorCachedTimePeriod = favorCachedTimePeriod // Set to false to ensure that specified years override user-set custom time periods
+        this.enableComparisonSeries = enableComparisonSeries // Controls whether comparison series feature is available
         this.argDefaultStartYear = startYear
         this.argDefaultEndYear = endYear
         this.yBeginAtZero = yBeginAtZero
@@ -54,6 +56,48 @@ class PanelChart {
     buildChartOptions() {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options')
+
+        // Build comparison options HTML conditionally
+        const comparisonOptionsHTML = this.enableComparisonSeries ? `
+        <div class="chart-view-subheader">Comparison Options</div>
+        <div class="chart-view-option">
+            <input type="checkbox" class="show-comparison-series"/>
+            <label class="title-bar-label">Show Comparison Series</label>
+        </div>` : '';
+
+        // Conditional HTML for search button - hide in country list mode
+        const searchButtonHTML = this.isCountryListMode ? '' : `
+                <button class="add-country-button">Search Country</button>
+        `;
+
+        // Conditional HTML for country group selector - hide in country list mode
+        const countryGroupSelectorHTML = this.isCountryListMode ? '' : `
+        <div class="chart-view-subheader">Country Groups</div>
+        <div class="chart-view-option">
+            <select class="country-group-selector"></select>
+        </div>
+        `;
+
+        // Conditional HTML for country group buttons - different in country list mode
+        const countryGroupButtonsHTML = this.isCountryListMode ? `
+        <div class="chart-view-option country-group-buttons">
+            <div class="country-group-button-group">
+                <button class="show-all-countries-button">Show All Countries</button>
+            </div>
+        </div>
+        ` : `
+        <div class="chart-view-option country-group-buttons">
+            <div class="country-group-button-group">
+                <div class="random-draw-controls">
+                    <button class="random-history-back-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-right"/></svg></button>
+                    <button class="draw-button">Draw 10 Countries</button>
+                    <button class="random-history-forward-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-left"/></svg></button>
+                </div>
+                <button class="show-in-group-button">Show All in Group</button>
+            </div>
+        </div>
+        `;
+
         this.chartOptions.innerHTML = `
 <div class="hide-chart-button-container">
     <button class="icon-button hide-chart-options" aria-label="Hide Chart Options" title="Hide Chart Options">
@@ -83,27 +127,15 @@ class PanelChart {
             <div class="pin-actions-box">
                 <button class="hideunpinned-button">Hide Unpinned</button>
                 <button class="clearpins-button">Clear Pins</button>
-                <button class="add-country-button">Search Country</button>
+                ${searchButtonHTML}
             </div>
             <div class="country-search-results-window"></div>
         </div>
         <legend class="dynamic-line-legend">
             <div class="legend-items"></div>
         </legend>
-        <div class="chart-view-subheader">Country Groups</div>
-        <div class="chart-view-option">
-            <select class="country-group-selector"></select>
-        </div>
-        <div class="chart-view-option country-group-buttons">
-            <div class="country-group-button-group">
-                <div class="random-draw-controls">
-                    <button class="random-history-back-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-right"/></svg></button>
-                    <button class="draw-button">Draw 10 Countries</button>
-                    <button class="random-history-forward-button"><svg class="history-button-svg" width="16" height="16"><use href="#icon-open-arrow-left"/></svg></button>
-                </div>
-                <button class="show-in-group-button">Show All in Group</button>
-            </div>
-        </div>
+        ${countryGroupSelectorHTML}
+        ${countryGroupButtonsHTML}
         <div class="chart-view-subheader">Missing Countries</div>
         <div class="missing-countries-container">
             <div class="missing-countries-list"></div>
@@ -137,6 +169,7 @@ class PanelChart {
             <input type="checkbox" class="interpolate-linear"/>
             <label class="title-bar-label">Linear Interpolation</label>
         </div>
+        ${comparisonOptionsHTML}
         <div class="chart-view-subheader">Randomization</div>
         <div class="chart-view-option">
             <div class="randomization-options">
@@ -213,22 +246,53 @@ class PanelChart {
         this.interpolateCheckbox.addEventListener('change', () => {
             this.toggleLinearInterpolation()
         })
-        this.randomHistoryBackButton = this.root.querySelector('.random-history-back-button')
-        this.randomHistoryBackButton.addEventListener('click', () => { this.randomHistoryBack() })
-        this.randomHistoryBackButton.style.display = "none";
-        this.randomHistoryForwardButton = this.root.querySelector('.random-history-forward-button')
-        this.randomHistoryForwardButton.addEventListener('click', () => { this.randomHistoryForward() })
-        this.randomHistoryForwardButton.style.display = "none";
-        this.drawButton = this.root.querySelector('.draw-button')
-        this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries ";
-        this.drawButton.addEventListener('click', () => {
-            this.showRandomN(this.randomN)
-        })
-        this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
-        this.showInGroupButton.addEventListener('click', () => {
-            const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
-            this.showGroup(activeGroup)
-        })
+
+        // Only set up comparison checkbox if feature is enabled
+        if (this.enableComparisonSeries) {
+            this.showComparisonCheckbox = this.chartOptions.querySelector('.show-comparison-series')
+            // Check saved state, but default to true when feature is enabled
+            const savedComparisonState = window.observableStorage.getItem('showComparisonSeries')
+            const shouldBeChecked = savedComparisonState !== null ? savedComparisonState : true
+
+            this.showComparisonCheckbox.checked = shouldBeChecked
+            // Apply initial state to chart options
+            if (this.chart && this.chart.options && this.chart.options.plugins && this.chart.options.plugins.chartInteractionPlugin) {
+                this.chart.options.plugins.chartInteractionPlugin.comparisonEnabled = shouldBeChecked
+            }
+
+            this.showComparisonCheckbox.addEventListener('change', () => {
+                this.toggleComparisonSeries()
+            })
+        }
+
+        // Conditional setup based on country list mode
+        if (this.isCountryListMode) {
+            // Country List Mode: Setup "Show All Countries" button only
+            this.showAllCountriesButton = this.chartOptions.querySelector('.show-all-countries-button')
+            if (this.showAllCountriesButton) {
+                this.showAllCountriesButton.addEventListener('click', () => {
+                    this.showAllCountriesInList()
+                })
+            }
+        } else {
+            // Normal Mode: Setup random draw and group buttons
+            this.randomHistoryBackButton = this.root.querySelector('.random-history-back-button')
+            this.randomHistoryBackButton.addEventListener('click', () => { this.randomHistoryBack() })
+            this.randomHistoryBackButton.style.display = "none";
+            this.randomHistoryForwardButton = this.root.querySelector('.random-history-forward-button')
+            this.randomHistoryForwardButton.addEventListener('click', () => { this.randomHistoryForward() })
+            this.randomHistoryForwardButton.style.display = "none";
+            this.drawButton = this.root.querySelector('.draw-button')
+            this.drawButton.innerText = "Draw " + this.randomN.toString() + " Countries ";
+            this.drawButton.addEventListener('click', () => {
+                this.showRandomN(this.randomN)
+            })
+            this.showInGroupButton = this.chartOptions.querySelector('.show-in-group-button')
+            this.showInGroupButton.addEventListener('click', () => {
+                const activeGroup = this.groupOptions[this.countryGroupSelector.selectedIndex]
+                this.showGroup(activeGroup)
+            })
+        }
         this.resetYearInput = this.chartOptions.querySelector('.reset-year-range-button')
         this.resetYearInput.addEventListener('click', (event) => {
             this.resetYearRange()
@@ -354,6 +418,11 @@ class PanelChart {
                         labelField: 'CCode',
                         showDefaultLabels: true,
                         defaultLabelSpacing: 0,
+                        comparisonEnabled: false,
+                        comparisonOpacity: 0.35,
+                        comparisonDashPattern: [6, 4],
+                        comparisonLineWidth: 1.5,
+                        comparisonDataField: 'comparisonScores',
                         onDatasetClick: (datasets, event, chart) => {
                             datasets.forEach((dataset) => {
                                 this.activeCountry = dataset;
@@ -412,6 +481,16 @@ class PanelChart {
     }
 
     rigCountryGroupSelector() {
+        // Skip country group selector setup in country list mode
+        if (this.isCountryListMode) {
+            // Still setup hide unpinned button as it's useful in country list mode
+            this.hideUnpinnedButton = this.chartOptions.querySelector('.hideunpinned-button')
+            this.hideUnpinnedButton.addEventListener('click', () => {
+                this.hideUnpinned()
+            })
+            return
+        }
+
         this.countryGroupSelector = this.chartOptions.querySelector('.country-group-selector')
         this.countryGroupSelector.addEventListener('change', (event) => {
             this.showGroup(event.target.value)
@@ -439,9 +518,14 @@ class PanelChart {
     rigLegend() {
         this.countrySearchResultsWindow =  this.chartOptions.querySelector('.country-search-results-window')
         this.addCountryButton = this.chartOptions.querySelector('.add-country-button')
-        this.addCountryButton.addEventListener('click', () => {
-            new CountrySelector(this.addCountryButton, this.countrySearchResultsWindow, this.chart.data.datasets, this)
-        })
+
+        // Only setup search in normal mode (button doesn't exist in country list mode)
+        if (this.addCountryButton && !this.isCountryListMode) {
+            this.addCountryButton.addEventListener('click', () => {
+                new CountrySelector(this.addCountryButton, this.countrySearchResultsWindow, this.chart.data.datasets, this)
+            })
+        }
+
         this.clearPinsButton = this.chartOptions.querySelector('.clearpins-button')
         this.clearPinsButton.addEventListener('click', () => {
             this.clearPins()
@@ -764,6 +848,13 @@ class PanelChart {
     }
 
     async fetch(url) {
+        // Add country codes to URL if in country list mode
+        if (this.isCountryListMode && this.CountryList.length > 0) {
+            const separator = url.includes('?') ? '&' : '?'
+            const countryParams = this.CountryList.map(code => `CountryCode=${code}`).join('&')
+            url = url + separator + countryParams
+        }
+
         const response = await fetch(url)
         try {
             return response.json()
@@ -791,6 +882,14 @@ class PanelChart {
         this.countryGroupMap = data.countryGroupMap || {}
         this.missingCountries = [] // Initialize as empty, will be populated asynchronously
         this.getPins()
+
+        // Auto-pin all countries in country list mode
+        if (this.isCountryListMode && this.CountryList.length > 0) {
+            this.CountryList.forEach(countryCode => {
+                this.pinCountryByCode(countryCode)
+            })
+        }
+
         this.updateLegend()
         this.updateItemDropdown(data.itemOptions, data.itemType)
         this.updateDescription(data.description)
@@ -899,6 +998,17 @@ class PanelChart {
         this.updateChartPreservingYAxis()
         // Update missing countries display for the new group
         this.refreshMissingCountriesDisplay()
+    }
+
+    showAllCountriesInList() {
+        // Show all countries in the filtered country list
+        // In country list mode, all datasets are already filtered to the requested countries
+        console.log('Showing all countries in filtered list')
+        this.chart.data.datasets.forEach((dataset) => {
+            // Show all datasets - they're already filtered by CountryList
+            dataset.hidden = false
+        })
+        this.updateChartPreservingYAxis()
     }
 
     hideUnpinned() {
@@ -1233,6 +1343,16 @@ class PanelChart {
 
     toggleLinearInterpolation() {
         this.chart.options.datasets.line.spanGaps = !this.chart.options.datasets.line.spanGaps
+        this.updateChartPreservingYAxis();
+    }
+
+    toggleComparisonSeries() {
+        if (!this.enableComparisonSeries) {
+            return; // Feature disabled, do nothing
+        }
+        const enabled = this.showComparisonCheckbox.checked;
+        this.chart.options.plugins.chartInteractionPlugin.comparisonEnabled = enabled;
+        window.observableStorage.setItem('showComparisonSeries', enabled);
         this.updateChartPreservingYAxis();
     }
 

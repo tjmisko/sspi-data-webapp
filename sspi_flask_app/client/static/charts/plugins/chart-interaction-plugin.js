@@ -50,6 +50,13 @@ const chartInteractionPlugin = {
         occludedAlpha: 0.12,
         animAlpha: 0.50,
 
+        // Comparison series settings
+        comparisonEnabled: false,
+        comparisonOpacity: 0.35,
+        comparisonDashPattern: [6, 4],
+        comparisonLineWidth: 1.5,
+        comparisonDataField: 'comparisonScores',
+
         // Callbacks
         onDatasetClick: null
     },
@@ -123,7 +130,7 @@ const chartInteractionPlugin = {
         const ctx = chart.ctx;
         const area = chart.chartArea;
 
-        // If plugin disabled, just bail (no custom clip, but you also shouldn’t have disabled ds.clip)
+        // If plugin disabled, just bail (no custom clip, but you also shouldn't have disabled ds.clip)
         if (!opts || !opts.enabled) {
             this._resetProximity(chart);
             return;
@@ -140,6 +147,9 @@ const chartInteractionPlugin = {
         ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
         ctx.clip();
         chart._interactionClipApplied = true;  // mark that we did a save()
+
+        // 2.5. Draw comparison series FIRST (background layer, before proximity guides and datasets)
+        this._drawComparisonSeries(chart, opts);
 
         // 3. Now do interaction logic; but DO NOT early-return before datasets draw
         const pos = this._interaction.mouse;
@@ -821,6 +831,117 @@ const chartInteractionPlugin = {
         if (orderChanged) {
             chart.data.datasets = reorderedDatasets;
         }
+    },
+
+    /* ---------- comparison series drawing ----------------------------- */
+    _drawComparisonSeries(chart, opts) {
+        // Early exit if feature disabled
+        if (!opts.comparisonEnabled) {
+            return;
+        }
+
+        // Validate required components
+        const ctx = chart.ctx;
+        const xScale = chart.scales?.x;
+        const yScale = chart.scales?.y;
+        const labels = chart.data?.labels;
+
+        if (!ctx || !xScale || !yScale || !labels) {
+            // Missing critical components - fail silently
+            return;
+        }
+
+        const startYear = chart.options?.scales?.x?.min;
+        const endYear = chart.options?.scales?.x?.max;
+
+        // Process each dataset that has comparison data
+        chart.data.datasets.forEach((dataset) => {
+            // Skip if dataset is hidden
+            if (dataset.hidden) {
+                return;
+            }
+
+            // Skip if no comparison data field exists (graceful handling)
+            const comparisonData = dataset[opts.comparisonDataField];
+            if (!comparisonData || !Array.isArray(comparisonData) || comparisonData.length === 0) {
+                // No comparison data - silently skip this dataset
+                return;
+            }
+
+            // Get base color for the comparison line
+            const baseColor = dataset.borderColor || dataset._full?.border;
+            if (!baseColor) {
+                // No color available - skip this dataset
+                return;
+            }
+
+            // Create ghosted version of the color
+            const ghostColor = this._fade(baseColor, opts.comparisonOpacity);
+
+            // Setup canvas for drawing
+            ctx.save();
+            ctx.strokeStyle = ghostColor;
+            ctx.lineWidth = opts.comparisonLineWidth;
+            ctx.setLineDash(opts.comparisonDashPattern);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Build path from comparison data
+            ctx.beginPath();
+            let pathStarted = false;
+
+            for (let i = 0; i < comparisonData.length; i++) {
+                const value = comparisonData[i];
+
+                // Skip null/undefined values (creates gap in line)
+                if (value === null || value === undefined) {
+                    pathStarted = false;
+                    continue;
+                }
+
+                // Get corresponding year from labels
+                const year = labels[i];
+                if (year === undefined) {
+                    continue;
+                }
+
+                // Filter by year range if specified
+                if (startYear !== undefined || endYear !== undefined) {
+                    const numericYear = typeof year === 'string' ? parseInt(year) : year;
+                    const numericStartYear = typeof startYear === 'string' ? parseInt(startYear) : startYear;
+                    const numericEndYear = typeof endYear === 'string' ? parseInt(endYear) : endYear;
+
+                    if (numericStartYear !== undefined && numericYear < numericStartYear) continue;
+                    if (numericEndYear !== undefined && numericYear > numericEndYear) continue;
+                }
+
+                // Calculate pixel coordinates
+                const x = xScale.getPixelForValue(i);
+                const y = yScale.getPixelForValue(value);
+
+                // Skip invalid coordinates
+                if (isNaN(x) || isNaN(y)) {
+                    pathStarted = false;
+                    continue;
+                }
+
+                // Add point to path
+                if (!pathStarted) {
+                    ctx.moveTo(x, y);
+                    pathStarted = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            // Draw the path if we have any valid points
+            if (pathStarted) {
+                ctx.stroke();
+            }
+
+            // Restore canvas state
+            ctx.restore();
+        });
     },
 
     _setupCanvas(ctx, font, color, alpha = 1) {
