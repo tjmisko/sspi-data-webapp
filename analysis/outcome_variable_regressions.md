@@ -12,5 +12,5 @@ Date: 2025-11-25
 #### GDP per Capita
 
 <script>
-console.log("Even run JS Code!")
+console.log("Write in markdown and run JS Code to create Charts! Check your developer tools console to see how this works!")
 </script>
