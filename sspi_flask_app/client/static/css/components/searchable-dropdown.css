@@ -153,7 +153,8 @@
 
 .searchable-dropdown-option:hover,
 .searchable-dropdown-option.is-highlighted {
-    background: var(--region-background-color, #f5f5f5);
+    background: var(--accent-color, #8BA342);
+    color: white;
 }
 
 .searchable-dropdown-option.is-selected {
@@ -198,7 +199,8 @@
 /* Dark theme enhancements */
 .dark-theme .searchable-dropdown-option:hover,
 .dark-theme .searchable-dropdown-option.is-highlighted {
-    background: var(--region-background-color, #1e293b44);
+    background: var(--accent-color, #8BA342);
+    color: white;
 }
 
 .dark-theme .searchable-dropdown-option.is-selected {

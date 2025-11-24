@@ -118,6 +118,8 @@ class SearchableDropdown {
     }
 
     bindEvents() {
+        console.log('[SearchableDropdown] Binding events to search input:', this.searchInput);
+
         // Toggle dropdown
         this.selectedDisplay.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -130,6 +132,7 @@ class SearchableDropdown {
         });
 
         this.searchInput.addEventListener('keydown', (e) => {
+            console.log('[SearchableDropdown] Keydown event fired on search input');
             this.handleKeyDown(e);
         });
 
@@ -159,18 +162,28 @@ class SearchableDropdown {
     }
 
     open() {
+        console.log('[SearchableDropdown] Opening dropdown');
         this.isOpen = true;
         this.container.classList.add('is-open');
         this.searchInput.value = '';
         this.filterOptions('');
         this.searchInput.focus();
+        console.log('[SearchableDropdown] Search input focused, active element:', document.activeElement === this.searchInput);
         this.highlightedIndex = -1;
+        console.log('[SearchableDropdown] Dropdown opened with', this.filteredOptions.length, 'options, highlightedIndex reset to -1');
     }
 
     close() {
+        console.log('[SearchableDropdown] Closing dropdown');
         this.isOpen = false;
         this.container.classList.remove('is-open');
         this.highlightedIndex = -1;
+
+        // Ensure panel is hidden and clear search
+        this.searchInput.value = '';
+        this.searchInput.blur();
+
+        console.log('[SearchableDropdown] Dropdown closed, is-open class removed:', !this.container.classList.contains('is-open'));
     }
 
     filterOptions(query) {
@@ -275,21 +288,28 @@ class SearchableDropdown {
     handleKeyDown(e) {
         const options = Array.from(this.optionsList.querySelectorAll('.searchable-dropdown-option'));
 
+        console.log('[SearchableDropdown] Key pressed:', e.key, 'Options count:', options.length, 'Current index:', this.highlightedIndex);
+
         switch(e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                this.highlightedIndex = Math.min(this.highlightedIndex + 1, options.length - 1);
+                const newDownIndex = Math.min(this.highlightedIndex + 1, options.length - 1);
+                console.log('[SearchableDropdown] ArrowDown: index', this.highlightedIndex, '->', newDownIndex);
+                this.highlightedIndex = newDownIndex;
                 this.updateHighlight(options);
                 break;
 
             case 'ArrowUp':
                 e.preventDefault();
-                this.highlightedIndex = Math.max(this.highlightedIndex - 1, 0);
+                const newUpIndex = Math.max(this.highlightedIndex - 1, 0);
+                console.log('[SearchableDropdown] ArrowUp: index', this.highlightedIndex, '->', newUpIndex);
+                this.highlightedIndex = newUpIndex;
                 this.updateHighlight(options);
                 break;
 
             case 'Enter':
                 e.preventDefault();
+                console.log('[SearchableDropdown] Enter pressed, index:', this.highlightedIndex);
                 if (this.highlightedIndex >= 0 && options[this.highlightedIndex]) {
                     const value = options[this.highlightedIndex].dataset.value;
                     this.selectOption(value);
@@ -298,14 +318,18 @@ class SearchableDropdown {
 
             case 'Escape':
                 e.preventDefault();
+                console.log('[SearchableDropdown] Escape pressed');
                 this.close();
                 break;
         }
     }
 
     updateHighlight(options) {
+        console.log('[SearchableDropdown] updateHighlight called, highlighting index:', this.highlightedIndex, 'of', options.length, 'options');
+
         options.forEach((option, index) => {
             if (index === this.highlightedIndex) {
+                console.log('[SearchableDropdown] Adding highlight to option:', option.textContent);
                 option.classList.add('is-highlighted');
                 option.scrollIntoView({ block: 'nearest' });
             } else {

@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from datetime import datetime
 
 import pycountry
 from flask import Blueprint, redirect, render_template, request, url_for
@@ -363,7 +364,27 @@ def indicators():
 
 @client_bp.route('/analysis')
 def analysis():
-    return render_template('analysis.html')
+    # Fetch all analysis details from metadata
+    analysis_docs = sspi_metadata.find({"DocumentType": "AnalysisDetail"})
+
+    # Extract metadata and build analyses list
+    analyses = []
+    for doc in analysis_docs:
+        meta = doc.get("Metadata", {})
+        if meta:
+            analyses.append(meta)
+
+    # Sort by date descending (most recent first)
+    def parse_date(analysis):
+        date_str = analysis.get("Date", "")
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            return datetime.min
+
+    analyses.sort(key=parse_date, reverse=True)
+
+    return render_template('analysis.html', analyses=analyses)
 
 @client_bp.route('/analysis/<analysis_code>')
 def analysis_page(analysis_code):

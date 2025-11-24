@@ -23,6 +23,22 @@ class SeriesCorrelationChart {
         // State
         this.seriesX = this.options.initialSeriesX;
         this.seriesY = this.options.initialSeriesY;
+
+        // Check URL parameters and set defaults if none provided
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSeriesX = urlParams.get('seriesX');
+        const urlSeriesY = urlParams.get('seriesY');
+
+        // Use URL params if available, otherwise check for defaults
+        if (urlSeriesX) this.seriesX = urlSeriesX;
+        if (urlSeriesY) this.seriesY = urlSeriesY;
+
+        // If no series specified from any source, use defaults
+        if (!this.seriesX && !this.seriesY) {
+            this.seriesX = 'SSPI';
+            this.seriesY = 'WB_GDP_PERCAP_CURPRICE_USD';
+        }
+
         this.seriesOptions = null; // Populated from API
         this.rawData = null;
         this.transformedData = null;
@@ -203,32 +219,39 @@ class SeriesCorrelationChart {
                 <summary>Regression Statistics</summary>
                 <div class="view-options-suboption-container">
                     <div class="stat-row">
-                        <span class="stat-label">Slope (β₁):</span>
-                        <span class="stat-value slope-value">-</span>
+                        <span class="stat-label">Slope (β₁)</span>
+                        <span class="stat-value-int slope-value-int">-</span>
+                        <span class="stat-value-dec slope-value-dec">-</span>
                     </div>
                     <div class="stat-row stat-row-se">
-                        <span class="stat-label-indent">SE(β₁):</span>
-                        <span class="stat-value se-slope-value">-</span>
+                        <span class="stat-label-indent">SE\u0020(β₁)</span>
+                        <span class="stat-value-int se-slope-value-int">-</span>
+                        <span class="stat-value-dec se-slope-value-dec">-</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Constant (β₀):</span>
-                        <span class="stat-value intercept-value">-</span>
+                        <span class="stat-label">Constant (β₀)</span>
+                        <span class="stat-value-int intercept-value-int">-</span>
+                        <span class="stat-value-dec intercept-value-dec">-</span>
                     </div>
                     <div class="stat-row stat-row-se">
-                        <span class="stat-label-indent">SE(β₀):</span>
-                        <span class="stat-value se-intercept-value">-</span>
+                        <span class="stat-label-indent">SE\u0020(β₀)</span>
+                        <span class="stat-value-int se-intercept-value-int">-</span>
+                        <span class="stat-value-dec se-intercept-value-dec">-</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Std. Error:</span>
-                        <span class="stat-value ser-value">-</span>
+                        <span class="stat-label">Std. Error</span>
+                        <span class="stat-value-int ser-value-int">-</span>
+                        <span class="stat-value-dec ser-value-dec">-</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">R²:</span>
-                        <span class="stat-value r-squared-value">-</span>
+                        <span class="stat-label">R²</span>
+                        <span class="stat-value-int r-squared-value-int">-</span>
+                        <span class="stat-value-dec r-squared-value-dec">-</span>
                     </div>
                     <div class="stat-row">
-                        <span class="stat-label">Observations:</span>
-                        <span class="stat-value n-value">-</span>
+                        <span class="stat-label">Observations</span>
+                        <span class="stat-value-int n-value">-</span>
+                        <span class="stat-value-dec"></span>
                     </div>
                 </div>
             </details>
@@ -766,32 +789,77 @@ class SeriesCorrelationChart {
         };
     }
 
+    splitNumber(value, isInParens = false) {
+        // Split a number into integer part (with sign/paren) and decimal part
+        const str = value.toFixed(3);
+        const [intPart, decPart] = str.split('.');
+
+        if (isInParens) {
+            return {
+                int: `(${intPart}`,
+                dec: `.${decPart})`
+            };
+        } else {
+            return {
+                int: intPart,
+                dec: `.${decPart}`
+            };
+        }
+    }
+
     updateStatistics(regression) {
-        const rSquaredValue = this.chartOptions.querySelector('.r-squared-value');
-        const slopeValue = this.chartOptions.querySelector('.slope-value');
-        const seSlopeValue = this.chartOptions.querySelector('.se-slope-value');
-        const interceptValue = this.chartOptions.querySelector('.intercept-value');
-        const seInterceptValue = this.chartOptions.querySelector('.se-intercept-value');
+        // Get all DOM elements
+        const slopeInt = this.chartOptions.querySelector('.slope-value-int');
+        const slopeDec = this.chartOptions.querySelector('.slope-value-dec');
+        const seSlopeInt = this.chartOptions.querySelector('.se-slope-value-int');
+        const seSlopeDec = this.chartOptions.querySelector('.se-slope-value-dec');
+        const interceptInt = this.chartOptions.querySelector('.intercept-value-int');
+        const interceptDec = this.chartOptions.querySelector('.intercept-value-dec');
+        const seInterceptInt = this.chartOptions.querySelector('.se-intercept-value-int');
+        const seInterceptDec = this.chartOptions.querySelector('.se-intercept-value-dec');
+        const serInt = this.chartOptions.querySelector('.ser-value-int');
+        const serDec = this.chartOptions.querySelector('.ser-value-dec');
+        const rSquaredInt = this.chartOptions.querySelector('.r-squared-value-int');
+        const rSquaredDec = this.chartOptions.querySelector('.r-squared-value-dec');
         const nValue = this.chartOptions.querySelector('.n-value');
-        const serValue = this.chartOptions.querySelector('.ser-value');
 
         if (!regression) {
-            rSquaredValue.textContent = '-';
-            slopeValue.textContent = '-';
-            seSlopeValue.textContent = '-';
-            interceptValue.textContent = '-';
-            seInterceptValue.textContent = '-';
-            nValue.textContent = this.transformedData ? this.transformedData.length : '-';
-            serValue.textContent = '-';
+            // Set placeholders
+            [slopeInt, seSlopeInt, interceptInt, seInterceptInt, serInt, rSquaredInt].forEach(el => {
+                if (el) el.textContent = '-';
+            });
+            [slopeDec, seSlopeDec, interceptDec, seInterceptDec, serDec, rSquaredDec].forEach(el => {
+                if (el) el.textContent = '';
+            });
+            if (nValue) nValue.textContent = this.transformedData ? this.transformedData.length : '-';
             return;
         }
 
-        slopeValue.textContent = regression.slope.toFixed(3);
-        seSlopeValue.textContent = `(${regression.seSlope.toFixed(3)})`;
-        interceptValue.textContent = regression.intercept.toFixed(3);
-        seInterceptValue.textContent = `(${regression.seIntercept.toFixed(3)})`;
-        serValue.textContent = regression.ser.toFixed(3);
-        rSquaredValue.textContent = regression.rSquared.toFixed(3);
+        // Split and populate each value
+        const slope = this.splitNumber(regression.slope);
+        slopeInt.textContent = slope.int;
+        slopeDec.textContent = slope.dec;
+
+        const seSlope = this.splitNumber(regression.seSlope, true);
+        seSlopeInt.textContent = seSlope.int;
+        seSlopeDec.textContent = seSlope.dec;
+
+        const intercept = this.splitNumber(regression.intercept);
+        interceptInt.textContent = intercept.int;
+        interceptDec.textContent = intercept.dec;
+
+        const seIntercept = this.splitNumber(regression.seIntercept, true);
+        seInterceptInt.textContent = seIntercept.int;
+        seInterceptDec.textContent = seIntercept.dec;
+
+        const ser = this.splitNumber(regression.ser);
+        serInt.textContent = ser.int;
+        serDec.textContent = ser.dec;
+
+        const rSquared = this.splitNumber(regression.rSquared);
+        rSquaredInt.textContent = rSquared.int;
+        rSquaredDec.textContent = rSquared.dec;
+
         nValue.textContent = regression.n;
     }
 
