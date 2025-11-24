@@ -55,7 +55,7 @@ def sample_hierarchical_data():
             "CountryCode": "USA",
             "Year": 2018,
             "ItemCode": "SSPI",
-            "ItemName": "Social Progress Index",
+            "ItemName": "Sustainable and Shared-Prosperity Policy Index",
             "Score": 0.8,
             "Children": ["SUS", "MS", "PG"]
         },
@@ -205,7 +205,7 @@ def test_active_schema_basic_structure(sample_hierarchical_data, sspi_item_data_
     
     assert schema is not None
     assert schema["ItemCode"] == "SSPI"
-    assert schema["ItemName"] == "Social Progress Index"
+    assert schema["ItemName"] == "Sustainable and Shared-Prosperity Policy Index"
     assert len(schema["Children"]) == 1  # Only SUS has children with data
     
     pillar_codes = [child["ItemCode"] for child in schema["Children"]]
@@ -283,7 +283,7 @@ def test_active_schema_missing_children_field(sspi_item_data_wrapper):
             "CountryCode": "USA",
             "Year": 2018,
             "ItemCode": "SSPI",
-            "ItemName": "Social Progress Index",
+            "ItemName": "Sustainable and Shared-Prosperity Policy Index",
             "Score": 0.8
             # Missing Children field
         }
@@ -304,7 +304,7 @@ def test_active_schema_empty_children_list(sspi_item_data_wrapper):
             "CountryCode": "USA",
             "Year": 2018,
             "ItemCode": "SSPI",
-            "ItemName": "Social Progress Index",
+            "ItemName": "Sustainable and Shared-Prosperity Policy Index",
             "Score": 0.8,
             "Children": []
         }

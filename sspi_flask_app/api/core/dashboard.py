@@ -126,7 +126,7 @@ def get_dynamic_indicator_line_data(indicator_code):
                 enriched_treepath.append(
                     {
                         "itemCode": itemCode.lower(),
-                        "itemName": "Sustainable and Shared Prosperity Policy Index",
+                        "itemName": "Sustainable and Shared-Prosperity Policy Index",
                     }
                 )
             else:
@@ -242,7 +242,7 @@ def get_dynamic_score_line_data(item_code):
                 enriched_treepath.append(
                     {
                         "itemCode": itemCode.lower(),
-                        "itemName": "Social Policy and Progress Index",
+                        "itemName": "Sustainable and Shared-Prosperity Policy Index",
                     }
                 )
             else:
@@ -1390,6 +1390,223 @@ def item_coverage_data(ItemCode, CountryGroup):
 @dashboard_bp.route("/globe")
 def globe_data():
     return sspi_globe_data.find({})[0]
+
+
+def fetch_series(series_code):
+    """
+    Determine series type and fetch from appropriate collection.
+
+    Args:
+        series_code (str): Code for indicator, item (pillar/category/SSPI), or dataset
+
+    Returns:
+        tuple: (data, metadata) where:
+            - data: list of country documents with years/scores/values
+            - metadata: dict with series info (code, name, type, field)
+
+    Raises:
+        ValueError: If series_code not found in any collection
+    """
+    # Check if it's an item (indicator, pillar, category, SSPI)
+    try:
+        item_detail = sspi_metadata.get_item_detail(series_code)
+        if item_detail:
+            item_type = item_detail.get("ItemType")
+
+            if item_type == "Indicator":
+                # Fetch from indicator collection
+                data = parse_json(
+                    sspi_indicator_dynamic_line_data.find({"ICode": series_code})
+                )
+                return data, {
+                    "code": series_code,
+                    "name": item_detail.get("ItemName", series_code),
+                    "type": "Indicator",
+                    "field": "score"
+                }
+
+            elif item_type in ["Pillar", "Category", "SSPI"]:
+                # Fetch from item collection
+                data = parse_json(
+                    sspi_item_dynamic_line_data.find({"ICode": series_code})
+                )
+                return data, {
+                    "code": series_code,
+                    "name": item_detail.get("ItemName", series_code),
+                    "type": item_type,
+                    "field": "score"
+                }
+    except Exception:
+        pass  # Try dataset next
+
+    # Check if it's a dataset
+    try:
+        dataset_detail = sspi_metadata.get_dataset_detail(series_code)
+        if dataset_detail:
+            # Fetch from panel data
+            data = parse_json(
+                sspi_panel_data.find({"DatasetCode": series_code})
+            )
+            return data, {
+                "code": series_code,
+                "name": dataset_detail.get("DatasetName", series_code),
+                "type": "Dataset",
+                "field": "value"
+            }
+    except Exception:
+        pass
+
+    # Not found
+    raise ValueError(f"Series '{series_code}' not found in metadata or dataset collections")
+
+
+def merge_series_data(data_x, data_y):
+    """
+    Merge two series datasets by country code.
+
+    Args:
+        data_x: List of country documents for series X
+        data_y: List of country documents for series Y
+
+    Returns:
+        List of merged country documents with both xValues and yValues
+    """
+    # Build lookup for series Y
+    y_lookup = {doc["CCode"]: doc for doc in data_y}
+
+    merged = []
+    for x_doc in data_x:
+        country_code = x_doc["CCode"]
+
+        # Skip if no matching Y data
+        if country_code not in y_lookup:
+            continue
+
+        y_doc = y_lookup[country_code]
+
+        # Extract values from appropriate field (score or value or data)
+        x_values = x_doc.get("score") or x_doc.get("value") or x_doc.get("data", [])
+        y_values = y_doc.get("score") or y_doc.get("value") or y_doc.get("data", [])
+
+        # Merge into single document
+        merged.append({
+            "CCode": country_code,
+            "CName": x_doc.get("CName", country_code),
+            "CFlag": x_doc.get("CFlag", ""),
+            "CGroup": x_doc.get("CGroup", []),
+            "years": x_doc.get("years", []),
+            "xValues": x_values,
+            "yValues": y_values
+        })
+
+    return merged
+
+
+@dashboard_bp.route("/correlation/<series_x>/<series_y>", methods=["GET"])
+def get_series_correlation_data(series_x, series_y):
+    """
+    Fetch correlation data for two series using pre-finalized collections.
+
+    Series can be:
+    - Indicators (from sspi_indicator_dynamic_line_data)
+    - Items (Pillars/Categories/SSPI from sspi_item_dynamic_line_data)
+    - Datasets (from sspi_panel_data)
+
+    Args:
+        series_x (str): First series code
+        series_y (str): Second series code
+
+    Returns:
+        JSON with complete time series for both variables across all countries
+    """
+    try:
+        series_x_data, series_x_meta = fetch_series(series_x)
+        series_y_data, series_y_meta = fetch_series(series_y)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 404
+
+    # Merge by country code
+    merged_data = merge_series_data(series_x_data, series_y_data)
+
+    if not merged_data:
+        return jsonify({
+            "error": f"No common countries between {series_x} and {series_y}"
+        }), 400
+
+    # Get metadata
+    group_options = sspi_metadata.country_groups()
+    country_group_map = sspi_metadata.country_group_map()
+
+    return jsonify({
+        "seriesX": series_x_meta,
+        "seriesY": series_y_meta,
+        "data": merged_data,
+        "years": list(range(2000, datetime.now().year + 1)),
+        "groupOptions": group_options,
+        "countryGroupMap": country_group_map
+    })
+
+
+@dashboard_bp.route("/series-options")
+def get_series_options():
+    """
+    Get all available series for correlation analysis.
+
+    Returns:
+        JSON with series grouped by type (Index, Pillars, Categories, Indicators, Datasets)
+    """
+    series_options = {
+        'Pillars': [],
+        'Categories': [],
+        'Indicators': [],
+        'Datasets': []
+    }
+
+    # Get all items (pillars, categories, indicators)
+    items = sspi_metadata.item_details()
+    for item in items:
+        item_type = item.get('ItemType')
+        item_code = item.get('ItemCode')
+        item_name = item.get('ItemName')
+
+        if item_type == 'Pillar':
+            series_options['Pillars'].append({
+                'code': item_code,
+                'name': item_name,
+                'type': item_type
+            })
+        elif item_type == 'Category':
+            series_options['Categories'].append({
+                'code': item_code,
+                'name': item_name,
+                'type': item_type
+            })
+        elif item_type == 'Indicator':
+            series_options['Indicators'].append({
+                'code': item_code,
+                'name': item_name,
+                'type': item_type
+            })
+
+    # Get all datasets
+    datasets = sspi_metadata.dataset_details()
+    for dataset in datasets:
+        series_options['Datasets'].append({
+            'code': dataset.get('DatasetCode'),
+            'name': dataset.get('DatasetName'),
+            'type': 'Dataset'
+        })
+
+    # Add SSPI to the options (it's the root item)
+    series_options['Index'] = [
+        {
+            'code': 'SSPI',
+            'name': 'Sustainable and Shared-Prosperity Policy Index',
+            'type': 'SSPI'
+        }
+    ]
+
+    return jsonify(series_options)
 
 
 @dashboard_bp.route("/fast_score")

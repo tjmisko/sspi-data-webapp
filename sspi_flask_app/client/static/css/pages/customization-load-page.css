@@ -1,0 +1,110 @@
+/* Customization Load Page Styles */
+
+/* Main layout container */
+.load-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25em;
+}
+
+/* Explainer text below section headers */
+.functionality-explainer {
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+/* Section boxes */
+.bounded-content-box {
+    background-color: var(--box-background-color);
+    padding: 1.25rem;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+    box-sizing: border-box;
+}
+
+.config-section {
+    flex: 1 1 0;
+    min-width: 400px;
+}
+
+.config-section h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Unsaved changes warning banner */
+.unsaved-warnings-section {
+    margin-bottom: 1.5rem;
+}
+
+.unsaved-warning-banner {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius-lg, 12px);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+}
+
+.unsaved-warning-banner h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.unsaved-warning-banner p {
+    margin: 0 0 1rem 0;
+    opacity: 0.9;
+    font-size: 0.875rem;
+}
+
+.warning-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.warning-actions .btn-primary {
+    background: white;
+    color: #f57c00;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.warning-actions .btn-primary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: var(--shadow-sm);
+}
+
+.warning-actions .btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.warning-actions .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .config-section {
+        min-width: 100%;
+    }
+}

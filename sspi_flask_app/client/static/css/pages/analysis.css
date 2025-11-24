@@ -22,5 +22,90 @@
 .analysis-date {
   color: var(--low-importance-font-color);
 }
-.methodology-subsection
-.methodology-wrapper
+
+/* Analysis Page Sections */
+.analysis-section {
+    margin-bottom: 2.5rem;
+}
+
+.analysis-section h2 {
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+.functionality-explainer {
+    margin-bottom: 0.5rem;
+    color: var(--low-importance-font-color);
+    font-family: var(--body-font-family);
+}
+
+/* Analysis page specific card adjustments - reduce whitespace */
+.analysis-section .config-card {
+    padding: 0.75rem 0.875rem;
+}
+
+.analysis-section .config-card-header {
+    margin-bottom: 0.25rem;
+}
+
+.analysis-section .config-name {
+    font-size: 0.95rem;
+}
+
+.analysis-section .config-description {
+    margin: 0.25rem 0;
+    font-size: 0.8rem;
+}
+
+.analysis-section .config-meta {
+    margin-bottom: 0.5rem;
+}
+
+/* Core Analysis Cards - Visual distinction with hover effects */
+.core-analysis-card {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+}
+
+.core-analysis-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Analysis Article Cards */
+.analysis-article-card {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+}
+
+.analysis-article-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.analysis-article-card .config-card-header {
+    align-items: center;
+}
+
+.analysis-article-card .config-meta-item {
+    color: var(--low-importance-font-color);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* Article Authors Styling */
+.article-authors {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--subtle-line-color);
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+
+.article-authors strong {
+    font-weight: 600;
+}

@@ -1,0 +1,289 @@
+/* Correlation Chart Specific Styles
+ * Reuses panel-chart base classes, adds only correlation-specific overrides
+ */
+
+/* Ensure proper box-sizing for all correlation chart elements */
+.correlation-header-row,
+.correlation-title-and-selectors,
+.correlation-series-selectors,
+.correlation-series-selector-group,
+.correlation-series-label,
+.series-selector-inline,
+.searchable-dropdown,
+.searchable-dropdown-selected {
+    box-sizing: border-box;
+}
+
+/* Series selectors in title area */
+
+/* Header row: contains title+selectors on left, actions button on right */
+.correlation-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* Left side: title and selectors stacked vertically */
+.correlation-title-and-selectors {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Title takes full width with proper spacing */
+.correlation-title-and-selectors .panel-chart-title {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    line-height: 1.2;
+    overflow-wrap: break-word;
+    width: 100%;
+}
+
+/* Selectors container: vertical stack */
+.correlation-series-selectors {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--subtle-line-color);
+}
+
+/* Each selector group: label + dropdown */
+.correlation-series-selector-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.correlation-series-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Dropdowns expand to fill available space and are same width */
+.series-selector-inline {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+.series-selector-inline:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Ensure SearchableDropdown container in title area also grows to fill space */
+.correlation-series-selector-group .searchable-dropdown {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+}
+
+.correlation-series-selector-group .searchable-dropdown-selected {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Actions button stays to the right */
+.correlation-header-row .panel-chart-title-actions {
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+/* Compact searchable dropdown overrides */
+.chart-options .searchable-dropdown-selected {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.chart-options .searchable-dropdown-label {
+    font-size: 0.8rem;
+}
+
+.chart-options .searchable-dropdown-arrow {
+    width: 10px;
+    height: 10px;
+}
+
+.chart-options .searchable-dropdown-search {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.chart-options .searchable-dropdown-option {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.chart-options .searchable-dropdown-group-label {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+}
+
+/* Statistics section styling - economist's regression table */
+.statistics-details {
+    font-size: 0.8rem;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--subtle-line-color);
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+/* Standard error rows - indented and slightly muted */
+.stat-row-se {
+    padding: 0.15rem 0 0.25rem 0;
+    border-bottom: none;
+    font-size: 0.7rem;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: var(--low-importance-font-color);
+    font-size: 0.7rem;
+    grid-column: 1;
+}
+
+/* Label for standard errors */
+.stat-label-indent {
+    font-weight: 500;
+    color: var(--low-importance-font-color);
+    opacity: 0.85;
+    font-size: 0.65rem;
+    grid-column: 1;
+}
+
+/* Integer part - right aligned */
+.stat-value-int {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: var(--text-color);
+    text-align: right;
+    white-space: nowrap;
+    grid-column: 2;
+}
+
+/* Decimal part - left aligned */
+.stat-value-dec {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: var(--text-color);
+    text-align: left;
+    white-space: nowrap;
+    grid-column: 3;
+}
+
+/* Year slider in sidebar - compact version for correlation chart */
+.analysis-mode-details .year-slider-container {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.analysis-mode-details .year-slider-wrapper {
+    padding: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Reduce year slider size specifically in correlation chart */
+.analysis-mode-details .globe-year-slider-container {
+    transform: scale(0.85);
+    transform-origin: center center;
+}
+
+/* Mode selector */
+.chart-options .mode-selector {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+/* Mode description */
+.chart-options .mode-description {
+    font-family: var(--body-font-family);
+    font-size: 0.8rem;
+    color: var(--low-importance-font-color);
+    line-height: 1.4;
+    padding: 0.5rem 0;
+    margin-top: 0.25rem;
+}
+
+/* Compact checkbox styling */
+.chart-options .chart-view-option label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.chart-options .chart-view-option input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Ensure statistics details don't have extra padding */
+.statistics-details .view-options-suboption-container {
+    padding: 0.5rem;
+}
+
+/* Country group selector */
+.chart-options .country-group-selector {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-background-color);
+    color: var(--input-text-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 999px) {
+    .chart-options .searchable-dropdown-panel {
+        max-height: 50vh;
+    }
+}
+
+/* Ensure chart canvas maintains proper height */
+.panel-chart-root-container .panel-canvas-wrapper {
+    min-height: 400px;
+}
+
+/* Dark theme compatibility */
+.dark-theme .stat-row {
+    border-bottom-color: var(--subtle-line-color);
+}
