@@ -20,6 +20,8 @@ from sspi_flask_app.models.database import (
     sspi_custom_user_structure,
     sspi_metadata,
     sspidb,
+    sspi_clean_api_data,
+    sspi_dynamic_rank_data,
 )
 
 client_bp = Blueprint(
@@ -29,6 +31,192 @@ client_bp = Blueprint(
     static_url_path='/client/static')
 
 from sspi_flask_app.auth.decorators import admin_required
+
+
+def get_country_characteristics(country_code):
+    """
+    Get key country characteristics (SSPI score/rank, population, GDP per capita)
+    for display in country overview.
+    """
+    def format_number(value, num_type="number"):
+        """Format large numbers with appropriate units"""
+        if value is None:
+            return "N/A"
+
+        abs_val = abs(value)
+
+        if num_type == "currency":
+            if abs_val >= 1_000_000_000_000:
+                return f"${value / 1_000_000_000_000:.1f} trillion"
+            elif abs_val >= 1_000_000_000:
+                return f"${value / 1_000_000_000:.1f} billion"
+            elif abs_val >= 1_000_000:
+                return f"${value / 1_000_000:.1f} million"
+            else:
+                return f"${value:,.0f}"
+        else:
+            if abs_val >= 1_000_000_000:
+                return f"{value / 1_000_000_000:.1f} billion"
+            elif abs_val >= 1_000_000:
+                return f"{value / 1_000_000:.1f} million"
+            elif abs_val >= 1_000:
+                return f"{value / 1_000:.1f} thousand"
+            else:
+                return f"{value:,.0f}"
+
+    characteristics = []
+
+    # Query SSPI rank and score (most recent year)
+    sspi_rank_results = list(sspi_dynamic_rank_data.find({
+        "CountryCode": country_code,
+        "ItemCode": "SSPI",
+        "TimePeriodType": "Single Year"
+    }))
+
+    if sspi_rank_results:
+        sspi_rank_results_sorted = sorted(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"), reverse=True)
+        sspi_rank_data = sspi_rank_results_sorted[0]
+
+        rank = sspi_rank_data.get("Rank")
+        score = sspi_rank_data.get("Score")
+        year = sspi_rank_data.get("TimePeriod")
+
+        # Get total number of countries for this year
+        total_countries = len(list(sspi_dynamic_rank_data.find({
+            "ItemCode": "SSPI",
+            "TimePeriod": year,
+            "TimePeriodType": "Single Year"
+        })))
+
+        characteristics.append({
+            "key": "sspiScore",
+            "label": "SSPI Score",
+            "value": score,
+            "year": year,
+            "rank": rank,
+            "totalCountries": total_countries,
+            "formatted": f"{score:.3f}",
+            "source": "SSPI",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "sspiScore",
+            "label": "SSPI Score",
+            "formatted": "Data not available",
+            "available": False
+        })
+
+    # Query population data
+    population_results = list(sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_POPULN"
+    }))
+
+    if population_results:
+        population_results_sorted = sorted(population_results, key=lambda x: x.get("Year", 0), reverse=True)
+        population_data = population_results_sorted[0]
+        pop_value = population_data.get("Value")
+
+        characteristics.append({
+            "key": "population",
+            "label": "Population",
+            "year": population_data.get("Year"),
+            "formatted": format_number(pop_value),
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "population",
+            "label": "Population",
+            "formatted": "Data not available",
+            "available": False
+        })
+
+    # Query land area data
+    land_area_results = list(sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_LANDAR"
+    }))
+
+    if land_area_results:
+        land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
+        land_area_data = land_area_results_sorted[0]
+        land_area_value = land_area_data.get("Value")
+
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "year": land_area_data.get("Year"),
+            "formatted": f"{land_area_value:,.0f} km²" if land_area_value else "N/A",
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "landArea",
+            "label": "Land Area",
+            "formatted": "Data not available",
+            "available": False
+        })
+
+    # Query GDP per capita data
+    gdp_per_capita_results = list(sspi_clean_api_data.find({
+        "CountryCode": country_code,
+        "DatasetCode": "WB_GDP_PERCAP_CURPRICE_USD"
+    }))
+
+    if gdp_per_capita_results:
+        gdp_per_capita_results_sorted = sorted(gdp_per_capita_results, key=lambda x: x.get("Year", 0), reverse=True)
+        gdp_per_capita_data = gdp_per_capita_results_sorted[0]
+        gdp_pc_value = gdp_per_capita_data.get("Value")
+
+        characteristics.append({
+            "key": "gdpPerCapita",
+            "label": "GDP per Capita",
+            "year": gdp_per_capita_data.get("Year"),
+            "formatted": format_number(gdp_pc_value, "currency"),
+            "source": "World Bank",
+            "available": True
+        })
+    else:
+        characteristics.append({
+            "key": "gdpPerCapita",
+            "label": "GDP per Capita",
+            "formatted": "Data not available",
+            "available": False
+        })
+
+    return characteristics
+
+
+###########################
+# HELPER FUNCTIONS        #
+###########################
+
+def validate_country_codes(codes):
+    """
+    Validate and normalize country codes to 3-character uppercase strings.
+
+    Args:
+        codes: List of country code strings from query parameters
+
+    Returns:
+        List of validated 3-character uppercase country codes
+
+    Example:
+        >>> validate_country_codes(['usa', 'CAN', 'MEX'])
+        ['USA', 'CAN', 'MEX']
+        >>> validate_country_codes(['usa', 'USAA', 'ca'])
+        ['USA']
+    """
+    validated = []
+    for code in codes:
+        normalized = code.strip().upper()
+        if len(normalized) == 3 and normalized.isalpha():
+            validated.append(normalized)
+    return validated
 
 ###########################
 # SSPI DYNAMIC DATA PAGES #
@@ -208,7 +396,28 @@ def test_custom_chart():
 def country_data(country_code):
     country_code = country_code.upper()
     cdetail = sspi_metadata.get_country_detail(country_code)
-    return render_template('country-data.html', cdetail=cdetail)
+    characteristics = get_country_characteristics(country_code)
+
+    # Get SSPI67 country list for dropdown
+    sspi67_countries = sspi_metadata.country_group_details("SSPI67")
+
+    # Deduplicate by country code (keep first occurrence)
+    seen_codes = set()
+    unique_countries = []
+    for country in sspi67_countries:
+        code = country["Metadata"]["CountryCode"]
+        if code not in seen_codes:
+            seen_codes.add(code)
+            unique_countries.append(country)
+
+    unique_countries.sort(key=lambda x: x["Metadata"]["Country"])
+
+    return render_template(
+        'country-data.html',
+        cdetail=cdetail,
+        characteristics=characteristics,
+        country_list=unique_countries
+    )
 
 
 @client_bp.route('/data/dataset/<dataset_code>')
@@ -222,17 +431,24 @@ def dataset_data(dataset_code):
 @client_bp.route('/data/indicator/<indicator_code>')
 def indicator_data(indicator_code):
     indicator_code = indicator_code.upper()
+
+    # Parse and validate country codes from query parameters
+    country_codes = request.args.getlist('countryCode')
+    validated_codes = validate_country_codes(country_codes)
+
     if indicator_code not in sspi_metadata.indicator_codes():
         return render_template(
             'score-panel-data.html',
             PanelItemCode=indicator_code,
             PanelItemType='Indicator',
+            CountryList=[],
             error=True
         )
     return render_template(
         'score-panel-data.html',
         PanelItemCode=indicator_code,
         PanelItemType='Indicator',
+        CountryList=validated_codes,
         methodology=sspi_metadata.get_item_methodology_html(indicator_code),
         error=False
     )
@@ -321,17 +537,24 @@ def correlation_chart(series_x, series_y):
 @client_bp.route('/data/category/<category_code>')
 def category_data(category_code):
     category_code = category_code.upper()
+
+    # Parse and validate country codes from query parameters
+    country_codes = request.args.getlist('countryCode')
+    validated_codes = validate_country_codes(country_codes)
+
     if category_code not in sspi_metadata.category_codes():
         return render_template(
             'score-panel-data.html',
             PanelItemCode=category_code,
             PanelItemType='Category',
+            CountryList=[],
             error=True
         )
     return render_template(
         'score-panel-data.html',
         PanelItemCode=category_code,
         PanelItemType='Category',
+        CountryList=validated_codes,
         methodology=sspi_metadata.get_item_methodology_html(category_code),
         error=False
     )
@@ -340,11 +563,17 @@ def category_data(category_code):
 @client_bp.route('/data/pillar/<pillar_code>')
 def pillar_data(pillar_code):
     pillar_code = pillar_code.upper()
+
+    # Parse and validate country codes from query parameters
+    country_codes = request.args.getlist('countryCode')
+    validated_codes = validate_country_codes(country_codes)
+
     if pillar_code not in sspi_metadata.pillar_codes():
         return render_template(
             'score-panel-data.html',
             PanelItemCode=pillar_code,
             PanelItemType='Pillar',
+            CountryList=[],
             medhodology=sspi_metadata.get_item_methodology_html(pillar_code),
             error=True
         )
@@ -352,6 +581,7 @@ def pillar_data(pillar_code):
         'score-panel-data.html',
         PanelItemCode=pillar_code,
         PanelItemType='Pillar',
+        CountryList=validated_codes,
         error=False
     )
 
