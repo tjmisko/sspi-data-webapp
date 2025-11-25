@@ -21,6 +21,16 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from sspi_flask_app.models.rank import SSPIRankingTable
 from sspi_flask_app.models.sspi import FastSSPI
+from sspi_flask_app.api.resources.scoring_tasks import (
+    start_scoring_job,
+    get_job,
+    generate_sse_events,
+    JobStatus,
+)
+from sspi_flask_app.api.resources.metadata_validator import (
+    validate_custom_metadata,
+    compute_config_hash,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,10 +94,6 @@ def get_dataset_details(dataset_code):
     except Exception as e:
         logger.error(f"Error getting dataset details for {dataset_code}: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
-
-def validate_custom_metadata(metadata_items: list):
-    pass # throw error if not valid
 
 
 @customize_bp.route("/default-structure", methods=["GET"])
@@ -628,10 +634,8 @@ def export_configuration(config_id):
     """
     try:
         user_id = current_user.username
-
         # Fetch configuration (verify ownership)
         config = sspi_custom_user_structure.find_by_config_id(config_id, username=user_id)
-
         if not config:
             return jsonify({
                 "success": False,
@@ -641,21 +645,17 @@ def export_configuration(config_id):
         # Remove MongoDB _id field if present
         if "_id" in config:
             del config["_id"]
-
         # Prepare export data
         export_data = {
             "export_version": "1.0",
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "configuration": config
         }
-
         logger.info(f"Exported configuration {config_id} for user {user_id}")
-
         # Return as downloadable JSON
         response = app.make_response(json.dumps(export_data, indent=2))
         response.headers['Content-Type'] = 'application/json'
         response.headers['Content-Disposition'] = f'attachment; filename=sspi-config-{config_id}.json'
-
         return response
     except AttributeError:
         return jsonify({"success": False, "error": "No user_id in request"}), 401
@@ -664,52 +664,104 @@ def export_configuration(config_id):
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
-@customize_bp.route("/score-stream", methods=["GET"])
+@customize_bp.route("/score-stream/<job_id>", methods=["GET"])
 @owner_or_admin_required
-def score_stream():
+def score_stream(job_id):
     """
-    SSE endpoint for streaming scoring progress (test stream).
+    SSE endpoint for streaming scoring progress.
 
-    Requires authentication - users must be logged in to score configurations.
+    Requires authentication - users must be logged in and own the job.
+
+    Events:
+    - progress: {"percent": 25, "message": "Scoring indicator BIODIV..."}
+    - indicator_start: {"code": "BIODIV", "name": "...", "index": 1, "total": 54}
+    - indicator_complete: {"code": "BIODIV", "countries": 57, "duration_ms": 150}
+    - complete: {"success": true, "total_scores": 12345, "duration_ms": 8500}
+    - error: {"message": "...", "code": "VALIDATION_ERROR"}
     """
-    import time
+    user_id = current_user.username
+
+    # Verify job exists and belongs to user
+    job = get_job(job_id)
+    if not job:
+        return jsonify({"success": False, "error": "Job not found"}), 404
+
+    if job.user_id != user_id:
+        return jsonify({"success": False, "error": "Access denied"}), 403
 
     def generate():
-        # Test stream - simulate scoring progress
-        steps = [
-            (10, "Validating configuration..."),
-            (20, "Loading indicator data..."),
-            (40, "Computing scores for Sustainability pillar..."),
-            (60, "Computing scores for Market Structure pillar..."),
-            (80, "Computing scores for Public Goods pillar..."),
-            (90, "Aggregating results..."),
-            (100, "Finalizing scores...")
-        ]
-
-        for progress, message in steps:
-            data = {
-                "progress": progress,
-                "message": message
-            }
-            yield f"data: {json.dumps(data)}\n\n"
-            time.sleep(0.5)  # Simulate processing time
-
-        # Send completion event
-        completion_data = {
-            "progress": 100,
-            "message": "Scoring complete!",
-            "success": True
-        }
-        yield f"event: complete\ndata: {json.dumps(completion_data)}\n\n"
+        for event in generate_sse_events(job_id):
+            yield event
 
     return app.response_class(
         generate(),
         mimetype='text/event-stream',
         headers={
             'Cache-Control': 'no-cache',
-            'X-Accel-Buffering': 'no'
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
         }
     )
+
+
+@customize_bp.route("/score-stream", methods=["GET"])
+@owner_or_admin_required
+def score_stream_legacy():
+    """
+    Legacy SSE endpoint (no job_id) - returns error directing to new endpoint.
+    """
+    return jsonify({
+        "success": False,
+        "error": "Please use /score-stream/<job_id> endpoint. Get job_id from /score POST response."
+    }), 400
+
+
+@customize_bp.route("/job/<job_id>", methods=["GET"])
+@owner_or_admin_required
+def get_job_status(job_id):
+    """
+    Get status of a scoring job.
+
+    Returns:
+        JSON with job status, progress, and result if complete
+    """
+    try:
+        user_id = current_user.username
+
+        job = get_job(job_id)
+        if not job:
+            return jsonify({"success": False, "error": "Job not found"}), 404
+
+        if job.user_id != user_id:
+            return jsonify({"success": False, "error": "Access denied"}), 403
+
+        response = {
+            "success": True,
+            "job_id": job_id,
+            "config_id": job.config_id,
+            "config_hash": job.config_hash,
+            "status": job.status.value,
+            "progress": job.progress,
+            "message": job.message,
+            "created_at": job.created_at,
+            "completed_at": job.completed_at,
+        }
+
+        if job.status == JobStatus.COMPLETE and job.result:
+            response["total_scores"] = len(job.result.get("results", []))
+            response["cached"] = job.result.get("cached", False)
+
+        if job.status == JobStatus.ERROR:
+            response["error"] = job.error
+
+        return jsonify(response)
+
+    except AttributeError:
+        return jsonify({"success": False, "error": "No user_id in request"}), 401
+    except Exception as e:
+        logger.error(f"Error getting job status: {str(e)}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+
 
 @customize_bp.route("/score", methods=["POST"])
 @owner_or_admin_required
@@ -723,8 +775,21 @@ def score_custom_configuration():
     1. config_id: Score a saved configuration
     2. metadata + actions: Score an ad-hoc configuration
 
+    Request body:
+    {
+        "config_id": "optional - score saved config",
+        "metadata": [...],  // Required if no config_id
+        "actions": [...]    // Optional action history
+    }
+
     Returns:
-        JSON with success status and stream URL
+    {
+        "success": true,
+        "config_id": "...",
+        "config_hash": "...",
+        "job_id": "...",
+        "stream_url": "/api/v1/customize/score-stream/<job_id>"
+    }
     """
     try:
         # Get authenticated user_id (decorator ensures user is logged in)
@@ -763,32 +828,50 @@ def score_custom_configuration():
         if not isinstance(custom_metadata, list) or len(custom_metadata) == 0:
             return jsonify({"success": False, "error": "metadata must be a non-empty list"}), 400
 
-        # Save to file for debugging
-        filepath = Path(os.path.join(app.root_path, "custom-sspi.json"))
-        logger.info(f"Saving custom SSPI to: {filepath}")
-        filepath.write_text(json.dumps({
-            "config_id": config_id,
-            "user_id": user_id,
-            "metadata": custom_metadata,
-            "actions": actions
-        }, indent=2))
+        # Quick validation before starting job
+        validation_result = validate_custom_metadata(
+            custom_metadata,
+            validate_score_functions=False  # Full validation in background job
+        )
+        if not validation_result.valid:
+            error_msgs = [e.message for e in validation_result.errors[:3]]
+            return jsonify({
+                "success": False,
+                "error": f"Invalid configuration: {'; '.join(error_msgs)}",
+                "validation_errors": validation_result.to_dict()["errors"]
+            }), 400
 
-        # TODO: Implement actual scoring logic
-        # For now, just return success and point to stream
-        # In future: trigger background job here
+        # Compute config hash for cache lookup
+        config_hash = compute_config_hash(custom_metadata)
 
-        logger.info(f"Scoring initiated for config {config_id} with {len(custom_metadata)} items")
+        # Start background scoring job
+        job_id = start_scoring_job(
+            config_id=config_id,
+            metadata=custom_metadata,
+            actions=actions,
+            user_id=user_id
+        )
+
+        logger.info(
+            f"Scoring job {job_id} started for config {config_id} "
+            f"(hash: {config_hash[:8]}...) with {len(custom_metadata)} items"
+        )
 
         return jsonify({
             "success": True,
             "config_id": config_id,
-            "message": "Scoring initiated. Connect to /score-stream for progress updates.",
-            "stream_url": "/api/v1/customize/score-stream"
+            "config_hash": config_hash,
+            "job_id": job_id,
+            "message": "Scoring initiated. Connect to stream_url for progress updates.",
+            "stream_url": f"/api/v1/customize/score-stream/{job_id}"
         })
+
     except AttributeError:
         return jsonify({"success": False, "error": "No user_id in request"}), 401
     except Exception as e:
         logger.error(f"Error scoring configuration: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 
@@ -861,38 +944,30 @@ def get_chart_data(config_id):
     """
     try:
         user_id = current_user.username
-
         # Verify config exists and user owns it
         config = sspi_custom_user_structure.find_by_config_id(config_id, username=user_id)
-
         if not config:
             return jsonify({
                 "success": False,
                 "error": "Configuration not found or access denied"
             }), 404
-
         # Get query parameters
         item_code = request.args.get('item_code')
         if not item_code:
             return jsonify({"success": False, "error": "item_code parameter is required"}), 400
-
         # Parse optional filters
         countries_param = request.args.get('countries', '')
         years_param = request.args.get('years', '')
-
         country_codes = [c.strip() for c in countries_param.split(',') if c.strip()] if countries_param else None
         years = [int(y.strip()) for y in years_param.split(',') if y.strip()] if years_param else None
-
         # Get results from database
         results = sspi_custom_user_data.get_config_results(
             config_id=config_id,
             country_codes=country_codes,
             years=years
         )
-
         # Filter by item_code
         filtered_results = [r for r in results if r.get("item_code") == item_code]
-
         if not filtered_results:
             return jsonify({
                 "success": True,
@@ -908,20 +983,16 @@ def get_chart_data(config_id):
             country = result.get("country_code")
             year = result.get("year")
             score = result.get("score")
-
             if country not in chart_data:
                 chart_data[country] = []
-
             chart_data[country].append({
                 "year": year,
                 "score": score,
                 "rank": result.get("rank")
             })
-
         # Sort each country's data by year
         for country in chart_data:
             chart_data[country].sort(key=lambda x: x["year"])
-
         logger.info(f"Retrieved chart data for config {config_id}, item {item_code} (user {user_id})")
 
         return jsonify({

@@ -22,8 +22,8 @@ LowerGoalpost: null
 UpperGoalpost: null
 ScoreFunction: >
     Score = max(
-        goalpost(TOTDON * 10**8 / GDPMKT, 0, 1),
-        goalpost(TOTREC * 10**6 / POPULN, 0, 500)
+        goalpost(TOTDON * pow(10, 8) / GDPMKT, 0, 1),
+        goalpost(TOTREC * pow(10, 6) / POPULN, 0, 500)
     )
 ---
 

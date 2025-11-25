@@ -87,7 +87,20 @@
 .sspi-toolbar {
   margin-bottom: 1rem;
   display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background-color: var(--box-background-color);
+  margin: 0 0.6em 1em 0.6em;
+  padding: 1em;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.sspi-toolbar-button-group {
+  display: flex;
   gap: 0.5rem;
+  flex-wrap: nowrap;
 }
 
 .sspi-toolbar button, .add-category, .add-indicator {
@@ -99,7 +112,6 @@
   cursor: pointer;
   font-family: var(--header-font-family);
   font-size: 0.8em;
-  margin: 0.2em;
 }
 
 .sspi-toolbar button:hover, .add-category:hover, .add-indicator:hover {

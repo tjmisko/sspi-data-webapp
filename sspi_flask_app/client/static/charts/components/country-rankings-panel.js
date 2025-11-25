@@ -72,20 +72,20 @@ class CountryRankingsPanel {
                     </div>
                     <div class="rankings-panel-content ${layoutClass}">
                         <div class="rankings-column">
-                            <h5>Highest Scores</h5>
+                            <h5>Highest Average Score</h5>
                             <div class="rankings-cards" id="absolute-highest-cards"></div>
                         </div>
                         <div class="rankings-column">
-                            <h5>Lowest Scores</h5>
+                            <h5>Lowest Average Score</h5>
                             <div class="rankings-cards" id="absolute-lowest-cards"></div>
                         </div>
                         ${!isSingleYear ? `
                         <div class="rankings-column">
-                            <h5>Most Improved Scores</h5>
+                            <h5>Biggest Score Increase</h5>
                             <div class="rankings-cards" id="absolute-improved-cards"></div>
                         </div>
                         <div class="rankings-column">
-                            <h5>Biggest Score Declines</h5>
+                            <h5>Biggest Score Decline</h5>
                             <div class="rankings-cards" id="absolute-declined-cards"></div>
                         </div>
                         ` : ''}
@@ -100,20 +100,20 @@ class CountryRankingsPanel {
                     </div>
                     <div class="rankings-panel-content ${layoutClass}">
                         <div class="rankings-column">
-                            <h5>Best Ranks</h5>
+                            <h5>Best Average Rank</h5>
                             <div class="rankings-cards" id="relative-strongest-cards"></div>
                         </div>
                         <div class="rankings-column">
-                            <h5>Worst Ranks</h5>
+                            <h5>Worst Average Rank</h5>
                             <div class="rankings-cards" id="relative-weakest-cards"></div>
                         </div>
                         ${!isSingleYear ? `
                         <div class="rankings-column">
-                            <h5>Most Improved Ranks</h5>
+                            <h5>Biggest Rank Increase</h5>
                             <div class="rankings-cards" id="relative-improved-cards"></div>
                         </div>
                         <div class="rankings-column">
-                            <h5>Biggest Rank Declines</h5>
+                            <h5>Biggest Rank Decline</h5>
                             <div class="rankings-cards" id="relative-declined-cards"></div>
                         </div>
                         ` : ''}

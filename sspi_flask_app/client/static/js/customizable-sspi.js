@@ -1,7 +1,5 @@
 // customizable-sspi.js
 // SSPI Tree UI implementing full specification (three-column layout)
-
-
 class CustomizableSSPIStructure {
     constructor(parentElement, options = {}) {
         const {
@@ -12,9 +10,10 @@ class CustomizableSSPIStructure {
             ],
             loadingDelay = 100,
             username = '',
-            baseConfig = 'sspi'  // NEW: base config from URL
+            baseConfig = 'sspi',  // NEW: base config from URL
+            readOnly = false
         } = options;
-
+        this.readOnly = readOnly
         this.baseConfig = baseConfig;
         this.parentElement = parentElement;
         this.pillars = pillars;
@@ -29,18 +28,13 @@ class CustomizableSSPIStructure {
         this.cacheTimeout = null;
         this.datasetDetails = {};// Dataset details storage (maps dataset code to full details)
         this.actionHistory = new CustomizableActionHistory(this);
-
         // Configuration tracking for save/load
         this.currentConfigId = null;
         this.currentConfigName = null;
-
         this.initToolbar();
         this.initRoot();
         this.rigPillarRename();
-
         // Progress tracking - initialize AFTER initRoot() creates this.container
-        this.progressState = this.loadProgressState();
-        this.initProgressTracker();
         this.rigCategoryIndicatorListeners();
         this.rigDragStructureListeners();
         this.setupKeyboardShortcuts();
@@ -58,9 +52,9 @@ class CustomizableSSPIStructure {
 
     initToolbar() {
         this.toolbarLeft = document.createElement('div');
-        this.toolbarLeft.classList.add('sspi-toolbar');
+        this.toolbarLeft.classList.add('sspi-toolbar-button-group');
         this.toolbarRight = document.createElement('div');
-        this.toolbarRight.classList.add('sspi-toolbar');
+        this.toolbarRight.classList.add('sspi-toolbar-button-group');
         this.saveButton = document.createElement('button');
         this.saveButton.textContent = 'Save';
         this.saveButton.addEventListener('click', async () => {
@@ -106,15 +100,12 @@ class CustomizableSSPIStructure {
         const scoreVisualizeBtn = document.createElement('button');
         this.toolbarLeft.append(this.saveButton, validateBtn, viewChangesBtn, this.discardButton);
         this.toolbarRight.append(resetViewBtn, expandAllBtn, collapseAllBtn)
-        this.parentElement.appendChild(this.toolbarLeft);
-        this.parentElement.appendChild(this.toolbarRight);
-
-        // Set initial save button state based on login status
+        this.toolbar = document.createElement('div')
+        this.toolbar.classList.add('sspi-toolbar')
+        this.toolbar.appendChild(this.toolbarLeft);
+        this.toolbar.appendChild(this.toolbarRight);
+        this.parentElement.appendChild(this.toolbar);
         this.updateSaveButtonState();
-
-        // Initially hide toolbars (they'll be shown only in Build stage)
-        this.toolbarLeft.style.display = 'none';
-        this.toolbarRight.style.display = 'none';
     }
 
     async fetch(url, options = {}) {
@@ -422,123 +413,6 @@ class CustomizableSSPIStructure {
                 if (e.key === 'Enter') { e.preventDefault(); h.blur(); }
             })
         );
-    }
-
-    // ========== Progress Tracking Methods ==========
-
-    initProgressTracker() {
-        // Create progress stepper container at the top
-        const stepperContainer = document.createElement('div');
-        stepperContainer.id = 'progress-stepper-container';
-        stepperContainer.classList.add('progress-stepper-container');
-        this.parentElement.insertBefore(stepperContainer, this.parentElement.firstChild);
-
-        // Create stage content container
-        const stageContainer = document.createElement('div');
-        stageContainer.id = 'stage-content-container';
-        stageContainer.classList.add('stage-content-container');
-        this.parentElement.appendChild(stageContainer);
-
-        // Initialize progress stepper
-        this.progressStepper = new ProgressStepper(stepperContainer, {
-            currentStage: this.progressState.currentStage,
-            completedStages: this.progressState.completedStages,
-            onStageClick: (stageId) => this.navigateToStage(stageId)
-        });
-
-        // Initialize stage manager
-        this.stageManager = new StageManager(stageContainer, this, {
-            currentStage: this.progressState.currentStage,
-            onStageComplete: (stageId) => this.handleStageComplete(stageId),
-            onStageChange: (stageId) => this.handleStageChange(stageId)
-        });
-
-        // Render initial stage
-        this.stageManager.setStage(this.progressState.currentStage);
-    }
-
-    loadProgressState() {
-        try {
-            const cached = localStorage.getItem('sspi-progress-state');
-            if (cached) {
-                return JSON.parse(cached);
-            }
-        } catch (error) {
-            console.error('Error loading progress state:', error);
-        }
-
-        // Default state
-        return {
-            currentStage: 0,
-            completedStages: []
-        };
-    }
-
-    saveProgressState() {
-        try {
-            const state = {
-                currentStage: this.progressState.currentStage,
-                completedStages: this.progressState.completedStages
-            };
-            localStorage.setItem('sspi-progress-state', JSON.stringify(state));
-        } catch (error) {
-            console.error('Error saving progress state:', error);
-        }
-    }
-
-    navigateToStage(stageId) {
-        // Only allow navigation to completed stages or previous stages
-        const canNavigate = this.progressState.completedStages.includes(stageId) ||
-                          stageId < this.progressState.currentStage;
-
-        if (canNavigate || stageId === this.progressState.currentStage) {
-            this.progressState.currentStage = stageId;
-            this.progressStepper.setCurrentStage(stageId);
-            this.stageManager.setStage(stageId);
-            this.saveProgressState();
-        }
-    }
-
-    handleStageComplete(stageId) {
-        // Mark stage as completed
-        if (!this.progressState.completedStages.includes(stageId)) {
-            this.progressState.completedStages.push(stageId);
-            this.progressStepper.markStageCompleted(stageId);
-        }
-
-        // Move to next stage
-        if (stageId < 3) {
-            this.progressState.currentStage = stageId + 1;
-            this.progressStepper.setCurrentStage(stageId + 1);
-            this.stageManager.setStage(stageId + 1);
-            this.saveProgressState();
-        }
-    }
-
-    handleStageChange(stageId) {
-        // Update UI based on current stage
-        // Hide/show SSPI container and toolbars based on stage
-        if (stageId === 0) {
-            // Structure stage - show customization UI and toolbars
-            this.container.style.display = 'block';
-            this.toolbarLeft.style.display = 'flex';
-            this.toolbarRight.style.display = 'flex';
-        } else {
-            // Other stages - hide customization UI and toolbars (stage manager handles its own UI)
-            this.container.style.display = 'none';
-            this.toolbarLeft.style.display = 'none';
-            this.toolbarRight.style.display = 'none';
-        }
-    }
-
-    resetProgress() {
-        this.progressState = {
-            currentStage: 0,
-            completedStages: []
-        };
-        this.progressStepper.resetProgress();
-        this.stageManager.setStage(0);
-        this.saveProgressState();
     }
 
     rigCategoryIndicatorListeners() {

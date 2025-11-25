@@ -98,18 +98,22 @@ def test_goalpost_large_ranges():
     assert result == pytest.approx(0.5, rel=1e-6)
 
 
-def test_goalpost_identical_bounds_raises_division_by_zero():
-    """Test that identical upper and lower bounds raise a division by zero error."""
-    
-    # When upper == lower, we get division by zero
-    with pytest.raises(ZeroDivisionError):
-        goalpost(5, 10, 10)
-    
-    with pytest.raises(ZeroDivisionError):
-        goalpost(0, 0, 0)
-    
-    with pytest.raises(ZeroDivisionError):
-        goalpost(-5, 3.14, 3.14)
+def test_goalpost_identical_bounds_handled_gracefully():
+    """Test that identical upper and lower bounds are handled gracefully."""
+
+    # When upper == lower, return 0.5 if value equals bounds, else clamp
+    # Value above the single goalpost -> 1.0
+    assert goalpost(5, 10, 10) == 0.0  # 5 < 10, so returns 0.0
+
+    # Value equals the single goalpost -> 0.5
+    assert goalpost(0, 0, 0) == 0.5
+    assert goalpost(3.14, 3.14, 3.14) == 0.5
+
+    # Value below the single goalpost -> 0.0
+    assert goalpost(-5, 3.14, 3.14) == 0.0
+
+    # Value above the single goalpost -> 1.0
+    assert goalpost(15, 10, 10) == 1.0
 
 
 def test_goalpost_inverted_bounds():
@@ -180,22 +184,29 @@ def test_goalpost_linearity():
 
 def test_goalpost_special_numeric_values():
     """Test goalpost with special numeric values like infinity and NaN."""
-    
+
     # Test with infinity
     result = goalpost(float('inf'), 0, 10)
     assert result == 1.0  # Should be clamped to 1
-    
+
     result = goalpost(float('-inf'), 0, 10)
     assert result == 0.0  # Should be clamped to 0
-    
-    # Test with NaN - the max/min functions handle this by returning 1
-    result = goalpost(float('nan'), 0, 10)
-    assert result == 1.0  # NaN gets clamped to 1 by the max/min logic
-    
+
+    # Test with NaN - raises ValueError to indicate upstream data quality issue
+    with pytest.raises(ValueError, match="NaN value"):
+        goalpost(float('nan'), 0, 10)
+
+    # Test bounds with NaN - raises ValueError
+    with pytest.raises(ValueError, match="NaN goalpost bounds"):
+        goalpost(5, float('nan'), 10)
+
+    with pytest.raises(ValueError, match="NaN goalpost bounds"):
+        goalpost(5, 0, float('nan'))
+
     # Test bounds with infinity
     result = goalpost(5, 0, float('inf'))
     assert result == 0.0  # (5-0)/(inf-0) = 0
-    
+
     result = goalpost(5, float('-inf'), 10)
     assert result == 1.0  # (5-(-inf))/(10-(-inf)) = inf/inf = indeterminate, but gets clamped to 1
 

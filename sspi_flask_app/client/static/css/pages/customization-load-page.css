@@ -43,9 +43,9 @@
 }
 
 .unsaved-warning-banner {
-    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
     color: white;
     padding: 1.5rem;
+    background-color: #f52e00cc;
     border-radius: var(--border-radius-lg, 12px);
     margin-bottom: 1rem;
     box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));

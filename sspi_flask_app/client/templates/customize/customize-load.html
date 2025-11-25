@@ -2,87 +2,86 @@
 {% block content %}
 <article class="page-content">
     <section class="page-section">
-        <!-- Unsaved warnings will be injected here by JavaScript -->
-        <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
-
-        <div class="load-container">
-            <div class="bounded-content-box config-section">
-                <h3>Load Prebuilt Configuration</h3>
-                <p class="functionality-explainer">
-                    Choose a preset SSPI configuration to start from. Useful for comparing
-                    a series of changes to the original SSPI and for running sensitivity testing.
-                </p>
-                <div class="config-flex-container">
-                    {% for config in prebuilt_configurations %}
-                        <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
-                            <div class="config-card-header">
-                                <h3 class="config-name">{{ config.name }}</h3>
-                                {% if config.recommended %}
-                                <span class="config-badge">Recommended</span>
-                                {% endif %}
-                            </div>
-                            <p class="config-description">{{ config.description }}</p>
-                            <div class="config-meta">
-                                <span class="config-meta-item">{{ config.pillars }} Pillars</span>
-                                <span class="config-meta-item">{{ config.categories }} Categories</span>
-                                <span class="config-meta-item">{{ config.indicators }} Indicators</span>
-                                <span class="config-meta-item">{{ config.datasets }} Datasets</span>
-                            </div>
-                            <div class="config-actions">
-                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
+        <div class="load-box"> 
+            <div class="outer-save-wrapper"> 
+                <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
             </div>
-            <!-- Saved Configurations -->
-            <div class="bounded-content-box config-section">
-                <h3>Saved Configurations</h3>
-                <p class="functionality-explainer">
-                    Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
-                </p>
-                <div class="config-flex-container">
-                    {% if not is_authenticated %}
-                        {% include 'components/login-box.html' with context %}
-                    {% elif saved_configurations | length == 0 %}
-                        <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
-                    {% else %}
-                        {% for config in saved_configurations %}
-                        <div class="config-card" data-config-id="{{ config.id }}">
-                            <div class="config-card-header">
-                                <h3 class="config-name">{{ config.name }}</h3>
+            <div class="load-container">
+                <div class="bounded-content-box config-section">
+                    <h3>Load Prebuilt Configuration</h3>
+                    <p class="functionality-explainer">
+                        Choose a preset SSPI configuration to start from. Useful for comparing
+                        a series of changes to the original SSPI and for running sensitivity testing.
+                    </p>
+                    <div class="config-flex-container">
+                        {% for config in prebuilt_configurations %}
+                            <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
+                                <div class="config-card-header">
+                                    <h3 class="config-name">{{ config.name }}</h3>
+                                    {% if config.recommended %}
+                                    <span class="config-badge">Recommended</span>
+                                    {% endif %}
+                                </div>
+                                <p class="config-description">{{ config.description }}</p>
+                                <div class="config-meta">
+                                    <span class="config-meta-item">{{ config.pillars }} Pillars</span>
+                                    <span class="config-meta-item">{{ config.categories }} Categories</span>
+                                    <span class="config-meta-item">{{ config.indicators }} Indicators</span>
+                                    <span class="config-meta-item">{{ config.datasets }} Datasets</span>
+                                </div>
+                                <div class="config-actions">
+                                </div>
                             </div>
-                            <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
-                            {% if config.updated_at %}
-                            <div class="config-meta">
-                                <span class="config-meta-item">{{ config.updated_at }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="config-actions">
-                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
-                            </div>
-                        </div>
                         {% endfor %}
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="bounded-content-box config-section">
-                <h3>New Configuration</h3>
-                <p class="functionality-explainer">
-                    Begin from an empty template, designing your own
-                    data-driven policy index from the datasets up.
-                </p>
-                <div class="config-flex-container">
-                    <div class="config-card">
-                        <div class="config-card-header">
-                            <h3 class="config-name">Blank Configuration</h3>
-                        </div>
-                        <p class="config-description">
-                            Start with an empty template and build your custom policy index
-                            from scratch, selecting your own datasets, indicators, and scoring methods.
-                        </p>
-                        <div class="config-actions">
-                            <a href="/customize/builder?base_config=blank" class="btn-load">Start Building</a>
+                <!-- Saved Configurations -->
+                <div class="bounded-content-box config-section">
+                    <h3>Saved Configurations</h3>
+                    <p class="functionality-explainer">
+                        Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
+                    </p>
+                    <div class="config-flex-container">
+                        {% if not is_authenticated %}
+                            {% include 'components/login-box.html' with context %}
+                        {% elif saved_configurations | length == 0 %}
+                            <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
+                        {% else %}
+                            {% for config in saved_configurations %}
+                            <div class="config-card" data-config-id="{{ config.id }}">
+                                <div class="config-card-header">
+                                    <h3 class="config-name">{{ config.name }}</h3>
+                                </div>
+                                <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
+                                {% if config.updated_at %}
+                                <div class="config-meta">
+                                    <span class="config-meta-item">{{ config.updated_at }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="config-actions">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="bounded-content-box config-section">
+                    <h3>New Configuration</h3>
+                    <p class="functionality-explainer">
+                        Begin from an empty template, designing your own
+                        data-driven policy index from the datasets up.
+                    </p>
+                    <div class="config-flex-container">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <h3 class="config-name">Blank Configuration</h3>
+                            </div>
+                            <p class="config-description">
+                                Start with an empty template and build your custom policy index
+                                from scratch, selecting your own datasets, indicators, and scoring methods.
+                            </p>
+                            <div class="config-actions">
+                            </div>
                         </div>
                     </div>
                 </div>

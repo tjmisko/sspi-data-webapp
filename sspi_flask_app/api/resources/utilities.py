@@ -129,8 +129,47 @@ def detect_repeated_item(item_list: list[str]) -> dict[str, list]:
     }
 
 def goalpost(value, lower, upper) -> float:
-    """Implement the goalposting formula"""
-    return max(0, min(1, (value - lower) / (upper - lower)))
+    """
+    Implement the goalposting formula with strict numeric validation.
+
+    Formula: max(0, min(1, (value - lower) / (upper - lower)))
+
+    Maps value from [lower, upper] to [0, 1]:
+    - value <= lower -> 0
+    - value >= upper -> 1
+    - in between -> linear interpolation
+
+    Args:
+        value: The raw value to transform
+        lower: The lower goalpost (maps to 0)
+        upper: The upper goalpost (maps to 1)
+
+    Returns:
+        Score between 0 and 1
+
+    Raises:
+        ValueError: If any input is NaN (indicates upstream data quality issue)
+    """
+    # Fail immediately on NaN - indicates data quality issue
+    if math.isnan(value):
+        raise ValueError("goalpost() received NaN value - check upstream data")
+    if math.isnan(lower) or math.isnan(upper):
+        raise ValueError("goalpost() received NaN goalpost bounds")
+
+    # Handle division by zero gracefully (when lower == upper)
+    if upper == lower:
+        # If value equals the single goalpost, score is 0.5; otherwise clamp
+        if value == lower:
+            return 0.5
+        return 1.0 if value > upper else 0.0
+
+    normalized = (value - lower) / (upper - lower)
+
+    # Handle infinity from extreme values - clamp to bounds
+    if math.isinf(normalized):
+        return 1.0 if normalized > 0 else 0.0
+
+    return max(0.0, min(1.0, normalized))
 
 
 def parse_json(data):
