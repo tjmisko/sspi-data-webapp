@@ -3,8 +3,8 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: end;
-  background-color: var(--header-color, #000);
-  border-bottom: var(--theme-border-thick, none);
+  background-color: var(--box-background-color, #fff);
+  border-bottom: 1px solid var(--border-color);
   padding: 0 1.15em;
   box-sizing: content-box;
   box-shadow: var(--theme-header-box-shadow, none);
