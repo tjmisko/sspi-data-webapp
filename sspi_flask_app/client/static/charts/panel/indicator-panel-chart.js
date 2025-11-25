@@ -257,7 +257,18 @@ class IndicatorPanelChart extends PanelChart {
 
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
-        if (this.pinnedOnly) {
+
+        // In countryListMode, ignore saved state and show all countries in the list
+        if (this.isCountryListMode && this.CountryList.length > 0) {
+            // Set all datasets as visible and pinned (local pins only, not persisted)
+            // Use colorProvider as single source of truth for colors (dataset.borderColor isn't set yet)
+            this.chart.data.datasets.forEach(dataset => {
+                dataset.hidden = false
+                dataset.pinned = true
+                const color = this.colorProvider.get(dataset.CCode)
+                this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: color })
+            })
+        } else if (this.pinnedOnly) {
             this.hideUnpinned()
         } else {
             this.showGroup(this.countryGroup)

@@ -355,6 +355,10 @@
   margin-bottom: 1rem;
 }
 
+.indicator-description:last-child {
+  margin-bottom: 0;
+}
+
 .indicator-description p {
   color: var(--medium-importance-font-color);
   line-height: 1.5;
@@ -371,6 +375,10 @@
 }
 
 /* Datasets Section */
+.datasets-section {
+  margin-bottom: 1rem;
+}
+
 .datasets-section h6, .indicator-description h6 {
   color: var(--header-font-color);
   font-family: var(--header-font-family);

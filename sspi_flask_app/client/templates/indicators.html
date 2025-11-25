@@ -93,12 +93,6 @@
                                                             <p>{{ indicator.description }}</p>
                                                         </div>
                                                         {% endif %}
-                                                        {% if indicator.score_function %}
-                                                        <div class="indicator-description">
-                                                            <h6>Score Function</h6>
-                                                            <pre class="indicator-score-function">{{ indicator.score_function }}</pre>
-                                                        </div>
-                                                        {% endif %}
                                                         {% if indicator.datasets %}
                                                         <div class="datasets-section">
                                                             <h6>Datasets</h6>
@@ -126,6 +120,12 @@
                                                                 </div>
                                                                 {% endfor %}
                                                             </div>
+                                                        </div>
+                                                        {% endif %}
+                                                        {% if indicator.score_function %}
+                                                        <div class="indicator-description">
+                                                            <h6>Score Function</h6>
+                                                            <pre class="indicator-score-function">{{ indicator.score_function }}</pre>
                                                         </div>
                                                         {% endif %}
                                                     </div>

@@ -1,5 +1,6 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 import frontmatter
+import pycountry
 from markdown import markdown
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, MethodologyFileError
 from flask import current_app as app
@@ -139,27 +140,19 @@ class SSPIMetadataDeprecated(MongoWrapper):
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
         with open(os.path.join(local_path, "country-groups.json")) as file:
             country_groups = json.load(file)
-        with open(os.path.join(local_path, "country-flag-colors.json")) as file:
-            country_colors = json.load(file)
-        with open(os.path.join(local_path, "sspi-colors.json")) as file:
-            sspi_custom_colors = json.load(file)
         if self.indicator_detail_file is not None and self.intermediate_detail_file is not None:
             count = self.load_static(
                 self.indicator_detail_file,
                 self.intermediate_detail_file,
-                country_groups,
-                country_colors,
-                sspi_custom_colors
+                country_groups
             )
         else:
             count = self.load_dynamic(
                 country_groups,
-                country_colors,
-                sspi_custom_colors
             )
         return count
 
-    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors) -> int:
+    def load_dynamic(self, country_groups) -> int:
         """
         Load metadata specified in methodology files into the database
 
@@ -188,7 +181,7 @@ class SSPIMetadataDeprecated(MongoWrapper):
             {"DocumentType": "IntermediateCodes", "Metadata": item_codes["Intermediate"]}
         ])
         metadata.extend(self.build_country_groups(country_groups))
-        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
+        metadata.extend(self.build_country_details(country_groups))
         metadata.extend(sorted_details)
         metadata.append(pc_sum_tree)
         count = self.insert_many(metadata)
@@ -341,20 +334,45 @@ class SSPIMetadataDeprecated(MongoWrapper):
             })
         return country_groups_lookup + country_group_list
 
-    def build_country_details(self, country_groups: dict, country_colors: list[dict], sspi_custom_colors: dict) -> list[dict]:
+    def build_country_details(self, country_groups: dict) -> list[dict]:
         """
-        Builds a list of country details from the country groups and colors
+        Builds a list of country details from country groups using pycountry
+        for country names and flags. Colors are managed on the frontend only.
         """
+        # Get unique country codes from all groups
+        all_country_codes = set()
+        for ccode_list in country_groups.values():
+            all_country_codes.update(ccode_list)
+
         details = []
-        for cou in country_colors:
-            if "CountryCode" not in cou.keys():
+        for country_code in sorted(all_country_codes):
+            # Look up country info from pycountry
+            try:
+                country = pycountry.countries.get(alpha_3=country_code)
+                if not country:
+                    log.warning(f"Country code {country_code} not found in pycountry")
+                    continue
+                country_name = country.name
+                flag = country.flag if hasattr(country, 'flag') else ""
+            except Exception as e:
+                log.warning(f"Error looking up country {country_code}: {e}")
                 continue
+
+            # Find which groups this country belongs to
+            country_group_list = []
+            for group_name, ccode_list in country_groups.items():
+                if country_code in ccode_list:
+                    country_group_list.append(group_name)
+
             details.append({
                 "DocumentType": "CountryDetail",
-                "Metadata": cou
+                "Metadata": {
+                    "Country": country_name,
+                    "CountryCode": country_code,
+                    "Flag": flag,
+                    "CountryGroups": country_group_list
+                }
             })
-            if cou["CountryCode"] in sspi_custom_colors.keys():
-                cou["SSPIColor"] = sspi_custom_colors[cou["CountryCode"]]
         return details
 
     def build_pillar_category_summary_tree(self, details) -> dict:
@@ -376,7 +394,7 @@ class SSPIMetadataDeprecated(MongoWrapper):
         return {"DocumentType": "PillarCategorySummaryTree", "Metadata": pc_summary_tree}
 
 
-    def load_static(self, indicator_detail_file, intermediate_detail_file, country_groups, country_colors, sspi_custom_colors) -> int:
+    def load_static(self, indicator_detail_file, intermediate_detail_file, country_groups) -> int:
         """
         Loads the metadata from local metadata CSV files into the database
         """
@@ -392,7 +410,7 @@ class SSPIMetadataDeprecated(MongoWrapper):
         metadata = []
         metadata.extend(self.build_item_codes_static(indicator_details, intermediate_details))
         metadata.extend(self.build_country_groups(country_groups))
-        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
+        metadata.extend(self.build_country_details(country_groups))
         metadata.extend(self.build_intermediate_details_static(intermediate_details))
         metadata.extend(self.build_indicator_details_static(indicator_details, intermediate_details))
         metadata.extend(self.build_category_details(indicator_details))
