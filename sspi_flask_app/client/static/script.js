@@ -44,7 +44,7 @@ chartObject.chart.update()
 sleep(1000).then(()=>{if(alpha){html2canvas(chartObject.parentElement,{backgroundColor:null}).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}else{html2canvas(chartObject.parentElement).then(canvas=>{const link=document.createElement('a');link.download=chartObject.parentElement.id+'.png';link.href=canvas.toDataURL('image/png');link.click();});}
 chartObject.textColor=textColorOriginal
 chartObject.gridColor=gridColorOriginal
-chartObject.chart.update()})};const customCountryColors={"ARG":"#36A2EB","AUS":"#FF6384","AUT":"#FF9F40","BEL":"#FFCD56","BRA":"#4BC0C0","CAN":"#9966FF","CHL":"#C9CBCF","CHN":"#FFD8B1","COL":"#FF6384","CZE":"#F4D35E","DNK":"#36A2EB","EST":"#FF6384","FIN":"#FF9F40","FRA":"#FFCD56","DEU":"#4BC0C0","GRC":"#9966FF","HUN":"#C9CBCF","ISL":"#F4D35E","IND":"#8FD14F","IDN":"#FFD8B1","IRL":"#36A2EB","ISR":"#FF6384","ITA":"#FF9F40","JPN":"#FFCD56","KOR":"#4BC0C0","KWT":"#9966FF","LVA":"#C9CBCF","LTU":"#F4D35E","LUX":"#8FD14F","MEX":"#FFD8B1","NLD":"#36A2EB","NZL":"#FF6384","NOR":"#FF9F40","POL":"#FFCD56","PRT":"#4BC0C0","RUS":"#9966FF","SAU":"#C9CBCF","SGP":"#F4D35E","SVK":"#8FD14F","SVN":"#FFD8B1","ZAF":"#F4D35E","ESP":"#FF6384","SWE":"#FF9F40","CHE":"#FFCD56","TUR":"#4BC0C0","ARE":"#9966FF","GBR":"#C9CBCF","USA":"#36A2EB","URY":"#8FD14F","DZA":"#FFD8B1","BGD":"#36A2EB","ECU":"#FF9F40","EGY":"#FFCD56","ETH":"#4BC0C0","IRN":"#9966FF","IRQ":"#C9CBCF","KEN":"#F4D35E","MYS":"#8FD14F","NGA":"#FFD8B1","PAK":"#36A2EB","PER":"#FF6384","PHL":"#FF9F40","ROU":"#FFCD56","THA":"#4BC0C0","VEN":"#9966FF","VNM":"#C9CBCF"}
+chartObject.chart.update()})};const customCountryColors={"ARG":"#36A2EB","AUS":"#FF6384","AUT":"#FF9F40","BEL":"#FFCD56","BRA":"#4BC0C0","CAN":"#9966FF","CHL":"#E57373","CHN":"#FFD8B1","COL":"#FF6384","CZE":"#F4D35E","DNK":"#36A2EB","EST":"#FF6384","FIN":"#FF9F40","FRA":"#FFCD56","DEU":"#4BC0C0","GRC":"#9966FF","HUN":"#E57373","ISL":"#F4D35E","IND":"#8FD14F","IDN":"#FFD8B1","IRL":"#36A2EB","ISR":"#FF6384","ITA":"#FF9F40","JPN":"#FFCD56","KOR":"#4BC0C0","KWT":"#9966FF","LVA":"#E57373","LTU":"#F4D35E","LUX":"#8FD14F","MEX":"#FFD8B1","NLD":"#36A2EB","NZL":"#FF6384","NOR":"#FF9F40","POL":"#FFCD56","PRT":"#4BC0C0","RUS":"#9966FF","SAU":"#E57373","SGP":"#F4D35E","SVK":"#8FD14F","SVN":"#FFD8B1","ZAF":"#F4D35E","ESP":"#FF6384","SWE":"#FF9F40","CHE":"#FFCD56","TUR":"#4BC0C0","ARE":"#9966FF","GBR":"#E57373","USA":"#36A2EB","URY":"#8FD14F","DZA":"#FFD8B1","BGD":"#36A2EB","ECU":"#FF9F40","EGY":"#FFCD56","ETH":"#4BC0C0","IRN":"#9966FF","IRQ":"#E57373","KEN":"#F4D35E","MYS":"#8FD14F","NGA":"#FFD8B1","PAK":"#36A2EB","PER":"#FF6384","PHL":"#FF9F40","ROU":"#FFCD56","THA":"#4BC0C0","VEN":"#9966FF","VNM":"#E57373"}
 class ColorMap{constructor(){this.SSPI="#FFD54F"
 this.SUS="#28a745"
 this.MS="#ff851b"
@@ -2038,14 +2038,16 @@ try{return response.json()}catch(error){console.error('Error:',error)}}
 update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
-if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
+if(this.isCountryListMode&&this.CountryList.length>0){this.chart.data.datasets.forEach(dataset=>{dataset.hidden=false
+dataset.pinned=true
+const color=this.colorProvider.get(dataset.CCode)
+this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:color})})}else if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.title.innerText=data.title
 this.itemType=data.itemType
 this.groupOptions=data.groupOptions
 this.countryGroupMap=data.countryGroupMap||{}
 this.missingCountries=[]
 this.getPins()
-if(this.isCountryListMode&&this.CountryList.length>0){this.CountryList.forEach(countryCode=>{this.pinCountryByCode(countryCode)})}
 this.updateLegend()
 this.updateItemDropdown(data.itemOptions,data.itemType)
 this.updateDescription(data.description)
@@ -2068,14 +2070,20 @@ Object.entries(this.countryGroupMap).forEach(([countryCode,countryGroups])=>{if(
 missingCountries.push({CCode:countryCode,CName:countryCode,CGroup:countryGroups})}})
 this.missingCountries=missingCountries
 this.updateMissingCountries()}
-getPins(){const storedPins=window.observableStorage.getItem('pinnedCountries')
+getPins(){if(this.isCountryListMode){if(this.pins.size===0){return}
+this.chart.data.datasets.forEach(dataset=>{for(const element of this.pins){if(dataset.CCode===element.CCode){dataset.pinned=true
+dataset.hidden=false}}})
+this.updateLegend()
+this.updateChartPreservingYAxis();return}
+const storedPins=window.observableStorage.getItem('pinnedCountries')
 if(storedPins){this.pins=new Set(storedPins)}
 if(this.pins.size===0){return}
 this.chart.data.datasets.forEach(dataset=>{for(const element of this.pins){if(dataset.CCode===element.CCode){dataset.pinned=true
 dataset.hidden=false}}})
 this.updateLegend()
 this.updateChartPreservingYAxis();}
-pushPinUpdate(){window.observableStorage.setItem("pinnedCountries",Array.from(this.pins))}
+pushPinUpdate(){if(this.isCountryListMode){return}
+window.observableStorage.setItem("pinnedCountries",Array.from(this.pins))}
 showAll(){this.pinnedOnly=false
 window.observableStorage.setItem("pinnedOnly",false)
 console.log('Showing all countries')
@@ -2186,7 +2194,8 @@ if(year!==null&&year!==undefined){if(year<this.startYear||year>this.endYear){ret
 return{"ItemCode":dataset.ICode||'',"CountryCode":dataset.CCode||'',"CountryName":dataset.CName||'',"Score":scores[i]?.toString()||'',"Value":values[i]?.toString()||'',"Year":year?.toString()||''}}).filter(obs=>obs!==null);}).flat();if(observations.length===0){alert('No data available for the selected scope. Please try a different scope or ensure data is loaded.')
 return}
 const csvString=Papa.unparse(observations);const blob=new Blob([csvString],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;const today=new Date().toISOString().split('T')[0];const title=this.title.innerText||'item-panel-data';const itemCode=this.activeItemCode||this.itemCode;a.download=today+' - '+title+(itemCode?' - '+itemCode:'')+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
-rigPinChangeListener(){window.observableStorage.onChange("pinnedCountries",()=>{this.getPins()
+rigPinChangeListener(){if(this.isCountryListMode){return}
+window.observableStorage.onChange("pinnedCountries",()=>{this.getPins()
 console.log("Pin change detected!")})}
 rigUnloadListener(){window.addEventListener('beforeunload',()=>{window.observableStorage.setItem("openPanelChartDetails",Array.from(this.chartOptions.querySelectorAll('.chart-options-details')).filter(details=>details.open).map(details=>details.classList[0]))
 window.observableStorage.setItem("chartOptionsStatus",this.chartOptions.classList.contains('active')?"active":"inactive")})}
@@ -2409,7 +2418,10 @@ if(data.error||!data.data||data.data.length===0){const errorMessage=data.error||
 if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data.datasets=data.data
 this.chart.data.labels=data.labels
-if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
+if(this.isCountryListMode&&this.CountryList.length>0){this.chart.data.datasets.forEach(dataset=>{dataset.hidden=false
+dataset.pinned=true
+const color=this.colorProvider.get(dataset.CCode)
+this.pins.add({CName:dataset.CName,CCode:dataset.CCode,borderColor:color})})}else if(this.pinnedOnly){this.hideUnpinned()}else{this.showGroup(this.countryGroup)}
 this.datasetOptions=data.datasetOptions
 this.originalTitle=data.title
 this.treepath=data.treepath

@@ -10,6 +10,7 @@ from bson import json_util
 import pandas as pd
 import logging
 from datetime import date
+import pycountry
 
 log = logging.getLogger(__name__)
 
@@ -138,10 +139,6 @@ class SSPIMetadata(MongoWrapper):
         local_path = os.path.join(os.path.dirname(app.instance_path), "local")
         with open(os.path.join(local_path, "country-groups.json")) as file:
             country_groups = json.load(file)
-        with open(os.path.join(local_path, "country-flag-colors.json")) as file:
-            country_colors = json.load(file)
-        with open(os.path.join(local_path, "sspi-colors.json")) as file:
-            sspi_custom_colors = json.load(file)
         with open(os.path.join(local_path, "globe-data.geojson")) as file:
             globe_json = json.load(file)
         with open(os.path.join(local_path, "organization-details.json")) as file:
@@ -150,15 +147,13 @@ class SSPIMetadata(MongoWrapper):
             sspi_time_periods = json.load(file)
         count = self.load_dynamic(
             country_groups,
-            country_colors,
-            sspi_custom_colors,
             globe_json,
             organization_details,
             sspi_time_periods
         )
         return count
 
-    def load_dynamic(self, country_groups, country_colors, sspi_custom_colors, globe_json, organization_details, sspi_time_periods) -> int:
+    def load_dynamic(self, country_groups, globe_json, organization_details, sspi_time_periods) -> int:
         """
         Load metadata specified in methodology files into the database
 
@@ -211,7 +206,7 @@ class SSPIMetadata(MongoWrapper):
             "DocumentType": "TimePeriodDetail",
             "Metadata": t
         } for t in sspi_time_periods])
-        metadata.extend(self.build_country_details(country_groups, country_colors, sspi_custom_colors))
+        metadata.extend(self.build_country_details(country_groups))
         metadata.extend(sorted_item_details)
         metadata.extend(source_details)
         metadata.extend([{
@@ -447,24 +442,45 @@ class SSPIMetadata(MongoWrapper):
             })
         return country_groups_lookup + country_group_list
 
-    def build_country_details(self, country_groups: dict, country_colors: list[dict], sspi_custom_colors: dict) -> list[dict]:
+    def build_country_details(self, country_groups: dict) -> list[dict]:
         """
-        Builds a list of country details from the country groups and colors
+        Builds a list of country details from country groups using pycountry
+        for country names and flags. Colors are managed on the frontend only.
         """
+        # Get unique country codes from all groups
+        all_country_codes = set()
+        for ccode_list in country_groups.values():
+            all_country_codes.update(ccode_list)
+
         details = []
-        for cou in country_colors:
-            if "CountryCode" not in cou.keys():
+        for country_code in sorted(all_country_codes):
+            # Look up country info from pycountry
+            try:
+                country = pycountry.countries.get(alpha_3=country_code)
+                if not country:
+                    log.warning(f"Country code {country_code} not found in pycountry")
+                    continue
+                country_name = country.name
+                flag = country.flag if hasattr(country, 'flag') else ""
+            except Exception as e:
+                log.warning(f"Error looking up country {country_code}: {e}")
                 continue
-            cou["CountryGroups"] = []
-            for g, ccode_list in country_groups.items():
-                if cou["CountryCode"] in ccode_list:
-                    cou["CountryGroups"].append(g)
+
+            # Find which groups this country belongs to
+            country_group_list = []
+            for group_name, ccode_list in country_groups.items():
+                if country_code in ccode_list:
+                    country_group_list.append(group_name)
+
             details.append({
                 "DocumentType": "CountryDetail",
-                "Metadata": cou
+                "Metadata": {
+                    "Country": country_name,
+                    "CountryCode": country_code,
+                    "Flag": flag,
+                    "CountryGroups": country_group_list
+                }
             })
-            if cou["CountryCode"] in sspi_custom_colors.keys():
-                cou["SSPIColor"] = sspi_custom_colors[cou["CountryCode"]]
         return details
 
     def generate_source_details(self, dataset_details: list[dict]) -> list[dict]:

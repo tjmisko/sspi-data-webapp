@@ -873,10 +873,21 @@ class PanelChart {
         if (this.chartInteractionPlugin && this.chartInteractionPlugin._forceRefreshLabels) {
             this.chartInteractionPlugin._forceRefreshLabels(this.chart)
         }
-        
+
         this.chart.data.datasets = data.data
         this.chart.data.labels = data.labels
-        if (this.pinnedOnly) {
+
+        // In countryListMode, ignore saved state and show all countries in the list
+        if (this.isCountryListMode && this.CountryList.length > 0) {
+            // Set all datasets as visible and pinned (local pins only, not persisted)
+            // Use colorProvider as single source of truth for colors (dataset.borderColor isn't set yet)
+            this.chart.data.datasets.forEach(dataset => {
+                dataset.hidden = false
+                dataset.pinned = true
+                const color = this.colorProvider.get(dataset.CCode)
+                this.pins.add({ CName: dataset.CName, CCode: dataset.CCode, borderColor: color })
+            })
+        } else if (this.pinnedOnly) {
             this.hideUnpinned()
         } else {
             this.showGroup(this.countryGroup)
@@ -887,13 +898,6 @@ class PanelChart {
         this.countryGroupMap = data.countryGroupMap || {}
         this.missingCountries = [] // Initialize as empty, will be populated asynchronously
         this.getPins()
-
-        // Auto-pin all countries in country list mode
-        if (this.isCountryListMode && this.CountryList.length > 0) {
-            this.CountryList.forEach(countryCode => {
-                this.pinCountryByCode(countryCode)
-            })
-        }
 
         this.updateLegend()
         this.updateItemDropdown(data.itemOptions, data.itemType)
@@ -954,6 +958,25 @@ class PanelChart {
     }
 
     getPins() {
+        // In countryListMode, don't load from global storage - pins are local only
+        if (this.isCountryListMode) {
+            // Just apply local pins to datasets without reading from storage
+            if (this.pins.size === 0) {
+                return
+            }
+            this.chart.data.datasets.forEach(dataset => {
+                for (const element of this.pins) {
+                    if (dataset.CCode === element.CCode) {
+                        dataset.pinned = true
+                        dataset.hidden = false
+                    }
+                }
+            })
+            this.updateLegend()
+            this.updateChartPreservingYAxis();
+            return
+        }
+
         const storedPins = window.observableStorage.getItem('pinnedCountries')
         if (storedPins) {
             this.pins = new Set(storedPins)
@@ -974,6 +997,10 @@ class PanelChart {
     }
 
     pushPinUpdate() {
+        // In countryListMode, don't persist to global storage - pins are local only
+        if (this.isCountryListMode) {
+            return
+        }
         window.observableStorage.setItem("pinnedCountries", Array.from(this.pins))
     }
 
@@ -1320,6 +1347,10 @@ class PanelChart {
     }
 
     rigPinChangeListener() {
+        // In countryListMode, don't listen for global pin changes - pins are local only
+        if (this.isCountryListMode) {
+            return
+        }
         window.observableStorage.onChange("pinnedCountries", () => {
             this.getPins()
             console.log("Pin change detected!")
