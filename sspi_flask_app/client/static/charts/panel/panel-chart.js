@@ -623,6 +623,10 @@ class PanelChart {
             return listener
         }
         this.legendItems.innerHTML = ''
+        // Remove old mouseleave listener before adding new one (prevent accumulation)
+        if (this._legendMouseleaveHandler) {
+            this.legendItems.removeEventListener('mouseleave', this._legendMouseleaveHandler)
+        }
         if (this.pins.size > 0) {
             this.pins.forEach((PinnedCountry) => {
                 const pinSpan = document.createElement('span')
@@ -647,13 +651,16 @@ class PanelChart {
                 newPin.addEventListener('click', generateListener(PinnedCountry.CCode, this))
                 newPin.addEventListener('mouseenter', (event) => this.handleChartCountryHighlight(event.target.dataset.ccode))
                 this.legendItems.appendChild(newPin)
-                this.legendItems.addEventListener('mouseleave', (event) => this.handleChartCountryHighlight(null))
             })
+            // Add mouseleave listener once (outside the loop), store reference for cleanup
+            this._legendMouseleaveHandler = () => this.handleChartCountryHighlight(null)
+            this.legendItems.addEventListener('mouseleave', this._legendMouseleaveHandler)
         }
         let removeButtons = this.legendItems.querySelectorAll('.remove-button-legend-item')
         removeButtons.forEach((button) => {
             let countryCode = button.id.split('-')[0]
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation() // Prevent bubbling to parent legend item
                 this.unpinCountryByCode(countryCode, true)
                 this.handleChartCountryHighlight(countryCode)
             })
@@ -1459,7 +1466,7 @@ class PanelChart {
 
     // Helper method to update chart while preserving any set y-axis limits
     // Chart.js automatically recalculates y-axis min/max during chart.update() based on visible data,
-    // which overrides any bounds that have been set (programmatically or by users). 
+    // which overrides any bounds that have been set (programmatically or by users).
     // This method preserves those bounds to respect the configured limits.
     updateChartPreservingYAxis(updateOptions = { duration: 0, lazy: false }) {
         // Get the actual current scale values from the chart's scales object

@@ -344,6 +344,9 @@ const chartInteractionPlugin = {
         const rows = this._interaction.tooltipItems;
         if (!rows?.length) return;
 
+        // Guard against null mouse position (can happen on quick mouseout)
+        if (!this._interaction.mouse) return;
+
         const ctx = chart.ctx;
         const pad = opts.tooltipPad, gap = opts.colGap, lh = 14;
         const baseFont = opts.tooltipFont;
