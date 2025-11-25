@@ -1,0 +1,1313 @@
+{
+  "config_id": "adhoc_tjmisko_a75752fc0f109b32",
+  "user_id": "tjmisko",
+  "metadata": [
+    {
+      "ItemType": "SSPI",
+      "ItemCode": "sspi",
+      "ItemName": "Sustainable and Shared Prosperity Policy Index",
+      "Children": [
+        "SUS",
+        "MS",
+        "PG"
+      ],
+      "DocumentType": "ItemDetail"
+    },
+    {
+      "ItemType": "Pillar",
+      "ItemCode": "SUS",
+      "ItemName": "Sustainability",
+      "PillarCode": "SUS",
+      "Children": [
+        "ECO",
+        "LND",
+        "GHG",
+        "NRG",
+        "WST"
+      ],
+      "CategoryCodes": [
+        "ECO",
+        "LND",
+        "GHG",
+        "NRG",
+        "WST"
+      ],
+      "DocumentType": "PillarDetail",
+      "TreePath": "sspi/sus"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "ECO",
+      "ItemName": "Ecosystem",
+      "CategoryCode": "ECO",
+      "PillarCode": "SUS",
+      "Children": [
+        "BIODIV",
+        "REDLST"
+      ],
+      "IndicatorCodes": [
+        "BIODIV",
+        "REDLST"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/sus/eco"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "BIODIV",
+      "ItemName": "Biodiversity Protection",
+      "IndicatorCode": "BIODIV",
+      "CategoryCode": "ECO",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_MARINE, 50, 100),\n    goalpost(UNSDG_TERRST, 50, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)",
+      "DatasetCodes": [
+        "UNSDG_MARINE",
+        "UNSDG_TERRST",
+        "UNSDG_FRSHWT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/eco/biodiv"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "REDLST",
+      "ItemName": "IUCN Red List Index",
+      "IndicatorCode": "REDLST",
+      "CategoryCode": "ECO",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(UNSDG_REDLST, 0, 1)",
+      "DatasetCodes": [
+        "UNSDG_REDLST"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/eco/redlst"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "LND",
+      "ItemName": "Land",
+      "CategoryCode": "LND",
+      "PillarCode": "SUS",
+      "Children": [
+        "NITROG",
+        "WATMAN",
+        "CHMPOL",
+        "DEFRST",
+        "CARBON"
+      ],
+      "IndicatorCodes": [
+        "NITROG",
+        "WATMAN",
+        "CHMPOL",
+        "DEFRST",
+        "CARBON"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/sus/lnd"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "NITROG",
+      "ItemName": "Sustainable Nitrogen Management",
+      "IndicatorCode": "NITROG",
+      "CategoryCode": "LND",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(EPI_NITROG, 0, 100)",
+      "DatasetCodes": [
+        "EPI_NITROG"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/lnd/nitrog"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "WATMAN",
+      "ItemName": "Water Management",
+      "IndicatorCode": "WATMAN",
+      "CategoryCode": "LND",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_CWUEFF, -20, 50),\n    goalpost(UNSDG_WTSTRS, 100, 0)\n)",
+      "DatasetCodes": [
+        "UNSDG_CWUEFF",
+        "UNSDG_WTSTRS"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/lnd/watman"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "CHMPOL",
+      "ItemName": "Chemical Pollution Convention Compliance",
+      "IndicatorCode": "CHMPOL",
+      "CategoryCode": "LND",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_STKHLM, 0, 1),\n    goalpost(UNSDG_BASELA, 0, 1),\n    goalpost(UNSDG_MONTRL, 0, 1),\n    goalpost(UNSDG_MINMAT, 0, 1),\n    goalpost(UNSDG_ROTDAM, 0, 1)\n)",
+      "DatasetCodes": [
+        "UNSDG_STKHLM",
+        "UNSDG_BASELA",
+        "UNSDG_MONTRL",
+        "UNSDG_MINMAT",
+        "UNSDG_ROTDAM"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/lnd/chmpol"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "DEFRST",
+      "ItemName": "Deforestation",
+      "IndicatorCode": "DEFRST",
+      "CategoryCode": "LND",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost((UNFAO_FRSTLV - UNFAO_FRSTAV) / UNFAO_FRSTAV, -20, 40)",
+      "DatasetCodes": [
+        "UNFAO_FRSTLV",
+        "UNFAO_FRSTAV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/lnd/defrst"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "CARBON",
+      "ItemName": "Natural Carbon Capture",
+      "IndicatorCode": "CARBON",
+      "CategoryCode": "LND",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost((UNFAO_CRBNLV - UNFAO_CRBNAV) / UNFAO_CRBNAV * 100, -5, 50)",
+      "DatasetCodes": [
+        "UNFAO_CRBNLV",
+        "UNFAO_CRBNAV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/lnd/carbon"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "GHG",
+      "ItemName": "Greenhouse Gases",
+      "CategoryCode": "GHG",
+      "PillarCode": "SUS",
+      "Children": [
+        "GTRANS",
+        "BEEFMK",
+        "COALPW"
+      ],
+      "IndicatorCodes": [
+        "GTRANS",
+        "BEEFMK",
+        "COALPW"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/sus/ghg"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "GTRANS",
+      "ItemName": "Green Transport Index",
+      "IndicatorCode": "GTRANS",
+      "CategoryCode": "GHG",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(IEA_TCO2EM / WB_POPULN, 7000, 0)",
+      "DatasetCodes": [
+        "IEA_TCO2EM",
+        "WB_POPULN"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/ghg/gtrans"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "BEEFMK",
+      "ItemName": "Beef Market",
+      "IndicatorCode": "BEEFMK",
+      "CategoryCode": "GHG",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = average(\n    goalpost(UNFAO_BFPROD / WB_POPULN, 50, 0),\n    goalpost(UNFAO_BFCONS, 50, 0)\n)",
+      "DatasetCodes": [
+        "UNFAO_BFPROD",
+        "UNFAO_BFCONS",
+        "WB_POPULN"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/ghg/beefmk"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "COALPW",
+      "ItemName": "Energy From Coal",
+      "IndicatorCode": "COALPW",
+      "CategoryCode": "GHG",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(IEA_TLCOAL / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL), 0.4, 0)",
+      "DatasetCodes": [
+        "IEA_TLCOAL",
+        "IEA_NATGAS",
+        "IEA_NCLEAR",
+        "IEA_HYDROP",
+        "IEA_GEOPWR",
+        "IEA_BIOWAS",
+        "IEA_FSLOIL"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/ghg/coalpw"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "NRG",
+      "ItemName": "Energy",
+      "CategoryCode": "NRG",
+      "PillarCode": "SUS",
+      "Children": [
+        "ALTNRG",
+        "NRGINT",
+        "AIRPOL"
+      ],
+      "IndicatorCodes": [
+        "ALTNRG",
+        "NRGINT",
+        "AIRPOL"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/sus/nrg"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "ALTNRG",
+      "ItemName": "Alternative Energy Generation",
+      "IndicatorCode": "ALTNRG",
+      "CategoryCode": "NRG",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(((IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS) - 0.5 * IEA_BIOWAS) / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL) * 100, 0, 60)",
+      "DatasetCodes": [
+        "IEA_TLCOAL",
+        "IEA_NATGAS",
+        "IEA_NCLEAR",
+        "IEA_HYDROP",
+        "IEA_GEOPWR",
+        "IEA_BIOWAS",
+        "IEA_FSLOIL"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/nrg/altnrg"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "NRGINT",
+      "ItemName": "Energy Intensity",
+      "IndicatorCode": "NRGINT",
+      "CategoryCode": "NRG",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(UNSDG_NRGINT, LowerGoalpost, UpperGoalpost)",
+      "DatasetCodes": [
+        "UNSDG_NRGINT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/nrg/nrgint"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "AIRPOL",
+      "ItemName": "Urban Air Pollution",
+      "IndicatorCode": "AIRPOL",
+      "CategoryCode": "NRG",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(UNSDG_AIRPOL, 40, 0)",
+      "DatasetCodes": [
+        "UNSDG_AIRPOL"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/nrg/airpol"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "WST",
+      "ItemName": "Waste",
+      "CategoryCode": "WST",
+      "PillarCode": "SUS",
+      "Children": [
+        "MSWGEN",
+        "RECYCL",
+        "STCONS"
+      ],
+      "IndicatorCodes": [
+        "MSWGEN",
+        "RECYCL",
+        "STCONS"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/sus/wst"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "MSWGEN",
+      "ItemName": "Municipal Solid Waste Generation",
+      "IndicatorCode": "MSWGEN",
+      "CategoryCode": "WST",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(EPI_MSWGEN, 100, 0)",
+      "DatasetCodes": [
+        "EPI_MSWGEN"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/wst/mswgen"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "RECYCL",
+      "ItemName": "Recycling Rate",
+      "IndicatorCode": "RECYCL",
+      "CategoryCode": "WST",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(WB_RECYCL, 0, 100)",
+      "DatasetCodes": [
+        "WB_RECYCL"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/wst/recycl"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "STCONS",
+      "ItemName": "Status Consumption",
+      "IndicatorCode": "STCONS",
+      "CategoryCode": "WST",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score = goalpost(FPI_ECOFPT_PER_CAP * WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, 30, 1.6)",
+      "DatasetCodes": [
+        "WID_CARBON_TOT_P0P100",
+        "WID_CARBON_TOT_P90P100",
+        "FPI_ECOFPT_PER_CAP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/wst/stcons"
+    },
+    {
+      "ItemType": "Pillar",
+      "ItemCode": "MS",
+      "ItemName": "Market Structure",
+      "PillarCode": "MS",
+      "Children": [
+        "WEN",
+        "WWB",
+        "TAX",
+        "FIN",
+        "NEQ"
+      ],
+      "CategoryCodes": [
+        "WEN",
+        "WWB",
+        "TAX",
+        "FIN",
+        "NEQ"
+      ],
+      "DocumentType": "PillarDetail",
+      "TreePath": "sspi/ms"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "WEN",
+      "ItemName": "Worker Engagement",
+      "CategoryCode": "WEN",
+      "PillarCode": "MS",
+      "Children": [
+        "EMPLOY",
+        "COLBAR"
+      ],
+      "IndicatorCodes": [
+        "EMPLOY",
+        "COLBAR"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/ms/wen"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "EMPLOY",
+      "ItemName": "Participation in Paid Employment",
+      "IndicatorCode": "EMPLOY",
+      "CategoryCode": "WEN",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(ILO_EMPLOY_TO_POP, 50, 95)",
+      "DatasetCodes": [
+        "ILO_EMPLOY_TO_POP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/wen/employ"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "COLBAR",
+      "ItemName": "Collective Bargaining Coverage",
+      "IndicatorCode": "COLBAR",
+      "CategoryCode": "WEN",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(ILO_COLBAR, 0, 100)",
+      "DatasetCodes": [
+        "ILO_COLBAR"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/wen/colbar"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "WWB",
+      "ItemName": "Worker Wellbeing",
+      "CategoryCode": "WWB",
+      "PillarCode": "MS",
+      "Children": [
+        "UNEMPB",
+        "MATERN",
+        "FATINJ",
+        "SENIOR"
+      ],
+      "IndicatorCodes": [
+        "UNEMPB",
+        "MATERN",
+        "FATINJ",
+        "SENIOR"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/ms/wwb"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "UNEMPB",
+      "ItemName": "Unemployment Benefits Coverage",
+      "IndicatorCode": "UNEMPB",
+      "CategoryCode": "WWB",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(UNSDG_BENFTS_UNEMP, 0, 100)",
+      "DatasetCodes": [
+        "UNSDG_BENFTS_UNEMP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/wwb/unempb"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "MATERN",
+      "ItemName": "Paid Maternity Leave",
+      "IndicatorCode": "MATERN",
+      "CategoryCode": "WWB",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(OECD_MATERN, 0, 52)",
+      "DatasetCodes": [
+        "OECD_MATERN"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/wwb/matern"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "FATINJ",
+      "ItemName": "Fatal Workplace Injuries",
+      "IndicatorCode": "FATINJ",
+      "CategoryCode": "WWB",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(ILO_FATINJ, 25, 0)",
+      "DatasetCodes": [
+        "ILO_FATINJ"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/wwb/fatinj"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "SENIOR",
+      "ItemName": "Senior Wellbeing",
+      "IndicatorCode": "SENIOR",
+      "CategoryCode": "WWB",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = average(\n    average(\n        goalpost(SENLEM - SENCRM, 0, 15),\n        goalpost(SENLEF - SENCRF, 0, 20)\n    ),\n    goalpost(SENPVT, 0, 50)\n)",
+      "DatasetCodes": [
+        "OECD_POVNRT",
+        "OECD_YRSRTM",
+        "OECD_YRSRTW"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/wwb/senior"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "TAX",
+      "ItemName": "Taxes",
+      "CategoryCode": "TAX",
+      "PillarCode": "MS",
+      "Children": [
+        "CRPTAX",
+        "TAXREV",
+        "TXRDST"
+      ],
+      "IndicatorCodes": [
+        "CRPTAX",
+        "TAXREV",
+        "TXRDST"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/ms/tax"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "CRPTAX",
+      "ItemName": "Corporate Tax Rate",
+      "IndicatorCode": "CRPTAX",
+      "CategoryCode": "TAX",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(TF_CRPTAX, 0, 40)",
+      "DatasetCodes": [
+        "TF_CRPTAX"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/tax/crptax"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "TAXREV",
+      "ItemName": "Tax Revenue",
+      "IndicatorCode": "TAXREV",
+      "CategoryCode": "TAX",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(WB_TAXREV, 0, 50)",
+      "DatasetCodes": [
+        "WB_TAXREV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/tax/taxrev"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "TXRDST",
+      "ItemName": "Tax Redistribution",
+      "IndicatorCode": "TXRDST",
+      "CategoryCode": "TAX",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost((WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50 / WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100 -  WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100 ) / ( WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100 ) * 100, -10, -100)",
+      "DatasetCodes": [
+        "WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50",
+        "WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100",
+        "WID_NINCSH_PRETAX_P0P50",
+        "WID_NINCSH_PRETAX_P90P100"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/tax/txrdst"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "FIN",
+      "ItemName": "Financial Sector",
+      "CategoryCode": "FIN",
+      "PillarCode": "MS",
+      "Children": [
+        "FSTABL",
+        "FDEPTH",
+        "PUBACC"
+      ],
+      "IndicatorCodes": [
+        "FSTABL",
+        "FDEPTH",
+        "PUBACC"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/ms/fin"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "FSTABL",
+      "ItemName": "Stability",
+      "IndicatorCode": "FSTABL",
+      "CategoryCode": "FIN",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(IMF_FSTABL, 10, 0)",
+      "DatasetCodes": [
+        "IMF_FSTABL"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/fin/fstabl"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "FDEPTH",
+      "ItemName": "Financial Depth",
+      "IndicatorCode": "FDEPTH",
+      "CategoryCode": "FIN",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = average(\n    goalpost(WB_CREDIT, 0, 200), \n    goalpost(WB_DPOSIT, 0, 100)\n)",
+      "DatasetCodes": [
+        "WB_CREDIT",
+        "WB_DPOSIT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/fin/fdepth"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "PUBACC",
+      "ItemName": "Public Access",
+      "IndicatorCode": "PUBACC",
+      "CategoryCode": "FIN",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(WB_PUBACC, 0, 100)",
+      "DatasetCodes": [
+        "WB_PUBACC"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/fin/pubacc"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "NEQ",
+      "ItemName": "Inequality",
+      "CategoryCode": "NEQ",
+      "PillarCode": "MS",
+      "Children": [
+        "ISHRAT",
+        "GINIPT"
+      ],
+      "IndicatorCodes": [
+        "ISHRAT",
+        "GINIPT"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/ms/neq"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "ISHRAT",
+      "ItemName": "Income Share Ratio",
+      "IndicatorCode": "ISHRAT",
+      "CategoryCode": "NEQ",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100, 0.2, 1.25)",
+      "DatasetCodes": [
+        "WID_NINCSH_PRETAX_P90P100",
+        "WID_NINCSH_PRETAX_P0P50"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/neq/ishrat"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "GINIPT",
+      "ItemName": "Gini-coefficient After Taxes",
+      "IndicatorCode": "GINIPT",
+      "CategoryCode": "NEQ",
+      "PillarCode": "MS",
+      "ScoreFunction": "Score = goalpost(WB_GINIPT, 70, 20)",
+      "DatasetCodes": [
+        "WB_GINIPT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/ms/neq/ginipt"
+    },
+    {
+      "ItemType": "Pillar",
+      "ItemCode": "PG",
+      "ItemName": "Public Goods",
+      "PillarCode": "PG",
+      "Children": [
+        "EDU",
+        "HLC",
+        "INF",
+        "RTS",
+        "SAF",
+        "GLB"
+      ],
+      "CategoryCodes": [
+        "EDU",
+        "HLC",
+        "INF",
+        "RTS",
+        "SAF",
+        "GLB"
+      ],
+      "DocumentType": "PillarDetail",
+      "TreePath": "sspi/pg"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "EDU",
+      "ItemName": "Education",
+      "CategoryCode": "EDU",
+      "PillarCode": "PG",
+      "Children": [
+        "ENRPRI",
+        "ENRSEC",
+        "YRSEDU",
+        "PUPTCH"
+      ],
+      "IndicatorCodes": [
+        "ENRPRI",
+        "ENRSEC",
+        "YRSEDU",
+        "PUPTCH"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/pg/edu"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "ENRPRI",
+      "ItemName": "Primary School Net Enrollment",
+      "IndicatorCode": "ENRPRI",
+      "CategoryCode": "EDU",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(UIS_ENRPRI, 80, 100)",
+      "DatasetCodes": [
+        "UIS_ENRPRI"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/edu/enrpri"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "ENRSEC",
+      "ItemName": "Lower Secondary Net Enrollment",
+      "IndicatorCode": "ENRSEC",
+      "CategoryCode": "EDU",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(UIS_ENRSEC, 70, 100)",
+      "DatasetCodes": [
+        "UIS_ENRSEC"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/edu/enrsec"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "YRSEDU",
+      "ItemName": "Years of Compulsory Education",
+      "IndicatorCode": "YRSEDU",
+      "CategoryCode": "EDU",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(UIS_YRSEDU, 6, 12)",
+      "DatasetCodes": [
+        "UIS_YRSEDU"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/edu/yrsedu"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "PUPTCH",
+      "ItemName": "Primary Education Pupil to Teacher Ratio",
+      "IndicatorCode": "PUPTCH",
+      "CategoryCode": "EDU",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WB_PUPTCH, 40, 9)",
+      "DatasetCodes": [
+        "WB_PUPTCH"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/edu/puptch"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "HLC",
+      "ItemName": "Healthcare",
+      "CategoryCode": "HLC",
+      "PillarCode": "PG",
+      "Children": [
+        "ATBRTH",
+        "DPTCOV",
+        "PHYSPC",
+        "FAMPLN",
+        "CSTUNT"
+      ],
+      "IndicatorCodes": [
+        "ATBRTH",
+        "DPTCOV",
+        "PHYSPC",
+        "FAMPLN",
+        "CSTUNT"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/pg/hlc"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "ATBRTH",
+      "ItemName": "Attended Births by Skilled Personnel",
+      "IndicatorCode": "ATBRTH",
+      "CategoryCode": "HLC",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WHO_ATBRTH, 80, 100)",
+      "DatasetCodes": [
+        "WHO_ATBRTH"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/hlc/atbrth"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "DPTCOV",
+      "ItemName": "Infant DTP Vaccine Coverage",
+      "IndicatorCode": "DPTCOV",
+      "CategoryCode": "HLC",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WHO_DPTCOV, 75, 100)",
+      "DatasetCodes": [
+        "WHO_DPTCOV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/hlc/dptcov"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "PHYSPC",
+      "ItemName": "Physicians per 10,000",
+      "IndicatorCode": "PHYSPC",
+      "CategoryCode": "HLC",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WHO_PHYSPC, 0, 70)",
+      "DatasetCodes": [
+        "WHO_PHYSPC"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/hlc/physpc"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "FAMPLN",
+      "ItemName": "Family Planning",
+      "IndicatorCode": "FAMPLN",
+      "CategoryCode": "HLC",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(UNSDG_FAMPLN, 20, 100)",
+      "DatasetCodes": [
+        "WHO_FAMPLN"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/hlc/fampln"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "CSTUNT",
+      "ItemName": "Child Stunting",
+      "IndicatorCode": "CSTUNT",
+      "CategoryCode": "HLC",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(UNSDG_CSTUNT, 50, 0)",
+      "DatasetCodes": [
+        "UNSDG_CSTUNT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/hlc/cstunt"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "INF",
+      "ItemName": "Infrastructure",
+      "CategoryCode": "INF",
+      "PillarCode": "PG",
+      "Children": [
+        "AQELEC",
+        "SANSRV",
+        "DRKWAT",
+        "INTRNT",
+        "TRNETW"
+      ],
+      "IndicatorCodes": [
+        "AQELEC",
+        "SANSRV",
+        "DRKWAT",
+        "INTRNT",
+        "TRNETW"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/pg/inf"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "AQELEC",
+      "ItemName": "Availability and Quality of Electricity",
+      "IndicatorCode": "AQELEC",
+      "CategoryCode": "INF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = average(\n    goalpost(WB_AVELEC, 0, 100),\n    goalpost(WEF_QUELEC, 1, 7)\n)",
+      "DatasetCodes": [
+        "WB_AVELEC",
+        "WEF_QUELEC"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/inf/aqelec"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "SANSRV",
+      "ItemName": "Basic Sanitation Services",
+      "IndicatorCode": "SANSRV",
+      "CategoryCode": "INF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WB_SANSRV, 50, 100)",
+      "DatasetCodes": [
+        "WB_SANSRV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/inf/sansrv"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "DRKWAT",
+      "ItemName": "Safely Managed Water",
+      "IndicatorCode": "DRKWAT",
+      "CategoryCode": "INF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WB_DRKWAT, 0, 100)",
+      "DatasetCodes": [
+        "WB_DRKWAT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/inf/drkwat"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "INTRNT",
+      "ItemName": "Internet Access and Quality",
+      "IndicatorCode": "INTRNT",
+      "CategoryCode": "INF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_INTRNT, 0, 100),\n    goalpost(WB_INTRNT, 0, 100)\n)",
+      "DatasetCodes": [
+        "UNSDG_AVINTR",
+        "CABLE_QUINTR"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/inf/intrnt"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "TRNETW",
+      "ItemName": "National Transport Network Intensity",
+      "IndicatorCode": "TRNETW",
+      "CategoryCode": "INF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Not available (computed from complex transformation) https://www.cia.gov/the-world-factbook/field/railways/country-comparison/]'",
+      "DatasetCodes": [
+        "CIA_ROADNT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/inf/trnetw"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "RTS",
+      "ItemName": "Rights",
+      "CategoryCode": "RTS",
+      "PillarCode": "PG",
+      "Children": [
+        "RULELW",
+        "PUBSRV",
+        "EDEMOC",
+        "UNCONV",
+        "GENDEQ"
+      ],
+      "IndicatorCodes": [
+        "RULELW",
+        "PUBSRV",
+        "EDEMOC",
+        "UNCONV",
+        "GENDEQ"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/pg/rts"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "RULELW",
+      "ItemName": "Rule of Law Index",
+      "IndicatorCode": "RULELW",
+      "CategoryCode": "RTS",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(VDEM_RULELW, 0, 1)",
+      "DatasetCodes": [
+        "VDEM_RULELW"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/rts/rulelw"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "PUBSRV",
+      "ItemName": "Quality of Public Services & Governance",
+      "IndicatorCode": "PUBSRV",
+      "CategoryCode": "RTS",
+      "PillarCode": "PG",
+      "ScoreFunction": "Not available (computed from WGI_PUBSRV)",
+      "DatasetCodes": [
+        "WGI_PUBSRV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/rts/pubsrv"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "EDEMOC",
+      "ItemName": "Electoral Democracy Index",
+      "IndicatorCode": "EDEMOC",
+      "CategoryCode": "RTS",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(VDEM_EDEMOC, 0, 1)",
+      "DatasetCodes": [
+        "VDEM_EDEMOC"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/rts/edemoc"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "UNCONV",
+      "ItemName": "Adoption of Key UN Conventions",
+      "IndicatorCode": "UNCONV",
+      "CategoryCode": "RTS",
+      "PillarCode": "PG",
+      "ScoreFunction": "Not available (computed from UNSDG_UNCONV)",
+      "DatasetCodes": [
+        "UNSDG_UNCONV"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/rts/unconv"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "GENDEQ",
+      "ItemName": "Gender Equality Index",
+      "IndicatorCode": "GENDEQ",
+      "CategoryCode": "RTS",
+      "PillarCode": "PG",
+      "ScoreFunction": "Not available (computed from multiple weighted datasets)",
+      "DatasetCodes": [
+        "IPU_WMPLMT",
+        "WBL_WMMOBL",
+        "WBL_WMMARR",
+        "WBL_WMFNMN"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/rts/gendeq"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "SAF",
+      "ItemName": "Public Safety",
+      "CategoryCode": "SAF",
+      "PillarCode": "PG",
+      "Children": [
+        "MURDER",
+        "CYBSEC",
+        "SECAPP",
+        "PRISON"
+      ],
+      "IndicatorCodes": [
+        "MURDER",
+        "CYBSEC",
+        "SECAPP",
+        "PRISON"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/pg/saf"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "MURDER",
+      "ItemName": "Intentional Homicide",
+      "IndicatorCode": "MURDER",
+      "CategoryCode": "SAF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(WB_MURDER, 20, 0)",
+      "DatasetCodes": [
+        "WB_MURDER"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/saf/murder"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "CYBSEC",
+      "ItemName": "Global Cybersecurity Index",
+      "IndicatorCode": "CYBSEC",
+      "CategoryCode": "SAF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(ITU_CYBSEC, 0, 1)",
+      "DatasetCodes": [
+        "ITU_CYBSEC"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/saf/cybsec"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "SECAPP",
+      "ItemName": "Security Apparatus",
+      "IndicatorCode": "SECAPP",
+      "CategoryCode": "SAF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(FSI_SECAPP, 10, 0)",
+      "DatasetCodes": [
+        "FSI_SECAPP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/saf/secapp"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "PRISON",
+      "ItemName": "Incarceration Rates",
+      "IndicatorCode": "PRISON",
+      "CategoryCode": "SAF",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(UNODC_PRIPOP, 540, 40)",
+      "DatasetCodes": [
+        "UNODC_PRIPOP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/saf/prison"
+    },
+    {
+      "ItemType": "Category",
+      "ItemCode": "GLB",
+      "ItemName": "Global Role",
+      "CategoryCode": "GLB",
+      "PillarCode": "PG",
+      "Children": [
+        "ARMEXP",
+        "MILEXP",
+        "RDFUND",
+        "FORAID"
+      ],
+      "IndicatorCodes": [
+        "ARMEXP",
+        "MILEXP",
+        "RDFUND",
+        "FORAID"
+      ],
+      "DocumentType": "CategoryDetail",
+      "TreePath": "sspi/pg/glb"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "ARMEXP",
+      "ItemName": "Arms Transfers",
+      "IndicatorCode": "ARMEXP",
+      "CategoryCode": "GLB",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(SIPRI_ARMEXP, 500, 0)",
+      "DatasetCodes": [
+        "SIPRI_ARMEXP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/glb/armexp"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "MILEXP",
+      "ItemName": "Military Expenditure",
+      "IndicatorCode": "MILEXP",
+      "CategoryCode": "GLB",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = goalpost(SIPRI_MILEXP, 5, 0)",
+      "DatasetCodes": [
+        "SIPRI_MILEXP"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/glb/milexp"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "RDFUND",
+      "ItemName": "Research and Development",
+      "IndicatorCode": "RDFUND",
+      "CategoryCode": "GLB",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_RDPGDP, 0, 4),\n    goalpost(UNSDG_NRSRCH, 0, 5000)\n)",
+      "DatasetCodes": [
+        "UNSDG_RDPGDP",
+        "UNSDG_NRSRCH"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/glb/rdfund"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "FORAID",
+      "ItemName": "Foreign Aid",
+      "IndicatorCode": "FORAID",
+      "CategoryCode": "GLB",
+      "PillarCode": "PG",
+      "ScoreFunction": "Score = max(\n    goalpost(TOTDON * 10**8 / GDPMKT, 0, 1),\n    goalpost(TOTREC * 10**6 / POPULN, 0, 500)\n)",
+      "DatasetCodes": [
+        "OECD_TOTDON",
+        "OECD_TONREC",
+        "WB_POPULN",
+        "WB_GDPMKT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/pg/glb/foraid"
+    }
+  ],
+  "actions": [
+    {
+      "type": "set-score-function",
+      "from": "Score = average(\n    goalpost(UNSDG_MARINE, 0, 100),\n    goalpost(UNSDG_TERRST, 0, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)",
+      "to": "Score = average(\n    goalpost(UNSDG_MARINE, 50, 100),\n    goalpost(UNSDG_TERRST, 50, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)",
+      "indicatorCode": "BIODIV",
+      "scoreFunction": "Score = average(\n    goalpost(UNSDG_MARINE, 50, 100),\n    goalpost(UNSDG_TERRST, 50, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)"
+    }
+  ]
+}
