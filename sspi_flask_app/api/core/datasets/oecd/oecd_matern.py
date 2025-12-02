@@ -15,8 +15,8 @@ def collect_oecd_matern_data(**kwargs):
         source_info = {
             "OrganizationCode": "OECD",
             "OrganizationName": "OECD",
-            "OrganizationSeriesCode": None,
-            "QueryCode": None,
+            "OrganizationSeriesCode": "paidmatern",
+            "QueryCode": "paidmatern",
             "SheetName": "Data",
             "DateDownloaded": datetime.now().strftime('%Y-%m-%d'),
             "SourceURL": child_wellbeing_url
