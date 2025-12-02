@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    <title> {{ title }} </title>
+{% endblock title %}
+
+{% block content %}
+<section class="print-style-article">
+    <h2> {{ title }} </h2>
+    {% if subtitle %}
+        <h3> {{ subtitle }} </h3>
+    {% endif %}
+    <div class="analysis-metadata-line">
+        <ul class="analysis-author-list">
+            Authors: 
+            {% for a in authors %}
+                <li class="analysis-author-list-element">{{a}}</li>
+            {% endfor %}
+        </ul>
+        <span class="analysis-date">Published: {{ date }}</h4>
+    </div>
+    <subsection class="methodology-subsection">
+        <div class="methodology-wrapper">
+            {{ analysis | safe }}
+        </div>
+    </subsection>
+</section>
+{% endblock content %}

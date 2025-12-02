@@ -1,0 +1,6 @@
+.chart-section-overall-stack div {
+  width: 100%;
+  min-height: 500px;
+  padding-right: 1.5em;
+  box-sizing: border-box;
+}

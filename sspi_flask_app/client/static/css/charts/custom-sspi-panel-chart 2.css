@@ -1,0 +1,338 @@
+/* Custom SSPI Panel Chart Styles */
+
+.custom-panel-chart-root-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.custom-sspi-tree-container {
+    background-color: var(--panel-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.custom-sspi-tree-description {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.custom-sspi-tree-header {
+    color: var(--text-primary);
+    font-size: 1.2em;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.config-info-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin: var(--spacing-sm) 0;
+}
+
+.config-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.1em;
+}
+
+.config-stats {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.custom-sspi-tree-description-text {
+    color: var(--text-secondary);
+    margin: var(--spacing-sm) 0 0 0;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+/* Custom Controls */
+.custom-controls-container {
+    background-color: var(--panel-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.custom-controls-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.custom-controls-header h4 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.custom-controls-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.custom-control-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--button-background);
+    color: var(--button-text);
+    border: 1px solid var(--button-border);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.custom-control-btn:hover {
+    background-color: var(--button-background-hover);
+    border-color: var(--button-border-hover);
+    transform: translateY(-1px);
+}
+
+.custom-control-btn:active {
+    transform: translateY(0);
+}
+
+.custom-control-btn svg {
+    flex-shrink: 0;
+}
+
+.refresh-cache-btn {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.refresh-cache-btn:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+.clear-cache-btn {
+    background-color: var(--color-warning);
+    border-color: var(--color-warning);
+    color: white;
+}
+
+.clear-cache-btn:hover {
+    background-color: var(--color-warning-dark);
+    border-color: var(--color-warning-dark);
+}
+
+.edit-config-btn {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: white;
+}
+
+.edit-config-btn:hover {
+    background-color: var(--color-secondary-dark);
+    border-color: var(--color-secondary-dark);
+}
+
+.cache-status-indicator {
+    margin-left: auto;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+}
+
+.cache-status-text {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Custom Item Tree */
+.custom-item-selector {
+    padding: var(--spacing-md);
+}
+
+.custom-item-selector h4 {
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.custom-item-button {
+    display: inline-block;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: 0 var(--spacing-xs) var(--spacing-xs) 0;
+    background-color: var(--button-background);
+    color: var(--button-text);
+    border: 1px solid var(--button-border);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.custom-item-button:hover {
+    background-color: var(--button-background-hover);
+    border-color: var(--button-border-hover);
+}
+
+.custom-item-button.selected {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.custom-item-button.selected:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+/* Status Messages */
+.no-data-message, .error-message, .no-items-message {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--text-secondary);
+}
+
+.error-message {
+    background-color: var(--color-error-light);
+    border: 1px solid var(--color-error);
+    border-radius: var(--border-radius);
+    color: var(--color-error-dark);
+}
+
+.error-message h4 {
+    color: var(--color-error-dark);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.error-message p {
+    margin: var(--spacing-xs) 0;
+    line-height: 1.4;
+}
+
+.no-data-message {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.no-data-message h4 {
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.retry-btn, .generate-data-btn {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-primary);
+    color: white;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.retry-btn:hover, .generate-data-btn:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .custom-controls-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .custom-control-btn {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .cache-status-indicator {
+        margin-left: 0;
+        margin-top: var(--spacing-sm);
+    }
+    
+    .config-info-container {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .custom-controls-container,
+    .custom-sspi-tree-container {
+        padding: var(--spacing-sm);
+    }
+    
+    .custom-controls-buttons {
+        gap: var(--spacing-xs);
+    }
+    
+    .custom-control-btn {
+        font-size: 0.85em;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .custom-item-button {
+        font-size: 0.85em;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .custom-controls-container,
+[data-theme="dark"] .custom-sspi-tree-container {
+    background-color: var(--panel-background-dark);
+    border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .custom-control-btn {
+    background-color: var(--button-background-dark);
+    color: var(--button-text-dark);
+    border-color: var(--button-border-dark);
+}
+
+[data-theme="dark"] .custom-control-btn:hover {
+    background-color: var(--button-background-hover-dark);
+}
+
+[data-theme="dark"] .custom-item-button {
+    background-color: var(--button-background-dark);
+    color: var(--button-text-dark);
+    border-color: var(--button-border-dark);
+}
+
+[data-theme="dark"] .custom-item-button:hover {
+    background-color: var(--button-background-hover-dark);
+}
+
+[data-theme="dark"] .no-data-message {
+    background-color: var(--background-secondary-dark);
+    border-color: var(--border-color-dark);
+}
+
+[data-theme="dark"] .cache-status-indicator {
+    background-color: var(--background-secondary-dark);
+    border-color: var(--border-color-dark);
+}
