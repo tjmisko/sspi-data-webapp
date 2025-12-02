@@ -13,13 +13,14 @@ def collect_oecd_matern_data(**kwargs):
     
     if response.status_code == 200:
         source_info = {
+            "BaseURL": "https://stats.oecd.org/",
             "OrganizationCode": "OECD",
             "OrganizationName": "OECD",
             "OrganizationSeriesCode": "paidmatern",
             "QueryCode": "paidmatern",
-            "SheetName": "Data",
-            "DateDownloaded": datetime.now().strftime('%Y-%m-%d'),
-            "SourceURL": child_wellbeing_url
+            # "SheetName": "Data",
+            # "DateDownloaded": datetime.now().strftime('%Y-%m-%d'),
+            # "SourceURL": child_wellbeing_url
         }
         
         sspi_raw_api_data.raw_insert_one(
