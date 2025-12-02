@@ -67,17 +67,26 @@ def clean_puptch_csv_data(raw_data, dataset_code, unit, description):
         raise ValueError(f"csv_Raw_data in clean_puptch_csv_data is None")
 
     df = pd.read_csv(io.StringIO(csv_Raw_text_data))
-    df = df.rename(columns = {"Pupil-qualified teacher ratio in primary education": "Value"})
+    df = df.rename(columns = {"pupil_qualified_teacher_ratio_in_primary_education__headcount_basis__ptrhc_1_qualified": "Value"})
     df['DatasetCode'] = dataset_code
     df['Description'] = description
     df['Unit'] = unit
     df['CountryCode'] = df['Entity'].apply(get_country_code)
+    # df['CountryCode'] = df['Code']
     df['Year'] = df['Year'].astype(int)
-    print(df.columns.tolist())
     df = df.loc[:, ["CountryCode", "DatasetCode", "Description", "Unit", "Value", "Year"]]
+    df = df[df['CountryCode'].str.len() == 3]
     df = df.dropna()
-    rows = df.to_dict(orient="records")
 
+    #drop duplicate rows and keep the row that has the maximum value 
+    # for example, I had {"CountryCode": "KOR", "DatasetCode": "PUPTCH_OWD", "Year": 2018, "Value": 20.16}
+    # and another duplicate row {"CountryCode": "KOR", "DatasetCode": "PUPTCH_OWD", "Year": 2018, "Value": 16.04}
+    # so I kept the row with the maximum value so I can only have unique combinations of 
+    # "CountryCode", "DatasetCode", "Year" and the dataset only contains 
+    # {"CountryCode": "KOR", "DatasetCode": "PUPTCH_OWD", "Year": 2018, "Value": 20.16}
+    df = df.loc[df.groupby(["CountryCode", "DatasetCode", "Year"])["Value"].idxmax()]
+    df = df.reset_index(drop=True)
+    rows = df.to_dict(orient="records")
     return parse_json(rows)
 
 
@@ -100,13 +109,18 @@ def clean_puptch_zip_data(raw_data, dataset_code, unit, description):
     
     csv_Raw_text_data = io.StringIO(csv_Raw_text_data)
     df = pd.read_csv(csv_Raw_text_data)
-    df_long = df.melt(id_vars=["country", "iso_3"], var_name="Year", value_name="Value")
-    df_long = df_long.rename(columns={"country": "Country_name","iso_3": "geo_unit"})
+    df_long = df.loc[:, ['geoUnit', 'year', 'value']]
+
+    df_long = df_long.rename(columns={"geoUnit": "Country_name", "value": "Value"})
     df_long['DatasetCode'] = dataset_code
     df_long['Description'] = description
     df_long['Unit'] = unit
-    df_long['CountryCode'] = df_long['Country_name'].apply(get_country_code)
-    df_long['Year'] = df_long['Year'].astype(int)
+    df_long['CountryCode'] = df_long['Country_name']
+    ## Only keeping CountryCode that is 3 letters long 
+    ## Deleted CountryCode that were ALECSO: Gulf countries and others that were alike since
+    ## They were not a specific unique country, it covered groups of countries in one category ALECSO
+    df_long = df_long[df_long['CountryCode'].str.len() == 3]
+    df_long['Year'] = df_long['year'].astype(int)
     df_long = df_long.loc[:, ["CountryCode", "DatasetCode", "Description", "Unit", "Value", "Year"]]
     df_long = df_long.dropna()
     rows = df_long.to_dict(orient="records")

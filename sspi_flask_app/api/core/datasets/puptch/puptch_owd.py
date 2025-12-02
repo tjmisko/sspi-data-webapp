@@ -24,9 +24,9 @@ def clean_puptch_owd():
         raise ValueError(f"Dataset code PUPTCH_OWD not found in metadata.")
     description = detail['Description']
 
-    cleaned_data = clean_puptch_csv_data(raw_data, DatasetCode, unit, description)
+    cleaned_data_json = clean_puptch_csv_data(raw_data, DatasetCode, unit, description)
+    
 
-
-    sspi_clean_api_data.insert_many(cleaned_data)
-    sspi_metadata.record_dataset_range(cleaned_data, DatasetCode)
-    return parse_json(cleaned_data)
+    sspi_clean_api_data.insert_many(cleaned_data_json)
+    sspi_metadata.record_dataset_range(cleaned_data_json, DatasetCode)
+    return cleaned_data_json
