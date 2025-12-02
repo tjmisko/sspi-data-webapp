@@ -73,6 +73,7 @@ def clean_puptch_csv_data(raw_data, dataset_code, unit, description):
     df['Unit'] = unit
     df['CountryCode'] = df['Entity'].apply(get_country_code)
     df['Year'] = df['Year'].astype(int)
+    print(df.columns.tolist())
     df = df.loc[:, ["CountryCode", "DatasetCode", "Description", "Unit", "Value", "Year"]]
     df = df.dropna()
     rows = df.to_dict(orient="records")
