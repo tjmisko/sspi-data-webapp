@@ -9,7 +9,8 @@ from sspi_flask_app.api.resources.utilities import (
     extrapolate_forward,
     extrapolate_backward,
     interpolate_linear,
-    impute_reference_class_average)
+    impute_reference_class_average,
+    filter_imputations)
 
 from sspi_flask_app.auth.decorators import admin_required
 from sspi_flask_app.models.database import (
@@ -45,45 +46,80 @@ def compute_stcons():
 @impute_bp.route("/STCONS", methods=["POST"])
 @admin_required
 def impute_stcons():
+    lg, ug = sspi_metadata.get_goalposts("STCONS")
+    def stcons_score_function(WID_CARBON_TOT_P90P100, WID_CARBON_TOT_P0P100, FPI_ECOFPT_PER_CAP):
+        return goalpost(FPI_ECOFPT_PER_CAP * WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, lg, ug)
+
     mongo_query = {"IndicatorCode": "STCONS"}
     sspi_imputed_data.delete_many(mongo_query)
-    
-    # Get complete indicator data
-    clean_list = sspi_indicator_data.find(mongo_query)
-    
-    # Extrapolate indicator scores backward to 2000 and forward to 2023
-    imputed_backward = extrapolate_backward(
-        clean_list, 2000, series_id=["CountryCode", "IndicatorCode"], impute_only=True
+
+    sspi_67 = sspi_metadata.country_group("SSPI67")
+    reference_class_averages = []
+
+    # Extract and impute WID_CARBON_TOT_P0P100 data
+    wid_p0p100 = sspi_clean_api_data.find({"DatasetCode": "WID_CARBON_TOT_P0P100"})
+    missing_p0p100 = set(sspi_67) - set([d.get("CountryCode", "") for d in wid_p0p100])
+    for country in missing_p0p100:
+        reference_class_averages.extend(
+            impute_reference_class_average(country, 2000, 2023, "Dataset", "WID_CARBON_TOT_P0P100", wid_p0p100)
+        )
+    imputed_p0p100 = extrapolate_backward(
+        wid_p0p100, 2000, series_id=["CountryCode", "DatasetCode"]
     )
-    imputed_forward = extrapolate_forward(
-        clean_list, 2023, series_id=["CountryCode", "IndicatorCode"], impute_only=True
+    imputed_p0p100 = extrapolate_forward(
+        imputed_p0p100, 2023, series_id=["CountryCode", "DatasetCode"]
     )
-    
-    # Combine for interpolation
-    all_data = clean_list + imputed_backward + imputed_forward
-    interpolated = interpolate_linear(
-        all_data, series_id=["CountryCode", "IndicatorCode"], impute_only=True
+    imputed_p0p100 = interpolate_linear(
+        imputed_p0p100, series_id=["CountryCode", "DatasetCode"]
     )
-    
-    imputed_stcons = imputed_backward + imputed_forward + interpolated
-    
-    # Handle countries with no data using reference class average
-    sspi67_countries = sspi_metadata.country_group("SSPI67")
-    countries_with_data = {d["CountryCode"] for d in clean_list}
-    countries_no_data = [c for c in sspi67_countries if c not in countries_with_data]
-    
-    if countries_no_data:
-        ref_data = [d for d in clean_list if d["CountryCode"] not in countries_no_data]
-        
-        for country in countries_no_data:
-            if ref_data:
-                country_imputed = impute_reference_class_average(
-                    country, 2000, 2023, "Indicator", "STCONS", ref_data
-                )
-                imputed_stcons.extend(country_imputed)
-    
+
+    # Extract and impute WID_CARBON_TOT_P90P100 data
+    wid_p90p100 = sspi_clean_api_data.find({"DatasetCode": "WID_CARBON_TOT_P90P100"})
+    missing_p90p100 = set(sspi_67) - set([d.get("CountryCode", "") for d in wid_p90p100])
+    for country in missing_p90p100:
+        reference_class_averages.extend(
+            impute_reference_class_average(country, 2000, 2023, "Dataset", "WID_CARBON_TOT_P90P100", wid_p90p100)
+        )
+    imputed_p90p100 = extrapolate_backward(
+        wid_p90p100, 2000, series_id=["CountryCode", "DatasetCode"]
+    )
+    imputed_p90p100 = extrapolate_forward(
+        imputed_p90p100, 2023, series_id=["CountryCode", "DatasetCode"]
+    )
+    imputed_p90p100 = interpolate_linear(
+        imputed_p90p100, series_id=["CountryCode", "DatasetCode"]
+    )
+
+    # Extract and impute FPI_ECOFPT_PER_CAP data
+    fpi_ecofpt = sspi_clean_api_data.find({"DatasetCode": "FPI_ECOFPT_PER_CAP"})
+    missing_fpi = set(sspi_67) - set([d.get("CountryCode", "") for d in fpi_ecofpt])
+    for country in missing_fpi:
+        reference_class_averages.extend(
+            impute_reference_class_average(country, 2000, 2023, "Dataset", "FPI_ECOFPT_PER_CAP", fpi_ecofpt)
+        )
+    imputed_fpi = extrapolate_backward(
+        fpi_ecofpt, 2000, series_id=["CountryCode", "DatasetCode"]
+    )
+    imputed_fpi = extrapolate_forward(
+        imputed_fpi, 2023, series_id=["CountryCode", "DatasetCode"]
+    )
+    imputed_fpi = interpolate_linear(
+        imputed_fpi, series_id=["CountryCode", "DatasetCode"]
+    )
+
+    # Combine all imputed datasets and score the indicator
+    all_imputed_datasets = imputed_p0p100 + imputed_p90p100 + imputed_fpi + reference_class_averages
+    overall_stcons, _ = score_indicator(
+        all_imputed_datasets, "STCONS",
+        score_function=stcons_score_function,
+        unit="Index"
+    )
+
+    # Filter to only get imputations
+    imputed_stcons = filter_imputations(overall_stcons)
+
     # Insert into database
     if imputed_stcons:
         sspi_imputed_data.insert_many(imputed_stcons)
-    
+
     return parse_json(imputed_stcons)

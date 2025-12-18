@@ -472,6 +472,15 @@ def country_data(country_code):
 def dataset_data(dataset_code):
     dataset_code = dataset_code.upper()
     dataset_detail = sspi_metadata.get_dataset_detail(dataset_code)
+
+    # Validate dataset exists in metadata
+    if not dataset_detail:
+        return render_template(
+            'dataset-panel-data.html',
+            dataset_detail={'DatasetCode': dataset_code, 'DatasetName': 'Unknown Dataset'},
+            dataset_notes_html='<p>Dataset not found.</p>'
+        )
+
     dataset_notes = sspi_metadata.get_dataset_documentation(dataset_code)
     return render_template('dataset-panel-data.html', dataset_detail=dataset_detail, dataset_notes_html=dataset_notes)
 
@@ -622,7 +631,6 @@ def pillar_data(pillar_code):
             PanelItemCode=pillar_code,
             PanelItemType='Pillar',
             CountryList=[],
-            medhodology=sspi_metadata.get_item_methodology_html(pillar_code),
             error=True
         )
     return render_template(
@@ -630,6 +638,7 @@ def pillar_data(pillar_code):
         PanelItemCode=pillar_code,
         PanelItemType='Pillar',
         CountryList=validated_codes,
+        methodology=sspi_metadata.get_item_methodology_html(pillar_code),
         error=False
     )
 
@@ -668,6 +677,18 @@ def analysis():
 def analysis_page(analysis_code):
     analysis_code = analysis_code.upper()
     analysis_detail = sspi_metadata.get_analysis_detail(analysis_code)
+
+    # Validate analysis exists in metadata
+    if not analysis_detail:
+        return render_template(
+            'analysis-template.html',
+            title='Analysis Not Found',
+            subtitle=None,
+            authors=None,
+            date=None,
+            analysis='<p>The requested analysis could not be found.</p>'
+        )
+
     analysis_title = analysis_detail.get("AnalysisTitle")
     analysis_subtitle = analysis_detail.get("AnalysisSubtitle")
     analysis_date = analysis_detail.get("Date")
@@ -675,11 +696,11 @@ def analysis_page(analysis_code):
     analysis_html = sspi_metadata.get_analysis_html(analysis_code)
     return render_template(
         'analysis-template.html',
-        title = analysis_title,
-        subtitle = analysis_subtitle,
-        authors = analysis_authors,
-        date = analysis_date,
-        analysis = analysis_html
+        title=analysis_title,
+        subtitle=analysis_subtitle,
+        authors=analysis_authors,
+        date=analysis_date,
+        analysis=analysis_html
     )
 
 

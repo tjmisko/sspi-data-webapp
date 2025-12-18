@@ -1,4 +1,5 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
+from sspi_flask_app.models.utils import secure_read_file, SecurePathError
 import frontmatter
 from markdown import markdown
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, MethodologyFileError, DatasetFileError, AnalysisFileError
@@ -848,76 +849,104 @@ class SSPIMetadata(MongoWrapper):
         )["Metadata"] 
 
     def get_analysis_html(self, analysis_code: str) -> str:
-        analysis_code = analysis_code.lower()
-        path_lst = [app.root_path, "..", "analysis", analysis_code + ".md"]
-        analysis_path = os.path.join(*path_lst)
-        with open(analysis_path, 'r', encoding='utf-8') as f:
-            analysis_page = f.read()
-        if not analysis_page:
-            analysis_html = f"<p>Invalid analysis code {analysis_code} requested.</p>"
+        """
+        Returns the HTML for the analysis page with the given analysis_code.
+        Returns a safe error message if the file cannot be read.
+        """
         try:
+            # Sanitize input - only allow alphanumeric and hyphens
+            analysis_code = analysis_code.lower()
+            if not all(c.isalnum() or c == '-' for c in analysis_code):
+                log.warning(f"Invalid analysis code format: {analysis_code}")
+                return "<p>Analysis not available.</p>"
+
+            analysis_dir = os.path.join(app.root_path, "..", "analysis")
+            relative_path = analysis_code + ".md"
+
+            analysis_page = secure_read_file(analysis_dir, relative_path, ['.md'])
+
+            if not analysis_page:
+                return "<p>Analysis not available.</p>"
+
             post = frontmatter.loads(analysis_page)
-            analysis_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+            return markdown(post.content, extensions=['fenced_code', 'tables'])
+        except SecurePathError as e:
+            log.warning(f"Secure path error for analysis {analysis_code}: {e}")
+            return "<p>Analysis not available.</p>"
         except (ValueError, yaml.YAMLError) as e:
-            raise MethodologyFileError(
-                f"Error loading analysis file for {analysis_code}: {e};\n"
-                "Is there an error in the YAML frontmatter?"
-            )
-        return analysis_html 
+            log.error(f"Error parsing analysis file for {analysis_code}: {e}")
+            return "<p>Analysis not available.</p>" 
 
              
     def get_dataset_documentation(self, dataset_code: str) -> str:
         """
-        Returns the HTML for the documentation of the given dataset_code
+        Returns the HTML for the documentation of the given dataset_code.
+        Returns a safe error message if the file cannot be read.
 
         NOTE: Assumes datasets correctly coded and organized.
         1) Dataset must begin with the correct source organization code,
         followed by an underscore.
-        2) Dataset documentation must be in the correct location: 
+        2) Dataset documentation must be in the correct location:
         /datasets/<org_code>/<dataset_code>/documentation.md
         """
-        org_code = dataset_code.split("_")[0].lower()
-        documentation_fp = os.path.join(
-            app.root_path, "..", "datasets", org_code, dataset_code.lower(), "documentation.md"
-        )
-        with open(documentation_fp, 'r', encoding='utf-8') as f:
-            documentation = f.read()
-        if not documentation:
-            documentation_html = "<p>No methodology available for this item.</p>"
         try:
+            # Validate dataset_code format - must contain underscore and be alphanumeric
+            if "_" not in dataset_code:
+                log.warning(f"Invalid dataset code format (no underscore): {dataset_code}")
+                return "<p>Documentation not available for this dataset.</p>"
+
+            # Sanitize input - only allow alphanumeric and underscores
+            dataset_code_lower = dataset_code.lower()
+            if not all(c.isalnum() or c == '_' for c in dataset_code_lower):
+                log.warning(f"Invalid dataset code format: {dataset_code}")
+                return "<p>Documentation not available for this dataset.</p>"
+
+            org_code = dataset_code_lower.split("_")[0]
+            datasets_dir = os.path.join(app.root_path, "..", "datasets")
+            relative_path = os.path.join(org_code, dataset_code_lower, "documentation.md")
+
+            documentation = secure_read_file(datasets_dir, relative_path, ['.md'])
+
+            if not documentation:
+                return "<p>Documentation not available for this dataset.</p>"
+
             post = frontmatter.loads(documentation)
-            documentation_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+            return markdown(post.content, extensions=['fenced_code', 'tables'])
+        except SecurePathError as e:
+            log.warning(f"Secure path error for dataset {dataset_code}: {e}")
+            return "<p>Documentation not available for this dataset.</p>"
         except (ValueError, yaml.YAMLError) as e:
-            raise DatasetFileError(
-                f"Error loading methodology file {documentation_fp}: {e};\n"
-                "Is there an error in the YAML frontmatter?"
-            )
-        return documentation_html
+            log.error(f"Error parsing documentation file for {dataset_code}: {e}")
+            return "<p>Documentation not available for this dataset.</p>"
 
 
     def get_item_methodology_html(self, ItemCode: str) -> str:
         """
-        Returns the HTML for the methodology of the given ItemCode
+        Returns the HTML for the methodology of the given ItemCode.
+        Returns a safe error message if the file cannot be read.
         """
-        detail = self.get_item_detail(ItemCode)
-        if "TreePath" not in detail.keys():
-            return ""
-        tree_path = detail["TreePath"].replace("sspi", "methodology")
-        methodology_dirlst = ['..'] + tree_path.split('/') + ['methodology.md']
-        methdology_fp = os.path.join(app.root_path, *methodology_dirlst)
-        with open(methdology_fp, 'r', encoding='utf-8') as f:
-            methodology = f.read()
-        if not methodology:
-            methodology_html = "<p>No methodology available for this item.</p>"
         try:
+            detail = self.get_item_detail(ItemCode)
+            if not detail or "TreePath" not in detail.keys():
+                return "<p>No methodology available for this item.</p>"
+
+            tree_path = detail["TreePath"].replace("sspi", "methodology")
+            methodology_dir = os.path.join(app.root_path, "..")
+            relative_path = os.path.join(*tree_path.split('/'), "methodology.md")
+
+            methodology = secure_read_file(methodology_dir, relative_path, ['.md'])
+
+            if not methodology:
+                return "<p>No methodology available for this item.</p>"
+
             post = frontmatter.loads(methodology)
-            methodology_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+            return markdown(post.content, extensions=['fenced_code', 'tables'])
+        except SecurePathError as e:
+            log.warning(f"Secure path error for item {ItemCode}: {e}")
+            return "<p>No methodology available for this item.</p>"
         except (ValueError, yaml.YAMLError) as e:
-            raise MethodologyFileError(
-                f"Error loading methodology file {methdology_fp}: {e};\n"
-                "Is there an error in the YAML frontmatter?"
-            )
-        return methodology_html
+            log.error(f"Error parsing methodology file for {ItemCode}: {e}")
+            return "<p>No methodology available for this item.</p>"
 
     def get_dataset_dependencies(self, series_code: str) -> list:
         """
@@ -1112,3 +1141,46 @@ class SSPIMetadata(MongoWrapper):
         if not detail:
             return {}
         return detail
+
+    def get_active_schema_dataset_dependencies(self, active_indicator_codes: list[str]) -> dict:
+        """
+        Returns dataset dependencies for only the active schema indicators.
+
+        :param active_indicator_codes: List of indicator codes from DataCoverage.complete()
+        :return: {
+            "indicatorToDatasets": {
+                "BIODIV": ["UNSDG_TERRST", "UNSDG_FRSHWT", "UNSDG_MARINE"],
+                ...
+            },
+            "datasetToIndicator": {
+                "UNSDG_TERRST": "BIODIV",
+                ...
+            },
+            "allDatasets": ["UNSDG_TERRST", ...]  # Ordered list
+        }
+        """
+        indicator_to_datasets = {}
+        dataset_to_indicator = {}
+        all_datasets = []
+
+        for indicator_code in active_indicator_codes:
+            detail = self.get_indicator_detail(indicator_code)
+            if not detail:
+                continue
+            dataset_codes = detail.get("DatasetCodes", [])
+            if not dataset_codes:
+                # Some indicators may not have explicit DatasetCodes
+                # Use get_dataset_dependencies as fallback
+                dataset_codes = self.get_dataset_dependencies(indicator_code)
+
+            indicator_to_datasets[indicator_code] = dataset_codes
+            for ds_code in dataset_codes:
+                dataset_to_indicator[ds_code] = indicator_code
+                if ds_code not in all_datasets:
+                    all_datasets.append(ds_code)
+
+        return {
+            "indicatorToDatasets": indicator_to_datasets,
+            "datasetToIndicator": dataset_to_indicator,
+            "allDatasets": all_datasets
+        }

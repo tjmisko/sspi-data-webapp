@@ -1,4 +1,5 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
+from sspi_flask_app.models.utils import secure_read_file, SecurePathError
 import frontmatter
 import pycountry
 from markdown import markdown
@@ -817,27 +818,31 @@ class SSPIMetadataDeprecated(MongoWrapper):
 
     def get_item_methodology_html(self, ItemCode: str) -> str:
         """
-        Returns the HTML for the methodology of the given ItemCode
+        Returns the HTML for the methodology of the given ItemCode.
+        Returns a safe error message if the file cannot be read.
         """
-        detail = self.get_item_detail(ItemCode)
-        if "TreePath" not in detail.keys():
-            return ""
-        tree_path = detail["TreePath"].replace("sspi", "methodology")
-        methodology_dirlst = ['..'] + tree_path.split('/') + ['methodology.md']
-        methdology_fp = os.path.join(app.root_path, *methodology_dirlst)
-        with open(methdology_fp, 'r', encoding='utf-8') as f:
-            methodology = f.read()
-        if not methodology:
-            methodology_html = "<p>No methodology available for this item.</p>"
         try:
+            detail = self.get_item_detail(ItemCode)
+            if not detail or "TreePath" not in detail.keys():
+                return "<p>No methodology available for this item.</p>"
+
+            tree_path = detail["TreePath"].replace("sspi", "methodology")
+            methodology_dir = os.path.join(app.root_path, "..")
+            relative_path = os.path.join(*tree_path.split('/'), "methodology.md")
+
+            methodology = secure_read_file(methodology_dir, relative_path, ['.md'])
+
+            if not methodology:
+                return "<p>No methodology available for this item.</p>"
+
             post = frontmatter.loads(methodology)
-            methodology_html = markdown(post.content, extensions=['fenced_code', 'tables'])
+            return markdown(post.content, extensions=['fenced_code', 'tables'])
+        except SecurePathError as e:
+            log.warning(f"Secure path error for item {ItemCode}: {e}")
+            return "<p>No methodology available for this item.</p>"
         except (ValueError, yaml.YAMLError) as e:
-            raise MethodologyFileError(
-                f"Error loading methodology file {methdology_fp}: {e};\n"
-                "It is likely that there is an error in the YAML frontmatter format."
-            )
-        return methodology_html
+            log.error(f"Error parsing methodology file for {ItemCode}: {e}")
+            return "<p>No methodology available for this item.</p>"
 
     def item_details(self) -> list[dict]:
         sspi = self.sspi_detail()

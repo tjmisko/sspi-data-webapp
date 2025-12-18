@@ -745,6 +745,7 @@ def filter_imputations(doc_list):
     imputations = []
     for doc in doc_list:
         if any([i.get("Imputed", False) for i in doc.get("Datasets", [])]):
+            print("imputation found!")
             imputations.append(doc)
     return imputations
 
