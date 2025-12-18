@@ -3557,3 +3557,701 @@ to {
     width: 100%;
   }
 }
+
+/* ================================================== */
+/* Config Header Component                            */
+/* Styles for configuration name, description, ID     */
+/* ================================================== */
+
+.sspi-config-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+.sspi-config-header-info-box {
+  min-width: 0;
+}
+
+.sspi-header-navigation {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sspi-header-navigation button {
+  background-color: var(--input-background-color);
+  color: var(--input-text-color);
+  border: 1px solid var(--subtle-line-color);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.sspi-header-navigation button:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--link-color) 20%);
+  border-color: var(--link-color);
+}
+
+.sspi-header-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sspi-header-navigation button.btn-primary {
+  background-color: var(--link-color);
+  color: white;
+  border-color: var(--link-color);
+}
+
+.sspi-header-navigation button.btn-primary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--link-color) 85%, black 15%);
+}
+
+.sspi-header-navigation button.btn-secondary {
+  background-color: transparent;
+  border-color: var(--border-color);
+}
+
+.sspi-header-navigation button.btn-secondary:hover:not(:disabled) {
+  background-color: var(--box-background-color);
+}
+
+.sspi-config-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sspi-config-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color, #333);
+}
+
+.sspi-config-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: var(--text-color, #333);
+}
+
+.sspi-config-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--low-importance-font-color);
+}
+
+.sspi-config-desc {
+  white-space: pre-line;
+}
+
+.sspi-edit-metadata-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  line-height: 0;
+  color: var(--body-text-color);
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.sspi-edit-metadata-btn:hover {
+  opacity: 1;
+}
+
+.sspi-edit-metadata-btn.visible {
+  display: inline-flex;
+}
+
+.read-only-badge {
+  margin-left: 8px;
+  font-size: 0.75em;
+  color: var(--muted-text-color, #6c757d);
+  font-weight: normal;
+}
+
+/* ================================================== */
+/* Generic Modal System                               */
+/* Reusable modal overlay and dialog styles           */
+/* ================================================== */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-dialog {
+  background: var(--box-background-color);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+  margin: 0 0 16px 0;
+  font-family: var(--header-font-family);
+  color: var(--header-text-color);
+}
+
+/* ================================================== */
+/* Modal Form Elements                                */
+/* Inputs, labels, errors for modal dialogs           */
+/* ================================================== */
+
+.modal-form-group {
+  margin-bottom: 16px;
+}
+
+.modal-form-label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: var(--header-text-color);
+  font-family: var(--body-font-family);
+}
+
+.modal-form-required {
+  color: red;
+}
+
+.modal-form-optional {
+  color: var(--muted-text-color);
+}
+
+.modal-form-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  background: var(--input-background-color);
+  color: var(--input-text-color);
+  font-family: var(--body-font-family);
+}
+
+.modal-form-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+  background: var(--input-background-color);
+  color: var(--input-text-color);
+}
+
+.modal-form-input:focus,
+.modal-form-textarea:focus {
+  outline: none;
+  border-color: var(--green-accent);
+  box-shadow: 0 0 0 1px var(--green-accent);
+}
+
+.modal-form-hint {
+  color: var(--muted-text-color);
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-family: var(--body-font-family);
+}
+
+.modal-form-error {
+  color: red;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: none;
+}
+
+.modal-form-error.visible {
+  display: block;
+}
+
+.modal-form-input.input-error,
+.modal-form-textarea.input-error {
+  border-color: red;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--body-font-family);
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease;
+}
+
+.modal-btn-cancel {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+}
+
+.modal-btn-cancel:hover {
+  background: color-mix(in srgb, var(--border-color) 20%, transparent);
+}
+
+.modal-btn-primary {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.modal-btn-primary:hover {
+  background: color-mix(in srgb, var(--primary-color) 85%, black);
+}
+
+.modal-btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+}
+
+.modal-btn-danger:hover {
+  background: #c82333;
+}
+
+.modal-actions-stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.modal-actions-stacked .modal-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.modal-message {
+  margin: 0 0 16px 0;
+  color: var(--body-text-color);
+  line-height: 1.5;
+}
+
+/* ================================================== */
+/* Scoring Modal                                      */
+/* Progress tracking modal for scoring operations     */
+/* ================================================== */
+
+#scoring-modal-overlay,
+.scoring-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+
+#scoring-modal-content,
+.scoring-modal {
+  background: var(--box-background-color);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.scoring-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--muted-text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.scoring-modal-close:hover {
+  background: var(--subtle-line-color);
+  color: var(--body-text-color);
+}
+
+.scoring-modal-close:focus {
+  outline: 2px solid var(--link-color);
+  outline-offset: 2px;
+}
+
+.scoring-modal-title {
+  margin: 0 0 1.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-family: var(--header-font-family);
+  color: var(--header-text-color);
+}
+
+.scoring-progress-section {
+  margin-bottom: 1.5rem;
+}
+
+.scoring-progress-bar {
+  width: 100%;
+  height: 1.5rem;
+  background: var(--subtle-line-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.scoring-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--green-accent), var(--primary-color));
+  transition: width 0.3s ease;
+  border-radius: 0.75rem;
+}
+
+.scoring-progress-percent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.scoring-indicator-section {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  min-height: 3rem;
+}
+
+.scoring-indicator-label {
+  font-size: 0.9rem;
+  color: var(--muted-text-color);
+  margin-bottom: 0.25rem;
+}
+
+.scoring-indicator-code {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--header-text-color);
+}
+
+.scoring-indicator-name {
+  font-size: 0.9rem;
+  color: var(--muted-text-color);
+}
+
+.scoring-elapsed-section {
+  border-top: 1px solid var(--subtle-line-color);
+  padding-top: 1rem;
+  text-align: center;
+  color: var(--muted-text-color);
+  font-size: 0.85rem;
+}
+
+.scoring-result-content {
+  text-align: center;
+}
+
+.scoring-result-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.scoring-result-icon.success {
+  color: var(--green-accent);
+}
+
+.scoring-result-icon.error {
+  color: var(--sus-color);
+}
+
+.scoring-result-title {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  font-family: var(--header-font-family);
+}
+
+.scoring-result-title.error {
+  color: var(--sus-color);
+}
+
+.scoring-result-message {
+  color: var(--muted-text-color);
+  text-align: left;
+  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  white-space: pre-line;
+}
+
+.scoring-result-cached {
+  font-size: 0.85rem;
+}
+
+.scoring-result-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.scoring-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: var(--body-font-family);
+  transition: background-color 0.15s ease;
+}
+
+.scoring-btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.scoring-btn-primary:hover {
+  background: color-mix(in srgb, var(--primary-color) 85%, black);
+}
+
+.scoring-btn-secondary {
+  background: var(--input-background-color);
+  color: var(--input-text-color);
+  border: 1px solid var(--border-color);
+}
+
+.scoring-btn-secondary:hover {
+  background: color-mix(in srgb, var(--input-background-color) 80%, var(--border-color) 20%);
+}
+
+/* ================================================== */
+/* Scoring Stages                                     */
+/* Multi-stage progress display for scoring pipeline  */
+/* ================================================== */
+
+.scoring-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.scoring-stage {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--input-background-color);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.scoring-stage.in-progress {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--input-background-color));
+}
+
+.scoring-stage.complete {
+  border-color: var(--green-accent);
+  background: color-mix(in srgb, var(--green-accent) 8%, var(--input-background-color));
+}
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stage-icon {
+  font-size: 1rem;
+  width: 1.25rem;
+  text-align: center;
+  color: var(--muted-text-color);
+  flex-shrink: 0;
+}
+
+.scoring-stage.complete .stage-icon {
+  color: var(--green-accent);
+}
+
+.scoring-stage.in-progress .stage-icon {
+  color: var(--primary-color);
+  animation: stage-pulse 1.5s ease-in-out infinite;
+}
+
+.stage-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.stage-status {
+  margin-left: 2rem;
+  font-size: 0.8rem;
+  color: var(--muted-text-color);
+  margin-top: 0.25rem;
+}
+
+.scoring-stage.complete .stage-status {
+  color: var(--green-accent);
+}
+
+/* Stage progress bar (for scoring stage) */
+.stage-progress-container {
+  margin: 0.5rem 0 0 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stage-progress-container.hidden {
+  display: none;
+}
+
+.stage-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--subtle-line-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stage-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--primary-color);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.stage-progress-text {
+  font-size: 0.8rem;
+  color: var(--muted-text-color);
+  min-width: 3rem;
+  text-align: right;
+}
+
+@keyframes stage-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ================================================== */
+/* Utility Classes                                    */
+/* Reusable state and visibility classes              */
+/* ================================================== */
+
+.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-enabled {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.element-hidden {
+  display: none !important;
+}
+
+/* Generic hidden class without !important for toggleable elements */
+.hidden {
+  display: none;
+}
+
+/* ================================================== */
+/* Drag Ghost Positioning                             */
+/* Off-screen positioning for drag image creation     */
+/* ================================================== */
+
+.drag-ghost-offscreen {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+}
+
+/* ================================================== */
+/* Context Menu                                       */
+/* Absolute positioned context menu (position set via JS) */
+/* ================================================== */
+
+.context-menu-positioned {
+  position: absolute;
+}
+
+/* ================================================== */
+/* Chart Error Messages                               */
+/* Error states for chart/preview containers          */
+/* ================================================== */
+
+.chart-error-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--sus-color);
+  font-family: var(--body-font-family);
+}
+
+.chart-error-message p {
+  margin: 0.5rem 0;
+}
+
+/* ================================================== */
+/* Loading Overlay                                    */
+/* Full-screen loading state overlay                  */
+/* ================================================== */
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.loading-modal {
+  background: var(--box-background-color);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

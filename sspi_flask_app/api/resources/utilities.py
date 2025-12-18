@@ -921,8 +921,8 @@ def deduplicate_dictionary_list(dicts: list[dict]) -> list:
 def reduce_dataset_list(dataset_list: list[str]) -> list[str]:
     """
     Reduce the dataset list by removing datasets with duplicate
-    source information. Each RawDocumentSet/Source may contain 
-    the information for multiple datasets. This function takes 
+    source information. Each RawDocumentSet/Source may contain
+    the information for multiple datasets. This function takes
     a list of dataset codes which may not be an injective mapping
     onto RawDocumentSets and returns sublist of dataset codes
     which is bijective onto RawDocumentSets.
@@ -941,4 +941,174 @@ def reduce_dataset_list(dataset_list: list[str]) -> list[str]:
                 found = True
             i += 1
     return dataset_list_reduced
+
+
+def impute_dataset(
+    dataset_code: str,
+    country_codes: list[str],
+    start_year: int = 2000,
+    end_year: int = 2023,
+    reference_group: str = "SSPI67"
+) -> dict[tuple[str, int], dict]:
+    """
+    Pull and impute a single dataset for all specified countries and years.
+
+    This function handles three imputation scenarios:
+    1. If the entire dataset is globally empty: fill all country-years with 0.5
+    2. If a country has no data but others do: use reference class average from SSPI67
+    3. If a country has partial data: use backward/forward extrapolation + interpolation
+
+    :param dataset_code: The dataset code to impute (e.g., "UNSDG_MARINE")
+    :param country_codes: List of country codes to impute for
+    :param start_year: The start year for the imputation range (default 2000)
+    :param end_year: The end year for the imputation range (default 2023)
+    :param reference_group: Country group for reference class averaging (default "SSPI67")
+    :return: Dict mapping (CountryCode, Year) → imputed record with fields:
+             - Value: float
+             - Imputed: bool
+             - ImputationMethod: str | None
+             - ImputationDistance: int | None
+             - DatasetCode: str
+             - CountryCode: str
+             - Year: int
+    """
+    years = list(range(start_year, end_year + 1))
+    result = {}
+
+    # Step 1: Query all data for this dataset
+    all_data = list(sspi_clean_api_data.find(
+        {"DatasetCode": dataset_code},
+        {"_id": 0}
+    ))
+
+    # Step 2: Check if entire dataset is globally empty
+    if not all_data:
+        # Fill all country-years with 0.5 (neutral value)
+        for country_code in country_codes:
+            for year in years:
+                result[(country_code, year)] = {
+                    "DatasetCode": dataset_code,
+                    "CountryCode": country_code,
+                    "Year": year,
+                    "Value": 0.5,
+                    "Unit": "Index",
+                    "Imputed": True,
+                    "ImputationMethod": "No Data - Neutral Fill",
+                    "ImputationDistance": None
+                }
+        return result
+
+    # Get unit from first record
+    unit = all_data[0].get("Unit", "Index")
+
+    # Group data by country
+    data_by_country = {}
+    for record in all_data:
+        country = record.get("CountryCode")
+        if country not in data_by_country:
+            data_by_country[country] = []
+        data_by_country[country].append(record)
+
+    # Get reference group countries for averaging
+    reference_countries = sspi_metadata.country_group(reference_group) or []
+
+    # Compute reference class average (from countries that have data)
+    reference_values = []
+    for ref_country in reference_countries:
+        if ref_country in data_by_country:
+            country_data = data_by_country[ref_country]
+            avg_value = sum(r.get("Value", 0) for r in country_data) / len(country_data)
+            reference_values.append(avg_value)
+
+    reference_avg = sum(reference_values) / len(reference_values) if reference_values else 0.5
+
+    # Step 3: Process each requested country
+    for country_code in country_codes:
+        country_data = data_by_country.get(country_code, [])
+
+        if not country_data:
+            # Case 3a: Country has NO data at all - use reference class average
+            for year in years:
+                result[(country_code, year)] = {
+                    "DatasetCode": dataset_code,
+                    "CountryCode": country_code,
+                    "Year": year,
+                    "Value": reference_avg,
+                    "Unit": unit,
+                    "Imputed": True,
+                    "ImputationMethod": "Reference Class Average",
+                    "ImputationDistance": None
+                }
+        else:
+            # Case 3b/3c: Country has some or all data
+            # Start with observed data
+            observed_years = set()
+            for record in country_data:
+                year = record.get("Year")
+                if start_year <= year <= end_year:
+                    observed_years.add(year)
+                    result[(country_code, year)] = {
+                        "DatasetCode": dataset_code,
+                        "CountryCode": country_code,
+                        "Year": year,
+                        "Value": record.get("Value"),
+                        "Unit": record.get("Unit", unit),
+                        "Imputed": False,
+                        "ImputationMethod": None,
+                        "ImputationDistance": None
+                    }
+
+            # Apply imputation for missing years if needed
+            if len(observed_years) < len(years):
+                # Prepare data for imputation functions (use list format)
+                imputation_input = [
+                    {
+                        "DatasetCode": dataset_code,
+                        "CountryCode": country_code,
+                        "Year": r.get("Year"),
+                        "Value": r.get("Value"),
+                        "Unit": r.get("Unit", unit)
+                    }
+                    for r in country_data if start_year <= r.get("Year") <= end_year
+                ]
+
+                if imputation_input:
+                    # Apply backward extrapolation
+                    imputed = extrapolate_backward(
+                        imputation_input, start_year,
+                        series_id=["CountryCode", "DatasetCode"],
+                        impute_only=False
+                    )
+                    # Apply forward extrapolation
+                    imputed = extrapolate_forward(
+                        imputed, end_year,
+                        series_id=["CountryCode", "DatasetCode"],
+                        impute_only=False
+                    )
+                    # Apply linear interpolation
+                    imputed = interpolate_linear(
+                        imputed,
+                        series_id=["CountryCode", "DatasetCode"],
+                        impute_only=False
+                    )
+
+                    # Update result with imputed values
+                    for record in imputed:
+                        year = record.get("Year")
+                        if (country_code, year) not in result:
+                            result[(country_code, year)] = {
+                                "DatasetCode": dataset_code,
+                                "CountryCode": country_code,
+                                "Year": year,
+                                "Value": record.get("Value"),
+                                "Unit": record.get("Unit", unit),
+                                "Imputed": record.get("Imputed", True),
+                                "ImputationMethod": record.get("ImputationMethod"),
+                                "ImputationDistance": record.get("ImputationDistance")
+                            }
+                        elif record.get("Imputed") and not result[(country_code, year)].get("Imputed"):
+                            # Don't overwrite observed with imputed
+                            pass
+
+    return result
 

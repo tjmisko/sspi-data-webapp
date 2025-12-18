@@ -11,10 +11,24 @@ class CustomizableSSPIStructure {
             loadingDelay = 100,
             username = '',
             baseConfig = 'sspi',  // NEW: base config from URL
-            readOnly = false
+            readOnly = false,
+            scoring = false,
+            jobId = null
         } = options;
         this.readOnly = readOnly
         this.baseConfig = baseConfig;
+        this.scoring = scoring;
+        this.jobId = jobId;
+        this.eventSource = null;
+        this.elapsedTimeInterval = null;
+        this.scoringProgress = {
+            percent: 0,
+            status: 'starting',
+            currentIndicator: null,
+            indicatorIndex: 0,
+            totalIndicators: 0,
+            startTime: null
+        };
         this.parentElement = parentElement;
         this.pillars = pillars;
         this.loadingDelay = loadingDelay;
@@ -25,12 +39,15 @@ class CustomizableSSPIStructure {
         this.origin = null;
         this.dropped = false;
         this.isLoading = false;
-        this.cacheTimeout = null;
+        this.unsavedChangesTimeout = null;
         this.datasetDetails = {};// Dataset details storage (maps dataset code to full details)
         this.actionHistory = new CustomizableActionHistory(this);
         // Configuration tracking for save/load
         this.currentConfigId = null;
         this.currentConfigName = null;
+        this.currentConfigDescription = null;
+        this.hasScores = false; // Whether current config has been scored (from server)
+        this.initConfigHeader();
         this.initToolbar();
         this.initRoot();
         this.rigPillarRename();
@@ -40,14 +57,512 @@ class CustomizableSSPIStructure {
         this.setupKeyboardShortcuts();
         // NOTE: Dataset details are loaded as part of default-structure API response (datasetDetailsMap field)
         // This eliminates the need for a separate API call to /api/v1/customize/datasets
-        this.setupCacheSync();
+        this.setupUnsavedChangesSync();
         this.rigUnloadListener();
         // Setup unsaved changes warning (uses client-side flag)
         this.setupUnsavedChangesWarning();
-        // Auto-load cached modifications or default metadata if enabled
+        // Auto-load unsaved changes or default metadata if enabled
         setTimeout(() => { // delay ensures DOM is ready
-            this.loadInitialData();
+            this.loadInitialData().then(() => {
+                // Apply read-only state after data is loaded
+                if (this.readOnly) {
+                    this.applyReadOnlyState();
+                }
+                // Start scoring UI if redirected here with scoring params
+                if (this.scoring && this.jobId) {
+                    this.startScoringProgressUI();
+                }
+            });
         }, this.loadingDelay);
+    }
+
+    /**
+     * Toggle read-only mode
+     * @param {boolean} isReadOnly - Whether to enable read-only mode
+     */
+    setReadOnly(isReadOnly) {
+        this.readOnly = isReadOnly;
+        if (isReadOnly) {
+            this.applyReadOnlyState();
+        } else {
+            this.removeReadOnlyState();
+        }
+    }
+
+    /**
+     * Apply read-only state to the entire UI
+     * Disables dragging, editing, and modification controls
+     */
+    applyReadOnlyState() {
+        // Add read-only class to container for CSS targeting
+        this.container.classList.add('read-only');
+        this.parentElement.classList.add('read-only');
+
+        // Disable all draggable elements
+        this.container.querySelectorAll('[draggable="true"]').forEach(el => {
+            el.setAttribute('draggable', 'false');
+            el.classList.add('drag-disabled');
+        });
+
+        // Disable all contenteditable elements
+        this.container.querySelectorAll('[contenteditable="true"]').forEach(el => {
+            el.setAttribute('contenteditable', 'false');
+            el.classList.add('edit-disabled');
+        });
+
+        // Disable all code input fields
+        this.container.querySelectorAll('.pillar-code-input, .category-code-input, .indicator-code-input').forEach(input => {
+            input.disabled = true;
+            input.classList.add('edit-disabled');
+        });
+
+        // Hide add category and add indicator buttons
+        this.container.querySelectorAll('.add-category, .add-indicator').forEach(btn => {
+            btn.style.display = 'none';
+        });
+
+        // Hide modification toolbar buttons (Save, Save As, Discard)
+        // Keep Validate and View Changes visible as they are read-only operations
+        if (this.saveButton) this.saveButton.style.display = 'none';
+        if (this.saveAsButton) this.saveAsButton.style.display = 'none';
+        if (this.discardButton) this.discardButton.style.display = 'none';
+
+        // Update config header to show read-only indicator
+        if (this.configNameDisplay) {
+            const readOnlyBadge = document.createElement('span');
+            readOnlyBadge.className = 'read-only-badge';
+            readOnlyBadge.textContent = '(Read Only)';
+            this.configNameDisplay.appendChild(readOnlyBadge);
+        }
+    }
+
+    /**
+     * Remove read-only state from the UI
+     * Re-enables dragging, editing, and modification controls
+     */
+    removeReadOnlyState() {
+        // Remove read-only class from container
+        this.container.classList.remove('read-only');
+        this.parentElement.classList.remove('read-only');
+
+        // Re-enable draggable elements
+        this.container.querySelectorAll('.drag-disabled').forEach(el => {
+            el.setAttribute('draggable', 'true');
+            el.classList.remove('drag-disabled');
+        });
+
+        // Re-enable contenteditable elements
+        this.container.querySelectorAll('.edit-disabled[contenteditable]').forEach(el => {
+            el.setAttribute('contenteditable', 'true');
+            el.classList.remove('edit-disabled');
+        });
+
+        // Re-enable code input fields
+        this.container.querySelectorAll('.pillar-code-input, .category-code-input, .indicator-code-input').forEach(input => {
+            input.disabled = false;
+            input.classList.remove('edit-disabled');
+        });
+
+        // Show add category and add indicator buttons
+        this.container.querySelectorAll('.add-category, .add-indicator').forEach(btn => {
+            btn.style.display = '';
+        });
+
+        // Show modification toolbar buttons
+        if (this.saveButton) this.saveButton.style.display = '';
+        if (this.saveAsButton) this.saveAsButton.style.display = '';
+        if (this.discardButton) this.discardButton.style.display = '';
+
+        // Remove read-only badge
+        const badge = this.configNameDisplay?.querySelector('.read-only-badge');
+        if (badge) badge.remove();
+    }
+
+    initConfigHeader() {
+        // Create config info header showing name, id, and description
+        this.configHeader = document.createElement('div');
+        this.configHeader.classList.add('sspi-config-header');
+        this.configHeaderInfoBox = document.createElement('div');
+        this.configHeaderInfoBox.classList.add('sspi-config-header-info-box');
+
+        // Config name row with edit button
+        const configNameRow = document.createElement('div');
+        configNameRow.classList.add('sspi-config-name-row');
+
+        this.configNameDisplay = document.createElement('div');
+        this.configNameDisplay.classList.add('sspi-config-name');
+        this.configNameDisplay.textContent = 'New Configuration';
+
+        // Edit button (hidden by default via CSS, shown via .visible class when user owns config)
+        this.editMetadataButton = document.createElement('button');
+        this.editMetadataButton.classList.add('sspi-edit-metadata-btn');
+        this.editMetadataButton.title = 'Edit configuration name and description';
+        this.editMetadataButton.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <use href="#icon-edit"></use>
+            </svg>
+        `;
+        this.editMetadataButton.addEventListener('click', () => this.handleEditMetadata());
+
+        configNameRow.appendChild(this.configNameDisplay);
+        configNameRow.appendChild(this.editMetadataButton);
+
+        // Config meta row (ID and description)
+        this.configMetaDisplay = document.createElement('div');
+        this.configMetaDisplay.classList.add('sspi-config-meta');
+
+        this.configIdDisplay = document.createElement('span');
+        this.configIdDisplay.classList.add('sspi-config-id');
+
+        this.configDescDisplay = document.createElement('span');
+        this.configDescDisplay.classList.add('sspi-config-desc');
+
+        this.configMetaDisplay.appendChild(this.configIdDisplay);
+        this.configMetaDisplay.appendChild(this.configDescDisplay);
+        this.configHeaderInfoBox.appendChild(configNameRow);
+        this.configHeaderInfoBox.appendChild(this.configMetaDisplay);
+        this.configHeader.appendChild(this.configHeaderInfoBox);
+
+        // Header navigation buttons
+        const headerNavigationBox = document.createElement('div');
+        headerNavigationBox.classList.add('sspi-header-navigation');
+
+        // Score Configuration button
+        this.scoreConfigButton = document.createElement('button');
+        this.scoreConfigButton.classList.add('btn-primary');
+        this.scoreConfigButton.textContent = 'Score Configuration';
+        this.scoreConfigButton.title = 'Save and score this configuration';
+        this.scoreConfigButton.addEventListener('click', () => this.handleScoreConfiguration());
+
+        // Return to Configuration Selection button
+        this.returnToSelectionButton = document.createElement('button');
+        this.returnToSelectionButton.classList.add('btn-secondary');
+        this.returnToSelectionButton.textContent = 'Browse Configurations';
+        this.returnToSelectionButton.title = 'Return to configuration selection';
+        this.returnToSelectionButton.addEventListener('click', () => this.handleReturnToSelection());
+
+        headerNavigationBox.appendChild(this.scoreConfigButton);
+        headerNavigationBox.appendChild(this.returnToSelectionButton);
+        this.configHeader.appendChild(headerNavigationBox);
+        this.parentElement.appendChild(this.configHeader);
+    }
+
+    /**
+     * Handle Score Configuration button click
+     * If config is scored and no unsaved changes, navigates to visualization.
+     * Otherwise, auto-saves if needed and initiates scoring.
+     */
+    async handleScoreConfiguration() {
+        try {
+            // If config is already scored and no unsaved changes, navigate to view scores
+            if (this.hasScores && !this.unsavedChanges) {
+                // For default SSPI, navigate to main data overview
+                if (this.baseConfig === 'sspi' || this.baseConfig === 'default') {
+                    window.location.href = '/data/overview';
+                    return;
+                }
+                // For saved custom configs, navigate to custom visualization
+                if (this.currentConfigId) {
+                    window.location.href = `/customize/visualize/${this.currentConfigId}`;
+                    return;
+                }
+                // For other cases (e.g., baseConfig is a config_id), use baseConfig
+                window.location.href = `/customize/visualize/${this.baseConfig}`;
+                return;
+            }
+
+            // Check if user is authenticated (required for scoring)
+            if (!window.sspiUsername) {
+                notifications.error('Please log in to score configurations');
+                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
+
+            // Auto-save if there are unsaved changes
+            if (this.unsavedChanges) {
+                const saved = await this.autoSaveBeforeAction('score');
+                if (!saved) return; // User cancelled or save failed
+            }
+
+            // Need a saved config to score
+            if (!this.currentConfigId) {
+                notifications.error('Please save the configuration before scoring');
+                return;
+            }
+
+            // Initiate scoring
+            await this.initiateScoring();
+        } catch (error) {
+            console.error('Error in handleScoreConfiguration:', error);
+            notifications.error('Failed to score configuration: ' + error.message);
+        }
+    }
+
+    /**
+     * Handle Return to Selection button click
+     * Prompts to save if there are unsaved changes
+     */
+    async handleReturnToSelection() {
+        try {
+            // Check for unsaved changes
+            if (this.unsavedChanges) {
+                const proceed = await this.promptUnsavedChangesNavigation();
+                if (!proceed) return; // User cancelled
+            }
+
+            // Navigate to configuration selection page
+            window.location.href = '/customize/load';
+        } catch (error) {
+            console.error('Error in handleReturnToSelection:', error);
+            notifications.error('Navigation failed: ' + error.message);
+        }
+    }
+
+    /**
+     * Auto-save before performing an action
+     * @param {string} actionName - Name of the action for user messaging
+     * @returns {Promise<boolean>} - True if save succeeded or was skipped, false if cancelled/failed
+     */
+    async autoSaveBeforeAction(actionName) {
+        // Check if user is authenticated
+        if (!window.sspiUsername) {
+            notifications.info('Please log in to save changes');
+            return false;
+        }
+
+        const protectedConfigs = ['sspi', 'blank', 'default'];
+        const isProtectedConfig = protectedConfigs.includes(this.baseConfig);
+        const canUpdate = this.currentConfigId && this.currentConfigId === this.baseConfig && !isProtectedConfig;
+
+        if (canUpdate) {
+            // Can update existing config directly
+            try {
+                await this.updateConfiguration(this.currentConfigId);
+                return true;
+            } catch (error) {
+                notifications.error('Failed to save: ' + error.message);
+                return false;
+            }
+        } else {
+            // Need to save as new - prompt user
+            const result = await this.promptSaveConfig({
+                title: `Save Before ${actionName.charAt(0).toUpperCase() + actionName.slice(1)}`,
+                defaultName: this.currentConfigName || 'My Custom SSPI',
+                defaultDescription: this.currentConfigDescription || '',
+                saveButtonText: 'Save & Continue'
+            });
+
+            if (!result) return false; // User cancelled
+
+            try {
+                this.showLoadingState('Saving configuration...');
+                const metadata = this.exportMetadata();
+                const actions = this.actionHistory.exportActionLog();
+
+                const response = await this.fetch('/api/v1/customize/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: result.name,
+                        description: result.description,
+                        metadata: metadata,
+                        actions: actions
+                    })
+                });
+
+                this.hideLoadingState();
+
+                if (response.success) {
+                    this.currentConfigId = response.config_id;
+                    this.currentConfigName = result.name;
+                    this.currentConfigDescription = result.description;
+                    this.clearUnsavedState();
+                    this.clearUnsavedChanges();
+                    this.updateSaveButtonState();
+                    this.updateConfigHeader();
+                    this.updateNavigationButtonStates();
+                    return true;
+                } else {
+                    throw new Error(response.error || 'Save failed');
+                }
+            } catch (error) {
+                this.hideLoadingState();
+                notifications.error('Failed to save: ' + error.message);
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Prompt user about unsaved changes before navigation
+     * @returns {Promise<boolean>} - True to proceed, false to cancel
+     */
+    async promptUnsavedChangesNavigation() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+
+            const dialog = document.createElement('div');
+            dialog.className = 'modal-dialog';
+            dialog.innerHTML = `
+                <h3 class="modal-title">Unsaved Changes</h3>
+                <p class="modal-message">You have unsaved changes. What would you like to do?</p>
+                <div class="modal-actions modal-actions-stacked">
+                    <button id="save-and-leave-btn" class="modal-btn modal-btn-primary">Save & Leave</button>
+                    <button id="leave-without-saving-btn" class="modal-btn modal-btn-danger">Leave Without Saving</button>
+                    <button id="cancel-nav-btn" class="modal-btn modal-btn-cancel">Cancel</button>
+                </div>
+            `;
+
+            modal.appendChild(dialog);
+            document.body.appendChild(modal);
+
+            const cleanup = () => modal.remove();
+
+            dialog.querySelector('#save-and-leave-btn').addEventListener('click', async () => {
+                cleanup();
+                const saved = await this.autoSaveBeforeAction('navigation');
+                resolve(saved);
+            });
+
+            dialog.querySelector('#leave-without-saving-btn').addEventListener('click', () => {
+                cleanup();
+                this.clearUnsavedChanges(); // Clear persisted unsaved changes
+                resolve(true);
+            });
+
+            dialog.querySelector('#cancel-nav-btn').addEventListener('click', () => {
+                cleanup();
+                resolve(false);
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    cleanup();
+                    resolve(false);
+                }
+            });
+        });
+    }
+
+    /**
+     * Initiate scoring for the current configuration
+     */
+    async initiateScoring() {
+        if (!this.currentConfigId) {
+            notifications.error('No configuration to score');
+            return;
+        }
+
+        try {
+            this.showLoadingState('Initiating scoring...');
+
+            const response = await this.fetch('/api/v1/customize/score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ config_id: this.currentConfigId })
+            });
+
+            this.hideLoadingState();
+
+            if (response.success && response.job_id) {
+                // Show scoring progress modal directly without redirect
+                this.jobId = response.job_id;
+                this.startScoringProgressUI();
+            } else {
+                throw new Error(response.error || 'Failed to initiate scoring');
+            }
+        } catch (error) {
+            this.hideLoadingState();
+            throw error;
+        }
+    }
+
+    /**
+     * Update navigation button states based on current SSPI state
+     */
+    updateNavigationButtonStates() {
+        const isLoggedIn = !!(window.sspiUsername && window.sspiUsername.trim());
+        const hasConfig = !!this.currentConfigId;
+        const canViewScores = this.hasScores && !this.unsavedChanges;
+
+        // Score/View button - behavior changes based on scoring status
+        if (this.scoreConfigButton) {
+            if (canViewScores) {
+                // Config is scored and no unsaved changes - show "View Scores"
+                this.scoreConfigButton.textContent = 'View Scores';
+                this.scoreConfigButton.disabled = false;
+                this.scoreConfigButton.title = 'View scored results for this configuration';
+            } else if (!isLoggedIn) {
+                // Not logged in - disable scoring
+                this.scoreConfigButton.textContent = 'Score Configuration';
+                this.scoreConfigButton.disabled = true;
+                this.scoreConfigButton.title = 'Please log in to score configurations';
+            } else if (this.unsavedChanges) {
+                // Has unsaved changes - prompt to save first
+                this.scoreConfigButton.textContent = 'Score Configuration';
+                this.scoreConfigButton.disabled = false;
+                this.scoreConfigButton.title = 'Save changes and score this configuration';
+            } else {
+                // No scores yet, no unsaved changes - ready to score
+                this.scoreConfigButton.textContent = 'Score Configuration';
+                this.scoreConfigButton.disabled = false;
+                this.scoreConfigButton.title = hasConfig
+                    ? 'Score this configuration'
+                    : 'Save and score this configuration';
+            }
+        }
+
+        // Return button - always enabled
+        if (this.returnToSelectionButton) {
+            this.returnToSelectionButton.disabled = false;
+        }
+    }
+
+    updateConfigHeader() {
+        // Update the config header display with current values
+        const isProtected = ['sspi', 'blank', 'default'].includes(this.baseConfig);
+        const isLoggedIn = !!(window.sspiUsername && window.sspiUsername.trim());
+        // User owns config if they're editing a saved config that matches baseConfig
+        const canEdit = isLoggedIn &&
+                        !isProtected &&
+                        this.currentConfigId &&
+                        this.currentConfigId === this.baseConfig;
+
+        if (this.currentConfigName) {
+            this.configNameDisplay.textContent = this.currentConfigName;
+        } else if (isProtected) {
+            const names = {
+                'sspi': 'Standard SSPI',
+                'default': 'Standard SSPI',
+                'blank': 'Blank Configuration'
+            };
+            this.configNameDisplay.textContent = names[this.baseConfig] || 'New Configuration';
+        } else {
+            this.configNameDisplay.textContent = 'New Configuration';
+        }
+
+        if (this.currentConfigId && !isProtected) {
+            this.configIdDisplay.textContent = `ID: ${this.currentConfigId}`;
+            this.configIdDisplay.classList.remove('hidden');
+        } else {
+            this.configIdDisplay.classList.add('hidden');
+        }
+
+        if (this.currentConfigDescription) {
+            this.configDescDisplay.textContent = this.currentConfigDescription;
+            this.configDescDisplay.classList.remove('hidden');
+        } else {
+            this.configDescDisplay.classList.add('hidden');
+        }
+
+        // Show/hide edit button based on ownership (uses .visible class from CSS)
+        if (this.editMetadataButton) {
+            this.editMetadataButton.classList.toggle('visible', canEdit);
+        }
+
+        // Update navigation button states
+        this.updateNavigationButtonStates();
     }
 
     initToolbar() {
@@ -59,6 +574,12 @@ class CustomizableSSPIStructure {
         this.saveButton.textContent = 'Save';
         this.saveButton.addEventListener('click', async () => {
             await this.handleSave();
+        });
+        this.saveAsButton = document.createElement('button');
+        this.saveAsButton.textContent = 'Save As';
+        this.saveAsButton.title = 'Save as a new configuration with a new name';
+        this.saveAsButton.addEventListener('click', async () => {
+            await this.handleSaveAs();
         });
         const resetViewBtn = document.createElement('button');
         resetViewBtn.textContent = 'Default View';
@@ -98,7 +619,7 @@ class CustomizableSSPIStructure {
             }
         });
         const scoreVisualizeBtn = document.createElement('button');
-        this.toolbarLeft.append(this.saveButton, validateBtn, viewChangesBtn, this.discardButton);
+        this.toolbarLeft.append(this.saveButton, this.saveAsButton, validateBtn, viewChangesBtn, this.discardButton);
         this.toolbarRight.append(resetViewBtn, expandAllBtn, collapseAllBtn)
         this.toolbar = document.createElement('div')
         this.toolbar.classList.add('sspi-toolbar')
@@ -138,19 +659,18 @@ class CustomizableSSPIStructure {
                 return;
             }
 
-            // Protected configs cannot be overwritten
+            // Protected configs cannot be overwritten - must use Save As
             const protectedConfigs = ['sspi', 'blank', 'default'];
 
             if (protectedConfigs.includes(this.baseConfig)) {
                 // Always save as new when editing protected configs
                 await this.saveNewConfiguration();
+            } else if (this.currentConfigId && this.currentConfigId === this.baseConfig) {
+                // Can update existing saved config directly
+                await this.updateConfiguration(this.baseConfig);
             } else {
-                // Can update existing saved config
-                if (this.currentConfigId === this.baseConfig) {
-                    await this.updateConfiguration(this.baseConfig);
-                } else {
-                    await this.saveNewConfiguration();
-                }
+                // No existing config to update - save as new
+                await this.saveNewConfiguration();
             }
         } catch (error) {
             console.error('Error in handleSave:', error);
@@ -158,10 +678,34 @@ class CustomizableSSPIStructure {
         }
     }
 
+    async handleSaveAs() {
+        try {
+            // Check if user is authenticated
+            if (!window.sspiUsername) {
+                notifications.error('Please log in to save configurations');
+                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                return;
+            }
+
+            // Always create a new configuration with Save As
+            await this.saveNewConfiguration();
+        } catch (error) {
+            console.error('Error in handleSaveAs:', error);
+            notifications.error('Failed to save configuration: ' + error.message);
+        }
+    }
+
     async saveNewConfiguration() {
-        // Prompt for configuration name
-        const name = await this.promptConfigName();
-        if (!name) return; // User cancelled
+        // Prompt for configuration name and description
+        const result = await this.promptSaveConfig({
+            title: 'Save Configuration',
+            defaultName: this.currentConfigName || 'My Custom SSPI',
+            defaultDescription: this.currentConfigDescription || '',
+            saveButtonText: 'Save'
+        });
+        if (!result) return; // User cancelled
+
+        const { name, description } = result;
 
         try {
             this.showLoadingState('Saving configuration...');
@@ -172,12 +716,14 @@ class CustomizableSSPIStructure {
 
             const payload = {
                 name: name,
+                description: description,
                 metadata: metadata,
                 actions: actions
             };
 
             console.log('Saving configuration:', {
                 name: name,
+                description: description ? description.substring(0, 50) + '...' : null,
                 metadataCount: metadata.length,
                 actionsCount: actions.length,
                 payloadSize: JSON.stringify(payload).length
@@ -196,20 +742,18 @@ class CustomizableSSPIStructure {
                 // Update current config tracking
                 this.currentConfigId = response.config_id;
                 this.currentConfigName = name;
+                this.currentConfigDescription = description;
 
-                // Clear unsaved state and cache
+                // Clear unsaved state and persisted unsaved changes
                 this.clearUnsavedState();
-                this.clearCache();
+                this.clearUnsavedChanges();
 
                 // Update UI
                 this.updateSaveButtonState();
+                this.updateConfigHeader();
 
-                // Show success with link to edit the newly saved config
-                const editLink = `/customize/builder?base_config=${response.config_id}`;
-                notifications.success(
-                    `Configuration saved successfully! <a href="${editLink}" style="color: white; text-decoration: underline;">Edit this config</a>`,
-                    8000
-                );
+                // Show success notification
+                notifications.success('Configuration saved successfully!');
             } else {
                 throw new Error(response.error || 'Unknown error');
             }
@@ -225,6 +769,7 @@ class CustomizableSSPIStructure {
 
             const payload = {
                 name: this.currentConfigName || 'Custom SSPI',
+                description: this.currentConfigDescription,
                 metadata: this.exportMetadata(),
                 actions: this.actionHistory.exportActionLog()
             };
@@ -239,8 +784,9 @@ class CustomizableSSPIStructure {
 
             if (response.success) {
                 this.clearUnsavedState();
-                this.clearCache();
+                this.clearUnsavedChanges();
                 this.updateSaveButtonState();
+                this.updateConfigHeader();
                 notifications.success('Configuration updated successfully');
             } else {
                 throw new Error(response.error || 'Update failed');
@@ -251,71 +797,251 @@ class CustomizableSSPIStructure {
         }
     }
 
-    async promptConfigName(defaultName = '') {
+    /**
+     * Handle editing configuration metadata (name/description).
+     * If there are unsaved structure changes, saves the full configuration.
+     * Otherwise, updates only the metadata.
+     */
+    async handleEditMetadata() {
+        try {
+            // Check if user is authenticated
+            if (!window.sspiUsername) {
+                notifications.error('Please log in to edit configurations');
+                return;
+            }
+
+            // Must have a saved config to edit metadata directly
+            if (!this.currentConfigId) {
+                notifications.error('No configuration to edit. Save the configuration first.');
+                return;
+            }
+
+            // Prompt for new name and description
+            const result = await this.promptEditMetadata({
+                currentName: this.currentConfigName || '',
+                currentDescription: this.currentConfigDescription || ''
+            });
+
+            if (!result) return; // User cancelled
+
+            const { name, description } = result;
+
+            // If there are unsaved structure changes, save the full configuration
+            if (this.unsavedChanges) {
+                this.showLoadingState('Saving configuration...');
+
+                const metadata = this.exportMetadata();
+                const actions = this.actionHistory.exportActionLog();
+
+                const response = await this.fetch(`/api/v1/customize/update/${this.currentConfigId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        description: description,
+                        metadata: metadata,
+                        actions: actions
+                    })
+                });
+
+                this.hideLoadingState();
+
+                if (response.success) {
+                    // Update local state
+                    this.currentConfigName = name;
+                    this.currentConfigDescription = description;
+
+                    // Clear unsaved state since we saved everything
+                    this.clearUnsavedState();
+                    this.clearUnsavedChanges();
+
+                    // Update UI
+                    this.updateSaveButtonState();
+                    this.updateConfigHeader();
+
+                    notifications.success('Configuration saved successfully');
+                } else {
+                    throw new Error(response.error || 'Update failed');
+                }
+            } else {
+                // No structure changes - just update metadata
+                this.showLoadingState('Updating configuration details...');
+
+                const response = await this.fetch(`/api/v1/customize/update/${this.currentConfigId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        description: description
+                    })
+                });
+
+                this.hideLoadingState();
+
+                if (response.success) {
+                    // Update local state
+                    this.currentConfigName = name;
+                    this.currentConfigDescription = description;
+
+                    // Update UI
+                    this.updateConfigHeader();
+
+                    notifications.success('Configuration details updated successfully');
+                } else {
+                    throw new Error(response.error || 'Update failed');
+                }
+            }
+        } catch (error) {
+            this.hideLoadingState();
+            console.error('Error in handleEditMetadata:', error);
+            notifications.error('Failed to update configuration: ' + error.message);
+        }
+    }
+
+    /**
+     * Show modal to edit configuration name and description.
+     * Includes frontend validation for allowed characters.
+     */
+    async promptEditMetadata(options = {}) {
+        const {
+            currentName = '',
+            currentDescription = ''
+        } = options;
+
+        // Character validation patterns
+        const namePattern = /^[A-Za-z0-9.,() -]*$/;
+        const descPattern = /^[A-Za-z0-9.,() \r\n-]*$/;
+        const validateInput = (value, fieldName, allowNewlines = false) => {
+            const pattern = allowNewlines ? descPattern : namePattern;
+            if (!pattern.test(value)) {
+                // Find invalid characters for helpful message
+                const invalidChars = [...new Set(value.split('').filter(c => !pattern.test(c)))];
+                const allowedChars = allowNewlines
+                    ? 'letters, numbers, periods, commas, parentheses, dashes, spaces, and newlines'
+                    : 'letters, numbers, periods, commas, parentheses, dashes, and spaces';
+                return `${fieldName} contains invalid characters: ${invalidChars.join(', ')}. Only ${allowedChars} are allowed.`;
+            }
+            return null;
+        };
+
         return new Promise((resolve) => {
             // Create modal elements
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-            `;
 
             const dialog = document.createElement('div');
             dialog.className = 'modal-dialog';
-            dialog.style.cssText = `
-                background: var(--box-background-color);
-                border-radius: 8px;
-                padding: 24px;
-                max-width: 400px;
-                width: 90%;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            `;
+
+            // Escape HTML to prevent XSS
+            const escapeHtml = (str) => {
+                if (!str) return '';
+                return str.replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#039;');
+            };
 
             dialog.innerHTML = `
-                <h3 style="margin: 0 0 16px 0;">Save Configuration</h3>
-                <label style="display: block; margin-bottom: 8px;">Configuration Name:</label>
-                <input type="text" id="config-name-input"
-                    value="${defaultName || 'My Custom SSPI'}"
-                    style="width: 100%; padding: 8px; margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 4px;"
-                    maxlength="200">
-                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid var(--border-color); background: transparent; border-radius: 4px; cursor: pointer;">Cancel</button>
-                    <button id="save-btn" style="padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">Save</button>
+                <h3 class="modal-title">Edit Configuration Details</h3>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Name <span class="modal-form-required">*</span></label>
+                    <input type="text" id="edit-config-name-input"
+                        class="modal-form-input"
+                        value="${escapeHtml(currentName)}"
+                        placeholder="Enter configuration name"
+                        maxlength="200">
+                    <div id="edit-name-error" class="modal-form-error"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Description\u0020<span class="modal-form-optional">(optional)</span></label>
+                    <textarea id="edit-config-desc-input"
+                        class="modal-form-textarea"
+                        placeholder="Enter a brief description of this configuration"
+                        maxlength="1000">${escapeHtml(currentDescription)}</textarea>
+                    <div id="edit-desc-error" class="modal-form-error"></div>
+                </div>
+                <div class="modal-actions">
+                    <button id="edit-cancel-btn" class="modal-btn modal-btn-cancel">Cancel</button>
+                    <button id="edit-save-btn" class="modal-btn modal-btn-primary">Save Changes</button>
                 </div>
             `;
 
             modal.appendChild(dialog);
             document.body.appendChild(modal);
 
-            const input = dialog.querySelector('#config-name-input');
-            const saveBtn = dialog.querySelector('#save-btn');
-            const cancelBtn = dialog.querySelector('#cancel-btn');
+            const nameInput = dialog.querySelector('#edit-config-name-input');
+            const descInput = dialog.querySelector('#edit-config-desc-input');
+            const nameError = dialog.querySelector('#edit-name-error');
+            const descError = dialog.querySelector('#edit-desc-error');
+            const saveBtn = dialog.querySelector('#edit-save-btn');
+            const cancelBtn = dialog.querySelector('#edit-cancel-btn');
 
-            // Focus and select input text
-            input.focus();
-            input.select();
+            // Focus and select name input text
+            nameInput.focus();
+            nameInput.select();
 
             const cleanup = () => {
                 modal.remove();
             };
 
+            // Real-time validation on input
+            const validateAndShowErrors = () => {
+                let isValid = true;
+
+                // Validate name
+                const nameValue = nameInput.value.trim();
+                const nameValidationError = validateInput(nameValue, 'Name');
+                if (nameValidationError) {
+                    nameError.textContent = nameValidationError;
+                    nameError.classList.add('visible');
+                    nameInput.classList.add('input-error');
+                    isValid = false;
+                } else if (!nameValue) {
+                    nameError.textContent = 'Name is required';
+                    nameError.classList.add('visible');
+                    nameInput.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    nameError.classList.remove('visible');
+                    nameInput.classList.remove('input-error');
+                }
+
+                // Validate description (optional, but still check characters - allows newlines)
+                const descValue = descInput.value.trim();
+                if (descValue) {
+                    const descValidationError = validateInput(descValue, 'Description', true);
+                    if (descValidationError) {
+                        descError.textContent = descValidationError;
+                        descError.classList.add('visible');
+                        descInput.classList.add('input-error');
+                        isValid = false;
+                    } else {
+                        descError.classList.remove('visible');
+                        descInput.classList.remove('input-error');
+                    }
+                } else {
+                    descError.classList.remove('visible');
+                    descInput.classList.remove('input-error');
+                }
+
+                return isValid;
+            };
+
+            // Add input event listeners for real-time validation
+            nameInput.addEventListener('input', validateAndShowErrors);
+            descInput.addEventListener('input', validateAndShowErrors);
+
             const handleSave = () => {
-                const name = input.value.trim();
-                if (!name) {
-                    input.style.borderColor = 'red';
+                if (!validateAndShowErrors()) {
                     return;
                 }
+
+                const name = nameInput.value.trim();
+                const description = descInput.value.trim();
+
                 cleanup();
-                resolve(name);
+                resolve({ name, description: description || null });
             };
 
             const handleCancel = () => {
@@ -326,8 +1052,117 @@ class CustomizableSSPIStructure {
             // Event listeners
             saveBtn.addEventListener('click', handleSave);
             cancelBtn.addEventListener('click', handleCancel);
-            input.addEventListener('keypress', (e) => {
+            nameInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') handleSave();
+            });
+            nameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') handleCancel();
+            });
+            descInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') handleCancel();
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) handleCancel();
+            });
+        });
+    }
+
+    async promptSaveConfig(options = {}) {
+        const {
+            title = 'Save Configuration',
+            defaultName = 'My Custom SSPI',
+            defaultDescription = '',
+            saveButtonText = 'Save'
+        } = options;
+
+        return new Promise((resolve) => {
+            // Create modal elements
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+
+            const dialog = document.createElement('div');
+            dialog.className = 'modal-dialog';
+
+            // Escape HTML to prevent XSS
+            const escapeHtml = (str) => {
+                if (!str) return '';
+                return str.replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#039;');
+            };
+
+            dialog.innerHTML = `
+                <h3 class="modal-title">${escapeHtml(title)}</h3>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Name <span class="modal-form-required">*</span></label>
+                    <input type="text" id="config-name-input"
+                        class="modal-form-input"
+                        value="${escapeHtml(defaultName)}"
+                        placeholder="Enter configuration name"
+                        maxlength="200">
+                    <small class="modal-form-hint">Maximum 200 characters</small>
+                </div>
+                <div class="modal-form-group">
+                    <label class="modal-form-label">Description <span class="modal-form-optional">(optional)</span></label>
+                    <textarea id="config-desc-input"
+                        class="modal-form-textarea"
+                        placeholder="Enter a brief description of this configuration"
+                        maxlength="1000">${escapeHtml(defaultDescription)}</textarea>
+                    <small class="modal-form-hint">Maximum 1000 characters</small>
+                </div>
+                <div class="modal-actions">
+                    <button id="cancel-btn" class="modal-btn modal-btn-cancel">Cancel</button>
+                    <button id="save-btn" class="modal-btn modal-btn-primary">${escapeHtml(saveButtonText)}</button>
+                </div>
+            `;
+
+            modal.appendChild(dialog);
+            document.body.appendChild(modal);
+
+            const nameInput = dialog.querySelector('#config-name-input');
+            const descInput = dialog.querySelector('#config-desc-input');
+            const saveBtn = dialog.querySelector('#save-btn');
+            const cancelBtn = dialog.querySelector('#cancel-btn');
+
+            // Focus and select name input text
+            nameInput.focus();
+            nameInput.select();
+
+            const cleanup = () => {
+                modal.remove();
+            };
+
+            const handleSave = () => {
+                const name = nameInput.value.trim();
+                const description = descInput.value.trim();
+
+                if (!name) {
+                    nameInput.classList.add('input-error');
+                    nameInput.focus();
+                    return;
+                }
+
+                cleanup();
+                resolve({ name, description: description || null });
+            };
+
+            const handleCancel = () => {
+                cleanup();
+                resolve(null);
+            };
+
+            // Event listeners
+            saveBtn.addEventListener('click', handleSave);
+            cancelBtn.addEventListener('click', handleCancel);
+            nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSave();
+            });
+            nameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') handleCancel();
+            });
+            descInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') handleCancel();
             });
             modal.addEventListener('click', (e) => {
@@ -339,32 +1174,43 @@ class CustomizableSSPIStructure {
     updateSaveButtonState() {
         // Check if user is logged in (handle both undefined and empty string)
         const isLoggedIn = !!(window.sspiUsername && window.sspiUsername.trim());
+        const protectedConfigs = ['sspi', 'blank', 'default'];
+        const isProtectedConfig = protectedConfigs.includes(this.baseConfig);
+        const canUpdate = this.currentConfigId && this.currentConfigId === this.baseConfig && !isProtectedConfig;
 
         if (!isLoggedIn) {
-            // Use same styling as Discard button when disabled
-            this.saveButton.classList.remove('unsaved-changes');
+            // Disable both buttons when not logged in
+            this.saveButton.classList.remove('unsaved-changes', 'btn-enabled');
+            this.saveButton.classList.add('btn-disabled');
             this.saveButton.textContent = 'Save';
             this.saveButton.disabled = true;
-            this.saveButton.style.opacity = '0.5';
-            this.saveButton.style.cursor = 'not-allowed';
             this.saveButton.title = 'You must be logged in to save configurations';
+
+            this.saveAsButton.classList.remove('btn-enabled');
+            this.saveAsButton.classList.add('btn-disabled');
+            this.saveAsButton.disabled = true;
+            this.saveAsButton.title = 'You must be logged in to save configurations';
             return;
         }
 
         // User is logged in - enable save functionality
+        // Save As is always available when logged in
+        this.saveAsButton.classList.remove('btn-disabled');
+        this.saveAsButton.classList.add('btn-enabled');
+        this.saveAsButton.disabled = false;
+        this.saveAsButton.title = 'Save as a new configuration with a new name';
+
         if (this.unsavedChanges) {
-            this.saveButton.classList.add('unsaved-changes');
-            this.saveButton.textContent = this.currentConfigId ? 'Update' : 'Save';
+            this.saveButton.classList.add('unsaved-changes', 'btn-enabled');
+            this.saveButton.classList.remove('btn-disabled');
+            this.saveButton.textContent = 'Save';
             this.saveButton.disabled = false;
-            this.saveButton.style.opacity = '1';
-            this.saveButton.style.cursor = 'pointer';
-            this.saveButton.title = this.currentConfigId ? 'Update the current configuration' : 'Save as new configuration';
+            this.saveButton.title = canUpdate ? 'Save changes to current configuration' : 'Save as new configuration';
         } else {
-            this.saveButton.classList.remove('unsaved-changes');
-            this.saveButton.textContent = 'Saved';
-            this.saveButton.disabled = false;
-            this.saveButton.style.opacity = '1';
-            this.saveButton.style.cursor = 'pointer';
+            this.saveButton.classList.remove('unsaved-changes', 'btn-enabled');
+            this.saveButton.classList.add('btn-disabled');
+            this.saveButton.textContent = 'Save';
+            this.saveButton.disabled = true;
             this.saveButton.title = 'No unsaved changes';
         }
     }
@@ -428,6 +1274,9 @@ class CustomizableSSPIStructure {
         });
         // Add Category / Indicator
         this.container.addEventListener('click', e => {
+            // Block add actions in read-only mode
+            if (this.readOnly) return;
+
             if (e.target.classList.contains('add-category')) {
                 const zone = e.target.previousElementSibling;
                 const cat = this.createCategoryElement();
@@ -451,6 +1300,11 @@ class CustomizableSSPIStructure {
     rigDragStructureListeners() {
         // Drag & Drop with preview clone
         this.container.addEventListener('dragstart', e => {
+            // Block dragging in read-only mode
+            if (this.readOnly) {
+                e.preventDefault();
+                return;
+            }
             // Only allow dragging from headers (category-header or indicator-header)
             // Since only headers have draggable="true", this should be the case
             const isDraggingFromHeader = e.target.closest('.customization-category-header') ||
@@ -476,10 +1330,7 @@ class CustomizableSSPIStructure {
             el.classList.add('dragging');
             // Create and style the drag ghost
             const clone = el.cloneNode(true);
-            clone.style.position = 'absolute';
-            clone.style.top = '-9999px';
-            clone.style.left = '-9999px';
-            clone.classList.add('drag-ghost');
+            clone.classList.add('drag-ghost', 'drag-ghost-offscreen');
             clone.classList.remove('dragging'); // Remove dragging class from clone
             document.body.appendChild(clone);
             const rect = el.getBoundingClientRect();
@@ -966,7 +1817,7 @@ class CustomizableSSPIStructure {
                         undo: undoFn,
                         redo: redoFn
                     });
-                    // Flag unsaved to trigger cache update
+                    // Flag unsaved to trigger persistence
                     this.flagUnsaved();
                 }
                 editingElement = null;
@@ -992,7 +1843,7 @@ class CustomizableSSPIStructure {
     }
 
     setupKeyboardShortcuts() {
-        // Set up keyboard shortcuts for undo/redo
+        // Set up keyboard shortcuts for undo/redo/save
         document.addEventListener('keydown', (e) => {
             // Check if we're in an input field or contenteditable element
             const isInInput = e.target.tagName === 'INPUT' ||
@@ -1009,35 +1860,46 @@ class CustomizableSSPIStructure {
                 e.preventDefault();
                 this.actionHistory.redo();
             }
+            // Save: Ctrl+S (Windows/Linux) or Cmd+S (Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key === 's' && !e.shiftKey && !isInInput) {
+                e.preventDefault();
+                this.handleSave();
+            }
+            // Save As: Ctrl+A or Ctrl+Shift+S (Windows/Linux) or Cmd+A or Cmd+Shift+S (Mac)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || (e.shiftKey && e.key === 'S')) && !isInInput) {
+                e.preventDefault();
+                this.handleSaveAs();
+            }
         });
     }
 
     flagUnsaved() {
         this.unsavedChanges = true;
+        // Reset hasScores since the current version with changes hasn't been scored
+        this.hasScores = false;
         this.discardButton.disabled = false;
-        this.discardButton.style.opacity = '1';
-        this.discardButton.style.cursor = 'pointer';
+        this.discardButton.classList.remove('btn-disabled');
+        this.discardButton.classList.add('btn-enabled');
+        this.setStorage('unsavedChanges', true);
         this.updateSaveButtonState();
-        this.debouncedCacheState();
+        this.updateNavigationButtonStates();
+        this.debouncedPersistUnsavedChanges();
     }
-    
+
     clearUnsavedState() {
         this.unsavedChanges = false;
         this.discardButton.disabled = true;
-        this.discardButton.style.opacity = '0.5';
-        this.discardButton.style.cursor = 'not-allowed';
+        this.discardButton.classList.remove('btn-enabled');
+        this.discardButton.classList.add('btn-disabled');
+        this.setStorage('unsavedChanges', false);
         this.updateSaveButtonState();
+        this.updateNavigationButtonStates();
     }
     
     setUnsavedState(hasChanges) {
         if (hasChanges) {
-            this.markUnsaved();
-            this.saveButton.classList.add('unsaved-changes');
-            this.discardButton.disabled = false;
-            this.discardButton.style.opacity = '1';
-            this.discardButton.style.cursor = 'pointer';
+            this.flagUnsaved();
         } else {
-            this.markSaved();
             this.clearUnsavedState();
         }
     }
@@ -2047,7 +2909,7 @@ class CustomizableSSPIStructure {
                 }
             });
         }
-        this.hasUnsavedChanges = true;
+        this.flagUnsaved();
         this.validate();
         return { success: true, action: action ?? "Action not recorded" };
     }
@@ -2215,7 +3077,7 @@ class CustomizableSSPIStructure {
                 actions.push(indicatorAction);
             }
         }
-        this.hasUnsavedChanges = true;
+        this.flagUnsaved();
         this.validate();
         return { success: true, actions: actions };
     }
@@ -2301,7 +3163,7 @@ class CustomizableSSPIStructure {
                 }
             }
         });
-        this.hasUnsavedChanges = true;
+        this.flagUnsaved();
         this.validate();
         return { success: true, action: action };
     }
@@ -2353,7 +3215,7 @@ class CustomizableSSPIStructure {
                 if (name) name.textContent = categoryName;
             }
         });
-        this.hasUnsavedChanges = true;
+        this.flagUnsaved();
         this.validate();
         return { success: true, action: action };
     }
@@ -2407,7 +3269,7 @@ class CustomizableSSPIStructure {
                 if (name) name.textContent = pillarName;
             }
         });
-        this.hasUnsavedChanges = true;
+        this.flagUnsaved();
         this.validate();
         return { success: true, action: action };
     }
@@ -2630,17 +3492,6 @@ class CustomizableSSPIStructure {
         });
     }
 
-    flagUnsaved() {
-        this.unsavedChanges = true;
-        this.saveButton.classList.add('unsaved-changes');
-        // Enable the discard button
-        this.discardButton.disabled = false;
-        this.discardButton.style.opacity = '1';
-        this.discardButton.style.cursor = 'pointer';
-        // Cache the current state with debouncing
-        this.debouncedCacheState();
-    }
-
     showIndicatorSelectionMenu(indicatorsContainer) {
         const menu = new IndicatorSelectionMenu({
             onCreateNew: (container) => {
@@ -2746,8 +3597,8 @@ class CustomizableSSPIStructure {
         if (m) m.remove();
         m = document.createElement('ul');
         m.id = 'sspi-context-menu';
-        m.className = 'context-menu';
-        m.style.position = 'absolute';
+        m.className = 'context-menu context-menu-positioned';
+        // Dynamic position based on cursor - must remain inline
         m.style.top = `${y}px`;
         m.style.left = `${x}px`;
 
@@ -2757,7 +3608,28 @@ class CustomizableSSPIStructure {
 
         let menuItems;
 
-        if (isDataset) {
+        // In read-only mode, only show view options (Preview, Show/Hide Details)
+        if (this.readOnly) {
+            if (isDataset) {
+                const isExpanded = target.dataset.expanded === 'true';
+                const toggleText = isExpanded ? 'Hide Details' : 'Show Details';
+                menuItems = [
+                    { name: toggleText, handler: () => {
+                        const newState = target.dataset.expanded !== 'true';
+                        target.dataset.expanded = newState.toString();
+                        const slideout = target.querySelector('.dataset-details-slideout');
+                        if (slideout) {
+                            slideout.style.maxHeight = newState ? slideout.scrollHeight + 'px' : '0';
+                        }
+                    }},
+                    { name: 'Preview', handler: () => this.showDatasetPreviewModal(target) }
+                ];
+            } else {
+                menuItems = [
+                    { name: 'Preview', handler: () => this.showPreviewModal(target) }
+                ];
+            }
+        } else if (isDataset) {
             // Special menu for datasets
             const isExpanded = target.dataset.expanded === 'true';
             const toggleText = isExpanded ? 'Hide Details' : 'Show Details';
@@ -3128,7 +4000,7 @@ class CustomizableSSPIStructure {
             }
         } catch (error) {
             console.error('Error creating preview chart:', error);
-            chartContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--error-color);">
+            chartContainer.innerHTML = `<div class="chart-error-message">
                 <p>Error\u0020loading\u0020preview\u0020chart.</p>
                 <p>${error.message}</p>
             </div>`;
@@ -3203,7 +4075,7 @@ class CustomizableSSPIStructure {
             }
         } catch (error) {
             console.error('Error creating dataset preview chart:', error);
-            chartContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--error-color);">
+            chartContainer.innerHTML = `<div class="chart-error-message">
                 <p>Error\u0020loading\u0020dataset\u0020preview\u0020chart.</p>
                 <p>${error.message}</p>
             </div>`;
@@ -3449,6 +4321,7 @@ class CustomizableSSPIStructure {
             });
         });
         Object.values(categories).forEach(category => {
+            const parentPillar = pillars[category.pillarCode];
             metadataItems.push({
                 DocumentType: "CategoryDetail",
                 ItemType: "Category",
@@ -3458,6 +4331,8 @@ class CustomizableSSPIStructure {
                 IndicatorCodes: category.indicators,
                 Category: category.name,
                 CategoryCode: category.code,
+                Pillar: parentPillar?.name || '',
+                PillarCode: category.pillarCode,
                 TreeIndex: [0, category.pillarIdx, category.catIdx, -1],
                 TreePath: `sspi/${category.pillarCode.toLowerCase()}/${category.code.toLowerCase()}`,
                 ItemOrder: category.itemOrder
@@ -3511,52 +4386,58 @@ class CustomizableSSPIStructure {
         return notifications.show(message, type, duration);
     }
 
-    // Cache Management Helper Methods
+    // Unsaved Changes Management Helper Methods
     /**
-     * Get the cache key for the current base configuration
-     * Single cache key per user per base config
+     * Get the storage key for unsaved changes
+     * Single key per user per base config
      */
-    getCacheKey() {
+    getUnsavedChangesKey() {
         const username = this.username || 'anonymous';
         return `customSSPI_${username}_${this.baseConfig}`;
     }
 
     /**
-     * Save data to cache
+     * Save unsaved changes to localStorage
      */
-    setCache(data) {
-        const cacheKey = this.getCacheKey();
+    saveUnsavedChanges(data) {
+        const cacheKey = this.getUnsavedChangesKey();
         try {
             localStorage.setItem(cacheKey, JSON.stringify(data));
         } catch (error) {
-            console.error('Error saving cache:', error);
+            console.error('Error saving unsaved changes:', error);
         }
     }
 
     /**
-     * Load data from cache
+     * Load unsaved changes from localStorage
      */
-    getCache() {
-        const cacheKey = this.getCacheKey();
+    getUnsavedChanges() {
+        const cacheKey = this.getUnsavedChangesKey();
         try {
             const data = localStorage.getItem(cacheKey);
             return data ? JSON.parse(data) : null;
         } catch (error) {
-            console.error('Error loading cache:', error);
+            console.error('Error loading unsaved changes:', error);
             return null;
         }
     }
 
     /**
-     * Clear cache for current base config
+     * Clear unsaved changes for current base config
      */
-    clearCache() {
-        const cacheKey = this.getCacheKey();
+    clearUnsavedChanges() {
+        // Cancel any pending debounced save to prevent race condition
+        if (this.unsavedChangesTimeout) {
+            clearTimeout(this.unsavedChangesTimeout);
+            this.unsavedChangesTimeout = null;
+        }
+
+        const cacheKey = this.getUnsavedChangesKey();
         try {
             localStorage.removeItem(cacheKey);
-            console.log(`Cleared cache for ${this.baseConfig}`);
+            console.log(`Cleared unsaved changes for ${this.baseConfig}`);
         } catch (error) {
-            console.error('Error clearing cache:', error);
+            console.error('Error clearing unsaved changes:', error);
         }
     }
 
@@ -3574,18 +4455,6 @@ class CustomizableSSPIStructure {
     getStorage(key) {
         const namespacedKey = this.getStorageKey(key);
         return window.observableStorage.getItem(namespacedKey);
-    }
-
-    markUnsaved() {
-        this.unsavedChanges = true;
-        // Legacy: still set old storage flag for backwards compatibility
-        this.setStorage('hasUnsaved', true);
-    }
-
-    markSaved() {
-        this.unsavedChanges = false;
-        // Legacy: still clear old storage flag for backwards compatibility
-        this.setStorage('hasUnsaved', false);
     }
 
     setupUnsavedChangesWarning() {
@@ -3661,7 +4530,26 @@ class CustomizableSSPIStructure {
             // Save scroll position
             this.setStorage('scrollX', window.scrollX);
             this.setStorage('scrollY', window.scrollY);
+            // Save unsaved changes state for button restoration
+            this.setStorage('unsavedChanges', this.unsavedChanges);
         });
+    }
+
+    restoreButtonStates() {
+        // Restore unsaved changes state from observableStorage
+        const savedUnsavedState = this.getStorage('unsavedChanges');
+        if (savedUnsavedState === true || savedUnsavedState === 'true') {
+            this.unsavedChanges = true;
+            this.discardButton.disabled = false;
+            this.discardButton.classList.remove('btn-disabled');
+            this.discardButton.classList.add('btn-enabled');
+        } else {
+            this.unsavedChanges = false;
+            this.discardButton.disabled = true;
+            this.discardButton.classList.remove('btn-enabled');
+            this.discardButton.classList.add('btn-disabled');
+        }
+        this.updateSaveButtonState();
     }
 
     restoreExpansionState() {
@@ -3916,19 +4804,20 @@ class CustomizableSSPIStructure {
         // Check and migrate legacy data first
         await this.checkLegacyData();
 
-        // STEP 1: Try to load from cache
-        const cachedState = this.getCache();
+        // STEP 1: Try to restore unsaved changes
+        const cachedState = this.getUnsavedChanges();
         if (cachedState && cachedState.hasModifications) {
-            console.log('Restoring from cached state');
+            console.log('Restoring from unsaved changes');
             try {
-                await this.restoreFromCache(cachedState);
+                await this.restoreFromUnsavedChanges(cachedState);
                 this.showNotification("✓ Restored from previous session");
                 this.restoreExpansionState();
                 this.restoreScrollPosition();
+                this.restoreButtonStates();
                 return;
             } catch (error) {
-                console.warn('Failed to restore cache, loading from server:', error);
-                this.clearCache();
+                console.warn('Failed to restore unsaved changes, loading from server:', error);
+                this.clearUnsavedChanges();
             }
         }
 
@@ -3936,6 +4825,7 @@ class CustomizableSSPIStructure {
         await this.loadFromServer();
         this.restoreExpansionState();
         this.restoreScrollPosition();
+        this.restoreButtonStates();
     }
 
     /**
@@ -3986,11 +4876,17 @@ class CustomizableSSPIStructure {
                     this.actionHistory.currentIndex = this.actionHistory.actions.length - 1;
                 }
 
-                // Set config name
+                // Set config tracking info
                 if (response.name) {
                     configName = response.name;
                 }
                 this.currentConfigName = configName;
+                this.currentConfigDescription = response.description || null;
+                this.currentConfigId = response.config_id || null;
+                this.hasScores = response.has_scores || false;
+
+                // Update the config header display
+                this.updateConfigHeader();
 
                 // Clear unsaved state for freshly loaded config
                 this.clearUnsavedState();
@@ -4007,10 +4903,23 @@ class CustomizableSSPIStructure {
     }
 
     /**
-     * Restore configuration from cached state
+     * Restore configuration from unsaved changes
      */
-    async restoreFromCache(cachedState) {
-        console.log('Restoring from cache:', cachedState);
+    async restoreFromUnsavedChanges(cachedState) {
+        console.log('Restoring from unsaved changes:', cachedState);
+
+        // Restore config identity (critical for save behavior)
+        if (cachedState.currentConfigId) {
+            this.currentConfigId = cachedState.currentConfigId;
+            console.log('Restored config ID:', this.currentConfigId);
+        }
+        if (cachedState.currentConfigName) {
+            this.currentConfigName = cachedState.currentConfigName;
+            console.log('Restored config name:', this.currentConfigName);
+        }
+        if (cachedState.currentConfigDescription !== undefined) {
+            this.currentConfigDescription = cachedState.currentConfigDescription;
+        }
 
         // Restore dataset details
         if (cachedState.datasetDetailsMap) {
@@ -4035,12 +4944,16 @@ class CustomizableSSPIStructure {
             this.actionHistory.currentIndex = this.actionHistory.actions.length - 1;
         }
 
+        // Update the config header to reflect restored identity
+        this.updateConfigHeader();
+        this.updateNavigationButtonStates();
+
         // Mark as having unsaved changes
         this.flagUnsaved();
     }
 
     /**
-     * Check for and migrate legacy session/cache data
+     * Check for and migrate legacy session/storage data
      */
     async checkLegacyData() {
         // Check for old sspi_active_session
@@ -4051,29 +4964,29 @@ class CustomizableSSPIStructure {
             window.observableStorage.removeItem('sspi_pending_config');
         }
 
-        // Migrate old cache if exists
+        // Migrate old unsaved changes format if exists
         const oldCacheKey = `customSSPI_${this.username}_cachedModifications`;
         const oldCache = localStorage.getItem(oldCacheKey);
 
         if (oldCache && this.baseConfig === 'sspi') {
-            console.log('Migrating legacy cache to new format');
+            console.log('Migrating legacy unsaved changes to new format');
             try {
                 const data = JSON.parse(oldCache);
-                const newCacheKey = this.getCacheKey();
+                const newCacheKey = this.getUnsavedChangesKey();
                 localStorage.setItem(newCacheKey, oldCache);
                 localStorage.removeItem(oldCacheKey);
                 // Also remove old hasUnsaved flag
                 localStorage.removeItem(`customSSPI_${this.username}_hasUnsaved`);
                 console.log('Migration complete');
             } catch (error) {
-                console.error('Failed to migrate cache:', error);
+                console.error('Failed to migrate unsaved changes:', error);
             }
         }
     }
     
     async discardChanges() {
         try {
-            this.clearCache();
+            this.clearUnsavedChanges();
             this.showLoadingState('Discarding changes...');
             this.clearUnsavedState();
             setTimeout(() => {
@@ -4185,14 +5098,436 @@ class CustomizableSSPIStructure {
             buttons.forEach(btn => {
                 btn.disabled = disabled;
                 if (disabled) {
-                    btn.style.opacity = '0.5';
-                    btn.style.cursor = 'not-allowed';
+                    btn.classList.add('btn-disabled');
+                    btn.classList.remove('btn-enabled');
                 } else {
-                    btn.style.opacity = '';
-                    btn.style.cursor = '';
+                    btn.classList.remove('btn-disabled');
+                    btn.classList.add('btn-enabled');
                 }
             });
         }
+    }
+
+    // ========== Scoring Progress UI Methods ==========
+
+    /**
+     * Show the scoring progress modal
+     */
+    showScoringModal() {
+        const overlay = document.createElement('div');
+        overlay.id = 'scoring-modal-overlay';
+        overlay.className = 'scoring-modal-overlay';
+
+        const modal = document.createElement('div');
+        modal.id = 'scoring-modal-content';
+        modal.className = 'scoring-modal';
+
+        modal.innerHTML = `
+            <button class="scoring-modal-close" title="Close" aria-label="Close modal">&times;</button>
+            <h3 class="scoring-modal-title">
+                Scoring Configuration
+            </h3>
+
+            <div class="scoring-stages">
+                <div class="scoring-stage in-progress" data-stage="validate">
+                    <div class="stage-header">
+                        <span class="stage-icon">◉</span>
+                        <span class="stage-name">Validate Metadata</span>
+                    </div>
+                    <div class="stage-status"></div>
+                </div>
+
+                <div class="scoring-stage" data-stage="identify">
+                    <div class="stage-header">
+                        <span class="stage-icon">○</span>
+                        <span class="stage-name">Identify Modified Indicators</span>
+                    </div>
+                    <div class="stage-status"></div>
+                </div>
+
+                <div class="scoring-stage" data-stage="scoring">
+                    <div class="stage-header">
+                        <span class="stage-icon">○</span>
+                        <span class="stage-name">Scoring Modified Indicators</span>
+                    </div>
+                    <div class="stage-progress-container hidden">
+                        <div class="stage-progress-bar">
+                            <div class="stage-progress-fill"></div>
+                        </div>
+                        <span class="stage-progress-text">0/0</span>
+                    </div>
+                    <div class="stage-status"></div>
+                </div>
+
+                <div class="scoring-stage" data-stage="aggregate">
+                    <div class="stage-header">
+                        <span class="stage-icon">○</span>
+                        <span class="stage-name">Aggregating Hierarchy</span>
+                    </div>
+                    <div class="stage-status"></div>
+                </div>
+
+                <div class="scoring-stage" data-stage="ranking">
+                    <div class="stage-header">
+                        <span class="stage-icon">○</span>
+                        <span class="stage-name">Computing Ranks</span>
+                    </div>
+                    <div class="stage-status"></div>
+                </div>
+
+                <div class="scoring-stage" data-stage="visualizations">
+                    <div class="stage-header">
+                        <span class="stage-icon">○</span>
+                        <span class="stage-name">Building Visualizations</span>
+                    </div>
+                    <div class="stage-status"></div>
+                </div>
+            </div>
+
+            <div class="scoring-elapsed-section">
+                Elapsed: <span id="scoring-elapsed-time">0:00</span>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Add close button click handler
+        const closeBtn = modal.querySelector('.scoring-modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeScoringModal();
+            });
+        }
+
+        // Add overlay click handler (close when clicking outside modal)
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.closeScoringModal();
+            }
+        });
+    }
+
+    /**
+     * Start the scoring progress UI and connect to SSE stream
+     */
+    startScoringProgressUI() {
+        this.scoringProgress.startTime = Date.now();
+        this.showScoringModal();
+
+        // Start elapsed time counter
+        this.elapsedTimeInterval = setInterval(() => {
+            this.updateElapsedTime();
+        }, 1000);
+
+        const streamUrl = `/api/v1/customize/score-stream/${this.jobId}`;
+        this.eventSource = new EventSource(streamUrl);
+
+        // Stage completion events
+        this.eventSource.addEventListener('stage_complete', (e) => {
+            const { stage, message } = JSON.parse(e.data);
+            this.markStageComplete(stage, message);
+        });
+
+        // Stage progress events (for progress bars)
+        this.eventSource.addEventListener('stage_progress', (e) => {
+            const { stage, current, total } = JSON.parse(e.data);
+            this.updateStageProgress(stage, current, total);
+        });
+
+        // Legacy progress events (for backwards compatibility)
+        this.eventSource.addEventListener('progress', (e) => {
+            // Ignore - using stage events now
+        });
+
+        this.eventSource.addEventListener('status', (e) => {
+            // Ignore - using stage events now
+        });
+
+        this.eventSource.addEventListener('indicator_start', (e) => {
+            // Ignore - using stage_progress now
+        });
+
+        this.eventSource.addEventListener('indicator_complete', (e) => {
+            // Ignore - using stage_complete now
+        });
+
+        this.eventSource.addEventListener('complete', (e) => {
+            const { success, total_scores, duration_ms, cached } = JSON.parse(e.data);
+            this.handleScoringComplete({ success, total_scores, duration_ms, cached });
+        });
+
+        this.eventSource.addEventListener('error', (e) => {
+            try {
+                const { message, code } = JSON.parse(e.data);
+                this.handleScoringError({ message, code });
+            } catch {
+                // SSE error event without data - connection issue
+                if (this.eventSource.readyState !== EventSource.CLOSED) {
+                    this.handleScoringError({ message: 'Connection lost to server', code: 'NETWORK_ERROR' });
+                }
+            }
+        });
+
+        this.eventSource.onerror = () => {
+            // Only handle if not already closed by complete/error event
+            if (this.eventSource && this.eventSource.readyState === EventSource.CONNECTING) {
+                // Reconnecting - could show reconnecting state
+                console.log('SSE reconnecting...');
+            } else if (this.eventSource && this.eventSource.readyState === EventSource.CLOSED) {
+                // Already closed - handled by complete or error event
+            }
+        };
+    }
+
+    /**
+     * Update the progress bar and message
+     */
+    updateScoringProgress({ percent, message, status }) {
+        this.scoringProgress.percent = percent;
+        this.scoringProgress.status = status;
+
+        const progressFill = document.getElementById('scoring-progress-fill');
+        const progressPercent = document.getElementById('scoring-progress-percent');
+        const indicatorSection = document.getElementById('scoring-indicator-section');
+
+        if (progressFill) progressFill.style.width = `${percent}%`;
+        if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+
+        // Update the status message display
+        if (indicatorSection && message) {
+            indicatorSection.innerHTML = `
+                <div class="scoring-indicator-label">
+                    ${this.escapeHtml(message)}
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Update the current indicator display
+     */
+    updateScoringIndicator({ code, name, index, total }) {
+        this.scoringProgress.currentIndicator = { code, name };
+        this.scoringProgress.indicatorIndex = index;
+        this.scoringProgress.totalIndicators = total;
+
+        const section = document.getElementById('scoring-indicator-section');
+        if (section) {
+            section.innerHTML = `
+                <div style="font-size: 0.9rem; color: var(--muted-text-color); margin-bottom: 0.25rem;">
+                    Scoring indicator ${index}/${total}
+                </div>
+                <div style="font-weight: 600; font-size: 1.1rem;">
+                    ${this.escapeHtml(code)}
+                </div>
+                <div style="font-size: 0.9rem; color: var(--muted-text-color);">
+                    ${this.escapeHtml(name)}
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Update the elapsed time display
+     */
+    updateElapsedTime() {
+        if (!this.scoringProgress.startTime) return;
+        const elapsed = Math.floor((Date.now() - this.scoringProgress.startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const elapsedEl = document.getElementById('scoring-elapsed-time');
+        if (elapsedEl) {
+            elapsedEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+    }
+
+    /**
+     * Mark a scoring stage as complete
+     * @param {string} stage - Stage identifier
+     * @param {string} message - Completion message
+     */
+    markStageComplete(stage, message) {
+        const stageEl = document.querySelector(`.scoring-stage[data-stage="${stage}"]`);
+        if (!stageEl) return;
+
+        // Remove in-progress, add complete
+        stageEl.classList.remove('in-progress');
+        stageEl.classList.add('complete');
+
+        // Update icon to checkmark
+        const icon = stageEl.querySelector('.stage-icon');
+        if (icon) icon.textContent = '✓';
+
+        // Set completion message
+        const status = stageEl.querySelector('.stage-status');
+        if (status) status.textContent = message;
+
+        // Hide progress bar if present
+        const progressContainer = stageEl.querySelector('.stage-progress-container');
+        if (progressContainer) {
+            progressContainer.classList.add('hidden');
+        }
+
+        // Mark next stage as in-progress
+        this.activateNextStage(stage);
+    }
+
+    /**
+     * Update progress within a stage (for stages with progress bars)
+     * @param {string} stage - Stage identifier
+     * @param {number} current - Current item number
+     * @param {number} total - Total items
+     */
+    updateStageProgress(stage, current, total) {
+        const stageEl = document.querySelector(`.scoring-stage[data-stage="${stage}"]`);
+        if (!stageEl) return;
+
+        // Ensure stage is marked as in-progress
+        stageEl.classList.add('in-progress');
+        const icon = stageEl.querySelector('.stage-icon');
+        if (icon) icon.textContent = '◉';
+
+        // Show and update progress bar
+        const progressContainer = stageEl.querySelector('.stage-progress-container');
+        if (progressContainer) {
+            progressContainer.classList.remove('hidden');
+
+            const fill = progressContainer.querySelector('.stage-progress-fill');
+            const text = progressContainer.querySelector('.stage-progress-text');
+
+            const percent = total > 0 ? (current / total) * 100 : 0;
+            if (fill) fill.style.width = `${percent}%`;
+            if (text) text.textContent = `${current}/${total}`;
+        }
+    }
+
+    /**
+     * Activate the next stage after one completes
+     * @param {string} completedStage - Stage that just completed
+     */
+    activateNextStage(completedStage) {
+        const stages = ['validate', 'identify', 'scoring', 'aggregate', 'ranking', 'visualizations'];
+        const currentIndex = stages.indexOf(completedStage);
+
+        if (currentIndex >= 0 && currentIndex < stages.length - 1) {
+            const nextStage = stages[currentIndex + 1];
+            const nextEl = document.querySelector(`.scoring-stage[data-stage="${nextStage}"]`);
+            if (nextEl && !nextEl.classList.contains('complete')) {
+                nextEl.classList.add('in-progress');
+                const icon = nextEl.querySelector('.stage-icon');
+                if (icon) icon.textContent = '◉';
+            }
+        }
+    }
+
+    /**
+     * Handle scoring completion
+     */
+    handleScoringComplete({ success, total_scores, duration_ms, cached }) {
+        if (this.eventSource) this.eventSource.close();
+        if (this.elapsedTimeInterval) clearInterval(this.elapsedTimeInterval);
+
+        // Mark that this configuration now has scores
+        if (success) {
+            this.hasScores = true;
+            this.updateNavigationButtonStates();
+        }
+
+        const modal = document.getElementById('scoring-modal-content');
+        if (modal) {
+            const durationSec = (duration_ms / 1000).toFixed(1);
+            modal.innerHTML = `
+                <div class="scoring-result-content">
+                    <div class="scoring-result-icon success">&#10003;</div>
+                    <h3 class="scoring-result-title">Scoring Complete!</h3>
+                    <p class="scoring-result-message">
+                        ${total_scores.toLocaleString()}\u0020scores computed in\u0020${durationSec}s
+                        ${cached ? '<br><span class="scoring-result-cached">(loaded from cache)</span>' : ''}
+                    </p>
+                    <div class="scoring-result-actions">
+                        <button id="view-results-btn" class="scoring-btn scoring-btn-primary">View Results</button>
+                    </div>
+                </div>
+            `;
+
+            const viewBtn = document.getElementById('view-results-btn');
+            viewBtn.addEventListener('click', () => {
+                window.location.href = `/customize/visualize/${this.baseConfig}`;
+            });
+        }
+    }
+
+    /**
+     * Handle scoring errors
+     */
+    handleScoringError({ message, code }) {
+        if (this.eventSource) this.eventSource.close();
+        if (this.elapsedTimeInterval) clearInterval(this.elapsedTimeInterval);
+
+        const modal = document.getElementById('scoring-modal-content');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="scoring-result-content">
+                    <div class="scoring-result-icon error">&#10007;</div>
+                    <h3 class="scoring-result-title error">Scoring Failed</h3>
+                    <p class="scoring-indicator-label">
+                        ${this.escapeHtml(code)}
+                    </p>
+                    <pre class="scoring-result-message">
+                        ${this.escapeHtml(message)}
+                    </pre>
+                    <div class="scoring-result-actions">
+                        <button id="retry-scoring-btn" class="scoring-btn scoring-btn-primary">Retry</button>
+                        <button id="close-error-btn" class="scoring-btn scoring-btn-secondary">Close</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('retry-scoring-btn').addEventListener('click', () => {
+                this.closeScoringModal();
+                window.location.href = '/customize/load';
+            });
+
+            document.getElementById('close-error-btn').addEventListener('click', () => {
+                this.closeScoringModal();
+                // Remove scoring params from URL
+                const url = new URL(window.location);
+                url.searchParams.delete('scoring');
+                url.searchParams.delete('job_id');
+                window.history.replaceState({}, '', url);
+            });
+        }
+    }
+
+    /**
+     * Close and clean up the scoring modal
+     */
+    closeScoringModal() {
+        const overlay = document.getElementById('scoring-modal-overlay');
+        if (overlay) overlay.remove();
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+        }
+        if (this.elapsedTimeInterval) {
+            clearInterval(this.elapsedTimeInterval);
+            this.elapsedTimeInterval = null;
+        }
+    }
+
+    /**
+     * Escape HTML to prevent XSS in dynamic content
+     */
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     // Build hierarchy tree from metadata items
@@ -4376,121 +5711,6 @@ class CustomizableSSPIStructure {
         // Single DOM append for all categories in this pillar
         categoriesContainer.appendChild(fragment);
         this.validate(categoriesContainer);
-    }
-
-    exportData() {
-        // Export current SSPI structure as metadata array
-        const metadataItems = [];
-
-        // Add SSPI root item
-        const pillarCodes = [];
-        const pillarColumns = this.container.querySelectorAll('.pillar-column');
-
-        pillarColumns.forEach(col => {
-            const pillarCode = col.dataset.pillarCode || col.dataset.itemCode;
-            if (pillarCode) {
-                pillarCodes.push(pillarCode);
-            }
-        });
-
-        metadataItems.push({
-            ItemType: 'SSPI',
-            ItemCode: 'sspi',
-            ItemName: 'Sustainable and Shared Prosperity Policy Index',
-            Children: pillarCodes,
-            DocumentType: 'ItemDetail'
-        });
-
-        // Process each pillar
-        pillarColumns.forEach(col => {
-            const pillarCode = col.dataset.pillarCode || col.dataset.itemCode;
-            const pillarName = col.querySelector('.pillar-name')?.textContent || '';
-            const categoryCodes = [];
-
-            // Get all categories in this pillar
-            const categories = col.querySelectorAll('.category-box');
-            categories.forEach(catEl => {
-                const categoryCode = catEl.dataset.categoryCode || catEl.dataset.itemCode;
-                if (categoryCode) {
-                    categoryCodes.push(categoryCode);
-                }
-            });
-
-            // Add pillar item
-            metadataItems.push({
-                ItemType: 'Pillar',
-                ItemCode: pillarCode,
-                ItemName: pillarName,
-                PillarCode: pillarCode,
-                Children: categoryCodes,
-                CategoryCodes: categoryCodes,
-                DocumentType: 'PillarDetail',
-                TreePath: `sspi/${pillarCode.toLowerCase()}`
-            });
-
-            // Process each category
-            categories.forEach(catEl => {
-                const categoryCode = catEl.dataset.categoryCode || catEl.dataset.itemCode;
-                const categoryName = catEl.querySelector('.customization-category-header-title')?.textContent || '';
-                const indicatorCodes = [];
-
-                // Get all indicators in this category
-                const indicators = catEl.querySelectorAll('.indicator-card');
-                indicators.forEach(indEl => {
-                    const indicatorCode = indEl.dataset.indicatorCode || indEl.dataset.itemCode;
-                    if (indicatorCode) {
-                        indicatorCodes.push(indicatorCode);
-                    }
-                });
-
-                // Add category item
-                metadataItems.push({
-                    ItemType: 'Category',
-                    ItemCode: categoryCode,
-                    ItemName: categoryName,
-                    CategoryCode: categoryCode,
-                    PillarCode: pillarCode,
-                    Children: indicatorCodes,
-                    IndicatorCodes: indicatorCodes,
-                    DocumentType: 'CategoryDetail',
-                    TreePath: `sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}`
-                });
-
-                // Process each indicator
-                indicators.forEach(indEl => {
-                    const indicatorCode = indEl.dataset.indicatorCode || indEl.dataset.itemCode;
-                    const indicatorName = indEl.querySelector('.indicator-name')?.textContent || '';
-                    const scoreFunction = indEl.querySelector('.editable-score-function')?.textContent || 'Score = 0';
-
-                    // Get dataset codes
-                    const datasetCodes = [];
-                    const datasetItems = indEl.querySelectorAll('.dataset-item');
-                    datasetItems.forEach(dsEl => {
-                        const datasetCode = dsEl.dataset.datasetCode;
-                        if (datasetCode) {
-                            datasetCodes.push(datasetCode);
-                        }
-                    });
-
-                    // Add indicator item
-                    metadataItems.push({
-                        ItemType: 'Indicator',
-                        ItemCode: indicatorCode,
-                        ItemName: indicatorName,
-                        IndicatorCode: indicatorCode,
-                        CategoryCode: categoryCode,
-                        PillarCode: pillarCode,
-                        ScoreFunction: scoreFunction,
-                        DatasetCodes: datasetCodes,
-                        Children: [],
-                        DocumentType: 'IndicatorDetail',
-                        TreePath: `sspi/${pillarCode.toLowerCase()}/${categoryCode.toLowerCase()}/${indicatorCode.toLowerCase()}`
-                    });
-                });
-            });
-        });
-
-        return metadataItems;
     }
 
     setupCodeValidation(input, type) {
@@ -4695,10 +5915,10 @@ class CustomizableSSPIStructure {
             }
         });
 
-        // IMPORTANT: Always flag unsaved and update cache after dataset selection changes
-        // This ensures changes are cached even when removing all datasets
+        // IMPORTANT: Always flag unsaved and persist after dataset selection changes
+        // This ensures changes are persisted even when removing all datasets
         this.flagUnsaved();
-        this.debouncedCacheState();
+        this.debouncedPersistUnsavedChanges();
     }
 
 
@@ -4712,13 +5932,18 @@ class CustomizableSSPIStructure {
 
     /**
      * Enrich metadata with full dataset details for caching.
-     * This ensures dataset assignments can be fully restored from cache.
+     * This ensures dataset assignments can be fully restored from unsaved changes.
      * Uses Dataset Codes as keys to lookup full details from this.datasetDetails.
      *
      * @param {Array} metadata - SSPI metadata items with DatasetCodes arrays
      * @returns {Array} - Enriched metadata with DatasetDetails arrays
      */
-    cacheCurrentState() {
+    persistUnsavedChanges() {
+        // Don't persist if there are no unsaved changes
+        if (!this.unsavedChanges) {
+            return;
+        }
+
         try {
             const metadata = this.exportMetadata();
             const actionHistory = {
@@ -4739,125 +5964,119 @@ class CustomizableSSPIStructure {
                 metadata: metadata,
                 datasetDetailsMap: this.datasetDetails,
                 actions: actionHistory.actions,
-                baseConfig: this.baseConfig
+                baseConfig: this.baseConfig,
+                // Preserve config identity for proper save behavior after refresh
+                currentConfigId: this.currentConfigId,
+                currentConfigName: this.currentConfigName,
+                currentConfigDescription: this.currentConfigDescription
             };
             const cacheSize = JSON.stringify(cacheData).length;
-            console.log('Approximate cache size:', parseFloat((cacheSize / 1024 / 1024).toFixed(2)), 'MB');
+            console.log('Approximate unsaved changes size:', parseFloat((cacheSize / 1024 / 1024).toFixed(2)), 'MB');
             if (cacheSize > 5 * 1024 * 1024) { // 5MB limit
-                console.warn('Cache data is too large (>5MB), skipping cache');
+                console.warn('Unsaved changes data is too large (>5MB), skipping persistence');
                 notifications.warning('Configuration too large to cache locally. Please save to server.');
                 return;
             }
-            this.setCache(cacheData);
-            console.log('SSPI modifications cached successfully');
+            this.saveUnsavedChanges(cacheData);
+            console.log('Unsaved changes persisted successfully');
         } catch (error) {
-            console.warn('Failed to cache SSPI modifications:', error);
+            console.warn('Failed to persist unsaved changes:', error);
         }
     }
 
     async loadCachedState() {
         try {
             const cacheData = this.getStorage("cachedModifications");
-            if (!cacheData || !this.isValidCacheData(cacheData)) {
+            if (!cacheData || !this.isValidUnsavedChangesData(cacheData)) {
                 return false;
             }
-            console.log('Loading cached SSPI modifications from:', new Date(cacheData.lastModified));
+            console.log('Loading unsaved changes from:', new Date(cacheData.lastModified));
             if (cacheData.datasetDetailsMap) { // Restore dataset details map
                 this.datasetDetails = cacheData.datasetDetailsMap;
-                console.log('Restored', Object.keys(this.datasetDetails).length, 'dataset details from cache map');
+                console.log('Restored', Object.keys(this.datasetDetails).length, 'dataset details from unsaved changes');
             }
             await this.importDataAsync(cacheData.metadata);
             if (cacheData.actionHistory) { // Restore action history
                 this.actionHistory.actions = cacheData.actionHistory.actions || [];
                 this.actionHistory.currentIndex = cacheData.actionHistory.currentIndex ?? -1;
                 this.actionHistory.baseline = cacheData.actionHistory.baseline || null;
-                console.log('Restored', this.actionHistory.actions.length, 'actions from cache');
+                console.log('Restored', this.actionHistory.actions.length, 'actions from unsaved changes');
             }
-            this.setUnsavedState(cacheData.hasModifications); // Set unsaved state based on cache
+            this.setUnsavedState(cacheData.hasModifications); // Set unsaved state based on stored state
             return true;
         } catch (error) {
-            console.warn('Failed to load cached SSPI modifications:', error);
-            this.clearCache(); // Clear corrupted cache
+            console.warn('Failed to load unsaved changes:', error);
+            this.clearUnsavedChanges(); // Clear corrupted data
             return false;
         }
     }
-    
-    clearCache() {
-        try {
-            const cacheKey = this.getStorageKey("cachedModifications");
-            window.observableStorage.removeItem(cacheKey);
-            console.log('SSPI modifications and dataset cache cleared');
-        } catch (error) {
-            console.warn('Failed to clear SSPI cache:', error);
-        }
-    }
-    
+
     hasCachedModifications() {
         try {
             const cacheData = this.getStorage("cachedModifications");
-            return cacheData && this.isValidCacheData(cacheData) && cacheData.hasModifications;
+            return cacheData && this.isValidUnsavedChangesData(cacheData) && cacheData.hasModifications;
         } catch (error) {
-            console.warn('Error checking for cached modifications:', error);
+            console.warn('Error checking for unsaved changes:', error);
             return false;
         }
     }
     
-    isValidCacheData(cacheData) {
+    isValidUnsavedChangesData(cacheData) {
         if (!cacheData || typeof cacheData !== 'object') {
             return false;
         }
         const requiredFields = ['hasModifications', 'lastModified', 'metadata'];
         for (const field of requiredFields) {
             if (!(field in cacheData)) {
-                console.warn(`Invalid cache data: missing field '${field}'`);
+                console.warn(`Invalid unsaved changes data: missing field '${field}'`);
                 return false;
             }
         }
         if (typeof cacheData.hasModifications !== 'boolean') {
-            console.warn('Invalid cache data: hasModifications must be boolean');
+            console.warn('Invalid unsaved changes data: hasModifications must be boolean');
             return false;
         }
         if (typeof cacheData.lastModified !== 'number' || cacheData.lastModified <= 0) {
-            console.warn('Invalid cache data: lastModified must be a positive number');
+            console.warn('Invalid unsaved changes data: lastModified must be a positive number');
             return false;
         }
         if (!Array.isArray(cacheData.metadata)) {
-            console.warn('Invalid cache data: metadata must be an array');
+            console.warn('Invalid unsaved changes data: metadata must be an array');
             return false;
         }
         const maxAge = 7 * 24 * 60 * 60 * 1000;
         const age = Date.now() - cacheData.lastModified;
         if (age > maxAge) {
-            console.warn('Cache data is too old (>7 days), discarding');
+            console.warn('Unsaved changes data is too old (>7 days), discarding');
             return false;
         }
         if (cacheData.metadata.length > 0) {
             const firstItem = cacheData.metadata[0];
             if (!firstItem || typeof firstItem !== 'object' || !firstItem.ItemType) {
-                console.warn('Invalid cache data: metadata items have invalid structure');
+                console.warn('Invalid unsaved changes data: metadata items have invalid structure');
                 return false;
             }
         }
         return true;
     }
 
-    debouncedCacheState() {
+    debouncedPersistUnsavedChanges() {
         // Clear existing timeout
-        if (this.cacheTimeout) {
-            clearTimeout(this.cacheTimeout);
+        if (this.unsavedChangesTimeout) {
+            clearTimeout(this.unsavedChangesTimeout);
         }
         // Set new timeout for debounced caching
-        this.cacheTimeout = setTimeout(() => {
-            this.cacheCurrentState();
+        this.unsavedChangesTimeout = setTimeout(() => {
+            this.persistUnsavedChanges();
         }, 500); // 500ms debounce
     }
     
-    setupCacheSync() {
+    setupUnsavedChangesSync() {
         // Listen for storage events from other tabs
         window.addEventListener('storage', (e) => {
-            const myCacheKey = this.getCacheKey();
+            const myCacheKey = this.getUnsavedChangesKey();
             if (e.key === myCacheKey && e.newValue !== e.oldValue) {
-                console.log('Cache updated in another tab');
+                console.log('Unsaved changes updated in another tab');
                 if (confirm('Configuration updated in another tab. Reload to see changes?')) {
                     window.location.reload();
                 }

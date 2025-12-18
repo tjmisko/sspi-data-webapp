@@ -3,6 +3,7 @@ import os
 import json
 import io
 import logging
+import re
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,12 +14,13 @@ from flask_login import login_required, current_user
 from sspi_flask_app.auth.decorators import owner_or_admin_required
 from sspi_flask_app.api.resources.utilities import parse_json
 from sspi_flask_app.models.database import (
+    sspi_custom_panel_data,
     sspi_custom_user_data,
     sspi_custom_user_structure,
     sspi_item_data,
     sspi_metadata,
 )
-from sspi_flask_app.models.errors import InvalidDocumentFormatError
+from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from sspi_flask_app.models.rank import SSPIRankingTable
 from sspi_flask_app.models.sspi import FastSSPI
 from sspi_flask_app.api.resources.scoring_tasks import (
@@ -33,6 +35,112 @@ from sspi_flask_app.api.resources.metadata_validator import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def compute_metadata_counts(metadata: list) -> dict:
+    """
+    Compute counts of pillars, categories, indicators, and datasets from metadata.
+
+    Args:
+        metadata: List of metadata items
+
+    Returns:
+        Dictionary with pillar_count, category_count, indicator_count, dataset_count
+    """
+    counts = {
+        "pillar_count": 0,
+        "category_count": 0,
+        "indicator_count": 0,
+        "dataset_count": 0
+    }
+
+    dataset_codes = set()
+
+    for item in metadata:
+        item_type = item.get("ItemType", "")
+        if item_type == "Pillar":
+            counts["pillar_count"] += 1
+        elif item_type == "Category":
+            counts["category_count"] += 1
+        elif item_type == "Indicator":
+            counts["indicator_count"] += 1
+            # Count datasets from indicators
+            for code in item.get("DatasetCodes", []):
+                dataset_codes.add(code)
+
+    counts["dataset_count"] = len(dataset_codes)
+    return counts
+
+
+def sanitize_text_input(text: str, max_length: int = 200, field_name: str = "input", allow_newlines: bool = False) -> str:
+    """
+    Sanitize user text input to prevent injection and ensure safe storage.
+
+    Only allows ASCII alphanumeric characters, periods, commas, parentheses,
+    dashes, and spaces. Optionally allows newlines for description fields.
+    This prevents injection attacks via special characters like
+    angle brackets, curly braces, equals signs, and other operators.
+
+    Allowed characters: A-Z, a-z, 0-9, period (.), comma (,), parentheses (), dash (-), space
+    With allow_newlines: also newline characters
+
+    Args:
+        text: The input text to sanitize
+        max_length: Maximum allowed length (default 200)
+        field_name: Name of the field for error messages
+        allow_newlines: Whether to allow newline characters (default False)
+
+    Returns:
+        Sanitized text string
+
+    Raises:
+        ValueError: If text is invalid, contains forbidden characters, or exceeds max length
+    """
+    if not isinstance(text, str):
+        raise ValueError(f"{field_name} must be a string")
+
+    # Strip leading/trailing whitespace
+    text = text.strip()
+
+    if not text:
+        raise ValueError(f"{field_name} cannot be empty")
+
+    if len(text) > max_length:
+        raise ValueError(f"{field_name} cannot exceed {max_length} characters")
+
+    # Validate allowed characters: A-Za-z0-9.,()- and space only
+    # This prevents injection via <, >, {, }, =, /, \, quotes, etc.
+    if allow_newlines:
+        # Allow newlines (\n and \r) in addition to standard characters
+        allowed_pattern = re.compile(r'^[A-Za-z0-9.,() \r\n-]+$')
+        allowed_chars_desc = "letters, numbers, periods, commas, parentheses, dashes, spaces, and newlines"
+        char_pattern = r'[A-Za-z0-9.,() \r\n-]'
+    else:
+        allowed_pattern = re.compile(r'^[A-Za-z0-9.,() -]+$')
+        allowed_chars_desc = "letters, numbers, periods, commas, parentheses, dashes, and spaces"
+        char_pattern = r'[A-Za-z0-9.,() -]'
+
+    if not allowed_pattern.match(text):
+        # Find the first invalid character for a helpful error message
+        invalid_chars = set()
+        for char in text:
+            if not re.match(char_pattern, char):
+                invalid_chars.add(repr(char))
+        raise ValueError(
+            f"{field_name} contains invalid characters: {', '.join(sorted(invalid_chars))}. "
+            f"Only {allowed_chars_desc} are allowed."
+        )
+
+    # Normalize whitespace (collapse multiple consecutive spaces, but preserve newlines if allowed)
+    if allow_newlines:
+        text = re.sub(r'[^\S\r\n]+', ' ', text)  # Collapse spaces/tabs but not newlines
+        text = re.sub(r' *\r?\n *', '\n', text)  # Normalize newlines and trim spaces around them
+        text = re.sub(r'\n{3,}', '\n\n', text)   # Collapse 3+ newlines to 2
+    else:
+        text = re.sub(r' +', ' ', text)
+
+    return text
+
 
 customize_bp = Blueprint("customize_bp", __name__,
                         template_folder="templates",
@@ -133,6 +241,7 @@ def get_default_structure():
             "success": True,
             "metadata": metadata_items,
             "datasetDetailsMap": all_datasets,  # Map of DatasetCode -> full dataset object
+            "has_scores": True,  # Default SSPI always has pre-computed scores
         })
     except Exception as e:
         logger.error(f"Error loading default structure: {str(e)}")
@@ -216,6 +325,7 @@ def save_configuration():
             return jsonify({"success": False, "error": "No metadata provided"}), 400
 
         config_name = data.get('name', f'Custom SSPI {user_id}')
+        config_description = data.get('description', None)
         metadata = data.get('metadata')
         actions = data.get('actions', [])
 
@@ -226,12 +336,22 @@ def save_configuration():
         if not isinstance(actions, list):
             return jsonify({"success": False, "error": "actions must be a list"}), 400
 
+        # Sanitize name and description (strip whitespace, limit length)
+        config_name = sanitize_text_input(config_name, max_length=200, field_name="name")
+        if config_description:
+            config_description = sanitize_text_input(config_description, max_length=1000, field_name="description", allow_newlines=True)
+
+        # Compute counts from metadata
+        counts = compute_metadata_counts(metadata)
+
         # Save to database
         config_id = sspi_custom_user_structure.create_config(
             name=config_name,
             metadata=metadata,
             username=user_id,
-            actions=actions
+            description=config_description,
+            actions=actions,
+            counts=counts
         )
 
         logger.info(f"Saved configuration {config_id} for user {user_id} with {len(metadata)} items and {len(actions)} actions")
@@ -239,8 +359,13 @@ def save_configuration():
         return jsonify({
             "success": True,
             "config_id": config_id,
+            "name": config_name,
+            "description": config_description,
             "message": "Configuration saved successfully"
         })
+    except LimitExceededError as e:
+        logger.warning(f"User {current_user.username} exceeded config limit: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 429
     except ValueError as e:
         logger.error(f"Validation error saving configuration: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 400
@@ -304,15 +429,23 @@ def load_configuration(config_id):
 
         all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
 
-        logger.info(f"Loaded configuration {config_id} for user {user_id}")
+        # Check if configuration has been scored (has cached results)
+        has_scores = False
+        if config.get("metadata"):
+            config_hash = compute_config_hash(config["metadata"])
+            has_scores = sspi_custom_panel_data.has_cached_results(config_hash)
+
+        logger.info(f"Loaded configuration {config_id} for user {user_id} (has_scores={has_scores})")
 
         return jsonify({
             "success": True,
             "config_id": config["config_id"],
             "name": config["name"],
+            "description": config.get("description"),
             "metadata": config["metadata"],
             "actions": config.get("actions", []),
             "datasetDetailsMap": all_datasets,
+            "has_scores": has_scores,
             "created_at": config.get("created_at"),
             "updated_at": config.get("updated_at")
         })
@@ -323,46 +456,67 @@ def load_configuration(config_id):
 @customize_bp.route("/empty-structure", methods=["GET"])
 def get_empty_structure():
     """
-    Get minimal SSPI structure with only pillars (no categories or indicators).
+    Get minimal SSPI structure with three blank pillars (no categories or indicators).
+
+    Returns a blank canvas with 3 empty pillar slots. All name and code fields are
+    empty strings - users fill these in as they build their custom SSPI.
 
     Returns:
-        JSON with success status, empty metadata (just SSPI root + pillars), and dataset details map
+        JSON with success status, empty metadata (SSPI root + 3 blank pillars), and dataset details map
     """
     try:
-        # Create minimal structure: SSPI root + 3 pillars only
+        # Create blank structure: SSPI root + 3 empty pillars
+        # All names and codes are empty strings - users fill them in
         empty_metadata = [
             {
+                "DocumentType": "SSPIDetail",
                 "ItemType": "SSPI",
                 "ItemCode": "SSPI",
-                "ItemName": "Sustainable and Shared-Prosperity Policy Index",
-                "Children": ["SUS", "MS", "PG"]
+                "ItemName": "",
+                "Children": [],
+                "PillarCodes": [],
+                "TreeIndex": [0, -1, -1, -1],
+                "TreePath": "sspi",
+                "ItemOrder": 0
             },
             {
+                "DocumentType": "PillarDetail",
                 "ItemType": "Pillar",
-                "ItemCode": "SUS",
-                "ItemName": "Sustainability",
-                "PillarCode": "SUS",
+                "ItemCode": "",
+                "ItemName": "",
+                "Pillar": "",
+                "PillarCode": "",
                 "CategoryCodes": [],
-                "IndicatorCodes": [],
-                "Children": []
+                "Children": [],
+                "TreeIndex": [0, 0, -1, -1],
+                "TreePath": "",
+                "ItemOrder": 0
             },
             {
+                "DocumentType": "PillarDetail",
                 "ItemType": "Pillar",
-                "ItemCode": "MS",
-                "ItemName": "Market Structure",
-                "PillarCode": "MS",
+                "ItemCode": "",
+                "ItemName": "",
+                "Pillar": "",
+                "PillarCode": "",
                 "CategoryCodes": [],
-                "IndicatorCodes": [],
-                "Children": []
+                "Children": [],
+                "TreeIndex": [0, 1, -1, -1],
+                "TreePath": "",
+                "ItemOrder": 1
             },
             {
+                "DocumentType": "PillarDetail",
                 "ItemType": "Pillar",
-                "ItemCode": "PG",
-                "ItemName": "Public Goods",
-                "PillarCode": "PG",
+                "ItemCode": "",
+                "ItemName": "",
+                "Pillar": "",
+                "PillarCode": "",
                 "CategoryCodes": [],
-                "IndicatorCodes": [],
-                "Children": []
+                "Children": [],
+                "TreeIndex": [0, 2, -1, -1],
+                "TreePath": "",
+                "ItemOrder": 2
             }
         ]
 
@@ -384,12 +538,13 @@ def get_empty_structure():
 
         all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
 
-        logger.info("Returned empty SSPI structure with 3 pillars")
+        logger.info("Returned blank SSPI structure with 3 empty pillar slots")
 
         return jsonify({
             "success": True,
             "metadata": empty_metadata,
-            "datasetDetailsMap": all_datasets
+            "datasetDetailsMap": all_datasets,
+            "has_scores": False  # Blank configurations have no scores
         })
     except Exception as e:
         logger.error(f"Error creating empty structure: {str(e)}")
@@ -471,7 +626,7 @@ def update_configuration(config_id):
     Update an existing configuration.
 
     Accepts partial updates - only provided fields will be updated.
-    Allowed fields: name, metadata, actions
+    Allowed fields: name, description, metadata, actions
 
     Returns:
         JSON with success status
@@ -484,7 +639,7 @@ def update_configuration(config_id):
             return jsonify({"success": False, "error": "No updates provided"}), 400
 
         # Validate allowed fields
-        allowed_fields = {"name", "metadata", "actions"}
+        allowed_fields = {"name", "description", "metadata", "actions"}
         provided_fields = set(updates.keys())
         invalid_fields = provided_fields - allowed_fields
 
@@ -493,6 +648,12 @@ def update_configuration(config_id):
                 "success": False,
                 "error": f"Invalid fields: {', '.join(invalid_fields)}. Allowed: {', '.join(allowed_fields)}"
             }), 400
+
+        # Sanitize name and description if provided
+        if "name" in updates:
+            updates["name"] = sanitize_text_input(updates["name"], max_length=200, field_name="name")
+        if "description" in updates and updates["description"]:
+            updates["description"] = sanitize_text_input(updates["description"], max_length=1000, field_name="description", allow_newlines=True)
 
         # Update configuration
         success = sspi_custom_user_structure.update_config(
@@ -792,8 +953,7 @@ def score_custom_configuration():
     }
     """
     try:
-        # Get authenticated user_id (decorator ensures user is logged in)
-        user_id = current_user.username
+        user_id = current_user.username # Get authenticated user_id (decorator ensures user is logged in)
         json_data = request.get_json()
 
         if not json_data:
@@ -899,8 +1059,20 @@ def get_results_summary(config_id):
                 "error": "Configuration not found or access denied"
             }), 404
 
-        # Check if results exist
-        has_results = sspi_custom_user_data.config_has_results(config_id)
+        # Compute config_hash from metadata to look up cached results
+        metadata = config.get("metadata")
+        if not metadata:
+            return jsonify({
+                "success": True,
+                "config_id": config_id,
+                "has_results": False,
+                "message": "Configuration has no metadata"
+            })
+
+        config_hash = compute_config_hash(metadata)
+
+        # Check if results exist in sspi_custom_panel_data (by config_hash)
+        has_results = sspi_custom_panel_data.has_cached_results(config_hash)
 
         if not has_results:
             return jsonify({
@@ -910,14 +1082,15 @@ def get_results_summary(config_id):
                 "message": "No scoring results found for this configuration"
             })
 
-        # Get statistics about results
-        stats = sspi_custom_user_data.get_config_stats(config_id)
+        # Get statistics about results from sspi_custom_panel_data
+        stats = sspi_custom_panel_data.get_cache_stats(config_hash)
 
-        logger.info(f"Retrieved results summary for config {config_id} (user {user_id})")
+        logger.info(f"Retrieved results summary for config {config_id} (hash {config_hash[:8]}..., user {user_id})")
 
         return jsonify({
             "success": True,
             "config_id": config_id,
+            "config_hash": config_hash,
             "has_results": True,
             "stats": stats
         })
@@ -951,6 +1124,20 @@ def get_chart_data(config_id):
                 "success": False,
                 "error": "Configuration not found or access denied"
             }), 404
+
+        # Compute config_hash from metadata to look up cached results
+        metadata = config.get("metadata")
+        if not metadata:
+            return jsonify({
+                "success": True,
+                "config_id": config_id,
+                "item_code": request.args.get('item_code', ''),
+                "data": [],
+                "message": "Configuration has no metadata"
+            })
+
+        config_hash = compute_config_hash(metadata)
+
         # Get query parameters
         item_code = request.args.get('item_code')
         if not item_code:
@@ -960,14 +1147,15 @@ def get_chart_data(config_id):
         years_param = request.args.get('years', '')
         country_codes = [c.strip() for c in countries_param.split(',') if c.strip()] if countries_param else None
         years = [int(y.strip()) for y in years_param.split(',') if y.strip()] if years_param else None
-        # Get results from database
-        results = sspi_custom_user_data.get_config_results(
-            config_id=config_id,
+
+        # Get results from sspi_custom_panel_data using config_hash
+        filtered_results = sspi_custom_panel_data.get_results_by_item(
+            config_hash=config_hash,
+            item_code=item_code,
             country_codes=country_codes,
             years=years
         )
-        # Filter by item_code
-        filtered_results = [r for r in results if r.get("item_code") == item_code]
+
         if not filtered_results:
             return jsonify({
                 "success": True,
@@ -993,7 +1181,7 @@ def get_chart_data(config_id):
         # Sort each country's data by year
         for country in chart_data:
             chart_data[country].sort(key=lambda x: x["year"])
-        logger.info(f"Retrieved chart data for config {config_id}, item {item_code} (user {user_id})")
+        logger.info(f"Retrieved chart data for config {config_id} (hash {config_hash[:8]}...), item {item_code} (user {user_id})")
 
         return jsonify({
             "success": True,
@@ -1017,4 +1205,3 @@ def get_chart_data(config_id):
 # ============================================================================
 # Session management migrated to client-side localStorage.
 # See REFACTOR_SESSION_TO_LOCALSTORAGE.md for details.
-

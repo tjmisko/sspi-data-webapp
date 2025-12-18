@@ -1,0 +1,534 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>Custom SSPI Visualization</title>
+{% endblock title %}
+
+{% block content %}
+<article class="page-content">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="custom-visualization-container">
+                <div class="visualization-header">
+                    <div class="config-info">
+                        <h2 id="config-name">Loading configuration...</h2>
+                        <p id="config-description" class="config-description"></p>
+                        <div id="config-stats" class="config-stats"></div>
+                    </div>
+                    <div class="visualization-actions">
+                        <a id="btn-edit-config" href="/customize/builder?base_config={{ config_id }}" class="btn-secondary">
+                            Edit Configuration
+                        </a>
+                        <a href="/customize" class="btn-secondary">
+                            Back to Configurations
+                        </a>
+                    </div>
+                </div>
+
+                <div id="visualization-content" class="visualization-content">
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading visualization data...</p>
+                    </div>
+                </div>
+
+                <div id="no-results-message" class="no-results-message hidden">
+                    <h3>No Scores Available</h3>
+                    <p>This configuration has not been scored yet.</p>
+                    <a href="/customize?action=score&config={{ config_id }}" class="btn-primary">
+                        Score This Configuration
+                    </a>
+                </div>
+
+                <div id="error-message" class="error-message hidden">
+                    <h3>Error Loading Data</h3>
+                    <p id="error-text"></p>
+                    <button onclick="window.location.reload()" class="btn-secondary">
+                        Retry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+</article>
+
+<style>
+.custom-visualization-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.visualization-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.config-info h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
+}
+
+.config-description {
+    color: var(--low-importance-font-color);
+    margin: 0 0 0.5rem 0;
+}
+
+.config-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--low-importance-font-color);
+}
+
+.config-stats span {
+    padding: 0.25rem 0.5rem;
+    background: var(--badge-background-color);
+    border-radius: var(--border-radius);
+}
+
+.visualization-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.visualization-content {
+    min-height: 400px;
+}
+
+.loading-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--low-importance-font-color);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.no-results-message,
+.error-message {
+    text-align: center;
+    padding: 3rem;
+    background: var(--box-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.no-results-message h3,
+.error-message h3 {
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
+}
+
+.no-results-message p,
+.error-message p {
+    margin: 0 0 1.5rem 0;
+    color: var(--low-importance-font-color);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Chart container styles */
+.chart-section {
+    margin-top: 2rem;
+}
+
+.item-selector {
+    margin-bottom: 1.5rem;
+}
+
+.item-selector label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.item-selector select {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--box-background-color);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.chart-wrapper {
+    background: var(--box-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    min-height: 400px;
+}
+
+.results-summary {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--box-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.results-summary h3 {
+    margin: 0 0 1rem 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--low-importance-font-color);
+}
+
+/* Button styles */
+.btn-primary,
+.btn-secondary {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background: var(--box-background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+</style>
+
+<script>
+window.csrfToken = {{ csrf_token|tojson|safe if csrf_token is defined else '""' }};
+window.sspiConfigId = {{ config_id|tojson|safe }};
+
+async function fetchWithCSRF(url, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && window.csrfToken) {
+        options.headers = {
+            ...options.headers,
+            'X-CSRFToken': window.csrfToken
+        };
+    }
+    return fetch(url, options);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const configId = window.sspiConfigId;
+
+    try {
+        // Load configuration details and results summary in parallel
+        const [configResponse, resultsResponse] = await Promise.all([
+            fetchWithCSRF(`/api/v1/customize/load/${configId}`),
+            fetchWithCSRF(`/api/v1/customize/results/${configId}`)
+        ]);
+
+        const configData = await configResponse.json();
+        const resultsData = await resultsResponse.json();
+
+        if (!configData.success) {
+            showError(configData.error || 'Failed to load configuration');
+            return;
+        }
+
+        // Update header with configuration info
+        updateConfigHeader(configData);
+
+        if (!resultsData.success || !resultsData.has_results) {
+            showNoResults();
+            return;
+        }
+
+        // Show results
+        showResults(configData, resultsData);
+
+    } catch (error) {
+        console.error('Error loading visualization:', error);
+        showError('Failed to load visualization data. Please try again.');
+    }
+});
+
+function updateConfigHeader(configData) {
+    document.getElementById('config-name').textContent = configData.name || 'Custom SSPI Configuration';
+
+    const descEl = document.getElementById('config-description');
+    if (configData.description) {
+        descEl.textContent = configData.description;
+    } else {
+        descEl.style.display = 'none';
+    }
+
+    // Count structure elements
+    const metadata = configData.metadata || [];
+    let pillars = 0, categories = 0, indicators = 0;
+
+    metadata.forEach(item => {
+        const itemType = item.ItemType;
+        if (itemType === 'Pillar') pillars++;
+        else if (itemType === 'Category') categories++;
+        else if (itemType === 'Indicator') indicators++;
+    });
+
+    document.getElementById('config-stats').innerHTML = `
+        <span>${pillars} Pillars</span>
+        <span>${categories} Categories</span>
+        <span>${indicators} Indicators</span>
+    `;
+}
+
+function showNoResults() {
+    document.getElementById('visualization-content').classList.add('hidden');
+    document.getElementById('no-results-message').classList.remove('hidden');
+}
+
+function showError(message) {
+    document.getElementById('visualization-content').classList.add('hidden');
+    document.getElementById('error-text').textContent = message;
+    document.getElementById('error-message').classList.remove('hidden');
+}
+
+function showResults(configData, resultsData) {
+    const content = document.getElementById('visualization-content');
+    const stats = resultsData.stats || {};
+
+    // Build the visualization content
+    content.innerHTML = `
+        <div class="results-summary">
+            <h3>Scoring Results Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${stats.total_results || 0}</div>
+                    <div class="stat-label">Total Scores</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.countries || 0}</div>
+                    <div class="stat-label">Countries</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.years || 0}</div>
+                    <div class="stat-label">Years</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.items || 0}</div>
+                    <div class="stat-label">Items Scored</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="item-selector">
+                <label for="item-select">Select Item to Visualize:</label>
+                <select id="item-select">
+                    <option value="">-- Select an item --</option>
+                </select>
+            </div>
+            <div id="chart-container" class="chart-wrapper">
+                <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
+                    Select an item above to view its chart
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Populate item selector from metadata
+    const select = document.getElementById('item-select');
+    const metadata = configData.metadata || [];
+
+    // Group by type
+    const pillars = metadata.filter(m => m.ItemType === 'Pillar');
+    const categories = metadata.filter(m => m.ItemType === 'Category');
+    const indicators = metadata.filter(m => m.ItemType === 'Indicator');
+
+    if (pillars.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = 'Pillars';
+        pillars.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.ItemCode;
+            opt.textContent = `${p.ItemCode} - ${p.ItemName}`;
+            group.appendChild(opt);
+        });
+        select.appendChild(group);
+    }
+
+    if (categories.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = 'Categories';
+        categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.ItemCode;
+            opt.textContent = `${c.ItemCode} - ${c.ItemName}`;
+            group.appendChild(opt);
+        });
+        select.appendChild(group);
+    }
+
+    if (indicators.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = 'Indicators';
+        indicators.forEach(i => {
+            const opt = document.createElement('option');
+            opt.value = i.ItemCode;
+            opt.textContent = `${i.ItemCode} - ${i.ItemName}`;
+            group.appendChild(opt);
+        });
+        select.appendChild(group);
+    }
+
+    // Add change listener
+    select.addEventListener('change', (e) => {
+        if (e.target.value) {
+            loadChartData(e.target.value);
+        }
+    });
+}
+
+async function loadChartData(itemCode) {
+    const container = document.getElementById('chart-container');
+    container.innerHTML = `
+        <div class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading chart data...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetchWithCSRF(
+            `/api/v1/customize/results/${window.sspiConfigId}/chart-data?item_code=${itemCode}`
+        );
+        const data = await response.json();
+
+        if (!data.success) {
+            container.innerHTML = `
+                <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
+                    ${data.message || 'No data available for this item'}
+                </p>
+            `;
+            return;
+        }
+
+        renderChart(container, data);
+
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+        container.innerHTML = `
+            <p style="text-align: center; color: var(--badge-negative-color); padding: 3rem;">
+                Error loading chart data. Please try again.
+            </p>
+        `;
+    }
+}
+
+function renderChart(container, data) {
+    // Create a simple table view of the data
+    // A more sophisticated chart can be added later using Chart.js or similar
+    const chartData = data.data;
+    const countries = Object.keys(chartData);
+
+    if (countries.length === 0) {
+        container.innerHTML = `
+            <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
+                No data available for this item
+            </p>
+        `;
+        return;
+    }
+
+    // Get all years from the data
+    const allYears = new Set();
+    countries.forEach(country => {
+        chartData[country].forEach(point => allYears.add(point.year));
+    });
+    const years = Array.from(allYears).sort();
+
+    container.innerHTML = `
+        <h4 style="margin: 0 0 1rem 0;">${data.item_name || data.item_code}</h4>
+        <p style="color: var(--low-importance-font-color); margin-bottom: 1rem;">
+            ${data.total_points} data points across ${countries.length} countries
+        </p>
+        <div style="overflow-x: auto;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--badge-background-color);">
+                        <th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color);">Country</th>
+                        ${years.map(y => `<th style="padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color);">${y}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${countries.slice(0, 20).map(country => {
+                        const countryData = chartData[country];
+                        const yearMap = {};
+                        countryData.forEach(point => yearMap[point.year] = point.score);
+                        return `
+                            <tr>
+                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">${country}</td>
+                                ${years.map(y => `
+                                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color);">
+                                        ${yearMap[y] !== undefined ? yearMap[y].toFixed(2) : '-'}
+                                    </td>
+                                `).join('')}
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+            ${countries.length > 20 ? `<p style="color: var(--low-importance-font-color); margin-top: 1rem;">Showing first 20 of ${countries.length} countries</p>` : ''}
+        </div>
+    `;
+}
+</script>
+{% endblock content %}

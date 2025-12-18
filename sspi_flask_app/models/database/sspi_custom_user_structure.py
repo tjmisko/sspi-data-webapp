@@ -1,5 +1,5 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
-from sspi_flask_app.models.errors import InvalidDocumentFormatError
+from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from datetime import datetime, timezone
 import secrets
 import re
@@ -14,16 +14,22 @@ class SSPICustomUserStructure(MongoWrapper):
 
     Document format:
     {
-        "config_id": "unique_hex_string", # create if missing by hashing the metadata field
+        "config_id": "unique_hex_string",
         "name": "My Custom SSPI",
+        "description": "Optional description",  # Optional, max 1000 chars
         "username": "",  # REQUIRED - enforces ownership
-        "public": "", # Boolean
+        "public": False,  # Boolean
         "metadata": [...],  # Array of SSPI metadata items (same format as item_details())
-        "actions": [...], # Array of actions exported from action history
-        "created": "2024-01-01T00:00:00Z",
-        "updated": "2024-01-01T00:00:00Z"
+        "actions": [...],  # Array of actions exported from action history
+        "created_at": "2024-01-01T00:00:00Z",
+        "updated_at": "2024-01-01T00:00:00Z"
     }
+
+    Limits:
+        - Max 100 configurations per user
     """
+
+    MAX_CONFIGS_PER_USER = 100
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
@@ -33,6 +39,7 @@ class SSPICustomUserStructure(MongoWrapper):
         """
         self.validate_config_id(document, document_number)
         self.validate_config_name(document, document_number)
+        self.validate_description(document, document_number)
         self.validate_username(document, document_number)
         self.validate_metadata(document, document_number)
         self.validate_timestamps(document, document_number)
@@ -81,6 +88,25 @@ class SSPICustomUserStructure(MongoWrapper):
         if len(name) > 200:
             raise InvalidDocumentFormatError(
                 f"'name' cannot exceed 200 characters (document {document_number})"
+            )
+
+    def validate_description(self, document: dict, document_number: int = 0):
+        """Validate description field (optional)."""
+        if "description" not in document:
+            return  # Description is optional
+
+        description = document["description"]
+        if description is None:
+            return  # None is allowed (treated as no description)
+
+        if not isinstance(description, str):
+            raise InvalidDocumentFormatError(
+                f"'description' must be a string (document {document_number})"
+            )
+
+        if len(description) > 1000:
+            raise InvalidDocumentFormatError(
+                f"'description' cannot exceed 1000 characters (document {document_number})"
             )
 
     def validate_username(self, document: dict, document_number: int = 0):
@@ -181,6 +207,32 @@ class SSPICustomUserStructure(MongoWrapper):
         """Check if a configuration exists."""
         return self.count_documents({"config_id": config_id}) > 0
 
+    def count_user_configs(self, username: str) -> int:
+        """
+        Count how many configurations a user has.
+
+        Args:
+            username: User identifier
+
+        Returns:
+            Number of configurations owned by the user
+        """
+        if not username:
+            return 0
+        return self.count_documents({"username": username})
+
+    def can_create_config(self, username: str) -> bool:
+        """
+        Check if a user can create a new configuration (under the limit).
+
+        Args:
+            username: User identifier
+
+        Returns:
+            True if user has fewer than MAX_CONFIGS_PER_USER configurations
+        """
+        return self.count_user_configs(username) < self.MAX_CONFIGS_PER_USER
+
     def verify_ownership(self, config_id: str, username: str) -> bool:
         """
         Verify that a user owns a specific configuration.
@@ -197,7 +249,15 @@ class SSPICustomUserStructure(MongoWrapper):
         return self.count_documents({"config_id": config_id, "username": username}) > 0
 
     # CRUD operations with user isolation
-    def create_config(self, name: str, metadata: list, username: str, actions: list = None) -> str:
+    def create_config(
+        self,
+        name: str,
+        metadata: list,
+        username: str,
+        description: str = None,
+        actions: list = None,
+        counts: dict = None
+    ) -> str:
         """
         Create a new custom configuration.
 
@@ -205,17 +265,26 @@ class SSPICustomUserStructure(MongoWrapper):
             name: Human-readable name for the configuration
             metadata: Array of SSPI metadata items (SSPI, Pillars, Categories, Indicators)
             username: User identifier (REQUIRED)
+            description: Optional description for the configuration (max 1000 chars)
             actions: Array of action history items (optional, defaults to empty list)
+            counts: Dictionary with pillar_count, category_count, indicator_count, dataset_count
 
         Returns:
             The generated config_id
 
         Raises:
             ValueError: If username is not provided
+            LimitExceededError: If user has reached max configurations (100)
             InvalidDocumentFormatError: If validation fails
         """
         if not username:
             raise ValueError("username is required to create a configuration")
+
+        # Check if user has reached the config limit
+        if not self.can_create_config(username):
+            raise LimitExceededError(
+                f"User {username} has reached the maximum of {self.MAX_CONFIGS_PER_USER} configurations"
+            )
 
         if actions is None:
             actions = []
@@ -231,12 +300,20 @@ class SSPICustomUserStructure(MongoWrapper):
         config_doc = {
             "config_id": config_id,
             "name": name,
+            "description": description,
             "username": username,
             "metadata": metadata,
             "actions": actions,
             "created_at": now,
             "updated_at": now
         }
+
+        # Add counts if provided
+        if counts:
+            config_doc["pillar_count"] = counts.get("pillar_count", 0)
+            config_doc["category_count"] = counts.get("category_count", 0)
+            config_doc["indicator_count"] = counts.get("indicator_count", 0)
+            config_doc["dataset_count"] = counts.get("dataset_count", 0)
 
         # Validate the document
         self.validate_document_format(config_doc)
@@ -290,20 +367,20 @@ class SSPICustomUserStructure(MongoWrapper):
             is_admin: If True, return all configurations across all users
 
         Returns:
-            List of dicts with config_id, name, and username (username included if admin)
+            List of dicts with config_id, name, description, and username (username included if admin)
 
         Raises:
             ValueError: If username is not provided and is_admin is False
         """
         if is_admin:
             # Admin can see all configs across all users
-            configs = self.find({}, {"_id": 0, "config_id": 1, "name": 1, "username": 1})
+            configs = self.find({}, {"_id": 0, "config_id": 1, "name": 1, "description": 1, "username": 1, "created_at": 1, "updated_at": 1})
             return configs
         else:
             # Regular user can only see their own configs
             if not username:
                 raise ValueError("username is required to list configurations")
-            configs = self.find({"username": username}, {"_id": 0, "config_id": 1, "name": 1})
+            configs = self.find({"username": username}, {"_id": 0, "config_id": 1, "name": 1, "description": 1, "created_at": 1, "updated_at": 1})
             return configs
 
     def update_config(self, config_id: str, username: str, updates: dict, is_admin: bool = False) -> bool:
