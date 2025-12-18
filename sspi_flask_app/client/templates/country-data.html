@@ -63,13 +63,21 @@
             <div class="country-overview-box">
                 <h3>Data Coverage and Imputations</h3>
                 <p class="functionality-explainer">
-                    The SSPI uses the best available data to generate
-                    policy scores. Where data availability presents
-                    challenges, we use imputations and data modelling
-                    to make scores as commensurable across countries
-                    and years as possible. 
+                    The SSPI uses the best available data to generate policy
+                    scores. When data is unavailable, we use imputations and data
+                    modelling to make scores as commensurable across countries and
+                    years as possible. The matrix below shows which indicator-year
+                    combinations have observed data (green) and which rely on 
+                    imputed data (orange). 
+                    
+                <p class="functionality-explainer">
+                    Imputations are typically carried out at the dataset level.
+                    Since each indicator relies on one or more datasets, the
+                    imputation percentage for an indicator is always greater than
+                    or equal to that for datasets. Toggle between an indicator and
+                    dataset views using the tab bar.
                 </p>
-                <div id="category-radar-chart"></div>
+                <div id="country-coverage-matrix-chart"></div>
             </div>
         </div>
     </section>
@@ -102,6 +110,15 @@
                 document.getElementById("country-rankings-panel"),
                 "{{ cdetail.CountryCode | upper}}",
                 "indicator"
+            );
+
+            // Initialize Country Coverage Matrix
+            window.SSPICharts.push(
+                new CountryCoverageMatrixChart(
+                    document.getElementById("country-coverage-matrix-chart"),
+                    "{{ cdetail.CountryCode | upper}}",
+                    { minYear: 2000, maxYear: 2023 }
+                )
             );
 
             const x = window.observableStorage.getItem('windowX');

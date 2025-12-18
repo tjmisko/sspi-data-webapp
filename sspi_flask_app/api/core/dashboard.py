@@ -27,6 +27,7 @@ from sspi_flask_app.models.database import (
     sspi_item_data,
     sspi_metadata,
     sspi_indicator_data,
+    sspi_imputed_data,
     sspi_panel_data,
     sspi_static_rank_data,
     sspi_static_metadata,
@@ -965,6 +966,341 @@ def coverage_country(CountryCode):
     group = request.args.get("CountryGroup", "SSPI67")
     coverage = DataCoverage(2000, 2023, group).country_report(CountryCode)
     return coverage
+
+
+@dashboard_bp.route("/country/coverage/matrix/<country_code>")
+def country_coverage_matrix_data(country_code):
+    """
+    Get coverage matrix data for a single country showing observed vs imputed vs missing.
+    Returns data suitable for rendering a matrix chart with indicators on y-axis and years on x-axis.
+    Only includes indicators from the active schema (those with complete coverage used in SSPI computation).
+
+    Query parameters:
+        view: 'indicator' (default) or 'dataset'
+    """
+    min_year = 2000
+    max_year = 2023
+    years = list(range(min_year, max_year + 1))
+    country_code = country_code.upper()
+    view = request.args.get("view", "indicator")
+
+    # Get only indicators with complete coverage (the active schema)
+    coverage = DataCoverage(min_year, max_year, "SSPI67")
+    indicator_codes = coverage.complete()
+
+    # Get indicator details for name mapping
+    indicator_details = sspi_metadata.indicator_details()
+    indicator_name_map = {d["ItemCode"]: d["ItemName"] for d in indicator_details}
+
+    # Get dataset dependencies for active schema
+    dataset_deps = sspi_metadata.get_active_schema_dataset_dependencies(indicator_codes)
+    indicator_to_datasets = dataset_deps["indicatorToDatasets"]
+
+    # Get dataset details for name mapping
+    dataset_details = sspi_metadata.dataset_details()
+    dataset_name_map = {d["DatasetCode"]: d["DatasetName"] for d in dataset_details}
+
+    # Build indicator hierarchy for pillar/category grouping
+    item_details = sspi_metadata.item_details()
+    indicator_hierarchy = {}
+    for item in item_details:
+        if item.get("ItemType") == "Indicator":
+            indicator_hierarchy[item["ItemCode"]] = {
+                "pillarCode": item.get("PillarCode", ""),
+                "categoryCode": item.get("CategoryCode", "")
+            }
+
+    # Query observed data for this country (indicator-level)
+    observed_pipeline = [
+        {"$match": {
+            "CountryCode": country_code,
+            "IndicatorCode": {"$in": indicator_codes},
+            "Year": {"$gte": min_year, "$lte": max_year}
+        }},
+        {"$group": {
+            "_id": {"IndicatorCode": "$IndicatorCode", "Year": "$Year"},
+            "score": {"$first": "$Score"}
+        }},
+        {"$project": {
+            "_id": 0,
+            "IndicatorCode": "$_id.IndicatorCode",
+            "Year": "$_id.Year",
+            "score": 1
+        }}
+    ]
+    observed_results = sspi_indicator_data.aggregate(observed_pipeline)
+    observed_set = {(r["IndicatorCode"], r["Year"]): r["score"] for r in observed_results}
+
+    # Query imputed data with dataset-level breakdown
+    imputed_pipeline = [
+        {"$match": {
+            "CountryCode": country_code,
+            "IndicatorCode": {"$in": indicator_codes},
+            "Year": {"$gte": min_year, "$lte": max_year}
+        }},
+        {"$project": {
+            "_id": 0,
+            "IndicatorCode": 1,
+            "Year": 1,
+            "Score": 1,
+            "Datasets": 1
+        }}
+    ]
+    imputed_results = list(sspi_imputed_data.aggregate(imputed_pipeline))
+
+    # Build lookup for imputed data: (indicator, year) -> {score, datasets}
+    imputed_set = {}
+    for r in imputed_results:
+        key = (r["IndicatorCode"], r["Year"])
+        datasets_info = {}
+        observed_ds_count = 0
+        imputed_ds_count = 0
+
+        for ds in r.get("Datasets", []):
+            ds_code = ds.get("DatasetCode")
+            if not ds_code:
+                continue
+            is_imputed = ds.get("Imputed", False)
+            ds_info = {
+                "status": "imputed" if is_imputed else "observed",
+                "value": ds.get("Value")
+            }
+            # Include imputation method if present
+            if is_imputed and ds.get("ImputationMethod"):
+                ds_info["imputationMethod"] = ds.get("ImputationMethod")
+            datasets_info[ds_code] = ds_info
+            if is_imputed:
+                imputed_ds_count += 1
+            else:
+                observed_ds_count += 1
+
+        imputed_set[key] = {
+            "score": r.get("Score"),
+            "datasetBreakdown": datasets_info,
+            "observedDatasets": observed_ds_count,
+            "imputedDatasets": imputed_ds_count,
+            "totalDatasets": observed_ds_count + imputed_ds_count
+        }
+
+    # Get country details
+    country_detail = sspi_metadata.get_country_detail(country_code)
+
+    if view == "dataset":
+        return _build_dataset_view_response(
+            country_code, years, indicator_codes, indicator_name_map,
+            dataset_name_map, indicator_to_datasets, indicator_hierarchy,
+            observed_set, imputed_set, country_detail
+        )
+    else:
+        return _build_indicator_view_response(
+            country_code, years, indicator_codes, indicator_name_map,
+            indicator_to_datasets, indicator_hierarchy,
+            observed_set, imputed_set, country_detail
+        )
+
+
+def _build_indicator_view_response(
+    country_code, years, indicator_codes, indicator_name_map,
+    indicator_to_datasets, indicator_hierarchy,
+    observed_set, imputed_set, country_detail
+):
+    """Build indicator-level coverage matrix response with dataset breakdown."""
+    data = []
+    observed_count = 0
+    imputed_count = 0
+
+    for indicator_code in indicator_codes:
+        hierarchy = indicator_hierarchy.get(indicator_code, {})
+        expected_datasets = indicator_to_datasets.get(indicator_code, [])
+
+        for year in years:
+            key = (indicator_code, year)
+            cell = {
+                "x": year,
+                "y": indicator_code,
+                "yName": indicator_name_map.get(indicator_code, indicator_code),
+                "pillarCode": hierarchy.get("pillarCode", ""),
+                "categoryCode": hierarchy.get("categoryCode", ""),
+                "totalDatasets": len(expected_datasets)
+            }
+
+            if key in observed_set:
+                # All observed (from sspi_indicator_data means no imputation)
+                cell["v"] = "observed"
+                cell["score"] = observed_set[key]
+                cell["observedDatasets"] = len(expected_datasets)
+                cell["imputedDatasets"] = 0
+                cell["datasetBreakdown"] = {
+                    ds: {"status": "observed"} for ds in expected_datasets
+                }
+                observed_count += 1
+            elif key in imputed_set:
+                imputed_info = imputed_set[key]
+                cell["score"] = imputed_info["score"]
+                cell["datasetBreakdown"] = imputed_info["datasetBreakdown"]
+                cell["observedDatasets"] = imputed_info["observedDatasets"]
+                cell["imputedDatasets"] = imputed_info["imputedDatasets"]
+
+                # If any dataset is imputed, show as imputed
+                if imputed_info["imputedDatasets"] > 0:
+                    cell["v"] = "imputed"
+                    imputed_count += 1
+                else:
+                    cell["v"] = "observed"
+                    observed_count += 1
+            else:
+                # Data should never be missing - all indicator/year combinations
+                # should exist in either observed or imputed data
+                raise AssertionError(
+                    f"Missing data for {indicator_code} in {year} for {country_code}. "
+                    "All data should be present in sspi_indicator_data or sspi_imputed_data."
+                )
+
+            data.append(cell)
+
+    total_cells = len(indicator_codes) * len(years)
+
+    return jsonify({
+        "view": "indicator",
+        "data": data,
+        "summary": {
+            "totalCells": total_cells,
+            "observedCount": observed_count,
+            "imputedCount": imputed_count,
+            "observedPercent": round(observed_count / total_cells * 100, 1) if total_cells > 0 else 0,
+            "imputedPercent": round(imputed_count / total_cells * 100, 1) if total_cells > 0 else 0
+        },
+        "indicators": indicator_codes,
+        "indicatorNames": indicator_name_map,
+        "years": years,
+        "countryCode": country_code,
+        "countryName": country_detail.get("Country", country_code) if country_detail else country_code,
+        "countryFlag": country_detail.get("Flag", "") if country_detail else ""
+    })
+
+
+def _build_dataset_view_response(
+    country_code, years, indicator_codes, indicator_name_map,
+    dataset_name_map, indicator_to_datasets, indicator_hierarchy,
+    observed_set, imputed_set, country_detail
+):
+    """Build dataset-level coverage matrix response with grouped structure."""
+    data = []
+    observed_count = 0
+    imputed_count = 0
+
+    # Build y-axis labels with indicator headers and datasets
+    y_labels = []
+    dataset_list = []  # flat list for y-axis of chart
+
+    for indicator_code in indicator_codes:
+        # Add indicator as group header
+        y_labels.append({
+            "type": "indicator",
+            "code": indicator_code,
+            "name": indicator_name_map.get(indicator_code, indicator_code)
+        })
+
+        # Add datasets under this indicator
+        datasets = indicator_to_datasets.get(indicator_code, [])
+        for ds_code in datasets:
+            compound_key = f"{indicator_code}/{ds_code}"
+            dataset_list.append(compound_key)
+            y_labels.append({
+                "type": "dataset",
+                "code": ds_code,
+                "name": dataset_name_map.get(ds_code, ds_code),
+                "parent": indicator_code,
+                "compoundKey": compound_key
+            })
+
+    # Build data cells for each dataset-year combination
+    for indicator_code in indicator_codes:
+        hierarchy = indicator_hierarchy.get(indicator_code, {})
+        datasets = indicator_to_datasets.get(indicator_code, [])
+
+        for ds_code in datasets:
+            compound_key = f"{indicator_code}/{ds_code}"
+
+            for year in years:
+                key = (indicator_code, year)
+                cell = {
+                    "x": year,
+                    "y": compound_key,
+                    "yIndicator": indicator_code,
+                    "yIndicatorName": indicator_name_map.get(indicator_code, indicator_code),
+                    "yDataset": ds_code,
+                    "yDatasetName": dataset_name_map.get(ds_code, ds_code),
+                    "pillarCode": hierarchy.get("pillarCode", ""),
+                    "categoryCode": hierarchy.get("categoryCode", "")
+                }
+
+                if key in observed_set:
+                    # From sspi_indicator_data - all datasets observed
+                    cell["v"] = "observed"
+                    cell["value"] = None  # No per-dataset value in observed case
+                    observed_count += 1
+                elif key in imputed_set:
+                    imputed_info = imputed_set[key]
+                    ds_breakdown = imputed_info.get("datasetBreakdown", {})
+                    ds_info = ds_breakdown.get(ds_code, {})
+
+                    if ds_info:
+                        status = ds_info.get("status")
+                        # Data should only be 'observed' or 'imputed', never missing
+                        assert status in ("observed", "imputed"), (
+                            f"Invalid status '{status}' for dataset {ds_code} in {indicator_code} "
+                            f"for year {year}, country {country_code}. Status must be 'observed' or 'imputed'."
+                        )
+                        cell["v"] = status
+                        cell["value"] = ds_info.get("value")
+                        # Include imputation method if present
+                        if ds_info.get("imputationMethod"):
+                            cell["imputationMethod"] = ds_info.get("imputationMethod")
+                        if status == "observed":
+                            observed_count += 1
+                        else:
+                            imputed_count += 1
+                    else:
+                        # Dataset info should always be present in imputed data
+                        raise AssertionError(
+                            f"Missing dataset info for {ds_code} in {indicator_code} "
+                            f"for year {year}, country {country_code}. "
+                            "All datasets should have info in sspi_imputed_data."
+                        )
+                else:
+                    # Data should never be missing - all indicator/year combinations
+                    # should exist in either observed or imputed data
+                    raise AssertionError(
+                        f"Missing data for {indicator_code}/{ds_code} in {year} for {country_code}. "
+                        "All data should be present in sspi_indicator_data or sspi_imputed_data."
+                    )
+
+                data.append(cell)
+
+    total_cells = len(dataset_list) * len(years)
+
+    return jsonify({
+        "view": "dataset",
+        "data": data,
+        "summary": {
+            "totalCells": total_cells,
+            "observedCount": observed_count,
+            "imputedCount": imputed_count,
+            "observedPercent": round(observed_count / total_cells * 100, 1) if total_cells > 0 else 0,
+            "imputedPercent": round(imputed_count / total_cells * 100, 1) if total_cells > 0 else 0
+        },
+        "indicators": indicator_codes,
+        "indicatorNames": indicator_name_map,
+        "indicatorToDatasets": indicator_to_datasets,
+        "datasets": dataset_list,
+        "datasetNames": dataset_name_map,
+        "yLabels": y_labels,
+        "years": years,
+        "countryCode": country_code,
+        "countryName": country_detail.get("Country", country_code) if country_detail else country_code,
+        "countryFlag": country_detail.get("Flag", "") if country_detail else ""
+    })
 
 
 @dashboard_bp.route("/utilities/coverage/schema", methods=["GET"])
