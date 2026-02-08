@@ -1,6 +1,6 @@
 {
-  "config_id": "adhoc_tjmisko_a75752fc0f109b32",
-  "user_id": "tjmisko",
+  "config_id": "adhoc_alisonx_491504dc355cd272",
+  "user_id": "alisonx",
   "metadata": [
     {
       "ItemType": "SSPI",
@@ -43,11 +43,13 @@
       "PillarCode": "SUS",
       "Children": [
         "BIODIV",
-        "REDLST"
+        "REDLST",
+        "BIODIV"
       ],
       "IndicatorCodes": [
         "BIODIV",
-        "REDLST"
+        "REDLST",
+        "BIODIV"
       ],
       "DocumentType": "CategoryDetail",
       "TreePath": "sspi/sus/eco"
@@ -59,7 +61,7 @@
       "IndicatorCode": "BIODIV",
       "CategoryCode": "ECO",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_MARINE, 50, 100),\n    goalpost(UNSDG_TERRST, 50, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_MARINE",
         "UNSDG_TERRST",
@@ -76,13 +78,30 @@
       "IndicatorCode": "REDLST",
       "CategoryCode": "ECO",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(UNSDG_REDLST, 0, 1)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_REDLST"
       ],
       "Children": [],
       "DocumentType": "IndicatorDetail",
       "TreePath": "sspi/sus/eco/redlst"
+    },
+    {
+      "ItemType": "Indicator",
+      "ItemCode": "BIODIV",
+      "ItemName": "Biodiversity Protection",
+      "IndicatorCode": "BIODIV",
+      "CategoryCode": "ECO",
+      "PillarCode": "SUS",
+      "ScoreFunction": "Score=",
+      "DatasetCodes": [
+        "UNSDG_MARINE",
+        "UNSDG_TERRST",
+        "UNSDG_FRSHWT"
+      ],
+      "Children": [],
+      "DocumentType": "IndicatorDetail",
+      "TreePath": "sspi/sus/eco/biodiv"
     },
     {
       "ItemType": "Category",
@@ -114,7 +133,7 @@
       "IndicatorCode": "NITROG",
       "CategoryCode": "LND",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(EPI_NITROG, 0, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "EPI_NITROG"
       ],
@@ -129,8 +148,9 @@
       "IndicatorCode": "WATMAN",
       "CategoryCode": "LND",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_CWUEFF, -20, 50),\n    goalpost(UNSDG_WTSTRS, 100, 0)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
+        "UNSDG_WUSEFF",
         "UNSDG_CWUEFF",
         "UNSDG_WTSTRS"
       ],
@@ -145,7 +165,7 @@
       "IndicatorCode": "CHMPOL",
       "CategoryCode": "LND",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_STKHLM, 0, 1),\n    goalpost(UNSDG_BASELA, 0, 1),\n    goalpost(UNSDG_MONTRL, 0, 1),\n    goalpost(UNSDG_MINMAT, 0, 1),\n    goalpost(UNSDG_ROTDAM, 0, 1)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_STKHLM",
         "UNSDG_BASELA",
@@ -164,7 +184,7 @@
       "IndicatorCode": "DEFRST",
       "CategoryCode": "LND",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost((UNFAO_FRSTLV - UNFAO_FRSTAV) / UNFAO_FRSTAV, -20, 40)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNFAO_FRSTLV",
         "UNFAO_FRSTAV"
@@ -176,11 +196,11 @@
     {
       "ItemType": "Indicator",
       "ItemCode": "CARBON",
-      "ItemName": "Natural Carbon Capture",
+      "ItemName": "Carbon Capture",
       "IndicatorCode": "CARBON",
       "CategoryCode": "LND",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost((UNFAO_CRBNLV - UNFAO_CRBNAV) / UNFAO_CRBNAV * 100, -5, 50)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNFAO_CRBNLV",
         "UNFAO_CRBNAV"
@@ -215,7 +235,7 @@
       "IndicatorCode": "GTRANS",
       "CategoryCode": "GHG",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(IEA_TCO2EM / WB_POPULN, 7000, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "IEA_TCO2EM",
         "WB_POPULN"
@@ -231,11 +251,10 @@
       "IndicatorCode": "BEEFMK",
       "CategoryCode": "GHG",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = average(\n    goalpost(UNFAO_BFPROD / WB_POPULN, 50, 0),\n    goalpost(UNFAO_BFCONS, 50, 0)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNFAO_BFPROD",
-        "UNFAO_BFCONS",
-        "WB_POPULN"
+        "UNFAO_BFCONS"
       ],
       "Children": [],
       "DocumentType": "IndicatorDetail",
@@ -248,7 +267,7 @@
       "IndicatorCode": "COALPW",
       "CategoryCode": "GHG",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(IEA_TLCOAL / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL), 0.4, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "IEA_TLCOAL",
         "IEA_NATGAS",
@@ -288,7 +307,7 @@
       "IndicatorCode": "ALTNRG",
       "CategoryCode": "NRG",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(((IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS) - 0.5 * IEA_BIOWAS) / (IEA_TLCOAL + IEA_NATGAS + IEA_NCLEAR + IEA_HYDROP + IEA_GEOPWR + IEA_BIOWAS + IEA_FSLOIL) * 100, 0, 60)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "IEA_TLCOAL",
         "IEA_NATGAS",
@@ -309,7 +328,7 @@
       "IndicatorCode": "NRGINT",
       "CategoryCode": "NRG",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(UNSDG_NRGINT, LowerGoalpost, UpperGoalpost)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_NRGINT"
       ],
@@ -324,7 +343,7 @@
       "IndicatorCode": "AIRPOL",
       "CategoryCode": "NRG",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(UNSDG_AIRPOL, 40, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_AIRPOL"
       ],
@@ -358,7 +377,7 @@
       "IndicatorCode": "MSWGEN",
       "CategoryCode": "WST",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(EPI_MSWGEN, 100, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "EPI_MSWGEN"
       ],
@@ -373,7 +392,7 @@
       "IndicatorCode": "RECYCL",
       "CategoryCode": "WST",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(WB_RECYCL, 0, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_RECYCL"
       ],
@@ -388,7 +407,7 @@
       "IndicatorCode": "STCONS",
       "CategoryCode": "WST",
       "PillarCode": "SUS",
-      "ScoreFunction": "Score = goalpost(FPI_ECOFPT_PER_CAP * WID_CARBON_TOT_P90P100 / WID_CARBON_TOT_P0P100, 30, 1.6)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WID_CARBON_TOT_P0P100",
         "WID_CARBON_TOT_P90P100",
@@ -444,9 +463,9 @@
       "IndicatorCode": "EMPLOY",
       "CategoryCode": "WEN",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(ILO_EMPLOY_TO_POP, 50, 95)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
-        "ILO_EMPLOY_TO_POP"
+        "ILO_EMPLOY"
       ],
       "Children": [],
       "DocumentType": "IndicatorDetail",
@@ -459,7 +478,7 @@
       "IndicatorCode": "COLBAR",
       "CategoryCode": "WEN",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(ILO_COLBAR, 0, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "ILO_COLBAR"
       ],
@@ -474,13 +493,13 @@
       "CategoryCode": "WWB",
       "PillarCode": "MS",
       "Children": [
-        "UNEMPB",
+        "UNEMPL",
         "MATERN",
         "FATINJ",
         "SENIOR"
       ],
       "IndicatorCodes": [
-        "UNEMPB",
+        "UNEMPL",
         "MATERN",
         "FATINJ",
         "SENIOR"
@@ -490,18 +509,18 @@
     },
     {
       "ItemType": "Indicator",
-      "ItemCode": "UNEMPB",
+      "ItemCode": "UNEMPL",
       "ItemName": "Unemployment Benefits Coverage",
-      "IndicatorCode": "UNEMPB",
+      "IndicatorCode": "UNEMPL",
       "CategoryCode": "WWB",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(UNSDG_BENFTS_UNEMP, 0, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_BENFTS_UNEMP"
       ],
       "Children": [],
       "DocumentType": "IndicatorDetail",
-      "TreePath": "sspi/ms/wwb/unempb"
+      "TreePath": "sspi/ms/wwb/unempl"
     },
     {
       "ItemType": "Indicator",
@@ -510,7 +529,7 @@
       "IndicatorCode": "MATERN",
       "CategoryCode": "WWB",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(OECD_MATERN, 0, 52)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "OECD_MATERN"
       ],
@@ -525,7 +544,7 @@
       "IndicatorCode": "FATINJ",
       "CategoryCode": "WWB",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(ILO_FATINJ, 25, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "ILO_FATINJ"
       ],
@@ -540,7 +559,7 @@
       "IndicatorCode": "SENIOR",
       "CategoryCode": "WWB",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = average(\n    average(\n        goalpost(SENLEM - SENCRM, 0, 15),\n        goalpost(SENLEF - SENCRF, 0, 20)\n    ),\n    goalpost(SENPVT, 0, 50)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "OECD_POVNRT",
         "OECD_YRSRTM",
@@ -576,7 +595,7 @@
       "IndicatorCode": "CRPTAX",
       "CategoryCode": "TAX",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(TF_CRPTAX, 0, 40)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "TF_CRPTAX"
       ],
@@ -591,7 +610,7 @@
       "IndicatorCode": "TAXREV",
       "CategoryCode": "TAX",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(WB_TAXREV, 0, 50)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_TAXREV"
       ],
@@ -606,7 +625,7 @@
       "IndicatorCode": "TXRDST",
       "CategoryCode": "TAX",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost((WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50 / WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100 -  WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100 ) / ( WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100 ) * 100, -10, -100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WID_NINCSH_POSTTAX_EQUALSPLIT_P0P50",
         "WID_NINCSH_POSTTAX_EQUALSPLIT_P90P100",
@@ -643,7 +662,7 @@
       "IndicatorCode": "FSTABL",
       "CategoryCode": "FIN",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(IMF_FSTABL, 10, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "IMF_FSTABL"
       ],
@@ -658,7 +677,7 @@
       "IndicatorCode": "FDEPTH",
       "CategoryCode": "FIN",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = average(\n    goalpost(WB_CREDIT, 0, 200), \n    goalpost(WB_DPOSIT, 0, 100)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_CREDIT",
         "WB_DPOSIT"
@@ -674,7 +693,7 @@
       "IndicatorCode": "PUBACC",
       "CategoryCode": "FIN",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(WB_PUBACC, 0, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_PUBACC"
       ],
@@ -706,7 +725,7 @@
       "IndicatorCode": "ISHRAT",
       "CategoryCode": "NEQ",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(WID_NINCSH_PRETAX_P0P50 / WID_NINCSH_PRETAX_P90P100, 0.2, 1.25)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WID_NINCSH_PRETAX_P90P100",
         "WID_NINCSH_PRETAX_P0P50"
@@ -722,7 +741,7 @@
       "IndicatorCode": "GINIPT",
       "CategoryCode": "NEQ",
       "PillarCode": "MS",
-      "ScoreFunction": "Score = goalpost(WB_GINIPT, 70, 20)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_GINIPT"
       ],
@@ -782,7 +801,7 @@
       "IndicatorCode": "ENRPRI",
       "CategoryCode": "EDU",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(UIS_ENRPRI, 80, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UIS_ENRPRI"
       ],
@@ -797,7 +816,7 @@
       "IndicatorCode": "ENRSEC",
       "CategoryCode": "EDU",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(UIS_ENRSEC, 70, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UIS_ENRSEC"
       ],
@@ -812,7 +831,7 @@
       "IndicatorCode": "YRSEDU",
       "CategoryCode": "EDU",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(UIS_YRSEDU, 6, 12)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UIS_YRSEDU"
       ],
@@ -827,7 +846,7 @@
       "IndicatorCode": "PUPTCH",
       "CategoryCode": "EDU",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WB_PUPTCH, 40, 9)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_PUPTCH"
       ],
@@ -865,7 +884,7 @@
       "IndicatorCode": "ATBRTH",
       "CategoryCode": "HLC",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WHO_ATBRTH, 80, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WHO_ATBRTH"
       ],
@@ -880,7 +899,7 @@
       "IndicatorCode": "DPTCOV",
       "CategoryCode": "HLC",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WHO_DPTCOV, 75, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WHO_DPTCOV"
       ],
@@ -895,7 +914,7 @@
       "IndicatorCode": "PHYSPC",
       "CategoryCode": "HLC",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WHO_PHYSPC, 0, 70)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WHO_PHYSPC"
       ],
@@ -910,9 +929,9 @@
       "IndicatorCode": "FAMPLN",
       "CategoryCode": "HLC",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(UNSDG_FAMPLN, 20, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
-        "WHO_FAMPLN"
+        "UNSDG_FAMPLN"
       ],
       "Children": [],
       "DocumentType": "IndicatorDetail",
@@ -925,7 +944,7 @@
       "IndicatorCode": "CSTUNT",
       "CategoryCode": "HLC",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(UNSDG_CSTUNT, 50, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_CSTUNT"
       ],
@@ -963,7 +982,7 @@
       "IndicatorCode": "AQELEC",
       "CategoryCode": "INF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = average(\n    goalpost(WB_AVELEC, 0, 100),\n    goalpost(WEF_QUELEC, 1, 7)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_AVELEC",
         "WEF_QUELEC"
@@ -979,7 +998,7 @@
       "IndicatorCode": "SANSRV",
       "CategoryCode": "INF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WB_SANSRV, 50, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_SANSRV"
       ],
@@ -994,7 +1013,7 @@
       "IndicatorCode": "DRKWAT",
       "CategoryCode": "INF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WB_DRKWAT, 0, 100)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_DRKWAT"
       ],
@@ -1009,10 +1028,9 @@
       "IndicatorCode": "INTRNT",
       "CategoryCode": "INF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_INTRNT, 0, 100),\n    goalpost(WB_INTRNT, 0, 100)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
-        "UNSDG_AVINTR",
-        "CABLE_QUINTR"
+        "UNSDG_AVINTR"
       ],
       "Children": [],
       "DocumentType": "IndicatorDetail",
@@ -1025,7 +1043,7 @@
       "IndicatorCode": "TRNETW",
       "CategoryCode": "INF",
       "PillarCode": "PG",
-      "ScoreFunction": "Not available (computed from complex transformation) https://www.cia.gov/the-world-factbook/field/railways/country-comparison/]'",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "CIA_ROADNT"
       ],
@@ -1063,7 +1081,7 @@
       "IndicatorCode": "RULELW",
       "CategoryCode": "RTS",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(VDEM_RULELW, 0, 1)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "VDEM_RULELW"
       ],
@@ -1078,7 +1096,7 @@
       "IndicatorCode": "PUBSRV",
       "CategoryCode": "RTS",
       "PillarCode": "PG",
-      "ScoreFunction": "Not available (computed from WGI_PUBSRV)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WGI_PUBSRV"
       ],
@@ -1093,7 +1111,7 @@
       "IndicatorCode": "EDEMOC",
       "CategoryCode": "RTS",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(VDEM_EDEMOC, 0, 1)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "VDEM_EDEMOC"
       ],
@@ -1108,7 +1126,7 @@
       "IndicatorCode": "UNCONV",
       "CategoryCode": "RTS",
       "PillarCode": "PG",
-      "ScoreFunction": "Not available (computed from UNSDG_UNCONV)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_UNCONV"
       ],
@@ -1123,7 +1141,7 @@
       "IndicatorCode": "GENDEQ",
       "CategoryCode": "RTS",
       "PillarCode": "PG",
-      "ScoreFunction": "Not available (computed from multiple weighted datasets)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "IPU_WMPLMT",
         "WBL_WMMOBL",
@@ -1162,7 +1180,7 @@
       "IndicatorCode": "MURDER",
       "CategoryCode": "SAF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(WB_MURDER, 20, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "WB_MURDER"
       ],
@@ -1177,7 +1195,7 @@
       "IndicatorCode": "CYBSEC",
       "CategoryCode": "SAF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(ITU_CYBSEC, 0, 1)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "ITU_CYBSEC"
       ],
@@ -1192,7 +1210,7 @@
       "IndicatorCode": "SECAPP",
       "CategoryCode": "SAF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(FSI_SECAPP, 10, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "FSI_SECAPP"
       ],
@@ -1207,7 +1225,7 @@
       "IndicatorCode": "PRISON",
       "CategoryCode": "SAF",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(UNODC_PRIPOP, 540, 40)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNODC_PRIPOP"
       ],
@@ -1243,7 +1261,7 @@
       "IndicatorCode": "ARMEXP",
       "CategoryCode": "GLB",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(SIPRI_ARMEXP, 500, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "SIPRI_ARMEXP"
       ],
@@ -1258,7 +1276,7 @@
       "IndicatorCode": "MILEXP",
       "CategoryCode": "GLB",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = goalpost(SIPRI_MILEXP, 5, 0)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "SIPRI_MILEXP"
       ],
@@ -1273,7 +1291,7 @@
       "IndicatorCode": "RDFUND",
       "CategoryCode": "GLB",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = average(\n    goalpost(UNSDG_RDPGDP, 0, 4),\n    goalpost(UNSDG_NRSRCH, 0, 5000)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "UNSDG_RDPGDP",
         "UNSDG_NRSRCH"
@@ -1289,7 +1307,7 @@
       "IndicatorCode": "FORAID",
       "CategoryCode": "GLB",
       "PillarCode": "PG",
-      "ScoreFunction": "Score = max(\n    goalpost(TOTDON * 10**8 / GDPMKT, 0, 1),\n    goalpost(TOTREC * 10**6 / POPULN, 0, 500)\n)",
+      "ScoreFunction": "Score=",
       "DatasetCodes": [
         "OECD_TOTDON",
         "OECD_TONREC",
@@ -1301,13 +1319,5 @@
       "TreePath": "sspi/pg/glb/foraid"
     }
   ],
-  "actions": [
-    {
-      "type": "set-score-function",
-      "from": "Score = average(\n    goalpost(UNSDG_MARINE, 0, 100),\n    goalpost(UNSDG_TERRST, 0, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)",
-      "to": "Score = average(\n    goalpost(UNSDG_MARINE, 50, 100),\n    goalpost(UNSDG_TERRST, 50, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)",
-      "indicatorCode": "BIODIV",
-      "scoreFunction": "Score = average(\n    goalpost(UNSDG_MARINE, 50, 100),\n    goalpost(UNSDG_TERRST, 50, 100),\n    goalpost(UNSDG_FRSHWT, 0, 100)\n)"
-    }
-  ]
+  "actions": []
 }
