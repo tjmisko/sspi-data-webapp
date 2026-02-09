@@ -116,6 +116,6 @@ jobs:
           ln -sfn "$DEPLOY_BASE/shared" ./.shared
           ln -sfn "$DIR" "$DEPLOY_BASE/current"
           ln -sfn "$DEPLOY_BASE/secrets/.env" ./.env
-          sudo /usr/sbin/apachectl graceful
+          sudo systemctl restart sspi
           EOF
         shell: bash
