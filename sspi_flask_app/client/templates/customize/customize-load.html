@@ -2,106 +2,369 @@
 {% block content %}
 <article class="page-content">
     <section class="page-section">
-        <!-- Unsaved warnings will be injected here by JavaScript -->
-        <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
-
-        <div class="load-container">
-            <div class="bounded-content-box config-section">
-                <h3>Load Prebuilt Configuration</h3>
-                <p class="functionality-explainer">
-                    Choose a preset SSPI configuration to start from. Useful for comparing
-                    a series of changes to the original SSPI and for running sensitivity testing.
-                </p>
-                <div class="config-flex-container">
-                    {% for config in prebuilt_configurations %}
-                        <div class="config-card" data-config-id="{{ config.id }}" data-config-type="prebuilt">
-                            <div class="config-card-header">
-                                <h3 class="config-name">{{ config.name }}</h3>
-                                {% if config.recommended %}
-                                <span class="config-badge">Recommended</span>
-                                {% endif %}
-                            </div>
-                            <p class="config-description">{{ config.description }}</p>
-                            <div class="config-meta">
-                                <span class="config-meta-item">{{ config.pillars }} Pillars</span>
-                                <span class="config-meta-item">{{ config.categories }} Categories</span>
-                                <span class="config-meta-item">{{ config.indicators }} Indicators</span>
-                                <span class="config-meta-item">{{ config.datasets }} Datasets</span>
-                            </div>
-                            <div class="config-actions">
-                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
+        <div class="load-box">
+            <div class="outer-save-wrapper">
+                <div id="unsaved-warnings-container" class="unsaved-warnings-section"></div>
             </div>
-            <!-- Saved Configurations -->
-            <div class="bounded-content-box config-section">
-                <h3>Saved Configurations</h3>
-                <p class="functionality-explainer">
-                    Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
-                </p>
-                <div class="config-flex-container">
-                    {% if not is_authenticated %}
-                        {% include 'components/login-box.html' with context %}
-                    {% elif saved_configurations | length == 0 %}
-                        <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
-                    {% else %}
-                        {% for config in saved_configurations %}
-                        <div class="config-card" data-config-id="{{ config.id }}">
-                            <div class="config-card-header">
-                                <h3 class="config-name">{{ config.name }}</h3>
+            <div class="load-container">
+                <!-- Prebuilt Configurations -->
+                <div class="bounded-content-box config-section">
+                    <h3>Load Prebuilt Configuration</h3>
+                    <p class="functionality-explainer">
+                        Choose a preset SSPI configuration to start from. Useful for comparing
+                        a series of changes to the original SSPI and for running sensitivity testing.
+                    </p>
+                    <div class="config-flex-container">
+                        {% for config in prebuilt_configurations %}
+                            <div class="config-card selectable-card"
+                                 data-config-id="{{ config.id }}"
+                                 data-config-type="prebuilt"
+                                 data-has-scores="{{ 'true' if config.has_scores else 'false' }}">
+                                <div class="config-card-header">
+                                    <h3 class="config-name">{{ config.name }}</h3>
+                                    <div class="config-badges">
+                                        {% if config.recommended %}
+                                        <span class="config-badge">Recommended</span>
+                                        {% endif %}
+                                        {% if config.has_scores %}
+                                        <span class="config-badge badge-scored">Scored</span>
+                                        {% else %}
+                                        <span class="config-badge badge-unscored">Unscored</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="config-description">{{ config.description }}</p>
+                                <div class="config-meta">
+                                    <span class="config-meta-item">{{ config.pillars }} Pillars</span>
+                                    <span class="config-meta-item">{{ config.categories }} Categories</span>
+                                    <span class="config-meta-item">{{ config.indicators }} Indicators</span>
+                                    <span class="config-meta-item">{{ config.datasets }} Datasets</span>
+                                </div>
                             </div>
-                            <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
-                            {% if config.updated_at %}
-                            <div class="config-meta">
-                                <span class="config-meta-item">{{ config.updated_at }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="config-actions">
-                                <a href="/customize/builder?base_config={{ config.id }}" class="btn-load">Load</a>
-                            </div>
-                        </div>
                         {% endfor %}
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="bounded-content-box config-section">
-                <h3>New Configuration</h3>
-                <p class="functionality-explainer">
-                    Begin from an empty template, designing your own
-                    data-driven policy index from the datasets up.
-                </p>
-                <div class="config-flex-container">
-                    <div class="config-card">
-                        <div class="config-card-header">
-                            <h3 class="config-name">Blank Configuration</h3>
+
+                <!-- Saved Configurations -->
+                <div class="bounded-content-box config-section">
+                    <h3>Saved Configurations</h3>
+                    <p class="functionality-explainer">
+                        Load a custom SSPI configuration to view scores, comparisons with the canonical SSPI, or resume editing.
+                    </p>
+                    <div class="config-flex-container">
+                        {% if not is_authenticated %}
+                            {% include 'components/login-box.html' with context %}
+                        {% elif saved_configurations | length == 0 %}
+                            <div class="empty-message">No saved configurations yet.</div>
+                        {% else %}
+                            {% for config in saved_configurations %}
+                            <div class="config-card selectable-card"
+                                 data-config-id="{{ config.id }}"
+                                 data-config-type="saved"
+                                 data-has-scores="{{ 'true' if config.has_scores else 'false' }}">
+                                <div class="config-card-header">
+                                    <h3 class="config-name">{{ config.name }}</h3>
+                                    <div class="config-badges">
+                                        {% if config.has_scores %}
+                                        <span class="config-badge badge-scored">Scored</span>
+                                        {% else %}
+                                        <span class="config-badge badge-unscored">Unscored</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="config-description">{{ config.description or 'Custom SSPI configuration' }}</p>
+                                <div class="config-meta">
+                                    <span class="config-meta-item">{{ config.pillars }} Pillars</span>
+                                    <span class="config-meta-item">{{ config.categories }} Categories</span>
+                                    <span class="config-meta-item">{{ config.indicators }} Indicators</span>
+                                    <span class="config-meta-item">{{ config.datasets }} Datasets</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- New Configuration -->
+                <div class="bounded-content-box config-section">
+                    <h3>New Configuration</h3>
+                    <p class="functionality-explainer">
+                        Begin from an empty template, designing your own
+                        data-driven policy index from the datasets up.
+                    </p>
+                    <div class="config-flex-container">
+                        <div class="config-card selectable-card"
+                             data-config-id="blank"
+                             data-config-type="prebuilt"
+                             data-has-scores="false">
+                            <div class="config-card-header">
+                                <h3 class="config-name">Blank Configuration</h3>
+                                <div class="config-badges">
+                                    <span class="config-badge badge-unscored">Unscored</span>
+                                </div>
+                            </div>
+                            <p class="config-description">
+                                Start with an empty template and build your custom policy index
+                                from scratch, selecting your own datasets, indicators, and scoring methods.
+                            </p>
                         </div>
-                        <p class="config-description">
-                            Start with an empty template and build your custom policy index
-                            from scratch, selecting your own datasets, indicators, and scoring methods.
-                        </p>
-                        <div class="config-actions">
-                            <a href="/customize/builder?base_config=blank" class="btn-load">Start Building</a>
-                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons (shown when a card is selected) -->
+                <div id="config-actions-panel" class="config-actions-panel hidden">
+                    <div class="actions-info">
+                        <span class="selected-config-name"></span>
+                    </div>
+                    <div class="actions-buttons">
+                        <!-- For prebuilt/blank configs -->
+                        <a id="btn-use-template" href="#" class="btn-primary hidden">Use as Template</a>
+                        <!-- For custom configs -->
+                        <a id="btn-edit-config" href="#" class="btn-primary hidden">Edit Configuration</a>
+                        <!-- For scored configs -->
+                        <a id="btn-view-scores" href="#" class="btn-secondary hidden">View Scores</a>
+                        <!-- For unscored custom configs -->
+                        <button id="btn-score-config" class="btn-secondary hidden">Score Configuration</button>
+                        <!-- For custom configs only -->
+                        <button id="btn-delete-config" class="btn-danger hidden">Delete</button>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 </article>
+
+<style>
+/* Card selection styles */
+.selectable-card {
+    cursor: pointer;
+}
+
+.selectable-card.selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.selectable-card .config-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.selectable-card .config-name {
+    flex: 1;
+    margin: 0;
+    line-height: 1;
+}
+
+/* Badge styles */
+.config-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.badge-scored {
+    background: var(--badge-positive-color);
+}
+
+.badge-unscored {
+    background: var(--low-importance-font-color);
+}
+
+/* Actions panel */
+.config-actions-panel {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--box-background-color);
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--border-radius);
+    max-width: 800px;
+    width: calc(100% - 3rem);
+    z-index: 100;
+}
+
+.config-actions-panel.hidden,
+.actions-buttons .hidden {
+    display: none;
+}
+
+.actions-info {
+    font-weight: 500;
+    font-family: var(--body-font-family);
+}
+
+.selected-config-name {
+    color: var(--text-color);
+}
+
+.actions-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Consistent button styling for action panel */
+.actions-buttons a,
+.actions-buttons button {
+    font-family: var(--body-font-family);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    box-sizing: border-box;
+}
+
+.actions-buttons .btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+}
+
+.actions-buttons .btn-primary:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-sm);
+}
+
+.actions-buttons .btn-secondary {
+    background: var(--box-background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.actions-buttons .btn-secondary:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.actions-buttons .btn-secondary.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.actions-buttons .btn-danger {
+    background: var(--badge-negative-color);
+    color: white;
+    border: none;
+}
+
+.actions-buttons .btn-danger:hover {
+    opacity: 0.9;
+}
+</style>
+
 <script>
 window.csrfToken = {{ csrf_token|tojson|safe }};
 window.sspiUsername = {{ current_user.username|tojson|safe if current_user.is_authenticated else '""' }};
 
-// Check for unsaved changes on page load
+// Simple CSRF fetch helper (csrf.js may not be bundled)
+async function fetchWithCSRF(url, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && window.csrfToken) {
+        options.headers = {
+            ...options.headers,
+            'X-CSRFToken': window.csrfToken
+        };
+    }
+    return fetch(url, options);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     checkForUnsavedChanges();
+    initCardSelection();
 });
 
 /**
+ * Initialize card selection behavior (radio button style)
+ */
+function initCardSelection() {
+    const cards = document.querySelectorAll('.selectable-card');
+    const actionsPanel = document.getElementById('config-actions-panel');
+    const templateBtn = document.getElementById('btn-use-template');
+    const editBtn = document.getElementById('btn-edit-config');
+    const viewBtn = document.getElementById('btn-view-scores');
+    const scoreBtn = document.getElementById('btn-score-config');
+    const deleteBtn = document.getElementById('btn-delete-config');
+    const selectedNameSpan = document.querySelector('.selected-config-name');
+
+    // Helper to hide all action buttons
+    function hideAllButtons() {
+        templateBtn.classList.add('hidden');
+        editBtn.classList.add('hidden');
+        viewBtn.classList.add('hidden');
+        scoreBtn.classList.add('hidden');
+        deleteBtn.classList.add('hidden');
+    }
+
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            // Deselect all cards
+            cards.forEach(c => c.classList.remove('selected'));
+
+            // Select clicked card
+            card.classList.add('selected');
+
+            // Get config info
+            const configId = card.dataset.configId;
+            const configType = card.dataset.configType;
+            const hasScores = card.dataset.hasScores === 'true';
+            const configName = card.querySelector('.config-name').textContent;
+
+            // Update actions panel
+            selectedNameSpan.textContent = `Selected: ${configName}`;
+            actionsPanel.classList.remove('hidden');
+
+            // Reset all buttons
+            hideAllButtons();
+
+            // Configure buttons based on config type
+            if (configType === 'prebuilt') {
+                // Prebuilt configs: Use as Template + View Scores (if scored)
+                templateBtn.classList.remove('hidden');
+                templateBtn.href = `/customize/builder?base_config=${configId}`;
+
+                if (hasScores) {
+                    viewBtn.classList.remove('hidden');
+                    // Standard SSPI links to main data view, others to visualize
+                    if (configId === 'default') {
+                        viewBtn.href = `/data/indicator/SSPI`;
+                    } else {
+                        viewBtn.href = `/customize/visualize/${configId}`;
+                    }
+                }
+            } else if (configType === 'saved') {
+                // Custom configs: Edit + (View Scores OR Score) + Delete
+                editBtn.classList.remove('hidden');
+                editBtn.href = `/customize/builder?base_config=${configId}`;
+
+                if (hasScores) {
+                    viewBtn.classList.remove('hidden');
+                    viewBtn.href = `/customize/visualize/${configId}`;
+                } else {
+                    scoreBtn.classList.remove('hidden');
+                    scoreBtn.onclick = () => scoreConfiguration(configId);
+                }
+
+                deleteBtn.classList.remove('hidden');
+                deleteBtn.onclick = () => deleteConfiguration(configId);
+            }
+        });
+    });
+}
+
+/**
  * Check localStorage for any cached configurations with unsaved changes
- * and display warning banners for each one
  */
 function checkForUnsavedChanges() {
     if (!window.sspiUsername) return;
@@ -110,7 +373,6 @@ function checkForUnsavedChanges() {
         const userCachePattern = `customSSPI_${window.sspiUsername}_`;
         const unsavedConfigs = [];
 
-        // Scan all localStorage keys for user's cached configs
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith(userCachePattern)) {
@@ -134,9 +396,6 @@ function checkForUnsavedChanges() {
     }
 }
 
-/**
- * Get a human-readable name for a base_config ID
- */
 function getConfigName(baseConfig) {
     const prebuiltNames = {
         'sspi': 'Standard SSPI',
@@ -146,9 +405,6 @@ function getConfigName(baseConfig) {
     return prebuiltNames[baseConfig] || `Configuration ${baseConfig}`;
 }
 
-/**
- * Display warning banners for configurations with unsaved changes
- */
 function displayUnsavedWarnings(unsavedConfigs) {
     const container = document.getElementById('unsaved-warnings-container');
     if (!container) return;
@@ -171,17 +427,13 @@ function displayUnsavedWarnings(unsavedConfigs) {
     container.innerHTML = html;
 }
 
-/**
- * Discard cached changes for a specific base_config
- */
 function discardCache(baseConfig) {
     if (!confirm(`Discard all unsaved changes to ${getConfigName(baseConfig)}?`)) {
         return;
     }
 
     try {
-        const username = window.sspiUsername;
-        const cacheKey = `customSSPI_${username}_${baseConfig}`;
+        const cacheKey = `customSSPI_${window.sspiUsername}_${baseConfig}`;
         localStorage.removeItem(cacheKey);
         window.location.reload();
     } catch (error) {
@@ -196,13 +448,12 @@ async function deleteConfiguration(configId) {
     }
 
     try {
-        const response = await window.csrf.fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
+        const response = await fetchWithCSRF(`/api/v1/customize/delete/${configId}`, {
             method: 'DELETE'
         });
         const data = await response.json();
 
         if (data.success) {
-            // Reload page to show updated list
             window.location.reload();
         } else {
             alert('Error deleting configuration: ' + (data.error || 'Unknown error'));
@@ -210,6 +461,40 @@ async function deleteConfiguration(configId) {
     } catch (error) {
         console.error('Error deleting configuration:', error);
         alert('Error deleting configuration. Please try again.');
+    }
+}
+
+async function scoreConfiguration(configId) {
+    const scoreBtn = document.getElementById('btn-score-config');
+    const originalText = scoreBtn.textContent;
+
+    try {
+        // Update button to show loading state
+        scoreBtn.textContent = 'Starting...';
+        scoreBtn.disabled = true;
+
+        const response = await fetchWithCSRF('/api/v1/customize/score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config_id: configId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Redirect to builder with scoring in progress
+            // The builder will show scoring progress via SSE
+            window.location.href = `/customize/builder?base_config=${configId}&scoring=true&job_id=${data.job_id}`;
+        } else {
+            alert('Error starting scoring: ' + (data.error || 'Unknown error'));
+            scoreBtn.textContent = originalText;
+            scoreBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error scoring configuration:', error);
+        alert('Error starting scoring. Please try again.');
+        scoreBtn.textContent = originalText;
+        scoreBtn.disabled = false;
     }
 }
 </script>

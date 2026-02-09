@@ -248,15 +248,11 @@ class ChangesHistoryModal {
         const summary = document.createElement('summary');
         summary.className = 'change-details-summary';
         summary.textContent = 'Details';
-
         details.appendChild(summary);
-
         // Details content
         const content = document.createElement('div');
         content.className = 'change-details-content';
-
         const delta = action.delta;
-
         // Check if this is a composite action
         if (delta.type === 'composite' && delta.subActions && Array.isArray(delta.subActions)) {
             // Render sub-actions as a list
@@ -291,8 +287,9 @@ class ChangesHistoryModal {
             Object.entries(delta).forEach(([key, value]) => {
                 // Skip the 'type' field as it's shown in the badge
                 if (key === 'type') return;
-                // Skip subActions as they're handled above
                 if (key === 'subActions') return;
+                if (key === 'indicatorMetadata') return;
+                if (key === 'scoreFunction') return;
 
                 const dt = document.createElement('dt');
                 dt.textContent = this.formatDeltaKey(key);
@@ -545,29 +542,29 @@ class ChangesHistoryModal {
         switch (type) {
             case 'set-indicator-code':
                 if (subDelta.from) {
-                    return `: Changed code from "${subDelta.from}" to "${subDelta.to}"`;
+                    return `: Changed code from\u0020${subDelta.from}\u0020to\u0020${subDelta.to}`;
                 } else {
-                    return `: Set code to "${subDelta.to}"`;
+                    return `: Set code to\u0020${subDelta.to}`;
                 }
 
             case 'add-dataset':
-                return `: Added dataset "${subDelta.datasetCode}"`;
+                return `: Added dataset\u0020${subDelta.datasetCode}`;
 
             case 'set-score-function':
-                return `: Set score function to "${subDelta.to}"`;
+                return `: Set score function to\u0020${subDelta.to}`;
 
             case 'set-indicator-name':
                 if (subDelta.from) {
-                    return `: Renamed from "${subDelta.from}" to "${subDelta.to}"`;
+                    return `: Renamed from\u0020${subDelta.from}\u0020to\u0020${subDelta.to}`;
                 } else {
-                    return `: Set name to "${subDelta.to}"`;
+                    return `: Set name to\u0020${subDelta.to}`;
                 }
 
             case 'move-indicator':
                 return `: Moved from ${subDelta.fromParentCode} to ${subDelta.toParentCode}`;
 
             case 'remove-dataset':
-                return `: Removed dataset "${subDelta.datasetCode}"`;
+                return `: Removed dataset\u0020${subDelta.datasetCode}`;
 
             default:
                 // Generic formatting: try to show from/to if available

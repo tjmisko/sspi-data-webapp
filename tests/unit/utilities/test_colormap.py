@@ -15,7 +15,7 @@ class TestColormap:
         assert result.endswith("ff")  # Default alpha
     
     def test_colormap_ms_pillar(self):
-        """Test colormap for MS (Material Security) pillar."""
+        """Test colormap for MS (Market Structure) pillar."""
         
         result = colormap("MS")
         
@@ -24,7 +24,7 @@ class TestColormap:
         assert result.endswith("ff")  # Default alpha
     
     def test_colormap_pg_pillar(self):
-        """Test colormap for PG (Personal Growth) pillar."""
+        """Test colormap for PG (Public Goods) pillar."""
         
         result = colormap("PG")
         
@@ -124,8 +124,8 @@ class TestColormap:
         
         known_pillars = [
             ("SUS", "#28a745ff"),  # Sustainability - Green
-            ("MS", "#ff851bff"),   # Material Security - Orange
-            ("PG", "#007bffff"),   # Personal Growth - Blue
+            ("MS", "#ff851bff"),   # Market Structure - Orange
+            ("PG", "#007bffff"),   # Public Goods - Blue
         ]
         
         for pillar_code, expected_color in known_pillars:

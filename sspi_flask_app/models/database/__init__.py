@@ -46,6 +46,12 @@ from sspi_flask_app.models.database.sspi_custom_user_structure import (
 from sspi_flask_app.models.database.sspi_custom_user_data import (
     SSPICustomUserData
 )
+from sspi_flask_app.models.database.sspi_custom_panel_data import (
+    SSPICustomPanelData
+)
+from sspi_flask_app.models.database.sspi_custom_item_data import (
+    SSPICustomItemData
+)
 
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
@@ -135,4 +141,14 @@ sspi_custom_user_structure = SSPICustomUserStructure(
 # Custom User Scoring Data (cached results from custom structures)
 sspi_custom_user_data = SSPICustomUserData(
     sspidb.sspi_custom_user_data
+)
+
+# Custom Panel Data (line chart format for SSPIPanelChart)
+sspi_custom_panel_data = SSPICustomPanelData(
+    sspidb.sspi_custom_panel_data
+)
+
+# Custom Item Data (flat score storage for custom configurations)
+sspi_custom_item_data = SSPICustomItemData(
+    sspidb.sspi_custom_item_data
 )

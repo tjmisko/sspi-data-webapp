@@ -497,17 +497,17 @@
 
 /* Inline layout for Country Group buttons */
 .chart-options-details .country-group-button-group {
+  margin-top: 0.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.25rem;
   width: 100%;
 }
 
 .chart-options-details .country-group-button-group button {
   margin: 0;
   padding: 0.2rem 0.3rem;
-  font-size: 0.65em;
-  line-height: 1.1;
+  font-size: 0.55rem;
 }
 
 .random-draw-controls {
