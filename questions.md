@@ -23,7 +23,7 @@ purpose: >
 ### Universality of Policy
 - The paper discusses ideal policy benchmarks that are set. How do we decide what a universal, international benchmark is? 
 - We know that the policy landscape varies so much by country, so how do we decide which policies must be universal, and which to leave open to the preferences and interpretations of individual countries?
-- How do we decide on goalposts for a given indicator? What research do we bring to bear to decide on goalposts? How does setting upper and lower goalposts differ methodologically?
+- How do we decide on goalposts for each indicator? What research do we bring to bear to decide on goalposts? How does setting upper and lower goalposts differ methodologically?
 - What is our core set of basic assumptions about how countries should conduct policy? Where (which categories and indicators) might that run aground of differing cultural values? How do we account for these differences?
 
 ### Accounting for Country Size
