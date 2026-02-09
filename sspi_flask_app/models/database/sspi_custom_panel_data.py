@@ -1,32 +1,38 @@
 """
-SSPICustomPanelData - Database model for cached custom SSPI scoring results.
+SSPICustomPanelData - Database model for custom SSPI line chart data.
 
-This collection stores computed panel data for custom SSPI configurations,
-keyed by config_hash for efficient cache lookups. Same configurations
-(regardless of user) produce the same hash and can share cached results.
+This collection stores ONLY line chart format data for SSPIPanelChart.
+One document per (config_hash, item_code, country_code) with year-aligned arrays.
+
+Many-to-one relationship: Multiple config_ids can reference the same config_hash.
+Caching strategy: Line data cached by config_hash only, no config_id stored.
+No eager deletion on config delete - cached results remain available for other
+configs with the same hash.
 
 Document format:
 {
     "config_hash": "abc123def456...",     # 32-char SHA-256 prefix (primary cache key)
-    "config_id": "user_config_abc123",    # Links to sspi_custom_user_structure
-    "item_code": "BIODIV",                # SSPI/Pillar/Category/Indicator code
-    "item_name": "Biodiversity Protection",
-    "item_type": "Indicator",             # Type: SSPI, Pillar, Category, Indicator
-    "country_code": "USA",
-    "year": 2023,
-    "score": 0.75,
-    "rank": 12,
-    "imputed": false,
-    "imputation_method": null,            # "interpolate", "extrapolate_forward", etc.
-    "imputation_distance": null,          # Years from nearest actual data
+    "ICode": "SSPI",                      # Item code
+    "IName": "Custom SSPI",               # Item name
+    "CCode": "USA",                       # Country code (ISO 3166-1 alpha-3)
+    "CName": "United States",             # Country name
+    "CFlag": "🇺🇸",                        # Country flag emoji
+    "CGroup": ["SSPI67", "OECD"],         # Country groups
+    "years": [2000, 2001, ..., 2023],     # Year array (always 2000-2023)
+    "score": [72.1, 73.5, ..., 76.2],     # Score array (aligned with years)
+    "data": [72.1, 73.5, ..., 76.2],      # Same as score (for chart compatibility)
+    "label": "USA - United States",       # Display label
+    "pinned": false,                      # UI state
+    "hidden": false,                      # UI state
+    "yAxisMinValue": 0,                   # Chart axis config
+    "yAxisMaxValue": 100,                 # Chart axis config
     "created_at": "2024-01-15T10:30:00Z"
 }
 
 Indexes:
-- (config_hash, item_code, country_code, year) - unique compound
+- (config_hash, ICode, CCode) - unique compound
 - config_hash - for full config lookups
-- config_id - for user's saved configs
-- created_at - for cache management
+- (config_hash, ICode) - for item-specific queries
 """
 
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
@@ -40,11 +46,10 @@ logger = logging.getLogger(__name__)
 
 class SSPICustomPanelData(MongoWrapper):
     """
-    MongoDB wrapper for cached custom SSPI panel data.
+    MongoDB wrapper for custom SSPI line chart data.
 
-    Stores computed scores from custom configurations, keyed by config_hash
-    for efficient caching. Multiple users with identical configurations
-    share the same cached results.
+    Stores ONLY line chart format data for SSPIPanelChart.
+    One document per (config_hash, item_code, country_code) with year-aligned arrays.
     """
 
     # ==========================================================================
@@ -53,7 +58,7 @@ class SSPICustomPanelData(MongoWrapper):
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
-        Validate panel data document format.
+        Validate line chart document format.
 
         Args:
             document: Document to validate
@@ -63,12 +68,9 @@ class SSPICustomPanelData(MongoWrapper):
             InvalidDocumentFormatError: If validation fails
         """
         self._validate_config_hash(document, document_number)
-        self._validate_item_code(document, document_number)
-        self._validate_item_type(document, document_number)
-        self._validate_country_code(document, document_number)
-        self._validate_year(document, document_number)
-        self._validate_score(document, document_number)
-        self._validate_optional_fields(document, document_number)
+        self._validate_item_fields(document, document_number)
+        self._validate_country_fields(document, document_number)
+        self._validate_year_aligned_arrays(document, document_number)
 
     def _validate_config_hash(self, document: dict, document_number: int):
         """Validate config_hash field."""
@@ -83,132 +85,115 @@ class SSPICustomPanelData(MongoWrapper):
                 f"'config_hash' must be a string (document {document_number})"
             )
 
-        # Should be 32 hex characters (first 32 chars of SHA-256)
         if not re.match(r'^[a-f0-9]{32}$', config_hash):
             raise InvalidDocumentFormatError(
                 f"'config_hash' must be 32 lowercase hex characters (document {document_number})"
             )
 
-    def _validate_item_code(self, document: dict, document_number: int):
-        """Validate item_code field."""
-        if "item_code" not in document:
+    def _validate_item_fields(self, document: dict, document_number: int):
+        """Validate item code and name fields."""
+        if "ICode" not in document:
             raise InvalidDocumentFormatError(
-                f"'item_code' is required (document {document_number})"
+                f"'ICode' is required (document {document_number})"
             )
 
-        item_code = document["item_code"]
-        if not isinstance(item_code, str) or len(item_code) == 0:
+        if not isinstance(document["ICode"], str) or len(document["ICode"]) == 0:
             raise InvalidDocumentFormatError(
-                f"'item_code' must be a non-empty string (document {document_number})"
+                f"'ICode' must be a non-empty string (document {document_number})"
             )
 
-    def _validate_item_type(self, document: dict, document_number: int):
-        """Validate item_type field."""
-        if "item_type" not in document:
+        if "IName" not in document:
             raise InvalidDocumentFormatError(
-                f"'item_type' is required (document {document_number})"
+                f"'IName' is required (document {document_number})"
             )
 
-        item_type = document["item_type"]
-        valid_types = {"SSPI", "Pillar", "Category", "Indicator"}
-
-        if item_type not in valid_types:
+    def _validate_country_fields(self, document: dict, document_number: int):
+        """Validate country fields."""
+        if "CCode" not in document:
             raise InvalidDocumentFormatError(
-                f"'item_type' must be one of {valid_types} (document {document_number})"
+                f"'CCode' is required (document {document_number})"
             )
 
-    def _validate_country_code(self, document: dict, document_number: int):
-        """Validate country_code field."""
-        if "country_code" not in document:
-            raise InvalidDocumentFormatError(
-                f"'country_code' is required (document {document_number})"
-            )
-
-        country_code = document["country_code"]
+        country_code = document["CCode"]
         if not isinstance(country_code, str):
             raise InvalidDocumentFormatError(
-                f"'country_code' must be a string (document {document_number})"
+                f"'CCode' must be a string (document {document_number})"
             )
 
-        # ISO 3166-1 alpha-3 format
         if not re.match(r'^[A-Z]{3}$', country_code):
             raise InvalidDocumentFormatError(
-                f"'country_code' must be 3 uppercase letters (document {document_number})"
+                f"'CCode' must be 3 uppercase letters (document {document_number})"
             )
 
-    def _validate_year(self, document: dict, document_number: int):
-        """Validate year field."""
-        if "year" not in document:
+        if "CName" not in document:
             raise InvalidDocumentFormatError(
-                f"'year' is required (document {document_number})"
+                f"'CName' is required (document {document_number})"
             )
 
-        year = document["year"]
-        if not isinstance(year, int):
+        if "CGroup" not in document or not isinstance(document["CGroup"], list):
             raise InvalidDocumentFormatError(
-                f"'year' must be an integer (document {document_number})"
+                f"'CGroup' must be a list (document {document_number})"
             )
 
-        if not (1990 <= year <= 2030):
+    def _validate_year_aligned_arrays(self, document: dict, document_number: int):
+        """Validate year-aligned score arrays."""
+        if "years" not in document:
             raise InvalidDocumentFormatError(
-                f"'year' must be between 1990 and 2030 (document {document_number})"
+                f"'years' is required (document {document_number})"
             )
 
-    def _validate_score(self, document: dict, document_number: int):
-        """Validate score field."""
+        years = document["years"]
+        if not isinstance(years, list):
+            raise InvalidDocumentFormatError(
+                f"'years' must be a list (document {document_number})"
+            )
+
+        # Validate years span 2000-2023
+        expected_years = list(range(2000, 2024))
+        if years != expected_years:
+            raise InvalidDocumentFormatError(
+                f"'years' must be [2000, 2001, ..., 2023] (document {document_number})"
+            )
+
         if "score" not in document:
             raise InvalidDocumentFormatError(
                 f"'score' is required (document {document_number})"
             )
 
         score = document["score"]
-        # Score can be None for missing data
-        if score is not None and not isinstance(score, (int, float)):
+        if not isinstance(score, list):
             raise InvalidDocumentFormatError(
-                f"'score' must be a number or null (document {document_number})"
+                f"'score' must be a list (document {document_number})"
             )
 
-    def _validate_optional_fields(self, document: dict, document_number: int):
-        """Validate optional fields if present."""
-        # Rank validation
-        rank = document.get("rank")
-        if rank is not None and not isinstance(rank, int):
+        if len(score) != len(years):
             raise InvalidDocumentFormatError(
-                f"'rank' must be an integer or null (document {document_number})"
+                f"'score' length ({len(score)}) must match 'years' length ({len(years)}) "
+                f"(document {document_number})"
             )
 
-        # Imputed flag validation
-        imputed = document.get("imputed")
-        if imputed is not None and not isinstance(imputed, bool):
-            raise InvalidDocumentFormatError(
-                f"'imputed' must be a boolean or null (document {document_number})"
-            )
-
-        # Imputation method validation
-        imputation_method = document.get("imputation_method")
-        valid_methods = {None, "interpolate", "extrapolate_forward", "extrapolate_backward"}
-        if imputation_method not in valid_methods:
-            raise InvalidDocumentFormatError(
-                f"'imputation_method' must be one of {valid_methods} (document {document_number})"
-            )
+        # Validate each score is a number or None
+        for i, s in enumerate(score):
+            if s is not None and not isinstance(s, (int, float)):
+                raise InvalidDocumentFormatError(
+                    f"'score[{i}]' must be a number or null (document {document_number})"
+                )
 
     # ==========================================================================
     # CRUD Operations
     # ==========================================================================
 
-    def store_scoring_results(
+    def store_line_data(
         self,
         config_hash: str,
-        config_id: str,
-        results: list[dict]
+        line_data: list[dict]
     ) -> int:
         """
-        Store complete scoring results for a configuration.
+        Store line chart data for a configuration.
 
         Args:
             config_hash: SHA-256 hash prefix (32 chars) of canonical config
-            config_id: User's configuration ID (for reference)
-            results: List of score documents to store
+            line_data: List of line chart documents to store
 
         Returns:
             Number of documents inserted
@@ -216,25 +201,26 @@ class SSPICustomPanelData(MongoWrapper):
         Raises:
             InvalidDocumentFormatError: If validation fails
         """
-        if not results:
+        if not line_data:
             return 0
 
         now = datetime.now(timezone.utc).isoformat()
 
         # Prepare documents
         documents = []
-        for i, result in enumerate(results):
-            doc = result.copy()
+        for i, data in enumerate(line_data):
+            doc = data.copy()
             doc["config_hash"] = config_hash
-            doc["config_id"] = config_id
             doc["created_at"] = now
 
-            # Set defaults for optional fields
-            doc.setdefault("imputed", False)
-            doc.setdefault("imputation_method", None)
-            doc.setdefault("imputation_distance", None)
-            doc.setdefault("rank", None)
-            doc.setdefault("item_name", doc.get("item_code", ""))
+            # Ensure 'data' field matches 'score' for chart compatibility
+            doc["data"] = doc.get("score", [])
+
+            # Set defaults for UI state fields
+            doc.setdefault("pinned", False)
+            doc.setdefault("hidden", False)
+            doc.setdefault("yAxisMinValue", 0)
+            doc.setdefault("yAxisMaxValue", 100)
 
             # Validate
             self.validate_document_format(doc, i)
@@ -243,52 +229,50 @@ class SSPICustomPanelData(MongoWrapper):
         # Insert all documents
         try:
             inserted = self.insert_many(documents)
-            logger.info(f"Stored {len(inserted)} results for config_hash {config_hash[:8]}...")
+            logger.info(f"Stored {len(inserted)} line chart documents for config_hash {config_hash[:8]}...")
             return len(inserted)
         except Exception as e:
-            logger.error(f"Failed to store results: {e}")
+            logger.error(f"Failed to store line chart data: {e}")
             raise
 
-    def get_cached_results(self, config_hash: str) -> list[dict] | None:
+    def get_line_data(
+        self,
+        config_hash: str,
+        item_code: str | None = None,
+        country_codes: list[str] | None = None
+    ) -> list[dict]:
         """
-        Get cached results by config hash.
+        Get line chart data by config hash.
 
         Args:
             config_hash: SHA-256 hash prefix of canonical config
+            item_code: Optional filter by item code
+            country_codes: Optional filter by country codes
 
         Returns:
-            List of score documents if cached, None if not cached
+            List of line chart documents
         """
-        results = self.find({"config_hash": config_hash}, {"_id": 0})
+        query = {"config_hash": config_hash}
 
-        if not results:
-            return None
+        if item_code:
+            query["ICode"] = item_code
 
-        return results
+        if country_codes:
+            query["CCode"] = {"$in": country_codes}
 
-    def has_cached_results(self, config_hash: str) -> bool:
-        """Check if results exist for a config hash."""
+        return self.find(query, {"_id": 0})
+
+    def has_line_data(self, config_hash: str) -> bool:
+        """Check if line data exists for a config hash."""
         return self.count_documents({"config_hash": config_hash}) > 0
 
-    def clear_config_results(self, config_id: str) -> int:
+    def has_scores(self, config_hash: str) -> bool:
+        """Check if scores exist for a config hash (alias for has_line_data)."""
+        return self.has_line_data(config_hash)
+
+    def clear_by_hash(self, config_hash: str) -> int:
         """
-        Clear all results for a config_id.
-
-        Used when a configuration is deleted or updated.
-
-        Args:
-            config_id: Configuration ID to clear
-
-        Returns:
-            Number of documents deleted
-        """
-        deleted = self.delete_many({"config_id": config_id})
-        logger.info(f"Cleared {deleted} cached results for config_id {config_id}")
-        return deleted
-
-    def clear_hash_results(self, config_hash: str) -> int:
-        """
-        Clear all results for a config hash.
+        Clear all line data for a config hash.
 
         Args:
             config_hash: Config hash to clear
@@ -297,71 +281,30 @@ class SSPICustomPanelData(MongoWrapper):
             Number of documents deleted
         """
         deleted = self.delete_many({"config_hash": config_hash})
-        logger.info(f"Cleared {deleted} cached results for config_hash {config_hash[:8]}...")
+        logger.info(f"Cleared {deleted} line chart documents for config_hash {config_hash[:8]}...")
         return deleted
 
-    def get_results_by_item(
-        self,
-        config_hash: str,
-        item_code: str,
-        country_codes: list[str] | None = None,
-        years: list[int] | None = None
-    ) -> list[dict]:
+    def get_unique_items(self, config_hash: str) -> list[str]:
         """
-        Get cached results for a specific item.
+        Get list of unique item codes for a config.
 
         Args:
             config_hash: Configuration hash
-            item_code: Item code to query
-            country_codes: Optional filter by countries
-            years: Optional filter by years
 
         Returns:
-            List of score documents
+            List of unique item codes
         """
-        query = {
-            "config_hash": config_hash,
-            "item_code": item_code
-        }
-
-        if country_codes:
-            query["country_code"] = {"$in": country_codes}
-
-        if years:
-            query["year"] = {"$in": years}
-
-        return self.find(query, {"_id": 0})
-
-    def get_results_by_country(
-        self,
-        config_hash: str,
-        country_code: str,
-        years: list[int] | None = None
-    ) -> list[dict]:
-        """
-        Get all cached results for a specific country.
-
-        Args:
-            config_hash: Configuration hash
-            country_code: Country code to query
-            years: Optional filter by years
-
-        Returns:
-            List of score documents
-        """
-        query = {
-            "config_hash": config_hash,
-            "country_code": country_code
-        }
-
-        if years:
-            query["year"] = {"$in": years}
-
-        return self.find(query, {"_id": 0})
+        pipeline = [
+            {"$match": {"config_hash": config_hash}},
+            {"$group": {"_id": "$ICode"}},
+            {"$sort": {"_id": 1}}
+        ]
+        result = list(self._mongo_database.aggregate(pipeline))
+        return [r["_id"] for r in result]
 
     def get_cache_stats(self, config_hash: str) -> dict:
         """
-        Get statistics about cached results.
+        Get statistics about cached line data.
 
         Args:
             config_hash: Configuration hash
@@ -374,14 +317,9 @@ class SSPICustomPanelData(MongoWrapper):
             {"$group": {
                 "_id": None,
                 "total_documents": {"$sum": 1},
-                "unique_countries": {"$addToSet": "$country_code"},
-                "unique_years": {"$addToSet": "$year"},
-                "unique_items": {"$addToSet": "$item_code"},
-                "item_types": {"$addToSet": "$item_type"},
-                "created_at": {"$first": "$created_at"},
-                "imputed_count": {
-                    "$sum": {"$cond": [{"$eq": ["$imputed", True]}, 1, 0]}
-                }
+                "unique_countries": {"$addToSet": "$CCode"},
+                "unique_items": {"$addToSet": "$ICode"},
+                "created_at": {"$first": "$created_at"}
             }}
         ]
 
@@ -391,22 +329,16 @@ class SSPICustomPanelData(MongoWrapper):
             return {
                 "total_documents": 0,
                 "countries_count": 0,
-                "years_count": 0,
                 "items_count": 0,
-                "item_types": [],
-                "created_at": None,
-                "imputed_count": 0
+                "created_at": None
             }
 
         stats = result[0]
         return {
             "total_documents": stats["total_documents"],
             "countries_count": len(stats["unique_countries"]),
-            "years_count": len(stats["unique_years"]),
             "items_count": len(stats["unique_items"]),
-            "item_types": stats["item_types"],
-            "created_at": stats["created_at"],
-            "imputed_count": stats["imputed_count"]
+            "created_at": stats["created_at"]
         }
 
     # ==========================================================================
@@ -415,46 +347,27 @@ class SSPICustomPanelData(MongoWrapper):
 
     def create_indexes(self):
         """Create database indexes for optimal query performance."""
-        # Primary compound unique index for cache lookups
+        # Primary compound unique index
         self._mongo_database.create_index(
             [
                 ("config_hash", 1),
-                ("item_code", 1),
-                ("country_code", 1),
-                ("year", 1)
+                ("ICode", 1),
+                ("CCode", 1)
             ],
             unique=True,
-            name="unique_score_entry"
+            name="unique_line_entry"
         )
 
-        # Index for full config hash lookups (cache hit check)
+        # Index for full config hash lookups
         self._mongo_database.create_index(
             "config_hash",
             name="config_hash_lookup"
         )
 
-        # Index for config_id (clear results when config deleted)
-        self._mongo_database.create_index(
-            "config_id",
-            name="config_id_lookup"
-        )
-
         # Index for item-specific queries
         self._mongo_database.create_index(
-            [("config_hash", 1), ("item_code", 1)],
+            [("config_hash", 1), ("ICode", 1)],
             name="hash_item_lookup"
-        )
-
-        # Index for country-specific queries
-        self._mongo_database.create_index(
-            [("config_hash", 1), ("country_code", 1)],
-            name="hash_country_lookup"
-        )
-
-        # Index for cache management (TTL, cleanup)
-        self._mongo_database.create_index(
-            "created_at",
-            name="created_at_index"
         )
 
         logger.info("Created indexes for sspi_custom_panel_data")

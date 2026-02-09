@@ -15,11 +15,13 @@ from sspi_flask_app.auth.decorators import owner_or_admin_required
 from sspi_flask_app.api.resources.utilities import parse_json
 from sspi_flask_app.models.database import (
     sspi_custom_panel_data,
+    sspi_custom_item_data,
     sspi_custom_user_data,
     sspi_custom_user_structure,
     sspi_item_data,
     sspi_metadata,
 )
+from sspi_flask_app.api.resources.custom_scoring import build_custom_tree
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from sspi_flask_app.models.rank import SSPIRankingTable
 from sspi_flask_app.models.sspi import FastSSPI
@@ -430,12 +432,13 @@ def load_configuration(config_id):
         all_datasets = {d["DatasetCode"]: d for d in all_datasets_list}
 
         # Check if configuration has been scored (has cached results)
+        # Use the stored scored_hash which reflects the filtered metadata used during scoring
         has_scores = False
-        if config.get("metadata"):
-            config_hash = compute_config_hash(config["metadata"])
-            has_scores = sspi_custom_panel_data.has_cached_results(config_hash)
+        scored_hash = config.get("scored_hash")
+        if scored_hash:
+            has_scores = sspi_custom_panel_data.has_scores(scored_hash)
 
-        logger.info(f"Loaded configuration {config_id} for user {user_id} (has_scores={has_scores})")
+        logger.info(f"Loaded configuration {config_id} for user {user_id} (has_scores={has_scores}, scored_hash={scored_hash[:8] if scored_hash else 'None'}...)")
 
         return jsonify({
             "success": True,
@@ -655,6 +658,9 @@ def update_configuration(config_id):
         if "description" in updates and updates["description"]:
             updates["description"] = sanitize_text_input(updates["description"], max_length=1000, field_name="description", allow_newlines=True)
 
+        # If metadata is being updated, clear the scored_hash since the config changed
+        metadata_changed = "metadata" in updates
+
         # Update configuration
         success = sspi_custom_user_structure.update_config(
             config_id=config_id,
@@ -667,6 +673,11 @@ def update_configuration(config_id):
                 "success": False,
                 "error": "Configuration not found or no changes made"
             }), 404
+
+        # Clear scored_hash if metadata changed (config needs to be re-scored)
+        if metadata_changed:
+            sspi_custom_user_structure.clear_scored_hash(config_id)
+            logger.info(f"Cleared scored_hash for config {config_id} due to metadata change")
 
         logger.info(f"Updated configuration {config_id} for user {user_id}")
 
@@ -762,15 +773,18 @@ def delete_configuration(config_id):
                 "error": "Configuration not found or access denied"
             }), 404
 
-        # Clear associated scoring results
-        cleared_count = sspi_custom_user_data.clear_config_results(config_id)
+        # Clear legacy scoring results (sspi_custom_user_data)
+        # Note: sspi_custom_item_data and sspi_custom_panel_data are cached by
+        # config_hash only - no eager deletion on config delete. Cached results
+        # remain available for other configs with the same hash.
+        cleared_legacy = sspi_custom_user_data.clear_config_results(config_id)
 
-        logger.info(f"Deleted configuration {config_id} and {cleared_count} result records for user {user_id}")
+        logger.info(f"Deleted configuration {config_id} for user {user_id}")
 
         return jsonify({
             "success": True,
             "config_id": config_id,
-            "message": f"Configuration and {cleared_count} result records deleted successfully"
+            "message": "Configuration deleted successfully"
         })
     except PermissionError as e:
         logger.error(f"Permission error deleting config {config_id}: {str(e)}")
@@ -1071,8 +1085,8 @@ def get_results_summary(config_id):
 
         config_hash = compute_config_hash(metadata)
 
-        # Check if results exist in sspi_custom_panel_data (by config_hash)
-        has_results = sspi_custom_panel_data.has_cached_results(config_hash)
+        # Check if results exist in sspi_custom_item_data (by config_hash)
+        has_results = sspi_custom_item_data.has_cached_results(config_hash)
 
         if not has_results:
             return jsonify({
@@ -1082,8 +1096,8 @@ def get_results_summary(config_id):
                 "message": "No scoring results found for this configuration"
             })
 
-        # Get statistics about results from sspi_custom_panel_data
-        stats = sspi_custom_panel_data.get_cache_stats(config_hash)
+        # Get statistics about results from sspi_custom_item_data
+        stats = sspi_custom_item_data.get_cache_stats(config_hash)
 
         logger.info(f"Retrieved results summary for config {config_id} (hash {config_hash[:8]}..., user {user_id})")
 
@@ -1148,8 +1162,8 @@ def get_chart_data(config_id):
         country_codes = [c.strip() for c in countries_param.split(',') if c.strip()] if countries_param else None
         years = [int(y.strip()) for y in years_param.split(',') if y.strip()] if years_param else None
 
-        # Get results from sspi_custom_panel_data using config_hash
-        filtered_results = sspi_custom_panel_data.get_results_by_item(
+        # Get results from sspi_custom_item_data using config_hash
+        filtered_results = sspi_custom_item_data.get_results_by_item(
             config_hash=config_hash,
             item_code=item_code,
             country_codes=country_codes,
@@ -1197,6 +1211,150 @@ def get_chart_data(config_id):
         return jsonify({"success": False, "error": f"Invalid parameter: {str(e)}"}), 400
     except Exception as e:
         logger.error(f"Error getting chart data for {config_id}/{item_code}: {str(e)}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+
+
+# ============================================================================
+# Panel Chart Endpoint for SSPIPanelChart
+# ============================================================================
+
+@customize_bp.route("/panel/score/<item_code>", methods=["GET"])
+def get_custom_panel_score(item_code):
+    """
+    Serve custom scoring results for SSPIPanelChart.
+
+    This endpoint returns data in the same format as /api/v1/panel/score/<item_code>
+    but for custom SSPI configurations.
+
+    Query parameters:
+        - config_hash: Required. SHA-256 hash of the custom configuration.
+        - config_id: Optional. Configuration ID for retrieving metadata.
+
+    Returns:
+        JSON matching standard panel score format:
+        {
+            "data": [...],           # Line chart documents
+            "tree": {...},           # Hierarchical navigation tree
+            "itemCode": "SSPI",
+            "itemName": "Custom SSPI",
+            "itemType": "SSPI",
+            "title": "Custom SSPI Score",
+            "labels": [2000, 2001, ..., 2023],
+            "groupOptions": [...],
+            "countryGroupMap": {...}
+        }
+    """
+    try:
+        config_hash = request.args.get("config_hash")
+        config_id = request.args.get("config_id")
+
+        if not config_hash:
+            return jsonify({
+                "success": False,
+                "error": "config_hash parameter is required"
+            }), 400
+
+        # Validate config_hash format
+        if not re.match(r'^[a-f0-9]{32}$', config_hash):
+            return jsonify({
+                "success": False,
+                "error": "config_hash must be 32 lowercase hex characters"
+            }), 400
+
+        # Check if line data exists
+        if not sspi_custom_panel_data.has_line_data(config_hash):
+            return jsonify({
+                "success": False,
+                "error": "No scoring results found for this configuration. Please score the configuration first."
+            }), 404
+
+        # Get line data for the requested item
+        line_data = sspi_custom_panel_data.get_line_data(
+            config_hash=config_hash,
+            item_code=item_code
+        )
+
+        if not line_data:
+            return jsonify({
+                "success": False,
+                "error": f"No data found for item {item_code}"
+            }), 404
+
+        # Get custom metadata for tree building
+        custom_metadata = None
+        if config_id:
+            # Try to get metadata from sspi_custom_user_structure
+            config = sspi_custom_user_structure.find_by_config_id(config_id)
+            if config:
+                custom_metadata = config.get("metadata", [])
+
+        # If no config_id or config not found, try to infer from line data
+        if not custom_metadata:
+            # Get all unique item codes from line data to build scored_item_codes set
+            all_line_data = sspi_custom_panel_data.get_line_data(config_hash)
+            scored_item_codes = {doc["ICode"] for doc in all_line_data}
+
+            # Use default SSPI metadata as base, filtered to scored items
+            custom_metadata = sspi_metadata.item_details(
+                indicator_filter=list(scored_item_codes)
+            )
+
+        # Build tree from custom metadata
+        scored_items = {doc["ICode"] for doc in line_data}
+        # Get all scored items for proper tree building
+        all_line_data = sspi_custom_panel_data.get_line_data(config_hash)
+        all_scored_items = {doc["ICode"] for doc in all_line_data}
+
+        tree = build_custom_tree(custom_metadata, all_scored_items)
+
+        if not tree:
+            # Fallback: create minimal tree with just the requested item
+            item_name = line_data[0].get("IName", item_code) if line_data else item_code
+            tree = {
+                "ItemCode": item_code,
+                "ItemName": item_name,
+                "Children": []
+            }
+
+        # Get item metadata
+        item_name = line_data[0].get("IName", item_code) if line_data else item_code
+
+        # Determine item type from tree or metadata
+        item_type = "SSPI"
+        for item in custom_metadata:
+            if item.get("ItemCode") == item_code:
+                item_type = item.get("ItemType", "SSPI")
+                break
+
+        # Get country groups from metadata
+        country_groups = sspi_metadata.country_groups()
+        country_group_map = sspi_metadata.country_group_map()
+
+        # Build response in standard panel format
+        years = list(range(2000, 2024))
+
+        logger.info(
+            f"Serving custom panel data for item {item_code} "
+            f"(config_hash: {config_hash[:8]}..., {len(line_data)} country records)"
+        )
+
+        return jsonify({
+            "success": True,
+            "data": line_data,
+            "tree": tree,
+            "itemCode": item_code,
+            "itemName": item_name,
+            "itemType": item_type,
+            "title": f"{item_name} Score",
+            "labels": years,
+            "groupOptions": country_groups,
+            "countryGroupMap": country_group_map
+        })
+
+    except Exception as e:
+        logger.error(f"Error serving custom panel data for {item_code}: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 

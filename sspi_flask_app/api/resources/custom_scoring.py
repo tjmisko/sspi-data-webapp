@@ -17,6 +17,7 @@ Key Functions:
 import logging
 from copy import deepcopy
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Any
 
 from sspi_flask_app.api.resources.score_function_validator import (
@@ -43,6 +44,129 @@ logger = logging.getLogger(__name__)
 DEFAULT_START_YEAR = 2000
 DEFAULT_END_YEAR = 2023
 SSPI_COUNTRIES = 57  # Number of countries in SSPI
+
+
+# =============================================================================
+# Empty Dataset Detection
+# =============================================================================
+
+@dataclass
+class EmptyDatasetResult:
+    """Result of checking for empty datasets before scoring."""
+    empty_datasets: set[str]  # Dataset codes with zero data
+    dropped_indicators: list[dict]  # Indicators dropped due to empty datasets
+    scorable_indicators: list[dict]  # Indicators that can be scored
+
+    @property
+    def has_dropped(self) -> bool:
+        """True if any indicators were dropped."""
+        return len(self.dropped_indicators) > 0
+
+
+def identify_empty_datasets(
+    metadata: list[dict],
+    required_datasets: set[str] | None = None
+) -> EmptyDatasetResult:
+    """
+    Identify datasets with zero data and indicators that should be dropped.
+
+    Uses a fast MongoDB aggregation to find all datasets that exist in
+    sspi_clean_api_data, then compares against required datasets from metadata.
+
+    An indicator is dropped if ALL of its required datasets are empty.
+
+    Args:
+        metadata: Custom SSPI metadata structure (list of item dicts)
+        required_datasets: Optional set of dataset codes to check.
+                          If None, extracts from metadata indicators.
+
+    Returns:
+        EmptyDatasetResult with empty datasets and dropped/scorable indicators
+    """
+    from sspi_flask_app.models.database import sspi_clean_api_data
+
+    # Extract indicators from metadata
+    indicators = [
+        item for item in metadata
+        if item.get("ItemType") == "Indicator"
+    ]
+
+    # Collect all required dataset codes from indicators
+    if required_datasets is None:
+        required_datasets = set()
+        for ind in indicators:
+            codes = ind.get("DatasetCodes", [])
+            if codes:
+                required_datasets.update(codes)
+
+    if not required_datasets:
+        logger.warning("No dataset codes found in metadata")
+        return EmptyDatasetResult(
+            empty_datasets=set(),
+            dropped_indicators=[],
+            scorable_indicators=indicators
+        )
+
+    # Fast aggregation: get all dataset codes that have data
+    pipeline = [
+        {"$match": {"DatasetCode": {"$in": list(required_datasets)}}},
+        {"$group": {"_id": "$DatasetCode"}},
+    ]
+    datasets_with_data = set(
+        doc["_id"] for doc in sspi_clean_api_data.aggregate(pipeline)
+    )
+
+    # Find empty datasets (in metadata but no data in DB)
+    empty_datasets = required_datasets - datasets_with_data
+
+    logger.info(
+        f"Dataset check: {len(datasets_with_data)} with data, "
+        f"{len(empty_datasets)} empty out of {len(required_datasets)} required"
+    )
+
+    # Classify indicators as dropped or scorable
+    dropped_indicators = []
+    scorable_indicators = []
+
+    for ind in indicators:
+        indicator_code = ind.get("ItemCode") or ind.get("IndicatorCode")
+        indicator_name = ind.get("ItemName") or ind.get("Indicator", indicator_code)
+        dataset_codes = set(ind.get("DatasetCodes", []))
+
+        if not dataset_codes:
+            # No datasets specified - can't score
+            dropped_indicators.append({
+                "code": indicator_code,
+                "name": indicator_name,
+                "reason": "No DatasetCodes specified",
+                "empty_datasets": [],
+            })
+            continue
+
+        # Check if ALL datasets are empty
+        all_empty = dataset_codes.issubset(empty_datasets)
+
+        if all_empty:
+            dropped_indicators.append({
+                "code": indicator_code,
+                "name": indicator_name,
+                "reason": "All datasets have no data",
+                "empty_datasets": sorted(dataset_codes),
+            })
+        else:
+            scorable_indicators.append(ind)
+
+    if dropped_indicators:
+        logger.warning(
+            f"Dropping {len(dropped_indicators)} indicators due to empty datasets: "
+            f"{', '.join(d['code'] for d in dropped_indicators)}"
+        )
+
+    return EmptyDatasetResult(
+        empty_datasets=empty_datasets,
+        dropped_indicators=dropped_indicators,
+        scorable_indicators=scorable_indicators
+    )
 
 
 # =============================================================================
@@ -651,3 +775,225 @@ def flatten_scores_for_storage(
     for scores in all_scores.values():
         flat_list.extend(scores)
     return flat_list
+
+
+# =============================================================================
+# Line Chart Data Transformation
+# =============================================================================
+
+def transform_scores_to_line_format(
+    all_scores: dict[str, list[dict]],
+    custom_metadata: list[dict],
+    country_details: list[dict],
+    country_group_map: dict[str, list[str]],
+    start_year: int = DEFAULT_START_YEAR,
+    end_year: int = DEFAULT_END_YEAR
+) -> list[dict]:
+    """
+    Transform flat score documents to line chart format for SSPIPanelChart.
+
+    Groups by (item_code, country_code) and builds year-aligned arrays.
+    Enriches with country metadata (name, flag, groups).
+
+    Args:
+        all_scores: Dict mapping item_code -> list of score docs
+        custom_metadata: List of item details from custom config
+        country_details: List of country detail dicts with Country, CountryCode, Flag
+        country_group_map: Dict mapping country_code -> list of group names
+        start_year: First year (default 2000)
+        end_year: Last year (default 2023)
+
+    Returns:
+        List of line chart documents ready for SSPICustomPanelData
+    """
+    from sspi_flask_app.models.database import sspi_metadata
+
+    # Build lookup tables
+    years = list(range(start_year, end_year + 1))
+
+    # Item name lookup: custom metadata first, then sspi_metadata as backup
+    item_name_map = {}
+    for item in custom_metadata:
+        code = item.get("ItemCode")
+        name = item.get("ItemName")
+        if code and name:
+            item_name_map[code] = name
+
+    # Country lookup
+    country_name_map = {}
+    country_flag_map = {}
+    for detail in country_details:
+        code = detail.get("CountryCode")
+        if code:
+            country_name_map[code] = detail.get("Country", code)
+            country_flag_map[code] = detail.get("Flag", "")
+
+    line_data = []
+
+    for item_code, score_docs in all_scores.items():
+        # Get item name from custom metadata, fallback to sspi_metadata
+        item_name = item_name_map.get(item_code)
+        if not item_name:
+            try:
+                item_detail = sspi_metadata.get_item_detail(item_code)
+                item_name = item_detail.get("ItemName", item_code)
+            except Exception:
+                item_name = item_code
+
+        # Group scores by country
+        by_country = defaultdict(dict)
+        for doc in score_docs:
+            country = doc.get("country_code")
+            year = doc.get("year")
+            score = doc.get("score")
+            if country and year is not None:
+                by_country[country][year] = score
+
+        # Create line chart document for each country
+        for country_code, year_scores in by_country.items():
+            # Build year-aligned score array
+            score_array = []
+            for year in years:
+                score_array.append(year_scores.get(year))  # None if missing
+
+            # Get country metadata
+            country_name = country_name_map.get(country_code, country_code)
+            country_flag = country_flag_map.get(country_code, "")
+            country_groups = country_group_map.get(country_code, [])
+
+            line_doc = {
+                "ICode": item_code,
+                "IName": item_name,
+                "CCode": country_code,
+                "CName": country_name,
+                "CFlag": country_flag,
+                "CGroup": country_groups,
+                "years": years,
+                "score": score_array,
+                "label": f"{country_code} - {country_name}",
+            }
+
+            line_data.append(line_doc)
+
+    logger.info(f"Transformed {len(line_data)} line chart documents")
+    return line_data
+
+
+# =============================================================================
+# Custom Tree Building
+# =============================================================================
+
+def build_custom_tree(
+    custom_metadata: list[dict],
+    scored_item_codes: set[str] | None = None
+) -> dict | None:
+    """
+    Build hierarchical tree structure from custom metadata.
+
+    Follows the pattern from sspi_item_data.active_schema():
+    1. Build map of items present in custom config
+    2. Filter to only items that have actual scores (if scored_item_codes provided)
+    3. Recursively construct tree with {ItemCode, ItemName, Children}
+
+    Args:
+        custom_metadata: List of item details from custom config
+        scored_item_codes: Optional set of item codes that have computed scores.
+                          If None, includes all items from metadata.
+
+    Returns:
+        Tree structure: {ItemCode: "SSPI", ItemName: "...", Children: [...]}
+        Returns None if no valid tree can be built.
+    """
+    from sspi_flask_app.models.database import sspi_metadata
+
+    # Build lookup table
+    item_map = {
+        item.get("ItemCode"): item
+        for item in custom_metadata
+        if item.get("ItemCode")
+    }
+
+    # If no scored_item_codes provided, use all items
+    if scored_item_codes is None:
+        scored_item_codes = set(item_map.keys())
+
+    # Find the SSPI root
+    sspi_root = next(
+        (item for item in custom_metadata if item.get("ItemType") == "SSPI"),
+        None
+    )
+
+    if not sspi_root:
+        logger.error("No SSPI root found in custom metadata")
+        return None
+
+    def get_item_name(item_code: str, item: dict | None) -> str:
+        """Get item name from custom metadata or sspi_metadata as backup."""
+        if item and item.get("ItemName"):
+            return item.get("ItemName")
+        try:
+            detail = sspi_metadata.get_item_detail(item_code)
+            return detail.get("ItemName", item_code)
+        except Exception:
+            return item_code
+
+    def build_tree(item_code: str) -> dict | None:
+        """Recursively build tree node."""
+        if not item_code:
+            return None
+
+        item = item_map.get(item_code)
+        if not item:
+            return None
+
+        item_type = item.get("ItemType")
+        item_name = get_item_name(item_code, item)
+
+        # Get children based on item type
+        if item_type == "SSPI":
+            child_codes = item.get("PillarCodes") or item.get("Children", [])
+        elif item_type == "Pillar":
+            child_codes = item.get("CategoryCodes") or item.get("Children", [])
+        elif item_type == "Category":
+            child_codes = item.get("IndicatorCodes") or item.get("Children", [])
+        else:
+            # Indicators have no children
+            child_codes = []
+
+        # For leaf nodes (indicators), include if they have scores
+        if not child_codes:
+            if item_code in scored_item_codes:
+                return {
+                    "ItemCode": item_code,
+                    "ItemName": item_name,
+                    "Children": []
+                }
+            return None
+
+        # For non-leaf nodes, build children recursively
+        children = []
+        for child_code in child_codes:
+            child_node = build_tree(child_code)
+            if child_node:
+                children.append(child_node)
+
+        # Only include node if it has children with data
+        if children:
+            return {
+                "ItemCode": item_code,
+                "ItemName": item_name,
+                "Children": children
+            }
+
+        # For aggregates (SSPI, Pillar, Category), include if they have scores
+        # even without children (shouldn't normally happen)
+        if item_code in scored_item_codes:
+            return {
+                "ItemCode": item_code,
+                "ItemName": item_name,
+                "Children": []
+            }
+
+        return None
+
+    return build_tree(sspi_root.get("ItemCode", "SSPI"))

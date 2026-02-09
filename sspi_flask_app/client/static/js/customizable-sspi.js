@@ -442,6 +442,16 @@ class CustomizableSSPIStructure {
                     resolve(false);
                 }
             });
+
+            // Close on Escape key
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', handleEscape);
+                    cleanup();
+                    resolve(false);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
         });
     }
 
@@ -743,6 +753,17 @@ class CustomizableSSPIStructure {
                 this.currentConfigId = response.config_id;
                 this.currentConfigName = name;
                 this.currentConfigDescription = description;
+
+                // Update baseConfig if we saved from a protected config
+                // This ensures future saves will update rather than create new
+                const protectedConfigs = ['sspi', 'blank', 'default'];
+                if (protectedConfigs.includes(this.baseConfig)) {
+                    this.baseConfig = response.config_id;
+                    // Update URL to reflect new config
+                    const url = new URL(window.location);
+                    url.searchParams.set('base_config', response.config_id);
+                    window.history.replaceState({}, '', url);
+                }
 
                 // Clear unsaved state and persisted unsaved changes
                 this.clearUnsavedState();
@@ -1064,6 +1085,15 @@ class CustomizableSSPIStructure {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) handleCancel();
             });
+
+            // Document-level Escape handler for when focus is outside inputs
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', handleEscape);
+                    handleCancel();
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
         });
     }
 
@@ -1168,6 +1198,15 @@ class CustomizableSSPIStructure {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) handleCancel();
             });
+
+            // Document-level Escape handler for when focus is outside inputs
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', handleEscape);
+                    handleCancel();
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
         });
     }
 
@@ -2057,7 +2096,7 @@ class CustomizableSSPIStructure {
 
                     this.actionHistory.recordAction({
                         type: 'remove-dataset',
-                        message: `Removed dataset "${datasetCode}" from indicator "${indicatorCode}"`,
+                        message: `Removed dataset\u0020${datasetCode}\u0020from indicator\u0020${indicatorCode}`,
                         delta: {
                             type: 'remove-dataset',
                             indicatorCode,
@@ -2178,7 +2217,7 @@ class CustomizableSSPIStructure {
         if (record) {
             action = this.actionHistory.recordAction({
                 type: 'add-dataset',
-                message: `Added dataset "${datasetCode}" to indicator "${indicatorCode}"`,
+                message: `Added dataset\u0020${datasetCode}\u0020to indicator\u0020${indicatorCode}`,
                 delta: {
                     type: 'add-dataset',
                     indicatorCode: indicatorCode,
@@ -2270,7 +2309,7 @@ class CustomizableSSPIStructure {
         datasetItem.remove();
         const action = this.actionHistory.recordAction({
             type: 'remove-dataset',
-            message: `Removed dataset "${datasetCode}" from indicator "${indicatorCode}"`,
+            message: `Removed dataset\u0020${datasetCode}\u0020from indicator\u0020${indicatorCode}`,
             delta: {
                 type: 'remove-dataset',
                 indicatorCode: indicatorCode,
@@ -2360,7 +2399,7 @@ class CustomizableSSPIStructure {
         };
         const action = this.actionHistory.recordAction({
             type: 'add-indicator',
-            message: `Added indicator "${indicatorCode}" to ${parentType} "${parentCode}"`,
+            message: `Added indicator\u0020${indicatorCode}\u0020to\u0020${parentType}\u0020${parentCode}`,
             delta: {
                 type: 'add-indicator',
                 indicatorCode: indicatorCode,
@@ -2414,7 +2453,7 @@ class CustomizableSSPIStructure {
         indEl.remove();
         const action = this.actionHistory.recordAction({
             type: 'remove-indicator',
-            message: `Removed indicator "${indicatorCode}" from ${parentType} "${parentCode}"`,
+            message: `Removed indicator\u0020${indicatorCode}\u0020from\u0020${parentType}\u0020${parentCode}`,
             delta: {
                 type: 'remove-indicator',
                 indicatorCode: indicatorCode,
@@ -2484,7 +2523,7 @@ class CustomizableSSPIStructure {
         targetContainer.appendChild(indEl);
         const action = this.actionHistory.recordAction({
             type: 'move-indicator',
-            message: `Moved indicator "${indicatorCode}" from ${fromParentType} "${fromParentCode}" to ${toParentType} "${targetParentCode}"`,
+            message: `Moved indicator\u0020${indicatorCode}\u0020from ${fromParentType}\u0020${fromParentCode}\u0020to\u0020${toParentType} "${targetParentCode}"`,
             delta: {
                 type: 'move-indicator',
                 indicatorCode: indicatorCode,
@@ -2881,7 +2920,7 @@ class CustomizableSSPIStructure {
         if (logAction) {
             action = this.actionHistory.recordAction({
                 type: 'add-category',
-                message: `Added category "${categoryName}" (${categoryCode}) to pillar ${pillarCode}`,
+                message: `Added category\u0020${categoryName}\u0020(${categoryCode}) to pillar\u0020${pillarCode}`,
                 delta: {
                     type: 'add-category',
                     categoryCode: categoryCode,
@@ -3026,7 +3065,7 @@ class CustomizableSSPIStructure {
         // Record main action
         const mainAction = this.actionHistory.recordAction({
             type: 'remove-category',
-            message: `Removed category "${categoryName}" (${categoryCode}) from pillar ${pillarCode}`,
+            message: `Removed category\u0020${categoryName}\u0020(${categoryCode}) from pillar\u0020${pillarCode}`,
             delta: {
                 type: 'remove-category',
                 categoryCode: categoryCode,
@@ -3131,7 +3170,7 @@ class CustomizableSSPIStructure {
         // No indicator actions created - indicators move with category but metadata unchanged
         const action = this.actionHistory.recordAction({
             type: 'move-category',
-            message: `Moved category ${categoryCode} from pillar ${fromPillarCode} to ${targetPillarCode}`,
+            message: `Moved category\u0020${categoryCode}\u0020from pillar\u0020${fromPillarCode}\u0020to\u0020${targetPillarCode}`,
             delta: {
                 type: 'move-category',
                 categoryCode: categoryCode,
@@ -4635,7 +4674,7 @@ class CustomizableSSPIStructure {
         this.flagUnsaved();
         // Skip logging and validation during bulk import to reduce noise
         if (!this.isImporting) {
-            console.log(`Added ${elementType}:`, element);
+            console.log(`Added\u0020${elementType}:`, element);
             const errors = this.validateHierarchy();
             if (errors.length > 0) {
                 console.warn('Hierarchy validation errors after add:', errors);
@@ -4645,8 +4684,7 @@ class CustomizableSSPIStructure {
 
     updateHierarchyOnRemove(element, elementType) {
         this.flagUnsaved();
-        console.log(`Removed ${elementType}:`, element);
-
+        console.log(`Removed\u0020${elementType}:`, element);
         // Skip validation during bulk import to avoid noisy warnings
         if (!this.isImporting) {
             const errors = this.validateHierarchy();
@@ -4739,10 +4777,10 @@ class CustomizableSSPIStructure {
         const stats = this.getMetadataStats();
         
         let message = `Metadata Stats:\n`;
-        message += `- Pillars: ${stats.pillars}\n`;
-        message += `- Categories: ${stats.categories}\n`;
-        message += `- Indicators: ${stats.indicators}\n`;
-        message += `- Total Datasets: ${stats.datasets}\n\n`;
+        message += `- Pillars:\u0020${stats.pillars}\n`;
+        message += `- Categories:\u0020${stats.categories}\n`;
+        message += `- Indicators:\u0020${stats.indicators}\n`;
+        message += `- Total Datasets:\u0020${stats.datasets}\n\n`;
         
         if (result.errors.length > 0) {
             message += `Errors (${result.errors.length}):\n`;
@@ -5129,9 +5167,18 @@ class CustomizableSSPIStructure {
             </h3>
 
             <div class="scoring-stages">
-                <div class="scoring-stage in-progress" data-stage="validate">
+                <div class="scoring-stage in-progress" data-stage="data_check">
                     <div class="stage-header">
                         <span class="stage-icon">◉</span>
+                        <span class="stage-name">Checking Data Availability</span>
+                    </div>
+                    <div class="stage-status"></div>
+                    <div class="stage-dropped-indicators hidden"></div>
+                </div>
+
+                <div class="scoring-stage" data-stage="validate">
+                    <div class="stage-header">
+                        <span class="stage-icon">○</span>
                         <span class="stage-name">Validate Metadata</span>
                     </div>
                     <div class="stage-status"></div>
@@ -5207,6 +5254,14 @@ class CustomizableSSPIStructure {
                 this.closeScoringModal();
             }
         });
+
+        // Close on Escape key
+        this.scoringModalEscapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeScoringModal();
+            }
+        };
+        document.addEventListener('keydown', this.scoringModalEscapeHandler);
     }
 
     /**
@@ -5226,8 +5281,8 @@ class CustomizableSSPIStructure {
 
         // Stage completion events
         this.eventSource.addEventListener('stage_complete', (e) => {
-            const { stage, message } = JSON.parse(e.data);
-            this.markStageComplete(stage, message);
+            const data = JSON.parse(e.data);
+            this.markStageComplete(data.stage, data.message, data);
         });
 
         // Stage progress events (for progress bars)
@@ -5347,8 +5402,9 @@ class CustomizableSSPIStructure {
      * Mark a scoring stage as complete
      * @param {string} stage - Stage identifier
      * @param {string} message - Completion message
+     * @param {Object} data - Additional data from the event
      */
-    markStageComplete(stage, message) {
+    markStageComplete(stage, message, data = {}) {
         const stageEl = document.querySelector(`.scoring-stage[data-stage="${stage}"]`);
         if (!stageEl) return;
 
@@ -5363,6 +5419,32 @@ class CustomizableSSPIStructure {
         // Set completion message
         const status = stageEl.querySelector('.stage-status');
         if (status) status.textContent = message;
+
+        // Handle dropped indicators for data_check stage
+        if (stage === 'data_check' && data.dropped_indicators && data.dropped_indicators.length > 0) {
+            stageEl.classList.add('has-dropped');
+            const droppedContainer = stageEl.querySelector('.stage-dropped-indicators');
+            if (droppedContainer) {
+                droppedContainer.classList.remove('hidden');
+                const droppedList = data.dropped_indicators.map(ind =>
+                    `<div class="dropped-indicator-item">
+                        <span class="dropped-indicator-code">${this.escapeHtml(ind.code)}</span>
+                        <span class="dropped-indicator-name">${this.escapeHtml(ind.name)}</span>
+                        <span class="dropped-indicator-reason">${this.escapeHtml(ind.reason)}</span>
+                    </div>`
+                ).join('');
+                droppedContainer.innerHTML = `
+                    <details class="dropped-indicators-details">
+                        <summary class="dropped-indicators-summary">
+                            ${data.dropped_count} indicator${data.dropped_count !== 1 ? 's' : ''} dropped (click to expand)
+                        </summary>
+                        <div class="dropped-indicators-list">
+                            ${droppedList}
+                        </div>
+                    </details>
+                `;
+            }
+        }
 
         // Hide progress bar if present
         const progressContainer = stageEl.querySelector('.stage-progress-container');
@@ -5469,6 +5551,7 @@ class CustomizableSSPIStructure {
         const modal = document.getElementById('scoring-modal-content');
         if (modal) {
             modal.innerHTML = `
+                <button class="scoring-modal-close" id="close-error-x" aria-label="Close">&times;</button>
                 <div class="scoring-result-content">
                     <div class="scoring-result-icon error">&#10007;</div>
                     <h3 class="scoring-result-title error">Scoring Failed</h3>
@@ -5478,19 +5561,10 @@ class CustomizableSSPIStructure {
                     <pre class="scoring-result-message">
                         ${this.escapeHtml(message)}
                     </pre>
-                    <div class="scoring-result-actions">
-                        <button id="retry-scoring-btn" class="scoring-btn scoring-btn-primary">Retry</button>
-                        <button id="close-error-btn" class="scoring-btn scoring-btn-secondary">Close</button>
-                    </div>
                 </div>
             `;
 
-            document.getElementById('retry-scoring-btn').addEventListener('click', () => {
-                this.closeScoringModal();
-                window.location.href = '/customize/load';
-            });
-
-            document.getElementById('close-error-btn').addEventListener('click', () => {
+            document.getElementById('close-error-x').addEventListener('click', () => {
                 this.closeScoringModal();
                 // Remove scoring params from URL
                 const url = new URL(window.location);
@@ -5514,6 +5588,10 @@ class CustomizableSSPIStructure {
         if (this.elapsedTimeInterval) {
             clearInterval(this.elapsedTimeInterval);
             this.elapsedTimeInterval = null;
+        }
+        if (this.scoringModalEscapeHandler) {
+            document.removeEventListener('keydown', this.scoringModalEscapeHandler);
+            this.scoringModalEscapeHandler = null;
         }
     }
 

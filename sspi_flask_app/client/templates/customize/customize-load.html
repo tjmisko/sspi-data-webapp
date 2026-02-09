@@ -55,7 +55,7 @@
                         {% if not is_authenticated %}
                             {% include 'components/login-box.html' with context %}
                         {% elif saved_configurations | length == 0 %}
-                            <div class="empty-message">No saved configurations yet. Start by building a custom SSPI!</div>
+                            <div class="empty-message">No saved configurations yet.</div>
                         {% else %}
                             {% for config in saved_configurations %}
                             <div class="config-card selectable-card"

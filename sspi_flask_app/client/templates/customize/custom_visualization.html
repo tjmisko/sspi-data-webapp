@@ -19,13 +19,19 @@
                         <a id="btn-edit-config" href="/customize/builder?base_config={{ config_id }}" class="btn-secondary">
                             Edit Configuration
                         </a>
-                        <a href="/customize" class="btn-secondary">
+                        <a href="/customize/load" class="btn-secondary">
                             Back to Configurations
                         </a>
                     </div>
                 </div>
 
-                <div id="visualization-content" class="visualization-content">
+                <div class="visualization-tabs">
+                    <button class="tab-btn active" data-tab="scores">Scores</button>
+                    <button class="tab-btn" data-tab="changes">Changes</button>
+                </div>
+
+                <div id="tab-scores" class="tab-content active">
+                    <div id="visualization-content" class="visualization-content">
                     <div class="loading-indicator">
                         <div class="spinner"></div>
                         <p>Loading visualization data...</p>
@@ -47,210 +53,22 @@
                         Retry
                     </button>
                 </div>
+                </div>
+
+                <div id="tab-changes" class="tab-content">
+                    <div id="changes-content" class="changes-content">
+                        <div class="loading-indicator">
+                            <div class="spinner"></div>
+                            <p>Loading changes...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 </article>
 
-<style>
-.custom-visualization-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1rem;
-}
-
-.visualization-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.config-info h2 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-color);
-}
-
-.config-description {
-    color: var(--low-importance-font-color);
-    margin: 0 0 0.5rem 0;
-}
-
-.config-stats {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.875rem;
-    color: var(--low-importance-font-color);
-}
-
-.config-stats span {
-    padding: 0.25rem 0.5rem;
-    background: var(--badge-background-color);
-    border-radius: var(--border-radius);
-}
-
-.visualization-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
-.visualization-content {
-    min-height: 400px;
-}
-
-.loading-indicator {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    color: var(--low-importance-font-color);
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--border-color);
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.no-results-message,
-.error-message {
-    text-align: center;
-    padding: 3rem;
-    background: var(--box-background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-}
-
-.no-results-message h3,
-.error-message h3 {
-    margin: 0 0 1rem 0;
-    color: var(--text-color);
-}
-
-.no-results-message p,
-.error-message p {
-    margin: 0 0 1.5rem 0;
-    color: var(--low-importance-font-color);
-}
-
-.hidden {
-    display: none;
-}
-
-/* Chart container styles */
-.chart-section {
-    margin-top: 2rem;
-}
-
-.item-selector {
-    margin-bottom: 1.5rem;
-}
-
-.item-selector label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text-color);
-}
-
-.item-selector select {
-    width: 100%;
-    max-width: 400px;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background: var(--box-background-color);
-    color: var(--text-color);
-    font-size: 1rem;
-}
-
-.chart-wrapper {
-    background: var(--box-background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 1.5rem;
-    min-height: 400px;
-}
-
-.results-summary {
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: var(--box-background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-}
-
-.results-summary h3 {
-    margin: 0 0 1rem 0;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--primary-color);
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: var(--low-importance-font-color);
-}
-
-/* Button styles */
-.btn-primary,
-.btn-secondary {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: var(--border-radius);
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-}
-
-.btn-primary {
-    background: var(--primary-color);
-    color: white;
-}
-
-.btn-primary:hover {
-    opacity: 0.9;
-}
-
-.btn-secondary {
-    background: var(--box-background-color);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-</style>
+<style></style>
 
 <script>
 window.csrfToken = {{ csrf_token|tojson|safe if csrf_token is defined else '""' }};
@@ -267,8 +85,14 @@ async function fetchWithCSRF(url, options = {}) {
     return fetch(url, options);
 }
 
+// Store config data globally for tab access
+let globalConfigData = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const configId = window.sspiConfigId;
+
+    // Setup tab switching
+    setupTabs();
 
     try {
         // Load configuration details and results summary in parallel
@@ -285,8 +109,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Store globally for changes tab
+        globalConfigData = configData;
+
         // Update header with configuration info
         updateConfigHeader(configData);
+
+        // Render changes tab (always available)
+        renderChanges(configData.actions || []);
 
         if (!resultsData.success || !resultsData.has_results) {
             showNoResults();
@@ -301,6 +131,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         showError('Failed to load visualization data. Please try again.');
     }
 });
+
+function setupTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+
+            // Update button states
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update tab content visibility
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        });
+    });
+}
 
 function updateConfigHeader(configData) {
     document.getElementById('config-name').textContent = configData.name || 'Custom SSPI Configuration';
@@ -529,6 +378,213 @@ function renderChart(container, data) {
             ${countries.length > 20 ? `<p style="color: var(--low-importance-font-color); margin-top: 1rem;">Showing first 20 of ${countries.length} countries</p>` : ''}
         </div>
     `;
+}
+
+// ========== Changes Tab Functions ==========
+
+function renderChanges(actions) {
+    const container = document.getElementById('changes-content');
+
+    if (!actions || actions.length === 0) {
+        container.innerHTML = `
+            <div class="changes-empty">
+                <h3>No Changes from Baseline</h3>
+                <p>This configuration matches the default SSPI structure.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Reverse to show newest first
+    const sortedActions = [...actions].reverse();
+
+    container.innerHTML = `
+        <div class="changes-summary">
+            <h3>Configuration Changes</h3>
+            <p class="changes-count">${actions.length} change${actions.length === 1 ? '' : 's'} from baseline SSPI</p>
+        </div>
+        <div class="changes-list">
+            ${sortedActions.map(action => createChangeItemHTML(action)).join('')}
+        </div>
+    `;
+}
+
+function createChangeItemHTML(action) {
+    const changeType = getChangeCategory(action.type, action.subtype);
+    const formattedType = formatActionType(action.type);
+    const formattedSubtype = action.subtype ? formatActionType(action.subtype) : '';
+    const timestamp = formatTimestamp(action.timestamp);
+    const itemRef = getItemReference(action);
+
+    let detailsHTML = '';
+    if (action.delta && Object.keys(action.delta).length > 0) {
+        detailsHTML = createDetailsHTML(action);
+    }
+
+    return `
+        <div class="change-item">
+            <div class="change-item-header">
+                <span class="change-type-badge" data-change-type="${changeType}">
+                    ${formattedSubtype ? `${formattedType}: ${formattedSubtype}` : formattedType}
+                </span>
+                <span class="change-timestamp">${timestamp}</span>
+            </div>
+            <div class="change-message">${escapeHTML(action.message)}</div>
+            ${itemRef ? `<div class="change-item-reference">${escapeHTML(itemRef)}</div>` : ''}
+            ${detailsHTML}
+        </div>
+    `;
+}
+
+function createDetailsHTML(action) {
+    const delta = action.delta;
+
+    // Check if this is a composite action
+    if (delta.type === 'composite' && delta.subActions && Array.isArray(delta.subActions)) {
+        const subActionsHTML = delta.subActions.map(subDelta => {
+            const subType = formatActionType(subDelta.type || 'change');
+            const subDetails = formatSubActionDetails(subDelta);
+            return `<li class="change-sub-action-item"><span class="sub-action-type">${subType}</span><span class="sub-action-details">${escapeHTML(subDetails)}</span></li>`;
+        }).join('');
+
+        return `
+            <details class="change-details">
+                <summary>Details</summary>
+                <div class="change-details-content">
+                    <ul class="change-sub-actions-list">${subActionsHTML}</ul>
+                </div>
+            </details>
+        `;
+    }
+
+    // Normal delta rendering
+    const deltaEntries = Object.entries(delta)
+        .filter(([key]) => !['type', 'subActions', 'indicatorMetadata', 'scoreFunction'].includes(key))
+        .map(([key, value]) => `<dt>${formatDeltaKey(key)}</dt><dd>${escapeHTML(formatDeltaValue(key, value))}</dd>`)
+        .join('');
+
+    if (!deltaEntries) return '';
+
+    return `
+        <details class="change-details">
+            <summary>Details</summary>
+            <div class="change-details-content">
+                <dl class="change-delta-list">${deltaEntries}</dl>
+            </div>
+        </details>
+    `;
+}
+
+function getChangeCategory(type, subtype) {
+    if (type === 'modify-indicator' && subtype) {
+        if (subtype === 'set-code' || subtype === 'set-name') return 'rename';
+        if (subtype === 'set-score-function') return 'other';
+        if (subtype === 'replace-datasets') return 'other';
+    }
+
+    if (type.startsWith('add-')) return 'add';
+    if (type.startsWith('remove-')) return 'remove';
+    if (type.startsWith('move-')) return 'move';
+    if (type.startsWith('set-')) return 'rename';
+    if (type.startsWith('create-')) return 'add';
+    if (type === 'composite') return 'other';
+    if (type === 'modify-indicator') return 'other';
+    return 'other';
+}
+
+function formatActionType(type) {
+    return type
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function getItemReference(action) {
+    const delta = action.delta;
+    if (!delta) return null;
+
+    let code = delta.indicatorCode || delta.categoryCode || delta.pillarCode || delta.datasetCode;
+    if (action.type.startsWith('move-')) {
+        code = delta.indicatorCode || delta.categoryCode;
+    }
+
+    let name = delta.indicatorName || delta.categoryName || delta.pillarName ||
+               (delta.to && typeof delta.to === 'string' && !delta.to.includes('Score =') ? delta.to : null) ||
+               delta.name;
+
+    let categoryContext = '';
+    if (delta.type === 'composite' && delta.categoryName) {
+        categoryContext = ` in ${delta.categoryName}`;
+    }
+
+    if (name && code) return `${name} (${code})${categoryContext}`;
+    if (code) return `(${code})${categoryContext}`;
+    return null;
+}
+
+function formatDeltaKey(key) {
+    const keyMap = {
+        indicatorCode: 'Indicator Code',
+        categoryCode: 'Category Code',
+        pillarCode: 'Pillar Code',
+        fromParentCode: 'From Category',
+        toParentCode: 'To Category',
+        fromPillarCode: 'From Pillar',
+        toPillarCode: 'To Pillar',
+        from: 'Previous Value',
+        to: 'New Value',
+        name: 'Name',
+        datasetCode: 'Dataset Code',
+        position: 'Position'
+    };
+    return keyMap[key] || key;
+}
+
+function formatDeltaValue(key, value) {
+    if (value === null || value === undefined) return '(none)';
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+}
+
+function formatSubActionDetails(subDelta) {
+    if (!subDelta) return '';
+    const type = subDelta.type;
+
+    switch (type) {
+        case 'set-indicator-code':
+            return subDelta.from ? `: Changed code from ${subDelta.from} to ${subDelta.to}` : `: Set code to ${subDelta.to}`;
+        case 'add-dataset':
+            return `: Added dataset ${subDelta.datasetCode}`;
+        case 'set-score-function':
+            return `: Set score function to ${subDelta.to}`;
+        case 'set-indicator-name':
+            return subDelta.from ? `: Renamed from ${subDelta.from} to ${subDelta.to}` : `: Set name to ${subDelta.to}`;
+        case 'move-indicator':
+            return `: Moved from ${subDelta.fromParentCode} to ${subDelta.toParentCode}`;
+        case 'remove-dataset':
+            return `: Removed dataset ${subDelta.datasetCode}`;
+        default:
+            if (subDelta.from && subDelta.to) return `: Changed from "${subDelta.from}" to "${subDelta.to}"`;
+            if (subDelta.to) return `: ${subDelta.to}`;
+            return '';
+    }
+}
+
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 </script>
 {% endblock content %}

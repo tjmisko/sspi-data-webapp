@@ -49,6 +49,28 @@ SCORING_RELEVANT_FIELDS = frozenset({
     "ScoreFunction",
 })
 
+# Fields that matter for config hash computation (structure + scoring)
+# These fields determine whether two configs are functionally equivalent
+# Excludes display-only fields like Description, Footnote, Policy, etc.
+CONFIG_HASH_FIELDS = frozenset({
+    # Structure fields (all item types)
+    "ItemType",
+    "ItemCode",
+    "ItemName",
+    "Children",
+    "TreeIndex",
+    "ItemOrder",
+    # Hierarchy references
+    "PillarCodes",
+    "CategoryCodes",
+    "IndicatorCodes",
+    "PillarCode",
+    "CategoryCode",
+    # Scoring fields (indicators)
+    "DatasetCodes",
+    "ScoreFunction",
+})
+
 
 # =============================================================================
 # Validation Result Classes
@@ -71,6 +93,7 @@ class ValidationResult:
     warnings: list[ValidationError] = field(default_factory=list)
     item_count: int = 0
     indicator_count: int = 0
+    dropped_indicators: list[dict] = field(default_factory=list)
 
     def add_error(self, item_code: str | None, field: str | None, message: str):
         self.errors.append(ValidationError(item_code, field, message, "error"))
@@ -93,6 +116,7 @@ class ValidationResult:
             ],
             "item_count": self.item_count,
             "indicator_count": self.indicator_count,
+            "dropped_indicators": self.dropped_indicators,
         }
 
 
@@ -111,7 +135,8 @@ class MetadataValidationError(Exception):
 def validate_custom_metadata(
     metadata: list[dict],
     valid_dataset_codes: set[str] | None = None,
-    validate_score_functions: bool = True
+    validate_score_functions: bool = True,
+    check_data_availability: bool = False
 ) -> ValidationResult:
     """
     Validate complete custom SSPI metadata structure.
@@ -121,14 +146,16 @@ def validate_custom_metadata(
     - Hierarchy consistency (Children match *Codes fields)
     - ScoreFunction validity for Indicators
     - DatasetCodes exist (if valid_dataset_codes provided)
+    - Data availability (if check_data_availability=True)
 
     Args:
         metadata: List of metadata item dictionaries
         valid_dataset_codes: Optional set of valid dataset codes for validation
         validate_score_functions: Whether to validate ScoreFunction strings
+        check_data_availability: Whether to check if datasets have actual data
 
     Returns:
-        ValidationResult with errors and warnings
+        ValidationResult with errors, warnings, and dropped_indicators
     """
     result = ValidationResult(valid=True)
 
@@ -207,6 +234,19 @@ def validate_custom_metadata(
 
     # Validate hierarchy relationships
     validate_hierarchy(items_by_code, result)
+
+    # Check for empty datasets if requested
+    if check_data_availability:
+        from sspi_flask_app.api.resources.custom_scoring import identify_empty_datasets
+        empty_result = identify_empty_datasets(metadata)
+
+        for dropped in empty_result.dropped_indicators:
+            result.add_warning(
+                dropped["code"],
+                "DatasetCodes",
+                f"Indicator will be dropped: {dropped['reason']}"
+            )
+            result.dropped_indicators.append(dropped)
 
     return result
 
@@ -444,17 +484,25 @@ def canonicalize_metadata(metadata: list[dict]) -> list[dict]:
     return [canonicalize_item(item) for item in canonical]
 
 
-def canonicalize_item(item: dict) -> dict:
+def canonicalize_item(item: dict, filter_fields: bool = True) -> dict:
     """
     Normalize a single metadata item for consistent hashing.
 
     - Sort keys alphabetically
     - Sort list values
     - Convert numbers to consistent format
+    - Optionally filter to only CONFIG_HASH_FIELDS
+
+    Args:
+        item: Metadata item dictionary
+        filter_fields: If True, only include fields in CONFIG_HASH_FIELDS
     """
     canonical = {}
 
     for key in sorted(item.keys()):
+        # Skip fields that don't affect config hash (like Description, Footnote, etc.)
+        if filter_fields and key not in CONFIG_HASH_FIELDS:
+            continue
         value = item[key]
         canonical[key] = canonicalize_value(value)
 

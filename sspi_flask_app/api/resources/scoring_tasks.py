@@ -32,11 +32,21 @@ from sspi_flask_app.api.resources.change_detection import (
     ChangeDetectionResult,
 )
 from sspi_flask_app.api.resources.custom_scoring import (
-    score_custom_configuration,
     flatten_scores_for_storage,
+    identify_empty_datasets,
+    transform_scores_to_line_format,
+    build_custom_tree,
 )
-from sspi_flask_app.models.database import sspi_custom_panel_data
-from sspi_flask_app.models.database import sspi_item_data, sspi_metadata
+from sspi_flask_app.api.resources.fast_custom_scoring import (
+    score_custom_configuration_fast,
+)
+from sspi_flask_app.models.database import (
+    sspi_custom_panel_data,
+    sspi_custom_item_data,
+    sspi_custom_user_structure,
+    sspi_item_data,
+    sspi_metadata,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -307,6 +317,60 @@ def cancel_job(job_id: str) -> bool:
 
 
 # =============================================================================
+# Metadata Helpers
+# =============================================================================
+
+def _rebuild_metadata_without_indicators(
+    metadata: list[dict],
+    dropped_codes: set[str]
+) -> list[dict]:
+    """
+    Rebuild metadata after dropping indicators.
+
+    Removes dropped indicators and updates hierarchy references in parent items
+    (Categories) to remove references to dropped indicator codes.
+
+    Args:
+        metadata: Original metadata list
+        dropped_codes: Set of indicator codes to drop
+
+    Returns:
+        New metadata list with dropped indicators removed and hierarchy updated
+    """
+    rebuilt = []
+
+    for item in metadata:
+        item_type = item.get("ItemType")
+        item_code = item.get("ItemCode")
+
+        # Skip dropped indicators
+        if item_type == "Indicator" and item_code in dropped_codes:
+            continue
+
+        # For Categories, update IndicatorCodes and Children to remove dropped codes
+        if item_type == "Category":
+            item = dict(item)  # Make a copy to avoid mutating original
+
+            # Update IndicatorCodes
+            if "IndicatorCodes" in item and item["IndicatorCodes"]:
+                item["IndicatorCodes"] = [
+                    code for code in item["IndicatorCodes"]
+                    if code not in dropped_codes
+                ]
+
+            # Update Children
+            if "Children" in item and item["Children"]:
+                item["Children"] = [
+                    code for code in item["Children"]
+                    if code not in dropped_codes
+                ]
+
+        rebuilt.append(item)
+
+    return rebuilt
+
+
+# =============================================================================
 # Scoring Pipeline
 # =============================================================================
 
@@ -328,11 +392,47 @@ def run_scoring_pipeline(
     """
     start_time = time.time()
     try:
-        # =====================================================================
-        # Stage 1: Validate Metadata
-        # =====================================================================
         job.status = JobStatus.VALIDATING
 
+        # =====================================================================
+        # Stage 1: Check for Empty Datasets (BEFORE validation)
+        # =====================================================================
+        # This must happen first so indicators with empty datasets are filtered
+        # out before validation - otherwise their invalid ScoreFunctions will
+        # cause validation to fail unnecessarily.
+        empty_dataset_result = identify_empty_datasets(metadata)
+
+        dropped_count = len(empty_dataset_result.dropped_indicators)
+        scorable_count = len(empty_dataset_result.scorable_indicators)
+
+        if dropped_count > 0:
+            dropped_codes_set = set(d["code"] for d in empty_dataset_result.dropped_indicators)
+            job.emit_stage_complete(
+                "data_check",
+                f"Dropped {dropped_count} indicators (no data)",
+                {
+                    "dropped_count": dropped_count,
+                    "scorable_count": scorable_count,
+                    "dropped_indicators": empty_dataset_result.dropped_indicators,
+                }
+            )
+            logger.warning(
+                f"Job {job.job_id}: Dropped {dropped_count} indicators due to empty datasets: "
+                f"{', '.join(sorted(dropped_codes_set))}"
+            )
+
+            # Rebuild metadata: remove dropped indicators and update hierarchy references
+            metadata = _rebuild_metadata_without_indicators(metadata, dropped_codes_set)
+        else:
+            job.emit_stage_complete(
+                "data_check",
+                "All datasets have data",
+                {"dropped_count": 0, "scorable_count": scorable_count}
+            )
+
+        # =====================================================================
+        # Stage 2: Validate Metadata (after filtering dropped indicators)
+        # =====================================================================
         # Get valid dataset codes for validation
         try:
             valid_datasets = set(sspi_metadata.dataset_codes())
@@ -348,7 +448,7 @@ def run_scoring_pipeline(
         if not validation_result.valid:
             error_msgs = [e.message for e in validation_result.errors[:5]]
             job.emit_error(
-                f"Validation failed: {'\n'.join(error_msgs)}",
+                f"Validation failed:\n{'\n'.join(error_msgs)}",
                 "VALIDATION_ERROR"
             )
             return
@@ -366,21 +466,24 @@ def run_scoring_pipeline(
         job.config_hash = config_hash
 
         try:
-            cached_results = sspi_custom_panel_data.get_cached_results(config_hash)
-            if cached_results:
-                # Cache hit! Emit all stages as complete
-                job.emit_stage_complete("identify", "Configuration Unchanged (cached)", {"count": 0})
-                job.emit_stage_complete("scoring", "Scores Retrieved from Cache", {"cached": True})
-                job.emit_stage_complete("aggregate", "Aggregation Complete (cached)")
-                job.emit_stage_complete("ranking", "Ranks Computed (cached)")
-                job.emit_stage_complete("visualizations", "Visualizations Ready")
+            # Check if we have cached flat scores in sspi_custom_item_data
+            if sspi_custom_item_data.has_cached_results(config_hash):
+                # Also verify line data exists
+                if sspi_custom_panel_data.has_line_data(config_hash):
+                    cached_results = sspi_custom_item_data.get_cached_results(config_hash)
+                    # Cache hit! Emit all stages as complete
+                    job.emit_stage_complete("identify", "Configuration Unchanged (cached)", {"count": 0})
+                    job.emit_stage_complete("scoring", "Scores Retrieved from Cache", {"cached": True})
+                    job.emit_stage_complete("aggregate", "Aggregation Complete (cached)")
+                    job.emit_stage_complete("ranking", "Ranks Computed (cached)")
+                    job.emit_stage_complete("visualizations", "Visualizations Ready")
 
-                duration_ms = int((time.time() - start_time) * 1000)
-                job.result = {"cached": True, "results": cached_results}
-                job.emit_complete(len(cached_results), duration_ms, cached=True)
+                    duration_ms = int((time.time() - start_time) * 1000)
+                    job.result = {"cached": True, "results": cached_results}
+                    job.emit_complete(len(cached_results), duration_ms, cached=True)
 
-                logger.info(f"Cache hit for job {job.job_id}, returning {len(cached_results)} cached results")
-                return
+                    logger.info(f"Cache hit for job {job.job_id}, returning {len(cached_results)} cached results")
+                    return
         except Exception as e:
             logger.warning(f"Cache check failed: {e}, proceeding with scoring")
 
@@ -464,8 +567,8 @@ def run_scoring_pipeline(
                     job.emit_stage_progress("scoring", current, total)
             # Aggregation and ranking handled after score_custom_configuration returns
 
-        # Run the scoring pipeline
-        all_scores = score_custom_configuration(
+        # Run the scoring pipeline (using fast vectorized implementation)
+        all_scores = score_custom_configuration_fast(
             metadata,
             modified_indicators=change_result.modified_indicators or None,
             default_scores=default_scores,
@@ -501,13 +604,43 @@ def run_scoring_pipeline(
         flat_scores = flatten_scores_for_storage(all_scores)
 
         try:
-            # Store results with config hash
-            stored_count = sspi_custom_panel_data.store_scoring_results(
+            # Store flat scores in sspi_custom_item_data
+            stored_count = sspi_custom_item_data.store_scoring_results(
                 config_hash=config_hash,
-                config_id=job.config_id,
                 results=flat_scores
             )
-            logger.info(f"Stored {stored_count} score documents for job {job.job_id}")
+            logger.info(f"Stored {stored_count} flat score documents for job {job.job_id}")
+
+            # Get country metadata for line chart transformation
+            country_details = sspi_metadata.country_details()
+            country_group_map = sspi_metadata.country_group_map()
+
+            # Transform to line chart format
+            line_data = transform_scores_to_line_format(
+                all_scores=all_scores,
+                custom_metadata=metadata,
+                country_details=country_details,
+                country_group_map=country_group_map
+            )
+
+            # Store line data in sspi_custom_panel_data
+            line_count = sspi_custom_panel_data.store_line_data(
+                config_hash=config_hash,
+                line_data=line_data
+            )
+            logger.info(f"Stored {line_count} line chart documents for job {job.job_id}")
+
+            # Update the config with the scored_hash for future has_scores checks
+            # Skip for ad-hoc configs (they aren't stored in sspi_custom_user_structure)
+            if not job.config_id.startswith("adhoc_"):
+                try:
+                    sspi_custom_user_structure.set_scored_hash(
+                        config_id=job.config_id,
+                        scored_hash=config_hash
+                    )
+                    logger.info(f"Updated config {job.config_id} with scored_hash {config_hash[:8]}...")
+                except Exception as hash_err:
+                    logger.warning(f"Failed to update scored_hash for config {job.config_id}: {hash_err}")
 
         except Exception as e:
             logger.error(f"Failed to store results: {e}")

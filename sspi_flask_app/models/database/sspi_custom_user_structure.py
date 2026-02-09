@@ -465,6 +465,50 @@ class SSPICustomUserStructure(MongoWrapper):
             result = self.delete_one({"config_id": config_id, "username": username})
         return result > 0
 
+    def set_scored_hash(self, config_id: str, scored_hash: str) -> bool:
+        """
+        Update a configuration with its scored_hash after scoring completes.
+
+        The scored_hash is the config_hash computed from the FILTERED metadata
+        (indicators without data are removed during scoring). This hash is used
+        for has_scores lookups since it matches what's stored in the cache.
+
+        Args:
+            config_id: Configuration identifier
+            scored_hash: Hash computed from filtered metadata during scoring
+
+        Returns:
+            True if update successful, False otherwise
+        """
+        result = self._mongo_database.update_one(
+            {"config_id": config_id},
+            {
+                "$set": {
+                    "scored_hash": scored_hash,
+                    "scored_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        return result.modified_count > 0
+
+    def clear_scored_hash(self, config_id: str) -> bool:
+        """
+        Clear the scored_hash when a config is modified.
+
+        Should be called when metadata changes to invalidate the scoring status.
+
+        Args:
+            config_id: Configuration identifier
+
+        Returns:
+            True if update successful, False otherwise
+        """
+        result = self._mongo_database.update_one(
+            {"config_id": config_id},
+            {"$unset": {"scored_hash": "", "scored_at": ""}}
+        )
+        return result.modified_count > 0
+
     def duplicate_config(self, config_id: str, username: str, new_name: str, is_admin: bool = False) -> str:
         """
         Create a copy of an existing configuration.

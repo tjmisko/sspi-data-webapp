@@ -24,7 +24,6 @@ from sspi_flask_app.models.database import (
     sspi_clean_api_data,
     sspi_dynamic_rank_data,
 )
-from sspi_flask_app.api.resources.metadata_validator import compute_config_hash
 from sspi_flask_app.api.core.customize import compute_metadata_counts
 
 client_bp = Blueprint(
@@ -306,8 +305,8 @@ def customize_load():
     prebuilt_configurations = [
         {
             'id': 'default',
-            'name': 'Standard SSPI',
-            'description': 'Standard SSPI structure with all 54 indicators across Sustainability, Market Structure, and Public Goods.',
+            'name': 'Default SSPI',
+            'description': 'Default SSPI structure with all 54 indicators across Sustainability, Market Structure, and Public Goods.',
             'pillars': 3,
             'categories': 18,
             'indicators': 54,
@@ -323,14 +322,17 @@ def customize_load():
             config_list = sspi_custom_user_structure.find_by_username(current_user.username)
 
             for config in config_list:
-                # Compute config hash and check if scores exist
+                # Check if scores exist using stored scored_hash
+                # The scored_hash is set after scoring completes and reflects
+                # the hash of the FILTERED metadata (indicators without data removed)
                 has_scores = False
                 try:
-                    if config.get("metadata"):
-                        config_hash = compute_config_hash(config["metadata"])
-                        has_scores = sspi_custom_panel_data.has_cached_results(config_hash)
+                    scored_hash = config.get("scored_hash")
+                    if scored_hash:
+                        # Use the stored hash from when scoring completed
+                        has_scores = sspi_custom_panel_data.has_scores(scored_hash)
                 except Exception as hash_err:
-                    logger.warning(f"Error computing hash for config {config.get('config_id')}: {hash_err}")
+                    logger.warning(f"Error checking scores for config {config.get('config_id')}: {hash_err}")
 
                 # Get counts from stored fields or compute from metadata
                 if config.get("pillar_count") is not None:

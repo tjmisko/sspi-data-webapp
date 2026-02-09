@@ -913,11 +913,15 @@ def score_custom_configuration_fast(
 
     Drop-in replacement for score_custom_configuration() with same interface.
 
+    NOTE: This function always scores ALL indicators in the metadata because
+    the matrix multiplication requires consistent dimensions. The metadata
+    should be pre-filtered to remove indicators with empty datasets before
+    calling this function.
+
     Args:
-        metadata: Custom SSPI metadata structure
-        modified_indicators: Set of indicator codes that need scoring
-                           (if None, scores all indicators)
-        default_scores: Pre-computed scores for unchanged indicators
+        metadata: Custom SSPI metadata structure (pre-filtered for data availability)
+        modified_indicators: IGNORED - kept for interface compatibility
+        default_scores: IGNORED - kept for interface compatibility
         country_codes: List of country codes to score (defaults to SSPI67)
         reference_group: Country group for reference class averaging
         start_year: Start year for scoring
@@ -936,22 +940,21 @@ def score_custom_configuration_fast(
         return {}
 
     # Extract all indicators from metadata
+    # NOTE: We always score ALL indicators in the metadata because the
+    # aggregation matrix dimensions must match. The vectorized operations
+    # are fast enough that partial scoring is not necessary.
+    # The metadata should already be filtered to remove dropped indicators
+    # (those with empty datasets) before calling this function.
     all_indicators = [
         item for item in metadata
         if item.get("ItemType") == "Indicator"
     ]
 
-    # Determine which indicators to score
-    if modified_indicators is not None:
-        indicators_to_score = [
-            ind for ind in all_indicators
-            if ind.get("ItemCode") in modified_indicators
-        ]
-    else:
-        indicators_to_score = all_indicators
+    # Always score all indicators - matrix multiplication requires consistent dimensions
+    indicators_to_score = all_indicators
 
     logger.info(
-        f"Fast pipeline: Scoring {len(indicators_to_score)}/{len(all_indicators)} indicators"
+        f"Fast pipeline: Scoring {len(indicators_to_score)} indicators"
     )
 
     # Phase 1: Fetch datasets
@@ -1037,12 +1040,8 @@ def score_custom_configuration_fast(
         metadata
     )
 
-    # Merge with default scores for unchanged indicators
-    if default_scores:
-        for ind in all_indicators:
-            code = ind.get("ItemCode")
-            if code not in result and code in default_scores:
-                result[code] = default_scores[code]
+    # NOTE: default_scores parameter is ignored - we always score all indicators
+    # in the metadata for correct matrix multiplication dimensions
 
     if progress_callback:
         total_docs = sum(len(docs) for docs in result.values())
