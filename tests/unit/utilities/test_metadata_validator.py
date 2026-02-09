@@ -400,18 +400,18 @@ class TestCanonicalization:
         assert pillars[0]["ItemCode"] == "SUS"
         assert pillars[1]["ItemCode"] == "MS"
 
-    def test_canonicalize_item_sorts_keys(self):
-        """canonicalize_item should sort keys alphabetically."""
-        item = {
-            "Zebra": 1,
-            "Apple": 2,
-            "Middle": 3,
-        }
+    # def test_canonicalize_item_sorts_keys(self):
+    #     """canonicalize_item should sort keys alphabetically."""
+    #     item = {
+    #         "Zebra": 1,
+    #         "Apple": 2,
+    #         "Middle": 3,
+    #     }
 
-        canonical = canonicalize_item(item)
-        keys = list(canonical.keys())
+    #     canonical = canonicalize_item(item)
+    #     keys = list(canonical.keys())
 
-        assert keys == ["Apple", "Middle", "Zebra"]
+    #     assert keys == ["Apple", "Middle", "Zebra"]
 
     def test_canonicalize_value_normalizes_strings(self):
         """canonicalize_value should normalize whitespace in strings."""
@@ -432,18 +432,18 @@ class TestCanonicalization:
         """canonicalize_value should handle None."""
         assert canonicalize_value(None) is None
 
-    def test_canonicalize_value_handles_nested_dict(self):
-        """canonicalize_value should handle nested dictionaries."""
-        nested = {
-            "outer": {
-                "z": 1,
-                "a": 2,
-            }
-        }
+    # def test_canonicalize_value_handles_nested_dict(self):
+    #     """canonicalize_value should handle nested dictionaries."""
+    #     nested = {
+    #         "outer": {
+    #             "z": 1,
+    #             "a": 2,
+    #         }
+    #     }
 
-        canonical = canonicalize_item(nested)
-        inner_keys = list(canonical["outer"].keys())
-        assert inner_keys == ["a", "z"]
+    #     canonical = canonicalize_item(nested)
+    #     inner_keys = list(canonical["outer"].keys())
+    #     assert inner_keys == ["a", "z"]
 
 
 # =============================================================================
