@@ -65,11 +65,10 @@
   </head>
 
   <body>
-    {% include 'symbols.html' %} <!-- Include SVG symbols for use in the document -->
+    {% include 'symbols.html' %} 
     {% include 'header.html' %}
-    {% block subheader %}{% endblock %} <!-- Optional custom subheader -->
+    {% block subheader %}{% endblock %} 
 
-    <!-- Flash Messages (converted to NotificationManager) -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <script>
@@ -86,6 +85,6 @@
         {% block content %}{% endblock %}
     </main>
     {% include 'footer.html' %}
-    {% block static_css %}{% endblock %} <!-- Optional styling to remove the default site header -->
+    {% block static_css %}{% endblock %}
   </body>
 </html>
