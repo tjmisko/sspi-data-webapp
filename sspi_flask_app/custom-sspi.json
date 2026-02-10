@@ -1,5 +1,5 @@
 {
-  "config_id": "adhoc_alisonx_491504dc355cd272",
+  "config_id": "adhoc_alisonx_2357bf46238c02d0",
   "user_id": "alisonx",
   "metadata": [
     {
@@ -43,13 +43,11 @@
       "PillarCode": "SUS",
       "Children": [
         "BIODIV",
-        "REDLST",
-        "BIODIV"
+        "REDLST"
       ],
       "IndicatorCodes": [
         "BIODIV",
-        "REDLST",
-        "BIODIV"
+        "REDLST"
       ],
       "DocumentType": "CategoryDetail",
       "TreePath": "sspi/sus/eco"
@@ -85,23 +83,6 @@
       "Children": [],
       "DocumentType": "IndicatorDetail",
       "TreePath": "sspi/sus/eco/redlst"
-    },
-    {
-      "ItemType": "Indicator",
-      "ItemCode": "BIODIV",
-      "ItemName": "Biodiversity Protection",
-      "IndicatorCode": "BIODIV",
-      "CategoryCode": "ECO",
-      "PillarCode": "SUS",
-      "ScoreFunction": "Score=",
-      "DatasetCodes": [
-        "UNSDG_MARINE",
-        "UNSDG_TERRST",
-        "UNSDG_FRSHWT"
-      ],
-      "Children": [],
-      "DocumentType": "IndicatorDetail",
-      "TreePath": "sspi/sus/eco/biodiv"
     },
     {
       "ItemType": "Category",

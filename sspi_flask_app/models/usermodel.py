@@ -26,7 +26,13 @@ class User(UserMixin):
         self.email = user_doc.get('email', None)  # Optional field for backwards compatibility
         self.password = user_doc['password']
         self.secretkey = user_doc['secretkey']
-        self.roles = user_doc['roles']
+        # self.roles = user_doc['roles']
+        if 'roles' in user_doc:
+            self.roles = user_doc['roles']
+        elif 'role' in user_doc:
+            self.roles = [user_doc['role']]
+        else:
+            self.roles = []
         self.apikey = user_doc['apikey']
     
     def get_id(self):
