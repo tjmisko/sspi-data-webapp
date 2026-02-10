@@ -18,11 +18,13 @@ from sspi_flask_app.api.core.dashboard import (
 from sspi_flask_app.api.resources.utilities import parse_json, public_databases
 from sspi_flask_app.models.database import (
     sspi_custom_user_structure,
+    sspi_custom_panel_data,
     sspi_metadata,
     sspidb,
     sspi_clean_api_data,
     sspi_dynamic_rank_data,
 )
+from sspi_flask_app.api.core.customize import compute_metadata_counts
 
 client_bp = Blueprint(
     'client_bp', __name__,
@@ -291,36 +293,79 @@ def customize_home():
 def customize_load():
     """
     Load page for customization feature.
-    Shows pre-built and saved configurations.
+    Shows pre-built and saved configurations with scoring status.
     Client-side JavaScript checks localStorage for active editing session.
     Works for both authenticated and anonymous users.
     """
     logger = logging.getLogger(__name__)
-    # Check if user is authenticated
     is_authenticated = current_user.is_authenticated
     saved_configurations = []
+
     # Define prebuilt configurations
     prebuilt_configurations = [
         {
             'id': 'default',
-            'name': 'Standard SSPI',
-            'description': 'Standard SSPI structure with all 54 indicators across sustainability, material security, and public goods.',
+            'name': 'Default SSPI',
+            'description': 'Default SSPI structure with all 54 indicators across Sustainability, Market Structure, and Public Goods.',
             'pillars': 3,
             'categories': 18,
             'indicators': 54,
-            'recommended': True
+            'datasets': 72,
+            'recommended': True,
+            'has_scores': True  # Default SSPI always has scores
         }
     ]
+
     if is_authenticated:
-        # Fetch saved configurations from database (authentication required)
         try:
-            saved_configurations = sspi_custom_user_structure.list_config_names(
-                username=current_user.username
-            )
+            # Fetch saved configurations with full metadata for scoring status check
+            config_list = sspi_custom_user_structure.find_by_username(current_user.username)
+
+            for config in config_list:
+                # Check if scores exist using stored scored_hash
+                # The scored_hash is set after scoring completes and reflects
+                # the hash of the FILTERED metadata (indicators without data removed)
+                has_scores = False
+                try:
+                    scored_hash = config.get("scored_hash")
+                    if scored_hash:
+                        # Use the stored hash from when scoring completed
+                        has_scores = sspi_custom_panel_data.has_scores(scored_hash)
+                except Exception as hash_err:
+                    logger.warning(f"Error checking scores for config {config.get('config_id')}: {hash_err}")
+
+                # Get counts from stored fields or compute from metadata
+                if config.get("pillar_count") is not None:
+                    pillars = config.get("pillar_count", 0)
+                    categories = config.get("category_count", 0)
+                    indicators = config.get("indicator_count", 0)
+                    datasets = config.get("dataset_count", 0)
+                elif config.get("metadata"):
+                    counts = compute_metadata_counts(config["metadata"])
+                    pillars = counts["pillar_count"]
+                    categories = counts["category_count"]
+                    indicators = counts["indicator_count"]
+                    datasets = counts["dataset_count"]
+                else:
+                    pillars = categories = indicators = datasets = 0
+
+                saved_configurations.append({
+                    'id': config.get('config_id'),
+                    'name': config.get('name', 'Unnamed Configuration'),
+                    'description': config.get('description', ''),
+                    'updated_at': config.get('updated_at', ''),
+                    'has_scores': has_scores,
+                    'pillars': pillars,
+                    'categories': categories,
+                    'indicators': indicators,
+                    'datasets': datasets
+                })
+
             logger.info(f"Loaded {len(saved_configurations)} configurations for user {current_user.username}")
         except Exception as e:
             logger.error(f"Error fetching configurations for user {current_user.username}: {e}")
             saved_configurations = []
+
     csrf_token = generate_csrf()
     return render_template(
         'customize/customize-load.html',
@@ -383,7 +428,12 @@ def customize_configuration_builder():
 @client_bp.route('/customize/visualize/<config_id>')
 def custom_visualization(config_id):
     """Production visualization page for custom SSPI configurations"""
-    return render_template('customize/custom_visualization.html', config_id=config_id)
+    csrf_token = generate_csrf()
+    return render_template(
+        'customize/custom_visualization.html',
+        config_id=config_id,
+        csrf_token=csrf_token
+    )
 
 
 @client_bp.route('/customize/test-chart')

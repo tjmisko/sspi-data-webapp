@@ -15,7 +15,7 @@ DatasetCodes:
   - CIA_ROADNT
 LowerGoalpost: null
 UpperGoalpost: null
-ScoreFunction: Not available (computed from complex transformation)
-  https://www.cia.gov/the-world-factbook/field/railways/country-comparison/]'
+ScoreFunction: >
+  Score = average(goalpost(WB_RAILNT, 0, 100), goalpost(CIA_ROADNT, 0, 100))
 ---
 

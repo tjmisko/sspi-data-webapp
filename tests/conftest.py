@@ -9,7 +9,10 @@ def pytest_ignore_collect(path, config):
 @pytest.fixture(scope="session")
 def app():
     app = init_app(TestConfig)
-    app.config.update({"TESTING": True})
+    app.config.update({
+        "TESTING": True,
+        "WTF_CSRF_ENABLED": False,  # Disable CSRF for testing
+    })
     yield app
 
 

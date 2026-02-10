@@ -45,3 +45,9 @@ class AnalysisFileError(Exception):
     Raised when there is an error with the methodology file
     """
     pass
+
+class LimitExceededError(Exception):
+    """
+    Raised when a user exceeds a resource limit (e.g., max configurations)
+    """
+    pass

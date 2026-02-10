@@ -1,0 +1,590 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+<title>Custom SSPI Visualization</title>
+{% endblock title %}
+
+{% block content %}
+<article class="page-content">
+    <section class="page-section">
+        <div class="content-container">
+            <div class="custom-visualization-container">
+                <div class="visualization-header">
+                    <div class="config-info">
+                        <h2 id="config-name">Loading configuration...</h2>
+                        <p id="config-description" class="config-description"></p>
+                        <div id="config-stats" class="config-stats"></div>
+                    </div>
+                    <div class="visualization-actions">
+                        <a id="btn-edit-config" href="/customize/builder?base_config={{ config_id }}" class="btn-secondary">
+                            Edit Configuration
+                        </a>
+                        <a href="/customize/load" class="btn-secondary">
+                            Back to Configurations
+                        </a>
+                    </div>
+                </div>
+
+                <div class="visualization-tabs">
+                    <button class="tab-btn active" data-tab="scores">Scores</button>
+                    <button class="tab-btn" data-tab="changes">Changes</button>
+                </div>
+
+                <div id="tab-scores" class="tab-content active">
+                    <div id="visualization-content" class="visualization-content">
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading visualization data...</p>
+                    </div>
+                </div>
+
+                <div id="no-results-message" class="no-results-message hidden">
+                    <h3>No Scores Available</h3>
+                    <p>This configuration has not been scored yet.</p>
+                    <a href="/customize?action=score&config={{ config_id }}" class="btn-primary">
+                        Score This Configuration
+                    </a>
+                </div>
+
+                <div id="error-message" class="error-message hidden">
+                    <h3>Error Loading Data</h3>
+                    <p id="error-text"></p>
+                    <button onclick="window.location.reload()" class="btn-secondary">
+                        Retry
+                    </button>
+                </div>
+                </div>
+
+                <div id="tab-changes" class="tab-content">
+                    <div id="changes-content" class="changes-content">
+                        <div class="loading-indicator">
+                            <div class="spinner"></div>
+                            <p>Loading changes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</article>
+
+<style></style>
+
+<script>
+window.csrfToken = {{ csrf_token|tojson|safe if csrf_token is defined else '""' }};
+window.sspiConfigId = {{ config_id|tojson|safe }};
+
+async function fetchWithCSRF(url, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && window.csrfToken) {
+        options.headers = {
+            ...options.headers,
+            'X-CSRFToken': window.csrfToken
+        };
+    }
+    return fetch(url, options);
+}
+
+// Store config data globally for tab access
+let globalConfigData = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const configId = window.sspiConfigId;
+
+    // Setup tab switching
+    setupTabs();
+
+    try {
+        // Load configuration details and results summary in parallel
+        const [configResponse, resultsResponse] = await Promise.all([
+            fetchWithCSRF(`/api/v1/customize/load/${configId}`),
+            fetchWithCSRF(`/api/v1/customize/results/${configId}`)
+        ]);
+
+        const configData = await configResponse.json();
+        const resultsData = await resultsResponse.json();
+
+        if (!configData.success) {
+            showError(configData.error || 'Failed to load configuration');
+            return;
+        }
+
+        // Store globally for changes tab
+        globalConfigData = configData;
+
+        // Update header with configuration info
+        updateConfigHeader(configData);
+
+        // Render changes tab (always available)
+        renderChanges(configData.actions || []);
+
+        if (!resultsData.success || !resultsData.has_results) {
+            showNoResults();
+            return;
+        }
+
+        // Show results
+        showResults(configData, resultsData);
+
+    } catch (error) {
+        console.error('Error loading visualization:', error);
+        showError('Failed to load visualization data. Please try again.');
+    }
+});
+
+function setupTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+
+            // Update button states
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update tab content visibility
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        });
+    });
+}
+
+function updateConfigHeader(configData) {
+    document.getElementById('config-name').textContent = configData.name || 'Custom SSPI Configuration';
+
+    const descEl = document.getElementById('config-description');
+    if (configData.description) {
+        descEl.textContent = configData.description;
+    } else {
+        descEl.style.display = 'none';
+    }
+
+    // Count structure elements
+    const metadata = configData.metadata || [];
+    let pillars = 0, categories = 0, indicators = 0;
+
+    metadata.forEach(item => {
+        const itemType = item.ItemType;
+        if (itemType === 'Pillar') pillars++;
+        else if (itemType === 'Category') categories++;
+        else if (itemType === 'Indicator') indicators++;
+    });
+
+    document.getElementById('config-stats').innerHTML = `
+        <span>${pillars} Pillars</span>
+        <span>${categories} Categories</span>
+        <span>${indicators} Indicators</span>
+    `;
+}
+
+function showNoResults() {
+    document.getElementById('visualization-content').classList.add('hidden');
+    document.getElementById('no-results-message').classList.remove('hidden');
+}
+
+function showError(message) {
+    document.getElementById('visualization-content').classList.add('hidden');
+    document.getElementById('error-text').textContent = message;
+    document.getElementById('error-message').classList.remove('hidden');
+}
+
+function showResults(configData, resultsData) {
+    const content = document.getElementById('visualization-content');
+    const stats = resultsData.stats || {};
+
+    // Build the visualization content
+    content.innerHTML = `
+        <div class="results-summary">
+            <h3>Scoring Results Summary</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">${stats.total_results || 0}</div>
+                    <div class="stat-label">Total Scores</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.countries || 0}</div>
+                    <div class="stat-label">Countries</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.years || 0}</div>
+                    <div class="stat-label">Years</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.items || 0}</div>
+                    <div class="stat-label">Items Scored</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="item-selector">
+                <label for="item-select">Select Item to Visualize:</label>
+                <select id="item-select">
+                    <option value="">-- Select an item --</option>
+                </select>
+            </div>
+            <div id="chart-container" class="chart-wrapper">
+                <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
+                    Select an item above to view its chart
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Populate item selector from metadata
+    const select = document.getElementById('item-select');
+    const metadata = configData.metadata || [];
+
+    // Group by type
+    const pillars = metadata.filter(m => m.ItemType === 'Pillar');
+    const categories = metadata.filter(m => m.ItemType === 'Category');
+    const indicators = metadata.filter(m => m.ItemType === 'Indicator');
+
+    if (pillars.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = 'Pillars';
+        pillars.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.ItemCode;
+            opt.textContent = `${p.ItemCode} - ${p.ItemName}`;
+            group.appendChild(opt);
+        });
+        select.appendChild(group);
+    }
+
+    if (categories.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = 'Categories';
+        categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.ItemCode;
+            opt.textContent = `${c.ItemCode} - ${c.ItemName}`;
+            group.appendChild(opt);
+        });
+        select.appendChild(group);
+    }
+
+    if (indicators.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = 'Indicators';
+        indicators.forEach(i => {
+            const opt = document.createElement('option');
+            opt.value = i.ItemCode;
+            opt.textContent = `${i.ItemCode} - ${i.ItemName}`;
+            group.appendChild(opt);
+        });
+        select.appendChild(group);
+    }
+
+    // Add change listener
+    select.addEventListener('change', (e) => {
+        if (e.target.value) {
+            loadChartData(e.target.value);
+        }
+    });
+}
+
+async function loadChartData(itemCode) {
+    const container = document.getElementById('chart-container');
+    container.innerHTML = `
+        <div class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading chart data...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetchWithCSRF(
+            `/api/v1/customize/results/${window.sspiConfigId}/chart-data?item_code=${itemCode}`
+        );
+        const data = await response.json();
+
+        if (!data.success) {
+            container.innerHTML = `
+                <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
+                    ${data.message || 'No data available for this item'}
+                </p>
+            `;
+            return;
+        }
+
+        renderChart(container, data);
+
+    } catch (error) {
+        console.error('Error loading chart data:', error);
+        container.innerHTML = `
+            <p style="text-align: center; color: var(--badge-negative-color); padding: 3rem;">
+                Error loading chart data. Please try again.
+            </p>
+        `;
+    }
+}
+
+function renderChart(container, data) {
+    // Create a simple table view of the data
+    // A more sophisticated chart can be added later using Chart.js or similar
+    const chartData = data.data;
+    const countries = Object.keys(chartData);
+
+    if (countries.length === 0) {
+        container.innerHTML = `
+            <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
+                No data available for this item
+            </p>
+        `;
+        return;
+    }
+
+    // Get all years from the data
+    const allYears = new Set();
+    countries.forEach(country => {
+        chartData[country].forEach(point => allYears.add(point.year));
+    });
+    const years = Array.from(allYears).sort();
+
+    container.innerHTML = `
+        <h4 style="margin: 0 0 1rem 0;">${data.item_name || data.item_code}</h4>
+        <p style="color: var(--low-importance-font-color); margin-bottom: 1rem;">
+            ${data.total_points} data points across ${countries.length} countries
+        </p>
+        <div style="overflow-x: auto;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--badge-background-color);">
+                        <th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color);">Country</th>
+                        ${years.map(y => `<th style="padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color);">${y}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${countries.slice(0, 20).map(country => {
+                        const countryData = chartData[country];
+                        const yearMap = {};
+                        countryData.forEach(point => yearMap[point.year] = point.score);
+                        return `
+                            <tr>
+                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">${country}</td>
+                                ${years.map(y => `
+                                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color);">
+                                        ${yearMap[y] !== undefined ? yearMap[y].toFixed(2) : '-'}
+                                    </td>
+                                `).join('')}
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+            ${countries.length > 20 ? `<p style="color: var(--low-importance-font-color); margin-top: 1rem;">Showing first 20 of ${countries.length} countries</p>` : ''}
+        </div>
+    `;
+}
+
+// ========== Changes Tab Functions ==========
+
+function renderChanges(actions) {
+    const container = document.getElementById('changes-content');
+
+    if (!actions || actions.length === 0) {
+        container.innerHTML = `
+            <div class="changes-empty">
+                <h3>No Changes from Baseline</h3>
+                <p>This configuration matches the default SSPI structure.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Reverse to show newest first
+    const sortedActions = [...actions].reverse();
+
+    container.innerHTML = `
+        <div class="changes-summary">
+            <h3>Configuration Changes</h3>
+            <p class="changes-count">${actions.length} change${actions.length === 1 ? '' : 's'} from baseline SSPI</p>
+        </div>
+        <div class="changes-list">
+            ${sortedActions.map(action => createChangeItemHTML(action)).join('')}
+        </div>
+    `;
+}
+
+function createChangeItemHTML(action) {
+    const changeType = getChangeCategory(action.type, action.subtype);
+    const formattedType = formatActionType(action.type);
+    const formattedSubtype = action.subtype ? formatActionType(action.subtype) : '';
+    const timestamp = formatTimestamp(action.timestamp);
+    const itemRef = getItemReference(action);
+
+    let detailsHTML = '';
+    if (action.delta && Object.keys(action.delta).length > 0) {
+        detailsHTML = createDetailsHTML(action);
+    }
+
+    return `
+        <div class="change-item">
+            <div class="change-item-header">
+                <span class="change-type-badge" data-change-type="${changeType}">
+                    ${formattedSubtype ? `${formattedType}: ${formattedSubtype}` : formattedType}
+                </span>
+                <span class="change-timestamp">${timestamp}</span>
+            </div>
+            <div class="change-message">${escapeHTML(action.message)}</div>
+            ${itemRef ? `<div class="change-item-reference">${escapeHTML(itemRef)}</div>` : ''}
+            ${detailsHTML}
+        </div>
+    `;
+}
+
+function createDetailsHTML(action) {
+    const delta = action.delta;
+
+    // Check if this is a composite action
+    if (delta.type === 'composite' && delta.subActions && Array.isArray(delta.subActions)) {
+        const subActionsHTML = delta.subActions.map(subDelta => {
+            const subType = formatActionType(subDelta.type || 'change');
+            const subDetails = formatSubActionDetails(subDelta);
+            return `<li class="change-sub-action-item"><span class="sub-action-type">${subType}</span><span class="sub-action-details">${escapeHTML(subDetails)}</span></li>`;
+        }).join('');
+
+        return `
+            <details class="change-details">
+                <summary>Details</summary>
+                <div class="change-details-content">
+                    <ul class="change-sub-actions-list">${subActionsHTML}</ul>
+                </div>
+            </details>
+        `;
+    }
+
+    // Normal delta rendering
+    const deltaEntries = Object.entries(delta)
+        .filter(([key]) => !['type', 'subActions', 'indicatorMetadata', 'scoreFunction'].includes(key))
+        .map(([key, value]) => `<dt>${formatDeltaKey(key)}</dt><dd>${escapeHTML(formatDeltaValue(key, value))}</dd>`)
+        .join('');
+
+    if (!deltaEntries) return '';
+
+    return `
+        <details class="change-details">
+            <summary>Details</summary>
+            <div class="change-details-content">
+                <dl class="change-delta-list">${deltaEntries}</dl>
+            </div>
+        </details>
+    `;
+}
+
+function getChangeCategory(type, subtype) {
+    if (type === 'modify-indicator' && subtype) {
+        if (subtype === 'set-code' || subtype === 'set-name') return 'rename';
+        if (subtype === 'set-score-function') return 'other';
+        if (subtype === 'replace-datasets') return 'other';
+    }
+
+    if (type.startsWith('add-')) return 'add';
+    if (type.startsWith('remove-')) return 'remove';
+    if (type.startsWith('move-')) return 'move';
+    if (type.startsWith('set-')) return 'rename';
+    if (type.startsWith('create-')) return 'add';
+    if (type === 'composite') return 'other';
+    if (type === 'modify-indicator') return 'other';
+    return 'other';
+}
+
+function formatActionType(type) {
+    return type
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function getItemReference(action) {
+    const delta = action.delta;
+    if (!delta) return null;
+
+    let code = delta.indicatorCode || delta.categoryCode || delta.pillarCode || delta.datasetCode;
+    if (action.type.startsWith('move-')) {
+        code = delta.indicatorCode || delta.categoryCode;
+    }
+
+    let name = delta.indicatorName || delta.categoryName || delta.pillarName ||
+               (delta.to && typeof delta.to === 'string' && !delta.to.includes('Score =') ? delta.to : null) ||
+               delta.name;
+
+    let categoryContext = '';
+    if (delta.type === 'composite' && delta.categoryName) {
+        categoryContext = ` in ${delta.categoryName}`;
+    }
+
+    if (name && code) return `${name} (${code})${categoryContext}`;
+    if (code) return `(${code})${categoryContext}`;
+    return null;
+}
+
+function formatDeltaKey(key) {
+    const keyMap = {
+        indicatorCode: 'Indicator Code',
+        categoryCode: 'Category Code',
+        pillarCode: 'Pillar Code',
+        fromParentCode: 'From Category',
+        toParentCode: 'To Category',
+        fromPillarCode: 'From Pillar',
+        toPillarCode: 'To Pillar',
+        from: 'Previous Value',
+        to: 'New Value',
+        name: 'Name',
+        datasetCode: 'Dataset Code',
+        position: 'Position'
+    };
+    return keyMap[key] || key;
+}
+
+function formatDeltaValue(key, value) {
+    if (value === null || value === undefined) return '(none)';
+    if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    return String(value);
+}
+
+function formatSubActionDetails(subDelta) {
+    if (!subDelta) return '';
+    const type = subDelta.type;
+
+    switch (type) {
+        case 'set-indicator-code':
+            return subDelta.from ? `: Changed code from ${subDelta.from} to ${subDelta.to}` : `: Set code to ${subDelta.to}`;
+        case 'add-dataset':
+            return `: Added dataset ${subDelta.datasetCode}`;
+        case 'set-score-function':
+            return `: Set score function to ${subDelta.to}`;
+        case 'set-indicator-name':
+            return subDelta.from ? `: Renamed from ${subDelta.from} to ${subDelta.to}` : `: Set name to ${subDelta.to}`;
+        case 'move-indicator':
+            return `: Moved from ${subDelta.fromParentCode} to ${subDelta.toParentCode}`;
+        case 'remove-dataset':
+            return `: Removed dataset ${subDelta.datasetCode}`;
+        default:
+            if (subDelta.from && subDelta.to) return `: Changed from "${subDelta.from}" to "${subDelta.to}"`;
+            if (subDelta.to) return `: ${subDelta.to}`;
+            return '';
+    }
+}
+
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+</script>
+{% endblock content %}

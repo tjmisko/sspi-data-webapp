@@ -247,13 +247,16 @@
 }
 
 .pin-actions-box {
+  font-family: var(--body-font-family);
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  gap: 0.25rem;
   margin: 0.25em 0;
 }
 
 .pin-actions-box button {
+  font-size: 0.55rem;
+  padding: 0.1rem 0;
   width: 100%;
 }
 

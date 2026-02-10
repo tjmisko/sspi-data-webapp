@@ -18,14 +18,14 @@
   color: var(--green-accent, #000);
   text-decoration: none;
   align-items: flex-start;
-  margin: 5px 0;
+  margin: 8px 0;
 }
 
 
 .site-title-line {
   font-family: var(--title-font-family);
   font-weight: var(--title-weight, 300);
-  font-size: 1.1em;
+  font-size: 1.08em;
   margin: -1px 0px;
   white-space: nowrap;
 }

@@ -106,7 +106,7 @@ jobs:
           ./env/bin/pip install --no-cache-dir --upgrade pip wheel
           ./env/bin/pip install --no-cache-dir -r requirements.txt
           ./env/bin/pip install --no-cache-dir -e .
-          cat > sspi.world.wsgi << 'PYWSGI'
+          cat > wsgi.py << 'PYWSGI'
           from sspi_flask_app import init_app
           from config import ProdConfig
 
@@ -116,6 +116,6 @@ jobs:
           ln -sfn "$DEPLOY_BASE/shared" ./.shared
           ln -sfn "$DIR" "$DEPLOY_BASE/current"
           ln -sfn "$DEPLOY_BASE/secrets/.env" ./.env
-          sudo /usr/sbin/apachectl graceful
+          sudo systemctl restart sspi
           EOF
         shell: bash

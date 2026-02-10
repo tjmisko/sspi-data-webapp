@@ -35,6 +35,7 @@ class NotificationManager {
             animation: slideInRight 0.3s ease-out;
             word-wrap: break-word;
             line-height: 1.4;
+            white-space: pre-line;
         `;
 
         // Set background color based on type
