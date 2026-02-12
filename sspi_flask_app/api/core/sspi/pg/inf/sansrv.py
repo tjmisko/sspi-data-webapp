@@ -32,6 +32,20 @@ def compute_sansrv():
     sspi_indicator_data.insert_many(scored_list)
     return parse_json(scored_list)
 
+ my_country_imputations = [
+        {"CountryCode": "ARE", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 99.00},
+        {"CountryCode": "ARG", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 93.1},
+        {"CountryCode": "AUS", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 98.9},
+        {"CountryCode": "CHN", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 91.20},
+        {"CountryCode": "EGY", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 79.00},
+        {"CountryCode": "IND", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 76.00},
+        {"CountryCode": "KEN", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 50.30},
+        {"CountryCode": "SAU", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 97.70},
+        {"CountryCode": "THA", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 94.40},
+        {"CountryCode": "TUR", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 91.20},
+        {"CountryCode": "URU", "Year": 2024, "IndicatorCode": "SANSRV", "Value": 93.5}
+    ]
+
 
 @impute_bp.route("/SANSRV", methods=["POST"])
 @admin_required
@@ -43,7 +57,7 @@ def impute_sansrv():
     backward_imputations = extrapolate_backward(sansrv_clean, 2000, series_id=["CountryCode", "DatasetCode"], impute_only=True)
     lg, ug = sspi_metadata.get_goalposts("SANSRV")
     scored_list, _ = score_indicator(
-        forward_imputations + backward_imputations, "SANSRV",
+        forward_imputations + backward_imputations + my_country_imputations, "SANSRV",
         score_function=lambda WB_SANSRV: goalpost(WB_SANSRV, lg, ug),
         unit="Percent"
     )
