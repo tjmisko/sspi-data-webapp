@@ -7,8 +7,8 @@ Description: Paid parental leave available to mothers (full-rate equivalent) in 
 Source:
   OrganizationName: OECD
   OrganizationCode: OECD
-  OrganizationSeriesCode: null
-  QueryCode: null
+  OrganizationSeriesCode: paidmatern
+  QueryCode: paidmatern
   BaseURL: https://stats.oecd.org/
 ---
 
