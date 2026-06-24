@@ -52,6 +52,9 @@ from sspi_flask_app.models.database.sspi_custom_panel_data import (
 from sspi_flask_app.models.database.sspi_custom_item_data import (
     SSPICustomItemData
 )
+from sspi_flask_app.models.database.sspi_scoring_jobs import (
+    SSPIScoringJobs
+)
 
 logging.getLogger("pymongo").setLevel(logging.WARNING)
 
@@ -151,4 +154,9 @@ sspi_custom_panel_data = SSPICustomPanelData(
 # Custom Item Data (flat score storage for custom configurations)
 sspi_custom_item_data = SSPICustomItemData(
     sspidb.sspi_custom_item_data
+)
+
+# Scoring Jobs (worker-safe job store for background custom scoring)
+sspi_scoring_jobs = SSPIScoringJobs(
+    sspidb.sspi_scoring_jobs
 )

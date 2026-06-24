@@ -167,6 +167,9 @@ def init_app(Config):
         # Initialize MongoDB indexes for custom structure data
         from sspi_flask_app.models.database import sspi_custom_user_structure
         sspi_custom_user_structure.create_indexes()
+        # Initialize MongoDB indexes for the worker-safe scoring job store
+        from sspi_flask_app.models.database import sspi_scoring_jobs
+        sspi_scoring_jobs.create_indexes()
         # Register Blueprints
         api_bp.register_blueprint(dataset_bp)
         api_bp.register_blueprint(compute_bp)

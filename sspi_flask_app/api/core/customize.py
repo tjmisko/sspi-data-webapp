@@ -923,7 +923,7 @@ def get_job_status(job_id):
         }
 
         if job.status == JobStatus.COMPLETE and job.result:
-            response["total_scores"] = len(job.result.get("results", []))
+            response["total_scores"] = job.result.get("total_scores", 0)
             response["cached"] = job.result.get("cached", False)
 
         if job.status == JobStatus.ERROR:
