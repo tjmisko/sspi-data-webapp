@@ -294,6 +294,74 @@ class FastCustomSSPI:
         # Build the aggregation matrix
         self.score_matrix = self._build_score_matrix()
 
+    def _normalized_child_weight(
+        self, child_code: str, sibling_codes: list[str]
+    ) -> float:
+        """
+        Per-parent normalized weight of ``child_code`` within its sibling set.
+
+        Weight model (see metadata_validator constants comment):
+        - If EVERY sibling carries a numeric ``Weight``, return
+          ``child.Weight / sum(sibling weights)`` — normalizing by the actual
+          sibling sum so the parent stays a true weighted average even if the
+          stored weights are only "almost" 1.0 (float dust / rounded display).
+        - If NONE do, return ``1.0 / len(sibling_codes)`` — today's equal
+          weighting, so a weightless config reproduces the legacy matrix
+          bit-for-bit.
+        - Mixed (some siblings weighted, some not) is ambiguous: fall back to
+          equal weight and warn. F3 rejects this at /validate so it should
+          never reach here from the UI.
+        - Zero sibling-sum (all weights 0): fall back to equal and warn.
+
+        Aggregation is a weighted SUM (score_matrix.T @ flat_scores), so the
+        returned factors MUST sum to 1.0 across a sibling set for the parent to
+        be a proper average.
+        """
+        n_siblings = len(sibling_codes)
+        if n_siblings == 0:
+            return 0.0
+
+        def _weight_of(code):
+            w = self.items_by_code.get(code, {}).get("Weight")
+            if isinstance(w, bool) or not isinstance(w, (int, float)):
+                return None
+            return float(w)
+
+        weights = [_weight_of(code) for code in sibling_codes]
+        present = [w for w in weights if w is not None]
+
+        if not present:
+            # No weights anywhere in this sibling set -> equal weighting.
+            return 1.0 / n_siblings
+
+        if len(present) != n_siblings:
+            # Mixed: some siblings weighted, some not. Ambiguous -> equal.
+            logger.warning(
+                "Mixed per-parent weights for sibling set %s "
+                "(%d of %d weighted); falling back to equal weights.",
+                sibling_codes, len(present), n_siblings,
+            )
+            return 1.0 / n_siblings
+
+        total = sum(present)
+        if total <= 0:
+            logger.warning(
+                "Sibling weights sum to %s for set %s; falling back to equal "
+                "weights.", total, sibling_codes,
+            )
+            return 1.0 / n_siblings
+
+        child_weight = _weight_of(child_code)
+        if child_weight is None:
+            # child_code not in the sibling set (shouldn't happen) -> equal.
+            logger.warning(
+                "Child %s missing from its sibling weight set %s; using equal.",
+                child_code, sibling_codes,
+            )
+            return 1.0 / n_siblings
+
+        return child_weight / total
+
     def _build_score_matrix(self) -> np.ndarray:
         """
         Build matrix mapping indicator scores to all hierarchy levels.
@@ -301,6 +369,11 @@ class FastCustomSSPI:
         Each row represents an indicator.
         Each column represents a parent item (category, pillar, or SSPI).
         Values are the weight contribution of that indicator to each parent.
+
+        Per-parent weights come from the metadata ``Weight`` field when every
+        sibling in a set carries one (normalized to sum to 1.0); otherwise each
+        level falls back to equal ``1/n``. With no weights present the product
+        chain equals the legacy ``(1/n_ind)/n_cat/n_pillar``.
 
         Returns:
             Matrix of shape (n_indicators, n_categories + n_pillars + 1)
@@ -335,7 +408,9 @@ class FastCustomSSPI:
                 logger.warning(f"Category {category_code} has no indicators")
                 continue
 
-            category_weight = 1.0 / n_indicators_in_category
+            category_weight = self._normalized_child_weight(
+                ind_code, category_children
+            )
             category_idx = self.category_codes.index(category_code)
             score_matrix[ind_idx, category_idx] = category_weight
 
@@ -356,7 +431,9 @@ class FastCustomSSPI:
                 logger.warning(f"Pillar {pillar_code} has no categories")
                 continue
 
-            pillar_weight = category_weight / n_categories_in_pillar
+            pillar_weight = category_weight * self._normalized_child_weight(
+                category_code, pillar_children
+            )
             pillar_idx = self.pillar_codes.index(pillar_code)
             score_matrix[ind_idx, n_categories + pillar_idx] = pillar_weight
 
@@ -376,7 +453,9 @@ class FastCustomSSPI:
                 logger.warning("SSPI has no pillars")
                 continue
 
-            sspi_weight = pillar_weight / n_pillars_in_sspi
+            sspi_weight = pillar_weight * self._normalized_child_weight(
+                pillar_code, sspi_children
+            )
             sspi_idx = n_categories + n_pillars
             score_matrix[ind_idx, sspi_idx] = sspi_weight
 
