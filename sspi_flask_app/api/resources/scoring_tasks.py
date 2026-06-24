@@ -27,15 +27,10 @@ from sspi_flask_app.api.resources.metadata_validator import (
     compute_config_hash,
     ValidationResult,
 )
-from sspi_flask_app.api.resources.change_detection import (
-    identify_modified_indicators,
-    ChangeDetectionResult,
-)
 from sspi_flask_app.api.resources.custom_scoring import (
     flatten_scores_for_storage,
     identify_empty_datasets,
     transform_scores_to_line_format,
-    build_custom_tree,
 )
 from sspi_flask_app.api.resources.fast_custom_scoring import (
     score_custom_configuration_fast,
@@ -44,7 +39,6 @@ from sspi_flask_app.models.database import (
     sspi_custom_panel_data,
     sspi_custom_item_data,
     sspi_custom_user_structure,
-    sspi_item_data,
     sspi_metadata,
 )
 
@@ -384,8 +378,8 @@ def run_scoring_pipeline(
 
     Stages emitted to frontend:
     1. validate - Validate metadata & score functions
-    2. identify - Identify modified indicators
-    3. scoring - Score modified indicators (with progress bar)
+    2. identify - Static stage marker (change detection removed)
+    3. scoring - Score all indicators (with progress bar)
     4. aggregate - Aggregate hierarchy
     5. ranking - Compute ranks
     6. visualizations - Build visualizations (save results)
@@ -488,73 +482,29 @@ def run_scoring_pipeline(
             logger.warning(f"Cache check failed: {e}, proceeding with scoring")
 
         # =====================================================================
-        # Stage 2: Identify Modified Indicators
+        # Stage 2: Identify Indicators (static)
         # =====================================================================
-        change_result = identify_modified_indicators(metadata, actions)
-        modified_count = len(change_result.modified_indicators)
-        unchanged_count = len(change_result.unchanged_indicators)
+        # Change detection was removed: the fast scorer always scores ALL
+        # indicators because the vectorized matrix multiply needs consistent
+        # dimensions. We still emit a static `identify` stage_complete so the
+        # frontend progress modal (which hardcodes an `identify` stage row)
+        # advances past this stage.
+        indicator_count = sum(
+            1 for item in metadata if item.get("ItemType") == "Indicator"
+        )
 
         job.emit_stage_complete(
             "identify",
-            f"Identified {modified_count} Modified Indicators",
-            {"modified": modified_count, "unchanged": unchanged_count}
+            f"Scoring {indicator_count} Indicators",
+            {"modified": indicator_count, "unchanged": 0}
         )
 
-        logger.info(
-            f"Job {job.job_id}: {modified_count} modified, {unchanged_count} unchanged"
-        )
+        logger.info(f"Job {job.job_id}: scoring {indicator_count} indicators")
 
         # =====================================================================
-        # Stage 3: Score Modified Indicators
+        # Stage 3: Score Indicators
         # =====================================================================
         job.status = JobStatus.SCORING
-
-        # Get default scores for unchanged indicators from sspi_item_data
-        default_scores = None
-        if change_result.unchanged_indicators:
-            try:
-                country_codes = sspi_metadata.country_group("SSPI67") or []
-                default_scores = {}
-                for indicator_code in change_result.unchanged_indicators:
-                    # Fetch pre-computed scores from sspi_item_data
-                    scores = list(sspi_item_data.find({
-                        "ItemCode": indicator_code,
-                        "ItemType": "Indicator",
-                        "CountryCode": {"$in": country_codes},
-                        "Year": {"$gte": 2000, "$lte": 2023}
-                    }, {"_id": 0}))
-                    # Convert to expected format
-                    formatted_scores = []
-                    for doc in scores:
-                        formatted_scores.append({
-                            "item_code": doc.get("ItemCode"),
-                            "item_name": doc.get("ItemName", indicator_code),
-                            "item_type": "Indicator",
-                            "country_code": doc.get("CountryCode"),
-                            "year": doc.get("Year"),
-                            "score": doc.get("Score", 0) * 100,  # Convert to 0-100 scale
-                            "imputed": False,
-                            "imputation_method": None,
-                        })
-
-                    if formatted_scores:
-                        default_scores[indicator_code] = formatted_scores
-
-                logger.info(f"Fetched {len(default_scores)} unchanged indicator scores")
-
-            except Exception as e:
-                logger.warning(f"Failed to fetch unchanged indicator scores: {e}")
-                default_scores = None
-
-        # Progress callback for scoring - emits stage_progress events
-        indicators_to_score = [
-            item for item in metadata
-            if item.get("ItemType") == "Indicator"
-            and item.get("ItemCode") in (change_result.modified_indicators or set())
-        ]
-        total_to_score = len(indicators_to_score) if change_result.modified_indicators else len([
-            item for item in metadata if item.get("ItemType") == "Indicator"
-        ])
 
         def progress_callback(phase: str, percent: int, message: str):
             """Map scoring phases to stage events."""
@@ -570,13 +520,11 @@ def run_scoring_pipeline(
         # Run the scoring pipeline (using fast vectorized implementation)
         all_scores = score_custom_configuration_fast(
             metadata,
-            modified_indicators=change_result.modified_indicators or None,
-            default_scores=default_scores,
             progress_callback=progress_callback
         )
 
         # Count scored indicators
-        scored_count = total_to_score
+        scored_count = indicator_count
         job.emit_stage_complete(
             "scoring",
             f"Scored {scored_count} Indicators",
