@@ -18,7 +18,8 @@ Document format:
     "CName": "United States",             # Country name
     "CFlag": "🇺🇸",                        # Country flag emoji
     "CGroup": ["SSPI67", "OECD"],         # Country groups
-    "years": [2000, 2001, ..., 2023],     # Year array (always 2000-2023)
+    "years": [2000, 2001, ..., 2023],     # Contiguous ascending year range
+                                          #   (start/end set by the scoring layer)
     "score": [72.1, 73.5, ..., 76.2],     # Score array (aligned with years)
     "data": [72.1, 73.5, ..., 76.2],      # Same as score (for chart compatibility)
     "label": "USA - United States",       # Display label
@@ -148,11 +149,23 @@ class SSPICustomPanelData(MongoWrapper):
                 f"'years' must be a list (document {document_number})"
             )
 
-        # Validate years span 2000-2023
-        expected_years = list(range(2000, 2024))
-        if years != expected_years:
+        # 'years' must be a non-empty, contiguous, strictly-+1-increasing range of
+        # ints (no gaps, dupes, or non-monotonic order). The specific endpoints are
+        # NOT pinned here: the window (start/end year) is owned by the scoring layer
+        # so it can grow forward without editing this model. The cache only enforces
+        # internal consistency (contiguous years, length-matched to 'score').
+        if len(years) == 0:
             raise InvalidDocumentFormatError(
-                f"'years' must be [2000, 2001, ..., 2023] (document {document_number})"
+                f"'years' must be a non-empty list (document {document_number})"
+            )
+        if not all(isinstance(y, int) for y in years):
+            raise InvalidDocumentFormatError(
+                f"'years' must contain only integers (document {document_number})"
+            )
+        if years != list(range(years[0], years[-1] + 1)):
+            raise InvalidDocumentFormatError(
+                f"'years' must be a contiguous ascending range of years with no "
+                f"gaps or duplicates (document {document_number})"
             )
 
         if "score" not in document:

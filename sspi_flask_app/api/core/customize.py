@@ -21,7 +21,11 @@ from sspi_flask_app.models.database import (
     sspi_item_data,
     sspi_metadata,
 )
-from sspi_flask_app.api.resources.custom_scoring import build_custom_tree
+from sspi_flask_app.api.resources.custom_scoring import (
+    build_custom_tree,
+    DEFAULT_START_YEAR,
+    DEFAULT_END_YEAR,
+)
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from sspi_flask_app.models.rank import SSPIRankingTable
 from sspi_flask_app.models.sspi import FastSSPI
@@ -1335,7 +1339,7 @@ def get_custom_panel_score(item_code):
         country_group_map = sspi_metadata.country_group_map()
 
         # Build response in standard panel format
-        years = list(range(2000, 2024))
+        years = list(range(DEFAULT_START_YEAR, DEFAULT_END_YEAR + 1))
 
         logger.info(
             f"Serving custom panel data for item {item_code} "

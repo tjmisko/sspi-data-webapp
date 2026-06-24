@@ -24,15 +24,14 @@ from sspi_flask_app.api.resources.score_function_validator import (
     safe_eval,
     ValidatedScoreFunction,
 )
+# Single source of truth for the custom-scoring year window lives in
+# custom_scoring.py; import rather than redefine so the two modules cannot drift.
+from sspi_flask_app.api.resources.custom_scoring import (
+    DEFAULT_START_YEAR,
+    DEFAULT_END_YEAR,
+)
 
 logger = logging.getLogger(__name__)
-
-# =============================================================================
-# Constants
-# =============================================================================
-
-DEFAULT_START_YEAR = 2000
-DEFAULT_END_YEAR = 2023
 
 
 # =============================================================================

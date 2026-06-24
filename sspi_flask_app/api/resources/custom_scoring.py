@@ -41,6 +41,14 @@ logger = logging.getLogger(__name__)
 # Constants
 # =============================================================================
 
+# Canonical custom-scoring year window. This is the SINGLE source of truth:
+# fast_custom_scoring.py and api/core/customize.py import these constants rather
+# than redefining them. DEFAULT_END_YEAR is the one forward-grow knob -- bump it
+# to the latest year with meaningful clean data and the whole custom pipeline
+# computes and caches that year (the panel-data cache validator only enforces a
+# contiguous range, so a longer window flows through without further edits).
+# Follow-up option (out of scope here): derive the end year from data, e.g. the
+# max Year in sspi_clean_api_data.
 DEFAULT_START_YEAR = 2000
 DEFAULT_END_YEAR = 2023
 SSPI_COUNTRIES = 57  # Number of countries in SSPI
