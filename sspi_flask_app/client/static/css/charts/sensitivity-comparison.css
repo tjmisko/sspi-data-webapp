@@ -1,0 +1,133 @@
+/*
+ * Sensitivity comparison view
+ *
+ * A vertically stacked column of per-level comparison charts driven by a
+ * single shared options panel. Layout-only: the chart, options panel, pins,
+ * and overlay styling are all inherited from the panel-chart styles.
+ */
+
+.sensitivity-comparison-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg, 1.5rem);
+    width: 100%;
+}
+
+.sensitivity-level-row {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--box-background-color);
+    padding: var(--spacing-md, 1rem);
+}
+
+.sensitivity-level-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sensitivity-level-title {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.sensitivity-level-meta {
+    font-size: 0.8rem;
+    color: var(--low-importance-font-color);
+    font-family: var(--mono-font-family, monospace);
+}
+
+.sensitivity-level-chart {
+    position: relative;
+    width: 100%;
+    min-height: 320px;
+}
+
+/* The per-level chart hides its own item-tree sidebar in the stacked view; the
+ * column is navigation-free (levels are fixed by the change-group). */
+.sensitivity-comparison-view .custom-sspi-tree-container {
+    display: none;
+}
+
+/*
+ * Shared-panel mode: only the first (top) level exposes the options panel; the
+ * sibling levels' settings gear, sidebar wrapper, and overlay are suppressed so
+ * a single sticky panel controls the whole stack.
+ */
+.sensitivity-comparison-view.shared-panel-mode .sensitivity-level-row:not(:first-child) .show-chart-options,
+.sensitivity-comparison-view.shared-panel-mode .sensitivity-level-row:not(:first-child) .chart-options-wrapper,
+.sensitivity-comparison-view.shared-panel-mode .sensitivity-level-row:not(:first-child) .chart-options-overlay {
+    display: none !important;
+}
+
+/* Keep the single live options panel pinned while scrolling the stack. */
+.sensitivity-comparison-view.shared-panel-mode .sensitivity-level-row:first-child .chart-options-wrapper.active {
+    position: sticky;
+    top: var(--spacing-md, 1rem);
+}
+
+/*
+ * Sensitivity tab states (empty / not-scored). Reuses the changes-empty
+ * vocabulary so the Sensitivity tab matches the Changes tab visually.
+ */
+.sensitivity-empty,
+.sensitivity-not-scored {
+    text-align: center;
+    padding: 3rem;
+    color: var(--low-importance-font-color);
+}
+
+.sensitivity-empty h3,
+.sensitivity-not-scored h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
+}
+
+.sensitivity-empty .btn-primary,
+.sensitivity-empty .btn-secondary,
+.sensitivity-not-scored .btn-primary,
+.sensitivity-not-scored .btn-secondary {
+    margin-top: 1rem;
+    display: inline-block;
+}
+
+/* Change-group selector shown when a config carries more than one scenario. */
+.sensitivity-group-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.sensitivity-group-selector label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.sensitivity-group-selector select {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--box-background-color);
+    color: var(--text-color);
+    max-width: 100%;
+}
+
+.sensitivity-note {
+    font-size: 0.85rem;
+    color: var(--low-importance-font-color);
+    margin: 0 0 1rem 0;
+    line-height: 1.4;
+}
+
+.sensitivity-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--low-importance-font-color);
+}
