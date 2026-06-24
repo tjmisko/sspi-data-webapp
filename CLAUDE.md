@@ -22,6 +22,15 @@ touch wsgi.py                # Refresh development server and rebuild script and
 pytest                       # Run all tests
 ```
 
+### Git & Commits
+Claude may create commits autonomously in this repo without asking each time, provided:
+- Work is on a feature branch or worktree, **never directly on `main`**.
+- Commits are atomic (one logical change) with conventional messages
+  (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`).
+- Relevant tests/builds are run before committing when the change affects them.
+
+Pushing and PR creation still require explicit approval.
+
 ## SSPI CLI Usage
 The project includes a comprehensive CLI tool 
 accessible via `sspi` command after installation.
