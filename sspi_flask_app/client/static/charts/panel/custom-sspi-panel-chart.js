@@ -123,6 +123,33 @@ class CustomSSPIPanelChart extends PanelChart {
         if (this.pendingComparisonSeries) {
             this.applyComparisonSeries(this.pendingComparisonSeries);
         }
+        this._markReady();
+    }
+
+    /**
+     * Resolves once the chart has completed its first data load (success, no-data,
+     * or handled error). Lets a host sequence its own overrides strictly after the
+     * constructor's auto-fetch, avoiding a race where the auto-fetch update lands
+     * last and clobbers composed series.
+     */
+    whenReady() {
+        if (this._isReady) {
+            return Promise.resolve();
+        }
+        if (!this._readyPromise) {
+            this._readyPromise = new Promise((resolve) => {
+                this._readyResolve = resolve;
+            });
+        }
+        return this._readyPromise;
+    }
+
+    _markReady() {
+        this._isReady = true;
+        if (this._readyResolve) {
+            this._readyResolve();
+            this._readyResolve = null;
+        }
     }
 
     buildItemTree(tree, selectedItemCode) {
@@ -220,6 +247,7 @@ class CustomSSPIPanelChart extends PanelChart {
                 </div>
             `;
         }
+        this._markReady();
     }
 
     handleNoData(data) {
@@ -238,5 +266,6 @@ class CustomSSPIPanelChart extends PanelChart {
                 </div>
             `;
         }
+        this._markReady();
     }
 }

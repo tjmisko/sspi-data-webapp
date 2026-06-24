@@ -42,8 +42,8 @@
                 <div id="no-results-message" class="no-results-message hidden">
                     <h3>No Scores Available</h3>
                     <p>This configuration has not been scored yet.</p>
-                    <a href="/customize?action=score&config={{ config_id }}" class="btn-primary">
-                        Score This Configuration
+                    <a href="/customize/builder?base_config={{ config_id }}" class="btn-primary">
+                        Open in Builder to Score
                     </a>
                 </div>
 
@@ -97,6 +97,8 @@ async function fetchWithCSRF(url, options = {}) {
 
 // Store config data globally for tab access
 let globalConfigData = null;
+let globalResultsData = null;
+const sensitivityState = { initialized: false, view: null, groups: [] };
 
 document.addEventListener('DOMContentLoaded', async () => {
     const configId = window.sspiConfigId;
@@ -119,14 +121,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Store globally for changes tab
+        // Store globally for changes / sensitivity tabs
         globalConfigData = configData;
+        globalResultsData = resultsData;
 
         // Update header with configuration info
         updateConfigHeader(configData);
 
         // Render changes tab (always available)
         renderChanges(configData.actions || []);
+
+        // Lazily build the Sensitivity tab on first activation
+        setupSensitivityLazyInit();
 
         if (!resultsData.success || !resultsData.has_results) {
             showNoResults();
@@ -388,6 +394,241 @@ function renderChart(container, data) {
             ${countries.length > 20 ? `<p style="color: var(--low-importance-font-color); margin-top: 1rem;">Showing first 20 of ${countries.length} countries</p>` : ''}
         </div>
     `;
+}
+
+// ========== Sensitivity Tab Functions ==========
+
+function setupSensitivityLazyInit() {
+    const btn = document.querySelector('.tab-btn[data-tab="sensitivity"]');
+    if (!btn) {
+        return;
+    }
+    btn.addEventListener('click', () => {
+        if (sensitivityState.initialized) {
+            return;
+        }
+        sensitivityState.initialized = true;
+        renderSensitivity();
+    });
+}
+
+function renderSensitivity() {
+    const content = document.getElementById('sensitivity-content');
+    if (!content) {
+        return;
+    }
+
+    // Not scored yet -> reuse the "score this configuration" call to action.
+    if (!globalResultsData || !globalResultsData.success || !globalResultsData.has_results) {
+        content.innerHTML = `
+            <div class="sensitivity-not-scored">
+                <h3>No Scores Available</h3>
+                <p>Score this configuration to explore how each change percolates up the SSPI hierarchy.</p>
+                <a href="/customize/builder?base_config=${encodeURIComponent(window.sspiConfigId)}" class="btn-primary">
+                    Open in Builder to Score
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    const configHash = globalResultsData.config_hash;
+    const metadata = (globalConfigData && globalConfigData.metadata) || [];
+    const actions = (globalConfigData && globalConfigData.actions) || [];
+    const groups = SensitivityEngine.deriveChangeGroups(actions, metadata);
+    sensitivityState.groups = groups;
+
+    // No score-affecting changes -> empty state + link to the builder.
+    if (groups.length === 0) {
+        content.innerHTML = `
+            <div class="sensitivity-empty">
+                <h3>No Sensitivity to Show</h3>
+                <p>This configuration has no score-affecting changes from the standard SSPI
+                   (goalpost / score-function edits, added indicators, or moved indicators).</p>
+                <a href="/customize/builder?base_config=${encodeURIComponent(window.sspiConfigId)}" class="btn-secondary">
+                    Edit in Builder
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    let selectorHTML = '';
+    if (groups.length > 1) {
+        const options = groups.map((g, i) => `<option value="${i}">${escapeHTML(g.label)}</option>`).join('');
+        selectorHTML = `
+            <div class="sensitivity-group-selector">
+                <label for="sensitivity-group-select">Change to analyze:</label>
+                <select id="sensitivity-group-select" class="sensitivity-group-select">${options}</select>
+            </div>
+        `;
+    }
+
+    content.innerHTML = `
+        ${selectorHTML}
+        <p id="sensitivity-note" class="sensitivity-note"></p>
+        <div id="sensitivity-mount"></div>
+    `;
+
+    if (groups.length > 1) {
+        const select = content.querySelector('.sensitivity-group-select');
+        select.addEventListener('change', () => {
+            renderSensitivityGroup(groups[select.selectedIndex], configHash, metadata);
+        });
+    }
+
+    renderSensitivityGroup(groups[0], configHash, metadata);
+}
+
+function sensitivityScenarioNote(group) {
+    const baseLine = 'Solid line = custom proposal; faded dashed line = standard SSPI baseline. ' +
+        'Upper levels use linear ceteris-paribus propagation (no re-scoring).';
+    if (group.scenario === 'goalpost') {
+        return `Score-function / goalpost change on ${group.indicatorCode}, propagated up its category, pillar, and the SSPI. ${baseLine}`;
+    }
+    if (group.scenario === 'add') {
+        return `New indicator ${group.indicatorCode} added to its category (baseline category excludes it, custom includes it). ${baseLine}`;
+    }
+    if (group.scenario === 'move') {
+        return `Indicator ${group.indicatorCode} moved between categories. Its own score is unchanged, so the effect is structural; both the losing and gaining categories are shown. ${baseLine}`;
+    }
+    return baseLine;
+}
+
+function renderSensitivityGroup(group, configHash, metadata) {
+    const mount = document.getElementById('sensitivity-mount');
+    const note = document.getElementById('sensitivity-note');
+    if (!mount) {
+        return;
+    }
+    if (note) {
+        note.textContent = sensitivityScenarioNote(group);
+    }
+
+    mount.innerHTML = `
+        <div class="sensitivity-loading">
+            <div class="spinner"></div>
+            <p>Computing sensitivity...</p>
+        </div>
+    `;
+
+    if (sensitivityState.view) {
+        sensitivityState.view.destroy();
+        sensitivityState.view = null;
+    }
+
+    const levels = SensitivityEngine.buildLevelsForGroup(group, metadata);
+    const baselineItems = Array.from(new Set(
+        levels.filter((l) => l.role !== 'added-indicator').map((l) => l.itemCode)
+    ));
+    const customIndicatorCode = SensitivityEngine.requiredCustomIndicator(group);
+
+    const baselineFetches = baselineItems.map((code) =>
+        fetchPanelData(`/api/v1/panel/score/${code}`).then((data) => ({ code, data }))
+    );
+    const customFetch = customIndicatorCode
+        ? fetchPanelData(CustomSSPIPanelChart.buildCustomURL(customIndicatorCode, configHash, window.sspiConfigId))
+        : Promise.resolve(null);
+
+    Promise.all([Promise.all(baselineFetches), customFetch])
+        .then(([baselineResults, customPayload]) => {
+            const baselinePayloadByItem = {};
+            const baselineByItem = {};
+            baselineResults.forEach(({ code, data }) => {
+                if (data && data.success !== false) {
+                    baselinePayloadByItem[code] = data;
+                    baselineByItem[code] = SensitivityEngine.scoreMapFromPanel(data);
+                }
+            });
+            const customIndicatorMap = (customPayload && customPayload.success !== false)
+                ? SensitivityEngine.scoreMapFromPanel(customPayload)
+                : null;
+
+            const seriesByRole = SensitivityEngine.computeGroupSeries(group, metadata, {
+                baselineByItem,
+                customIndicatorMap
+            });
+
+            mount.innerHTML = '';
+            const view = new SensitivityComparisonView(mount, {
+                configHash,
+                configId: window.sspiConfigId,
+                levels
+            });
+            sensitivityState.view = view;
+
+            const focusCountry = pickFocusCountry(baselinePayloadByItem, levels);
+
+            const levelPromises = levels.map((level, index) => {
+                const chart = view.getChart(index);
+                const roleSeries = seriesByRole[level.role];
+                if (!chart || !roleSeries) {
+                    return Promise.resolve();
+                }
+                return chart.whenReady().then(() => {
+                    if (level.role !== 'added-indicator') {
+                        const skeleton = baselinePayloadByItem[level.itemCode];
+                        if (skeleton) {
+                            // Drive the country/label skeleton from the baseline (always
+                            // present for real SSPI items); compose the custom series on top.
+                            chart.update(skeleton);
+                        }
+                    }
+                    if (roleSeries.customMap) {
+                        chart.setMainSeries(roleSeries.customMap);
+                    }
+                    if (roleSeries.hasBaseline && roleSeries.baselineMap) {
+                        chart.setComparisonSeries(roleSeries.baselineMap);
+                    } else {
+                        chart.clearComparisonSeries();
+                    }
+                });
+            });
+
+            // Focus a single country across the whole stack once every level has
+            // been composed (so the baseline datasets are in place to pin against).
+            if (focusCountry) {
+                Promise.all(levelPromises).then(() => {
+                    view.setFocusCountry(focusCountry);
+                });
+            }
+        })
+        .catch((error) => {
+            console.error('Error computing sensitivity:', error);
+            mount.innerHTML = `
+                <p style="text-align: center; color: var(--badge-negative-color); padding: 2rem;">
+                    Error computing sensitivity view. Please try again.
+                </p>
+            `;
+        });
+}
+
+async function fetchPanelData(url) {
+    const response = await fetchWithCSRF(url);
+    return response.json();
+}
+
+function pickFocusCountry(baselinePayloadByItem, levels) {
+    // Prefer the SSPI / largest level's country list; fall back to any.
+    const orderedCodes = levels.map((l) => l.itemCode).reverse();
+    let datasets = null;
+    for (const code of orderedCodes) {
+        const payload = baselinePayloadByItem[code];
+        if (payload && Array.isArray(payload.data) && payload.data.length > 0) {
+            datasets = payload.data;
+            break;
+        }
+    }
+    if (!datasets) {
+        return null;
+    }
+    const hasData = (ds) => Array.isArray(ds.score) && ds.score.some((v) => v !== null && v !== undefined);
+    const preferred = datasets.find((ds) => ds.CCode === 'USA' && hasData(ds));
+    if (preferred) {
+        return 'USA';
+    }
+    const firstWithData = datasets.find(hasData);
+    return firstWithData ? firstWithData.CCode : (datasets[0] ? datasets[0].CCode : null);
 }
 
 // ========== Changes Tab Functions ==========
