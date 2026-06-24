@@ -35,6 +35,10 @@ from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
     compute_config_hash,
 )
+from sspi_flask_app.api.resources.score_function_validator import (
+    validate_score_function,
+    ScoreFunctionValidationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -601,7 +605,15 @@ def get_prebuilt_configuration(config_id):
 @customize_bp.route("/validate", methods=["POST"])
 @owner_or_admin_required
 def validate_configuration():
-    """Validate a custom SSPI configuration."""
+    """
+    Pre-flight validation of a custom SSPI configuration.
+
+    Runs each indicator's ScoreFunction through the score-function parser and
+    returns structured per-indicator errors/warnings. This is a fast, static
+    structural check only (no scoring against real data); numeric scoring lives
+    on /score. An empty or placeholder ("Score =") function is reported as a
+    warning (work-in-progress), not a hard error.
+    """
     try:
         data = request.get_json()
 
@@ -610,13 +622,54 @@ def validate_configuration():
 
         metadata = data.get('metadata')
 
-        # TODO: Implement actual validation logic
-        # For now, always return valid
+        if not isinstance(metadata, list):
+            return jsonify({"success": False, "error": "Metadata must be a list"}), 400
+
+        errors = []
+        warnings = []
+
+        for item in metadata:
+            if not isinstance(item, dict) or item.get("ItemType") != "Indicator":
+                continue
+
+            indicator_code = item.get("IndicatorCode") or item.get("ItemCode") or ""
+            score_function = item.get("ScoreFunction", "")
+
+            if not isinstance(score_function, str):
+                errors.append({
+                    "indicatorCode": indicator_code,
+                    "message": "ScoreFunction must be a string",
+                    "position": None,
+                })
+                continue
+
+            # Empty / placeholder ("Score =") -> incomplete, surfaced as a warning
+            # so the builder can validate work-in-progress without hard failures.
+            compact = "".join(score_function.split())
+            if compact in ("", "Score="):
+                warnings.append({
+                    "indicatorCode": indicator_code,
+                    "message": "Score function is empty or incomplete",
+                })
+                continue
+
+            dataset_codes = item.get("DatasetCodes") or []
+            valid_dataset_codes = set(dataset_codes) if dataset_codes else None
+
+            try:
+                validate_score_function(score_function, valid_dataset_codes)
+            except ScoreFunctionValidationError as e:
+                errors.append({
+                    "indicatorCode": indicator_code,
+                    "message": str(e),
+                    "position": e.position,
+                })
+
         return jsonify({
             "success": True,
-            "valid": True,
-            "errors": [],
-            "warnings": []
+            "valid": len(errors) == 0,
+            "errors": errors,
+            "warnings": warnings,
         })
     except Exception as e:
         logger.error(f"Error validating configuration: {str(e)}")

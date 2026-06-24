@@ -609,8 +609,11 @@ class CustomizableSSPIStructure {
         });
         const validateBtn = document.createElement('button');
         validateBtn.textContent = 'Validate';
-        validateBtn.addEventListener('click', () => {
+        validateBtn.addEventListener('click', async () => {
+            // Read-only pre-flight: client-side hierarchy stats + server-side
+            // score-function validation. Must not mutate state or unsavedChanges.
             this.showHierarchyStatus();
+            await this.runPreflightValidation();
         });
         const viewChangesBtn = document.createElement('button');
         viewChangesBtn.textContent = 'View Changes';
@@ -4804,6 +4807,76 @@ class CustomizableSSPIStructure {
             notifications.warning(message, 8000);
         } else {
             notifications.success(message);
+        }
+    }
+
+    /**
+     * Clear any score-function error markers left by a previous pre-flight run.
+     */
+    clearScoreFunctionMarkers() {
+        this.container.querySelectorAll('.editable-score-function.score-function-invalid')
+            .forEach(el => {
+                el.classList.remove('score-function-invalid');
+                el.style.outline = '';
+                el.removeAttribute('title');
+            });
+    }
+
+    /**
+     * Pre-flight server validation of every indicator's score function.
+     *
+     * POSTs the current in-progress metadata to /api/v1/customize/validate,
+     * surfaces structured score-function errors/warnings via notifications, and
+     * marks the offending .editable-score-function cells. Read-only: it does not
+     * create undo actions or set unsavedChanges.
+     */
+    async runPreflightValidation() {
+        // Clear markers from the previous run before re-validating.
+        this.clearScoreFunctionMarkers();
+
+        const metadata = this.exportMetadata();
+
+        let result;
+        try {
+            result = await this.fetch('/api/v1/customize/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ metadata })
+            });
+        } catch (err) {
+            notifications.error(`Score function validation request failed: ${err.message}`, 8000);
+            return;
+        }
+
+        const errors = result.errors || [];
+        const warnings = result.warnings || [];
+
+        // Mark the offending score-function cells (mirrors drop-zone invalid/title).
+        errors.forEach(error => {
+            if (!error.indicatorCode) return;
+            const card = this.container.querySelector(`[data-indicator-code="${error.indicatorCode}"]`);
+            const scoreFunctionEl = card?.querySelector('.editable-score-function');
+            if (scoreFunctionEl) {
+                scoreFunctionEl.classList.add('score-function-invalid');
+                scoreFunctionEl.style.outline = '2px solid var(--color-error, #d33)';
+                scoreFunctionEl.title = error.message;
+            }
+        });
+
+        if (errors.length > 0) {
+            let message = `Score Function Errors (${errors.length}):\n`;
+            errors.forEach(e => {
+                message += `- ${e.indicatorCode || 'unknown'}: ${e.message}\n`;
+            });
+            notifications.error(message, 10000);
+        } else if (warnings.length > 0) {
+            let message = `Score Function Warnings (${warnings.length}):\n`;
+            warnings.forEach(w => {
+                message += `- ${w.indicatorCode || 'unknown'}: ${w.message}\n`;
+            });
+            notifications.warning(message, 8000);
+        } else {
+            notifications.success('All score functions are valid! ✓');
         }
     }
 
