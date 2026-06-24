@@ -610,17 +610,33 @@ def validate_configuration():
 
         metadata = data.get('metadata')
 
-        # TODO: Implement actual validation logic
-        # For now, always return valid
-        return jsonify({
-            "success": True,
-            "valid": True,
-            "errors": [],
-            "warnings": []
-        })
+        if not isinstance(metadata, list):
+            return jsonify({"success": False, "error": "metadata must be a list"}), 400
+
+        # Run the real validator: structural + hierarchy + per-parent weight
+        # semantics + score-function checks. Returns structured errors/warnings.
+        result = validate_custom_metadata(
+            metadata,
+            validate_score_functions=True
+        )
+        return jsonify({"success": True, **result.to_dict()})
     except Exception as e:
         logger.error(f"Error validating configuration: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
+
+
+@customize_bp.route("/weights-config", methods=["GET"])
+def weights_config():
+    """Expose the custom-weights UI feature flag to the builder client.
+
+    UI-only: the scoring engine and validator always honor stored weights
+    regardless of this flag. No authentication required (the builder is
+    accessible to anonymous users).
+    """
+    return jsonify({
+        "success": True,
+        "custom_weights_enabled": bool(app.config.get("CUSTOM_WEIGHTS_ENABLED", False)),
+    })
 
 @customize_bp.route("/update/<config_id>", methods=["PUT"])
 @owner_or_admin_required

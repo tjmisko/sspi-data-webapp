@@ -30,6 +30,13 @@ logger = logging.getLogger(__name__)
 
 VALID_ITEM_TYPES = frozenset({"SSPI", "Pillar", "Category", "Indicator"})
 
+# Allowed drift of a per-parent weight set's sum from 1.0. Loose enough to
+# absorb UI display rounding (e.g. 0.33 + 0.33 + 0.34) but tight enough that a
+# genuinely un-normalized set is rejected. The F2 engine normalizes by the
+# actual sibling sum, so scores never leave 0-100 regardless; this tolerance
+# only governs whether the *config* is accepted.
+WEIGHT_SUM_TOLERANCE = 1e-3
+
 # Required fields per ItemType
 # NOTE: These must match the actual metadata schema from `sspi metadata item:*`
 # Indicators do NOT have CategoryCode or PillarCode in canonical metadata
@@ -437,6 +444,9 @@ def validate_hierarchy(
             elif child_type == "Category":
                 validate_children(child, "Indicator", "IndicatorCodes")
 
+        # Per-parent weight semantics (all-or-none, in-range, sum to 1.0).
+        validate_sibling_weights(parent_code, children, items_by_code, result)
+
     # Start validation from SSPI root
     reachable_codes.add(sspi_root.get("ItemCode"))
     validate_children(sspi_root, "Pillar", "PillarCodes")
@@ -451,6 +461,75 @@ def validate_hierarchy(
             orphan_code, None,
             f"Item '{orphan_code}' ({orphan.get('ItemType')}) is not reachable from SSPI root"
         )
+
+
+def validate_sibling_weights(
+    parent_code: str | None,
+    child_codes: list,
+    items_by_code: dict[str, dict],
+    result: ValidationResult,
+) -> None:
+    """
+    Validate the per-parent normalized weight model for one sibling set.
+
+    Rules (see the Weight model comment near the constants):
+    - Each present `Weight` must be a number in [0, 1].
+    - All-or-none: if any sibling carries a weight, ALL must (mixed is an error).
+    - When every sibling is weighted, the weights must sum to 1.0 within
+      WEIGHT_SUM_TOLERANCE.
+    - Absent everywhere is valid (engine uses equal 1/n).
+
+    This is the only place with the full sibling set in hand, so it is called
+    once per parent (SSPI->Pillars, Pillar->Categories, Category->Indicators).
+    """
+    if not isinstance(child_codes, list) or len(child_codes) == 0:
+        return
+
+    children = [items_by_code[c] for c in child_codes if c in items_by_code]
+    if not children:
+        return
+
+    weighted_count = 0
+    numeric_weights = []
+    for child in children:
+        if "Weight" not in child or child["Weight"] is None:
+            continue
+        weighted_count += 1
+        weight = child["Weight"]
+        child_code = child.get("ItemCode")
+        if isinstance(weight, bool) or not isinstance(weight, (int, float)):
+            result.add_error(child_code, "Weight", "Weight must be a number")
+            continue
+        if not (0 <= weight <= 1):
+            result.add_error(
+                child_code, "Weight",
+                f"Weight must be between 0 and 1 (got {weight})"
+            )
+            continue
+        numeric_weights.append(weight)
+
+    # No weights anywhere -> equal weighting, valid.
+    if weighted_count == 0:
+        return
+
+    # Mixed: some siblings weighted, some not.
+    if weighted_count != len(children):
+        result.add_error(
+            parent_code, "Weight",
+            f"All {len(children)} children of '{parent_code}' must have a Weight "
+            f"or none of them (got {weighted_count} weighted)"
+        )
+        return
+
+    # All weighted and all numeric/in-range -> must sum to 1.0.
+    if len(numeric_weights) == len(children):
+        total = sum(numeric_weights)
+        if abs(total - 1.0) > WEIGHT_SUM_TOLERANCE:
+            result.add_error(
+                parent_code, "Weight",
+                f"Weights of children of '{parent_code}' must sum to 1.0 "
+                f"(got {total})"
+            )
 
 
 # =============================================================================

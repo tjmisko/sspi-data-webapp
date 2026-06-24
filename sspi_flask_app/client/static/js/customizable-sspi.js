@@ -47,6 +47,7 @@ class CustomizableSSPIStructure {
         this.currentConfigName = null;
         this.currentConfigDescription = null;
         this.hasScores = false; // Whether current config has been scored (from server)
+        this.customWeightsEnabled = false; // Feature-flagged per-child weight UI (fetched on load)
         this.initConfigHeader();
         this.initToolbar();
         this.initRoot();
@@ -63,7 +64,7 @@ class CustomizableSSPIStructure {
         this.setupUnsavedChangesWarning();
         // Auto-load unsaved changes or default metadata if enabled
         setTimeout(() => { // delay ensures DOM is ready
-            this.loadInitialData().then(() => {
+            this.loadInitialData().then(async () => {
                 // Apply read-only state after data is loaded
                 if (this.readOnly) {
                     this.applyReadOnlyState();
@@ -72,8 +73,91 @@ class CustomizableSSPIStructure {
                 if (this.scoring && this.jobId) {
                     this.startScoringProgressUI();
                 }
+                // Fetch the weight-UI feature flag and render inputs accordingly
+                await this.applyWeightsFlag();
             });
         }, this.loadingDelay);
+    }
+
+    /**
+     * Fetch the CUSTOM_WEIGHTS_ENABLED feature flag from the server and render
+     * (or remove) per-child weight inputs accordingly. UI-only: the backend
+     * always honors stored weights regardless of this flag.
+     */
+    async applyWeightsFlag() {
+        try {
+            const res = await fetch('/api/v1/customize/weights-config');
+            if (res.ok) {
+                const data = await res.json();
+                this.customWeightsEnabled = !!data.custom_weights_enabled;
+            }
+        } catch (e) {
+            this.customWeightsEnabled = false;
+        }
+        this.refreshWeightInputs();
+    }
+
+    /**
+     * Add a minimal per-child weight input to each pillar/category/indicator
+     * card when the flag is on; remove them when off. Inputs are seeded from a
+     * card's data-weight attribute (set when a stored config is loaded), so
+     * saved weights repopulate. Deliberately minimal — no auto-rebalancing.
+     */
+    refreshWeightInputs() {
+        if (!this.container) return;
+        const cardSelectors = ['.pillar-column', '.category-box', '.indicator-card'];
+        cardSelectors.forEach((cardSel) => {
+            this.container.querySelectorAll(cardSel).forEach((card) => {
+                let wrapper = card.querySelector(':scope > .weight-input-wrapper');
+                if (!this.customWeightsEnabled) {
+                    if (wrapper) wrapper.remove();
+                    return;
+                }
+                if (wrapper) return; // already present
+                wrapper = document.createElement('label');
+                wrapper.className = 'weight-input-wrapper';
+                wrapper.textContent = 'Weight ';
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'weight-input';
+                input.min = '0';
+                input.max = '1';
+                input.step = '0.01';
+                input.placeholder = 'equal';
+                const stored = card.dataset.weight;
+                if (stored !== undefined && stored !== '') {
+                    input.value = stored;
+                }
+                input.addEventListener('change', () => { this.flagUnsaved?.(); });
+                wrapper.appendChild(input);
+                card.appendChild(wrapper);
+            });
+        });
+    }
+
+    /**
+     * Resolve the Weight to emit for a card, or null to omit it.
+     *
+     * - Flag ON: use the live input value when set (validated to [0, 1]).
+     * - Keep-and-hide: if no usable input value, fall back to a previously
+     *   stored data-weight so toggling the flag off never silently drops the
+     *   weights of an already-saved config.
+     */
+    _readItemWeight(cardEl) {
+        const parse = (raw) => {
+            if (raw === undefined || raw === null) return null;
+            const text = String(raw).trim();
+            if (text === '') return null;
+            const val = Number(text);
+            if (!Number.isFinite(val) || val < 0 || val > 1) return null;
+            return val;
+        };
+        if (this.customWeightsEnabled) {
+            const input = cardEl.querySelector(':scope > .weight-input-wrapper .weight-input');
+            const fromInput = parse(input ? input.value : null);
+            if (fromInput !== null) return fromInput;
+        }
+        return parse(cardEl.dataset ? cardEl.dataset.weight : null);
     }
 
     /**
@@ -4278,7 +4362,8 @@ class CustomizableSSPIStructure {
                     name: pillarName,
                     categories: [],
                     itemOrder: pillarIdx,  // Start from 0
-                    pillarIdx: pillarIdx
+                    pillarIdx: pillarIdx,
+                    weight: this._readItemWeight(pillarCol)
                 };
                 pillarCol.querySelectorAll('.category-box').forEach((catBox, catIdx) => {
                     const categoryName = catBox.querySelector('.customization-category-header-title').textContent.trim();
@@ -4293,7 +4378,8 @@ class CustomizableSSPIStructure {
                             indicators: [],
                             itemOrder: catIdx,  // Start from 0
                             pillarIdx: pillarIdx,
-                            catIdx: catIdx
+                            catIdx: catIdx,
+                            weight: this._readItemWeight(catBox)
                         };
                         catBox.querySelectorAll('.indicator-card').forEach((indCard, indIdx) => {
                             const indicatorName = indCard.querySelector('.indicator-name').textContent.trim();
@@ -4321,7 +4407,8 @@ class CustomizableSSPIStructure {
                                     itemOrder: indIdx,  // Start from 0
                                     pillarIdx: pillarIdx,
                                     catIdx: catIdx,
-                                    indIdx: indIdx
+                                    indIdx: indIdx,
+                                    weight: this._readItemWeight(indCard)
                                 };
                             }
                         });
@@ -4345,7 +4432,7 @@ class CustomizableSSPIStructure {
             });
         }
         Object.values(pillars).forEach(pillar => {
-            metadataItems.push({
+            const pillarItem = {
                 DocumentType: "PillarDetail",
                 ItemType: "Pillar",
                 ItemCode: pillar.code,
@@ -4357,11 +4444,15 @@ class CustomizableSSPIStructure {
                 TreeIndex: [0, pillar.pillarIdx, -1, -1],
                 TreePath: `sspi/${pillar.code.toLowerCase()}`,
                 ItemOrder: pillar.itemOrder
-            });
+            };
+            if (pillar.weight !== null && pillar.weight !== undefined) {
+                pillarItem.Weight = pillar.weight;
+            }
+            metadataItems.push(pillarItem);
         });
         Object.values(categories).forEach(category => {
             const parentPillar = pillars[category.pillarCode];
-            metadataItems.push({
+            const categoryItem = {
                 DocumentType: "CategoryDetail",
                 ItemType: "Category",
                 ItemCode: category.code,
@@ -4375,10 +4466,14 @@ class CustomizableSSPIStructure {
                 TreeIndex: [0, category.pillarIdx, category.catIdx, -1],
                 TreePath: `sspi/${category.pillarCode.toLowerCase()}/${category.code.toLowerCase()}`,
                 ItemOrder: category.itemOrder
-            });
+            };
+            if (category.weight !== null && category.weight !== undefined) {
+                categoryItem.Weight = category.weight;
+            }
+            metadataItems.push(categoryItem);
         });
         Object.values(indicators).forEach(indicator => {
-            metadataItems.push({
+            const indicatorItem = {
                 DocumentType: "IndicatorDetail",
                 ItemType: "Indicator",
                 ItemCode: indicator.code,
@@ -4391,7 +4486,11 @@ class CustomizableSSPIStructure {
                 TreeIndex: [0, indicator.pillarIdx, indicator.catIdx, indicator.indIdx],
                 TreePath: `sspi/${indicator.pillarCode.toLowerCase()}/${indicator.categoryCode.toLowerCase()}/${indicator.code.toLowerCase()}`,
                 ItemOrder: indicator.itemOrder
-            });
+            };
+            if (indicator.weight !== null && indicator.weight !== undefined) {
+                indicatorItem.Weight = indicator.weight;
+            }
+            metadataItems.push(indicatorItem);
         });
         return metadataItems;
     }
@@ -5697,6 +5796,10 @@ class CustomizableSSPIStructure {
         col.dataset.pillarCode = pillarItem.ItemCode;
         col.dataset.itemCode = pillarItem.ItemCode;
         col.dataset.itemType = 'Pillar';
+        // Preserve a stored per-parent weight for the weight UI (keep-and-hide)
+        if (pillarItem.Weight !== undefined && pillarItem.Weight !== null) {
+            col.dataset.weight = pillarItem.Weight;
+        }
         // Update pillar name
         const pillarNameEl = col.querySelector('.pillar-name');
         if (pillarNameEl) {
@@ -5720,6 +5823,9 @@ class CustomizableSSPIStructure {
                 // Set data attributes for efficient querying
                 catEl.dataset.categoryCode = categoryItem.ItemCode;
                 catEl.dataset.itemCode = categoryItem.ItemCode;
+                if (categoryItem.Weight !== undefined && categoryItem.Weight !== null) {
+                    catEl.dataset.weight = categoryItem.Weight;
+                }
                 // Add indicators to this category
                 const indicatorsContainer = catEl.querySelector('.indicators-container');
                 const indicatorCodes = categoryItem.Children || [];
@@ -5739,6 +5845,9 @@ class CustomizableSSPIStructure {
                         // Set data attributes for efficient querying
                         indEl.dataset.indicatorCode = indicatorItem.ItemCode;
                         indEl.dataset.itemCode = indicatorItem.ItemCode;
+                        if (indicatorItem.Weight !== undefined && indicatorItem.Weight !== null) {
+                            indEl.dataset.weight = indicatorItem.Weight;
+                        }
                         // Populate score function if present
                         if (scoreFunctionEl) {
                             if (indicatorItem.ScoreFunction) {

@@ -22,6 +22,13 @@ class Config:
     ASSETS_AUTO_BUILD = True
     JSONIFY_PRETTYPRINT_REGULAR = True
     REMEMBER_COOKIE_DURATION = timedelta(days=30)
+    # Feature flag gating the custom-scoring per-child weight UI in the builder.
+    # UI-ONLY: the scoring engine and validator always honor weights already
+    # stored on a config regardless of this flag. Default OFF; override with the
+    # CUSTOM_WEIGHTS_ENABLED environment variable ("1"/"true" to enable).
+    CUSTOM_WEIGHTS_ENABLED = environ.get(
+        "CUSTOM_WEIGHTS_ENABLED", ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
 
 
 class ProdConfig(Config):
