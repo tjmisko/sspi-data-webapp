@@ -1,24 +1,27 @@
 """
 Background Task Management for Custom SSPI Scoring
 
-This module manages background scoring jobs with progress tracking for SSE streaming.
+This module manages background scoring jobs with progress tracking for SSE
+streaming. Job state lives in the ``sspi_scoring_jobs`` MongoDB collection so a
+job started on one gunicorn worker is fully observable (status / progress /
+events) from requests served by any other worker (#893).
 
 Key Components:
-- ScoringJob: Data class for job state and progress
-- scoring_jobs: In-memory job registry
-- start_scoring_job: Launch background scoring
-- run_scoring_pipeline: Main pipeline executed in background thread
+- ScoringJob: Write-through view of a job persisted in Mongo
+- start_scoring_job: Launch background scoring (inserts the job doc, spawns thread)
+- run_scoring_pipeline: Main pipeline executed in background thread (writes to Mongo)
+- generate_sse_events: Polls the Mongo job doc and streams SSE events
 """
 
 import json
 import logging
+import os
 import re
 import secrets
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from enum import Enum
-from queue import Queue, Empty
 from threading import Thread
 from typing import Callable
 
@@ -27,15 +30,10 @@ from sspi_flask_app.api.resources.metadata_validator import (
     compute_config_hash,
     ValidationResult,
 )
-from sspi_flask_app.api.resources.change_detection import (
-    identify_modified_indicators,
-    ChangeDetectionResult,
-)
 from sspi_flask_app.api.resources.custom_scoring import (
     flatten_scores_for_storage,
     identify_empty_datasets,
     transform_scores_to_line_format,
-    build_custom_tree,
 )
 from sspi_flask_app.api.resources.fast_custom_scoring import (
     score_custom_configuration_fast,
@@ -44,8 +42,8 @@ from sspi_flask_app.models.database import (
     sspi_custom_panel_data,
     sspi_custom_item_data,
     sspi_custom_user_structure,
-    sspi_item_data,
     sspi_metadata,
+    sspi_scoring_jobs,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,6 +65,50 @@ class JobStatus(Enum):
     CANCELLED = "cancelled"
 
 
+# Active (non-terminal) vs terminal status sets. Mirrors the string sets in
+# sspi_scoring_jobs.py; used by the D2 concurrency cap and the SSE generator.
+ACTIVE_STATUSES = frozenset({
+    JobStatus.PENDING,
+    JobStatus.VALIDATING,
+    JobStatus.SCORING,
+    JobStatus.AGGREGATING,
+    JobStatus.SAVING,
+})
+TERMINAL_STATUSES = frozenset({
+    JobStatus.COMPLETE,
+    JobStatus.ERROR,
+    JobStatus.CANCELLED,
+})
+
+
+# =============================================================================
+# Job Store Configuration (TTL + concurrency cap)
+# =============================================================================
+
+# How long a job document lives before the Mongo TTL index / sweep evicts it.
+JOB_TTL_SECONDS = int(os.environ.get("SCORING_JOB_TTL_SECONDS", 3600))  # 1 hour
+
+# A job stuck in an active status longer than this is reaped to ERROR (the
+# worker running its thread is presumed dead). Must be comfortably above both
+# the worst-case scoring time and the SSE stream timeout (300s).
+JOB_MAX_RUN_SECONDS = int(os.environ.get("SCORING_JOB_MAX_RUN_SECONDS", 900))  # 15 min
+
+# Concurrency caps: how many jobs may be active at once. Each job spawns a
+# daemon thread doing heavy NumPy/Mongo work, so unbounded launches can exhaust
+# a worker.
+MAX_CONCURRENT_JOBS_PER_USER = int(
+    os.environ.get("SCORING_MAX_JOBS_PER_USER", 3)
+)
+MAX_CONCURRENT_JOBS_GLOBAL = int(
+    os.environ.get("SCORING_MAX_JOBS_GLOBAL", 20)
+)
+
+
+class ConcurrencyLimitExceeded(Exception):
+    """Raised when starting a job would exceed a concurrency cap."""
+    pass
+
+
 # =============================================================================
 # Data Classes
 # =============================================================================
@@ -79,24 +121,75 @@ class ProgressEvent:
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
-@dataclass
 class ScoringJob:
-    """State and progress tracking for a scoring job."""
-    job_id: str
-    config_id: str
-    config_hash: str | None
-    user_id: str
-    status: JobStatus
-    progress: int  # 0-100
-    message: str
-    result: dict | None = None
-    error: str | None = None
-    progress_queue: Queue = field(default_factory=Queue)
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    completed_at: str | None = None
+    """
+    Write-through view of a scoring job persisted in ``sspi_scoring_jobs``.
+
+    The pipeline thread mutates a ScoringJob and every mutation is persisted to
+    Mongo so other workers can observe it. Readers (``get_job``) reconstruct a
+    read-only snapshot from the Mongo document; the attribute names below are the
+    public contract consumed by ``customize.py`` routes (``status``,
+    ``progress``, ``message``, ``created_at``, ``completed_at``, ``result``,
+    ``config_hash``, ``error``, ``user_id``).
+    """
+
+    def __init__(
+        self,
+        job_id: str,
+        config_id: str,
+        config_hash: str | None,
+        user_id: str,
+        status: JobStatus,
+        progress: int,
+        message: str,
+        result: dict | None = None,
+        error: str | None = None,
+        created_at: str | None = None,
+        completed_at: str | None = None,
+        cancel_requested: bool = False,
+    ):
+        self.job_id = job_id
+        self.config_id = config_id
+        self.config_hash = config_hash
+        self.user_id = user_id
+        self.status = status
+        self.progress = progress
+        self.message = message
+        self.result = result
+        self.error = error
+        self.created_at = created_at
+        self.completed_at = completed_at
+        self.cancel_requested = cancel_requested
+
+    # ------------------------------------------------------------------
+    # Write-through mutators (persist to Mongo so other workers see them)
+    # ------------------------------------------------------------------
+
+    def set_status(self, status: JobStatus, message: str | None = None):
+        """Persist a status (and optional message) transition."""
+        self.status = status
+        fields = {"status": status.value}
+        if message is not None:
+            self.message = message
+            fields["message"] = message
+        sspi_scoring_jobs.set_fields(self.job_id, **fields)
+
+    def set_config_hash(self, config_hash: str):
+        """Persist the computed config hash."""
+        self.config_hash = config_hash
+        sspi_scoring_jobs.set_fields(self.job_id, config_hash=config_hash)
+
+    def _append_event(self, event: ProgressEvent, **set_fields):
+        """Append an SSE event to the Mongo doc (atomic with set_fields)."""
+        sspi_scoring_jobs.append_event(
+            self.job_id,
+            event.event_type,
+            event.data,
+            set_fields=set_fields or None,
+        )
 
     def emit_progress(self, percent: int, message: str, event_type: str = "progress"):
-        """Emit a progress event to the queue."""
+        """Emit a legacy progress event (frontend ignores; kept for interface)."""
         self.progress = percent
         self.message = message
         event = ProgressEvent(
@@ -107,7 +200,7 @@ class ScoringJob:
                 "status": self.status.value,
             }
         )
-        self.progress_queue.put(event)
+        self._append_event(event, progress=percent, message=message)
 
     def emit_stage_complete(self, stage: str, message: str, data: dict = {}):
         """
@@ -118,6 +211,7 @@ class ScoringJob:
             message: Completion message to display
             data: Optional additional data
         """
+        self.message = message
         event = ProgressEvent(
             event_type="stage_complete",
             data={
@@ -126,29 +220,29 @@ class ScoringJob:
                 **(data or {})
             }
         )
-        self.progress_queue.put(event)
+        self._append_event(event, message=message, stage=stage)
 
     def emit_stage_progress(self, stage: str, current: int, total: int):
         """
         Emit progress within a stage (for stages with progress bars).
 
-        Args:
-            stage: Stage identifier
-            current: Current item number
-            total: Total items to process
+        High-frequency (per-indicator) updates are written as scalar fields
+        rather than appended to the events array to keep the document small.
+        The SSE generator synthesizes ``stage_progress`` events from these
+        scalar fields, so the frontend wire format is unchanged.
         """
-        event = ProgressEvent(
-            event_type="stage_progress",
-            data={
-                "stage": stage,
-                "current": current,
-                "total": total,
-            }
+        progress = int(current / total * 100) if total else 0
+        self.progress = progress
+        sspi_scoring_jobs.set_fields(
+            self.job_id,
+            stage=stage,
+            stage_current=current,
+            stage_total=total,
+            progress=progress,
         )
-        self.progress_queue.put(event)
 
     def emit_indicator_start(self, code: str, name: str, index: int, total: int):
-        """Emit indicator scoring start event."""
+        """Emit indicator scoring start event (legacy; frontend ignores)."""
         event = ProgressEvent(
             event_type="indicator_start",
             data={
@@ -158,10 +252,10 @@ class ScoringJob:
                 "total": total,
             }
         )
-        self.progress_queue.put(event)
+        self._append_event(event)
 
     def emit_indicator_complete(self, code: str, countries: int, duration_ms: int):
-        """Emit indicator scoring complete event."""
+        """Emit indicator scoring complete event (legacy; frontend ignores)."""
         event = ProgressEvent(
             event_type="indicator_complete",
             data={
@@ -170,12 +264,21 @@ class ScoringJob:
                 "duration_ms": duration_ms,
             }
         )
-        self.progress_queue.put(event)
+        self._append_event(event)
 
     def emit_complete(self, total_scores: int, duration_ms: int, cached: bool = False):
-        """Emit job completion event."""
+        """Emit job completion event and persist terminal state atomically."""
         self.status = JobStatus.COMPLETE
-        self.completed_at = datetime.now(timezone.utc).isoformat()
+        completed_at = datetime.now(timezone.utc)
+        self.completed_at = completed_at.isoformat()
+        self.progress = 100
+        # Store a SUMMARY only - the full flat-score list already lives in
+        # sspi_custom_item_data keyed by config_hash (see D1 doc-size discipline).
+        self.result = {
+            "cached": cached,
+            "total_scores": total_scores,
+            "config_hash": self.config_hash,
+        }
         event = ProgressEvent(
             event_type="complete",
             data={
@@ -186,13 +289,20 @@ class ScoringJob:
                 "config_hash": self.config_hash,
             }
         )
-        self.progress_queue.put(event)
+        self._append_event(
+            event,
+            status=JobStatus.COMPLETE.value,
+            completed_at=completed_at,
+            progress=100,
+            result=self.result,
+        )
 
     def emit_error(self, message: str, code: str = "SCORING_ERROR"):
-        """Emit error event."""
+        """Emit error event and persist terminal state atomically."""
         self.status = JobStatus.ERROR
         self.error = message
-        self.completed_at = datetime.now(timezone.utc).isoformat()
+        completed_at = datetime.now(timezone.utc)
+        self.completed_at = completed_at.isoformat()
         event = ProgressEvent(
             event_type="error",
             data={
@@ -200,47 +310,86 @@ class ScoringJob:
                 "code": code,
             }
         )
-        self.progress_queue.put(event)
+        self._append_event(
+            event,
+            status=JobStatus.ERROR.value,
+            error=message,
+            completed_at=completed_at,
+        )
+
+    def emit_cancelled(self, message: str = "Cancelled by user"):
+        """Persist a cooperative cancellation and emit its terminal event.
+
+        Uses the same ``error``/``CANCELLED`` wire shape the frontend already
+        handles (and that the SSE generator emits for a CANCELLED job).
+        """
+        self.status = JobStatus.CANCELLED
+        completed_at = datetime.now(timezone.utc)
+        self.completed_at = completed_at.isoformat()
+        self.message = message
+        event = ProgressEvent(
+            event_type="error",
+            data={"message": "Job was cancelled", "code": "CANCELLED"},
+        )
+        self._append_event(
+            event,
+            status=JobStatus.CANCELLED.value,
+            message=message,
+            completed_at=completed_at,
+        )
 
 
 # =============================================================================
-# Job Registry (In-Memory)
+# Job Registry (Mongo-backed)
 # =============================================================================
 
-# In-memory job tracking (for MVP - could move to Redis later)
-scoring_jobs: dict[str, ScoringJob] = {}
+def _status_from_value(value: str | None) -> JobStatus:
+    """Rehydrate a JobStatus enum from its stored string value."""
+    try:
+        return JobStatus(value)
+    except ValueError:
+        logger.warning(f"Unknown job status value {value!r}, defaulting to ERROR")
+        return JobStatus.ERROR
 
-# Job cleanup threshold (jobs older than this are removed)
-JOB_TTL_SECONDS = 3600  # 1 hour
+
+def _iso(value) -> str | None:
+    """Format a stored timestamp (BSON datetime or str) as an ISO string."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
 
 
-def _cleanup_old_jobs():
-    """Remove jobs older than TTL."""
-    now = datetime.now(timezone.utc)
-    to_remove = []
-
-    for job_id, job in scoring_jobs.items():
-        created = datetime.fromisoformat(job.created_at.replace('Z', '+00:00'))
-        age = (now - created).total_seconds()
-
-        if age > JOB_TTL_SECONDS:
-            to_remove.append(job_id)
-
-    for job_id in to_remove:
-        del scoring_jobs[job_id]
-
-    if to_remove:
-        logger.info(f"Cleaned up {len(to_remove)} old scoring jobs")
+def _job_from_doc(doc: dict) -> ScoringJob:
+    """Reconstruct a read-only ScoringJob snapshot from a Mongo document."""
+    return ScoringJob(
+        job_id=doc["job_id"],
+        config_id=doc.get("config_id"),
+        config_hash=doc.get("config_hash"),
+        user_id=doc.get("user_id"),
+        status=_status_from_value(doc.get("status")),
+        progress=doc.get("progress", 0),
+        message=doc.get("message", ""),
+        result=doc.get("result"),
+        error=doc.get("error"),
+        created_at=_iso(doc.get("created_at")),
+        completed_at=_iso(doc.get("completed_at")),
+        cancel_requested=doc.get("cancel_requested", False),
+    )
 
 
 def get_job(job_id: str) -> ScoringJob | None:
-    """Get a job by ID."""
-    return scoring_jobs.get(job_id)
+    """Get a job by ID from Mongo (works across workers)."""
+    doc = sspi_scoring_jobs.get(job_id)
+    if not doc:
+        return None
+    return _job_from_doc(doc)
 
 
 def get_user_jobs(user_id: str) -> list[ScoringJob]:
-    """Get all jobs for a user."""
-    return [job for job in scoring_jobs.values() if job.user_id == user_id]
+    """Get all jobs for a user from Mongo."""
+    return [_job_from_doc(doc) for doc in sspi_scoring_jobs.list_for_user(user_id)]
 
 
 # =============================================================================
@@ -256,6 +405,10 @@ def start_scoring_job(
     """
     Start a background scoring job.
 
+    Inserts the job document in Mongo (status PENDING) so other workers can
+    observe it immediately, then spawns the daemon thread that runs the
+    pipeline and writes progress/events back to Mongo.
+
     Args:
         config_id: Configuration identifier
         metadata: Custom SSPI metadata
@@ -264,23 +417,67 @@ def start_scoring_job(
 
     Returns:
         job_id for tracking via SSE
+
+    Raises:
+        ConcurrencyLimitExceeded: if the per-user or global active-job cap is hit
     """
-    # Cleanup old jobs first
-    _cleanup_old_jobs()
+    # Evict expired jobs and reap stalled (dead-worker) jobs first, so neither
+    # blocks new work or wrongly counts against the cap. This also preserves the
+    # old "sweep on new job" trigger now that the dict-based cleanup is gone.
+    sspi_scoring_jobs.evict_expired()
+    sspi_scoring_jobs.reap_stalled(JOB_MAX_RUN_SECONDS)
+
+    # Enforce concurrency caps (counts read from Mongo, so they hold across
+    # workers). There is an inherent check-then-insert race; acceptable for the
+    # modest caps here.
+    if sspi_scoring_jobs.count_active(user_id) >= MAX_CONCURRENT_JOBS_PER_USER:
+        raise ConcurrencyLimitExceeded(
+            f"You already have {MAX_CONCURRENT_JOBS_PER_USER} scoring jobs "
+            f"running. Please wait for one to finish before starting another."
+        )
+    if sspi_scoring_jobs.count_active() >= MAX_CONCURRENT_JOBS_GLOBAL:
+        raise ConcurrencyLimitExceeded(
+            "The server is at capacity for scoring jobs. Please try again shortly."
+        )
+
     # Generate job ID
     job_id = secrets.token_hex(16)
-    # Create job entry
+    now = datetime.now(timezone.utc)
+    # Persist the job document (worker-safe state lives in Mongo)
+    sspi_scoring_jobs.create_job({
+        "job_id": job_id,
+        "config_id": config_id,
+        "config_hash": None,  # Will be computed during validation
+        "user_id": user_id,
+        "status": JobStatus.PENDING.value,
+        "progress": 0,
+        "message": "Starting...",
+        "stage": None,
+        "stage_current": None,
+        "stage_total": None,
+        "result": None,
+        "error": None,
+        "cancel_requested": False,
+        "seq": 0,
+        "events": [],
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "expire_at": now + timedelta(seconds=JOB_TTL_SECONDS),
+        "worker_pid": os.getpid(),
+    })
+    # Build the write-through job object handed to the pipeline thread
     job = ScoringJob(
         job_id=job_id,
         config_id=config_id,
-        config_hash=None,  # Will be computed during validation
+        config_hash=None,
         user_id=user_id,
         status=JobStatus.PENDING,
         progress=0,
         message="Starting...",
+        created_at=now.isoformat(),
     )
-    scoring_jobs[job_id] = job
-    # Start background thread
+    # Start background thread (runs in this worker; state is shared via Mongo)
     thread = Thread(
         target=run_scoring_pipeline,
         args=(job, metadata, actions),
@@ -293,27 +490,64 @@ def start_scoring_job(
 
 def cancel_job(job_id: str) -> bool:
     """
-    Cancel a running job.
+    Cancel a job, persisting the request to Mongo so the running thread (which
+    may live on another worker) observes it.
+
+    For a job that has not finished, this sets ``cancel_requested=True`` so the
+    pipeline transitions it to CANCELLED at its next stage boundary (the worker
+    owning the thread writes the final status/completed_at). A job that is still
+    PENDING (no thread progress yet) is flipped straight to CANCELLED.
 
     Args:
         job_id: Job to cancel
 
     Returns:
-        True if job was found and cancelled
+        True if the job was found and is cancellable; False if missing or
+        already terminal.
     """
-    job = scoring_jobs.get(job_id)
-    if not job:
+    doc = sspi_scoring_jobs.get(job_id)
+    if not doc:
         return False
 
-    if job.status in (JobStatus.COMPLETE, JobStatus.ERROR, JobStatus.CANCELLED):
+    status = _status_from_value(doc.get("status"))
+    if status in TERMINAL_STATUSES:
         return False
 
-    job.status = JobStatus.CANCELLED
-    job.message = "Cancelled by user"
-    job.completed_at = datetime.now(timezone.utc).isoformat()
+    # Always record the cancel request so the running pipeline can honor it
+    # cooperatively at its next checkpoint (works across workers).
+    fields = {"cancel_requested": True, "message": "Cancelled by user"}
+    if status == JobStatus.PENDING:
+        # Not yet doing real work - flip straight to terminal CANCELLED.
+        fields["status"] = JobStatus.CANCELLED.value
+        fields["completed_at"] = datetime.now(timezone.utc)
+    sspi_scoring_jobs.set_fields(job_id, **fields)
 
-    logger.info(f"Cancelled job {job_id}")
+    logger.info(f"Cancel requested for job {job_id} (status was {status.value})")
     return True
+
+
+def is_cancel_requested(job_id: str) -> bool:
+    """Return True if a cancel has been requested for the job (reads Mongo).
+
+    Works across workers: the cancel route may run on a different worker than
+    the one executing the pipeline thread.
+    """
+    doc = sspi_scoring_jobs.get(job_id)
+    return bool(doc and doc.get("cancel_requested"))
+
+
+def _abort_if_cancelled(job: ScoringJob) -> bool:
+    """Cooperative cancellation checkpoint for the pipeline.
+
+    If a cancel was requested, transition the job to CANCELLED (terminal) and
+    emit its terminal event, then return True so the caller can stop. Returns
+    False otherwise.
+    """
+    if is_cancel_requested(job.job_id):
+        job.emit_cancelled()
+        logger.info(f"Job {job.job_id} cancelled at stage boundary")
+        return True
+    return False
 
 
 # =============================================================================
@@ -384,15 +618,15 @@ def run_scoring_pipeline(
 
     Stages emitted to frontend:
     1. validate - Validate metadata & score functions
-    2. identify - Identify modified indicators
-    3. scoring - Score modified indicators (with progress bar)
+    2. identify - Static stage marker (change detection removed)
+    3. scoring - Score all indicators (with progress bar)
     4. aggregate - Aggregate hierarchy
     5. ranking - Compute ranks
     6. visualizations - Build visualizations (save results)
     """
     start_time = time.time()
     try:
-        job.status = JobStatus.VALIDATING
+        job.set_status(JobStatus.VALIDATING)
 
         # =====================================================================
         # Stage 1: Check for Empty Datasets (BEFORE validation)
@@ -430,6 +664,10 @@ def run_scoring_pipeline(
                 {"dropped_count": 0, "scorable_count": scorable_count}
             )
 
+        # Cancellation checkpoint (before validation work)
+        if _abort_if_cancelled(job):
+            return
+
         # =====================================================================
         # Stage 2: Validate Metadata (after filtering dropped indicators)
         # =====================================================================
@@ -463,7 +701,7 @@ def run_scoring_pipeline(
         # Check cache before identifying modified indicators
         # =====================================================================
         config_hash = compute_config_hash(metadata)
-        job.config_hash = config_hash
+        job.set_config_hash(config_hash)
 
         try:
             # Check if we have cached flat scores in sspi_custom_item_data
@@ -479,7 +717,6 @@ def run_scoring_pipeline(
                     job.emit_stage_complete("visualizations", "Visualizations Ready")
 
                     duration_ms = int((time.time() - start_time) * 1000)
-                    job.result = {"cached": True, "results": cached_results}
                     job.emit_complete(len(cached_results), duration_ms, cached=True)
 
                     logger.info(f"Cache hit for job {job.job_id}, returning {len(cached_results)} cached results")
@@ -488,73 +725,29 @@ def run_scoring_pipeline(
             logger.warning(f"Cache check failed: {e}, proceeding with scoring")
 
         # =====================================================================
-        # Stage 2: Identify Modified Indicators
+        # Stage 2: Identify Indicators (static)
         # =====================================================================
-        change_result = identify_modified_indicators(metadata, actions)
-        modified_count = len(change_result.modified_indicators)
-        unchanged_count = len(change_result.unchanged_indicators)
+        # Change detection was removed: the fast scorer always scores ALL
+        # indicators because the vectorized matrix multiply needs consistent
+        # dimensions. We still emit a static `identify` stage_complete so the
+        # frontend progress modal (which hardcodes an `identify` stage row)
+        # advances past this stage.
+        indicator_count = sum(
+            1 for item in metadata if item.get("ItemType") == "Indicator"
+        )
 
         job.emit_stage_complete(
             "identify",
-            f"Identified {modified_count} Modified Indicators",
-            {"modified": modified_count, "unchanged": unchanged_count}
+            f"Scoring {indicator_count} Indicators",
+            {"modified": indicator_count, "unchanged": 0}
         )
 
-        logger.info(
-            f"Job {job.job_id}: {modified_count} modified, {unchanged_count} unchanged"
-        )
+        logger.info(f"Job {job.job_id}: scoring {indicator_count} indicators")
 
         # =====================================================================
-        # Stage 3: Score Modified Indicators
+        # Stage 3: Score Indicators
         # =====================================================================
-        job.status = JobStatus.SCORING
-
-        # Get default scores for unchanged indicators from sspi_item_data
-        default_scores = None
-        if change_result.unchanged_indicators:
-            try:
-                country_codes = sspi_metadata.country_group("SSPI67") or []
-                default_scores = {}
-                for indicator_code in change_result.unchanged_indicators:
-                    # Fetch pre-computed scores from sspi_item_data
-                    scores = list(sspi_item_data.find({
-                        "ItemCode": indicator_code,
-                        "ItemType": "Indicator",
-                        "CountryCode": {"$in": country_codes},
-                        "Year": {"$gte": 2000, "$lte": 2023}
-                    }, {"_id": 0}))
-                    # Convert to expected format
-                    formatted_scores = []
-                    for doc in scores:
-                        formatted_scores.append({
-                            "item_code": doc.get("ItemCode"),
-                            "item_name": doc.get("ItemName", indicator_code),
-                            "item_type": "Indicator",
-                            "country_code": doc.get("CountryCode"),
-                            "year": doc.get("Year"),
-                            "score": doc.get("Score", 0) * 100,  # Convert to 0-100 scale
-                            "imputed": False,
-                            "imputation_method": None,
-                        })
-
-                    if formatted_scores:
-                        default_scores[indicator_code] = formatted_scores
-
-                logger.info(f"Fetched {len(default_scores)} unchanged indicator scores")
-
-            except Exception as e:
-                logger.warning(f"Failed to fetch unchanged indicator scores: {e}")
-                default_scores = None
-
-        # Progress callback for scoring - emits stage_progress events
-        indicators_to_score = [
-            item for item in metadata
-            if item.get("ItemType") == "Indicator"
-            and item.get("ItemCode") in (change_result.modified_indicators or set())
-        ]
-        total_to_score = len(indicators_to_score) if change_result.modified_indicators else len([
-            item for item in metadata if item.get("ItemType") == "Indicator"
-        ])
+        job.set_status(JobStatus.SCORING)
 
         def progress_callback(phase: str, percent: int, message: str):
             """Map scoring phases to stage events."""
@@ -567,16 +760,19 @@ def run_scoring_pipeline(
                     job.emit_stage_progress("scoring", current, total)
             # Aggregation and ranking handled after score_custom_configuration returns
 
+        # Cancellation checkpoint (before the heavy vectorized compute - the
+        # most valuable checkpoint, since it precedes the single expensive block)
+        if _abort_if_cancelled(job):
+            return
+
         # Run the scoring pipeline (using fast vectorized implementation)
         all_scores = score_custom_configuration_fast(
             metadata,
-            modified_indicators=change_result.modified_indicators or None,
-            default_scores=default_scores,
             progress_callback=progress_callback
         )
 
         # Count scored indicators
-        scored_count = total_to_score
+        scored_count = indicator_count
         job.emit_stage_complete(
             "scoring",
             f"Scored {scored_count} Indicators",
@@ -586,7 +782,7 @@ def run_scoring_pipeline(
         # =====================================================================
         # Stage 4: Aggregate Hierarchy
         # =====================================================================
-        job.status = JobStatus.AGGREGATING
+        job.set_status(JobStatus.AGGREGATING)
         # Aggregation already happened in score_custom_configuration
         job.emit_stage_complete("aggregate", "Aggregation Complete")
 
@@ -599,7 +795,12 @@ def run_scoring_pipeline(
         # =====================================================================
         # Stage 6: Build Visualizations (Save results)
         # =====================================================================
-        job.status = JobStatus.SAVING
+        job.set_status(JobStatus.SAVING)
+
+        # Cancellation checkpoint (BEFORE any store write, so a cancelled job
+        # never persists partial flat-score / line-data rows for its config_hash)
+        if _abort_if_cancelled(job):
+            return
 
         flat_scores = flatten_scores_for_storage(all_scores)
 
@@ -652,7 +853,6 @@ def run_scoring_pipeline(
         # Complete
         # =====================================================================
         duration_ms = int((time.time() - start_time) * 1000)
-        job.result = {"cached": False, "results": flat_scores}
         job.emit_complete(len(flat_scores), duration_ms, cached=False)
 
         logger.info(
@@ -668,42 +868,68 @@ def run_scoring_pipeline(
 # SSE Event Generator
 # =============================================================================
 
-def generate_sse_events(job_id: str, timeout: float = 300.0):
+def _terminal_event(status: JobStatus, doc: dict) -> tuple[str, dict] | None:
+    """Build the terminal (event_type, data) for a job's terminal status."""
+    if status == JobStatus.ERROR:
+        return "error", {
+            "message": doc.get("error") or "Unknown error",
+            "code": "SCORING_ERROR",
+        }
+    if status == JobStatus.COMPLETE:
+        result = doc.get("result") or {}
+        return "complete", {
+            "success": True,
+            "total_scores": result.get("total_scores", 0),
+            "duration_ms": 0,
+            "cached": result.get("cached", False),
+        }
+    if status == JobStatus.CANCELLED:
+        return "error", {"message": "Job was cancelled", "code": "CANCELLED"}
+    return None
+
+
+def generate_sse_events(job_id: str, timeout: float = 300.0, poll_interval: float = 0.5):
     """
-    Generator for SSE events from a scoring job.
+    Generator for SSE events from a scoring job, polling the Mongo job document.
+
+    Because job state lives in Mongo (not a per-process queue), this works
+    regardless of which worker is serving the SSE request or running the
+    pipeline thread (#893). The wire format is identical to the previous
+    queue-based implementation so the frontend needs no change.
 
     Args:
         job_id: Job ID to stream events for
-        timeout: Maximum time to wait for events (seconds)
+        timeout: Maximum time to stream (seconds)
+        poll_interval: Seconds between Mongo polls
 
     Yields:
         SSE-formatted event strings
     """
-    job = scoring_jobs.get(job_id)
-    if not job:
+    doc = sspi_scoring_jobs.get(job_id)
+    if not doc:
         yield f"event: error\ndata: {{\"message\": \"Job not found\", \"code\": \"JOB_NOT_FOUND\"}}\n\n"
         return
 
-    # Immediately send current job status on connection
-    # This handles the case where job failed/completed before SSE connected
-    if job.status == JobStatus.ERROR:
-        error_data = {"message": job.error or "Unknown error", "code": "SCORING_ERROR"}
-        yield f'event: error\ndata: {json.dumps(error_data)}\n\n'
-        return
-    elif job.status == JobStatus.COMPLETE:
-        results_count = len(job.result.get("results", [])) if job.result else 0
-        complete_data = {"success": True, "total_scores": results_count, "duration_ms": 0, "cached": False}
-        yield f'event: complete\ndata: {json.dumps(complete_data)}\n\n'
-        return
-    elif job.status == JobStatus.CANCELLED:
-        yield f'event: error\ndata: {json.dumps({"message": "Job was cancelled", "code": "CANCELLED"})}\n\n'
+    # Immediately send terminal state if the job already finished before the
+    # SSE connection opened (e.g. cache hit, fast failure, or reconnect).
+    status = _status_from_value(doc.get("status"))
+    terminal = _terminal_event(status, doc)
+    if terminal:
+        yield _format_sse_event(*terminal)
         return
 
-    # Send initial status event so frontend knows connection succeeded and current state
-    status_data = {"status": job.status.value, "progress": job.progress, "message": job.message}
+    # Send initial status event so the frontend knows the connection succeeded
+    status_data = {
+        "status": status.value,
+        "progress": doc.get("progress", 0),
+        "message": doc.get("message", ""),
+    }
     yield f'event: status\ndata: {json.dumps(status_data)}\n\n'
 
     start_time = time.time()
+    last_seq = 0
+    last_stage_progress = None  # (stage, current, total)
+    terminal_emitted = False
 
     while True:
         # Check timeout
@@ -711,35 +937,66 @@ def generate_sse_events(job_id: str, timeout: float = 300.0):
             yield f"event: error\ndata: {{\"message\": \"Stream timeout\", \"code\": \"TIMEOUT\"}}\n\n"
             return
 
-        # Check if job is done
-        if job.status in (JobStatus.COMPLETE, JobStatus.ERROR, JobStatus.CANCELLED):
-            # Drain remaining events
-            while True:
-                try:
-                    event = job.progress_queue.get_nowait()
-                    yield _format_sse_event(event)
-                except Empty:
-                    break
+        doc = sspi_scoring_jobs.get(job_id)
+        if not doc:
+            # Job evicted mid-stream (D2 TTL/sweep)
+            yield f"event: error\ndata: {{\"message\": \"Job not found\", \"code\": \"JOB_NOT_FOUND\"}}\n\n"
             return
 
-        # Get next event with timeout
-        try:
-            event = job.progress_queue.get(timeout=1.0)
-            yield _format_sse_event(event)
+        progressed = False
 
-            # If this was a terminal event, we're done
-            if event.event_type in ("complete", "error"):
-                return
+        # Drain newly appended events in seq order
+        for event in doc.get("events", []):
+            if event["seq"] <= last_seq:
+                continue
+            last_seq = event["seq"]
+            progressed = True
+            yield _format_sse_event(event["event_type"], event["data"])
+            if event["event_type"] in ("complete", "error"):
+                terminal_emitted = True
+        if terminal_emitted:
+            return
 
-        except Empty:
-            # Send heartbeat to keep connection alive
+        # Synthesize a stage_progress event from the scalar progress fields when
+        # they change (high-frequency progress is not stored as events).
+        stage_progress = (
+            doc.get("stage"),
+            doc.get("stage_current"),
+            doc.get("stage_total"),
+        )
+        if (
+            stage_progress[1] is not None
+            and stage_progress[2] is not None
+            and stage_progress != last_stage_progress
+        ):
+            last_stage_progress = stage_progress
+            progressed = True
+            yield _format_sse_event("stage_progress", {
+                "stage": stage_progress[0],
+                "current": stage_progress[1],
+                "total": stage_progress[2],
+            })
+
+        # Terminal status reached without a terminal event in the log (e.g. a
+        # CANCELLED set by the cancel route): synthesize the terminal event.
+        status = _status_from_value(doc.get("status"))
+        if status in TERMINAL_STATUSES:
+            terminal = _terminal_event(status, doc)
+            if terminal:
+                yield _format_sse_event(*terminal)
+            return
+
+        if not progressed:
+            # Heartbeat to keep the connection alive while idle
             yield ": heartbeat\n\n"
 
+        time.sleep(poll_interval)
 
-def _format_sse_event(event: ProgressEvent) -> str:
-    """Format a ProgressEvent as an SSE string."""
-    lines = [f"event: {event.event_type}"]
-    lines.append(f"data: {json.dumps(event.data)}")
+
+def _format_sse_event(event_type: str, data: dict) -> str:
+    """Format an SSE event from an event type and JSON-serializable data."""
+    lines = [f"event: {event_type}"]
+    lines.append(f"data: {json.dumps(data)}")
     lines.append("")  # Blank line to end event
 
     return "\n".join(lines) + "\n"

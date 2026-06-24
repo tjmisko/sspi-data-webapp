@@ -436,12 +436,6 @@ def custom_visualization(config_id):
     )
 
 
-@client_bp.route('/customize/test-chart')
-def test_custom_chart():
-    """Test page for custom SSPI chart development and debugging"""
-    return render_template('customize/test_custom_chart.html')
-
-
 @client_bp.route('/data/country/<country_code>')
 def country_data(country_code):
     country_code = country_code.upper()
