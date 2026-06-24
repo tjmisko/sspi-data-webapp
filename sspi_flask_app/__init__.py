@@ -165,8 +165,17 @@ def init_app(Config):
         # Initialize MongoDB indexes for user data
         sspi_user_data.create_indexes()
         # Initialize MongoDB indexes for custom structure data
-        from sspi_flask_app.models.database import sspi_custom_user_structure
+        from sspi_flask_app.models.database import (
+            sspi_custom_user_structure,
+            sspi_custom_item_data,
+            sspi_custom_panel_data,
+            sspi_custom_user_data,
+        )
         sspi_custom_user_structure.create_indexes()
+        # Initialize MongoDB indexes for custom-scoring cache collections
+        sspi_custom_item_data.create_indexes()
+        sspi_custom_panel_data.create_indexes()
+        sspi_custom_user_data.create_indexes()
         # Register Blueprints
         api_bp.register_blueprint(dataset_bp)
         api_bp.register_blueprint(compute_bp)
