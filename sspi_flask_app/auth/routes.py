@@ -14,11 +14,10 @@ from sspi_flask_app.models.usermodel import User
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from sspi_flask_app.models.database import sspi_user_data
 from sspi_flask_app import login_manager, flask_bcrypt
+from sspi_flask_app.auth.decorators import admin_required
 
 from flask_login import (
-    fresh_login_required,
     login_user,
-    login_required,
     logout_user,
     current_user,
 )
@@ -307,7 +306,7 @@ def register():
 
 
 @auth_bp.route("/auth/register-admin", methods=["GET", "POST"])
-@fresh_login_required
+@admin_required
 def register_admin():
     """Admin-only registration - can create users with any role"""
     register_form = RegisterForm()
@@ -368,7 +367,7 @@ def check_email():
 
 
 @auth_bp.route("/auth/clear", methods=["GET"])
-@fresh_login_required
+@admin_required
 def clear():
     if not app.config["DEBUG"]:
         return Response("This route is only available in DEBUG mode", status=403)
@@ -377,14 +376,17 @@ def clear():
 
 
 @auth_bp.route("/auth/query", methods=["GET"])
-@fresh_login_required
+@admin_required
 def query():
+    # SECURITY: never expose API keys here. API keys are Bearer credentials
+    # that authenticate as their owner, so leaking them (previously to any
+    # fresh-logged-in non-admin) allowed user->admin escalation. Admin-only
+    # listing with secrets stripped.
     users = User.get_all_users()
     user_info = []
     for user in users:
         user_info.append({
             'username': user.username,
-            'apikey': user.apikey,
             'id': user.id
         })
     return jsonify(user_info), 200
