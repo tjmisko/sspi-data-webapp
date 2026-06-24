@@ -616,11 +616,11 @@ def validate_configuration():
     """
     Pre-flight validation of a custom SSPI configuration.
 
-    Runs each indicator's ScoreFunction through the score-function parser and
-    returns structured per-indicator errors/warnings. This is a fast, static
-    structural check only (no scoring against real data); numeric scoring lives
-    on /score. An empty or placeholder ("Score =") function is reported as a
-    warning (work-in-progress), not a hard error.
+    Runs the full custom-metadata validator: structural checks, hierarchy
+    integrity, per-parent weight semantics, and each indicator's ScoreFunction
+    (through the score-function parser). Returns structured per-item
+    errors/warnings. Static check only (no scoring against real data); numeric
+    scoring lives on /score, which gates on this same validator.
     """
     try:
         data = request.get_json()
@@ -631,57 +631,32 @@ def validate_configuration():
         metadata = data.get('metadata')
 
         if not isinstance(metadata, list):
-            return jsonify({"success": False, "error": "Metadata must be a list"}), 400
+            return jsonify({"success": False, "error": "metadata must be a list"}), 400
 
-        errors = []
-        warnings = []
-
-        for item in metadata:
-            if not isinstance(item, dict) or item.get("ItemType") != "Indicator":
-                continue
-
-            indicator_code = item.get("IndicatorCode") or item.get("ItemCode") or ""
-            score_function = item.get("ScoreFunction", "")
-
-            if not isinstance(score_function, str):
-                errors.append({
-                    "indicatorCode": indicator_code,
-                    "message": "ScoreFunction must be a string",
-                    "position": None,
-                })
-                continue
-
-            # Empty / placeholder ("Score =") -> incomplete, surfaced as a warning
-            # so the builder can validate work-in-progress without hard failures.
-            compact = "".join(score_function.split())
-            if compact in ("", "Score="):
-                warnings.append({
-                    "indicatorCode": indicator_code,
-                    "message": "Score function is empty or incomplete",
-                })
-                continue
-
-            dataset_codes = item.get("DatasetCodes") or []
-            valid_dataset_codes = set(dataset_codes) if dataset_codes else None
-
-            try:
-                validate_score_function(score_function, valid_dataset_codes)
-            except ScoreFunctionValidationError as e:
-                errors.append({
-                    "indicatorCode": indicator_code,
-                    "message": str(e),
-                    "position": e.position,
-                })
-
-        return jsonify({
-            "success": True,
-            "valid": len(errors) == 0,
-            "errors": errors,
-            "warnings": warnings,
-        })
+        # Run the real validator: structural + hierarchy + per-parent weight
+        # semantics + score-function checks. Returns structured errors/warnings.
+        result = validate_custom_metadata(
+            metadata,
+            validate_score_functions=True
+        )
+        return jsonify({"success": True, **result.to_dict()})
     except Exception as e:
         logger.error(f"Error validating configuration: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
+
+
+@customize_bp.route("/weights-config", methods=["GET"])
+def weights_config():
+    """Expose the custom-weights UI feature flag to the builder client.
+
+    UI-only: the scoring engine and validator always honor stored weights
+    regardless of this flag. No authentication required (the builder is
+    accessible to anonymous users).
+    """
+    return jsonify({
+        "success": True,
+        "custom_weights_enabled": bool(app.config.get("CUSTOM_WEIGHTS_ENABLED", False)),
+    })
 
 @customize_bp.route("/update/<config_id>", methods=["PUT"])
 @owner_or_admin_required

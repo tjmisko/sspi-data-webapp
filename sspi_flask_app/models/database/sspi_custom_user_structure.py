@@ -19,7 +19,10 @@ class SSPICustomUserStructure(MongoWrapper):
         "description": "Optional description",  # Optional, max 1000 chars
         "username": "",  # REQUIRED - enforces ownership
         "public": False,  # Boolean
-        "metadata": [...],  # Array of SSPI metadata items (same format as item_details())
+        "metadata": [...],  # Array of SSPI metadata items (same format as item_details()).
+                            # Each non-root item may carry an optional "Weight"
+                            # (number in [0, 1]): a per-parent normalized weight.
+                            # Absent => engine uses equal 1/n for that sibling set.
         "actions": [...],  # Array of actions exported from action history
         "created_at": "2024-01-01T00:00:00Z",
         "updated_at": "2024-01-01T00:00:00Z"
@@ -157,6 +160,21 @@ class SSPICustomUserStructure(MongoWrapper):
                 raise InvalidDocumentFormatError(
                     f"'metadata[{i}].ItemType' must be one of {valid_types} (document {document_number})"
                 )
+
+            # Optional per-parent normalized weight. Absent is valid (engine
+            # falls back to equal 1/n). When present it must be a number in
+            # [0, 1]. Semantic checks (all-or-none per parent, sibling sum == 1)
+            # live in metadata_validator.validate_hierarchy, not here.
+            if "Weight" in item and item["Weight"] is not None:
+                weight = item["Weight"]
+                if isinstance(weight, bool) or not isinstance(weight, (int, float)):
+                    raise InvalidDocumentFormatError(
+                        f"'metadata[{i}].Weight' must be a number (document {document_number})"
+                    )
+                if not (0 <= weight <= 1):
+                    raise InvalidDocumentFormatError(
+                        f"'metadata[{i}].Weight' must be between 0 and 1 (document {document_number})"
+                    )
 
     def validate_timestamps(self, document: dict, document_number: int = 0):
         """Validate timestamp fields."""
