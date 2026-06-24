@@ -41,10 +41,6 @@ from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
     compute_config_hash,
 )
-from sspi_flask_app.api.resources.score_function_validator import (
-    validate_score_function,
-    ScoreFunctionValidationError,
-)
 
 logger = logging.getLogger(__name__)
 
