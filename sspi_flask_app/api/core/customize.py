@@ -557,21 +557,25 @@ def get_empty_structure():
 def get_prebuilt_configuration(config_id):
     """Get a pre-built SSPI configuration."""
     try:
-        # Map of pre-built configurations
-        prebuilt_configs = {
-            'default': 'default-structure',
-            'environment': 'default-structure',  # TODO: Create environment-focused config
-            'economy': 'default-structure'  # TODO: Create economy-focused config
+        # Registry of prebuilt configuration templates.
+        # Maps a public prebuilt id -> the internal structure builder it resolves to.
+        # Add future curated templates here (e.g. 'environment', 'economy') ONLY once a
+        # real, distinct structure exists for them. Stub entries that alias 'default'
+        # are intentionally NOT registered, so the API never hands back a mislabeled
+        # config. Registering a new id here also requires adding a matching card in
+        # routes.py `prebuilt_configurations` so it surfaces on the load page.
+        PREBUILT_CONFIG_REGISTRY = {
+            "default": "default-structure",
         }
 
-        if config_id not in prebuilt_configs:
+        if config_id not in PREBUILT_CONFIG_REGISTRY:
             return jsonify({
                 "success": False,
                 "error": "Pre-built configuration not found"
             }), 404
 
-        # For now, all pre-built configs return default structure
-        # TODO: Create actual pre-built configurations
+        # Currently the only registered template ('default') returns the default
+        # structure. Distinct curated templates would branch on the registry value.
         metadata_items = sspi_metadata.item_details()
         org_details = sspi_metadata.organization_details()
         org_code_to_name = {

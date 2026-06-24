@@ -15,6 +15,11 @@
                         a series of changes to the original SSPI and for running sensitivity testing.
                     </p>
                     <div class="config-flex-container">
+                        {# Prebuilt cards are data-driven: each entry comes from
+                           routes.py `prebuilt_configurations`, backed by the
+                           PREBUILT_CONFIG_REGISTRY in api/core/customize.py. To add a
+                           curated template, register it in both places -- no markup
+                           change is needed here. "Blank" is a separate card below. #}
                         {% for config in prebuilt_configurations %}
                             <div class="config-card selectable-card"
                                  data-config-id="{{ config.id }}"
