@@ -1219,6 +1219,7 @@ def get_chart_data(config_id):
 # ============================================================================
 
 @customize_bp.route("/panel/score/<item_code>", methods=["GET"])
+@owner_or_admin_required
 def get_custom_panel_score(item_code):
     """
     Serve custom scoring results for SSPIPanelChart.
@@ -1245,6 +1246,13 @@ def get_custom_panel_score(item_code):
         }
     """
     try:
+        # Decorator-injected identity; used to scope the config_id metadata
+        # lookup so this route cannot leak another user's stored configuration
+        # metadata. Reading request.user_id fails closed (AttributeError -> 401)
+        # if the decorator did not inject identity.
+        user_id = request.user_id
+        is_admin = getattr(request, "is_admin", False)
+
         config_hash = request.args.get("config_hash")
         config_id = request.args.get("config_id")
 
@@ -1283,8 +1291,14 @@ def get_custom_panel_score(item_code):
         # Get custom metadata for tree building
         custom_metadata = None
         if config_id:
-            # Try to get metadata from sspi_custom_user_structure
-            config = sspi_custom_user_structure.find_by_config_id(config_id)
+            # Scope the lookup to the requesting user (admins bypass) so a
+            # non-owner who passes another user's config_id does not receive
+            # that user's stored metadata. A non-owner gets None here and falls
+            # through to the inferred-metadata branch below, avoiding an
+            # existence oracle (no distinct "not yours" vs "not found" signal).
+            config = sspi_custom_user_structure.find_by_config_id(
+                config_id, username=user_id, is_admin=is_admin
+            )
             if config:
                 custom_metadata = config.get("metadata", [])
 
@@ -1351,6 +1365,8 @@ def get_custom_panel_score(item_code):
             "countryGroupMap": country_group_map
         })
 
+    except AttributeError:
+        return jsonify({"success": False, "error": "No user_id in request"}), 401
     except Exception as e:
         logger.error(f"Error serving custom panel data for {item_code}: {str(e)}")
         import traceback
