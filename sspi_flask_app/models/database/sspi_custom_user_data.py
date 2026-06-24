@@ -6,20 +6,23 @@ import re
 
 class SSPICustomUserData(MongoWrapper):
     """
-    MongoDB wrapper for custom SSPI scoring results data.
-    
-    Stores cached scoring results from custom user-defined SSPI structures 
-    to avoid recalculating scores every time a chart is loaded.
+    LEGACY MongoDB wrapper for custom SSPI scoring results, keyed by ``config_id``.
+
+    This collection is no longer on the hot read path. The live caches are
+    ``sspi_custom_item_data`` (flat scores) and ``sspi_custom_panel_data``
+    (line-chart data), both keyed by ``config_hash`` (a 32-char SHA-256 prefix)
+    rather than ``config_id``. This class is retained only for back-compatibility;
+    prefer the ``config_hash``-keyed caches for new code.
     """
-    
+
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
         Validates custom scoring data document format.
-        
-        Expected document format:
+
+        Expected (legacy) document format, keyed by ``config_id``:
         {
             "config_id": "unique_string_identifier",
-            "country_code": "USA", 
+            "country_code": "USA",
             "year": 2023,
             "item_code": "SSPI|SUS|ECO|BIODIV",
             "item_name": "Biodiversity Protection",
