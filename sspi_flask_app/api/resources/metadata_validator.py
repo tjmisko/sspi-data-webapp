@@ -40,18 +40,43 @@ REQUIRED_FIELDS = {
     "Indicator": {"ItemType", "ItemCode", "ItemName", "IndicatorCode"},
 }
 
+# ---------------------------------------------------------------------------
+# Weight model (per-parent normalized weights)
+# ---------------------------------------------------------------------------
+# `Weight` is an OPTIONAL float carried by any non-root item (Pillar under SSPI,
+# Category under Pillar, Indicator under Category). It is interpreted as a
+# *per-parent normalized weight*: the weights of the siblings under a given
+# parent are normalized to sum to 1.0 by the scoring engine
+# (FastCustomSSPI._build_score_matrix). When NO sibling in a set carries a
+# `Weight`, the engine falls back to equal `1/n` weighting — i.e. absent ==
+# today's behavior, so omitting weights is a pure no-op.
+#
+# Ownership of the `Weight` rules across tasks:
+#   - F1 (this file): adds `Weight` to the hash/change-detection allowlists and
+#     a permissive structure typecheck. It does NOT change scoring math.
+#   - F2 (fast_custom_scoring): reads `Weight` and normalizes per parent.
+#   - F3 (validate_hierarchy): semantic validation (all-or-none per parent,
+#     sum-to-1 within tolerance, each in [0, 1]).
+# The SSPI root is never weighted.
+
 # Fields that affect scoring (used for change detection)
-# Only ScoreFunction, ItemCode (indicator code), and DatasetCodes trigger recomputation
-# Goalposts are embedded in the ScoreFunction itself, not tracked separately
+# ScoreFunction, ItemCode (indicator code), DatasetCodes, and Weight trigger
+# recomputation. Goalposts are embedded in the ScoreFunction itself.
+# NOTE: weights also live on Pillars/Categories, which compute_indicator_hash
+# (indicator-scoped) cannot see; pillar/category weight edits are caught by
+# compute_config_hash (config-scoped) below, which now includes Weight.
 SCORING_RELEVANT_FIELDS = frozenset({
     "ItemCode",
     "DatasetCodes",
     "ScoreFunction",
+    "Weight",
 })
 
 # Fields that matter for config hash computation (structure + scoring)
 # These fields determine whether two configs are functionally equivalent
 # Excludes display-only fields like Description, Footnote, Policy, etc.
+# `Weight` MUST be here: two configs identical except for weights would
+# otherwise collide on the same hash and serve each other's cached scores.
 CONFIG_HASH_FIELDS = frozenset({
     # Structure fields (all item types)
     "ItemType",
@@ -69,6 +94,8 @@ CONFIG_HASH_FIELDS = frozenset({
     # Scoring fields (indicators)
     "DatasetCodes",
     "ScoreFunction",
+    # Per-parent normalized weight (optional; absent => equal 1/n)
+    "Weight",
 })
 
 
