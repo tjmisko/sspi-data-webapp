@@ -20,6 +20,13 @@ from sspi_flask_app.api.resources.score_function_validator import (
     ScoreFunctionValidationError,
     TokenType,
     MAX_SCORE_FUNCTION_LENGTH,
+    Assignment,
+    BinaryOp,
+    UnaryOp,
+    NumberLiteral,
+    DatasetRef,
+    GoalpostVar,
+    FunctionCall,
 )
 
 
@@ -539,4 +546,197 @@ class TestNormalization:
         assert result is not None
         # Normalized should work when executed
         score = safe_eval(result, {"DATASET_X": 50})
+        assert score == 0.5
+
+
+# =============================================================================
+# Parser / AST Tests (whitelist-by-construction grammar, no exec)
+# =============================================================================
+
+class TestParserAST:
+    """Test that validation builds the expected AST by construction."""
+
+    def test_validate_populates_ast(self):
+        """Validation should attach a parsed Assignment AST."""
+        result = validate_score_function("Score = goalpost(DATASET_X, 0, 1)")
+        assert isinstance(result.ast, Assignment)
+        assert result.ast.target == "Score"
+
+    def test_simple_goalpost_ast_shape(self):
+        """A simple goalpost call parses to FunctionCall with literal/ref args."""
+        ast = validate_score_function("Score = goalpost(DATASET_X, 0, 100)").ast
+        call = ast.expr
+        assert isinstance(call, FunctionCall)
+        assert call.name == "goalpost"
+        assert len(call.args) == 3
+        assert isinstance(call.args[0], DatasetRef)
+        assert call.args[0].code == "DATASET_X"
+        assert isinstance(call.args[1], NumberLiteral)
+        assert call.args[1].value == 0.0
+        assert isinstance(call.args[2], NumberLiteral)
+        assert call.args[2].value == 100.0
+
+    def test_arithmetic_ast_precedence(self):
+        """`a + b * c` parses with * binding tighter than +."""
+        ast = validate_score_function("Score = goalpost(A_CODE + B_CODE * C_CODE, 0, 1)").ast
+        inner = ast.expr.args[0]  # first arg of goalpost
+        assert isinstance(inner, BinaryOp)
+        assert inner.op == "+"
+        assert isinstance(inner.left, DatasetRef)
+        assert isinstance(inner.right, BinaryOp)
+        assert inner.right.op == "*"
+
+    def test_negative_literal_is_unary_over_number(self):
+        """A '-' is tokenized as an operator, so a signed bound is a UnaryOp over a
+        NumberLiteral. It still evaluates to the negative value."""
+        ast = validate_score_function("Score = goalpost(DATASET_X, -20, 50)").ast
+        bound = ast.expr.args[1]
+        assert isinstance(bound, UnaryOp)
+        assert bound.op == "-"
+        assert isinstance(bound.operand, NumberLiteral)
+        assert bound.operand.value == 20.0
+
+    def test_goalpost_var_node(self):
+        """LowerGoalpost/UpperGoalpost parse to GoalpostVar nodes."""
+        ast = validate_score_function(
+            "Score = goalpost(DATASET_X, LowerGoalpost, UpperGoalpost)"
+        ).ast
+        assert isinstance(ast.expr.args[1], GoalpostVar)
+        assert ast.expr.args[1].name == "LowerGoalpost"
+        assert isinstance(ast.expr.args[2], GoalpostVar)
+        assert ast.expr.args[2].name == "UpperGoalpost"
+
+    def test_nested_aggregator_ast(self):
+        """Nested average parses to nested FunctionCall nodes."""
+        ast = validate_score_function(
+            "Score = average(goalpost(A_CODE, 0, 1), average(goalpost(B_CODE, 0, 1), goalpost(C_CODE, 0, 1)))"
+        ).ast
+        assert ast.expr.name == "average"
+        assert len(ast.expr.args) == 2
+        assert ast.expr.args[1].name == "average"
+
+
+class TestArityValidation:
+    """Functions must be called with the correct number of arguments."""
+
+    @pytest.mark.parametrize("func", [
+        "Score = goalpost(DATASET_X, 0)",            # too few (needs 3)
+        "Score = goalpost(DATASET_X, 0, 1, 2)",      # too many (needs 3)
+        "Score = average()",                          # empty -> parse error
+    ])
+    def test_arity_violations_rejected(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    def test_wrong_arity_message(self):
+        with pytest.raises(ScoreFunctionValidationError) as exc:
+            validate_score_function("Score = goalpost(DATASET_X, 0)")
+        assert "goalpost" in str(exc.value)
+
+    def test_variadic_aggregator_single_arg_ok(self):
+        """average/min/max accept a single argument."""
+        result = validate_score_function("Score = average(goalpost(DATASET_X, 0, 1))")
+        assert result is not None
+
+
+class TestPowExponentBound:
+    """pow() exponent must be a bounded numeric literal."""
+
+    def test_pow_literal_exponent_ok(self):
+        assert validate_score_function("Score = goalpost(pow(DATASET_X, 2), 0, 10)") is not None
+
+    def test_pow_exponent_at_limit_ok(self):
+        assert validate_score_function("Score = goalpost(pow(2, 10), 0, 100000)") is not None
+
+    def test_pow_exponent_over_limit_rejected(self):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function("Score = goalpost(pow(2, 11), 0, 100)")
+
+    def test_pow_dataset_exponent_rejected(self):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function("Score = goalpost(pow(DATASET_A, DATASET_B), 0, 1)")
+
+    def test_pow_expression_exponent_rejected(self):
+        """A non-literal (expression) exponent cannot be pre-validated -> reject."""
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function("Score = goalpost(pow(DATASET_A, DATASET_B + 1), 0, 1)")
+
+
+class TestBoundedOutputProof:
+    """Top-level expression must be provably in [0, 1]."""
+
+    @pytest.mark.parametrize("func", [
+        "Score = DATASET_A",                                    # raw dataset
+        "Score = 0.5",                                          # bare number
+        "Score = goalpost(DATASET_A, 0, 1) + goalpost(DATASET_A, 0, 1)",  # sum of goalposts
+        "Score = goalpost(DATASET_A, 0, 1) * 2",               # scaled goalpost
+        "Score = sqrt(DATASET_A)",                              # non-bounding function
+        "Score = pow(DATASET_A, 2)",                            # non-bounding function
+    ])
+    def test_unbounded_top_level_rejected(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+    @pytest.mark.parametrize("func", [
+        "Score = goalpost(DATASET_A, 0, 1)",
+        "Score = average(goalpost(DATASET_A, 0, 1), goalpost(DATASET_B, 0, 1))",
+        "Score = max(goalpost(DATASET_A, 0, 1), min(goalpost(DATASET_B, 0, 1), goalpost(DATASET_C, 0, 1)))",
+    ])
+    def test_bounded_top_level_accepted(self, func):
+        assert validate_score_function(func) is not None
+
+
+class TestOffGrammarRejection:
+    """Off-grammar tokens are rejected structurally (no blacklist needed)."""
+
+    @pytest.mark.parametrize("func", [
+        "Score = DATASET_A ** 2",      # ** has no production
+        "Score = DATASET_A ^ 2",       # bitwise xor char
+        "Score = DATASET_A % 2",       # modulo char
+        "Score = DATASET_A // 2",      # floor division
+        "Score = DATASET_A == 2",      # comparison
+        "Score = foo(DATASET_A)",      # unknown function name (lowercase)
+        "Score = goalpost(DATASET_A, 0, 1) extra",  # trailing token
+        "Score = goalpost[0]",         # indexing char
+    ])
+    def test_off_grammar_rejected(self, func):
+        with pytest.raises(ScoreFunctionValidationError):
+            validate_score_function(func)
+
+
+class TestASTEvaluationCorrectness:
+    """The AST walk evaluates real score functions to the expected numbers."""
+
+    def test_real_function_division(self):
+        # GTRANS: goalpost(IEA_TCO2EM / WB_POPULN, 7000, 0)  (inverted goalpost)
+        score = validate_and_execute(
+            "Score = goalpost(IEA_TCO2EM / WB_POPULN, 7000, 0)",
+            {"IEA_TCO2EM": 7000, "WB_POPULN": 1},
+        )
+        assert score == 0.0  # value == lower bound (7000) -> 0
+
+    def test_real_function_average(self):
+        # FDEPTH: average of two goalposts
+        score = validate_and_execute(
+            "Score = average(goalpost(WB_CREDIT, 0, 200), goalpost(WB_DPOSIT, 0, 100))",
+            {"WB_CREDIT": 100, "WB_DPOSIT": 50},
+        )
+        assert score == 0.5  # (0.5 + 0.5) / 2
+
+    def test_real_function_pow(self):
+        # FORAID style: max with pow scaling
+        score = validate_and_execute(
+            "Score = max(goalpost(TOTDON * pow(10, 2) / GDPMKT, 0, 1), goalpost(TOTREC, 0, 500))",
+            {"TOTDON": 0.005, "GDPMKT": 1.0, "TOTREC": 250},
+        )
+        # goalpost(0.005*100/1=0.5, 0, 1)=0.5 ; goalpost(250,0,500)=0.5 ; max=0.5
+        assert score == 0.5
+
+    def test_unary_minus_evaluation(self):
+        # goalpost arg with a real unary minus over a dataset ref
+        score = validate_and_execute(
+            "Score = goalpost(-DATASET_X, -100, 0)",
+            {"DATASET_X": 50},
+        )
+        # -50 mapped over [-100, 0] -> 0.5
         assert score == 0.5
