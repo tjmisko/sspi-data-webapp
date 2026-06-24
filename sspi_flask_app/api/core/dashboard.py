@@ -14,6 +14,7 @@ import json
 from flask import (
     Blueprint,
     Response,
+    abort,
     jsonify,
     request,
     render_template,
@@ -222,6 +223,8 @@ def get_dynamic_score_line_data(item_code):
     name_map = {detail["ItemCode"]: detail["ItemName"] for detail in indicator_details}
     active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(item_code)
+    if "Error" in detail:
+        abort(404, description=f"Item code '{item_code}' not found")
     doc_type = detail.get("ItemType", "No Item Type")
     if doc_type == "Indicator":
         item_options = sspi_metadata.indicator_options()
@@ -333,6 +336,8 @@ def get_dataset_panel_data(dataset_code):
     for d in dataset_details:
         dataset_options.append({"datasetCode": d.get("DatasetCode"), "datasetName": d.get("DatasetName")})
     dataset_detail = sspi_metadata.get_dataset_detail(dataset_code)
+    if not dataset_detail:
+        abort(404, description=f"Dataset code '{dataset_code}' not found")
     panel_data_datasets = sspi_panel_data.find({"DatasetCode": dataset_code})
     year_labels = list(range(2000, datetime.now().year + 1))
     group_options = sspi_metadata.country_groups()

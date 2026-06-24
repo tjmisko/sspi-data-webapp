@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, request, jsonify
+from werkzeug.exceptions import HTTPException
 from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -85,6 +86,44 @@ limiter = Limiter(
 )
 assets = Environment()
 
+
+def register_error_handlers(app):
+    """Register app-level error handlers with content negotiation.
+
+    API requests (anything under ``/api/`` or a client that prefers JSON) get a
+    JSON ``{"error": ...}`` body; everyone else gets a minimal HTML page. This
+    converts raw 500 tracebacks from bad codes / unvalidated forms into clean,
+    predictable responses (see issues #266, #896, #242).
+    """
+
+    def prefers_json():
+        if request.path.startswith("/api/"):
+            return True
+        best = request.accept_mimetypes.best_match(["application/json", "text/html"])
+        return best == "application/json"
+
+    def error_response(status_code, message):
+        if prefers_json():
+            return jsonify({"error": message}), status_code
+        return (
+            f"<!doctype html><title>{status_code}</title>"
+            f"<h1>{status_code}</h1><p>{message}</p>",
+            status_code,
+        )
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(error):
+        return error_response(error.code or 500, error.description or error.name)
+
+    # Only swallow unexpected (non-HTTP) exceptions outside debug/testing, so the
+    # interactive debugger and pytest exception propagation keep working there.
+    if not (app.debug or app.testing):
+        @app.errorhandler(Exception)
+        def handle_unexpected_exception(error):
+            app.logger.exception("Unhandled exception")
+            return error_response(500, "Internal Server Error")
+
+
 def init_app(Config):
     # Initialize Core application
     app = Flask(__name__)
@@ -149,6 +188,8 @@ def init_app(Config):
         csrf.exempt(impute_bp)
         app.register_blueprint(client_bp)
         app.register_blueprint(auth_bp)
+
+        register_error_handlers(app)
 
         configure_logging(app)
         if Config.FLASK_ENV == "development":
