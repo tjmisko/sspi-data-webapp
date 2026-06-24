@@ -661,6 +661,19 @@ def update_configuration(config_id):
         # If metadata is being updated, clear the scored_hash since the config changed
         metadata_changed = "metadata" in updates
 
+        # When metadata changes, read the OLD scored_hash BEFORE update_config /
+        # clear_scored_hash mutate the doc (clear_scored_hash $unsets the field),
+        # so we can evict the cache rows that old hash keyed. Owner-scoped fetch
+        # (admins bypass) consistent with the update's ownership check.
+        old_scored_hash = None
+        if metadata_changed:
+            existing = sspi_custom_user_structure.find_by_config_id(
+                config_id,
+                username=user_id,
+                is_admin=getattr(request, "is_admin", False),
+            )
+            old_scored_hash = existing.get("scored_hash") if existing else None
+
         # Update configuration
         success = sspi_custom_user_structure.update_config(
             config_id=config_id,
@@ -678,6 +691,18 @@ def update_configuration(config_id):
         if metadata_changed:
             sspi_custom_user_structure.clear_scored_hash(config_id)
             logger.info(f"Cleared scored_hash for config {config_id} due to metadata change")
+            # Evict the stale config_hash-keyed cache rows for the OLD scored_hash
+            # so the changed config re-scores instead of serving outdated results.
+            # Only metadata changes invalidate scoring; name/description/actions
+            # edits skip this block and leave the cache intact.
+            if old_scored_hash:
+                cleared_item = sspi_custom_item_data.clear_by_hash(old_scored_hash)
+                cleared_panel = sspi_custom_panel_data.clear_by_hash(old_scored_hash)
+                logger.info(
+                    f"Evicted custom cache for old scored_hash {old_scored_hash[:8]}... "
+                    f"({cleared_item} item rows, {cleared_panel} panel rows) "
+                    f"on metadata change of config {config_id}"
+                )
 
         logger.info(f"Updated configuration {config_id} for user {user_id}")
 
@@ -761,6 +786,17 @@ def delete_configuration(config_id):
     try:
         user_id = current_user.username
 
+        # Read the config's scored_hash BEFORE deletion so we can evict the
+        # config_hash-keyed cache rows it points at. delete_config removes the
+        # structure doc, after which the hash is unrecoverable. Owner-scoped
+        # fetch (admins bypass) consistent with the deletion's ownership check.
+        config = sspi_custom_user_structure.find_by_config_id(
+            config_id,
+            username=user_id,
+            is_admin=getattr(request, "is_admin", False),
+        )
+        scored_hash = config.get("scored_hash") if config else None
+
         # Delete configuration (verifies ownership internally)
         deleted = sspi_custom_user_structure.delete_config(
             config_id=config_id,
@@ -773,11 +809,25 @@ def delete_configuration(config_id):
                 "error": "Configuration not found or access denied"
             }), 404
 
-        # Clear legacy scoring results (sspi_custom_user_data)
-        # Note: sspi_custom_item_data and sspi_custom_panel_data are cached by
-        # config_hash only - no eager deletion on config delete. Cached results
-        # remain available for other configs with the same hash.
+        # Clear legacy scoring results (sspi_custom_user_data, keyed by config_id)
         cleared_legacy = sspi_custom_user_data.clear_config_results(config_id)
+
+        # Evict the config_hash-keyed cache rows for this config's scored_hash.
+        # The cache is shared (multiple config_ids may share one scored_hash);
+        # because it is recomputable, evicting a hash still referenced by another
+        # config only forces a re-score there, which is correctness-safe. Skip
+        # eviction for never-scored configs (no scored_hash means nothing cached).
+        # Best-effort cleanup: the structure delete has already succeeded, so an
+        # eviction error surfaces via the route's 500 handler rather than
+        # rolling back the user-visible deletion.
+        if scored_hash:
+            cleared_item = sspi_custom_item_data.clear_by_hash(scored_hash)
+            cleared_panel = sspi_custom_panel_data.clear_by_hash(scored_hash)
+            logger.info(
+                f"Evicted custom cache for scored_hash {scored_hash[:8]}... "
+                f"({cleared_item} item rows, {cleared_panel} panel rows) "
+                f"on delete of config {config_id}"
+            )
 
         logger.info(f"Deleted configuration {config_id} for user {user_id}")
 
