@@ -30,6 +30,7 @@ from sspi_flask_app.api.resources.scoring_tasks import (
     get_job,
     generate_sse_events,
     JobStatus,
+    ConcurrencyLimitExceeded,
 )
 from sspi_flask_app.api.resources.metadata_validator import (
     validate_custom_metadata,
@@ -1040,6 +1041,10 @@ def score_custom_configuration():
             "stream_url": f"/api/v1/customize/score-stream/{job_id}"
         })
 
+    except ConcurrencyLimitExceeded as e:
+        # Too many active scoring jobs - reject with 429 (not a 500) so the
+        # client can back off and retry.
+        return jsonify({"success": False, "error": str(e)}), 429
     except AttributeError:
         return jsonify({"success": False, "error": "No user_id in request"}), 401
     except Exception as e:

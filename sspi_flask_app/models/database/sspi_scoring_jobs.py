@@ -36,21 +36,23 @@ Document format:
          "data": {...}, "ts": "2026-06-24T..."},
         ...
     ],
-    "created_at": <datetime UTC>,         # BSON datetime (TTL source of truth)
-    "updated_at": <datetime UTC>,
+    "created_at": <datetime UTC>,         # BSON datetime
+    "updated_at": <datetime UTC>,         # bumped on every write (stall reaping)
     "completed_at": <datetime UTC> | null,
+    "expire_at": <datetime UTC>,          # TTL source of truth (created_at + TTL)
     "worker_pid": 12345                   # debugging: which worker ran the thread
 }
 
 Indexes:
 - job_id        - unique
 - user_id       - per-user job listing + cap counts
-- (status, created_at) - evictor / concurrency-cap scans (D2)
-- created_at    - cache management / TTL (TTL index added in D2)
+- (status, created_at) - evictor / concurrency-cap scans
+- created_at    - cache management / eviction scans
+- expire_at     - TTL index (expireAfterSeconds=0), server-driven eviction
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from pymongo import ReturnDocument
 
@@ -229,13 +231,68 @@ class SSPIScoringJobs(MongoWrapper):
         """
         Count jobs currently in an active (non-terminal) status.
 
-        Used by the D2 concurrency cap. Scoped per-user when ``user_id`` is
+        Used by the concurrency cap. Scoped per-user when ``user_id`` is
         given, global otherwise.
         """
         query = {"status": {"$in": list(ACTIVE_STATUS_VALUES)}}
         if user_id is not None:
             query["user_id"] = user_id
         return self._mongo_database.count_documents(query)
+
+    # ==========================================================================
+    # Eviction & Reaping (TTL hardening)
+    # ==========================================================================
+
+    def evict_expired(self) -> int:
+        """
+        Application-side sweep deleting jobs whose ``expire_at`` is in the past.
+
+        Belt-and-suspenders companion to the server-driven TTL index: it makes
+        eviction immediate on activity and works even where the mongod TTL
+        monitor is disabled. Cheap indexed range delete.
+
+        Returns the number of jobs deleted.
+        """
+        now = datetime.now(timezone.utc)
+        deleted = self._mongo_database.delete_many(
+            {"expire_at": {"$lt": now}}
+        ).deleted_count
+        if deleted:
+            logger.info(f"Evicted {deleted} expired scoring jobs")
+        return deleted
+
+    def reap_stalled(self, max_run_seconds: int) -> int:
+        """
+        Flip jobs stuck in an active status past ``max_run_seconds`` to ERROR.
+
+        A worker can die mid-job (the pipeline thread lives in one worker), which
+        would otherwise leave the job active forever and wrongly counting against
+        the concurrency cap. ``max_run_seconds`` should be set comfortably above
+        the worst-case scoring time and the SSE stream timeout.
+
+        Returns the number of jobs reaped.
+        """
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(seconds=max_run_seconds)
+        result = self._mongo_database.update_many(
+            {
+                "status": {"$in": list(ACTIVE_STATUS_VALUES)},
+                "updated_at": {"$lt": cutoff},
+            },
+            {"$set": {
+                "status": "error",
+                "error": "Worker lost or job timed out",
+                "message": "Worker lost or job timed out",
+                "completed_at": now,
+                "updated_at": now,
+            }},
+        )
+        if result.modified_count:
+            logger.warning(
+                f"Reaped {result.modified_count} stalled scoring jobs "
+                f"(active > {max_run_seconds}s)"
+            )
+        return result.modified_count
 
     # ==========================================================================
     # Index Management
@@ -255,9 +312,17 @@ class SSPIScoringJobs(MongoWrapper):
         self._mongo_database.create_index(
             [("status", 1), ("created_at", 1)], name="status_created_at"
         )
-        # Cache management / eviction by age (TTL index added in D2).
+        # Cache management / eviction scans by age.
         self._mongo_database.create_index(
             "created_at", name="created_at_index"
+        )
+        # Server-driven TTL: mongod expires a job once `expire_at` passes.
+        # expireAfterSeconds=0 means "expire exactly at the expire_at instant"
+        # (the per-job TTL offset is baked into expire_at at insert time, so
+        # completed jobs can be kept for a grace window). Docs without an
+        # `expire_at` date are never expired by this index.
+        self._mongo_database.create_index(
+            "expire_at", expireAfterSeconds=0, name="expire_at_ttl"
         )
         logger.info("Created indexes for sspi_scoring_jobs")
 

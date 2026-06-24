@@ -20,7 +20,7 @@ import re
 import secrets
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from threading import Thread
 from typing import Callable
@@ -79,6 +79,34 @@ TERMINAL_STATUSES = frozenset({
     JobStatus.ERROR,
     JobStatus.CANCELLED,
 })
+
+
+# =============================================================================
+# Job Store Configuration (TTL + concurrency cap)
+# =============================================================================
+
+# How long a job document lives before the Mongo TTL index / sweep evicts it.
+JOB_TTL_SECONDS = int(os.environ.get("SCORING_JOB_TTL_SECONDS", 3600))  # 1 hour
+
+# A job stuck in an active status longer than this is reaped to ERROR (the
+# worker running its thread is presumed dead). Must be comfortably above both
+# the worst-case scoring time and the SSE stream timeout (300s).
+JOB_MAX_RUN_SECONDS = int(os.environ.get("SCORING_JOB_MAX_RUN_SECONDS", 900))  # 15 min
+
+# Concurrency caps: how many jobs may be active at once. Each job spawns a
+# daemon thread doing heavy NumPy/Mongo work, so unbounded launches can exhaust
+# a worker.
+MAX_CONCURRENT_JOBS_PER_USER = int(
+    os.environ.get("SCORING_MAX_JOBS_PER_USER", 3)
+)
+MAX_CONCURRENT_JOBS_GLOBAL = int(
+    os.environ.get("SCORING_MAX_JOBS_GLOBAL", 20)
+)
+
+
+class ConcurrencyLimitExceeded(Exception):
+    """Raised when starting a job would exceed a concurrency cap."""
+    pass
 
 
 # =============================================================================
@@ -368,7 +396,29 @@ def start_scoring_job(
 
     Returns:
         job_id for tracking via SSE
+
+    Raises:
+        ConcurrencyLimitExceeded: if the per-user or global active-job cap is hit
     """
+    # Evict expired jobs and reap stalled (dead-worker) jobs first, so neither
+    # blocks new work or wrongly counts against the cap. This also preserves the
+    # old "sweep on new job" trigger now that the dict-based cleanup is gone.
+    sspi_scoring_jobs.evict_expired()
+    sspi_scoring_jobs.reap_stalled(JOB_MAX_RUN_SECONDS)
+
+    # Enforce concurrency caps (counts read from Mongo, so they hold across
+    # workers). There is an inherent check-then-insert race; acceptable for the
+    # modest caps here.
+    if sspi_scoring_jobs.count_active(user_id) >= MAX_CONCURRENT_JOBS_PER_USER:
+        raise ConcurrencyLimitExceeded(
+            f"You already have {MAX_CONCURRENT_JOBS_PER_USER} scoring jobs "
+            f"running. Please wait for one to finish before starting another."
+        )
+    if sspi_scoring_jobs.count_active() >= MAX_CONCURRENT_JOBS_GLOBAL:
+        raise ConcurrencyLimitExceeded(
+            "The server is at capacity for scoring jobs. Please try again shortly."
+        )
+
     # Generate job ID
     job_id = secrets.token_hex(16)
     now = datetime.now(timezone.utc)
@@ -392,6 +442,7 @@ def start_scoring_job(
         "created_at": now,
         "updated_at": now,
         "completed_at": None,
+        "expire_at": now + timedelta(seconds=JOB_TTL_SECONDS),
         "worker_pid": os.getpid(),
     })
     # Build the write-through job object handed to the pipeline thread

@@ -190,3 +190,47 @@ def test_should_reject_missing_job_id(jobs_model):
     del doc["job_id"]
     with pytest.raises(InvalidDocumentFormatError):
         jobs_model.create_job(doc)
+
+
+# =============================================================================
+# TTL eviction & stall reaping (D2)
+# =============================================================================
+
+def test_should_create_expire_at_ttl_index(jobs_model):
+    info = jobs_model._mongo_database.index_information()
+    assert "expire_at_ttl" in info
+    assert info["expire_at_ttl"].get("expireAfterSeconds") == 0
+
+
+def test_should_delete_jobs_older_than_ttl_and_keep_recent(jobs_model):
+    now = datetime.now(timezone.utc)
+    stale = _make_job_doc("stale", status="complete")
+    stale["expire_at"] = now - timedelta(seconds=10)
+    fresh = _make_job_doc("fresh", status="complete")
+    fresh["expire_at"] = now + timedelta(seconds=3600)
+    jobs_model.create_job(stale)
+    jobs_model.create_job(fresh)
+
+    deleted = jobs_model.evict_expired()
+    assert deleted == 1
+    assert jobs_model.get("stale") is None
+    assert jobs_model.get("fresh") is not None
+
+
+def test_should_reap_stalled_active_jobs_to_error(jobs_model):
+    now = datetime.now(timezone.utc)
+    stalled = _make_job_doc("stalled", status="scoring")
+    stalled["updated_at"] = now - timedelta(seconds=10000)
+    stalled["expire_at"] = now + timedelta(seconds=3600)
+    fresh = _make_job_doc("fresh", status="scoring")
+    fresh["updated_at"] = now
+    fresh["expire_at"] = now + timedelta(seconds=3600)
+    jobs_model.create_job(stalled)
+    jobs_model.create_job(fresh)
+
+    reaped = jobs_model.reap_stalled(max_run_seconds=900)
+    assert reaped == 1
+    assert jobs_model.get("stalled")["status"] == "error"
+    assert jobs_model.get("fresh")["status"] == "scoring"
+    # The reaped job no longer counts against the concurrency cap.
+    assert jobs_model.count_active() == 1
