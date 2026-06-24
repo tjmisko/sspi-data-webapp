@@ -328,7 +328,7 @@ class PanelChart {
                 this.hoverRadiusInput.classList.add("invalid-year-input")
                 radius = 15;
             } else {
-                this.endYearInput.classList.remove("invalid-year-input")
+                this.hoverRadiusInput.classList.remove("invalid-year-input")
             }
             this.updateHoverRadius(radius)
             window.observableStorage.setItem('hoverRadius', radius)

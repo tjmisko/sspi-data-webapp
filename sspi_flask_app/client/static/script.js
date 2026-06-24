@@ -1902,7 +1902,7 @@ this.hoverRadiusInput=this.chartOptions.querySelector('.hover-radius')
 this.hoverRadiusInput.value=this.hoverRadius
 this.hoverRadiusInput.addEventListener('change',(event)=>{let radius=this.hoverRadiusInput.value
 if(radius>50||radius<5){this.hoverRadiusInput.classList.add("invalid-year-input")
-radius=15;}else{this.endYearInput.classList.remove("invalid-year-input")}
+radius=15;}else{this.hoverRadiusInput.classList.remove("invalid-year-input")}
 this.updateHoverRadius(radius)
 window.observableStorage.setItem('hoverRadius',radius)})
 const detailsElements=this.chartOptions.querySelectorAll('.chart-options-details')
