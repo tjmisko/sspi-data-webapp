@@ -28,6 +28,7 @@ from sspi_flask_app.models.sspi import FastSSPI
 from sspi_flask_app.api.resources.scoring_tasks import (
     start_scoring_job,
     get_job,
+    cancel_job,
     generate_sse_events,
     JobStatus,
     ConcurrencyLimitExceeded,
@@ -936,6 +937,46 @@ def get_job_status(job_id):
         return jsonify({"success": False, "error": "No user_id in request"}), 401
     except Exception as e:
         logger.error(f"Error getting job status: {str(e)}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
+
+
+@customize_bp.route("/cancel/<job_id>", methods=["POST"])
+@owner_or_admin_required
+def cancel_scoring_job(job_id):
+    """
+    Cancel a running or queued scoring job.
+
+    Requires authentication and ownership of the job. A running job is asked to
+    stop cooperatively at its next stage boundary (the pipeline checks a
+    persisted cancel flag); a queued job is cancelled immediately. Cancelling an
+    already-finished job is a clean no-op (409, not a 500).
+
+    Returns:
+        200 {"success": true, "cancelled": true, "job_id": ...} when cancellable
+        409 {"success": false, "error": "Job already finished"} when terminal
+        404 / 403 for unknown job / wrong owner
+    """
+    try:
+        user_id = current_user.username
+
+        job = get_job(job_id)
+        if not job:
+            return jsonify({"success": False, "error": "Job not found"}), 404
+
+        if job.user_id != user_id:
+            return jsonify({"success": False, "error": "Access denied"}), 403
+
+        cancelled = cancel_job(job_id)
+        if not cancelled:
+            # Already terminal (complete/error/cancelled) - not a server error.
+            return jsonify({"success": False, "error": "Job already finished"}), 409
+
+        return jsonify({"success": True, "cancelled": True, "job_id": job_id})
+
+    except AttributeError:
+        return jsonify({"success": False, "error": "No user_id in request"}), 401
+    except Exception as e:
+        logger.error(f"Error cancelling job: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 

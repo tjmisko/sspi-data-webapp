@@ -317,6 +317,27 @@ class ScoringJob:
             completed_at=completed_at,
         )
 
+    def emit_cancelled(self, message: str = "Cancelled by user"):
+        """Persist a cooperative cancellation and emit its terminal event.
+
+        Uses the same ``error``/``CANCELLED`` wire shape the frontend already
+        handles (and that the SSE generator emits for a CANCELLED job).
+        """
+        self.status = JobStatus.CANCELLED
+        completed_at = datetime.now(timezone.utc)
+        self.completed_at = completed_at.isoformat()
+        self.message = message
+        event = ProgressEvent(
+            event_type="error",
+            data={"message": "Job was cancelled", "code": "CANCELLED"},
+        )
+        self._append_event(
+            event,
+            status=JobStatus.CANCELLED.value,
+            message=message,
+            completed_at=completed_at,
+        )
+
 
 # =============================================================================
 # Job Registry (Mongo-backed)
@@ -505,6 +526,30 @@ def cancel_job(job_id: str) -> bool:
     return True
 
 
+def is_cancel_requested(job_id: str) -> bool:
+    """Return True if a cancel has been requested for the job (reads Mongo).
+
+    Works across workers: the cancel route may run on a different worker than
+    the one executing the pipeline thread.
+    """
+    doc = sspi_scoring_jobs.get(job_id)
+    return bool(doc and doc.get("cancel_requested"))
+
+
+def _abort_if_cancelled(job: ScoringJob) -> bool:
+    """Cooperative cancellation checkpoint for the pipeline.
+
+    If a cancel was requested, transition the job to CANCELLED (terminal) and
+    emit its terminal event, then return True so the caller can stop. Returns
+    False otherwise.
+    """
+    if is_cancel_requested(job.job_id):
+        job.emit_cancelled()
+        logger.info(f"Job {job.job_id} cancelled at stage boundary")
+        return True
+    return False
+
+
 # =============================================================================
 # Metadata Helpers
 # =============================================================================
@@ -619,6 +664,10 @@ def run_scoring_pipeline(
                 {"dropped_count": 0, "scorable_count": scorable_count}
             )
 
+        # Cancellation checkpoint (before validation work)
+        if _abort_if_cancelled(job):
+            return
+
         # =====================================================================
         # Stage 2: Validate Metadata (after filtering dropped indicators)
         # =====================================================================
@@ -711,6 +760,11 @@ def run_scoring_pipeline(
                     job.emit_stage_progress("scoring", current, total)
             # Aggregation and ranking handled after score_custom_configuration returns
 
+        # Cancellation checkpoint (before the heavy vectorized compute - the
+        # most valuable checkpoint, since it precedes the single expensive block)
+        if _abort_if_cancelled(job):
+            return
+
         # Run the scoring pipeline (using fast vectorized implementation)
         all_scores = score_custom_configuration_fast(
             metadata,
@@ -742,6 +796,11 @@ def run_scoring_pipeline(
         # Stage 6: Build Visualizations (Save results)
         # =====================================================================
         job.set_status(JobStatus.SAVING)
+
+        # Cancellation checkpoint (BEFORE any store write, so a cancelled job
+        # never persists partial flat-score / line-data rows for its config_hash)
+        if _abort_if_cancelled(job):
+            return
 
         flat_scores = flatten_scores_for_storage(all_scores)
 
