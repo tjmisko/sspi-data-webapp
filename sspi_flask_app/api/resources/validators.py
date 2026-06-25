@@ -28,15 +28,27 @@ def validate_data_query(raw_query_input:dict):
 
     def validate_query_safety(raw_query_input):
         """
-        Uses _is_safe to check that the query parameters are safe
+        Uses _is_safe to check that the query parameter VALUES are safe.
+
+        Previously this iterated ``enumerate(raw_query_input)``, which for a dict
+        yields ``(index, key)`` -- so ``value`` was always a static field name and
+        the user-supplied values were never inspected, silently disabling the
+        filter. We now validate each value (and each item of list-valued params)
+        and reject operator objects (e.g. ``{"$ne": null}``). (Audit finding F6.)
         """
         if len(raw_query_input.keys()) > 200:
             raise InvalidQueryError("Invalid Query: Too many parameters passed")
-        for key, value in enumerate(raw_query_input):
-            if (type(value) is str or type(value) is int) and not _is_safe(value):
-                raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for {key}: {value}")
-            elif type(value) is list and any([not _is_safe(item) for item in value]):
-                raise InvalidQueryError(f"Invalid Query: Unsafe Parameters Passed for list {key}")
+        for key, value in raw_query_input.items():
+            items = value if isinstance(value, list) else [value]
+            for item in items:
+                if isinstance(item, dict):
+                    raise InvalidQueryError(
+                        f"Invalid Query: operator objects are not allowed for '{key}'"
+                    )
+                if not _is_safe(item):
+                    raise InvalidQueryError(
+                        f"Invalid Query: Unsafe Parameters Passed for '{key}': {item}"
+                    )
         return raw_query_input
 
     return validate_query_safety(raw_query_input)
