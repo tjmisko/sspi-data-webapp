@@ -641,6 +641,7 @@ def get_static_stacked_sspi():
 
 @dashboard_bp.route("/utilities/extrapolate/backward/<int:year>", methods=["POST"])
 @csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
+@admin_required
 def do_backward_extrapolate(year: int):
     """
     Extrapolate backward missing data for a given indicator
@@ -662,6 +663,7 @@ def do_backward_extrapolate(year: int):
 
 @dashboard_bp.route("/utilities/extrapolate/forward/<int:year>", methods=["POST"])
 @csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
+@admin_required
 def do_forward_extrapolate(year: int):
     """
     Extrapolate backward missing data for a given indicator
@@ -683,6 +685,7 @@ def do_forward_extrapolate(year: int):
 
 @dashboard_bp.route("/utilities/interpolate/linear", methods=["POST"])
 @csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
+@admin_required
 def do_linear_interpolate():
     """
     Extrapolate backward missing data for a given indicator
@@ -701,6 +704,7 @@ def do_linear_interpolate():
 
 @dashboard_bp.route("/utilities/panel/levels", methods=["POST"])
 @csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
+@admin_required
 def find_panel_levels():
     """
     Prepare panel data for plotting
@@ -732,6 +736,7 @@ def find_panel_levels():
 
 @dashboard_bp.route("/utilities/panel/plot", methods=["POST"])
 @csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms
+@admin_required
 def prepare_panel_data():
     """
     Prepare panel data for plotting
