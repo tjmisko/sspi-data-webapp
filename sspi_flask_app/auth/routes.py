@@ -13,7 +13,7 @@ from flask import (
 from sspi_flask_app.models.usermodel import User
 from sspi_flask_app.models.errors import InvalidDocumentFormatError
 from sspi_flask_app.models.database import sspi_user_data
-from sspi_flask_app import login_manager, flask_bcrypt
+from sspi_flask_app import login_manager, flask_bcrypt, limiter
 from sspi_flask_app.auth.decorators import admin_required
 
 from flask_login import (
@@ -36,6 +36,33 @@ auth_bp = Blueprint(
 )
 
 login_manager.login_view = "auth_bp.user_login"
+
+# Strict per-route limits for credential-handling endpoints. The global limiter
+# default (50000/hr) is far too permissive to stop online password guessing, so
+# authentication and account-existence endpoints get their own tight buckets
+# (keyed by remote address). Applied to POST only so rendering the form (GET)
+# is not throttled. (Audit finding F4.)
+AUTH_RATE_LIMIT = "10 per minute;100 per hour"
+
+# Pre-computed bcrypt hash used to equalize response time when the supplied
+# username does not exist, so that "unknown user" and "wrong password" take the
+# same wall-clock time and cannot be distinguished by timing. (Audit finding F11.)
+_DUMMY_PASSWORD_HASH = flask_bcrypt.generate_password_hash(
+    secrets.token_hex(16)
+).decode("utf-8")
+
+
+def verify_user_password(user, password):
+    """Verify a password, always running bcrypt to avoid a timing oracle.
+
+    When ``user`` is ``None`` we still perform a bcrypt comparison against a
+    throwaway hash so the response time matches the wrong-password path, then
+    return ``False``.
+    """
+    if user is None:
+        flask_bcrypt.check_password_hash(_DUMMY_PASSWORD_HASH, password)
+        return False
+    return flask_bcrypt.check_password_hash(user.password, password)
 
 
 @login_manager.user_loader
@@ -154,6 +181,7 @@ class UserLoginForm(FlaskForm):
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit(AUTH_RATE_LIMIT, methods=["POST"])
 def user_login():
     next_url = request.args.get("next", None)
     if current_user.is_authenticated:
@@ -162,9 +190,8 @@ def user_login():
     if not login_form.validate_on_submit():
         return render_template("user-login.html", form=login_form, title="Login")
     user = User.find_by_username(login_form.username.data)
-    if user is None or not flask_bcrypt.check_password_hash(
-        user.password, login_form.password.data
-    ):
+    password_ok = verify_user_password(user, login_form.password.data)
+    if user is None or not password_ok:
         flash("Invalid username or password")
         return render_template(
             "user-login.html",
@@ -191,6 +218,7 @@ def user_login():
 
 
 @auth_bp.route("/admin", methods=["GET", "POST"])
+@limiter.limit(AUTH_RATE_LIMIT, methods=["POST"])
 def admin_login():
     next_url = request.args.get("next", None)
     if current_user.is_authenticated:
@@ -199,9 +227,8 @@ def admin_login():
     if not login_form.validate_on_submit():
         return render_template("login.html", form=login_form, title="Admin Login")
     user = User.find_by_username(login_form.username.data)
-    if user is None or not flask_bcrypt.check_password_hash(
-        user.password, login_form.password.data
-    ):
+    password_ok = verify_user_password(user, login_form.password.data)
+    if user is None or not password_ok:
         flash("Invalid username or password")
         return render_template(
             "login.html",
@@ -234,6 +261,7 @@ def admin_login():
 
 
 @auth_bp.route('/auth/key', methods=['GET', 'POST'])
+@limiter.limit(AUTH_RATE_LIMIT, methods=["POST"])
 def apikey_web():
     if current_user.is_authenticated:
         return Response(current_user.apikey, 200, mimetype='text/plain')
@@ -243,8 +271,8 @@ def apikey_web():
                                form=form,
                                title="Retrieve API Key")
     user = User.find_by_username(form.username.data)
-    if user is None or not flask_bcrypt.check_password_hash(
-            user.password, form.password.data):
+    password_ok = verify_user_password(user, form.password.data)
+    if user is None or not password_ok:
         flash("Invalid username or password")
         return render_template('apikey.html',
                                form=form,
