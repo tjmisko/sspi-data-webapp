@@ -44,6 +44,11 @@ login_manager.login_view = "auth_bp.user_login"
 # is not throttled. (Audit finding F4.)
 AUTH_RATE_LIMIT = "10 per minute;100 per hour"
 
+# Account-existence oracles (username/email availability). Looser than the login
+# bucket so live form validation keeps working, but tight enough to stop bulk
+# enumeration (vs. the useless 50000/hr global default). (Audit finding F10.)
+ENUM_RATE_LIMIT = "30 per minute;300 per hour"
+
 # Pre-computed bcrypt hash used to equalize response time when the supplied
 # username does not exist, so that "unknown user" and "wrong password" take the
 # same wall-clock time and cannot be distinguished by timing. (Audit finding F11.)
@@ -358,9 +363,13 @@ def register_admin():
 
 
 @auth_bp.route("/auth/check-username", methods=["POST"])
+@limiter.limit(ENUM_RATE_LIMIT)
 def check_username():
     """API endpoint to check if username is available"""
-    username = request.json.get("username", "").strip()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("username", ""), str):
+        return jsonify({"available": False, "message": "Invalid request"}), 400
+    username = data.get("username", "").strip()
 
     if not username:
         return jsonify({"available": False, "message": "Username is required"})
@@ -375,9 +384,13 @@ def check_username():
 
 
 @auth_bp.route("/auth/check-email", methods=["POST"])
+@limiter.limit(ENUM_RATE_LIMIT)
 def check_email():
     """API endpoint to check if email is available"""
-    email = request.json.get("email", "").strip()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("email", ""), str):
+        return jsonify({"available": False, "message": "Invalid request"}), 400
+    email = data.get("email", "").strip()
 
     if not email:
         return jsonify({"available": False, "message": "Email is required"})
