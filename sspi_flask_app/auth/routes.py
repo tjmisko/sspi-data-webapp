@@ -107,7 +107,14 @@ class UpdatePasswordForm(FlaskForm):
 
 class RegisterForm(FlaskForm):
     username = StringField(
-        validators=[InputRequired(), Length(min=6, max=20)],
+        validators=[
+            InputRequired(),
+            Length(min=6, max=20),
+            Regexp(
+                r"^[A-Za-z0-9_]+$",
+                message="Username may only contain letters, numbers, and underscores.",
+            ),
+        ],
         render_kw={"placeholder": "Username"},
         label="Username",
     )

@@ -74,7 +74,7 @@
         <script>
           document.addEventListener('DOMContentLoaded', function() {
             {% for message in messages %}
-              window.notifications.info('{{ message | safe }}');
+              window.notifications.info({{ message | tojson }});
             {% endfor %}
           });
         </script>
