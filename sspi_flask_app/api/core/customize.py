@@ -65,6 +65,11 @@ def compute_metadata_counts(metadata: list) -> dict:
     dataset_codes = set()
 
     for item in metadata:
+        # Defensive: skip malformed items here (strict validation/rejection
+        # happens in create_config -> validate_metadata). Avoids a 500 when an
+        # item is not a dict or DatasetCodes is not a list. (Audit finding F16.)
+        if not isinstance(item, dict):
+            continue
         item_type = item.get("ItemType", "")
         if item_type == "Pillar":
             counts["pillar_count"] += 1
@@ -72,9 +77,11 @@ def compute_metadata_counts(metadata: list) -> dict:
             counts["category_count"] += 1
         elif item_type == "Indicator":
             counts["indicator_count"] += 1
-            # Count datasets from indicators
-            for code in item.get("DatasetCodes", []):
-                dataset_codes.add(code)
+            # Count datasets from indicators (guard against non-list DatasetCodes)
+            dataset_codes_field = item.get("DatasetCodes", [])
+            if isinstance(dataset_codes_field, list):
+                for code in dataset_codes_field:
+                    dataset_codes.add(code)
 
     counts["dataset_count"] = len(dataset_codes)
     return counts
@@ -374,8 +381,8 @@ def save_configuration():
     except LimitExceededError as e:
         logger.warning(f"User {current_user.username} exceeded config limit: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 429
-    except ValueError as e:
-        logger.error(f"Validation error saving configuration: {str(e)}")
+    except (ValueError, InvalidDocumentFormatError) as e:
+        logger.warning(f"Validation error saving configuration: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         import traceback

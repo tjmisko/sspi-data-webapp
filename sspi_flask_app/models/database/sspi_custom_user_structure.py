@@ -1,6 +1,7 @@
 from sspi_flask_app.models.database.mongo_wrapper import MongoWrapper
 from sspi_flask_app.models.errors import InvalidDocumentFormatError, LimitExceededError
 from datetime import datetime, timezone
+import json
 import secrets
 import re
 
@@ -33,6 +34,12 @@ class SSPICustomUserStructure(MongoWrapper):
     """
 
     MAX_CONFIGS_PER_USER = 100
+    # Per-config metadata bounds. The full SSPI structure is a few hundred items,
+    # so these are generous; they exist to stop storage-exhaustion via padded or
+    # runaway configs (there is no per-field whitelist, so arbitrary keys would
+    # otherwise be stored verbatim up to MongoDB's 16 MB doc limit). (Finding F9.)
+    MAX_METADATA_ITEMS = 5000
+    MAX_METADATA_BYTES = 4 * 1024 * 1024  # 4 MB serialized
 
     def validate_document_format(self, document: dict, document_number: int = 0):
         """
@@ -141,6 +148,27 @@ class SSPICustomUserStructure(MongoWrapper):
         if not isinstance(metadata, list):
             raise InvalidDocumentFormatError(
                 f"'metadata' must be a list (document {document_number})"
+            )
+
+        # Bound item count and total serialized size to prevent storage
+        # exhaustion via oversized/padded configs. (Audit finding F9.)
+        if len(metadata) > self.MAX_METADATA_ITEMS:
+            raise LimitExceededError(
+                f"Configuration metadata exceeds the maximum of "
+                f"{self.MAX_METADATA_ITEMS} items"
+            )
+        try:
+            serialized_bytes = len(
+                json.dumps(metadata, default=str).encode("utf-8")
+            )
+        except (TypeError, ValueError):
+            raise InvalidDocumentFormatError(
+                f"'metadata' must be JSON-serializable (document {document_number})"
+            )
+        if serialized_bytes > self.MAX_METADATA_BYTES:
+            raise LimitExceededError(
+                f"Configuration metadata exceeds the maximum size of "
+                f"{self.MAX_METADATA_BYTES // (1024 * 1024)} MB"
             )
 
         # Basic structure validation - each item should be a dict with ItemType

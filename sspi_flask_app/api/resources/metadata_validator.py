@@ -590,7 +590,13 @@ def canonicalize_metadata(metadata: list[dict]) -> list[dict]:
     return [canonicalize_item(item) for item in canonical]
 
 
-def canonicalize_item(item: dict, filter_fields: bool = True) -> dict:
+# Maximum nesting depth when canonicalizing metadata for hashing. Real configs
+# are shallow; this bounds recursion so a deeply-nested attacker payload raises a
+# controlled error instead of consuming the stack/CPU (RecursionError). (F15.)
+MAX_CANONICALIZE_DEPTH = 64
+
+
+def canonicalize_item(item: dict, filter_fields: bool = True, _depth: int = 0) -> dict:
     """
     Normalize a single metadata item for consistent hashing.
 
@@ -602,7 +608,11 @@ def canonicalize_item(item: dict, filter_fields: bool = True) -> dict:
     Args:
         item: Metadata item dictionary
         filter_fields: If True, only include fields in CONFIG_HASH_FIELDS
+        _depth: Internal recursion-depth counter (do not set directly)
     """
+    if _depth > MAX_CANONICALIZE_DEPTH:
+        raise ValueError("Metadata nesting exceeds the maximum allowed depth")
+
     canonical = {}
 
     for key in sorted(item.keys()):
@@ -610,13 +620,15 @@ def canonicalize_item(item: dict, filter_fields: bool = True) -> dict:
         if filter_fields and key not in CONFIG_HASH_FIELDS:
             continue
         value = item[key]
-        canonical[key] = canonicalize_value(value)
+        canonical[key] = canonicalize_value(value, _depth=_depth + 1)
 
     return canonical
 
 
-def canonicalize_value(value: Any) -> Any:
-    """Recursively canonicalize a value."""
+def canonicalize_value(value: Any, _depth: int = 0) -> Any:
+    """Recursively canonicalize a value (depth-bounded)."""
+    if _depth > MAX_CANONICALIZE_DEPTH:
+        raise ValueError("Metadata nesting exceeds the maximum allowed depth")
     if value is None:
         return None
     elif isinstance(value, bool):
@@ -636,9 +648,9 @@ def canonicalize_value(value: Any) -> Any:
             return sorted(value)
         else:
             # Preserve order for numeric and mixed lists (like TreeIndex)
-            return [canonicalize_value(v) for v in value]
+            return [canonicalize_value(v, _depth=_depth + 1) for v in value]
     elif isinstance(value, dict):
-        return canonicalize_item(value)
+        return canonicalize_item(value, _depth=_depth + 1)
     else:
         # Fallback: convert to string
         return str(value)
