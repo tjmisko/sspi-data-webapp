@@ -88,17 +88,17 @@ class UpdatePasswordForm(FlaskForm):
         label="Username",
     )
     oldpassword = PasswordField(
-        validators=[InputRequired(), Length(min=4, max=20)],
+        validators=[InputRequired(), Length(min=4, max=128)],
         render_kw={"placeholder": "Old Password"},
         label="Old Password",
     )
     newpassword = PasswordField(
-        validators=[InputRequired(), Length(min=4, max=20)],
+        validators=[InputRequired(), Length(min=8, max=128)],
         render_kw={"placeholder": "New Password"},
         label="New Password",
     )
     newpasswordconfirm = PasswordField(
-        validators=[InputRequired(), Length(min=4, max=20)],
+        validators=[InputRequired(), Length(min=8, max=128)],
         render_kw={"placeholder": "Confirm Password"},
         label="Confirm Password",
     )
@@ -162,7 +162,7 @@ class LoginForm(FlaskForm):
         label="Username",
     )
     password = PasswordField(
-        validators=[InputRequired(), Length(min=4, max=20)],
+        validators=[InputRequired(), Length(min=4, max=128)],
         render_kw={"placeholder": "Password"},
         label="Password",
     )
@@ -177,7 +177,7 @@ class UserLoginForm(FlaskForm):
         label="Username",
     )
     password = PasswordField(
-        validators=[InputRequired(), Length(min=4, max=20)],
+        validators=[InputRequired(), Length(min=4, max=128)],
         render_kw={"placeholder": "Password"},
         label="Password",
     )
@@ -206,7 +206,7 @@ def user_login():
         )
     login_user(
         user,
-        remember=bool(login_form.remember_me),
+        remember=login_form.remember_me.data,
         duration=app.config["REMEMBER_COOKIE_DURATION"],
     )
 
@@ -253,7 +253,7 @@ def admin_login():
         )
     login_user(
         user,
-        remember=bool(login_form.remember_me),
+        remember=login_form.remember_me.data,
         duration=app.config["REMEMBER_COOKIE_DURATION"],
     )
     if not next_url:
