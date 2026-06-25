@@ -13,9 +13,14 @@ class Config:
     FLASK_ENV = 'development'
     LOG_LEVEL = logging.INFO
     LOG_DIR = path.join(basedir, 'logs')
-    TESTING = True
+    # Secure default: only DevConfig/TestConfig opt into testing/login-disabled.
+    TESTING = False
     SECRET_KEY = environ['SECRET_KEY']
     RELOAD = False
+    # Global backstop on request body size (256 MB). Per-endpoint input bounds
+    # (utilities / customize) do the real work; this just stops absurd payloads
+    # from being buffered. Admin bulk /load dumps stay well under this.
+    MAX_CONTENT_LENGTH = 256 * 1024 * 1024
     STATIC_FOLDER = 'static'
     TEMPLATES_FOLDER = 'templates'
     ASSETS_DEBUG = False
@@ -34,8 +39,18 @@ class Config:
 class ProdConfig(Config):
     FLASK_ENV = 'production'
     DEBUG = False
-    LOG_LEVEL = logging.DEBUG
+    LOG_LEVEL = logging.INFO
     TESTING = False
+    # Cookie hardening (F5): only send cookies over HTTPS, keep them out of JS,
+    # and constrain cross-site sending. The remember-me cookie lives 30 days, so
+    # protecting it in transit and against CSRF matters.
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    PREFERRED_URL_SCHEME = "https"
 
 
 class DevConfig(Config):
