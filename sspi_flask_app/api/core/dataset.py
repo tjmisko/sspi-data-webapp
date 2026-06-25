@@ -6,7 +6,7 @@ from sspi_flask_app.api.core.datasets import (
     dataset_cleaner_registry,
     dataset_collector_registry)
 
-from sspi_flask_app.auth.decorators import admin_required
+from sspi_flask_app.auth.decorators import admin_required, require_bearer_for_writes
 from sspi_flask_app.api.resources.utilities import (
     check_raw_document_set_coverage,
     parse_json,
@@ -23,6 +23,12 @@ dataset_bp = Blueprint(
     template_folder="templates",
     static_folder="static",
 )
+
+# /collect is CSRF-exempt for CLI (Bearer) access; require Bearer auth on POST so
+# an ambient admin session cookie can't be used to forge a cross-site collect
+# (CSRF). GET (the confirmation form/info) is unaffected. (Audit finding F7.)
+dataset_bp.before_request(require_bearer_for_writes)
+
 
 @dataset_bp.route("/collect/<series_code>", methods=["GET", "POST"])
 @csrf.exempt  # API endpoint accessed programmatically (CLI/scripts), not browser forms

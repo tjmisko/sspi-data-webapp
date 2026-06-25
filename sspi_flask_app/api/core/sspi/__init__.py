@@ -2,7 +2,7 @@ import time
 from flask import Blueprint, current_app, Response, session
 from flask_login import login_required, current_user, login_user
 from sspi_flask_app.models.database import sspi_metadata
-from sspi_flask_app.auth.decorators import admin_required
+from sspi_flask_app.auth.decorators import admin_required, require_bearer_for_writes
 
 compute_bp = Blueprint(
     "compute_bp",
@@ -19,6 +19,14 @@ impute_bp = Blueprint(
     static_folder="static",
     url_prefix="/impute",
 )
+
+# These blueprints are CSRF-exempt (programmatic CLI access via Bearer token).
+# Require Bearer auth on state-changing requests so an ambient session cookie
+# cannot be used to forge cross-site writes (CSRF). Internal compute/impute
+# dispatch calls view functions directly (not via HTTP), so this before_request
+# guard does not affect it. (Audit finding F7.)
+compute_bp.before_request(require_bearer_for_writes)
+impute_bp.before_request(require_bearer_for_writes)
 
 _COMPUTE_REGISTRY = {}
 _IMPUTE_REGISTRY = {}

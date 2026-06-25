@@ -205,3 +205,25 @@ def owner_or_admin_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def require_bearer_for_writes():
+    """Blueprint ``before_request`` guard for CSRF-exempt programmatic endpoints.
+
+    State-changing requests (POST/PUT/PATCH/DELETE) must authenticate with a
+    Bearer API key rather than an ambient session cookie. Browsers cannot attach
+    an ``Authorization`` header on cross-site requests, so requiring one makes
+    CSRF impossible on these CSRF-exempt admin endpoints (compute / impute /
+    collect) while leaving the CLI (which sends Bearer) and any GET form/info
+    routes unaffected. (Audit finding F7.)
+
+    Register with ``blueprint.before_request(require_bearer_for_writes)``.
+    """
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return jsonify({
+                "error": "This operation requires Bearer API-key authentication.",
+                "message": "State-changing requests to this endpoint must send an "
+                           "Authorization: Bearer <api_key> header (use the CLI).",
+            }), 403
