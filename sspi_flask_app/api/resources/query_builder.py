@@ -170,22 +170,38 @@ def build_mongo_query(raw_query_input, database=None):
         if country_codes:
             mongo_query["CountryCode"] = {"$in": list(country_codes)}
 
+        # Reasonable bounds for SSPI year data. Used to reject absurd ranges that
+        # would otherwise expand into billions of integers and OOM the worker
+        # before any DB call, and to turn bad input into a clean 400. (F2/F12)
+        MIN_YEAR, MAX_YEAR = 1900, 2100
+
         # Handle Year filtering with time period expansion
         years = set()
 
         # Add individual years
         if raw_query_input["Year"]:
-            years.update([int(y) for y in raw_query_input["Year"]])
+            try:
+                years.update(int(y) for y in raw_query_input["Year"])
+            except (TypeError, ValueError):
+                raise InvalidQueryError("Invalid Query: 'Year' must be numeric")
 
         # Expand and add time periods
         if raw_query_input["TimePeriod"]:
             expanded_years = expand_time_periods(raw_query_input["TimePeriod"])
             years.update(expanded_years)
 
-        # Add year ranges
+        # Add year ranges (bounded to avoid unbounded range() expansion)
         if raw_query_input["YearRangeStart"] and raw_query_input["YearRangeEnd"]:
-            start_year = int(raw_query_input["YearRangeStart"])
-            end_year = int(raw_query_input["YearRangeEnd"])
+            try:
+                start_year = int(raw_query_input["YearRangeStart"])
+                end_year = int(raw_query_input["YearRangeEnd"])
+            except (TypeError, ValueError):
+                raise InvalidQueryError("Invalid Query: year range must be numeric")
+            if not (MIN_YEAR <= start_year <= end_year <= MAX_YEAR):
+                raise InvalidQueryError(
+                    "Invalid Query: year range must satisfy "
+                    f"{MIN_YEAR} <= start <= end <= {MAX_YEAR}"
+                )
             years.update(range(start_year, end_year + 1))
 
         if years:
