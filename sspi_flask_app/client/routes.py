@@ -76,8 +76,7 @@ def get_country_characteristics(country_code):
     })
 
     if sspi_rank_results:
-        sspi_rank_results_sorted = sorted(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"), reverse=True)
-        sspi_rank_data = sspi_rank_results_sorted[0]
+        sspi_rank_data = max(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"))
 
         rank = sspi_rank_data.get("Rank")
         score = sspi_rank_data.get("Score")
@@ -116,8 +115,7 @@ def get_country_characteristics(country_code):
     })
 
     if population_results:
-        population_results_sorted = sorted(population_results, key=lambda x: x.get("Year", 0), reverse=True)
-        population_data = population_results_sorted[0]
+        population_data = max(population_results, key=lambda x: x.get("Year", 0))
         pop_value = population_data.get("Value")
 
         characteristics.append({
@@ -143,8 +141,7 @@ def get_country_characteristics(country_code):
     })
 
     if land_area_results:
-        land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
-        land_area_data = land_area_results_sorted[0]
+        land_area_data = max(land_area_results, key=lambda x: x.get("Year", 0))
         land_area_value = land_area_data.get("Value")
 
         characteristics.append({
@@ -170,8 +167,7 @@ def get_country_characteristics(country_code):
     })
 
     if gdp_per_capita_results:
-        gdp_per_capita_results_sorted = sorted(gdp_per_capita_results, key=lambda x: x.get("Year", 0), reverse=True)
-        gdp_per_capita_data = gdp_per_capita_results_sorted[0]
+        gdp_per_capita_data = max(gdp_per_capita_results, key=lambda x: x.get("Year", 0))
         gdp_pc_value = gdp_per_capita_data.get("Value")
 
         characteristics.append({
