@@ -20,12 +20,27 @@ def collect_who_data(who_indicator_code, **kwargs):
     yield f"Inserted {count} observations into the database."
 
 
-def clean_who_data(raw_data, dataset_code, unit, description):
+def clean_who_data(raw_data, dataset_code, unit, description,
+                   dimension_values=None):
+    """Clean WHO GHO API data into SSPI observation documents.
+
+    dimension_values: optional {field: value} filter used to collapse a
+    disaggregated indicator down to a single series. For example,
+    {"Dim1": "SEX_BTSX"} keeps only the both-sexes total for an indicator
+    that GHO otherwise splits by SEX. Entries that do not match every given
+    filter are skipped. Defaults to no filtering, so undisaggregated
+    indicators are unaffected.
+    """
     cleaned_data_list = []
     for entry in raw_data[0]["Raw"]["value"]:
         if entry["SpatialDimType"] != "COUNTRY":
             continue
         if entry["Value"] == "No data":
+            continue
+        if dimension_values and any(
+            entry.get(field) != value
+            for field, value in dimension_values.items()
+        ):
             continue
         observation = {
             "CountryCode": entry["SpatialDim"],
