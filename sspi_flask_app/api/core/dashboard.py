@@ -153,8 +153,8 @@ def get_dynamic_indicator_line_data(indicator_code):
     if country_query:
         query["CCode"] = {"$in": country_query}
 
-    # Convert cursor to list and check if data exists
-    dynamic_score_data = list(sspi_indicator_dynamic_line_data.find(query))
+    # find() already returns a materialized list
+    dynamic_score_data = sspi_indicator_dynamic_line_data.find(query)
 
     if not dynamic_score_data:
         # No chart data available for this indicator
@@ -437,8 +437,8 @@ def get_dynamic_radar_data(CountryCode):
         },
     ]
 
-    # Execute aggregation pipeline
-    result = list(sspi_dynamic_radar_data.aggregate(pipeline))
+    # Execute aggregation pipeline (already returns a materialized list)
+    result = sspi_dynamic_radar_data.aggregate(pipeline)
 
     if not result:
         return jsonify({"error": f"No radar data found for country {CountryCode}"}), 404
@@ -1056,7 +1056,7 @@ def country_coverage_matrix_data(country_code):
             "Datasets": 1
         }}
     ]
-    imputed_results = list(sspi_imputed_data.aggregate(imputed_pipeline))
+    imputed_results = sspi_imputed_data.aggregate(imputed_pipeline)
 
     # Build lookup for imputed data: (indicator, year) -> {score, datasets}
     imputed_set = {}

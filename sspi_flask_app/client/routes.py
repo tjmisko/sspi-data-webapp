@@ -69,11 +69,11 @@ def get_country_characteristics(country_code):
     characteristics = []
 
     # Query SSPI rank and score (most recent year)
-    sspi_rank_results = list(sspi_dynamic_rank_data.find({
+    sspi_rank_results = sspi_dynamic_rank_data.find({
         "CountryCode": country_code,
         "ItemCode": "SSPI",
         "TimePeriodType": "Single Year"
-    }))
+    })
 
     if sspi_rank_results:
         sspi_rank_results_sorted = sorted(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"), reverse=True)
@@ -110,10 +110,10 @@ def get_country_characteristics(country_code):
         })
 
     # Query population data
-    population_results = list(sspi_clean_api_data.find({
+    population_results = sspi_clean_api_data.find({
         "CountryCode": country_code,
         "DatasetCode": "WB_POPULN"
-    }))
+    })
 
     if population_results:
         population_results_sorted = sorted(population_results, key=lambda x: x.get("Year", 0), reverse=True)
@@ -137,10 +137,10 @@ def get_country_characteristics(country_code):
         })
 
     # Query land area data
-    land_area_results = list(sspi_clean_api_data.find({
+    land_area_results = sspi_clean_api_data.find({
         "CountryCode": country_code,
         "DatasetCode": "WB_LANDAR"
-    }))
+    })
 
     if land_area_results:
         land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
@@ -164,10 +164,10 @@ def get_country_characteristics(country_code):
         })
 
     # Query GDP per capita data
-    gdp_per_capita_results = list(sspi_clean_api_data.find({
+    gdp_per_capita_results = sspi_clean_api_data.find({
         "CountryCode": country_code,
         "DatasetCode": "WB_GDP_PERCAP_CURPRICE_USD"
-    }))
+    })
 
     if gdp_per_capita_results:
         gdp_per_capita_results_sorted = sorted(gdp_per_capita_results, key=lambda x: x.get("Year", 0), reverse=True)
