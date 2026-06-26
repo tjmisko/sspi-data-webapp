@@ -553,6 +553,12 @@ def get_static_pillar_stack(pillar_code):
     labels = []
     code_map = {}
     pillar_name = ""
+    # Preload every (indicator, country) rank once instead of one find_one per
+    # indicator per country inside the nested loop below. First match wins, to
+    # mirror the previous find_one's natural-order selection.
+    rank_map = {}
+    for r in sspi_static_rank_data.find({}, {"_id": 0}):
+        rank_map.setdefault((r["ICode"], r["CCode"]), r["Rank"])
     for i, cou in enumerate(country_codes):
         cou_data = sspi_static_data_2018.find({"CountryCode": cou}, {"_id": 0})
         cou_sspi = SSPI(item_details, cou_data, strict_year=False)
@@ -572,9 +578,7 @@ def get_static_pillar_stack(pillar_code):
             for ind_code in category.indicator_codes:
                 indicator = cou_sspi.get_item(ind_code)
                 dataset = {}
-                indicator_rank = sspi_static_rank_data.find_one(
-                    {"ICode": indicator.code, "CCode": cou}, {"_id": 0}
-                )["Rank"]
+                indicator_rank = rank_map[(indicator.code, cou)]
                 data = [None] * len(pillar.category_codes)
                 n_indicators = len(category.indicator_codes)
                 dataset["CatCode"] = category.code
@@ -808,6 +812,9 @@ def prepare_panel_data():
             return jsonify({"error": "Too many series levels to display"})
         yield "================\n"
         count = 1
+        # Country->groups is invariant across every series and country here, so
+        # fetch the precomputed map once instead of scanning per country.
+        country_group_map = sspi_metadata.country_group_map()
         for series in series_group_list:
             min_year = 2000
             max_year = datetime.now().year
@@ -821,7 +828,7 @@ def prepare_panel_data():
             yield "================\n"
             for cou, document in series["Datasets"].items():
                 document = sorted(document, key=lambda x: x["time_id"])
-                group_list = sspi_metadata.get_country_groups(cou)
+                group_list = country_group_map.get(cou, [])
                 year = [None] * len(label_list)
                 value = [None] * len(label_list)
                 data = [None] * len(label_list)
@@ -2219,11 +2226,21 @@ def get_country_characteristics(country_code):
             else:
                 return f"{value:,.0f}"
 
-    # Query population data (most recent year)
-    population_results = sspi_clean_api_data.find({
+    # Fetch population, land area, and GDP-per-capita in a single round-trip,
+    # then bucket by DatasetCode. Each block below keeps its original
+    # most-recent-year selection logic unchanged.
+    characteristic_datasets = ["WB_POPULN", "WB_LANDAR", "WB_GDP_PERCAP_CURPRICE_USD"]
+    characteristic_results = {ds: [] for ds in characteristic_datasets}
+    for characteristic_doc in sspi_clean_api_data.find({
         "CountryCode": country_code,
-        "DatasetCode": "WB_POPULN"
-    })
+        "DatasetCode": {"$in": characteristic_datasets}
+    }):
+        bucket = characteristic_results.get(characteristic_doc.get("DatasetCode"))
+        if bucket is not None:
+            bucket.append(characteristic_doc)
+
+    # Population data (most recent year)
+    population_results = characteristic_results["WB_POPULN"]
     # Sort by year and get most recent
     population_data = None
     if population_results:
@@ -2254,11 +2271,8 @@ def get_country_characteristics(country_code):
             "available": False
         })
 
-    # Query land area data (most recent year)
-    land_area_results = sspi_clean_api_data.find({
-        "CountryCode": country_code,
-        "DatasetCode": "WB_LANDAR"
-    })
+    # Land area data (most recent year)
+    land_area_results = characteristic_results["WB_LANDAR"]
     # Sort by year and get most recent
     land_area_data = None
     if land_area_results:
@@ -2289,11 +2303,8 @@ def get_country_characteristics(country_code):
             "available": False
         })
 
-    # Query GDP per capita data (most recent year)
-    gdp_per_capita_results = sspi_clean_api_data.find({
-        "CountryCode": country_code,
-        "DatasetCode": "WB_GDP_PERCAP_CURPRICE_USD"
-    })
+    # GDP per capita data (most recent year)
+    gdp_per_capita_results = characteristic_results["WB_GDP_PERCAP_CURPRICE_USD"]
     # Sort by year and get most recent
     gdp_per_capita_data = None
     if gdp_per_capita_results:
