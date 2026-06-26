@@ -1972,7 +1972,6 @@ def fast_score():
     order_map_literal = {"$literal": indicator_order_map}
     min_year = 2000
     max_year = 2023
-    order_map_literal = {"$literal": indicator_order_map}
     pipeline = [
         {
             "$match": {
@@ -2087,15 +2086,6 @@ def fast_score():
     score_cube = scores.reshape(n_countries, n_years, n_items)
     score_cube_T = np.transpose(score_cube, (2, 0, 1))
     score_list = score_cube_T.reshape(n_items * n_countries, n_years)
-    multi_index = pd.MultiIndex.from_tuples(
-        [(i, c) for i in item_codes for c in country_codes],  # item outer, country inner
-        names=["ItemCode", "CountryCode"]
-    )
-    df = pd.DataFrame(
-        score_list,
-        index=multi_index,
-        columns=np.arange(min_year, max_year + 1)
-    )
     return parse_json(score_list)
 
 
