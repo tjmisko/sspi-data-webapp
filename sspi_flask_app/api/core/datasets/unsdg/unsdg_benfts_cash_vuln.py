@@ -25,8 +25,6 @@ def clean_unsdg_benfts_cash_vuln():
     cleaned_data = filter_sdg(
         extracted_data, {"SI_COV_VULN": "UNSDG_BENFTS_CASH_VULN"}, sex="BOTHSEX",
     )
-    for obs in cleaned_data:
-        obs["DatasetCode"] = "UNSDG_BENFTS_CASH_VULN"
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "UNSDG_BENFTS_CASH_VULN")
     return parse_json(cleaned_data)

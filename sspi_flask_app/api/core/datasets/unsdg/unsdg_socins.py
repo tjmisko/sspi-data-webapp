@@ -25,8 +25,6 @@ def clean_unsdg_socins():
     cleaned_data = filter_sdg(
         extracted_data, {"SI_COV_SOCINS": "UNSDG_SOCINS"}, sex="BOTHSEX",
     )
-    for obs in cleaned_data:
-        obs["DatasetCode"] = "UNSDG_SOCINS"
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "UNSDG_SOCINS")
     return parse_json(cleaned_data)
