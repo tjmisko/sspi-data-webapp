@@ -300,6 +300,10 @@ class FastCustomSSPI:
         # Non-indicator items in order: categories, pillars, SSPI
         self.item_codes = self.category_codes + self.pillar_codes + ["SSPI"]
 
+        # Map (child_code, parent_type) -> parent item for O(1) parent lookups,
+        # replacing a full metadata scan per indicator in _build_score_matrix.
+        self._parent_map = self._build_parent_map()
+
         # Build the aggregation matrix
         self.score_matrix = self._build_score_matrix()
 
@@ -471,6 +475,28 @@ class FastCustomSSPI:
         logger.debug(f"Score matrix built with shape {score_matrix.shape}")
         return score_matrix
 
+    def _build_parent_map(self) -> dict:
+        """
+        Precompute a ``{(child_code, parent_type): parent_item}`` lookup using
+        the same child-resolution and first-match-wins ordering that the
+        per-call ``_find_parent`` scan relied on.
+        """
+        parent_map = {}
+        for item in self.metadata:
+            item_type = item.get("ItemType")
+            children = (
+                item.get("IndicatorCodes") or
+                item.get("CategoryCodes") or
+                item.get("PillarCodes") or
+                item.get("Children") or
+                []
+            )
+            for child_code in children:
+                key = (child_code, item_type)
+                if key not in parent_map:
+                    parent_map[key] = item
+        return parent_map
+
     def _find_parent(self, child_code: str, parent_type: str) -> dict | None:
         """
         Find the parent item of a given type for a child code.
@@ -482,19 +508,7 @@ class FastCustomSSPI:
         Returns:
             Parent item dict or None if not found
         """
-        for item in self.metadata:
-            if item.get("ItemType") != parent_type:
-                continue
-            children = (
-                item.get("IndicatorCodes") or
-                item.get("CategoryCodes") or
-                item.get("PillarCodes") or
-                item.get("Children") or
-                []
-            )
-            if child_code in children:
-                return item
-        return None
+        return self._parent_map.get((child_code, parent_type))
 
     def aggregate(self, indicator_scores: np.ndarray) -> np.ndarray:
         """
@@ -650,15 +664,13 @@ def score_indicators_vectorized(
                 f"Scores will be NaN where data is missing."
             )
 
-        # Convert to array of shape (n_datasets, n_countries, n_years)
-        dataset_stack = np.array(dataset_stack)
-
         # Check if this is a simple goalpost function
         is_simple_goalpost = _is_simple_goalpost(score_function_str, dataset_codes)
 
         if is_simple_goalpost and lower_goalpost is not None and upper_goalpost is not None:
-            # Fast path: vectorized goalpost scoring
-            # For simple goalpost, there should be exactly one dataset
+            # Fast path: vectorized goalpost scoring. Only the first dataset is
+            # needed, so index the list directly instead of materializing the
+            # full (n_datasets, n_countries, n_years) stack.
             values = dataset_stack[0]  # shape: (n_countries, n_years)
 
             # Check if inverted (e.g., "Score = goalpost(-DATASET, -100, 0)")
@@ -670,7 +682,9 @@ def score_indicators_vectorized(
 
             logger.debug(f"Scored {indicator_code} using vectorized goalpost")
         else:
-            # Slow path: custom score function evaluation
+            # Slow path: custom score function evaluation. Materialize the 3D
+            # stack only here, where the full array is consumed.
+            dataset_stack = np.array(dataset_stack)
             try:
                 indicator_scores[i] = _apply_custom_score_function(
                     score_function_str,
