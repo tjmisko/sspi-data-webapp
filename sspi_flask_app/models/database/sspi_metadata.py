@@ -952,18 +952,42 @@ class SSPIMetadata(MongoWrapper):
         """
         Returns the list of datasets on which the provided series_code depends
         """
-        series_type = self.get_series_type(series_code)
-        if series_type == "Dataset":
+        # The code lists are constant for the duration of one walk, so fetch them
+        # once here and thread them through the recursion instead of re-querying
+        # Mongo at every node (see the Tier 2 metadata perf brief).
+        dataset_set = set(self.dataset_codes())
+        item_set = set(self.item_codes())
+        indicator_set = set(self.indicator_codes())
+        return self._get_dataset_dependencies(
+            series_code, dataset_set, item_set, indicator_set
+        )
+
+    def _get_dataset_dependencies(
+        self,
+        series_code: str,
+        dataset_set: set,
+        item_set: set,
+        indicator_set: set,
+    ) -> list:
+        """
+        Recursive worker for get_dataset_dependencies. The classification sets are
+        supplied by the public wrapper so this walk issues no repeated global
+        metadata queries. Classification order (Dataset before Item) and the
+        indicator-codes-specific fallback are preserved exactly.
+        """
+        if series_code in dataset_set:
             return [ series_code ]
-        elif series_type == "Item":
+        elif series_code in item_set:
             children = self.get_item_detail(series_code).get("Children", [])
-            if not children and series_code in self.indicator_codes():
+            if not children and series_code in indicator_set:
                 children = self.get_indicator_detail(series_code).get("DatasetCodes", [])
             assert not any([c is None for c in children])
             dataset_dependencies = []
             for c in children:
-                dataset_dependencies = dataset_dependencies + self.get_dataset_dependencies(c)
-            return dataset_dependencies   
+                dataset_dependencies = dataset_dependencies + self._get_dataset_dependencies(
+                    c, dataset_set, item_set, indicator_set
+                )
+            return dataset_dependencies
         else:
             return []
 
@@ -1115,7 +1139,17 @@ class SSPIMetadata(MongoWrapper):
         """
         Returns the list indicator codes on which the provided series_code depends
         """
-        if item_code not in self.item_codes():
+        # item_codes() is constant across the walk; fetch it once and thread it
+        # through the recursion rather than re-querying it at every node.
+        item_set = set(self.item_codes())
+        return self._get_indicator_dependencies(item_code, item_set)
+
+    def _get_indicator_dependencies(self, item_code: str, item_set: set) -> list:
+        """
+        Recursive worker for get_indicator_dependencies. item_set is supplied by the
+        public wrapper so the per-node membership check issues no extra queries.
+        """
+        if item_code not in item_set:
             return []
         item_detail = self.get_item_detail(item_code)
         if not item_detail:
@@ -1127,8 +1161,8 @@ class SSPIMetadata(MongoWrapper):
             assert not any([c is None for c in children])
             item_dependencies = []
             for c in children:
-                item_dependencies += self.get_indicator_dependencies(c)
-            return item_dependencies   
+                item_dependencies += self._get_indicator_dependencies(c, item_set)
+            return item_dependencies
     
     def time_period_details(self) -> list[dict]:
         details = self.find({"DocumentType": "TimePeriodDetail"})
@@ -1159,12 +1193,25 @@ class SSPIMetadata(MongoWrapper):
             "allDatasets": ["UNSDG_TERRST", ...]  # Ordered list
         }
         """
+        # Fetch every active indicator's detail in a single query and index it by
+        # IndicatorCode, instead of issuing one find_one per indicator.
+        detail_map = {}
+        for doc in self.find({
+            "DocumentType": "IndicatorDetail",
+            "Metadata.IndicatorCode": {"$in": active_indicator_codes}
+        }):
+            meta = doc.get("Metadata", {})
+            detail_map[meta.get("IndicatorCode")] = meta
+
         indicator_to_datasets = {}
         dataset_to_indicator = {}
         all_datasets = []
+        # Parallel set mirrors all_datasets so membership is O(1); the list still
+        # carries the ordered, deduplicated output.
+        all_datasets_seen = set()
 
         for indicator_code in active_indicator_codes:
-            detail = self.get_indicator_detail(indicator_code)
+            detail = detail_map.get(indicator_code)
             if not detail:
                 continue
             dataset_codes = detail.get("DatasetCodes", [])
@@ -1176,7 +1223,8 @@ class SSPIMetadata(MongoWrapper):
             indicator_to_datasets[indicator_code] = dataset_codes
             for ds_code in dataset_codes:
                 dataset_to_indicator[ds_code] = indicator_code
-                if ds_code not in all_datasets:
+                if ds_code not in all_datasets_seen:
+                    all_datasets_seen.add(ds_code)
                     all_datasets.append(ds_code)
 
         return {
