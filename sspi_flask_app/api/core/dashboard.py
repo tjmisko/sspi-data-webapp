@@ -2126,6 +2126,7 @@ def get_country_rankings(country_code, item_level):
     # Get item metadata to include item names
     item_details = sspi_metadata.item_details()
     item_name_map = {item["ItemCode"]: item["ItemName"] for item in item_details}
+    item_detail_map = {item["ItemCode"]: item for item in item_details}
     # Filter by item level and enrich with item names
     filtered_data = []
     for doc in ranking_data:
@@ -2133,7 +2134,7 @@ def get_country_rankings(country_code, item_level):
         if not item_code:
             continue
         # Get item detail to check item type
-        item_detail = next((item for item in item_details if item["ItemCode"] == item_code), None)
+        item_detail = item_detail_map.get(item_code)
         if not item_detail:
             continue
         item_type = item_detail.get("ItemType", "").lower()

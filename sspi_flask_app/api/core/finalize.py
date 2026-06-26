@@ -347,7 +347,7 @@ def finalize_sspi_dynamic_radar_data():
             pillar_code = pillar_detail['ItemCode']
 
             # Check if this pillar exists in the aggregated data
-            pillar_item = next((item for item in doc["items"] if item["ICode"] == pillar_code), None)
+            pillar_item = item_map.get(pillar_code)
             if not pillar_item:
                 continue  # Skip if pillar not available for this country-year
 

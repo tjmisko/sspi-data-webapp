@@ -287,6 +287,15 @@ class FastCustomSSPI:
             if item.get("ItemType") == "Pillar"
         ]
 
+        # Code -> index maps for O(1) lookup in the matrix build (codes are
+        # unique per type, so this matches list.index() first-occurrence).
+        self.category_code_to_idx = {
+            code: idx for idx, code in enumerate(self.category_codes)
+        }
+        self.pillar_code_to_idx = {
+            code: idx for idx, code in enumerate(self.pillar_codes)
+        }
+
         # Non-indicator items in order: categories, pillars, SSPI
         self.item_codes = self.category_codes + self.pillar_codes + ["SSPI"]
 
@@ -410,7 +419,7 @@ class FastCustomSSPI:
             category_weight = self._normalized_child_weight(
                 ind_code, category_children
             )
-            category_idx = self.category_codes.index(category_code)
+            category_idx = self.category_code_to_idx[category_code]
             score_matrix[ind_idx, category_idx] = category_weight
 
             pillar = self._find_parent(category_code, "Pillar")
@@ -433,7 +442,7 @@ class FastCustomSSPI:
             pillar_weight = category_weight * self._normalized_child_weight(
                 category_code, pillar_children
             )
-            pillar_idx = self.pillar_codes.index(pillar_code)
+            pillar_idx = self.pillar_code_to_idx[pillar_code]
             score_matrix[ind_idx, n_categories + pillar_idx] = pillar_weight
 
             sspi = self._find_parent(pillar_code, "SSPI")
