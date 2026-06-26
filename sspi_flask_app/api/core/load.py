@@ -28,7 +28,14 @@ def load(database_name):
     is not subject to browser-based CSRF attacks.
     """
     database = lookup_database(database_name)
-    observations_list = json.loads(request.get_json())
+    observations_list = request.get_json()
+    # Back-compat: older/external connectors double-encode the body
+    # (json=json.dumps(obs_lst)), so get_json() yields a JSON string rather
+    # than the list. Decode once more in that case. Current connectors send
+    # the list directly. This shim can be removed once all clients are
+    # confirmed migrated to single-encoding.
+    if isinstance(observations_list, str):
+        observations_list = json.loads(observations_list)
     count = database.insert_many(observations_list)
     message = f"Inserted {count} documents into {database_name}"
     app.logger.info(message)
