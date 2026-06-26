@@ -6,6 +6,10 @@ import click
 import sys
 
 
+_NUMERIC_RE = re.compile(r"^[0-9,.]+$")
+_TOKEN_SPLIT_RE = re.compile(r"([\[\],()\s]+)")
+
+
 def full_name(name):
     if name == "raw":
         return "sspi_raw_api_data"
@@ -21,8 +25,7 @@ def full_name(name):
 
 
 def is_numeric_string(string):
-    pattern = r"^[0-9,.]+$"
-    return bool(re.match(pattern, string))
+    return bool(_NUMERIC_RE.match(string))
 
 
 def echo_pretty(msg):
@@ -33,7 +36,7 @@ def echo_pretty(msg):
         if "error:" in line[0:8] or "problem:" in line[0:9]:
             click.secho(line.split(": ", 1)[1], fg="red")
             continue
-        tokens = re.split(r"([\[\],()\s]+)", line)
+        tokens = _TOKEN_SPLIT_RE.split(line)
         output = []
         for i, t in enumerate(tokens):
             if is_numeric_string(t):

@@ -26,8 +26,6 @@ def clean_unsdg_nrgint():
     filtered_data = filter_sdg(
         extracted_data, idcode_map
     )
-    for obs in filtered_data:
-        obs["DatasetCode"] = "UNSDG_NRGINT"
     sspi_clean_api_data.insert_many(filtered_data)
     sspi_metadata.record_dataset_range(filtered_data, "UNSDG_NRGINT")
     return parse_json(filtered_data)

@@ -71,7 +71,6 @@ def impute_ginipt():
         "only use ISHRAT data to measure income inequality. We use a simple "
         "linear regression model to predict GINIPT from ISHRAT data."
     )
-    lg, ug = sspi_metadata.get_goalposts("GINIPT")
     for obs in ishrat_data:
         obs["FeatureCode"] = "ISHRAT"
     for obs in prediction_input:

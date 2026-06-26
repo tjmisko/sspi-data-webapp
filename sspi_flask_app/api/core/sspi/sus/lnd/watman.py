@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from sspi_flask_app.api.core.sspi import compute_bp
 from sspi_flask_app.api.core.sspi import impute_bp
 from flask_login import login_required
@@ -159,10 +161,15 @@ def impute_watman():
     # Countries missing CWUEFF but having WUSEFF (excluding SGP handled separately)
     missing_cwueff_countries = ["AUS", "BGD", "CAN", "CHE", "CHL", "DEU", "ISL", "LVA", "PER", "PHL", "SVN", "THA"]
     
+    # Group WUSEFF observations by country in a single pass for lookup
+    wuseff_by_country = defaultdict(list)
+    for obs in wuseff_data:
+        wuseff_by_country[obs["CountryCode"]].append(obs)
+
     # Create synthetic CWUEFF for each missing country
     synthetic_cwueff_all = []
     for country in missing_cwueff_countries:
-        country_wuseff = [obs for obs in wuseff_data if obs["CountryCode"] == country]
+        country_wuseff = wuseff_by_country.get(country)
         if country_wuseff:
             synthetic_cwueff = create_synthetic_cwueff(country, country_wuseff)
             synthetic_cwueff_all.extend(synthetic_cwueff)

@@ -44,8 +44,10 @@ def save_all():
     )
 
     def save_iterator(snapshot_directory):
-        for i, database_name in enumerate(sspidb.list_collection_names()):
-            yield f"Saving {database_name} ( {i + 1} / {len(sspidb.list_collection_names())} )\n"
+        database_names = sspidb.list_collection_names()
+        total = len(database_names)
+        for i, database_name in enumerate(database_names):
+            yield f"Saving {database_name} ( {i + 1} / {total} )\n"
             yield from save_database_image(database_name, snapshot_directory)
     return Response(save_iterator(snapshot_directory), mimetype="text/event-stream")
 

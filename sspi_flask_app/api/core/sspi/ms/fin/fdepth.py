@@ -86,7 +86,7 @@ def impute_fdepth():
     )
     imputed_fdepth = []
     for obs in clean_list:
-        if any([inter.get("Imputed", False) for inter in obs["Intermediates"]]):
+        if any(inter.get("Imputed", False) for inter in obs["Intermediates"]):
            imputed_fdepth.append(obs) 
     sspi_imputed_data.insert_many(imputed_fdepth) 
     return parse_json(imputed_fdepth)

@@ -25,8 +25,6 @@ def clean_unsdg_benfts_unemp():
     cleaned_data = filter_sdg(
         extracted_data, {"SI_COV_UEMP": "UNSDG_BENFTS_UNEMP"}, sex="BOTHSEX",
     )
-    for obs in cleaned_data:
-        obs["DatasetCode"] = "UNSDG_BENFTS_UNEMP"
     sspi_clean_api_data.insert_many(cleaned_data)
     sspi_metadata.record_dataset_range(cleaned_data, "UNSDG_BENFTS_UNEMP")
     return parse_json(cleaned_data)

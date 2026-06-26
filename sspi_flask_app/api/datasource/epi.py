@@ -49,8 +49,8 @@ def parse_epi_csv(raw_csv_string: str, dataset_code: str) -> list[dict]:
     ]
     EPI_long["Year"] = pd.to_numeric(EPI_long["Year"], errors='coerce')
     EPI_long.drop(columns=['YearString'], inplace=True)
-    EPI_long.drop(EPI_long[EPI_long['Value'] < 0].index.tolist(), inplace=True)
-    EPI_long.drop(EPI_long[EPI_long['Value'].isna()].index.tolist(), inplace=True)
+    EPI_long.drop(EPI_long[EPI_long['Value'] < 0].index, inplace=True)
+    EPI_long.drop(EPI_long[EPI_long['Value'].isna()].index, inplace=True)
     EPI_long['DatasetCode'] = dataset_code
     EPI_long['Unit'] = 'Index'
     return json.loads(str(EPI_long.to_json(orient="records")))

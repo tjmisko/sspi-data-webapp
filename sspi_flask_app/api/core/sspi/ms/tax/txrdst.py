@@ -26,7 +26,6 @@ def compute_txrdst():
     app.logger.info("Running /api/v1/compute/TXRDST")
     sspi_indicator_data.delete_many({"IndicatorCode": "TXRDST"})
     sspi_incomplete_indicator_data.delete_many({"IndicatorCode": "TXRDST"})
-    lg, ug = sspi_metadata.get_goalposts("TXRDST")
     # Fetch clean datasets
     topten_pretax = sspi_clean_api_data.find({"DatasetCode": "WID_NINCSH_PRETAX_P90P100"})
     bfifty_pretax = sspi_clean_api_data.find({"DatasetCode": "WID_NINCSH_PRETAX_P0P50"})

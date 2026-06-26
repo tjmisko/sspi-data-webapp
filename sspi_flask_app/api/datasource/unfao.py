@@ -30,7 +30,7 @@ def format_fao_data_series(raw_data: list, IndicatorCode: str):
     for raw in raw_data:
         if not len(raw["Area Code (ISO3)"]) == 3:
             continue
-        if any([str(i) in raw["Area Code (ISO3)"] for i in range(0, 10)]):
+        if any(str(i) in raw["Area Code (ISO3)"] for i in range(0, 10)):
             continue
         if not raw["Value"]:
             continue

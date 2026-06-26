@@ -62,7 +62,7 @@ def impute_biodiv():
     unsdg_marine = sspi_clean_api_data.find(
         {"DatasetCode": {"$in": ["UNSDG_MARINE"]}}
     )
-    missing_marine = set(sspi_67) - set([m.get("CountryCode", "") for m in unsdg_marine])
+    missing_marine = set(sspi_67) - set(m.get("CountryCode", "") for m in unsdg_marine)
     reference_class_averages = []
     for country in missing_marine:
         reference_class_averages.extend(
@@ -81,7 +81,7 @@ def impute_biodiv():
     unsdg_terrst = sspi_clean_api_data.find(
         {"DatasetCode": {"$in": ["UNSDG_TERRST"]}}
     )
-    missing_terrst = set(sspi_67) - set([m.get("CountryCode", "") for m in unsdg_terrst])
+    missing_terrst = set(sspi_67) - set(m.get("CountryCode", "") for m in unsdg_terrst)
     for country in missing_terrst:
         reference_class_averages.extend(
             impute_reference_class_average(country, 2000, 2023, "Dataset", "UNSDG_TERRST", unsdg_terrst)
@@ -99,7 +99,7 @@ def impute_biodiv():
     unsdg_frshwt = sspi_clean_api_data.find(
         {"DatasetCode": {"$in": ["UNSDG_FRSHWT"]}}
     )
-    missing_frshwt = set(sspi_67) - set([m.get("CountryCode", "") for m in unsdg_frshwt])
+    missing_frshwt = set(sspi_67) - set(m.get("CountryCode", "") for m in unsdg_frshwt)
     for country in missing_frshwt:
         reference_class_averages.extend(
             impute_reference_class_average(country, 2000, 2023, "Dataset", "UNSDG_FRSHWT", unsdg_frshwt)

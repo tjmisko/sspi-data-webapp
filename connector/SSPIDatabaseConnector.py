@@ -13,6 +13,8 @@ log = logging.getLogger(__name__)
 
 class SSPIDatabaseConnector:
     def __init__(self):
+        basedir = path.abspath(path.dirname(path.dirname(__file__)))
+        load_dotenv(path.join(basedir, '.env'))
         self.remote_token = self.get_token()
         self.local_token = self.get_token(token_name="SSPI_APIKEY_LOCAL")
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
@@ -38,8 +40,6 @@ class SSPIDatabaseConnector:
         self.remote_base = "https://sspi.world"
 
     def get_token(self, token_name="SSPI_APIKEY"):
-        basedir = path.abspath(path.dirname(path.dirname(__file__)))
-        load_dotenv(path.join(basedir, '.env'))
         key = environ.get(token_name)
         if key is None:
             log.error("No API key found in environment variables")

@@ -69,25 +69,26 @@ def filter_wid_csv(dataset_code:str, csv_string: str, country_code: str, percent
     """
     # Define optimized data types for faster parsing and lower memory usage
     dtype_spec = {
-        'variable': 'category',   # Categorical for repeated variables  
+        'variable': 'category',   # Categorical for repeated variables
         'percentile': 'category', # Categorical for repeated percentile
         'year': 'int16',          # Smaller int type for years (handles 1900-2100+)
         'value': 'float32'        # float32 sufficient for most economic data
     }
-    
+
     # Parse CSV with optimizations - only load needed columns (skip country since each CSV is single-country)
     df = pd.read_csv(
-        StringIO(csv_string), 
+        StringIO(csv_string),
         delimiter=';',
         dtype=dtype_spec,
         usecols=['variable', 'percentile', 'year', 'value']
     )
     log.info(f"Loaded {len(df)} rows from WID CSV data for country {country_code}, variable {variable}, percentile {percentile}, years {years}")
-    
+
     # Chain filters efficiently - each filter reduces dataset size for next operation
     # Order matters: most selective filters first
     log.info(f"Initial dataset size: {len(df)} rows")
-    log.debug(f"Available variables in dataset: {sorted(df['variable'].unique().tolist())}")
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug(f"Available variables in dataset: {sorted(df['variable'].unique().tolist())}")
     filtered = df.query('variable == @variable')
     log.info(f"After variable filter ({variable}): {len(filtered)} rows")
     filtered = filtered.query('percentile == @percentile')

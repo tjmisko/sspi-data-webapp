@@ -56,11 +56,7 @@ def extract_sdg(raw_sdg_pivot_data):
                 continue
             if isinstance(value, str) and len(value) > 500:
                 continue
-            valid_identifier = any([
-                isinstance(value, str),
-                isinstance(value, float),
-                isinstance(value, int),
-            ])
+            valid_identifier = isinstance(value, (str, float, int))
             if valid_identifier:
                 series_identifiers[field] = value
         country_data = countries.get(numeric=geoAreaCode)
@@ -109,26 +105,26 @@ def filter_sdg(observations: list[dict], idcode_map: dict, rename_map={}, drop_k
         ]
     filtered_list = []
     for obs in observations:
-        if obs["SDGSeriesCode"] not in idcode_map.keys():
+        if obs["SDGSeriesCode"] not in idcode_map:
             continue
         obs["DatasetCode"] = idcode_map[obs["SDGSeriesCode"]]
         drop_obs = False
         for k, v in kwargs.items():
-            if k not in obs.keys():
+            if k not in obs:
                 continue
             list_test = type(v) is list and obs[k] not in v
-            value_test = type(v) in [str, int, float] and obs[k] != v
+            value_test = type(v) in (str, int, float) and obs[k] != v
             if list_test or value_test:
                 drop_obs = True
                 break
         if drop_obs:
             continue
         for k, v in rename_map.items():
-            if k in obs.keys():
+            if k in obs:
                 obs[v] = obs[k]
                 del obs[k]
         for k in drop_keys:
-            if k in obs.keys():
+            if k in obs:
                 del obs[k]
         filtered_list.append(obs)
     return filtered_list
