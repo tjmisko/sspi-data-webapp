@@ -2,7 +2,11 @@
 
 **Date:** 2026-06-26
 **Branch:** `perf/tier2-metadata-deps` (created off `main`; this doc is the only commit so far)
-**Status:** Not started — this file is the brief.
+**Status:** Done — implemented in commit `perf(metadata): eliminate N+1 query storm
+in dependency walkers`. The three core walkers are refactored; query counts verified
+to drop (33→12, 20→8, 2→1 on the 5-node test fixture) with byte-identical output, and
+`tests/unit` still reports 968 passed / 7 pre-existing errors. The two optional smaller
+wins (`get_child_details`, `get_country_groups`) were left out of scope.
 **Prereq context:** See `docs/python-performance-audit.md` (the full audit). Tier 1 is already
 done and in draft PR #899 on branch `perf/tier1-hot-path-optimizations` — independent of this work.
 
