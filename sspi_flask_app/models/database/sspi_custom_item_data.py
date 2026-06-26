@@ -208,7 +208,13 @@ class SSPICustomItemData(MongoWrapper):
         results: list[dict]
     ) -> int:
         """
-        Store complete scoring results for a configuration.
+        Store complete scoring results for a configuration (idempotent replace).
+
+        Any existing rows for ``config_hash`` are cleared before the new set is
+        inserted, so re-scoring the same configuration replaces the cache rather
+        than colliding with the unique ``unique_score_entry`` index. The clear
+        happens only after the replacement set is built and validated, so a
+        validation failure never wipes a good cache.
 
         Args:
             config_hash: SHA-256 hash prefix (32 chars) of canonical config
@@ -243,11 +249,17 @@ class SSPICustomItemData(MongoWrapper):
             self.validate_document_format(doc, i)
             documents.append(doc)
 
-        # Insert all documents
+        # Replace any prior rows for this config_hash so re-scoring is
+        # idempotent and never collides with the unique `unique_score_entry`
+        # index. Done after the replacement set is validated above, so bad
+        # input can't wipe a good cache.
+        self.clear_by_hash(config_hash)
+
+        # Insert all documents (insert_many returns the inserted count)
         try:
-            inserted = self.insert_many(documents)
-            logger.info(f"Stored {len(inserted)} flat score results for config_hash {config_hash[:8]}...")
-            return len(inserted)
+            inserted_count = self.insert_many(documents)
+            logger.info(f"Stored {inserted_count} flat score results for config_hash {config_hash[:8]}...")
+            return inserted_count
         except Exception as e:
             logger.error(f"Failed to store flat score results: {e}")
             raise
