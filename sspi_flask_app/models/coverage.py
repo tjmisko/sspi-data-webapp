@@ -106,10 +106,8 @@ class DataCoverage:
         coverage dictionary
         """
         return all(
-            [
-                self.check_complete_country(country_year_dict[cou])
-                for cou in self.country_codes
-            ]
+            self.check_complete_country(country_year_dict[cou])
+            for cou in self.country_codes
         )
 
     def complete(self):

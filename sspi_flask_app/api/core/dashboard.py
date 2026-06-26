@@ -1713,9 +1713,9 @@ def item_coverage_data(ItemCode, CountryGroup):
     coverage = DataCoverage(2000, 2023, CountryGroup)
     n_squares = (coverage.max_year - coverage.min_year) * len(coverage.country_codes)
     data = coverage.item_coverage_data(ItemCode)
-    complete_coverage = len([d for d in data if d["v"] == d["vComplete"]])
-    one_missing = len([d for d in data if d["v"] == d["vComplete"] - 1])
-    two_or_more_missing = len([d for d in data if d["v"] < d["vComplete"] - 1])
+    complete_coverage = sum(1 for d in data if d["v"] == d["vComplete"])
+    one_missing = sum(1 for d in data if d["v"] == d["vComplete"] - 1)
+    two_or_more_missing = sum(1 for d in data if d["v"] < d["vComplete"] - 1)
     no_observations = n_squares - complete_coverage - one_missing - two_or_more_missing
     return {
         "summary": [

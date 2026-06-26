@@ -35,6 +35,11 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
 
+# Accepted numeric types for dataset values (module constant so the tuple is
+# not rebuilt on every membership check inside hot per-document loops).
+_NUMERIC_TYPES = (int, float)
+
+
 # Public databases available for download and querying
 # This is the single source of truth for database configurations
 public_databases = [
@@ -350,7 +355,7 @@ def create_computed_series(
                 dataset["DatasetCode"]: dataset.get("Value", None)
                 for dataset in document["Datasets"]
             }
-            if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
+            if any((type(v) not in _NUMERIC_TYPES) for v in arg_value_dict.values()):
                 continue
             try:
                 arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
@@ -393,7 +398,7 @@ def score_indicator_documents(
             dataset["DatasetCode"]: dataset.get("Value", None)
             for dataset in document["Datasets"]
         }
-        if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
+        if any((type(v) not in _NUMERIC_TYPES) for v in arg_value_dict.values()):
             continue
         try:
             arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
