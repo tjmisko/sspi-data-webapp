@@ -716,14 +716,18 @@ class SSPIMetadata(MongoWrapper):
         """
         if ItemCode == "SSPI":
             return self.find({"DocumentType": "PillarDetail"})
-        elif ItemCode in self.pillar_codes():
-            category_codes = self.get_pillar_detail(ItemCode)["Children"]
+        # One detail lookup classifies the item and supplies its children,
+        # replacing the previous chain of pillar/category/indicator code-list
+        # queries followed by a second detail re-query.
+        detail = self.get_item_detail(ItemCode)
+        item_type = detail.get("ItemType")
+        if item_type == "Pillar":
+            category_codes = detail["Children"]
             return self.find({"DocumentType": "CategoryDetail", "Metadata.ItemCode": {"$in": category_codes}})
-        elif ItemCode in self.category_codes():
-            indicator_codes = self.get_category_detail(ItemCode)["Children"]
+        elif item_type == "Category":
+            indicator_codes = detail["Children"]
             return self.find({"DocumentType": "IndicatorDetail", "Metadata.ItemCode": {"$in": indicator_codes}})
-        elif ItemCode in self.indicator_codes():
-            detail = self.get_indicator_detail(ItemCode)  # Ensure the indicator exists
+        elif item_type == "Indicator":
             child_codes = detail.get("DatasetCodes", [])
             return self.find({"DocumentType": "DatasetDetail", "Metadata.DatasetCode": {"$in": child_codes}})
         else:
@@ -796,12 +800,10 @@ class SSPIMetadata(MongoWrapper):
         """
         Return a list containing the group names to which the country belongs
         """
-        groups = self.find({"DocumentType": "CountryGroup"})
-        group_list = []
-        for g in groups:
-            if country_code in g["Metadata"]["Countries"]:
-                group_list.append(g["Metadata"]["CountryGroupName"])
-        return group_list
+        # The precomputed CountryGroupMap is built by iterating the same
+        # CountryGroup documents in the same order this method used to scan, so
+        # the per-country group list is identical without the full collection scan.
+        return self.country_group_map().get(country_code, [])
 
     def indicator_details(self, filter=[]) -> list[dict]:
         """
