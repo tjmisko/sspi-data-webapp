@@ -87,8 +87,11 @@ class MongoWrapper:
         and returns a count of deleted documents
         """
         tab_ids = self.tabulate_ids()
-        id_delete_list = [ObjectId(str(oid["$oid"])) for oid in sum(
-            [obs["ids"][1:] for obs in tab_ids], [])]
+        id_delete_list = [
+            ObjectId(str(oid["$oid"]))
+            for obs in tab_ids
+            for oid in obs["ids"][1:]
+        ]
         query = {"_id": {"$in": id_delete_list}}
         return self._mongo_database.delete_many(query).deleted_count
 
