@@ -1021,9 +1021,13 @@ def score_custom_configuration_fast(
     Returns:
         Dict mapping item_code -> list of ranked score documents
     """
+    # Reference group countries are used both to default country_codes and to
+    # build the imputation reference mask below - fetch them once.
+    reference_countries = sspi_metadata.country_group(reference_group) or []
+
     # Get country codes if not provided
     if country_codes is None:
-        country_codes = sspi_metadata.country_group(reference_group) or []
+        country_codes = reference_countries
 
     if not country_codes:
         logger.warning(f"No country codes found for reference group {reference_group}")
@@ -1074,9 +1078,10 @@ def score_custom_configuration_fast(
     if progress_callback:
         progress_callback("scoring", 20, "Imputing missing data...")
 
-    # Get reference mask for imputation
-    reference_countries = sspi_metadata.country_group(reference_group) or []
-    reference_mask = np.array([c in reference_countries for c in country_codes])
+    # Get reference mask for imputation (reuse the group fetched above; set
+    # membership is O(1) per country)
+    reference_country_set = set(reference_countries)
+    reference_mask = np.array([c in reference_country_set for c in country_codes])
 
     imputation_flags = {}
     for dataset_code, data_array in dataset_arrays.items():
