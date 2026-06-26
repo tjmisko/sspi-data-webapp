@@ -73,7 +73,6 @@ def fetch_all_datasets_aggregated(
 
     # Create index mappings for efficient array placement
     country_to_idx = {code: idx for idx, code in enumerate(country_codes)}
-    dataset_to_idx = {code: idx for idx, code in enumerate(dataset_codes)}
 
     logger.info(f"Fetching {len(dataset_codes)} datasets for {n_countries} countries, years {start_year}-{end_year}")
 
@@ -862,126 +861,6 @@ def compute_ranks_vectorized(all_scores: np.ndarray) -> np.ndarray:
             ranks[item_idx, :, year_idx] = rank_values
 
     return ranks
-
-
-def flatten_to_documents(
-    indicator_scores: np.ndarray,
-    aggregated_scores: np.ndarray,
-    indicator_ranks: np.ndarray,
-    aggregated_ranks: np.ndarray,
-    indicator_codes: list[str],
-    item_codes: list[str],
-    country_codes: list[str],
-    start_year: int,
-    metadata: list[dict],
-    imputation_flags: dict[str, np.ndarray] | None = None
-) -> list[dict]:
-    """
-    Convert NumPy arrays to list of score documents for MongoDB.
-
-    Args:
-        indicator_scores: Shape (n_indicators, n_countries, n_years)
-        aggregated_scores: Shape (n_items, n_countries, n_years)
-        indicator_ranks: Shape (n_indicators, n_countries, n_years)
-        aggregated_ranks: Shape (n_items, n_countries, n_years)
-        indicator_codes: Ordered list of indicator codes
-        item_codes: Ordered list of category/pillar/SSPI codes
-        country_codes: Ordered list of country codes
-        start_year: First year in data
-        metadata: Original metadata for item names/types
-        imputation_flags: Optional dict of imputation flag arrays
-
-    Returns:
-        List of score documents ready for bulk insert
-    """
-    # Build metadata lookup tables
-    items_by_code = {item["ItemCode"]: item for item in metadata}
-
-    documents = []
-    n_years = indicator_scores.shape[2]
-
-    # Process indicator scores
-    for ind_idx, ind_code in enumerate(indicator_codes):
-        item = items_by_code.get(ind_code)
-        if not item:
-            logger.warning(f"No metadata found for indicator {ind_code}")
-            continue
-
-        item_name = item.get("ItemName", ind_code)
-
-        for country_idx, country_code in enumerate(country_codes):
-            for year_idx in range(n_years):
-                year = start_year + year_idx
-                score = indicator_scores[ind_idx, country_idx, year_idx]
-                rank = indicator_ranks[ind_idx, country_idx, year_idx]
-
-                # Skip NaN scores
-                if np.isnan(score):
-                    continue
-
-                # Check imputation status if provided
-                imputed = False
-                imputation_method = None
-                if imputation_flags and ind_code in imputation_flags:
-                    imputed = bool(imputation_flags[ind_code][country_idx, year_idx])
-
-                documents.append({
-                    "item_code": ind_code,
-                    "item_name": item_name,
-                    "item_type": "Indicator",
-                    "country_code": country_code,
-                    "year": year,
-                    "score": float(score * 100),  # Convert to 0-100 scale
-                    "rank": int(rank),
-                    "imputed": imputed,
-                    "imputation_method": imputation_method,
-                })
-
-    # Process aggregated scores (categories, pillars, SSPI)
-    for item_idx, item_code in enumerate(item_codes):
-        item = items_by_code.get(item_code)
-
-        # For SSPI root, might not be in metadata by code
-        if not item and item_code == "SSPI":
-            # Find SSPI item by type
-            item = next(
-                (m for m in metadata if m.get("ItemType") == "SSPI"),
-                {"ItemCode": "SSPI", "ItemName": "SSPI", "ItemType": "SSPI"}
-            )
-
-        if not item:
-            logger.warning(f"No metadata found for item {item_code}")
-            continue
-
-        item_name = item.get("ItemName", item_code)
-        item_type = item.get("ItemType", "Unknown")
-
-        for country_idx, country_code in enumerate(country_codes):
-            for year_idx in range(n_years):
-                year = start_year + year_idx
-                score = aggregated_scores[item_idx, country_idx, year_idx]
-                rank = aggregated_ranks[item_idx, country_idx, year_idx]
-
-                # Skip NaN scores
-                if np.isnan(score):
-                    continue
-
-                # Aggregated items inherit imputation from children
-                # For now, mark as not imputed (would need child tracking for accuracy)
-                documents.append({
-                    "item_code": item_code,
-                    "item_name": item_name,
-                    "item_type": item_type,
-                    "country_code": country_code,
-                    "year": year,
-                    "score": float(score * 100),  # Convert to 0-100 scale
-                    "rank": int(rank),
-                    "imputed": False,  # Could be improved to track child imputation
-                    "imputation_method": None,
-                })
-
-    logger.info(f"Flattened {len(documents)} score documents")
-    return documents
 
 
 # =============================================================================
