@@ -3,7 +3,8 @@ from sspi_flask_app.models.database import (
     sspi_indicator_data,
     sspi_imputed_data,
     sspi_item_data,
-    sspi_incomplete_indicator_data
+    sspi_incomplete_indicator_data,
+    sspi_clean_api_data
 )
 
 
@@ -260,8 +261,6 @@ class DataCoverage:
             result_clean = sspi_indicator_data.aggregate(pipeline)
             return result_clean
         child_icodes = [child for child in children]
-        child_details = [sspi_metadata.get_item_detail(child) for child in child_icodes]
-        child_item_field = child_details[0].get("ItemType", "") + "Code"
         if item_field == "IndicatorCode":
             pipeline = [
                 {
