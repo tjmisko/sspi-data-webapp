@@ -219,12 +219,12 @@ def get_dynamic_score_line_data(item_code):
     """
     Get the dynamic data for the given category code for a line chart
     """
-    indicator_details = sspi_metadata.indicator_details()
-    name_map = {detail["ItemCode"]: detail["ItemName"] for detail in indicator_details}
-    active_schema = sspi_item_data.active_schema(name_map=name_map)
     detail = sspi_metadata.get_item_detail(item_code)
     if "Error" in detail:
         abort(404, description=f"Item code '{item_code}' not found")
+    indicator_details = sspi_metadata.indicator_details()
+    name_map = {detail["ItemCode"]: detail["ItemName"] for detail in indicator_details}
+    active_schema = sspi_item_data.active_schema(name_map=name_map)
     doc_type = detail.get("ItemType", "No Item Type")
     if doc_type == "Indicator":
         item_options = sspi_metadata.indicator_options()
