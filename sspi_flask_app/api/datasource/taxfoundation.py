@@ -37,7 +37,7 @@ def clean_tax_foundation(raw_csv_data, dataset_code, unit, description):
     crptax_melted = crptax_melted.rename(columns={'iso_3':'CountryCode'})
     crptax_melted = crptax_melted.dropna()
     crptax_melted = crptax_melted.sort_values(['CountryCode','Year'],ascending=[True,False]).reset_index(drop=True)
-    crptax_melted["Year"] = crptax_melted["Year"].map(lambda x: int(x))
+    crptax_melted["Year"] = crptax_melted["Year"].astype(int)
     crptax_melted['DatasetCode'] = dataset_code
     crptax_melted['Unit'] = unit
     crptax_melted['Description'] = description

@@ -121,26 +121,18 @@ def scrape_stored_pages_for_data():
             "c ", "", regex=True)
         df["Prison Population Rate"] = df["Prison Population Rate"].replace(
             "c ", "", regex=True)
-        if "GBR" in country:
-            df.apply(lambda row: gbr_data.append(
+        # Columns are ("Year", "Prison Population Total", "Prison Population Rate")
+        target = gbr_data if "GBR" in country else final_data
+        for year, total, _rate in df.itertuples(index=False, name=None):
+            target.append(
                 {"IndicatorCode": "PRISON",
-                 "Value": int(row["Prison Population Total"]),
-                 # "WPB Rate": int(row["Prison Population Rate"]),
+                 "Value": int(total),
+                 # "WPB Rate": int(_rate),
                  "IntermediateCode": "PRIPOP",
-                 "Year": int(row["Year"]),
+                 "Year": int(year),
                  "CountryCode": country,
                  "Unit": "People per 100,000",
-                 "Description": "Prison population rate per 100,000 of the national population."}), axis=1)
-        else:
-            df.apply(lambda row: final_data.append(
-                {"IndicatorCode": "PRISON",
-                 "Value": int(row["Prison Population Total"]),
-                 # "WPB Rate": int(row["Prison Population Rate"]),
-                 "IntermediateCode": "PRIPOP",
-                 "Year": int(row["Year"]),
-                 "CountryCode": country,
-                 "Unit": "People per 100,000",
-                 "Description": "Prison population rate per 100,000 of the national population."}), axis=1)
+                 "Description": "Prison population rate per 100,000 of the national population."})
     # combine uk values
     gbr_obs = {}
     for obs in gbr_data:
