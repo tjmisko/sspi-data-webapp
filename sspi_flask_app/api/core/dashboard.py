@@ -2342,12 +2342,12 @@ def get_country_characteristics(country_code):
         year = sspi_rank_data.get("TimePeriod")
 
         # Get total number of countries for this year
-        total_countries_results = sspi_dynamic_rank_data.find({
+        total_countries_count = sspi_dynamic_rank_data.count_documents({
             "ItemCode": "SSPI",
             "TimePeriod": year,
             "TimePeriodType": "Single Year"
         })
-        total_countries = len(list(total_countries_results)) if total_countries_results else None
+        total_countries = total_countries_count if total_countries_count else None
 
         # Format rank with ordinal suffix
         def ordinal(n):

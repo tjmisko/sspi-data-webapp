@@ -84,11 +84,11 @@ def get_country_characteristics(country_code):
         year = sspi_rank_data.get("TimePeriod")
 
         # Get total number of countries for this year
-        total_countries = len(list(sspi_dynamic_rank_data.find({
+        total_countries = sspi_dynamic_rank_data.count_documents({
             "ItemCode": "SSPI",
             "TimePeriod": year,
             "TimePeriodType": "Single Year"
-        })))
+        })
 
         characteristics.append({
             "key": "sspiScore",
