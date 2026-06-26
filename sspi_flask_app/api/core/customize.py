@@ -1437,23 +1437,19 @@ def get_custom_panel_score(item_code):
             if config:
                 custom_metadata = config.get("metadata", [])
 
-        # If no config_id or config not found, try to infer from line data
-        if not custom_metadata:
-            # Get all unique item codes from line data to build scored_item_codes set
-            all_line_data = sspi_custom_panel_data.get_line_data(config_hash)
-            scored_item_codes = {doc["ICode"] for doc in all_line_data}
-
-            # Use default SSPI metadata as base, filtered to scored items
-            custom_metadata = sspi_metadata.item_details(
-                indicator_filter=list(scored_item_codes)
-            )
-
-        # Build tree from custom metadata
-        scored_items = {doc["ICode"] for doc in line_data}
-        # Get all scored items for proper tree building
+        # Line data is needed both to (optionally) infer metadata and to build
+        # the tree below, so fetch it once instead of twice.
         all_line_data = sspi_custom_panel_data.get_line_data(config_hash)
         all_scored_items = {doc["ICode"] for doc in all_line_data}
 
+        # If no config_id or config not found, infer metadata from line data
+        if not custom_metadata:
+            # Use default SSPI metadata as base, filtered to scored items
+            custom_metadata = sspi_metadata.item_details(
+                indicator_filter=list(all_scored_items)
+            )
+
+        # Build tree from custom metadata
         tree = build_custom_tree(custom_metadata, all_scored_items)
 
         if not tree:

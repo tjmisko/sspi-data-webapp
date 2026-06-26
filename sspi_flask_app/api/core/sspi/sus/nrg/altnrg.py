@@ -139,7 +139,7 @@ def impute_altnrg():
             all_imputed_datasets.extend(extrapolated_backward + extrapolated_forward + interpolated)
     
     # Combine original datasets with imputations for indicator computation
-    combined_datasets = list(all_altnrg_datasets) + all_imputed_datasets
+    combined_datasets = all_altnrg_datasets + all_imputed_datasets
     
     # Now compute ALTNRG indicator with complete datasets
     lg, ug = sspi_metadata.get_goalposts("ALTNRG")

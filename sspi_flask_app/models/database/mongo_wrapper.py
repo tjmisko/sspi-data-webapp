@@ -307,9 +307,6 @@ class MongoWrapper:
             self.validate_value(item, document_number)
             self.validate_unit(item, document_number)
             document_id = f"{item['ItemCode']}_{item['CountryCode']}_{item['Year']}"
-            print("==========================")
-            print(document_id)
-            print(item)
             if document_id in id_set:
                 print(f"Document Produced an Error: {item}")
                 raise InvalidDocumentFormatError(

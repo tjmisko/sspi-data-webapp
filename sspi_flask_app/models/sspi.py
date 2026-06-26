@@ -27,10 +27,10 @@ class FastSSPI:
         indicator_index = 0
         item_list = ["" for i in range(n_categories + n_pillars)]
         item_list.append("SSPI")
-        item_codes = [d["ItemCode"] for d in self.item_details_sorted]
+        item_codes = {d["ItemCode"] for d in self.item_details_sorted}
         for item in self.item_details_sorted:
             item_type = item['ItemType']
-            multiple = len([c for c in item['Children'] if c in item_codes])
+            multiple = sum(1 for c in item['Children'] if c in item_codes)
             item["TreeIndex"]
             if item_type == "SSPI": ## Fill the last column with the overall SSPI weight
                 sspi_multiple = multiple 
@@ -191,7 +191,7 @@ class SSPI:
                 raise InvalidDocumentFormatError(
                     f"Category {cat} has no indicators defined."
                 )
-            catsum = sum([self._item_detail_table[ic].score for ic in cat.indicator_codes])
+            catsum = sum(self._item_detail_table[ic].score for ic in cat.indicator_codes)
             catlen = len(cat.indicator_codes)
             cat.score = catsum / catlen
         for pil in self.pillars:
@@ -199,11 +199,11 @@ class SSPI:
                 raise InvalidDocumentFormatError(
                     f"Pillar {pil} has no categories defined."
                 )
-            pilsum = sum([self._item_detail_table[cc].score for cc in pil.category_codes])
+            pilsum = sum(self._item_detail_table[cc].score for cc in pil.category_codes)
             pillen = len(pil.category_codes)
             pil.score = pilsum / pillen
-        self.root.score = sum([self._item_detail_table[p.code].score for p in self.pillars]) / len(self.pillars)
-        assert all([it.score is not None for it in self._item_detail_table.values()]), \
+        self.root.score = sum(self._item_detail_table[p.code].score for p in self.pillars) / len(self.pillars)
+        assert all(it.score is not None for it in self._item_detail_table.values()), \
             "Not all items have a score calculated."
 
     def get_item(self, item_code: str) -> dict:

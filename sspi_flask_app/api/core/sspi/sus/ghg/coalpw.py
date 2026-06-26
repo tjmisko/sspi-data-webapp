@@ -123,7 +123,7 @@ def impute_coalpw():
             all_imputed_datasets.extend(extrapolated_backward + extrapolated_forward + interpolated)
     
     # Combine original datasets with imputations for indicator computation
-    combined_datasets = list(all_coalpw_datasets) + all_imputed_datasets
+    combined_datasets = all_coalpw_datasets + all_imputed_datasets
     
     # Now compute COALPW indicator with complete datasets
     lg, ug = sspi_metadata.get_goalposts("COALPW")

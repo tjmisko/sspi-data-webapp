@@ -347,7 +347,7 @@ def finalize_sspi_dynamic_radar_data():
             pillar_code = pillar_detail['ItemCode']
 
             # Check if this pillar exists in the aggregated data
-            pillar_item = next((item for item in doc["items"] if item["ICode"] == pillar_code), None)
+            pillar_item = item_map.get(pillar_code)
             if not pillar_item:
                 continue  # Skip if pillar not available for this country-year
 
@@ -764,8 +764,8 @@ def finalize_matrix_iterator(local_path, endpoints):
         }
     ]
     result = sspi_indicator_data.aggregate(pipeline)
-    sspi49_countries = sspi_metadata.country_group("SSPI49")
-    sspi_extended_countries = sspi_metadata.country_group("SSPIExtended")
+    sspi49_countries = set(sspi_metadata.country_group("SSPI49"))
+    sspi_extended_countries = set(sspi_metadata.country_group("SSPIExtended"))
     indicator_details, indicator_map = sspi_metadata.indicator_details(), {}
     for detail in indicator_details:
         indicator_map[detail["IndicatorCode"]] = {

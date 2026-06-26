@@ -194,7 +194,7 @@ def delete_clear_database(database_name):
     timestr = datetime.now().strftime("%s")
     temp_file_path = os.path.join(temp_dir, f"{timestr}_{database_name}.json")
     with open(temp_file_path, 'w') as temp_file:
-        json.dump(list(database.find({})), temp_file)
+        json.dump(database.find({}), temp_file)
     count = database.delete_many({})
     msg = (
         f"Deleted {count} observations from database {database.name}\n"

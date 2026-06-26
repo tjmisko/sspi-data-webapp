@@ -153,8 +153,8 @@ def get_dynamic_indicator_line_data(indicator_code):
     if country_query:
         query["CCode"] = {"$in": country_query}
 
-    # Convert cursor to list and check if data exists
-    dynamic_score_data = list(sspi_indicator_dynamic_line_data.find(query))
+    # find() already returns a materialized list
+    dynamic_score_data = sspi_indicator_dynamic_line_data.find(query)
 
     if not dynamic_score_data:
         # No chart data available for this indicator
@@ -437,8 +437,8 @@ def get_dynamic_radar_data(CountryCode):
         },
     ]
 
-    # Execute aggregation pipeline
-    result = list(sspi_dynamic_radar_data.aggregate(pipeline))
+    # Execute aggregation pipeline (already returns a materialized list)
+    result = sspi_dynamic_radar_data.aggregate(pipeline)
 
     if not result:
         return jsonify({"error": f"No radar data found for country {CountryCode}"}), 404
@@ -908,7 +908,6 @@ def get_series_panel_plot(series_id):
     group_options = sspi_metadata.country_groups()
     yMin = 0
     yMax = 1
-    print("Panel Data:", panel_data)
     for doc in panel_data:
         values = [d for d in doc.get("value", []) if d is not None]
         if values:
@@ -1056,7 +1055,7 @@ def country_coverage_matrix_data(country_code):
             "Datasets": 1
         }}
     ]
-    imputed_results = list(sspi_imputed_data.aggregate(imputed_pipeline))
+    imputed_results = sspi_imputed_data.aggregate(imputed_pipeline)
 
     # Build lookup for imputed data: (indicator, year) -> {score, datasets}
     imputed_set = {}
@@ -1442,9 +1441,7 @@ def build_indicators_data():
                         dataset = datasets_by_code.get(dataset_code)
                         if dataset:
                             org_code = dataset.get("Source", {}).get("OrganizationCode", "")
-                            print(org_code)
                             org_detail = source_organization_lookup.get(org_code)
-                            print(org_detail)
                             datasets.append(
                                 {
                                     "dataset_code": dataset_code,
@@ -1713,10 +1710,11 @@ def item_coverage_data(ItemCode, CountryGroup):
     coverage = DataCoverage(2000, 2023, CountryGroup)
     n_squares = (coverage.max_year - coverage.min_year) * len(coverage.country_codes)
     data = coverage.item_coverage_data(ItemCode)
-    complete_coverage = len([d for d in data if d["v"] == d["vComplete"]])
-    one_missing = len([d for d in data if d["v"] == d["vComplete"] - 1])
-    two_or_more_missing = len([d for d in data if d["v"] < d["vComplete"] - 1])
+    complete_coverage = sum(1 for d in data if d["v"] == d["vComplete"])
+    one_missing = sum(1 for d in data if d["v"] == d["vComplete"] - 1)
+    two_or_more_missing = sum(1 for d in data if d["v"] < d["vComplete"] - 1)
     no_observations = n_squares - complete_coverage - one_missing - two_or_more_missing
+    y_codes_sorted = sorted({d["y"] for d in data})
     return {
         "summary": [
             f"Complete Coverage: {complete_coverage} / {n_squares} observations ({complete_coverage / n_squares:.2%})",
@@ -1726,10 +1724,10 @@ def item_coverage_data(ItemCode, CountryGroup):
         ],
         "data": data,
         "title": f"Coverage for {ItemCode}",
-        "labels": sorted(list(set(d["y"] for d in data))),
+        "labels": y_codes_sorted,
         "itemCode": ItemCode,
         "years": list(range(2000, 2024)),
-        "ccodes": sorted(list(set(d["y"] for d in data))),
+        "ccodes": y_codes_sorted,
     }
 
 
@@ -1963,7 +1961,6 @@ def fast_score():
     coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
     complete_indicators = coverage.complete()
     details_for_scoring = sspi_metadata.item_details(indicator_filter=complete_indicators)
-    print(details_for_scoring)
     indicator_order_map = {d["ItemCode"]: d["ItemOrder"] for d in details_for_scoring if d["ItemType"] == "Indicator"}
     order_map_literal = {"$literal": indicator_order_map}
     min_year = 2000
@@ -2126,6 +2123,7 @@ def get_country_rankings(country_code, item_level):
     # Get item metadata to include item names
     item_details = sspi_metadata.item_details()
     item_name_map = {item["ItemCode"]: item["ItemName"] for item in item_details}
+    item_detail_map = {item["ItemCode"]: item for item in item_details}
     # Filter by item level and enrich with item names
     filtered_data = []
     for doc in ranking_data:
@@ -2133,7 +2131,7 @@ def get_country_rankings(country_code, item_level):
         if not item_code:
             continue
         # Get item detail to check item type
-        item_detail = next((item for item in item_details if item["ItemCode"] == item_code), None)
+        item_detail = item_detail_map.get(item_code)
         if not item_detail:
             continue
         item_type = item_detail.get("ItemType", "").lower()
@@ -2227,8 +2225,7 @@ def get_country_characteristics(country_code):
     # Sort by year and get most recent
     population_data = None
     if population_results:
-        population_results_sorted = sorted(population_results, key=lambda x: x.get("Year", 0), reverse=True)
-        population_data = population_results_sorted[0] if population_results_sorted else None
+        population_data = max(population_results, key=lambda x: x.get("Year", 0))
 
     if population_data:
         pop_value = population_data.get("Value")
@@ -2262,8 +2259,7 @@ def get_country_characteristics(country_code):
     # Sort by year and get most recent
     land_area_data = None
     if land_area_results:
-        land_area_results_sorted = sorted(land_area_results, key=lambda x: x.get("Year", 0), reverse=True)
-        land_area_data = land_area_results_sorted[0] if land_area_results_sorted else None
+        land_area_data = max(land_area_results, key=lambda x: x.get("Year", 0))
 
     if land_area_data:
         land_area_value = land_area_data.get("Value")
@@ -2297,8 +2293,7 @@ def get_country_characteristics(country_code):
     # Sort by year and get most recent
     gdp_per_capita_data = None
     if gdp_per_capita_results:
-        gdp_per_capita_results_sorted = sorted(gdp_per_capita_results, key=lambda x: x.get("Year", 0), reverse=True)
-        gdp_per_capita_data = gdp_per_capita_results_sorted[0] if gdp_per_capita_results_sorted else None
+        gdp_per_capita_data = max(gdp_per_capita_results, key=lambda x: x.get("Year", 0))
 
     if gdp_per_capita_data:
         gdp_pc_value = gdp_per_capita_data.get("Value")
@@ -2333,8 +2328,7 @@ def get_country_characteristics(country_code):
     # Sort by TimePeriod (year) and get most recent
     sspi_rank_data = None
     if sspi_rank_results:
-        sspi_rank_results_sorted = sorted(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"), reverse=True)
-        sspi_rank_data = sspi_rank_results_sorted[0] if sspi_rank_results_sorted else None
+        sspi_rank_data = max(sspi_rank_results, key=lambda x: x.get("TimePeriod", "0"))
 
     if sspi_rank_data:
         rank = sspi_rank_data.get("Rank")
@@ -2342,12 +2336,12 @@ def get_country_characteristics(country_code):
         year = sspi_rank_data.get("TimePeriod")
 
         # Get total number of countries for this year
-        total_countries_results = sspi_dynamic_rank_data.find({
+        total_countries_count = sspi_dynamic_rank_data.count_documents({
             "ItemCode": "SSPI",
             "TimePeriod": year,
             "TimePeriodType": "Single Year"
         })
-        total_countries = len(list(total_countries_results)) if total_countries_results else None
+        total_countries = total_countries_count if total_countries_count else None
 
         # Format rank with ordinal suffix
         def ordinal(n):

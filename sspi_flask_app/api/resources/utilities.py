@@ -35,6 +35,11 @@ from sspi_flask_app.models.database import (
 from sspi_flask_app.models.errors import InvalidDatabaseError
 
 
+# Accepted numeric types for dataset values (module constant so the tuple is
+# not rebuilt on every membership check inside hot per-document loops).
+_NUMERIC_TYPES = (int, float)
+
+
 # Public databases available for download and querying
 # This is the single source of truth for database configurations
 public_databases = [
@@ -301,15 +306,13 @@ def drop_none_or_na(intermediate_document_list):
     Utility function for dropping documents with None or NaN values
     """
     noneish_list = []
+    kept_list = []
     for document in intermediate_document_list:
         if document["Value"] is None or math.isnan(document["Value"]):
             noneish_list.append(document)
-    intermediate_document_list = [
-        document
-        for document in intermediate_document_list
-        if document not in noneish_list
-    ]
-    return intermediate_document_list, noneish_list
+        else:
+            kept_list.append(document)
+    return kept_list, noneish_list
 
 
 def group_by_indicator(dataset_document_list, indicator_code) -> list:
@@ -345,12 +348,15 @@ def create_computed_series(
     for vf_spec in value_function_specification:
         series_code, unit, value_function = vf_spec
         arg_name_list = list(inspect.signature(value_function).parameters.keys())
+        # value_function is fixed for this vf_spec, so read its source once
+        # instead of re-parsing the source file for every document.
+        value_function_source = str(inspect.getsource(value_function)).strip()
         for i, document in enumerate(indicator_document_list):
             arg_value_dict = {
                 dataset["DatasetCode"]: dataset.get("Value", None)
                 for dataset in document["Datasets"]
             }
-            if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
+            if any((type(v) not in _NUMERIC_TYPES) for v in arg_value_dict.values()):
                 continue
             try:
                 arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
@@ -363,7 +369,7 @@ def create_computed_series(
                     "Year": document["Year"],
                     "Value": value_function(*arg_value_list),
                     "Unit": unit,
-                    "ValueFunction": str(inspect.getsource(value_function)).strip(),
+                    "ValueFunction": value_function_source,
                     "Computed": True,
                 } 
                 document["Datasets"].append(new_dataset)
@@ -393,7 +399,7 @@ def score_indicator_documents(
             dataset["DatasetCode"]: dataset.get("Value", None)
             for dataset in document["Datasets"]
         }
-        if any((type(v) not in [int, float]) for v in arg_value_dict.values()):
+        if any((type(v) not in _NUMERIC_TYPES) for v in arg_value_dict.values()):
             continue
         try:
             arg_value_list = [arg_value_dict[arg] for arg in arg_name_list]
@@ -416,16 +422,15 @@ def filter_incomplete_data(indicator_document_list):
     """
     filtered_list = []
     partial_observation_list = []
+    required_keys = (
+        "IndicatorCode",
+        "CountryCode",
+        "Year",
+        "Unit",
+        "Score",
+    )
     for document in indicator_document_list:
-        key_list = list(document.keys())
-        required_keys = [
-            "IndicatorCode",
-            "CountryCode",
-            "Year",
-            "Unit",
-            "Score",
-        ]
-        if all([key in key_list for key in required_keys]):
+        if all(key in document for key in required_keys):
             filtered_list.append(document)
         else:
             partial_observation_list.append(document)

@@ -158,16 +158,17 @@ def impute_dataset_vectorized(
     """
     n_countries, n_years = data.shape
     imputed_data = data.copy()
-    imputation_flags = np.isnan(data)
+    nan_mask = np.isnan(data)
+    imputation_flags = nan_mask
 
     # Scenario 1: Entire dataset is empty
-    if np.all(np.isnan(data)):
+    if np.all(nan_mask):
         logger.debug("Entire dataset empty, filling with neutral value")
         imputed_data.fill(neutral_fill)
         return imputed_data, imputation_flags
 
     # Scenario 2: Countries with no data at all - use reference class average
-    has_data_per_country = ~np.all(np.isnan(data), axis=1)  # True if country has any data
+    has_data_per_country = ~np.all(nan_mask, axis=1)  # True if country has any data
     no_data_countries = ~has_data_per_country
 
     if np.any(no_data_countries):
@@ -286,6 +287,15 @@ class FastCustomSSPI:
             item["ItemCode"] for item in metadata
             if item.get("ItemType") == "Pillar"
         ]
+
+        # Code -> index maps for O(1) lookup in the matrix build (codes are
+        # unique per type, so this matches list.index() first-occurrence).
+        self.category_code_to_idx = {
+            code: idx for idx, code in enumerate(self.category_codes)
+        }
+        self.pillar_code_to_idx = {
+            code: idx for idx, code in enumerate(self.pillar_codes)
+        }
 
         # Non-indicator items in order: categories, pillars, SSPI
         self.item_codes = self.category_codes + self.pillar_codes + ["SSPI"]
@@ -410,7 +420,7 @@ class FastCustomSSPI:
             category_weight = self._normalized_child_weight(
                 ind_code, category_children
             )
-            category_idx = self.category_codes.index(category_code)
+            category_idx = self.category_code_to_idx[category_code]
             score_matrix[ind_idx, category_idx] = category_weight
 
             pillar = self._find_parent(category_code, "Pillar")
@@ -433,7 +443,7 @@ class FastCustomSSPI:
             pillar_weight = category_weight * self._normalized_child_weight(
                 category_code, pillar_children
             )
-            pillar_idx = self.pillar_codes.index(pillar_code)
+            pillar_idx = self.pillar_code_to_idx[pillar_code]
             score_matrix[ind_idx, n_categories + pillar_idx] = pillar_weight
 
             sspi = self._find_parent(pillar_code, "SSPI")
@@ -544,18 +554,19 @@ def _is_simple_goalpost(score_function: str, dataset_codes: list[str]) -> bool:
     if not score_function or len(dataset_codes) != 1:
         return False
 
-    # Normalize whitespace
+    # Normalize whitespace (strip all spaces once for the membership checks)
     normalized = ' '.join(score_function.split())
+    compact = normalized.replace(" ", "")
 
     # Check for simple patterns
     dataset_code = dataset_codes[0]
 
     # Pattern 1: Score = goalpost(DATASET, ...)
-    if f"goalpost({dataset_code}," in normalized.replace(" ", ""):
+    if f"goalpost({dataset_code}," in compact:
         return True
 
     # Pattern 2: Score = goalpost(-DATASET, ...) (inverted)
-    if f"goalpost(-{dataset_code}," in normalized.replace(" ", ""):
+    if f"goalpost(-{dataset_code}," in compact:
         return True
 
     return False
@@ -819,9 +830,10 @@ def compute_ranks_vectorized(all_scores: np.ndarray) -> np.ndarray:
 
     # For each item and year, rank countries by score
     for item_idx in range(n_items):
+        item_scores = all_scores[item_idx]  # 2D view: (n_countries, n_years)
         for year_idx in range(n_years):
             # Get scores for this item and year across all countries
-            year_scores = all_scores[item_idx, :, year_idx]
+            year_scores = item_scores[:, year_idx]
 
             # Handle NaN values - they should get the worst rank
             # argsort returns indices that would sort the array
@@ -1009,9 +1021,13 @@ def score_custom_configuration_fast(
     Returns:
         Dict mapping item_code -> list of ranked score documents
     """
+    # Reference group countries are used both to default country_codes and to
+    # build the imputation reference mask below - fetch them once.
+    reference_countries = sspi_metadata.country_group(reference_group) or []
+
     # Get country codes if not provided
     if country_codes is None:
-        country_codes = sspi_metadata.country_group(reference_group) or []
+        country_codes = reference_countries
 
     if not country_codes:
         logger.warning(f"No country codes found for reference group {reference_group}")
@@ -1062,9 +1078,10 @@ def score_custom_configuration_fast(
     if progress_callback:
         progress_callback("scoring", 20, "Imputing missing data...")
 
-    # Get reference mask for imputation
-    reference_countries = sspi_metadata.country_group(reference_group) or []
-    reference_mask = np.array([c in reference_countries for c in country_codes])
+    # Get reference mask for imputation (reuse the group fetched above; set
+    # membership is O(1) per country)
+    reference_country_set = set(reference_countries)
+    reference_mask = np.array([c in reference_country_set for c in country_codes])
 
     imputation_flags = {}
     for dataset_code, data_array in dataset_arrays.items():
@@ -1179,14 +1196,21 @@ def _arrays_to_score_dicts(
         # Build list of score documents for this item
         item_docs = []
 
+        # 2D views for this item so the inner loop indexes 2D arrays and the
+        # NaN check reads a precomputed mask instead of re-indexing the 3D
+        # arrays and calling np.isnan per cell.
+        score_mat = all_scores[item_idx]
+        rank_mat = all_ranks[item_idx]
+        nan_mat = np.isnan(score_mat)
+
         for country_idx, country_code in enumerate(country_codes):
             for year_idx in range(n_years):
                 year = start_year + year_idx
-                score = all_scores[item_idx, country_idx, year_idx]
-                rank = all_ranks[item_idx, country_idx, year_idx]
+                score = score_mat[country_idx, year_idx]
+                rank = rank_mat[country_idx, year_idx]
 
                 # Skip NaN scores
-                if np.isnan(score):
+                if nan_mat[country_idx, year_idx]:
                     continue
 
                 item_docs.append({

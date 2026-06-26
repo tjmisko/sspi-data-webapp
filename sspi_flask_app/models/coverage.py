@@ -93,8 +93,9 @@ class DataCoverage:
         :param year_list: The list of years for a given country, given as the
         value of the CountryCode key in the coverage dictionary
         """
+        year_set = set(year_list)
         return all(
-            [year in year_list for year in range(self.min_year, self.max_year + 1)]
+            year in year_set for year in range(self.min_year, self.max_year + 1)
         )
 
     def check_complete_indicator(self, country_year_dict):
@@ -105,10 +106,8 @@ class DataCoverage:
         coverage dictionary
         """
         return all(
-            [
-                self.check_complete_country(country_year_dict[cou])
-                for cou in self.country_codes
-            ]
+            self.check_complete_country(country_year_dict[cou])
+            for cou in self.country_codes
         )
 
     def complete(self):
@@ -156,14 +155,16 @@ class DataCoverage:
             )
         msg = f"Indicator code {indicator_code} has incomplete coverage:"
         for country in self.country_codes:
-            if not self.check_complete_country(country_year_dict[country]):
-                if len(country_year_dict[country]) == 0:
+            country_years = country_year_dict[country]
+            if not self.check_complete_country(country_years):
+                if len(country_years) == 0:
                     msg += f"\nproblem: {country} has no observations."
                     continue
+                year_set = set(country_years)
                 missing = [
                     y
                     for y in range(self.min_year, self.max_year + 1)
-                    if y not in country_year_dict[country]
+                    if y not in year_set
                 ]
                 if len(missing) == 0:
                     continue
@@ -189,10 +190,11 @@ class DataCoverage:
             if self.check_complete_country(country_year_dict[country_code]):
                 msg += f"\nIndicator code {indicator} has complete coverage from {self.min_year} to {self.max_year}."
             else:
+                year_set = set(country_year_dict[country_code])
                 missing = [
                     y
                     for y in range(self.min_year, self.max_year + 1)
-                    if y not in country_year_dict[country_code]
+                    if y not in year_set
                 ]
                 if len(missing) == 0:
                     continue
