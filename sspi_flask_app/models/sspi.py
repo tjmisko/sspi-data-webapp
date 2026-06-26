@@ -27,10 +27,10 @@ class FastSSPI:
         indicator_index = 0
         item_list = ["" for i in range(n_categories + n_pillars)]
         item_list.append("SSPI")
-        item_codes = [d["ItemCode"] for d in self.item_details_sorted]
+        item_codes = {d["ItemCode"] for d in self.item_details_sorted}
         for item in self.item_details_sorted:
             item_type = item['ItemType']
-            multiple = len([c for c in item['Children'] if c in item_codes])
+            multiple = sum(1 for c in item['Children'] if c in item_codes)
             item["TreeIndex"]
             if item_type == "SSPI": ## Fill the last column with the overall SSPI weight
                 sspi_multiple = multiple 
