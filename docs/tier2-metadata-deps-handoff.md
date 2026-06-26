@@ -2,11 +2,16 @@
 
 **Date:** 2026-06-26
 **Branch:** `perf/tier2-metadata-deps` (created off `main`; this doc is the only commit so far)
-**Status:** Done — implemented in commit `perf(metadata): eliminate N+1 query storm
-in dependency walkers`. The three core walkers are refactored; query counts verified
-to drop (33→12, 20→8, 2→1 on the 5-node test fixture) with byte-identical output, and
-`tests/unit` still reports 968 passed / 7 pre-existing errors. The two optional smaller
-wins (`get_child_details`, `get_country_groups`) were left out of scope.
+**Status:** Done — the three core walkers are refactored (query counts verified to
+drop 33→12, 20→8, 2→1 on the 5-node test fixture with byte-identical output). The
+branch then grew to cover **all of Tier 2** from the audit: `get_child_details` and
+`get_country_groups` (the two optional smaller wins), the `dashboard.py` N+1 hotspots
+(rank map, country-group map, characteristics `$in`), the `query_builder` source-info
+batch, the `fast_custom_scoring` parent map + deferred stack (K/L), and the
+`mongo_wrapper` quadratic flatten (M). `utilities.py:903` was evaluated and skipped
+(the un-batchable `raw_data_available` is the dominant per-dataset query there, and the
+existing tests assert the `get_source_info` call count). `tests/unit` reports 968 passed
+/ 7 pre-existing errors throughout.
 **Prereq context:** See `docs/python-performance-audit.md` (the full audit). Tier 1 is already
 done and in draft PR #899 on branch `perf/tier1-hot-path-optimizations` — independent of this work.
 
