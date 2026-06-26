@@ -908,7 +908,6 @@ def get_series_panel_plot(series_id):
     group_options = sspi_metadata.country_groups()
     yMin = 0
     yMax = 1
-    print("Panel Data:", panel_data)
     for doc in panel_data:
         values = [d for d in doc.get("value", []) if d is not None]
         if values:
@@ -1442,9 +1441,7 @@ def build_indicators_data():
                         dataset = datasets_by_code.get(dataset_code)
                         if dataset:
                             org_code = dataset.get("Source", {}).get("OrganizationCode", "")
-                            print(org_code)
                             org_detail = source_organization_lookup.get(org_code)
-                            print(org_detail)
                             datasets.append(
                                 {
                                     "dataset_code": dataset_code,
@@ -1964,7 +1961,6 @@ def fast_score():
     coverage = DataCoverage(2000, 2023, "SSPI67", countries=country_codes)
     complete_indicators = coverage.complete()
     details_for_scoring = sspi_metadata.item_details(indicator_filter=complete_indicators)
-    print(details_for_scoring)
     indicator_order_map = {d["ItemCode"]: d["ItemOrder"] for d in details_for_scoring if d["ItemType"] == "Indicator"}
     order_map_literal = {"$literal": indicator_order_map}
     min_year = 2000
