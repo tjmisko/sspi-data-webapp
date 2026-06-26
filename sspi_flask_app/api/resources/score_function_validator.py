@@ -772,21 +772,26 @@ def safe_eval(
         ValueError: If required dataset values are missing
         ScoreFunctionValidationError: If execution fails or the result is non-finite
     """
-    # Check all required dataset codes are present
-    missing = validated_function.dataset_codes - set(dataset_values.keys())
+    # Check all required dataset codes are present (set.difference accepts the
+    # dict directly, avoiding a throwaway set() of its keys each call)
+    missing = validated_function.dataset_codes.difference(dataset_values)
     if missing:
         raise ValueError(f"Missing dataset values: {missing}")
 
     if validated_function.ast is None:
         raise ScoreFunctionValidationError("Score function has no parsed AST to evaluate")
 
-    # Build evaluation environment
-    env = dict(dataset_values)
+    # Build evaluation environment. _eval only reads env, so when no goalpost
+    # variables are injected we can pass dataset_values directly and skip the
+    # per-call copy (the common case in the per-(country, year) hot loop).
     if validated_function.uses_goalposts_as_vars:
+        env = dict(dataset_values)
         if lower_goalpost is not None:
             env["LowerGoalpost"] = lower_goalpost
         if upper_goalpost is not None:
             env["UpperGoalpost"] = upper_goalpost
+    else:
+        env = dataset_values
 
     try:
         score = _eval(validated_function.ast, env)

@@ -158,16 +158,17 @@ def impute_dataset_vectorized(
     """
     n_countries, n_years = data.shape
     imputed_data = data.copy()
-    imputation_flags = np.isnan(data)
+    nan_mask = np.isnan(data)
+    imputation_flags = nan_mask
 
     # Scenario 1: Entire dataset is empty
-    if np.all(np.isnan(data)):
+    if np.all(nan_mask):
         logger.debug("Entire dataset empty, filling with neutral value")
         imputed_data.fill(neutral_fill)
         return imputed_data, imputation_flags
 
     # Scenario 2: Countries with no data at all - use reference class average
-    has_data_per_country = ~np.all(np.isnan(data), axis=1)  # True if country has any data
+    has_data_per_country = ~np.all(nan_mask, axis=1)  # True if country has any data
     no_data_countries = ~has_data_per_country
 
     if np.any(no_data_countries):
@@ -553,18 +554,19 @@ def _is_simple_goalpost(score_function: str, dataset_codes: list[str]) -> bool:
     if not score_function or len(dataset_codes) != 1:
         return False
 
-    # Normalize whitespace
+    # Normalize whitespace (strip all spaces once for the membership checks)
     normalized = ' '.join(score_function.split())
+    compact = normalized.replace(" ", "")
 
     # Check for simple patterns
     dataset_code = dataset_codes[0]
 
     # Pattern 1: Score = goalpost(DATASET, ...)
-    if f"goalpost({dataset_code}," in normalized.replace(" ", ""):
+    if f"goalpost({dataset_code}," in compact:
         return True
 
     # Pattern 2: Score = goalpost(-DATASET, ...) (inverted)
-    if f"goalpost(-{dataset_code}," in normalized.replace(" ", ""):
+    if f"goalpost(-{dataset_code}," in compact:
         return True
 
     return False
@@ -828,9 +830,10 @@ def compute_ranks_vectorized(all_scores: np.ndarray) -> np.ndarray:
 
     # For each item and year, rank countries by score
     for item_idx in range(n_items):
+        item_scores = all_scores[item_idx]  # 2D view: (n_countries, n_years)
         for year_idx in range(n_years):
             # Get scores for this item and year across all countries
-            year_scores = all_scores[item_idx, :, year_idx]
+            year_scores = item_scores[:, year_idx]
 
             # Handle NaN values - they should get the worst rank
             # argsort returns indices that would sort the array
@@ -1188,14 +1191,21 @@ def _arrays_to_score_dicts(
         # Build list of score documents for this item
         item_docs = []
 
+        # 2D views for this item so the inner loop indexes 2D arrays and the
+        # NaN check reads a precomputed mask instead of re-indexing the 3D
+        # arrays and calling np.isnan per cell.
+        score_mat = all_scores[item_idx]
+        rank_mat = all_ranks[item_idx]
+        nan_mat = np.isnan(score_mat)
+
         for country_idx, country_code in enumerate(country_codes):
             for year_idx in range(n_years):
                 year = start_year + year_idx
-                score = all_scores[item_idx, country_idx, year_idx]
-                rank = all_ranks[item_idx, country_idx, year_idx]
+                score = score_mat[country_idx, year_idx]
+                rank = rank_mat[country_idx, year_idx]
 
                 # Skip NaN scores
-                if np.isnan(score):
+                if nan_mat[country_idx, year_idx]:
                     continue
 
                 item_docs.append({

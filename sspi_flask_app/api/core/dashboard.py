@@ -1717,6 +1717,7 @@ def item_coverage_data(ItemCode, CountryGroup):
     one_missing = sum(1 for d in data if d["v"] == d["vComplete"] - 1)
     two_or_more_missing = sum(1 for d in data if d["v"] < d["vComplete"] - 1)
     no_observations = n_squares - complete_coverage - one_missing - two_or_more_missing
+    y_codes_sorted = sorted({d["y"] for d in data})
     return {
         "summary": [
             f"Complete Coverage: {complete_coverage} / {n_squares} observations ({complete_coverage / n_squares:.2%})",
@@ -1726,10 +1727,10 @@ def item_coverage_data(ItemCode, CountryGroup):
         ],
         "data": data,
         "title": f"Coverage for {ItemCode}",
-        "labels": sorted(list(set(d["y"] for d in data))),
+        "labels": y_codes_sorted,
         "itemCode": ItemCode,
         "years": list(range(2000, 2024)),
-        "ccodes": sorted(list(set(d["y"] for d in data))),
+        "ccodes": y_codes_sorted,
     }
 
 
