@@ -130,9 +130,19 @@ def build_mongo_query(raw_query_input, database=None):
 
         # Special handling for raw data queries - use Source fields
         if database is sspi_raw_api_data:
+            # Batch the dataset-detail lookups into one fetch instead of a
+            # find_one per dataset code via get_source_info.
+            dataset_detail_map = {
+                d["DatasetCode"]: d for d in sspi_metadata.dataset_details()
+            }
             source_queries = []
             for dataset_code in dataset_codes:
-                source_info = sspi_metadata.get_source_info(dataset_code)
+                detail = dataset_detail_map.get(dataset_code)
+                if not detail:
+                    raise ValueError(
+                        f"Dataset code {dataset_code} not found in metadata."
+                    )
+                source_info = detail["Source"]
                 source_queries.append(
                     {
                         "Source.OrganizationCode": source_info["OrganizationCode"],
