@@ -38,11 +38,12 @@ def collect(series_code, overwrite_all: bool, overwrite: list[str], remote: bool
         if collected_datasets:
             for dataset in collected_datasets:
                 click.echo(f"A RawDocumentSet for {dataset} has already been collected.")
-                if dataset in previous_collection_info.keys():
+                if dataset in previous_collection_info:
+                    previous_info = previous_collection_info[dataset]
                     click.echo("Previous collection info:")
-                    click.secho(json.dumps(previous_collection_info[dataset]["CollectionInfo"], indent=2), fg="yellow")
+                    click.secho(json.dumps(previous_info["CollectionInfo"], indent=2), fg="yellow")
                     click.echo("Source Info:")
-                    click.secho(json.dumps(previous_collection_info[dataset]["Source"], indent=2), fg="yellow")
+                    click.secho(json.dumps(previous_info["Source"], indent=2), fg="yellow")
                 if click.confirm("Do you want to overwrite the RawDocumentSet associated with this dataset?"):
                     overwrite_list.append(dataset)
         if overwrite_list:

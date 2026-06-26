@@ -3,6 +3,9 @@ from sspi_flask_app.models.errors import InvalidQueryError
 import re
 
 
+_SAFE_RE = re.compile(r"^[\w\d&-]*$")
+
+
 def validate_data_query(raw_query_input:dict):
     """
     Returns the raw_query_input iff the query is valid. Raises InvalidQueryError if the query is invalid.
@@ -23,8 +26,7 @@ def validate_data_query(raw_query_input:dict):
         """
         if query_string is None:
             return True
-        safe_pattern = r"^[\w\d&-]*$"
-        return bool(re.match(safe_pattern, str(query_string)))
+        return bool(_SAFE_RE.match(str(query_string)))
 
     def validate_query_safety(raw_query_input):
         """

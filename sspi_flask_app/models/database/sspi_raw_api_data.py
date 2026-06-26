@@ -141,9 +141,12 @@ class SSPIRawAPIData(MongoWrapper):
             num_fragments = (len(document) + byte_max - 1) // byte_max
             source_info_id = f"{source_info['OrganizationCode']}_{source_info['QueryCode']}"
             fragment_group_id = hashlib.blake2b(document.encode('utf-8')).hexdigest()
+            # kwargs are loop-invariant: apply once. The "Raw" placeholder fixes its
+            # field position before the kwargs keys to match the original ordering.
+            obs["Raw"] = None
+            obs.update(kwargs)
             for i in range(num_fragments):
                 obs["Raw"] = document[byte_max * i:byte_max * i + byte_max]
-                obs.update(kwargs)
                 obs.update({
                     "FragmentGroupID": f"{source_info_id}_{fragment_group_id}",
                     "FragmentNumber": i,
