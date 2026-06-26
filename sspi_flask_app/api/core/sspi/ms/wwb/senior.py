@@ -113,6 +113,7 @@ def compute_senior():
 
     obs_list = parse_oecd_observations(raw[0]["Raw"][2:][:-1])
     filtered_obs_list = []
+    current_year = datetime.now().year
     for obs in obs_list:
         if not bool(re.match(r'^[A-Z]{3}$', obs["REF_AREA"])):
             continue
@@ -131,7 +132,6 @@ def compute_senior():
             continue
         obs["Value"] = float(obs["Value"])
         obs["Year"] = int(obs["Year"])
-        current_year = datetime.now().year
         if obs["Year"] < 1990 or obs["Year"] > current_year:
             continue
         filtered_obs_list.append(obs)

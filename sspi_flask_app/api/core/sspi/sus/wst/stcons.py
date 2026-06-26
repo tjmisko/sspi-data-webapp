@@ -58,7 +58,7 @@ def impute_stcons():
 
     # Extract and impute WID_CARBON_TOT_P0P100 data
     wid_p0p100 = sspi_clean_api_data.find({"DatasetCode": "WID_CARBON_TOT_P0P100"})
-    missing_p0p100 = set(sspi_67) - set([d.get("CountryCode", "") for d in wid_p0p100])
+    missing_p0p100 = set(sspi_67) - set(d.get("CountryCode", "") for d in wid_p0p100)
     for country in missing_p0p100:
         reference_class_averages.extend(
             impute_reference_class_average(country, 2000, 2023, "Dataset", "WID_CARBON_TOT_P0P100", wid_p0p100)
@@ -75,7 +75,7 @@ def impute_stcons():
 
     # Extract and impute WID_CARBON_TOT_P90P100 data
     wid_p90p100 = sspi_clean_api_data.find({"DatasetCode": "WID_CARBON_TOT_P90P100"})
-    missing_p90p100 = set(sspi_67) - set([d.get("CountryCode", "") for d in wid_p90p100])
+    missing_p90p100 = set(sspi_67) - set(d.get("CountryCode", "") for d in wid_p90p100)
     for country in missing_p90p100:
         reference_class_averages.extend(
             impute_reference_class_average(country, 2000, 2023, "Dataset", "WID_CARBON_TOT_P90P100", wid_p90p100)
@@ -92,7 +92,7 @@ def impute_stcons():
 
     # Extract and impute FPI_ECOFPT_PER_CAP data
     fpi_ecofpt = sspi_clean_api_data.find({"DatasetCode": "FPI_ECOFPT_PER_CAP"})
-    missing_fpi = set(sspi_67) - set([d.get("CountryCode", "") for d in fpi_ecofpt])
+    missing_fpi = set(sspi_67) - set(d.get("CountryCode", "") for d in fpi_ecofpt)
     for country in missing_fpi:
         reference_class_averages.extend(
             impute_reference_class_average(country, 2000, 2023, "Dataset", "FPI_ECOFPT_PER_CAP", fpi_ecofpt)
