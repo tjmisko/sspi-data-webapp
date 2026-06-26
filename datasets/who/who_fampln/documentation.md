@@ -1,8 +1,8 @@
 ---
 DatasetType: Indicator
 DatasetCode: WHO_FAMPLN
-DatasetName: Child Stunting
-Description: Estimated prevalence of stunting in children under 5 (%).
+DatasetName: Demand for Family Planning Satisfied
+Description: Proportion of women of reproductive age (15-49 years) who have their need for family planning satisfied with modern methods (%).
 Source:
   OrganizationCode: WHO
   QueryCode: SDGFPALL 
