@@ -177,6 +177,57 @@ def identify_empty_datasets(
     )
 
 
+def rebuild_metadata_without_indicators(
+    metadata: list[dict],
+    dropped_codes: set[str]
+) -> list[dict]:
+    """
+    Rebuild metadata after dropping indicators.
+
+    Removes dropped indicators and updates hierarchy references in parent items
+    (Categories) to remove references to dropped indicator codes, so downstream
+    weight normalization renormalizes over the indicators that remain.
+
+    Args:
+        metadata: Original metadata list
+        dropped_codes: Set of indicator codes to drop
+
+    Returns:
+        New metadata list with dropped indicators removed and hierarchy updated
+    """
+    rebuilt = []
+
+    for item in metadata:
+        item_type = item.get("ItemType")
+        item_code = item.get("ItemCode")
+
+        # Skip dropped indicators
+        if item_type == "Indicator" and item_code in dropped_codes:
+            continue
+
+        # For Categories, update IndicatorCodes and Children to remove dropped codes
+        if item_type == "Category":
+            item = dict(item)  # Make a copy to avoid mutating original
+
+            # Update IndicatorCodes
+            if "IndicatorCodes" in item and item["IndicatorCodes"]:
+                item["IndicatorCodes"] = [
+                    code for code in item["IndicatorCodes"]
+                    if code not in dropped_codes
+                ]
+
+            # Update Children
+            if "Children" in item and item["Children"]:
+                item["Children"] = [
+                    code for code in item["Children"]
+                    if code not in dropped_codes
+                ]
+
+        rebuilt.append(item)
+
+    return rebuilt
+
+
 # =============================================================================
 # Dataset Preparation
 # =============================================================================
