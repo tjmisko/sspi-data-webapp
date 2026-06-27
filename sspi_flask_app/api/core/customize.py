@@ -462,6 +462,7 @@ def load_configuration(config_id):
             "actions": config.get("actions", []),
             "datasetDetailsMap": all_datasets,
             "has_scores": has_scores,
+            "scored_hash": scored_hash,
             "created_at": config.get("created_at"),
             "updated_at": config.get("updated_at")
         })

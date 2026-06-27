@@ -78,7 +78,23 @@
     </section>
 </article>
 
-<style></style>
+<style>
+.scores-chart-mount {
+    width: 100%;
+    min-height: 480px;
+    margin-top: 1rem;
+}
+
+.viz-inline-error {
+    text-align: center;
+    color: var(--badge-negative-color);
+    padding: 2.5rem 1rem;
+}
+
+.viz-inline-error p {
+    margin-bottom: 1rem;
+}
+</style>
 
 <script>
 window.csrfToken = {{ csrf_token|tojson|safe if csrf_token is defined else '""' }};
@@ -98,6 +114,12 @@ async function fetchWithCSRF(url, options = {}) {
 // Store config data globally for tab access
 let globalConfigData = null;
 let globalResultsData = null;
+// Authoritative cache hash for this config's scored data. Sourced from the
+// stored scored_hash (the FILTERED metadata hash the scorer actually wrote
+// under), so the Scores chart and Sensitivity view both hit the cache even
+// when indicators were dropped for missing data.
+let globalScoredHash = null;
+let scoresChart = null;
 const sensitivityState = { initialized: false, view: null, groups: [] };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -134,7 +156,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Lazily build the Sensitivity tab on first activation
         setupSensitivityLazyInit();
 
-        if (!resultsData.success || !resultsData.has_results) {
+        // Authoritative scored state + hash come from /load: the backend derives
+        // has_scores from the stored scored_hash, which reflects the FILTERED
+        // metadata that was actually scored. /results recomputes a hash from the
+        // full (unfiltered) metadata, so it can falsely report has_results:false
+        // whenever an indicator was dropped — don't gate on it.
+        globalScoredHash = configData.scored_hash
+            || (resultsData && resultsData.config_hash)
+            || null;
+        const hasScores = configData.has_scores
+            || (resultsData && resultsData.success && resultsData.has_results);
+
+        if (!hasScores || !globalScoredHash) {
             showNoResults();
             return;
         }
@@ -208,10 +241,13 @@ function showError(message) {
 
 function showResults(configData, resultsData) {
     const content = document.getElementById('visualization-content');
-    const stats = resultsData.stats || {};
+    const stats = (resultsData && resultsData.stats) || {};
+    const hasStats = !!(stats.total_results || stats.countries || stats.years || stats.items);
 
-    // Build the visualization content
-    content.innerHTML = `
+    // Stats are best-effort context (sourced from /results, which may be empty
+    // when its full-metadata hash diverges from scored_hash). Only show the
+    // summary when it actually has numbers, so we never display misleading zeros.
+    const summaryHTML = hasStats ? `
         <div class="results-summary">
             <h3>Scoring Results Summary</h3>
             <div class="stats-grid">
@@ -233,167 +269,57 @@ function showResults(configData, resultsData) {
                 </div>
             </div>
         </div>
+    ` : '';
 
-        <div class="chart-section">
-            <div class="item-selector">
-                <label for="item-select">Select Item to Visualize:</label>
-                <select id="item-select">
-                    <option value="">-- Select an item --</option>
-                </select>
-            </div>
-            <div id="chart-container" class="chart-wrapper">
-                <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
-                    Select an item above to view its chart
-                </p>
-            </div>
-        </div>
+    content.innerHTML = `
+        ${summaryHTML}
+        <div id="scores-chart-mount" class="scores-chart-mount"></div>
     `;
 
-    // Populate item selector from metadata
-    const select = document.getElementById('item-select');
-    const metadata = configData.metadata || [];
-
-    // Group by type
-    const pillars = metadata.filter(m => m.ItemType === 'Pillar');
-    const categories = metadata.filter(m => m.ItemType === 'Category');
-    const indicators = metadata.filter(m => m.ItemType === 'Indicator');
-
-    if (pillars.length > 0) {
-        const group = document.createElement('optgroup');
-        group.label = 'Pillars';
-        pillars.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.ItemCode;
-            opt.textContent = `${p.ItemCode} - ${p.ItemName}`;
-            group.appendChild(opt);
-        });
-        select.appendChild(group);
-    }
-
-    if (categories.length > 0) {
-        const group = document.createElement('optgroup');
-        group.label = 'Categories';
-        categories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.ItemCode;
-            opt.textContent = `${c.ItemCode} - ${c.ItemName}`;
-            group.appendChild(opt);
-        });
-        select.appendChild(group);
-    }
-
-    if (indicators.length > 0) {
-        const group = document.createElement('optgroup');
-        group.label = 'Indicators';
-        indicators.forEach(i => {
-            const opt = document.createElement('option');
-            opt.value = i.ItemCode;
-            opt.textContent = `${i.ItemCode} - ${i.ItemName}`;
-            group.appendChild(opt);
-        });
-        select.appendChild(group);
-    }
-
-    // Add change listener
-    select.addEventListener('change', (e) => {
-        if (e.target.value) {
-            loadChartData(e.target.value);
-        }
-    });
+    renderScoresChart();
 }
 
-async function loadChartData(itemCode) {
-    const container = document.getElementById('chart-container');
-    container.innerHTML = `
-        <div class="loading-indicator">
-            <div class="spinner"></div>
-            <p>Loading chart data...</p>
-        </div>
-    `;
-
-    try {
-        const response = await fetchWithCSRF(
-            `/api/v1/customize/results/${window.sspiConfigId}/chart-data?item_code=${itemCode}`
-        );
-        const data = await response.json();
-
-        if (!data.success) {
-            container.innerHTML = `
-                <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
-                    ${data.message || 'No data available for this item'}
-                </p>
-            `;
-            return;
-        }
-
-        renderChart(container, data);
-
-    } catch (error) {
-        console.error('Error loading chart data:', error);
-        container.innerHTML = `
-            <p style="text-align: center; color: var(--badge-negative-color); padding: 3rem;">
-                Error loading chart data. Please try again.
-            </p>
-        `;
+// Mount the live custom panel chart at the SSPI root. The chart auto-fetches
+// /api/v1/customize/panel/score/SSPI?config_hash=...&config_id=... and renders a
+// real line chart over years for every country, plus a built-in item tree so the
+// user can drill into pillars / categories / indicators (each click re-fetches
+// the same custom endpoint). This replaces the old truncated 20-row table.
+function renderScoresChart() {
+    const mount = document.getElementById('scores-chart-mount');
+    if (!mount) {
+        return;
     }
-}
 
-function renderChart(container, data) {
-    // Create a simple table view of the data
-    // A more sophisticated chart can be added later using Chart.js or similar
-    const chartData = data.data;
-    const countries = Object.keys(chartData);
-
-    if (countries.length === 0) {
-        container.innerHTML = `
-            <p style="text-align: center; color: var(--low-importance-font-color); padding: 3rem;">
-                No data available for this item
-            </p>
+    if (typeof CustomSSPIPanelChart === 'undefined') {
+        mount.innerHTML = `
+            <div class="viz-inline-error">
+                <p>The chart component failed to load.</p>
+                <button onclick="window.location.reload()" class="btn-secondary">Reload</button>
+            </div>
         `;
         return;
     }
 
-    // Get all years from the data
-    const allYears = new Set();
-    countries.forEach(country => {
-        chartData[country].forEach(point => allYears.add(point.year));
-    });
-    const years = Array.from(allYears).sort();
+    if (scoresChart && typeof scoresChart.destroy === 'function') {
+        scoresChart.destroy();
+        scoresChart = null;
+    }
 
-    container.innerHTML = `
-        <h4 style="margin: 0 0 1rem 0;">${data.item_name || data.item_code}</h4>
-        <p style="color: var(--low-importance-font-color); margin-bottom: 1rem;">
-            ${data.total_points} data points across ${countries.length} countries
-        </p>
-        <div style="overflow-x: auto;">
-            <table class="data-table" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: var(--badge-background-color);">
-                        <th style="padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border-color);">Country</th>
-                        ${years.map(y => `<th style="padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color);">${y}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-                    ${countries.slice(0, 20).map(country => {
-                        const countryData = chartData[country];
-                        const yearMap = {};
-                        countryData.forEach(point => yearMap[point.year] = point.score);
-                        return `
-                            <tr>
-                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">${country}</td>
-                                ${years.map(y => `
-                                    <td style="padding: 0.5rem; text-align: right; border-bottom: 1px solid var(--border-color);">
-                                        ${yearMap[y] !== undefined ? yearMap[y].toFixed(2) : '-'}
-                                    </td>
-                                `).join('')}
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-            ${countries.length > 20 ? `<p style="color: var(--low-importance-font-color); margin-top: 1rem;">Showing first 20 of ${countries.length} countries</p>` : ''}
-        </div>
-    `;
+    try {
+        scoresChart = new CustomSSPIPanelChart(mount, 'SSPI', {
+            configHash: globalScoredHash,
+            configId: window.sspiConfigId,
+            enableComparisonSeries: false
+        });
+    } catch (error) {
+        console.error('Error rendering scores chart:', error);
+        mount.innerHTML = `
+            <div class="viz-inline-error">
+                <p>Unable to render the chart for this configuration.</p>
+                <button onclick="window.location.reload()" class="btn-secondary">Reload</button>
+            </div>
+        `;
+    }
 }
 
 // ========== Sensitivity Tab Functions ==========
@@ -419,7 +345,9 @@ function renderSensitivity() {
     }
 
     // Not scored yet -> reuse the "score this configuration" call to action.
-    if (!globalResultsData || !globalResultsData.success || !globalResultsData.has_results) {
+    // Gate on the authoritative scored_hash (same source as the Scores tab) so a
+    // scored config never falsely shows the not-scored state.
+    if (!globalScoredHash) {
         content.innerHTML = `
             <div class="sensitivity-not-scored">
                 <h3>No Scores Available</h3>
@@ -432,7 +360,7 @@ function renderSensitivity() {
         return;
     }
 
-    const configHash = globalResultsData.config_hash;
+    const configHash = globalScoredHash;
     const metadata = (globalConfigData && globalConfigData.metadata) || [];
     const actions = (globalConfigData && globalConfigData.actions) || [];
     const groups = SensitivityEngine.deriveChangeGroups(actions, metadata);
