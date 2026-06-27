@@ -33,8 +33,12 @@ from sspi_flask_app.api.resources.metadata_validator import (
 from sspi_flask_app.api.resources.custom_scoring import (
     flatten_scores_for_storage,
     identify_empty_datasets,
+    rebuild_metadata_without_indicators,
     transform_scores_to_line_format,
 )
+
+# Backwards-compatible alias: this helper used to be defined here.
+_rebuild_metadata_without_indicators = rebuild_metadata_without_indicators
 from sspi_flask_app.api.resources.fast_custom_scoring import (
     score_custom_configuration_fast,
 )
@@ -548,60 +552,6 @@ def _abort_if_cancelled(job: ScoringJob) -> bool:
         logger.info(f"Job {job.job_id} cancelled at stage boundary")
         return True
     return False
-
-
-# =============================================================================
-# Metadata Helpers
-# =============================================================================
-
-def _rebuild_metadata_without_indicators(
-    metadata: list[dict],
-    dropped_codes: set[str]
-) -> list[dict]:
-    """
-    Rebuild metadata after dropping indicators.
-
-    Removes dropped indicators and updates hierarchy references in parent items
-    (Categories) to remove references to dropped indicator codes.
-
-    Args:
-        metadata: Original metadata list
-        dropped_codes: Set of indicator codes to drop
-
-    Returns:
-        New metadata list with dropped indicators removed and hierarchy updated
-    """
-    rebuilt = []
-
-    for item in metadata:
-        item_type = item.get("ItemType")
-        item_code = item.get("ItemCode")
-
-        # Skip dropped indicators
-        if item_type == "Indicator" and item_code in dropped_codes:
-            continue
-
-        # For Categories, update IndicatorCodes and Children to remove dropped codes
-        if item_type == "Category":
-            item = dict(item)  # Make a copy to avoid mutating original
-
-            # Update IndicatorCodes
-            if "IndicatorCodes" in item and item["IndicatorCodes"]:
-                item["IndicatorCodes"] = [
-                    code for code in item["IndicatorCodes"]
-                    if code not in dropped_codes
-                ]
-
-            # Update Children
-            if "Children" in item and item["Children"]:
-                item["Children"] = [
-                    code for code in item["Children"]
-                    if code not in dropped_codes
-                ]
-
-        rebuilt.append(item)
-
-    return rebuilt
 
 
 # =============================================================================

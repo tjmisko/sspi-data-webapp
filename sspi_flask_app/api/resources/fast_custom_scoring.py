@@ -29,6 +29,7 @@ from sspi_flask_app.api.resources.score_function_validator import (
 from sspi_flask_app.api.resources.custom_scoring import (
     DEFAULT_START_YEAR,
     DEFAULT_END_YEAR,
+    rebuild_metadata_without_indicators,
 )
 
 logger = logging.getLogger(__name__)
@@ -997,6 +998,35 @@ def score_custom_configuration_fast(
         start_year,
         end_year
     )
+
+    # Drop indicators that produced no usable score anywhere (NaN across every
+    # country and year). This happens when a score function needs a dataset
+    # that is entirely absent: identify_empty_datasets() only drops an indicator
+    # when ALL of its datasets are empty, so an indicator that needs several
+    # datasets but is missing just one survives that check yet still scores
+    # all-NaN here. Left in place, a single all-NaN indicator poisons the
+    # aggregation matrix multiply (weight * NaN = NaN) and nulls EVERY
+    # category / pillar / SSPI score for every country, so nothing above the
+    # indicator level can be stored. Drop them and renormalize over the
+    # indicators that actually scored, mirroring the pre-scoring empty-dataset
+    # drop.
+    if indicator_scores.size:
+        dead_mask = np.all(np.isnan(indicator_scores), axis=(1, 2))
+        if dead_mask.any():
+            dead_codes = {
+                indicators_to_score[i].get("ItemCode")
+                for i in np.nonzero(dead_mask)[0]
+            }
+            dead_codes.discard(None)
+            logger.warning(
+                f"Dropping {len(dead_codes)} indicator(s) that scored no data "
+                f"(all-NaN across the panel): {', '.join(sorted(dead_codes))}"
+            )
+            indicators_to_score = [
+                ind for ind, dead in zip(indicators_to_score, dead_mask) if not dead
+            ]
+            indicator_scores = indicator_scores[~dead_mask]
+            metadata = rebuild_metadata_without_indicators(metadata, dead_codes)
 
     # Phase 4: Aggregate hierarchy
     if progress_callback:
