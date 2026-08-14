@@ -260,7 +260,108 @@ def countries():
 
 @client_bp.route('/methodology')
 def methodology():
-    return render_template('methodology.html')
+    """
+    Render the methodology essay.
+
+    Every count quoted in the prose comes from sspi_metadata so the page
+    cannot drift from the live structure of the index.
+    """
+    pillar_tree = sspi_metadata.pillar_category_summary_tree()
+    indicator_details = sspi_metadata.indicator_details()
+    dataset_details = sspi_metadata.dataset_details()
+    scored_dataset_codes = {
+        dataset_code
+        for detail in indicator_details
+        for dataset_code in detail.get("DatasetCodes") or []
+    }
+    organization_codes = {
+        (detail.get("Source") or {}).get("OrganizationCode")
+        for detail in dataset_details
+        if detail.get("DatasetCode") in scored_dataset_codes
+    }
+    organization_codes.discard(None)
+    years = sorted({
+        year
+        for period in sspi_metadata.time_period_details()
+        if period.get("Type") == "Single Year"
+        for year in period.get("Years") or []
+    })
+    # An indicator whose raw values run the wrong way is inverted by swapping
+    # its goalposts, so the only way to count them is to read the goalposts.
+    # Goalposts live either on the indicator or as literals in its score
+    # function, and an indicator may combine components running both ways.
+    inverted_count = 0
+    partly_inverted_count = 0
+    for detail in indicator_details:
+        goalpost_pairs = [
+            (float(lower), float(upper))
+            for _, lower, upper in re.findall(
+                r"goalpost\(\s*(\w+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)",
+                detail.get("ScoreFunction") or "",
+            )
+        ]
+        lower, upper = detail.get("LowerGoalpost"), detail.get("UpperGoalpost")
+        if lower is not None and upper is not None:
+            goalpost_pairs.append((lower, upper))
+        swapped = [lower > upper for lower, upper in goalpost_pairs]
+        if swapped and all(swapped):
+            inverted_count += 1
+        elif any(swapped):
+            partly_inverted_count += 1
+    # Every level of the tree is an unweighted mean, so a single indicator's
+    # share of the SSPI is 1 / (indicators in its category * categories in its
+    # pillar * pillars). The spread across categories is the price of that
+    # choice, and the table on the page states it outright.
+    pillar_count = len(pillar_tree)
+    weight_rows = []
+    pillar_summary = []
+    for pillar in pillar_tree:
+        categories = pillar.get("Categories") or []
+        pillar_summary.append({
+            "code": pillar["ItemCode"],
+            "name": pillar["ItemName"],
+            "description": pillar.get("ShortDescription", ""),
+            "categories": [
+                {"code": c["ItemCode"], "name": c["ItemName"],
+                 "description": c.get("ShortDescription", "")}
+                for c in categories
+            ],
+            "category_count": len(categories),
+            "indicator_count": sum(
+                len(c.get("IndicatorCodes") or []) for c in categories
+            ),
+        })
+        for category in categories:
+            indicator_count = len(category.get("IndicatorCodes") or [])
+            if not indicator_count or not pillar_count:
+                continue
+            weight_rows.append({
+                "pillar": pillar["ItemName"],
+                "pillar_code": pillar["ItemCode"],
+                "category": category["ItemName"],
+                "category_code": category["ItemCode"],
+                "indicator_count": indicator_count,
+                "category_count": len(categories),
+                "weight_percent": 100 / (indicator_count * len(categories) * pillar_count),
+            })
+    weight_rows.sort(key=lambda row: row["weight_percent"], reverse=True)
+    return render_template(
+        'methodology.html',
+        pillar_summary=pillar_summary,
+        pillar_count=pillar_count,
+        category_count=len(sspi_metadata.category_codes()),
+        indicator_count=len(sspi_metadata.indicator_codes()),
+        dataset_count=len(scored_dataset_codes),
+        organization_count=len(organization_codes),
+        country_count=len(sspi_metadata.country_group("SSPI67")),
+        core_country_count=len(sspi_metadata.country_group("SSPI49")),
+        extended_country_count=len(sspi_metadata.country_group("SSPIExtended")),
+        year_start=years[0] if years else None,
+        year_end=years[-1] if years else None,
+        inverted_count=inverted_count,
+        partly_inverted_count=partly_inverted_count,
+        weight_rows=weight_rows,
+    )
 
 
 @client_bp.route('/contact')
