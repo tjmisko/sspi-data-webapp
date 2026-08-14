@@ -1,28 +1,40 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    <title> {{ title }} </title>
+    <title>{{ title }}</title>
 {% endblock title %}
 
 {% block content %}
-<section class="print-style-article">
-    <h2> {{ title }} </h2>
-    {% if subtitle %}
-        <h3> {{ subtitle }} </h3>
-    {% endif %}
-    <div class="analysis-metadata-line">
-        <ul class="analysis-author-list">
-            Authors: 
-            {% for a in authors %}
-                <li class="analysis-author-list-element">{{a}}</li>
-            {% endfor %}
-        </ul>
-        <span class="analysis-date">Published: {{ date }}</h4>
-    </div>
-    <subsection class="methodology-subsection">
-        <div class="methodology-wrapper">
-            {{ analysis | safe }}
+<article class="analysis-article print-style-article">
+    <header class="analysis-article-header">
+        <h1 class="analysis-title">{{ title }}</h1>
+        {% if subtitle %}
+        <p class="analysis-subtitle">{{ subtitle }}</p>
+        {% endif %}
+        {% if authors or date %}
+        <div class="analysis-metadata-line">
+            {% if authors %}
+            <p class="analysis-authors">Authors: {{ authors | join(', ') }}</p>
+            {% endif %}
+            {% if date %}
+            <p class="analysis-date">Published: {{ date }}</p>
+            {% endif %}
         </div>
-    </subsection>
-</section>
+        {% endif %}
+    </header>
+
+    {% if analysis %}
+    <section class="analysis-article-body">
+        {{ analysis | safe }}
+    </section>
+    {% else %}
+    <section class="analysis-empty-state">
+        <p class="analysis-empty-state-message">This analysis is not available.</p>
+        <p class="analysis-empty-state-detail">
+            The article may have been renamed, moved, or not yet published.
+        </p>
+        <a class="analysis-empty-state-link" href="/analysis">Browse all analysis</a>
+    </section>
+    {% endif %}
+</article>
 {% endblock content %}

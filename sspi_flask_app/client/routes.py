@@ -506,66 +506,13 @@ def indicator_data(indicator_code):
 @client_bp.route('/analysis/regressions')
 def regressions():
     """
-    Render regressions analysis page with dynamic series selection.
+    Render the regressions analysis page.
 
-    Query parameters:
-    - seriesX: First series code (default: SSPI)
-    - seriesY: Second series code (default: WB_GDP_PERCAP_CURPRICE_USD)
-
-    Returns:
-        Rendered template with series options and initial selection
+    The chart reads its series selection from the seriesX/seriesY query
+    parameters and fetches the dropdown options from
+    /api/v1/series-options, so the server renders the shell only.
     """
-    # Get URL parameters or use defaults
-    series_x = request.args.get('seriesX', 'SSPI').upper()
-    series_y = request.args.get('seriesY', 'WB_GDP_PERCAP_CURPRICE_USD').upper()
-
-    # Build grouped series options for dropdowns
-    series_options = {
-        'Indicators': [
-            {
-                'code': indicator['ItemCode'],
-                'name': indicator['ItemName'],
-                'type': 'Indicator'
-            } for indicator in sspi_metadata.indicator_details()
-        ],
-        'Categories': [
-            {
-                'code': category['ItemCode'],
-                'name': category['ItemName'],
-                'type': 'Category'
-            } for category in sspi_metadata.category_details()
-        ],
-        'Pillars': [
-            {
-                'code': pillar['ItemCode'],
-                'name': pillar['ItemName'],
-                'type': 'Pillar'
-            } for pillar in sspi_metadata.pillar_details()
-        ],
-        'Datasets': [
-            {
-                'code': dataset['DatasetCode'],
-                'name': dataset['DatasetName'],
-                'type': 'Dataset'
-            } for dataset in sspi_metadata.dataset_details()
-        ]
-    }
-
-    # Add SSPI to the options (it's the root item)
-    series_options['Index'] = [
-        {
-            'code': 'SSPI',
-            'name': 'Sustainable and Shared-Prosperity Policy Index',
-            'type': 'SSPI'
-        }
-    ]
-
-    return render_template(
-        'regressions.html',
-        series_options=series_options,
-        initial_series_x=series_x,
-        initial_series_y=series_y
-    )
+    return render_template('regressions.html')
 
 
 @client_bp.route('/analysis/correlation/<series_x>/<series_y>')
@@ -676,16 +623,22 @@ def analysis_page(analysis_code):
             'analysis-template.html',
             title='Analysis Not Found',
             subtitle=None,
-            authors=None,
+            authors=[],
             date=None,
-            analysis='<p>The requested analysis could not be found.</p>'
-        )
+            analysis=None
+        ), 404
 
     analysis_title = analysis_detail.get("AnalysisTitle")
     analysis_subtitle = analysis_detail.get("AnalysisSubtitle")
     analysis_date = analysis_detail.get("Date")
-    analysis_authors = analysis_detail.get("Authors")
+    analysis_authors = analysis_detail.get("Authors") or []
+    if isinstance(analysis_authors, str):
+        analysis_authors = [analysis_authors]
     analysis_html = sspi_metadata.get_analysis_html(analysis_code)
+    # get_analysis_html returns this placeholder when the markdown file is
+    # missing or unreadable; the template renders an empty state for None.
+    if analysis_html == "<p>Analysis not available.</p>":
+        analysis_html = None
     return render_template(
         'analysis-template.html',
         title=analysis_title,
