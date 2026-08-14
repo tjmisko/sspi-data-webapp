@@ -60,10 +60,10 @@ class PanelChart {
         // Build comparison options HTML conditionally
         const comparisonOptionsHTML = this.enableComparisonSeries ? `
         <div class="chart-view-subheader">Comparison Options</div>
-        <div class="chart-view-option">
+        <label class="chart-view-option">
             <input type="checkbox" class="show-comparison-series"/>
-            <label class="title-bar-label">Show Comparison Series</label>
-        </div>` : '';
+            <span class="title-bar-label">Show Comparison Series</span>
+        </label>` : '';
 
         // Conditional HTML for search button - hide in country list mode
         const searchButtonHTML = this.isCountryListMode ? '' : `
@@ -161,14 +161,14 @@ class PanelChart {
             </div>
         </div>
         <div class="chart-view-subheader">Imputation Options</div>
-        <div class="chart-view-option">
+        <label class="chart-view-option">
             <input type="checkbox" class="extrapolate-backward"/>
-            <label class="title-bar-label">Backward Extrapolation</label>
-        </div>
-        <div class="chart-view-option">
+            <span class="title-bar-label">Backward Extrapolation</span>
+        </label>
+        <label class="chart-view-option">
             <input type="checkbox" class="interpolate-linear"/>
-            <label class="title-bar-label">Linear Interpolation</label>
-        </div>
+            <span class="title-bar-label">Linear Interpolation</span>
+        </label>
         ${comparisonOptionsHTML}
         <div class="chart-view-subheader">Randomization</div>
         <div class="chart-view-option">

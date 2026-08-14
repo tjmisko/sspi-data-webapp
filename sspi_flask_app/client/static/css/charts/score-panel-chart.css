@@ -286,12 +286,6 @@
   margin-bottom: 0;
 }
 
-/* Tighter spacing specifically for imputation checkboxes */
-.chart-options-details .chart-view-option:has(input[type="checkbox"]) {
-  line-height: 1.2;
-  margin-bottom: 0.05rem;
-}
-
 /* Section subheaders within View Options */
 .chart-view-subheader {
   display: flex;
@@ -466,18 +460,6 @@
   line-height: 1.1;
 }
 
-/* Override inherited margins for inputs and labels in chart options only */
-.chart-options-details .chart-view-option input[type="checkbox"] {
-  margin: 0 0.25rem 0 0;
-  padding: 0;
-  vertical-align: middle;
-}
-
-.chart-options-details .chart-view-option input[type="number"] {
-  margin: 0;
-  padding: 0.1rem 0.3rem;
-}
-
 /* Compact button spacing only in chart options */
 .chart-options-details .chart-view-option button {
   margin: 0.1rem 0;
@@ -523,15 +505,8 @@
   fill: none;
 }
 
-/* Form element styling for both themes */
-.chart-options-details select,
-.chart-options-details input[type="number"] {
-  background-color: var(--input-background-color);
-  color: var(--input-text-color);
-  border: 1px solid var(--subtle-line-color);
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
-}
+/* Selects, number inputs, switches, and radios are themed centrally by
+   chart-controls.css. */
 
 /* Button styling for chart options */
 .chart-options-details button {
@@ -550,9 +525,6 @@
 .chart-options-details .series-selector,
 .chart-options-details .country-group-selector {
   width: 100%;
-  padding: 0.5em;
-  font-size: 0.85em;
-  border-radius: 4px;
 }
 
 /* Styling for the unified Select Countries section */

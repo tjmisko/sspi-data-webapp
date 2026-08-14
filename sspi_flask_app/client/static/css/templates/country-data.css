@@ -38,7 +38,7 @@
 
 .country-selector {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 2.6em 0.75rem 1rem;
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.3;
@@ -50,6 +50,17 @@
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-shadow: var(--shadow-sm);
+  /* Same chevron recipe as chart-controls.css, at hero scale. */
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--low-importance-font-color) 50%),
+    linear-gradient(135deg, var(--low-importance-font-color) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.35em) 50%,
+    calc(100% - 1em) 50%;
+  background-size: 0.35em 0.35em;
+  background-repeat: no-repeat;
 }
 
 .country-selector:hover {
@@ -147,26 +158,9 @@
   font-style: italic;
 }
 
+/* Look, hover, and focus come from chart-controls.css; sizing lives here. */
 .time-period-selector {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  border: var(--theme-border-thin);
-  border-radius: var(--border-radius);
-  background-color: var(--box-background-color);
-  color: var(--body-text-color);
-  cursor: pointer;
-  transition: border-color 0.2s ease;
   min-width: 200px;
-}
-
-.time-period-selector:hover {
-  border-color: var(--primary-color);
-}
-
-.time-period-selector:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-  border-color: var(--primary-color);
 }
 
 .time-period-selector optgroup {

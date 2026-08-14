@@ -542,10 +542,10 @@ class IndicatorPanelChart extends PanelChart {
                     .find(header => header.textContent.includes('Imputation Options'));
                 if (imputationOptionsHeader) {
                     const imputationToggleHTML = `
-                        <div class="chart-view-option">
+                        <label class="chart-view-option">
                             <input type="checkbox" class="show-all-imputations" ${this.showImputations ? 'checked' : ''}/>
-                            <label class="title-bar-label">Show All Imputations</label>
-                        </div>
+                            <span class="title-bar-label">Show All Imputations</span>
+                        </label>
                     `;
                     // Insert after the Imputation Options header
                     imputationOptionsHeader.insertAdjacentHTML('afterend', imputationToggleHTML);
