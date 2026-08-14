@@ -5,10 +5,42 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sspi"
 version = "0.1"
+requires-python = ">=3.11"
 dependencies = [
+  "beautifulsoup4",
   "click",
-  "flask",
-  "flask_login"
+  "cssmin",
+  "email-validator",
+  "Flask",
+  "Flask-Assets",
+  "Flask-Bcrypt",
+  "Flask-Limiter",
+  "Flask-Login",
+  "Flask-PyMongo",
+  "Flask-WTF",
+  "gunicorn",
+  "jq",
+  "jsmin",
+  "lxml",
+  "Markdown",
+  "numpy",
+  "openpyxl",
+  "pandas",
+  "pycountry",
+  "pymongo",
+  "python-dotenv",
+  "python-frontmatter",
+  "PyYAML",
+  "requests",
+  "scikit-learn",
+  "urllib3",
+  "Werkzeug",
+  "WTForms",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
 ]
 
 [project.scripts]
