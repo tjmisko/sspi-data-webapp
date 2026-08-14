@@ -455,6 +455,9 @@
   font-family: var(--body-font-family);
 }
 
+/* The border/radius/padding and the name/code treatment below used to leak in
+   from indicator-table.css's unscoped rules; restated here when that file was
+   scoped so the builder's dataset rows keep their pre-scoping rendering. */
 .customizable-sspi .dataset-item {
   position: relative;
   display: flex;

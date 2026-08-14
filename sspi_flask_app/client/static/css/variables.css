@@ -77,7 +77,10 @@
   --page-background: #f0f1f2;
   --green-accent: #8BA342;
   --text-color: #111827;
-  --low-importance-font-color: #6b7280;
+  /* Darkened from #6b7280, which sat at 4.2-4.4:1 against the light grounds and
+     missed the 4.5:1 floor for captions, stat labels, and breadcrumb chrome.
+     This clears it on every light surface up to the tinted pillar cards. */
+  --low-importance-font-color: #616874;
   --medium-importance-font-color: #4b5563;
   --font-color: var(--text-color);
   --body-font-color: var(--body-text-color);
@@ -155,7 +158,8 @@
   /* Pillar accents: brand hue preserved, lightness tuned to pass AA per theme */
   --sus-accent: #3DD164;
   --ms-accent: #FFA04D;
-  --pg-accent: #4DA3FF;
+  /* Lightened from #4DA3FF, which read 4.1:1 on its own 12% chip tint. */
+  --pg-accent: #66B0FF;
   /* Pole to mix chip/label text toward for contrast against this theme's surfaces */
   --chip-text-mix: white;
 }

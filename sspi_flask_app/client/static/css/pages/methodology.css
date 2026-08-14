@@ -18,6 +18,9 @@
   /* Page-scoped semantic accent: the index's gold, mixed toward the theme's
      text pole so it holds up as a line and a rule on both grounds. */
   --methodology-accent: color-mix(in srgb, var(--sspi-color) 62%, var(--chip-text-mix));
+  /* The accent clears 3:1 as a rule or a stroke but not the 4.5:1 text floor,
+     so small type on the accent takes this deeper mix instead. */
+  --methodology-accent-text: color-mix(in srgb, var(--sspi-color) 48%, var(--chip-text-mix));
   --methodology-measure: 68ch;
 }
 
@@ -220,7 +223,7 @@
   font-family: var(--code-font-family);
   font-size: 0.62rem;
   font-weight: 400;
-  color: var(--methodology-accent);
+  color: var(--methodology-accent-text);
 }
 
 .methodology-subheading {
@@ -392,7 +395,9 @@
   min-width: max-content;
   gap: 0.35em;
   font-family: var(--code-font-family);
-  font-size: 0.7rem;
+  /* Sized so the longest formula (the implied-weight denominator) still fits
+     the 70ch prose column without scrolling away its trailing factor. */
+  font-size: 0.66rem;
   line-height: 1.3;
   color: var(--text-color);
   white-space: nowrap;
@@ -401,7 +406,7 @@
 /* The stacked means read as one system only when their equals signs line up,
    so the rows share one grid instead of each centring itself. The grid sits
    inside the scrolling figure rather than being it, so an overflowing formula
-   scrolls from its left edge instead of being centred out of view. */
+   scrolls from its left edge instead of being centered out of view. */
 .formula-grid {
   display: grid;
   grid-template-columns: max-content max-content max-content;
