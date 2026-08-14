@@ -238,47 +238,48 @@ div:has(> .globegl-hover) {
 }
 
 
+/* ---------------------------------------------------------------------------
+   Globe layout
+   The scene runs the full width of the container and the chart options panel
+   floats above it on the right, so the globe passes behind the settings rather
+   than sharing a row with them. Controls that must stay clickable (tabs, year
+   slider) reserve the sidebar column with --globe-sidebar-width.
+   --------------------------------------------------------------------------- */
+
 .globe-visualization-container {
+  --globe-sidebar-width: 0px;  /* sidebar is an overlay drawer until desktop */
   position: relative;
   display: flex;
-  flex-direction: row-reverse;
-  align-items: stretch;  /* Stretch children to match tallest child */
-  color: var(--header-text-color);
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* MOBILE: Hide chart options when they slide off-screen */
-@media (max-width: 999px) {
-  .globe-visualization-container {
-    overflow: hidden;  /* Clip chart options when they slide outside container */
-  }
-}
-
-.globe-and-tab-container {
-  display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
+  color: var(--header-text-color);
+  width: 100%;
+  height: clamp(520px, 80vh, 900px);
+  box-sizing: border-box;
+  overflow: hidden;  /* Clip the scene to the card and hide the closed drawer */
+}
+
+/* The scene layer takes every pixel the controls do not claim */
+.globe-scene-layer {
+  position: relative;
+  z-index: 0;
   flex: 1 1 auto;
-  max-width: 100%;
-  box-sizing: border-box;
+  min-height: 0;
+  width: 100%;
 }
 
-.globe-and-tab-container > div {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.globe-and-tab-container canvas {
-  max-width: 100% !important;
-  height: auto !important;
+.globe-scene-layer canvas {
+  display: block;
 }
 
 .globe-tab-bar {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
   width: 100%;
+  padding-right: var(--globe-sidebar-width);
   display: flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .globe-tab-bar button:not(.globe-hamburger-menu) {
@@ -337,6 +338,68 @@ div:has(> .globegl-hover) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Chart options panel over the globe
+   The panel is a frosted surface layered on top of the scene. It owns every
+   pointer event inside its own bounds, so a click on an option never reaches
+   the canvas underneath and never toggles rotation or selects a country.
+   --------------------------------------------------------------------------- */
+
+.globe-visualization-container .chart-options {
+  background: color-mix(in srgb, var(--box-background-color) 80%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-left: 1px solid color-mix(in srgb, var(--subtle-line-color) 60%, transparent);
+  pointer-events: auto;
+}
+
+/* Above the mobile dismiss overlay, and above the scene in every case */
+.globe-visualization-container .chart-options-wrapper,
+.globe-visualization-container .chart-options-wrapper.active,
+.globe-visualization-container .chart-options-wrapper.inactive {
+  z-index: 4;
+}
+
+.globe-visualization-container .chart-options-overlay.active {
+  border-radius: 0;
+  z-index: 3;
+}
+
+/* DESKTOP: the panel floats over the right edge instead of taking a column */
+@media (min-width: 1000px) {
+  .globe-visualization-container {
+    --globe-sidebar-width: clamp(250px, 22vw, 340px);
+  }
+
+  .globe-visualization-container .chart-options-wrapper,
+  .globe-visualization-container .chart-options-wrapper.active,
+  .globe-visualization-container .chart-options-wrapper.inactive {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: block;
+    width: var(--globe-sidebar-width);
+    height: auto;
+    flex: none !important;
+    max-width: none !important;
+    pointer-events: none;  /* only the panel itself is interactive */
+  }
+
+  .globe-visualization-container .chart-options,
+  .globe-visualization-container .chart-options.active,
+  .globe-visualization-container .chart-options.inactive {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0.75em;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+}
+
 .country-information-box[data-unpopulated=true] {
   color: var(--low-importance-font-color);
   line-height: 1.4;
@@ -363,6 +426,21 @@ div:has(> .globegl-hover) {
   border: 1px solid var(--border-color);
   border-radius: 0.75em;
   margin-top: 1em;
+}
+
+/* Inside the globe the slider is the bottom row of a fixed-height card, and
+   its row reserves the sidebar column so the play button stays reachable */
+.globe-slider-row {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding-right: var(--globe-sidebar-width);
+}
+
+.globe-slider-row .globe-year-slider-container {
+  width: auto;
+  margin: 0.75em;
 }
 
 .year-slider-controls {

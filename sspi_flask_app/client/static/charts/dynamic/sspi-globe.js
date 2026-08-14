@@ -1,3 +1,9 @@
+const GLOBE_DEFAULT_ALTITUDE = 1.5 // camera altitude used when the scene is wide enough
+const GLOBE_EXPLODED_ALTITUDE = 3 // pulled further back so raised polygons stay in frame
+const GLOBE_FIT_FRACTION = 0.92 // share of the shortest scene axis the globe may span
+const GLOBE_FALLBACK_SCENE_SIZE = 600 // used only when the scene has not been laid out yet
+const GLOBE_ALTITUDE_EPSILON = 0.01 // tolerance for "the camera is still where we put it"
+
 class SSPIGlobeChart {
     constructor(parentElement) {
         this.parentElement = parentElement
@@ -15,11 +21,13 @@ class SSPIGlobeChart {
         this.pins = new Set() // pins contains a list of pinned countries
         this.playing = window.observableStorage.getItem("globePlaying") || false // timeline play state
         this.playInterval = null // interval reference for timeline playback
-        this.computeGlobeDimensions() 
+        this.globeWidth = GLOBE_FALLBACK_SCENE_SIZE
+        this.globeHeight = GLOBE_FALLBACK_SCENE_SIZE
         this.getComputedStyles()
-        this.buildGlobeContainer() 
+        this.buildGlobeContainer()
         this.buildGlobe()
-        this.hydrateGlobe().then(this.restyleGlobe())
+        this.buildChartOptions()
+        this.hydrateGlobe().then(() => this.restyleGlobe())
         this.setTheme(window.observableStorage.getItem("theme"))
         this.rigResizeListener()
         this.rigPinChangeListener()
@@ -27,21 +35,70 @@ class SSPIGlobeChart {
     }
 
     computeGlobeDimensions() {
-        // Use viewport/container width instead of screen width for better responsiveness
-        const availableWidth = Math.min(window.innerWidth, this.parentElement.clientWidth || window.innerWidth);
-        const availableHeight = window.innerHeight;
+        // The scene fills its layer edge to edge; the layer is sized entirely by CSS
+        const sceneRect = this.globeSceneContainer.getBoundingClientRect()
+        this.globeWidth = Math.round(sceneRect.width) || this.globeWidth
+        this.globeHeight = Math.round(sceneRect.height) || this.globeHeight
+    }
 
-        if (availableWidth < 700) {
-            // For narrow viewports, use available width with some padding
-            this.globeWidth = Math.max(300, availableWidth - 40); // Min 300px, max viewport - 40px padding
-            this.globeHeight = Math.min(this.globeWidth, availableHeight - 200); // Leave room for controls
-        } else {
-            // Responsive sizing: use 60% of available width, capped at 900px max, 700px min
-            const maxGlobeSize = 900;
-            const targetSize = Math.min(availableWidth * 0.60, maxGlobeSize);
-            this.globeWidth = Math.max(700, targetSize);
-            this.globeHeight = this.globeWidth;
+    /**
+     * Smallest camera altitude that keeps the whole sphere inside the scene.
+     * The vertical field of view is fixed, so a scene that is taller than it is
+     * wide would clip the globe left and right unless the camera pulls back.
+     */
+    minimumFittingAltitude() {
+        const camera = this.globe.camera()
+        const verticalFov = camera?.fov || 50
+        const halfVerticalSpan = Math.tan(verticalFov * Math.PI / 360)
+        const aspectRatio = this.globeWidth / this.globeHeight
+        const halfVisibleSpan = halfVerticalSpan * Math.min(1, aspectRatio) * GLOBE_FIT_FRACTION
+        return 1 / Math.sin(Math.atan(halfVisibleSpan)) - 1
+    }
+
+    /** Altitude that frames the whole globe for the current view mode and scene shape */
+    framingAltitudeForScene() {
+        const modeAltitude = this.altitudeCoding ? GLOBE_EXPLODED_ALTITUDE : GLOBE_DEFAULT_ALTITUDE
+        return Math.max(modeAltitude, this.minimumFittingAltitude())
+    }
+
+    setFramingAltitude(pointOfView = {}, duration = 0) {
+        this.framingAltitude = this.framingAltitudeForScene()
+        this.framingSettlesAt = performance.now() + duration
+        this.globe.pointOfView({ ...pointOfView, altitude: this.framingAltitude }, duration)
+    }
+
+    /** Milliseconds left in a framing transition this chart started */
+    framingTransitionRemaining() {
+        return Math.max(0, this.framingSettlesAt - performance.now())
+    }
+
+    /** True while the camera is where this chart put it rather than where the user put it */
+    cameraIsFramed() {
+        if (this.framingTransitionRemaining() > 0) {
+            return true
         }
+        return Math.abs(this.globe.pointOfView().altitude - this.framingAltitude) <= GLOBE_ALTITUDE_EPSILON
+    }
+
+    /**
+     * Re-frame the globe after the scene changed shape. A camera the user has
+     * moved themselves (manual zoom, country focus) keeps its position unless
+     * the new scene shape would clip the sphere.
+     */
+    refitFramingAltitude() {
+        if (this.cameraIsFramed()) {
+            // globe.gl camera tweens are additive, so an instant move would be
+            // overridden by a transition still in flight: land with that one
+            this.setFramingAltitude({}, this.framingTransitionRemaining())
+            return
+        }
+        const currentAltitude = this.globe.pointOfView().altitude
+        const minimumAltitude = this.minimumFittingAltitude()
+        // A camera closer than the default is a deliberate close-up, not a fit
+        if (currentAltitude < GLOBE_DEFAULT_ALTITUDE || currentAltitude >= minimumAltitude) {
+            return
+        }
+        this.globe.pointOfView({ altitude: minimumAltitude }, 0)
     }
 
     getComputedStyles() {
@@ -54,43 +111,43 @@ class SSPIGlobeChart {
     }
 
     handleResize() {
-        // Clear existing timeout
-        if (this.resizeTimeout) {
-            clearTimeout(this.resizeTimeout);
+        const previousWidth = this.globeWidth
+        const previousHeight = this.globeHeight
+        this.computeGlobeDimensions()
+        if (this.globeWidth === previousWidth && this.globeHeight === previousHeight) {
+            return
         }
-
-        // Debounce resize events (wait 300ms after last resize)
-        this.resizeTimeout = setTimeout(() => {
-            const oldWidth = this.globeWidth;
-            const oldHeight = this.globeHeight;
-
-            // Recompute dimensions
-            this.computeGlobeDimensions();
-
-            // Only update if dimensions changed significantly (threshold: 50px)
-            const widthDiff = Math.abs(this.globeWidth - oldWidth);
-            const heightDiff = Math.abs(this.globeHeight - oldHeight);
-
-            if (widthDiff > 50 || heightDiff > 50) {
-                // Update globe dimensions
-                if (this.globe) {
-                    this.globe
-                        .width(this.globeWidth)
-                        .height(this.globeHeight);
-                }
-            }
-        }, 300);
+        this.globe
+            .width(this.globeWidth)
+            .height(this.globeHeight)
+        this.refitFramingAltitude()
     }
 
     rigResizeListener() {
-        this.resizeTimeout = null;
-        window.addEventListener('resize', () => this.handleResize());
+        // Coalesce bursts of resizes into a single update on the next frame
+        this.resizeFrame = null
+        const scheduleResize = () => {
+            if (this.resizeFrame) {
+                return
+            }
+            this.resizeFrame = window.requestAnimationFrame(() => {
+                this.resizeFrame = null
+                this.handleResize()
+            })
+        }
+        if (typeof ResizeObserver === 'undefined') {
+            window.addEventListener('resize', scheduleResize)
+            return
+        }
+        // Observe the layer itself: the scene also has to follow container-only
+        // changes (sidebar layout, font loading) that never fire a window resize
+        this.resizeObserver = new ResizeObserver(scheduleResize)
+        this.resizeObserver.observe(this.globeSceneContainer)
     }
 
     buildGlobeContainer() {
         this.root = document.createElement("div");
         this.root.classList.add("globe-visualization-container");
-        this.buildChartOptions()
         this.parentElement.appendChild(this.root)
     }
 
@@ -130,29 +187,31 @@ class SSPIGlobeChart {
             this.openChartOptionsSidebar()
         })
         this.tabBar.appendChild(this.showChartOptions)
-        this.globeTabSliderColumn.appendChild(this.tabBar)
+        this.root.appendChild(this.tabBar)
     }
 
     buildGlobe() {
-        this.globeTabSliderColumn = document.createElement("div");
-        this.globeTabSliderColumn.classList.add('globe-and-tab-container')
-        this.buildTabBar() 
+        // Build every control first: the scene layer takes the height they leave
+        // behind, so it can only be measured once they are all in the document
+        this.buildTabBar()
         this.globeSceneContainer = document.createElement("div");
-        this.globeTabSliderColumn.appendChild(this.globeSceneContainer)
-        this.root.appendChild(this.globeTabSliderColumn)
-        this.globe = Globe()
-            .width(this.globeWidth.toString())
-            .height(this.globeHeight.toString())
+        this.globeSceneContainer.classList.add('globe-scene-layer')
+        this.root.appendChild(this.globeSceneContainer)
+        this.buildYearSlider()
+        // Mount before sizing so the camera is available to the fitting calculation
+        this.globe = Globe()(this.globeSceneContainer)
+        this.computeGlobeDimensions()
+        this.globe
+            .width(this.globeWidth)
+            .height(this.globeHeight)
             .showGraticules(false)
             .showAtmosphere(false)
             .lineHoverPrecision(0)
             .polygonAltitude(0.01)
             .polygonStrokeColor(this.getStrokeColor())
             .polygonsTransitionDuration(100)
-            .pointOfView({lat: 25, lng: 60, altitude: 1.5}, 500)
-            (this.globeSceneContainer)
-        this.buildYearSlider()
-    } 
+        this.setFramingAltitude({lat: 25, lng: 60}, 500)
+    }
 
     buildYearSlider() {
         this.yearSliderContainer = document.createElement("div");
@@ -186,7 +245,10 @@ class SSPIGlobeChart {
     </button>
 </div>
         `;
-        this.globeTabSliderColumn.appendChild(this.yearSliderContainer)
+        this.yearSliderRow = document.createElement("div");
+        this.yearSliderRow.classList.add('globe-slider-row')
+        this.yearSliderRow.appendChild(this.yearSliderContainer)
+        this.root.appendChild(this.yearSliderRow)
         this.rigYearSlider()
     }
 
@@ -340,7 +402,9 @@ class SSPIGlobeChart {
     }
 
     restyleGlobe() {
-        this.globe.backgroundColor(this.styles.boxBackgroundColor)
+        // Transparent clear colour: the card behind the canvas shows through, so
+        // the scene blends into its container and respects its rounded corners
+        this.globe.backgroundColor('rgba(0, 0, 0, 0)')
         // this.globe.globeImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg')
         const mat = this.globe.globeMaterial();
         mat.map = null;
@@ -500,7 +564,8 @@ class SSPIGlobeChart {
     toggleAltitudeCoding(){
         this.altitudeCoding = !this.altitudeCoding;
         if (this.altitudeCoding) {
-            this.globe.pointOfView({ altitude: 3 }, 2000)
+            this.setFramingAltitude({}, 2000)
+            this.globe
                 .polygonsTransitionDuration(750)
                 .polygonSideColor(feat => this.colorScale(this.getVal(feat)) + 'ef')
                 .onPolygonHover(hoverD => {
@@ -515,7 +580,8 @@ class SSPIGlobeChart {
                     return value >= 0 ? value : 0.01;
                 })
         } else {
-            this.globe.pointOfView({ altitude: 1.5 }, 1500)
+            this.setFramingAltitude({}, 1500)
+            this.globe
                 .polygonsTransitionDuration(100)
                 .polygonAltitude(feat => this.getVal(feat) / 2)
                 .onPolygonHover(hoverD => {

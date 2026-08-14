@@ -262,7 +262,6 @@
     margin-bottom: 0.5rem;
   }
 
-  .home-globe-box,
   .country-directory-box {
     padding: 1rem;
   }
@@ -303,8 +302,8 @@
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 1.25rem;
-  padding-top: 0.5em;
+  padding: 0;  /* the globe runs edge to edge inside the card */
+  overflow: hidden;  /* clip the scene to the rounded corners */
   box-sizing: border-box;
 }
 

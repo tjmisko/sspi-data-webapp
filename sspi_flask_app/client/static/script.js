@@ -60,8 +60,16 @@ this.gradients.MS={10:"#ff851b",9:"#ff9132",8:"#ff9d49",7:"#ffa960",6:"#ffb577",
 this.gradients.PG={10:"#007bff",9:"#1988ff",8:"#3295ff",7:"#4ba2ff",6:"#64afff",5:"#7dbcff",4:"#96c9ff",3:"#afd6ff",2:"#c8e3ff",1:"#e1f0ff",0:"#fefefe"}}}
 const SSPIColors=new ColorMap(customCountryColors)
 class CustomizableSSPIStructure{constructor(parentElement,options={}){const{pillars=[{ItemName:'Sustainability',ItemCode:'SUS'},{ItemName:'Market Structure',ItemCode:'MS'},{ItemName:'Public Goods',ItemCode:'PG'}],loadingDelay=100,username='',baseConfig='sspi',readOnly=false,scoring=false,jobId=null}=options;this.readOnly=readOnly
-this.baseConfig=baseConfig;this.scoring=scoring;this.jobId=jobId;this.eventSource=null;this.elapsedTimeInterval=null;this.scoringProgress={percent:0,status:'starting',currentIndicator:null,indicatorIndex:0,totalIndicators:0,startTime:null};this.parentElement=parentElement;this.pillars=pillars;this.loadingDelay=loadingDelay;this.username=username||window.sspiUsername||'';this.unsavedChanges=false;this.isImporting=false;this.draggedEl=null;this.origin=null;this.dropped=false;this.isLoading=false;this.unsavedChangesTimeout=null;this.datasetDetails={};this.actionHistory=new CustomizableActionHistory(this);this.currentConfigId=null;this.currentConfigName=null;this.currentConfigDescription=null;this.hasScores=false;this.initConfigHeader();this.initToolbar();this.initRoot();this.rigPillarRename();this.rigCategoryIndicatorListeners();this.rigDragStructureListeners();this.setupKeyboardShortcuts();this.setupUnsavedChangesSync();this.rigUnloadListener();this.setupUnsavedChangesWarning();setTimeout(()=>{this.loadInitialData().then(()=>{if(this.readOnly){this.applyReadOnlyState();}
-if(this.scoring&&this.jobId){this.startScoringProgressUI();}});},this.loadingDelay);}
+this.baseConfig=baseConfig;this.scoring=scoring;this.jobId=jobId;this.eventSource=null;this.elapsedTimeInterval=null;this.scoringProgress={percent:0,status:'starting',currentIndicator:null,indicatorIndex:0,totalIndicators:0,startTime:null};this.parentElement=parentElement;this.pillars=pillars;this.loadingDelay=loadingDelay;this.username=username||window.sspiUsername||'';this.unsavedChanges=false;this.isImporting=false;this.draggedEl=null;this.origin=null;this.dropped=false;this.isLoading=false;this.unsavedChangesTimeout=null;this.datasetDetails={};this.actionHistory=new CustomizableActionHistory(this);this.currentConfigId=null;this.currentConfigName=null;this.currentConfigDescription=null;this.hasScores=false;this.customWeightsEnabled=false;this.initConfigHeader();this.initToolbar();this.initRoot();this.rigPillarRename();this.rigCategoryIndicatorListeners();this.rigDragStructureListeners();this.setupKeyboardShortcuts();this.setupUnsavedChangesSync();this.rigUnloadListener();this.setupUnsavedChangesWarning();setTimeout(()=>{this.loadInitialData().then(async()=>{if(this.readOnly){this.applyReadOnlyState();}
+if(this.scoring&&this.jobId){this.startScoringProgressUI();}
+await this.applyWeightsFlag();});},this.loadingDelay);}
+async applyWeightsFlag(){try{const res=await fetch('/api/v1/customize/weights-config');if(res.ok){const data=await res.json();this.customWeightsEnabled=!!data.custom_weights_enabled;}}catch(e){this.customWeightsEnabled=false;}
+this.refreshWeightInputs();}
+refreshWeightInputs(){if(!this.container)return;const cardSelectors=['.pillar-column','.category-box','.indicator-card'];cardSelectors.forEach((cardSel)=>{this.container.querySelectorAll(cardSel).forEach((card)=>{let wrapper=card.querySelector(':scope > .weight-input-wrapper');if(!this.customWeightsEnabled){if(wrapper)wrapper.remove();return;}
+if(wrapper)return;wrapper=document.createElement('label');wrapper.className='weight-input-wrapper';wrapper.textContent='Weight ';const input=document.createElement('input');input.type='number';input.className='weight-input';input.min='0';input.max='1';input.step='0.01';input.placeholder='equal';const stored=card.dataset.weight;if(stored!==undefined&&stored!==''){input.value=stored;}
+input.addEventListener('change',()=>{this.flagUnsaved?.();});wrapper.appendChild(input);card.appendChild(wrapper);});});}
+_readItemWeight(cardEl){const parse=(raw)=>{if(raw===undefined||raw===null)return null;const text=String(raw).trim();if(text==='')return null;const val=Number(text);if(!Number.isFinite(val)||val<0||val>1)return null;return val;};if(this.customWeightsEnabled){const input=cardEl.querySelector(':scope > .weight-input-wrapper .weight-input');const fromInput=parse(input?input.value:null);if(fromInput!==null)return fromInput;}
+return parse(cardEl.dataset?cardEl.dataset.weight:null);}
 setReadOnly(isReadOnly){this.readOnly=isReadOnly;if(isReadOnly){this.applyReadOnlyState();}else{this.removeReadOnlyState();}}
 applyReadOnlyState(){this.container.classList.add('read-only');this.parentElement.classList.add('read-only');this.container.querySelectorAll('[draggable="true"]').forEach(el=>{el.setAttribute('draggable','false');el.classList.add('drag-disabled');});this.container.querySelectorAll('[contenteditable="true"]').forEach(el=>{el.setAttribute('contenteditable','false');el.classList.add('edit-disabled');});this.container.querySelectorAll('.pillar-code-input, .category-code-input, .indicator-code-input').forEach(input=>{input.disabled=true;input.classList.add('edit-disabled');});this.container.querySelectorAll('.add-category, .add-indicator').forEach(btn=>{btn.style.display='none';});if(this.saveButton)this.saveButton.style.display='none';if(this.saveAsButton)this.saveAsButton.style.display='none';if(this.discardButton)this.discardButton.style.display='none';if(this.configNameDisplay){const readOnlyBadge=document.createElement('span');readOnlyBadge.className='read-only-badge';readOnlyBadge.textContent='(Read Only)';this.configNameDisplay.appendChild(readOnlyBadge);}}
 removeReadOnlyState(){this.container.classList.remove('read-only');this.parentElement.classList.remove('read-only');this.container.querySelectorAll('.drag-disabled').forEach(el=>{el.setAttribute('draggable','true');el.classList.remove('drag-disabled');});this.container.querySelectorAll('.edit-disabled[contenteditable]').forEach(el=>{el.setAttribute('contenteditable','true');el.classList.remove('edit-disabled');});this.container.querySelectorAll('.pillar-code-input, .category-code-input, .indicator-code-input').forEach(input=>{input.disabled=false;input.classList.remove('edit-disabled');});this.container.querySelectorAll('.add-category, .add-indicator').forEach(btn=>{btn.style.display='';});if(this.saveButton)this.saveButton.style.display='';if(this.saveAsButton)this.saveAsButton.style.display='';if(this.discardButton)this.discardButton.style.display='';const badge=this.configNameDisplay?.querySelector('.read-only-badge');if(badge)badge.remove();}
@@ -87,7 +95,7 @@ if(this.currentConfigId&&!isProtected){this.configIdDisplay.textContent=`ID:${th
 if(this.currentConfigDescription){this.configDescDisplay.textContent=this.currentConfigDescription;this.configDescDisplay.classList.remove('hidden');}else{this.configDescDisplay.classList.add('hidden');}
 if(this.editMetadataButton){this.editMetadataButton.classList.toggle('visible',canEdit);}
 this.updateNavigationButtonStates();}
-initToolbar(){this.toolbarLeft=document.createElement('div');this.toolbarLeft.classList.add('sspi-toolbar-button-group');this.toolbarRight=document.createElement('div');this.toolbarRight.classList.add('sspi-toolbar-button-group');this.saveButton=document.createElement('button');this.saveButton.textContent='Save';this.saveButton.addEventListener('click',async()=>{await this.handleSave();});this.saveAsButton=document.createElement('button');this.saveAsButton.textContent='Save As';this.saveAsButton.title='Save as a new configuration with a new name';this.saveAsButton.addEventListener('click',async()=>{await this.handleSaveAs();});const resetViewBtn=document.createElement('button');resetViewBtn.textContent='Default View';resetViewBtn.title='Collapse all indicators, expand all categories';resetViewBtn.addEventListener('click',()=>{this.resetView();});const expandAllBtn=document.createElement('button');expandAllBtn.textContent='Expand All';expandAllBtn.addEventListener('click',()=>{this.expandAll();});const collapseAllBtn=document.createElement('button');collapseAllBtn.textContent='Collapse All';collapseAllBtn.addEventListener('click',()=>{this.collapseAll();});const validateBtn=document.createElement('button');validateBtn.textContent='Validate';validateBtn.addEventListener('click',()=>{this.showHierarchyStatus();});const viewChangesBtn=document.createElement('button');viewChangesBtn.textContent='View Changes';viewChangesBtn.title='View history of all changes made to the SSPI structure';viewChangesBtn.id='view-changes-btn';viewChangesBtn.addEventListener('click',()=>{this.showChangesHistory();});this.viewChangesButton=viewChangesBtn;this.discardButton=document.createElement('button');this.discardButton.textContent='Discard Changes';this.discardButton.disabled=true;this.discardButton.addEventListener('click',async()=>{if(this.unsavedChanges&&confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')){await this.discardChanges();}});const scoreVisualizeBtn=document.createElement('button');this.toolbarLeft.append(this.saveButton,this.saveAsButton,validateBtn,viewChangesBtn,this.discardButton);this.toolbarRight.append(resetViewBtn,expandAllBtn,collapseAllBtn)
+initToolbar(){this.toolbarLeft=document.createElement('div');this.toolbarLeft.classList.add('sspi-toolbar-button-group');this.toolbarRight=document.createElement('div');this.toolbarRight.classList.add('sspi-toolbar-button-group');this.saveButton=document.createElement('button');this.saveButton.textContent='Save';this.saveButton.addEventListener('click',async()=>{await this.handleSave();});this.saveAsButton=document.createElement('button');this.saveAsButton.textContent='Save As';this.saveAsButton.title='Save as a new configuration with a new name';this.saveAsButton.addEventListener('click',async()=>{await this.handleSaveAs();});const resetViewBtn=document.createElement('button');resetViewBtn.textContent='Default View';resetViewBtn.title='Collapse all indicators, expand all categories';resetViewBtn.addEventListener('click',()=>{this.resetView();});const expandAllBtn=document.createElement('button');expandAllBtn.textContent='Expand All';expandAllBtn.addEventListener('click',()=>{this.expandAll();});const collapseAllBtn=document.createElement('button');collapseAllBtn.textContent='Collapse All';collapseAllBtn.addEventListener('click',()=>{this.collapseAll();});const validateBtn=document.createElement('button');validateBtn.textContent='Validate';validateBtn.addEventListener('click',async()=>{this.showHierarchyStatus();await this.runPreflightValidation();});const viewChangesBtn=document.createElement('button');viewChangesBtn.textContent='View Changes';viewChangesBtn.title='View history of all changes made to the SSPI structure';viewChangesBtn.id='view-changes-btn';viewChangesBtn.addEventListener('click',()=>{this.showChangesHistory();});this.viewChangesButton=viewChangesBtn;this.discardButton=document.createElement('button');this.discardButton.textContent='Discard Changes';this.discardButton.disabled=true;this.discardButton.addEventListener('click',async()=>{if(this.unsavedChanges&&confirm('Are you sure you want to discard all unsaved changes? This action cannot be undone.')){await this.discardChanges();}});const scoreVisualizeBtn=document.createElement('button');this.toolbarLeft.append(this.saveButton,this.saveAsButton,validateBtn,viewChangesBtn,this.discardButton);this.toolbarRight.append(resetViewBtn,expandAllBtn,collapseAllBtn)
 this.toolbar=document.createElement('div')
 this.toolbar.classList.add('sspi-toolbar')
 this.toolbar.appendChild(this.toolbarLeft);this.toolbar.appendChild(this.toolbarRight);this.parentElement.appendChild(this.toolbar);this.updateSaveButtonState();}
@@ -345,8 +353,11 @@ const categoriesInPillar=col.querySelectorAll('.category-box');categoriesInPilla
 markInvalidNestedCategories(){this.container.querySelectorAll('.category-box').forEach(category=>{category.classList.remove('nested-category-invalid');if(category.title==='This category contains nested categories - please move them out'){category.removeAttribute('title');}});this.container.querySelectorAll('.category-box').forEach(category=>{const nestedCategories=category.querySelectorAll('.category-box');if(nestedCategories.length>0){category.classList.add('nested-category-invalid');category.title='This category contains nested categories - please move them out';nestedCategories.forEach(nested=>{nested.classList.add('nested-category-invalid');nested.title='This is a nested category - please move it to the pillar level';});}});}
 validate(z){if(!z){this.container.querySelectorAll('.drop-zone').forEach(zone=>this.validate(zone));return;}
 const selector=z.dataset.accept==='indicator'?'.indicator-card':'.category-box';const items=z.querySelectorAll(selector);const ok=items.length>=1&&items.length<=10;z.classList.toggle('invalid',!ok);if(!ok){z.title='Must have 1–10 items';}else{z.removeAttribute('title');}}
-exportMetadata(){const metadataItems=[];const pillars={};const categories={};const indicators={};const pillarIndexMap={};const categoryIndexMap={};const indicatorIndexMap={};this.container.querySelectorAll('.pillar-column').forEach((pillarCol,pillarIdx)=>{const pillarName=pillarCol.querySelector('.pillar-name').textContent.trim();const pillarCode=pillarCol.querySelector('.pillar-code-input').value.trim();if(pillarCode){pillarIndexMap[pillarCode]=pillarIdx;pillars[pillarCode]={code:pillarCode,name:pillarName,categories:[],itemOrder:pillarIdx,pillarIdx:pillarIdx};pillarCol.querySelectorAll('.category-box').forEach((catBox,catIdx)=>{const categoryName=catBox.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=catBox.querySelector('.category-code-input').value.trim();if(categoryCode){pillars[pillarCode].categories.push(categoryCode);categoryIndexMap[categoryCode]={pillarIdx,catIdx};categories[categoryCode]={code:categoryCode,name:categoryName,pillarCode:pillarCode,indicators:[],itemOrder:catIdx,pillarIdx:pillarIdx,catIdx:catIdx};catBox.querySelectorAll('.indicator-card').forEach((indCard,indIdx)=>{const indicatorName=indCard.querySelector('.indicator-name').textContent.trim();const indicatorCode=indCard.querySelector('.indicator-code-input').value.trim();if(indicatorCode){categories[categoryCode].indicators.push(indicatorCode);indicatorIndexMap[indicatorCode]={pillarIdx,catIdx,indIdx};const datasetCodes=[];indCard.querySelectorAll('.dataset-item').forEach(item=>{const datasetCode=item.dataset.datasetCode;if(datasetCode){datasetCodes.push(datasetCode);}});const scoreFunctionEl=indCard.querySelector('.editable-score-function');const scoreFunction=scoreFunctionEl?.textContent?.trim()||'';indicators[indicatorCode]={code:indicatorCode,name:indicatorName,categoryCode:categoryCode,pillarCode:pillarCode,datasetCodes:datasetCodes,scoreFunction:scoreFunction,itemOrder:indIdx,pillarIdx:pillarIdx,catIdx:catIdx,indIdx:indIdx};}});}});}});const pillarCodes=Object.keys(pillars).sort();if(pillarCodes.length>0){metadataItems.push({DocumentType:"SSPIDetail",ItemType:"SSPI",ItemCode:"SSPI",ItemName:"Custom SSPI",Children:pillarCodes,PillarCodes:pillarCodes,TreeIndex:[0,-1,-1,-1],TreePath:"sspi",ItemOrder:0});}
-Object.values(pillars).forEach(pillar=>{metadataItems.push({DocumentType:"PillarDetail",ItemType:"Pillar",ItemCode:pillar.code,ItemName:pillar.name,Children:pillar.categories,CategoryCodes:pillar.categories,Pillar:pillar.name,PillarCode:pillar.code,TreeIndex:[0,pillar.pillarIdx,-1,-1],TreePath:`sspi/${pillar.code.toLowerCase()}`,ItemOrder:pillar.itemOrder});});Object.values(categories).forEach(category=>{const parentPillar=pillars[category.pillarCode];metadataItems.push({DocumentType:"CategoryDetail",ItemType:"Category",ItemCode:category.code,ItemName:category.name,Children:category.indicators,IndicatorCodes:category.indicators,Category:category.name,CategoryCode:category.code,Pillar:parentPillar?.name||'',PillarCode:category.pillarCode,TreeIndex:[0,category.pillarIdx,category.catIdx,-1],TreePath:`sspi/${category.pillarCode.toLowerCase()}/${category.code.toLowerCase()}`,ItemOrder:category.itemOrder});});Object.values(indicators).forEach(indicator=>{metadataItems.push({DocumentType:"IndicatorDetail",ItemType:"Indicator",ItemCode:indicator.code,ItemName:indicator.name,Children:[],DatasetCodes:indicator.datasetCodes,Indicator:indicator.name,IndicatorCode:indicator.code,ScoreFunction:indicator.scoreFunction,TreeIndex:[0,indicator.pillarIdx,indicator.catIdx,indicator.indIdx],TreePath:`sspi/${indicator.pillarCode.toLowerCase()}/${indicator.categoryCode.toLowerCase()}/${indicator.code.toLowerCase()}`,ItemOrder:indicator.itemOrder});});return metadataItems;}
+exportMetadata(){const metadataItems=[];const pillars={};const categories={};const indicators={};const pillarIndexMap={};const categoryIndexMap={};const indicatorIndexMap={};this.container.querySelectorAll('.pillar-column').forEach((pillarCol,pillarIdx)=>{const pillarName=pillarCol.querySelector('.pillar-name').textContent.trim();const pillarCode=pillarCol.querySelector('.pillar-code-input').value.trim();if(pillarCode){pillarIndexMap[pillarCode]=pillarIdx;pillars[pillarCode]={code:pillarCode,name:pillarName,categories:[],itemOrder:pillarIdx,pillarIdx:pillarIdx,weight:this._readItemWeight(pillarCol)};pillarCol.querySelectorAll('.category-box').forEach((catBox,catIdx)=>{const categoryName=catBox.querySelector('.customization-category-header-title').textContent.trim();const categoryCode=catBox.querySelector('.category-code-input').value.trim();if(categoryCode){pillars[pillarCode].categories.push(categoryCode);categoryIndexMap[categoryCode]={pillarIdx,catIdx};categories[categoryCode]={code:categoryCode,name:categoryName,pillarCode:pillarCode,indicators:[],itemOrder:catIdx,pillarIdx:pillarIdx,catIdx:catIdx,weight:this._readItemWeight(catBox)};catBox.querySelectorAll('.indicator-card').forEach((indCard,indIdx)=>{const indicatorName=indCard.querySelector('.indicator-name').textContent.trim();const indicatorCode=indCard.querySelector('.indicator-code-input').value.trim();if(indicatorCode){categories[categoryCode].indicators.push(indicatorCode);indicatorIndexMap[indicatorCode]={pillarIdx,catIdx,indIdx};const datasetCodes=[];indCard.querySelectorAll('.dataset-item').forEach(item=>{const datasetCode=item.dataset.datasetCode;if(datasetCode){datasetCodes.push(datasetCode);}});const scoreFunctionEl=indCard.querySelector('.editable-score-function');const scoreFunction=scoreFunctionEl?.textContent?.trim()||'';indicators[indicatorCode]={code:indicatorCode,name:indicatorName,categoryCode:categoryCode,pillarCode:pillarCode,datasetCodes:datasetCodes,scoreFunction:scoreFunction,itemOrder:indIdx,pillarIdx:pillarIdx,catIdx:catIdx,indIdx:indIdx,weight:this._readItemWeight(indCard)};}});}});}});const pillarCodes=Object.keys(pillars).sort();if(pillarCodes.length>0){metadataItems.push({DocumentType:"SSPIDetail",ItemType:"SSPI",ItemCode:"SSPI",ItemName:"Custom SSPI",Children:pillarCodes,PillarCodes:pillarCodes,TreeIndex:[0,-1,-1,-1],TreePath:"sspi",ItemOrder:0});}
+Object.values(pillars).forEach(pillar=>{const pillarItem={DocumentType:"PillarDetail",ItemType:"Pillar",ItemCode:pillar.code,ItemName:pillar.name,Children:pillar.categories,CategoryCodes:pillar.categories,Pillar:pillar.name,PillarCode:pillar.code,TreeIndex:[0,pillar.pillarIdx,-1,-1],TreePath:`sspi/${pillar.code.toLowerCase()}`,ItemOrder:pillar.itemOrder};if(pillar.weight!==null&&pillar.weight!==undefined){pillarItem.Weight=pillar.weight;}
+metadataItems.push(pillarItem);});Object.values(categories).forEach(category=>{const parentPillar=pillars[category.pillarCode];const categoryItem={DocumentType:"CategoryDetail",ItemType:"Category",ItemCode:category.code,ItemName:category.name,Children:category.indicators,IndicatorCodes:category.indicators,Category:category.name,CategoryCode:category.code,Pillar:parentPillar?.name||'',PillarCode:category.pillarCode,TreeIndex:[0,category.pillarIdx,category.catIdx,-1],TreePath:`sspi/${category.pillarCode.toLowerCase()}/${category.code.toLowerCase()}`,ItemOrder:category.itemOrder};if(category.weight!==null&&category.weight!==undefined){categoryItem.Weight=category.weight;}
+metadataItems.push(categoryItem);});Object.values(indicators).forEach(indicator=>{const indicatorItem={DocumentType:"IndicatorDetail",ItemType:"Indicator",ItemCode:indicator.code,ItemName:indicator.name,Children:[],DatasetCodes:indicator.datasetCodes,Indicator:indicator.name,IndicatorCode:indicator.code,ScoreFunction:indicator.scoreFunction,TreeIndex:[0,indicator.pillarIdx,indicator.catIdx,indicator.indIdx],TreePath:`sspi/${indicator.pillarCode.toLowerCase()}/${indicator.categoryCode.toLowerCase()}/${indicator.code.toLowerCase()}`,ItemOrder:indicator.itemOrder};if(indicator.weight!==null&&indicator.weight!==undefined){indicatorItem.Weight=indicator.weight;}
+metadataItems.push(indicatorItem);});return metadataItems;}
 async exportForScoring(){let res=await this.fetch("/api/v1/customize/score",{method:"POST",body:JSON.stringify({metadata:this.exportMetadata(),changes:this.actionHistory.exportActionLog()}),headers:{"Content-type":"application/json; charset=UTF-8"}})
 console.log(res)}
 showNotification(message,type='info',duration=3000){return notifications.show(message,type,duration);}
@@ -379,6 +390,9 @@ showHierarchyStatus(){const result=this.validateHierarchy();const stats=this.get
 if(result.warnings.length>0){message+=`Warnings(${result.warnings.length}):\n`;result.warnings.forEach(warning=>message+=`-${warning}\n`);}
 if(result.errors.length===0&&result.warnings.length===0){message+='Metadata is valid! ✓';}
 if(result.errors.length>0){notifications.error(message,10000);}else if(result.warnings.length>0){notifications.warning(message,8000);}else{notifications.success(message);}}
+clearScoreFunctionMarkers(){this.container.querySelectorAll('.editable-score-function.score-function-invalid').forEach(el=>{el.classList.remove('score-function-invalid');el.style.outline='';el.removeAttribute('title');});}
+async runPreflightValidation(){this.clearScoreFunctionMarkers();const metadata=this.exportMetadata();let result;try{result=await this.fetch('/api/v1/customize/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({metadata})});}catch(err){notifications.error(`Score function validation request failed:${err.message}`,8000);return;}
+const errors=result.errors||[];const warnings=result.warnings||[];errors.forEach(error=>{if(!error.indicatorCode)return;const card=this.container.querySelector(`[data-indicator-code="${error.indicatorCode}"]`);const scoreFunctionEl=card?.querySelector('.editable-score-function');if(scoreFunctionEl){scoreFunctionEl.classList.add('score-function-invalid');scoreFunctionEl.style.outline='2px solid var(--color-error, #d33)';scoreFunctionEl.title=error.message;}});if(errors.length>0){let message=`Score Function Errors(${errors.length}):\n`;errors.forEach(e=>{message+=`-${e.indicatorCode||'unknown'}:${e.message}\n`;});notifications.error(message,10000);}else if(warnings.length>0){let message=`Score Function Warnings(${warnings.length}):\n`;warnings.forEach(w=>{message+=`-${w.indicatorCode||'unknown'}:${w.message}\n`;});notifications.warning(message,8000);}else{notifications.success('All score functions are valid! ✓');}}
 showChangesHistory(){if(!window.ChangesHistoryModal){console.error('ChangesHistoryModal class not loaded');notifications.error('Changes history feature is not available. Please refresh the page.');return;}
 const modal=new ChangesHistoryModal({actionHistory:this.actionHistory,mode:'modal'});modal.show();}
 getMetadataStats(){return{pillars:this.container.querySelectorAll('.pillar-column').length,categories:this.container.querySelectorAll('.category-box').length,indicators:this.container.querySelectorAll('.indicator-card').length,datasets:this.container.querySelectorAll('.dataset-item').length};}
@@ -435,8 +449,11 @@ console.log('Async metadata import completed');this.isImporting=false;this.actio
 if(validation.warnings&&validation.warnings.length>0){console.warn('Hierarchy warnings after import:',validation.warnings);}}
 async processPillarFromMetadata(pillarItem,hierarchy){const col=Array.from(this.container.querySelectorAll('.pillar-column')).find(c=>c.dataset.pillar===pillarItem.ItemName);if(!col){console.warn(`No UI column found for pillar:${pillarItem.ItemName}`);return;}
 const pillarCodeInput=col.querySelector('.pillar-code-input');if(pillarCodeInput){pillarCodeInput.value=pillarItem.ItemCode;}
-col.dataset.pillarCode=pillarItem.ItemCode;col.dataset.itemCode=pillarItem.ItemCode;col.dataset.itemType='Pillar';const pillarNameEl=col.querySelector('.pillar-name');if(pillarNameEl){pillarNameEl.textContent=pillarItem.ItemName;}
-const categoriesContainer=col.querySelector('.categories-container');if(!categoriesContainer)return;const fragment=document.createDocumentFragment();const categoryCodes=pillarItem.Children||[];for(const categoryCode of categoryCodes){const categoryItem=hierarchy.categories[categoryCode];if(categoryItem){const catEl=this.createCategoryElement();const categoryHeader=catEl.querySelector('.customization-category-header-title');const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryHeader)categoryHeader.textContent=categoryItem.ItemName;if(categoryCodeInput)categoryCodeInput.value=categoryItem.ItemCode;catEl.dataset.categoryCode=categoryItem.ItemCode;catEl.dataset.itemCode=categoryItem.ItemCode;const indicatorsContainer=catEl.querySelector('.indicators-container');const indicatorCodes=categoryItem.Children||[];indicatorCodes.forEach(indicatorCode=>{const indicatorItem=hierarchy.indicators[indicatorCode];if(indicatorItem){const indEl=this.createIndicatorElement();const indicatorName=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const lowerGoalpost=indEl.querySelector('.lower-goalpost');const upperGoalpost=indEl.querySelector('.upper-goalpost');const invertedCheckbox=indEl.querySelector('.inverted-checkbox');const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicatorItem.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicatorItem.ItemCode||'';indEl.dataset.indicatorCode=indicatorItem.ItemCode;indEl.dataset.itemCode=indicatorItem.ItemCode;if(scoreFunctionEl){if(indicatorItem.ScoreFunction){scoreFunctionEl.textContent=indicatorItem.ScoreFunction;if(!this.isImporting){console.log(`Set score function for ${indicatorItem.ItemCode}:`,indicatorItem.ScoreFunction);}}else if(!this.isImporting){console.log(`No ScoreFunction for ${indicatorItem.ItemCode}`);}}
+col.dataset.pillarCode=pillarItem.ItemCode;col.dataset.itemCode=pillarItem.ItemCode;col.dataset.itemType='Pillar';if(pillarItem.Weight!==undefined&&pillarItem.Weight!==null){col.dataset.weight=pillarItem.Weight;}
+const pillarNameEl=col.querySelector('.pillar-name');if(pillarNameEl){pillarNameEl.textContent=pillarItem.ItemName;}
+const categoriesContainer=col.querySelector('.categories-container');if(!categoriesContainer)return;const fragment=document.createDocumentFragment();const categoryCodes=pillarItem.Children||[];for(const categoryCode of categoryCodes){const categoryItem=hierarchy.categories[categoryCode];if(categoryItem){const catEl=this.createCategoryElement();const categoryHeader=catEl.querySelector('.customization-category-header-title');const categoryCodeInput=catEl.querySelector('.category-code-input');if(categoryHeader)categoryHeader.textContent=categoryItem.ItemName;if(categoryCodeInput)categoryCodeInput.value=categoryItem.ItemCode;catEl.dataset.categoryCode=categoryItem.ItemCode;catEl.dataset.itemCode=categoryItem.ItemCode;if(categoryItem.Weight!==undefined&&categoryItem.Weight!==null){catEl.dataset.weight=categoryItem.Weight;}
+const indicatorsContainer=catEl.querySelector('.indicators-container');const indicatorCodes=categoryItem.Children||[];indicatorCodes.forEach(indicatorCode=>{const indicatorItem=hierarchy.indicators[indicatorCode];if(indicatorItem){const indEl=this.createIndicatorElement();const indicatorName=indEl.querySelector('.indicator-name');const indicatorCodeInput=indEl.querySelector('.indicator-code-input');const lowerGoalpost=indEl.querySelector('.lower-goalpost');const upperGoalpost=indEl.querySelector('.upper-goalpost');const invertedCheckbox=indEl.querySelector('.inverted-checkbox');const scoreFunctionEl=indEl.querySelector('.editable-score-function');if(indicatorName)indicatorName.textContent=indicatorItem.ItemName||'';if(indicatorCodeInput)indicatorCodeInput.value=indicatorItem.ItemCode||'';indEl.dataset.indicatorCode=indicatorItem.ItemCode;indEl.dataset.itemCode=indicatorItem.ItemCode;if(indicatorItem.Weight!==undefined&&indicatorItem.Weight!==null){indEl.dataset.weight=indicatorItem.Weight;}
+if(scoreFunctionEl){if(indicatorItem.ScoreFunction){scoreFunctionEl.textContent=indicatorItem.ScoreFunction;if(!this.isImporting){console.log(`Set score function for ${indicatorItem.ItemCode}:`,indicatorItem.ScoreFunction);}}else if(!this.isImporting){console.log(`No ScoreFunction for ${indicatorItem.ItemCode}`);}}
 const datasetCodes=indicatorItem.DatasetCodes||[];if(!this.isImporting){console.log(`Processing ${indicatorItem.ItemCode}:${datasetCodes.length}dataset codes`);}
 if(datasetCodes.length>0){datasetCodes.forEach((datasetCode,idx)=>{if(!this.isImporting){console.log(`Adding dataset ${datasetCode}to ${indicatorItem.ItemCode}`);}
 const result=this._addDatasetToIndicatorElement(datasetCode,indEl,indicatorItem.ItemCode,{record:false});if(!result.success){console.warn(`Failed to add dataset ${datasetCode}:${result.error}`);}});if(!this.isImporting){const selectedDatasetsDiv=indEl.querySelector('.selected-datasets');const addedDatasets=selectedDatasetsDiv?.querySelectorAll('.dataset-item')||[];console.log(`After adding:${addedDatasets.length}dataset items in DOM for ${indicatorItem.ItemCode}`);}}else if(!this.isImporting){console.log(`No datasets to add for ${indicatorItem.ItemCode}`);}
@@ -2648,807 +2665,330 @@ this.itemTree.innerHTML=`<div class="sspi-tree-description"><h3 class="sspi-tree
     }
 }
 
-class CountryPillarPanelChart {
-    constructor(parentElement, countryCode, rootItemCode, { colorProvider = SSPIColors } ) {
-        this.parentElement = parentElement// ParentElement is the element to attach the canvas to
-        this.countryCode = countryCode
-        this.endpointURL = "/api/v1/country/dynamic/stack/" + countryCode + "/" + rootItemCode
-        this.colorProvider = colorProvider // colorProvider is an instance of ColorProvider
-        this.extrapolateBackwardPlugin = extrapolateBackwardPlugin
-        this.pillarBreakdownPlugin = pillarBreakdownInteractionPlugin
-        this.setTheme(window.observableStorage.getItem("theme"))
-        this.initRoot()
-        this.initChartJSCanvas()
-        this.updateChartOptions()
-        this.fetch(this.endpointURL).then(data => {
-            this.update(data)
-        })
-    }
-
-    initRoot() {
-        // Create the root element
-        this.root = document.createElement('div')
-        this.root.classList.add('panel-chart-root-container')
-        this.parentElement.appendChild(this.root)
-    }
-
-    initChartJSCanvas() {
-        this.chartContainer = document.createElement('div')
-        this.chartContainer.classList.add('panel-chart-container')
-        this.chartContainer.innerHTML = `
-<div class="panel-chart-title-container">
-    <h2 class="panel-chart-title"></h2>
-</div>
-<div class="panel-canvas-wrapper">
-    <canvas class="panel-chart-canvas"></canvas>
-</div>
-`;
-        this.root.appendChild(this.chartContainer)
-        this.title = this.chartContainer.querySelector('.panel-chart-title')
-        this.canvas = this.chartContainer.querySelector('.panel-chart-canvas')
-        this.context = this.canvas.getContext('2d')
-        this.chart = new Chart(this.context, {
-            type: 'line',
-            plugins: [this.pillarBreakdownPlugin, this.extrapolateBackwardPlugin],
-            options: {
-                animation: false,
-                responsive: true,
-                hover: {
-                    mode: null
-                },
-                maintainAspectRatio: false,
-                datasets: {
-                    fill: true,
-                    line: {
-                        spanGaps: true,
-                        pointRadius: 2,
-                        pointHoverRadius: 4,
-                        pointBorderWidth: 0,
-                        pointBackgroundColor: function(context) {
-                            return context.dataset.borderColor;
-                        },
-                        segment: {
-                            borderWidth: 2,
-                            borderDash: ctx => {
-                                return ctx.p0.skip || ctx.p1.skip ? [10, 4] : [];
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    endLabelPlugin: {
-                        labelField: 'ICode'
-                    },
-                    tooltip: {
-                        enabled: false
-                    },
-                    pillarBreakdownInteractionPlugin: {
-                        enabled: true,
-                        radius: 30,
-                        guideColor: this.tickColor,
-                        showTotal: true,
-                        countryName: null,
-                        countryFlag: null
-                    }
-                },
-                layout: {
-                    padding: {
-                        right: 20
-                    }
-                }
-            }
-        })
-    }
-
-    updateChartOptions() {
-        this.chart.options.scales = {
-            x: {
-                ticks: {
-                    color: this.tickColor,
-                },
-                type: "category",
-                title: {
-                    display: true,
-                    text: 'Year',
-                    color: this.axisTitleColor,
-                    font: {
-                        size: 16
-                    }
-                },
-            },
-            y: {
-                stacked: true,
-                ticks: {
-                    color: this.tickColor,
-                },
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Item Value',
-                    color: this.axisTitleColor,
-                    font: {
-                        size: 16
-                    }
-                }
-            }
-        }
-    }
-
-    updateChartColors() {
-        for (let i = 0; i < this.chart.data.datasets.length; i++) {
-            const dataset = this.chart.data.datasets[i]
-            const color = this.colorProvider.get(dataset.ICode)
-            dataset.borderColor = color
-            dataset.backgroundColor = color + "44"
-            dataset.pointBackgroundColor = color
-            dataset.pointBorderColor = color
-        }
-    }
-
-    setTheme(theme) {
-        const root = document.documentElement
-        if (theme !== "light") {
-            this.theme = "dark"
-            this.tickColor = "#bbb"
-            this.guideColor = "#333333"
-            this.axisTitleColor = "#bbb"
-            this.titleColor = "#ccc"
-        } else {
-            this.theme = "light"
-            this.tickColor = "#444"
-            this.guideColor = "#bbbbbb"
-            this.axisTitleColor = "#444"
-            this.titleColor = "#444"
-            this.headerBackgroundColor = "#f0f0f0"
-        }
-        const bg = getComputedStyle(root).getPropertyValue('--header-color').trim()
-        this.headerBackgroundColor = bg
-        if (this.chart) {
-            this.updateChartOptionsPreservingYAxis()
-        }
-    }
-
-    updateChartOptionsPreservingYAxis() {
-        // Store current y-axis scale settings
-        const currentYMin = this.chart.options.scales?.y?.min
-        const currentYMax = this.chart.options.scales?.y?.max
-        const currentYTitle = this.chart.options.scales?.y?.title?.text
-        // Update chart options with new theme colors
-        this.updateChartOptions()
-        if (this.chart.options.plugins.pillarBreakdownInteractionPlugin) {
-            this.chart.options.plugins.pillarBreakdownInteractionPlugin.guideColor = this.tickColor
-        }
-        // Restore preserved y-axis scale settings
-        if (currentYMin !== undefined) {
-            this.chart.options.scales.y.min = currentYMin
-        }
-        if (currentYMax !== undefined) {
-            this.chart.options.scales.y.max = currentYMax
-        }
-        if (currentYTitle !== undefined) {
-            this.chart.options.scales.y.title.text = currentYTitle
-        }
-        // Update the chart to apply changes
-        this.chart.update()
-    }
-
-    async fetch(url) {
-        const response = await fetch(url)
-        try {
-            return response.json()
-        } catch (error) {
-            console.error('Error:', error)
-        }
-    }
-
-    update(data) {
-        console.log(data)
-        this.chart.data.datasets = data.data
-        this.chart.data.labels = data.labels
-        this.title.innerText = data.title
-        this.itemType = data.itemType
-        if (data.countryDetails) {
-            this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryName = data.countryDetails.CName;
-        }
-        // Pass country code to plugin
-        this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryCode = this.countryCode;
-        this.updateChartColors()
-        this.chart.options.scales.y.min = 0
-        this.chart.options.scales.y.max = 1
-        this.chart.update()
-    }
+/**
+ * SensitivityEngine
+ *
+ * Pure (DOM-free, Chart.js-free) helpers backing the custom-scoring
+ * "Sensitivity" visualization. The engine turns a configuration's change log*into per-level baseline-vs-custom series using*linear ceteris-paribus*propagation*instead of re-scoring.**Why linear propagation is exact(not an approximation):SSPI aggregation is*the(equal-weight)mean of child scores at every level above the indicator,*and the only nonlinearity--goalpost clamping to[0,1]--is contained*entirely within indicator scoring.The fetched indicator series already*carry that clamping,so for every level above the indicator*custom_series=baseline_series+propagated_delta*holds exactly,with no re-clamping required.**The G1(scaffold)portion below provides the generic series math and the*metadata/ancestry helpers.The G2(buildout)portion adds change-group*derivation and the three-scenario propagation engine.**This module is exposed as a browser global(for the asset bundle)and,when*loaded under Node,via module.exports so the pure functions can be*unit-tested without a DOM.*/
+const SensitivityEngine={childWeight(childCount ){return childCount>0?1/childCount:0;},_isNullish(value){return value===null||value===undefined||(typeof value==='number'&&Number.isNaN(value));},subtractSeries(a,b){if(!Array.isArray(a)||!Array.isArray(b)){return null;}
+const length=Math.max(a.length,b.length);const out=new Array(length);for(let i=0;i<length;i++){const x=a[i];const y=b[i];out[i]=(this._isNullish(x)||this._isNullish(y))?null:x-y;}
+return out;},addSeries(a,b){if(!Array.isArray(a)||!Array.isArray(b)){return null;}
+const length=Math.max(a.length,b.length);const out=new Array(length);for(let i=0;i<length;i++){const x=a[i];const y=b[i];out[i]=(this._isNullish(x)||this._isNullish(y))?null:x+y;}
+return out;},scaleSeries(a,factor){if(!Array.isArray(a)){return null;}
+return a.map((x)=>(this._isNullish(x)?null:x*factor));},scoreMapFromPanel(panelData){const map={};if(!panelData||!Array.isArray(panelData.data)){return map;}
+panelData.data.forEach((dataset)=>{if(!dataset||!dataset.CCode){return;}
+const series=dataset.score||dataset.data||[];map[dataset.CCode]=Array.isArray(series)?series.slice():[];});return map;},subtractMaps(customMap,baselineMap){const out={};const codes=new Set([...Object.keys(customMap||{}),...Object.keys(baselineMap||{})]);codes.forEach((code)=>{out[code]=this.subtractSeries(customMap?.[code]||null,baselineMap?.[code]||null);});return out;},addMaps(baseMap,deltaMap){const out={};const codes=new Set([...Object.keys(baseMap||{}),...Object.keys(deltaMap||{})]);codes.forEach((code)=>{out[code]=this.addSeries(baseMap?.[code]||null,deltaMap?.[code]||null);});return out;},scaleMap(map,factor){const out={};Object.keys(map||{}).forEach((code)=>{out[code]=this.scaleSeries(map[code],factor);});return out;},indexMetadata(metadata){const items=Array.isArray(metadata)?metadata:[];const byCode={};const indicators=[];const categories=[];const pillars=[];let sspi=null;items.forEach((item)=>{if(!item){return;}
+if(item.ItemCode){byCode[item.ItemCode]=item;}
+switch(item.ItemType){case'Indicator':indicators.push(item);break;case'Category':categories.push(item);break;case'Pillar':pillars.push(item);break;case'SSPI':sspi=item;break;default:break;}});return{byCode,indicators,categories,pillars,sspi,items};},childCodes(item){if(!item){return[];}
+switch(item.ItemType){case'SSPI':return item.PillarCodes||item.Children||[];case'Pillar':return item.CategoryCodes||item.Children||[];case'Category':return item.IndicatorCodes||item.Children||[];default:return[];}},resolveAncestry(indicatorCode,metadata){const idx=this.indexMetadata(metadata);let categoryCode=null;let pillarCode=null;for(const category of idx.categories){if(this.childCodes(category).includes(indicatorCode)){categoryCode=category.ItemCode;break;}}
+if(categoryCode){for(const pillar of idx.pillars){if(this.childCodes(pillar).includes(categoryCode)){pillarCode=pillar.ItemCode;break;}}}
+const indicator=idx.byCode[indicatorCode];if(indicator){categoryCode=categoryCode||indicator.CategoryCode||null;pillarCode=pillarCode||indicator.PillarCode||null;}
+if(!pillarCode&&categoryCode){const category=idx.byCode[categoryCode];if(category){pillarCode=category.PillarCode||null;}}
+return{indicatorCode,categoryCode,pillarCode};},pillarOfCategory(categoryCode,metadata){if(!categoryCode){return null;}
+const idx=this.indexMetadata(metadata);for(const pillar of idx.pillars){if(this.childCodes(pillar).includes(categoryCode)){return pillar.ItemCode;}}
+const category=idx.byCode[categoryCode];return category?(category.PillarCode||null):null;},countIndicatorsInCategory(categoryCode,metadata){const idx=this.indexMetadata(metadata);const category=idx.byCode[categoryCode];if(category){const codes=this.childCodes(category);if(codes.length){return codes.length;}}
+return idx.indicators.filter((indicator)=>this.resolveAncestry(indicator.ItemCode,metadata).categoryCode===categoryCode).length;},countCategoriesInPillar(pillarCode,metadata){const idx=this.indexMetadata(metadata);const pillar=idx.byCode[pillarCode];if(pillar){const codes=this.childCodes(pillar);if(codes.length){return codes.length;}}
+return idx.categories.filter((category)=>this.pillarOfCategory(category.ItemCode,metadata)===pillarCode).length;},countPillars(metadata){const idx=this.indexMetadata(metadata);if(idx.sspi){const codes=this.childCodes(idx.sspi);if(codes.length){return codes.length;}}
+return idx.pillars.length;},SCENARIO:{GOALPOST:'goalpost',ADD:'add',MOVE:'move',NO_EFFECT:'no-effect',UNSUPPORTED:'unsupported'},_itemName(itemCode,metadata){const idx=this.indexMetadata(metadata);const item=idx.byCode[itemCode];return item&&item.ItemName?item.ItemName:itemCode;},_classifyType(type){if(!type){return null;}
+if(type==='move-indicator'){return this.SCENARIO.MOVE;}
+if(type==='add-indicator'||type==='create-indicator'){return this.SCENARIO.ADD;}
+if(type==='set-score-function'||type==='add-dataset'||type==='remove-dataset'||type==='replace-datasets'){return this.SCENARIO.GOALPOST;}
+if(type==='move-category'){return this.SCENARIO.UNSUPPORTED;}
+if(type.indexOf('set-')===0||type==='rename'||type==='ren'){return this.SCENARIO.NO_EFFECT;}
+return null;},_flattenAction(action){const out=[];if(!action){return out;}
+const delta=action.delta||{};if(delta.type==='composite'&&Array.isArray(delta.subActions)){delta.subActions.forEach((sub)=>{out.push({type:sub.type,delta:Object.assign({},delta,sub)});});return out;}
+out.push({type:action.type||delta.type,delta:delta});return out;},deriveChangeGroups(actions,metadata){const list=Array.isArray(actions)?actions:[];const groups=[];const seen=new Set();const push=(group)=>{const key=`${group.scenario}:${group.indicatorCode||group.categoryCode||''}`;if(seen.has(key)){return;}
+seen.add(key);group.id=key;groups.push(group);};list.forEach((action)=>{this._flattenAction(action).forEach(({type,delta})=>{const scenario=this._classifyType(type);if(!scenario){return;}
+if(scenario===this.SCENARIO.GOALPOST){const indicatorCode=delta.indicatorCode;if(!indicatorCode){return;}
+const ancestry=this.resolveAncestry(indicatorCode,metadata);push({scenario:scenario,indicatorCode:indicatorCode,categoryCode:ancestry.categoryCode,pillarCode:ancestry.pillarCode,label:`Score change — ${this._itemName(indicatorCode,metadata)}(${indicatorCode})`});}else if(scenario===this.SCENARIO.ADD){const indicatorCode=delta.indicatorCode;if(!indicatorCode){return;}
+const categoryCode=delta.parentCode||this.resolveAncestry(indicatorCode,metadata).categoryCode;push({scenario:scenario,indicatorCode:indicatorCode,categoryCode:categoryCode,pillarCode:this.pillarOfCategory(categoryCode,metadata),label:`New indicator — ${this._itemName(indicatorCode,metadata)}(${indicatorCode})`});}else if(scenario===this.SCENARIO.MOVE){const indicatorCode=delta.indicatorCode;if(!indicatorCode){return;}
+const fromCategoryCode=delta.fromParentCode;const toCategoryCode=delta.toParentCode;push({scenario:scenario,indicatorCode:indicatorCode,fromCategoryCode:fromCategoryCode,toCategoryCode:toCategoryCode,fromPillarCode:this.pillarOfCategory(fromCategoryCode,metadata),toPillarCode:this.pillarOfCategory(toCategoryCode,metadata),label:`Moved indicator — ${this._itemName(indicatorCode,metadata)}(${indicatorCode})`});}});});return groups;},buildLevelsForGroup(group,metadata){if(!group){return[];}
+const levels=[];const named=(itemCode,itemType,role,prefix)=>({itemCode:itemCode,itemType:itemType,role:role,title:`${prefix}:${this._itemName(itemCode,metadata)}(${itemCode})`});const sspiLevel={itemCode:'SSPI',itemType:'SSPI',role:'sspi',title:'SSPI'};if(group.scenario===this.SCENARIO.GOALPOST){levels.push(named(group.indicatorCode,'Indicator','indicator','Indicator'));if(group.categoryCode){levels.push(named(group.categoryCode,'Category','category','Category'));}
+if(group.pillarCode){levels.push(named(group.pillarCode,'Pillar','pillar','Pillar'));}
+levels.push(sspiLevel);}else if(group.scenario===this.SCENARIO.ADD){levels.push(named(group.indicatorCode,'Indicator','added-indicator','New Indicator'));if(group.categoryCode){levels.push(named(group.categoryCode,'Category','category','Category'));}
+if(group.pillarCode){levels.push(named(group.pillarCode,'Pillar','pillar','Pillar'));}
+levels.push(sspiLevel);}else if(group.scenario===this.SCENARIO.MOVE){levels.push(named(group.indicatorCode,'Indicator','moved-indicator','Indicator'));if(group.fromCategoryCode){levels.push(named(group.fromCategoryCode,'Category','losing-category','Losing Category'));}
+if(group.toCategoryCode){levels.push(named(group.toCategoryCode,'Category','gaining-category','Gaining Category'));}
+if(group.fromPillarCode&&group.fromPillarCode===group.toPillarCode){levels.push(named(group.fromPillarCode,'Pillar','pillar','Pillar'));}else{if(group.fromPillarCode){levels.push(named(group.fromPillarCode,'Pillar','losing-pillar','Losing Pillar'));}
+if(group.toPillarCode){levels.push(named(group.toPillarCode,'Pillar','gaining-pillar','Gaining Pillar'));}}
+levels.push(sspiLevel);}
+return levels;},requiredCustomIndicator(group){if(!group){return null;}
+if(group.scenario===this.SCENARIO.GOALPOST||group.scenario===this.SCENARIO.ADD){return group.indicatorCode;}
+return null;},_composeLevel(baselineMap,deltaMap){const base=baselineMap||{};const delta=deltaMap||{};const customMap={};Object.keys(base).forEach((code)=>{if(delta[code]){customMap[code]=this.addSeries(base[code],delta[code]);}else{customMap[code]=Array.isArray(base[code])?base[code].slice():null;}});Object.keys(delta).forEach((code)=>{if(!(code in customMap)){customMap[code]=delta[code];}});return{baselineMap:base,customMap:customMap,hasBaseline:true};},computeGroupSeries(group,metadata,context){const baselineByItem=(context&&context.baselineByItem)||{};const customIndicatorMap=(context&&context.customIndicatorMap)||null;const out={};const p=this.countPillars(metadata);if(group.scenario===this.SCENARIO.GOALPOST){const baselineI=baselineByItem[group.indicatorCode]||{};const customI=customIndicatorMap||{};const deltaI=this.subtractMaps(customI,baselineI);const n=this.countIndicatorsInCategory(group.categoryCode,metadata);const m=this.countCategoriesInPillar(group.pillarCode,metadata);const deltaC=this.scaleMap(deltaI,this.childWeight(n));const deltaP=this.scaleMap(deltaC,this.childWeight(m));const deltaS=this.scaleMap(deltaP,this.childWeight(p));out.indicator={baselineMap:baselineI,customMap:customI,hasBaseline:true};out.category=this._composeLevel(baselineByItem[group.categoryCode],deltaC);out.pillar=this._composeLevel(baselineByItem[group.pillarCode],deltaP);out.sspi=this._composeLevel(baselineByItem.SSPI,deltaS);}else if(group.scenario===this.SCENARIO.ADD){const iNew=customIndicatorMap||{};const baselineC=baselineByItem[group.categoryCode]||{};const nPlus1=this.countIndicatorsInCategory(group.categoryCode,metadata);const m=this.countCategoriesInPillar(group.pillarCode,metadata);const deltaC=this.scaleMap(this.subtractMaps(iNew,baselineC),this.childWeight(nPlus1));const deltaP=this.scaleMap(deltaC,this.childWeight(m));const deltaS=this.scaleMap(deltaP,this.childWeight(p));out['added-indicator']={baselineMap:null,customMap:iNew,hasBaseline:false,note:'New indicator — no baseline to compare against.'};out.category=this._composeLevel(baselineC,deltaC);out.pillar=this._composeLevel(baselineByItem[group.pillarCode],deltaP);out.sspi=this._composeLevel(baselineByItem.SSPI,deltaS);}else if(group.scenario===this.SCENARIO.MOVE){const aMap=baselineByItem[group.indicatorCode]||{};const baselineFrom=baselineByItem[group.fromCategoryCode]||{};const baselineTo=baselineByItem[group.toCategoryCode]||{};const nFrom=this.countIndicatorsInCategory(group.fromCategoryCode,metadata);const nTo=this.countIndicatorsInCategory(group.toCategoryCode,metadata);const deltaCfrom=this.scaleMap(this.subtractMaps(baselineFrom,aMap),this.childWeight(nFrom));const deltaCto=this.scaleMap(this.subtractMaps(aMap,baselineTo),this.childWeight(nTo));out['moved-indicator']={baselineMap:aMap,customMap:aMap,hasBaseline:true,note:'Indicator score unchanged; the effect is structural.'};out['losing-category']=this._composeLevel(baselineFrom,deltaCfrom);out['gaining-category']=this._composeLevel(baselineTo,deltaCto);if(group.fromPillarCode&&group.fromPillarCode===group.toPillarCode){const m=this.countCategoriesInPillar(group.fromPillarCode,metadata);const deltaP=this.scaleMap(this.addMaps(deltaCfrom,deltaCto),this.childWeight(m));const deltaS=this.scaleMap(deltaP,this.childWeight(p));out.pillar=this._composeLevel(baselineByItem[group.fromPillarCode],deltaP);out.sspi=this._composeLevel(baselineByItem.SSPI,deltaS);}else{const mFrom=this.countCategoriesInPillar(group.fromPillarCode,metadata);const mTo=this.countCategoriesInPillar(group.toPillarCode,metadata);const deltaPfrom=this.scaleMap(deltaCfrom,this.childWeight(mFrom));const deltaPto=this.scaleMap(deltaCto,this.childWeight(mTo));const deltaS=this.scaleMap(this.addMaps(deltaPfrom,deltaPto),this.childWeight(p));out['losing-pillar']=this._composeLevel(baselineByItem[group.fromPillarCode],deltaPfrom);out['gaining-pillar']=this._composeLevel(baselineByItem[group.toPillarCode],deltaPto);out.sspi=this._composeLevel(baselineByItem.SSPI,deltaS);}}
+return out;}};if(typeof module!=='undefined'&&module.exports){module.exports=SensitivityEngine;}
+class CustomSSPIPanelChart extends PanelChart{constructor(parentElement,itemCode,{configHash='',configId='',CountryList=[],width=600,height=600,enableComparisonSeries=true,showItemTree=true}={}){super(parentElement,{CountryList:CountryList,endpointURL:CustomSSPIPanelChart.buildCustomURL(itemCode,configHash,configId),width:width,height:height,enableComparisonSeries:enableComparisonSeries});this.itemCode=itemCode;this.activeItemCode=itemCode;this.configHash=configHash;this.configId=configId;}
+static buildCustomURL(itemCode,configHash,configId){const params=new URLSearchParams();if(configHash){params.set('config_hash',configHash);}
+if(configId){params.set('config_id',configId);}
+const queryString=params.toString();return`/api/v1/customize/panel/score/${itemCode}${queryString?`?${queryString}`:''}`;}
+initItemTree(){this.itemTree=document.createElement('div');this.itemTree.classList.add('custom-sspi-tree-container');this.itemTree.innerHTML=`<div class="custom-sspi-tree-description"><h3 class="custom-sspi-tree-header">Custom SSPI Structure</h3><p class="custom-sspi-tree-description-text">Explore the scores across your custom SSPI structure below.Click on an item to view its data.</p></div><div class="item-tree-content"></div>`;}
+initRoot(){this.initItemTree();this.root=document.createElement('div');this.root.classList.add('custom-panel-chart-root-container');this.root.appendChild(this.itemTree);this.parentElement.appendChild(this.root);}
+rigItemDropdown(){this.itemInformation=this.chartOptions.querySelector('.item-information');this.itemDropdown=this.itemInformation.querySelector('.item-dropdown');this.itemDropdown.style.display="none";}
+updateItemDropdown(options,itemType){let itemTypeCapped;const resolvedType=itemType||this.itemType||'';if(resolvedType==="sspi"||resolvedType==="SSPI"){itemTypeCapped=resolvedType.toUpperCase();}else{itemTypeCapped=resolvedType.charAt(0).toUpperCase()+resolvedType.slice(1);}
+const itemSummary=this.itemInformation.querySelector('.item-information-summary');if(itemSummary){itemSummary.textContent=`${itemTypeCapped}Information`;}}
+update(data){if(!data||data.success===false){this.handleDataError(data||{});return;}
+if(!data.data||data.data.length===0){this.handleNoData(data);return;}
+data.itemOptions=data.itemOptions||[];data.description=data.description||'';this.activeItemCode=data.itemCode;super.update(data);this.buildItemTree(data.tree,data.itemCode);if(this.pendingComparisonSeries){this.applyComparisonSeries(this.pendingComparisonSeries);}
+this._markReady();}
+whenReady(){if(this._isReady){return Promise.resolve();}
+if(!this._readyPromise){this._readyPromise=new Promise((resolve)=>{this._readyResolve=resolve;});}
+return this._readyPromise;}
+_markReady(){this._isReady=true;if(this._readyResolve){this._readyResolve();this._readyResolve=null;}}
+buildItemTree(tree,selectedItemCode){if(!tree){return;}
+if(this.itemTreeObject&&typeof this.itemTreeObject.destroy==='function'){this.itemTreeObject.destroy();}
+this.itemTreeObject=new SSPIItemTree(this.itemTree.querySelector('.item-tree-content'),tree,(itemCode)=>{this.activeItemCode=itemCode;this.fetch(CustomSSPIPanelChart.buildCustomURL(itemCode,this.configHash,this.configId)).then((d)=>this.update(d));},selectedItemCode);}
+setComparisonSeries(seriesByCountryCode){this.pendingComparisonSeries=seriesByCountryCode||null;this.applyComparisonSeries(seriesByCountryCode);}
+applyComparisonSeries(seriesByCountryCode){if(!seriesByCountryCode||!this.chart||!this.chart.data){return;}
+this.chart.data.datasets.forEach((dataset)=>{const series=seriesByCountryCode[dataset.CCode];if(series){dataset.comparisonScores=series;}});this.updateChartPreservingYAxis();}
+clearComparisonSeries(){this.pendingComparisonSeries=null;if(!this.chart||!this.chart.data){return;}
+this.chart.data.datasets.forEach((dataset)=>{delete dataset.comparisonScores;});this.updateChartPreservingYAxis();}
+setMainSeries(seriesByCountryCode){if(!seriesByCountryCode||!this.chart||!this.chart.data){return;}
+this.chart.data.datasets.forEach((dataset)=>{const series=seriesByCountryCode[dataset.CCode];if(series){dataset.score=series;dataset.data=series;}});this.updateChartPreservingYAxis();}
+handleDataError(data){if(this.title){this.title.innerText='Error Loading Custom SSPI Data';}
+this.chart.data.datasets=[];this.chart.data.labels=[];this.chart.update();const treeContent=this.itemTree.querySelector('.item-tree-content');if(treeContent){treeContent.innerHTML=`<div class="error-message"><h4>Error Loading Data</h4><p>${data&&data.error?data.error:'Unable to load custom scoring data.'}</p></div>`;}
+this._markReady();}
+handleNoData(data){if(this.title){this.title.innerText=(data&&data.title)||'Custom SSPI - No Data';}
+this.chart.data.datasets=[];this.chart.data.labels=[];this.chart.update();const treeContent=this.itemTree.querySelector('.item-tree-content');if(treeContent){treeContent.innerHTML=`<div class="no-data-message"><h4>No Data Available</h4><p>This configuration has no scored data for the requested item.</p></div>`;}
+this._markReady();}}
+class SensitivityComparisonView{constructor(mountElement,{configHash='',configId='',levels=[],focusCountryCode=null}={}){this.mount=mountElement;this.configHash=configHash;this.configId=configId;this.levels=Array.isArray(levels)?levels:[];this.focusCountryCode=focusCountryCode;this.charts=[];this.primary=null;this.root=document.createElement('div');this.root.classList.add('sensitivity-comparison-view');this.mount.appendChild(this.root);this.render();}
+render(){this.destroyCharts();this.root.innerHTML='';this.charts=[];if(this.levels.length===0){return;}
+this.levels.forEach((level,index)=>{const row=document.createElement('div');row.classList.add('sensitivity-level-row');row.dataset.role=level.role||'';row.dataset.level=String(index);const header=document.createElement('div');header.classList.add('sensitivity-level-header');header.innerHTML=`<span class="sensitivity-level-title">${level.title||level.itemCode}</span><span class="sensitivity-level-meta">${level.itemType||''}${level.itemCode||''}</span>`;row.appendChild(header);const chartMount=document.createElement('div');chartMount.classList.add('sensitivity-level-chart');row.appendChild(chartMount);this.root.appendChild(row);const chart=new CustomSSPIPanelChart(chartMount,level.itemCode,{configHash:this.configHash,configId:this.configId,enableComparisonSeries:true,width:900,height:320});chart._sensitivityLevel=level;this.charts.push(chart);});this.primary=this.charts[0]||null;if(this.charts.length>1){this.root.classList.add('shared-panel-mode');}else{this.root.classList.remove('shared-panel-mode');}
+this.wireSharedPanel();this.wireLinkedHover();}
+wireSharedPanel(){if(!this.primary||this.charts.length<2){return;}
+const siblings=this.charts.slice(1);const fanned=['showGroup','showAll','hideUnpinned','clearPins','pinCountryByCode','unpinCountryByCode','updateYearRange','updateHoverRadius','toggleComparisonSeries','toggleBackwardExtrapolation','toggleLinearInterpolation','showRandomN'];fanned.forEach((methodName)=>{const original=this.primary[methodName];if(typeof original!=='function'){return;}
+this.primary[methodName]=(...args)=>{const result=original.apply(this.primary,args);siblings.forEach((sibling)=>{if(typeof sibling[methodName]==='function'){try{sibling[methodName].apply(sibling,args);}catch(error){}}});return result;};});}
+wireLinkedHover(){if(this.charts.length<2){return;}
+this.charts.forEach((chart)=>{const original=chart.handleChartCountryHighlight;if(typeof original!=='function'){return;}
+chart.handleChartCountryHighlight=(countryCode)=>{original.apply(chart,[countryCode]);this.charts.forEach((other)=>{if(other===chart){return;}
+this.applyExternalHover(other,countryCode);});};});}
+applyExternalHover(chart,countryCode){if(!chart||!chart.chartInteractionPlugin||!chart.chart){return;}
+if(countryCode===null||countryCode===undefined){chart.chartInteractionPlugin.setExternalHover(chart.chart,null);}else{const datasetIndex=chart.chart.data.datasets.findIndex((ds)=>ds.CCode===countryCode);chart.chartInteractionPlugin.setExternalHover(chart.chart,datasetIndex===-1?null:datasetIndex);}
+chart.updateChartPreservingYAxis();}
+setFocusCountry(countryCode){this.focusCountryCode=countryCode;if(!countryCode||!this.primary){return;}
+this.primary.pinCountryByCode(countryCode);this.primary.hideUnpinned();}
+setLevelMainSeries(levelIndex,seriesByCountryCode){const chart=this.charts[levelIndex];if(chart&&typeof chart.setMainSeries==='function'){chart.setMainSeries(seriesByCountryCode);}}
+setLevelComparisonSeries(levelIndex,seriesByCountryCode){const chart=this.charts[levelIndex];if(chart&&typeof chart.setComparisonSeries==='function'){chart.setComparisonSeries(seriesByCountryCode);}}
+getChart(levelIndex){return this.charts[levelIndex]||null;}
+destroyCharts(){this.charts.forEach((chart)=>{if(chart&&chart.itemTreeObject&&typeof chart.itemTreeObject.destroy==='function'){chart.itemTreeObject.destroy();}});}
+destroy(){this.destroyCharts();if(this.root&&this.root.parentElement){this.root.parentElement.removeChild(this.root);}
+this.charts=[];this.primary=null;}}
+if(typeof module!=='undefined'&&module.exports){module.exports=SensitivityComparisonView;}
+class CountryPillarPanelChart{constructor(parentElement,countryCode,rootItemCode,{colorProvider=SSPIColors}){this.parentElement=parentElement
+this.countryCode=countryCode
+this.endpointURL="/api/v1/country/dynamic/stack/"+countryCode+"/"+rootItemCode
+this.colorProvider=colorProvider
+this.extrapolateBackwardPlugin=extrapolateBackwardPlugin
+this.pillarBreakdownPlugin=pillarBreakdownInteractionPlugin
+this.setTheme(window.observableStorage.getItem("theme"))
+this.initRoot()
+this.initChartJSCanvas()
+this.updateChartOptions()
+this.fetch(this.endpointURL).then(data=>{this.update(data)})}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('panel-chart-root-container')
+this.parentElement.appendChild(this.root)}
+initChartJSCanvas(){this.chartContainer=document.createElement('div')
+this.chartContainer.classList.add('panel-chart-container')
+this.chartContainer.innerHTML=`<div class="panel-chart-title-container"><h2 class="panel-chart-title"></h2></div><div class="panel-canvas-wrapper"><canvas class="panel-chart-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer)
+this.title=this.chartContainer.querySelector('.panel-chart-title')
+this.canvas=this.chartContainer.querySelector('.panel-chart-canvas')
+this.context=this.canvas.getContext('2d')
+this.chart=new Chart(this.context,{type:'line',plugins:[this.pillarBreakdownPlugin,this.extrapolateBackwardPlugin],options:{animation:false,responsive:true,hover:{mode:null},maintainAspectRatio:false,datasets:{fill:true,line:{spanGaps:true,pointRadius:2,pointHoverRadius:4,pointBorderWidth:0,pointBackgroundColor:function(context){return context.dataset.borderColor;},segment:{borderWidth:2,borderDash:ctx=>{return ctx.p0.skip||ctx.p1.skip?[10,4]:[];}}}},plugins:{legend:{display:false,},endLabelPlugin:{labelField:'ICode'},tooltip:{enabled:false},pillarBreakdownInteractionPlugin:{enabled:true,radius:30,guideColor:this.tickColor,showTotal:true,countryName:null,countryFlag:null}},layout:{padding:{right:20}}}})}
+updateChartOptions(){this.chart.options.scales={x:{ticks:{color:this.tickColor,},type:"category",title:{display:true,text:'Year',color:this.axisTitleColor,font:{size:16}},},y:{stacked:true,ticks:{color:this.tickColor,},beginAtZero:true,title:{display:true,text:'Item Value',color:this.axisTitleColor,font:{size:16}}}}}
+updateChartColors(){for(let i=0;i<this.chart.data.datasets.length;i++){const dataset=this.chart.data.datasets[i]
+const color=this.colorProvider.get(dataset.ICode)
+dataset.borderColor=color
+dataset.backgroundColor=color+"44"
+dataset.pointBackgroundColor=color
+dataset.pointBorderColor=color}}
+setTheme(theme){const root=document.documentElement
+if(theme!=="light"){this.theme="dark"
+this.tickColor="#bbb"
+this.guideColor="#333333"
+this.axisTitleColor="#bbb"
+this.titleColor="#ccc"}else{this.theme="light"
+this.tickColor="#444"
+this.guideColor="#bbbbbb"
+this.axisTitleColor="#444"
+this.titleColor="#444"
+this.headerBackgroundColor="#f0f0f0"}
+const bg=getComputedStyle(root).getPropertyValue('--header-color').trim()
+this.headerBackgroundColor=bg
+if(this.chart){this.updateChartOptionsPreservingYAxis()}}
+updateChartOptionsPreservingYAxis(){const currentYMin=this.chart.options.scales?.y?.min
+const currentYMax=this.chart.options.scales?.y?.max
+const currentYTitle=this.chart.options.scales?.y?.title?.text
+this.updateChartOptions()
+if(this.chart.options.plugins.pillarBreakdownInteractionPlugin){this.chart.options.plugins.pillarBreakdownInteractionPlugin.guideColor=this.tickColor}
+if(currentYMin!==undefined){this.chart.options.scales.y.min=currentYMin}
+if(currentYMax!==undefined){this.chart.options.scales.y.max=currentYMax}
+if(currentYTitle!==undefined){this.chart.options.scales.y.title.text=currentYTitle}
+this.chart.update()}
+async fetch(url){const response=await fetch(url)
+try{return response.json()}catch(error){console.error('Error:',error)}}
+update(data){console.log(data)
+this.chart.data.datasets=data.data
+this.chart.data.labels=data.labels
+this.title.innerText=data.title
+this.itemType=data.itemType
+if(data.countryDetails){this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryName=data.countryDetails.CName;}
+this.chart.options.plugins.pillarBreakdownInteractionPlugin.countryCode=this.countryCode;this.updateChartColors()
+this.chart.options.scales.y.min=0
+this.chart.options.scales.y.max=1
+this.chart.update()}}
+const chartArrowLabels={id:'chartArrowLabels',afterDraw(chart,args,optionVars){const{ctx,chartArea}=chart;ctx.save();ctx.fillStyle='#FF634799';ctx.font='bold 12px Arial';ctx.textAlign='center';const offset=10
+const xLeftMid=(chartArea.left+chartArea.right+offset)/4;const xRightMid=3*(chartArea.left+chartArea.right-offset)/4;const yTop=(chartArea.top+chartArea.bottom)/10+5;ctx.fillText(optionVars.LeftCountry+" Higher",xLeftMid,yTop);ctx.fillStyle='#32CD3299';ctx.fillText(optionVars.RightCountry+" Higher",xRightMid,yTop);ctx.restore();}}
+class StaticPillarDifferentialChart{constructor(BaseCountry,ComparisonCountry,PillarCode,parentElement){this.parentElement=parentElement;this.BaseCountry=BaseCountry;this.ComparisonCountry=ComparisonCountry;this.PillarCode=PillarCode;this.titleString=`Sustainability Score Differences(${ComparisonCountry}-${BaseCountry})`;this.initRoot()
+this.initChartJSCanvas()
+this.fetch().then(data=>{this.update(data)})}
+colormap(diff){if(diff>0){return"#32CD3299"}else{return"#FF634799"}}
+async fetch(){const response=await fetch(`/api/v1/static/differential/pillar/${this.PillarCode}?BaseCountry=${this.BaseCountry}&ComparisonCountry=${this.ComparisonCountry}`);return response.json();}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('chart-section-pillar-differential')
+this.parentElement.appendChild(this.root)}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id=`pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;this.canvas.width=300
+this.canvas.height=300
+this.context=this.canvas.getContext('2d')
+this.root.appendChild(this.canvas)
+this.chart=new Chart(this.context,{type:'bar',plugins:[chartArrowLabels],options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false,},chartArrowLabels:{LeftCountry:this.BaseCountry,RightCountry:this.ComparisonCountry},tooltip:{callbacks:{title:function(tooltipItems){return`Category:${tooltipItems[0].raw.CategoryName}`;},label:function(tooltipItem){if(tooltipItem.raw.Diff>0){return`Difference:+${tooltipItem.formattedValue}`;}
+return`Difference:${tooltipItem.formattedValue}`;},},backgroundColor:'rgba(0, 0, 0, 0.7)',titleColor:'#ffffff',bodyColor:'#ffcc00',padding:5}},parsing:{xAxisKey:'Diff',yAxisKey:'CategoryCode'},scales:{x:{beginAtZero:true,grid:{drawTicks:false},ticks:{color:'#bbb',stepSize:0.1},title:{display:true,color:'#bbb',},min:-1,max:1,},y:{ticks:{color:'#bbb',minRotation:90,maxRotation:90,align:'center',crossAlign:'center',},title:{padding:10,display:true,text:'Categories',color:'#bbb',},type:'category',reverse:false}}}})}
+update(data){this.baseCCode=data.baseCCode
+this.baseCName=data.baseCName
+this.comparisonCCode=data.comparisonCCode
+this.comparisonCName=data.comparisonCName
+data.datasets.forEach(dataset=>{dataset.backgroundColor=dataset.data.map(item=>this.colormap(item.Diff))
+dataset.borderColor=dataset.data.map(item=>this.colormap(item.Diff).slice(0,-2))
+dataset.borderWidth=1})
+this.chart.data.datasets=data.datasets
+this.chart.options.scales.x.title.text=data.title
+this.chart.labels=data.labels
+this.chart.options.plugins.tooltip.callbacks.beforeLabel=(tooltipItem)=>{const base=`${this.baseCCode}Score:${tooltipItem.raw.baseScore.toFixed(3)}`;const comparison=`${this.comparisonCCode}Score:${tooltipItem.raw.comparisonScore.toFixed(3)}`;return[base,comparison];}
+this.chart.update()}}
+class CategoryRadarStatic{constructor(countryCode,parentElement,textColor="#bbb",gridColor="#cccccc33"){this.parentElement=parentElement
+this.countryCode=countryCode
+this.textColor=textColor
+this.gridColor=gridColor
+this.initRoot()
+this.initTitle()
+this.initLegend()
+this.initChartJSCanvas()
+this.fetch().then(data=>{this.update(data)})}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('radar-chart-box')
+this.parentElement.appendChild(this.root)}
+initTitle(){this.title=document.createElement('h3')
+this.title.classList.add('radar-chart-title')
+this.root.appendChild(this.title)}
+initLegend(){this.chartArea=document.createElement('div')
+this.chartArea.classList.add('radar-chart-area')
+this.legend=document.createElement('div')
+this.legend.classList.add('radar-chart-legend-box')
+this.chartArea.appendChild(this.legend)
+this.root.appendChild(this.chartArea)}
+initChartJSCanvas(){this.canvasContainer=document.createElement('div')
+this.canvasContainer.classList.add('radar-chart-canvas-container')
+this.canvas=document.createElement('canvas')
+this.canvasContainer.appendChild(this.canvas)
+this.canvas.width=300
+this.canvas.height=300
+this.context=this.canvas.getContext('2d')
+this.chartArea.appendChild(this.canvasContainer)
+this.chart=new Chart(this.context,{type:'polarArea',options:{responsive:true,animation:{animateRotate:false,animateScale:true,duration:750,easing:'easeInOutQuart'},transitions:{active:{animation:{duration:400}}},elements:{line:{borderWidth:3}},scales:{r:{animate:true,pointLabels:{display:true,font:{size:10},color:this.textColor,centerPointLabels:true,padding:0},angleLines:{display:true,color:this.gridColor},grid:{color:this.gridColor,circular:true},ticks:{backdropColor:'rgba(0, 0, 0, 0)',clip:true,color:this.textColor,font:{size:8}},suggestedMin:0,suggestedMax:1}},plugins:{legend:{display:false,},tooltip:{backgroundColor:'#1B2A3Ccc',},}}})}
+async fetch(){const response=await fetch(`/api/v1/static/radar/${this.countryCode}`)
+return response.json();}
+update(data){this.labelMap=data.labelMap
+this.chart.data.labels=data.labels
+this.ranks=data.ranks
+if(this.chart.data.datasets.length===0){this.chart.data.datasets=data.datasets}else{data.datasets.forEach((newDataset,i)=>{if(this.chart.data.datasets[i]){this.chart.data.datasets[i].data=newDataset.data
+this.chart.data.datasets[i].label=newDataset.label}else{this.chart.data.datasets.push(newDataset)}})
+while(this.chart.data.datasets.length>data.datasets.length){this.chart.data.datasets.pop()}}
+this.title.innerText=data.title
+this.updateLegend(data)
+this.chart.options.plugins.tooltip.callbacks.title=(context)=>{const categoryName=this.labelMap[context[0].label]
+return categoryName}
+this.chart.options.plugins.tooltip.callbacks.label=(context)=>{return["Category Score: "+context.raw.toFixed(3),"Category Rank: "+this.ranks[context.dataIndex].Rank,]}
+this.chart.update()}
+updateLegend(data){this.legendItems=data.legendItems
+const pillarColorsAlpha=data.datasets.map(d=>d.backgroundColor)
+const pillarColorsSolid=pillarColorsAlpha.map(c=>c.slice(0,7))
+for(let i=0;i<this.legendItems.length;i++){const pillarLegendItem=document.createElement('div')
+pillarLegendItem.classList.add('radar-chart-legend-item')
+const pillarLegendCanvasContainer=document.createElement('div')
+pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
+const pillarLegendItemCanvas=document.createElement('canvas')
+pillarLegendItemCanvas.width=100
+pillarLegendItemCanvas.height=50
+pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
+this.drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i)
+pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
+pillarLegendItem.appendChild(pillarLegendCanvasContainer)
+const pillarLegendItemText=document.createElement('div')
+pillarLegendItemText.classList.add('radar-chart-legend-item-text')
+pillarLegendItemText.innerText=this.legendItems[i].Name
+pillarLegendItem.appendChild(pillarLegendItemText)
+this.legend.appendChild(pillarLegendItem)}}
+drawPillarLegendCanvas(pillarLegendItemCanvas,pillarColorsAlpha,pillarColorsSolid,i){const pillarLegendContext=pillarLegendItemCanvas.getContext('2d')
+const shadedWidth=(pillarLegendItemCanvas.width*this.legendItems[i].Score).toFixed(0)
+pillarLegendContext.strokeStyle=this.textColor
+pillarLegendContext.linewidth=5
+pillarLegendContext.beginPath()
+pillarLegendContext.moveTo(0,0)
+pillarLegendContext.lineTo(0,pillarLegendItemCanvas.height)
+pillarLegendContext.moveTo(pillarLegendItemCanvas.width,0)
+pillarLegendContext.lineTo(pillarLegendItemCanvas.width,pillarLegendItemCanvas.height)
+pillarLegendContext.stroke()
+pillarLegendContext.strokeStyle=this.gridColor
+pillarLegendContext.linewidth=3
+pillarLegendContext.beginPath()
+const spacing=pillarLegendItemCanvas.width/10
+pillarLegendContext.beginPath();for(let i=0;i<10;i++){const x=(i*spacing)
+pillarLegendContext.moveTo(x,5)
+pillarLegendContext.lineTo(x,pillarLegendItemCanvas.height)}
+pillarLegendContext.stroke();pillarLegendContext.fillStyle=pillarColorsAlpha[i]
+pillarLegendContext.fillRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)
+pillarLegendContext.strokeStyle=pillarColorsSolid[i]
+pillarLegendContext.linewidth=10
+pillarLegendContext.strokeRect(3,5,shadedWidth,pillarLegendItemCanvas.height-5)}}
+class OutcomeScatterStatic{constructor(parentElement,outcomeVariable){this.outcomeVariable=outcomeVariable
+this.parentElement=parentElement;this.initRoot()
 }
-
-const chartArrowLabels = {
-    id: 'chartArrowLabels',
-    afterDraw(chart, args, optionVars) {
-        const {ctx, chartArea} = chart;
-        ctx.save();
-
-        ctx.fillStyle = '#FF634799';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        const offset = 10
-        const xLeftMid = (chartArea.left + chartArea.right + offset) / 4;
-        const xRightMid = 3 * (chartArea.left + chartArea.right - offset) / 4;
-        const yTop = (chartArea.top + chartArea.bottom) / 10 + 5;
-        ctx.fillText(optionVars.LeftCountry + " Higher", xLeftMid, yTop);
-        ctx.fillStyle = '#32CD3299';
-        ctx.fillText(optionVars.RightCountry + " Higher", xRightMid, yTop);
-
-        ctx.restore();
-    }
-}
-
-class StaticPillarDifferentialChart {
-    constructor(BaseCountry, ComparisonCountry, PillarCode, parentElement) {
-        this.parentElement = parentElement;
-        this.BaseCountry = BaseCountry;
-        this.ComparisonCountry = ComparisonCountry;
-        this.PillarCode = PillarCode;
-        this.titleString = `Sustainability Score Differences (${ComparisonCountry} - ${BaseCountry})`;
-        this.initRoot()
-        this.initChartJSCanvas()
-        this.fetch().then(data => {
-            this.update(data)
-        })
-    }
-
-    colormap(diff) {
-        if (diff > 0) {
-            return "#32CD3299"
-        } else {
-            return "#FF634799"
-        }
-    }
-
-    async fetch() {
-        const response = await fetch(`/api/v1/static/differential/pillar/${this.PillarCode}?BaseCountry=${this.BaseCountry}&ComparisonCountry=${this.ComparisonCountry}`);
-        return response.json();
-    }
-
-    initRoot() {
-        // Create the root element
-        this.root = document.createElement('div')
-        this.root.classList.add('chart-section-pillar-differential')
-        this.parentElement.appendChild(this.root)
-    }
-
-    initChartJSCanvas() {
-        this.canvas = document.createElement('canvas')
-        this.canvas.id = `pillar-differential-canvas-${this.PillarCode}-${this.BaseCountry}-${this.ComparisonCountry}`;
-        this.canvas.width = 300
-        this.canvas.height = 300
-        this.context = this.canvas.getContext('2d')
-        this.root.appendChild(this.canvas)
-        this.chart = new Chart(this.context, {
-            type: 'bar',
-            plugins: [ chartArrowLabels ],
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    chartArrowLabels: {
-                        LeftCountry: this.BaseCountry,
-                        RightCountry: this.ComparisonCountry
-                    },
-                    tooltip: {
-                        callbacks: {
-                            // Customize the title (top line in tooltip)
-                            title: function(tooltipItems) {
-                                return `Category: ${tooltipItems[0].raw.CategoryName}`;
-                            },
-                            // Customize the label (each line below the title)
-                            label: function(tooltipItem) {
-                                // const diff = tooltipItem.raw;
-                                if (tooltipItem.raw.Diff > 0) {
-                                    return `Difference: +${tooltipItem.formattedValue}`;
-                                }
-                                return `Difference: ${tooltipItem.formattedValue}`;
-                            },
-                            // Customize any additional lines
-                        },
-                        backgroundColor: 'rgba(0,0,0,0.7)',  // Customize tooltip background color
-                        titleColor: '#ffffff',                 // Customize tooltip title color
-                        bodyColor: '#ffcc00',                  // Customize tooltip body color
-                        padding: 5                            // Tooltip padding
-                    }
-                },
-                parsing:
-                {
-                    xAxisKey: 'Diff',
-                    yAxisKey: 'CategoryCode'
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            drawTicks: false
-                        },
-                        ticks: {
-                            color: '#bbb',
-                            stepSize: 0.1
-                        },
-                        title: {
-                            display: true,
-                            color: '#bbb',
-                        },
-                        min: -1,
-                        max: 1,
-                    },
-                    y: {
-                        ticks: {
-                            color: '#bbb',
-                            minRotation: 90,
-                            maxRotation: 90,
-                            align: 'center',
-                            crossAlign: 'center',
-                        },
-                        title: {
-                            padding: 10,
-                            display: true,
-                            text: 'Categories',
-                            color: '#bbb',
-                        },
-                        type: 'category',
-                        reverse: false
-                    }
-                }
-            }
-        })
-    }
-
-    update(data) {
-        this.baseCCode = data.baseCCode
-        this.baseCName = data.baseCName
-        this.comparisonCCode = data.comparisonCCode
-        this.comparisonCName = data.comparisonCName
-        data.datasets.forEach(dataset => {
-            dataset.backgroundColor = dataset.data.map(item => this.colormap(item.Diff)) // Assign colors dynamically
-            dataset.borderColor = dataset.data.map(item => this.colormap(item.Diff).slice(0, -2)) // Assign colors dynamically
-            dataset.borderWidth = 1
-        })
-        this.chart.data.datasets = data.datasets
-        this.chart.options.scales.x.title.text = data.title
-        this.chart.labels = data.labels
-        this.chart.options.plugins.tooltip.callbacks.beforeLabel = (tooltipItem) => {
-            const base = `${this.baseCCode} Score: ${tooltipItem.raw.baseScore.toFixed(3)}`;
-            const comparison = `${this.comparisonCCode} Score: ${tooltipItem.raw.comparisonScore.toFixed(3)}`;
-            return [base, comparison];
-        }
-        // this.chart.plugins[0].options.LeftCountry = this.baseCName
-        // this.chart.plugins[0].options.RightCountry = this.comparisonCName
-        this.chart.update()
-    }
-}
-
-class CategoryRadarStatic {
-    constructor(countryCode, parentElement, textColor="#bbb", gridColor="#cccccc33") {
-        this.parentElement = parentElement
-        this.countryCode = countryCode
-        this.textColor = textColor
-        this.gridColor = gridColor
-
-        this.initRoot()
-        this.initTitle()
-        this.initLegend()
-        this.initChartJSCanvas()
-
-        this.fetch().then(data => {
-            this.update(data)
-        })
-    }
-
-    initRoot() {
-        this.root = document.createElement('div')
-        this.root.classList.add('radar-chart-box')
-        this.parentElement.appendChild(this.root)
-    }
-
-    initTitle() {
-        this.title = document.createElement('h3')
-        this.title.classList.add('radar-chart-title')
-        this.root.appendChild(this.title)
-    }
-
-    initLegend() {
-        this.chartArea = document.createElement('div')
-        this.chartArea.classList.add('radar-chart-area')
-        this.legend = document.createElement('div')
-        this.legend.classList.add('radar-chart-legend-box')
-        this.chartArea.appendChild(this.legend)
-        this.root.appendChild(this.chartArea)
-    }
-
-    initChartJSCanvas() {
-        this.canvasContainer = document.createElement('div')
-        this.canvasContainer.classList.add('radar-chart-canvas-container')
-        this.canvas = document.createElement('canvas')
-        this.canvasContainer.appendChild(this.canvas)
-        this.canvas.width = 300
-        this.canvas.height = 300
-        this.context = this.canvas.getContext('2d')
-        this.chartArea.appendChild(this.canvasContainer)
-        this.chart = new Chart(this.context, {
-            type: 'polarArea',
-            options: {
-                responsive: true,
-                animation: {
-                    animateRotate: false,
-                    animateScale: true,
-                    duration: 750,
-                    easing: 'easeInOutQuart'
-                },
-                transitions: {
-                    active: {
-                        animation: {
-                            duration: 400
-                        }
-                    }
-                },
-                elements: {
-                    line: {
-                        borderWidth: 3
-                    }
-                },
-                scales: {
-                    r: {
-                        animate: true,
-                        pointLabels: {
-                            display: true,
-                            font: {
-                                size: 10
-                            },
-                            color: this.textColor,
-                            centerPointLabels: true,
-                            padding:0
-                        },
-                        angleLines: {
-                            display: true,
-                            color: this.gridColor
-                        },
-                        grid: {
-                            color: this.gridColor,
-                            circular: true
-                        },
-                        ticks: {
-                            backdropColor: 'rgba(0,0,0,0)',
-                            clip: true,
-                            color: this.textColor,
-                            font: {
-                                size: 8
-                            }
-                        },
-                        suggestedMin: 0,
-                        suggestedMax: 1
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    tooltip: {
-                        backgroundColor: '#1B2A3Ccc',
-                    },
-                }
-            }
-        })
-    }
-
-    async fetch() {
-        const response = await fetch(`/api/v1/static/radar/${this.countryCode}`)
-        return response.json();
-    }
-
-    update(data) {
-        this.labelMap = data.labelMap
-        this.chart.data.labels = data.labels
-        this.ranks = data.ranks
-
-        // Update datasets in place to preserve animation continuity
-        // This prevents bars from animating from 0 on every update
-        if (this.chart.data.datasets.length === 0) {
-            // First render - just set the datasets
-            this.chart.data.datasets = data.datasets
-        } else {
-            // Subsequent updates - update data arrays in place
-            data.datasets.forEach((newDataset, i) => {
-                if (this.chart.data.datasets[i]) {
-                    // Update the data array in place so Chart.js animates from old to new values
-                    this.chart.data.datasets[i].data = newDataset.data
-                    this.chart.data.datasets[i].label = newDataset.label
-                } else {
-                    // New dataset appeared - add it
-                    this.chart.data.datasets.push(newDataset)
-                }
-            })
-            // Remove any extra datasets if new data has fewer
-            while (this.chart.data.datasets.length > data.datasets.length) {
-                this.chart.data.datasets.pop()
-            }
-        }
-
-        this.title.innerText = data.title
-        this.updateLegend(data)
-        this.chart.options.plugins.tooltip.callbacks.title = (context) => {
-            const categoryName = this.labelMap[context[0].label]
-            return categoryName
-        }
-        this.chart.options.plugins.tooltip.callbacks.label = (context) => {
-            return [
-                "Category Score: " + context.raw.toFixed(3),
-                "Category Rank: " + this.ranks[context.dataIndex].Rank,
-            ]
-        }
-        this.chart.update()
-    }
-
-    updateLegend(data) {
-        this.legendItems = data.legendItems
-        const pillarColorsAlpha = data.datasets.map(d => d.backgroundColor)
-        const pillarColorsSolid = pillarColorsAlpha.map(c => c.slice(0, 7))
-        for (let i = 0; i < this.legendItems.length; i++) {
-            const pillarLegendItem = document.createElement('div')
-            pillarLegendItem.classList.add('radar-chart-legend-item')
-            const pillarLegendCanvasContainer = document.createElement('div')
-            pillarLegendCanvasContainer.classList.add('radar-chart-legend-canvas-container')
-            const pillarLegendItemCanvas = document.createElement('canvas')
-            pillarLegendItemCanvas.width = 100
-            pillarLegendItemCanvas.height = 50
-            pillarLegendItemCanvas.classList.add('radar-chart-legend-item-canvas')
-            this.drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i)
-            pillarLegendCanvasContainer.appendChild(pillarLegendItemCanvas)
-            pillarLegendItem.appendChild(pillarLegendCanvasContainer)
-            const pillarLegendItemText = document.createElement('div')
-            pillarLegendItemText.classList.add('radar-chart-legend-item-text')
-            pillarLegendItemText.innerText = this.legendItems[i].Name
-            pillarLegendItem.appendChild(pillarLegendItemText)
-            this.legend.appendChild(pillarLegendItem)
-        }
-    }
-
-    drawPillarLegendCanvas(pillarLegendItemCanvas, pillarColorsAlpha, pillarColorsSolid, i) {
-        const pillarLegendContext = pillarLegendItemCanvas.getContext('2d')
-        const shadedWidth = (pillarLegendItemCanvas.width * this.legendItems[i].Score).toFixed(0)
-        // Draw the main boundary lines at 0 and 1
-        pillarLegendContext.strokeStyle = this.textColor
-        pillarLegendContext.linewidth = 5
-        pillarLegendContext.beginPath()
-        pillarLegendContext.moveTo(0, 0) // Move to the top of the canvas at x = 0
-        pillarLegendContext.lineTo(0, pillarLegendItemCanvas.height) // Draw a line to the bottom of the canvas at x = 0
-        pillarLegendContext.moveTo(pillarLegendItemCanvas.width, 0) // Move to the top of the canvas at x = width
-        pillarLegendContext.lineTo(pillarLegendItemCanvas.width, pillarLegendItemCanvas.height) // Draw a line to the bottom of the canvas at x = width
-        pillarLegendContext.stroke() // Render the lines
-        // Draw the grid lines
-        pillarLegendContext.strokeStyle = this.gridColor
-        pillarLegendContext.linewidth = 3
-        pillarLegendContext.beginPath()
-        const spacing = pillarLegendItemCanvas.width / 10
-        pillarLegendContext.beginPath();
-        for (let i = 0; i < 10; i++) {
-            const x = (i * spacing)
-            pillarLegendContext.moveTo(x, 5)
-            pillarLegendContext.lineTo(x, pillarLegendItemCanvas.height)
-        }
-        pillarLegendContext.stroke(); // Render all lines
-        // Draw the main shaded rectangle
-        pillarLegendContext.fillStyle = pillarColorsAlpha[i]
-        pillarLegendContext.fillRect(3, 5, shadedWidth, pillarLegendItemCanvas.height-5)
-        pillarLegendContext.strokeStyle = pillarColorsSolid[i]
-        pillarLegendContext.linewidth = 10
-        pillarLegendContext.strokeRect(3, 5, shadedWidth, pillarLegendItemCanvas.height-5)
-    }
-}
-
-class OutcomeScatterStatic {
-    constructor(parentElement, outcomeVariable) {
-        this.outcomeVariable = outcomeVariable
-        this.parentElement = parentElement;
-        this.initRoot()
-        // this.initTitle()
-        // this.initChartJSCanvas()
-        // this.fetch().then(data => {
-        //     this.update(data)
-        // })
-    }
-
-    async fetch() {
-        const response = await fetch(`/api/v1/...`);
-        return response.json();
-    }
-
-    initRoot() {
-        // Create the root element
-        this.root = document.createElement('div')
-        this.root.classList.add('outcome-scatter-static')
-        this.parentElement.appendChild(this.root)
-    }
-
-    initTitle() {
-    }
-
-    initChartJSCanvas() {
-    }
-
-    update(data) {
-    }
-}
-
-class StaticOverallStackedBarChart {
-    constructor(parentElement, colormap = {}) {
-        this.parentElement = parentElement;
-        this.textColor = '#bbb';
-        this.gridColor = '#cccccc33';
-        this.initRoot()
-        this.initTitle()
-        if (Object.keys(colormap).length === 0) {
-            this.initColormap()
-        } else {
-            this.colormap = colormap
-        }
-        this.initChartJSCanvas()
-        this.fetch().then(data => {
-            this.update(data)
-        })
-    }
-
-    async fetch() {
-        const response = await fetch('/api/v1/static/stacked/sspi');
-        return response.json();
-    }
-
-    initRoot() {
-        // Create the root element
-        this.root = document.createElement('div')
-        this.root.classList.add('chart-section-overall-stack')
-        this.parentElement.appendChild(this.root)
-    }
-
-    initTitle() {
-        this.title = document.createElement('h4')
-        this.title.classList.add('stack-bar-title')
-        this.root.appendChild(this.title)
-    }
-
-    initColormap() {
-        this.colormap = {
-            "SUS": "#28a745",
-            "MS": "#ff851b",
-            "PG": "#007bff"
-        }
-    }
-
-
-    initChartJSCanvas() {
-        this.canvas = document.createElement('canvas')
-        this.canvas.id = `overall-stacked-bar-canvas`;
-        this.canvas.width = 1000
-        this.canvas.height = 1000
-        this.context = this.canvas.getContext('2d')
-        this.chartWrapper = document.createElement('div')
-        this.chartWrapper.appendChild(this.canvas)
-        this.root.appendChild(this.chartWrapper)
-        this.chart = new Chart(this.context, {
-            type: 'bar',
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false,
-                    },
-                    tooltip: {
-                        intersect: false,
-                        padding: 10,
-                        backgroundColor: 'rgba(0,0,0,0.7)',
-                        xAlign: 'left',
-                        callbacks: {
-                            afterTitle(context) {
-                                const info = context[0].dataset.info[context[0].dataIndex]
-                                return [
-                                    `SSPI Overall Score: ${info.SSPIScore.toFixed(3)}`,
-                                    `SSPI Overall Rank: ${info.SSPIRank}`
-                                ]
-                            },
-                            label(context) {
-                                const info = context.dataset.info[context.dataIndex]
-                                return [
-                                    info.IName + '\tScore:\t' + Number.parseFloat(info.Score).toFixed(3),
-                                    info.IName + '\tRank:\t' + info.Rank,
-                                ];
-                            }
-                        }
-                    }
-                },
-                responsive: true,
-                indexAxis: 'y',
-                scales: {
-                    x2: {
-                        position: 'top',
-                        display: true,
-                        ticks: {
-                            color: this.textColor,
-                        },
-                        grid: {
-                            display: false,
-                        },
-                        min: 0,
-                        max: 1,
-                        stacked: true,
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'SSPI Score',
-                            color: this.textColor,
-                        },
-                        ticks: {
-                            color: this.textColor,
-                        },
-                        stacked: true,
-                        min: 0,
-                        max: 1,
-                    },
-                    y2: {
-                        position: 'left',
-                        display: true,
-                        ticks: {
-                            color: this.textColor,
-                            callback: function(value, index, values) {
-                                return index + 1
-                            },
-                            padding: 8,
-                            font: {
-                                size: 12,
-                                weight: 'bold'
-                            },
-                        },
-                        stacked: true,
-                        grid: {
-                            display: false,
-                        }
-                    },
-                    y: {
-                        position: 'left',
-                        stacked: true,
-                        ticks: {
-                            color: this.textColor,
-                        },
-                        grid: {
-                            display: true,
-                            drawBorder: true,
-                            drawOnChartArea: true,
-                            color: function(context) {
-                                // Draw gridline only every 10 indices
-                                return context.index % 10 === 0 ? '#66666666' : 'rgba(0,0,0,0)';
-                            }
-                        },
-                    },
-                }
-            },
-        })
-    }
-
-    update(data) {
-        this.chart.data = data.data
-        this.chart.data.datasets.forEach((dataset) => {
-            const color = this.colormap[dataset.label]
-            dataset.backgroundColor = color + "99"
-            dataset.borderColor = color
-        })
-        this.title.innerText = data.title
-        this.chart.update()
-    }
-}
-
-function createDiagonalPattern(color) {
-    // create a 10x10 px canvas for the pattern's base shape
-let shape=document.createElement('canvas')
+async fetch(){const response=await fetch(`/api/v1/...`);return response.json();}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('outcome-scatter-static')
+this.parentElement.appendChild(this.root)}
+initTitle(){}
+initChartJSCanvas(){}
+update(data){}}
+class StaticOverallStackedBarChart{constructor(parentElement,colormap={}){this.parentElement=parentElement;this.textColor='#bbb';this.gridColor='#cccccc33';this.initRoot()
+this.initTitle()
+if(Object.keys(colormap).length===0){this.initColormap()}else{this.colormap=colormap}
+this.initChartJSCanvas()
+this.fetch().then(data=>{this.update(data)})}
+async fetch(){const response=await fetch('/api/v1/static/stacked/sspi');return response.json();}
+initRoot(){this.root=document.createElement('div')
+this.root.classList.add('chart-section-overall-stack')
+this.parentElement.appendChild(this.root)}
+initTitle(){this.title=document.createElement('h4')
+this.title.classList.add('stack-bar-title')
+this.root.appendChild(this.title)}
+initColormap(){this.colormap={"SUS":"#28a745","MS":"#ff851b","PG":"#007bff"}}
+initChartJSCanvas(){this.canvas=document.createElement('canvas')
+this.canvas.id=`overall-stacked-bar-canvas`;this.canvas.width=1000
+this.canvas.height=1000
+this.context=this.canvas.getContext('2d')
+this.chartWrapper=document.createElement('div')
+this.chartWrapper.appendChild(this.canvas)
+this.root.appendChild(this.chartWrapper)
+this.chart=new Chart(this.context,{type:'bar',options:{maintainAspectRatio:false,plugins:{legend:{display:false,},tooltip:{intersect:false,padding:10,backgroundColor:'rgba(0, 0, 0, 0.7)',xAlign:'left',callbacks:{afterTitle(context){const info=context[0].dataset.info[context[0].dataIndex]
+return[`SSPI Overall Score:${info.SSPIScore.toFixed(3)}`,`SSPI Overall Rank:${info.SSPIRank}`]},label(context){const info=context.dataset.info[context.dataIndex]
+return[info.IName+'\tScore:\t'+Number.parseFloat(info.Score).toFixed(3),info.IName+'\tRank:\t'+info.Rank,];}}}},responsive:true,indexAxis:'y',scales:{x2:{position:'top',display:true,ticks:{color:this.textColor,},grid:{display:false,},min:0,max:1,stacked:true,},x:{title:{display:true,text:'SSPI Score',color:this.textColor,},ticks:{color:this.textColor,},stacked:true,min:0,max:1,},y2:{position:'left',display:true,ticks:{color:this.textColor,callback:function(value,index,values){return index+1},padding:8,font:{size:12,weight:'bold'},},stacked:true,grid:{display:false,}},y:{position:'left',stacked:true,ticks:{color:this.textColor,},grid:{display:true,drawBorder:true,drawOnChartArea:true,color:function(context){return context.index%10===0?'#66666666':'rgba(0, 0, 0, 0)';}},},}},})}
+update(data){this.chart.data=data.data
+this.chart.data.datasets.forEach((dataset)=>{const color=this.colormap[dataset.label]
+dataset.backgroundColor=color+"99"
+dataset.borderColor=color})
+this.title.innerText=data.title
+this.chart.update()}}
+function createDiagonalPattern(color){let shape=document.createElement('canvas')
 shape.width=5
 shape.height=5
 let c=shape.getContext('2d')
@@ -3872,32 +3412,71 @@ showLoading(){this.title.textContent='Loading...';}
 showError(message){this.title.textContent='Error';this.chart.data.datasets=[];this.chart.update();console.error(message);}
 setTheme(theme){const root=document.documentElement;const bg=getComputedStyle(root).getPropertyValue('--header-color').trim();this.headerBackgroundColor=bg;const greenAccent=getComputedStyle(root)?.getPropertyValue('--green-accent')?.trim()||'#8BA342';this.greenAccent=greenAccent;if(theme!=='light'){this.theme='dark';this.tickColor='#bbb';this.titleColor='#ccc';}else{this.theme='light';this.tickColor='#444';this.titleColor='#444';this.headerBackgroundColor=this.headerBackgroundColor||'#f0f0f0';}
 if(this.chart){this.updateChart();}}}
+const GLOBE_DEFAULT_ALTITUDE=1.5
+const GLOBE_EXPLODED_ALTITUDE=3
+const GLOBE_FIT_FRACTION=0.92
+const GLOBE_FALLBACK_SCENE_SIZE=600
+const GLOBE_ALTITUDE_EPSILON=0.01
 class SSPIGlobeChart{constructor(parentElement){this.parentElement=parentElement
 this.globeDataURL="/api/v1/globe"
 this.tabBarState="SSPI";this.year=window.observableStorage.getItem("globeYear")||2023;this.altitudeCoding=false;this.cloropleth=true;this.darkenBorders=false;this.globeRotation=window.observableStorage.getItem("globeRotation")??true;this.rotationOnClick=window.observableStorage.getItem("rotationOnClick")??true;this.activeCountry=null;this.hoveredCountry=null;this.hoveredFeature=null;this.pins=new Set()
 this.playing=window.observableStorage.getItem("globePlaying")||false
 this.playInterval=null
-this.computeGlobeDimensions()
+this.globeWidth=GLOBE_FALLBACK_SCENE_SIZE
+this.globeHeight=GLOBE_FALLBACK_SCENE_SIZE
 this.getComputedStyles()
 this.buildGlobeContainer()
 this.buildGlobe()
-this.hydrateGlobe().then(this.restyleGlobe())
+this.buildChartOptions()
+this.hydrateGlobe().then(()=>this.restyleGlobe())
 this.setTheme(window.observableStorage.getItem("theme"))
 this.rigResizeListener()
 this.rigPinChangeListener()
 this.rigUnloadListener()}
-computeGlobeDimensions(){const availableWidth=Math.min(window.innerWidth,this.parentElement.clientWidth||window.innerWidth);const availableHeight=window.innerHeight;if(availableWidth<700){this.globeWidth=Math.max(300,availableWidth-40);this.globeHeight=Math.min(this.globeWidth,availableHeight-200);}else{const maxGlobeSize=900;const targetSize=Math.min(availableWidth*0.60,maxGlobeSize);this.globeWidth=Math.max(700,targetSize);this.globeHeight=this.globeWidth;}}
+computeGlobeDimensions(){const sceneRect=this.globeSceneContainer.getBoundingClientRect()
+this.globeWidth=Math.round(sceneRect.width)||this.globeWidth
+this.globeHeight=Math.round(sceneRect.height)||this.globeHeight}
+minimumFittingAltitude(){const camera=this.globe.camera()
+const verticalFov=camera?.fov||50
+const halfVerticalSpan=Math.tan(verticalFov*Math.PI/360)
+const aspectRatio=this.globeWidth/this.globeHeight
+const halfVisibleSpan=halfVerticalSpan*Math.min(1,aspectRatio)*GLOBE_FIT_FRACTION
+return 1/Math.sin(Math.atan(halfVisibleSpan))-1}
+framingAltitudeForScene(){const modeAltitude=this.altitudeCoding?GLOBE_EXPLODED_ALTITUDE:GLOBE_DEFAULT_ALTITUDE
+return Math.max(modeAltitude,this.minimumFittingAltitude())}
+setFramingAltitude(pointOfView={},duration=0){this.framingAltitude=this.framingAltitudeForScene()
+this.framingSettlesAt=performance.now()+duration
+this.globe.pointOfView({...pointOfView,altitude:this.framingAltitude},duration)}
+framingTransitionRemaining(){return Math.max(0,this.framingSettlesAt-performance.now())}
+cameraIsFramed(){if(this.framingTransitionRemaining()>0){return true}
+return Math.abs(this.globe.pointOfView().altitude-this.framingAltitude)<=GLOBE_ALTITUDE_EPSILON}
+refitFramingAltitude(){if(this.cameraIsFramed()){this.setFramingAltitude({},this.framingTransitionRemaining())
+return}
+const currentAltitude=this.globe.pointOfView().altitude
+const minimumAltitude=this.minimumFittingAltitude()
+if(currentAltitude<GLOBE_DEFAULT_ALTITUDE||currentAltitude>=minimumAltitude){return}
+this.globe.pointOfView({altitude:minimumAltitude},0)}
 getComputedStyles(){this.styles={}
 this.styles.greenAccent=window.getComputedStyle(document.documentElement).getPropertyValue("--green-accent")
 this.styles.pageBackgroundColor=window.getComputedStyle(document.documentElement).getPropertyValue("--page-background")
 this.styles.boxBackgroundColor=window.getComputedStyle(document.documentElement).getPropertyValue("--box-background-color")
 this.styles.oceanColor=window.getComputedStyle(document.documentElement).getPropertyValue("--ocean-color")
 console.log(this.styles)}
-handleResize(){if(this.resizeTimeout){clearTimeout(this.resizeTimeout);}
-this.resizeTimeout=setTimeout(()=>{const oldWidth=this.globeWidth;const oldHeight=this.globeHeight;this.computeGlobeDimensions();const widthDiff=Math.abs(this.globeWidth-oldWidth);const heightDiff=Math.abs(this.globeHeight-oldHeight);if(widthDiff>50||heightDiff>50){if(this.globe){this.globe.width(this.globeWidth).height(this.globeHeight);}}},300);}
-rigResizeListener(){this.resizeTimeout=null;window.addEventListener('resize',()=>this.handleResize());}
-buildGlobeContainer(){this.root=document.createElement("div");this.root.classList.add("globe-visualization-container");this.buildChartOptions()
-this.parentElement.appendChild(this.root)}
+handleResize(){const previousWidth=this.globeWidth
+const previousHeight=this.globeHeight
+this.computeGlobeDimensions()
+if(this.globeWidth===previousWidth&&this.globeHeight===previousHeight){return}
+this.globe.width(this.globeWidth).height(this.globeHeight)
+this.refitFramingAltitude()}
+rigResizeListener(){this.resizeFrame=null
+const scheduleResize=()=>{if(this.resizeFrame){return}
+this.resizeFrame=window.requestAnimationFrame(()=>{this.resizeFrame=null
+this.handleResize()})}
+if(typeof ResizeObserver==='undefined'){window.addEventListener('resize',scheduleResize)
+return}
+this.resizeObserver=new ResizeObserver(scheduleResize)
+this.resizeObserver.observe(this.globeSceneContainer)}
+buildGlobeContainer(){this.root=document.createElement("div");this.root.classList.add("globe-visualization-container");this.parentElement.appendChild(this.root)}
 buildTabBar(){this.tabBar=document.createElement("div");this.tabBar.classList.add("globe-tab-bar");this.tabBar.innerHTML=`<button data-item-code="SSPI"data-active-tab=true>SSPI</button><button data-item-code="SUS"data-active-tab=false>Sustainability</button><button data-item-code="MS"data-active-tab=false>Market Structure</button><button data-item-code="PG"data-active-tab=false>Public Goods</button>`;for(var i=0;i<this.tabBar.children.length;i++){this.tabBar.children[i].addEventListener('click',(el)=>{const oldTab=this.tabBar.querySelector('[data-item-code="'+this.tabBarState+'"]')
 oldTab.dataset.activeTab=false;this.tabBarState=el.target.dataset.itemCode
 const newTab=this.tabBar.querySelector('[data-item-code="'+this.tabBarState+'"]')
@@ -3910,14 +3489,15 @@ this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
 this.showChartOptions.innerHTML=`<svg class="svg-button show-chart-options-svg"width="24"height="24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><use href="#icon-menu"/></svg>`;this.showChartOptions.addEventListener('click',()=>{this.openChartOptionsSidebar()})
 this.tabBar.appendChild(this.showChartOptions)
-this.globeTabSliderColumn.appendChild(this.tabBar)}
-buildGlobe(){this.globeTabSliderColumn=document.createElement("div");this.globeTabSliderColumn.classList.add('globe-and-tab-container')
-this.buildTabBar()
-this.globeSceneContainer=document.createElement("div");this.globeTabSliderColumn.appendChild(this.globeSceneContainer)
-this.root.appendChild(this.globeTabSliderColumn)
-this.globe=Globe().width(this.globeWidth.toString()).height(this.globeHeight.toString()).showGraticules(false).showAtmosphere(false).lineHoverPrecision(0).polygonAltitude(0.01).polygonStrokeColor(this.getStrokeColor()).polygonsTransitionDuration(100).pointOfView({lat:25,lng:60,altitude:1.5},500)
-(this.globeSceneContainer)
-this.buildYearSlider()}
+this.root.appendChild(this.tabBar)}
+buildGlobe(){this.buildTabBar()
+this.globeSceneContainer=document.createElement("div");this.globeSceneContainer.classList.add('globe-scene-layer')
+this.root.appendChild(this.globeSceneContainer)
+this.buildYearSlider()
+this.globe=Globe()(this.globeSceneContainer)
+this.computeGlobeDimensions()
+this.globe.width(this.globeWidth).height(this.globeHeight).showGraticules(false).showAtmosphere(false).lineHoverPrecision(0).polygonAltitude(0.01).polygonStrokeColor(this.getStrokeColor()).polygonsTransitionDuration(100)
+this.setFramingAltitude({lat:25,lng:60},500)}
 buildYearSlider(){this.yearSliderContainer=document.createElement("div");this.yearSliderContainer.classList.add('globe-year-slider-container')
 this.yearSliderContainer.innerHTML=`<div class="year-slider-controls"><label class="year-slider-label"for="globe-year-slider"><span class="year-value-display"contenteditable="true"spellcheck="false">${this.year}</span></label><div class="year-slider-wrapper"><div class="year-slider-track-container"><div class="year-slider-ticks"></div><input
 type="range"
@@ -3927,7 +3507,9 @@ min="2000"
 max="2023"
 value="${this.year}"
 step="1"/
-></div><div class="year-slider-bounds"><span class="year-slider-min">2000</span><span class="year-slider-max">2023</span></div></div><button class="year-play-pause-button"aria-label="Play timeline"><span class="play-icon">▶</span><span class="pause-icon"style="display:none;">⏸</span></button></div>`;this.globeTabSliderColumn.appendChild(this.yearSliderContainer)
+></div><div class="year-slider-bounds"><span class="year-slider-min">2000</span><span class="year-slider-max">2023</span></div></div><button class="year-play-pause-button"aria-label="Play timeline"><span class="play-icon">▶</span><span class="pause-icon"style="display:none;">⏸</span></button></div>`;this.yearSliderRow=document.createElement("div");this.yearSliderRow.classList.add('globe-slider-row')
+this.yearSliderRow.appendChild(this.yearSliderContainer)
+this.root.appendChild(this.yearSliderRow)
 this.rigYearSlider()}
 rigYearSlider(){this.yearSliderInput=this.yearSliderContainer.querySelector('.year-slider-input')
 this.yearValueDisplay=this.yearSliderContainer.querySelector('.year-value-display')
@@ -3984,7 +3566,7 @@ return value}
 this.setColorScale();this.globe.polygonsData(this.geojson.features.filter(d=>d.properties.ISO_A2!=='AQ')).polygonCapColor(feat=>this.colorScale(this.getVal(feat))).polygonSideColor(feat=>"transparent").onPolygonHover(hoverD=>{this.hoveredCountry=hoverD?hoverD.properties:null;this.hoveredFeature=hoverD;this.globe.polygonAltitude(d=>d===hoverD?0.02:0.01).polygonCapColor(d=>d===hoverD?this.styles.greenAccent:this.colorScale(this.getVal(d))).polygonSideColor(d=>d===hoverD?this.styles.greenAccent+'cc':"transparent")}).onPolygonClick((p,e)=>{if(this.globeRotation&&this.rotationOnClick){this.globe.controls().autoRotate=!this.globe.controls().autoRotate;}
 this.activeCountry=p.properties;this.countryInformationBox.dataset.unpopulated=false;this.updateCountryInformation();}).polygonLabel(({properties:d})=>this.getPolygonLabel(d))
 this.getPins()}
-restyleGlobe(){this.globe.backgroundColor(this.styles.boxBackgroundColor)
+restyleGlobe(){this.globe.backgroundColor('rgba(0, 0, 0, 0)')
 const mat=this.globe.globeMaterial();mat.map=null;mat.bumpMap=null;mat.specularMap=null;mat.shininess=0;if(mat.specular&&mat.specular.set)mat.specular.set(0x000000);mat.color.set(this.styles.oceanColor);mat.needsUpdate=true;this.globe.controls().autoRotate=this.globeRotation
 this.globe.controls().autoRotateSpeed=0.3
 this.globe.controls().enableZoom=true;}
@@ -4004,7 +3586,9 @@ if(this.hoveredCountry){const tooltipElements=this.globeSceneContainer.parentEle
 toggleDarkenBorders(){this.darkenBorders=!this.darkenBorders;this.globe.polygonsData(this.geojson.features.filter(d=>d.properties.ISO_A2!=='AQ')).polygonStrokeColor(this.getStrokeColor())}
 toggleCloropleth(){this.cloropleth=!this.cloropleth
 this.updateDataset()}
-toggleAltitudeCoding(){this.altitudeCoding=!this.altitudeCoding;if(this.altitudeCoding){this.globe.pointOfView({altitude:3},2000).polygonsTransitionDuration(750).polygonSideColor(feat=>this.colorScale(this.getVal(feat))+'ef').onPolygonHover(hoverD=>{this.hoveredCountry=hoverD?hoverD.properties:null;this.hoveredFeature=hoverD;this.globe.polygonCapColor(d=>d===hoverD?this.styles.greenAccent:this.colorScale(this.getVal(d))).polygonSideColor(d=>d===hoverD?this.styles.greenAccent+'ef':this.colorScale(this.getVal(d))+'ef')}).polygonAltitude(feat=>{const value=this.getVal(feat);return value>=0?value:0.01;})}else{this.globe.pointOfView({altitude:1.5},1500).polygonsTransitionDuration(100).polygonAltitude(feat=>this.getVal(feat)/2).onPolygonHover(hoverD=>{this.hoveredCountry=hoverD?hoverD.properties:null;this.hoveredFeature=hoverD;this.globe.polygonAltitude(d=>d===hoverD?0.02:0.01).polygonCapColor(d=>d===hoverD?this.styles.greenAccent:this.colorScale(this.getVal(d))).polygonSideColor(d=>d===hoverD?this.styles.greenAccent+'cc':"transparent")})}}
+toggleAltitudeCoding(){this.altitudeCoding=!this.altitudeCoding;if(this.altitudeCoding){this.setFramingAltitude({},2000)
+this.globe.polygonsTransitionDuration(750).polygonSideColor(feat=>this.colorScale(this.getVal(feat))+'ef').onPolygonHover(hoverD=>{this.hoveredCountry=hoverD?hoverD.properties:null;this.hoveredFeature=hoverD;this.globe.polygonCapColor(d=>d===hoverD?this.styles.greenAccent:this.colorScale(this.getVal(d))).polygonSideColor(d=>d===hoverD?this.styles.greenAccent+'ef':this.colorScale(this.getVal(d))+'ef')}).polygonAltitude(feat=>{const value=this.getVal(feat);return value>=0?value:0.01;})}else{this.setFramingAltitude({},1500)
+this.globe.polygonsTransitionDuration(100).polygonAltitude(feat=>this.getVal(feat)/2).onPolygonHover(hoverD=>{this.hoveredCountry=hoverD?hoverD.properties:null;this.hoveredFeature=hoverD;this.globe.polygonAltitude(d=>d===hoverD?0.02:0.01).polygonCapColor(d=>d===hoverD?this.styles.greenAccent:this.colorScale(this.getVal(d))).polygonSideColor(d=>d===hoverD?this.styles.greenAccent+'cc':"transparent")})}}
 toggleGlobeRotation(){this.globeRotation=!this.globeRotation;this.globe.controls().autoRotate=this.globeRotation;this.rotationOnClickToggleButton.disabled=!this.globeRotation;}
 toggleRotationOnClick(){this.rotationOnClick=!this.rotationOnClick;}
 setColorScale(){const aggregates=this.geojson["aggregates"].find(a=>a.ICode===this.tabBarState)
