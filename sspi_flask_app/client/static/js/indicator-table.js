@@ -9,15 +9,26 @@ class IndicatorTable {
         this.initializeState();
         this.rigUnloadListener();
     }
-    
+
     initializeEventListeners() {
-        const indicators = this.container.querySelectorAll('.indicator-item')
-        indicators.forEach((indicator) => {
-            const headerBox = indicator.querySelector('.indicators-indicator-header')
-            headerBox.addEventListener('click', (event) => {
-                const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
-                event.stopPropagation();
-                this.handleToggle(toggleBtn);
+        /* The whole header row toggles its section, at every level. Clicks on
+         * the row data link fall through to the browser untouched.
+         * NB: apostrophes inside // comments make the bundler swallow the line
+         * that follows them, so keep block comments here. */
+        const rowLevels = [
+            ['.indicators-pillar-header', '.indicators-pillar-header-content > button'],
+            ['.indicators-category-header', '.indicators-category-header-content > button'],
+            ['.indicators-indicator-header', '.indicator-info > button'],
+        ];
+        rowLevels.forEach(([headerSelector, buttonSelector]) => {
+            this.container.querySelectorAll(headerSelector).forEach((header) => {
+                header.addEventListener('click', (event) => {
+                    if (event.target.closest('a')) return;
+                    const toggleBtn = header.querySelector(buttonSelector);
+                    if (!toggleBtn) return;
+                    event.stopPropagation();
+                    this.handleToggle(toggleBtn);
+                })
             })
         })
         // Add click listeners to all collapse toggle buttons
@@ -38,7 +49,7 @@ class IndicatorTable {
             }
         });
     }
-    
+
     initializeState() {
         // Set initial expanded states based on data-expanded attributes
         const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
@@ -53,7 +64,7 @@ class IndicatorTable {
             this.updateToggleIcon(toggleButton, cachedState);
         });
     }
-    
+
     handleToggle(toggleBtn) {
         const section = this.findToggleableSection(toggleBtn);
         if (!section) return;
@@ -68,6 +79,7 @@ class IndicatorTable {
 
     findToggleButton(toggleSection) {
         const parentSection = toggleSection.parentElement
+        if (!parentSection) return null;
         if (parentSection.classList.contains('pillar-section')) {
             return parentSection.querySelector('.indicators-pillar-header-content > button')
         } else if (parentSection.classList.contains('category-section')) {
@@ -75,10 +87,11 @@ class IndicatorTable {
         } else if (parentSection.classList.contains('indicator-item')) {
             return parentSection.querySelector('.indicator-info > button')
         }
+        return null;
     }
-    
+
     findToggleableSection(toggleBtn) {
-        // Find the appropriate collapsible section based on the toggle button's context
+        // Find the appropriate collapsible section for this toggle button
         const pillarSection = toggleBtn.closest('.pillar-section');
         const categorySection = toggleBtn.closest('.category-section');
         const indicatorItem = toggleBtn.closest('.indicator-item');
@@ -89,10 +102,10 @@ class IndicatorTable {
         } else if (pillarSection && toggleBtn.closest('.indicators-pillar-header')) {
             return pillarSection.querySelector('.pillar-content');
         }
-        
+
         return null;
     }
-    
+
     updateSectionVisibility(section, isExpanded) {
         if (isExpanded) {
             section.style.display = '';
@@ -102,8 +115,9 @@ class IndicatorTable {
             section.style.display = 'none';
         }
     }
-    
+
     updateToggleIcon(toggleBtn, isExpanded) {
+        if (!toggleBtn) return;
         const icon = toggleBtn.querySelector('.collapse-icon');
         if (icon) {
             if (isExpanded) {
@@ -113,81 +127,24 @@ class IndicatorTable {
             }
         }
     }
-    
+
     // Utility methods for programmatic control
     expandAll() {
         const allSections = this.container.querySelectorAll('[data-expanded]');
         allSections.forEach(section => {
             section.dataset.expanded = 'true';
             this.updateSectionVisibility(section, true);
-            
-            // Update corresponding toggle button
-            const toggleBtn = this.findToggleButtonForSection(section);
-            if (toggleBtn) {
-                this.updateToggleIcon(toggleBtn, true);
-            }
+            this.updateToggleIcon(this.findToggleButton(section), true);
         });
     }
-    
+
     collapseAll() {
         const allSections = this.container.querySelectorAll('[data-expanded]');
         allSections.forEach(section => {
             section.dataset.expanded = 'false';
             this.updateSectionVisibility(section, false);
-            
-            // Update corresponding toggle button
-            const toggleBtn = this.findToggleButtonForSection(section);
-            if (toggleBtn) {
-                this.updateToggleIcon(toggleBtn, false);
-            }
+            this.updateToggleIcon(this.findToggleButton(section), false);
         });
-    }
-    
-    expandPillar(pillarCode) {
-        const pillarSection = this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);
-        if (pillarSection) {
-            const pillarContent = pillarSection.querySelector('.pillar-content');
-            if (pillarContent) {
-                pillarContent.dataset.expanded = 'true';
-                this.updateSectionVisibility(pillarContent, true);
-                
-                const toggleBtn = pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');
-                if (toggleBtn) {
-                    this.updateToggleIcon(toggleBtn, true);
-                }
-            }
-        }
-    }
-    
-    collapsePillar(pillarCode) {
-        const pillarSection = this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);
-        if (pillarSection) {
-            const pillarContent = pillarSection.querySelector('.pillar-content');
-            if (pillarContent) {
-                pillarContent.dataset.expanded = 'false';
-                this.updateSectionVisibility(pillarContent, false);
-                
-                const toggleBtn = pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');
-                if (toggleBtn) {
-                    this.updateToggleIcon(toggleBtn, false);
-                }
-            }
-        }
-    }
-    
-    findToggleButtonForSection(section) {
-        const parent = section.parentElement;
-        if (!parent) return null;
-        
-        if (section.classList.contains('pillar-content')) {
-            return parent.querySelector('.indicator-table-pillar-header .collapse-toggle-btn');
-        } else if (section.classList.contains('indicator-table-category-content')) {
-            return parent.querySelector('.indicators-category-header .collapse-toggle-btn');
-        } else if (section.classList.contains('indicator-details')) {
-            return parent.querySelector('.indicator-header .collapse-toggle-btn');
-        }
-        
-        return null;
     }
 
     resetView() {

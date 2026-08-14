@@ -1,604 +1,683 @@
-/* Indicator Table Page Styles */
-
-.indicators-page {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0;
-}
-.indicator-table-title-controls-box {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-.indicator-table-title-controls-box h2 {
-  flex: 1 1 0;
-  color: var(--header-font-color);
-  font-family: var(--header-font-family);
-  margin-bottom: 0.5rem;
-  padding: 0 var(--theme-gap);
-}
-
-.indicator-table-container p {
-  font-family: var(--body-font-family);
-  color: var(--low-importance-font-color);
-  padding: 0 var(--theme-gap);
-  margin-top: 0.15em;
-}
-
-.page-description {
-  color: var(--medium-importance-font-color);
-  font-size: 1rem;
-  line-height: 1.5;
-  margin-bottom: 2rem;
-  max-width: 800px;
-  padding: 0 var(--theme-gap);
-}
+/* Indicator Table — /indicators and /2018/indicators
+ *
+ * Class names carrying the indicator-table- prefix are unique to this component
+ * and stand alone. Every other selector is scoped under .indicator-table-container,
+ * because names like .collapse-toggle-btn, .collapse-icon, .view-data-btn and
+ * .error-message are shared with /customize, which ships its own definitions;
+ * unscoped rules in this file used to win the cascade over there.
+ *
+ * Depth is carried by indentation + a pillar-colored left rail + typographic
+ * weight, never by full-row background tints. Each pillar section publishes its
+ * hue once as --pillar-accent and every descendant inherits it. */
 
 .indicator-table-container {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 0.5em;
   width: 100%;
+  padding: 1.25rem;
   background-color: var(--box-background-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 1.25rem;
-  box-sizing: border-box;
 }
 
-/* Pillar Section Styling */
-.pillar-section {
+/* ---------- Title block ---------- */
+
+.indicator-table-title-controls-box {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.indicator-table-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
   min-width: 0;
-  border: none;
-  border-top: 1px solid var(--subtle-line-color);
-  border-radius: 0;
-  overflow: hidden;
-  width: 100%;
-  margin-bottom: 1px;
+}
+
+.indicator-table-container h2 {
+  margin: 0;
+  color: var(--header-text-color);
+  font-family: var(--title-font-family);
+  font-weight: var(--title-weight, 400);
+  letter-spacing: -0.01em;
+}
+
+.indicator-table-stats {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.indicator-table-stat + .indicator-table-stat::before {
+  content: "·";
+  margin: 0 0.45em;
+  color: var(--border-color);
+}
+
+.indicator-table-stat-value {
+  color: var(--medium-importance-font-color);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.indicator-table-control-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.indicator-table-intro {
+  max-width: 70ch;
+  margin: 0.5rem 0 1.5rem 0;
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.indicator-table-tree {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Pillar hue, published once per section ---------- */
+
+/* display/padding are restated because templates/comparison.css ships an
+   unscoped .pillar-section rule that otherwise supplies them here. */
+.indicator-table-container .pillar-section {
+  --pillar-accent: var(--primary-color);
+  display: block;
   box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 0 0 1.5rem 0;
 }
 
-.pillar-section:first-child {
-  border-top: none;
-}
-
-.pillar-section:last-child {
-  border-bottom: none;
+.indicator-table-container .pillar-section:last-child {
   padding-bottom: 0;
 }
 
-.indicators-pillar-header {
-  border-bottom: 1px solid var(--subtle-line-color);
-  padding: 1rem;
-  width: 100%;
-  box-sizing: border-box;
+.indicator-table-container .pillar-section[data-pillar-code="SUS"] {
+  --pillar-accent: var(--sus-accent);
 }
 
-/* Individual pillar colors - matching customizable-sspi patterns */
-.pillar-section[data-pillar-code="SUS"] .indicators-pillar-header {
-  background: color-mix(in srgb, var(--sus-color) 20%, var(--box-background-color));
-  border-color: var(--sus-color);
+.indicator-table-container .pillar-section[data-pillar-code="MS"] {
+  --pillar-accent: var(--ms-accent);
 }
 
-.pillar-section[data-pillar-code="MS"] .indicators-pillar-header {
-  background: color-mix(in srgb, var(--ms-color) 20%, var(--box-background-color));
-  border-color: var(--ms-color);
+.indicator-table-container .pillar-section[data-pillar-code="PG"] {
+  --pillar-accent: var(--pg-accent);
 }
 
-.pillar-section[data-pillar-code="PG"] .indicators-pillar-header {
-  background: color-mix(in srgb, var(--pg-color) 20%, var(--box-background-color));
-  border-color: var(--pg-color);
-}
+/* ---------- Shared row anatomy ---------- */
 
-.indicators-pillar-header-content {
+.indicator-table-container .indicators-pillar-header-content,
+.indicator-table-container .indicators-category-header-content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   width: 100%;
-  justify-content: flex-start;
+  min-width: 0;
 }
 
-.pillar-info {
+.indicator-table-container .pillar-info,
+.indicator-table-container .category-info,
+.indicator-table-container .indicator-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   flex: 1;
+  min-width: 0;
 }
 
-.pillar-name {
-  color: var(--header-font-color);
-  font-family: var(--header-font-family);
-  font-size: 1.25rem;
-  margin: 0;
-  font-weight: 600;
-  flex: 1;
-}
-
-.pillar-code {
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius);
-  font-family: var(--code-font-family);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-/* Pillar code colors */
-.pillar-section[data-pillar-code="SUS"] .pillar-code {
-  background: var(--sus-color);
-}
-
-.pillar-section[data-pillar-code="MS"] .pillar-code {
-  background: var(--ms-color);
-}
-
-.pillar-section[data-pillar-code="PG"] .pillar-code {
-  background: var(--pg-color);
-}
-
-.pillar-content {
-  padding: 0;
-  width: 100%;
-}
-
-.pillar-content[data-expanded="false"] {
-  display: none;
-}
-
-/* Category Section Styling */
-.category-section {
-  /* border-bottom: 1px solid var(--subtle-line-color); */
-  width: 100%;
-}
-
-.category-section:last-child {
-  border-bottom: none;
-}
-
-.indicators-category-header {
-  padding: 0.65rem 1rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Category header colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .indicators-category-header {
-  background: color-mix(in srgb, var(--sus-color) 10%, var(--box-background-color) 90%);
-}
-
-.pillar-section[data-pillar-code="MS"] .indicators-category-header {
-  background: color-mix(in srgb, var(--ms-color) 10%, var(--box-background-color) 90%);
-}
-
-.pillar-section[data-pillar-code="PG"] .indicators-category-header {
-  background: color-mix(in srgb, var(--pg-color) 10%, var(--box-background-color) 90%);
-}
-
-.indicators-category-header-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  justify-content: flex-start;
-}
-
-.category-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.category-name {
-  color: var(--header-font-color);
-  font-family: var(--header-font-family);
-  font-size: 1.1rem;
-  margin: 0;
-  font-weight: 500;
-  flex: 1;
-}
-
-.category-code {
-  color: white;
-  padding: 0.2rem 0.4rem;
-  border-radius: var(--border-radius);
-  font-family: var(--code-font-family);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Category code colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .category-code {
-  background: var(--sus-color);
-}
-
-.pillar-section[data-pillar-code="MS"] .category-code {
-  background: var(--ms-color);
-}
-
-.pillar-section[data-pillar-code="PG"] .category-code {
-  background: var(--pg-color);
-}
-
-.indicator-table-category-content {
+.indicator-table-container .row-text {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  padding: 0.25em;
-  box-sizing: border-box;
-  margin-bottom: 0.25em;
+  gap: 0.1rem;
+  min-width: 0;
 }
 
-.category-content[data-expanded="false"] {
-  display: none;
-}
-
-/* Indicators List Styling */
-.indicator-table-indicators-list {
+.indicator-table-container .row-title-line {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  width: 100%;
-  box-sizing: border-box;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-.no-indicators {
-  padding: 1rem;
-  text-align: center;
+.indicator-table-container .row-subtitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 80ch;
+  margin: 0;
   color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 0.65rem;
+  line-height: 1.35;
+}
+
+/* ---------- Pillar row ---------- */
+
+.indicator-table-container .indicators-pillar-header {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.7rem 0.75rem 0.7rem calc(0.9rem - 4px);
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+  border-left: 4px solid var(--pillar-accent);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.indicator-table-container .indicators-pillar-header:hover {
+  background: color-mix(in srgb, var(--pillar-accent) 7%, transparent);
+}
+
+/* flex/min-width are restated because customizable-sspi.css ships an unscoped
+   .pillar-name rule with flex:1, which would stretch the name and push the code
+   chip out to a right rail. */
+.indicator-table-container .pillar-name {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--header-text-color);
+  font-family: var(--header-font-family);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.indicator-table-container .pillar-content {
+  width: 100%;
+  padding: 0;
+}
+
+.indicator-table-container .pillar-content[data-expanded="false"] {
+  display: none;
+}
+
+/* ---------- Category row ---------- */
+
+.indicator-table-container .category-section {
+  width: 100%;
+}
+
+.indicator-table-container .indicators-category-header {
+  box-sizing: border-box;
+  margin: 0.9rem 0 0 1.75rem;
+  padding: 0.35rem 0.75rem 0.35rem calc(0.75rem - 2px);
+  background: transparent;
+  border-left: 2px solid color-mix(in srgb, var(--pillar-accent) 45%, transparent);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.indicator-table-container .indicators-category-header:hover {
+  border-left-color: var(--pillar-accent);
+}
+
+.indicator-table-container .category-name {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--medium-importance-font-color);
+  font-family: var(--header-font-family);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.indicator-table-container .indicator-table-category-content {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  padding-top: 0.45rem;
+}
+
+.indicator-table-container .indicator-table-category-content[data-expanded="false"] {
+  display: none;
+}
+
+.indicator-table-container .indicator-table-indicators-list {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  gap: 0.3rem;
+}
+
+.indicator-table-container .no-indicators {
+  margin-left: 2.5rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--low-importance-font-color);
+  font-size: 0.75rem;
   font-style: italic;
 }
 
-/* Indicator Item Styling */
-.indicator-item {
-  background: var(--input-background-color);
-  border: 1px solid var(--subtle-line-color);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  width: 100%;
-}
+/* ---------- Indicator row ---------- */
 
-.indicators-indicator-header {
-  padding: 0.5rem 0.5em;
-  cursor: pointer;
-  width: 100%;
+.indicator-table-container .indicator-item {
   box-sizing: border-box;
-  font-family: var(--body-font-family);
+  margin-left: 2.5rem;
+  overflow: hidden;
+  background: var(--row-surface);
+  border: 1px solid var(--border-color);
+  border-left: 2px solid color-mix(in srgb, var(--pillar-accent) 55%, transparent);
+  border-radius: var(--border-radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Indicator header colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .indicators-indicator-header {
-  background: color-mix(in srgb, var(--sus-color) 8%, var(--input-background-color) 92%);
+.indicator-table-container .indicator-item:hover {
+  border-color: var(--pillar-accent);
+  box-shadow: var(--shadow-sm);
 }
 
-.pillar-section[data-pillar-code="SUS"] .indicators-indicator-header:hover {
-  background: color-mix(in srgb, var(--sus-color) 12%, var(--input-background-color) 88%);
-}
-
-.pillar-section[data-pillar-code="MS"] .indicators-indicator-header {
-  background: color-mix(in srgb, var(--ms-color) 8%, var(--input-background-color) 92%);
-}
-
-.pillar-section[data-pillar-code="MS"] .indicators-indicator-header:hover {
-  background: color-mix(in srgb, var(--ms-color) 12%, var(--input-background-color) 88%);
-}
-
-.pillar-section[data-pillar-code="PG"] .indicators-indicator-header {
-  background: color-mix(in srgb, var(--pg-color) 8%, var(--input-background-color) 92%);
-}
-
-.pillar-section[data-pillar-code="PG"] .indicators-indicator-header:hover {
-  background: color-mix(in srgb, var(--pg-color) 12%, var(--input-background-color) 88%);
-}
-
-.indicator-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.indicator-table-container .indicators-indicator-header {
+  box-sizing: border-box;
   width: 100%;
-  justify-content: flex-start;
-}
-
-.indicator-main-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.indicator-name {
-  color: var(--font-color);
-  font-family: var(--body-font-family);
-  font-size: 1rem;
-  margin: 0;
-  font-weight: 500;
-  flex: 1;
-}
-
-.indicator-code {
-  color: white;
-  padding: 0.2rem 0.4rem;
-  border-radius: var(--border-radius);
-  font-family: var(--code-font-family);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-/* Indicator code colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .indicator-code {
-  background: var(--sus-color);
-}
-
-.pillar-section[data-pillar-code="MS"] .indicator-code {
-  background: var(--ms-color);
-}
-
-.pillar-section[data-pillar-code="PG"] .indicator-code {
-  background: var(--pg-color);
-}
-
-/* Indicator Details (Collapsible) */
-.indicator-details {
-  border-top: 1px solid var(--subtle-line-color);
-  background: var(--box-background-color);
-  padding: 1rem;
-}
-
-.indicator-details[data-expanded="false"] {
-  display: none;
-}
-
-.indicator-description {
-  margin-bottom: 1rem;
-}
-
-.indicator-description:last-child {
-  margin-bottom: 0;
-}
-
-.indicator-description p {
-  color: var(--medium-importance-font-color);
-  line-height: 1.5;
-  margin: 0;
-}
-
-.indicator-description pre {
-  margin: 0;
-  border-radius: 5px;
-  background-color: var(--pre-background-color);
-  padding: 0.5em var(--theme-gap);
-  overflow-x: scroll;
-  font-size: 0.8rem;
-}
-
-/* Datasets Section */
-.datasets-section {
-  margin-bottom: 1rem;
-}
-
-.datasets-section h6, .indicator-description h6 {
-  color: var(--header-font-color);
-  font-family: var(--header-font-family);
-  font-size: 0.9rem;
-  margin: 0 0 0.5rem 0;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.datasets-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.dataset-item {
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 0.75rem;
-  border: 1px solid var(--subtle-line-color);
-  border-radius: var(--border-radius);
-}
-
-/* Dataset item colors based on parent pillar */
-.pillar-section[data-pillar-code="SUS"] .dataset-item {
-  background: color-mix(in srgb, var(--sus-color) 8%, var(--box-background-color) 92%);
-}
-
-.pillar-section[data-pillar-code="MS"] .dataset-item {
-  background: color-mix(in srgb, var(--ms-color) 8%, var(--box-background-color) 92%);
-}
-
-.pillar-section[data-pillar-code="PG"] .dataset-item {
-  background: color-mix(in srgb, var(--pg-color) 8%, var(--box-background-color) 92%);
-}
-
-.dataset-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1;
-  width: 100%;
-}
-
-.view-data-btn {
-  background-color: var(--input-background-color);
-  color: var(--input-text-color);
-  border: 1px solid var(--subtle-line-color);
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--border-radius);
+  padding: 0.4rem 0.6rem;
   cursor: pointer;
-  font-family: var(--header-font-family);
-  font-size: 0.8rem;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
-.view-data-btn:hover {
-  background-color: color-mix(in srgb, var(--input-background-color) 80%, var(--link-color) 20%);
-  color: var(--link-color);
+.indicator-table-container .indicators-indicator-header:hover {
+  background: var(--row-surface-hover);
 }
 
-.dataset-header-row {
+.indicator-table-container .indicator-main-info {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  align-items: center;
-}
-
-.dataset-name {
-  flex: 1 1 auto;
-  color: var(--font-color);
-  font-weight: 500;
-  font-size: 0.85rem;
-  font-family: var(--header-font-family);
-}
-
-.dataset-code {
-  flex: 0 0 auto;
-  color: var(--medium-importance-font-color);
-  font-family: var(--code-font-family);
-  font-size: 0.8rem;
-  line-height: 1.2;
-  max-width: 300px;
-  overflow-wrap: break-word;
-}
-
-.dataset-description {
-  color: var(--low-importance-font-color);
-  font-family: var(--body-font-family);
-  line-height: 1.2;
-  font-size: 0.9rem;
-}
-
-.dataset-source {
-  margin-top: 0.5em;
-  width: 100%;
-}
-
-.source-org {
-  color: var(--body-font-color);
-  font-family: var(--code-font-family);
-  font-size: 0.8rem;
-  margin-right: 0.25em;
-  line-height: 1;
-}
-
-.source-label {
-  color: var(--low-importance-font-color);
-  font-size: 0.8rem;
-  margin-right: 0.25em;
-  line-height: 1;
-}
-
-.dataset-source-link-container {
-  margin-top: 0.25em;
-  display: flex;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: 0.25em;
-  width: 100%;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-.dataset-source-link-container a {
-  font-size: 0.7rem;
-  padding: 0.3rem 0.6rem;
-}
-
-/* Collapse Toggle Button Styling (reusing from customizable-sspi-enhanced.css) */
-.collapse-toggle-btn {
-  background: none;
-  border: none;
-  padding: 0;
+.indicator-table-container .indicator-name {
   margin: 0;
-  cursor: pointer;
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--text-color);
+  font-family: var(--header-font-family);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* ---------- Code chips ---------- */
+
+.indicator-table-container .pillar-code,
+.indicator-table-container .category-code,
+.indicator-table-container .indicator-code {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.35rem;
+  color: var(--pillar-accent);
+  background: color-mix(in srgb, var(--pillar-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pillar-accent) 35%, transparent);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--code-font-family);
+  font-size: 0.62rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* ---------- The one per-row affordance ---------- */
+
+.indicator-table-container .row-data-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-left: auto;
+  color: var(--pillar-accent);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.indicator-table-container .indicators-pillar-header:hover .row-data-link,
+.indicator-table-container .indicators-pillar-header:focus-within .row-data-link,
+.indicator-table-container .indicators-category-header:hover .row-data-link,
+.indicator-table-container .indicators-category-header:focus-within .row-data-link,
+.indicator-table-container .indicator-item:hover .row-data-link,
+.indicator-table-container .indicator-item:focus-within .row-data-link,
+.indicator-table-container .row-data-link:focus-visible {
+  opacity: 1;
+}
+
+.indicator-table-container .row-data-link:hover {
+  color: var(--pillar-accent);
+  background: color-mix(in srgb, var(--pillar-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--pillar-accent) 45%, transparent);
+}
+
+.indicator-table-container .row-data-link-icon {
+  width: 0.72rem;
+  height: 0.72rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Collapse toggles (scoped: /customize owns its own copies) ---------- */
+
+.indicator-table-container .collapse-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.5em;
-  height: 1.5em;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
+  width: 1.4em;
+  height: 1.4em;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
-.collapse-toggle-btn:hover {
+.indicator-table-container .collapse-toggle-btn:hover {
   background-color: color-mix(in srgb, var(--low-importance-font-color) 20%, transparent);
 }
 
-.collapse-icon {
-  font-size: 0.8em;
-  color: var(--medium-importance-font-color);
-  transition: transform 0.2s ease;
+/* Rotation is set inline by indicator-table.js — do not animate it from CSS. */
+.indicator-table-container .collapse-icon {
+  color: var(--low-importance-font-color);
+  font-size: 0.65em;
+  line-height: 1;
   user-select: none;
   pointer-events: none;
+  transition: transform 0.2s ease;
 }
 
-/* Responsive Design */
+/* ---------- Indicator details ---------- */
+
+.indicator-table-container .indicator-details {
+  padding: 0.85rem 0.9rem;
+  background: var(--detail-well);
+  border-top: 1px solid var(--border-color);
+}
+
+.indicator-table-container .indicator-details[data-expanded="false"] {
+  display: none;
+}
+
+.indicator-table-container .indicator-description {
+  margin-bottom: 0.9rem;
+}
+
+.indicator-table-container .indicator-description:last-child {
+  margin-bottom: 0;
+}
+
+.indicator-table-container .datasets-section h6,
+.indicator-table-container .indicator-description h6 {
+  margin: 0 0 0.35rem 0;
+  color: var(--low-importance-font-color);
+  font-family: var(--header-font-family);
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.indicator-table-container .indicator-description p {
+  margin: 0;
+  max-width: 80ch;
+  color: var(--body-text-color);
+  font-family: var(--body-font-family);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.indicator-table-container .indicator-description-explainer-box {
+  margin-top: 0.6rem;
+  color: var(--low-importance-font-color);
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.indicator-table-container .indicator-score-function {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  overflow-x: auto;
+  color: var(--body-text-color);
+  background-color: var(--row-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--code-font-family);
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+/* ---------- Dataset cards ---------- */
+
+.indicator-table-container .datasets-section {
+  margin-bottom: 0.9rem;
+}
+
+.indicator-table-container .datasets-section:last-child {
+  margin-bottom: 0;
+}
+
+.indicator-table-container .datasets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.indicator-table-container .dataset-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.55rem 0.65rem;
+  background: var(--row-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  transition: border-color 0.15s ease;
+}
+
+.indicator-table-container .dataset-item:hover {
+  border-color: color-mix(in srgb, var(--pillar-accent) 45%, var(--border-color));
+}
+
+/* align-items is restated because customizable-sspi.css ships an unscoped
+   .dataset-info rule that centers its children. */
+.indicator-table-container .dataset-info {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.15rem;
+  flex: 1;
+  width: 100%;
+}
+
+.indicator-table-container .dataset-header-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.indicator-table-container .dataset-header-row:hover .dataset-name {
+  color: var(--pillar-accent);
+}
+
+.indicator-table-container .dataset-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--text-color);
+  font-family: var(--header-font-family);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  transition: color 0.15s ease;
+}
+
+.indicator-table-container .dataset-code {
+  flex: 0 0 auto;
+  max-width: 300px;
+  color: var(--low-importance-font-color);
+  font-family: var(--code-font-family);
+  font-size: 0.62rem;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  overflow-wrap: break-word;
+}
+
+.indicator-table-container .dataset-description {
+  color: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.indicator-table-container .dataset-source {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.indicator-table-container .dataset-source > summary {
+  display: list-item;
+  width: fit-content;
+  padding: 0.15rem 0.3rem;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.indicator-table-container .dataset-source > summary:hover {
+  background: color-mix(in srgb, var(--green-accent) 12%, transparent);
+}
+
+.indicator-table-container .dataset-source > summary::marker {
+  color: var(--low-importance-font-color);
+  font-size: 0.6rem;
+}
+
+.indicator-table-container .source-label {
+  margin-right: 0.25em;
+  color: var(--low-importance-font-color);
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.indicator-table-container .source-org {
+  color: var(--body-text-color);
+  font-family: var(--code-font-family);
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.indicator-table-container .dataset-source-link-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.indicator-table-container .dataset-source-link-container .view-data-btn {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.6rem;
+}
+
+/* ---------- Buttons (scoped: /customize owns its own .view-data-btn) ---------- */
+
+.indicator-table-container .view-data-btn {
+  padding: 0.3rem 0.6rem;
+  color: var(--text-color);
+  background-color: var(--row-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-family: var(--body-font-family);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.indicator-table-container .view-data-btn:hover {
+  color: var(--text-color);
+  background-color: color-mix(in srgb, var(--green-accent) 14%, var(--row-surface));
+  border-color: color-mix(in srgb, var(--green-accent) 45%, var(--border-color));
+}
+
+.indicator-table-container .error-message {
+  padding: 1rem;
+  color: var(--error-color);
+  background: color-mix(in srgb, var(--error-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error-color) 35%, transparent);
+  border-radius: var(--border-radius);
+}
+
+.indicator-table-container .error-message p {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+/* ---------- Responsive ---------- */
+
 @media (max-width: 768px) {
-  .indicators-page {
-    padding: 1rem;
+  .indicator-table-container {
+    padding: 0.9rem;
   }
 
-  .indicators-pillar-header {
-    padding: 0.75rem;
+  .indicator-table-container .indicators-category-header {
+    margin-left: 0.9rem;
   }
 
-  .indicators-category-header {
-    padding: 0.5rem 0.75rem;
+  .indicator-table-container .indicator-item,
+  .indicator-table-container .no-indicators {
+    margin-left: 1.25rem;
   }
 
-  .indicators-list {
-    padding: 0.75rem;
-    gap: 0.5rem;
-  }
-
-  .indicators-indicator-header {
-    padding: 0.5rem;
-  }
-
-  .indicator-details {
-    padding: 0.75rem;
-  }
-
-  .pillar-info,
-  .category-info,
-  .indicator-main-info {
-    flex-wrap: wrap;
-  }
-
-  .dataset-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+  /* No hover on touch: the affordance has to stay visible. */
+  .indicator-table-container .row-data-link {
+    opacity: 1;
   }
 }
 
 @media (max-width: 480px) {
-  .pillar-name {
-    font-size: 1.1rem;
+  .indicator-table-container .pillar-name {
+    font-size: 1.05rem;
   }
 
-  .category-name {
-    font-size: 1rem;
+  .indicator-table-container .indicators-category-header {
+    margin-left: 0.5rem;
   }
 
-  .indicator-name {
-    font-size: 0.9rem;
+  .indicator-table-container .indicator-item,
+  .indicator-table-container .no-indicators {
+    margin-left: 0.75rem;
   }
-
-  .dataset-item {
-    padding: 0.5rem;
-  }
-}
-
-.indicator-description .indicator-description-explainer-box {
-  color: var(--low-importance-font-color);
-  font-size: 0.75em;
-  margin-top: 0.75em;
-  line-height: 1.45;
 }

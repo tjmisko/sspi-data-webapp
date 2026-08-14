@@ -1424,6 +1424,7 @@ def build_indicators_data():
                 "pillar_code": pillar_code,
                 "pillar_name": pillar_item.get("ItemName", pillar_code),
                 "pillar_description": pillar_item.get("Description", ""),
+                "pillar_short_description": pillar_item.get("ShortDescription", ""),
                 "categories": [],
             }
             category_codes = pillar_item.get("CategoryCodes", [])
@@ -1435,6 +1436,9 @@ def build_indicators_data():
                     "category_code": category_code,
                     "category_name": category_item.get("ItemName", category_code),
                     "category_description": category_item.get("Description", ""),
+                    "category_short_description": category_item.get(
+                        "ShortDescription", ""
+                    ),
                     "indicators": [],
                 }
                 indicator_codes = category_item.get("IndicatorCodes", [])
@@ -1642,6 +1646,7 @@ def build_indicators_data_static():
                 "pillar_code": pillar_code,
                 "pillar_name": pillar_item.get("ItemName", pillar_code),
                 "pillar_description": pillar_item.get("Description", ""),
+                "pillar_short_description": pillar_item.get("ShortDescription", ""),
                 "categories": [],
             }
             category_codes = pillar_item.get("CategoryCodes", [])
@@ -1654,6 +1659,9 @@ def build_indicators_data_static():
                     "category_code": category_code,
                     "category_name": category_item.get("ItemName", category_code),
                     "category_description": category_item.get("Description", ""),
+                    "category_short_description": category_item.get(
+                        "ShortDescription", ""
+                    ),
                     "indicators": [],
                 }
                 indicator_codes = category_item.get("IndicatorCodes", [])
