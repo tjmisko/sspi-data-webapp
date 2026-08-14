@@ -95,6 +95,25 @@
   gap: 0.85rem;
 }
 
+/* Three pillar columns on wide screens, like the customizer's pillars grid;
+   below the tablet break the tree collapses back to the single column. */
+@media (min-width: 1025px) {
+  .indicator-table-container {
+    max-width: none;
+  }
+
+  .indicator-table-tree {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .indicator-table-container .pillar-section {
+    min-width: 0;
+  }
+}
+
 /* ---------- Pillar hue, published once per section ---------- */
 
 /* display/padding are restated because templates/comparison.css ships an
