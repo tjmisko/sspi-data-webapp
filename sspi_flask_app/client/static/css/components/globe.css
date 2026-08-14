@@ -240,17 +240,18 @@ div:has(> .globegl-hover) {
 
 /* ---------------------------------------------------------------------------
    Globe layout
-   The scene runs the full width of the container and the chart options panel
-   floats above it on the right, so the globe passes behind the settings rather
-   than sharing a row with them. Controls that must stay clickable (tabs, year
-   slider) reserve the sidebar column with --globe-sidebar-width.
+   The scene is a full-bleed layer covering the whole container, and everything
+   else floats over it: frosted bars at the top and bottom and the chart options
+   panel on the right. The globe therefore runs to all four edges and passes
+   behind the chrome instead of sharing rows and columns with it. JS offsets the
+   scene so the globe centres on the space the chrome leaves free.
    --------------------------------------------------------------------------- */
 
 .globe-visualization-container {
   --globe-sidebar-width: 0px;  /* sidebar is an overlay drawer until desktop */
+  --globe-chrome-background: color-mix(in srgb, var(--box-background-color) 72%, transparent);
+  --globe-chrome-blur: blur(10px);
   position: relative;
-  display: flex;
-  flex-direction: column;
   color: var(--header-text-color);
   width: 100%;
   height: clamp(520px, 80vh, 900px);
@@ -258,34 +259,49 @@ div:has(> .globegl-hover) {
   overflow: hidden;  /* Clip the scene to the card and hide the closed drawer */
 }
 
-/* The scene layer takes every pixel the controls do not claim */
+/* Sized and offset by JS: larger than the container, so it covers every edge
+   while staying centred on the visible rectangle */
 .globe-scene-layer {
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
   z-index: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
 }
 
 .globe-scene-layer canvas {
   display: block;
 }
 
+/* Frosted bars floating over the scene at the top and bottom edges */
+.globe-tab-bar,
+.globe-slider-row {
+  position: absolute;
+  left: 0;
+  right: var(--globe-sidebar-width);
+  z-index: 2;
+  box-sizing: border-box;
+  background: var(--globe-chrome-background);
+  backdrop-filter: var(--globe-chrome-blur);
+  -webkit-backdrop-filter: var(--globe-chrome-blur);
+}
+
 .globe-tab-bar {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  width: 100%;
-  padding-right: var(--globe-sidebar-width);
+  top: 0;
   display: flex;
   align-items: center;
-  box-sizing: border-box;
+  border-bottom: 2px solid color-mix(in srgb, var(--green-accent) 55%, black);
+}
+
+.globe-slider-row {
+  bottom: 0;
+  border-top: 1px solid color-mix(in srgb, var(--subtle-line-color) 60%, transparent);
 }
 
 .globe-tab-bar button:not(.globe-hamburger-menu) {
   padding: 1em 0.5em;
   flex: 1 1 0;
-  background-color: var(--box-background-color);
+  background-color: transparent;
   border: none;
   color: var(--header-text-color);
   font-size: 0.7em;
@@ -307,7 +323,7 @@ div:has(> .globegl-hover) {
   height: 3em;
   padding: 0.5em;
   margin-right: 1em;
-  background-color: var(--box-background-color);
+  background-color: transparent;
   border: none;
   color: var(--header-text-color);
   display: flex;
@@ -346,9 +362,9 @@ div:has(> .globegl-hover) {
    --------------------------------------------------------------------------- */
 
 .globe-visualization-container .chart-options {
-  background: color-mix(in srgb, var(--box-background-color) 80%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--globe-chrome-background);
+  backdrop-filter: var(--globe-chrome-blur);
+  -webkit-backdrop-filter: var(--globe-chrome-blur);
   border-left: 1px solid color-mix(in srgb, var(--subtle-line-color) 60%, transparent);
   pointer-events: auto;
 }
@@ -428,19 +444,15 @@ div:has(> .globegl-hover) {
   margin-top: 1em;
 }
 
-/* Inside the globe the slider is the bottom row of a fixed-height card, and
-   its row reserves the sidebar column so the play button stays reachable */
-.globe-slider-row {
-  position: relative;
-  z-index: 1;
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  padding-right: var(--globe-sidebar-width);
-}
-
+/* The slider bar is the frosted surface itself, so its inner box drops the
+   border and background it needs when it stands alone elsewhere */
 .globe-slider-row .globe-year-slider-container {
   width: auto;
-  margin: 0.75em;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.75em 1em;
 }
 
 .year-slider-controls {

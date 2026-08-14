@@ -3412,9 +3412,8 @@ showLoading(){this.title.textContent='Loading...';}
 showError(message){this.title.textContent='Error';this.chart.data.datasets=[];this.chart.update();console.error(message);}
 setTheme(theme){const root=document.documentElement;const bg=getComputedStyle(root).getPropertyValue('--header-color').trim();this.headerBackgroundColor=bg;const greenAccent=getComputedStyle(root)?.getPropertyValue('--green-accent')?.trim()||'#8BA342';this.greenAccent=greenAccent;if(theme!=='light'){this.theme='dark';this.tickColor='#bbb';this.titleColor='#ccc';}else{this.theme='light';this.tickColor='#444';this.titleColor='#444';this.headerBackgroundColor=this.headerBackgroundColor||'#f0f0f0';}
 if(this.chart){this.updateChart();}}}
-const GLOBE_DEFAULT_ALTITUDE=1.5
-const GLOBE_EXPLODED_ALTITUDE=3
 const GLOBE_FIT_FRACTION=0.92
+const GLOBE_EXPLODED_FIT_FRACTION=GLOBE_FIT_FRACTION/2
 const GLOBE_FALLBACK_SCENE_SIZE=600
 const GLOBE_ALTITUDE_EPSILON=0.01
 class SSPIGlobeChart{constructor(parentElement){this.parentElement=parentElement
@@ -3424,38 +3423,41 @@ this.playing=window.observableStorage.getItem("globePlaying")||false
 this.playInterval=null
 this.globeWidth=GLOBE_FALLBACK_SCENE_SIZE
 this.globeHeight=GLOBE_FALLBACK_SCENE_SIZE
+this.fitWidth=GLOBE_FALLBACK_SCENE_SIZE
+this.fitHeight=GLOBE_FALLBACK_SCENE_SIZE
 this.getComputedStyles()
 this.buildGlobeContainer()
-this.buildGlobe()
 this.buildChartOptions()
+this.buildGlobe()
 this.hydrateGlobe().then(()=>this.restyleGlobe())
 this.setTheme(window.observableStorage.getItem("theme"))
 this.rigResizeListener()
 this.rigPinChangeListener()
 this.rigUnloadListener()}
-computeGlobeDimensions(){const sceneRect=this.globeSceneContainer.getBoundingClientRect()
-this.globeWidth=Math.round(sceneRect.width)||this.globeWidth
-this.globeHeight=Math.round(sceneRect.height)||this.globeHeight}
-minimumFittingAltitude(){const camera=this.globe.camera()
-const verticalFov=camera?.fov||50
-const halfVerticalSpan=Math.tan(verticalFov*Math.PI/360)
-const aspectRatio=this.globeWidth/this.globeHeight
-const halfVisibleSpan=halfVerticalSpan*Math.min(1,aspectRatio)*GLOBE_FIT_FRACTION
-return 1/Math.sin(Math.atan(halfVisibleSpan))-1}
-framingAltitudeForScene(){const modeAltitude=this.altitudeCoding?GLOBE_EXPLODED_ALTITUDE:GLOBE_DEFAULT_ALTITUDE
-return Math.max(modeAltitude,this.minimumFittingAltitude())}
+computeGlobeDimensions(){const containerRect=this.root.getBoundingClientRect()
+const containerWidth=Math.round(containerRect.width)
+const containerHeight=Math.round(containerRect.height)
+if(!containerWidth||!containerHeight){return}
+const sidebarWidth=Math.round(this.chartOptionsWrapper.getBoundingClientRect().width)
+this.globeWidth=containerWidth+sidebarWidth
+this.globeHeight=containerHeight
+this.fitWidth=Math.max(1,containerWidth-sidebarWidth)
+this.fitHeight=containerHeight
+this.globeSceneContainer.style.left=`${-sidebarWidth}px`;}
+cameraVerticalFov(){return this.globe.camera()?.fov||50}
+sphereSpanAtAltitude(altitude){return Math.tan(Math.asin(1/(1+altitude)))/Math.tan(this.cameraVerticalFov()*Math.PI/360)}
+altitudeForSphereFraction(fraction){const sphereDiameter=fraction*Math.min(this.fitWidth,this.fitHeight)
+const sphereSpan=Math.tan(this.cameraVerticalFov()*Math.PI/360)*sphereDiameter/this.globeHeight
+return 1/Math.sin(Math.atan(sphereSpan))-1}
+framingAltitudeForScene(){return this.altitudeForSphereFraction(this.altitudeCoding?GLOBE_EXPLODED_FIT_FRACTION:GLOBE_FIT_FRACTION)}
 setFramingAltitude(pointOfView={},duration=0){this.framingAltitude=this.framingAltitudeForScene()
 this.framingSettlesAt=performance.now()+duration
 this.globe.pointOfView({...pointOfView,altitude:this.framingAltitude},duration)}
 framingTransitionRemaining(){return Math.max(0,this.framingSettlesAt-performance.now())}
 cameraIsFramed(){if(this.framingTransitionRemaining()>0){return true}
 return Math.abs(this.globe.pointOfView().altitude-this.framingAltitude)<=GLOBE_ALTITUDE_EPSILON}
-refitFramingAltitude(){if(this.cameraIsFramed()){this.setFramingAltitude({},this.framingTransitionRemaining())
-return}
-const currentAltitude=this.globe.pointOfView().altitude
-const minimumAltitude=this.minimumFittingAltitude()
-if(currentAltitude<GLOBE_DEFAULT_ALTITUDE||currentAltitude>=minimumAltitude){return}
-this.globe.pointOfView({altitude:minimumAltitude},0)}
+refitFramingAltitude(){if(!this.cameraIsFramed()){return}
+this.setFramingAltitude({},this.framingTransitionRemaining())}
 getComputedStyles(){this.styles={}
 this.styles.greenAccent=window.getComputedStyle(document.documentElement).getPropertyValue("--green-accent")
 this.styles.pageBackgroundColor=window.getComputedStyle(document.documentElement).getPropertyValue("--page-background")
@@ -3475,7 +3477,8 @@ this.handleResize()})}
 if(typeof ResizeObserver==='undefined'){window.addEventListener('resize',scheduleResize)
 return}
 this.resizeObserver=new ResizeObserver(scheduleResize)
-this.resizeObserver.observe(this.globeSceneContainer)}
+this.resizeObserver.observe(this.root)
+this.resizeObserver.observe(this.chartOptionsWrapper)}
 buildGlobeContainer(){this.root=document.createElement("div");this.root.classList.add("globe-visualization-container");this.parentElement.appendChild(this.root)}
 buildTabBar(){this.tabBar=document.createElement("div");this.tabBar.classList.add("globe-tab-bar");this.tabBar.innerHTML=`<button data-item-code="SSPI"data-active-tab=true>SSPI</button><button data-item-code="SUS"data-active-tab=false>Sustainability</button><button data-item-code="MS"data-active-tab=false>Market Structure</button><button data-item-code="PG"data-active-tab=false>Public Goods</button>`;for(var i=0;i<this.tabBar.children.length;i++){this.tabBar.children[i].addEventListener('click',(el)=>{const oldTab=this.tabBar.querySelector('[data-item-code="'+this.tabBarState+'"]')
 oldTab.dataset.activeTab=false;this.tabBarState=el.target.dataset.itemCode
@@ -3727,7 +3730,7 @@ if(this.globe.controls().autoRotate){this.globe.controls().autoRotate=false;this
 window.observableStorage.setItem("globeRotation",false);}
 const[minLng,minLat,maxLng,maxLat]=bbox;let centerLng=(minLng+maxLng)/2;let centerLat=(minLat+maxLat)/2;if(minLng>maxLng){centerLng=((minLng+maxLng+360)/2)%360;if(centerLng>180)centerLng-=360;}
 let lngSpan=maxLng-minLng;if(minLng>maxLng){lngSpan=(360-minLng)+maxLng;}
-const latSpan=maxLat-minLat;const avgLat=Math.abs(centerLat);const lngSpanAdjusted=lngSpan*Math.cos(avgLat*Math.PI/180);const maxSpan=Math.max(latSpan,lngSpanAdjusted);const baseAltitude=(maxSpan/40+1.5)/2;const altitude=baseAltitude*paddingFactor;const finalAltitude=Math.max(0.8,Math.min(altitude,4));this.globe.pointOfView({lat:centerLat,lng:centerLng,altitude:finalAltitude},duration);console.log(`Zooming to bbox[${minLng},${minLat},${maxLng},${maxLat}]`);console.log(`Center:(${centerLat.toFixed(2)}°,${centerLng.toFixed(2)}°),Altitude:${finalAltitude.toFixed(2)}`);}
+const latSpan=maxLat-minLat;const avgLat=Math.abs(centerLat);const lngSpanAdjusted=lngSpan*Math.cos(avgLat*Math.PI/180);const maxSpan=Math.max(latSpan,lngSpanAdjusted);const baseAltitude=(maxSpan/40+1.5)/2;const altitude=baseAltitude*paddingFactor;const framedAltitude=Math.max(0.8,Math.min(altitude,4));const finalAltitude=this.altitudeForSphereFraction(this.sphereSpanAtAltitude(framedAltitude));this.globe.pointOfView({lat:centerLat,lng:centerLng,altitude:finalAltitude},duration);console.log(`Zooming to bbox[${minLng},${minLat},${maxLng},${maxLat}]`);console.log(`Center:(${centerLat.toFixed(2)}°,${centerLng.toFixed(2)}°),Altitude:${finalAltitude.toFixed(2)}`);}
 zoomToCountry(countryCode,duration=1000){const feature=this.geojson.features.find(f=>f.properties.CCode===countryCode);if(!feature){console.error(`Country with code"${countryCode}"not found`);return;}
 if(!feature.bbox){console.error(`Country"${countryCode}"does not have a bounding box`);return;}
 this.zoomToBoundingBox(feature.bbox,duration);}}

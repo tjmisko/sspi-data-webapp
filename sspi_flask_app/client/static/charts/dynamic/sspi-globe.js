@@ -1,6 +1,7 @@
-const GLOBE_DEFAULT_ALTITUDE = 1.5 // camera altitude used when the scene is wide enough
-const GLOBE_EXPLODED_ALTITUDE = 3 // pulled further back so raised polygons stay in frame
-const GLOBE_FIT_FRACTION = 0.92 // share of the shortest scene axis the globe may span
+const GLOBE_FIT_FRACTION = 0.92 // share of the shortest fitted axis the globe spans
+// Exploded polygons rise by up to one globe radius, doubling the silhouette, so
+// the sphere itself gets half the room to keep the raised caps in frame
+const GLOBE_EXPLODED_FIT_FRACTION = GLOBE_FIT_FRACTION / 2
 const GLOBE_FALLBACK_SCENE_SIZE = 600 // used only when the scene has not been laid out yet
 const GLOBE_ALTITUDE_EPSILON = 0.01 // tolerance for "the camera is still where we put it"
 
@@ -23,10 +24,12 @@ class SSPIGlobeChart {
         this.playInterval = null // interval reference for timeline playback
         this.globeWidth = GLOBE_FALLBACK_SCENE_SIZE
         this.globeHeight = GLOBE_FALLBACK_SCENE_SIZE
+        this.fitWidth = GLOBE_FALLBACK_SCENE_SIZE
+        this.fitHeight = GLOBE_FALLBACK_SCENE_SIZE
         this.getComputedStyles()
         this.buildGlobeContainer()
-        this.buildGlobe()
         this.buildChartOptions()
+        this.buildGlobe()
         this.hydrateGlobe().then(() => this.restyleGlobe())
         this.setTheme(window.observableStorage.getItem("theme"))
         this.rigResizeListener()
@@ -34,31 +37,55 @@ class SSPIGlobeChart {
         this.rigUnloadListener()
     }
 
+    /**
+     * Size the scene to cover the whole container and centre it on the space the
+     * globe actually gets. The top and bottom bars are translucent, so the globe
+     * runs under them to the container's edges and only the options panel is
+     * subtracted; the canvas is grown past the container on the opposite side by
+     * the sidebar width, which puts the canvas centre — where the globe is drawn
+     * — in the middle of the space beside the panel.
+     */
     computeGlobeDimensions() {
-        // The scene fills its layer edge to edge; the layer is sized entirely by CSS
-        const sceneRect = this.globeSceneContainer.getBoundingClientRect()
-        this.globeWidth = Math.round(sceneRect.width) || this.globeWidth
-        this.globeHeight = Math.round(sceneRect.height) || this.globeHeight
+        const containerRect = this.root.getBoundingClientRect()
+        const containerWidth = Math.round(containerRect.width)
+        const containerHeight = Math.round(containerRect.height)
+        if (!containerWidth || !containerHeight) {
+            return
+        }
+        // Zero while the options are an overlay drawer, the sidebar width on desktop
+        const sidebarWidth = Math.round(this.chartOptionsWrapper.getBoundingClientRect().width)
+        this.globeWidth = containerWidth + sidebarWidth
+        this.globeHeight = containerHeight
+        this.fitWidth = Math.max(1, containerWidth - sidebarWidth)
+        this.fitHeight = containerHeight
+        this.globeSceneContainer.style.left = `${-sidebarWidth}px`;
+    }
+
+    cameraVerticalFov() {
+        return this.globe.camera()?.fov || 50
+    }
+
+    /** Sphere diameter as a share of the view height at the given altitude */
+    sphereSpanAtAltitude(altitude) {
+        return Math.tan(Math.asin(1 / (1 + altitude))) / Math.tan(this.cameraVerticalFov() * Math.PI / 360)
     }
 
     /**
-     * Smallest camera altitude that keeps the whole sphere inside the scene.
-     * The vertical field of view is fixed, so a scene that is taller than it is
-     * wide would clip the globe left and right unless the camera pulls back.
+     * Altitude at which the sphere spans the given share of the shortest fitted
+     * axis. The vertical field of view is fixed, so this is what keeps the globe
+     * inside its box whatever shape the container takes.
      */
-    minimumFittingAltitude() {
-        const camera = this.globe.camera()
-        const verticalFov = camera?.fov || 50
-        const halfVerticalSpan = Math.tan(verticalFov * Math.PI / 360)
-        const aspectRatio = this.globeWidth / this.globeHeight
-        const halfVisibleSpan = halfVerticalSpan * Math.min(1, aspectRatio) * GLOBE_FIT_FRACTION
-        return 1 / Math.sin(Math.atan(halfVisibleSpan)) - 1
+    altitudeForSphereFraction(fraction) {
+        const sphereDiameter = fraction * Math.min(this.fitWidth, this.fitHeight)
+        const sphereSpan = Math.tan(this.cameraVerticalFov() * Math.PI / 360) * sphereDiameter / this.globeHeight
+        return 1 / Math.sin(Math.atan(sphereSpan)) - 1
     }
 
     /** Altitude that frames the whole globe for the current view mode and scene shape */
     framingAltitudeForScene() {
-        const modeAltitude = this.altitudeCoding ? GLOBE_EXPLODED_ALTITUDE : GLOBE_DEFAULT_ALTITUDE
-        return Math.max(modeAltitude, this.minimumFittingAltitude())
+        return this.altitudeForSphereFraction(
+            this.altitudeCoding ? GLOBE_EXPLODED_FIT_FRACTION : GLOBE_FIT_FRACTION
+        )
     }
 
     setFramingAltitude(pointOfView = {}, duration = 0) {
@@ -82,23 +109,15 @@ class SSPIGlobeChart {
 
     /**
      * Re-frame the globe after the scene changed shape. A camera the user has
-     * moved themselves (manual zoom, country focus) keeps its position unless
-     * the new scene shape would clip the sphere.
+     * moved themselves (manual zoom, country focus) is left exactly where it is.
      */
     refitFramingAltitude() {
-        if (this.cameraIsFramed()) {
-            // globe.gl camera tweens are additive, so an instant move would be
-            // overridden by a transition still in flight: land with that one
-            this.setFramingAltitude({}, this.framingTransitionRemaining())
+        if (!this.cameraIsFramed()) {
             return
         }
-        const currentAltitude = this.globe.pointOfView().altitude
-        const minimumAltitude = this.minimumFittingAltitude()
-        // A camera closer than the default is a deliberate close-up, not a fit
-        if (currentAltitude < GLOBE_DEFAULT_ALTITUDE || currentAltitude >= minimumAltitude) {
-            return
-        }
-        this.globe.pointOfView({ altitude: minimumAltitude }, 0)
+        // globe.gl camera tweens are additive, so an instant move would be
+        // overridden by a transition still in flight: land with that one
+        this.setFramingAltitude({}, this.framingTransitionRemaining())
     }
 
     getComputedStyles() {
@@ -139,10 +158,13 @@ class SSPIGlobeChart {
             window.addEventListener('resize', scheduleResize)
             return
         }
-        // Observe the layer itself: the scene also has to follow container-only
-        // changes (sidebar layout, font loading) that never fire a window resize
+        // Observe the container and the sidebar, never the scene layer: the layer
+        // is sized by the canvas we are about to resize, so watching it would
+        // loop. These also catch container-only changes (sidebar breakpoint,
+        // font loading) that never fire a window resize.
         this.resizeObserver = new ResizeObserver(scheduleResize)
-        this.resizeObserver.observe(this.globeSceneContainer)
+        this.resizeObserver.observe(this.root)
+        this.resizeObserver.observe(this.chartOptionsWrapper)
     }
 
     buildGlobeContainer() {
@@ -1093,7 +1115,11 @@ class SSPIGlobeChart {
         const altitude = baseAltitude * paddingFactor;
 
         // Clamp altitude to reasonable bounds (lower than before for closer view)
-        const finalAltitude = Math.max(0.8, Math.min(altitude, 4));
+        const framedAltitude = Math.max(0.8, Math.min(altitude, 4));
+        // The bounds above are calibrated against a scene the globe fills. The
+        // canvas now extends past the container, so translate the altitude into
+        // the share of visible space it used to mean.
+        const finalAltitude = this.altitudeForSphereFraction(this.sphereSpanAtAltitude(framedAltitude));
 
         // Animate to the new point of view
         this.globe.pointOfView({
