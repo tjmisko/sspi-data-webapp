@@ -25,7 +25,7 @@ class DatasetPanelChart extends PanelChart {
         dbox.innerHTML =`
             <div class="item-info-title">${description.Name}</div>
             <ul class="item-detail-list">
-                <li class="item-detail-element"><b>Dataset Code:</b> <span class="item-detail-value">${this.datasetCode}</li>
+                <li class="item-detail-element"><b>Dataset Code:</b> <span class="item-detail-value">${this.datasetCode}</span></li>
                 <li class="item-detail-element"><b>Description:</b> <span class="item-detail-value">${description.Description}</span></li>
             </ul>
         `;
@@ -98,7 +98,6 @@ class DatasetPanelChart extends PanelChart {
         }
         this.chart.data = data
         this.chart.data.labels = data.labels
-        console.log("Data Labels:", this.chart.data.labels)
         this.chart.data.datasets = data.data
         this.title.innerText = data.title
         this.chart.options.plugins.title = data.title

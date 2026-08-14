@@ -64,7 +64,6 @@ class ScorePanelChart extends PanelChart {
         const itemSummary = this.itemInformation.querySelector('.item-information-summary')
         itemSummary.textContent = itemTitle;
         const defaultValue = '/data/' + itemType.toLowerCase() + '/' + this.itemCode
-        console.log('Default value for item dropdown:', defaultValue)
         for (const option of options) {
             const opt = document.createElement('option')
             opt.value = option.Value
@@ -269,8 +268,7 @@ class ScorePanelChart extends PanelChart {
         // Add children section if children exist
         if (children && children.length > 0 && childTypeTitle) {
             const tooltipText = this.generateTooltipText(parentItemName, parentItemType, childTypeTitle, children.length);
-            console.log('Generated tooltip text:', tooltipText);
-            
+
             const childrenHTML = '<div class="item-children-section">' +
                 '<div class="children-title-wrapper">' +
                 '<h4>' + childTypeTitle + '</h4>' +

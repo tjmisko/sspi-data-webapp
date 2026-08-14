@@ -233,7 +233,7 @@
   white-space: nowrap;
   font-size: 0.75em;
   line-height: 1;
-  font-color: var(--low-importance-font-color);
+  color: var(--low-importance-font-color);
 }
 
 .randomization-options input {
@@ -261,7 +261,7 @@
 }
 
 .pin-actions-box button form input {
-  color: var(--font-color);
+  color: var(--text-color);
   background-color: var(--input-background-color);
 }
 

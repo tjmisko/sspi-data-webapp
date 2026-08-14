@@ -68,12 +68,9 @@
   border-radius: 5px;
   cursor: pointer;
   display: flex;
-  flex-align: center;
+  align-items: center;
   justify-content: center;
   padding: 0.5em;
-}
-
-.show-chart-options {
 }
 
 .hide-chart-button-container {
@@ -244,11 +241,6 @@
 .chart-options-details {
   font-size: 0.75em;
   font-family: var(--header-font-family);
-}
-
-.chart-options-details {
-  font-size: 0.75em;
-  font-family: var(--header-font-family);
   margin-bottom: 0.6rem;
   border: 1px solid var(--subtle-line-color);
   border-radius: var(--border-radius);
@@ -280,7 +272,6 @@
 }
 
 .view-options-suboption-container {
-  padding: 0.75rem;
   box-sizing: border-box;
 }
 
@@ -335,7 +326,7 @@
   min-width: fit-content;
   font-size: 0.75em;
   line-height: 1;
-  font-color: var(--low-importance-font-color);
+  color: var(--low-importance-font-color);
 }
 
 .chart-options-details .y-axis-input-group input {
@@ -403,7 +394,6 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: ;
   margin: 0.1em 0.25em;
   box-sizing: border-box;
 }
@@ -438,6 +428,7 @@
 .legend-item button {
   flex: 0 0 auto;
   background-color: transparent;
+  border: none;
 }
 
 .remove-button-legend-item {
@@ -604,9 +595,4 @@
   color: var(--green-accent);
   font-size: 0.75em;
   font-style: italic;
-}
-
-.legend-item button {
-  background-color: transparent;
-  border: none;
 }

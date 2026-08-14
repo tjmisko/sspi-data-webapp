@@ -4,7 +4,7 @@
     overflow: auto;
     resize: both;
     position: relative;
-    background-color: text-color;
+    background-color: var(--box-background-color);
     border-radius: 0.5em;
     padding: 1em;
     min-width: 300px;
@@ -16,7 +16,7 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 0.6em;
-    background-color: var(--text-color, #000);
+    background-color: var(--box-background-color);
     border-radius: 0.5em;
     color: var(--text-color, #000);
     box-shadow: rgba(47, 47, 51, 0.4) 0px 7px 29px 0px;
