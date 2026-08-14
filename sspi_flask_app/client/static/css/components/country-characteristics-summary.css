@@ -1,7 +1,7 @@
 /* Country Characteristics Summary Component Styles */
 
 .country-characteristics-summary {
-  margin-top: 1rem;
+  margin-top: 0.875rem;
   padding: 0;
   background: transparent;
 }
@@ -14,7 +14,7 @@
 
 .characteristic-card {
   padding: 0.875rem 1rem;
-  background: var(--box-background-color);
+  background: color-mix(in srgb, var(--page-background) 60%, var(--box-background-color) 40%);
   border: var(--theme-border-thin);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);

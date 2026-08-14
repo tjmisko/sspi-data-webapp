@@ -5,11 +5,11 @@
   align-items: center;
   gap: 1rem;
   box-sizing: border-box;
-  padding: 0.5em 0.25em 0.5em 0.75em ;
+  padding: 0.5rem;
 }
 
 .radar-chart-title {
-  font-family: var(--heading-font-family);
+  font-family: var(--header-font-family);
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-color);
