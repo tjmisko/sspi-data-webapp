@@ -251,12 +251,14 @@ div:has(> .globegl-hover) {
   --globe-sidebar-width: 0px;  /* sidebar is an overlay drawer until desktop */
   --globe-chrome-background: color-mix(in srgb, var(--box-background-color) 72%, transparent);
   --globe-chrome-blur: blur(10px);
+  --globe-corner-radius: var(--border-radius-lg);
   position: relative;
   color: var(--header-text-color);
   width: 100%;
   height: clamp(520px, 80vh, 900px);
   box-sizing: border-box;
   overflow: hidden;  /* Clip the scene to the card and hide the closed drawer */
+  border-radius: var(--globe-corner-radius);
 }
 
 /* Sized and offset by JS: larger than the container, so it covers every edge
@@ -286,16 +288,35 @@ div:has(> .globegl-hover) {
   -webkit-backdrop-filter: var(--globe-chrome-blur);
 }
 
+/* The bars carry their own corner radii: a backdrop-filter escapes the rounded
+   overflow clip of its ancestors, so relying on the card to round them leaves
+   square corners poking out */
 .globe-tab-bar {
   top: 0;
   display: flex;
   align-items: center;
   border-bottom: 2px solid color-mix(in srgb, var(--green-accent) 55%, black);
+  border-top-left-radius: var(--globe-corner-radius);
+  border-top-right-radius: var(--globe-corner-radius);
 }
 
 .globe-slider-row {
   bottom: 0;
   border-top: 1px solid color-mix(in srgb, var(--subtle-line-color) 60%, transparent);
+  border-bottom-left-radius: var(--globe-corner-radius);
+  border-bottom-right-radius: var(--globe-corner-radius);
+}
+
+/* On desktop the bars stop at the options panel, so only their outer corners
+   meet the card and the panel takes the two on the right */
+@media (min-width: 1000px) {
+  .globe-tab-bar {
+    border-top-right-radius: 0;
+  }
+
+  .globe-slider-row {
+    border-bottom-right-radius: 0;
+  }
 }
 
 .globe-tab-bar button:not(.globe-hamburger-menu) {
@@ -367,6 +388,9 @@ div:has(> .globegl-hover) {
   -webkit-backdrop-filter: var(--globe-chrome-blur);
   border-left: 1px solid color-mix(in srgb, var(--subtle-line-color) 60%, transparent);
   pointer-events: auto;
+  /* Same reason as the bars: the blur escapes the card's rounded clip */
+  border-top-right-radius: var(--globe-corner-radius);
+  border-bottom-right-radius: var(--globe-corner-radius);
 }
 
 /* Above the mobile dismiss overlay, and above the scene in every case */
@@ -411,7 +435,8 @@ div:has(> .globegl-hover) {
     min-width: 0;
     height: 100%;
     padding: 0.75em;
-    border-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
     overflow-y: auto;
   }
 }
@@ -442,6 +467,109 @@ div:has(> .globegl-hover) {
   border: 1px solid var(--border-color);
   border-radius: 0.75em;
   margin-top: 1em;
+}
+
+/* ---------------------------------------------------------------------------
+   View option switches
+   Each option is a switch whose whole row is the label, so the hit target is
+   the row rather than a 13px native checkbox. The input stays in the markup,
+   visually hidden, and drives the track through sibling selectors.
+   --------------------------------------------------------------------------- */
+
+.globe-visualization-container .chart-options-details .chart-view-option.globe-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75em;
+  width: 100%;
+  margin: 0;
+  padding: 0.4em 0.45em;
+  box-sizing: border-box;
+  border-radius: var(--border-radius);
+  line-height: 1.25;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.globe-visualization-container .chart-view-option.globe-switch:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 12%, transparent);
+}
+
+.globe-visualization-container .chart-view-option.globe-switch:has(input:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+.globe-switch-label {
+  font-size: 0.75em;
+  min-width: 0;
+}
+
+/* Visually hidden, but still focusable and announced */
+.globe-visualization-container .chart-view-option.globe-switch input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.globe-switch-track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2.1em;
+  height: 1.15em;
+  border-radius: 1em;
+  background-color: color-mix(in srgb, var(--subtle-line-color) 55%, transparent);
+  border: 1px solid var(--subtle-line-color);
+  box-sizing: border-box;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.globe-switch-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.13em;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 50%;
+  background-color: var(--low-importance-font-color);
+  transform: translateY(-50%);
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.globe-switch input:checked ~ .globe-switch-track {
+  background-color: var(--green-accent);
+  border-color: var(--green-accent);
+}
+
+.globe-switch input:checked ~ .globe-switch-track .globe-switch-thumb {
+  transform: translateY(-50%) translateX(0.95em);
+  background-color: var(--page-background);
+}
+
+.globe-switch input:focus-visible ~ .globe-switch-track {
+  outline: 2px solid var(--green-accent);
+  outline-offset: 2px;
+}
+
+.globe-visualization-container .chart-options-details .chart-view-subheader {
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--low-importance-font-color);
+  margin: 0.9rem 0 0.35rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--subtle-line-color) 50%, transparent);
+}
+
+.globe-visualization-container .chart-options-details .chart-view-subheader:first-child {
+  margin-top: 0;
 }
 
 /* The slider bar is the frosted surface itself, so its inner box drops the

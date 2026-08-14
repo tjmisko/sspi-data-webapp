@@ -652,6 +652,20 @@ class SSPIGlobeChart {
         }
     };
 
+    /**
+     * A view option as a switch. The whole row is the label, so the hit target
+     * is the row rather than a bare checkbox, and the native input stays in the
+     * markup (visually hidden) to keep keyboard and screen reader behaviour.
+     */
+    getSwitchMarkup(toggleClass, labelText, checked = false) {
+        return `
+        <label class="chart-view-option globe-switch">
+            <span class="globe-switch-label">${labelText}</span>
+            <input type="checkbox" class="${toggleClass}"${checked ? ' checked' : ''}/>
+            <span class="globe-switch-track"><span class="globe-switch-thumb"></span></span>
+        </label>`
+    }
+
     buildChartOptions() {
         this.chartOptions = document.createElement('div')
         this.chartOptions.classList.add('chart-options', 'inactive')
@@ -673,27 +687,12 @@ class SSPIGlobeChart {
     <summary class="chart-view-options-summary">View Options</summary>
     <div class="view-options-suboption-container">
         <div class="chart-view-subheader">Dataset Options</div>
-        <div class="chart-view-option">
-            <input type="checkbox" class="altitude-toggle"/>
-            <label class="title-bar-label">Exploded View</label>
-        </div>
-        <div class="chart-view-option">
-            <input type="checkbox" checked=true class="cloropleth-toggle"/>
-            <label class="title-bar-label">Cloropleth</label>
-        </div>
-        <div class="chart-view-option">
-            <input type="checkbox" class="darken-borders-toggle"/>
-            <label class="title-bar-label">Darken Borders</label>
-        </div>
+        ${this.getSwitchMarkup('altitude-toggle', 'Exploded View')}
+        ${this.getSwitchMarkup('cloropleth-toggle', 'Cloropleth', true)}
+        ${this.getSwitchMarkup('darken-borders-toggle', 'Darken Borders')}
         <div class="chart-view-subheader">Rotation</div>
-        <div class="chart-view-option">
-            <input type="checkbox" checked="true" class="globe-rotation-toggle"/>
-            <label class="title-bar-label">Globe Rotation</label>
-        </div>
-        <div class="chart-view-option">
-            <input type="checkbox" checked="true" class="rotation-on-click-toggle"/>
-            <label class="title-bar-label">Toggle Rotation on Click</label>
-        </div>
+        ${this.getSwitchMarkup('globe-rotation-toggle', 'Globe Rotation', true)}
+        ${this.getSwitchMarkup('rotation-on-click-toggle', 'Toggle Rotation on Click', true)}
     </div>
 </details>
 <details class="select-countries-options chart-options-details">
