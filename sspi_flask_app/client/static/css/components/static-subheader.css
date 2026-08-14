@@ -31,7 +31,7 @@
 .static-subheader-title {
   font-family: var(--title-font-family, sans-serif);
   font-size: 0.8rem;
-  font-color: var(--text-color);
+  color: var(--text-color);
   font-weight: 800;
   flex: 0 1 0;
   text-wrap: nowrap;
@@ -48,7 +48,7 @@
   padding: 0.5em 1em;
   max-width: 60ch;
   text-align: justify;
-  overflow-wrap: break-all;
+  overflow-wrap: anywhere;
   top: 2em;
   left: 0.5em;
 }

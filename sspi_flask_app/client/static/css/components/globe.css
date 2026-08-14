@@ -26,7 +26,8 @@ div:has(> .globegl-hover) {
 }
 
 .globegl-hover h3 {
-  font: var(--header-font-style);
+  font-family: var(--header-font-family);
+  font-weight: 600;
   font-size: 1rem;
   margin: 0;
   padding: 0;
@@ -59,7 +60,8 @@ div:has(> .globegl-hover) {
 }
 
 .country-details-header {
-  font: var(--header-font-style);
+  font-family: var(--header-font-family);
+  font-weight: 600;
   font-size: 0.9em;
   line-height: 1;
   margin: 0 0 0.5em 0;
