@@ -4,15 +4,24 @@
 <title>SSPI Methodology</title>
 {% endblock %}
 
+{% block javascript %}
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
+{% endblock %}
+
+{% block stylesheet %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+{% endblock %}
+
 {% set sections = [
-    ('overview', 'What the Index Measures'),
-    ('scope', 'Countries and Years'),
+    ('overview', 'Policy Measurement'),
+    ('scope', 'Data Coverage: Countries and Years'),
     ('indicators', 'Building Policy Indicators'),
     ('data-sources', 'Selecting Data Sources'),
     ('scoring', 'Scoring with Goalposts'),
-    ('imputation', 'Filling Gaps in the Panel'),
-    ('aggregation', 'Aggregating to the Index'),
-    ('limitations', 'What the Index Cannot Tell You'),
+    ('imputation', 'Imputation'),
+    ('aggregation', 'Aggregation'),
+    ('limitations', 'Limitations'),
     ('reproducibility', 'Reproducibility'),
 ] %}
 
@@ -29,11 +38,15 @@
 </ol>
 {% endmacro %}
 
-{% macro section_head(index, anchor, label) %}
+{% macro section_head(anchor) %}
+{%- for section_anchor, label in sections %}
+{%- if section_anchor == anchor %}
 <h2 class="methodology-heading" id="{{ anchor }}">
-    <span class="methodology-heading-number">{{ '%02d' | format(index) }}</span>
+    <span class="methodology-heading-number">{{ '%02d' | format(loop.index) }}</span>
     <span class="methodology-heading-label">{{ label }}</span>
 </h2>
+{%- endif %}
+{%- endfor %}
 {% endmacro %}
 
 {% block content %}
@@ -43,16 +56,15 @@
             <header class="methodology-hero">
                 <p class="methodology-eyebrow">Methodology</p>
                 <h1 class="methodology-thesis">
-                    The SSPI scores what governments do, not how countries happen to be doing.
+                    Measuring and Scoring National Policies
                 </h1>
                 <p class="methodology-lede">
-                    This page documents how the index is built: which countries and
-                    years it covers, how policy indicators are chosen, where the
-                    underlying data comes from, how raw measurements become
-                    comparable scores, and how those scores are combined into a
-                    single number. Each step is a methodological commitment. We
-                    state them here so that readers can weigh them, disagree with
-                    them, and test alternatives against the same data.
+                    The SSPI measures the strength of the national
+                    policies that support sustainable and shared
+                    prosperity. Each policy indicator is scored between
+                    0 and 1 against fixed goalposts. Indicator
+                    scores are aggregated by unweighted averages into
+                    category, pillar, and index scores.
                 </p>
                 <dl class="methodology-stats">
                     <div class="methodology-stat">
@@ -99,67 +111,56 @@
 
                 <article class="methodology-article">
 
-                    {{ section_head(1, 'overview', 'What the Index Measures') }}
+                    {{ section_head('overview') }}
                     <p>
-                        The Sustainable and Shared-Prosperity Policy Index documents
-                        the policies practiced around the world that build an economy
-                        caring for people and the planet. We largely know which
-                        policies create a sustainable world, share prosperity, provide
-                        a comfortable and meaningful life, and reduce suffering
-                        globally. The question the index asks is narrower and more
-                        answerable: to what extent are governments actually adopting
-                        them? Following Amartya Sen (1999), we presume the goal is to
-                        guarantee a comfortable, dignified life with full opportunities
-                        for everyone, now and in future generations, and we read a
-                        country's policies as the measure of how far its government has
-                        committed to that goal.
+                        The Sustainable and Shared-Prosperity Policy Index (SSPI)
+                        documents the national policies that build an economy caring for
+                        people and the planet. A large literature in economics and
+                        climate science describes the policies that create a sustainable
+                        world, share prosperity, and provide a comfortable and
+                        meaningful life. The SSPI asks to what extent governments have
+                        adopted them. Following Sen (1999), we presume the goal
+                        of policy is to guarantee a comfortable, dignified life with
+                        full opportunities for everyone, now and in future generations,
+                        and we read a country's policies as the measure of its
+                        government's commitment to that goal.
                     </p>
                     <p>
-                        That question sets the unit of measurement. The SSPI scores
-                        <em>policy</em>&mdash;what a government has legislated, funded,
-                        built, protected, or refused to do&mdash;rather than national
-                        wellbeing, growth, or happiness. Outcomes depend on geography,
-                        history, trading partners, and luck. Policy is the part a
-                        government controls, and the part another government can copy.
+                        The unit of measurement is policy: what a government has
+                        legislated, funded, built, regulated, or protected. Many indices
+                        compare the economic performance of countries in terms of
+                        inequality, greenhouse gas emissions, health, education, and
+                        productivity. To our knowledge, no other index measures, across
+                        a broad range of policy areas, the national policies created to
+                        guide and support those outcomes. Outcomes depend on geography,
+                        history, trading partners, and circumstance. Policy is the
+                        component a government controls and the component another
+                        government can adopt.
                     </p>
                     <p>
-                        The index is a tree with four levels. At the leaves sit
-                        {{ indicator_count }} <strong>indicators</strong>, each a
-                        single measurable feature of national policy. Indicators are
-                        grouped into {{ category_count }}
-                        <strong>categories</strong>, each a package of policies that
-                        works together in one sector. Categories are grouped into
-                        {{ pillar_count }} <strong>pillars</strong> corresponding to
-                        three core tasks of government, and the pillars combine into
-                        the SSPI itself. Every item at every level, from a single
-                        indicator up to the index, is expressed on the same 0 to 1
-                        scale, where 0 is the weakest policy the scale admits and 1 is
-                        the strongest.
+                        The index has four levels. Each of the {{ indicator_count }}
+                        <strong>indicators</strong> measures a single feature of
+                        national policy. Indicators are grouped into {{ category_count }} <strong>categories</strong>, each a package of policies that
+                        work together in one sector. Categories are grouped into {{ pillar_count }} <strong>pillars</strong> corresponding to three
+                        functions of government: protecting the environment, structuring
+                        markets, and delivering public goods and services. The pillars
+                        combine into the SSPI. Every item at every level is expressed on
+                        the same scale from 0 to 1, where 0 represents a very weak
+                        policy and 1 represents an ideal policy.
                     </p>
                     <p class="methodology-note">
-                        A score is a statement about policy, not about welfare. A
-                        country can score well on a policy that has not yet produced
-                        results, and badly on an outcome it enjoys for reasons that
-                        have nothing to do with its government.
-                    </p>
-                    <p>
-                        The methodology summarized on this page is developed at length,
-                        together with the analysis it supports, in the SSPI working
-                        paper: Brown and Misko (2025),
-                        <a class="methodology-link"
-                           href="https://irle.berkeley.edu/publications/working-papers/national-policies-to-support-sustainable-equitable-economies/"
-                           target="_blank" rel="noopener"><em>National Policies to
-                        Support Sustainable, Equitable Economies</em></a>, IRLE Working
-                        Paper No. 101-25.
+                        Scores describe policy. A country may score well on a policy
+                        whose effects have not yet appeared in outcome data, and poorly
+                        on an outcome it enjoys for reasons unrelated to its government.
                     </p>
 
-                    {{ section_head(2, 'scope', 'Countries and Years') }}
+                    {{ section_head('scope') }}
                     <p>
                         The SSPI is calculated for {{ country_count }} countries: the
-                        {{ core_country_count }} countries of the original panel&mdash;the
+                        {{ core_country_count }} countries of the original panel (the
                         members of the Organisation for Economic Co-operation and
                         Development, the Group of Twenty, and five further countries
-                        classified as high income by the World Bank&mdash;together with
+                        classified as high income by the World Bank) together with
                         {{ extended_country_count }} countries added as coverage
                         improved. These are the largest and most industrialized
                         economies, for which most policy data are available and
@@ -169,20 +170,20 @@
                     </p>
                     <p>
                         Scores are computed annually from {{ year_start }} through
-                        {{ year_end }}, giving a balanced panel of country-years. The
-                        panel is balanced by construction rather than by luck: source
-                        series begin and end at different dates, and the gaps are
-                        filled by the imputation procedure described
-                        <a class="methodology-link" href="#imputation">below</a>.
+                        {{ year_end }}, giving a balanced panel of country-years. 
+                        To handle variations in the availability of data and series
+                        coverage, we fill gaps in the series by imputation (<em>see</em>
+                        details <a class="methodology-link" href="#imputation">below</a>).
                     </p>
                     <p>
-                        The country list is a compromise, and it is worth naming what
-                        the compromise costs. Policy data are dense where statistical
-                        agencies are well funded and thin everywhere else. Extending
-                        the panel further down the income distribution would mean
-                        publishing more imputation than measurement, so we have
-                        preferred a smaller panel we can defend to a larger one we
-                        cannot. Conclusions drawn from the SSPI apply to the countries
+                        The country list is a compromise. Policy and proxy data 
+                        are highly available where statistical agencies are 
+                        well-funded, but they are scarce elsewhere. Extending
+                        the panel for countries across the developing world (for whom
+                        policy choices and institution building may be of the 
+                        greatest consequence and therefore most important to study
+                        carefully) relies on more imputation than measurement.
+                        Conclusions drawn from the SSPI apply to the countries
                         in it and should not be extrapolated beyond them.
                     </p>
                     <p>
@@ -191,7 +192,7 @@
                         page</a>.
                     </p>
 
-                    {{ section_head(3, 'indicators', 'Building Policy Indicators') }}
+                    {{ section_head('indicators') }}
                     <p>
                         Indicator design rests on a large body of literature describing
                         and analyzing government policies and programs, with
@@ -228,27 +229,25 @@
                         cover against a 1990s benchmark), Fatal Injuries (fatal
                         injuries per ten thousand workers), and Primary School
                         Enrollment (the share of primary-age children enrolled in formal
-                        education) are not set directly by a policy dial in the way
+                        education) are not specified directly by policy in the way
                         public research spending is, yet government policy nevertheless
                         determines their level, especially over the long run. Proxy
-                        measures acknowledge the variety of specific policies&mdash;each
+                        measures acknowledge the variety of specific policies, each
                         adapted to a particular geographic, cultural, and political
-                        context&mdash;that countries may pursue toward a universal
+                        context, that countries may pursue toward a universal
                         policy goal.
                     </p>
                     <p class="methodology-note">
-                        Proxies are the largest interpretive risk in the index. An
-                        outcome metric picks up policy and circumstance together, and
-                        the two cannot be fully separated. We take the trade-off
-                        knowingly: a proxy that captures policy imperfectly is more
-                        informative than omitting a policy area that resists direct
-                        measurement.
+                        Proxy indicators require care in their interpretation. Outcome 
+                        metrics reflect circumstances as well as policy, and the two 
+                        cannot be fully seperated. We accept this trade-off in instances 
+                        in which an important policy area can only be imperfectly 
+                        measured by a proxy.
                     </p>
 
                     <h3 class="methodology-subheading">Organizing indicators into categories and pillars</h3>
                     <p>
-                        The three pillars correspond to three tasks that governments in
-                        the twenty-first century are asked to perform. Public Goods
+                        The three pillars correspond to three functions of government. Public Goods
                         covers goods and services supplied or guaranteed directly by
                         government, which are largely under the direct control of a
                         national or regional administration. Market Structure brings
@@ -294,17 +293,16 @@
                     </div>
 
                     <p>
-                        Pillars and categories are best read as systems of policies
-                        that operate together rather than as lists of separable
-                        instruments. Many kinds of policy affect how markets operate,
-                        or the health of the environment, or the quality of life, and
-                        the goal is a set of policies that work on those things
-                        jointly. Infrastructure is a fair example: access to
-                        electricity, water quality, basic sanitation, internet access,
-                        and the transport network are commonly built by governments and
-                        either operated by them or regulated in private hands, and
-                        together they support daily life and shape environmental
-                        outcomes at the same time.
+                        Pillars and categories should be read as systems of policies
+                        that operate together. Many kinds of policy affect how markets
+                        operate, the health of the environment, or the quality of life,
+                        and the goal is a set of policies that influence these jointly
+                        within the overall socioeconomic system. Infrastructure is an
+                        example: access to electricity, water quality, basic sanitation,
+                        internet access, and the transport network are commonly built by
+                        governments and either operated by them or regulated in private
+                        hands, and together they support daily life and shape
+                        environmental outcomes.
                     </p>
                     <p>
                         Every indicator, with its definition, its sources, and its score
@@ -313,7 +311,7 @@
                         table</a>.
                     </p>
 
-                    {{ section_head(4, 'data-sources', 'Selecting Data Sources') }}
+                    {{ section_head('data-sources') }}
                     <p>
                         In selecting data to represent the policy indicators, and then
                         aggregating them into a composite index, we follow the
@@ -340,8 +338,8 @@
                         <strong>dataset</strong> is one measured series from one
                         source, collected and cleaned on its own terms; an
                         <strong>indicator</strong> is one or more datasets combined by
-                        a published score function. Some indicators are a single
-                        dataset renamed; others average several. Biodiversity
+                        a published score function. Some indicators use a single
+                        dataset; others combine several. Biodiversity
                         Protection, for instance, is the average of the protected share
                         of important terrestrial, freshwater, and marine sites, each
                         scored separately first.
@@ -356,7 +354,7 @@
                         href="/download">download page</a>.
                     </p>
 
-                    {{ section_head(5, 'scoring', 'Scoring with Goalposts') }}
+                    {{ section_head('scoring') }}
                     <p>
                         Every indicator is set up so that a higher score represents a
                         policy oriented toward a better outcome, and every indicator is
@@ -364,56 +362,49 @@
                         data are expressed in comparable units. Normalization uses a
                         pair of <strong>goalposts</strong>: a lower goalpost
                         representing a hypothetical minimum for the policy variable and
-                        an upper goalpost representing a hypothetical maximum. A raw
-                        value is placed on that scale, and anything beyond either post
-                        is held at the end of the scale.
+                        an upper goalpost representing a hypothetical maximum. Values
+                        beyond either goalpost are censored at that goalpost.
                     </p>
 
                     <figure class="methodology-formula">
-                        <div class="formula-row">
-                            <span class="formula-term">score</span>
-                            <span class="formula-op">=</span>
-                            <span class="formula-term">max<span class="formula-paren">(</span></span>
-                            <span class="formula-term">0,</span>
-                            <span class="formula-term">min<span class="formula-paren">(</span></span>
-                            <span class="formula-term">1,</span>
-                            <span class="formula-fraction">
-                                <span class="formula-numerator">value &minus; lower</span>
-                                <span class="formula-denominator">upper &minus; lower</span>
-                            </span>
-                            <span class="formula-paren">)&#8201;)</span>
+                        <div class="methodology-equation">
+                            \[
+                            \text{score} = \max\left(0,\ \min\left(1,\
+                            \frac{\text{value} - \text{LG}}{\text{UG} - \text{LG}}
+                            \right)\right)
+                            \]
                         </div>
                         <figcaption class="methodology-figure-caption">
-                            The goalpost formula. Values at or below the lower goalpost
-                            score 0; values at or above the upper goalpost score 1;
-                            everything between is linear.
+                            LG is the lower goalpost and UG the upper goalpost. Values
+                            at or below LG score 0, values at or above UG score 1.
+                            The score is linear between the goalposts.
                         </figcaption>
                     </figure>
 
                     <p>
                         This follows the goalposting used for the Human Development
-                        Index, whose dimension indices&mdash;the equivalent of our
-                        indicator scores&mdash;are normalized to values between 0 and 1
+                        Index, whose dimension indices (the equivalent of our
+                        indicator scores) are normalized to values between 0 and 1
                         against minima and maxima set from both historical evidence and
                         achievability.
                     </p>
 
                     <h3 class="methodology-subheading">Inverting an indicator by swapping its goalposts</h3>
                     <p>
-                        Some policy variables run the wrong way: a higher murder rate,
-                        a higher Gini coefficient, or higher energy intensity all
-                        indicate weaker policy. Rather than carry a separate direction
-                        flag, the SSPI inverts these indicators by putting the larger
-                        value in the lower-goalpost position. The formula is unchanged
-                        and the slope simply runs downhill. The Gini coefficient after
-                        taxes and transfers, for example, is scored with goalposts of
-                        70 and 20, so a Gini of 70 scores 0 and a Gini of 20 or better
-                        scores 1. Of the {{ indicator_count }} indicators,
-                        {{ inverted_count }} are scored this
-                        way{% if partly_inverted_count == 1 %}, and one further indicator combines
-                        components running in both directions{% elif partly_inverted_count %}, and
-                        {{ partly_inverted_count }} further indicators combine components
-                        running in both directions{% endif %}.
+                        For some policy variables a higher value indicates weaker
+                        policy: the homicide rate, the Gini coefficient, and energy
+                        intensity are examples. The SSPI inverts these indicators by
+                        placing the larger value in the lower-goalpost position. The
+                        formula is unchanged, and the score decreases in the raw value.
+                        The Gini coefficient after taxes and transfers, for example, is
+                        scored with goalposts of 70 and 20, so a Gini of 70 scores 0 and
+                        a Gini of 20 or better scores 1. Of the {{ indicator_count }}
+                        indicators, {{ inverted_count }} are scored this way{% if
+                        partly_inverted_count == 1 %}, and one further indicator
+                        combines components running in both directions{% elif
+                        partly_inverted_count %}, and {{ partly_inverted_count }}
+                        further indicators combine components running in both
+                        directions{% endif %}.
                     </p>
 
                     <figure class="methodology-figure">
@@ -466,21 +457,19 @@
                             </svg>
                         </div>
                         <figcaption class="methodology-figure-caption">
-                            The same formula in both directions. Swapping the
-                            goalposts&mdash;putting 70 in the lower slot and 20 in the
-                            upper&mdash;turns the line downhill without changing the
-                            arithmetic. The shaded bands are the clipped regions, where
-                            differences in the raw value make no difference to the
-                            score.
+                            The goalpost formula in both directions. With 70 as the
+                            lower goalpost and 20 as the upper, the score decreases in
+                            the raw value. The shaded bands mark the censored regions,
+                            where differences in the raw value do not change the score.
                         </figcaption>
                     </figure>
 
-                    <h3 class="methodology-subheading">Where the goalposts come from</h3>
+                    <h3 class="methodology-subheading">Setting the goalposts</h3>
                     <p>
                         Setting the goalposts of an indicator shifts the center and
                         controls the spread of its score distribution while preserving
                         the ranks in the observed data. Where an internationally
-                        established norm exists, we use it&mdash;several goalposts
+                        established norm exists, we use it; several goalposts
                         follow the 2022 Sustainable Development Report (Sachs et al
                         2022). Where no norm exists, the historical values observed
                         across countries guide what is possible for high performers
@@ -500,18 +489,18 @@
                         policy would protect every known important site.
                     </p>
                     <p>
-                        Carbon sequestration is harder. We do not know the maximum
+                        Carbon sequestration is a more complex case. We do not know the maximum
                         amount of carbon a country could sequester, because it varies
                         widely with geography and cross-country data are sparse.
-                        Without clear benchmarks, we rely on the data itself&mdash;land
-                        characteristics and historical trends&mdash;to set goalposts for
+                        Without clear benchmarks, we rely on the data itself, land
+                        characteristics and historical trends, to set goalposts for
                         what good policy can achieve. Country policy is ranked on
                         carbon density, the ratio of carbon stock in living biomass to
                         forest land, measured against that country's own 1990s average,
                         when deforestation became conspicuous. Higher values indicate
                         that a country is allocating land to forests that sequester
-                        carbon. The benchmark is the country's own land endowment
-                        rather than a universal target. Deforestation follows the same
+                        carbon. The benchmark is the country's own land endowment.
+                        Deforestation follows the same
                         logic, using the ratio of naturally regenerating forest to the
                         1990s average.
                     </p>
@@ -530,22 +519,22 @@
                     </p>
                     <p class="methodology-note">
                         One pair of goalposts applies to every country and every year,
-                        so a score of 0.60 carries the same meaning in
-                        {{ year_start }} as in {{ year_end }}. That is what makes the
-                        panel comparable over time, and it is also why goalposts are
-                        not revised casually: moving one rewrites the history of the
-                        indicator.
+                        so a score of 0.60 has the same meaning in {{ year_start }} as
+                        in {{ year_end }}. Fixed goalposts make the panel comparable
+                        over time. Revising a goalpost changes every score in the
+                        history of the indicator, so goalposts are revised only with a
+                        documented rationale.
                     </p>
 
-                    {{ section_head(6, 'imputation', 'Filling Gaps in the Panel') }}
+                    {{ section_head('imputation') }}
                     <p>
                         Source series rarely cover every country in every year. Without
-                        some treatment of the gaps, the index would be missing wherever
-                        a single contributing series was late, early, or absent, and
-                        countries would drop in and out of the ranking for reasons that
-                        have nothing to do with their policies. Imputation fills those
-                        gaps so that each indicator has a complete set of country-year
-                        observations across {{ year_start }} to {{ year_end }}.
+                        treatment of the gaps, the index would be undefined wherever a
+                        single contributing series began late, ended early, or was
+                        missing, and countries would enter and leave the ranking for
+                        reasons unrelated to their policies. Imputation fills those gaps
+                        so that each indicator has a complete set of country-year
+                        observations from {{ year_start }} to {{ year_end }}.
                     </p>
                     <p>Three methods are applied, in this order:</p>
                     <ul class="methodology-list">
@@ -567,84 +556,35 @@
                         observed values, and stored separately from them, so that any
                         number in the index can be traced back to whether it was
                         measured or inferred. Indicators with complete coverage are
-                        never imputed at all.
+                        not imputed.
                     </p>
                     <p class="methodology-note">
-                        Imputation moves information; it does not create any. Flat
-                        extrapolation is the conservative choice&mdash;it assumes policy
-                        did not change rather than inventing a trend&mdash;but it
-                        understates real change at the ends of a series, and a long run
-                        of extrapolated years should be read as an assumption rather
-                        than as a measurement.
+                        Flat extrapolation assumes that policy did not change outside
+                        the observed range. The assumption is conservative, and it
+                        understates real change at the ends of a series. A long run of
+                        extrapolated years should be read as an assumption about policy,
+                        and the record of which values were measured and which were
+                        imputed is kept for that reason.
                     </p>
                     <p>
-                        After imputation, a country-year is scored only if every
-                        indicator is present for it. A country with an irreparable hole
-                        in one indicator is left out of the index for that year rather
-                        than being scored on a partial tree, which would make its score
-                        incomparable with everyone else's.
+                        After imputation, a country-year receives an SSPI score only if
+                        every indicator is present. A country missing any indicator in a
+                        year is excluded from the index for that year, because a score
+                        computed over a partial tree would not be comparable with the
+                        others.
                     </p>
 
-                    {{ section_head(7, 'aggregation', 'Aggregating to the Index') }}
+                    {{ section_head('aggregation') }}
                     <p>
-                        Aggregation is deliberately the least clever part of the
-                        methodology. Each level of the tree is an unweighted arithmetic
-                        mean of the level below it. A category is the average of its
-                        indicators, a pillar is the average of its categories, and the
-                        SSPI is the average of its {{ pillar_count }} pillars. There
-                        are no coefficients, no principal components, and no expert
-                        weights.
-                    </p>
-                    <p>
-                        Our starting position was to use equal weights because they are
-                        widely used and because they attenuate bias and arbitrariness.
-                        Equal weights imply that all policy indicators are equally
-                        important within a category, all categories are equally
-                        important within a pillar, and the {{ pillar_count }} pillars
-                        are equally important within the SSPI. This reflects our
-                        assumption that the SSPI integrates a system of interrelated
-                        and indivisible policies that are equally important, none of
-                        which a government may neglect on the grounds that it is doing
-                        well elsewhere. The SDG Index takes the same position, treating
-                        each Sustainable Development Goal equally with fixed equal
-                        weights.
+                        Aggregation is deliberately simple. All scores for index items 
+                        are between zero and one, and each level of the index is
+                        an unweighted arithmetic mean of the components of the level
+                        below it.
                     </p>
 
-                    <figure class="methodology-formula methodology-formula-stack">
-                        <div class="formula-grid">
-                            <div class="formula-row">
-                                <span class="formula-term">category score</span>
-                                <span class="formula-op">=</span>
-                                <span class="formula-fraction">
-                                    <span class="formula-numerator">sum of its indicator scores</span>
-                                    <span class="formula-denominator">number of indicators</span>
-                                </span>
-                            </div>
-                            <div class="formula-row">
-                                <span class="formula-term">pillar score</span>
-                                <span class="formula-op">=</span>
-                                <span class="formula-fraction">
-                                    <span class="formula-numerator">sum of its category scores</span>
-                                    <span class="formula-denominator">number of categories</span>
-                                </span>
-                            </div>
-                            <div class="formula-row">
-                                <span class="formula-term">SSPI score</span>
-                                <span class="formula-op">=</span>
-                                <span class="formula-fraction">
-                                    <span class="formula-numerator">sum of the pillar scores</span>
-                                    <span class="formula-denominator">{{ pillar_count }}</span>
-                                </span>
-                            </div>
-                        </div>
-                        <figcaption class="methodology-figure-caption">
-                            Three unweighted means, applied bottom up.
-                        </figcaption>
-                    </figure>
-
-                    <figure class="methodology-figure">
+                    <figure class="methodology-figure methodology-figure-tight">
                         <div class="methodology-figure-scroll">
-                            <svg class="hierarchy-svg" viewBox="0 0 620 278" role="img"
+                            <svg class="hierarchy-svg" viewBox="0 12 620 262" role="img"
                                  aria-labelledby="hierarchy-title hierarchy-desc">
                                 <title id="hierarchy-title">How indicator scores aggregate into the SSPI</title>
                                 <desc id="hierarchy-desc">Indicator scores are averaged into a category score, category scores are averaged into a pillar score, and the three pillar scores are averaged into the SSPI. The chain from Biodiversity Protection and Red List up through Ecosystem and Sustainability is shown as an example.</desc>
@@ -652,18 +592,21 @@
                                 <line class="hy-edge" x1="310" y1="52" x2="120" y2="88"/>
                                 <line class="hy-edge" x1="310" y1="52" x2="310" y2="88"/>
                                 <line class="hy-edge" x1="310" y1="52" x2="500" y2="88"/>
-                                <text class="hy-divisor" x="330" y="76">&divide; {{ pillar_count }}</text>
+                                <text class="hy-weight" x="215" y="70">1/{{ pillar_count }}</text>
+                                <text class="hy-weight" x="310" y="70">1/{{ pillar_count }}</text>
+                                <text class="hy-weight" x="405" y="70">1/{{ pillar_count }}</text>
 
                                 <line class="hy-edge" x1="120" y1="122" x2="61" y2="158"/>
                                 <line class="hy-edge" x1="120" y1="122" x2="121" y2="158"/>
                                 <line class="hy-edge" x1="120" y1="122" x2="161" y2="158"/>
                                 <line class="hy-edge" x1="120" y1="122" x2="201" y2="158"/>
                                 <line class="hy-edge" x1="120" y1="122" x2="241" y2="158"/>
-                                <text class="hy-divisor" x="248" y="150">&divide; 5</text>
+                                <text class="hy-weight" x="90.5" y="140">1/5</text>
 
                                 <line class="hy-edge" x1="61" y1="192" x2="60" y2="228"/>
                                 <line class="hy-edge" x1="61" y1="192" x2="150" y2="228"/>
-                                <text class="hy-divisor" x="132" y="212">&divide; 2</text>
+                                <text class="hy-weight" x="60.5" y="210">1/2</text>
+                                <text class="hy-weight" x="105.5" y="210">1/2</text>
 
                                 <g class="hy-node hy-node-root">
                                     <rect x="254" y="24" width="112" height="28" rx="6"/>
@@ -711,33 +654,89 @@
                                 </g>
                             </svg>
                         </div>
-                        <figcaption class="methodology-figure-caption">
-                            One chain through the tree. Biodiversity Protection and Red
-                            List average into Ecosystem; Ecosystem and the four other
-                            Sustainability categories average into the pillar; the
-                            {{ pillar_count }} pillars average into the SSPI.
-                        </figcaption>
                     </figure>
-
-                    <h3 class="methodology-subheading">Equal weights are still weights</h3>
                     <p>
-                        Averaging at each level is not the same as weighting every
-                        indicator equally in the index. Because a category divides its
-                        share among however many indicators it holds, and a pillar
-                        divides its share among however many categories it holds, an
-                        indicator's influence on the final score depends on how crowded
-                        its neighborhood is.
+                        We use equal weights because they are easy to understand, simple
+                        to interpret, and widely used. We recognize that equal-weight
+                        aggregation at each level is arbitrary, imposing uneven
+                        weighting at the overall index level because of variation in the
+                        indicator-per-category count and category-per-pillar count. This
+                        variation proved unavoidable in the construction of the index,
+                        so, rather than allowing low data availability in one category
+                        to constrain all others, we allow the count of indicators and
+                        categories to vary, and accept the cost of heterogeneity in
+                        weighting at the overall level.
+                    </p>
+                    <p>
+                        Equal weights within a category imply that all policy indicators
+                        are equally important within the category. Equal weights within
+                        a pillar imply that all categories are equally important within
+                        the pillar. Finally, even weighting across the three pillars
+                        implies that each has equal importance. We do not believe we are
+                        in a position to evaluate scientifically the commensurability of
+                        indicators, categories, and pillars, and still less in a
+                        position to encode such a judgement into prescriptive,
+                        universally valid weights. Nevertheless, we do believe that the
+                        SSPI identifies and measures a bundle of policies which are
+                        universally applicable, should a country want to deliver
+                        sustainable and shared prosperity, and we do want to compute
+                        summary metrics in the form of aggregate scores which convey
+                        real information about the underlying policies. We believe the
+                        equal-weight construction is the most defensible way to do so:
+                        it makes the bias of aggregation transparent and easy to account
+                        for, and it is minimally contaminated with methodological
+                        judgements carrying a scientific imprimatur.
+                    </p>
+                    <p>
+                        Equal weighting also reflects our assumption that the SSPI
+                        integrates a system of interrelated and indivisible policies
+                        that are equally important. The SDG Index takes the same
+                        position, treating each Sustainable Development Goal equally
+                        with fixed equal weights.
                     </p>
 
                     <figure class="methodology-formula">
-                        <div class="formula-row">
-                            <span class="formula-term">indicator weight</span>
-                            <span class="formula-op">=</span>
-                            <span class="formula-fraction">
-                                <span class="formula-numerator">1</span>
-                                <span class="formula-denominator">indicators in category &times; categories in pillar &times; {{ pillar_count }}</span>
-                            </span>
+                        <div class="methodology-equation">
+                            \[
+                            \begin{aligned}
+                            \text{Score}_{\text{Category}} &amp;= \frac{\sum_{i \in \text{Category}} \text{Score}_i}{\left|\text{Category}\right|} \\[1em]
+                            \text{Score}_{\text{Pillar}} &amp;= \frac{\sum_{c \in \text{Pillar}} \text{Score}_c}{\left|\text{Pillar}\right|} \\[1em]
+                            \text{Score}_{\text{SSPI}} &amp;= \frac{1}{ {{ pillar_count }} } \sum_{p \in \text{Pillars}} \text{Score}_p
+                            \end{aligned}
+                            \]
                         </div>
+                        <figcaption class="methodology-figure-caption">
+                            <em>i</em> ranges over the indicators in a category,
+                            <em>c</em> over the categories in a pillar, and <em>p</em>
+                            over the {{ pillar_count }} pillars. |Category| and |Pillar|
+                            are the number of indicators in the category and the number
+                            of categories in the pillar.
+                        </figcaption>
+                    </figure>
+
+                    <h3 class="methodology-subheading">Implied indicator weights</h3>
+                    <p>
+                        The weight of an indicator in the SSPI depends on its position
+                        in the tree. A category divides its weight equally among its
+                        indicators and a pillar divides its weight equally among its
+                        categories, so the share of the index carried by a single
+                        indicator is:
+                    </p>
+
+                    <figure class="methodology-formula">
+                        <div class="methodology-equation">
+                            \[
+                            \text{Weight}_i =
+                            \frac{1}{\left|\text{Category}\right|
+                                      \times \left|\text{Pillar}\right|
+                                      \times {{ pillar_count }}}
+                            \]
+                        </div>
+                        <figcaption class="methodology-figure-caption">
+                            |Category| is the number of indicators in the category of
+                            indicator <em>i</em>, and |Pillar| the number of categories
+                            in its pillar.
+                        </figcaption>
                     </figure>
 
                     {% set max_weight = weight_rows[0].weight_percent %}
@@ -746,13 +745,13 @@
                     {% set lightest = weight_rows | selectattr('weight_percent', 'equalto', min_weight) | map(attribute='category') | list %}
                     {% set spread = '%g' | format((max_weight / min_weight) | round(1)) %}
                     <p>
-                        The consequence is a spread of roughly
-                        {{ spread }} to one. An indicator
+                        The implied weights vary by a factor of roughly
+                        {{ spread }}. An indicator
                         in {{ heaviest[:-1] | join(', ') }}{% if heaviest | length > 2 %}, or {% elif heaviest | length > 1 %} or {% endif %}{{ heaviest[-1] }}
                         carries {{ '%.2f' | format(max_weight) }} percent of the SSPI,
                         while an indicator in {{ lightest[:-1] | join(', ') }}{% if lightest | length > 2 %}, or {% elif lightest | length > 1 %} or {% endif %}{{ lightest[-1] }}
                         carries {{ '%.2f' | format(min_weight) }} percent. The same
-                        arithmetic operates one level up: each pillar takes exactly a
+                        arithmetic applies one level up: each pillar carries one
                         third of the index regardless of its size, so the
                         {{ pillar_summary | selectattr('code', 'equalto', 'PG') | map(attribute='indicator_count') | first }}
                         indicators of Public Goods share the same third as the
@@ -790,139 +789,126 @@
                     </div>
 
                     <p>
-                        We publish this table rather than bury it. Equal weighting is
-                        the honest default when there is no defensible basis for
-                        declaring one policy area more important than another, and it
-                        keeps every judgment in the structure of the tree, where a
-                        reader can see it, instead of in a vector of coefficients,
-                        where they cannot. But equal weighting is itself a choice, and
-                        the table is what that choice costs. Adding an indicator to a
-                        category dilutes the indicators already there; splitting a
-                        category in two doubles the weight of its contents.
+                        The table states the cost of the equal-weight construction.
+                        Adding an indicator to a category reduces the weight of every
+                        indicator already in it, and splitting a category in two doubles
+                        the weight of its contents. Because the weights follow from the
+                        structure of the tree, every weighting judgement in the index is
+                        visible in the indicator table.
                     </p>
                     <p>
-                        The right response to a weighting scheme you doubt is to test
-                        it. We have done some of that testing ourselves: sensitivity
-                        tests on the weights at both levels of aggregation&mdash;pillars
-                        and categories&mdash;compared country rankings under alternative
-                        schemes, including unequal weights and the geometric average,
-                        against the rankings achieved under equal weighting, and found
-                        little difference in rankings or scores between the geometric
-                        and simple averages. The
-                        <a class="methodology-link" href="/customize">custom
-                        index builder</a> lets you go further and rebuild the tree&mdash;drop
+                        We tested the sensitivity of the results to the weights at both
+                        levels of aggregation, pillars and categories, by comparing
+                        country rankings under alternative schemes, including unequal
+                        weights and the geometric average, with the rankings under equal
+                        weighting. The tests showed little difference in rankings or
+                        scores between the geometric and simple averages. The <a
+                        class="methodology-link" href="/customize">custom index
+                        builder</a> allows readers to extend these tests: drop
                         indicators, move them between categories, split or merge
-                        categories, change score functions&mdash;score your version
-                        against the same underlying data, and compare the result with
-                        the published index.
+                        categories, or change score functions, then score the modified
+                        tree against the same underlying data and compare the result
+                        with the published index.
                     </p>
                     <p class="methodology-note">
-                        One difference is worth knowing before you read your own
-                        results. The published index scores a country-year only when
-                        every indicator is present, while the custom builder averages
+                        The published index scores a country-year only when every
+                        indicator is present, while the custom builder averages
                         whichever children are available. A custom tree with sparse
-                        coverage will therefore still produce a score, and that score
-                        is an average over a different set of indicators for different
+                        coverage therefore still produces a score, and that score is an
+                        average over a different set of indicators for different
                         countries.
                     </p>
 
-                    {{ section_head(8, 'limitations', 'What the Index Cannot Tell You') }}
+                    {{ section_head('limitations') }}
                     <p>
-                        Composite indices invite more confidence than they earn. These
-                        are the limitations we consider most likely to mislead a
-                        careful reader.
+                        The following limitations bear on the interpretation of SSPI
+                        scores.
                     </p>
                     <ul class="methodology-list methodology-list-spaced">
                         <li>
-                            <strong>Policy effort is not policy quality, and proxies
-                            blur the two.</strong> Where an indicator is an outcome
-                            metric standing in for a package of policies, it captures
-                            circumstance alongside policy. Forest cover reflects
-                            geography and history as well as land management.
+                            <strong>Proxy indicators reflect circumstance as well as
+                            policy.</strong> Where an indicator is an outcome metric
+                            standing in for a package of policies, its level depends on
+                            geography and history as well as on government action.
+                            Forest cover reflects terrain and settlement history as well
+                            as land management.
                         </li>
                         <li>
-                            <strong>Equal weighting is not neutral.</strong> As the
-                            table above shows, the implied weight of an indicator
-                            varies by a factor of about {{ spread }} depending on
-                            where it sits in the tree.
+                            <strong>Equal weighting implies unequal indicator
+                            weights.</strong> As the table above shows, the implied
+                            weight of an indicator varies by a factor of about {{ spread }} with its position in the tree.
                         </li>
                         <li>
-                            <strong>Clipping destroys information at the ends.</strong>
-                            Every country beyond a goalpost receives an identical 0 or
-                            1, so the index cannot distinguish among leaders or among
-                            laggards on an indicator where many countries are censored.
+                            <strong>Censoring removes information at the
+                            extremes.</strong> Every country beyond a goalpost receives
+                            the same score of 0 or 1, so the index does not distinguish
+                            among leaders or among laggards on an indicator where many
+                            countries are censored.
                         </li>
                         <li>
                             <strong>Imputed years are assumptions.</strong> Flat
-                            extrapolation across a long gap will show a country's policy
-                            as unchanged when it may not have been.
+                            extrapolation across a long gap shows a country's policy as
+                            unchanged when it may have changed.
                         </li>
                         <li>
-                            <strong>The panel is not the world.</strong> The
-                            {{ country_count }} countries are rich and large economies.
-                            Relationships found in this panel need not hold outside it.
+                            <strong>Findings are specific to the panel.</strong> The {{ country_count }} countries are large, industrialized
+                            economies. Relationships found in this panel need not hold
+                            elsewhere.
                         </li>
                         <li>
-                            <strong>Small differences are not differences.</strong>
-                            Scores inherit the measurement error of every source series
-                            beneath them. Gaps of a few hundredths&mdash;and the
-                            rank changes that follow from them&mdash;should not be
+                            <strong>Small differences in score lie within measurement
+                            error.</strong> Scores inherit the measurement error of
+                            every source series beneath them. Gaps of a few hundredths,
+                            and the rank changes that follow from them, should not be
                             treated as findings.
                         </li>
                         <li>
                             <strong>Indicator selection encodes a view of good
                             policy.</strong> Deciding that a policy area belongs in the
                             index, and which measurable feature represents it, is a
-                            judgment made by the research team. We document those
-                            judgments rather than claim not to have made any.
+                            judgement of the research team. Those judgements are
+                            documented on the indicator and dataset pages.
                         </li>
                         <li>
-                            <strong>Source data is revised.</strong> Statistical
+                            <strong>Source data are revised.</strong> Statistical
                             agencies restate historical series. A score can change
-                            between collections without any policy having changed, which
-                            is why each published figure is tied to the collection that
-                            produced it.
+                            between collections without any change in policy, so each
+                            published figure is tied to the collection that produced it.
                         </li>
                     </ul>
 
-                    {{ section_head(9, 'reproducibility', 'Reproducibility') }}
+                    {{ section_head('reproducibility') }}
                     <p>
-                        For its first years the SSPI lived in a stack of spreadsheets.
-                        An assignment might be to find a data reporter's website and
-                        copy the numbers by hand into a sheet; an indicator would be
-                        computed in a workbook, the result copied by hand into the main
-                        file, and the workbook and the source promptly lost. The method
-                        worked, but it had a fatal property: the only way to check that
-                        the data had been processed correctly was to process it again by
-                        hand and hope the two agreed.
+                        Early versions of the SSPI were built in spreadsheets. Data were
+                        copied by hand from source websites into worksheets, indicators
+                        were computed in separate workbooks, and results were copied by
+                        hand into a main file. The only check on the procedure was to
+                        repeat it by hand and compare the results.
                     </p>
                     <p>
-                        Two failure modes recurred. Rankings were often produced by
-                        selecting a range and sorting it rather than by a ranking
-                        function, and a selection that was slightly wrong scrambled
-                        countries against their values. And the scoring scheme was
-                        distributed across dozens of sheets, so answering &ldquo;which
-                        indicators actually went into this category?&rdquo; meant
-                        auditing every formula in every row. Both classes of error were
-                        hard to find, costly to fix, and a standing threat to the
-                        reliability of published findings.
+                        Two classes of error recurred. Rankings were often produced by
+                        sorting a selected range, and a selection that was slightly
+                        wrong scrambled countries against their values. The scoring
+                        scheme was distributed across dozens of sheets, so determining
+                        which indicators entered a category required auditing every
+                        formula in every row. Both classes of error were hard to detect
+                        and costly to correct.
                     </p>
                     <p>
-                        Writing the index as code fixed the underlying problem, because
-                        code forces tacit knowledge to become explicit. Sources and
-                        transformations are named once and run repeatedly; a mistake is
-                        a mistake in a written procedure, and so it can be found. The
-                        2018 index was frozen only after it had been reproduced in code,
-                        and that reproduction caught several substantive errors in
-                        earlier versions.
+                        Rewriting the index as code addressed the underlying problem,
+                        because code makes each procedure explicit. Sources and
+                        transformations are named once and run repeatedly, and a mistake
+                        is a mistake in a written procedure that can be found and
+                        corrected. The 2018 index was frozen only after it had been
+                        reproduced in code, and the reproduction caught several
+                        substantive errors in earlier versions.
                     </p>
                     <p>
-                        Data now moves through the system in stages&mdash;collected from
-                        the source API, cleaned into a standard form, imputed where
+                        Data now move through the system in stages: collected from the
+                        source API, cleaned into a standard form, imputed where
                         necessary, scored against goalposts, and finalized into item
-                        scores&mdash;and every stage is stored rather than overwritten.
-                        Any number on this site can be walked backwards to the response
-                        the source organization returned.
+                        scores. Every stage is stored, so any number on this site can be
+                        traced back to the response returned by the source organization.
                     </p>
                     <ul class="methodology-list">
                         <li>
@@ -965,4 +951,16 @@
         </div>
     </section>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    new MethodologyContents();
+    new JustifiedCaptions();
+    if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.querySelector('.methodology-article'), {
+            delimiters: [{ left: '\\[', right: '\\]', display: true }],
+            throwOnError: false
+        });
+    }
+});
+</script>
 {% endblock %}

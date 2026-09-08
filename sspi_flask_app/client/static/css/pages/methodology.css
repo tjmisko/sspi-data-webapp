@@ -166,6 +166,17 @@
   font-family: var(--code-font-family);
   font-size: 0.85em;
   color: var(--low-importance-font-color);
+  transition: color 0.15s ease;
+}
+
+/* Scroll position: the section under the reading line takes the heading
+   accent on its number, mirroring the numbered headings in the article. */
+.methodology-toc-link.is-active {
+  color: var(--header-text-color);
+}
+
+.methodology-toc-link.is-active .methodology-toc-number {
+  color: var(--methodology-accent-text);
 }
 
 /* Article ------------------------------------------------------------------- */
@@ -376,79 +387,29 @@
 /* Formulas ------------------------------------------------------------------ */
 
 .methodology-formula {
-  margin: 1.6rem 0;
-  padding: 1rem 1.1rem 0.85rem 1.1rem;
-  background-color: var(--box-background-color);
-  border: 1px solid var(--border-color);
-  border-left: 3px solid var(--methodology-accent);
-  border-radius: var(--border-radius-lg);
+  margin: 1.4rem 0;
+}
+
+/* Equations are typeset by KaTeX from the LaTeX source in each figure and
+   sit inline with the prose at its size. They scroll horizontally on narrow
+   screens so a fraction never breaks. */
+.methodology-equation {
+  font-size: inherit;
+  color: var(--text-color);
+  text-align: center;
   overflow-x: auto;
 }
 
-.formula-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  /* Keeps a formula intact and lets the card scroll instead of breaking a
-     fraction across lines on a narrow screen. */
-  min-width: max-content;
-  gap: 0.35em;
-  font-family: var(--code-font-family);
-  /* Sized so the longest formula (the implied-weight denominator) still fits
-     the 70ch prose column without scrolling away its trailing factor. */
-  font-size: 0.66rem;
-  line-height: 1.3;
-  color: var(--text-color);
+.methodology-equation .katex {
+  font-size: 1.05em;
+}
+
+.methodology-equation .katex-display {
+  margin: 0.2rem 0;
+}
+
+.methodology-equation .katex-display > .katex {
   white-space: nowrap;
-}
-
-/* The stacked means read as one system only when their equals signs line up,
-   so the rows share one grid instead of each centring itself. The grid sits
-   inside the scrolling figure rather than being it, so an overflowing formula
-   scrolls from its left edge instead of being centered out of view. */
-.formula-grid {
-  display: grid;
-  grid-template-columns: max-content max-content max-content;
-  justify-content: center;
-  align-items: center;
-  min-width: max-content;
-  row-gap: 1rem;
-  column-gap: 0.4rem;
-}
-
-.formula-grid .formula-row {
-  display: contents;
-}
-
-.formula-grid .formula-term:first-child {
-  text-align: right;
-}
-
-.formula-op,
-.formula-paren {
-  color: var(--low-importance-font-color);
-}
-
-.formula-paren {
-  font-size: 1.5em;
-  line-height: 0.8;
-  vertical-align: -0.12em;
-}
-
-.formula-fraction {
-  display: inline-flex;
-  flex-direction: column;
-  /* Stretch so the rule spans the wider of the two terms rather than only the
-     denominator. */
-  align-items: stretch;
-  text-align: center;
-}
-
-.formula-denominator {
-  border-top: 1px solid currentColor;
-  padding-top: 0.22em;
-  margin-top: 0.22em;
 }
 
 /* Figures ------------------------------------------------------------------- */
@@ -457,20 +418,29 @@
   margin: 1.8rem 0;
 }
 
+/* A figure that reads as part of the prose is spaced like a display
+   equation: the same small gap above and below. */
+.methodology-figure-tight {
+  margin: 0.6rem 0;
+}
+
+/* Captions are justified blocks with a centered last line. The box width is
+   chosen at runtime by JustifiedCaptions (js/justified-captions.js), which
+   narrows or slightly widens the box so justification fills every line and
+   the last line is nearly full. Without the script the caption is a plain
+   justified block at the column width. */
 .methodology-figure-caption {
-  margin-top: 0.7rem;
+  margin: 0.7rem auto 0 auto;
+  max-width: 80ch;
   font-family: var(--header-font-family);
   font-size: 0.6rem;
   line-height: 1.5;
   color: var(--low-importance-font-color);
+  text-align: justify;
+  text-align-last: center;
+  hyphens: auto;
 }
 
-.methodology-formula .methodology-figure-caption {
-  margin-top: 0.9rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--border-color);
-  text-align: center;
-}
 
 .methodology-figure-scroll {
   overflow-x: auto;
@@ -557,10 +527,18 @@
   stroke-width: 1.5;
 }
 
-.methodology-page .hy-divisor {
+/* Edge weights sit on the edges themselves; the stroke knocks the line out
+   behind each label so the fraction reads as part of the edge. */
+.methodology-page .hy-weight {
   fill: var(--low-importance-font-color);
   font-family: var(--code-font-family);
-  font-size: 11px;
+  font-size: 9px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: var(--page-background);
+  stroke-width: 5px;
+  stroke-linejoin: round;
 }
 
 .methodology-page .hy-node rect {
