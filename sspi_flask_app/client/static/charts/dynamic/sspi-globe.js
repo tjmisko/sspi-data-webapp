@@ -688,7 +688,7 @@ class SSPIGlobeChart {
     <div class="view-options-suboption-container">
         <div class="chart-view-subheader">Dataset Options</div>
         ${this.getSwitchMarkup('altitude-toggle', 'Exploded View')}
-        ${this.getSwitchMarkup('cloropleth-toggle', 'Cloropleth', true)}
+        ${this.getSwitchMarkup('cloropleth-toggle', 'Choropleth', true)}
         ${this.getSwitchMarkup('darken-borders-toggle', 'Darken Borders')}
         <div class="chart-view-subheader">Rotation</div>
         ${this.getSwitchMarkup('globe-rotation-toggle', 'Globe Rotation', true)}

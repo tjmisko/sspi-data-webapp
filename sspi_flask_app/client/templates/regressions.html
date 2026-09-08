@@ -5,51 +5,54 @@
 {% endblock %}
 
 {% block content %}
-<article class="page-content">
+<article class="page-content regressions-page">
     <section class="page-section">
         <div class="content-container">
-            <div class="page-header">
-                <h2>Series Correlation Analysis</h2>
+            <header class="page-header">
+                <h1>Series Correlation Analysis</h1>
                 <p class="functionality-explainer">
                     Explore relationships between different indicators, categories, pillars, and datasets
                     using multiple statistical analysis modes.
                 </p>
-            </div>
+            </header>
 
             <div id="correlation-chart-root"></div>
 
-            <div class="methodology-section">
-                <h2>Analysis Modes</h2>
+            <section class="analysis-modes">
+                <h2 class="analysis-modes-title">Analysis Modes</h2>
+                <div class="analysis-mode-list">
+                    <div class="analysis-mode-card">
+                        <h3>First Differences</h3>
+                        <p>
+                            Examines how year-over-year changes in one variable relate to
+                            contemporaneous changes in the other (&Delta;y against &Delta;x),
+                            centered on the origin. Differencing absorbs country-specific
+                            fixed effects, so the relationship reflects movement rather than
+                            persistent level differences.
+                        </p>
+                    </div>
 
-                <div class="mode-description">
-                    <h3>Year-by-Year Cross-Sectional</h3>
-                    <p>
-                        Examines the correlation within a single year across countries.
-                        Use the year slider to see how the relationship evolves over time.
-                        Controls for temporal effects but requires sufficient cross-sectional variation.
-                    </p>
-                </div>
+                    <div class="analysis-mode-card">
+                        <h3>Year-by-Year Cross-Sectional</h3>
+                        <p>
+                            Compares values across countries within a single year.
+                            Use the year slider to see how the relationship evolves over time.
+                            Controls for temporal effects but requires sufficient
+                            cross-sectional variation.
+                        </p>
+                    </div>
 
-                <div class="mode-description">
-                    <h3>Lagged First Differences</h3>
-                    <p>
-                        Analyzes the relationship between changes (Δx, Δy) from year to year.
-                        Centered on the origin. Helps identify whether changes in one variable
-                        are associated with changes in another, controlling for country-specific
-                        fixed effects.
-                    </p>
+                    <div class="analysis-mode-card">
+                        <h3>Pooled Correlation</h3>
+                        <p>
+                            Combines all country-year observations into one analysis,
+                            ignoring temporal structure. Provides a simple overall
+                            correlation measure but may be misleading if the relationship
+                            changes over time.
+                        </p>
+                    </div>
                 </div>
-
-                <div class="mode-description">
-                    <h3>Pooled Correlation</h3>
-                    <p>
-                        Combines all data points across all years and countries,
-                        ignoring temporal structure. Provides a simple overall
-                        correlation measure but may be misleading if the relationship
-                        changes over time.
-                    </p>
-                </div>
-            </div>
+            </section>
         </div>
     </section>
 </article>

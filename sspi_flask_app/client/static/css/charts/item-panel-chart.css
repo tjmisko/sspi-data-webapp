@@ -1,12 +1,6 @@
+/* Look and feel come from chart-controls.css; only the width lives here. */
 .item-dropdown {
-  /* color: var(--text-color); */
-  /* font-weight: bold; */
   width: 100%;
-  padding: 0.5em;
-  border: 0px solid #ccc;
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
-  font-size: 0.85em;
 }
 
 /* Enhanced item description in chart sidebar */

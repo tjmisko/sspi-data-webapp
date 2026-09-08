@@ -383,9 +383,13 @@ class SSPIMetadata(MongoWrapper):
         print("Analysis Directory: ", analysis_dir)
         details = []
         for dirpath, dirnames, filenames in os.walk(analysis_dir):
+            # Prune hidden directories (.ipynb_checkpoints, .git) before descending
+            dirnames[:] = [d for d in dirnames if not d.startswith(".")]
             if "notebooks" in dirpath:
                 continue
             for analysis_file in filenames:
+                if not analysis_file.endswith(".md"):
+                    continue
                 full_analysis_path = os.path.join(dirpath, analysis_file)
                 try:
                     detail = frontmatter.load(full_analysis_path)
@@ -858,7 +862,7 @@ class SSPIMetadata(MongoWrapper):
         try:
             # Sanitize input - only allow alphanumeric and hyphens
             analysis_code = analysis_code.lower()
-            if not all(c.isalnum() or c == '-' for c in analysis_code):
+            if not all(c.isalnum() or c in '-_' for c in analysis_code):
                 log.warning(f"Invalid analysis code format: {analysis_code}")
                 return "<p>Analysis not available.</p>"
 

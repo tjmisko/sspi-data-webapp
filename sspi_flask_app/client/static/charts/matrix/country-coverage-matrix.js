@@ -18,22 +18,30 @@ class CountryCoverageMatrixChart {
     }
 
     setTheme(theme) {
-        if (theme !== "light") {
-            this.theme = "dark";
-            this.tickColor = "#bbb";
-            this.axisTitleColor = "#bbb";
-            // Darker but saturated green for dark mode
-            this.observedBg = 'rgba(0, 140, 0, 0.7)';
-            this.observedBorder = 'rgba(0, 140, 0, 1)';
-            this.observedSummary = 'rgba(0, 140, 0, 0.8)';
-        } else {
-            this.theme = "light";
-            this.tickColor = "#444";
-            this.axisTitleColor = "#444";
-            this.observedBg = 'rgba(0, 180, 0, 0.7)';
-            this.observedBorder = 'rgba(0, 180, 0, 1)';
-            this.observedSummary = 'rgba(0, 180, 0, 0.8)';
-        }
+        this.theme = theme === "light" ? "light" : "dark";
+        // Pillar tokens carry the theme-tuned green/orange; read them rather
+        // than keeping a second palette in JS.
+        const rootStyle = getComputedStyle(document.documentElement);
+        const readToken = (name, fallback) =>
+            rootStyle.getPropertyValue(name).trim() || fallback;
+        const withAlpha = (color, alpha) =>
+            /^#[0-9a-fA-F]{6}$/.test(color)
+                ? color + Math.round(alpha * 255).toString(16).padStart(2, "0")
+                : color;
+
+        const observed = readToken("--sus-accent", "#28A745");
+        const imputed = readToken("--ms-accent", "#FF851B");
+        // Observed cells are the bulk of the matrix, so they sit back; the
+        // imputed exceptions carry full strength in both themes.
+        const observedAlpha = this.theme === "light" ? 0.75 : 0.65;
+        this.tickColor = readToken("--low-importance-font-color", "#888");
+        this.axisTitleColor = this.tickColor;
+        this.observedBg = withAlpha(observed, observedAlpha);
+        this.observedBorder = observed;
+        this.observedSummary = withAlpha(observed, 0.85);
+        this.imputedBg = withAlpha(imputed, 0.85);
+        this.imputedBorder = imputed;
+        this.imputedSummary = withAlpha(imputed, 0.85);
         if (this.chart) {
             this.updateChartOptions();
             this.chart.update();
@@ -86,7 +94,7 @@ class CountryCoverageMatrixChart {
         });
 
         this.font = {
-            family: 'Courier New',
+            family: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
             size: 10,
             style: "normal",
             weight: "normal"
@@ -240,7 +248,7 @@ class CountryCoverageMatrixChart {
         this.summaryContainer.innerHTML = '';
         const items = [
             { label: 'Observed Data', value: summary.observedPercent, count: summary.observedCount, color: this.observedSummary },
-            { label: 'Imputed Data', value: summary.imputedPercent, count: summary.imputedCount, color: 'rgba(255, 165, 0, 0.8)' }
+            { label: 'Imputed Data', value: summary.imputedPercent, count: summary.imputedCount, color: this.imputedSummary }
         ];
 
         items.forEach(item => {
@@ -292,14 +300,14 @@ class CountryCoverageMatrixChart {
                     // Data should only be 'observed' or 'imputed'
                     return cell.v === 'observed'
                         ? this.observedBg
-                        : 'rgba(255, 165, 0, 0.7)'; // Orange
+                        : this.imputedBg;
                 },
                 borderColor: (context) => {
                     const cell = context.dataset.data[context.dataIndex];
                     // Data should only be 'observed' or 'imputed'
                     return cell.v === 'observed'
                         ? this.observedBorder
-                        : 'rgba(255, 165, 0, 1)';
+                        : this.imputedBorder;
                 },
                 borderWidth: 1,
                 width: ({ chart }) => (chart.chartArea || {}).width / this.n_years - 1,

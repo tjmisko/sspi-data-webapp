@@ -1,42 +1,55 @@
-.analysis-metadata-line {
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
+/* ==========================================================================
+   Analysis index (/analysis)
+   ========================================================================== */
+
+/* The index is a card list, not prose: it uses the content column, capped
+   narrower than the 1280px default so two-up cards stay readable. */
+.analysis-index.content-container {
+  max-width: 960px;
+  padding-bottom: 2rem;
 }
 
-.analysis-author-list {
+.analysis-index-header {
+  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.analysis-index-header h1 {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: row;
 }
 
-.analysis-author-list-element:not(:first-child)::before {
-  content: ",";
-}
-.analysis-author-list-element {
-  color: var(--low-importance-font-color);
-}
-
-.analysis-date {
-  color: var(--low-importance-font-color);
+.analysis-index-lede {
+  margin: 0.4rem 0 0;
+  max-width: 60ch;
+  font-family: var(--body-font-family);
+  font-size: 0.85rem;
+  color: var(--medium-importance-font-color);
 }
 
-/* Analysis Page Sections */
 .analysis-section {
   margin-bottom: 2.5rem;
 }
 
-.analysis-section h2 {
-  margin-bottom: 0.5rem;
-  margin-top: 0;
+.analysis-section:last-child {
+  margin-bottom: 0;
 }
 
+.analysis-section h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+}
+
+/* Shared with country-data and customize-load — keep global, tune per page. */
 .functionality-explainer {
   margin-bottom: 0.5rem;
   color: var(--low-importance-font-color);
   font-family: var(--body-font-family);
+}
+
+.analysis-section .functionality-explainer {
+  margin: 0 0 0.75rem;
+  max-width: 70ch;
 }
 
 /* Analysis page specific card adjustments - reduce whitespace */
@@ -63,51 +76,354 @@
   margin-bottom: 0.5rem;
 }
 
-/* Core Analysis Cards - Visual distinction with hover effects */
-.core-analysis-card {
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  display: block;
-}
-
-.core-analysis-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-/* Analysis Article Cards */
+/* Cards are links: the trailing arrow is the resting-state affordance. */
+.core-analysis-card,
 .analysis-article-card {
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: block;
+  text-decoration: none;
+  color: var(--text-color);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.analysis-article-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+.analysis-section .config-card .config-card-header::after {
+  content: "\2192";
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.analysis-section .config-card:hover .config-card-header::after {
+  transform: translateX(3px);
+}
+
+.analysis-section .config-card:hover {
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--box-background-color));
+  border-color: var(--primary-color);
+}
+
+/* Keep the global a:hover green off card text — the card tint carries hover. */
+.analysis-section .config-card:hover,
+.analysis-section .config-card:hover .config-name {
+  color: var(--text-color);
 }
 
 .analysis-article-card .config-card-header {
   align-items: center;
 }
 
+/* Push date + arrow together against the right edge of the header row. */
 .analysis-article-card .config-meta-item {
+  margin-left: auto;
   color: var(--low-importance-font-color);
   font-size: 0.75rem;
   white-space: nowrap;
 }
 
-/* Article Authors Styling */
 .article-authors {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--subtle-line-color);
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-color);
+  font-family: var(--body-font-family);
+  font-size: 0.72rem;
+  color: var(--low-importance-font-color);
+}
+
+/* ==========================================================================
+   Analysis article (/analysis/<code>)
+   ========================================================================== */
+
+.analysis-article.print-style-article {
+  max-width: 70ch;
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+
+.analysis-article-header {
+  padding-bottom: 0.9rem;
+  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.analysis-article .analysis-title {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.analysis-article .analysis-subtitle {
+  margin: 0.5rem 0 0;
+  font-family: var(--article-body-font-family);
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--medium-importance-font-color);
+}
+
+.analysis-metadata-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.25rem;
+  margin-top: 0.9rem;
+}
+
+.analysis-article .analysis-metadata-line p {
+  margin: 0;
+  font-family: var(--body-font-family);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--low-importance-font-color);
+}
+
+/* --- Article prose: the "policy paper" register --- */
+
+.analysis-article-body {
+  font-family: var(--article-body-font-family);
   font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--body-text-color);
+}
+
+.analysis-article-body > *:first-child {
+  margin-top: 0;
+}
+
+.analysis-article .analysis-article-body p {
+  margin: 0 0 1.1em;
+}
+
+.analysis-article-body h2,
+.analysis-article-body h3,
+.analysis-article-body h4,
+.analysis-article-body h5,
+.analysis-article-body h6 {
+  font-family: var(--header-font-family);
+  color: var(--header-text-color);
+  line-height: 1.3;
+}
+
+.analysis-article-body h2 {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin: 2.25rem 0 0.6rem;
+}
+
+.analysis-article-body h3 {
+  font-size: 1.12rem;
+  font-weight: 500;
+  margin: 2rem 0 0.5rem;
+}
+
+.analysis-article-body h4 {
+  font-size: 0.94rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.35rem;
+}
+
+.analysis-article-body h5 {
+  font-size: 0.86rem;
+  font-weight: 600;
+  margin: 1.3rem 0 0.3rem;
+  letter-spacing: 0.02em;
+}
+
+.analysis-article-body h6 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.3rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--medium-importance-font-color);
+}
+
+.analysis-article-body ul,
+.analysis-article-body ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.3em;
+}
+
+.analysis-article-body li {
+  margin-bottom: 0.35em;
+}
+
+.analysis-article-body a {
+  color: var(--primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.analysis-article-body a:hover {
+  color: var(--green-accent);
+}
+
+.analysis-article-body blockquote {
+  margin: 1.5em 0;
+  padding: 0.1em 0 0.1em 1rem;
+  border-left: 2px solid var(--border-color);
+  color: var(--medium-importance-font-color);
+  font-style: italic;
+}
+
+.analysis-article-body code {
+  font-family: var(--code-font-family);
+  font-size: 0.85em;
+  background: var(--pre-background-color);
+  padding: 0.1em 0.3em;
+  border-radius: var(--border-radius-sm);
+}
+
+.analysis-article-body pre {
+  background: var(--pre-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+}
+
+.analysis-article-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.analysis-article-body table {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-family: var(--body-font-family);
+  font-size: 0.75rem;
+  margin: 1.5em 0;
+}
+
+.analysis-article-body th,
+.analysis-article-body td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.4em 0.75em;
+  text-align: left;
+}
+
+.analysis-article-body th {
+  font-weight: 600;
   color: var(--text-color);
 }
 
-.article-authors strong {
+.analysis-article-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+.analysis-article-body hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2.5rem 0;
+}
+
+/* --- Empty state: no article body, or no such article --- */
+
+.analysis-empty-state {
+  margin: 1.5rem 0 2rem;
+  padding: 2rem 1.5rem;
+  background: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  text-align: center;
+}
+
+.analysis-article .analysis-empty-state-message {
+  margin: 0;
+  font-family: var(--body-font-family);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.analysis-article .analysis-empty-state-detail {
+  margin: 0.4rem auto 1.25rem;
+  max-width: 44ch;
+  font-family: var(--body-font-family);
+  font-size: 0.78rem;
+  color: var(--low-importance-font-color);
+}
+
+.analysis-empty-state-link {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--region-background-color);
+  font-family: var(--body-font-family);
+  font-size: 0.78rem;
+  color: var(--primary-color);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.analysis-empty-state-link:hover {
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--box-background-color));
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* ==========================================================================
+   Regressions page (/analysis/regressions)
+   ========================================================================== */
+
+.regressions-page .page-header {
+  padding-bottom: 0.9rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.regressions-page .page-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.regressions-page .page-header .functionality-explainer {
+  margin: 0.4rem 0 0;
+  max-width: 70ch;
+  font-size: 0.85rem;
+}
+
+.regressions-page #correlation-chart-root {
+  margin-bottom: 2rem;
+}
+
+.regressions-page .analysis-modes {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.regressions-page .analysis-modes-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.analysis-mode-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.analysis-mode-card {
+  padding: 0.875rem 1rem;
+  background: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.analysis-mode-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
   font-weight: 600;
+  color: var(--text-color);
+}
+
+.analysis-mode-card p {
+  margin: 0;
+  font-family: var(--body-font-family);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--body-text-color);
 }

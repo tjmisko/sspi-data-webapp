@@ -260,7 +260,108 @@ def countries():
 
 @client_bp.route('/methodology')
 def methodology():
-    return render_template('methodology.html')
+    """
+    Render the methodology essay.
+
+    Every count quoted in the prose comes from sspi_metadata so the page
+    cannot drift from the live structure of the index.
+    """
+    pillar_tree = sspi_metadata.pillar_category_summary_tree()
+    indicator_details = sspi_metadata.indicator_details()
+    dataset_details = sspi_metadata.dataset_details()
+    scored_dataset_codes = {
+        dataset_code
+        for detail in indicator_details
+        for dataset_code in detail.get("DatasetCodes") or []
+    }
+    organization_codes = {
+        (detail.get("Source") or {}).get("OrganizationCode")
+        for detail in dataset_details
+        if detail.get("DatasetCode") in scored_dataset_codes
+    }
+    organization_codes.discard(None)
+    years = sorted({
+        year
+        for period in sspi_metadata.time_period_details()
+        if period.get("Type") == "Single Year"
+        for year in period.get("Years") or []
+    })
+    # An indicator whose raw values run the wrong way is inverted by swapping
+    # its goalposts, so the only way to count them is to read the goalposts.
+    # Goalposts live either on the indicator or as literals in its score
+    # function, and an indicator may combine components running both ways.
+    inverted_count = 0
+    partly_inverted_count = 0
+    for detail in indicator_details:
+        goalpost_pairs = [
+            (float(lower), float(upper))
+            for _, lower, upper in re.findall(
+                r"goalpost\(\s*(\w+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)",
+                detail.get("ScoreFunction") or "",
+            )
+        ]
+        lower, upper = detail.get("LowerGoalpost"), detail.get("UpperGoalpost")
+        if lower is not None and upper is not None:
+            goalpost_pairs.append((lower, upper))
+        swapped = [lower > upper for lower, upper in goalpost_pairs]
+        if swapped and all(swapped):
+            inverted_count += 1
+        elif any(swapped):
+            partly_inverted_count += 1
+    # Every level of the tree is an unweighted mean, so a single indicator's
+    # share of the SSPI is 1 / (indicators in its category * categories in its
+    # pillar * pillars). The spread across categories is the price of that
+    # choice, and the table on the page states it outright.
+    pillar_count = len(pillar_tree)
+    weight_rows = []
+    pillar_summary = []
+    for pillar in pillar_tree:
+        categories = pillar.get("Categories") or []
+        pillar_summary.append({
+            "code": pillar["ItemCode"],
+            "name": pillar["ItemName"],
+            "description": pillar.get("ShortDescription", ""),
+            "categories": [
+                {"code": c["ItemCode"], "name": c["ItemName"],
+                 "description": c.get("ShortDescription", "")}
+                for c in categories
+            ],
+            "category_count": len(categories),
+            "indicator_count": sum(
+                len(c.get("IndicatorCodes") or []) for c in categories
+            ),
+        })
+        for category in categories:
+            indicator_count = len(category.get("IndicatorCodes") or [])
+            if not indicator_count or not pillar_count:
+                continue
+            weight_rows.append({
+                "pillar": pillar["ItemName"],
+                "pillar_code": pillar["ItemCode"],
+                "category": category["ItemName"],
+                "category_code": category["ItemCode"],
+                "indicator_count": indicator_count,
+                "category_count": len(categories),
+                "weight_percent": 100 / (indicator_count * len(categories) * pillar_count),
+            })
+    weight_rows.sort(key=lambda row: row["weight_percent"], reverse=True)
+    return render_template(
+        'methodology.html',
+        pillar_summary=pillar_summary,
+        pillar_count=pillar_count,
+        category_count=len(sspi_metadata.category_codes()),
+        indicator_count=len(sspi_metadata.indicator_codes()),
+        dataset_count=len(scored_dataset_codes),
+        organization_count=len(organization_codes),
+        country_count=len(sspi_metadata.country_group("SSPI67")),
+        core_country_count=len(sspi_metadata.country_group("SSPI49")),
+        extended_country_count=len(sspi_metadata.country_group("SSPIExtended")),
+        year_start=years[0] if years else None,
+        year_end=years[-1] if years else None,
+        inverted_count=inverted_count,
+        partly_inverted_count=partly_inverted_count,
+        weight_rows=weight_rows,
+    )
 
 
 @client_bp.route('/contact')
@@ -506,66 +607,13 @@ def indicator_data(indicator_code):
 @client_bp.route('/analysis/regressions')
 def regressions():
     """
-    Render regressions analysis page with dynamic series selection.
+    Render the regressions analysis page.
 
-    Query parameters:
-    - seriesX: First series code (default: SSPI)
-    - seriesY: Second series code (default: WB_GDP_PERCAP_CURPRICE_USD)
-
-    Returns:
-        Rendered template with series options and initial selection
+    The chart reads its series selection from the seriesX/seriesY query
+    parameters and fetches the dropdown options from
+    /api/v1/series-options, so the server renders the shell only.
     """
-    # Get URL parameters or use defaults
-    series_x = request.args.get('seriesX', 'SSPI').upper()
-    series_y = request.args.get('seriesY', 'WB_GDP_PERCAP_CURPRICE_USD').upper()
-
-    # Build grouped series options for dropdowns
-    series_options = {
-        'Indicators': [
-            {
-                'code': indicator['ItemCode'],
-                'name': indicator['ItemName'],
-                'type': 'Indicator'
-            } for indicator in sspi_metadata.indicator_details()
-        ],
-        'Categories': [
-            {
-                'code': category['ItemCode'],
-                'name': category['ItemName'],
-                'type': 'Category'
-            } for category in sspi_metadata.category_details()
-        ],
-        'Pillars': [
-            {
-                'code': pillar['ItemCode'],
-                'name': pillar['ItemName'],
-                'type': 'Pillar'
-            } for pillar in sspi_metadata.pillar_details()
-        ],
-        'Datasets': [
-            {
-                'code': dataset['DatasetCode'],
-                'name': dataset['DatasetName'],
-                'type': 'Dataset'
-            } for dataset in sspi_metadata.dataset_details()
-        ]
-    }
-
-    # Add SSPI to the options (it's the root item)
-    series_options['Index'] = [
-        {
-            'code': 'SSPI',
-            'name': 'Sustainable and Shared-Prosperity Policy Index',
-            'type': 'SSPI'
-        }
-    ]
-
-    return render_template(
-        'regressions.html',
-        series_options=series_options,
-        initial_series_x=series_x,
-        initial_series_y=series_y
-    )
+    return render_template('regressions.html')
 
 
 @client_bp.route('/analysis/correlation/<series_x>/<series_y>')
@@ -676,16 +724,22 @@ def analysis_page(analysis_code):
             'analysis-template.html',
             title='Analysis Not Found',
             subtitle=None,
-            authors=None,
+            authors=[],
             date=None,
-            analysis='<p>The requested analysis could not be found.</p>'
-        )
+            analysis=None
+        ), 404
 
     analysis_title = analysis_detail.get("AnalysisTitle")
     analysis_subtitle = analysis_detail.get("AnalysisSubtitle")
     analysis_date = analysis_detail.get("Date")
-    analysis_authors = analysis_detail.get("Authors")
+    analysis_authors = analysis_detail.get("Authors") or []
+    if isinstance(analysis_authors, str):
+        analysis_authors = [analysis_authors]
     analysis_html = sspi_metadata.get_analysis_html(analysis_code)
+    # get_analysis_html returns this placeholder when the markdown file is
+    # missing or unreadable; the template renders an empty state for None.
+    if analysis_html == "<p>Analysis not available.</p>":
+        analysis_html = None
     return render_template(
         'analysis-template.html',
         title=analysis_title,

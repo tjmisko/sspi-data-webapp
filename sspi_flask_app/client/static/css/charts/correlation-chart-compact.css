@@ -71,21 +71,11 @@
     flex-shrink: 0;
 }
 
-/* Dropdowns expand to fill available space and are same width */
+/* Dropdowns expand to fill available space and are same width.
+   Look and focus styling come from chart-controls.css. */
 .series-selector-inline {
     flex: 1 1 0;
     min-width: 0;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--input-background-color);
-    color: var(--input-text-color);
-}
-
-.series-selector-inline:focus {
-    outline: 2px solid var(--accent-color);
-    outline-offset: 2px;
 }
 
 /* Ensure SearchableDropdown container in title area also grows to fill space */
@@ -221,15 +211,9 @@
     transform-origin: center center;
 }
 
-/* Mode selector */
+/* Mode selector — themed by chart-controls.css; only sizing lives here. */
 .chart-options .mode-selector {
     width: 100%;
-    padding: 0.4rem 0.5rem;
-    font-size: 0.8rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--input-background-color);
-    color: var(--input-text-color);
 }
 
 /* Mode description */
@@ -260,15 +244,9 @@
     padding: 0.5rem;
 }
 
-/* Country group selector */
+/* Country group selector — themed by chart-controls.css. */
 .chart-options .country-group-selector {
     width: 100%;
-    padding: 0.4rem 0.5rem;
-    font-size: 0.8rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--input-background-color);
-    color: var(--input-text-color);
 }
 
 /* Responsive adjustments */

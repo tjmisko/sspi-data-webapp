@@ -1,9 +1,13 @@
 :root {
-  --title-font-family: 'REM', sans-serif;
-  --header-font-family: 'Hevetica', sans-serif;
-  --body-font-family: 'Helvetica', sans-serif;
-  --article-body-font-family: 'Libra Baskerville', serif;
-  --code-font-family: 'Georgia', serif;
+  --title-font-family: 'REM', system-ui, sans-serif;
+  --body-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --header-font-family: var(--body-font-family);
+  --article-body-font-family: 'Libre Baskerville', Georgia, serif;
+  --code-font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  /* Legacy aliases — keep call sites working, one source of truth above */
+  --heading-font-family: var(--header-font-family);
+  --monospace-font-family: var(--code-font-family);
+  --mono-font-family: var(--code-font-family);
   --mobile-break-width: 600px;
   --hamburger-break-width: 850px;
   --small-tablet-break-width: 768px;
@@ -17,26 +21,30 @@
   --pg-color: #007BFF;
   --link-color: #2895AE;
   --error-color: #dc3545;
+  --negative-color: #ef4444;
   --theme-gap: 1rem;
   --primary-color: #3b82f6;
+  --accent-color: rgb(41, 75, 80);
   --border-radius: 8px;
   --border-radius-lg: 12px;
+  --border-radius-md: var(--border-radius);
+  --border-radius-sm: 4px;
   --shadow-sm: 0 2px 4px -1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 8px 25px -5px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
 
-  /* Ranking Badge Colors */
-  --badge-positive-color: rgba(40, 167, 69, 0.75); /* Green for high scores/best ranks */
-  --badge-negative-color: rgba(239, 68, 68, 0.75); /* Red for low scores/worst ranks */
-  --badge-improved-color: rgba(0, 123, 255, 0.75); /* Blue for improvements */
-  --badge-declined-color: rgba(255, 133, 27, 0.75); /* Orange for declines */
-  --badge-default-color: rgba(59, 130, 246, 0.75); /* Default blue */
+  /* Ranking Badge Colors — opaque so badge text passes AA in both themes */
+  --badge-positive-color: #1e7e34; /* Green for high scores/best ranks */
+  --badge-negative-color: #dc2626; /* Red for low scores/worst ranks */
+  --badge-improved-color: #0062cc; /* Blue for improvements */
+  --badge-declined-color: #b45309; /* Orange for declines */
+  --badge-default-color: #2563eb; /* Default blue */
 
-  /* Ranking Card Background Tints */
-  --card-tint-positive: rgba(40, 167, 69, 0.03); /* Green tint */
-  --card-tint-negative: rgba(239, 68, 68, 0.03); /* Red tint */
-  --card-tint-improved: rgba(0, 123, 255, 0.03); /* Blue tint */
-  --card-tint-declined: rgba(255, 133, 27, 0.03); /* Orange tint */
+  /* Ranking Card Background Tints — opaque mixes so cards read against inset panels */
+  --card-tint-positive: color-mix(in srgb, var(--sus-color) 7%, var(--box-background-color));
+  --card-tint-negative: color-mix(in srgb, var(--negative-color) 7%, var(--box-background-color));
+  --card-tint-improved: color-mix(in srgb, var(--pg-color) 7%, var(--box-background-color));
+  --card-tint-declined: color-mix(in srgb, var(--ms-color) 7%, var(--box-background-color));
 }
 
 @media (min-width: 600px) {
@@ -57,7 +65,6 @@
 
 
 .light-theme {
-  --accent-color-1: rgb(41, 75, 80);
   --title-weight: 400;
   --header-color: #f9fafb;
   --subheader-background-color:  rgba(250,200,0,0.75);
@@ -65,17 +72,28 @@
   --region-background-color: #F5F5F5;
   --pre-background-color: #dedede44;
   --header-text-color: #1f2937;
-  --header-font-color: #1f2937;
+  --header-font-color: var(--header-text-color);
   --body-text-color: #4b5563;
   --page-background: #f0f1f2;
   --green-accent: #8BA342;
   --text-color: #111827;
-  --low-importance-font-color: #6b7280;
-  --mobile-break-width: 1135px;
+  /* Darkened from #6b7280, which sat at 4.2-4.4:1 against the light grounds and
+     missed the 4.5:1 floor for captions, stat labels, and breadcrumb chrome.
+     This clears it on every light surface up to the tinted pillar cards. */
+  --low-importance-font-color: #616874;
+  --medium-importance-font-color: #4b5563;
+  --font-color: var(--text-color);
+  --body-font-color: var(--body-text-color);
+  --text-primary: var(--text-color);
+  --text-secondary: var(--low-importance-font-color);
+  --background-primary: var(--box-background-color);
+  --background-secondary: var(--region-background-color);
   --subtle-line-color: #e5e7eb;
-  --border-color: #e5e7eb;
+  --border-color: var(--subtle-line-color);
   --theme-border-thick: 2px solid var(--subtle-line-color);
   --theme-border-thin: 1px solid var(--subtle-line-color);
+  --theme-border: var(--theme-border-thin);
+  --primary-color: #1d4ed8;
   --toggle-bg: #F5F5F5;
   --toggle-thumb: rgb(0, 0, 0, 0.075);
   --input-background-color: #ffffff;
@@ -85,10 +103,19 @@
   --ocean-color: #0b2d51;
   --info-background: #e8f4f8;
   --info-border: #2196f3;
+  /* Surface ladder for list rows and recessed wells */
+  --row-surface: #ffffff;
+  --row-surface-hover: #eef0f3;
+  --detail-well: #f3f4f6;
+  /* Pillar accents: brand hue preserved, lightness tuned to pass AA per theme */
+  --sus-accent: #1B6E30;
+  --ms-accent: #96450A;
+  --pg-accent: #0056B3;
+  /* Pole to mix chip/label text toward for contrast against this theme's surfaces */
+  --chip-text-mix: black;
 }
 
 .dark-theme {
-  --accent-color: rgb(41, 75, 80);
   --title-weight: 300;
   --header-color: #1e293b;
   --subheader-background-color: rgba(150,100,0,0.95);
@@ -96,17 +123,25 @@
   --box-background-color: #1b2840;
   --region-background-color: #1e293b44;
   --header-text-color: #f1f5f9;
-  --header-font-color: #f1f5f9;
+  --header-font-color: var(--header-text-color);
   --body-text-color: #e2e8f0;
   --page-background: color-mix(in srgb, #1b2840, black 22%);
   --green-accent: #AECC53;
   --text-color: #f7fafc;
   --low-importance-font-color: #a0aec0;
-  --mobile-break-width: 1135px;
+  --medium-importance-font-color: #cbd5e1;
+  --font-color: var(--text-color);
+  --body-font-color: var(--body-text-color);
+  --text-primary: var(--text-color);
+  --text-secondary: var(--low-importance-font-color);
+  --background-primary: var(--box-background-color);
+  --background-secondary: var(--region-background-color);
   --subtle-line-color: #4a5568;
-  --border-color: #4a5568;
+  --border-color: var(--subtle-line-color);
   --theme-border-thick: none;
   --theme-border-thin: 1px solid var(--subtle-line-color);
+  --theme-border: var(--theme-border-thin);
+  --primary-color: #60a5fa;
   --toggle-bg: #2d3748;
   --toggle-thumb: rgb(255, 255, 255, 0.1);
   --input-background-color: #4b5563;
@@ -116,4 +151,15 @@
   --ocean-color: #0b2131;
   --info-background: #2196f322;
   --info-border: #2196f3;
+  /* Surface ladder for list rows and recessed wells */
+  --row-surface: #223049;
+  --row-surface-hover: #2A3A57;
+  --detail-well: #18233A;
+  /* Pillar accents: brand hue preserved, lightness tuned to pass AA per theme */
+  --sus-accent: #3DD164;
+  --ms-accent: #FFA04D;
+  /* Lightened from #4DA3FF, which read 4.1:1 on its own 12% chip tint. */
+  --pg-accent: #66B0FF;
+  /* Pole to mix chip/label text toward for contrast against this theme's surfaces */
+  --chip-text-mix: white;
 }

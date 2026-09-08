@@ -59,8 +59,8 @@ class CountryRankingsPanel {
         this.parentElement.innerHTML = `
             <div class="rankings-panel">
                 <div class="rankings-panel-header">
-                    <h3>Time Period</h3>
-                    <select class="time-period-selector">
+                    <label class="time-period-label" for="rankings-time-period-selector">Time Period</label>
+                    <select class="time-period-selector" id="rankings-time-period-selector">
                         ${dropdownHTML}
                     </select>
                 </div>
@@ -95,8 +95,8 @@ class CountryRankingsPanel {
                 <!-- Relative Performance Section -->
                 <div class="rankings-section">
                     <div class="rankings-section-header">
-                        <h4>Relative Indicator Performance (Rank-Based)</h4>
-                        <p class="rankings-section-description">Policy indicators on which ${this.countryCode} ranks best/worst compared to other countries.</p>
+                        <h4>Relative Indicator Performance\u0020(Rank-Based)</h4>
+                        <p class="rankings-section-description">Policy indicators on which ${this.countryCode}\u0020ranks best/worst compared to other countries.</p>
                     </div>
                     <div class="rankings-panel-content ${layoutClass}">
                         <div class="rankings-column">
@@ -343,7 +343,7 @@ class CountryRankingsPanel {
 
         if (!isSingleYear) {
             container.querySelectorAll('.ranking-card').forEach(card => {
-                card.style.cursor = 'pointer';
+                card.classList.add('ranking-card-clickable');
                 card.addEventListener('click', (e) => {
                     this.showPreviewModal(card);
                 });

@@ -1,0 +1,264 @@
+/* Chart option controls — the shared form-control kit for every chart surface.
+ *
+ * One recipe per control type, applied across the panel-chart sidebar
+ * (.chart-options), the correlation chart options, and the standalone chart
+ * selects (.time-period-selector, .sensitivity-group-select, .filter-select).
+ * The globe switches in components/globe.css set the pattern these rules
+ * follow: tracks and thumbs sized in em, --green-accent as the only active
+ * hue, inputs on --input-background-color inside 1px --subtle-line-color
+ * borders. Native checkboxes here render as the same switch without the
+ * globe's extra track/thumb markup, so the two stay visually identical.
+ *
+ * This file owns the control look; sizing overrides (width, compact padding)
+ * stay with the components that need them. The download form is owned here
+ * outright — panel-chart.css no longer styles it. */
+
+/* ---------- Selects ---------- */
+
+.chart-options select,
+.series-selector-inline,
+.time-period-selector,
+.sensitivity-group-select,
+.filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  padding: 0.4em 1.9em 0.4em 0.6em;
+  color: var(--input-text-color);
+  background-color: var(--input-background-color);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--low-importance-font-color) 50%),
+    linear-gradient(135deg, var(--low-importance-font-color) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.05em) 50%,
+    calc(100% - 0.7em) 50%;
+  background-size: 0.35em 0.35em;
+  background-repeat: no-repeat;
+  border: 1px solid var(--subtle-line-color);
+  border-radius: var(--border-radius);
+  font-family: var(--header-font-family);
+  font-size: 0.85em;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.chart-options select:hover,
+.series-selector-inline:hover,
+.time-period-selector:hover,
+.sensitivity-group-select:hover,
+.filter-select:hover {
+  border-color: color-mix(in srgb, var(--green-accent) 45%, var(--subtle-line-color));
+}
+
+.chart-options select:focus-visible,
+.series-selector-inline:focus-visible,
+.time-period-selector:focus-visible,
+.sensitivity-group-select:focus-visible,
+.filter-select:focus-visible {
+  outline: 2px solid var(--green-accent);
+  outline-offset: 1px;
+}
+
+.chart-options select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Number inputs ---------- */
+
+.chart-options input[type="number"] {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.25em 0.45em;
+  color: var(--input-text-color);
+  background-color: var(--input-background-color);
+  border: 1px solid var(--subtle-line-color);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--header-font-family);
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease;
+}
+
+.chart-options input[type="number"]:hover {
+  border-color: color-mix(in srgb, var(--green-accent) 45%, var(--subtle-line-color));
+}
+
+.chart-options input[type="number"]:focus-visible {
+  outline: 2px solid var(--green-accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Checkbox switch rows ----------
+   Two markup shapes arrive here: a label.chart-view-option wrapping the input
+   (panel charts), and a div.chart-view-option holding a label that wraps the
+   input (correlation chart). row-reverse puts the text left and the switch
+   right in both. The globe rows carry .globe-switch and their own layout. */
+
+.chart-options .chart-view-option:has(> input[type="checkbox"]):not(.globe-switch),
+.chart-options .chart-view-option > label:has(> input[type="checkbox"]) {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75em;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0.3em 0.45em;
+  border-radius: var(--border-radius);
+  line-height: 1.25;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.chart-options .chart-view-option:has(> input[type="checkbox"]):not(.globe-switch):hover,
+.chart-options .chart-view-option > label:has(> input[type="checkbox"]):hover {
+  background-color: color-mix(in srgb, var(--green-accent) 12%, transparent);
+}
+
+/* ---------- The switch itself ---------- */
+
+.chart-options .chart-view-option:not(.globe-switch) input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 2.1em;
+  height: 1.15em;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  background-color: color-mix(in srgb, var(--subtle-line-color) 55%, transparent);
+  border: 1px solid var(--subtle-line-color);
+  border-radius: 1em;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.chart-options .chart-view-option:not(.globe-switch) input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.13em;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 50%;
+  background-color: var(--low-importance-font-color);
+  transform: translateY(-50%);
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.chart-options .chart-view-option:not(.globe-switch) input[type="checkbox"]:checked {
+  background-color: var(--green-accent);
+  border-color: var(--green-accent);
+}
+
+.chart-options .chart-view-option:not(.globe-switch) input[type="checkbox"]:checked::before {
+  transform: translateY(-50%) translateX(0.95em);
+  background-color: var(--page-background);
+}
+
+.chart-options .chart-view-option:not(.globe-switch) input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--green-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Download form ---------- */
+
+.panel-download-form fieldset {
+  margin: 0.4em 0;
+  padding: 0.45em 0.5em;
+  border: 1px solid var(--subtle-line-color);
+  border-radius: var(--border-radius);
+}
+
+.panel-download-form legend {
+  padding: 0 0.35em;
+  color: var(--low-importance-font-color);
+  font-size: 0.68em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.panel-download-form .download-scope-option {
+  display: flex;
+}
+
+.panel-download-form .download-format-option {
+  display: inline-flex;
+  margin-right: 0.6em;
+}
+
+.panel-download-form .download-scope-option,
+.panel-download-form .download-format-option {
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.25em 0.45em;
+  border-radius: var(--border-radius);
+  line-height: 1.25;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.panel-download-form .download-scope-option:hover,
+.panel-download-form .download-format-option:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 12%, transparent);
+}
+
+.panel-download-form input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 0.95em;
+  height: 0.95em;
+  margin: 0;
+  font: inherit;
+  background-color: var(--input-background-color);
+  border: 1px solid var(--subtle-line-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.panel-download-form input[type="radio"]:checked {
+  background-color: var(--green-accent);
+  border-color: var(--green-accent);
+  box-shadow: inset 0 0 0 0.18em var(--input-background-color);
+}
+
+.panel-download-form input[type="radio"]:focus-visible {
+  outline: 2px solid var(--green-accent);
+  outline-offset: 2px;
+}
+
+/* Dark ink on the olive accent: white fails AA on #8BA342/#AECC53.
+   The extra .panel-download-form qualifier outranks the generic
+   .chart-options-details button recipe in score-panel-chart.css. */
+.panel-download-form button.download-submit-button {
+  width: 100%;
+  margin-top: 0.5em;
+  padding: 0.45em 1em;
+  color: #10160a;
+  background-color: var(--green-accent);
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: var(--header-font-family);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.panel-download-form button.download-submit-button:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 88%, #10160a 12%);
+}
+
+.panel-download-form button.download-submit-button:focus-visible {
+  outline: 2px solid var(--green-accent);
+  outline-offset: 2px;
+}

@@ -7,3 +7,743 @@
 .print-style-article p {
     margin: 1.5em auto;
 }
+
+/* ---------------------------------------------------------------------------
+   Methodology essay (/methodology)
+   Page-scoped: every rule below hangs off .methodology-page so nothing leaks
+   into the global bundle.
+   --------------------------------------------------------------------------- */
+
+.methodology-page {
+  /* Page-scoped semantic accent: the index's gold, mixed toward the theme's
+     text pole so it holds up as a line and a rule on both grounds. */
+  --methodology-accent: color-mix(in srgb, var(--sspi-color) 62%, var(--chip-text-mix));
+  /* The accent clears 3:1 as a rule or a stroke but not the 4.5:1 text floor,
+     so small type on the accent takes this deeper mix instead. */
+  --methodology-accent-text: color-mix(in srgb, var(--sspi-color) 48%, var(--chip-text-mix));
+  --methodology-measure: 68ch;
+}
+
+/* Hero ---------------------------------------------------------------------- */
+
+.methodology-hero {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 1rem;
+}
+
+.methodology-eyebrow {
+  font-family: var(--header-font-family);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--low-importance-font-color);
+  margin: 0 0 0.7rem 0;
+}
+
+.methodology-thesis {
+  max-width: 22ch;
+  margin: 0 0 1.2rem 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--header-text-color);
+}
+
+.methodology-lede {
+  font-family: var(--article-body-font-family);
+  font-size: 0.8rem;
+  line-height: 1.65;
+  max-width: 60ch;
+  color: var(--body-text-color);
+  margin: 0 0 1.6rem 0;
+}
+
+.methodology-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.methodology-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.2rem;
+}
+
+.methodology-stat-label {
+  font-family: var(--header-font-family);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--low-importance-font-color);
+}
+
+.methodology-stat-value {
+  font-family: var(--title-font-family);
+  font-weight: 300;
+  font-size: 1.45rem;
+  line-height: 1;
+  margin: 0;
+  color: var(--header-text-color);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A year range is four times as wide as a count and would otherwise force the
+   whole row to a narrower grid. */
+.methodology-stat-value-range {
+  font-size: 1.1rem;
+  line-height: 1.32;
+}
+
+/* Layout -------------------------------------------------------------------- */
+
+.methodology-layout {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.methodology-rail {
+  display: none;
+}
+
+.methodology-toc-collapse {
+  margin: 1.5rem 0 2rem 0;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 0.8rem;
+}
+
+.methodology-toc-summary {
+  font-family: var(--header-font-family);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--header-text-color);
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.methodology-toc-list {
+  list-style: none;
+  margin: 0.6rem 0 0.3rem 0;
+  padding: 0;
+}
+
+.methodology-toc-item {
+  margin: 0;
+}
+
+.methodology-toc-link {
+  display: flex;
+  gap: 0.6em;
+  align-items: baseline;
+  padding: 0.28rem 0.4rem;
+  margin-left: -0.4rem;
+  border-radius: var(--border-radius-sm);
+  border-left: 2px solid transparent;
+  font-family: var(--header-font-family);
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: var(--medium-importance-font-color);
+}
+
+.methodology-toc-link:hover {
+  background-color: color-mix(in srgb, var(--green-accent) 12%, transparent);
+  border-left-color: var(--green-accent);
+  color: var(--header-text-color);
+}
+
+.methodology-toc-number {
+  font-family: var(--code-font-family);
+  font-size: 0.85em;
+  color: var(--low-importance-font-color);
+}
+
+/* Article ------------------------------------------------------------------- */
+
+.methodology-article {
+  font-family: var(--article-body-font-family);
+  font-size: 0.78rem;
+  line-height: 1.72;
+  color: var(--body-text-color);
+  max-width: var(--methodology-measure);
+}
+
+.methodology-article p {
+  margin: 0 0 1.15em 0;
+}
+
+.methodology-article strong {
+  color: var(--header-text-color);
+  font-weight: 700;
+}
+
+.methodology-link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.methodology-link:hover {
+  color: var(--green-accent);
+}
+
+.methodology-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7em;
+  scroll-margin-top: 1.5rem;
+  margin: 2.6rem 0 1.1rem 0;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--border-color);
+  font-family: var(--header-font-family);
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--header-text-color);
+}
+
+.methodology-article > .methodology-heading:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.methodology-heading-number {
+  font-family: var(--code-font-family);
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: var(--methodology-accent-text);
+}
+
+.methodology-subheading {
+  scroll-margin-top: 1.5rem;
+  margin: 1.9rem 0 0.8rem 0;
+  font-family: var(--header-font-family);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--header-text-color);
+}
+
+.methodology-note {
+  margin: 1.4rem 0;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 2px solid var(--methodology-accent);
+  font-size: 0.72rem;
+  line-height: 1.65;
+  color: var(--medium-importance-font-color);
+}
+
+.methodology-article .methodology-note {
+  margin-bottom: 1.4rem;
+}
+
+.methodology-list {
+  margin: 1rem 0 1.3rem 0;
+  padding-left: 1.15em;
+}
+
+.methodology-list li {
+  margin-bottom: 0.45em;
+}
+
+.methodology-list-spaced li {
+  margin-bottom: 0.9em;
+}
+
+.methodology-references {
+  list-style: none;
+  margin: 1rem 0 0 0;
+  padding: 0;
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: var(--medium-importance-font-color);
+}
+
+.methodology-references li {
+  padding-left: 1.4em;
+  text-indent: -1.4em;
+  margin-bottom: 0.55em;
+}
+
+/* Pillar cards -------------------------------------------------------------- */
+
+.methodology-pillar-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+  margin: 1.5rem 0 1.8rem 0;
+}
+
+.methodology-pillar-card {
+  --pillar-color: var(--sspi-color);
+  --pillar-accent: var(--header-text-color);
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--pillar-color);
+  border-radius: var(--border-radius-lg);
+  background-color: color-mix(in srgb, var(--pillar-color) 4%, transparent);
+}
+
+.methodology-pillar-card.sus {
+  --pillar-color: var(--sus-color);
+  --pillar-accent: var(--sus-accent);
+}
+
+.methodology-pillar-card.ms {
+  --pillar-color: var(--ms-color);
+  --pillar-accent: var(--ms-accent);
+}
+
+.methodology-pillar-card.pg {
+  --pillar-color: var(--pg-color);
+  --pillar-accent: var(--pg-accent);
+}
+
+.methodology-pillar-name {
+  margin: 0;
+  font-family: var(--header-font-family);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.methodology-pillar-link {
+  color: var(--pillar-accent);
+}
+
+.methodology-pillar-link:hover {
+  color: var(--pillar-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.methodology-pillar-count {
+  font-family: var(--header-font-family);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--low-importance-font-color);
+  margin: 0.3rem 0 0.5rem 0;
+}
+
+.methodology-pillar-description {
+  font-family: var(--header-font-family);
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--body-text-color);
+  margin: 0 0 0.6rem 0;
+}
+
+.methodology-category-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+}
+
+.methodology-category-chip {
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--pillar-color) 30%, transparent);
+  border-radius: var(--border-radius-sm);
+  background-color: color-mix(in srgb, var(--pillar-color) 10%, transparent);
+  font-family: var(--header-font-family);
+  font-size: 0.58rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--pillar-accent);
+}
+
+.methodology-category-chip:hover {
+  border-color: var(--pillar-color);
+  background-color: color-mix(in srgb, var(--pillar-color) 18%, transparent);
+  color: var(--pillar-accent);
+}
+
+/* Formulas ------------------------------------------------------------------ */
+
+.methodology-formula {
+  margin: 1.6rem 0;
+  padding: 1rem 1.1rem 0.85rem 1.1rem;
+  background-color: var(--box-background-color);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--methodology-accent);
+  border-radius: var(--border-radius-lg);
+  overflow-x: auto;
+}
+
+.formula-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  /* Keeps a formula intact and lets the card scroll instead of breaking a
+     fraction across lines on a narrow screen. */
+  min-width: max-content;
+  gap: 0.35em;
+  font-family: var(--code-font-family);
+  /* Sized so the longest formula (the implied-weight denominator) still fits
+     the 70ch prose column without scrolling away its trailing factor. */
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+/* The stacked means read as one system only when their equals signs line up,
+   so the rows share one grid instead of each centring itself. The grid sits
+   inside the scrolling figure rather than being it, so an overflowing formula
+   scrolls from its left edge instead of being centered out of view. */
+.formula-grid {
+  display: grid;
+  grid-template-columns: max-content max-content max-content;
+  justify-content: center;
+  align-items: center;
+  min-width: max-content;
+  row-gap: 1rem;
+  column-gap: 0.4rem;
+}
+
+.formula-grid .formula-row {
+  display: contents;
+}
+
+.formula-grid .formula-term:first-child {
+  text-align: right;
+}
+
+.formula-op,
+.formula-paren {
+  color: var(--low-importance-font-color);
+}
+
+.formula-paren {
+  font-size: 1.5em;
+  line-height: 0.8;
+  vertical-align: -0.12em;
+}
+
+.formula-fraction {
+  display: inline-flex;
+  flex-direction: column;
+  /* Stretch so the rule spans the wider of the two terms rather than only the
+     denominator. */
+  align-items: stretch;
+  text-align: center;
+}
+
+.formula-denominator {
+  border-top: 1px solid currentColor;
+  padding-top: 0.22em;
+  margin-top: 0.22em;
+}
+
+/* Figures ------------------------------------------------------------------- */
+
+.methodology-figure {
+  margin: 1.8rem 0;
+}
+
+.methodology-figure-caption {
+  margin-top: 0.7rem;
+  font-family: var(--header-font-family);
+  font-size: 0.6rem;
+  line-height: 1.5;
+  color: var(--low-importance-font-color);
+}
+
+.methodology-formula .methodology-figure-caption {
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.methodology-figure-scroll {
+  overflow-x: auto;
+}
+
+.goalpost-figure {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.goalpost-svg,
+.hierarchy-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hierarchy-svg {
+  min-width: 520px;
+}
+
+/* Goalpost transfer-function panels */
+
+.methodology-page .gp-clip {
+  fill: var(--low-importance-font-color);
+  opacity: 0.16;
+}
+
+.methodology-page .gp-axis {
+  stroke: var(--border-color);
+  stroke-width: 1;
+}
+
+.methodology-page .gp-grid {
+  stroke: var(--border-color);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.methodology-page .gp-post {
+  stroke: var(--low-importance-font-color);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.methodology-page .gp-curve {
+  fill: none;
+  stroke: var(--methodology-accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.methodology-page .gp-knot {
+  fill: var(--methodology-accent);
+}
+
+.methodology-page .gp-tick,
+.methodology-page .gp-post-label,
+.methodology-page .gp-axis-label {
+  fill: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 12.5px;
+}
+
+.methodology-page .gp-post-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.methodology-page .gp-caption {
+  fill: var(--header-text-color);
+  font-family: var(--body-font-family);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Hierarchy diagram */
+
+.methodology-page .hy-edge {
+  stroke: var(--border-color);
+  stroke-width: 1.5;
+}
+
+.methodology-page .hy-divisor {
+  fill: var(--low-importance-font-color);
+  font-family: var(--code-font-family);
+  font-size: 11px;
+}
+
+.methodology-page .hy-node rect {
+  fill: color-mix(in srgb, var(--node-color, var(--sspi-color)) 12%, var(--box-background-color));
+  stroke: var(--node-color, var(--sspi-color));
+  stroke-width: 1;
+}
+
+.methodology-page .hy-node text {
+  fill: var(--header-text-color);
+  font-family: var(--body-font-family);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.methodology-page .hy-node .hy-sub {
+  fill: var(--low-importance-font-color);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.methodology-page .hy-node-root {
+  --node-color: var(--methodology-accent);
+}
+
+.methodology-page .hy-node-sus {
+  --node-color: var(--sus-accent);
+}
+
+.methodology-page .hy-node-ms {
+  --node-color: var(--ms-accent);
+}
+
+.methodology-page .hy-node-pg {
+  --node-color: var(--pg-accent);
+}
+
+.methodology-page .hy-node-dim rect {
+  fill: color-mix(in srgb, var(--node-color) 12%, var(--box-background-color));
+  stroke: color-mix(in srgb, var(--node-color) 45%, transparent);
+}
+
+.methodology-page .hy-aside {
+  fill: var(--low-importance-font-color);
+  font-family: var(--body-font-family);
+  font-size: 11.5px;
+}
+
+/* Weights table ------------------------------------------------------------- */
+
+.methodology-table-scroll {
+  overflow-x: auto;
+  margin: 1.4rem 0 1.6rem 0;
+}
+
+.methodology-weights {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--header-font-family);
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
+.methodology-table-caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 0.6rem;
+  color: var(--low-importance-font-color);
+  padding-bottom: 0.5rem;
+}
+
+.methodology-weights thead th {
+  padding: 0.3rem 0.55rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.53rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--low-importance-font-color);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.methodology-weights tbody th,
+.methodology-weights tbody td {
+  padding: 0.34rem 0.55rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  font-weight: 400;
+  color: var(--body-text-color);
+}
+
+.methodology-weights tbody th {
+  border-left: 3px solid var(--row-color, var(--border-color));
+  color: var(--header-text-color);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Sixteen underlined links would turn the first column into a texture, so the
+   affordance waits for hover. */
+.methodology-weights .methodology-link {
+  color: var(--header-text-color);
+  text-decoration: none;
+}
+
+.methodology-weights .methodology-link:hover {
+  color: var(--green-accent);
+  text-decoration: underline;
+}
+
+.methodology-weight-row.sus { --row-color: var(--sus-accent); }
+.methodology-weight-row.ms { --row-color: var(--ms-accent); }
+.methodology-weight-row.pg { --row-color: var(--pg-accent); }
+
+.methodology-weights .methodology-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Breakpoints --------------------------------------------------------------- */
+
+@media (min-width: 560px) {
+  .methodology-thesis {
+    font-size: 1.9rem;
+  }
+
+  .methodology-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 700px) {
+  .goalpost-figure {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .methodology-hero {
+    padding-top: 1.6rem;
+  }
+
+  .methodology-thesis {
+    font-size: 2.1rem;
+  }
+
+  .methodology-stats {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .methodology-layout {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .methodology-rail {
+    display: block;
+    position: sticky;
+    top: 1.5rem;
+    padding-top: 0.2rem;
+  }
+
+  .methodology-rail-title {
+    font-family: var(--header-font-family);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--low-importance-font-color);
+    margin: 0 0 0.6rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .methodology-toc-collapse {
+    display: none;
+  }
+}

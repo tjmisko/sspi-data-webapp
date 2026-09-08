@@ -1,8 +1,7 @@
 /* Unified page container system */
 /* Hero Section */
 .hero-box {
-  font-size: 0.85em;
-  font-family: var(--body-font-family, Arial, sans-serif);
+  font-family: var(--body-font-family);
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -80,7 +79,6 @@
   grid-template-columns: 1fr;
   gap: 0.8rem;
   margin-top: 1.25rem;
-  font-size: 0.85em;
   width: 100%;
   box-sizing: border-box;
 }
@@ -93,6 +91,11 @@
 .home-link:hover {
   transform: scale(1.01);
   transition: 0.3s;
+}
+
+/* The wrapping card already lifts on hover; only one element moves. */
+.home-link.pillar-link:hover {
+  transform: none;
 }
 
 
@@ -149,13 +152,15 @@
   font-weight: 500;
   transition: all 0.15s ease-in-out;
   text-decoration: none;
-  color: color-mix(in srgb, var(--pillar-color, #6b7280) 80%, black);
+  /* Mixed toward the theme's text pole so every pillar clears 4.5:1 on the
+     chip's composited tint; orange is the binding constraint at 60%. */
+  color: color-mix(in srgb, var(--pillar-color, #6b7280) 60%, var(--chip-text-mix));
 }
 
 .category-link:hover {
   background-color: color-mix(in srgb, var(--pillar-color, #6b7280) 20%, transparent);
   border-color: color-mix(in srgb, var(--pillar-color, #6b7280) 40%, transparent);
-  color: color-mix(in srgb, var(--pillar-color, #6b7280) 90%, black);
+  color: color-mix(in srgb, var(--pillar-color, #6b7280) 50%, var(--chip-text-mix));
   transform: none;
 }
 
@@ -186,13 +191,13 @@
 }
 
 .pillar-navigation-wrapper.ms {
-  --pillar-color: var(--ms-color, #0066cc);
+  --pillar-color: var(--ms-color, #cc6600);
   background-color: color-mix(in srgb, var(--pillar-color) 4%, transparent);
   border-color: var(--pillar-color);
 }
 
 .pillar-navigation-wrapper.pg {
-  --pillar-color: var(--pg-color, #cc6600);
+  --pillar-color: var(--pg-color, #0066cc);
   background-color: color-mix(in srgb, var(--pillar-color) 4%, transparent);
   border-color: var(--pillar-color);
 }
@@ -319,6 +324,17 @@
   font-family: var(--body-font-family);
 }
 
+.country-directory-link {
+  color: var(--primary-color);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.country-directory-link:hover {
+  color: var(--primary-color);
+  text-decoration-thickness: 2px;
+}
+
 .country-directory-card-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
@@ -355,6 +371,7 @@
 }
 
 .country-directory-card .flag-span {
+  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', var(--body-font-family);
   font-size: 1.5rem;
   flex-shrink: 0;
   line-height: 1;

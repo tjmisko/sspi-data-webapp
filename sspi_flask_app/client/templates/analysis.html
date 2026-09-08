@@ -1,30 +1,35 @@
 {% extends 'layout.html' %}
 
+{% block title %}
+    <title>Analysis</title>
+{% endblock title %}
+
 {% block content %}
-<article class="print-style-article">
+<div class="analysis-index content-container">
+    <header class="analysis-index-header">
+        <h1>Analysis</h1>
+        <p class="analysis-index-lede">
+            Research articles and interactive tools built on the SSPI dataset.
+        </p>
+    </header>
+
     <!-- Core Analysis Section -->
     <section class="analysis-section">
         <h2>Core Analysis</h2>
-        <p class="functionality-explainer">
-            Answer key questions about the SSPI using the tools below.
-        </p>
+        <p class="functionality-explainer">Answer key questions about the SSPI using the tools below.</p>
         <div class="config-flex-container">
             <a href="/analysis/regressions" class="config-card core-analysis-card">
                 <div class="config-card-header">
                     <h3 class="config-name">Series Correlation Analysis</h3>
                 </div>
-                <p class="config-description">
-                    Simple linear regressions quantifying the statistical relationship between SSPI pillars, categories, indicators and other datasets of interest.
-                </p>
+                <p class="config-description">Simple linear regressions quantifying the statistical relationship between SSPI pillars, categories, indicators and other datasets of interest.</p>
             </a>
             <!-- Sensitivity Testing Card -->
             <a href="/customize/load" class="config-card core-analysis-card">
                 <div class="config-card-header">
                     <h3 class="config-name">Sensitivity Testing</h3>
                 </div>
-                <p class="config-description">
-                    Quantify the effect of changes to the SSPI's structure affect the SSPI overall.
-                </p>
+                <p class="config-description">Quantify the effect of changes to the SSPI's structure on the overall SSPI.</p>
             </a>
         </div>
     </section>
@@ -45,14 +50,12 @@
                     </div>
                     <p class="config-description">{{ analysis.AnalysisSubtitle or 'Research article' }}</p>
                     {% if analysis.Authors %}
-                    <div class="article-authors">
-                        <strong>{{ analysis.Authors | join(', ') }}</strong>
-                    </div>
+                    <div class="article-authors">{{ analysis.Authors | join(', ') }}</div>
                     {% endif %}
                 </a>
                 {% endfor %}
             {% endif %}
         </div>
     </section>
-</article>
+</div>
 {% endblock %}

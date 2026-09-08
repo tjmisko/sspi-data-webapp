@@ -395,7 +395,7 @@ select[multiple] option:checked {
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   background: var(--background-primary);
   color: var(--text-primary);
   cursor: pointer;
@@ -415,7 +415,7 @@ select[multiple] option:checked {
   width: 100%;
   padding: 0.3rem;
   border: 1px solid var(--border-color);
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   background: var(--background-primary);
   color: var(--text-primary);
   font-size: 0.8rem;

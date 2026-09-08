@@ -44,7 +44,7 @@
     </script>
     <section class="methodology-section">
         <h2> Methodology </h2>
-        <subsection class="methodology-subsection">
+        <section class="methodology-subsection">
             {% if not methodology %}
                 <p> No methodology available for this {{ PanelItemType }}. </p>
             {% else %}
@@ -52,7 +52,7 @@
                     {{ methodology | safe }}
                 </div>
             {% endif %}
-        </subsection>
+        </section>
     </section>
 {% endif %}
 {% endblock content %}

@@ -1,25 +1,50 @@
 {% extends 'layout.html' %}
 
 {% block content %}
+{% macro data_link(href, label) -%}
+<a class="row-data-link" href="{{ href }}" title="{{ label }}" aria-label="{{ label }}">
+    <svg class="row-data-link-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M2.5 2v11.5H14" />
+        <path d="M4.75 10.75 7.5 6.75l2.25 2 3.25-5.5" />
+    </svg>
+</a>
+{%- endmacro %}
 <article class="page-content">
     <section class="page-section">
         <div class="content-container">
             <div class="indicator-table-container">
                 <div class="indicator-table-title-controls-box">
-                    <h2>SSPI Indicator Table</h2>
+                    <div class="indicator-table-title-group">
+                        <h2>SSPI Indicator Table</h2>
+                        {% if indicators_data.stats %}
+                        {#- stats.total_datasets counts every dataset in the metadata store, not
+                            the ones this table lists, so count the distinct codes actually shown. -#}
+                        {% set datasets_shown = indicators_data.pillars
+                            | map(attribute='categories') | sum(start=[])
+                            | map(attribute='indicators') | sum(start=[])
+                            | map(attribute='dataset_codes') | sum(start=[])
+                            | unique | list | length %}
+                        <p class="indicator-table-stats">
+                            <span class="indicator-table-stat"><span class="indicator-table-stat-value">{{ indicators_data.stats.total_pillars }}</span> pillars</span>
+                            <span class="indicator-table-stat"><span class="indicator-table-stat-value">{{ indicators_data.stats.total_categories }}</span> categories</span>
+                            <span class="indicator-table-stat"><span class="indicator-table-stat-value">{{ indicators_data.stats.total_indicators }}</span> indicators</span>
+                            <span class="indicator-table-stat"><span class="indicator-table-stat-value">{{ datasets_shown }}</span> datasets</span>
+                        </p>
+                        {% endif %}
+                    </div>
                     <div class="indicator-table-control-buttons">
                         <button id="reset-button" class="view-data-btn">Reset View</button>
                         <button id="expand-button" class="view-data-btn">Expand All</button>
                         <button id="collapse-button" class="view-data-btn">Collapse All</button>
                     </div>
                 </div>
-                <p>Explore the complete structure, definitions, and metadata of
+                <p class="indicator-table-intro">Explore the complete structure, definitions, and metadata of
                     the SSPI Policy Indicators and their underlying datasets.
                     Click on indicators to view their constituent datasets and
                     methodological details, or follow links to view data for
                     each indicator.</p>
-                
-                <div class="-container">
+
+                <div class="indicator-table-tree">
                     {% if indicators_data.error %}
                     <div class="error-message">
                         <p>Error loading indicators: {{ indicators_data.error }}</p>
@@ -29,57 +54,65 @@
                         <div id="{{ pillar.pillar_code }}" class="pillar-section" data-pillar-code="{{ pillar.pillar_code }}">
                             <div class="indicators-pillar-header">
                                 <div class="indicators-pillar-header-content">
-                                    <button class="collapse-toggle-btn" aria-label="Toggle pillar">
+                                    <button class="collapse-toggle-btn" aria-label="Toggle {{ pillar.pillar_name }} pillar">
                                         <span class="collapse-icon">▼</span>
                                     </button>
                                     <div class="pillar-info">
-                                        <h3 class="pillar-name">{{ pillar.pillar_name }}</h3>
-                                        <a href="/data/pillar/{{ pillar.pillar_code }}" class="view-data-btn">
-                                            Pillar Scores
-                                        </a>
-                                        <span class="pillar-code">{{ pillar.pillar_code }}</span>
+                                        <div class="row-text">
+                                            <div class="row-title-line">
+                                                <h3 class="pillar-name">{{ pillar.pillar_name }}</h3>
+                                                <span class="pillar-code">{{ pillar.pillar_code }}</span>
+                                            </div>
+                                            {% if pillar.pillar_short_description %}
+                                            <p class="row-subtitle">{{ pillar.pillar_short_description }}</p>
+                                            {% endif %}
+                                        </div>
+                                        {{ data_link('/data/pillar/' ~ pillar.pillar_code, 'View ' ~ pillar.pillar_name ~ ' pillar scores') }}
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="pillar-content" data-expanded="true" data-icode="{{ pillar.pillar_code }}">
                                 {% for category in pillar.categories %}
                                 <div id="{{ category.category_code }}" class="category-section" data-category-code="{{ category.category_code }}">
                                     <div class="indicators-category-header">
                                         <div class="indicators-category-header-content">
-                                            <button class="collapse-toggle-btn" aria-label="Toggle category">
+                                            <button class="collapse-toggle-btn" aria-label="Toggle {{ category.category_name }} category">
                                                 <span class="collapse-icon">▼</span>
                                             </button>
                                             <div class="category-info">
-                                                <h4 class="category-name">{{ category.category_name }}</h4>
-                                                <a href="/data/category/{{ category.category_code }}" class="view-data-btn">
-                                                    Category Scores
-                                                </a>
-                                                <span class="category-code">{{ category.category_code }}</span>
+                                                <div class="row-text">
+                                                    <div class="row-title-line">
+                                                        <h4 class="category-name">{{ category.category_name }}</h4>
+                                                        <span class="category-code">{{ category.category_code }}</span>
+                                                    </div>
+                                                    {% if category.category_short_description %}
+                                                    <p class="row-subtitle">{{ category.category_short_description }}</p>
+                                                    {% endif %}
+                                                </div>
+                                                {{ data_link('/data/category/' ~ category.category_code, 'View ' ~ category.category_name ~ ' category scores') }}
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="indicator-table-category-content" data-expanded="true" data-icode="{{ category.category_code }}">
                                         <div class="indicator-table-indicators-list">
                                             {% if category.indicators %}
                                                 {% for indicator in category.indicators %}
-                                                  <div class="indicator-item" id="{{ indicator.indicator_code}}" "data-indicator-code="{{ indicator.indicator_code }}">
+                                                  <div class="indicator-item" id="{{ indicator.indicator_code }}" data-indicator-code="{{ indicator.indicator_code }}">
                                                     <div class="indicators-indicator-header">
                                                         <div class="indicator-info">
-                                                            <button class="collapse-toggle-btn" aria-label="Toggle datasets">
+                                                            <button class="collapse-toggle-btn" aria-label="Toggle {{ indicator.indicator_name }} details">
                                                                 <span class="collapse-icon" style="transform: rotate(-90deg)">▼</span>
                                                             </button>
                                                             <div class="indicator-main-info">
                                                                 <h5 class="indicator-name">{{ indicator.indicator_name }}</h5>
-                                                                <a href="/data/indicator/{{ indicator.indicator_code }}" class="view-data-btn">
-                                                                    Indicator Scores
-                                                                </a>
                                                                 <span class="indicator-code">{{ indicator.indicator_code }}</span>
                                                             </div>
+                                                            {{ data_link('/data/indicator/' ~ indicator.indicator_code, 'View ' ~ indicator.indicator_name ~ ' indicator scores') }}
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div class="indicator-details" data-expanded="false" data-icode="{{ indicator.indicator_code }}">
                                                         {% if indicator.policy %}
                                                         <div class="indicator-description">
@@ -100,11 +133,11 @@
                                                                 {% for dataset in indicator.datasets %}
                                                                 <div class="dataset-item">
                                                                     <div class="dataset-info">
-                                                                        <a class="dataset-header-row" href="/data/dataset/{{ dataset.dataset_code}}">
+                                                                        <a class="dataset-header-row" href="/data/dataset/{{ dataset.dataset_code }}">
                                                                             <div class="dataset-name">{{ dataset.dataset_name }}</div>
                                                                             <div class="dataset-code">{{ dataset.dataset_code }}</div>
                                                                         </a>
-                                                                        <div class="dataset-description">{{ dataset.description }} </div>
+                                                                        <div class="dataset-description">{{ dataset.description }}</div>
                                                                     </div>
                                                                     <details class="dataset-source">
                                                                         <summary><span class="source-label">Source:</span><span class="source-org">{{ dataset.source.OrganizationCode }}</span></summary>

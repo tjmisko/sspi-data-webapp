@@ -10,8 +10,8 @@ div:has(> .pillar-breakdown-tooltip) {
   color: var(--text-color);
   padding: 0.5em;
   box-sizing: border-box;
-  border-radius: 0.5em;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
   font-family: var(--body-font-family);
 }
 
@@ -31,7 +31,7 @@ div:has(> .pillar-breakdown-tooltip) {
 
 .pillar-breakdown-country-code {
   font-size: 0.8rem;
-  color: white;
+  color: var(--text-color);
   font-weight: bold;
   margin: 0;
   padding: 0;

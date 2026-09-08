@@ -738,15 +738,26 @@ class IndicatorTable {
         this.initializeState();
         this.rigUnloadListener();
     }
-    
+
     initializeEventListeners() {
-        const indicators = this.container.querySelectorAll('.indicator-item')
-        indicators.forEach((indicator) => {
-            const headerBox = indicator.querySelector('.indicators-indicator-header')
-            headerBox.addEventListener('click', (event) => {
-                const toggleBtn = indicator.querySelector('.collapse-toggle-btn')
-                event.stopPropagation();
-                this.handleToggle(toggleBtn);
+        /* The whole header row toggles its section, at every level. Clicks on
+         * the row data link fall through to the browser untouched.
+         * NB: apostrophes inside // comments make the bundler swallow the line
+         * that follows them, so keep block comments here. */
+        const rowLevels = [
+            ['.indicators-pillar-header', '.indicators-pillar-header-content>button'],
+            ['.indicators-category-header', '.indicators-category-header-content>button'],
+            ['.indicators-indicator-header', '.indicator-info>button'],
+        ];
+        rowLevels.forEach(([headerSelector, buttonSelector]) => {
+            this.container.querySelectorAll(headerSelector).forEach((header) => {
+                header.addEventListener('click', (event) => {
+                    if (event.target.closest('a')) return;
+                    const toggleBtn = header.querySelector(buttonSelector);
+                    if (!toggleBtn) return;
+                    event.stopPropagation();
+                    this.handleToggle(toggleBtn);
+                })
             })
         })
         // Add click listeners to all collapse toggle buttons
@@ -767,7 +778,7 @@ class IndicatorTable {
             }
         });
     }
-    
+
     initializeState() {
         // Set initial expanded states based on data-expanded attributes
         const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
@@ -782,7 +793,7 @@ class IndicatorTable {
             this.updateToggleIcon(toggleButton, cachedState);
         });
     }
-    
+
     handleToggle(toggleBtn) {
         const section = this.findToggleableSection(toggleBtn);
         if (!section) return;
@@ -797,6 +808,7 @@ class IndicatorTable {
 
     findToggleButton(toggleSection) {
         const parentSection = toggleSection.parentElement
+        if (!parentSection) return null;
         if (parentSection.classList.contains('pillar-section')) {
             return parentSection.querySelector('.indicators-pillar-header-content>button')
         } else if (parentSection.classList.contains('category-section')) {
@@ -804,129 +816,910 @@ class IndicatorTable {
         } else if (parentSection.classList.contains('indicator-item')) {
             return parentSection.querySelector('.indicator-info>button')
         }
+        return null;
     }
-    
+
     findToggleableSection(toggleBtn) {
-        // Find the appropriate collapsible section based on the toggle button's context
-const pillarSection=toggleBtn.closest('.pillar-section');const categorySection=toggleBtn.closest('.category-section');const indicatorItem=toggleBtn.closest('.indicator-item');if(indicatorItem&&toggleBtn.closest('.indicators-indicator-header')){return indicatorItem.querySelector('.indicator-details');}else if(categorySection&&toggleBtn.closest('.indicators-category-header')){return categorySection.querySelector('.indicator-table-category-content');}else if(pillarSection&&toggleBtn.closest('.indicators-pillar-header')){return pillarSection.querySelector('.pillar-content');}
-return null;}
-updateSectionVisibility(section,isExpanded){if(isExpanded){section.style.display='';section.style.maxHeight='';section.style.opacity='';}else{section.style.display='none';}}
-updateToggleIcon(toggleBtn,isExpanded){const icon=toggleBtn.querySelector('.collapse-icon');if(icon){if(isExpanded){icon.style.transform='rotate(0deg)';}else{icon.style.transform='rotate(-90deg)';}}}
-expandAll(){const allSections=this.container.querySelectorAll('[data-expanded]');allSections.forEach(section=>{section.dataset.expanded='true';this.updateSectionVisibility(section,true);const toggleBtn=this.findToggleButtonForSection(section);if(toggleBtn){this.updateToggleIcon(toggleBtn,true);}});}
-collapseAll(){const allSections=this.container.querySelectorAll('[data-expanded]');allSections.forEach(section=>{section.dataset.expanded='false';this.updateSectionVisibility(section,false);const toggleBtn=this.findToggleButtonForSection(section);if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}});}
-expandPillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='true';this.updateSectionVisibility(pillarContent,true);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,true);}}}}
-collapsePillar(pillarCode){const pillarSection=this.container.querySelector(`[data-pillar-code="${pillarCode}"]`);if(pillarSection){const pillarContent=pillarSection.querySelector('.pillar-content');if(pillarContent){pillarContent.dataset.expanded='false';this.updateSectionVisibility(pillarContent,false);const toggleBtn=pillarSection.querySelector('.indicator-table-pilllar-header .collapse-toggle-btn');if(toggleBtn){this.updateToggleIcon(toggleBtn,false);}}}}
-findToggleButtonForSection(section){const parent=section.parentElement;if(!parent)return null;if(section.classList.contains('pillar-content')){return parent.querySelector('.indicator-table-pillar-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-table-category-content')){return parent.querySelector('.indicators-category-header .collapse-toggle-btn');}else if(section.classList.contains('indicator-details')){return parent.querySelector('.indicator-header .collapse-toggle-btn');}
-return null;}
-resetView(){const collapsibleSections=this.container.querySelectorAll('[data-expanded]');let stateLookup={};collapsibleSections.forEach((section)=>{if(section.dataset.icode.length===6){this.updateSectionVisibility(section,false);section.dataset.expanded='false';const toggleButton=this.findToggleButton(section)
-this.updateToggleIcon(toggleButton,false);stateLookup[section.dataset.icode]=false;}else{this.updateSectionVisibility(section,true);section.dataset.expanded='true';const toggleButton=this.findToggleButton(section)
-stateLookup[section.dataset.icode]=true;this.updateToggleIcon(toggleButton,true);}})
-window.observableStorage.setItem('indicatorTableState',stateLookup)}
-rigUnloadListener(){window.addEventListener('beforeunload',()=>{const collapsibleSections=this.container.querySelectorAll('[data-expanded]');let stateLookup={};collapsibleSections.forEach((section)=>{stateLookup[section.dataset.icode]=section.dataset.expanded;})
-window.observableStorage.setItem('indicatorTableState',stateLookup)})}}
-class ThemeToggle{constructor(parentElement){this.parentElement=parentElement
-this.currentTheme=window.theme||localStorage.getItem("theme")||"dark"
-this.initToggle()
-this.rigEventListeners()
-this.updateToggleState()}
-initToggle(){this.parentElement.innerHTML='<div id="theme-label-header-span" class="theme-label"></div>'+
-'<label class="theme-toggle">'+
-'<input type="checkbox" id="darkModeToggle" />'+
-'<span class="icons moon-svg">'+
-'<svg class="icon moon" viewBox="0 0 24 24">'+
-'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />'+
-'</svg>'+
-'</span>'+
-'<span class="slider"></span>'+
-'<span class="icons sun-svg">'+
-'<svg class="icon sun" viewBox="0 0 24 24">'+
-'<circle cx="12" cy="12" r="5" />'+
-'<g stroke-width="2">'+
-'<line x1="12" y1="1" x2="12" y2="3" />'+
-'<line x1="12" y1="21" x2="12" y2="23" />'+
-'<line x1="4.2" y1="4.2" x2="5.6" y2="5.6" />'+
-'<line x1="18.4" y1="18.4" x2="19.8" y2="19.8" />'+
-'<line x1="1" y1="12" x2="3" y2="12" />'+
-'<line x1="21" y1="12" x2="23" y2="12" />'+
-'<line x1="4.2" y1="19.8" x2="5.6" y2="18.4" />'+
-'<line x1="18.4" y1="5.6" x2="19.8" y2="4.2" />'+
-'</g>'+
-'</svg>'+
-'</span>'+
-'</label>';this.checkbox=this.parentElement.querySelector("#darkModeToggle");this.label=this.parentElement.querySelector("#theme-label-header-span");}
-rigEventListeners(){this.checkbox.title="Toggle Light/Dark Page Theme"
-this.checkbox.addEventListener("change",()=>{this.handleThemeChange()})}
-handleThemeChange(){const newTheme=this.checkbox.checked?"light":"dark"
-this.setTheme(newTheme)}
-setTheme(theme){this.currentTheme=theme
-const htmlTag=document.documentElement
-if(theme==="light"){htmlTag.classList.remove("dark-theme")
-htmlTag.classList.add("light-theme")
-localStorage.setItem("theme","light")
-window.theme="light"
-this.label.innerText="Light Theme"
-this.checkbox.checked=true}else{htmlTag.classList.remove("light-theme")
-htmlTag.classList.add("dark-theme")
-localStorage.setItem("theme","dark")
-window.theme="dark"
-this.label.innerText="Dark Theme"
-this.checkbox.checked=false}
-this.updateCharts()}
-updateToggleState(){this.checkbox.checked=this.currentTheme==="light"
-this.label.innerText=this.currentTheme.replace(/\b\w/g,char=>char.toUpperCase())+" Theme"}
-updateCharts(){if(window.SSPICharts&&Array.isArray(window.SSPICharts)){window.SSPICharts.forEach((chartObj)=>{if(chartObj&&typeof chartObj.setTheme==='function'){chartObj.setTheme(window.theme)}})}}
-getTheme(){return this.currentTheme}}
-class NotificationManager{constructor(){this.notifications=[];this.history=[];this.nextId=0;}
-show(message,type='info',duration=3000){const id=this.nextId++;const notification=document.createElement('div');notification.dataset.notificationId=id;notification.style.cssText=`position:fixed;top:20px;right:20px;padding:15px 20px;border-radius:5px;color:white;font-weight:normal;z-index:10000;max-width:450px;box-shadow:0 4px 6px rgba(0,0,0,0.1);animation:slideInRight 0.3s ease-out;word-wrap:break-word;line-height:1.4;white-space:pre-line;`;switch(type){case'success':notification.style.backgroundColor='#4CAF50';break;case'error':notification.style.backgroundColor='#f44336';break;case'warning':notification.style.backgroundColor='#ff9800';break;default:notification.style.backgroundColor='#2196F3';}
-notification.textContent=message;this._stackNotification(notification);const notificationObj={id,element:notification,message,type,timestamp:Date.now()};this.notifications.push(notificationObj);this.history.push({...notificationObj,dismissed:false});if(duration>0){setTimeout(()=>{this.clear(id);},duration);}
-return notificationObj;}
-_stackNotification(notification){const existingNotifications=document.querySelectorAll('[data-notification-id]');let topOffset=20;existingNotifications.forEach(existing=>{const rect=existing.getBoundingClientRect();topOffset=Math.max(topOffset,rect.bottom-document.documentElement.getBoundingClientRect().top+10);});notification.style.top=topOffset+'px';document.body.appendChild(notification);}
-clear(id){const index=this.notifications.findIndex(n=>n.id===id);if(index===-1)return;const notificationObj=this.notifications[index];const notification=notificationObj.element;if(notification&&notification.parentNode){notification.style.animation='slideOutRight 0.3s ease-in';setTimeout(()=>{if(notification.parentNode){notification.parentNode.removeChild(notification);}},300);}
-this.notifications.splice(index,1);const historyEntry=this.history.find(h=>h.id===id);if(historyEntry){historyEntry.dismissed=true;historyEntry.dismissedAt=Date.now();}
-this._restackNotifications();}
-_restackNotifications(){setTimeout(()=>{const existingNotifications=document.querySelectorAll('[data-notification-id]');let topOffset=20;existingNotifications.forEach(notification=>{notification.style.top=topOffset+'px';const rect=notification.getBoundingClientRect();topOffset=rect.bottom-document.documentElement.getBoundingClientRect().top+10;});},50);}
-clearAll(){const ids=this.notifications.map(n=>n.id);ids.forEach(id=>this.clear(id));}
-getHistory(limit=50){return this.history.slice(-limit);}
-clearHistory(){this.history=[];}
-success(message,duration=3000){return this.show(message,'success',duration);}
-error(message,duration=5000){return this.show(message,'error',duration);}
-warning(message,duration=4000){return this.show(message,'warning',duration);}
-info(message,duration=3000){return this.show(message,'info',duration);}}
-window.notifications=new NotificationManager();class SearchableDropdown{constructor(selectElement,options={}){this.originalSelect=selectElement;this.options={placeholder:options.placeholder||'Search...',onChange:options.onChange||(()=>{}),...options};this.parseOptions();this.createDropdown();this.isOpen=false;this.selectedValue=this.originalSelect.value;this.selectedLabel=this.getSelectedLabel();this.filteredOptions=[...this.allOptions];this.highlightedIndex=-1;this.bindEvents();this.originalSelect.style.display='none';this.originalSelect.parentNode.insertBefore(this.container,this.originalSelect.nextSibling);this.updateSelectedDisplay();}
-parseOptions(){this.groups=[];this.allOptions=[];const children=Array.from(this.originalSelect.children);children.forEach(child=>{if(child.tagName==='OPTGROUP'){const groupLabel=child.label;const groupOptions=Array.from(child.children).map(option=>({value:option.value,label:option.textContent,group:groupLabel,selected:option.selected}));this.groups.push({label:groupLabel,options:groupOptions});this.allOptions.push(...groupOptions);}else if(child.tagName==='OPTION'){const option={value:child.value,label:child.textContent,group:null,selected:child.selected};if(child.value){this.allOptions.push(option);}}});}
-createDropdown(){this.container=document.createElement('div');this.container.className='searchable-dropdown';this.selectedDisplay=document.createElement('div');this.selectedDisplay.className='searchable-dropdown-selected';this.selectedDisplay.innerHTML=`<span class="searchable-dropdown-label"></span><svg class="searchable-dropdown-arrow"width="12"height="12"viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4"stroke="currentColor"stroke-width="2"fill="none"stroke-linecap="round"/></svg>`;this.container.appendChild(this.selectedDisplay);this.panel=document.createElement('div');this.panel.className='searchable-dropdown-panel';this.searchInput=document.createElement('input');this.searchInput.type='text';this.searchInput.className='searchable-dropdown-search';this.searchInput.placeholder=this.options.placeholder;this.panel.appendChild(this.searchInput);this.optionsList=document.createElement('div');this.optionsList.className='searchable-dropdown-options';this.panel.appendChild(this.optionsList);this.container.appendChild(this.panel);}
-bindEvents(){console.log('[SearchableDropdown] Binding events to search input:',this.searchInput);this.selectedDisplay.addEventListener('click',(e)=>{e.stopPropagation();this.toggle();});this.searchInput.addEventListener('input',(e)=>{this.filterOptions(e.target.value);});this.searchInput.addEventListener('keydown',(e)=>{console.log('[SearchableDropdown] Keydown event fired on search input');this.handleKeyDown(e);});document.addEventListener('click',(e)=>{if(!this.container.contains(e.target)){this.close();}});this.optionsList.addEventListener('click',(e)=>{const optionEl=e.target.closest('.searchable-dropdown-option');if(optionEl){const value=optionEl.dataset.value;this.selectOption(value);}});}
-toggle(){if(this.isOpen){this.close();}else{this.open();}}
-open(){console.log('[SearchableDropdown] Opening dropdown');this.isOpen=true;this.container.classList.add('is-open');this.searchInput.value='';this.filterOptions('');this.searchInput.focus();console.log('[SearchableDropdown] Search input focused, active element:',document.activeElement===this.searchInput);this.highlightedIndex=-1;console.log('[SearchableDropdown] Dropdown opened with',this.filteredOptions.length,'options, highlightedIndex reset to -1');}
-close(){console.log('[SearchableDropdown] Closing dropdown');this.isOpen=false;this.container.classList.remove('is-open');this.highlightedIndex=-1;this.searchInput.value='';this.searchInput.blur();console.log('[SearchableDropdown] Dropdown closed, is-open class removed:',!this.container.classList.contains('is-open'));}
-filterOptions(query){const lowerQuery=query.toLowerCase();if(!query){this.filteredOptions=[...this.allOptions];}else{this.filteredOptions=this.allOptions.filter(option=>{return option.label.toLowerCase().includes(lowerQuery)||option.value.toLowerCase().includes(lowerQuery);});}
-this.renderOptions();this.highlightedIndex=-1;}
-renderOptions(){this.optionsList.innerHTML='';if(this.filteredOptions.length===0){this.optionsList.innerHTML='<div class="searchable-dropdown-no-results">No results found</div>';return;}
-const grouped={};this.filteredOptions.forEach(option=>{const group=option.group||'Other';if(!grouped[group]){grouped[group]=[];}
-grouped[group].push(option);});Object.entries(grouped).forEach(([groupLabel,options])=>{const groupEl=document.createElement('div');groupEl.className='searchable-dropdown-group';const groupLabelEl=document.createElement('div');groupLabelEl.className='searchable-dropdown-group-label';groupLabelEl.textContent=groupLabel;groupEl.appendChild(groupLabelEl);options.forEach(option=>{const optionEl=document.createElement('div');optionEl.className='searchable-dropdown-option';optionEl.dataset.value=option.value;if(option.value===this.selectedValue){optionEl.classList.add('is-selected');}
-optionEl.textContent=option.label;groupEl.appendChild(optionEl);});this.optionsList.appendChild(groupEl);});}
-selectOption(value){this.originalSelect.value=value;this.selectedValue=value;this.selectedLabel=this.getSelectedLabel();this.updateSelectedDisplay();this.close();const event=new Event('change',{bubbles:true});this.originalSelect.dispatchEvent(event);this.options.onChange(value);}
-getSelectedLabel(){const option=this.allOptions.find(opt=>opt.value===this.selectedValue);return option?option.label:(this.originalSelect.querySelector('option[value=""]')?.textContent||'Select...');}
-updateSelectedDisplay(){const label=this.container.querySelector('.searchable-dropdown-label');label.textContent=this.selectedLabel;if(!this.selectedValue){label.classList.add('is-placeholder');}else{label.classList.remove('is-placeholder');}}
-handleKeyDown(e){const options=Array.from(this.optionsList.querySelectorAll('.searchable-dropdown-option'));console.log('[SearchableDropdown] Key pressed:',e.key,'Options count:',options.length,'Current index:',this.highlightedIndex);switch(e.key){case'ArrowDown':e.preventDefault();const newDownIndex=Math.min(this.highlightedIndex+1,options.length-1);console.log('[SearchableDropdown] ArrowDown: index',this.highlightedIndex,'->',newDownIndex);this.highlightedIndex=newDownIndex;this.updateHighlight(options);break;case'ArrowUp':e.preventDefault();const newUpIndex=Math.max(this.highlightedIndex-1,0);console.log('[SearchableDropdown] ArrowUp: index',this.highlightedIndex,'->',newUpIndex);this.highlightedIndex=newUpIndex;this.updateHighlight(options);break;case'Enter':e.preventDefault();console.log('[SearchableDropdown] Enter pressed, index:',this.highlightedIndex);if(this.highlightedIndex>=0&&options[this.highlightedIndex]){const value=options[this.highlightedIndex].dataset.value;this.selectOption(value);}
-break;case'Escape':e.preventDefault();console.log('[SearchableDropdown] Escape pressed');this.close();break;}}
-updateHighlight(options){console.log('[SearchableDropdown] updateHighlight called, highlighting index:',this.highlightedIndex,'of',options.length,'options');options.forEach((option,index)=>{if(index===this.highlightedIndex){console.log('[SearchableDropdown] Adding highlight to option:',option.textContent);option.classList.add('is-highlighted');option.scrollIntoView({block:'nearest'});}else{option.classList.remove('is-highlighted');}});}
-getValue(){return this.selectedValue;}
-setValue(value){this.selectOption(value);}
-destroy(){this.container.remove();this.originalSelect.style.display='';}}
-class YearSlider{constructor(options){this.containerId=options.containerId;this.minYear=options.minYear;this.maxYear=options.maxYear;this.storageKey=options.storageKey||`yearSlider_${this.containerId}`;this.playStorageKey=`${this.storageKey}_playing`;this.playInterval=options.playInterval||1200;this.enablePlayback=options.enablePlayback!==false;this.onChange=options.onChange||(()=>{});const storedYear=window.observableStorage?.getItem(this.storageKey);this.year=storedYear||options.initialYear||this.maxYear;this.year=Math.max(this.minYear,Math.min(this.maxYear,this.year));const storedPlaying=window.observableStorage?.getItem(this.playStorageKey);this.playing=storedPlaying||false;this.playIntervalId=null;this.build();this.attachEventListeners();if(this.playing){this.startPlay();}}
-build(){this.container=document.createElement('div');this.container.id=this.containerId;this.container.classList.add('globe-year-slider-container');const playPauseButton=this.enablePlayback?`<button class="year-play-pause-button"aria-label="Play timeline"><span class="play-icon">▶</span><span class="pause-icon"style="display:none;">⏸</span></button>`:'';this.container.innerHTML=`<div class="year-slider-controls"><label class="year-slider-label"for="${this.containerId}-input"><span class="year-value-display"contenteditable="true"spellcheck="false">${this.year}</span></label><div class="year-slider-wrapper"><div class="year-slider-track-container"><div class="year-slider-ticks"></div><input
-type="range"
-class="year-slider-input"
-id="${this.containerId}-input"
-min="${this.minYear}"
-max="${this.maxYear}"
-value="${this.year}"
-step="1"/
-></div><div class="year-slider-bounds"><span class="year-slider-min">${this.minYear}</span><span class="year-slider-max">${this.maxYear}</span></div></div>${playPauseButton}</div>`;}
-attachEventListeners(){this.input=this.container.querySelector('.year-slider-input');this.display=this.container.querySelector('.year-value-display');this.input.addEventListener('input',(e)=>{if(this.playing){this.stopPlay();}
-this.setYear(parseInt(e.target.value));});this.display.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();this.display.blur();}else if(!/^\d$/.test(e.key)&&!['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)){e.preventDefault();}});this.display.addEventListener('blur',()=>{const inputYear=parseInt(this.display.textContent.trim());if(isNaN(inputYear)||inputYear<this.minYear||inputYear>this.maxYear){this.display.textContent=this.year;this.display.classList.add('year-input-error');setTimeout(()=>{this.display.classList.remove('year-input-error');},500);}else if(inputYear!==this.year){if(this.playing){this.stopPlay();}
-this.setYear(inputYear);}else{this.display.textContent=this.year;}});if(this.enablePlayback){this.playPauseButton=this.container.querySelector('.year-play-pause-button');this.playIcon=this.container.querySelector('.play-icon');this.pauseIcon=this.container.querySelector('.pause-icon');this.playPauseButton.addEventListener('click',()=>{this.togglePlay();});}}
+        // Find the appropriate collapsible section for this toggle button
+        const pillarSection = toggleBtn.closest('.pillar-section');
+        const categorySection = toggleBtn.closest('.category-section');
+        const indicatorItem = toggleBtn.closest('.indicator-item');
+        if (indicatorItem && toggleBtn.closest('.indicators-indicator-header')) {
+            return indicatorItem.querySelector('.indicator-details');
+        } else if (categorySection && toggleBtn.closest('.indicators-category-header')) {
+            return categorySection.querySelector('.indicator-table-category-content');
+        } else if (pillarSection && toggleBtn.closest('.indicators-pillar-header')) {
+            return pillarSection.querySelector('.pillar-content');
+        }
+
+        return null;
+    }
+
+    updateSectionVisibility(section, isExpanded) {
+        if (isExpanded) {
+            section.style.display = '';
+            section.style.maxHeight = '';
+            section.style.opacity = '';
+        } else {
+            section.style.display = 'none';
+        }
+    }
+
+    updateToggleIcon(toggleBtn, isExpanded) {
+        if (!toggleBtn) return;
+        const icon = toggleBtn.querySelector('.collapse-icon');
+        if (icon) {
+            if (isExpanded) {
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+    }
+
+    // Utility methods for programmatic control
+    expandAll() {
+        const allSections = this.container.querySelectorAll('[data-expanded]');
+        allSections.forEach(section => {
+            section.dataset.expanded = 'true';
+            this.updateSectionVisibility(section, true);
+            this.updateToggleIcon(this.findToggleButton(section), true);
+        });
+    }
+
+    collapseAll() {
+        const allSections = this.container.querySelectorAll('[data-expanded]');
+        allSections.forEach(section => {
+            section.dataset.expanded = 'false';
+            this.updateSectionVisibility(section, false);
+            this.updateToggleIcon(this.findToggleButton(section), false);
+        });
+    }
+
+    resetView() {
+        const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
+        let stateLookup = {};
+        collapsibleSections.forEach((section) => {
+            if (section.dataset.icode.length === 6) { // indicators hidden, others expanded
+                this.updateSectionVisibility(section, false);
+                section.dataset.expanded = 'false';
+                const toggleButton = this.findToggleButton(section)
+                this.updateToggleIcon(toggleButton, false);
+                stateLookup[section.dataset.icode] = false;
+            } else {
+                this.updateSectionVisibility(section, true);
+                section.dataset.expanded = 'true';
+                const toggleButton = this.findToggleButton(section)
+                stateLookup[section.dataset.icode] = true;
+                this.updateToggleIcon(toggleButton, true);
+            }
+        })
+        window.observableStorage.setItem('indicatorTableState', stateLookup)
+    }
+
+    rigUnloadListener() {
+        window.addEventListener('beforeunload', () => {
+            const collapsibleSections = this.container.querySelectorAll('[data-expanded]');
+            let stateLookup = {};
+            collapsibleSections.forEach((section) => {
+                stateLookup[section.dataset.icode] = section.dataset.expanded;
+            })
+            window.observableStorage.setItem('indicatorTableState', stateLookup)
+        })
+    }
+}
+
+class ThemeToggle {
+    constructor(parentElement) {
+        this.parentElement = parentElement
+        this.currentTheme = window.theme || localStorage.getItem("theme") || "dark"
+        this.initToggle()
+        this.rigEventListeners()
+        this.updateToggleState()
+    }
+
+    initToggle() {
+        // Create the theme toggle structure
+        this.parentElement.innerHTML = '<div id="theme-label-header-span"class="theme-label"></div>' +
+            '<label class="theme-toggle">' +
+                '<input type="checkbox"id="darkModeToggle"/>' +
+                '<span class="icons moon-svg">' +
+                    '<svg class="icon moon"viewBox="0 0 24 24">' +
+                        '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>' +
+                    '</svg>' +
+                '</span>' +
+                '<span class="slider"></span>' +
+                '<span class="icons sun-svg">' +
+                    '<svg class="icon sun"viewBox="0 0 24 24">' +
+                        '<circle cx="12"cy="12"r="5"/>' +
+                        '<g stroke-width="2">' +
+                            '<line x1="12"y1="1"x2="12"y2="3"/>' +
+                            '<line x1="12"y1="21"x2="12"y2="23"/>' +
+                            '<line x1="4.2"y1="4.2"x2="5.6"y2="5.6"/>' +
+                            '<line x1="18.4"y1="18.4"x2="19.8"y2="19.8"/>' +
+                            '<line x1="1"y1="12"x2="3"y2="12"/>' +
+                            '<line x1="21"y1="12"x2="23"y2="12"/>' +
+                            '<line x1="4.2"y1="19.8"x2="5.6"y2="18.4"/>' +
+                            '<line x1="18.4"y1="5.6"x2="19.8"y2="4.2"/>' +
+                        '</g>' +
+                    '</svg>' +
+                '</span>' +
+            '</label>';
+
+        // Get references to elements
+        this.checkbox = this.parentElement.querySelector("#darkModeToggle");
+        this.label = this.parentElement.querySelector("#theme-label-header-span");
+    }
+
+    rigEventListeners() {
+        // Set up checkbox properties
+        this.checkbox.title = "Toggle Light/Dark Page Theme"
+        
+        // Add event listener for theme changes
+        this.checkbox.addEventListener("change", () => {
+            this.handleThemeChange()
+        })
+    }
+
+    handleThemeChange() {
+        const newTheme = this.checkbox.checked ? "light" : "dark"
+        this.setTheme(newTheme)
+    }
+
+    setTheme(theme) {
+        this.currentTheme = theme
+        const htmlTag = document.documentElement
+        
+        if (theme === "light") {
+            htmlTag.classList.remove("dark-theme")
+            htmlTag.classList.add("light-theme")
+            localStorage.setItem("theme", "light")
+            window.theme = "light"
+            this.label.innerText = "Light Theme"
+            this.checkbox.checked = true
+        } else {
+            htmlTag.classList.remove("light-theme")
+            htmlTag.classList.add("dark-theme")
+            localStorage.setItem("theme", "dark")
+            window.theme = "dark"
+            this.label.innerText = "Dark Theme"
+            this.checkbox.checked = false
+        }
+        
+        this.updateCharts()
+    }
+
+    updateToggleState() {
+        // Update the toggle to reflect current theme
+        this.checkbox.checked = this.currentTheme === "light"
+        this.label.innerText = this.currentTheme.replace(/\b\w/g, char => char.toUpperCase()) + " Theme"
+    }
+
+    updateCharts() {
+        // Update charts if SSPICharts array exists
+        if (window.SSPICharts && Array.isArray(window.SSPICharts)) {
+            window.SSPICharts.forEach((chartObj) => {
+                if (chartObj && typeof chartObj.setTheme === 'function') {
+                    chartObj.setTheme(window.theme)
+                }
+            })
+        }
+    }
+
+    // Public method to get current theme
+    getTheme() {
+        return this.currentTheme
+    }
+}
+
+/**
+ * NotificationManager - Global notification system
+ * Replaces Flask flash messages with a cleaner, JavaScript-based notification system
+ */
+class NotificationManager {
+    constructor() {
+        this.notifications = [];
+        this.history = [];
+        this.nextId = 0;
+    }
+
+    /**
+     * Show a notification to the user
+     * @param {string} message - The message to display
+     * @param {string} type - The notification type ('success', 'error', 'warning', 'info')
+     * @param {number} duration - Duration in milliseconds (default: 3000, 0 = persistent)
+     * @returns {Object} Notification object with id and element
+     */
+    show(message, type = 'info', duration = 3000) {
+        const id = this.nextId++;
+
+        const notification = document.createElement('div');
+        notification.dataset.notificationId = id;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: normal;
+            z-index: 10000;
+            max-width: 450px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: slideInRight 0.3s ease-out;
+            word-wrap: break-word;
+            line-height: 1.4;
+            white-space: pre-line;
+        `;
+
+        // Set background color based on type
+        switch(type) {
+            case 'success':
+                notification.style.backgroundColor = '#4CAF50';
+                break;
+            case 'error':
+                notification.style.backgroundColor = '#f44336';
+                break;
+            case 'warning':
+                notification.style.backgroundColor = '#ff9800';
+                break;
+            default:
+                notification.style.backgroundColor = '#2196F3';
+        }
+
+        notification.textContent = message;
+
+        // Add to DOM with stacking
+        this._stackNotification(notification);
+
+        const notificationObj = {
+            id,
+            element: notification,
+            message,
+            type,
+            timestamp: Date.now()
+        };
+
+        this.notifications.push(notificationObj);
+        this.history.push({...notificationObj, dismissed: false});
+
+        // Auto-remove after duration (if not persistent)
+        if (duration > 0) {
+            setTimeout(() => {
+                this.clear(id);
+            }, duration);
+        }
+
+        return notificationObj;
+    }
+
+    /**
+     * Stack notification with proper spacing
+     * @private
+     */
+    _stackNotification(notification) {
+        const existingNotifications = document.querySelectorAll('[data-notification-id]');
+        let topOffset = 20;
+
+        existingNotifications.forEach(existing => {
+            const rect = existing.getBoundingClientRect();
+            topOffset = Math.max(topOffset, rect.bottom - document.documentElement.getBoundingClientRect().top + 10);
+        });
+
+        notification.style.top = topOffset + 'px';
+        document.body.appendChild(notification);
+    }
+
+    /**
+     * Clear a specific notification by ID
+     * @param {number} id - The notification ID
+     */
+    clear(id) {
+        const index = this.notifications.findIndex(n => n.id === id);
+        if (index === -1) return;
+
+        const notificationObj = this.notifications[index];
+        const notification = notificationObj.element;
+
+        if (notification && notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }
+
+        this.notifications.splice(index, 1);
+
+        // Mark as dismissed in history
+        const historyEntry = this.history.find(h => h.id === id);
+        if (historyEntry) {
+            historyEntry.dismissed = true;
+            historyEntry.dismissedAt = Date.now();
+        }
+
+        // Restack remaining notifications
+        this._restackNotifications();
+    }
+
+    /**
+     * Restack all remaining notifications
+     * @private
+     */
+    _restackNotifications() {
+        setTimeout(() => {
+            const existingNotifications = document.querySelectorAll('[data-notification-id]');
+            let topOffset = 20;
+
+            existingNotifications.forEach(notification => {
+                notification.style.top = topOffset + 'px';
+                const rect = notification.getBoundingClientRect();
+                topOffset = rect.bottom - document.documentElement.getBoundingClientRect().top + 10;
+            });
+        }, 50);
+    }
+
+    /**
+     * Clear all active notifications
+     */
+    clearAll() {
+        const ids = this.notifications.map(n => n.id);
+        ids.forEach(id => this.clear(id));
+    }
+
+    /**
+     * Get notification history
+     * @param {number} limit - Maximum number of history entries to return
+     * @returns {Array} Array of notification history objects
+     */
+    getHistory(limit = 50) {
+        return this.history.slice(-limit);
+    }
+
+    /**
+     * Clear notification history
+     */
+    clearHistory() {
+        this.history = [];
+    }
+
+    // Convenience methods
+    success(message, duration = 3000) {
+        return this.show(message, 'success', duration);
+    }
+
+    error(message, duration = 5000) {
+        return this.show(message, 'error', duration);
+    }
+
+    warning(message, duration = 4000) {
+        return this.show(message, 'warning', duration);
+    }
+
+    info(message, duration = 3000) {
+        return this.show(message, 'info', duration);
+    }
+}
+
+// Create global instance
+window.notifications = new NotificationManager();
+
+/**
+ * SearchableDropdown - A custom dropdown component with search functionality
+ *
+ * Features:
+ * - Keyboard-navigable search input
+ * - Grouped options (optgroups)
+ * - Filters options in real-time
+ * - Maintains visual consistency with site theme
+ * - Accessible keyboard navigation
+ */
+class SearchableDropdown {
+    constructor(selectElement, options = {}) {
+        this.originalSelect = selectElement;
+        this.options = {
+            placeholder: options.placeholder || 'Search...',
+            onChange: options.onChange || (() => {}),
+            ...options
+        };
+
+        // Parse options from original select element
+        this.parseOptions();
+
+        // Create custom dropdown elements
+        this.createDropdown();
+
+        // Initialize state
+        this.isOpen = false;
+        this.selectedValue = this.originalSelect.value;
+        this.selectedLabel = this.getSelectedLabel();
+        this.filteredOptions = [...this.allOptions];
+        this.highlightedIndex = -1;
+
+        // Bind events
+        this.bindEvents();
+
+        // Hide original select
+        this.originalSelect.style.display = 'none';
+
+        // Insert custom dropdown after original select
+        this.originalSelect.parentNode.insertBefore(this.container, this.originalSelect.nextSibling);
+
+        // Update display
+        this.updateSelectedDisplay();
+    }
+
+    parseOptions() {
+        this.groups = [];
+        this.allOptions = [];
+
+        // Parse optgroups and options
+        const children = Array.from(this.originalSelect.children);
+
+        children.forEach(child => {
+            if (child.tagName === 'OPTGROUP') {
+                const groupLabel = child.label;
+                const groupOptions = Array.from(child.children).map(option => ({
+                    value: option.value,
+                    label: option.textContent,
+                    group: groupLabel,
+                    selected: option.selected
+                }));
+
+                this.groups.push({
+                    label: groupLabel,
+                    options: groupOptions
+                });
+
+                this.allOptions.push(...groupOptions);
+            } else if (child.tagName === 'OPTION') {
+                const option = {
+                    value: child.value,
+                    label: child.textContent,
+                    group: null,
+                    selected: child.selected
+                };
+
+                // Only add non-placeholder options
+                if (child.value) {
+                    this.allOptions.push(option);
+                }
+            }
+        });
+    }
+
+    createDropdown() {
+        // Main container
+        this.container = document.createElement('div');
+        this.container.className = 'searchable-dropdown';
+
+        // Selected value display
+        this.selectedDisplay = document.createElement('div');
+        this.selectedDisplay.className = 'searchable-dropdown-selected';
+        this.selectedDisplay.innerHTML = `
+            <span class="searchable-dropdown-label"></span>
+            <svg class="searchable-dropdown-arrow" width="12" height="12" viewBox="0 0 12 12">
+                <path d="M2 4 L6 8 L10 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+        `;
+        this.container.appendChild(this.selectedDisplay);
+
+        // Dropdown panel
+        this.panel = document.createElement('div');
+        this.panel.className = 'searchable-dropdown-panel';
+
+        // Search input
+        this.searchInput = document.createElement('input');
+        this.searchInput.type = 'text';
+        this.searchInput.className = 'searchable-dropdown-search';
+        this.searchInput.placeholder = this.options.placeholder;
+        this.panel.appendChild(this.searchInput);
+
+        // Options list
+        this.optionsList = document.createElement('div');
+        this.optionsList.className = 'searchable-dropdown-options';
+        this.panel.appendChild(this.optionsList);
+
+        this.container.appendChild(this.panel);
+    }
+
+    bindEvents() {
+        console.log('[SearchableDropdown]Binding events to search input:', this.searchInput);
+
+        // Toggle dropdown
+        this.selectedDisplay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggle();
+        });
+
+        // Search input
+        this.searchInput.addEventListener('input', (e) => {
+            this.filterOptions(e.target.value);
+        });
+
+        this.searchInput.addEventListener('keydown', (e) => {
+            console.log('[SearchableDropdown]Keydown event fired on search input');
+            this.handleKeyDown(e);
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (!this.container.contains(e.target)) {
+                this.close();
+            }
+        });
+
+        // Option selection
+        this.optionsList.addEventListener('click', (e) => {
+            const optionEl = e.target.closest('.searchable-dropdown-option');
+            if (optionEl) {
+                const value = optionEl.dataset.value;
+                this.selectOption(value);
+            }
+        });
+    }
+
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    }
+
+    open() {
+        console.log('[SearchableDropdown]Opening dropdown');
+        this.isOpen = true;
+        this.container.classList.add('is-open');
+        this.searchInput.value = '';
+        this.filterOptions('');
+        this.searchInput.focus();
+        console.log('[SearchableDropdown]Search input focused,active element:', document.activeElement === this.searchInput);
+        this.highlightedIndex = -1;
+        console.log('[SearchableDropdown]Dropdown opened with', this.filteredOptions.length, 'options,highlightedIndex reset to-1');
+    }
+
+    close() {
+        console.log('[SearchableDropdown]Closing dropdown');
+        this.isOpen = false;
+        this.container.classList.remove('is-open');
+        this.highlightedIndex = -1;
+
+        // Ensure panel is hidden and clear search
+        this.searchInput.value = '';
+        this.searchInput.blur();
+
+        console.log('[SearchableDropdown]Dropdown closed,is-open class removed:', !this.container.classList.contains('is-open'));
+    }
+
+    filterOptions(query) {
+        const lowerQuery = query.toLowerCase();
+
+        if (!query) {
+            this.filteredOptions = [...this.allOptions];
+        } else {
+            this.filteredOptions = this.allOptions.filter(option => {
+                return option.label.toLowerCase().includes(lowerQuery) ||
+                       option.value.toLowerCase().includes(lowerQuery);
+            });
+        }
+
+        this.renderOptions();
+        this.highlightedIndex = -1;
+    }
+
+    renderOptions() {
+        this.optionsList.innerHTML = '';
+
+        if (this.filteredOptions.length === 0) {
+            this.optionsList.innerHTML = '<div class="searchable-dropdown-no-results">No results found</div>';
+            return;
+        }
+
+        // Group options by category
+        const grouped = {};
+        this.filteredOptions.forEach(option => {
+            const group = option.group || 'Other';
+            if (!grouped[group]) {
+                grouped[group] = [];
+            }
+            grouped[group].push(option);
+        });
+
+        // Render grouped options
+        Object.entries(grouped).forEach(([groupLabel, options]) => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'searchable-dropdown-group';
+
+            const groupLabelEl = document.createElement('div');
+            groupLabelEl.className = 'searchable-dropdown-group-label';
+            groupLabelEl.textContent = groupLabel;
+            groupEl.appendChild(groupLabelEl);
+
+            options.forEach(option => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'searchable-dropdown-option';
+                optionEl.dataset.value = option.value;
+
+                if (option.value === this.selectedValue) {
+                    optionEl.classList.add('is-selected');
+                }
+
+                optionEl.textContent = option.label;
+                groupEl.appendChild(optionEl);
+            });
+
+            this.optionsList.appendChild(groupEl);
+        });
+    }
+
+    selectOption(value) {
+        // Update original select
+        this.originalSelect.value = value;
+
+        // Update state
+        this.selectedValue = value;
+        this.selectedLabel = this.getSelectedLabel();
+
+        // Update display
+        this.updateSelectedDisplay();
+
+        // Close dropdown
+        this.close();
+
+        // Trigger change event on original select
+        const event = new Event('change', { bubbles: true });
+        this.originalSelect.dispatchEvent(event);
+
+        // Call onChange callback
+        this.options.onChange(value);
+    }
+
+    getSelectedLabel() {
+        const option = this.allOptions.find(opt => opt.value === this.selectedValue);
+        return option ? option.label : (this.originalSelect.querySelector('option[value=""]')?.textContent || 'Select...');
+    }
+
+    updateSelectedDisplay() {
+        const label = this.container.querySelector('.searchable-dropdown-label');
+        label.textContent = this.selectedLabel;
+
+        if (!this.selectedValue) {
+            label.classList.add('is-placeholder');
+        } else {
+            label.classList.remove('is-placeholder');
+        }
+    }
+
+    handleKeyDown(e) {
+        const options = Array.from(this.optionsList.querySelectorAll('.searchable-dropdown-option'));
+
+        console.log('[SearchableDropdown]Key pressed:', e.key, 'Options count:', options.length, 'Current index:', this.highlightedIndex);
+
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                const newDownIndex = Math.min(this.highlightedIndex + 1, options.length - 1);
+                console.log('[SearchableDropdown]ArrowDown:index', this.highlightedIndex, '->', newDownIndex);
+                this.highlightedIndex = newDownIndex;
+                this.updateHighlight(options);
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                const newUpIndex = Math.max(this.highlightedIndex - 1, 0);
+                console.log('[SearchableDropdown]ArrowUp:index', this.highlightedIndex, '->', newUpIndex);
+                this.highlightedIndex = newUpIndex;
+                this.updateHighlight(options);
+                break;
+
+            case 'Enter':
+                e.preventDefault();
+                console.log('[SearchableDropdown]Enter pressed,index:', this.highlightedIndex);
+                if (this.highlightedIndex >= 0 && options[this.highlightedIndex]) {
+                    const value = options[this.highlightedIndex].dataset.value;
+                    this.selectOption(value);
+                }
+                break;
+
+            case 'Escape':
+                e.preventDefault();
+                console.log('[SearchableDropdown]Escape pressed');
+                this.close();
+                break;
+        }
+    }
+
+    updateHighlight(options) {
+        console.log('[SearchableDropdown]updateHighlight called,highlighting index:', this.highlightedIndex, 'of', options.length, 'options');
+
+        options.forEach((option, index) => {
+            if (index === this.highlightedIndex) {
+                console.log('[SearchableDropdown]Adding highlight to option:', option.textContent);
+                option.classList.add('is-highlighted');
+                option.scrollIntoView({ block: 'nearest' });
+            } else {
+                option.classList.remove('is-highlighted');
+            }
+        });
+    }
+
+    // Public API
+    getValue() {
+        return this.selectedValue;
+    }
+
+    setValue(value) {
+        this.selectOption(value);
+    }
+
+    destroy() {
+        this.container.remove();
+        this.originalSelect.style.display = '';
+    }
+}
+
+/**
+ * YearSlider - Reusable year slider component with play/pause functionality
+ *
+ * Used across multiple charts (Globe, Radar, Correlation) for consistent
+ * year selection and timeline playback.
+ *
+ * Features:
+ * - Range slider with visual year display
+ * - Editable year input with validation
+ * - Play/pause timeline animation
+ * - Persistent state via observableStorage
+ *
+ * @example
+ * const slider = new YearSlider({
+ *     containerId: 'my-slider',
+ *     minYear: 2000,
+ *     maxYear: 2023,
+ *     initialYear: 2020,
+ *     storageKey: 'myChartYear',
+ *     onChange: (year) => { console.log('Year changed:', year) },
+ *     playInterval: 1200
+ * })
+ */
+class YearSlider {
+    /**
+     * @param {Object} options - Configuration options
+     * @param {string} options.containerId - Unique ID for the slider container element
+     * @param {number} options.minYear - Minimum year value
+     * @param {number} options.maxYear - Maximum year value
+     * @param {number} [options.initialYear] - Starting year (defaults to maxYear)
+     * @param {string} [options.storageKey] - Key for persistent storage (defaults to 'yearSlider_{containerId}')
+     * @param {Function} [options.onChange] - Callback when year changes: (year) => void
+     * @param {number} [options.playInterval=1200] - Milliseconds between year advances during playback
+     * @param {boolean} [options.enablePlayback=true] - Whether to show play/pause button
+     */
+    constructor(options) {
+        // Required options
+        this.containerId = options.containerId;
+        this.minYear = options.minYear;
+        this.maxYear = options.maxYear;
+        this.storageKey = options.storageKey || `yearSlider_${this.containerId}`;
+        this.playStorageKey = `${this.storageKey}_playing`;
+        this.playInterval = options.playInterval || 1200;
+        this.enablePlayback = options.enablePlayback !== false; // Default true
+        this.onChange = options.onChange || (() => {});
+        const storedYear = window.observableStorage?.getItem(this.storageKey);
+        this.year = storedYear || options.initialYear || this.maxYear;
+        this.year = Math.max(this.minYear, Math.min(this.maxYear, this.year));
+        const storedPlaying = window.observableStorage?.getItem(this.playStorageKey);
+        this.playing = storedPlaying || false;
+        this.playIntervalId = null;
+        // Build DOM
+        this.build();
+        this.attachEventListeners();
+        // Restore playing state if it was active
+        if (this.playing) {
+            this.startPlay();
+        }
+    }
+
+    build() {
+        this.container = document.createElement('div');
+        this.container.id = this.containerId;
+        this.container.classList.add('globe-year-slider-container'); // Reuse existing CSS class
+
+        const playPauseButton = this.enablePlayback
+            ? `<button class="year-play-pause-button" aria-label="Play timeline">
+                <span class="play-icon">▶</span>
+                <span class="pause-icon" style="display:none;">⏸</span>
+               </button>`
+            : '';
+
+        this.container.innerHTML = `
+<div class="year-slider-controls">
+    <label class="year-slider-label" for="${this.containerId}-input">
+        <span class="year-value-display" contenteditable="true" spellcheck="false">${this.year}</span>
+    </label>
+    <div class="year-slider-wrapper">
+        <div class="year-slider-track-container">
+            <div class="year-slider-ticks"></div>
+            <input
+                type="range"
+                class="year-slider-input"
+                id="${this.containerId}-input"
+                min="${this.minYear}"
+                max="${this.maxYear}"
+                value="${this.year}"
+                step="1"
+            />
+        </div>
+        <div class="year-slider-bounds">
+            <span class="year-slider-min">${this.minYear}</span>
+            <span class="year-slider-max">${this.maxYear}</span>
+        </div>
+    </div>
+    ${playPauseButton}
+</div>`;
+    }
+
+    attachEventListeners() {
+        this.input = this.container.querySelector('.year-slider-input');
+        this.display = this.container.querySelector('.year-value-display');
+
+        // Range slider input
+        this.input.addEventListener('input', (e) => {
+            if (this.playing) {
+                this.stopPlay();
+            }
+            this.setYear(parseInt(e.target.value));
+        });
+
+        // Editable display - keyboard handling
+        this.display.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.display.blur();
+            } else if (!/^\d$/.test(e.key) && !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // Editable display - blur validation
+        this.display.addEventListener('blur', () => {
+            const inputYear = parseInt(this.display.textContent.trim());
+
+            if (isNaN(inputYear) || inputYear < this.minYear || inputYear > this.maxYear) {
+                // Invalid year, revert to current year
+                this.display.textContent = this.year;
+                this.display.classList.add('year-input-error');
+                setTimeout(() => {
+                    this.display.classList.remove('year-input-error');
+                }, 500);
+            } else if (inputYear !== this.year) {
+                // Valid year and different from current, update
+                if (this.playing) {
+                    this.stopPlay();
+                }
+                this.setYear(inputYear);
+            } else {
+                // Same year, just ensure formatting is correct
+                this.display.textContent = this.year;
+            }
+        });
+
+        // Play/pause button
+        if (this.enablePlayback) {
+            this.playPauseButton = this.container.querySelector('.year-play-pause-button');
+            this.playIcon = this.container.querySelector('.play-icon');
+            this.pauseIcon = this.container.querySelector('.pause-icon');
+
+            this.playPauseButton.addEventListener('click', () => {
+                this.togglePlay();
+            });
+        }
+    }
+
+    /**
+     * Set the current year and trigger onChange callback
+     * @param {number} year - Year to set
+     * @param {boolean} [silent=false] - If true, don't trigger onChange callback*/
 setYear(year,silent=false){year=Math.max(this.minYear,Math.min(this.maxYear,year));this.year=year;this.input.value=year;this.display.textContent=year;if(window.observableStorage){window.observableStorage.setItem(this.storageKey,year);}
 if(!silent){this.onChange(year);}}
 updateRange(minYear,maxYear){this.minYear=minYear;this.maxYear=maxYear;this.input.min=minYear;this.input.max=maxYear;this.container.querySelector('.year-slider-min').textContent=minYear;this.container.querySelector('.year-slider-max').textContent=maxYear;if(this.year<minYear||this.year>maxYear){this.setYear(Math.max(minYear,Math.min(maxYear,this.year)));}}
@@ -1051,7 +1844,7 @@ async init(){await this.fetchData();this.render();}
 async fetchData(){try{const response=await fetch(`/api/v1/country/rankings/${this.countryCode}/${this.itemLevel}`);if(!response.ok){throw new Error(`HTTP\u0020error!\u0020status:\u0020${response.status}`);}
 const result=await response.json();this.data=result;this.totalCountries=result.totalCountries||67;if(this.data.timePeriods){if(this.data.timePeriods['Overall']&&this.data.timePeriods['Overall'].length>0){this.selectedTimePeriod=this.data.timePeriods['Overall'][0];}else if(this.data.timePeriods['Single Year']){const years=this.data.timePeriods['Single Year'];this.selectedTimePeriod=years[years.length-1];}else{const firstType=Object.keys(this.data.timePeriods)[0];this.selectedTimePeriod=this.data.timePeriods[firstType][0];}}}catch(error){console.error('Error fetching rankings data:',error);this.renderError(error.message);}}
 render(){if(!this.data){return;}
-const dropdownHTML=this.buildDropdownOptions();const isSingleYear=this.isSingleYearPeriod(this.selectedTimePeriod);const layoutClass=isSingleYear?'single-year':'intervals';this.parentElement.innerHTML=`<div class="rankings-panel"><div class="rankings-panel-header"><h3>Time Period</h3><select class="time-period-selector">${dropdownHTML}</select></div><!--Absolute Performance Section--><div class="rankings-section"><div class="rankings-section-header"><h4>Absolute Indicator Performance\u0020(Score-Based)</h4><p class="rankings-section-description">Policy indicators of note when comparing with the set of all indicators for ${this.countryCode}.</p></div><div class="rankings-panel-content ${layoutClass}"><div class="rankings-column"><h5>Highest Average Score</h5><div class="rankings-cards"id="absolute-highest-cards"></div></div><div class="rankings-column"><h5>Lowest Average Score</h5><div class="rankings-cards"id="absolute-lowest-cards"></div></div>${!isSingleYear?`<div class="rankings-column"><h5>Biggest Score Increase</h5><div class="rankings-cards"id="absolute-improved-cards"></div></div><div class="rankings-column"><h5>Biggest Score Decline</h5><div class="rankings-cards"id="absolute-declined-cards"></div></div>`:''}</div></div><!--Relative Performance Section--><div class="rankings-section"><div class="rankings-section-header"><h4>Relative Indicator Performance(Rank-Based)</h4><p class="rankings-section-description">Policy indicators on which ${this.countryCode}ranks best/worst compared to other countries.</p></div><div class="rankings-panel-content ${layoutClass}"><div class="rankings-column"><h5>Best Average Rank</h5><div class="rankings-cards"id="relative-strongest-cards"></div></div><div class="rankings-column"><h5>Worst Average Rank</h5><div class="rankings-cards"id="relative-weakest-cards"></div></div>${!isSingleYear?`<div class="rankings-column"><h5>Biggest Rank Increase</h5><div class="rankings-cards"id="relative-improved-cards"></div></div><div class="rankings-column"><h5>Biggest Rank Decline</h5><div class="rankings-cards"id="relative-declined-cards"></div></div>`:''}</div></div></div>`;const selector=this.parentElement.querySelector('.time-period-selector');selector.addEventListener('change',(e)=>{this.selectedTimePeriod=e.target.value;this.render();});this.updateCards();}
+const dropdownHTML=this.buildDropdownOptions();const isSingleYear=this.isSingleYearPeriod(this.selectedTimePeriod);const layoutClass=isSingleYear?'single-year':'intervals';this.parentElement.innerHTML=`<div class="rankings-panel"><div class="rankings-panel-header"><label class="time-period-label"for="rankings-time-period-selector">Time Period</label><select class="time-period-selector"id="rankings-time-period-selector">${dropdownHTML}</select></div><!--Absolute Performance Section--><div class="rankings-section"><div class="rankings-section-header"><h4>Absolute Indicator Performance\u0020(Score-Based)</h4><p class="rankings-section-description">Policy indicators of note when comparing with the set of all indicators for ${this.countryCode}.</p></div><div class="rankings-panel-content ${layoutClass}"><div class="rankings-column"><h5>Highest Average Score</h5><div class="rankings-cards"id="absolute-highest-cards"></div></div><div class="rankings-column"><h5>Lowest Average Score</h5><div class="rankings-cards"id="absolute-lowest-cards"></div></div>${!isSingleYear?`<div class="rankings-column"><h5>Biggest Score Increase</h5><div class="rankings-cards"id="absolute-improved-cards"></div></div><div class="rankings-column"><h5>Biggest Score Decline</h5><div class="rankings-cards"id="absolute-declined-cards"></div></div>`:''}</div></div><!--Relative Performance Section--><div class="rankings-section"><div class="rankings-section-header"><h4>Relative Indicator Performance\u0020(Rank-Based)</h4><p class="rankings-section-description">Policy indicators on which ${this.countryCode}\u0020ranks best/worst compared to other countries.</p></div><div class="rankings-panel-content ${layoutClass}"><div class="rankings-column"><h5>Best Average Rank</h5><div class="rankings-cards"id="relative-strongest-cards"></div></div><div class="rankings-column"><h5>Worst Average Rank</h5><div class="rankings-cards"id="relative-weakest-cards"></div></div>${!isSingleYear?`<div class="rankings-column"><h5>Biggest Rank Increase</h5><div class="rankings-cards"id="relative-improved-cards"></div></div><div class="rankings-column"><h5>Biggest Rank Decline</h5><div class="rankings-cards"id="relative-declined-cards"></div></div>`:''}</div></div></div>`;const selector=this.parentElement.querySelector('.time-period-selector');selector.addEventListener('change',(e)=>{this.selectedTimePeriod=e.target.value;this.render();});this.updateCards();}
 buildDropdownOptions(){if(!this.data.timePeriods){return'<option>No time periods available</option>';}
 const typeOrder=['Overall','Year-to-Present','Ten Year Interval','Five Year Interval','Single Year'];let html='';for(const type of typeOrder){if(this.data.timePeriods[type]){const periods=this.data.timePeriods[type];html+=`<optgroup label="${type}">`;const orderedPeriods=type==='Single Year'?[...periods].reverse():periods;for(const period of orderedPeriods){const selected=period===this.selectedTimePeriod?'selected':'';html+=`<option value="${period}"${selected}>${period}</option>`;}
 html+='</optgroup>';}}
@@ -1072,7 +1865,7 @@ getRankValue(item,metric){if(item.TimePeriodType==='Single Year'){return metric=
 getScoreValue(item,metric){if(item.TimePeriodType==='Single Year'){return metric==='avg'?item.Score:null;}else{return item.Scores?item.Scores[metric]:null;}}
 renderCards(containerId,items,type){const container=this.parentElement.querySelector(`#${containerId}`);if(!container){return;}
 if(!items||items.length===0){container.innerHTML='<div class="no-data-message">No data available</div>';return;}
-container.innerHTML=items.map(item=>this.createCard(item,type)).join('');const isSingleYear=items.length>0&&this.isSingleYearPeriod(items[0].TimePeriod);if(!isSingleYear){container.querySelectorAll('.ranking-card').forEach(card=>{card.style.cursor='pointer';card.addEventListener('click',(e)=>{this.showPreviewModal(card);});});}}
+container.innerHTML=items.map(item=>this.createCard(item,type)).join('');const isSingleYear=items.length>0&&this.isSingleYearPeriod(items[0].TimePeriod);if(!isSingleYear){container.querySelectorAll('.ranking-card').forEach(card=>{card.classList.add('ranking-card-clickable');card.addEventListener('click',(e)=>{this.showPreviewModal(card);});});}}
 createCard(item,type){const rank=this.getRankValue(item,'avg');const score=this.getScoreValue(item,'avg');const scoreChange=this.getScoreValue(item,'chg');const rankChange=this.getRankValue(item,'chg');const isAbsolute=type.startsWith('absolute');const isChangeCard=type.includes('improved')||type.includes('declined');const change=isAbsolute?scoreChange:rankChange;let changeHtml='';if(isChangeCard&&change!==null&&change!==undefined){const changeSign=change>0?'+':'';const changeClass=change>0?'positive-change':'negative-change';changeHtml=`<span class="rank-change ${changeClass}">${changeSign}${change.toFixed(isAbsolute?3:0)}</span>`;}
 return`<div class="ranking-card ${type}"data-item-code="${item.ItemCode}"data-time-period="${item.TimePeriod}"data-item-name="${item.ItemName || item.ItemCode}"><div class="card-header"><span class="item-name">${item.ItemName||item.ItemCode}</span>${rank?`<span class="rank-badge">#\u0020${rank}\u0020/\u0020${this.totalCountries}</span>`:''}</div><div class="card-body"><div class="score-row"><span class="score-display">Score:\u0020${score!==null?score.toFixed(3):'N/A'}</span>${changeHtml}</div></div><div class="card-footer"><span class="time-period">${item.TimePeriod}</span></div></div>`;}
 renderError(message){this.parentElement.innerHTML=`<div class="rankings-panel-error"><p>Error\u0020loading\u0020rankings\u0020data:\u0020${message}</p></div>`;}
@@ -1865,8 +2658,8 @@ this.root.classList.add('panel-chart-root-container')
 this.parentElement.appendChild(this.root)}
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options')
-const comparisonOptionsHTML=this.enableComparisonSeries?`<div class="chart-view-subheader">Comparison Options</div><div class="chart-view-option"><input type="checkbox"class="show-comparison-series"/><label class="title-bar-label">Show Comparison Series</label></div>`:'';const searchButtonHTML=this.isCountryListMode?'':`<button class="add-country-button">Search Country</button>`;const countryGroupSelectorHTML=this.isCountryListMode?'':`<div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div>`;const countryGroupButtonsHTML=this.isCountryListMode?`<div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="show-all-countries-button">Show All Countries</button></div></div>`:`<div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div>`;this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="country-information chart-options-details"><summary class="item-information-summary">Country Information</summary><div class="country-information-box"data-unpopulated=true>Click on a Country to Show Details and Links Here.</div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button>${searchButtonHTML}</div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend>${countryGroupSelectorHTML}
-${countryGroupButtonsHTML}<div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader"><div>Year Range</div><button class="reset-year-range-button">Reset to Default</button></div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label">Start Year</label><input type="number"class="start-year"value="${this.startYear}"min="2000"max="2025"/></div><div class="randomization-options"><label class="title-bar-label">End Year</label><input type="number"class="end-year"value="${this.endYear}"min="2000"max="2025"/></div></div><div class="chart-view-subheader">Imputation Options</div><div class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><label class="title-bar-label">Backward Extrapolation</label></div><div class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><label class="title-bar-label">Linear Interpolation</label></div>${comparisonOptionsHTML}<div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div><div class="chart-view-subheader">Chart Interaction</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label">Hover Radius:</label><input type="number"class="hover-radius"step="1"value="15"min="1"max="25"/></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
+const comparisonOptionsHTML=this.enableComparisonSeries?`<div class="chart-view-subheader">Comparison Options</div><label class="chart-view-option"><input type="checkbox"class="show-comparison-series"/><span class="title-bar-label">Show Comparison Series</span></label>`:'';const searchButtonHTML=this.isCountryListMode?'':`<button class="add-country-button">Search Country</button>`;const countryGroupSelectorHTML=this.isCountryListMode?'':`<div class="chart-view-subheader">Country Groups</div><div class="chart-view-option"><select class="country-group-selector"></select></div>`;const countryGroupButtonsHTML=this.isCountryListMode?`<div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><button class="show-all-countries-button">Show All Countries</button></div></div>`:`<div class="chart-view-option country-group-buttons"><div class="country-group-button-group"><div class="random-draw-controls"><button class="random-history-back-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-right"/></svg></button><button class="draw-button">Draw 10 Countries</button><button class="random-history-forward-button"><svg class="history-button-svg"width="16"height="16"><use href="#icon-open-arrow-left"/></svg></button></div><button class="show-in-group-button">Show All in Group</button></div></div>`;this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="item-information chart-options-details"><summary class="item-information-summary">Item Information</summary><select class="item-dropdown"></select><div class="dynamic-item-description-container"><div class="dynamic-item-description"></div></div></details><details class="country-information chart-options-details"><summary class="item-information-summary">Country Information</summary><div class="country-information-box"data-unpopulated=true>Click on a Country to Show Details and Links Here.</div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="hideunpinned-button">Hide Unpinned</button><button class="clearpins-button">Clear Pins</button>${searchButtonHTML}</div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend>${countryGroupSelectorHTML}
+${countryGroupButtonsHTML}<div class="chart-view-subheader">Missing Countries</div><div class="missing-countries-container"><div class="missing-countries-list"></div><div class="missing-countries-summary"></div></div></div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader"><div>Year Range</div><button class="reset-year-range-button">Reset to Default</button></div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label">Start Year</label><input type="number"class="start-year"value="${this.startYear}"min="2000"max="2025"/></div><div class="randomization-options"><label class="title-bar-label">End Year</label><input type="number"class="end-year"value="${this.endYear}"min="2000"max="2025"/></div></div><div class="chart-view-subheader">Imputation Options</div><label class="chart-view-option"><input type="checkbox"class="extrapolate-backward"/><span class="title-bar-label">Backward Extrapolation</span></label><label class="chart-view-option"><input type="checkbox"class="interpolate-linear"/><span class="title-bar-label">Linear Interpolation</span></label>${comparisonOptionsHTML}<div class="chart-view-subheader">Randomization</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label"for="random-country-sample">Draw Size:</label><input type="number"class="random-country-sample"id="random-country-sample"step="1"value="10"/></div></div><div class="chart-view-subheader">Chart Interaction</div><div class="chart-view-option"><div class="randomization-options"><label class="title-bar-label">Hover Radius:</label><input type="number"class="hover-radius"step="1"value="15"min="1"max="25"/></div></div></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.showChartOptions=document.createElement('button')
 this.showChartOptions.classList.add("icon-button","show-chart-options")
 this.showChartOptions.ariaLabel="Show Chart Options"
 this.showChartOptions.title="Show Chart Options"
@@ -2339,7 +3132,7 @@ opt.textContent=option.datasetName+' ('+option.datasetCode+')'
 datasetDropdown.appendChild(opt)}
 datasetDropdown.addEventListener('change',(event)=>{window.location.href=event.target.value})
 const dbox=this.chartOptions.querySelector('.dynamic-item-description')
-dbox.innerHTML=`<div class="item-info-title">${description.Name}</div><ul class="item-detail-list"><li class="item-detail-element"><b>Dataset Code:</b><span class="item-detail-value">${this.datasetCode}</li><li class="item-detail-element"><b>Description:</b><span class="item-detail-value">${description.Description}</span></li></ul>`;}
+dbox.innerHTML=`<div class="item-info-title">${description.Name}</div><ul class="item-detail-list"><li class="item-detail-element"><b>Dataset Code:</b><span class="item-detail-value">${this.datasetCode}</span></li><li class="item-detail-element"><b>Description:</b><span class="item-detail-value">${description.Description}</span></li></ul>`;}
 updateCountryInformation(){if(!this.activeCountry)return;this.countryInformationBox.dataset.unpopulated=false
 const isPinned=this.activeCountry.pinned||false;const pinButtonText=isPinned?"Unpin Country":"Pin Country";const pinButtonClass=isPinned?"unpin-country-button":"pin-country-button";let dataset=this.chart.data.datasets.find((ds)=>{return ds.CCode===this.activeCountry.CCode})
 try{const avgValue=(dataset.value.reduce((a,b)=>a+b)/dataset.value.length)
@@ -2353,7 +3146,6 @@ this.updateCountryInformation();}});}}
 update(data){if(this.chartInteractionPlugin&&this.chartInteractionPlugin._forceRefreshLabels){this.chartInteractionPlugin._forceRefreshLabels(this.chart)}
 this.chart.data=data
 this.chart.data.labels=data.labels
-console.log("Data Labels:",this.chart.data.labels)
 this.chart.data.datasets=data.data
 this.title.innerText=data.title
 this.chart.options.plugins.title=data.title
@@ -2379,7 +3171,6 @@ updateItemDropdown(options,itemType){let itemTypeCapped=itemType
 if(itemType==="sspi"){itemTypeCapped=this.itemType.toUpperCase()}else{itemTypeCapped=this.itemType.charAt(0).toUpperCase()+this.itemType.slice(1)}
 const itemTitle=itemTypeCapped+' Information';const itemSummary=this.itemInformation.querySelector('.item-information-summary')
 itemSummary.textContent=itemTitle;const defaultValue='/data/'+itemType.toLowerCase()+'/'+this.itemCode
-console.log('Default value for item dropdown:',defaultValue)
 for(const option of options){const opt=document.createElement('option')
 opt.value=option.Value
 if(option.Value===defaultValue){opt.selected=true;}
@@ -2395,7 +3186,7 @@ if(treePath.length>0){breadcrumbHTML+='<span class="breadcrumb-separator">></spa
 breadcrumbHTML+='<span class="breadcrumb-current">'+title+' ('+itemCode+')</span>';this.breadcrumb.innerHTML=breadcrumbHTML;}
 generateTooltipText(parentItemName,parentItemType,childTypeTitle,childrenCount){const pluralToSingular={'Pillars':'Pillar','Categories':'Category','Indicators':'Indicator'};const childTypeSingular=pluralToSingular[childTypeTitle]||childTypeTitle;const childTypeDisplay=childrenCount===1?childTypeSingular:childTypeTitle;const parentTypeDisplay=parentItemType==='SSPI'?'SSPI':parentItemName+' '+parentItemType;return parentTypeDisplay+' scores are the arithmetic average of the '+childTypeSingular.toLowerCase()+' scores of the '+childrenCount+' '+childTypeDisplay.toLowerCase()+' below';}
 updateChildren(children,childTypeTitle,parentItemName,parentItemType){const descriptionContainer=this.chartOptions.querySelector('.dynamic-item-description-container');const existingChildrenSection=descriptionContainer.querySelector('.item-children-section');if(existingChildrenSection){existingChildrenSection.remove();}
-if(children&&children.length>0&&childTypeTitle){const tooltipText=this.generateTooltipText(parentItemName,parentItemType,childTypeTitle,children.length);console.log('Generated tooltip text:',tooltipText);const childrenHTML='<div class="item-children-section">'+
+if(children&&children.length>0&&childTypeTitle){const tooltipText=this.generateTooltipText(parentItemName,parentItemType,childTypeTitle,children.length);const childrenHTML='<div class="item-children-section">'+
 '<div class="children-title-wrapper">'+
 '<h4>'+childTypeTitle+'</h4>'+
 '<span class="children-info-icon" title="'+tooltipText+'" aria-label="Information about scoring">i</span>'+
@@ -2520,7 +3311,7 @@ buildChartOptions(){super.buildChartOptions()
 const viewOptions=this.chartOptions.querySelector('.chart-view-options')
 if(viewOptions){const existingContainer=viewOptions.querySelector('.view-options-suboption-container')
 if(existingContainer){const seriesControlsHTML=`<div class="chart-view-subheader">Active Series</div><div class="chart-view-option series-selector-container"><select class="series-selector"id="series-selector"><option value="` + this.itemCode + `"selected>`+this.itemCode+`Indicator Score</option></select></div><div class="chart-view-subheader y-axis-range-subheader">Y-Axis Range</div><div class="chart-view-option y-axis-controls"><div class="y-axis-input-group"><label class="title-bar-label"for="y-min-input">Y Min:</label><input type="number"class="y-min-input"id="y-min-input"step="0.01"value="0"/></div><div class="y-axis-input-group"><label class="title-bar-label"for="y-max-input">Y Max:</label><input type="number"class="y-max-input"id="y-max-input"step="0.01"value="1"/></div><button class="restore-y-axis-button"style="display: none;">Restore Default Range</button></div>`;existingContainer.insertAdjacentHTML('afterbegin',seriesControlsHTML)
-const imputationOptionsHeader=Array.from(existingContainer.querySelectorAll('.chart-view-subheader')).find(header=>header.textContent.includes('Imputation Options'));if(imputationOptionsHeader){const imputationToggleHTML=`<div class="chart-view-option"><input type="checkbox"class="show-all-imputations"${this.showImputations?'checked':''}/><label class="title-bar-label">Show All Imputations</label></div>`;imputationOptionsHeader.insertAdjacentHTML('afterend',imputationToggleHTML);}}}}
+const imputationOptionsHeader=Array.from(existingContainer.querySelectorAll('.chart-view-subheader')).find(header=>header.textContent.includes('Imputation Options'));if(imputationOptionsHeader){const imputationToggleHTML=`<label class="chart-view-option"><input type="checkbox"class="show-all-imputations"${this.showImputations?'checked':''}/><span class="title-bar-label">Show All Imputations</span></label>`;imputationOptionsHeader.insertAdjacentHTML('afterend',imputationToggleHTML);}}}}
 rigChartOptions(){super.rigChartOptions()
 this.rigViewOptionsControls()
 this.initializeImputationState()}
@@ -3601,7 +4392,7 @@ return newColor;}}};getSwitchMarkup(toggleClass,labelText,checked=false){return`
 buildChartOptions(){this.chartOptions=document.createElement('div')
 this.chartOptions.classList.add('chart-options','inactive')
 this.chartOptions.innerHTML=`<div class="hide-chart-button-container"><button class="icon-button hide-chart-options"aria-label="Hide Chart Options"title="Hide Chart Options"><svg class="hide-chart-options-svg"width="24"height="24"><use href="#icon-close"/></svg></button></div><details class="country-information chart-options-details"><summary class="item-information-summary">Country Information</summary><div class="country-information-box"data-unpopulated=true>Click on a Country to Show Details and Links Here.</div></details><details class="chart-options-details chart-view-options"><summary class="chart-view-options-summary">View Options</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Dataset Options</div>${this.getSwitchMarkup('altitude-toggle','Exploded View')}
-${this.getSwitchMarkup('cloropleth-toggle','Cloropleth',true)}
+${this.getSwitchMarkup('cloropleth-toggle','Choropleth',true)}
 ${this.getSwitchMarkup('darken-borders-toggle','Darken Borders')}<div class="chart-view-subheader">Rotation</div>${this.getSwitchMarkup('globe-rotation-toggle','Globe Rotation',true)}
 ${this.getSwitchMarkup('rotation-on-click-toggle','Toggle Rotation on Click',true)}</div></details><details class="select-countries-options chart-options-details"><summary class="select-countries-summary">Select Countries</summary><div class="view-options-suboption-container"><div class="chart-view-subheader">Pinned Countries</div><div class="legend-title-bar-buttons"><div class="pin-actions-box"><button class="clearpins-button">Clear Pins</button><button class="add-country-button">Search Country</button></div><div class="country-search-results-window"></div></div><legend class="dynamic-line-legend"><div class="legend-items"></div></legend></div></details><details class="download-data-details chart-options-details"><summary>Download Chart Data</summary><form class="panel-download-form"><fieldset class="download-scope-fieldset"><legend>Select data scope:</legend><label class="download-scope-option"><input type="radio"name="scope"value="pinned"required>Pinned countries</label><label class="download-scope-option"><input type="radio"name="scope"value="visible">Visible countries</label><label class="download-scope-option"><input type="radio"name="scope"value="group">Countries in group</label><label class="download-scope-option"><input type="radio"name="scope"value="all">All available countries</label></fieldset><fieldset class="download-format-fieldset"><legend>Choose file format:</legend><label class="download-format-option"><input type="radio"name="format"value="json"required>JSON</label><label class="download-format-option"><input type="radio"name="format"value="csv">CSV</label></fieldset><button type="submit"class="download-submit-button">Download Data</button></form></details>`;this.overlay=document.createElement('div')
 this.overlay.classList.add('chart-options-overlay','inactive')
@@ -3739,11 +4530,10 @@ zoomToCountry(countryCode,duration=1000){const feature=this.geojson.features.fin
 if(!feature.bbox){console.error(`Country"${countryCode}"does not have a bounding box`);return;}
 this.zoomToBoundingBox(feature.bbox,duration);}}
 class CountryCoverageMatrixChart{constructor(parentElement,countryCode,{minYear=2000,maxYear=2023}={}){this.parentElement=parentElement;this.countryCode=countryCode;this.minYear=minYear;this.maxYear=maxYear;this.currentView='indicator';this.indicatorData=null;this.datasetData=null;this.setTheme(window.observableStorage.getItem("theme"));this.initRoot();this.initChartContainer();this.updateChartOptions();this.fetch();}
-setTheme(theme){if(theme!=="light"){this.theme="dark";this.tickColor="#bbb";this.axisTitleColor="#bbb";this.observedBg='rgba(0, 140, 0, 0.7)';this.observedBorder='rgba(0, 140, 0, 1)';this.observedSummary='rgba(0, 140, 0, 0.8)';}else{this.theme="light";this.tickColor="#444";this.axisTitleColor="#444";this.observedBg='rgba(0, 180, 0, 0.7)';this.observedBorder='rgba(0, 180, 0, 1)';this.observedSummary='rgba(0, 180, 0, 0.8)';}
-if(this.chart){this.updateChartOptions();this.chart.update();}}
+setTheme(theme){this.theme=theme==="light"?"light":"dark";const rootStyle=getComputedStyle(document.documentElement);const readToken=(name,fallback)=>rootStyle.getPropertyValue(name).trim()||fallback;const withAlpha=(color,alpha)=>/^#[0-9a-fA-F]{6}$/.test(color)?color+Math.round(alpha*255).toString(16).padStart(2,"0"):color;const observed=readToken("--sus-accent","#28A745");const imputed=readToken("--ms-accent","#FF851B");const observedAlpha=this.theme==="light"?0.75:0.65;this.tickColor=readToken("--low-importance-font-color","#888");this.axisTitleColor=this.tickColor;this.observedBg=withAlpha(observed,observedAlpha);this.observedBorder=observed;this.observedSummary=withAlpha(observed,0.85);this.imputedBg=withAlpha(imputed,0.85);this.imputedBorder=imputed;this.imputedSummary=withAlpha(imputed,0.85);if(this.chart){this.updateChartOptions();this.chart.update();}}
 updateChartOptions(){if(!this.chart)return;this.chart.options.scales.x.ticks.color=this.tickColor;this.chart.options.scales.y.ticks.color=this.tickColor;}
 initRoot(){this.root=document.createElement('div');this.root.classList.add('country-coverage-matrix-root');this.parentElement.appendChild(this.root);}
-initChartContainer(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('country-coverage-matrix-container');this.chartContainer.innerHTML=`<div class="country-coverage-matrix-header"><h3 class="country-coverage-matrix-title">Data Coverage Matrix</h3><div class="coverage-view-tabs"><button class="view-tab active"data-view="indicator">By Indicator</button><button class="view-tab"data-view="dataset">By Dataset</button></div></div><div class="country-coverage-summary"></div><div class="country-coverage-canvas-wrapper"><canvas class="country-coverage-matrix-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.title=this.chartContainer.querySelector('.country-coverage-matrix-title');this.summaryContainer=this.chartContainer.querySelector('.country-coverage-summary');this.canvasWrapper=this.chartContainer.querySelector('.country-coverage-canvas-wrapper');this.canvas=this.chartContainer.querySelector('.country-coverage-matrix-canvas');this.context=this.canvas.getContext('2d');this.tabButtons=this.chartContainer.querySelectorAll('.view-tab');this.tabButtons.forEach(btn=>{btn.addEventListener('click',(e)=>{const view=e.target.dataset.view;this.toggleView(view);});});this.font={family:'Courier New',size:10,style:"normal",weight:"normal"};this.chart=new Chart(this.context,{type:'matrix',options:{maintainAspectRatio:false,animation:{duration:500},layout:{padding:{top:40,right:25,left:10}},plugins:{legend:false,tooltip:{callbacks:{title:()=>'Data Coverage',label:(context)=>{const cell=context.dataset.data[context.dataIndex];return this.buildTooltipLabel(cell);}}}},scales:{x:{type:'category',position:'top',offset:true,ticks:{font:this.font,maxRotation:45,minRotation:45,autoSkip:false},grid:{display:true,drawOnChartArea:false}},y:{type:'category',offset:true,reverse:false,ticks:{font:this.font,autoSkip:false},grid:{display:true}}}},plugins:[]});}
+initChartContainer(){this.chartContainer=document.createElement('div');this.chartContainer.classList.add('country-coverage-matrix-container');this.chartContainer.innerHTML=`<div class="country-coverage-matrix-header"><h3 class="country-coverage-matrix-title">Data Coverage Matrix</h3><div class="coverage-view-tabs"><button class="view-tab active"data-view="indicator">By Indicator</button><button class="view-tab"data-view="dataset">By Dataset</button></div></div><div class="country-coverage-summary"></div><div class="country-coverage-canvas-wrapper"><canvas class="country-coverage-matrix-canvas"></canvas></div>`;this.root.appendChild(this.chartContainer);this.title=this.chartContainer.querySelector('.country-coverage-matrix-title');this.summaryContainer=this.chartContainer.querySelector('.country-coverage-summary');this.canvasWrapper=this.chartContainer.querySelector('.country-coverage-canvas-wrapper');this.canvas=this.chartContainer.querySelector('.country-coverage-matrix-canvas');this.context=this.canvas.getContext('2d');this.tabButtons=this.chartContainer.querySelectorAll('.view-tab');this.tabButtons.forEach(btn=>{btn.addEventListener('click',(e)=>{const view=e.target.dataset.view;this.toggleView(view);});});this.font={family:"ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",size:10,style:"normal",weight:"normal"};this.chart=new Chart(this.context,{type:'matrix',options:{maintainAspectRatio:false,animation:{duration:500},layout:{padding:{top:40,right:25,left:10}},plugins:{legend:false,tooltip:{callbacks:{title:()=>'Data Coverage',label:(context)=>{const cell=context.dataset.data[context.dataIndex];return this.buildTooltipLabel(cell);}}}},scales:{x:{type:'category',position:'top',offset:true,ticks:{font:this.font,maxRotation:45,minRotation:45,autoSkip:false},grid:{display:true,drawOnChartArea:false}},y:{type:'category',offset:true,reverse:false,ticks:{font:this.font,autoSkip:false},grid:{display:true}}}},plugins:[]});}
 buildTooltipLabel(cell){const status=cell.v==='observed'?'Observed Data':'Imputed Data';if(cell.yDataset){const lines=['Dataset: '+(cell.yDatasetName||cell.yDataset),'Indicator: '+(cell.yIndicatorName||cell.yIndicator),'Year: '+cell.x,'Status: '+status];if(cell.value!==null&&cell.value!==undefined){lines.push('Value: '+cell.value.toFixed(3));}
 if(cell.imputationMethod){lines.push('Imputation: '+cell.imputationMethod);}
 return lines;}
@@ -3752,9 +4542,9 @@ if(cell.datasetBreakdown&&Object.keys(cell.datasetBreakdown).length>0){const gre
 return lines;}
 async fetch(){const[indicatorRes,datasetRes]=await Promise.all([fetch(`/api/v1/country/coverage/matrix/${this.countryCode}?view=indicator`),fetch(`/api/v1/country/coverage/matrix/${this.countryCode}?view=dataset`)]);this.indicatorData=await indicatorRes.json();this.datasetData=await datasetRes.json();this.update(this.indicatorData);}
 toggleView(view){if(this.currentView===view)return;this.currentView=view;this.tabButtons.forEach(btn=>{if(btn.dataset.view===view){btn.classList.add('active');}else{btn.classList.remove('active');}});const data=view==='dataset'?this.datasetData:this.indicatorData;if(data){this.update(data);}}
-updateSummary(summary){this.summaryContainer.innerHTML='';const items=[{label:'Observed Data',value:summary.observedPercent,count:summary.observedCount,color:this.observedSummary},{label:'Imputed Data',value:summary.imputedPercent,count:summary.imputedCount,color:'rgba(255, 165, 0, 0.8)'}];items.forEach(item=>{const line=document.createElement('div');line.classList.add('coverage-summary-line');line.innerHTML=`<span class="coverage-color-block"style="background-color: ${item.color}"></span><span class="coverage-label">${item.label}:</span><span class="coverage-value">${item.value}%\u0020(${item.count}\u0020cells)</span>`;this.summaryContainer.appendChild(line);});}
+updateSummary(summary){this.summaryContainer.innerHTML='';const items=[{label:'Observed Data',value:summary.observedPercent,count:summary.observedCount,color:this.observedSummary},{label:'Imputed Data',value:summary.imputedPercent,count:summary.imputedCount,color:this.imputedSummary}];items.forEach(item=>{const line=document.createElement('div');line.classList.add('coverage-summary-line');line.innerHTML=`<span class="coverage-color-block"style="background-color: ${item.color}"></span><span class="coverage-label">${item.label}:</span><span class="coverage-value">${item.value}%\u0020(${item.count}\u0020cells)</span>`;this.summaryContainer.appendChild(line);});}
 update(res){this.n_years=res.years.length;let yLabels;if(res.view==='dataset'){yLabels=res.datasets||[];this.n_rows=yLabels.length;}else{yLabels=res.indicators||[];this.n_rows=yLabels.length;}
-this.title.textContent=res.countryName+' Data Coverage Matrix';const heightPerRow=res.view==='dataset'?12:15;const chartHeight=Math.max(400,this.n_rows*heightPerRow+100);this.canvasWrapper.style.height=`${chartHeight}px`;this.updateSummary(res.summary);this.chart.data={datasets:[{label:`${res.countryName}Data Coverage`,data:res.data,backgroundColor:(context)=>{const cell=context.dataset.data[context.dataIndex];return cell.v==='observed'?this.observedBg:'rgba(255, 165, 0, 0.7)';},borderColor:(context)=>{const cell=context.dataset.data[context.dataIndex];return cell.v==='observed'?this.observedBorder:'rgba(255, 165, 0, 1)';},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_years-1,height:({chart})=>(chart.chartArea||{}).height/this.n_rows-1}]};this.chart.options.scales.x.labels=res.years;this.chart.options.scales.y.labels=yLabels;if(res.view==='dataset'&&res.yLabels){const yLabelLookup={};res.yLabels.forEach(label=>{if(label.type==='dataset'){yLabelLookup[label.compoundKey]=label.code;}});this.chart.options.scales.y.ticks.callback=function(value,index,ticks){const compoundKey=this.getLabelForValue(value);let label=yLabelLookup[compoundKey]||compoundKey;if(label.length>20){label=label.substring(0,17)+'...';}
+this.title.textContent=res.countryName+' Data Coverage Matrix';const heightPerRow=res.view==='dataset'?12:15;const chartHeight=Math.max(400,this.n_rows*heightPerRow+100);this.canvasWrapper.style.height=`${chartHeight}px`;this.updateSummary(res.summary);this.chart.data={datasets:[{label:`${res.countryName}Data Coverage`,data:res.data,backgroundColor:(context)=>{const cell=context.dataset.data[context.dataIndex];return cell.v==='observed'?this.observedBg:this.imputedBg;},borderColor:(context)=>{const cell=context.dataset.data[context.dataIndex];return cell.v==='observed'?this.observedBorder:this.imputedBorder;},borderWidth:1,width:({chart})=>(chart.chartArea||{}).width/this.n_years-1,height:({chart})=>(chart.chartArea||{}).height/this.n_rows-1}]};this.chart.options.scales.x.labels=res.years;this.chart.options.scales.y.labels=yLabels;if(res.view==='dataset'&&res.yLabels){const yLabelLookup={};res.yLabels.forEach(label=>{if(label.type==='dataset'){yLabelLookup[label.compoundKey]=label.code;}});this.chart.options.scales.y.ticks.callback=function(value,index,ticks){const compoundKey=this.getLabelForValue(value);let label=yLabelLookup[compoundKey]||compoundKey;if(label.length>20){label=label.substring(0,17)+'...';}
 return label;};}else{this.chart.options.scales.y.ticks.callback=function(value){let label=this.getLabelForValue(value);if(label.length>20){label=label.substring(0,17)+'...';}
 return label;};}
 this.chart.update();}}

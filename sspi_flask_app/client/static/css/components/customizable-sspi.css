@@ -455,11 +455,18 @@
   font-family: var(--body-font-family);
 }
 
+/* The border/radius/padding and the name/code treatment below used to leak in
+   from indicator-table.css's unscoped rules; restated here when that file was
+   scoped so the builder's dataset rows keep their pre-scoping rendering. */
 .customizable-sspi .dataset-item {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-right: 0.5em;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.75rem 0.5em 0.75rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
   background-color: var(--box-background-color);
   cursor: pointer;
 }
@@ -472,19 +479,27 @@
   margin-right: 1em;
   flex: 1;
   min-width: 0;
+  width: 100%;
 }
 
 .customizable-sspi .dataset-code {
   display: inline;
+  flex: 0 0 auto;
   font-family: monospace;
   font-weight: bold;
-  line-height: 1;
+  font-size: 0.8rem;
+  color: var(--medium-importance-font-color);
+  line-height: 1.2;
+  max-width: 300px;
+  overflow-wrap: break-word;
 }
 
 .customizable-sspi .dataset-name {
   font-family: var(--body-font-family);
   font-size: 0.85em;
+  font-weight: 500;
   line-height: 1.15;
+  flex: 1 1 auto;
   color: var(--body-text-color);
   overflow: hidden;
   text-wrap: wrap;

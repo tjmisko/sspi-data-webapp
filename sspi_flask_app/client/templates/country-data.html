@@ -13,10 +13,11 @@
 {% else %}
     <section class="page-section">
         <div class="content-container">
+            <h1 class="visually-hidden">SSPI Data for {{ cdetail.Country }} ({{ cdetail.CountryCode | upper }})</h1>
             <div class="country-overview-box">
                 <div class="country-header">
                     <div class="country-selector-container">
-                        <select id="country-selector" class="country-selector">
+                        <select id="country-selector" class="country-selector" aria-label="Select country">
                             {% for country in country_list %}
                             <option
                                 value="{{ country.Metadata.CountryCode }}"
@@ -30,7 +31,7 @@
                 {% include 'components/country-characteristics-summary.html' %}
             </div>
             <div class="country-overview-box">
-                <h3>Pillar Score Breakdown</h3>
+                <h2>Pillar Score Breakdown</h2>
                 <p class="functionality-explainer"> The overall SSPI score is computed as the arithmetic
                 average of the Sustainability, Market Structure, and Public
                 Goods Pillars. The Pillar Score Breakdown below shows the
@@ -39,7 +40,7 @@
                 <div class="country-pillar-chart-container" id="pillar-breakdown-chart"></div>
             </div>
             <div class="country-overview-box">
-                <h3>Category Score Breakdown</h3>
+                <h2>Category Score Breakdown</h2>
                 <p class="functionality-explainer"> 
                     The Category Score Breakdown shows the
                     category scores for a given year. Use the year
@@ -49,27 +50,25 @@
                 <div id="category-radar-chart"></div>
             </div>
             <div class="country-overview-box">
-                <h3>Indicator Performance</h3>
+                <h2>Indicator Performance</h2>
                 <p class="functionality-explainer">
                     Select a time period of interest to view a summary of
                     indicators of note for {{ cdetail.Country }}, including their
                     strongest and weakest indicators. All ranks are computed
-                    relative to the 66 countries of Country Group SSPI67 scores
+                    relative to the 66 countries of the SSPI67 country group.
                 </p>
                 <div id="country-rankings-panel"></div>
-                <p></p>
-                <div id="category-radar-chart"></div>
             </div>
             <div class="country-overview-box">
-                <h3>Data Coverage and Imputations</h3>
+                <h2>Data Coverage and Imputations</h2>
                 <p class="functionality-explainer">
                     The SSPI uses the best available data to generate policy
                     scores. When data is unavailable, we use imputations and data
-                    modelling to make scores as commensurable across countries and
+                    modeling to make scores as commensurable across countries and
                     years as possible. The matrix below shows which indicator-year
-                    combinations have observed data (green) and which rely on 
-                    imputed data (orange). 
-                    
+                    combinations have observed data (green) and which rely on
+                    imputed data (orange).
+                </p>
                 <p class="functionality-explainer">
                     Imputations are typically carried out at the dataset level.
                     Since each indicator relies on one or more datasets, the
@@ -125,7 +124,6 @@
             const y = window.observableStorage.getItem('windowY');
 
             if (x !== null && y !== null && !String(location).includes("#")) {
-              console.log("Scrolling")
               window.moveTo(parseInt(x), parseInt(y));
             }
         })
